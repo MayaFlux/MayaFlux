@@ -2,3 +2,5 @@ build/*
 compile_commands.json
 .clangd/*
 .clang_format
+.cache/
+.ccls-cache/
