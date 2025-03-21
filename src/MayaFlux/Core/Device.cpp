@@ -1,4 +1,4 @@
-#include "Core/Device.hpp"
+#include "Device.hpp"
 
 using namespace MayaFlux::Core;
 

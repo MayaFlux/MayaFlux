@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux.hpp"
+#include "MayaFlux/MayaFlux.hpp"
 
 #include "Device.hpp"
 
@@ -36,6 +36,9 @@ namespace Core {
         std::shared_ptr<Device> m_Device;
 
         std::shared_ptr<Stream> m_StreamSettings;
+
+        int Callback(void* outputBuffer, void* inputBuffer, unsigned int nBufferFrames,
+            double streamTime, RtAudioStreamStatus status, void* userData);
     };
 }
 

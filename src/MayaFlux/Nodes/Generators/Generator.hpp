@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Nodes/Node.hpp"
+#include "MayaFlux/Nodes/Node.hpp"
 
 namespace MayaFlux::Nodes {
 

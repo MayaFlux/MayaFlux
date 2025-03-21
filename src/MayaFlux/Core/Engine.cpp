@@ -1,4 +1,4 @@
-#include "Core/Engine.hpp"
+#include "Engine.hpp"
 
 using namespace MayaFlux::Core;
 
@@ -12,4 +12,10 @@ Engine::Engine()
 void Engine::Init(GlobalStreamInfo stream_info)
 {
     m_StreamSettings = std::make_shared<Stream>(m_Device->get_default_output_device(), stream_info);
+}
+
+int Engine::Callback(void* outputBuffer, void* inputBuffer, unsigned int nBufferFrames,
+    double streamTime, RtAudioStreamStatus status, void* userData)
+{
+    return 1;
 }

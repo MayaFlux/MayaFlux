@@ -20,6 +20,18 @@ namespace Core {
             return m_Stream_info;
         }
 
+        inline RtAudio::StreamOptions get_stream_options()
+        {
+            return m_Options;
+        }
+
+        inline RtAudio::StreamParameters get_stream_parameters()
+        {
+            return m_Parameters;
+        }
+
+        void Start(RtAudio* context);
+
     private:
         RtAudio::StreamParameters m_Parameters;
         RtAudio::StreamOptions m_Options;

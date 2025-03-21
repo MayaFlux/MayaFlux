@@ -6,7 +6,7 @@ namespace MayaFlux::Nodes::Generator {
 
 class Sine : public Generator {
 public:
-    Sine(float amplitude, float frequency, float offset);
+    Sine(float amplitude = 1, float frequency = 440, float offset = 0);
 
     virtual ~Sine() = default;
 
@@ -16,7 +16,7 @@ public:
     virtual void printCurrent() override;
 
 private:
-    double m_phase_inc;
+    double m_phase_inc, m_phase;
     float m_amplitude, m_frequency, m_offset;
 };
 }

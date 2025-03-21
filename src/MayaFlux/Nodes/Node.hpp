@@ -14,6 +14,7 @@ namespace Nodes {
         virtual std::vector<double> processFull(unsigned int num_samples) = 0;
     };
 
+    std::shared_ptr<Node> operator>>(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
 }
 
 }

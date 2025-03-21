@@ -1,4 +1,4 @@
-#include "Core/Stream.hpp"
+#include "Stream.hpp"
 
 using namespace MayaFlux::Core;
 
@@ -8,4 +8,8 @@ Stream::Stream(unsigned int out_device, GlobalStreamInfo stream_info)
 
     m_Parameters.deviceId = out_device;
     m_Parameters.nChannels = m_Stream_info.num_channels;
+}
+
+void Stream::Start(RtAudio* context)
+{
 }
