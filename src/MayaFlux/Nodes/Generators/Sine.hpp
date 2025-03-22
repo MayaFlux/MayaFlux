@@ -12,6 +12,8 @@ public:
 
     virtual double processSample(double input) override;
 
+    virtual std::vector<double> processFull(unsigned int num_samples) override;
+
     virtual void printGraph() override;
     virtual void printCurrent() override;
 

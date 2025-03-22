@@ -31,3 +31,9 @@ double Sine::processSample(double input)
     }
     return current_sample;
 }
+
+std::vector<double> Sine::processFull(unsigned int num_samples)
+{
+    std::vector<double> output;
+    return output;
+}

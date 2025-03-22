@@ -22,8 +22,8 @@ namespace Core {
             return m_StreamSettings;
         }
 
-        // void Start();
-        // void End();
+        void Start();
+        void End();
 
     private:
         std::unique_ptr<RtAudio> m_Context;

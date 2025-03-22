@@ -30,8 +30,6 @@ namespace Core {
             return m_Parameters;
         }
 
-        void Start(RtAudio* context);
-
     private:
         RtAudio::StreamParameters m_Parameters;
         RtAudio::StreamOptions m_Options;
