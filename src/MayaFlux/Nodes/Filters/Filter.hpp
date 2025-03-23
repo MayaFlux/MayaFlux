@@ -15,6 +15,7 @@ protected:
 
 public:
     Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts);
+
     // Filter(std::vector<double> input, const std::string& zindex_shifts);
 
     virtual ~Filter() = default;
@@ -36,7 +37,7 @@ public:
     }
 
 protected:
-    void initialize_shift_buffers();
+    virtual void initialize_shift_buffers();
 
     virtual double processSample(double input) override = 0;
 };

@@ -6,40 +6,46 @@
 
 #include "Stream.hpp"
 
-namespace MayaFlux {
+namespace MayaFlux::Core {
 
-namespace Core {
+using AudioProcessingFunction = std::function<void(double*, double*, unsigned int)>;
 
-    class Engine {
-    public:
-        Engine();
-        ~Engine() = default;
+class Engine {
+public:
+    Engine();
+    ~Engine();
 
-        void Init(GlobalStreamInfo stream_info);
+    void Init(GlobalStreamInfo stream_info);
 
-        inline const std::shared_ptr<Stream> get_stream_settings() const
-        {
-            return m_StreamSettings;
-        }
+    inline const std::shared_ptr<Stream> get_stream_settings() const
+    {
+        return m_StreamSettings;
+    }
 
-        void Start();
-        void End();
+    void Start();
+    void End();
 
-    private:
-        std::unique_ptr<RtAudio> m_Context;
+    int process_input(double* input_buffer, unsigned int num_frames);
+    int process_output(double* output_buffer, unsigned int num_frames);
+    int process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames);
 
-        RtAudio* get_handle()
-        {
-            return m_Context.get();
-        }
+    void add_processor(AudioProcessingFunction processor);
+    void clear_processors();
 
-        std::shared_ptr<Device> m_Device;
+    void process_buffer(std::vector<double>& buffer, unsigned int num_frames);
 
-        std::shared_ptr<Stream> m_StreamSettings;
+private:
+    std::unique_ptr<RtAudio> m_Context;
+    std::shared_ptr<Device> m_Device;
+    std::shared_ptr<Stream> m_StreamSettings;
 
-        int Callback(void* outputBuffer, void* inputBuffer, unsigned int nBufferFrames,
-            double streamTime, RtAudioStreamStatus status, void* userData);
-    };
-}
+    std::vector<AudioProcessingFunction> m_Processing_chain;
 
+    void execute_processing_chain(double* input_buffer, double* output_buffer, unsigned int num_frames);
+
+    RtAudio* get_handle()
+    {
+        return m_Context.get();
+    }
+};
 }

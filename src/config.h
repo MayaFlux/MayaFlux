@@ -3,6 +3,7 @@
 #include "RtAudio.h"
 
 // System
+#include "functional"
 #include "numbers"
 #include "string"
 #include "unordered_map"

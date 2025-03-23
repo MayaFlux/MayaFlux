@@ -22,8 +22,9 @@ namespace Core {
         }
 
     private:
-        unsigned int m_Num_devices;
-        std::vector<RtAudio::DeviceInfo> m_Devices;
+        unsigned int m_Num_in_devices, m_Num_out_devices;
+        std::vector<RtAudio::DeviceInfo> m_Input_devices;
+        std::vector<RtAudio::DeviceInfo> m_Output_devices;
         unsigned int m_default_out_device;
         unsigned int m_default_in_device;
     };

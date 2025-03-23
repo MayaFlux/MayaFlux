@@ -56,8 +56,43 @@ std::vector<double> ChainNode::processFull(unsigned int num_samples)
     return output;
 }
 
+BinaryOpNode::BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs, CombineFunc func)
+    : m_lhs(lhs)
+    , m_rhs(rhs)
+    , m_func(func)
+{
+}
+
+double BinaryOpNode::processSample(double input)
+{
+    double lhs_out = m_lhs->processSample(input);
+    double rhs_out = m_rhs->processSample(input);
+
+    return m_func(lhs_out, rhs_out);
+}
+
+std::vector<double> BinaryOpNode::processFull(unsigned int num_samples)
+{
+    std::vector<double> output(num_samples);
+    for (unsigned int i = 0; i < num_samples; ++i) {
+        output[i] = processSample(0.0);
+    }
+    return output;
+}
+
 std::shared_ptr<Node> operator>>(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs)
 {
     return std::make_shared<ChainNode>(lhs, rhs);
 }
+
+std::shared_ptr<Node> operator+(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs)
+{
+    return std::make_shared<BinaryOpNode>(lhs, rhs, [](double a, double b) { return a + b; });
+}
+
+std::shared_ptr<Node> operator*(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs)
+{
+    return std::make_shared<BinaryOpNode>(lhs, rhs, [](double a, double b) { return a * b; });
+}
+
 }
