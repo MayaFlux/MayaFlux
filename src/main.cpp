@@ -12,10 +12,9 @@ int main()
 
     engine.Init(stream_info);
 
-    std::shared_ptr<MayaFlux::Nodes::Generator::Sine> sine2 = std::make_shared<MayaFlux::Nodes::Generator::Sine>(5, 1, 0.0, false);
-    std::shared_ptr<MayaFlux::Nodes::Generator::Sine> sine3 = std::make_shared<MayaFlux::Nodes::Generator::Sine>(80, 3, 0.0, false);
+    using namespace MayaFlux::Nodes::Generator;
 
-    std::shared_ptr<MayaFlux::Nodes::Generator::Sine> sine = std::make_shared<MayaFlux::Nodes::Generator::Sine>((sine2 + sine3), 440, 0.5, 0.0);
+    std::shared_ptr<Sine> sine = std::make_shared<Sine>((std::make_shared<Sine>(1, 5, 0.0, false) + std::make_shared<Sine>(50, 100, 0.0, false)), 440, 0.5, 0.0);
 
     engine.add_processor([](double* in, double* out, unsigned int nFrames) {
         const double masterVolume = 0.8;

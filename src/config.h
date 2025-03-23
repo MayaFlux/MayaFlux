@@ -3,6 +3,7 @@
 #include "RtAudio.h"
 
 // System
+#include "algorithm"
 #include "functional"
 #include "numbers"
 #include "string"
