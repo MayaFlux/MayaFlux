@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Core/Scheduler/Tasks.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 
 #include "Device.hpp"
@@ -34,10 +35,26 @@ public:
 
     void process_buffer(std::vector<double>& buffer, unsigned int num_frames);
 
+    Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback);
+    Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
+
+    template <typename T>
+    inline Scheduler::SoundRoutine schedule_pattern(std::function<T(u_int64_t)> pattern_func, std::function<void(T)> callback, double interval_seconds)
+    {
+        return pattern<T>(m_scheduler, pattern_func, callback, interval_seconds);
+    }
+
+    void schedule_task(std::string name, Scheduler::SoundRoutine&& task);
+    bool cancel_task(const std::string& name);
+
+    inline Scheduler::TaskScheduler& get_scheduler() { return m_scheduler; }
+
 private:
     std::unique_ptr<RtAudio> m_Context;
     std::shared_ptr<Device> m_Device;
     std::shared_ptr<Stream> m_StreamSettings;
+    Scheduler::TaskScheduler m_scheduler;
+    std::unordered_map<std::string, Scheduler::SoundRoutine*> m_named_tasks;
 
     std::vector<AudioProcessingFunction> m_Processing_chain;
 

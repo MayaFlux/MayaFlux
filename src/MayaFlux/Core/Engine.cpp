@@ -2,7 +2,7 @@
 #include "AudioCallback.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
-using namespace MayaFlux::Core;
+namespace MayaFlux::Core {
 
 Engine::Engine()
     : m_Context(std::make_unique<RtAudio>())
@@ -19,6 +19,8 @@ void Engine::Init(GlobalStreamInfo stream_info)
 {
     m_StreamSettings = std::make_shared<Stream>(m_Device->get_default_output_device(), stream_info);
     MayaFlux::set_context(*this);
+
+    m_scheduler = Scheduler::TaskScheduler(stream_info.sample_rate);
 
     if (MayaFlux::graph_manager == nullptr) {
         MayaFlux::graph_manager = new Nodes::NodeGraphManager();
@@ -61,6 +63,8 @@ void Engine::End()
     if (m_Context->isStreamOpen()) {
         m_Context->closeStream();
     }
+
+    m_named_tasks.clear();
 }
 
 int Engine::process_input(double* input_buffer, unsigned int num_frames)
@@ -70,6 +74,19 @@ int Engine::process_input(double* input_buffer, unsigned int num_frames)
 
 int Engine::process_output(double* output_buffer, unsigned int num_frames)
 {
+
+    m_scheduler.process_buffer(num_frames);
+
+    // for (auto it = m_named_tasks.begin(); it != m_named_tasks.end();) {
+    //     if (!it->second->is_active()) {
+    //         cancel_task(it->first);
+    //         // it = m_named_tasks.erase(it);
+    //     } else {
+    //         // it->second->try_resume(current_sample);
+    //         ++it;
+    //     }
+    // }
+
     auto& root_node = MayaFlux::get_node_graph_manager().get_root_node();
     std::vector<double> processed_data = root_node.process(num_frames);
 
@@ -125,4 +142,38 @@ void Engine::process_buffer(std::vector<double>& buffer, unsigned int num_frames
     }
 
     buffer = process_buffer;
+}
+
+Scheduler::SoundRoutine Engine::schedule_metro(double interval_seconds, std::function<void()> callback)
+{
+    return metro(m_scheduler, interval_seconds, callback);
+}
+Scheduler::SoundRoutine Engine::schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
+{
+    return sequence(m_scheduler, seq);
+}
+
+void Engine::schedule_task(std::string name, Scheduler::SoundRoutine&& task)
+{
+    cancel_task(name);
+
+    m_scheduler.add_task(std::move(task));
+
+    auto& tasks = m_scheduler.get_tasks();
+    if (!tasks.empty()) {
+        m_named_tasks[name] = &tasks.back();
+    }
+}
+
+bool Engine::cancel_task(const std::string& name)
+{
+    auto it = m_named_tasks.find(name);
+    if (it != m_named_tasks.end()) {
+        if (m_scheduler.cancel_task(it->second)) {
+            m_named_tasks.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
 }

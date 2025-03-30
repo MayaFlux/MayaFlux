@@ -54,6 +54,7 @@ void Sine::Setup(bool bAuto_register)
     m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_global_stream_info().sample_rate;
 
     if (bAuto_register) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         register_to_defult();
     }
 }
@@ -129,7 +130,15 @@ std::vector<double> Sine::processFull(unsigned int num_samples)
 
 void Sine::register_to_defult()
 {
-    MayaFlux::get_node_graph_manager().add_to_root(std::make_shared<Sine>(*this));
+    try {
+        auto self = shared_from_this();
+        MayaFlux::get_node_graph_manager().add_to_root(self);
+    } catch (const std::bad_weak_ptr& e) {
+        std::cerr << "Error in register_to_defult: " << e.what() << std::endl;
+        std::cerr << "The Sine object must be created with std::make_shared for shared_from_this() to work." << std::endl;
+
+        MayaFlux::get_node_graph_manager().add_to_root(std::make_shared<Sine>(*this));
+    }
 }
 
 void Sine::printGraph()

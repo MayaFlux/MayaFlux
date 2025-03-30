@@ -4,7 +4,7 @@
 
 namespace MayaFlux::Nodes::Generator {
 
-class Sine : public Generator {
+class Sine : public Generator, public std::enable_shared_from_this<Sine> {
 public:
     Sine(float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = true);
 
