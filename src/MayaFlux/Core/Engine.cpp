@@ -1,5 +1,6 @@
 #include "Engine.hpp"
 #include "AudioCallback.hpp"
+#include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
 namespace MayaFlux::Core {
@@ -7,6 +8,7 @@ namespace MayaFlux::Core {
 Engine::Engine()
     : m_Context(std::make_unique<RtAudio>())
     , m_Device(std::make_shared<Device>(get_handle()))
+    , m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
 {
 }
 
@@ -176,4 +178,29 @@ bool Engine::cancel_task(const std::string& name)
     }
     return false;
 }
+
+double Engine::get_uniform_random(double start, double end)
+{
+    m_rng->set_type(Utils::distribution::UNIFORM);
+    return m_rng->random_sample(start, end);
+}
+
+double Engine::get_gaussian_random(double start, double end)
+{
+    m_rng->set_type(Utils::distribution::NORMAL);
+    return m_rng->random_sample(start, end);
+}
+
+double Engine::get_exponential_random(double start, double end)
+{
+    m_rng->set_type(Utils::distribution::EXPONENTIAL);
+    return m_rng->random_sample(start, end);
+}
+
+double Engine::get_poisson_random(double start, double end)
+{
+    m_rng->set_type(Utils::distribution::POISSON);
+    return m_rng->random_sample(start, end);
+}
+
 }

@@ -7,6 +7,10 @@
 
 #include "Stream.hpp"
 
+namespace MayaFlux::Nodes::Generator::Stochastics {
+class NoiseEngine;
+}
+
 namespace MayaFlux::Core {
 
 using AudioProcessingFunction = std::function<void(double*, double*, unsigned int)>;
@@ -60,6 +64,11 @@ public:
 
     inline Scheduler::TaskScheduler& get_scheduler() { return m_scheduler; }
 
+    double get_uniform_random(double start = 0, double end = 1);
+    double get_gaussian_random(double start = 0, double end = 1);
+    double get_exponential_random(double start = 0, double end = 1);
+    double get_poisson_random(double start = 0, double end = 1);
+
 private:
     std::unique_ptr<RtAudio> m_Context;
     std::shared_ptr<Device> m_Device;
@@ -75,5 +84,7 @@ private:
     {
         return m_Context.get();
     }
+
+    Nodes::Generator::Stochastics::NoiseEngine* m_rng;
 };
 }

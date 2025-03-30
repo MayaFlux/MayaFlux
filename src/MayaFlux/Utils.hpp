@@ -9,4 +9,14 @@ enum NodeProcessType {
     Filter,
     Buffer
 };
+
+enum class distribution {
+    UNIFORM,
+    NORMAL,
+    EXPONENTIAL,
+    POISSON,
+    // PERLIN,
+    // GENDY
+};
+
 }

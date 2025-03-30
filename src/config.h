@@ -15,4 +15,5 @@
 // C style
 #include <cmath>
 #include <memory>
+#include <random>
 #include <thread>
