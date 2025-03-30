@@ -2,6 +2,26 @@
 
 namespace MayaFlux::Core::Scheduler {
 
+template <typename T>
+void SoundRoutine::promise_type::set_state(const std::string& key, T value)
+{
+    state[key] = std::make_any<T>(std::move(value));
+}
+
+template <typename T>
+T* SoundRoutine::promise_type::get_state(const std::string& key)
+{
+    auto it = state.find(key);
+    if (it != state.end()) {
+        try {
+            return std::any_cast<T>(&it->second);
+        } catch (const std::bad_any_cast&) {
+            return nullptr;
+        }
+    }
+    return nullptr;
+}
+
 SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
     : m_handle(h)
 {
@@ -39,6 +59,23 @@ bool SoundRoutine::try_resume(u_int64_t current_sample)
         return true;
     }
     return false;
+}
+
+template <typename T, typename... Args>
+void SoundRoutine::update_params(Args... args)
+{
+    if (m_handle) {
+        update_params_impl(m_handle.promise(), std::forward<Args>(args)...);
+    }
+}
+
+template <typename T, typename... Args>
+void SoundRoutine::update_params_impl(promise_type& promise, const std::string& key, T value, Args... args)
+{
+    promise.set_state(key, std::move(value));
+    if constexpr (sizeof...(args) > 0) {
+        update_params_impl(promise, std::forward<Args>(args)...);
+    }
 }
 
 SampleClock::SampleClock(unsigned int sample_rate)

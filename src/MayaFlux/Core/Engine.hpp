@@ -47,6 +47,17 @@ public:
     void schedule_task(std::string name, Scheduler::SoundRoutine&& task);
     bool cancel_task(const std::string& name);
 
+    template <typename... Args>
+    inline bool update_task_params(const std::string& name, Args... args)
+    {
+        auto it = m_named_tasks.find(name);
+        if (it != m_named_tasks.end() && it->second->is_active()) {
+            it->second->update_params(std::forward<Args>(args)...);
+            return true;
+        }
+        return false;
+    }
+
     inline Scheduler::TaskScheduler& get_scheduler() { return m_scheduler; }
 
 private:

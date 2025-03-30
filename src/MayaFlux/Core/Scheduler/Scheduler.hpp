@@ -19,6 +19,13 @@ public:
         void unhandled_exception() { std::terminate(); }
 
         u_int64_t next_sample = 0;
+        std::unordered_map<std::string, std::any> state;
+
+        template <typename T>
+        void set_state(const std::string& key, T value);
+
+        template <typename T>
+        T* get_state(const std::string& key);
     };
 
     SoundRoutine(std::coroutine_handle<promise_type> h);
@@ -46,8 +53,14 @@ public:
         return m_handle;
     }
 
+    template <typename T, typename... Args>
+    void update_params(Args... args);
+
 private:
     std::coroutine_handle<promise_type> m_handle;
+
+    template <typename T, typename... Args>
+    void update_params_impl(promise_type& promise, const std::string& key, T value, Args... args);
 };
 
 class SampleClock {
