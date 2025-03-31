@@ -19,4 +19,10 @@ enum class distribution {
     // GENDY
 };
 
+enum coefficients {
+    INPUT,
+    OUTPUT,
+    ALL
+};
+
 }

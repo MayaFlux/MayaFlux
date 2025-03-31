@@ -10,13 +10,17 @@ class Filter : public Node {
 protected:
     std::shared_ptr<Node> inputNode;
     std::pair<int, int> shift_config;
+
     std::vector<double> input_history;
     std::vector<double> output_history;
+
+    std::vector<double> coef_a;
+    std::vector<double> coef_b;
 
 public:
     Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts);
 
-    // Filter(std::vector<double> input, const std::string& zindex_shifts);
+    Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<double> b_coef);
 
     virtual ~Filter() = default;
 
@@ -36,10 +40,27 @@ public:
         initialize_shift_buffers();
     }
 
+    void setCoefficients(const std::vector<double>& new_coefs, Utils::coefficients type = Utils::coefficients::ALL);
+
+    void updateCoefficientsFromNode(int lenght, std::shared_ptr<Node> source, Utils::coefficients type = Utils::coefficients::ALL);
+
+    void updateCoefficientsFromInput(int lenght, Utils::coefficients type = Utils::coefficients::ALL);
+
 protected:
+    void setACoefficients(const std::vector<double>& new_coefs);
+
+    void setBCoefficients(const std::vector<double>& new_coefs);
+
+    inline const std::vector<double>& getACoefficients() const { return coef_a; }
+    inline const std::vector<double>& getBCoefficients() const { return coef_b; }
+
     virtual void initialize_shift_buffers();
 
     virtual double processSample(double input) override = 0;
+
+    virtual void update_inputs(double current_sample);
+
+    virtual void update_outputs(double current_sample);
 };
 
 }
