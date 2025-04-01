@@ -14,6 +14,8 @@
 
 // C style
 #include <cmath>
+#include <cstdint>
+#include <exception>
 #include <memory>
 #include <random>
 #include <thread>

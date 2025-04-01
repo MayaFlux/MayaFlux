@@ -2,69 +2,66 @@
 
 namespace MayaFlux::Core::Scheduler {
 
-TaskScheduler::TaskScheduler(unsigned int sample_rate)
-    : m_clock(sample_rate)
-{
-}
-
-void TaskScheduler::add_task(SoundRoutine&& Task)
-{
-    m_tasks.push_back(std::move(Task));
-}
-
-void TaskScheduler::process_sample()
-{
-    u_int64_t current_sample = m_clock.current_sample();
-
-    for (auto& task : m_tasks) {
-        task.try_resume(current_sample);
-    }
-
-    m_tasks.erase(std::remove_if(
-                      m_tasks.begin(), m_tasks.end(),
-                      [](const SoundRoutine& task) { return !task.is_active(); }),
-        m_tasks.end());
-
-    m_clock.tick();
-}
-
-bool TaskScheduler::cancel_task(SoundRoutine* task)
-{
-    auto it = std::find_if(m_tasks.begin(), m_tasks.end(),
-        [task](const SoundRoutine& routine) {
-            return &routine == task;
-        });
-    if (it != m_tasks.end()) {
-        it->get_handle().destroy();
-        m_tasks.erase(it);
-        return true;
-    }
-    return false;
-}
-
-void TaskScheduler::process_buffer(unsigned int buffer_size)
-{
-    for (unsigned int i = 0; i < buffer_size; ++i) {
-        process_sample();
-    }
-}
-
 SoundRoutine metro(TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
 {
     u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
+    u_int64_t next_sample = 0;
 
     while (true) {
         callback();
+        next_sample += interval_samples;
         co_await SampleDelay(interval_samples);
     }
 }
 
 SoundRoutine sequence(TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence)
 {
-    for (const auto& [delay_seconds, callback] : sequence) {
-        u_int64_t delay_samples = scheduler.seconds_to_samples(delay_seconds);
-        co_await SampleDelay(delay_samples);
+    for (const auto& [time, callback] : sequence) {
+        u_int64_t delay_samples = scheduler.seconds_to_samples(time);
         callback();
+        co_await SampleDelay(delay_samples);
     }
+}
+
+SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, bool loop)
+{
+    promise_handle promise;
+    auto handle = std::coroutine_handle<promise_handle>::from_promise(promise);
+    auto& promise_ref = handle.promise();
+
+    unsigned int sample_rate = scheduler.task_sample_rate();
+
+    float step = (end_value - start_value) / (duration_seconds * sample_rate);
+
+    promise_ref.set_state("current_value", start_value);
+    promise_ref.set_state("start_value", start_value);
+    promise_ref.set_state("end_value", end_value);
+    promise_ref.set_state("step", step);
+    promise_ref.set_state("loop", loop);
+
+    u_int64_t total_samples = duration_seconds * sample_rate;
+    u_int64_t samples_elapsed = 0;
+
+    while (samples_elapsed < total_samples) {
+        float* current_value = promise_ref.get_state<float>("current_value");
+        float* end_value = promise_ref.get_state<float>("end_value");
+        float* step = promise_ref.get_state<float>("step");
+
+        if (current_value && end_value && step) {
+            *current_value += *step;
+
+            if ((*step > 0 && *current_value >= *end_value) || (*step < 0 && *current_value <= *end_value)) {
+                *current_value = *end_value;
+            }
+        }
+
+        samples_elapsed++;
+        bool* should_loop = promise_ref.get_state<bool>("loop");
+        if (!should_loop || !*should_loop) {
+            break;
+        }
+    }
+
+    return SoundRoutine(handle);
 }
 }

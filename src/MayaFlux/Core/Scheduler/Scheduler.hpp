@@ -1,95 +1,39 @@
 #pragma once
 
 #include "config.h"
-#include "coroutine"
+
+#include "Clock.hpp"
+#include "Routine.hpp"
 
 namespace MayaFlux::Core::Scheduler {
-class SoundRoutine {
+
+class TaskScheduler {
 public:
-    struct promise_type {
+    TaskScheduler(unsigned int sample_rate = 48000);
 
-        SoundRoutine get_return_object()
-        {
-            return SoundRoutine(std::coroutine_handle<promise_type>::from_promise(*this));
-        }
+    void add_task(SoundRoutine&& Task);
+    void process_sample();
+    void process_buffer(unsigned int buffer_size);
 
-        std::suspend_never initial_suspend() { return {}; }
-        std::suspend_always final_suspend() noexcept { return {}; }
-        void return_void() { }
-        void unhandled_exception() { std::terminate(); }
-
-        u_int64_t next_sample = 0;
-        std::unordered_map<std::string, std::any> state;
-
-        template <typename T>
-        void set_state(const std::string& key, T value);
-
-        template <typename T>
-        T* get_state(const std::string& key);
-    };
-
-    SoundRoutine(std::coroutine_handle<promise_type> h);
-
-    SoundRoutine(SoundRoutine&& other) noexcept;
-
-    SoundRoutine& operator=(SoundRoutine&& other) noexcept;
-
-    ~SoundRoutine();
-
-    inline bool is_active() const
+    inline u_int64_t seconds_to_samples(double seconds) const
     {
-        return m_handle && !m_handle.done();
+        return static_cast<u_int64_t>(seconds * m_clock.sample_rate());
     }
 
-    inline u_int64_t next_execution() const
+    inline unsigned int task_sample_rate()
     {
-        return is_active() ? m_handle.promise().next_sample : UINT64_MAX;
+        return m_clock.sample_rate();
     }
 
-    bool try_resume(u_int64_t current_sample);
+    const SampleClock& get_clock() const { return m_clock; }
+    const std::vector<SoundRoutine>& get_tasks() const { return m_tasks; }
+    std::vector<SoundRoutine>& get_tasks() { return m_tasks; }
 
-    inline std::coroutine_handle<promise_type> get_handle()
-    {
-        return m_handle;
-    }
-
-    template <typename T, typename... Args>
-    void update_params(Args... args);
+    bool cancel_task(SoundRoutine* task);
 
 private:
-    std::coroutine_handle<promise_type> m_handle;
-
-    template <typename T, typename... Args>
-    void update_params_impl(promise_type& promise, const std::string& key, T value, Args... args);
+    SampleClock m_clock;
+    std::vector<SoundRoutine> m_tasks;
 };
 
-class SampleClock {
-public:
-    SampleClock(unsigned int sample_rate = 48000);
-
-    void tick(unsigned int samples = 1);
-
-    unsigned int current_sample() const;
-
-    double current_time() const;
-
-    unsigned int sample_rate() const;
-
-private:
-    unsigned int m_sample_rate;
-    u_int64_t m_current_sample;
-};
-
-struct SampleDelay {
-    u_int64_t samples_to_wait;
-
-    inline bool await_ready() const { return samples_to_wait == 0; }
-
-    inline void await_resume() { };
-
-    inline void await_suspend(std::coroutine_handle<SoundRoutine::promise_type> h)
-    {
-        h.promise().next_sample += samples_to_wait;
-    }
-};
 }

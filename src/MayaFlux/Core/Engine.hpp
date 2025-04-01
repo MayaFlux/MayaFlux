@@ -41,6 +41,9 @@ public:
 
     Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback);
     Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
+    Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, bool loop);
+
+    std::function<float()> line_value(const std::string& name);
 
     template <typename T>
     inline Scheduler::SoundRoutine schedule_pattern(std::function<T(u_int64_t)> pattern_func, std::function<void(T)> callback, double interval_seconds)

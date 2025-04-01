@@ -155,6 +155,26 @@ Scheduler::SoundRoutine Engine::schedule_sequence(std::vector<std::pair<double, 
     return sequence(m_scheduler, seq);
 }
 
+Scheduler::SoundRoutine Engine::create_line(float start_value, float end_value, float duration_seconds, bool loop)
+{
+    return line(m_scheduler, start_value, end_value, duration_seconds, loop);
+}
+
+std::function<float()> Engine::line_value(const std::string& name)
+{
+    return [this, name]() -> float {
+        auto it = m_named_tasks.find(name);
+        if (it != m_named_tasks.end() && it->second->is_active()) {
+            auto& promise = it->second->get_handle().promise();
+            float* value = promise.get_state<float>("current_value");
+            if (value) {
+                return *value;
+            }
+        }
+        return 0.0f;
+    };
+}
+
 void Engine::schedule_task(std::string name, Scheduler::SoundRoutine&& task)
 {
     cancel_task(name);
