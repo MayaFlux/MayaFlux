@@ -35,6 +35,12 @@ public:
     template <typename T, typename... Args>
     void update_params(Args... args);
 
+    template <typename T>
+    void set_state(const std::string& key, T value);
+
+    template <typename T>
+    T* get_state(const std::string& key);
+
 private:
     std::coroutine_handle<promise_type> m_handle;
 

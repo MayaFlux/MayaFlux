@@ -43,6 +43,8 @@ public:
     Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
     Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, bool loop);
 
+    float* get_line_value(const std::string& name);
+
     std::function<float()> line_value(const std::string& name);
 
     template <typename T>

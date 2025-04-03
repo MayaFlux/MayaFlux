@@ -40,12 +40,14 @@ struct SampleDelay {
 };
 
 struct GetPromise {
-    promise_handle& promise;
+    promise_handle* promise_ptr = nullptr;
 
-    explicit GetPromise(promise_handle& p);
+    GetPromise() = default;
 
-    bool await_ready() const noexcept;
+    inline bool await_ready() const noexcept { return false; }
+
     void await_suspend(std::coroutine_handle<promise_handle> h) noexcept;
+
     promise_handle& await_resume() const noexcept;
 };
 

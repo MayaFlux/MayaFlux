@@ -27,6 +27,18 @@ T* SoundRoutine::promise_type::get_state(const std::string& key)
     return nullptr;
 }
 
+template <typename T>
+void SoundRoutine::set_state(const std::string& key, T value)
+{
+    m_handle.promise().set_state(key, value);
+}
+
+template <typename T>
+T* SoundRoutine::get_state(const std::string& key)
+{
+    return m_handle.promise().get_state<T>(key);
+}
+
 // Explicit template instantiations
 template void SoundRoutine::promise_type::set_state<float>(const std::string& key, float value);
 template void SoundRoutine::promise_type::set_state<bool>(const std::string& key, bool value);

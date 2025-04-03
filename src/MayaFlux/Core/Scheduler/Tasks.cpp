@@ -25,13 +25,11 @@ SoundRoutine sequence(TaskScheduler& scheduler, std::vector<std::pair<double, st
 
 SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, bool loop)
 {
-    promise_handle promise;
-    auto handle = std::coroutine_handle<promise_handle>::from_promise(promise);
-    auto& promise_ref = handle.promise();
+    auto& promise_ref = co_await GetPromise {};
 
     unsigned int sample_rate = scheduler.task_sample_rate();
-
-    float step = (end_value - start_value) / (duration_seconds * sample_rate);
+    u_int64_t total_samples = duration_seconds * sample_rate;
+    float step = (end_value - start_value) / total_samples;
 
     promise_ref.set_state("current_value", start_value);
     promise_ref.set_state("start_value", start_value);
@@ -39,7 +37,8 @@ SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, 
     promise_ref.set_state("step", step);
     promise_ref.set_state("loop", loop);
 
-    u_int64_t total_samples = duration_seconds * sample_rate;
+    // co_await std::suspend_never {};
+
     u_int64_t samples_elapsed = 0;
 
     while (samples_elapsed < total_samples) {
@@ -57,11 +56,12 @@ SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, 
 
         samples_elapsed++;
         bool* should_loop = promise_ref.get_state<bool>("loop");
+
         if (!should_loop || !*should_loop) {
             break;
         }
+        co_await SampleDelay { 1 };
     }
-
-    return SoundRoutine(handle);
 }
+
 }

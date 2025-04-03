@@ -76,18 +76,7 @@ int Engine::process_input(double* input_buffer, unsigned int num_frames)
 
 int Engine::process_output(double* output_buffer, unsigned int num_frames)
 {
-
     m_scheduler.process_buffer(num_frames);
-
-    // for (auto it = m_named_tasks.begin(); it != m_named_tasks.end();) {
-    //     if (!it->second->is_active()) {
-    //         cancel_task(it->first);
-    //         // it = m_named_tasks.erase(it);
-    //     } else {
-    //         // it->second->try_resume(current_sample);
-    //         ++it;
-    //     }
-    // }
 
     auto& root_node = MayaFlux::get_node_graph_manager().get_root_node();
     std::vector<double> processed_data = root_node.process(num_frames);
@@ -132,7 +121,6 @@ void Engine::clear_processors()
 
 void Engine::process_buffer(std::vector<double>& buffer, unsigned int num_frames)
 {
-
     std::vector<double> process_buffer = buffer;
     auto& root_node = MayaFlux::get_node_graph_manager().get_root_node();
 
@@ -158,6 +146,19 @@ Scheduler::SoundRoutine Engine::schedule_sequence(std::vector<std::pair<double, 
 Scheduler::SoundRoutine Engine::create_line(float start_value, float end_value, float duration_seconds, bool loop)
 {
     return line(m_scheduler, start_value, end_value, duration_seconds, loop);
+}
+
+float* Engine::get_line_value(const std::string& name)
+{
+    auto it = m_named_tasks.find(name);
+    if (it != m_named_tasks.end() && it->second->is_active()) {
+        auto& promise = it->second->get_handle().promise();
+        float* value = promise.get_state<float>("current_value");
+        if (value) {
+            return value;
+        }
+    }
+    return nullptr;
 }
 
 std::function<float()> Engine::line_value(const std::string& name)
@@ -222,5 +223,4 @@ double Engine::get_poisson_random(double start, double end)
     m_rng->set_type(Utils::distribution::POISSON);
     return m_rng->random_sample(start, end);
 }
-
 }
