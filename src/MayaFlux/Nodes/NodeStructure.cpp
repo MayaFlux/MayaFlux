@@ -27,7 +27,7 @@ std::vector<double> RootNode::process(unsigned int num_samples)
         double sample = 0.f;
 
         for (auto& node : m_Nodes) {
-            sample += node->processSample(0.f);
+            sample += node->process_sample(0.f);
         }
         output[i] = sample;
     }
@@ -41,17 +41,17 @@ ChainNode::ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target)
 {
 }
 
-double ChainNode::processSample(double input)
+double ChainNode::process_sample(double input)
 {
-    double sample = m_Source->processSample(input);
-    return m_Target->processSample(sample);
+    double sample = m_Source->process_sample(input);
+    return m_Target->process_sample(sample);
 }
 
 std::vector<double> ChainNode::processFull(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (size_t i = 0; i < num_samples; i++) {
-        output[i] = processSample(0.f);
+        output[i] = process_sample(0.f);
     }
     return output;
 }
@@ -63,10 +63,10 @@ BinaryOpNode::BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs,
 {
 }
 
-double BinaryOpNode::processSample(double input)
+double BinaryOpNode::process_sample(double input)
 {
-    double lhs_out = m_lhs->processSample(input);
-    double rhs_out = m_rhs->processSample(input);
+    double lhs_out = m_lhs->process_sample(input);
+    double rhs_out = m_rhs->process_sample(input);
 
     return m_func(lhs_out, rhs_out);
 }
@@ -75,7 +75,7 @@ std::vector<double> BinaryOpNode::processFull(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (unsigned int i = 0; i < num_samples; ++i) {
-        output[i] = processSample(0.0);
+        output[i] = process_sample(0.0);
     }
     return output;
 }

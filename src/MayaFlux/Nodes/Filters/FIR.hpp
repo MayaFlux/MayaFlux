@@ -10,7 +10,7 @@ public:
     FIR(std::shared_ptr<Node> input, const std::vector<double> coeffs);
 
 protected:
-    double processSample(double input) override;
+    double process_sample(double input) override;
 };
 
 }

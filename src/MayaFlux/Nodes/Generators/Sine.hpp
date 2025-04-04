@@ -19,7 +19,7 @@ public:
 
     virtual ~Sine() = default;
 
-    virtual double processSample(double input) override;
+    virtual double process_sample(double input) override;
 
     virtual std::vector<double> processFull(unsigned int num_samples) override;
 

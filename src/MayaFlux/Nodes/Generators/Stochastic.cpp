@@ -8,7 +8,7 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
 {
 }
 
-double NoiseEngine::processSample(double input)
+double NoiseEngine::process_sample(double input)
 {
     return input + random_sample(-1.0, 1.0);
 }

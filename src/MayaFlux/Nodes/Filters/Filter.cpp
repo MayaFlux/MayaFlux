@@ -42,7 +42,7 @@ void Filter::initialize_shift_buffers()
     output_history.resize(shift_config.second + 1, 0.0f);
 }
 
-void Filter::setCoefficients(const std::vector<double>& new_coefs, Utils::coefficients type)
+void Filter::set_coefs(const std::vector<double>& new_coefs, Utils::coefficients type)
 {
     if (type == Utils::coefficients::OUTPUT) {
         setACoefficients(new_coefs);
@@ -101,17 +101,17 @@ void Filter::setBCoefficients(const std::vector<double>& new_coefs)
     }
 }
 
-void Filter::updateCoefficientsFromNode(int length, std::shared_ptr<Node> source, Utils::coefficients type)
+void Filter::update_coefs_from_node(int length, std::shared_ptr<Node> source, Utils::coefficients type)
 {
     std::vector<double> samples = source->processFull(length);
-    setCoefficients(samples, type);
+    set_coefs(samples, type);
 }
 
-void Filter::updateCoefficientsFromInput(int length, Utils::coefficients type)
+void Filter::update_coef_from_input(int length, Utils::coefficients type)
 {
     if (inputNode) {
         std::vector<double> samples = inputNode->processFull(length);
-        setCoefficients(samples, type);
+        set_coefs(samples, type);
     } else {
         std::cerr << "No input node set for Filter. Use Filter::setInputNode() to set an input node.\n Alternatively, use Filter::updateCoefficientsFromNode() to specify a different source node.\n";
     }

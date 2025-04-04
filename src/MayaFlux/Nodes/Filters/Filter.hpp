@@ -40,11 +40,11 @@ public:
         initialize_shift_buffers();
     }
 
-    void setCoefficients(const std::vector<double>& new_coefs, Utils::coefficients type = Utils::coefficients::ALL);
+    void set_coefs(const std::vector<double>& new_coefs, Utils::coefficients type = Utils::coefficients::ALL);
 
-    void updateCoefficientsFromNode(int lenght, std::shared_ptr<Node> source, Utils::coefficients type = Utils::coefficients::ALL);
+    void update_coefs_from_node(int lenght, std::shared_ptr<Node> source, Utils::coefficients type = Utils::coefficients::ALL);
 
-    void updateCoefficientsFromInput(int lenght, Utils::coefficients type = Utils::coefficients::ALL);
+    void update_coef_from_input(int lenght, Utils::coefficients type = Utils::coefficients::ALL);
 
 protected:
     void setACoefficients(const std::vector<double>& new_coefs);
@@ -56,7 +56,7 @@ protected:
 
     virtual void initialize_shift_buffers();
 
-    virtual double processSample(double input) override = 0;
+    virtual double process_sample(double input) override = 0;
 
     virtual void update_inputs(double current_sample);
 

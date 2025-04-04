@@ -10,7 +10,7 @@ public:
     IIR(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<double> b_coef);
 
 protected:
-    double processSample(double input) override;
+    double process_sample(double input) override;
 };
 
 }

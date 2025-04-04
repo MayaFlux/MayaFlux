@@ -22,7 +22,7 @@ class ChainNode : public Node {
 public:
     ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target);
 
-    double processSample(double input) override;
+    double process_sample(double input) override;
 
     std::vector<double> processFull(unsigned int num_samples) override;
 
@@ -37,7 +37,7 @@ public:
 
     BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs, CombineFunc func);
 
-    double processSample(double input) override;
+    double process_sample(double input) override;
 
     std::vector<double> processFull(unsigned int num_samples) override;
 

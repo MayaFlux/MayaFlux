@@ -14,7 +14,7 @@ public:
         m_type = type;
     }
 
-    virtual double processSample(double input) override;
+    virtual double process_sample(double input) override;
 
     double random_sample(double start, double end);
 

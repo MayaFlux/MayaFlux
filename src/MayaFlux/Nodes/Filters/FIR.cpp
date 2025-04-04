@@ -12,10 +12,10 @@ FIR::FIR(std::shared_ptr<Node> input, const std::string& zindex_shifts)
 {
 }
 
-double FIR::processSample(double input)
+double FIR::process_sample(double input)
 {
     if (inputNode) {
-        input += inputNode->processSample(input);
+        input += inputNode->process_sample(input);
         input *= 0.5f;
     }
 

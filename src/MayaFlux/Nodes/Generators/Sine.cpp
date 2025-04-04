@@ -86,11 +86,11 @@ void Sine::clear_modulators()
     m_amplitude_modulator = nullptr;
 }
 
-double Sine::processSample(double input)
+double Sine::process_sample(double input)
 {
     if (m_frequency_modulator) {
         double current_freq = m_frequency;
-        current_freq += m_frequency_modulator->processSample(0.f);
+        current_freq += m_frequency_modulator->process_sample(0.f);
         update_phase_increment(current_freq);
     }
 
@@ -105,7 +105,7 @@ double Sine::processSample(double input)
 
     float current_amplitude = m_amplitude;
     if (m_amplitude_modulator) {
-        float mod_value = m_amplitude_modulator->processSample(0.f);
+        float mod_value = m_amplitude_modulator->process_sample(0.f);
         current_amplitude += mod_value;
         m_amplitude = current_amplitude;
     }
@@ -123,7 +123,7 @@ std::vector<double> Sine::processFull(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (unsigned int i = 0; i < num_samples; i++) {
-        output[i] = processSample(0.0);
+        output[i] = process_sample(0.0);
     }
     return output;
 }

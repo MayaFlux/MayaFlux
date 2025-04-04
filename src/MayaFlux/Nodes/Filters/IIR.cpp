@@ -12,10 +12,10 @@ IIR::IIR(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<do
 {
 }
 
-double IIR::processSample(double input)
+double IIR::process_sample(double input)
 {
     if (inputNode) {
-        input += inputNode->processSample(input);
+        input += inputNode->process_sample(input);
         input *= 0.5f;
     }
     update_inputs(input);
