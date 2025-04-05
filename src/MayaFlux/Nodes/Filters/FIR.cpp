@@ -14,6 +14,10 @@ FIR::FIR(std::shared_ptr<Node> input, const std::string& zindex_shifts)
 
 double FIR::process_sample(double input)
 {
+    if (is_bypass_enabled()) {
+        return input;
+    }
+
     if (inputNode) {
         input += inputNode->process_sample(input);
         input *= 0.5f;
@@ -30,7 +34,7 @@ double FIR::process_sample(double input)
 
     update_outputs(output);
 
-    return output;
+    return output * get_gain();
 }
 
 }

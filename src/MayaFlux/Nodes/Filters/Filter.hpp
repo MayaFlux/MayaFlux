@@ -17,6 +17,9 @@ protected:
     std::vector<double> coef_a;
     std::vector<double> coef_b;
 
+    double gain = 1.0;
+    bool bypass_enabled = false;
+
 public:
     Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts);
 
@@ -46,6 +49,34 @@ public:
 
     void update_coef_from_input(int lenght, Utils::coefficients type = Utils::coefficients::ALL);
 
+    void add_coef(int index, double value, Utils::coefficients type = Utils::coefficients::ALL);
+
+    virtual void reset();
+
+    inline void set_gain(double new_gain) { gain = new_gain; }
+
+    inline double get_gain() const { return gain; }
+
+    inline void set_bypass(bool enable) { bypass_enabled = enable; }
+
+    inline bool is_bypass_enabled() const { return bypass_enabled; }
+
+    inline int get_order() const { return std::max(coef_a.size() - 1, coef_b.size() - 1); }
+
+    inline const std::vector<double>& get_input_history() const { return input_history; }
+
+    inline const std::vector<double>& get_output_history() const { return output_history; }
+
+    void normalize_coefficients(Utils::coefficients type = Utils::coefficients::ALL);
+
+    std::complex<double> get_frequency_response(double frequency, double sample_rate) const;
+
+    double get_magnitude_response(double frequency, double sample_rate) const;
+
+    double get_phase_response(double frequency, double sample_rate) const;
+
+    std::vector<double> processFull(unsigned int num_samples) override;
+
 protected:
     void setACoefficients(const std::vector<double>& new_coefs);
 
@@ -53,6 +84,8 @@ protected:
 
     inline const std::vector<double>& getACoefficients() const { return coef_a; }
     inline const std::vector<double>& getBCoefficients() const { return coef_b; }
+
+    void add_coef_internal(u_int64_t index, double value, std::vector<double>& buffer);
 
     virtual void initialize_shift_buffers();
 

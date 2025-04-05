@@ -14,6 +14,7 @@
 
 // C style
 #include <cmath>
+#include <complex>
 #include <cstdint>
 #include <exception>
 #include <memory>

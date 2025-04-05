@@ -14,6 +14,10 @@ IIR::IIR(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<do
 
 double IIR::process_sample(double input)
 {
+    if (is_bypass_enabled()) {
+        return input;
+    }
+
     if (inputNode) {
         input += inputNode->process_sample(input);
         input *= 0.5f;
@@ -34,7 +38,8 @@ double IIR::process_sample(double input)
     output /= coef_a[0];
 
     update_outputs(output);
-    return output;
+
+    return output * get_gain();
 }
 
 }

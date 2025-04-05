@@ -1,4 +1,5 @@
 #include "Filter.hpp"
+#include <cmath>
 
 namespace MayaFlux::Nodes::Filters {
 
@@ -34,6 +35,8 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
     if (coef_a[0] == 0.0f) {
         throw std::invalid_argument("First denominator coefficient (a[0]) cannot be zero");
     }
+
+    initialize_shift_buffers(); // Initialize the history buffers
 }
 
 void Filter::initialize_shift_buffers()
@@ -115,6 +118,100 @@ void Filter::update_coef_from_input(int length, Utils::coefficients type)
     } else {
         std::cerr << "No input node set for Filter. Use Filter::setInputNode() to set an input node.\n Alternatively, use Filter::updateCoefficientsFromNode() to specify a different source node.\n";
     }
+}
+
+void Filter::add_coef_internal(u_int64_t index, double value, std::vector<double>& buffer)
+{
+    if (index > buffer.size()) {
+        buffer.resize(index + 1, 1.f);
+    }
+    buffer.at(index) = value;
+}
+
+void Filter::add_coef(int index, double value, Utils::coefficients type)
+{
+    switch (type) {
+    case Utils::coefficients::INPUT:
+        add_coef_internal(index, value, coef_a);
+        break;
+    case Utils::coefficients::OUTPUT:
+        add_coef_internal(index, value, coef_b);
+        break;
+    default:
+        add_coef_internal(index, value, coef_a);
+        add_coef_internal(index, value, coef_b);
+        break;
+    }
+}
+
+void Filter::reset()
+{
+    std::fill(input_history.begin(), input_history.end(), 0.0);
+    std::fill(output_history.begin(), output_history.end(), 0.0);
+}
+
+void Filter::normalize_coefficients(Utils::coefficients type)
+{
+    if (type == Utils::coefficients::OUTPUT || type == Utils::coefficients::ALL) {
+        if (!coef_a.empty() && coef_a[0] != 0.0) {
+            double a0 = coef_a[0];
+            for (auto& coef : coef_a) {
+                coef /= a0;
+            }
+        }
+    }
+
+    if (type == Utils::coefficients::INPUT || type == Utils::coefficients::ALL) {
+        if (!coef_b.empty()) {
+            double max_coef = 0.0;
+            for (const auto& coef : coef_b) {
+                max_coef = std::max(max_coef, std::abs(coef));
+            }
+
+            if (max_coef > 0.0) {
+                for (auto& coef : coef_b) {
+                    coef /= max_coef;
+                }
+            }
+        }
+    }
+}
+
+std::complex<double> Filter::get_frequency_response(double frequency, double sample_rate) const
+{
+    double omega = 2.0 * M_PI * frequency / sample_rate;
+    std::complex<double> z = std::exp(std::complex<double>(0, omega));
+
+    std::complex<double> numerator = 0.0;
+    for (size_t i = 0; i < coef_b.size(); ++i) {
+        numerator += coef_b[i] * std::pow(z, -static_cast<int>(i));
+    }
+
+    std::complex<double> denominator = 0.0;
+    for (size_t i = 0; i < coef_a.size(); ++i) {
+        denominator += coef_a[i] * std::pow(z, -static_cast<int>(i));
+    }
+
+    return numerator / denominator;
+}
+
+double Filter::get_magnitude_response(double frequency, double sample_rate) const
+{
+    return std::abs(get_frequency_response(frequency, sample_rate));
+}
+
+double Filter::get_phase_response(double frequency, double sample_rate) const
+{
+    return std::arg(get_frequency_response(frequency, sample_rate));
+}
+
+std::vector<double> Filter::processFull(unsigned int num_samples)
+{
+    std::vector<double> output(num_samples);
+    for (unsigned int i = 0; i < num_samples; ++i) {
+        output[i] = process_sample(0.0); // The input value doesn't matter since we have an input node
+    }
+    return output;
 }
 
 }
