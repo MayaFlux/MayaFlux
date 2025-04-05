@@ -16,6 +16,7 @@ struct promise_type {
     void unhandled_exception() { std::terminate(); }
 
     u_int64_t next_sample = 0;
+    bool auto_resume = true;
     std::unordered_map<std::string, std::any> state;
 
     template <typename T>

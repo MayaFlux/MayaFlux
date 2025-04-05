@@ -101,7 +101,23 @@ bool SoundRoutine::try_resume(u_int64_t current_sample)
     if (!is_active())
         return false;
 
-    if (current_sample >= m_handle.promise().next_sample) {
+    auto& promise_ref = m_handle.promise();
+
+    if (promise_ref.auto_resume && current_sample >= promise_ref.next_sample) {
+        m_handle.resume();
+        return true;
+    }
+    return false;
+}
+
+bool SoundRoutine::restart()
+{
+    if (!m_handle)
+        return false;
+
+    set_state<bool>("restart", true);
+    m_handle.promise().auto_resume = true;
+    if (is_active()) {
         m_handle.resume();
         return true;
     }

@@ -41,7 +41,7 @@ public:
 
     Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback);
     Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
-    Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, bool loop);
+    Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop);
 
     float* get_line_value(const std::string& name);
 
@@ -55,6 +55,8 @@ public:
 
     void schedule_task(std::string name, Scheduler::SoundRoutine&& task);
     bool cancel_task(const std::string& name);
+
+    bool restart_task(const std::string& name);
 
     template <typename... Args>
     inline bool update_task_params(const std::string& name, Args... args)

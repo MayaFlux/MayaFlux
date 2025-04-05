@@ -32,6 +32,8 @@ public:
         return m_handle;
     }
 
+    bool restart();
+
     template <typename T, typename... Args>
     void update_params(Args... args);
 

@@ -8,7 +8,7 @@ SoundRoutine metro(TaskScheduler& scheduler, double interval_seconds, std::funct
 
 SoundRoutine sequence(TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence);
 
-SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, bool loop = false);
+SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, u_int32_t step_duration = 5, bool restartable = false);
 
 template <typename T>
 SoundRoutine pattern(TaskScheduler& scheduler, std::function<T(u_int64_t)> pattern_func, std::function<void(T)> callback, double interval_seconds)

@@ -143,9 +143,9 @@ Scheduler::SoundRoutine Engine::schedule_sequence(std::vector<std::pair<double, 
     return sequence(m_scheduler, seq);
 }
 
-Scheduler::SoundRoutine Engine::create_line(float start_value, float end_value, float duration_seconds, bool loop)
+Scheduler::SoundRoutine Engine::create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
 {
-    return line(m_scheduler, start_value, end_value, duration_seconds, loop);
+    return line(m_scheduler, start_value, end_value, duration_seconds, step_duration, loop);
 }
 
 float* Engine::get_line_value(const std::string& name)
@@ -195,6 +195,17 @@ bool Engine::cancel_task(const std::string& name)
         if (m_scheduler.cancel_task(it->second)) {
             m_named_tasks.erase(it);
             return true;
+        }
+    }
+    return false;
+}
+
+bool Engine::restart_task(const std::string& name)
+{
+    auto it = m_named_tasks.find(name);
+    if (it != m_named_tasks.end()) {
+        if (it->second) {
+            return it->second->restart();
         }
     }
     return false;
