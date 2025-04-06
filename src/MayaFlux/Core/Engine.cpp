@@ -204,12 +204,11 @@ void Engine::schedule_task(std::string name, Scheduler::SoundRoutine&& task)
 {
     cancel_task(name);
 
-    m_scheduler.add_task(std::move(task));
+    auto task_ptr = std::make_shared<Scheduler::SoundRoutine>(std::move(task));
 
-    auto& tasks = m_scheduler.get_tasks();
-    if (!tasks.empty()) {
-        m_named_tasks[name] = &tasks.back();
-    }
+    m_scheduler.add_task(task_ptr);
+
+    m_named_tasks[name] = task_ptr;
 }
 
 bool Engine::cancel_task(const std::string& name)

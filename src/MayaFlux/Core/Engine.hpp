@@ -81,7 +81,7 @@ private:
     std::shared_ptr<Device> m_Device;
     std::shared_ptr<Stream> m_StreamSettings;
     Scheduler::TaskScheduler m_scheduler;
-    std::unordered_map<std::string, Scheduler::SoundRoutine*> m_named_tasks;
+    std::unordered_map<std::string, std::shared_ptr<Scheduler::SoundRoutine>> m_named_tasks;
 
     std::vector<AudioProcessingFunction> m_Processing_chain;
 

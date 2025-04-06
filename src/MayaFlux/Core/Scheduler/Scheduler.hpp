@@ -11,7 +11,7 @@ class TaskScheduler {
 public:
     TaskScheduler(unsigned int sample_rate = 48000);
 
-    void add_task(SoundRoutine&& Task);
+    void add_task(std::shared_ptr<SoundRoutine> task);
     void process_sample();
     void process_buffer(unsigned int buffer_size);
 
@@ -26,14 +26,15 @@ public:
     }
 
     const SampleClock& get_clock() const { return m_clock; }
-    const std::vector<SoundRoutine>& get_tasks() const { return m_tasks; }
-    std::vector<SoundRoutine>& get_tasks() { return m_tasks; }
 
-    bool cancel_task(SoundRoutine* task);
+    inline const std::vector<std::shared_ptr<SoundRoutine>>& get_tasks() const { return m_tasks; }
+    inline std::vector<std::shared_ptr<SoundRoutine>>& get_tasks() { return m_tasks; }
+
+    bool cancel_task(std::shared_ptr<SoundRoutine> task);
 
 private:
     SampleClock m_clock;
-    std::vector<SoundRoutine> m_tasks;
+    std::vector<std::shared_ptr<SoundRoutine>> m_tasks;
 };
 
 }

@@ -7,9 +7,9 @@ TaskScheduler::TaskScheduler(unsigned int sample_rate)
 {
 }
 
-void TaskScheduler::add_task(SoundRoutine&& task)
+void TaskScheduler::add_task(std::shared_ptr<SoundRoutine> task)
 {
-    m_tasks.push_back(std::move(task));
+    m_tasks.push_back(task);
 }
 
 void TaskScheduler::process_sample()
@@ -17,12 +17,12 @@ void TaskScheduler::process_sample()
     u_int64_t current_sample = m_clock.current_sample();
 
     for (auto& task : m_tasks) {
-        task.try_resume(current_sample);
+        task->try_resume(current_sample);
     }
 
     m_tasks.erase(std::remove_if(
                       m_tasks.begin(), m_tasks.end(),
-                      [](const SoundRoutine& task) { return !task.is_active(); }),
+                      [](const std::shared_ptr<SoundRoutine>& task) { return !task->is_active(); }),
         m_tasks.end());
 
     m_clock.tick();
@@ -35,14 +35,11 @@ void TaskScheduler::process_buffer(unsigned int buffer_size)
     }
 }
 
-bool TaskScheduler::cancel_task(SoundRoutine* task)
+bool TaskScheduler::cancel_task(std::shared_ptr<SoundRoutine> task)
 {
-    auto it = std::find_if(m_tasks.begin(), m_tasks.end(),
-        [task](const SoundRoutine& routine) {
-            return &routine == task;
-        });
+    auto it = std::find(m_tasks.begin(), m_tasks.end(), task);
     if (it != m_tasks.end()) {
-        it->get_handle().destroy();
+        (*it)->get_handle().destroy();
         m_tasks.erase(it);
         return true;
     }
