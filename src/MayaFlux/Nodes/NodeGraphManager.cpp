@@ -1,10 +1,19 @@
 #include "NodeGraphManager.hpp"
+#include <sstream>
 
 namespace MayaFlux::Nodes {
 
 NodeGraphManager::NodeGraphManager()
-    : m_RootNode(std::make_shared<Nodes::RootNode>())
 {
+    m_channel_root_nodes[0] = std::make_shared<Nodes::RootNode>();
+}
+
+RootNode& NodeGraphManager::get_root_node(unsigned int channel)
+{
+    if (m_channel_root_nodes.find(channel) == m_channel_root_nodes.end()) {
+        m_channel_root_nodes[channel] = std::make_shared<RootNode>();
+    }
+    return *m_channel_root_nodes[channel];
 }
 
 template <typename NodeType, typename... Args>
@@ -35,16 +44,31 @@ void NodeGraphManager::connect(const std::string& source_id, const std::string& 
     }
 }
 
-void NodeGraphManager::add_to_root(const std::string& node_id)
+void NodeGraphManager::add_to_root(const std::string& node_id, unsigned int channel)
 {
     auto node = get_node(node_id);
     if (node) {
-        m_RootNode->register_node(node);
+        get_root_node(channel).register_node(node);
     }
 }
 
-void NodeGraphManager::add_to_root(std::shared_ptr<Node> node)
+void NodeGraphManager::add_to_root(std::shared_ptr<Node> node, unsigned int channel)
 {
-    m_RootNode->register_node(node);
+    bool found = false;
+    for (const auto& pair : m_Node_registry) {
+        if (pair.second == node) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        std::stringstream ss;
+        ss << "node_" << node.get();
+        std::string generated_id = ss.str();
+        m_Node_registry[generated_id] = node;
+    }
+
+    get_root_node(channel).register_node(node);
 }
 }

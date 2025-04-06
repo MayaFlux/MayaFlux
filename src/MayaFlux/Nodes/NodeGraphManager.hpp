@@ -8,9 +8,11 @@ class NodeGraphManager {
 public:
     NodeGraphManager();
 
-    inline RootNode& get_root_node()
+    RootNode& get_root_node(unsigned int channel = 0);
+
+    inline const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& get_all_channel_root_nodes() const
     {
-        return *m_RootNode;
+        return m_channel_root_nodes;
     }
 
     template <typename NodeType, typename... Args>
@@ -20,12 +22,11 @@ public:
 
     void connect(const std::string& source_id, const std::string& target_id);
 
-    void add_to_root(const std::string& node_id);
-
-    void add_to_root(std::shared_ptr<Node> node);
+    void add_to_root(const std::string& node_id, unsigned int channel = 0);
+    void add_to_root(std::shared_ptr<Node> node, unsigned int channel = 0);
 
 private:
-    std::shared_ptr<RootNode> m_RootNode;
+    std::unordered_map<unsigned int, std::shared_ptr<RootNode>> m_channel_root_nodes;
     std::unordered_map<std::string, std::shared_ptr<Node>> m_Node_registry;
 };
 

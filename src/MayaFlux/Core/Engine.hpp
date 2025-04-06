@@ -13,7 +13,7 @@ class NoiseEngine;
 
 namespace MayaFlux::Core {
 
-using AudioProcessingFunction = std::function<void(double*, double*, unsigned int)>;
+using AudioProcessingFunction = std::function<void(double*, double*, unsigned int, unsigned int)>;
 
 class Engine {
 public:

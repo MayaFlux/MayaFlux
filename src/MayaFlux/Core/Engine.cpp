@@ -78,12 +78,15 @@ int Engine::process_output(double* output_buffer, unsigned int num_frames)
 {
     m_scheduler.process_buffer(num_frames);
 
-    auto& root_node = MayaFlux::get_node_graph_manager().get_root_node();
-    std::vector<double> processed_data = root_node.process(num_frames);
+    unsigned int num_channels = m_StreamSettings->get_global_stream_info().num_channels;
 
-    for (unsigned int i = 0; i < num_frames; i++) {
-        for (unsigned int j = 0; j < m_StreamSettings->get_global_stream_info().num_channels; j++) {
-            output_buffer[i * m_StreamSettings->get_global_stream_info().num_channels + j] = processed_data[i];
+    for (unsigned int channel = 0; channel < num_channels; channel++) {
+        auto& channel_root = MayaFlux::get_node_graph_manager().get_root_node(channel);
+
+        std::vector<double> channel_data = channel_root.process(num_frames);
+
+        for (unsigned int i = 0; i < num_frames; i++) {
+            output_buffer[i * num_channels + channel] = channel_data[i];
         }
     }
 
@@ -104,8 +107,20 @@ int Engine::process_audio(double* input_buffer, double* output_buffer, unsigned 
 
 void Engine::execute_processing_chain(double* input_buffer, double* output_buffer, unsigned int num_frames)
 {
+    unsigned int num_channels = m_StreamSettings->get_global_stream_info().num_channels;
+
+    if (m_Processing_chain.empty()) {
+        return;
+    }
+
     for (auto& processor : m_Processing_chain) {
-        processor(input_buffer, output_buffer, num_frames);
+        std::vector<double> temp_buffer(num_frames * num_channels);
+
+        std::copy(output_buffer, output_buffer + num_frames * num_channels, temp_buffer.data());
+
+        processor(input_buffer, temp_buffer.data(), num_frames, num_channels);
+
+        std::copy(temp_buffer.data(), temp_buffer.data() + num_frames * num_channels, output_buffer);
     }
 }
 
@@ -121,17 +136,26 @@ void Engine::clear_processors()
 
 void Engine::process_buffer(std::vector<double>& buffer, unsigned int num_frames)
 {
-    std::vector<double> process_buffer = buffer;
-    auto& root_node = MayaFlux::get_node_graph_manager().get_root_node();
+    unsigned int num_channels = m_StreamSettings->get_global_stream_info().num_channels;
+    std::vector<std::vector<double>> channel_buffers(num_channels);
 
-    process_buffer = root_node.process(num_frames);
-
-    if (!m_Processing_chain.empty() && num_frames > 0) {
-        double* buffer_ptr = process_buffer.data();
-        execute_processing_chain(nullptr, buffer_ptr, num_frames);
+    for (unsigned int channel = 0; channel < num_channels; channel++) {
+        auto& channel_root = MayaFlux::get_node_graph_manager().get_root_node(channel);
+        channel_buffers[channel] = channel_root.process(num_frames);
     }
 
-    buffer = process_buffer;
+    buffer.resize(num_frames * num_channels);
+
+    for (unsigned int i = 0; i < num_frames; i++) {
+        for (unsigned int channel = 0; channel < num_channels; channel++) {
+            buffer[i * num_channels + channel] = channel_buffers[channel][i];
+        }
+    }
+
+    if (!m_Processing_chain.empty() && num_frames > 0) {
+        double* buffer_ptr = buffer.data();
+        execute_processing_chain(nullptr, buffer_ptr, num_frames);
+    }
 }
 
 Scheduler::SoundRoutine Engine::schedule_metro(double interval_seconds, std::function<void()> callback)
