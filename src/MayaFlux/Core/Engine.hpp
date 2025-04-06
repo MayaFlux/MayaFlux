@@ -3,8 +3,8 @@
 #include "MayaFlux/Core/Scheduler/Tasks.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 
+#include "Buffer.hpp"
 #include "Device.hpp"
-
 #include "Stream.hpp"
 
 namespace MayaFlux::Nodes::Generator::Stochastics {
@@ -13,7 +13,7 @@ class NoiseEngine;
 
 namespace MayaFlux::Core {
 
-using AudioProcessingFunction = std::function<void(double*, double*, unsigned int, unsigned int)>;
+using AudioProcessingFunction = std::function<void(AudioBuffer&, unsigned int)>;
 
 class Engine {
 public:
@@ -35,6 +35,9 @@ public:
     int process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames);
 
     void add_processor(AudioProcessingFunction processor);
+
+    void add_processor(AudioProcessingFunction processor, const std::vector<unsigned int>& channels);
+
     void clear_processors();
 
     void process_buffer(std::vector<double>& buffer, unsigned int num_frames);
@@ -83,9 +86,15 @@ private:
     Scheduler::TaskScheduler m_scheduler;
     std::unordered_map<std::string, std::shared_ptr<Scheduler::SoundRoutine>> m_named_tasks;
 
-    std::vector<AudioProcessingFunction> m_Processing_chain;
+    struct ProcessorInfo {
+        AudioProcessingFunction processor;
+        std::vector<unsigned int> channels;
+    };
 
-    void execute_processing_chain(double* input_buffer, double* output_buffer, unsigned int num_frames);
+    std::vector<ProcessorInfo> m_Processing_chain;
+    std::unique_ptr<BufferManager> m_Buffer_manager;
+
+    void execute_processing_chain();
 
     RtAudio* get_handle()
     {
