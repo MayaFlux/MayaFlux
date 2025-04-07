@@ -2,38 +2,54 @@
 
 #include "config.h"
 
-namespace MayaFlux {
+namespace MayaFlux::Core {
 
-namespace Core {
-    struct GlobalStreamInfo {
-        unsigned int sample_rate;
-        unsigned int buffer_size;
-        unsigned int num_channels;
-    };
+class Engine;
 
-    class Stream {
-    public:
-        Stream(unsigned int out_device, GlobalStreamInfo stream_info);
+struct GlobalStreamInfo {
+    unsigned int sample_rate;
+    unsigned int buffer_size;
+    unsigned int num_channels;
+};
 
-        inline GlobalStreamInfo get_global_stream_info()
-        {
-            return m_Stream_info;
-        }
+class Stream {
+public:
+    Stream(unsigned int out_device, GlobalStreamInfo stream_info, Engine* engine);
+    ~Stream();
 
-        inline RtAudio::StreamOptions get_stream_options()
-        {
-            return m_Options;
-        }
+    void open();
+    void start();
+    void stop();
+    void close();
 
-        inline RtAudio::StreamParameters get_stream_parameters()
-        {
-            return m_Parameters;
-        }
+    bool is_running() const;
+    bool is_open() const;
 
-    private:
-        RtAudio::StreamParameters m_Parameters;
-        RtAudio::StreamOptions m_Options;
-        GlobalStreamInfo m_Stream_info;
-    };
-}
+    inline GlobalStreamInfo get_global_stream_info()
+    {
+        return m_Stream_info;
+    }
+
+    inline RtAudio::StreamOptions get_stream_options()
+    {
+        return m_Options;
+    }
+
+    inline RtAudio::StreamParameters get_stream_parameters()
+    {
+        return m_Parameters;
+    }
+
+private:
+    RtAudio::StreamParameters m_Parameters;
+    RtAudio::StreamOptions m_Options;
+    GlobalStreamInfo m_Stream_info;
+
+    bool m_is_open;
+    bool m_is_running;
+
+    void handle_stream_error(RtAudioErrorType error);
+
+    Engine* m_engine;
+};
 }

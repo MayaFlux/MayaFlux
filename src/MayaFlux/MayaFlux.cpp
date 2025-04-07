@@ -10,7 +10,7 @@ Nodes::NodeGraphManager* graph_manager;
 void set_context(const Core::Engine& instance)
 {
     ::MayaFlux::engine_ref = &instance;
-    ::MayaFlux::streaminfo = instance.get_stream_settings()->get_global_stream_info();
+    ::MayaFlux::streaminfo = instance.get_stream_manager()->get_global_stream_info();
 }
 
 const Core::GlobalStreamInfo get_global_stream_info()

@@ -1,7 +1,8 @@
 #include "Engine.hpp"
-#include "AudioCallback.hpp"
+#include "Device.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "Stream.hpp"
 
 namespace MayaFlux::Core {
 
@@ -20,7 +21,7 @@ Engine::~Engine()
 
 void Engine::Init(GlobalStreamInfo stream_info)
 {
-    m_StreamSettings = std::make_shared<Stream>(m_Device->get_default_output_device(), stream_info);
+    m_Stream_manager = std::make_shared<Stream>(m_Device->get_default_output_device(), stream_info, this);
     MayaFlux::set_context(*this);
 
     m_scheduler = Scheduler::TaskScheduler(stream_info.sample_rate);
@@ -34,39 +35,15 @@ void Engine::Init(GlobalStreamInfo stream_info)
 
 void Engine::Start()
 {
-    auto stream_info = m_StreamSettings->get_global_stream_info();
-    RtAudio::StreamParameters output_params = m_StreamSettings->get_stream_parameters();
-    RtAudio::StreamOptions options = m_StreamSettings->get_stream_options();
-
-    try {
-        m_Context->openStream(
-            &output_params,
-            nullptr,
-            RTAUDIO_FLOAT64,
-            stream_info.sample_rate,
-            &stream_info.buffer_size,
-            rtaudio_callback,
-            this,
-            &options);
-
-        m_Context->startStream();
-    } catch (const RtAudioErrorType& e) {
-        throw std::runtime_error("Failed to open RtAudio stream");
-    }
+    m_Stream_manager->open();
+    m_Stream_manager->start();
 }
 
 void Engine::End()
 {
-    if (m_Context->isStreamRunning()) {
-        try {
-            m_Context->stopStream();
-        } catch (const RtAudioErrorType& e) {
-            throw std::runtime_error("Could not stop stream");
-        }
-    }
-
-    if (m_Context->isStreamOpen()) {
-        m_Context->closeStream();
+    if (m_Stream_manager) {
+        m_Stream_manager->stop();
+        m_Stream_manager->close();
     }
 
     m_named_tasks.clear();
@@ -81,7 +58,7 @@ int Engine::process_output(double* output_buffer, unsigned int num_frames)
 {
     m_scheduler.process_buffer(num_frames);
 
-    unsigned int num_channels = m_StreamSettings->get_global_stream_info().num_channels;
+    unsigned int num_channels = m_Stream_manager->get_global_stream_info().num_channels;
 
     if (m_Buffer_manager->get_num_frames() < num_frames) {
         m_Buffer_manager->resize(num_frames);
@@ -133,7 +110,6 @@ void Engine::execute_processing_chain()
 
 void Engine::add_processor(AudioProcessingFunction processor)
 {
-    // Add processor for all channels
     ProcessorInfo info;
     info.processor = processor;
     m_Processing_chain.push_back(info);
@@ -141,7 +117,6 @@ void Engine::add_processor(AudioProcessingFunction processor)
 
 void Engine::add_processor(AudioProcessingFunction processor, const std::vector<unsigned int>& channels)
 {
-    // Add processor for specific channels
     ProcessorInfo info;
     info.processor = processor;
     info.channels = channels;
@@ -155,13 +130,11 @@ void Engine::clear_processors()
 
 void Engine::process_buffer(std::vector<double>& buffer, unsigned int num_frames)
 {
-    // Resize the buffer if needed
     if (m_Buffer_manager->get_num_frames() < num_frames) {
         m_Buffer_manager->resize(num_frames);
     }
 
-    // Process each channel
-    unsigned int num_channels = m_StreamSettings->get_global_stream_info().num_channels;
+    unsigned int num_channels = m_Stream_manager->get_global_stream_info().num_channels;
     for (unsigned int channel = 0; channel < num_channels; channel++) {
         auto& channel_root = MayaFlux::get_node_graph_manager().get_root_node(channel);
         std::vector<double> channel_data = channel_root.process(num_frames);
@@ -170,7 +143,6 @@ void Engine::process_buffer(std::vector<double>& buffer, unsigned int num_frames
         std::copy(channel_data.begin(), channel_data.begin() + num_frames, channel_buffer.get_buffer().begin());
     }
 
-    // Apply any user-defined processors
     if (!m_Processing_chain.empty()) {
         execute_processing_chain();
     }

@@ -1,17 +1,18 @@
 #pragma once
 
+#include "Buffer.hpp"
+#include "Stream.hpp"
+
 #include "MayaFlux/Core/Scheduler/Tasks.hpp"
 #include "MayaFlux/MayaFlux.hpp"
-
-#include "Buffer.hpp"
-#include "Device.hpp"
-#include "Stream.hpp"
 
 namespace MayaFlux::Nodes::Generator::Stochastics {
 class NoiseEngine;
 }
 
 namespace MayaFlux::Core {
+
+class Device;
 
 using AudioProcessingFunction = std::function<void(AudioBuffer&, unsigned int)>;
 
@@ -22,9 +23,9 @@ public:
 
     void Init(GlobalStreamInfo stream_info);
 
-    inline const std::shared_ptr<Stream> get_stream_settings() const
+    inline const std::shared_ptr<Stream> get_stream_manager() const
     {
-        return m_StreamSettings;
+        return m_Stream_manager;
     }
 
     void Start();
@@ -79,10 +80,15 @@ public:
     double get_exponential_random(double start = 0, double end = 1);
     double get_poisson_random(double start = 0, double end = 1);
 
+    RtAudio* get_handle()
+    {
+        return m_Context.get();
+    }
+
 private:
     std::unique_ptr<RtAudio> m_Context;
     std::shared_ptr<Device> m_Device;
-    std::shared_ptr<Stream> m_StreamSettings;
+    std::shared_ptr<Stream> m_Stream_manager;
     Scheduler::TaskScheduler m_scheduler;
     std::unordered_map<std::string, std::shared_ptr<Scheduler::SoundRoutine>> m_named_tasks;
 
@@ -95,11 +101,6 @@ private:
     std::unique_ptr<BufferManager> m_Buffer_manager;
 
     void execute_processing_chain();
-
-    RtAudio* get_handle()
-    {
-        return m_Context.get();
-    }
 
     Nodes::Generator::Stochastics::NoiseEngine* m_rng;
 };
