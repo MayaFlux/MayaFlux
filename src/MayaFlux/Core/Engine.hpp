@@ -1,38 +1,74 @@
 #pragma once
 
 #include "Buffer.hpp"
-#include "Stream.hpp"
-
 #include "MayaFlux/Core/Scheduler/Tasks.hpp"
-#include "MayaFlux/MayaFlux.hpp"
 
-namespace MayaFlux::Nodes::Generator::Stochastics {
-class NoiseEngine;
+namespace MayaFlux::Nodes {
+class NodeGraphManager;
+namespace Generator::Stochastics {
+    class NoiseEngine;
+}
 }
 
 namespace MayaFlux::Core {
 
 class Device;
+class Stream;
+
+struct GlobalStreamInfo {
+    unsigned int sample_rate = 48000;
+    unsigned int buffer_size = 512;
+    unsigned int num_channels = 2;
+};
 
 using AudioProcessingFunction = std::function<void(AudioBuffer&, unsigned int)>;
 
 class Engine {
 public:
+    //-------------------------------------------------------------------------
+    // Initialization and Lifecycle
+    //-------------------------------------------------------------------------
+
     Engine();
+
     ~Engine();
 
-    void Init(GlobalStreamInfo stream_info);
-
-    inline const std::shared_ptr<Stream> get_stream_manager() const
-    {
-        return m_Stream_manager;
-    }
+    void Init(GlobalStreamInfo stream_info = GlobalStreamInfo { 48000, 512, 2 });
 
     void Start();
+
     void End();
 
+    //-------------------------------------------------------------------------
+    // Configuration Access
+    //-------------------------------------------------------------------------
+
+    inline GlobalStreamInfo& get_stream_info() { return m_stream_info; }
+
+    inline const Stream* get_stream_manager() const { return m_Stream_manager.get(); }
+
+    RtAudio* get_handle() { return m_Context.get(); }
+
+    //-------------------------------------------------------------------------
+    // Component Access
+    //-------------------------------------------------------------------------
+
+    inline std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager() { return m_node_graph_manager; }
+
+    inline std::shared_ptr<Scheduler::TaskScheduler> get_scheduler() { return m_scheduler; }
+
+    inline std::shared_ptr<BufferManager> get_buffer_manager() { return m_Buffer_manager; }
+
+    inline Nodes::Generator::Stochastics::NoiseEngine* get_random_engine() { return m_rng; }
+
+    //-------------------------------------------------------------------------
+    // Audio Processing
+    //-------------------------------------------------------------------------
+
     int process_input(double* input_buffer, unsigned int num_frames);
+
     int process_output(double* output_buffer, unsigned int num_frames);
+
     int process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames);
 
     void add_processor(AudioProcessingFunction processor);
@@ -43,21 +79,16 @@ public:
 
     void process_buffer(std::vector<double>& buffer, unsigned int num_frames);
 
-    Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback);
-    Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
-    Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop);
+    //-------------------------------------------------------------------------
+    // Task Scheduling
+    //-------------------------------------------------------------------------
 
     float* get_line_value(const std::string& name);
 
     std::function<float()> line_value(const std::string& name);
 
-    template <typename T>
-    inline Scheduler::SoundRoutine schedule_pattern(std::function<T(u_int64_t)> pattern_func, std::function<void(T)> callback, double interval_seconds)
-    {
-        return pattern<T>(m_scheduler, pattern_func, callback, interval_seconds);
-    }
-
     void schedule_task(std::string name, Scheduler::SoundRoutine&& task);
+
     bool cancel_task(const std::string& name);
 
     bool restart_task(const std::string& name);
@@ -73,24 +104,34 @@ public:
         return false;
     }
 
-    inline Scheduler::TaskScheduler& get_scheduler() { return m_scheduler; }
-
-    double get_uniform_random(double start = 0, double end = 1);
-    double get_gaussian_random(double start = 0, double end = 1);
-    double get_exponential_random(double start = 0, double end = 1);
-    double get_poisson_random(double start = 0, double end = 1);
-
-    RtAudio* get_handle()
-    {
-        return m_Context.get();
-    }
-
 private:
+    //-------------------------------------------------------------------------
+    // Audio System Components
+    //-------------------------------------------------------------------------
+
     std::unique_ptr<RtAudio> m_Context;
-    std::shared_ptr<Device> m_Device;
-    std::shared_ptr<Stream> m_Stream_manager;
-    Scheduler::TaskScheduler m_scheduler;
+    std::unique_ptr<Device> m_Device;
+    std::unique_ptr<Stream> m_Stream_manager;
+    GlobalStreamInfo m_stream_info;
+
+    //-------------------------------------------------------------------------
+    // Core Components
+    //-------------------------------------------------------------------------
+
+    std::shared_ptr<Scheduler::TaskScheduler> m_scheduler;
+    std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager;
+    std::shared_ptr<BufferManager> m_Buffer_manager;
+    Nodes::Generator::Stochastics::NoiseEngine* m_rng;
+
+    //-------------------------------------------------------------------------
+    // Task Management
+    //-------------------------------------------------------------------------
+
     std::unordered_map<std::string, std::shared_ptr<Scheduler::SoundRoutine>> m_named_tasks;
+
+    //-------------------------------------------------------------------------
+    // Audio Processing
+    //-------------------------------------------------------------------------
 
     struct ProcessorInfo {
         AudioProcessingFunction processor;
@@ -98,10 +139,8 @@ private:
     };
 
     std::vector<ProcessorInfo> m_Processing_chain;
-    std::unique_ptr<BufferManager> m_Buffer_manager;
 
     void execute_processing_chain();
-
-    Nodes::Generator::Stochastics::NoiseEngine* m_rng;
 };
-}
+
+} // namespace MayaFlux::Core

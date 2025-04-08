@@ -10,16 +10,5 @@ SoundRoutine sequence(TaskScheduler& scheduler, std::vector<std::pair<double, st
 
 SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, u_int32_t step_duration = 5, bool restartable = false);
 
-template <typename T>
-SoundRoutine pattern(TaskScheduler& scheduler, std::function<T(u_int64_t)> pattern_func, std::function<void(T)> callback, double interval_seconds)
-{
-    u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
-    u_int64_t step = 0;
-
-    while (true) {
-        T value = pattern_func(step++);
-        callback(value);
-        co_await SampleDelay(interval_samples);
-    }
-}
+SoundRoutine pattern(TaskScheduler& scheduler, std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
 }

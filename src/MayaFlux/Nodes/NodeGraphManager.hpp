@@ -22,8 +22,12 @@ public:
 
     void connect(const std::string& source_id, const std::string& target_id);
 
+    void connect(std::shared_ptr<Node> source, std::shared_ptr<Node> target);
+
     void add_to_root(const std::string& node_id, unsigned int channel = 0);
     void add_to_root(std::shared_ptr<Node> node, unsigned int channel = 0);
+
+    bool is_node_registered(std::shared_ptr<Node> node);
 
 private:
     std::unordered_map<unsigned int, std::shared_ptr<RootNode>> m_channel_root_nodes;

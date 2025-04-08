@@ -81,4 +81,16 @@ SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, 
     }
 }
 
+SoundRoutine pattern(TaskScheduler& scheduler, std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
+{
+    u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
+    u_int64_t step = 0;
+
+    while (true) {
+        std::any value = pattern_func(step++);
+        callback(value);
+        co_await SampleDelay(interval_samples);
+    }
+}
+
 }

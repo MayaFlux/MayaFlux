@@ -6,9 +6,13 @@
 
 namespace MayaFlux::Core {
 
+//-------------------------------------------------------------------------
+// Initialization and Lifecycle
+//-------------------------------------------------------------------------
+
 Engine::Engine()
     : m_Context(std::make_unique<RtAudio>())
-    , m_Device(std::make_shared<Device>(get_handle()))
+    , m_Device(std::make_unique<Device>(get_handle()))
     , m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
 {
 }
@@ -21,16 +25,11 @@ Engine::~Engine()
 
 void Engine::Init(GlobalStreamInfo stream_info)
 {
-    m_Stream_manager = std::make_shared<Stream>(m_Device->get_default_output_device(), stream_info, this);
-    MayaFlux::set_context(*this);
-
-    m_scheduler = Scheduler::TaskScheduler(stream_info.sample_rate);
-
-    m_Buffer_manager = std::make_unique<BufferManager>(stream_info.num_channels, stream_info.buffer_size);
-
-    if (MayaFlux::graph_manager == nullptr) {
-        MayaFlux::graph_manager = new Nodes::NodeGraphManager();
-    }
+    m_stream_info = stream_info;
+    m_Stream_manager = std::make_unique<Stream>(m_Device->get_default_output_device(), this);
+    m_scheduler = std::make_shared<Scheduler::TaskScheduler>(stream_info.sample_rate);
+    m_Buffer_manager = std::make_shared<BufferManager>(stream_info.num_channels, stream_info.buffer_size);
+    m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
 }
 
 void Engine::Start()
@@ -49,6 +48,10 @@ void Engine::End()
     m_named_tasks.clear();
 }
 
+//-------------------------------------------------------------------------
+// Audio Processing
+//-------------------------------------------------------------------------
+
 int Engine::process_input(double* input_buffer, unsigned int num_frames)
 {
     return 0;
@@ -56,16 +59,16 @@ int Engine::process_input(double* input_buffer, unsigned int num_frames)
 
 int Engine::process_output(double* output_buffer, unsigned int num_frames)
 {
-    m_scheduler.process_buffer(num_frames);
+    m_scheduler->process_buffer(num_frames);
 
-    unsigned int num_channels = m_Stream_manager->get_global_stream_info().num_channels;
+    unsigned int num_channels = m_stream_info.num_channels;
 
     if (m_Buffer_manager->get_num_frames() < num_frames) {
         m_Buffer_manager->resize(num_frames);
     }
 
     for (unsigned int channel = 0; channel < num_channels; channel++) {
-        auto& channel_root = MayaFlux::get_node_graph_manager().get_root_node(channel);
+        auto& channel_root = get_node_graph_manager()->get_root_node(channel);
         std::vector<double> channel_data = channel_root.process(num_frames);
 
         auto& channel_buffer = m_Buffer_manager->get_channel(channel);
@@ -134,9 +137,9 @@ void Engine::process_buffer(std::vector<double>& buffer, unsigned int num_frames
         m_Buffer_manager->resize(num_frames);
     }
 
-    unsigned int num_channels = m_Stream_manager->get_global_stream_info().num_channels;
+    unsigned int num_channels = m_stream_info.num_channels;
     for (unsigned int channel = 0; channel < num_channels; channel++) {
-        auto& channel_root = MayaFlux::get_node_graph_manager().get_root_node(channel);
+        auto& channel_root = get_node_graph_manager()->get_root_node(channel);
         std::vector<double> channel_data = channel_root.process(num_frames);
 
         auto& channel_buffer = m_Buffer_manager->get_channel(channel);
@@ -152,19 +155,9 @@ void Engine::process_buffer(std::vector<double>& buffer, unsigned int num_frames
     m_Buffer_manager->fill_interleaved(buffer.data(), num_frames);
 }
 
-Scheduler::SoundRoutine Engine::schedule_metro(double interval_seconds, std::function<void()> callback)
-{
-    return metro(m_scheduler, interval_seconds, callback);
-}
-Scheduler::SoundRoutine Engine::schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
-{
-    return sequence(m_scheduler, seq);
-}
-
-Scheduler::SoundRoutine Engine::create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
-{
-    return line(m_scheduler, start_value, end_value, duration_seconds, step_duration, loop);
-}
+//-------------------------------------------------------------------------
+// Task Scheduling
+//-------------------------------------------------------------------------
 
 float* Engine::get_line_value(const std::string& name)
 {
@@ -200,7 +193,7 @@ void Engine::schedule_task(std::string name, Scheduler::SoundRoutine&& task)
 
     auto task_ptr = std::make_shared<Scheduler::SoundRoutine>(std::move(task));
 
-    m_scheduler.add_task(task_ptr);
+    m_scheduler->add_task(task_ptr);
 
     m_named_tasks[name] = task_ptr;
 }
@@ -209,7 +202,7 @@ bool Engine::cancel_task(const std::string& name)
 {
     auto it = m_named_tasks.find(name);
     if (it != m_named_tasks.end()) {
-        if (m_scheduler.cancel_task(it->second)) {
+        if (m_scheduler->cancel_task(it->second)) {
             m_named_tasks.erase(it);
             return true;
         }
@@ -228,27 +221,4 @@ bool Engine::restart_task(const std::string& name)
     return false;
 }
 
-double Engine::get_uniform_random(double start, double end)
-{
-    m_rng->set_type(Utils::distribution::UNIFORM);
-    return m_rng->random_sample(start, end);
-}
-
-double Engine::get_gaussian_random(double start, double end)
-{
-    m_rng->set_type(Utils::distribution::NORMAL);
-    return m_rng->random_sample(start, end);
-}
-
-double Engine::get_exponential_random(double start, double end)
-{
-    m_rng->set_type(Utils::distribution::EXPONENTIAL);
-    return m_rng->random_sample(start, end);
-}
-
-double Engine::get_poisson_random(double start, double end)
-{
-    m_rng->set_type(Utils::distribution::POISSON);
-    return m_rng->random_sample(start, end);
-}
-}
+} // namespace MayaFlux::Core

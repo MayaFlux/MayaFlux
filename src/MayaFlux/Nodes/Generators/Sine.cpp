@@ -1,5 +1,4 @@
 #include "Sine.hpp"
-#include "MayaFlux/Core/Stream.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
@@ -51,7 +50,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> ampl
 
 void Sine::Setup(bool bAuto_register)
 {
-    m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_global_stream_info().sample_rate;
+    m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_sample_rate();
 
     if (bAuto_register) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -62,12 +61,12 @@ void Sine::Setup(bool bAuto_register)
 void Sine::set_frequency(float frequency)
 {
     m_frequency = frequency;
-    m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_global_stream_info().sample_rate;
+    m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_sample_rate();
 }
 
 void Sine::update_phase_increment(float frequency)
 {
-    m_phase_inc = (2 * M_PI * frequency) / MayaFlux::get_global_stream_info().sample_rate;
+    m_phase_inc = (2 * M_PI * frequency) / MayaFlux::get_sample_rate();
 }
 
 void Sine::set_frequency_modulator(std::shared_ptr<Node> modulator)
@@ -132,12 +131,12 @@ void Sine::register_to_defult()
 {
     try {
         auto self = shared_from_this();
-        MayaFlux::get_node_graph_manager().add_to_root(self);
+        MayaFlux::get_node_graph_manager()->add_to_root(self);
     } catch (const std::bad_weak_ptr& e) {
         std::cerr << "Error in register_to_defult: " << e.what() << std::endl;
         std::cerr << "The Sine object must be created with std::make_shared for shared_from_this() to work." << std::endl;
 
-        MayaFlux::get_node_graph_manager().add_to_root(std::make_shared<Sine>(*this));
+        MayaFlux::get_node_graph_manager()->add_to_root(std::make_shared<Sine>(*this));
     }
 }
 

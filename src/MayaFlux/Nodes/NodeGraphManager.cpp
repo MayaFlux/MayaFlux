@@ -34,11 +34,28 @@ std::shared_ptr<Node> NodeGraphManager::get_node(const std::string& id)
     return nullptr;
 }
 
+bool NodeGraphManager::is_node_registered(std::shared_ptr<Node> node)
+{
+    for (const auto& pair : m_Node_registry) {
+        if (pair.second == node) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void NodeGraphManager::connect(const std::string& source_id, const std::string& target_id)
 {
     auto source = get_node(source_id);
     auto target = get_node(target_id);
 
+    if (source && target) {
+        source >> target;
+    }
+}
+
+void NodeGraphManager::connect(std::shared_ptr<Nodes::Node> source, std::shared_ptr<Nodes::Node> target)
+{
     if (source && target) {
         source >> target;
     }
@@ -54,13 +71,7 @@ void NodeGraphManager::add_to_root(const std::string& node_id, unsigned int chan
 
 void NodeGraphManager::add_to_root(std::shared_ptr<Node> node, unsigned int channel)
 {
-    bool found = false;
-    for (const auto& pair : m_Node_registry) {
-        if (pair.second == node) {
-            found = true;
-            break;
-        }
-    }
+    bool found = is_node_registered(node);
 
     if (!found) {
         std::stringstream ss;

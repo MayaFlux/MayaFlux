@@ -1,16 +1,17 @@
+#include "Stream.hpp"
 #include "Engine.hpp"
 #include "MayaFlux/Core/AudioCallback.hpp"
 
 namespace MayaFlux::Core {
 
-Stream::Stream(unsigned int out_device, GlobalStreamInfo stream_info, Engine* m_handle)
-    : m_Stream_info(stream_info)
-    , m_is_open(false)
+Stream::Stream(unsigned int out_device, Engine* m_handle)
+    : m_is_open(false)
     , m_is_running(false)
     , m_engine(m_handle)
 {
     m_Parameters.deviceId = out_device;
-    m_Parameters.nChannels = m_Stream_info.num_channels;
+    m_Parameters.nChannels = m_engine->get_stream_info().num_channels;
+    m_Options = { RTAUDIO_SCHEDULE_REALTIME };
 }
 
 Stream::~Stream()
@@ -31,7 +32,7 @@ void Stream::open()
     try {
         m_engine->get_handle()->openStream(
             &m_Parameters, nullptr, RTAUDIO_FLOAT64,
-            m_Stream_info.sample_rate, &m_Stream_info.buffer_size,
+            m_engine->get_stream_info().sample_rate, &m_engine->get_stream_info().buffer_size,
             rtaudio_callback, m_engine,
             &m_Options);
         m_is_open = true;
