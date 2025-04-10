@@ -131,12 +131,12 @@ void Sine::register_to_defult()
 {
     try {
         auto self = shared_from_this();
-        MayaFlux::get_node_graph_manager()->add_to_root(self);
+        MayaFlux::add_node_to_root(self);
     } catch (const std::bad_weak_ptr& e) {
         std::cerr << "Error in register_to_defult: " << e.what() << std::endl;
         std::cerr << "The Sine object must be created with std::make_shared for shared_from_this() to work." << std::endl;
 
-        MayaFlux::get_node_graph_manager()->add_to_root(std::make_shared<Sine>(*this));
+        MayaFlux::add_node_to_root(std::make_shared<Sine>(*this));
     }
 }
 

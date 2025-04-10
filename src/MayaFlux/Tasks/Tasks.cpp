@@ -1,8 +1,10 @@
 #include "Tasks.hpp"
+#include "Awaiters.hpp"
+#include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Tasks {
 
-SoundRoutine metro(TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
+Core::Scheduler::SoundRoutine metro(Core::Scheduler::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
 {
     u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
     u_int64_t next_sample = 0;
@@ -14,7 +16,7 @@ SoundRoutine metro(TaskScheduler& scheduler, double interval_seconds, std::funct
     }
 }
 
-SoundRoutine sequence(TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence)
+Core::Scheduler::SoundRoutine sequence(Core::Scheduler::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence)
 {
     for (const auto& [time, callback] : sequence) {
         u_int64_t delay_samples = scheduler.seconds_to_samples(time);
@@ -23,7 +25,7 @@ SoundRoutine sequence(TaskScheduler& scheduler, std::vector<std::pair<double, st
     }
 }
 
-SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, u_int32_t step_duration, bool restartable)
+Core::Scheduler::SoundRoutine line(Core::Scheduler::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, u_int32_t step_duration, bool restartable)
 {
     auto& promise_ref = co_await GetPromise {};
     const unsigned int sample_rate = scheduler.task_sample_rate();
@@ -81,7 +83,7 @@ SoundRoutine line(TaskScheduler& scheduler, float start_value, float end_value, 
     }
 }
 
-SoundRoutine pattern(TaskScheduler& scheduler, std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
+Core::Scheduler::SoundRoutine pattern(Core::Scheduler::TaskScheduler& scheduler, std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
 {
     u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
     u_int64_t step = 0;

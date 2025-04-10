@@ -1,42 +1,79 @@
-#include "MayaFlux/Core/Engine.hpp"
+#include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Tasks/Chain.hpp"
+
+using namespace MayaFlux;
+using namespace MayaFlux::Tasks;
+using namespace MayaFlux::Nodes;
+using namespace MayaFlux::Nodes::Generator;
+using namespace MayaFlux::Nodes::Filters;
+
+MayaFlux::Tasks::DAC& dac = MayaFlux::Tasks::DAC::instance();
 
 int main()
 {
-    MayaFlux::Core::Engine engine;
-    MayaFlux::Core::GlobalStreamInfo stream_info;
-    stream_info.buffer_size = 512;
-    stream_info.sample_rate = 48000;
-    stream_info.num_channels = 2;
+    Init();
 
-    engine.Init(stream_info);
+    auto sine = std::make_shared<Sine>(440.0f, 0.5);
+    auto sine2 = std::make_shared<Sine>(880.0f, 0.5f);
+    auto sine3 = std::make_shared<Sine>(440.0f, 0.5f);
 
-    using namespace MayaFlux::Nodes::Generator;
+    // auto timer = Timer(*MayaFlux::get_scheduler());
+    // auto timer = TimedAction(*MayaFlux::get_scheduler());
+    // timer.execute([sine]() { MayaFlux::add_node_to_root(sine); }, [sine]() { MayaFlux::remove_node_from_root(sine); }, 2);
 
-    std::shared_ptr<Sine> sine = std::make_shared<Sine>((std::make_shared<Sine>(1, 5, 0.0, false) + std::make_shared<Sine>(50, 100, 0.0, false)), 440, 0.5, 0.0);
+    // auto node_player = NodeTimer(*MayaFlux::get_scheduler());
+    // node_player.play_for(sine, 3);
 
-    engine.add_processor([](double* in, double* out, unsigned int nFrames) {
-        const double masterVolume = 0.8;
-        unsigned int numSamples = nFrames * 2;
+    // sine >> dac;
 
-        for (unsigned int i = 0; i < numSamples; i++) {
-            double current_sample = out[i];
+    // sine2 >> Time(2.0);
 
-            current_sample *= masterVolume;
-            if (current_sample > 1.f) {
-                current_sample = 1.f;
-            } else if (current_sample < -1.f) {
-                current_sample = -1.f;
-            }
-            out[i] = current_sample;
-        }
-    });
+    auto filtered_sine = std::make_shared<Sine>(220.0f, 0.5f);
+    auto filter = std::make_shared<FIR>(filtered_sine, std::vector<double> { 0.2, 0.2, 0.2, 0.2, 0.2 });
+    // filter >> dac;
 
-    std::cout << "Starting audio engine..." << std::endl;
-    engine.Start();
+    // auto filter2 = std::make_shared<FIR>(sine3, std::vector<double> { 0.2, 0.2, 0.2, 0.2, 0.2 });
+    // filter2 >> Time(3.0);
 
-    std::cout << "Audio running. Press Enter to stop." << std::endl;
+    // EventChain()
+    //     .then([&]() { sine >> dac; })
+    //     .then([]() { std::cout << "Waiting\n"; }, 2.0)
+    //     .then([&]() {
+    //         MayaFlux::remove_node_from_root(sine);
+    //         sine2 >> dac;
+    //     },
+    //         1.0)
+    //     .then([&]() {
+    //         MayaFlux::remove_node_from_root(sine2);
+    //         std::cout << "Waiting again\n"; }, 3.0)
+    //     .start();
+
+    (
+        Sequence()
+        >> Play(sine)
+        >> Wait(2.0)
+        >> Action([&]() {
+              remove_node_from_root(sine);
+          })
+        >> Play(sine2)
+        >> Wait(1.5)
+        >> Action([&]() {
+              sine2->set_frequency(880.0);
+          })
+        >> Wait(2.0)
+        >> Action([&]() {
+              remove_node_from_root(sine2);
+              sine >> dac;
+          })
+        >> Play(filter)
+        >> Wait(3.0))
+        .execute();
+
+    Start();
     std::cin.get();
+    End();
+
     return 0;
 }

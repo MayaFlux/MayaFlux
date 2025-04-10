@@ -1,9 +1,9 @@
 #include "MayaFlux.hpp"
 
 #include "Core/Engine.hpp"
-#include "Core/Scheduler/Tasks.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "Nodes/NodeGraphManager.hpp"
+#include "Tasks/Chain.hpp"
 
 namespace MayaFlux {
 
@@ -174,22 +174,22 @@ bool update_task_params(const std::string& name, Args... args)
 
 Core::Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback)
 {
-    return metro(*get_scheduler(), interval_seconds, callback);
+    return Tasks::metro(*get_scheduler(), interval_seconds, callback);
 }
 
 Core::Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
 {
-    return sequence(*get_scheduler(), seq);
+    return Tasks::sequence(*get_scheduler(), seq);
 }
 
 Core::Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
 {
-    return line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
+    return Tasks::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
 }
 
 Core::Scheduler::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
 {
-    return Core::Scheduler::pattern(*get_scheduler(), pattern_func, callback, interval_seconds);
+    return Tasks::pattern(*get_scheduler(), pattern_func, callback, interval_seconds);
 }
 
 float* get_line_value(const std::string& name)
@@ -215,6 +215,21 @@ bool cancel_task(const std::string& name)
 bool restart_task(const std::string& name)
 {
     return get_context()->restart_task(name);
+}
+
+Tasks::ActionToken Play(std::shared_ptr<Nodes::Node> node)
+{
+    return Tasks::ActionToken(node);
+}
+
+Tasks::ActionToken Wait(double seconds)
+{
+    return Tasks::ActionToken(seconds);
+}
+
+Tasks::ActionToken Action(std::function<void()> func)
+{
+    return Tasks::ActionToken(func);
 }
 
 //-------------------------------------------------------------------------
@@ -274,6 +289,11 @@ void add_node_to_root(std::shared_ptr<Nodes::Node> node, unsigned int channel)
     get_context()->get_node_graph_manager()->add_to_root(node, channel);
 }
 
+void remove_node_from_root(std::shared_ptr<Nodes::Node> node, unsigned int channel)
+{
+    get_context()->get_node_graph_manager()->get_root_node(channel).unregister_node(node);
+}
+
 void connect_nodes(std::string& source, std::string& target)
 {
     get_context()->get_node_graph_manager()->connect(source, target);
@@ -288,4 +308,5 @@ Nodes::RootNode get_root_node(u_int32_t channel)
 {
     return get_node_graph_manager()->get_root_node(channel);
 }
+
 } // namespace MayaFlux

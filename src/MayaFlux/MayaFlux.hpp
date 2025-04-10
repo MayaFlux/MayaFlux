@@ -22,6 +22,10 @@ namespace Nodes {
     class RootNode;
 }
 
+namespace Tasks {
+    class ActionToken;
+}
+
 using AudioProcessingFunction = std::function<void(Core::AudioBuffer&, unsigned int)>;
 
 //-------------------------------------------------------------------------
@@ -101,6 +105,12 @@ bool restart_task(const std::string& name);
 template <typename... Args>
 bool update_task_params(const std::string& name, Args... args);
 
+Tasks::ActionToken Play(std::shared_ptr<Nodes::Node> node);
+
+Tasks::ActionToken Wait(double seconds);
+
+Tasks::ActionToken Action(std::function<void()> func);
+
 //-------------------------------------------------------------------------
 // Audio Processing
 //-------------------------------------------------------------------------
@@ -130,6 +140,8 @@ void process_channels(std::shared_ptr<Core::BufferManager> manager, AudioProcess
 //-------------------------------------------------------------------------
 
 void add_node_to_root(std::shared_ptr<Nodes::Node> node, unsigned int channel = 0);
+
+void remove_node_from_root(std::shared_ptr<Nodes::Node> node, unsigned int channel = 0);
 
 void connect_nodes(std::string& source, std::string& target);
 

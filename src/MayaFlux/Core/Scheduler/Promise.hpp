@@ -25,31 +25,4 @@ struct promise_type {
     template <typename T>
     T* get_state(const std::string& key);
 };
-
-using promise_handle = promise_type;
-
-// Common structs
-struct SampleDelay {
-    u_int64_t samples_to_wait;
-
-    inline bool await_ready() const { return samples_to_wait == 0; }
-    inline void await_resume() { };
-    inline void await_suspend(std::coroutine_handle<promise_handle> h)
-    {
-        h.promise().next_sample += samples_to_wait;
-    }
-};
-
-struct GetPromise {
-    promise_handle* promise_ptr = nullptr;
-
-    GetPromise() = default;
-
-    inline bool await_ready() const noexcept { return false; }
-
-    void await_suspend(std::coroutine_handle<promise_handle> h) noexcept;
-
-    promise_handle& await_resume() const noexcept;
-};
-
 }

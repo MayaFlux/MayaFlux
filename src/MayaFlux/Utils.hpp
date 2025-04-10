@@ -25,4 +25,10 @@ enum coefficients {
     ALL
 };
 
+enum ActionType {
+    NODE,
+    TIME,
+    FUNCTION
+};
+
 }

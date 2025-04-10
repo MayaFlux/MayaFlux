@@ -1,11 +1,6 @@
-#include "Promise.hpp"
+#include "Awaiters.hpp"
 
-namespace MayaFlux::Core::Scheduler {
-
-// SoundRoutine promise_type::get_return_object()
-// {
-//     return SoundRoutine(std::coroutine_handle<promise_type>::from_promise(*this));
-// }
+namespace MayaFlux::Tasks {
 
 void GetPromise::await_suspend(std::coroutine_handle<promise_handle> h) noexcept
 {

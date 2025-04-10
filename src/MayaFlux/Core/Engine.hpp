@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Buffer.hpp"
-#include "MayaFlux/Core/Scheduler/Tasks.hpp"
+#include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 
 namespace MayaFlux::Nodes {
 class NodeGraphManager;
