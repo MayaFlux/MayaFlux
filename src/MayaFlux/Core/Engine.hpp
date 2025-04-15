@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Buffer.hpp"
 #include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 
 namespace MayaFlux::Nodes {
@@ -14,14 +13,13 @@ namespace MayaFlux::Core {
 
 class Device;
 class Stream;
+class BufferManager;
 
 struct GlobalStreamInfo {
     unsigned int sample_rate = 48000;
     unsigned int buffer_size = 512;
     unsigned int num_channels = 2;
 };
-
-using AudioProcessingFunction = std::function<void(AudioBuffer&, unsigned int)>;
 
 class Engine {
 public:
@@ -70,14 +68,6 @@ public:
     int process_output(double* output_buffer, unsigned int num_frames);
 
     int process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames);
-
-    void add_processor(AudioProcessingFunction processor);
-
-    void add_processor(AudioProcessingFunction processor, const std::vector<unsigned int>& channels);
-
-    void clear_processors();
-
-    void process_buffer(std::vector<double>& buffer, unsigned int num_frames);
 
     //-------------------------------------------------------------------------
     // Task Scheduling
@@ -128,19 +118,6 @@ private:
     //-------------------------------------------------------------------------
 
     std::unordered_map<std::string, std::shared_ptr<Scheduler::SoundRoutine>> m_named_tasks;
-
-    //-------------------------------------------------------------------------
-    // Audio Processing
-    //-------------------------------------------------------------------------
-
-    struct ProcessorInfo {
-        AudioProcessingFunction processor;
-        std::vector<unsigned int> channels;
-    };
-
-    std::vector<ProcessorInfo> m_Processing_chain;
-
-    void execute_processing_chain();
 };
 
 } // namespace MayaFlux::Core

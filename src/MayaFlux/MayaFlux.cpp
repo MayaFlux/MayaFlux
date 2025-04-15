@@ -1,6 +1,7 @@
 #include "MayaFlux.hpp"
 
 #include "Core/Engine.hpp"
+#include "MayaFlux/Core/BufferManager.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "Nodes/NodeGraphManager.hpp"
 #include "Tasks/Chain.hpp"
@@ -236,48 +237,35 @@ Tasks::ActionToken Action(std::function<void()> func)
 // Audio Processing
 //-------------------------------------------------------------------------
 
-void add_processor(AudioProcessingFunction processor)
+void add_processor(AudioProcessingFunction processor, unsigned int channel_id)
 {
-    get_context()->add_processor(processor);
+    get_buffer_manager()->add_quick_process(processor, channel_id);
 }
 
-void add_processor(AudioProcessingFunction processor, const std::vector<unsigned int>& channels)
+void add_processor(AudioProcessingFunction processor, const std::vector<unsigned int> channels)
 {
-    get_context()->add_processor(processor, channels);
-}
-
-void clear_processors()
-{
-    get_context()->clear_processors();
-}
-
-void process_buffer(std::vector<double>& buffer, unsigned int num_frames)
-{
-    get_context()->process_buffer(buffer, num_frames);
+    for (unsigned int channel : channels) {
+        get_buffer_manager()->add_quick_process(processor, channel);
+    }
 }
 
 //-------------------------------------------------------------------------
 // Buffer Management
 //-------------------------------------------------------------------------
 
-void clear_buffer(Core::AudioBuffer& buffer)
+void clear_buffer(Buffers::AudioBuffer& buffer)
 {
     buffer.clear();
 }
 
-std::vector<double>& get_buffer_data(Core::AudioBuffer& buffer)
+Buffers::AudioBuffer& get_channel(unsigned int channel)
 {
-    return buffer.get_buffer();
+    return *get_buffer_manager()->get_channel(channel);
 }
 
-Core::AudioBuffer& get_channel(std::shared_ptr<Core::BufferManager> manager, unsigned int channel)
+void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix)
 {
-    return manager->get_channel(channel);
-}
-
-void process_channels(std::shared_ptr<Core::BufferManager> manager, AudioProcessingFunction processor)
-{
-    manager->process_channels(processor);
+    get_buffer_manager()->connect_node_to_channel(node, channel_index, mix);
 }
 
 //-------------------------------------------------------------------------

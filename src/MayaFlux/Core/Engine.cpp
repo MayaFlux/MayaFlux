@@ -1,4 +1,5 @@
 #include "Engine.hpp"
+#include "BufferManager.hpp"
 #include "Device.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
@@ -71,12 +72,9 @@ int Engine::process_output(double* output_buffer, unsigned int num_frames)
         auto& channel_root = get_node_graph_manager()->get_root_node(channel);
         std::vector<double> channel_data = channel_root.process(num_frames);
 
-        auto& channel_buffer = m_Buffer_manager->get_channel(channel);
-        std::copy(channel_data.begin(), channel_data.begin() + num_frames, channel_buffer.get_buffer().begin());
-    }
-
-    if (!m_Processing_chain.empty()) {
-        execute_processing_chain();
+        std::copy(channel_data.begin(), channel_data.begin() + num_frames,
+            m_Buffer_manager->get_channel_data(channel).begin());
+        m_Buffer_manager->process_channel(channel);
     }
 
     m_Buffer_manager->fill_interleaved(output_buffer, num_frames);
@@ -90,69 +88,6 @@ int Engine::process_audio(double* input_buffer, double* output_buffer, unsigned 
     process_output(output_buffer, num_frames);
 
     return 0;
-}
-
-void Engine::execute_processing_chain()
-{
-    for (const auto& processor_info : m_Processing_chain) {
-        if (processor_info.channels.empty()) {
-            for (unsigned int channel = 0; channel < m_Buffer_manager->get_num_channels(); channel++) {
-                auto& channel_buffer = m_Buffer_manager->get_channel(channel);
-                processor_info.processor(channel_buffer, channel);
-            }
-        } else {
-            for (unsigned int channel : processor_info.channels) {
-                if (channel < m_Buffer_manager->get_num_channels()) {
-                    auto& channel_buffer = m_Buffer_manager->get_channel(channel);
-                    processor_info.processor(channel_buffer, channel);
-                }
-            }
-        }
-    }
-}
-
-void Engine::add_processor(AudioProcessingFunction processor)
-{
-    ProcessorInfo info;
-    info.processor = processor;
-    m_Processing_chain.push_back(info);
-}
-
-void Engine::add_processor(AudioProcessingFunction processor, const std::vector<unsigned int>& channels)
-{
-    ProcessorInfo info;
-    info.processor = processor;
-    info.channels = channels;
-    m_Processing_chain.push_back(info);
-}
-
-void Engine::clear_processors()
-{
-    m_Processing_chain.clear();
-}
-
-void Engine::process_buffer(std::vector<double>& buffer, unsigned int num_frames)
-{
-    if (m_Buffer_manager->get_num_frames() < num_frames) {
-        m_Buffer_manager->resize(num_frames);
-    }
-
-    unsigned int num_channels = m_stream_info.num_channels;
-    for (unsigned int channel = 0; channel < num_channels; channel++) {
-        auto& channel_root = get_node_graph_manager()->get_root_node(channel);
-        std::vector<double> channel_data = channel_root.process(num_frames);
-
-        auto& channel_buffer = m_Buffer_manager->get_channel(channel);
-        std::copy(channel_data.begin(), channel_data.begin() + num_frames, channel_buffer.get_buffer().begin());
-    }
-
-    if (!m_Processing_chain.empty()) {
-        execute_processing_chain();
-    }
-
-    buffer.resize(num_frames * num_channels);
-
-    m_Buffer_manager->fill_interleaved(buffer.data(), num_frames);
 }
 
 //-------------------------------------------------------------------------

@@ -1,0 +1,43 @@
+#include "NodeSource.hpp"
+#include "MayaFlux/Nodes/Node.hpp"
+
+namespace MayaFlux::Buffers {
+NodeSourceProcessor::NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix)
+    : m_node(node)
+    , m_mix(mix)
+{
+}
+
+void NodeSourceProcessor::process(std::shared_ptr<AudioBuffer> buffer)
+{
+    if (!m_node)
+        return;
+
+    std::vector<double> node_data = m_node->processFull(buffer->get_num_samples());
+
+    auto& buffer_data = buffer->get_data();
+    for (size_t i = 0; i < std::min(node_data.size(), buffer_data.size()); i++) {
+        buffer_data[i] += node_data[i] * m_mix;
+    }
+}
+
+NodeBuffer::NodeBuffer(u_int32_t channel_id, u_int32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process)
+    : StandardAudioBuffer(channel_id, num_samples)
+    , m_source_node(source)
+    , m_clear_before_process(clear_before_process)
+{
+}
+
+void NodeBuffer::process()
+{
+    if (m_clear_before_process) {
+        clear();
+    }
+    StandardAudioBuffer::process();
+}
+
+std::shared_ptr<BufferProcessor> NodeBuffer::create_default_processor()
+{
+    return std::make_shared<NodeSourceProcessor>(m_source_node);
+}
+}

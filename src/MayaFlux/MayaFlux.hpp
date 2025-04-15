@@ -7,13 +7,16 @@ namespace MayaFlux {
 namespace Core {
     struct GlobalStreamInfo;
     class Engine;
-    struct AudioBuffer;
     class BufferManager;
 
     namespace Scheduler {
         class TaskScheduler;
         class SoundRoutine;
     }
+}
+
+namespace Buffers {
+    class AudioBuffer;
 }
 
 namespace Nodes {
@@ -26,7 +29,7 @@ namespace Tasks {
     class ActionToken;
 }
 
-using AudioProcessingFunction = std::function<void(Core::AudioBuffer&, unsigned int)>;
+using AudioProcessingFunction = std::function<void(std::shared_ptr<Buffers::AudioBuffer>)>;
 
 //-------------------------------------------------------------------------
 // Engine Management
@@ -115,25 +118,17 @@ Tasks::ActionToken Action(std::function<void()> func);
 // Audio Processing
 //-------------------------------------------------------------------------
 
-void add_processor(AudioProcessingFunction processor);
+void add_processor(AudioProcessingFunction processor, unsigned int channel_id = 0);
 
-void add_processor(AudioProcessingFunction processor, const std::vector<unsigned int>& channels);
-
-void clear_processors();
-
-void process_buffer(std::vector<double>& buffer, unsigned int num_frames);
+void add_processor(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
 
 //-------------------------------------------------------------------------
 // Buffer Management
 //-------------------------------------------------------------------------
 
-void clear_buffer(Core::AudioBuffer& buffer);
+Buffers::AudioBuffer& get_channel(unsigned int channel);
 
-std::vector<double>& get_buffer_data(Core::AudioBuffer& buffer);
-
-Core::AudioBuffer& get_channel(std::shared_ptr<Core::BufferManager> manager, unsigned int channel);
-
-void process_channels(std::shared_ptr<Core::BufferManager> manager, AudioProcessingFunction processor);
+void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index = 0, float mix = 0.5f);
 
 //-------------------------------------------------------------------------
 // Node Graph Management
