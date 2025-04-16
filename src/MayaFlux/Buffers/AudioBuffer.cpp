@@ -44,14 +44,10 @@ void StandardAudioBuffer::set_num_samples(u_int32_t num_samples)
     m_data.resize(num_samples);
 }
 
-void StandardAudioBuffer::process()
+void StandardAudioBuffer::process_default()
 {
     if (m_default_processor) {
         m_default_processor->process(shared_from_this());
-    }
-
-    if (m_processing_chain) {
-        m_processing_chain->process(shared_from_this());
     }
 }
 

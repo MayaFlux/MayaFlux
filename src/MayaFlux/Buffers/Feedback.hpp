@@ -15,8 +15,11 @@ public:
     inline std::vector<double>& get_previous_buffer() { return m_previous_buffer; }
     inline const std::vector<double>& get_previous_buffer() const { return m_previous_buffer; }
 
+    void process_default() override;
+
 protected:
     std::shared_ptr<BufferProcessor> create_default_processor() override;
+    std::shared_ptr<BufferProcessor> m_default_processor;
 
 private:
     float m_feedback_amount;

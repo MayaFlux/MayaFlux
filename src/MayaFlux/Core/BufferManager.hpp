@@ -51,6 +51,7 @@ public:
         }
 
         auto buffer = std::make_shared<BufferType>(channel_index, m_num_frames, std::forward<Args>(args)...);
+        buffer->set_processing_chain(m_channel_processing_chains[channel_index]);
 
         m_audio_buffers[channel_index] = buffer;
 

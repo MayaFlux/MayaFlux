@@ -80,6 +80,8 @@ void BufferManager::process_channel(u_int32_t channel_index)
 
     auto buffer = m_audio_buffers[channel_index];
 
+    buffer->process_default();
+
     m_channel_processing_chains[channel_index]->process(buffer);
 
     m_global_processing_chain->process(buffer);

@@ -32,10 +32,12 @@ public:
     inline void set_clear_before_process(bool value) { m_clear_before_process = value; }
     inline bool get_clear_before_process() const { return m_clear_before_process; }
 
-    void process() override;
+    void process_default() override;
 
 protected:
     std::shared_ptr<BufferProcessor> create_default_processor() override;
+
+    std::shared_ptr<BufferProcessor> m_default_processor;
 
 private:
     std::shared_ptr<Nodes::Node> m_source_node;

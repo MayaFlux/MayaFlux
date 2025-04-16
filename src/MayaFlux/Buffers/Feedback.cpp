@@ -2,6 +2,31 @@
 
 namespace MayaFlux::Buffers {
 
+FeedbackBuffer::FeedbackBuffer(u_int32_t channel_id, u_int32_t num_samples, float feedback)
+    : StandardAudioBuffer(channel_id, num_samples)
+    , m_feedback_amount(feedback)
+{
+    m_default_processor = create_default_processor();
+    m_previous_buffer.resize(num_samples, 0.f);
+}
+
+void FeedbackBuffer::process_default()
+{
+    m_default_processor->process(shared_from_this());
+}
+
+void FeedbackProcessor::on_detach(std::shared_ptr<AudioBuffer> buffer)
+{
+    if (m_using_internal_buffer) {
+        m_previous_buffer.clear();
+    }
+}
+
+std::shared_ptr<BufferProcessor> FeedbackBuffer::create_default_processor()
+{
+    return std::make_shared<FeedbackProcessor>(m_feedback_amount);
+}
+
 FeedbackProcessor::FeedbackProcessor(float feedback)
     : m_feedback_amount(feedback)
     , m_using_internal_buffer(false)
@@ -44,25 +69,6 @@ void FeedbackProcessor::on_attach(std::shared_ptr<AudioBuffer> buffer)
         m_previous_buffer.resize(buffer->get_num_samples(), 0.0);
         m_using_internal_buffer = true;
     }
-}
-
-FeedbackBuffer::FeedbackBuffer(u_int32_t channel_id, u_int32_t num_samples, float feedback)
-    : StandardAudioBuffer(channel_id, num_samples)
-    , m_feedback_amount(feedback)
-{
-    m_previous_buffer.resize(num_samples, 0.f);
-}
-
-void FeedbackProcessor::on_detach(std::shared_ptr<AudioBuffer> buffer)
-{
-    if (m_using_internal_buffer) {
-        m_previous_buffer.clear();
-    }
-}
-
-std::shared_ptr<BufferProcessor> FeedbackBuffer::create_default_processor()
-{
-    return std::make_shared<FeedbackProcessor>(m_feedback_amount);
 }
 
 }

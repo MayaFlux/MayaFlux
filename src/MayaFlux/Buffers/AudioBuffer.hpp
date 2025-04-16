@@ -19,7 +19,7 @@ public:
     virtual std::vector<double>& get_data() = 0;
     virtual const std::vector<double>& get_data() const = 0;
 
-    virtual void process() = 0;
+    virtual void process_default() = 0;
     // virtual void process(const std::any& params) = 0;
 
     virtual u_int32_t get_channel_id() const = 0;
@@ -52,7 +52,7 @@ public:
     std::vector<double>& get_data() override { return m_data; }
     const std::vector<double>& get_data() const override { return m_data; }
 
-    void process() override;
+    void process_default() override;
     // void process(const std::any& params) override;
 
     void set_default_processor(std::shared_ptr<BufferProcessor> processor) override;

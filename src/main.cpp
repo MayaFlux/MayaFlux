@@ -77,7 +77,9 @@ int main()
             .execute();
     */
     auto noise = std::make_shared<Nodes::Generator::Stochastics::NoiseEngine>();
-    connect_node_to_channel(noise, 0);
+    // connect_node_to_channel(noise, 0);
+
+    get_buffer_manager()->create_specialized_buffer<Buffers::NodeBuffer>(0, noise, true);
 
     auto feedback_processor = std::make_shared<Buffers::FeedbackProcessor>(0.99f);
     get_buffer_manager()->add_processor(feedback_processor, 0);
