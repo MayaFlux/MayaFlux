@@ -18,7 +18,7 @@ double NoiseEngine::random_sample(double start, double end)
     validate_range(start, end);
     m_current_start = start;
     m_current_end = end;
-    return transform_sample(generate_distributed_sample(), start, end);
+    return transform_sample(generate_distributed_sample(), start, end) * m_amplitude;
 }
 
 std::vector<double> NoiseEngine::random_array(double start, double end, unsigned int num_samples)

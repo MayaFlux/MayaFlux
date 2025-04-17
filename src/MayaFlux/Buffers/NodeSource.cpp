@@ -2,9 +2,10 @@
 #include "MayaFlux/Nodes/Node.hpp"
 
 namespace MayaFlux::Buffers {
-NodeSourceProcessor::NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix)
+NodeSourceProcessor::NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix, bool clear_before_process)
     : m_node(node)
     , m_mix(mix)
+    , m_clear_before_process(clear_before_process)
 {
 }
 
@@ -18,9 +19,20 @@ void NodeSourceProcessor::process(std::shared_ptr<AudioBuffer> buffer)
     try {
         std::vector<double> node_data = m_node->processFull(buffer->get_num_samples());
         auto& buffer_data = buffer->get_data();
+
+        bool should_clear = m_clear_before_process;
+        if (auto node_buffer = std::dynamic_pointer_cast<NodeBuffer>(buffer)) {
+            should_clear = node_buffer->get_clear_before_process();
+        }
+
+        if (should_clear) {
+            buffer->clear();
+        }
+
         for (size_t i = 0; i < std::min(node_data.size(), buffer_data.size()); i++) {
             buffer_data[i] += node_data[i] * m_mix;
         }
+
     } catch (const std::exception& e) {
         std::cerr << "Error processing node: " << e.what() << std::endl;
     } catch (...) {

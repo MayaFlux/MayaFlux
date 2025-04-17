@@ -26,6 +26,11 @@ public:
 
     virtual void printCurrent() override;
 
+    inline void set_amplitude(double amplitude)
+    {
+        m_amplitude = amplitude;
+    }
+
 private:
     double generate_distributed_sample();
     double transform_sample(double sample, double start, double end) const;
@@ -35,6 +40,7 @@ private:
     Utils::distribution m_type;
     double m_current_start = -1.0;
     double m_current_end = 1.0;
+    double m_amplitude = 1.0;
 };
 
 }

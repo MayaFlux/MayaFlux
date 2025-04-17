@@ -2,6 +2,7 @@
 #include "MayaFlux/Buffers/Feedback.hpp"
 #include "MayaFlux/Buffers/NodeSource.hpp"
 #include "MayaFlux/Core/BufferManager.hpp"
+#include "MayaFlux/Core/Scheduler/Routine.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
@@ -76,21 +77,32 @@ int main()
             >> Wait(3.0))
             .execute();
     */
+
     auto noise = std::make_shared<Nodes::Generator::Stochastics::NoiseEngine>();
-    // connect_node_to_channel(noise, 0);
 
-    get_buffer_manager()->create_specialized_buffer<Buffers::NodeBuffer>(0, noise, true);
+    // auto noisebuf = get_buffer_manager()->create_specialized_buffer<Buffers::NodeBuffer>(0, noise, true);
 
-    auto feedback_processor = std::make_shared<Buffers::FeedbackProcessor>(0.99f);
-    get_buffer_manager()->add_processor(feedback_processor, 0);
+    auto noisebuf = std::make_shared<Buffers::StandardAudioBuffer>(0, 512);
+    connect_node_to_buffer(noise, noisebuf);
 
-    add_processor([](std::shared_ptr<Buffers::AudioBuffer> buffer) {
-        for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-            // buffer->get_sample(i) *= get_uniform_random(-1.f, 1.f) * 0.25;
-            buffer->get_sample(i) * 0.25;
+    auto feedback_processor = std::make_shared<Buffers::FeedbackProcessor>(0.75f);
+    get_buffer_manager()->add_processor(feedback_processor, noisebuf);
+
+    get_buffer_manager()->add_buffer_to_channel(0, noisebuf);
+
+    attach_quick_process_to_channel([](std::shared_ptr<Buffers::AudioBuffer> buffer) {
+        auto& data = buffer->get_data();
+        std::vector<double> temp = data;
+
+        for (size_t i = 1; i < data.size() - 1; i++) {
+            data[i] = 0.5 * (temp[i] + temp[i - 1]);
         }
     },
         0);
+
+    schedule_task("pluck", schedule_metro(1.0, [noise]() {
+        noise->set_amplitude(get_uniform_random(0.1f, 0.3f));
+    }));
 
     Start();
     std::cin.get();

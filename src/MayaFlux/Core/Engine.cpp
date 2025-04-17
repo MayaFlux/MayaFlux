@@ -72,8 +72,10 @@ int Engine::process_output(double* output_buffer, unsigned int num_frames)
         auto& channel_root = get_node_graph_manager()->get_root_node(channel);
         std::vector<double> channel_data = channel_root.process(num_frames);
 
-        std::copy(channel_data.begin(), channel_data.begin() + num_frames,
-            m_Buffer_manager->get_channel_data(channel).begin());
+        auto root_buffer = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(
+            m_Buffer_manager->get_channel(channel));
+        root_buffer->set_node_output(channel_data);
+
         m_Buffer_manager->process_channel(channel);
     }
 

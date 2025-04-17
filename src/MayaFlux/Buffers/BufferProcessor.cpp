@@ -54,4 +54,22 @@ const std::vector<std::shared_ptr<BufferProcessor>>& BufferProcessingChain::get_
 
     return empty_vector;
 }
+
+void BufferProcessingChain::merge_chain(const std::shared_ptr<BufferProcessingChain> other)
+{
+    for (const auto& [buffer, processors] : other->get_chain()) {
+        if (!m_buffer_processors.count(buffer)) {
+            m_buffer_processors.try_emplace(buffer, processors);
+        } else {
+            auto& target_processors = m_buffer_processors[buffer];
+            target_processors.reserve(target_processors.size() + processors.size());
+
+            for (const auto& processor : processors) {
+                if (std::find(target_processors.begin(), target_processors.end(), processor) == target_processors.end()) {
+                    target_processors.push_back(processor);
+                }
+            }
+        }
+    }
+}
 }

@@ -11,7 +11,7 @@ namespace MayaFlux::Buffers {
 
 class NodeSourceProcessor : public BufferProcessor {
 public:
-    NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix = 0.5f);
+    NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix = 0.5f, bool clear_before_process = false);
 
     void process(std::shared_ptr<AudioBuffer> buffer) override;
 
@@ -22,6 +22,7 @@ public:
 private:
     std::shared_ptr<Nodes::Node> m_node;
     float m_mix;
+    bool m_clear_before_process;
 };
 
 class NodeBuffer : public StandardAudioBuffer {

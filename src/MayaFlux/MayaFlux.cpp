@@ -237,15 +237,20 @@ Tasks::ActionToken Action(std::function<void()> func)
 // Audio Processing
 //-------------------------------------------------------------------------
 
-void add_processor(AudioProcessingFunction processor, unsigned int channel_id)
+void attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer)
 {
-    get_buffer_manager()->add_quick_process(processor, channel_id);
+    get_buffer_manager()->attach_quick_process(processor, buffer);
 }
 
-void add_processor(AudioProcessingFunction processor, const std::vector<unsigned int> channels)
+void attach_quick_process_to_channel(AudioProcessingFunction processor, unsigned int channel_id)
+{
+    get_buffer_manager()->attach_quick_process_to_channel(processor, channel_id);
+}
+
+void attach_quick_process_to_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels)
 {
     for (unsigned int channel : channels) {
-        get_buffer_manager()->add_quick_process(processor, channel);
+        get_buffer_manager()->attach_quick_process_to_channel(processor, channel);
     }
 }
 
@@ -263,9 +268,14 @@ Buffers::AudioBuffer& get_channel(unsigned int channel)
     return *get_buffer_manager()->get_channel(channel);
 }
 
-void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix)
+void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix, bool clear_before)
 {
-    get_buffer_manager()->connect_node_to_channel(node, channel_index, mix);
+    get_buffer_manager()->connect_node_to_channel(node, channel_index, mix, clear_before);
+}
+
+void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<Buffers::AudioBuffer> buffer, float mix, bool clear_before)
+{
+    get_buffer_manager()->connect_node_to_buffer(node, buffer, mix, clear_before);
 }
 
 //-------------------------------------------------------------------------

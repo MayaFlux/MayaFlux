@@ -118,9 +118,11 @@ Tasks::ActionToken Action(std::function<void()> func);
 // Audio Processing
 //-------------------------------------------------------------------------
 
-void add_processor(AudioProcessingFunction processor, unsigned int channel_id = 0);
+void attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
 
-void add_processor(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
+void attach_quick_process_to_channel(AudioProcessingFunction processor, unsigned int channel_id = 0);
+
+void attach_quick_process_to_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
 
 //-------------------------------------------------------------------------
 // Buffer Management
@@ -128,7 +130,9 @@ void add_processor(AudioProcessingFunction processor, const std::vector<unsigned
 
 Buffers::AudioBuffer& get_channel(unsigned int channel);
 
-void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index = 0, float mix = 0.5f);
+void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index = 0, float mix = 0.5f, bool clear_before = false);
+
+void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<Buffers::AudioBuffer> buffer, float mix = 0.5f, bool clear_before = true);
 
 //-------------------------------------------------------------------------
 // Node Graph Management
