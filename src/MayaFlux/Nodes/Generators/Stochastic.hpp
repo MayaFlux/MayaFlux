@@ -31,6 +31,11 @@ public:
         m_amplitude = amplitude;
     }
 
+    inline void set_normal_spread(double spread)
+    {
+        m_normal_spread = spread;
+    }
+
 private:
     double generate_distributed_sample();
     double transform_sample(double sample, double start, double end) const;
@@ -38,9 +43,10 @@ private:
 
     std::mt19937 m_random_engine;
     Utils::distribution m_type;
-    double m_current_start = -1.0;
-    double m_current_end = 1.0;
-    double m_amplitude = 1.0;
+    double m_current_start;
+    double m_current_end;
+    double m_amplitude;
+    double m_normal_spread;
 };
 
 }

@@ -30,6 +30,9 @@ public:
 
     void set_frequency(float frequency);
 
+    inline float get_frequency() const { return m_frequency; }
+    inline float get_amplitude() const { return m_amplitude; }
+
     inline void set_amplitude(float amplitude)
     {
         m_amplitude = amplitude;

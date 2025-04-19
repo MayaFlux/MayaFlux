@@ -29,8 +29,6 @@ Device::Device(RtAudio* Context)
     m_Num_in_devices = m_Input_devices.size();
     m_Num_out_devices = m_Output_devices.size();
 
-    std::cout << "Found " << m_Num_in_devices << " input and " << m_Num_out_devices << " output devices\n";
-
     m_default_out_device = Context->getDefaultOutputDevice();
     m_default_in_device = Context->getDefaultInputDevice();
 }

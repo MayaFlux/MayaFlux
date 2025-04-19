@@ -13,6 +13,7 @@
 #include "vector"
 
 // C style
+#include <cassert>
 #include <cmath>
 #include <complex>
 #include <cstdint>

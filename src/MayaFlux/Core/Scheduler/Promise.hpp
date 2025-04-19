@@ -17,12 +17,27 @@ struct promise_type {
 
     u_int64_t next_sample = 0;
     bool auto_resume = true;
+    bool should_terminate = false;
     std::unordered_map<std::string, std::any> state;
 
     template <typename T>
-    void set_state(const std::string& key, T value);
+    inline void set_state(const std::string& key, T value)
+    {
+        state[key] = std::make_any<T>(std::move(value));
+    }
 
     template <typename T>
-    T* get_state(const std::string& key);
+    inline T* get_state(const std::string& key)
+    {
+        auto it = state.find(key);
+        if (it != state.end()) {
+            try {
+                return std::any_cast<T>(&it->second);
+            } catch (const std::bad_any_cast&) {
+                return nullptr;
+            }
+        }
+        return nullptr;
+    }
 };
 }

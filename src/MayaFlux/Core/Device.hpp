@@ -21,6 +21,16 @@ namespace Core {
             return m_default_in_device;
         }
 
+        inline const std::vector<RtAudio::DeviceInfo>& get_input_devices() const
+        {
+            return m_Input_devices;
+        }
+
+        inline const std::vector<RtAudio::DeviceInfo>& get_output_devices() const
+        {
+            return m_Output_devices;
+        }
+
     private:
         unsigned int m_Num_in_devices, m_Num_out_devices;
         std::vector<RtAudio::DeviceInfo> m_Input_devices;

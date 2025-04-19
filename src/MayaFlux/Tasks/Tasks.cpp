@@ -7,11 +7,13 @@ namespace MayaFlux::Tasks {
 Core::Scheduler::SoundRoutine metro(Core::Scheduler::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
 {
     u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
-    u_int64_t next_sample = 0;
+    auto& promise = co_await Tasks::GetPromise {};
 
     while (true) {
+        if (promise.should_terminate) {
+            break;
+        }
         callback();
-        next_sample += interval_samples;
         co_await SampleDelay(interval_samples);
     }
 }

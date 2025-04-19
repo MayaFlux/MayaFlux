@@ -35,7 +35,13 @@ public:
 
     void Start();
 
+    void Pause();
+
+    void Resume();
+
     void End();
+
+    bool is_running() const;
 
     //-------------------------------------------------------------------------
     // Configuration Access
@@ -103,6 +109,8 @@ private:
     std::unique_ptr<Device> m_Device;
     std::unique_ptr<Stream> m_Stream_manager;
     GlobalStreamInfo m_stream_info;
+
+    bool m_is_paused;
 
     //-------------------------------------------------------------------------
     // Core Components

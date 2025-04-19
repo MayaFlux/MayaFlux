@@ -37,24 +37,23 @@ int main()
     // auto node_player = NodeTimer(*MayaFlux::get_scheduler());
     // node_player.play_for(sine, 3);
 
-    /*
-        filter >> dac;
-        auto filter2 = std::make_shared<FIR>(sine3, std::vector<double> { 0.2, 0.2, 0.2, 0.2, 0.2 });
-        filter2 >> Time(3.0);
+    filter >> dac;
+    auto filter2 = std::make_shared<FIR>(sine3, std::vector<double> { 0.2, 0.2, 0.2, 0.2, 0.2 });
+    filter2 >> Time(3.0);
 
-        EventChain()
-            .then([&]() { sine >> dac; })
-            .then([]() { std::cout << "Waiting\n"; }, 2.0)
-            .then([&]() {
-                MayaFlux::remove_node_from_root(sine);
-                sine2 >> dac;
-            },
-                1.0)
-            .then([&]() {
+    EventChain()
+        .then([&]() { sine >> dac; })
+        .then([]() { std::cout << "Waiting\n"; }, 2.0)
+        .then([&]() {
+            MayaFlux::remove_node_from_root(sine);
+            sine2 >> dac;
+        },
+            1.0)
+        .then([&]() {
                 MayaFlux::remove_node_from_root(sine2);
                 std::cout << "Waiting again\n"; }, 3.0)
-            .start();
-    */
+        .start();
+
     /*
         (
             Sequence()
@@ -104,7 +103,22 @@ int main()
         noise->set_amplitude(get_uniform_random(0.1f, 0.3f));
     }));
 
+    schedule_task("printer", schedule_metro(1.0, [noise]() {
+        std::cout << "Bangin\n";
+    }));
+
     Start();
+
+    std::cout << "Press any key to pause\n";
+    std::cin.get();
+
+    Pause();
+
+    std::cout << "Press any key to resume\n";
+    std::cin.get();
+    Resume();
+
+    std::cout << "Press any key to stop\n";
     std::cin.get();
     End();
 

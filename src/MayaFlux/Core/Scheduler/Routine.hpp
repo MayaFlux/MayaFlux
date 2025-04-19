@@ -38,10 +38,16 @@ public:
     void update_params(Args... args);
 
     template <typename T>
-    void set_state(const std::string& key, T value);
+    inline void set_state(const std::string& key, T value)
+    {
+        m_handle.promise().set_state(key, value);
+    }
 
     template <typename T>
-    T* get_state(const std::string& key);
+    inline T* get_state(const std::string& key)
+    {
+        return m_handle.promise().get_state<T>(key);
+    }
 
 private:
     std::coroutine_handle<promise_type> m_handle;

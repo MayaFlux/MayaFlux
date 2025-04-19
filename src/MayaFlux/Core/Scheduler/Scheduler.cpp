@@ -17,12 +17,15 @@ void TaskScheduler::process_sample()
     u_int64_t current_sample = m_clock.current_sample();
 
     for (auto& task : m_tasks) {
-        task->try_resume(current_sample);
+        if (task)
+            task->try_resume(current_sample);
     }
 
-    m_tasks.erase(std::remove_if(
-                      m_tasks.begin(), m_tasks.end(),
-                      [](const std::shared_ptr<SoundRoutine>& task) { return !task->is_active(); }),
+    m_tasks.erase(
+        std::remove_if(m_tasks.begin(), m_tasks.end(),
+            [](const std::shared_ptr<SoundRoutine>& task) {
+                return !task || (task->get_handle() && task->get_handle().done());
+            }),
         m_tasks.end());
 
     m_clock.tick();
@@ -37,9 +40,19 @@ void TaskScheduler::process_buffer(unsigned int buffer_size)
 
 bool TaskScheduler::cancel_task(std::shared_ptr<SoundRoutine> task)
 {
+    if (!task) {
+        return false;
+    }
     auto it = std::find(m_tasks.begin(), m_tasks.end(), task);
     if (it != m_tasks.end()) {
-        (*it)->get_handle().destroy();
+
+        if (auto& routine = *it; routine->is_active()) {
+            auto& promise = routine->get_handle().promise();
+            promise.should_terminate = true;
+            promise.auto_resume = true;
+            promise.next_sample = 0;
+        }
+
         m_tasks.erase(it);
         return true;
     }

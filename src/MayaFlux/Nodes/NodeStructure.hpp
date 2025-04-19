@@ -14,6 +14,8 @@ public:
         return m_Nodes.size();
     }
 
+    inline void clear_all_nodes() { m_Nodes.clear(); }
+
 private:
     std::vector<std::shared_ptr<Node>> m_Nodes;
 };

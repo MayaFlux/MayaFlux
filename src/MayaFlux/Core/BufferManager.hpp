@@ -44,13 +44,10 @@ public:
 
     void attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
     void attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index);
-    void attach_quick_processor_to_all(AudioProcessingFunction processor);
+    void attach_quick_process_to_all(AudioProcessingFunction processor);
 
     void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix = 0.5, bool clear_before = false);
     void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<Buffers::AudioBuffer>, float mix = 0.5, bool clear_before = true);
-
-    // void remove_processor(std::shared_ptr<Buffers::BufferProcessor> processor, u_int32_t channel_index);
-    // void remove_processor_from_all(std::shared_ptr<Buffers::BufferProcessor> processor);
 
     template <typename BufferType, typename... Args>
     std::shared_ptr<BufferType> create_specialized_buffer(u_int32_t channel_index, Args&&... args)
@@ -66,9 +63,6 @@ public:
         return buffer;
     }
 
-    // template <typename... Args>
-    // std::shared_ptr<Buffers::AudioBuffer> create_specialized_buffer(u_int32_t channel_index, Args&&... args);
-
     void fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames);
     void fill_interleaved(double* interleaved_data, u_int32_t num_frames) const;
 
@@ -79,8 +73,6 @@ private:
     u_int32_t m_num_frames;
 
     std::vector<std::shared_ptr<Buffers::RootAudioBuffer>> m_root_buffers;
-
-    // std::vector<std::shared_ptr<Buffers::AudioBuffer>> m_audio_buffers;
 
     std::vector<std::shared_ptr<Buffers::BufferProcessingChain>> m_channel_processing_chains;
 

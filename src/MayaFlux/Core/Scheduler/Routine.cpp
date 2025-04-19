@@ -7,44 +7,6 @@ SoundRoutine promise_type::get_return_object()
     return SoundRoutine(std::coroutine_handle<promise_type>::from_promise(*this));
 }
 
-template <typename T>
-void SoundRoutine::promise_type::set_state(const std::string& key, T value)
-{
-    state[key] = std::make_any<T>(std::move(value));
-}
-
-template <typename T>
-T* SoundRoutine::promise_type::get_state(const std::string& key)
-{
-    auto it = state.find(key);
-    if (it != state.end()) {
-        try {
-            return std::any_cast<T>(&it->second);
-        } catch (const std::bad_any_cast&) {
-            return nullptr;
-        }
-    }
-    return nullptr;
-}
-
-template <typename T>
-void SoundRoutine::set_state(const std::string& key, T value)
-{
-    m_handle.promise().set_state(key, value);
-}
-
-template <typename T>
-T* SoundRoutine::get_state(const std::string& key)
-{
-    return m_handle.promise().get_state<T>(key);
-}
-
-// Explicit template instantiations
-template void SoundRoutine::promise_type::set_state<float>(const std::string& key, float value);
-template void SoundRoutine::promise_type::set_state<bool>(const std::string& key, bool value);
-template float* SoundRoutine::promise_type::get_state<float>(const std::string& key);
-template bool* SoundRoutine::promise_type::get_state<bool>(const std::string& key);
-
 SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
     : m_handle(h)
 {

@@ -47,6 +47,10 @@ void Init(Core::GlobalStreamInfo stream_info);
 
 void Start();
 
+void Pause();
+
+void Resume();
+
 void End();
 
 //-------------------------------------------------------------------------

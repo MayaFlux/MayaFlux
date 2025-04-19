@@ -108,6 +108,6 @@ bool Stream::is_open() const
 
 void Stream::handle_stream_error(RtAudioErrorType error)
 {
-    std::cerr << "RtAudio error: " << m_engine->get_handle()->getErrorText() << std::endl;
+    std::cerr << "RtAudio error: " << m_engine->get_handle()->getErrorText() << " of type: " << error << std::endl;
 }
 }

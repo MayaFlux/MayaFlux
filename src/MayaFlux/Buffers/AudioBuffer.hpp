@@ -58,7 +58,7 @@ public:
     void set_default_processor(std::shared_ptr<BufferProcessor> processor) override;
     std::shared_ptr<BufferProcessor> get_default_processor() const override { return m_default_processor; }
 
-    std::shared_ptr<BufferProcessingChain> get_processing_chain() override { return m_processing_chain; }
+    std::shared_ptr<BufferProcessingChain> get_processing_chain() override { return m_processing_chain.lock(); }
     void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain) override;
 
     inline virtual double& get_sample(u_int32_t index) override { return get_data()[index]; }
@@ -70,7 +70,7 @@ protected:
     u_int32_t m_sample_rate = 48000;
 
     std::shared_ptr<BufferProcessor> m_default_processor;
-    std::shared_ptr<BufferProcessingChain> m_processing_chain;
+    std::weak_ptr<BufferProcessingChain> m_processing_chain;
 
     virtual std::shared_ptr<BufferProcessor> create_default_processor() { return nullptr; }
 };

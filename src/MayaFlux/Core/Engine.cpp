@@ -15,6 +15,7 @@ Engine::Engine()
     : m_Context(std::make_unique<RtAudio>())
     , m_Device(std::make_unique<Device>(get_handle()))
     , m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
+    , m_is_paused(false)
 {
 }
 
@@ -39,14 +40,101 @@ void Engine::Start()
     m_Stream_manager->start();
 }
 
-void Engine::End()
+void Engine::Pause()
 {
-    if (m_Stream_manager) {
+    if (m_Stream_manager && m_Stream_manager->is_running()) {
         m_Stream_manager->stop();
-        m_Stream_manager->close();
+    } else {
+        return;
     }
 
+    for (auto& [name, task] : m_named_tasks) {
+        if (task && task->is_active()) {
+            bool current_auto_resume = task->get_handle().promise().auto_resume;
+            task->set_state<bool>("was_auto_resume", current_auto_resume);
+
+            task->get_handle().promise().auto_resume = false;
+        }
+    }
+    m_is_paused = true;
+}
+
+void Engine::Resume()
+{
+    if (!m_is_paused) {
+        return;
+    }
+    m_is_paused = false;
+
+    for (auto& [name, task] : m_named_tasks) {
+        if (task && task->is_active()) {
+            bool* was_auto_resume = task->get_state<bool>("was_auto_resume");
+            if (was_auto_resume) {
+                task->get_handle().promise().auto_resume = *was_auto_resume;
+            } else {
+                task->get_handle().promise().auto_resume = true;
+            }
+        }
+    }
+
+    if (m_Stream_manager && !m_Stream_manager->is_running() && m_Stream_manager->is_open()) {
+        m_Stream_manager->start();
+    }
+}
+
+void Engine::End()
+{
+    for (auto& [name, task] : m_named_tasks) {
+        if (task && task->is_active()) {
+            task->get_handle().promise().should_terminate = true;
+
+            task->get_handle().promise().auto_resume = true;
+            task->get_handle().promise().next_sample = 0;
+        }
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    if (m_Stream_manager) {
+        if (m_Stream_manager->is_running()) {
+            m_Stream_manager->stop();
+        }
+        if (m_Stream_manager->is_open()) {
+            m_Stream_manager->close();
+        }
+    }
+
+    for (auto& [name, task] : m_named_tasks) {
+        if (task && task->is_active()) {
+            m_scheduler->cancel_task(task);
+        }
+    }
     m_named_tasks.clear();
+
+    if (m_Buffer_manager && m_node_graph_manager) {
+        for (unsigned int i = 0; i < m_stream_info.num_channels; i++) {
+            auto channel_buffer = m_Buffer_manager->get_channel(i);
+            if (channel_buffer) {
+                channel_buffer->clear();
+
+                if (auto root_buffer = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(channel_buffer)) {
+                    for (auto& child : root_buffer->get_child_buffers()) {
+                        child->clear();
+                    }
+                }
+            }
+
+            m_node_graph_manager->get_root_node(i).clear_all_nodes();
+        }
+    }
+}
+
+bool Engine::is_running() const
+{
+    if (!m_Stream_manager) {
+        return false;
+    }
+    return m_Stream_manager->is_running();
 }
 
 //-------------------------------------------------------------------------

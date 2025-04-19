@@ -198,12 +198,6 @@ void BufferManager::remove_processor_from_all(std::shared_ptr<Buffers::BufferPro
     }
 }
 
-void BufferManager::attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index)
-{
-    auto quick_process = std::make_shared<QuickProcess>(processor);
-    add_processor_to_channel(quick_process, channel_index);
-}
-
 void BufferManager::connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix, bool clear_before)
 {
     auto processor = std::make_shared<Buffers::NodeSourceProcessor>(node, mix, clear_before);
@@ -222,7 +216,13 @@ void BufferManager::attach_quick_process(AudioProcessingFunction processor, std:
     add_processor(quick_process, buffer);
 }
 
-void BufferManager::attach_quick_processor_to_all(AudioProcessingFunction processor)
+void BufferManager::attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index)
+{
+    auto quick_process = std::make_shared<QuickProcess>(processor);
+    add_processor_to_channel(quick_process, channel_index);
+}
+
+void BufferManager::attach_quick_process_to_all(AudioProcessingFunction processor)
 {
     auto quick_process = std::make_shared<QuickProcess>(processor);
     add_processor_to_all(quick_process);

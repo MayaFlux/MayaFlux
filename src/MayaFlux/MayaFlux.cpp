@@ -85,6 +85,20 @@ void Start()
     get_context()->Start();
 }
 
+void Pause()
+{
+    if (internal::initialized) {
+        get_context()->Pause();
+    }
+}
+
+void Resume()
+{
+    if (internal::initialized) {
+        get_context()->Resume();
+    }
+}
+
 void End()
 {
     if (internal::initialized) {
