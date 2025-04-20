@@ -15,10 +15,8 @@ public:
     SoundRoutine& operator=(SoundRoutine&& other) noexcept;
     ~SoundRoutine();
 
-    inline bool is_active() const
-    {
-        return m_handle && !m_handle.done();
-    }
+    bool initialize_state(u_int64_t current_sample = 0u);
+    bool is_active() const;
 
     inline u_int64_t next_execution() const
     {
@@ -34,8 +32,13 @@ public:
 
     bool restart();
 
-    template <typename T, typename... Args>
-    void update_params(Args... args);
+    template <typename... Args>
+    inline void update_params(Args... args)
+    {
+        if (m_handle) {
+            update_params_impl(m_handle.promise(), std::forward<Args>(args)...);
+        }
+    }
 
     template <typename T>
     inline void set_state(const std::string& key, T value)
@@ -53,7 +56,13 @@ private:
     std::coroutine_handle<promise_type> m_handle;
 
     template <typename T, typename... Args>
-    void update_params_impl(promise_type& promise, const std::string& key, T value, Args... args);
+    inline void update_params_impl(promise_type& promise, const std::string& key, T value, Args... args)
+    {
+        promise.set_state(key, std::move(value));
+        if constexpr (sizeof...(args) > 0) {
+            update_params_impl(promise, std::forward<Args>(args)...);
+        }
+    }
 };
 
 }

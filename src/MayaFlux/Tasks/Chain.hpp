@@ -7,6 +7,7 @@ namespace MayaFlux::Tasks {
 class EventChain {
 public:
     EventChain();
+    EventChain(Core::Scheduler::TaskScheduler& scheduler);
 
     EventChain& then(std::function<void()> action, double delay_seconds = 0.f);
 
@@ -38,6 +39,8 @@ class Sequence {
 public:
     Sequence& operator>>(const ActionToken& token);
     void execute();
+
+    void execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Core::Scheduler::TaskScheduler> scheduler);
 
 private:
     std::vector<ActionToken> tokens;

@@ -103,7 +103,7 @@ float* get_line_value(const std::string& name);
 
 std::function<float()> line_value(const std::string& name);
 
-void schedule_task(std::string name, Core::Scheduler::SoundRoutine&& task);
+void schedule_task(std::string name, Core::Scheduler::SoundRoutine&& task, bool initialize = false);
 
 bool cancel_task(const std::string& name);
 

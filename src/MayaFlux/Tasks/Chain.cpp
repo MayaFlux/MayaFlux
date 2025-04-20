@@ -1,14 +1,18 @@
 #include "Chain.hpp"
 #include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 #include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Tasks/Awaiters.hpp"
-
-MayaFlux::Tasks::DAC& dac_loc = MayaFlux::Tasks::DAC::instance();
 
 namespace MayaFlux::Tasks {
 
 EventChain::EventChain()
     : m_Scheduler(*MayaFlux::get_scheduler())
+{
+}
+
+EventChain::EventChain(Core::Scheduler::TaskScheduler& scheduler)
+    : m_Scheduler(scheduler)
 {
 }
 
@@ -70,15 +74,21 @@ Sequence& Sequence::operator>>(const ActionToken& token)
 
 void Sequence::execute()
 {
-    EventChain chain;
+    execute(MayaFlux::get_node_graph_manager(), MayaFlux::get_scheduler());
+}
+
+void Sequence::execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Core::Scheduler::TaskScheduler> scheduler)
+{
+    EventChain chain(*scheduler);
     double accumulated_time = 0.f;
 
     for (size_t i = 0; i < tokens.size(); i++) {
         const auto& token = tokens[i];
 
         if (token.type == Utils::ActionType::NODE) {
-            chain.then([node = token.node]() {
-                node >> dac_loc;
+            chain.then([node = token.node, node_manager]() {
+                auto& root = node_manager->get_root_node();
+                root.register_node(node);
             },
                 accumulated_time);
             accumulated_time = 0.f;

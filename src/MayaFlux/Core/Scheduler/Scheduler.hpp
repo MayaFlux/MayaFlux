@@ -11,7 +11,7 @@ class TaskScheduler {
 public:
     TaskScheduler(unsigned int sample_rate = 48000);
 
-    void add_task(std::shared_ptr<SoundRoutine> task);
+    void add_task(std::shared_ptr<SoundRoutine> task, bool initialize = false);
     void process_sample();
     void process_buffer(unsigned int buffer_size);
 

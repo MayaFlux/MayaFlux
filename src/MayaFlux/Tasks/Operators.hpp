@@ -6,15 +6,18 @@ namespace MayaFlux::Tasks {
 
 class TimeOperation {
 public:
-    inline TimeOperation(double seconds)
-        : m_seconds(seconds)
-    {
-    }
+    TimeOperation(double seconds);
+
+    TimeOperation(double seconds, Core::Scheduler::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
 
     inline double get_seconds() const { return m_seconds; }
 
 private:
     double m_seconds;
+    Core::Scheduler::TaskScheduler& m_scheduler;
+    Nodes::NodeGraphManager& m_graph_manager;
+
+    friend void operator>>(std::shared_ptr<Nodes::Node>, const TimeOperation&);
 };
 
 class DAC {

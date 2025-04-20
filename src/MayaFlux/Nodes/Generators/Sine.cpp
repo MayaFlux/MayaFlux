@@ -83,6 +83,7 @@ void Sine::clear_modulators()
 {
     m_frequency_modulator = nullptr;
     m_amplitude_modulator = nullptr;
+    reset(m_frequency, m_amplitude, m_offset);
 }
 
 double Sine::process_sample(double input)
@@ -106,9 +107,9 @@ double Sine::process_sample(double input)
     if (m_amplitude_modulator) {
         float mod_value = m_amplitude_modulator->process_sample(0.f);
         current_amplitude += mod_value;
-        m_amplitude = current_amplitude;
+        // m_amplitude = current_amplitude;
     }
-    current_sample *= m_amplitude;
+    current_sample *= current_amplitude;
 
     if (input) {
         current_sample += input;
@@ -138,6 +139,15 @@ void Sine::register_to_defult()
 
         MayaFlux::add_node_to_root(std::make_shared<Sine>(*this));
     }
+}
+
+void Sine::reset(float frequency, float amplitude, float offset)
+{
+    m_phase = 0;
+    m_frequency = frequency;
+    m_amplitude = amplitude;
+    m_offset = offset;
+    m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_sample_rate();
 }
 
 void Sine::printGraph()

@@ -10,6 +10,9 @@ SoundRoutine promise_type::get_return_object()
 SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
     : m_handle(h)
 {
+    if (!m_handle || !m_handle.address()) {
+        throw std::invalid_argument("Invalid coroutine handle");
+    }
 }
 
 SoundRoutine::SoundRoutine(const SoundRoutine& other)
@@ -44,7 +47,7 @@ SoundRoutine::SoundRoutine(SoundRoutine&& other) noexcept
 SoundRoutine& SoundRoutine::operator=(SoundRoutine&& other) noexcept
 {
     if (this != &other) {
-        if (m_handle)
+        if (m_handle && m_handle.address())
             m_handle.destroy();
 
         m_handle = std::exchange(other.m_handle, {});
@@ -54,8 +57,26 @@ SoundRoutine& SoundRoutine::operator=(SoundRoutine&& other) noexcept
 
 SoundRoutine::~SoundRoutine()
 {
-    if (m_handle)
+    if (m_handle && m_handle.address())
         m_handle.destroy();
+}
+
+bool SoundRoutine::is_active() const
+{
+    if (!m_handle) {
+        return false;
+    }
+    return m_handle.address() != nullptr && !m_handle.done();
+}
+
+bool SoundRoutine::initialize_state(u_int64_t current_sample)
+{
+    if (!m_handle || !m_handle.address() || m_handle.done()) {
+        return false;
+    }
+
+    m_handle.resume();
+    return true;
 }
 
 bool SoundRoutine::try_resume(u_int64_t current_sample)
@@ -84,23 +105,6 @@ bool SoundRoutine::restart()
         return true;
     }
     return false;
-}
-
-template <typename T, typename... Args>
-void SoundRoutine::update_params(Args... args)
-{
-    if (m_handle) {
-        update_params_impl(m_handle.promise(), std::forward<Args>(args)...);
-    }
-}
-
-template <typename T, typename... Args>
-void SoundRoutine::update_params_impl(promise_type& promise, const std::string& key, T value, Args... args)
-{
-    promise.set_state(key, std::move(value));
-    if constexpr (sizeof...(args) > 0) {
-        update_params_impl(promise, std::forward<Args>(args)...);
-    }
 }
 
 }

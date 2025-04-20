@@ -1,6 +1,7 @@
 #include "Timers.hpp"
 #include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 #include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Tasks/Awaiters.hpp"
 
 namespace MayaFlux::Tasks {
@@ -36,7 +37,8 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
 void Timer::cancel()
 {
     if (m_active && m_routine) {
-        m_routine->get_handle().destroy();
+        m_Scheduler.cancel_task(m_routine);
+        m_routine = nullptr;
         m_active = false;
     }
 }
@@ -66,6 +68,14 @@ bool TimedAction::is_pending() const
 
 NodeTimer::NodeTimer(Core::Scheduler::TaskScheduler& scheduler)
     : m_scheduler(scheduler)
+    , m_node_graph_manager(*MayaFlux::get_node_graph_manager())
+    , m_timer(scheduler)
+{
+}
+
+NodeTimer::NodeTimer(Core::Scheduler::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
+    : m_scheduler(scheduler)
+    , m_node_graph_manager(graph_manager)
     , m_timer(scheduler)
 {
 }
@@ -77,10 +87,10 @@ void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seco
     m_current_node = node;
     m_current_channel = channel;
 
-    MayaFlux::add_node_to_root(node);
+    m_node_graph_manager.add_to_root(node, channel);
 
     m_timer.schedule(duration_seconds, [this, node, channel]() {
-        MayaFlux::remove_node_from_root(node, channel);
+        m_node_graph_manager.get_root_node(channel).unregister_node(node);
         m_current_node = nullptr;
     });
 }
@@ -93,11 +103,11 @@ void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::fun
     m_current_channel = channel;
 
     setup_func(node);
-    MayaFlux::add_node_to_root(node, channel);
+    m_node_graph_manager.add_to_root(node, channel);
 
     m_timer.schedule(duration_seconds, [this, node, cleanup_func, channel]() {
         cleanup_func(node);
-        MayaFlux::remove_node_from_root(node, channel);
+        m_node_graph_manager.get_root_node(channel).unregister_node(node);
         m_current_node = nullptr;
     });
 }
@@ -105,7 +115,7 @@ void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::fun
 void NodeTimer::cancel()
 {
     if (m_timer.is_active() && m_current_node) {
-        MayaFlux::remove_node_from_root(m_current_node, m_current_channel);
+        m_node_graph_manager.get_root_node(m_current_channel).unregister_node(m_current_node);
         m_current_node = nullptr;
     }
     m_timer.cancel();

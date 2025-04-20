@@ -212,13 +212,13 @@ std::function<float()> Engine::line_value(const std::string& name)
     };
 }
 
-void Engine::schedule_task(std::string name, Scheduler::SoundRoutine&& task)
+void Engine::schedule_task(std::string name, Scheduler::SoundRoutine&& task, bool initialize)
 {
     cancel_task(name);
 
     auto task_ptr = std::make_shared<Scheduler::SoundRoutine>(std::move(task));
 
-    m_scheduler->add_task(task_ptr);
+    m_scheduler->add_task(task_ptr, initialize);
 
     m_named_tasks[name] = task_ptr;
 }

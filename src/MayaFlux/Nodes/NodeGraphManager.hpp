@@ -16,7 +16,12 @@ public:
     }
 
     template <typename NodeType, typename... Args>
-    std::shared_ptr<NodeType> create_node(const std::string& id, Args&&... args);
+    inline std::shared_ptr<NodeType> create_node(const std::string& id, Args&&... args)
+    {
+        auto node = std::make_shared<NodeType>(std::forward<Args>(args)...);
+        m_Node_registry[id] = node;
+        return node;
+    }
 
     std::shared_ptr<Node> get_node(const std::string& id);
 

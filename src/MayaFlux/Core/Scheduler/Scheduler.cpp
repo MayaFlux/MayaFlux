@@ -7,9 +7,14 @@ TaskScheduler::TaskScheduler(unsigned int sample_rate)
 {
 }
 
-void TaskScheduler::add_task(std::shared_ptr<SoundRoutine> task)
+void TaskScheduler::add_task(std::shared_ptr<SoundRoutine> task, bool initialize)
 {
-    m_tasks.push_back(task);
+    if (task) {
+        if (initialize) {
+            task->initialize_state(m_clock.current_sample());
+        }
+        m_tasks.push_back(task);
+    }
 }
 
 void TaskScheduler::process_sample()

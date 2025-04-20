@@ -16,14 +16,6 @@ RootNode& NodeGraphManager::get_root_node(unsigned int channel)
     return *m_channel_root_nodes[channel];
 }
 
-template <typename NodeType, typename... Args>
-std::shared_ptr<NodeType> NodeGraphManager::create_node(const std::string& id, Args&&... args)
-{
-    auto node = std::make_shared<NodeType>(std::forward<Args>(args)...);
-    m_Node_registry[id] = node;
-    return node;
-}
-
 std::shared_ptr<Node> NodeGraphManager::get_node(const std::string& id)
 {
     auto it = m_Node_registry.find(id);

@@ -2,6 +2,7 @@
 
 namespace MayaFlux::Nodes {
 class Node;
+class NodeGraphManager;
 }
 
 namespace MayaFlux::Tasks {
@@ -44,6 +45,7 @@ private:
 class NodeTimer {
 public:
     NodeTimer(Core::Scheduler::TaskScheduler& scheduler);
+    NodeTimer(Core::Scheduler::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
     ~NodeTimer() = default;
 
     void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, unsigned int channel = 0);
@@ -60,6 +62,7 @@ public:
 
 private:
     Core::Scheduler::TaskScheduler& m_scheduler;
+    Nodes::NodeGraphManager& m_node_graph_manager;
     Timer m_timer;
     std::shared_ptr<Nodes::Node> m_current_node;
     unsigned int m_current_channel = 0;

@@ -18,9 +18,9 @@ double FIR::process_sample(double input)
         return input;
     }
 
+    double processed_input = input;
     if (inputNode) {
-        input += inputNode->process_sample(input);
-        input *= 0.5f;
+        processed_input = inputNode->process_sample(input);
     }
 
     update_inputs(input);

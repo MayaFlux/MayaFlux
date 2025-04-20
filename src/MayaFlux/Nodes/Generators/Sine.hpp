@@ -49,6 +49,8 @@ public:
     void set_amplitude_modulator(std::shared_ptr<Node> modulator);
     void clear_modulators();
 
+    void reset(float frequency = 440, float amplitude = 0.5f, float offset = 0);
+
 private:
     double m_phase_inc, m_phase;
     float m_amplitude, m_frequency, m_offset;

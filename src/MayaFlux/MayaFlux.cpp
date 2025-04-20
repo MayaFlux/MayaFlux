@@ -217,9 +217,9 @@ std::function<float()> line_value(const std::string& name)
     return get_context()->line_value(name);
 }
 
-void schedule_task(std::string name, Core::Scheduler::SoundRoutine&& task)
+void schedule_task(std::string name, Core::Scheduler::SoundRoutine&& task, bool initialize)
 {
-    get_context()->schedule_task(name, std::move(task));
+    get_context()->schedule_task(name, std::move(task), initialize);
 }
 
 bool cancel_task(const std::string& name)

@@ -35,7 +35,7 @@ std::vector<double> NoiseEngine::random_array(double start, double end, unsigned
     samples.reserve(num_samples);
 
     for (unsigned int i = 0; i < num_samples; ++i) {
-        samples.push_back(transform_sample(generate_distributed_sample(), start, end));
+        samples.push_back(transform_sample(generate_distributed_sample(), start, end) * m_amplitude);
     }
 
     return samples;

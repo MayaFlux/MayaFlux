@@ -59,10 +59,10 @@ void Filter::set_coefs(const std::vector<double>& new_coefs, Utils::coefficients
 
 void Filter::update_inputs(double current_sample)
 {
-    input_history[0] = current_sample;
     for (unsigned int i = input_history.size() - 1; i > 0; i--) {
         input_history[i] = input_history[i - 1];
     }
+    input_history[0] = current_sample;
 }
 
 void Filter::update_outputs(double current_sample)
