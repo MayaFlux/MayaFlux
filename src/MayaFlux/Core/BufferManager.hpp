@@ -42,9 +42,11 @@ public:
     void remove_processor_from_channel(std::shared_ptr<Buffers::BufferProcessor> processor, u_int32_t channel_index);
     void remove_processor_from_all(std::shared_ptr<Buffers::BufferProcessor> processor);
 
-    void attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
-    void attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index);
-    void attach_quick_process_to_all(AudioProcessingFunction processor);
+    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
+    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index);
+    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_all(AudioProcessingFunction processor);
+
+    void set_final_processor_for_root_buffers(std::shared_ptr<Buffers::BufferProcessor> processor);
 
     void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix = 0.5, bool clear_before = false);
     void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<Buffers::AudioBuffer>, float mix = 0.5, bool clear_before = true);

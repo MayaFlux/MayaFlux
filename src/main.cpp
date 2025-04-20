@@ -37,6 +37,7 @@ int main()
     // auto node_player = NodeTimer(*MayaFlux::get_scheduler());
     // node_player.play_for(sine, 3);
 
+    /*
     filter >> dac;
     auto filter2 = std::make_shared<FIR>(sine3, std::vector<double> { 0.2, 0.2, 0.2, 0.2, 0.2 });
     filter2 >> Time(3.0);
@@ -53,6 +54,7 @@ int main()
                 MayaFlux::remove_node_from_root(sine2);
                 std::cout << "Waiting again\n"; }, 3.0)
         .start();
+        */
 
     /*
         (
@@ -101,10 +103,6 @@ int main()
 
     schedule_task("pluck", schedule_metro(1.0, [noise]() {
         noise->set_amplitude(get_uniform_random(0.1f, 0.3f));
-    }));
-
-    schedule_task("printer", schedule_metro(1.0, [noise]() {
-        std::cout << "Bangin\n";
     }));
 
     Start();

@@ -39,7 +39,7 @@ bool is_engine_initialized();
 
 Core::Engine* get_context();
 
-void set_context(Core::Engine& instance);
+void set_context(Core::Engine* instance);
 
 void Init(u_int32_t sample_rate = 48000, u_int32_t buffer_size = 512, u_int32_t num_out_channels = 2);
 

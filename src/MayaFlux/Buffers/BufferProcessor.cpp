@@ -37,6 +37,12 @@ void BufferProcessingChain::process(std::shared_ptr<AudioBuffer> buffer)
     }
 }
 
+void BufferProcessingChain::add_final_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer)
+{
+    processor->on_attach(buffer);
+    m_final_processors[buffer] = processor;
+}
+
 bool BufferProcessingChain::has_processors(std::shared_ptr<AudioBuffer> buffer) const
 {
     auto it = m_buffer_processors.find(buffer);
@@ -53,6 +59,14 @@ const std::vector<std::shared_ptr<BufferProcessor>>& BufferProcessingChain::get_
     }
 
     return empty_vector;
+}
+
+void BufferProcessingChain::process_final(std::shared_ptr<AudioBuffer> buffer)
+{
+    auto final_it = m_final_processors.find(buffer);
+    if (final_it != m_final_processors.end()) {
+        final_it->second->process(buffer);
+    }
 }
 
 void BufferProcessingChain::merge_chain(const std::shared_ptr<BufferProcessingChain> other)

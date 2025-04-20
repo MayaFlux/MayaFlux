@@ -40,6 +40,9 @@ BufferManager::BufferManager(u_int32_t num_channels, u_int32_t num_frames)
 
         buffer->set_processing_chain(chain);
     }
+
+    auto limiter = std::make_shared<Buffers::FinalLimiterProcessor>();
+    set_final_processor_for_root_buffers(limiter);
 }
 
 std::shared_ptr<Buffers::AudioBuffer> BufferManager::get_channel(u_int32_t channel_index)
@@ -124,6 +127,10 @@ void BufferManager::process_channel(u_int32_t channel_index)
     root_buffer->process_default();
     m_channel_processing_chains[channel_index]->process(root_buffer);
     m_global_processing_chain->process(root_buffer);
+
+    if (auto chain = root_buffer->get_processing_chain()) {
+        chain->process_final(root_buffer);
+    }
 }
 
 void BufferManager::process_all_channels()
@@ -198,6 +205,15 @@ void BufferManager::remove_processor_from_all(std::shared_ptr<Buffers::BufferPro
     }
 }
 
+void BufferManager::set_final_processor_for_root_buffers(std::shared_ptr<Buffers::BufferProcessor> processor)
+{
+    for (auto& root_buffer : m_root_buffers) {
+        if (auto chain = root_buffer->get_processing_chain()) {
+            chain->add_final_processor(processor, root_buffer);
+        }
+    }
+}
+
 void BufferManager::connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix, bool clear_before)
 {
     auto processor = std::make_shared<Buffers::NodeSourceProcessor>(node, mix, clear_before);
@@ -210,22 +226,25 @@ void BufferManager::connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, st
     add_processor(processor, buffer);
 }
 
-void BufferManager::attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer)
+std::shared_ptr<Buffers::BufferProcessor> BufferManager::attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer)
 {
     auto quick_process = std::make_shared<QuickProcess>(processor);
     add_processor(quick_process, buffer);
+    return quick_process;
 }
 
-void BufferManager::attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index)
+std::shared_ptr<Buffers::BufferProcessor> BufferManager::attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index)
 {
     auto quick_process = std::make_shared<QuickProcess>(processor);
     add_processor_to_channel(quick_process, channel_index);
+    return quick_process;
 }
 
-void BufferManager::attach_quick_process_to_all(AudioProcessingFunction processor)
+std::shared_ptr<Buffers::BufferProcessor> BufferManager::attach_quick_process_to_all(AudioProcessingFunction processor)
 {
     auto quick_process = std::make_shared<QuickProcess>(processor);
     add_processor_to_all(quick_process);
+    return quick_process;
 }
 
 void BufferManager::fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames)

@@ -24,6 +24,8 @@ public:
 
     void process(std::shared_ptr<AudioBuffer> buffer);
 
+    void add_final_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer);
+
     bool has_processors(std::shared_ptr<AudioBuffer> buffer) const;
 
     const std::vector<std::shared_ptr<BufferProcessor>>& get_processors(std::shared_ptr<AudioBuffer> buffer) const;
@@ -32,8 +34,11 @@ public:
 
     void merge_chain(const std::shared_ptr<BufferProcessingChain> other);
 
+    void process_final(std::shared_ptr<AudioBuffer> buffer);
+
 private:
     std::unordered_map<std::shared_ptr<AudioBuffer>, std::vector<std::shared_ptr<BufferProcessor>>> m_buffer_processors;
+    std::unordered_map<std::shared_ptr<AudioBuffer>, std::shared_ptr<BufferProcessor>> m_final_processors;
 };
 
 }

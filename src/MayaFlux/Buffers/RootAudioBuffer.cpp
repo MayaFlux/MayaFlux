@@ -29,21 +29,6 @@ void ChannelProcessor::process(std::shared_ptr<AudioBuffer> buffer)
             root_data[i] /= m_root_buffer->get_num_children();
         }
     }
-
-    const double ceiling = 1.0;
-    const double softKnee = 0.9;
-
-    for (double& sample : root_data) {
-        double abs_sample = std::abs(sample);
-
-        if (abs_sample > softKnee) {
-            double excess = abs_sample - softKnee;
-            double compression = 1.0 - (excess / (ceiling - softKnee));
-            sample *= compression;
-        }
-
-        sample = std::clamp(sample, -ceiling, ceiling);
-    }
 }
 
 RootAudioBuffer::RootAudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
@@ -119,5 +104,25 @@ void RootAudioBuffer::resize(u_int32_t num_samples)
 std::shared_ptr<BufferProcessor> RootAudioBuffer::create_default_processor()
 {
     return std::make_shared<ChannelProcessor>(this);
+}
+
+void FinalLimiterProcessor::process(std::shared_ptr<Buffers::AudioBuffer> buffer)
+{
+    auto& data = buffer->get_data();
+    const double ceiling = 1.0;
+    const double softKnee = 0.9;
+
+    for (double& sample : data) {
+        double abs_sample = std::abs(sample);
+        if (abs_sample > softKnee) {
+            double excess = std::min(abs_sample - softKnee, ceiling - softKnee);
+            double compression_factor = 1.0 - (excess / (ceiling - softKnee));
+            compression_factor = std::max(0.0, compression_factor);
+            sample = std::copysign(
+                softKnee + excess * compression_factor,
+                sample);
+        }
+        sample = std::clamp(sample, -ceiling, ceiling);
+    }
 }
 }

@@ -23,6 +23,9 @@ namespace internal {
         std::lock_guard<std::mutex> lock(engine_mutex);
         if (engine_ref) {
             if (initialized) {
+                if (engine_ref->is_running()) {
+                    engine_ref->Pause();
+                }
                 engine_ref->End();
             }
             engine_ref.reset();
@@ -58,14 +61,32 @@ Core::Engine* get_context()
     return internal::get_or_create_engine();
 }
 
-void set_context(Core::Engine& instance)
+void set_context(Core::Engine* instance)
 {
-    std::lock_guard<std::mutex> lock(internal::engine_mutex);
-    if (internal::engine_ref) {
-        internal::cleanup_engine();
+    if (!instance) {
+        throw std::invalid_argument("Cannot set null Engine context");
     }
-    internal::engine_ref.reset(&instance);
-    internal::initialized = true;
+
+    bool is_same_instance = false;
+    {
+        std::lock_guard<std::mutex> lock(internal::engine_mutex);
+        is_same_instance = (instance == internal::engine_ref.get());
+        if (internal::engine_ref && !is_same_instance && internal::engine_ref->is_running()) {
+            internal::engine_ref->Pause();
+        }
+    }
+
+    if (internal::engine_ref && !is_same_instance) {
+        internal::engine_ref->End();
+        internal::engine_ref.reset();
+    }
+
+    if (!is_same_instance) {
+        std::lock_guard<std::mutex> lock(internal::engine_mutex);
+        internal::engine_ref.reset(instance);
+        instance = nullptr;
+        internal::initialized = true;
+    }
 }
 
 void Init(unsigned int sample_rate, unsigned int buffer_size, unsigned int num_out_channels)
@@ -102,7 +123,8 @@ void Resume()
 void End()
 {
     if (internal::initialized) {
-        get_context()->End();
+        // get_context()->End();
+        internal::cleanup_engine();
     }
 }
 

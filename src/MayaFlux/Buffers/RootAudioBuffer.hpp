@@ -50,4 +50,10 @@ public:
 private:
     RootAudioBuffer* m_root_buffer;
 };
+
+class FinalLimiterProcessor : public Buffers::BufferProcessor {
+public:
+    void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override;
+};
+
 }

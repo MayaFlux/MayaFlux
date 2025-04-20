@@ -25,6 +25,40 @@ Engine::~Engine()
     delete m_rng;
 }
 
+Engine::Engine(Engine&& other) noexcept
+    : m_Context(std::move(other.m_Context))
+    , m_Device(std::move(other.m_Device))
+    , m_Stream_manager(std::move(other.m_Stream_manager))
+    , m_rng(other.m_rng)
+    , m_is_paused(other.m_is_paused)
+    , m_scheduler(std::move(other.m_scheduler))
+    , m_node_graph_manager(std::move(other.m_node_graph_manager))
+    , m_Buffer_manager(std::move(other.m_Buffer_manager))
+    , m_named_tasks(std::move(other.m_named_tasks))
+{
+    other.m_rng = nullptr;
+}
+
+Engine& Engine::operator=(Engine&& other) noexcept
+{
+    if (this != &other) {
+        End();
+        delete m_rng;
+
+        m_Context = std::move(other.m_Context);
+        m_Device = std::move(other.m_Device);
+        m_Stream_manager = std::move(other.m_Stream_manager);
+        m_rng = other.m_rng;
+        other.m_rng = nullptr;
+        m_is_paused = other.m_is_paused;
+        m_scheduler = std::move(other.m_scheduler);
+        m_node_graph_manager = std::move(other.m_node_graph_manager);
+        m_Buffer_manager = std::move(other.m_Buffer_manager);
+        m_named_tasks = std::move(other.m_named_tasks);
+    }
+    return *this;
+}
+
 void Engine::Init(GlobalStreamInfo stream_info)
 {
     m_stream_info = stream_info;

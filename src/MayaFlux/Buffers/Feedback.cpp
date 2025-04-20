@@ -54,7 +54,7 @@ void FeedbackProcessor::process(std::shared_ptr<AudioBuffer> buffer)
         buffer->get_sample(i) += (m_feedback_amount * (*previous_data)[i]);
     }
 
-    m_previous_buffer = current_data;
+    *previous_data = current_data;
 }
 
 void FeedbackProcessor::on_attach(std::shared_ptr<AudioBuffer> buffer)

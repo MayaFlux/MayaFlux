@@ -31,6 +31,12 @@ public:
 
     ~Engine();
 
+    Engine(const Engine&) = delete;
+    Engine& operator=(const Engine&) = delete;
+
+    Engine(Engine&& other) noexcept;
+    Engine& operator=(Engine&& other) noexcept;
+
     void Init(GlobalStreamInfo stream_info = GlobalStreamInfo { 48000, 512, 2 });
 
     void Start();
