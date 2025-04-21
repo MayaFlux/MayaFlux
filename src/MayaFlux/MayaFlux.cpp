@@ -16,11 +16,11 @@ namespace internal {
 
     std::unique_ptr<Core::Engine> engine_ref;
     bool initialized = false;
-    std::mutex engine_mutex;
+    std::recursive_mutex engine_mutex;
 
     void cleanup_engine()
     {
-        std::lock_guard<std::mutex> lock(engine_mutex);
+        std::lock_guard<std::recursive_mutex> lock(engine_mutex);
         if (engine_ref) {
             if (initialized) {
                 if (engine_ref->is_running()) {
@@ -33,16 +33,16 @@ namespace internal {
         }
     }
 
-    Core::Engine* get_or_create_engine()
+    Core::Engine& get_or_create_engine()
     {
-        std::lock_guard<std::mutex> lock(engine_mutex);
+        std::lock_guard<std::recursive_mutex> lock(engine_mutex);
         if (!engine_ref) {
             engine_ref = std::make_unique<Core::Engine>();
             engine_ref->Init();
             initialized = true;
             std::atexit(cleanup_engine);
         }
-        return engine_ref.get();
+        return *engine_ref;
     }
 
 }
@@ -56,21 +56,18 @@ bool is_engine_initialized()
     return internal::initialized;
 }
 
-Core::Engine* get_context()
+Core::Engine& get_context()
 {
     return internal::get_or_create_engine();
 }
 
-void set_context(Core::Engine* instance)
+void set_and_transfer_context(Core::Engine instance)
 {
-    if (!instance) {
-        throw std::invalid_argument("Cannot set null Engine context");
-    }
-
     bool is_same_instance = false;
+
     {
-        std::lock_guard<std::mutex> lock(internal::engine_mutex);
-        is_same_instance = (instance == internal::engine_ref.get());
+        std::lock_guard<std::recursive_mutex> lock(internal::engine_mutex);
+        is_same_instance = (&instance == internal::engine_ref.get());
         if (internal::engine_ref && !is_same_instance && internal::engine_ref->is_running()) {
             internal::engine_ref->Pause();
         }
@@ -78,52 +75,50 @@ void set_context(Core::Engine* instance)
 
     if (internal::engine_ref && !is_same_instance) {
         internal::engine_ref->End();
-        internal::engine_ref.reset();
     }
 
     if (!is_same_instance) {
-        std::lock_guard<std::mutex> lock(internal::engine_mutex);
-        internal::engine_ref.reset(instance);
-        instance = nullptr;
+        std::lock_guard<std::recursive_mutex> lock(internal::engine_mutex);
+        internal::engine_ref = std::make_unique<Core::Engine>(std::move(instance));
         internal::initialized = true;
     }
 }
 
 void Init(unsigned int sample_rate, unsigned int buffer_size, unsigned int num_out_channels)
 {
-    auto* engine = internal::get_or_create_engine();
-    engine->Init({ sample_rate, buffer_size, num_out_channels });
+    auto& engine = internal::get_or_create_engine();
+    engine.Init({ sample_rate, buffer_size, num_out_channels });
 }
 
 void Init(Core::GlobalStreamInfo stream_info)
 {
-    auto* engine = internal::get_or_create_engine();
-    engine->Init(stream_info);
+    auto& engine = internal::get_or_create_engine();
+    engine.Init(stream_info);
 }
 
 void Start()
 {
-    get_context()->Start();
+    get_context().Start();
 }
 
 void Pause()
 {
     if (internal::initialized) {
-        get_context()->Pause();
+        get_context().Pause();
     }
 }
 
 void Resume()
 {
     if (internal::initialized) {
-        get_context()->Resume();
+        get_context().Resume();
     }
 }
 
 void End()
 {
     if (internal::initialized) {
-        // get_context()->End();
+        // get_context().End();
         internal::cleanup_engine();
     }
 }
@@ -134,7 +129,7 @@ void End()
 
 Core::GlobalStreamInfo get_global_stream_info()
 {
-    return get_context()->get_stream_info();
+    return get_context().get_stream_info();
 }
 
 u_int32_t get_sample_rate()
@@ -158,17 +153,17 @@ u_int32_t get_num_out_channels()
 
 std::shared_ptr<Core::Scheduler::TaskScheduler> get_scheduler()
 {
-    return get_context()->get_scheduler();
+    return get_context().get_scheduler();
 }
 
 std::shared_ptr<Buffers::BufferManager> get_buffer_manager()
 {
-    return get_context()->get_buffer_manager();
+    return get_context().get_buffer_manager();
 }
 
 std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager()
 {
-    return get_context()->get_node_graph_manager();
+    return get_context().get_node_graph_manager();
 }
 
 //-------------------------------------------------------------------------
@@ -177,26 +172,26 @@ std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager()
 
 double get_uniform_random(double start, double end)
 {
-    get_context()->get_random_engine()->set_type(Utils::distribution::UNIFORM);
-    return get_context()->get_random_engine()->random_sample(start, end);
+    get_context().get_random_engine()->set_type(Utils::distribution::UNIFORM);
+    return get_context().get_random_engine()->random_sample(start, end);
 }
 
 double get_gaussian_random(double start, double end)
 {
-    get_context()->get_random_engine()->set_type(Utils::distribution::NORMAL);
-    return get_context()->get_random_engine()->random_sample(start, end);
+    get_context().get_random_engine()->set_type(Utils::distribution::NORMAL);
+    return get_context().get_random_engine()->random_sample(start, end);
 }
 
 double get_exponential_random(double start, double end)
 {
-    get_context()->get_random_engine()->set_type(Utils::distribution::EXPONENTIAL);
-    return get_context()->get_random_engine()->random_sample(start, end);
+    get_context().get_random_engine()->set_type(Utils::distribution::EXPONENTIAL);
+    return get_context().get_random_engine()->random_sample(start, end);
 }
 
 double get_poisson_random(double start, double end)
 {
-    get_context()->get_random_engine()->set_type(Utils::distribution::POISSON);
-    return get_context()->get_random_engine()->random_sample(start, end);
+    get_context().get_random_engine()->set_type(Utils::distribution::POISSON);
+    return get_context().get_random_engine()->random_sample(start, end);
 }
 
 //-------------------------------------------------------------------------
@@ -206,7 +201,7 @@ double get_poisson_random(double start, double end)
 template <typename... Args>
 bool update_task_params(const std::string& name, Args... args)
 {
-    return get_context()->update_task_params(name, args...);
+    return get_context().update_task_params(name, args...);
 }
 
 Core::Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback)
@@ -231,27 +226,27 @@ Core::Scheduler::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)
 
 float* get_line_value(const std::string& name)
 {
-    return get_context()->get_line_value(name);
+    return get_context().get_line_value(name);
 }
 
 std::function<float()> line_value(const std::string& name)
 {
-    return get_context()->line_value(name);
+    return get_context().line_value(name);
 }
 
 void schedule_task(std::string name, Core::Scheduler::SoundRoutine&& task, bool initialize)
 {
-    get_context()->schedule_task(name, std::move(task), initialize);
+    get_context().schedule_task(name, std::move(task), initialize);
 }
 
 bool cancel_task(const std::string& name)
 {
-    return get_context()->cancel_task(name);
+    return get_context().cancel_task(name);
 }
 
 bool restart_task(const std::string& name)
 {
-    return get_context()->restart_task(name);
+    return get_context().restart_task(name);
 }
 
 Tasks::ActionToken Play(std::shared_ptr<Nodes::Node> node)
@@ -320,17 +315,17 @@ void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<B
 
 void add_node_to_root(std::shared_ptr<Nodes::Node> node, unsigned int channel)
 {
-    get_context()->get_node_graph_manager()->add_to_root(node, channel);
+    get_context().get_node_graph_manager()->add_to_root(node, channel);
 }
 
 void remove_node_from_root(std::shared_ptr<Nodes::Node> node, unsigned int channel)
 {
-    get_context()->get_node_graph_manager()->get_root_node(channel).unregister_node(node);
+    get_context().get_node_graph_manager()->get_root_node(channel).unregister_node(node);
 }
 
 void connect_nodes(std::string& source, std::string& target)
 {
-    get_context()->get_node_graph_manager()->connect(source, target);
+    get_context().get_node_graph_manager()->connect(source, target);
 }
 
 void connect_nodes(std::shared_ptr<Nodes::Node> source, std::shared_ptr<Nodes::Node> target)

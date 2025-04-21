@@ -286,19 +286,59 @@ TEST_F(MayaFluxAPITest, StreamInfoInitialization)
 
 TEST_F(MayaFluxAPITest, EngineContextOperations)
 {
-    auto* engine = MayaFlux::get_context();
-    EXPECT_NE(engine, nullptr);
+    auto& engine = MayaFlux::get_context();
+    EXPECT_TRUE(MayaFlux::is_engine_initialized());
 
-    Core::Engine* custom_engine = new Core::Engine {};
-    custom_engine->Init({ .sample_rate = 44100, .buffer_size = 256, .num_channels = 1 });
+    Core::Engine custom_engine = Core::Engine {};
+    custom_engine.Init({ .sample_rate = 44100, .buffer_size = 256, .num_channels = 1 });
 
-    MayaFlux::set_context(custom_engine);
+    MayaFlux::set_and_transfer_context(std::move(custom_engine));
 
     EXPECT_EQ(MayaFlux::get_sample_rate(), 44100);
     EXPECT_EQ(MayaFlux::get_buffer_size(), 256);
     EXPECT_EQ(MayaFlux::get_num_out_channels(), 1);
+}
 
-    // needs nullcheck
+TEST_F(MayaFluxAPITest, EngineMoveSemanticsAndReferenceManagement)
+{
+    EXPECT_TRUE(MayaFlux::is_engine_initialized());
+    auto initial_sample_rate = MayaFlux::get_sample_rate();
+
+    Core::Engine engine1;
+    engine1.Init({ .sample_rate = 48000, .buffer_size = 512, .num_channels = 2 });
+
+    Core::Engine engine2;
+    engine2.Init({ .sample_rate = 96000, .buffer_size = 256, .num_channels = 1 });
+
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    EXPECT_EQ(engine2.get_node_graph_manager()->get_root_node().get_node_size(), 0);
+
+    engine2.get_node_graph_manager()->add_to_root(sine, 0);
+    EXPECT_EQ(engine2.get_node_graph_manager()->get_root_node().get_node_size(), 1);
+
+    MayaFlux::set_and_transfer_context(std::move(engine1));
+    EXPECT_EQ(MayaFlux::get_sample_rate(), 48000);
+    EXPECT_EQ(MayaFlux::get_buffer_size(), 512);
+    EXPECT_EQ(MayaFlux::get_num_out_channels(), 2);
+
+    EXPECT_EQ(engine1.get_stream_info().sample_rate, 48000);
+
+    MayaFlux::set_and_transfer_context(std::move(engine2));
+    EXPECT_EQ(MayaFlux::get_sample_rate(), 96000);
+    EXPECT_EQ(MayaFlux::get_buffer_size(), 256);
+    EXPECT_EQ(MayaFlux::get_num_out_channels(), 1);
+
+    auto& root = MayaFlux::get_node_graph_manager()->get_root_node();
+    EXPECT_EQ(root.get_node_size(), 1);
+
+    EXPECT_EQ(engine2.get_stream_info().sample_rate, 96000);
+    EXPECT_EQ(engine2.get_node_graph_manager(), nullptr);
+
+    Core::Engine engine3;
+    engine3.Init({ .sample_rate = 44100, .buffer_size = 128, .num_channels = 1 });
+    MayaFlux::set_and_transfer_context(std::move(engine3));
+    EXPECT_EQ(MayaFlux::get_sample_rate(), 44100);
+    EXPECT_TRUE(MayaFlux::is_engine_initialized());
 }
 
 #endif
