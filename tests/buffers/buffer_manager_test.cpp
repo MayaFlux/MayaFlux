@@ -1,8 +1,8 @@
 #include "../test_config.h"
 
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Feedback.hpp"
 #include "MayaFlux/Buffers/NodeSource.hpp"
-#include "MayaFlux/Core/BufferManager.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
 namespace MayaFlux::Test {
@@ -11,7 +11,7 @@ class BufferManagerTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        manager = std::make_shared<Core::BufferManager>(TestConfig::NUM_CHANNELS, TestConfig::BUFFER_SIZE);
+        manager = std::make_shared<Buffers::BufferManager>(TestConfig::NUM_CHANNELS, TestConfig::BUFFER_SIZE);
     }
 
     void TearDown() override
@@ -19,7 +19,7 @@ protected:
         manager.reset();
     }
 
-    std::shared_ptr<Core::BufferManager> manager;
+    std::shared_ptr<Buffers::BufferManager> manager;
 };
 
 TEST_F(BufferManagerTest, Initialization)

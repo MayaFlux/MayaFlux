@@ -1,6 +1,6 @@
 #include "Engine.hpp"
-#include "BufferManager.hpp"
 #include "Device.hpp"
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "Stream.hpp"
@@ -64,7 +64,7 @@ void Engine::Init(GlobalStreamInfo stream_info)
     m_stream_info = stream_info;
     m_Stream_manager = std::make_unique<Stream>(m_Device->get_default_output_device(), this);
     m_scheduler = std::make_shared<Scheduler::TaskScheduler>(stream_info.sample_rate);
-    m_Buffer_manager = std::make_shared<BufferManager>(stream_info.num_channels, stream_info.buffer_size);
+    m_Buffer_manager = std::make_shared<Buffers::BufferManager>(stream_info.num_channels, stream_info.buffer_size);
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
 }
 

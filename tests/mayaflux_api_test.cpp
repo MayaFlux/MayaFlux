@@ -1,7 +1,7 @@
 #include "test_config.h"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
-#include "MayaFlux/Core/BufferManager.hpp"
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"

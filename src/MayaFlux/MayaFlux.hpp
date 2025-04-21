@@ -7,7 +7,6 @@ namespace MayaFlux {
 namespace Core {
     struct GlobalStreamInfo;
     class Engine;
-    class BufferManager;
 
     namespace Scheduler {
         class TaskScheduler;
@@ -17,6 +16,7 @@ namespace Core {
 
 namespace Buffers {
     class AudioBuffer;
+    class BufferManager;
 }
 
 namespace Nodes {
@@ -71,7 +71,7 @@ u_int32_t get_num_out_channels();
 
 std::shared_ptr<Core::Scheduler::TaskScheduler> get_scheduler();
 
-std::shared_ptr<Core::BufferManager> get_buffer_manager();
+std::shared_ptr<Buffers::BufferManager> get_buffer_manager();
 
 std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager();
 

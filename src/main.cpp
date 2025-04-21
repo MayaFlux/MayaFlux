@@ -1,7 +1,7 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Feedback.hpp"
 #include "MayaFlux/Buffers/NodeSource.hpp"
-#include "MayaFlux/Core/BufferManager.hpp"
 #include "MayaFlux/Core/Scheduler/Routine.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"

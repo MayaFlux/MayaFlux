@@ -1,7 +1,7 @@
 #include "MayaFlux.hpp"
 
 #include "Core/Engine.hpp"
-#include "MayaFlux/Core/BufferManager.hpp"
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "Nodes/NodeGraphManager.hpp"
 #include "Tasks/Chain.hpp"
@@ -161,7 +161,7 @@ std::shared_ptr<Core::Scheduler::TaskScheduler> get_scheduler()
     return get_context()->get_scheduler();
 }
 
-std::shared_ptr<Core::BufferManager> get_buffer_manager()
+std::shared_ptr<Buffers::BufferManager> get_buffer_manager()
 {
     return get_context()->get_buffer_manager();
 }

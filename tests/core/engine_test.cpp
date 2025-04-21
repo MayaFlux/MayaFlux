@@ -1,6 +1,6 @@
 #include "../test_config.h"
 
-#include "MayaFlux/Core/BufferManager.hpp"
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Core/Stream.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"

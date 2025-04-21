@@ -9,11 +9,14 @@ namespace Generator::Stochastics {
 }
 }
 
+namespace MayaFlux::Buffers {
+class BufferManager;
+}
+
 namespace MayaFlux::Core {
 
 class Device;
 class Stream;
-class BufferManager;
 
 struct GlobalStreamInfo {
     unsigned int sample_rate = 48000;
@@ -67,7 +70,7 @@ public:
 
     inline std::shared_ptr<Scheduler::TaskScheduler> get_scheduler() { return m_scheduler; }
 
-    inline std::shared_ptr<BufferManager> get_buffer_manager() { return m_Buffer_manager; }
+    inline std::shared_ptr<Buffers::BufferManager> get_buffer_manager() { return m_Buffer_manager; }
 
     inline Nodes::Generator::Stochastics::NoiseEngine* get_random_engine() { return m_rng; }
 
@@ -124,7 +127,7 @@ private:
 
     std::shared_ptr<Scheduler::TaskScheduler> m_scheduler;
     std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager;
-    std::shared_ptr<BufferManager> m_Buffer_manager;
+    std::shared_ptr<Buffers::BufferManager> m_Buffer_manager;
     Nodes::Generator::Stochastics::NoiseEngine* m_rng;
 
     //-------------------------------------------------------------------------
