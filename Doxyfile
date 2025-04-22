@@ -1,0 +1,71 @@
+# Project settings
+PROJECT_NAME           = "Maya Flux"
+PROJECT_BRIEF         = "Audio Engine"
+PROJECT_NUMBER        = "1.0"
+OUTPUT_DIRECTORY      = docs
+
+# Input settings
+INPUT                 = src README.md
+RECURSIVE             = YES
+USE_MDFILE_AS_MAINPAGE = README.md
+FILE_PATTERNS         = *.cpp *.hpp *.h *.md
+EXCLUDE_PATTERNS      = */build/* */tests/*
+
+# Output settings
+GENERATE_HTML         = YES
+GENERATE_LATEX        = NO
+HTML_OUTPUT           = html
+HTML_EXTRA_STYLESHEET = 
+SEARCHENGINE          = YES
+GENERATE_TREEVIEW     = YES
+
+# Extraction settings
+EXTRACT_ALL           = YES
+EXTRACT_PRIVATE       = YES
+EXTRACT_PACKAGE       = YES
+EXTRACT_STATIC        = YES
+EXTRACT_LOCAL_CLASSES = YES
+
+# Documentation settings
+JAVADOC_AUTOBRIEF     = YES
+QT_AUTOBRIEF          = YES
+MULTILINE_CPP_IS_BRIEF = NO
+INHERIT_DOCS          = YES
+SEPARATE_MEMBER_PAGES = NO
+TAB_SIZE             = 4
+OPTIMIZE_OUTPUT_FOR_C = NO
+
+# Diagram settings
+HAVE_DOT             = YES
+UML_LOOK             = YES
+CALL_GRAPH           = YES
+CALLER_GRAPH         = YES
+COLLABORATION_GRAPH  = YES
+TEMPLATE_RELATIONS   = YES
+
+# Warning settings
+QUIET                = NO
+WARNINGS             = YES
+WARN_IF_UNDOCUMENTED = YES
+WARN_IF_DOC_ERROR    = YES
+
+# Preprocessing settings
+ENABLE_PREPROCESSING = YES
+MACRO_EXPANSION      = YES
+EXPAND_ONLY_PREDEF   = NO
+PREDEFINED           = 
+
+# Source browsing
+SOURCE_BROWSER       = YES
+INLINE_SOURCES      = NO
+STRIP_CODE_COMMENTS = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION  = YES
+
+# Example settings
+EXAMPLE_PATH         = 
+EXAMPLE_PATTERNS     = *
+EXAMPLE_RECURSIVE    = NO
+
+# Image settings
+IMAGE_PATH           = 

@@ -4,16 +4,139 @@
 
 namespace MayaFlux::Nodes::Generator {
 
+/**
+ * @class Generator
+ * @brief Base class for all signal and pattern generators in Maya Flux
+ *
+ * Generators are specialized nodes that create numerical sequences from mathematical principles,
+ * rather than processing existing signals. They form the foundation of the
+ * computational graph by providing the initial patterns that other nodes
+ * can then transform, filter, or combine.
+ *
+ * Unlike transformation nodes that modify input signals, generators typically:
+ * - Create sequences based on mathematical formulas or algorithms
+ * - Maintain internal state to track progression, phase, or other parameters
+ * - Can operate autonomously without any input (though they may accept modulation inputs)
+ * - Serve as the origin points in computational processing networks
+ *
+ * Common types of generators include:
+ * - Oscillators (sine, square, sawtooth, triangle waves)
+ * - Stochastic generators (various probability distributions)
+ * - Sample-based generators (playing back recorded sequences)
+ * - Envelope generators (creating amplitude contours)
+ *
+ * Generators integrate with the node graph system, allowing them to be:
+ * - Connected to other nodes using operators like '>>' (chain)
+ * - Combined with other nodes using operators like '+' (mix)
+ * - Registered with a RootNode for processing
+ * - Used as modulation sources for other generators or transformations
+ *
+ * The Generator class extends the base Node interface with additional
+ * methods for visualization and analysis of the generated patterns.
+ */
 class Generator : public Node {
 public:
+    /**
+     * @brief Virtual destructor for proper cleanup
+     */
     virtual ~Generator() = default;
+
+    /**
+     * @brief Prints a visual representation of the generated pattern
+     *
+     * This method should output a visual representation of the
+     * generator's output over time, useful for analysis and
+     * understanding the pattern characteristics.
+     */
     virtual void printGraph() = 0;
+
+    /**
+     * @brief Prints the current state and parameters of the generator
+     *
+     * This method should output the current configuration and state
+     * of the generator, including parameters like frequency, amplitude,
+     * phase, or any other generator-specific settings.
+     */
     virtual void printCurrent() = 0;
 };
 
+/**
+ * @brief Creates a Hann window function
+ * @param length Number of samples in the window
+ * @return Vector containing the window function values
+ *
+ * The Hann window (sometimes called Hanning) is a bell-shaped window
+ * function that tapers smoothly to zero at both ends. It's commonly
+ * used for:
+ * - Smoothing signal transitions
+ * - Reducing spectral leakage in frequency domain analysis
+ * - Creating envelope shapes for synthesis
+ *
+ * Mathematical formula: w(n) = 0.5 * (1 - cos(2π*n/(N-1)))
+ */
 std::vector<double> HannWindow(size_t length);
+
+/**
+ * @brief Creates a Hamming window function
+ * @param length Number of samples in the window
+ * @return Vector containing the window function values
+ *
+ * The Hamming window is similar to the Hann window but doesn't
+ * reach zero at the edges. It offers different spectral characteristics
+ * and is often used in:
+ * - Signal processing
+ * - Filter design
+ * - Spectral analysis
+ *
+ * Mathematical formula: w(n) = 0.54 - 0.46*cos(2π*n/(N-1))
+ */
 std::vector<double> HammingWindow(size_t length);
+
+/**
+ * @brief Creates a Blackman window function
+ * @param length Number of samples in the window
+ * @return Vector containing the window function values
+ *
+ * The Blackman window provides better sidelobe suppression than
+ * Hamming or Hann windows, making it useful for:
+ * - High-quality spectral analysis
+ * - Applications requiring minimal spectral leakage
+ * - Creating smooth envelopes with minimal artifacts
+ *
+ * Mathematical formula: w(n) = 0.42 - 0.5*cos(2π*n/(N-1)) + 0.08*cos(4π*n/(N-1))
+ */
 std::vector<double> BlackmanWindow(size_t length);
+
+/**
+ * @brief Creates a linear ramp function
+ * @param length Number of samples in the ramp
+ * @param start Starting value (default: 0.0)
+ * @param end Ending value (default: 1.0)
+ * @return Vector containing the ramp function values
+ *
+ * A linear ramp increases or decreases at a constant rate from
+ * start to end value. Useful for:
+ * - Creating linear transitions
+ * - Parameter automation
+ * - Simple envelope shapes
+ */
 std::vector<double> LinearRamp(size_t length, double start = 0.0, double end = 1.0);
+
+/**
+ * @brief Creates an exponential ramp function
+ * @param length Number of samples in the ramp
+ * @param start Starting value (default: 0.001)
+ * @param end Ending value (default: 1.0)
+ * @return Vector containing the ramp function values
+ *
+ * An exponential ramp changes at a rate proportional to its current value,
+ * creating a curve that follows natural growth or decay patterns. Useful for:
+ * - Perceptually balanced transitions
+ * - Parameter sweeps with natural-sounding transitions
+ * - Creating more organic envelope shapes
+ *
+ * Note: The start value defaults to 0.001 instead of 0.0 because a true
+ * exponential curve cannot start at zero.
+ */
 std::vector<double> ExponentialRamp(size_t length, double start = 0.001, double end = 1.0);
 }
