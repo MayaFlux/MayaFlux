@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RootAudioBuffer.hpp"
+#include "MayaFlux/Buffers/Root/RootAudioBuffer.hpp"
 
 namespace MayaFlux::Nodes {
 class Node;

@@ -1,4 +1,4 @@
-#include "NodeSource.hpp"
+#include "NodeBuffer.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
 namespace MayaFlux::Buffers {

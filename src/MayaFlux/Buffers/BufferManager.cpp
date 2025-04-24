@@ -1,5 +1,5 @@
 #include "BufferManager.hpp"
-#include "MayaFlux/Buffers/NodeSource.hpp"
+#include "Node/NodeBuffer.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -117,10 +117,15 @@ void BufferManager::process_channel(u_int32_t channel_index)
     auto root_buffer = m_root_buffers[channel_index];
 
     for (auto& child : root_buffer->get_child_buffers()) {
-        child->process_default();
+
+        if (child->needs_default_processing()) {
+            child->process_default();
+        }
 
         if (auto processing_chain = child->get_processing_chain()) {
-            processing_chain->process(child);
+            if (child->has_data_for_cycle()) {
+                processing_chain->process(child);
+            }
         }
     }
 

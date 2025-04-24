@@ -1,8 +1,8 @@
 #include "../test_config.h"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
-#include "MayaFlux/Buffers/Feedback.hpp"
-#include "MayaFlux/Buffers/NodeSource.hpp"
+#include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
+#include "MayaFlux/Buffers/Recursive/FeedbackBuffer.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
 namespace MayaFlux::Test {

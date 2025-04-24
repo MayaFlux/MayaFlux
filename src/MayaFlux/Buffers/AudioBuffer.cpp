@@ -46,7 +46,7 @@ void StandardAudioBuffer::set_num_samples(u_int32_t num_samples)
 
 void StandardAudioBuffer::process_default()
 {
-    if (m_default_processor) {
+    if (m_process_default && m_default_processor) {
         m_default_processor->process(shared_from_this());
     }
 }

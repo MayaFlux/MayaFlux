@@ -151,6 +151,50 @@ public:
      * No bounds checking is performed, so the caller must ensure the index is valid.
      */
     virtual double& get_sample(u_int32_t index) = 0;
+
+    /**
+     * @brief Checks if the buffer has data for the current cycle to be processed
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always return true unless specified otherwise by their derived class implementations.
+     * @return True if the buffer has data for the current cycle, false otherwise
+     */
+    virtual bool has_data_for_cycle() const = 0;
+
+    /**
+     * @brief Checks if the buffer should be removed from the processing chain
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always return false unless specified otherwise by their derived class implementations.
+     * @return True if the buffer should be removed, false otherwise
+     */
+    virtual bool needs_removal() const = 0;
+
+    /**
+     * @brief Marks the buffer for processing in the current cycle
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always be marked true unless specified otherwise by their derived class implementations.
+     * @param has_data True if the buffer has data to process, false otherwise
+     */
+    virtual void mark_for_processing(bool has_data) = 0;
+
+    /** @brief Marks the buffer for removal from the processing chain
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * never be marked for removal unless specified otherwise by their derived class implementations.
+     */
+    virtual void mark_for_removal() = 0;
+
+    /** @brief Marks the buffer for default processing in the current cycle
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always be marked true unless specified otherwise by their derived class implementations.
+     * @param should_process True if the buffer should be processed, false otherwise
+     */
+    virtual void enforce_default_processing(bool should_process) = 0;
+
+    /** @brief Checks if the buffer should be processed using its default processor
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always return true unless specified otherwise by their derived class implementations.
+     * @return True if the buffer should be processed, false otherwise
+     */
+    virtual bool needs_default_processing() = 0;
 };
 
 /**
@@ -284,6 +328,51 @@ public:
      */
     inline virtual double& get_sample(u_int32_t index) override { return get_data()[index]; }
 
+    /**
+     * @brief Checks if the buffer has data for the current cycle to be processed
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always return true unless specified otherwise by their derived class implementations.
+     * @return True if the buffer has data for the current cycle, false otherwise
+     */
+    inline virtual bool has_data_for_cycle() const override { return true; }
+
+    /**
+     * @brief Checks if the buffer should be removed from the processing chain
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always return false unless specified otherwise by their derived class implementations.
+     * @return True if the buffer should be removed, false otherwise
+     */
+    inline virtual bool needs_removal() const override { return false; }
+
+    /**
+     * @brief Marks the buffer for processing in the current cycle
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always be marked true unless specified otherwise by their derived class implementations.
+     * @param has_data True if the buffer has data to process, false otherwise
+     */
+    inline virtual void mark_for_processing(bool has_data) override { m_has_data = has_data; }
+
+    /**
+     * @brief Marks the buffer for removal from the processing chain
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * never be marked for removal unless specified otherwise by their derived class implementations.
+     */
+    inline virtual void mark_for_removal() override { m_should_remove = true; }
+
+    /** @brief Marks the buffer for default processing in the current cycle
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always be marked true unless specified otherwise by their derived class implementations.
+     * @param should_process True if the buffer should be processed, false otherwise
+     */
+    inline virtual void enforce_default_processing(bool should_process) override { m_process_default = should_process; }
+
+    /** @brief Checks if the buffer should be processed using its default processor
+     * This is relevant when using SignalSourceContainers. Standard audio buffers will
+     * always return true unless specified otherwise by their derived class implementations.
+     * @return True if the buffer should be processed, false otherwise
+     */
+    inline virtual bool needs_default_processing() override { return m_process_default; }
+
 protected:
     /**
      * @brief Channel identifier for this buffer
@@ -332,5 +421,20 @@ protected:
      * default processors.
      */
     virtual std::shared_ptr<BufferProcessor> create_default_processor() { return nullptr; }
+
+    /**
+     * @brief Whether the buffer has data to process this cycle
+     */
+    bool m_has_data { true };
+
+    /**
+     * @brief Whether the buffer should be removed from the processing chain
+     */
+    bool m_should_remove { false };
+
+    /**
+     * @brief Whether the buffer should be processed using its default processor
+     */
+    bool m_process_default { true };
 };
 }

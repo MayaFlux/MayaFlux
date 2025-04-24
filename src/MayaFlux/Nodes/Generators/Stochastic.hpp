@@ -146,6 +146,8 @@ public:
         m_normal_spread = spread;
     }
 
+    inline double get_amplitude() { return m_amplitude; }
+
 private:
     /**
      * @brief Generates a raw value according to the current distribution

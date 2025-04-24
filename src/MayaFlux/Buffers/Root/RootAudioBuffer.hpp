@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AudioBuffer.hpp"
+#include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 
 namespace MayaFlux::Buffers {

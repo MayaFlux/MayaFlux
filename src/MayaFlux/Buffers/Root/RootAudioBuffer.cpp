@@ -22,12 +22,33 @@ void ChannelProcessor::process(std::shared_ptr<AudioBuffer> buffer)
         }
     }
 
+    std::vector<std::shared_ptr<AudioBuffer>> buffers_to_remove;
     for (auto& child : m_root_buffer->get_child_buffers()) {
-        const auto& child_data = child->get_data();
-        for (size_t i = 0; i < std::min(child_data.size(), root_data.size()); i++) {
-            root_data[i] += child_data[i];
-            root_data[i] /= m_root_buffer->get_num_children();
+        if (child->needs_removal()) {
+            buffers_to_remove.push_back(child);
         }
+    }
+
+    u_int32_t active_buffers = 0;
+    for (auto& child : m_root_buffer->get_child_buffers()) {
+        if (child->has_data_for_cycle() && !child->needs_removal()) {
+            active_buffers++;
+        }
+    }
+
+    if (active_buffers > 0) {
+        for (auto& child : m_root_buffer->get_child_buffers()) {
+            if (child->has_data_for_cycle() && !child->needs_removal()) {
+                const auto& child_data = child->get_data();
+                for (size_t i = 0; i < std::min(child_data.size(), root_data.size()); i++) {
+                    root_data[i] += child_data[i] / active_buffers;
+                }
+            }
+        }
+    }
+
+    for (auto& child : buffers_to_remove) {
+        m_root_buffer->remove_child_buffer(child);
     }
 }
 
