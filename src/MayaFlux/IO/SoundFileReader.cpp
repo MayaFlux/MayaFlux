@@ -38,34 +38,33 @@ bool SoundFileReader::read_file_to_container(const std::string& file_path, std::
     }
 
     std::vector<std::pair<std::string, uint64_t>> markers;
-    std::vector<Containers::Region> regions;
-    extract_file_metadata(file_path, markers, regions);
+    std::unordered_map<std::string, Containers::RegionGroup> region_groups;
+    extract_file_metadata(file_path, markers, region_groups);
 
     u_int64_t total_frames = file_info.frames;
 
-    // std::cout << "File info: " << file_info.frames << " frames, "
-    //           << file_info.channels << " channels, "
-    //           << samples.size() << " total samples" << std::endl;
-
     container->setup(total_frames, file_info.samplerate, file_info.channels);
-
     container->set_raw_samples(samples);
 
-    for (const auto& marker : markers) {
-        if (marker.second < total_frames) {
-            Containers::Region marker_region = {
-                marker.first,
-                marker.second,
-                marker.second
-            };
-            container->add_region(marker_region);
+    if (!markers.empty()) {
+        Containers::RegionGroup markers_group { "markers" };
+        for (const auto& marker : markers) {
+            if (marker.second < total_frames) {
+                Containers::RegionPoint point {
+                    marker.second,
+                    marker.second
+                };
+                point.point_attributes["label"] = marker.first;
+                markers_group.points.push_back(point);
+            }
+        }
+        if (!markers_group.points.empty()) {
+            container->add_region_group(markers_group);
         }
     }
 
-    for (const auto& region : regions) {
-        if (region.start_frame < total_frames && region.end_frame < total_frames && region.start_frame <= region.end_frame) { // Validate region
-            container->add_region(region);
-        }
+    for (const auto& [group_name, group] : region_groups) {
+        container->add_region_group(group);
     }
 
     if (file_info.channels > 1) {
@@ -135,10 +134,10 @@ void SoundFileReader::close_file()
 bool SoundFileReader::extract_file_metadata(
     const std::string& file_path,
     std::vector<std::pair<std::string, uint64_t>>& markers,
-    std::vector<Containers::Region>& regions)
+    std::unordered_map<std::string, Containers::RegionGroup>& region_groups)
 {
     markers.clear();
-    regions.clear();
+    region_groups.clear();
     bool need_to_open_file = !m_sndfile.get() || !m_sndfile->rawHandle();
 
     if (need_to_open_file) {
@@ -153,7 +152,7 @@ bool SoundFileReader::extract_file_metadata(
         set_file_properties(temp_info);
     }
 
-    bool success = extract_markers(markers) || extract_regions(regions);
+    bool success = extract_markers(markers) || extract_region_groups(region_groups);
 
     if (need_to_open_file) {
         close_file();
@@ -171,7 +170,6 @@ bool SoundFileReader::extract_markers(std::vector<std::pair<std::string, u_int64
     bool found_markers = false;
     SNDFILE* raw_handle = m_sndfile->rawHandle();
 
-    // Extract markers (cue points) from WAV files
     SF_CUES cues;
     memset(&cues, 0, sizeof(cues));
 
@@ -179,7 +177,6 @@ bool SoundFileReader::extract_markers(std::vector<std::pair<std::string, u_int64
         for (size_t i = 0; i < cues.cue_count; ++i) {
             SF_CUE_POINT cue = cues.cue_points[i];
 
-            // Convert identifier to string name if possible
             std::string name;
             if (cue.indx > 0) {
                 name = std::format("Cue_{}", cue.indx);
@@ -193,16 +190,8 @@ bool SoundFileReader::extract_markers(std::vector<std::pair<std::string, u_int64
         found_markers = cues.cue_count > 0;
     }
 
-    // Extract markers from Broadcast WAV Format files (BWF)
     SF_BROADCAST_INFO binfo;
     memset(&binfo, 0, sizeof(binfo));
-
-    // if (sf_command(raw_handle, SFC_GET_BROADCAST_INFO, &binfo, sizeof(binfo)) == SF_TRUE) {
-    //     if (binfo.timecode_flags && binfo.time_reference_low > 0) {
-    //         markers.emplace_back("BWF_TimeRef", binfo.time_reference_low);
-    //         found_markers = true;
-    //     }
-    // }
 
     if (sf_command(raw_handle, SFC_GET_BROADCAST_INFO, &binfo, sizeof(binfo)) == SF_TRUE) {
         if (binfo.time_reference_high != 0 || binfo.time_reference_low != 0) {
@@ -237,39 +226,88 @@ bool SoundFileReader::extract_markers(std::vector<std::pair<std::string, u_int64
     return found_markers;
 }
 
-bool SoundFileReader::extract_regions(std::vector<Containers::Region>& regions)
+bool SoundFileReader::extract_region_groups(std::unordered_map<std::string, Containers::RegionGroup>& region_groups)
 {
     if (!m_sndfile || !m_sndfile->rawHandle()) {
         return false;
     }
 
-    // The libsndfile library doesn't provide a direct way to extract region information
-    // from most audio formats. Some formats like AIFF and WAV can have region/loop information,
-    // but accessing this would require custom parsing or format-specific handling.
-
-    // As an example, we could check for instrument loops in formats that support them:
-    SNDFILE* raw_handle = m_sndfile->rawHandle();
+    SF_CUES* cues = nullptr;
     SF_INSTRUMENT inst;
-    memset(&inst, 0, sizeof(inst));
+    bool found_regions = false;
 
-    if (sf_command(raw_handle, SFC_GET_INSTRUMENT, &inst, sizeof(inst)) == SF_TRUE) {
-        if (inst.loop_count > 0) {
-            for (int i = 0; i < inst.loop_count; ++i) {
-                if (inst.loops[i].mode >= 0) { // Valid loop
-                    std::string name = std::format("Loop_{}", i + 1);
-                    Containers::Region region = {
-                        name,
-                        inst.loops[i].start,
-                        inst.loops[i].end
-                    };
-                    regions.push_back(region);
-                }
-            }
-            return true;
+    Containers::RegionGroup cue_points { "cue_points" };
+    Containers::RegionGroup loops { "loops" };
+    Containers::RegionGroup markers { "markers" };
+
+    if (sf_command(m_sndfile->rawHandle(), SFC_GET_CUE, &cues, sizeof(cues)) == SF_TRUE) {
+        for (int i = 0; i < cues->cue_count; i++) {
+            Containers::RegionPoint point {
+                static_cast<uint64_t>(cues->cue_points[i].position),
+                static_cast<uint64_t>(cues->cue_points[i].position)
+            };
+            point.point_attributes["label"] = std::string("cue_" + std::to_string(i));
+            cue_points.points.push_back(point);
+            found_regions = true;
         }
     }
 
-    return false;
+    if (sf_command(m_sndfile->rawHandle(), SFC_GET_INSTRUMENT, &inst, sizeof(inst)) == SF_TRUE) {
+        for (int i = 0; i < inst.loop_count; i++) {
+            Containers::RegionPoint point {
+                static_cast<uint64_t>(inst.loops[i].start),
+                static_cast<uint64_t>(inst.loops[i].end)
+            };
+            point.point_attributes["mode"] = inst.loops[i].mode;
+            point.point_attributes["count"] = inst.loops[i].count;
+            loops.points.push_back(point);
+            found_regions = true;
+        }
+    }
+
+    SF_BROADCAST_INFO binfo;
+    memset(&binfo, 0, sizeof(binfo));
+
+    if (sf_command(m_sndfile->rawHandle(), SFC_GET_BROADCAST_INFO, &binfo, sizeof(binfo)) == SF_TRUE) {
+        if (binfo.time_reference_high != 0 || binfo.time_reference_low != 0) {
+            uint64_t time_ref = (static_cast<uint64_t>(binfo.time_reference_high) << 32)
+                | binfo.time_reference_low;
+            Containers::RegionPoint time_ref_point {
+                time_ref,
+                time_ref
+            };
+            time_ref_point.point_attributes["type"] = "time_reference";
+            markers.points.push_back(time_ref_point);
+            found_regions = true;
+        }
+
+        if (binfo.description[0] != '\0') {
+            std::string desc(binfo.description, strnlen(binfo.description, 256));
+            Containers::RegionPoint desc_point { 0, 0 };
+            desc_point.point_attributes["type"] = "description";
+            desc_point.point_attributes["value"] = desc;
+            markers.points.push_back(desc_point);
+        }
+        if (binfo.originator[0] != '\0') {
+            std::string orig(binfo.originator, strnlen(binfo.originator, 32));
+            Containers::RegionPoint orig_point { 0, 0 };
+            orig_point.point_attributes["type"] = "originator";
+            orig_point.point_attributes["value"] = orig;
+            markers.points.push_back(orig_point);
+        }
+    }
+
+    if (!cue_points.points.empty()) {
+        region_groups["cue_points"] = cue_points;
+    }
+    if (!loops.points.empty()) {
+        region_groups["loops"] = loops;
+    }
+    if (!markers.points.empty()) {
+        region_groups["markers"] = markers;
+    }
+
+    return found_regions;
 }
 
 }

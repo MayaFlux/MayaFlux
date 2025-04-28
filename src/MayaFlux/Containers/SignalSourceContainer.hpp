@@ -12,32 +12,65 @@ class DataProcessor;
 class DataProcessingChain;
 
 /**
- * @struct Region
- * @brief Defines a named section within audio data
+ * @struct RegionPoint
+ * @brief Defines a point or segment within signal data
  *
- * Regions represent meaningful segments within audio content, allowing for
- * organization, navigation, and selective processing of audio material. Each
- * region has a descriptive name and precise frame boundaries that define its
- * start and end points.
+ * RegionPoints represent precise locations or segments within signal data,
+ * defined by start and end frame positions. Each point can have additional
+ * attributes stored in a flexible key-value map, allowing for rich metadata
+ * association with each point.
  *
- * Common uses for regions include:
- * - Marking grains for granular synthesis
- * - Defining synchronization points for audio editing
- * - Representing silences, busyness(zero crossings), density
- * - Creating chunks for waveform analysis and visualization
+ * Common DSP-specific uses include:
+ * - Marking transients and onset detection points
+ * - Identifying spectral features or frequency domain events
+ * - Defining zero-crossing boundaries for phase analysis
+ * - Marking signal transformation points (e.g., filter application boundaries)
+ * - Storing analysis results like RMS peaks, harmonic content points, or noise floors
  *
- * Regions provide a higher-level organizational structure than individual
- * markers, making them valuable for content navigation and editing workflows.
+ * The flexible attribute system allows for storing any computed values or metadata
+ * associated with specific signal locations, enabling advanced signal processing
+ * workflows and algorithmic decision-making.
  */
-struct Region {
-    /** @brief Descriptive name of the region */
-    std::string name;
-
+struct RegionPoint {
     /** @brief Starting frame index (inclusive) */
-    u_int64_t start_frame;
+    uint64_t start_frame;
 
     /** @brief Ending frame index (inclusive) */
-    u_int64_t end_frame;
+    uint64_t end_frame;
+
+    /** @brief Flexible key-value store for point-specific attributes */
+    std::unordered_map<std::string, std::any> point_attributes;
+};
+
+/**
+ * @struct RegionGroup
+ * @brief Organizes related signal points into a categorized collection
+ *
+ * RegionGroups provide a way to categorize and organize related points within
+ * signal data based on algorithmic or analytical criteria. Each group has a name
+ * and can contain multiple RegionPoints, as well as group-level attributes that
+ * apply to the entire collection.
+ *
+ * Common DSP-specific applications include:
+ * - Grouping frequency-domain features (e.g., "formants", "resonances", "harmonics")
+ * - Categorizing time-domain events (e.g., "transients", "steady_states", "decays")
+ * - Organizing analysis results (e.g., "zero_crossings", "spectral_centroids")
+ * - Defining processing boundaries (e.g., "convolution_segments", "filter_regions")
+ * - Storing algorithmic detection results (e.g., "noise_gates", "compression_thresholds")
+ *
+ * This data-driven approach enables sophisticated signal processing workflows
+ * where algorithms can operate on categorized signal segments without requiring
+ * predefined musical or content-specific structures.
+ */
+struct RegionGroup {
+    /** @brief Descriptive name of the group */
+    std::string name;
+
+    /** @brief Collection of points belonging to this group */
+    std::vector<RegionPoint> points;
+
+    /** @brief Flexible key-value store for group-specific attributes */
+    std::unordered_map<std::string, std::any> group_attributes;
 };
 
 /**
@@ -294,18 +327,33 @@ public:
     virtual u_int64_t get_marker_position(const std::string& marker_name) const = 0;
 
     /**
-     * @brief Adds a named region to the data
-     * @param region Region to add
+     * @brief Adds a region group to the container
+     * @param group RegionGroup to add
      *
-     * Regions define named sections of the data with start and end points.
+     * Adds a named collection of region points to the container. If a group with the
+     * same name already exists, it will be replaced with the new group.
      */
-    virtual void add_region(const Region& region) = 0;
+    virtual void add_region_group(const RegionGroup& group) = 0;
 
     /**
-     * @brief Gets all regions in the data
-     * @return Vector of all defined regions
+     * @brief Adds a region point to a specific group
+     * @param group_name Name of the group to add the point to
+     * @param point RegionPoint to add
+     *
+     * Adds a region point to the specified group. If the group doesn't exist,
+     * behavior is implementation-defined (typically creates the group or throws an exception).
      */
-    virtual std::vector<Region> get_regions() const = 0;
+    virtual void add_region_point(const std::string& group_name, const RegionPoint& point) = 0;
+
+    /**
+     * @brief Retrieves a region group by name
+     * @param group_name Name of the group to retrieve
+     * @return Constant reference to the requested RegionGroup
+     *
+     * Gets a specific region group by its name. If the group doesn't exist,
+     * behavior is implementation-defined (typically throws an exception).
+     */
+    virtual const RegionGroup& get_region_group(const std::string& group_name) const = 0;
 
     /**
      * @brief Gets direct access to raw sample data for a channel

@@ -4,7 +4,8 @@
 #include "sndfile.hh"
 
 namespace MayaFlux::Containers {
-struct Region;
+struct RegionPoint;
+struct RegionGroup;
 class SignalSourceContainer;
 }
 
@@ -95,20 +96,25 @@ private:
     void set_file_properties(SF_INFO& file_info);
 
     /**
-     * @brief Extracts marker and region information from an audio file
+     * @brief Extracts marker and region group information from an audio file
      * @param file_path Path to the audio file
      * @param markers Output vector to store extracted markers
-     * @param regions Output vector to store extracted regions
+     * @param region_groups Output map to store extracted region groups
      * @return true if any metadata was extracted, false otherwise
      *
-     * This method examines an audio file for embedded markers (cue points)
-     * and region information, which are available in some file formats
-     * like WAV with BWF extensions.
+     * This method examines an audio file for embedded metadata such as cue points,
+     * loop points, and broadcast wave format (BWF) information. It organizes this
+     * data into categorized region groups for DSP operations and analysis.
+     *
+     * Supported metadata includes:
+     * - Cue points (organized into "cue_points" group)
+     * - Loop points (organized into "loops" group)
+     * - BWF metadata (organized into "markers" group)
      */
     bool extract_file_metadata(
         const std::string& file_path,
         std::vector<std::pair<std::string, uint64_t>>& markers,
-        std::vector<Containers::Region>& regions);
+        std::unordered_map<std::string, Containers::RegionGroup>& region_groups);
 
     /**
      * @brief Extracts marker information from the current file
@@ -118,11 +124,21 @@ private:
     bool extract_markers(std::vector<std::pair<std::string, u_int64_t>>& markers);
 
     /**
-     * @brief Extracts region information from the current file
-     * @param regions Output vector to store extracted regions
-     * @return true if regions were extracted, false otherwise
+     * @brief Extracts region groups from the current file
+     * @param region_groups Output map to store extracted region groups
+     * @return true if region groups were extracted, false otherwise
+     *
+     * This method extracts various types of metadata from the audio file and
+     * organizes them into logical groups:
+     *
+     * - "cue_points": Contains individual cue points from the file
+     * - "loops": Contains loop regions with mode and count attributes
+     * - "markers": Contains BWF metadata and time references
+     *
+     * Each group contains RegionPoint objects with start/end frames and
+     * relevant attributes specific to the point type.
      */
-    bool extract_regions(std::vector<Containers::Region>& regions);
+    bool extract_region_groups(std::unordered_map<std::string, Containers::RegionGroup>& region_groups);
 
     std::unique_ptr<SndfileHandle> m_sndfile; ///< libsndfile C++ handle
     SF_INFO m_sfinfo; ///< File information

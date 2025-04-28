@@ -213,18 +213,37 @@ public:
     virtual u_int64_t get_marker_position(const std::string& marker_name) const override;
 
     /**
-     * @brief Adds a named region to the data
-     * @param region Region to add
+     * @brief Adds a region group to the container
+     * @param group RegionGroup to add
      *
-     * Regions define named sections of the data with start and end points.
+     * Region groups organize related signal points into categorized collections.
+     * Each group can contain multiple points with specific attributes, enabling
+     * sophisticated signal processing workflows based on signal characteristics.
      */
-    virtual void add_region(const Region& region) override;
+    virtual void add_region_group(const RegionGroup& group) override;
 
     /**
-     * @brief Gets all regions in the data
-     * @return Vector of all defined regions
+     * @brief Adds a region point to a specific group
+     * @param group_name Name of the group to add the point to
+     * @param point RegionPoint to add
+     *
+     * Region points represent specific locations or segments within the signal data,
+     * defined by start and end frame positions. Each point can have additional
+     * attributes for storing analysis results or processing parameters.
      */
-    virtual std::vector<Region> get_regions() const override;
+    virtual void add_region_point(const std::string& group_name, const RegionPoint& point) override;
+
+    /**
+     * @brief Gets a specific region group by name
+     * @param group_name Name of the group to retrieve
+     * @return Constant reference to the requested region group
+     * @throws std::out_of_range if the group doesn't exist
+     *
+     * Retrieves a named collection of region points for analysis or processing.
+     * Common groups include "cue_points", "loops", and "markers", but custom
+     * groups can be created for specific DSP applications.
+     */
+    virtual const RegionGroup& get_region_group(const std::string& group_name) const override;
 
     /**
      * @brief Gets direct access to raw sample data for a channel
@@ -514,7 +533,7 @@ private:
     std::string m_file_path; ///< Path to loaded file (if applicable)
     std::vector<std::vector<double>> m_samples; ///< Interleaved sample data
     std::vector<std::vector<double>> m_processed_data; ///< Processed output data (deinterleaved by processor)
-    std::vector<Region> m_regions; ///< Regions in the audio data
+    std::unordered_map<std::string, RegionGroup> m_region_groups; ///< Regions in the audio data
     std::vector<std::pair<std::string, u_int64_t>> m_markers; ///< Markers in the audio data
 
     // Audio metadata

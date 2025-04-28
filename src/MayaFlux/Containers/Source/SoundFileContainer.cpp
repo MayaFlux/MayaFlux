@@ -361,28 +361,22 @@ u_int64_t SoundFileContainer::get_marker_position(const std::string& marker_name
     return 0;
 }
 
-void SoundFileContainer::add_region(const Region& region)
+void SoundFileContainer::add_region_group(const RegionGroup& group)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_samples.empty() || m_samples[0].empty()) {
-        return;
-    }
-
-    const u_int64_t channel_size = m_samples[0].size();
-
-    if (region.start_frame > region.end_frame || region.end_frame >= channel_size + 1) {
-        std::cerr << "Invalid region boundaries: " << region.start_frame << " to " << region.end_frame << std::endl;
-        return;
-    }
-
-    m_regions.push_back(region);
+    m_region_groups[group.name] = group;
 }
 
-std::vector<Region> SoundFileContainer::get_regions() const
+void SoundFileContainer::add_region_point(const std::string& group_name, const RegionPoint& point)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_regions;
+    m_region_groups[group_name].points.push_back(point);
+}
+
+const RegionGroup& SoundFileContainer::get_region_group(const std::string& group_name) const
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    return m_region_groups.at(group_name);
 }
 
 const std::vector<double>& SoundFileContainer::get_raw_samples(uint32_t channel) const
