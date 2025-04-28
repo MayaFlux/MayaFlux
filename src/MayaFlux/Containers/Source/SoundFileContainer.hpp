@@ -1,123 +1,50 @@
 #pragma once
 
-#include "config.h"
-
-namespace MayaFlux::Buffers {
-class AudioBuffer;
-}
+#include "MayaFlux/Containers/SignalSourceContainer.hpp"
 
 namespace MayaFlux::Containers {
 
-class DataProcessor;
-class DataProcessingChain;
-
 /**
- * @struct Region
- * @brief Defines a named section within audio data
+ * @class SoundFileContainer
+ * @brief Container for audio data from sound files
  *
- * Regions represent meaningful segments within audio content, allowing for
- * organization, navigation, and selective processing of audio material. Each
- * region has a descriptive name and precise frame boundaries that define its
- * start and end points.
+ * SoundFileContainer extends SignalSourceContainer to provide a specialized
+ * container for audio data. It works with SoundFileReader to load audio
+ * from various file formats and makes the data available through the standard
+ * SignalSourceContainer interface.
  *
- * Common uses for regions include:
- * - Marking grains for granular synthesis
- * - Defining synchronization points for audio editing
- * - Representing silences, busyness(zero crossings), density
- * - Creating chunks for waveform analysis and visualization
- *
- * Regions provide a higher-level organizational structure than individual
- * markers, making them valuable for content navigation and editing workflows.
+ * This container stores data in interleaved format and relies on the default
+ * processor (typically ContiguousAccessProcessor) to handle deinterleaving
+ * when needed during processing.
  */
-struct Region {
-    /** @brief Descriptive name of the region */
-    std::string name;
-
-    /** @brief Starting frame index (inclusive) */
-    u_int64_t start_frame;
-
-    /** @brief Ending frame index (inclusive) */
-    u_int64_t end_frame;
-};
-
-/**
- * @enum ProcessingState
- * @brief Represents the current processing lifecycle state of a container
- *
- * ProcessingState tracks a container's position in the data processing lifecycle,
- * enabling coordinated processing across components and optimizing resource usage.
- * This state-based approach allows the system to make intelligent decisions about
- * when to process data and how to handle dependencies between components.
- *
- * The state transitions typically follow this sequence:
- * 1. IDLE → READY (when data is loaded/prepared)
- * 2. READY → PROCESSING (when processing begins)
- * 3. PROCESSING → PROCESSED (when processing completes)
- * 4. PROCESSED → READY (when new processing is needed)
- * 5. Any state → NEEDS_REMOVAL (when container should be removed)
- *
- * Components can register for state change notifications to coordinate their
- * activities with the container's lifecycle, enabling efficient resource
- * management and processing optimization.
- */
-enum class ProcessingState {
-    /**
-     * Container is inactive with no data or not ready for processing.
-     * Typically the initial state or when a container is reset.
-     */
-    IDLE,
-
-    /**
-     * Container has data loaded and is ready for processing.
-     * Processing can begin when resources are available.
-     */
-    READY,
-
-    /**
-     * Container is actively being processed.
-     * Other components should avoid modifying the data during this state.
-     */
-    PROCESSING,
-
-    /**
-     * Container has completed processing and results are available.
-     * Data can be consumed by downstream components.
-     */
-    PROCESSED,
-
-    /**
-     * Container is marked for removal from the system.
-     * Resources should be released and references cleared.
-     */
-    NEEDS_REMOVAL
-};
-
-/**
- * @class SignalSourceContainer
- * @brief Interface for managing arbitrary data sources as processable audio signals
- *
- * SignalSourceContainer provides a flexible abstraction for handling various types of data
- * that can be interpreted and processed as audio signals. Unlike AudioBuffer which is designed
- * for direct audio processing, this container can manage data from diverse sources such as:
- * - Audio files of any format
- * - Network streams
- * - External buffers from other applications
- * - Generated data from algorithms
- * - Any data source larger than or structurally different from AudioBuffer
- *
- * The container maintains its own processing state and can operate independently of the
- * engine's BufferManager, allowing for asynchronous or scheduled processing. It bridges
- * between raw data sources and the Maya Flux audio processing system through DataProcessor
- * objects that transform the raw data into processable audio channels.
- *
- * The default processor typically handles channel organization, ensuring that data is
- * properly structured for audio processing when needed. This approach enables data-driven
- * development where processing strategies can be adapted to the specific characteristics
- * of each data source.
- */
-class SignalSourceContainer : public std::enable_shared_from_this<SignalSourceContainer> {
+class SoundFileContainer : public SignalSourceContainer {
 public:
-    virtual ~SignalSourceContainer() = default;
+    /**
+     * @brief Creates an empty sound file container
+     *
+     * Creates a container without loading any data. Use SoundFileReader
+     * to load audio data into this container after construction.
+     */
+    SoundFileContainer();
+
+    // /**
+    //  * @brief Destructor
+    //  */
+    ~SoundFileContainer() = default;
+
+    /**
+     * @brief Creates the default processor for this container
+     *
+     * This method is made public to allow the SoundFileReader to
+     * set up the default processor after loading data.
+     */
+    void create_default_processor() override;
+
+    /**
+     * @brief Gets the file path this container was loaded from
+     * @return Path of the loaded file, or empty string if not loaded from a file
+     */
+    std::string get_file_path() const;
 
     /**
      * @brief Initializes the container with a specific frame capacity
@@ -126,7 +53,7 @@ public:
      * This method prepares the container to hold the specified number of frames,
      * allocating necessary resources and initializing internal structures.
      */
-    virtual void setup(u_int32_t num_frames, u_int32_t sample_rate, u_int32_t num_channels = 1) = 0;
+    virtual void setup(u_int32_t num_frames, u_int32_t sample_rate, u_int32_t num_channels = 1) override;
 
     /**
      * @brief Changes the container's frame capacity
@@ -135,20 +62,20 @@ public:
      * Resizes the container to accommodate a different number of frames,
      * preserving existing data where possible.
      */
-    virtual void resize(u_int32_t num_frames) = 0;
+    virtual void resize(u_int32_t num_frames) override;
 
     /**
      * @brief Removes all data from the container
      *
      * Clears all sample data while maintaining the container's structure and capacity.
      */
-    virtual void clear() = 0;
+    virtual void clear() override;
 
     /**
      * @brief Gets the current frame capacity of the container
      * @return Number of frames the container can hold
      */
-    virtual u_int32_t get_num_frames() const = 0;
+    virtual u_int32_t get_num_frames() const override;
 
     /**
      * @brief Retrieves a single sample value
@@ -156,14 +83,14 @@ public:
      * @param channel Channel to retrieve from (default: 0)
      * @return Sample value at the specified position
      */
-    virtual double get_sample_at(u_int64_t sample_index, u_int32_t channel = 0) const = 0;
+    virtual double get_sample_at(u_int64_t sample_index, u_int32_t channel = 0) const override;
 
     /**
      * @brief Retrieves all channel values for a specific frame
      * @param frame_index Index of the frame to retrieve
      * @return Vector containing sample values for all channels at the specified frame
      */
-    virtual std::vector<double> get_frame_at(u_int64_t frame_index) const = 0;
+    virtual std::vector<double> get_frame_at(u_int64_t frame_index) const override;
 
     /**
      * @brief Checks if the data is stored in interleaved format
@@ -172,16 +99,7 @@ public:
      * Interleaved format stores samples as [ch1, ch2, ch1, ch2, ...] while
      * non-interleaved stores as separate channel arrays.
      */
-    virtual const bool is_interleaved() const = 0;
-
-    /**
-     * @brief Makrs the interleaved state of stored data
-     * @param interleaved Is data interleaved?
-     *
-     * Interleaved format stores samples as [ch1, ch2, ch1, ch2, ...] while
-     * non-interleaved stores as separate channel arrays.
-     */
-    virtual void set_interleaved(bool interleaved) const = 0;
+    inline virtual const bool is_interleaved() const override { return true; }
 
     /**
      * @brief Checks if the container is ready for processing
@@ -190,7 +108,7 @@ public:
      * A container is typically ready when it has valid data loaded and any
      * necessary preprocessing has been completed.
      */
-    virtual const bool is_ready_for_processing() const = 0;
+    virtual const bool is_ready_for_processing() const override;
 
     /**
      * @brief Sets the processing readiness state
@@ -199,7 +117,7 @@ public:
      * This allows external components to signal when the container's data
      * is ready to be processed or when processing should be deferred.
      */
-    virtual void mark_ready_for_processing(bool ready) = 0;
+    virtual void mark_ready_for_processing(bool ready) override;
 
     /**
      * @brief Fills a buffer with samples from a specific channel
@@ -212,7 +130,7 @@ public:
      */
     virtual void fill_sample_range(
         u_int64_t start, u_int32_t num_samples, std::vector<double>& output_buffer, u_int32_t channel = 0) const
-        = 0;
+        override;
 
     /**
      * @brief Fills multiple buffers with frame data for specified channels
@@ -223,7 +141,8 @@ public:
      *
      * Copies frame data for multiple channels into separate buffers.
      */
-    virtual void fill_frame_range(u_int64_t start_frame, u_int32_t num_frames, std::vector<std::vector<double>>& output_buffers, const std::vector<u_int32_t>& channels) const = 0;
+    virtual void fill_frame_range(u_int64_t start_frame, u_int32_t num_frames,
+        std::vector<std::vector<double>>& output_buffers, const std::vector<u_int32_t>& channels) const;
 
     /**
      * @brief Checks if a specified range of frames is valid
@@ -233,7 +152,7 @@ public:
      *
      * A range is valid if it falls entirely within the container's data bounds.
      */
-    virtual bool is_range_valid(u_int64_t start_frame, u_int32_t num_frames) const = 0;
+    virtual bool is_range_valid(u_int64_t start_frame, u_int32_t num_frames) const override;
 
     /**
      * @brief Sets the current read position
@@ -241,13 +160,13 @@ public:
      *
      * This position is used by methods like advance() and is_read_at_end().
      */
-    virtual void set_read_position(u_int64_t frame_position) = 0;
+    virtual void set_read_position(u_int64_t frame_position) override;
 
     /**
      * @brief Gets the current read position
      * @return Current frame index for reading
      */
-    virtual u_int64_t get_read_position() const = 0;
+    virtual u_int64_t get_read_position() const override;
 
     /**
      * @brief Advances the read position by a specified number of frames
@@ -255,18 +174,18 @@ public:
      *
      * Moves the read position forward, handling looping if enabled.
      */
-    virtual void advance(u_int32_t num_frames) = 0;
+    virtual void advance(u_int32_t num_frames) override;
 
     /**
      * @brief Checks if the read position has reached the end of the data
      * @return true if at end, false otherwise
      */
-    virtual bool is_read_at_end() const = 0;
+    virtual bool is_read_at_end() const override;
 
     /**
      * @brief Resets the read position to the beginning
      */
-    virtual void reset_read_position() = 0;
+    virtual void reset_read_position() override;
 
     /**
      * @brief Generates a normalized preview of the data for visualization
@@ -276,7 +195,7 @@ public:
      *
      * This is typically used for waveform displays and other visualizations.
      */
-    virtual std::vector<double> get_normalized_preview(u_int32_t channel, u_int32_t max_points) const = 0;
+    virtual std::vector<double> get_normalized_preview(u_int32_t channel, u_int32_t max_points) const override;
 
     /**
      * @brief Gets all markers in the data
@@ -284,14 +203,14 @@ public:
      *
      * Markers are named positions within the data, often used for navigation.
      */
-    virtual std::vector<std::pair<std::string, u_int64_t>> get_markers() const = 0;
+    virtual std::vector<std::pair<std::string, u_int64_t>> get_markers() const override;
 
     /**
      * @brief Gets the position of a specific marker
      * @param marker_name Name of the marker to find
      * @return Frame position of the marker
      */
-    virtual u_int64_t get_marker_position(const std::string& marker_name) const = 0;
+    virtual u_int64_t get_marker_position(const std::string& marker_name) const override;
 
     /**
      * @brief Adds a named region to the data
@@ -299,13 +218,13 @@ public:
      *
      * Regions define named sections of the data with start and end points.
      */
-    virtual void add_region(const Region& region) = 0;
+    virtual void add_region(const Region& region) override;
 
     /**
      * @brief Gets all regions in the data
      * @return Vector of all defined regions
      */
-    virtual std::vector<Region> get_regions() const = 0;
+    virtual std::vector<Region> get_regions() const override;
 
     /**
      * @brief Gets direct access to raw sample data for a channel
@@ -314,7 +233,7 @@ public:
      *
      * Provides direct read access to the underlying sample data.
      */
-    virtual const std::vector<double>& get_raw_samples(uint32_t channel = 0) const = 0;
+    virtual const std::vector<double>& get_raw_samples(uint32_t channel = 0) const override;
 
     /**
      * @brief Gets mutable access to all channel data
@@ -322,13 +241,13 @@ public:
      *
      * Provides direct read/write access to all channel data.
      */
-    virtual std::vector<std::vector<double>>& get_all_raw_samples() = 0;
+    virtual std::vector<std::vector<double>>& get_all_raw_samples() override;
 
     /**
      * @brief Gets immutable access to all channel data
      * @return Constant reference to vector of channel sample vectors
      */
-    virtual const std::vector<std::vector<double>>& get_all_raw_samples() const = 0;
+    virtual const std::vector<std::vector<double>>& get_all_raw_samples() const override;
 
     /**
      * @brief Sets the sample data for a specific channel
@@ -337,7 +256,7 @@ public:
      *
      * Replaces the entire sample data for the specified channel.
      */
-    virtual void set_raw_samples(const std::vector<double>& samples, uint32_t channel = 0) = 0;
+    virtual void set_raw_samples(const std::vector<double>& samples, uint32_t channel = 0) override;
 
     /**
      * @brief Sets the sample data for all channels
@@ -345,7 +264,7 @@ public:
      *
      * Replaces the entire sample data for all channels.
      */
-    virtual void set_all_raw_samples(const std::vector<std::vector<double>>& samples) = 0;
+    virtual void set_all_raw_samples(const std::vector<std::vector<double>>& samples) override;
 
     /**
      * @brief Enables or disables looping playback
@@ -353,13 +272,13 @@ public:
      *
      * When looping is enabled, advancing past the end will wrap to the beginning.
      */
-    virtual void set_looping(bool enable) = 0;
+    virtual void set_looping(bool enable) override;
 
     /**
      * @brief Checks if looping is enabled
      * @return true if looping is enabled, false otherwise
      */
-    virtual bool get_looping() const = 0;
+    virtual bool get_looping() const override;
 
     /**
      * @brief Sets the default processor for this container
@@ -368,13 +287,13 @@ public:
      * The default processor is typically responsible for organizing data into
      * channels and preparing it for audio processing.
      */
-    virtual void set_default_processor(std::shared_ptr<DataProcessor> processor) = 0;
+    virtual void set_default_processor(std::shared_ptr<DataProcessor> processor) override;
 
     /**
      * @brief Gets the default processor
      * @return Shared pointer to the default processor
      */
-    virtual std::shared_ptr<DataProcessor> get_default_processor() const = 0;
+    virtual std::shared_ptr<DataProcessor> get_default_processor() const override;
 
     /**
      * @brief Gets the processing chain for this container
@@ -382,13 +301,13 @@ public:
      *
      * The processing chain manages the sequence of processors applied to the data.
      */
-    virtual std::shared_ptr<DataProcessingChain> get_processing_chain() = 0;
+    virtual std::shared_ptr<DataProcessingChain> get_processing_chain() override;
 
     /**
      * @brief Sets the processing chain for this container
      * @param chain Processing chain to use
      */
-    virtual void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) = 0;
+    virtual void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) override;
 
     /**
      * @brief Marks all associated buffers for processing or skipping
@@ -396,14 +315,14 @@ public:
      *
      * This affects how the container's data is handled during the next processing cycle.
      */
-    virtual void mark_buffers_for_processing(bool should_process) = 0;
+    virtual void mark_buffers_for_processing(bool should_process) override;
 
     /**
      * @brief Marks all associated buffers for removal
      *
      * Signals that the buffers should be removed during the next cleanup cycle.
      */
-    virtual void mark_buffers_for_removal() = 0;
+    virtual void mark_buffers_for_removal() override;
 
     /**
      * @brief Gets the AudioBuffer for a specific channel
@@ -413,25 +332,25 @@ public:
      * This provides access to the AudioBuffer representation of the channel data,
      * which can be used with the standard audio processing system.
      */
-    virtual std::shared_ptr<Buffers::AudioBuffer> get_channel_buffer(u_int32_t channel) = 0;
+    virtual std::shared_ptr<Buffers::AudioBuffer> get_channel_buffer(u_int32_t channel) override;
 
     /**
      * @brief Gets all AudioBuffers for this container
      * @return Vector of shared pointers to all AudioBuffers
      */
-    virtual std::vector<std::shared_ptr<Buffers::AudioBuffer>> get_all_buffers() = 0;
+    virtual std::vector<std::shared_ptr<Buffers::AudioBuffer>> get_all_buffers() override;
 
     /**
      * @brief Gets the sample rate of the data
      * @return Sample rate in Hz
      */
-    virtual u_int32_t get_sample_rate() const = 0;
+    virtual u_int32_t get_sample_rate() const override;
 
     /**
      * @brief Gets the number of audio channels
      * @return Number of channels
      */
-    virtual u_int32_t get_num_audio_channels() const = 0;
+    virtual u_int32_t get_num_audio_channels() const override;
 
     /**
      * @brief Gets the total number of frames in the data
@@ -440,13 +359,13 @@ public:
      * This represents the entire data size, which may be larger than
      * the container's current capacity.
      */
-    virtual u_int64_t get_num_frames_total() const = 0;
+    virtual u_int64_t get_num_frames_total() const override;
 
     /**
      * @brief Gets the total duration of the data in seconds
      * @return Duration in seconds
      */
-    virtual double get_duration_seconds() const = 0;
+    virtual double get_duration_seconds() const override;
 
     /**
      * @brief Acquires a lock on the container
@@ -454,24 +373,24 @@ public:
      * This should be used to ensure thread-safe access when the container
      * might be accessed from multiple threads.
      */
-    virtual void lock() = 0;
+    virtual void lock() override;
 
     /**
      * @brief Releases the lock on the container
      */
-    virtual void unlock() = 0;
+    virtual void unlock() override;
 
     /**
      * @brief Attempts to acquire the lock without blocking
      * @return true if the lock was acquired, false otherwise
      */
-    virtual bool try_lock() = 0;
+    virtual bool try_lock() override;
 
     /**
      * @brief Gets the current processing state
      * @return Current state of the container
      */
-    virtual ProcessingState get_processing_state() const = 0;
+    virtual ProcessingState get_processing_state() const override;
 
     /**
      * @brief Updates the processing state
@@ -479,7 +398,7 @@ public:
      *
      * This may trigger state change callbacks if registered.
      */
-    virtual void update_processing_state(ProcessingState new_state) = 0;
+    virtual void update_processing_state(ProcessingState new_state) override;
 
     /**
      * @brief Registers a callback for state changes
@@ -489,102 +408,140 @@ public:
      */
     virtual void register_state_change_callback(
         std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> callback)
-        = 0;
+        override;
 
     /**
      * @brief Unregisters the state change callback
      */
-    virtual void unregister_state_change_callback() = 0;
-
-    /**
-     * @brief Creates a default processor for this container
-     *
-     * Initializes and configures a standard DataProcessor that will handle
-     * the basic processing needs of this container's data. This is typically
-     * called during initialization if no custom processor is provided.
-     */
-    virtual void create_default_processor() = 0;
+    virtual void unregister_state_change_callback() override;
 
     /**
      * @brief Processes the container data using the default processor
      *
-     * Executes the default processing chain on the container's data.
-     * This method is a convenience wrapper that applies standard processing
-     * without requiring manual configuration of the processing chain.
+     * Executes the default processing chain on the container's audio data.
+     * For sound files, this typically involves deinterleaving the data and
+     * preparing it for further audio processing operations.
      */
-    virtual void process_default() = 0;
+    virtual void process_default() override;
 
     /**
      * @brief Registers a component as a reader for a specific channel
      * @param channel Channel index to register for reading
      *
-     * Tracks which components are actively reading from each channel,
-     * allowing the container to optimize processing and resource allocation
-     * based on actual usage patterns.
+     * Tracks which components are actively reading from each audio channel,
+     * allowing the container to optimize processing and resource allocation.
+     * This is particularly important for multi-channel audio files where
+     * not all channels may be used by all components.
      */
-    virtual void register_channel_reader(u_int32_t channel) = 0;
+    virtual void register_channel_reader(u_int32_t channel) override;
 
     /**
      * @brief Unregisters a component as a reader for a specific channel
      * @param channel Channel index to unregister from reading
      *
-     * Removes a component from the list of active readers for a channel.
+     * Removes a component from the list of active readers for an audio channel.
      * When a channel has no active readers, it may be eligible for
      * optimization or resource reclamation.
      */
-    virtual void unregister_channel_reader(u_int32_t channel) = 0;
+    virtual void unregister_channel_reader(u_int32_t channel) override;
 
     /**
      * @brief Checks if any channels have active readers
      * @return true if at least one channel has active readers, false otherwise
      *
-     * This method helps determine if the container's data is currently
+     * This method helps determine if the container's audio data is currently
      * being consumed by any components, which can inform processing and
      * resource management decisions.
      */
-    virtual bool has_active_channel_readers() const = 0;
+    virtual bool has_active_channel_readers() const override;
 
     /**
      * @brief Marks a specific channel as consumed
      * @param channel Channel index to mark as consumed
      *
      * Indicates that a reading component has finished consuming data from
-     * the specified channel for the current processing cycle. This helps
+     * the specified audio channel for the current processing cycle. This helps
      * track when all expected reads have completed.
      */
-    virtual void mark_channel_consumed(u_int32_t channel) = 0;
+    virtual void mark_channel_consumed(u_int32_t channel) override;
 
     /**
      * @brief Checks if all channels with active readers have been consumed
      * @return true if all channels have been consumed, false otherwise
      *
-     * This method helps determine when a processing cycle is complete by
+     * This method helps determine when an audio processing cycle is complete by
      * checking if all channels that were expected to be read have been
      * marked as consumed.
      */
-    virtual bool all_channels_consumed() const = 0;
+    virtual bool all_channels_consumed() const override;
 
     /**
-     * @brief Gets the processed data
+     * @brief Gets the processed audio data
      * @return Reference to vector of processed sample vectors
      *
-     * Provides access to the data after it has been transformed by the
+     * Provides access to the audio data after it has been transformed by the
      * processing chain. Each inner vector represents one channel of
      * processed samples. This is a mutable reference, allowing modifications
-     * to the processed data if needed.
+     * to the processed audio data if needed.
      */
-    virtual std::vector<std::vector<double>>& get_processed_data() = 0;
+    virtual std::vector<std::vector<double>>& get_processed_data() override;
 
     /**
-     * @brief Gets the processed data (const version)
+     * @brief Gets the processed audio data (const version)
      * @return Constant reference to vector of processed sample vectors
      *
-     * Provides read-only access to the data after it has been transformed
+     * Provides read-only access to the audio data after it has been transformed
      * by the processing chain. Each inner vector represents one channel of
      * processed samples. This const version ensures the data cannot be
      * modified through this reference.
      */
-    virtual const std::vector<std::vector<double>>& get_processed_data() const = 0;
-};
+    virtual const std::vector<std::vector<double>>& get_processed_data() const override;
 
+    /**
+     * @brief Sets the interleaved state of stored data
+     * @param interleaved Is data interleaved?
+     *
+     * This is a no-op since SoundFileContainer always stores data in interleaved format
+     */
+    inline virtual void set_interleaved(bool interleaved) const override
+    {
+        // No-op since this container is always interleaved
+        (void)interleaved;
+    }
+
+private:
+    // Data storage
+    std::string m_file_path; ///< Path to loaded file (if applicable)
+    std::vector<std::vector<double>> m_samples; ///< Interleaved sample data
+    std::vector<std::vector<double>> m_processed_data; ///< Processed output data (deinterleaved by processor)
+    std::vector<Region> m_regions; ///< Regions in the audio data
+    std::vector<std::pair<std::string, u_int64_t>> m_markers; ///< Markers in the audio data
+
+    // Audio metadata
+    u_int32_t m_sample_rate; ///< Sample rate in Hz
+    u_int32_t m_num_channels; ///< Number of audio channels
+    u_int64_t m_num_frames; ///< Number of frames in the data
+
+    // State management
+    bool m_ready_for_processing; ///< Whether the container is ready for processing
+    bool m_looping; ///< Whether playback should loop
+    u_int64_t m_read_position; ///< Current read position in frames
+    ProcessingState m_processing_state; ///< Current processing state
+
+    std::unordered_map<u_int32_t, int> m_active_channel_readers;
+    std::unordered_set<u_int32_t> m_channels_consumed_this_cycle;
+
+    // Processing components
+    std::shared_ptr<DataProcessor> m_default_processor; ///< Default processor (typically ContiguousAccessProcessor)
+    std::shared_ptr<DataProcessingChain> m_processing_chain; ///< Processing chain
+    std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_callback; ///< State change callback
+
+    // Buffer management
+    std::vector<std::shared_ptr<Buffers::AudioBuffer>> m_buffers; ///< AudioBuffers for this container
+
+    // Thread safety
+    mutable std::recursive_mutex m_mutex; ///< Mutex for thread safety
+
+    void create_container_buffers();
+};
 }

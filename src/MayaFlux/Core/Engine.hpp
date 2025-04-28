@@ -29,6 +29,28 @@ struct GlobalStreamInfo {
 };
 
 /**
+ * @enum HookPosition
+ * @brief Defines the position in the processing cycle where a hook should be executed
+ *
+ * Process hooks can be registered to run either before or after the main audio processing
+ * to perform additional operations or monitoring at specific points in the signal chain.
+ */
+enum class HookPosition {
+    PRE_PROCESS, ///< Execute hook before any audio processing occurs
+    POST_PROCESS ///< Execute hook after all audio processing is complete
+};
+
+/**
+ * @typedef ProcessHook
+ * @brief Function type for process hooks that can be registered with the engine
+ *
+ * Process hooks are callbacks that execute at specific points in the audio processing cycle.
+ * They receive the current number of frames being processed and can be used for monitoring,
+ * debugging, or additional processing operations.
+ */
+using ProcessHook = std::function<void(unsigned int num_frames)>;
+
+/**
  * @class Engine
  * @brief Core processing engine that manages signal flow, scheduling, and node graph operations
  *
@@ -274,6 +296,30 @@ public:
         return false;
     }
 
+    /**
+     * @brief Registers a process hook to be executed at a specific point in the processing cycle
+     * @param name Unique identifier for the hook
+     * @param hook The callback function to execute
+     * @param position When to execute the hook (pre or post processing)
+     *
+     * Process hooks allow for custom code execution at specific points in the audio processing cycle.
+     * They can be used for monitoring, debugging, or additional processing operations.
+     */
+    void register_process_hook(const std::string& name, ProcessHook hook, HookPosition position = HookPosition::POST_PROCESS);
+
+    /**
+     * @brief Removes a previously registered process hook
+     * @param name The identifier of the hook to remove
+     */
+    void unregister_process_hook(const std::string& name);
+
+    /**
+     * @brief Checks if a process hook with the given name exists
+     * @param name The identifier of the hook to check
+     * @return true if a hook with the given name exists, false otherwise
+     */
+    bool has_process_hook(const std::string& name) const;
+
 private:
     //-------------------------------------------------------------------------
     // System Components
@@ -300,6 +346,9 @@ private:
     //-------------------------------------------------------------------------
 
     std::unordered_map<std::string, std::shared_ptr<Scheduler::SoundRoutine>> m_named_tasks; ///< Named task registry
+
+    std::map<std::string, ProcessHook> m_pre_process_hooks;
+    std::map<std::string, ProcessHook> m_post_process_hooks;
 };
 
 } // namespace MayaFlux::Core

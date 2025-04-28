@@ -6,6 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(MayaFlux)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
+pkg_check_modules(SNDFILE REQUIRED IMPORTED_TARGET sndfile)
 
 find_package(GTest REQUIRED)
 enable_testing()
@@ -18,7 +19,10 @@ list(FILTER SOURCES EXCLUDE REGEX ".*main\\.cpp$")
 
 add_library(MayaFluxLib ${SOURCES})
 target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio)
+target_link_libraries(MayaFluxLib PUBLIC
+    PkgConfig::RtAudio
+    PkgConfig::SNDFILE
+)
 
 add_compile_options (
  -Wall

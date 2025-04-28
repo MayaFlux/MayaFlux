@@ -226,6 +226,12 @@ public:
         return m_source_channel;
     }
 
+    /**
+     * @brief Initilaize default processor
+     * Workaround to let shared_from_this() evaluate after constructor
+     */
+    void initialize();
+
 protected:
     /**
      * @brief Container providing the source data
@@ -238,9 +244,10 @@ protected:
     u_int32_t m_source_channel;
 
     /**
-     * @brief Default processor (ContainerToBufferAdapter) for this buffer
+     * @brief Default processor (ContainerToBufferAdapter) for this buffer.
+     * Marked pending to allow post constructor initialization
      */
-    std::shared_ptr<BufferProcessor> m_default_processor;
+    std::shared_ptr<BufferProcessor> m_pending_adapter;
 };
 
 }

@@ -72,10 +72,19 @@ void ContiguousAccessProcessor::deinterleave_data(std::shared_ptr<SignalSourceCo
 
         const auto& interleaved_data = signal_source->get_raw_samples();
 
-        if (interleaved_data.size() < m_total_frames * m_num_channels) {
+        // For interleaved data, we expect size = frames * channels
+        u_int64_t expected_interleaved_size = m_total_frames * m_num_channels;
+
+        std::cout << "Interleaved data size: " << interleaved_data.size()
+                  << ", Expected: " << expected_interleaved_size << std::endl;
+
+        // Check if the data is actually interleaved
+        if (interleaved_data.size() != expected_interleaved_size) {
+            // The data size doesn't match what we expect for interleaved data
+            // It might be already deinterleaved or there's an error
             throw std::runtime_error(std::format(
-                "Interleaved data size ({}) is less than expected ({}) for {} frames and {} channels",
-                interleaved_data.size(), m_total_frames * m_num_channels, m_total_frames, m_num_channels));
+                "Interleaved data size ({}) doesn't match expected size ({}) for {} frames and {} channels",
+                interleaved_data.size(), expected_interleaved_size, m_total_frames, m_num_channels));
         }
 
         m_channel_data.resize(m_num_channels);
@@ -90,8 +99,8 @@ void ContiguousAccessProcessor::deinterleave_data(std::shared_ptr<SignalSourceCo
         }
 
         signal_source->set_all_raw_samples(m_channel_data);
-
         m_data_interleaved = false;
+
         signal_source->unlock();
 
     } catch (const std::exception& e) {
@@ -149,7 +158,6 @@ void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer>
     m_data_interleaved = false;
 }
 
-// In ContiguousAccessProcessor::process
 void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> signal_source)
 {
     if (!m_prepared) {
@@ -174,7 +182,6 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> s
         processed_data.resize(m_num_channels);
     }
 
-    // Ensure each channel buffer has correct hardware size
     for (auto& channel_data : processed_data) {
         if (channel_data.size() != HARDWARE_BUFFER_SIZE) {
             channel_data.resize(HARDWARE_BUFFER_SIZE);
@@ -188,7 +195,6 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> s
     }
 
     signal_source->set_read_position(m_current_position);
-    signal_source->update_processing_state(ProcessingState::PROCESSED);
 }
 
 void ContiguousAccessProcessor::process_with_looping(
@@ -271,5 +277,14 @@ void ContiguousAccessProcessor::process_without_looping(
     if (m_current_position >= m_total_frames) {
         signal_source->update_processing_state(ProcessingState::NEEDS_REMOVAL);
     }
+}
+
+bool ContiguousAccessProcessor::is_processing() const
+{
+    if (auto container = m_source_container_weak.lock()) {
+        return container->get_processing_state() == ProcessingState::PROCESSING;
+    }
+
+    return false;
 }
 }

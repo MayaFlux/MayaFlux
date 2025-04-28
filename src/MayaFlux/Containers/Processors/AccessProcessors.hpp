@@ -73,6 +73,8 @@ public:
      */
     void process(std::shared_ptr<SignalSourceContainer> container) override;
 
+    bool is_processing() const override;
+
 protected:
     /**
      * @brief Extracts and stores metadata from the container

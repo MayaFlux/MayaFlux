@@ -182,6 +182,10 @@ int Engine::process_input(double* input_buffer, unsigned int num_frames)
 
 int Engine::process_output(double* output_buffer, unsigned int num_frames)
 {
+    for (const auto& [name, hook] : m_pre_process_hooks) {
+        hook(num_frames);
+    }
+
     m_scheduler->process_buffer(num_frames);
 
     unsigned int num_channels = m_stream_info.num_channels;
@@ -201,6 +205,10 @@ int Engine::process_output(double* output_buffer, unsigned int num_frames)
         m_Buffer_manager->process_channel(channel);
     }
 
+    for (const auto& [name, hook] : m_post_process_hooks) {
+        hook(num_frames);
+    }
+
     m_Buffer_manager->fill_interleaved(output_buffer, num_frames);
 
     return 0;
@@ -208,8 +216,16 @@ int Engine::process_output(double* output_buffer, unsigned int num_frames)
 
 int Engine::process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames)
 {
+    for (const auto& [name, hook] : m_pre_process_hooks) {
+        hook(num_frames);
+    }
+
     process_input(input_buffer, num_frames);
     process_output(output_buffer, num_frames);
+
+    for (const auto& [name, hook] : m_post_process_hooks) {
+        hook(num_frames);
+    }
 
     return 0;
 }
@@ -278,6 +294,38 @@ bool Engine::restart_task(const std::string& name)
         }
     }
     return false;
+}
+
+//-------------------------------------------------------------------------
+// Process Hook Registration
+//-------------------------------------------------------------------------
+
+void Engine::register_process_hook(const std::string& name, ProcessHook hook, HookPosition position)
+{
+    if (position == HookPosition::PRE_PROCESS) {
+        m_pre_process_hooks[name] = std::move(hook);
+    } else {
+        m_post_process_hooks[name] = std::move(hook);
+    }
+}
+
+void Engine::unregister_process_hook(const std::string& name)
+{
+    auto pre_it = m_pre_process_hooks.find(name);
+    if (pre_it != m_pre_process_hooks.end()) {
+        m_pre_process_hooks.erase(pre_it);
+        return;
+    }
+
+    auto post_it = m_post_process_hooks.find(name);
+    if (post_it != m_post_process_hooks.end()) {
+        m_post_process_hooks.erase(post_it);
+    }
+}
+
+bool Engine::has_process_hook(const std::string& name) const
+{
+    return m_pre_process_hooks.find(name) != m_pre_process_hooks.end() || m_post_process_hooks.find(name) != m_post_process_hooks.end();
 }
 
 } // namespace MayaFlux::Core

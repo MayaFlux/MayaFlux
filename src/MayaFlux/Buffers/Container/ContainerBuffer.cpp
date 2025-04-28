@@ -10,10 +10,18 @@ ContainerToBufferAdapter::ContainerToBufferAdapter(std::shared_ptr<Containers::S
     , m_update_flags(true)
 {
     if (container) {
-        container->register_state_change_callback(
-            [this](std::shared_ptr<Containers::SignalSourceContainer> c, Containers::ProcessingState s) {
-                this->on_container_state_change(c, s);
-            });
+        try {
+            container->register_state_change_callback(
+                [this](std::shared_ptr<Containers::SignalSourceContainer> c, Containers::ProcessingState s) {
+                    this->on_container_state_change(c, s);
+                });
+        } catch (const std::bad_weak_ptr& e) {
+            std::cerr << "Warning: Could not register callback during adapter construction: "
+                      << e.what() << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "Unexpected exception in adapter construction: "
+                      << e.what() << std::endl;
+        }
     }
 }
 
@@ -65,15 +73,12 @@ void ContainerToBufferAdapter::process(std::shared_ptr<Buffers::AudioBuffer> buf
                 }
             }
 
-            // Update state if needed
-            // Note: Each adapter only sees one buffer, so we need a way to
-            // track when all channels have been processed
             if (m_auto_advance) {
-                if (m_source_channel == processed_data.size() - 1) {
+                m_container->mark_channel_consumed(m_source_channel);
+
+                if (m_container->all_channels_consumed()) {
                     m_container->update_processing_state(Containers::ProcessingState::READY);
                 }
-                // For more deterministic behavior, consider adding a "channel_processed" counter
-                // in the container that each adapter increments, and the last one triggers the state change
             }
         }
 
@@ -90,6 +95,8 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<Buffers::AudioBuffer> b
     if (!m_container || !buffer) {
         return;
     }
+
+    m_container->register_channel_reader(m_source_channel);
 
     if (!m_container->is_ready_for_processing()) {
         throw std::invalid_argument("Supplied container is not prepared for evaluation! Aborting");
@@ -109,7 +116,6 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<Buffers::AudioBuffer> b
             buffer->mark_for_processing(true);
         }
 
-        m_container->update_processing_state(Containers::ProcessingState::READY);
         m_container->unlock();
 
     } catch (const std::exception& e) {
@@ -122,6 +128,7 @@ void ContainerToBufferAdapter::on_detach(std::shared_ptr<Buffers::AudioBuffer> b
 {
     if (m_container) {
         m_container->unregister_state_change_callback();
+        m_container->unregister_channel_reader(m_source_channel);
     }
 }
 
@@ -180,9 +187,6 @@ void ContainerToBufferAdapter::on_container_state_change(
     std::shared_ptr<Containers::SignalSourceContainer> container,
     Containers::ProcessingState state)
 {
-    // This callback is triggered when the container's state changes
-    // We can use this to synchronize state between the container and any attached buffers
-
     if (container != m_container) {
         return;
     }
@@ -205,15 +209,28 @@ void ContainerToBufferAdapter::on_container_state_change(
     }
 }
 
-ContainerBuffer::ContainerBuffer(u_int32_t channel_id, u_int32_t num_samples, std::shared_ptr<Containers::SignalSourceContainer> container, u_int32_t source_channel)
+ContainerBuffer::ContainerBuffer(u_int32_t channel_id, u_int32_t num_samples,
+    std::shared_ptr<Containers::SignalSourceContainer> container,
+    u_int32_t source_channel)
     : StandardAudioBuffer(channel_id, num_samples)
     , m_container(container)
     , m_source_channel(source_channel)
+    , m_pending_adapter(nullptr)
 {
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(m_container);
-    adapter->set_source_channel(m_source_channel);
-    set_default_processor(adapter);
-    enforce_default_processing(true);
+    if (!m_container) {
+        throw std::invalid_argument("ContainerBuffer: container must not be null");
+    }
+
+    m_pending_adapter = std::make_shared<ContainerToBufferAdapter>(m_container);
+    std::dynamic_pointer_cast<ContainerToBufferAdapter>(m_pending_adapter)->set_source_channel(m_source_channel);
 }
 
+void ContainerBuffer::initialize()
+{
+    if (m_pending_adapter) {
+        set_default_processor(m_pending_adapter);
+        enforce_default_processing(true);
+        m_pending_adapter.reset();
+    }
+}
 }

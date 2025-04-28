@@ -6,7 +6,7 @@ namespace MayaFlux::Buffers {
 StandardAudioBuffer::StandardAudioBuffer()
     : m_channel_id(0)
     , m_num_samples(0)
-    , m_default_processor(create_default_processor())
+    , m_default_processor(nullptr)
     , m_processing_chain(std::make_shared<BufferProcessingChain>())
 {
 }
@@ -14,7 +14,7 @@ StandardAudioBuffer::StandardAudioBuffer()
 StandardAudioBuffer::StandardAudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
     : m_channel_id(channel_id)
     , m_num_samples(num_samples)
-    , m_default_processor(create_default_processor())
+    , m_default_processor(nullptr)
     , m_processing_chain(std::make_shared<BufferProcessingChain>())
 {
     m_data.resize(num_samples);
@@ -60,14 +60,14 @@ void StandardAudioBuffer::process_default()
 
 void StandardAudioBuffer::set_default_processor(std::shared_ptr<BufferProcessor> processor)
 {
-    if (m_default_processor) {
-        m_default_processor->on_detach(shared_from_this());
-    }
-
-    m_default_processor = processor;
-
-    if (m_default_processor) {
-        m_default_processor->on_attach(shared_from_this());
+    try {
+        if (processor) {
+            processor->on_attach(shared_from_this()); // This is likely where it fails
+        }
+        m_default_processor = processor;
+    } catch (const std::exception& e) {
+        std::cout << "Exception in set_default_processor: " << e.what() << std::endl;
+        throw;
     }
 }
 
