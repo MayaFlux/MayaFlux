@@ -6,6 +6,20 @@ namespace MayaFlux::Containers {
 
 class SignalSourceContainer;
 
+enum class PointSelectionPattern {
+    ALL,
+    SEQUENTIAL,
+    RANDOM,
+    CUSTOM
+};
+
+enum class RegionTransition {
+    IMMEDIATE,
+    CROSSFADE,
+    OVERLAP,
+    CALLBACK
+};
+
 /**
  * @class DataProcessor
  * @brief Interface for processing data within SignalSourceContainer objects

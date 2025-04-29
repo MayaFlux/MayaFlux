@@ -1,7 +1,7 @@
 #include "SoundFileContainer.hpp"
 
 #include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
-#include "MayaFlux/Containers/Processors/AccessProcessors.hpp"
+#include "MayaFlux/Containers/Processors/ContiguousAccessProcessor.hpp"
 
 namespace MayaFlux::Containers {
 
@@ -377,6 +377,12 @@ const RegionGroup& SoundFileContainer::get_region_group(const std::string& group
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
     return m_region_groups.at(group_name);
+}
+
+const std::unordered_map<std::string, RegionGroup> SoundFileContainer::get_all_region_groups() const
+{
+    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    return m_region_groups;
 }
 
 const std::vector<double>& SoundFileContainer::get_raw_samples(uint32_t channel) const

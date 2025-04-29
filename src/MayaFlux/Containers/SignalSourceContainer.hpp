@@ -355,6 +355,8 @@ public:
      */
     virtual const RegionGroup& get_region_group(const std::string& group_name) const = 0;
 
+    virtual const std::unordered_map<std::string, RegionGroup> get_all_region_groups() const = 0;
+
     /**
      * @brief Gets direct access to raw sample data for a channel
      * @param channel Channel to access (default: 0)

@@ -5,6 +5,7 @@
 // System
 #include "algorithm"
 #include "any"
+#include "atomic"
 #include "format"
 #include "functional"
 #include "map"
