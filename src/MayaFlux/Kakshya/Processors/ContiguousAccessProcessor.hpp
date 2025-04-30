@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MayaFlux/Containers/DataProcessor.hpp"
+#include "MayaFlux/Kakshya/DataProcessor.hpp"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 
 /**
  * @class ContiguousAccessProcessor

@@ -6,7 +6,7 @@ namespace MayaFlux::Buffers {
 class AudioBuffer;
 }
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 
 class DataProcessor;
 class DataProcessingChain;

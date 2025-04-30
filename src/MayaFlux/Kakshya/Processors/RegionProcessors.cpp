@@ -1,8 +1,8 @@
 #include "RegionProcessors.hpp"
 
-#include "MayaFlux/Containers/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 
 void RegionOrganizationProcessor::on_attach(std::shared_ptr<SignalSourceContainer> container)
 {

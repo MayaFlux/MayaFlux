@@ -3,7 +3,7 @@
 #include "config.h"
 #include "sndfile.hh"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 struct RegionPoint;
 struct RegionGroup;
 class SignalSourceContainer;
@@ -50,7 +50,7 @@ public:
      */
     bool read_file_to_container(
         const std::string& file_path,
-        std::shared_ptr<Containers::SignalSourceContainer> container,
+        std::shared_ptr<Kakshya::SignalSourceContainer> container,
         sf_count_t start_frame = 0,
         sf_count_t num_frames = -1);
 
@@ -114,7 +114,7 @@ private:
     bool extract_file_metadata(
         const std::string& file_path,
         std::vector<std::pair<std::string, uint64_t>>& markers,
-        std::unordered_map<std::string, Containers::RegionGroup>& region_groups);
+        std::unordered_map<std::string, Kakshya::RegionGroup>& region_groups);
 
     /**
      * @brief Extracts marker information from the current file
@@ -138,7 +138,7 @@ private:
      * Each group contains RegionPoint objects with start/end frames and
      * relevant attributes specific to the point type.
      */
-    bool extract_region_groups(std::unordered_map<std::string, Containers::RegionGroup>& region_groups);
+    bool extract_region_groups(std::unordered_map<std::string, Kakshya::RegionGroup>& region_groups);
 
     std::unique_ptr<SndfileHandle> m_sndfile; ///< libsndfile C++ handle
     SF_INFO m_sfinfo; ///< File information

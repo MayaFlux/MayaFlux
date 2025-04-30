@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 class SignalSourceContainer;
 enum class ProcessingState;
 }
@@ -42,7 +42,7 @@ public:
      * - Auto advance: false (container position not automatically updated)
      * - Update flags: true (buffer processing flags updated after transfer)
      */
-    ContainerToBufferAdapter(std::shared_ptr<Containers::SignalSourceContainer> container);
+    ContainerToBufferAdapter(std::shared_ptr<Kakshya::SignalSourceContainer> container);
 
     /**
      * @brief Transfers data from container to buffer during processing
@@ -101,13 +101,13 @@ public:
      * Allows dynamically switching the data source without recreating
      * the adapter or disrupting the buffer processing chain.
      */
-    void set_container(std::shared_ptr<Containers::SignalSourceContainer> container);
+    void set_container(std::shared_ptr<Kakshya::SignalSourceContainer> container);
 
     /**
      * @brief Gets the currently connected container
      * @return Current container used as data source
      */
-    std::shared_ptr<Containers::SignalSourceContainer> get_container() const;
+    std::shared_ptr<Kakshya::SignalSourceContainer> get_container() const;
 
     /**
      * @brief Controls whether the container's position advances automatically
@@ -145,7 +145,7 @@ private:
     /**
      * @brief Container providing the source data
      */
-    std::shared_ptr<Containers::SignalSourceContainer> m_container;
+    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
 
     /**
      * @brief Channel index to read from the container
@@ -171,8 +171,8 @@ private:
      * allowing the adapter to respond appropriately (e.g., marking the buffer
      * for processing when new data is available).
      */
-    void on_container_state_change(std::shared_ptr<Containers::SignalSourceContainer> container,
-        Containers::ProcessingState state);
+    void on_container_state_change(std::shared_ptr<Kakshya::SignalSourceContainer> container,
+        Kakshya::ProcessingState state);
 };
 
 /**
@@ -205,14 +205,14 @@ public:
      * configured as a ContainerToBufferAdapter connected to the container.
      */
     ContainerBuffer(u_int32_t channel_id, u_int32_t num_samples,
-        std::shared_ptr<Containers::SignalSourceContainer> container,
+        std::shared_ptr<Kakshya::SignalSourceContainer> container,
         u_int32_t source_channel = 0);
 
     /**
      * @brief Gets the container this buffer is connected to
      * @return Container used as data source
      */
-    inline std::shared_ptr<Containers::SignalSourceContainer> get_container() const
+    inline std::shared_ptr<Kakshya::SignalSourceContainer> get_container() const
     {
         return m_container;
     }
@@ -236,7 +236,7 @@ protected:
     /**
      * @brief Container providing the source data
      */
-    std::shared_ptr<Containers::SignalSourceContainer> m_container;
+    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
 
     /**
      * @brief Channel index to read from the container

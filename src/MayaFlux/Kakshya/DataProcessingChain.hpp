@@ -3,7 +3,7 @@
 #include "DataProcessor.hpp"
 #include "SignalSourceContainer.hpp"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 
 /**
  * @class DataProcessingChain

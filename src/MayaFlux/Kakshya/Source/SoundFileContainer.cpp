@@ -1,9 +1,9 @@
 #include "SoundFileContainer.hpp"
 
 #include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
-#include "MayaFlux/Containers/Processors/ContiguousAccessProcessor.hpp"
+#include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 
 SoundFileContainer::SoundFileContainer()
     : m_ready_for_processing(false)

@@ -1,9 +1,9 @@
 #include "ContainerBuffer.hpp"
-#include "MayaFlux/Containers/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 namespace MayaFlux::Buffers {
 
-ContainerToBufferAdapter::ContainerToBufferAdapter(std::shared_ptr<Containers::SignalSourceContainer> container)
+ContainerToBufferAdapter::ContainerToBufferAdapter(std::shared_ptr<Kakshya::SignalSourceContainer> container)
     : m_container(container)
     , m_source_channel(0)
     , m_auto_advance(true)
@@ -12,7 +12,7 @@ ContainerToBufferAdapter::ContainerToBufferAdapter(std::shared_ptr<Containers::S
     if (container) {
         try {
             container->register_state_change_callback(
-                [this](std::shared_ptr<Containers::SignalSourceContainer> c, Containers::ProcessingState s) {
+                [this](std::shared_ptr<Kakshya::SignalSourceContainer> c, Kakshya::ProcessingState s) {
                     this->on_container_state_change(c, s);
                 });
         } catch (const std::bad_weak_ptr& e) {
@@ -36,7 +36,7 @@ void ContainerToBufferAdapter::process(std::shared_ptr<Buffers::AudioBuffer> buf
 
         auto state = m_container->get_processing_state();
 
-        if (state == Containers::ProcessingState::NEEDS_REMOVAL) {
+        if (state == Kakshya::ProcessingState::NEEDS_REMOVAL) {
             if (m_update_flags) {
                 buffer->mark_for_removal();
             }
@@ -44,7 +44,7 @@ void ContainerToBufferAdapter::process(std::shared_ptr<Buffers::AudioBuffer> buf
             return;
         }
 
-        if (state == Containers::ProcessingState::PROCESSED) {
+        if (state == Kakshya::ProcessingState::PROCESSED) {
             const auto& processed_data = m_container->get_processed_data();
 
             if (m_source_channel < processed_data.size()) {
@@ -77,7 +77,7 @@ void ContainerToBufferAdapter::process(std::shared_ptr<Buffers::AudioBuffer> buf
                 m_container->mark_channel_consumed(m_source_channel);
 
                 if (m_container->all_channels_consumed()) {
-                    m_container->update_processing_state(Containers::ProcessingState::READY);
+                    m_container->update_processing_state(Kakshya::ProcessingState::READY);
                 }
             }
         }
@@ -142,7 +142,7 @@ u_int32_t ContainerToBufferAdapter::get_source_channel() const
     return m_source_channel;
 }
 
-void ContainerToBufferAdapter::set_container(std::shared_ptr<Containers::SignalSourceContainer> container)
+void ContainerToBufferAdapter::set_container(std::shared_ptr<Kakshya::SignalSourceContainer> container)
 {
     if (m_container) {
         m_container->unregister_state_change_callback();
@@ -152,13 +152,13 @@ void ContainerToBufferAdapter::set_container(std::shared_ptr<Containers::SignalS
 
     if (container) {
         container->register_state_change_callback(
-            [this](std::shared_ptr<Containers::SignalSourceContainer> c, Containers::ProcessingState s) {
+            [this](std::shared_ptr<Kakshya::SignalSourceContainer> c, Kakshya::ProcessingState s) {
                 this->on_container_state_change(c, s);
             });
     }
 }
 
-std::shared_ptr<Containers::SignalSourceContainer> ContainerToBufferAdapter::get_container() const
+std::shared_ptr<Kakshya::SignalSourceContainer> ContainerToBufferAdapter::get_container() const
 {
     return m_container;
 }
@@ -184,33 +184,33 @@ bool ContainerToBufferAdapter::get_update_flags() const
 }
 
 void ContainerToBufferAdapter::on_container_state_change(
-    std::shared_ptr<Containers::SignalSourceContainer> container,
-    Containers::ProcessingState state)
+    std::shared_ptr<Kakshya::SignalSourceContainer> container,
+    Kakshya::ProcessingState state)
 {
     if (container != m_container) {
         return;
     }
 
     switch (state) {
-    case Containers::ProcessingState::NEEDS_REMOVAL:
+    case Kakshya::ProcessingState::NEEDS_REMOVAL:
         break;
 
-    case Containers::ProcessingState::READY:
+    case Kakshya::ProcessingState::READY:
         break;
 
-    case Containers::ProcessingState::PROCESSING:
+    case Kakshya::ProcessingState::PROCESSING:
         break;
 
-    case Containers::ProcessingState::PROCESSED:
+    case Kakshya::ProcessingState::PROCESSED:
         break;
 
-    case Containers::ProcessingState::IDLE:
+    case Kakshya::ProcessingState::IDLE:
         break;
     }
 }
 
 ContainerBuffer::ContainerBuffer(u_int32_t channel_id, u_int32_t num_samples,
-    std::shared_ptr<Containers::SignalSourceContainer> container,
+    std::shared_ptr<Kakshya::SignalSourceContainer> container,
     u_int32_t source_channel)
     : StandardAudioBuffer(channel_id, num_samples)
     , m_container(container)

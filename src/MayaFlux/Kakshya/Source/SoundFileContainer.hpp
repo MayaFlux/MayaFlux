@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MayaFlux/Containers/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 
 /**
  * @class SoundFileContainer

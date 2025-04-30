@@ -1,5 +1,5 @@
 #include "SoundFileReader.hpp"
-#include "MayaFlux/Containers/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include <cstring>
 
 namespace MayaFlux::IO {
@@ -23,7 +23,7 @@ void SoundFileReader::set_file_properties(SF_INFO& file_info)
     }
 }
 
-bool SoundFileReader::read_file_to_container(const std::string& file_path, std::shared_ptr<Containers::SignalSourceContainer> container, sf_count_t start_frame, sf_count_t num_frames)
+bool SoundFileReader::read_file_to_container(const std::string& file_path, std::shared_ptr<Kakshya::SignalSourceContainer> container, sf_count_t start_frame, sf_count_t num_frames)
 {
     if (!container) {
         m_last_error = "Invalid container (null)";
@@ -38,7 +38,7 @@ bool SoundFileReader::read_file_to_container(const std::string& file_path, std::
     }
 
     std::vector<std::pair<std::string, uint64_t>> markers;
-    std::unordered_map<std::string, Containers::RegionGroup> region_groups;
+    std::unordered_map<std::string, Kakshya::RegionGroup> region_groups;
     extract_file_metadata(file_path, markers, region_groups);
 
     u_int64_t total_frames = file_info.frames;
@@ -47,10 +47,10 @@ bool SoundFileReader::read_file_to_container(const std::string& file_path, std::
     container->set_raw_samples(samples);
 
     if (!markers.empty()) {
-        Containers::RegionGroup markers_group { "markers" };
+        Kakshya::RegionGroup markers_group { "markers" };
         for (const auto& marker : markers) {
             if (marker.second < total_frames) {
-                Containers::RegionPoint point {
+                Kakshya::RegionPoint point {
                     marker.second,
                     marker.second
                 };
@@ -134,7 +134,7 @@ void SoundFileReader::close_file()
 bool SoundFileReader::extract_file_metadata(
     const std::string& file_path,
     std::vector<std::pair<std::string, uint64_t>>& markers,
-    std::unordered_map<std::string, Containers::RegionGroup>& region_groups)
+    std::unordered_map<std::string, Kakshya::RegionGroup>& region_groups)
 {
     markers.clear();
     region_groups.clear();
@@ -226,7 +226,7 @@ bool SoundFileReader::extract_markers(std::vector<std::pair<std::string, u_int64
     return found_markers;
 }
 
-bool SoundFileReader::extract_region_groups(std::unordered_map<std::string, Containers::RegionGroup>& region_groups)
+bool SoundFileReader::extract_region_groups(std::unordered_map<std::string, Kakshya::RegionGroup>& region_groups)
 {
     if (!m_sndfile || !m_sndfile->rawHandle()) {
         return false;
@@ -236,13 +236,13 @@ bool SoundFileReader::extract_region_groups(std::unordered_map<std::string, Cont
     SF_INSTRUMENT inst;
     bool found_regions = false;
 
-    Containers::RegionGroup cue_points { "cue_points" };
-    Containers::RegionGroup loops { "loops" };
-    Containers::RegionGroup markers { "markers" };
+    Kakshya::RegionGroup cue_points { "cue_points" };
+    Kakshya::RegionGroup loops { "loops" };
+    Kakshya::RegionGroup markers { "markers" };
 
     if (sf_command(m_sndfile->rawHandle(), SFC_GET_CUE, &cues, sizeof(cues)) == SF_TRUE) {
         for (int i = 0; i < cues->cue_count; i++) {
-            Containers::RegionPoint point {
+            Kakshya::RegionPoint point {
                 static_cast<uint64_t>(cues->cue_points[i].position),
                 static_cast<uint64_t>(cues->cue_points[i].position)
             };
@@ -254,7 +254,7 @@ bool SoundFileReader::extract_region_groups(std::unordered_map<std::string, Cont
 
     if (sf_command(m_sndfile->rawHandle(), SFC_GET_INSTRUMENT, &inst, sizeof(inst)) == SF_TRUE) {
         for (int i = 0; i < inst.loop_count; i++) {
-            Containers::RegionPoint point {
+            Kakshya::RegionPoint point {
                 static_cast<uint64_t>(inst.loops[i].start),
                 static_cast<uint64_t>(inst.loops[i].end)
             };
@@ -272,7 +272,7 @@ bool SoundFileReader::extract_region_groups(std::unordered_map<std::string, Cont
         if (binfo.time_reference_high != 0 || binfo.time_reference_low != 0) {
             uint64_t time_ref = (static_cast<uint64_t>(binfo.time_reference_high) << 32)
                 | binfo.time_reference_low;
-            Containers::RegionPoint time_ref_point {
+            Kakshya::RegionPoint time_ref_point {
                 time_ref,
                 time_ref
             };
@@ -283,14 +283,14 @@ bool SoundFileReader::extract_region_groups(std::unordered_map<std::string, Cont
 
         if (binfo.description[0] != '\0') {
             std::string desc(binfo.description, strnlen(binfo.description, 256));
-            Containers::RegionPoint desc_point { 0, 0 };
+            Kakshya::RegionPoint desc_point { 0, 0 };
             desc_point.point_attributes["type"] = "description";
             desc_point.point_attributes["value"] = desc;
             markers.points.push_back(desc_point);
         }
         if (binfo.originator[0] != '\0') {
             std::string orig(binfo.originator, strnlen(binfo.originator, 32));
-            Containers::RegionPoint orig_point { 0, 0 };
+            Kakshya::RegionPoint orig_point { 0, 0 };
             orig_point.point_attributes["type"] = "originator";
             orig_point.point_attributes["value"] = orig;
             markers.points.push_back(orig_point);

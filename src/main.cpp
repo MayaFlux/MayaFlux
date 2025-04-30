@@ -1,13 +1,13 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
-#include "MayaFlux/Containers/DataProcessor.hpp"
-#include "MayaFlux/Containers/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/IO/SoundFileReader.hpp"
+#include "MayaFlux/Kakshya/DataProcessor.hpp"
+#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 
 using namespace MayaFlux;
 using namespace MayaFlux::IO;
-using namespace MayaFlux::Containers;
+using namespace MayaFlux::Kakshya;
 
 /**
  * A simple program that demonstrates loading and playing an audio file
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
         auto container = std::make_shared<SoundFileContainer>();
 
         std::cout << "Loading audio file: " << file_path << std::endl;
-        if (!reader.read_file_to_container(file_path, std::static_pointer_cast<Containers::SignalSourceContainer>(container))) {
+        if (!reader.read_file_to_container(file_path, std::static_pointer_cast<Kakshya::SignalSourceContainer>(container))) {
             std::cerr << "Error loading file: " << reader.get_last_error() << std::endl;
             return 1;
         }

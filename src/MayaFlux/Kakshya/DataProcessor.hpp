@@ -2,7 +2,7 @@
 
 #include "config.h"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 
 class SignalSourceContainer;
 

@@ -1,6 +1,6 @@
 #include "DataProcessingChain.hpp"
 
-namespace MayaFlux::Containers {
+namespace MayaFlux::Kakshya {
 
 void DataProcessingChain::add_processor(std::shared_ptr<DataProcessor> processor, std::shared_ptr<SignalSourceContainer> container, const std::string& tag)
 {
