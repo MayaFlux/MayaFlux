@@ -10,7 +10,7 @@ TimeOperation::TimeOperation(double seconds)
 {
 }
 
-TimeOperation::TimeOperation(double seconds, Core::Scheduler::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
+TimeOperation::TimeOperation(double seconds, Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
     : m_seconds(seconds)
     , m_scheduler(scheduler)
     , m_graph_manager(graph_manager)

@@ -1,6 +1,6 @@
 #include "Routine.hpp"
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Vruta {
 
 SoundRoutine promise_type::get_return_object()
 {

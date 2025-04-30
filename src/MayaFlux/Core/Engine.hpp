@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Core/Scheduler/Scheduler.hpp"
+#include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Nodes {
 class NodeGraphManager;
@@ -193,7 +193,7 @@ public:
      * @brief Gets the task scheduler
      * @return Shared pointer to the TaskScheduler
      */
-    inline std::shared_ptr<Scheduler::TaskScheduler> get_scheduler() { return m_scheduler; }
+    inline std::shared_ptr<Vruta::TaskScheduler> get_scheduler() { return m_scheduler; }
 
     /**
      * @brief Gets the buffer manager
@@ -262,7 +262,7 @@ public:
      * @param task The computational routine to schedule
      * @param initialize Whether to initialize the task immediately
      */
-    void schedule_task(std::string name, Scheduler::SoundRoutine&& task, bool initialize = false);
+    void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize = false);
 
     /**
      * @brief Cancels a scheduled task
@@ -336,7 +336,7 @@ private:
     // Core Components
     //-------------------------------------------------------------------------
 
-    std::shared_ptr<Scheduler::TaskScheduler> m_scheduler; ///< Task scheduler
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler; ///< Task scheduler
     std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager; ///< Node graph manager
     std::shared_ptr<Buffers::BufferManager> m_Buffer_manager; ///< Buffer manager
     Nodes::Generator::Stochastics::NoiseEngine* m_rng; ///< Stochastic signal generator
@@ -345,7 +345,7 @@ private:
     // Task Management
     //-------------------------------------------------------------------------
 
-    std::unordered_map<std::string, std::shared_ptr<Scheduler::SoundRoutine>> m_named_tasks; ///< Named task registry
+    std::unordered_map<std::string, std::shared_ptr<Vruta::SoundRoutine>> m_named_tasks; ///< Named task registry
 
     std::map<std::string, ProcessHook> m_pre_process_hooks;
     std::map<std::string, ProcessHook> m_post_process_hooks;

@@ -1,6 +1,6 @@
 #include "Clock.hpp"
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Vruta {
 
 SampleClock::SampleClock(unsigned int sample_rate)
     : m_sample_rate(sample_rate)
@@ -28,4 +28,4 @@ unsigned int SampleClock::sample_rate() const
     return m_sample_rate;
 }
 
-} 
+}

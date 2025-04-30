@@ -1,8 +1,8 @@
 #include "Chain.hpp"
-#include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 #include "MayaFlux/Kriya/Awaiters.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Kriya {
 
@@ -11,7 +11,7 @@ EventChain::EventChain()
 {
 }
 
-EventChain::EventChain(Core::Scheduler::TaskScheduler& scheduler)
+EventChain::EventChain(Vruta::TaskScheduler& scheduler)
     : m_Scheduler(scheduler)
 {
 }
@@ -29,7 +29,7 @@ void EventChain::start()
 
     auto shared_this = std::make_shared<EventChain>(*this);
 
-    auto coroutine_func = [](Core::Scheduler::TaskScheduler& scheduler, std::shared_ptr<EventChain> chain) -> MayaFlux::Core::Scheduler::SoundRoutine {
+    auto coroutine_func = [](Vruta::TaskScheduler& scheduler, std::shared_ptr<EventChain> chain) -> MayaFlux::Vruta::SoundRoutine {
         for (const auto& event : chain->m_events) {
             co_await SampleDelay { scheduler.seconds_to_samples(event.delay_seconds) };
             try {
@@ -44,7 +44,7 @@ void EventChain::start()
         }
     };
 
-    m_routine = std::make_shared<Core::Scheduler::SoundRoutine>(coroutine_func(m_Scheduler, shared_this));
+    m_routine = std::make_shared<Vruta::SoundRoutine>(coroutine_func(m_Scheduler, shared_this));
     m_Scheduler.add_task(m_routine);
 }
 
@@ -77,7 +77,7 @@ void Sequence::execute()
     execute(MayaFlux::get_node_graph_manager(), MayaFlux::get_scheduler());
 }
 
-void Sequence::execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Core::Scheduler::TaskScheduler> scheduler)
+void Sequence::execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Vruta::TaskScheduler> scheduler)
 {
     EventChain chain(*scheduler);
     double accumulated_time = 0.f;

@@ -1,16 +1,16 @@
 #pragma once
 
-#include "MayaFlux/Core/Scheduler/Promise.hpp"
+#include "MayaFlux/Vruta/Promise.hpp"
 
 namespace MayaFlux::Kriya {
 
 /**
  * @brief Type alias for the coroutine promise type
  *
- * This alias simplifies references to the Core::Scheduler::promise_type
+ * This alias simplifies references to the Vruta::promise_type
  * throughout the Kriya namespace.
  */
-using promise_handle = Core::Scheduler::promise_type;
+using promise_handle = Vruta::promise_type;
 
 /**
  * @struct SampleDelay

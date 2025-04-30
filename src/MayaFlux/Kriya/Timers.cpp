@@ -1,12 +1,12 @@
 #include "Timers.hpp"
-#include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 #include "MayaFlux/Kriya/Awaiters.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Kriya {
 
-Timer::Timer(Core::Scheduler::TaskScheduler& scheduler)
+Timer::Timer(Vruta::TaskScheduler& scheduler)
     : m_Scheduler(scheduler)
     , m_active(false)
 {
@@ -20,7 +20,7 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
 
     m_active = true;
 
-    auto routine_func = [](Core::Scheduler::TaskScheduler& scheduler, u_int64_t delay_samples, Timer* timer_ptr) -> Core::Scheduler::SoundRoutine {
+    auto routine_func = [](Vruta::TaskScheduler& scheduler, u_int64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
         co_await SampleDelay { delay_samples };
 
         if (timer_ptr && timer_ptr->is_active()) {
@@ -29,7 +29,7 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
         }
     };
 
-    m_routine = std::make_shared<Core::Scheduler::SoundRoutine>(
+    m_routine = std::make_shared<Vruta::SoundRoutine>(
         routine_func(m_Scheduler, m_Scheduler.seconds_to_samples(delay_seconds), this));
     m_Scheduler.add_task(m_routine);
 }
@@ -43,7 +43,7 @@ void Timer::cancel()
     }
 }
 
-TimedAction::TimedAction(Core::Scheduler::TaskScheduler& scheduler)
+TimedAction::TimedAction(Vruta::TaskScheduler& scheduler)
     : m_Scheduler(scheduler)
     , m_timer(scheduler)
 {
@@ -66,14 +66,14 @@ bool TimedAction::is_pending() const
     return m_timer.is_active();
 }
 
-NodeTimer::NodeTimer(Core::Scheduler::TaskScheduler& scheduler)
+NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler)
     : m_scheduler(scheduler)
     , m_node_graph_manager(*MayaFlux::get_node_graph_manager())
     , m_timer(scheduler)
 {
 }
 
-NodeTimer::NodeTimer(Core::Scheduler::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
+NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
     : m_scheduler(scheduler)
     , m_node_graph_manager(graph_manager)
     , m_timer(scheduler)

@@ -2,7 +2,7 @@
 
 #include "Promise.hpp"
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Vruta {
 
 /**
  * @class SoundRoutine
@@ -46,7 +46,7 @@ public:
      * This is the promise type that manages the coroutine state and
      * provides the co_await, co_yield, and co_return behaviors.
      */
-    using promise_type = ::MayaFlux::Core::Scheduler::promise_type;
+    using promise_type = ::MayaFlux::Vruta::promise_type;
 
     /**
      * @brief Constructs a SoundRoutine from a coroutine handle

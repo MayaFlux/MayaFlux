@@ -55,7 +55,7 @@ public:
      * operations. This allows for more control over which scheduler is used,
      * which is useful in contexts where multiple processing engines might exist.
      */
-    EventChain(Core::Scheduler::TaskScheduler& scheduler);
+    EventChain(Vruta::TaskScheduler& scheduler);
 
     /**
      * @brief Adds an event to the chain with a specified delay
@@ -110,7 +110,7 @@ private:
      * The scheduler provides the timing infrastructure needed for
      * precise execution of events in the chain.
      */
-    Core::Scheduler::TaskScheduler& m_Scheduler;
+    Vruta::TaskScheduler& m_Scheduler;
 
     /**
      * @brief The underlying computational routine that implements the chain
@@ -118,7 +118,7 @@ private:
      * This coroutine handles the actual timing and execution of events
      * in the chain. It's created when start() is called.
      */
-    std::shared_ptr<Core::Scheduler::SoundRoutine> m_routine;
+    std::shared_ptr<Vruta::SoundRoutine> m_routine;
 };
 
 /**
@@ -277,7 +277,7 @@ public:
      * The actions are executed in the order they were added, with any time
      * delays respected.
      */
-    void execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Core::Scheduler::TaskScheduler> scheduler);
+    void execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Vruta::TaskScheduler> scheduler);
 
 private:
     /**

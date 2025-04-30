@@ -21,10 +21,11 @@ namespace Core {
     struct GlobalStreamInfo;
     class Engine;
 
-    namespace Scheduler {
-        class TaskScheduler;
-        class SoundRoutine;
-    }
+}
+
+namespace Vruta {
+    class TaskScheduler;
+    class SoundRoutine;
 }
 
 namespace Buffers {
@@ -169,7 +170,7 @@ u_int32_t get_num_out_channels();
  * Returns the scheduler that's managed by the default engine instance.
  * All scheduled tasks using the convenience functions will use this scheduler.
  */
-std::shared_ptr<Core::Scheduler::TaskScheduler> get_scheduler();
+std::shared_ptr<Vruta::TaskScheduler> get_scheduler();
 
 /**
  * @brief Gets the buffer manager from the default engine
@@ -245,7 +246,7 @@ double get_poisson_random(double start = 0, double end = 1);
  *
  * Uses the task scheduler from the default engine.
  */
-Core::Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback);
+Vruta::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback);
 
 /**
  * @brief Creates a sequence task that calls functions at specified times
@@ -254,7 +255,7 @@ Core::Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::funct
  *
  * Uses the task scheduler from the default engine.
  */
-Core::Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
+Vruta::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
 
 /**
  * @brief Creates a line generator that interpolates between values over time
@@ -267,7 +268,7 @@ Core::Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, st
  *
  * Uses the task scheduler from the default engine.
  */
-Core::Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop);
+Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop);
 
 /**
  * @brief Schedules a pattern generator that produces values based on a pattern function
@@ -278,7 +279,7 @@ Core::Scheduler::SoundRoutine create_line(float start_value, float end_value, fl
  *
  * Uses the task scheduler from the default engine.
  */
-Core::Scheduler::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+Vruta::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
 
 /**
  * @brief Gets a pointer to a task's current value
@@ -306,7 +307,7 @@ std::function<float()> line_value(const std::string& name);
  *
  * Convenience wrapper for Engine::schedule_task() on the default engine.
  */
-void schedule_task(std::string name, Core::Scheduler::SoundRoutine&& task, bool initialize = false);
+void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize = false);
 
 /**
  * @brief Cancels a scheduled task

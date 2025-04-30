@@ -50,7 +50,7 @@ public:
      * This constructor allows for more control over which scheduler and graph manager
      * are used, which is useful in contexts where multiple processing engines might exist.
      */
-    TimeOperation(double seconds, Core::Scheduler::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
+    TimeOperation(double seconds, Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
 
     /**
      * @brief Gets the duration of this operation
@@ -75,7 +75,7 @@ private:
      * The scheduler provides the timing infrastructure needed for
      * precise control of node activation durations.
      */
-    Core::Scheduler::TaskScheduler& m_scheduler;
+    Vruta::TaskScheduler& m_scheduler;
 
     /**
      * @brief Reference to the graph manager that will manage node connections

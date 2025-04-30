@@ -45,7 +45,7 @@ public:
      * timing operations. The scheduler provides the sample clock and
      * task management infrastructure needed for precise timing.
      */
-    Timer(Core::Scheduler::TaskScheduler& scheduler);
+    Timer(Vruta::TaskScheduler& scheduler);
     ~Timer() = default;
 
     /**
@@ -86,7 +86,7 @@ private:
      * The scheduler provides the timing infrastructure needed to
      * execute callbacks at precise sample positions.
      */
-    Core::Scheduler::TaskScheduler& m_Scheduler;
+    Vruta::TaskScheduler& m_Scheduler;
 
     /**
      * @brief The underlying computational routine that implements the timer
@@ -95,7 +95,7 @@ private:
      * It's created when schedule() is called and destroyed when the
      * callback executes or cancel() is called.
      */
-    std::shared_ptr<Core::Scheduler::SoundRoutine> m_routine;
+    std::shared_ptr<Vruta::SoundRoutine> m_routine;
 
     /**
      * @brief Flag indicating whether a callback is currently scheduled
@@ -149,7 +149,7 @@ public:
      * timing operations. The scheduler provides the sample clock and
      * task management infrastructure needed for precise timing.
      */
-    TimedAction(Core::Scheduler::TaskScheduler& scheduler);
+    TimedAction(Vruta::TaskScheduler& scheduler);
     ~TimedAction() = default;
 
     /**
@@ -191,7 +191,7 @@ private:
      * The scheduler provides the timing infrastructure needed to
      * execute the end function at the right time.
      */
-    Core::Scheduler::TaskScheduler& m_Scheduler;
+    Vruta::TaskScheduler& m_Scheduler;
 
     /**
      * @brief The timer used to schedule the end function
@@ -236,7 +236,7 @@ public:
      * timing operations. The scheduler provides the sample clock and
      * task management infrastructure needed for precise timing.
      */
-    NodeTimer(Core::Scheduler::TaskScheduler& scheduler);
+    NodeTimer(Vruta::TaskScheduler& scheduler);
 
     /**
      * @brief Constructs a NodeTimer with the specified scheduler and graph manager
@@ -246,7 +246,7 @@ public:
      * Creates a new NodeTimer that will use the provided scheduler and
      * graph manager for timing and node management operations.
      */
-    NodeTimer(Core::Scheduler::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
+    NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
     ~NodeTimer() = default;
 
     /**
@@ -313,7 +313,7 @@ private:
      * The scheduler provides the timing infrastructure needed for
      * precise control of node activation durations.
      */
-    Core::Scheduler::TaskScheduler& m_scheduler;
+    Vruta::TaskScheduler& m_scheduler;
 
     /**
      * @brief Reference to the graph manager that manages processing nodes

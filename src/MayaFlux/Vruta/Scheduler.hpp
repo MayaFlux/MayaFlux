@@ -5,7 +5,7 @@
 #include "Clock.hpp"
 #include "Routine.hpp"
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Vruta {
 
 /**
  * @class TaskScheduler

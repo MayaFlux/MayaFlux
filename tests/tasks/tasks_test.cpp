@@ -10,7 +10,7 @@ class TasksTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        scheduler = std::make_shared<Core::Scheduler::TaskScheduler>(TestConfig::SAMPLE_RATE);
+        scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
         node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
     }
 
@@ -20,7 +20,7 @@ protected:
         node_graph_manager.reset();
     }
 
-    std::shared_ptr<Core::Scheduler::TaskScheduler> scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> scheduler;
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager;
 };
 
@@ -279,7 +279,7 @@ TEST_F(TasksTest, CoroutineTasks)
     int metro_count = 0;
     double interval = 0.01;
 
-    auto metro_routine = std::make_shared<Core::Scheduler::SoundRoutine>(std::move(Kriya::metro(*scheduler, interval, [&]() {
+    auto metro_routine = std::make_shared<Vruta::SoundRoutine>(std::move(Kriya::metro(*scheduler, interval, [&]() {
         metro_called = true;
         metro_count++;
     })));
@@ -312,7 +312,7 @@ TEST_F(TasksTest, LineTask)
     float end_value = 1.0f;
     float duration = 0.05f;
 
-    auto line_routine = std::make_shared<Core::Scheduler::SoundRoutine>(Kriya::line(*scheduler, start_value, end_value, duration, 5, false));
+    auto line_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, start_value, end_value, duration, 5, false));
     scheduler->add_task(line_routine, true);
 
     float* current_value = line_routine->get_state<float>("current_value");
@@ -329,7 +329,7 @@ TEST_F(TasksTest, LineTask)
 
     EXPECT_FLOAT_EQ(*current_value, end_value);
 
-    auto restartable_line = std::make_shared<Core::Scheduler::SoundRoutine>(Kriya::line(*scheduler, 0.0f, 10.f, 0.05f, 5, true));
+    auto restartable_line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, 0.0f, 10.f, 0.05f, 5, true));
     scheduler->add_task(restartable_line, true);
 
     scheduler->process_buffer(scheduler->seconds_to_samples(0.05));
@@ -356,7 +356,7 @@ TEST_F(TasksTest, PatternTask)
         return static_cast<int>(index * 10);
     };
 
-    auto callback = std::make_shared<Core::Scheduler::SoundRoutine>(Kriya::pattern(*scheduler, pattern_func, [&](std::any value) {
+    auto callback = std::make_shared<Vruta::SoundRoutine>(Kriya::pattern(*scheduler, pattern_func, [&](std::any value) {
         pattern_count++;
         received_values.push_back(std::any_cast<int>(value)); }, 0.01));
 
@@ -380,7 +380,7 @@ TEST_F(TasksTest, SequenceTask)
 {
     std::vector<int> execution_order;
 
-    auto sequence_routine = std::make_shared<Core::Scheduler::SoundRoutine>(Kriya::sequence(*scheduler,
+    auto sequence_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::sequence(*scheduler,
         { { 0.0, [&]() { execution_order.push_back(1); } },
             { 0.01, [&]() { execution_order.push_back(2); } },
             { 0.01, [&]() { execution_order.push_back(3); } } }));

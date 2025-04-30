@@ -1,9 +1,9 @@
 #include "../test_config.h"
 
-#include "MayaFlux/Core/Scheduler/Routine.hpp"
-#include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 #include "MayaFlux/Kriya/Awaiters.hpp"
 #include "MayaFlux/Kriya/Tasks.hpp"
+#include "MayaFlux/Vruta/Routine.hpp"
+#include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Test {
 
@@ -11,10 +11,10 @@ class SchedulerTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        scheduler = std::make_shared<Core::Scheduler::TaskScheduler>(TestConfig::SAMPLE_RATE);
+        scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
     }
 
-    std::shared_ptr<Core::Scheduler::TaskScheduler> scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> scheduler;
 };
 
 TEST_F(SchedulerTest, Initialize)
@@ -55,12 +55,12 @@ TEST_F(SchedulerTest, AddAndProcessTask)
 {
     bool task_completed = false;
 
-    auto task_func = [&task_completed](Core::Scheduler::TaskScheduler& sched) -> Core::Scheduler::SoundRoutine {
+    auto task_func = [&task_completed](Vruta::TaskScheduler& sched) -> Vruta::SoundRoutine {
         task_completed = true;
         co_return;
     };
 
-    auto routine = std::make_shared<Core::Scheduler::SoundRoutine>(task_func(*scheduler));
+    auto routine = std::make_shared<Vruta::SoundRoutine>(task_func(*scheduler));
     scheduler->add_task(routine);
 
     EXPECT_EQ(scheduler->get_tasks().size(), 1);
@@ -74,13 +74,13 @@ TEST_F(SchedulerTest, DelayedTask)
 {
     bool task_completed = false;
 
-    auto task_func = [&task_completed](Core::Scheduler::TaskScheduler& sched) -> Core::Scheduler::SoundRoutine {
+    auto task_func = [&task_completed](Vruta::TaskScheduler& sched) -> Vruta::SoundRoutine {
         co_await Kriya::SampleDelay { 10 };
         task_completed = true;
         co_return;
     };
 
-    auto routine = std::make_shared<Core::Scheduler::SoundRoutine>(task_func(*scheduler));
+    auto routine = std::make_shared<Vruta::SoundRoutine>(task_func(*scheduler));
     scheduler->add_task(routine);
 
     EXPECT_EQ(scheduler->get_tasks().size(), 1);
@@ -103,13 +103,13 @@ TEST_F(SchedulerTest, CancelTask)
 {
     int counter = 0;
 
-    auto task_func = [&counter](Core::Scheduler::TaskScheduler& sched) -> Core::Scheduler::SoundRoutine {
+    auto task_func = [&counter](Vruta::TaskScheduler& sched) -> Vruta::SoundRoutine {
         for (int i = 0; i < 10; i++) {
             counter++;
             co_await Kriya::SampleDelay { 10 };
         }
     };
-    auto routine = std::make_shared<Core::Scheduler::SoundRoutine>(task_func(*scheduler));
+    auto routine = std::make_shared<Vruta::SoundRoutine>(task_func(*scheduler));
     scheduler->add_task(routine);
 
     scheduler->process_buffer(10);
@@ -133,7 +133,7 @@ TEST_F(SchedulerTest, MetroTask)
         metro_count++;
     });
 
-    auto task_ptr = std::make_shared<Core::Scheduler::SoundRoutine>(std::move(metro_task));
+    auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(metro_task));
     scheduler->add_task(task_ptr);
 
     scheduler->process_buffer(expected_samples);
@@ -154,7 +154,7 @@ TEST_F(SchedulerTest, LineTask)
 
     // Create the task
     auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, false);
-    auto task_ptr = std::make_shared<Core::Scheduler::SoundRoutine>(std::move(line_task));
+    auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
     ASSERT_NE(task_ptr, nullptr);
 
     // Add task to scheduler and process to initialize
@@ -196,7 +196,7 @@ TEST_F(SchedulerTest, LineTaskRestart)
     bool restartable = true;
 
     auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, restartable);
-    auto task_ptr = std::make_shared<Core::Scheduler::SoundRoutine>(std::move(line_task));
+    auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
     scheduler->add_task(task_ptr, true);
 
     float* current_value = task_ptr->get_state<float>("current_value");

@@ -4,7 +4,7 @@
 
 #include <coroutine>
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Vruta {
 
 class SoundRoutine;
 

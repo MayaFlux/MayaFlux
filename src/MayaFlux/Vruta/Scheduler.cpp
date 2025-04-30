@@ -1,6 +1,6 @@
 #include "Scheduler.hpp"
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Vruta {
 
 TaskScheduler::TaskScheduler(unsigned int sample_rate)
     : m_clock(sample_rate)

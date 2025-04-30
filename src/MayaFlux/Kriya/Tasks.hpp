@@ -2,7 +2,7 @@
 
 #include "config.h"
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Vruta {
 class TaskScheduler;
 class SoundRoutine;
 }
@@ -39,7 +39,7 @@ namespace MayaFlux::Kriya {
  * The metro task continues indefinitely until explicitly cancelled, creating
  * a persistent temporal structure within the computational system.
  */
-Core::Scheduler::SoundRoutine metro(Core::Scheduler::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback);
+Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback);
 
 /**
  * @brief Creates a temporal sequence that executes callbacks at specified time offsets
@@ -70,7 +70,7 @@ Core::Scheduler::SoundRoutine metro(Core::Scheduler::TaskScheduler& scheduler, d
  *
  * The sequence task completes after executing all events in the defined timeline.
  */
-Core::Scheduler::SoundRoutine sequence(Core::Scheduler::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence);
+Vruta::SoundRoutine sequence(Vruta::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence);
 
 /**
  * @brief Creates a continuous interpolation generator between two values over time
@@ -109,7 +109,7 @@ Core::Scheduler::SoundRoutine sequence(Core::Scheduler::TaskScheduler& scheduler
  * If restartable is true, the interpolation task will remain active after reaching the
  * end value and can be restarted by calling restart() on the SoundRoutine.
  */
-Core::Scheduler::SoundRoutine line(Core::Scheduler::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, u_int32_t step_duration = 5, bool restartable = false);
+Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, u_int32_t step_duration = 5, bool restartable = false);
 
 /**
  * @brief Creates a generative algorithm that produces values based on a pattern function
@@ -152,5 +152,5 @@ Core::Scheduler::SoundRoutine line(Core::Scheduler::TaskScheduler& scheduler, fl
  * The pattern task continues indefinitely until explicitly cancelled, creating
  * an ongoing generative process within the computational system.
  */
-Core::Scheduler::SoundRoutine pattern(Core::Scheduler::TaskScheduler& scheduler, std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
 }

@@ -63,7 +63,7 @@ void Engine::Init(GlobalStreamInfo stream_info)
 {
     m_stream_info = stream_info;
     m_Stream_manager = std::make_unique<Stream>(m_Device->get_default_output_device(), this);
-    m_scheduler = std::make_shared<Scheduler::TaskScheduler>(stream_info.sample_rate);
+    m_scheduler = std::make_shared<Vruta::TaskScheduler>(stream_info.sample_rate);
     m_Buffer_manager = std::make_shared<Buffers::BufferManager>(stream_info.num_channels, stream_info.buffer_size);
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
 }
@@ -262,11 +262,11 @@ std::function<float()> Engine::line_value(const std::string& name)
     };
 }
 
-void Engine::schedule_task(std::string name, Scheduler::SoundRoutine&& task, bool initialize)
+void Engine::schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize)
 {
     cancel_task(name);
 
-    auto task_ptr = std::make_shared<Scheduler::SoundRoutine>(std::move(task));
+    auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(task));
 
     m_scheduler->add_task(task_ptr, initialize);
 

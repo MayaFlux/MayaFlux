@@ -2,7 +2,7 @@
 
 #include "Promise.hpp"
 
-namespace MayaFlux::Core::Scheduler {
+namespace MayaFlux::Vruta {
 
 /**
  * @class SampleClock

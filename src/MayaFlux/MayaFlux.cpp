@@ -151,7 +151,7 @@ u_int32_t get_num_out_channels()
 // Component Access
 //-------------------------------------------------------------------------
 
-std::shared_ptr<Core::Scheduler::TaskScheduler> get_scheduler()
+std::shared_ptr<Vruta::TaskScheduler> get_scheduler()
 {
     return get_context().get_scheduler();
 }
@@ -204,22 +204,22 @@ bool update_task_params(const std::string& name, Args... args)
     return get_context().update_task_params(name, args...);
 }
 
-Core::Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback)
+Vruta::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback)
 {
     return Kriya::metro(*get_scheduler(), interval_seconds, callback);
 }
 
-Core::Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
+Vruta::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
 {
     return Kriya::sequence(*get_scheduler(), seq);
 }
 
-Core::Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
+Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
 {
     return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
 }
 
-Core::Scheduler::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
+Vruta::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
 {
     return Kriya::pattern(*get_scheduler(), pattern_func, callback, interval_seconds);
 }
@@ -234,7 +234,7 @@ std::function<float()> line_value(const std::string& name)
     return get_context().line_value(name);
 }
 
-void schedule_task(std::string name, Core::Scheduler::SoundRoutine&& task, bool initialize)
+void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize)
 {
     get_context().schedule_task(name, std::move(task), initialize);
 }
