@@ -2,11 +2,11 @@
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Kriya/Chain.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
-#include "MayaFlux/Tasks/Chain.hpp"
 
 #define INTEGRATION_TEST
 
@@ -237,7 +237,7 @@ TEST_F(MayaFluxAPITest, TaskHelpers)
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     bool action_called = false;
 
-    (Tasks::Sequence() >> MayaFlux::Play(sine) >> MayaFlux::Wait(0.02) >> MayaFlux::Action([&action_called]() { action_called = true; }))
+    (Kriya::Sequence() >> MayaFlux::Play(sine) >> MayaFlux::Wait(0.02) >> MayaFlux::Action([&action_called]() { action_called = true; }))
         .execute();
 
     auto& root = MayaFlux::get_node_graph_manager()->get_root_node();

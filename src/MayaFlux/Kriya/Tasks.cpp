@@ -2,12 +2,12 @@
 #include "Awaiters.hpp"
 #include "MayaFlux/Core/Scheduler/Scheduler.hpp"
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 Core::Scheduler::SoundRoutine metro(Core::Scheduler::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
 {
     u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
-    auto& promise = co_await Tasks::GetPromise {};
+    auto& promise = co_await Kriya::GetPromise {};
 
     while (true) {
         if (promise.should_terminate) {

@@ -2,7 +2,7 @@
 
 #include "Timers.hpp"
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 /**
  * @class TimeOperation

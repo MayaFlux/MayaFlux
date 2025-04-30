@@ -7,7 +7,7 @@ class Node;
 class NodeGraphManager;
 }
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 /**
  * @class Timer

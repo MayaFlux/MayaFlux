@@ -61,6 +61,9 @@ void StandardAudioBuffer::process_default()
 void StandardAudioBuffer::set_default_processor(std::shared_ptr<BufferProcessor> processor)
 {
     try {
+        if (m_default_processor) {
+            m_default_processor->on_detach(shared_from_this());
+        }
         if (processor) {
             processor->on_attach(shared_from_this()); // This is likely where it fails
         }

@@ -1,7 +1,7 @@
 #include "Operators.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 TimeOperation::TimeOperation(double seconds)
     : m_seconds(seconds)

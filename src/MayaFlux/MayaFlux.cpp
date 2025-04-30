@@ -1,10 +1,10 @@
 #include "MayaFlux.hpp"
 
 #include "Core/Engine.hpp"
+#include "Kriya/Chain.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "Nodes/NodeGraphManager.hpp"
-#include "Tasks/Chain.hpp"
 
 namespace MayaFlux {
 
@@ -206,22 +206,22 @@ bool update_task_params(const std::string& name, Args... args)
 
 Core::Scheduler::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback)
 {
-    return Tasks::metro(*get_scheduler(), interval_seconds, callback);
+    return Kriya::metro(*get_scheduler(), interval_seconds, callback);
 }
 
 Core::Scheduler::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
 {
-    return Tasks::sequence(*get_scheduler(), seq);
+    return Kriya::sequence(*get_scheduler(), seq);
 }
 
 Core::Scheduler::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
 {
-    return Tasks::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
+    return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
 }
 
 Core::Scheduler::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
 {
-    return Tasks::pattern(*get_scheduler(), pattern_func, callback, interval_seconds);
+    return Kriya::pattern(*get_scheduler(), pattern_func, callback, interval_seconds);
 }
 
 float* get_line_value(const std::string& name)
@@ -249,19 +249,19 @@ bool restart_task(const std::string& name)
     return get_context().restart_task(name);
 }
 
-Tasks::ActionToken Play(std::shared_ptr<Nodes::Node> node)
+Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node)
 {
-    return Tasks::ActionToken(node);
+    return Kriya::ActionToken(node);
 }
 
-Tasks::ActionToken Wait(double seconds)
+Kriya::ActionToken Wait(double seconds)
 {
-    return Tasks::ActionToken(seconds);
+    return Kriya::ActionToken(seconds);
 }
 
-Tasks::ActionToken Action(std::function<void()> func)
+Kriya::ActionToken Action(std::function<void()> func)
 {
-    return Tasks::ActionToken(func);
+    return Kriya::ActionToken(func);
 }
 
 //-------------------------------------------------------------------------

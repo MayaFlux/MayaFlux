@@ -1,10 +1,10 @@
 #include "Chain.hpp"
 #include "MayaFlux/Core/Scheduler/Scheduler.hpp"
+#include "MayaFlux/Kriya/Awaiters.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
-#include "MayaFlux/Tasks/Awaiters.hpp"
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 EventChain::EventChain()
     : m_Scheduler(*MayaFlux::get_scheduler())

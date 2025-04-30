@@ -1,6 +1,6 @@
 #include "Awaiters.hpp"
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 void GetPromise::await_suspend(std::coroutine_handle<promise_handle> h) noexcept
 {

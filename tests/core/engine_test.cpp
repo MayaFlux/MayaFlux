@@ -3,10 +3,10 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Core/Stream.hpp"
+#include "MayaFlux/Kriya/Tasks.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
-#include "MayaFlux/Tasks/Tasks.hpp"
 
 #define INTEGRATION_TEST
 
@@ -206,7 +206,7 @@ TEST_F(EngineTest, TaskScheduling)
     float end_value = 1.0f;
     float duration = 0.01f; // Short duration for quick test
 
-    auto line_task = Tasks::line(*engine->get_scheduler(), start_value, end_value, duration, 5, false);
+    auto line_task = Kriya::line(*engine->get_scheduler(), start_value, end_value, duration, 5, false);
     engine->schedule_task("test_line", std::move(line_task), true);
 
     float* value_ptr = engine->get_line_value("test_line");
@@ -231,7 +231,7 @@ TEST_F(EngineTest, TaskScheduling)
 
     EXPECT_NEAR(*value_ptr, end_value, 0.01);
 
-    auto metro_task = Tasks::metro(*engine->get_scheduler(), 0.1, []() { });
+    auto metro_task = Kriya::metro(*engine->get_scheduler(), 0.1, []() { });
     engine->schedule_task("test_metro", std::move(metro_task));
     EXPECT_TRUE(engine->cancel_task("test_metro"));
     EXPECT_FALSE(engine->cancel_task("nonexistent_task"));
@@ -272,7 +272,7 @@ TEST_F(EngineTest, RestartableTask)
     float duration = 0.01f;
     bool restartable = true;
 
-    auto line_task = Tasks::line(*engine->get_scheduler(), start_value, end_value, duration, 5, restartable);
+    auto line_task = Kriya::line(*engine->get_scheduler(), start_value, end_value, duration, 5, restartable);
     engine->schedule_task("restartable_line", std::move(line_task));
 
     std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
@@ -301,7 +301,7 @@ TEST_F(EngineTest, ParameterUpdating)
     float end_value = 1.0f;
     float duration = 0.1f;
 
-    auto line_task = Tasks::line(*engine->get_scheduler(), start_value, end_value, duration, 5, true);
+    auto line_task = Kriya::line(*engine->get_scheduler(), start_value, end_value, duration, 5, true);
     engine->schedule_task("param_line", std::move(line_task));
 
     float new_end = 2.0f;
@@ -319,11 +319,11 @@ TEST_F(EngineTest, ConcurrentTasks)
     int metro1_count = 0;
     int metro2_count = 0;
 
-    auto metro1_task = Tasks::metro(*engine->get_scheduler(), 0.005, [&metro1_count]() {
+    auto metro1_task = Kriya::metro(*engine->get_scheduler(), 0.005, [&metro1_count]() {
         metro1_count++;
     });
 
-    auto metro2_task = Tasks::metro(*engine->get_scheduler(), 0.01, [&metro2_count]() {
+    auto metro2_task = Kriya::metro(*engine->get_scheduler(), 0.01, [&metro2_count]() {
         metro2_count++;
     });
 
@@ -347,7 +347,7 @@ TEST_F(EngineTest, SequenceTask)
 {
     std::vector<int> execution_order;
 
-    auto sequence_task = Tasks::sequence(*engine->get_scheduler(), { { 0.0, [&execution_order]() { execution_order.push_back(1); } }, { 0.005, [&execution_order]() { execution_order.push_back(2); } }, { 0.005, [&execution_order]() { execution_order.push_back(3); } } });
+    auto sequence_task = Kriya::sequence(*engine->get_scheduler(), { { 0.0, [&execution_order]() { execution_order.push_back(1); } }, { 0.005, [&execution_order]() { execution_order.push_back(2); } }, { 0.005, [&execution_order]() { execution_order.push_back(3); } } });
 
     engine->schedule_task("test_sequence", std::move(sequence_task));
 
@@ -370,8 +370,8 @@ TEST_F(EngineTest, SequenceTask)
 
 TEST_F(EngineTest, NamedTaskLookup)
 {
-    auto metro_task = Tasks::metro(*engine->get_scheduler(), 0.1, []() { });
-    auto line_task = Tasks::line(*engine->get_scheduler(), 0.0f, 1.0f, 0.1f, 5, false);
+    auto metro_task = Kriya::metro(*engine->get_scheduler(), 0.1, []() { });
+    auto line_task = Kriya::line(*engine->get_scheduler(), 0.0f, 1.0f, 0.1f, 5, false);
 
     engine->schedule_task("task1", std::move(metro_task));
     engine->schedule_task("task2", std::move(line_task), true);

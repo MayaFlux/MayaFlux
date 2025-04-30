@@ -7,7 +7,7 @@ class TaskScheduler;
 class SoundRoutine;
 }
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 /**
  * @brief Creates a periodic event generator that executes a callback at regular intervals
@@ -30,7 +30,7 @@ namespace MayaFlux::Tasks {
  * Example usage:
  * ```cpp
  * // Create a periodic event generator (2Hz)
- * auto periodic_task = Tasks::metro(*scheduler, 0.5, []() {
+ * auto periodic_task = Kriya::metro(*scheduler, 0.5, []() {
  *     trigger_event(); // Could affect audio, visuals, data, etc.
  * });
  * scheduler->add_task(std::make_shared<SoundRoutine>(std::move(periodic_task)));
@@ -59,7 +59,7 @@ Core::Scheduler::SoundRoutine metro(Core::Scheduler::TaskScheduler& scheduler, d
  * Example usage:
  * ```cpp
  * // Create a temporal sequence of events
- * auto event_sequence = Tasks::sequence(*scheduler, {
+ * auto event_sequence = Kriya::sequence(*scheduler, {
  *     {0.0, []() { trigger_event_a(); }},  // Immediate
  *     {0.5, []() { trigger_event_b(); }},  // 0.5 seconds later
  *     {1.0, []() { trigger_event_c(); }},  // 1.0 seconds later
@@ -94,7 +94,7 @@ Core::Scheduler::SoundRoutine sequence(Core::Scheduler::TaskScheduler& scheduler
  * Example usage:
  * ```cpp
  * // Create a 2-second interpolation from 0.0 to 1.0
- * auto transition = Tasks::line(*scheduler, 0.0f, 1.0f, 2.0f);
+ * auto transition = Kriya::line(*scheduler, 0.0f, 1.0f, 2.0f);
  * auto task_ptr = std::make_shared<SoundRoutine>(std::move(transition));
  * scheduler->add_task(task_ptr);
  *
@@ -133,7 +133,7 @@ Core::Scheduler::SoundRoutine line(Core::Scheduler::TaskScheduler& scheduler, fl
  * ```cpp
  * // Create a generative algorithm based on a mathematical sequence
  * std::vector<int> fibonacci = {0, 1, 1, 2, 3, 5, 8, 13, 21};
- * auto generator = Tasks::pattern(*scheduler,
+ * auto generator = Kriya::pattern(*scheduler,
  *     // Pattern function - apply algorithmic rules
  *     [&fibonacci](uint64_t step) -> std::any {
  *         return fibonacci[step % fibonacci.size()];

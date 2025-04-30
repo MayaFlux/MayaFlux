@@ -2,8 +2,8 @@
 
 #include "MayaFlux/Core/Scheduler/Routine.hpp"
 #include "MayaFlux/Core/Scheduler/Scheduler.hpp"
-#include "MayaFlux/Tasks/Awaiters.hpp"
-#include "MayaFlux/Tasks/Tasks.hpp"
+#include "MayaFlux/Kriya/Awaiters.hpp"
+#include "MayaFlux/Kriya/Tasks.hpp"
 
 namespace MayaFlux::Test {
 
@@ -75,7 +75,7 @@ TEST_F(SchedulerTest, DelayedTask)
     bool task_completed = false;
 
     auto task_func = [&task_completed](Core::Scheduler::TaskScheduler& sched) -> Core::Scheduler::SoundRoutine {
-        co_await Tasks::SampleDelay { 10 };
+        co_await Kriya::SampleDelay { 10 };
         task_completed = true;
         co_return;
     };
@@ -106,7 +106,7 @@ TEST_F(SchedulerTest, CancelTask)
     auto task_func = [&counter](Core::Scheduler::TaskScheduler& sched) -> Core::Scheduler::SoundRoutine {
         for (int i = 0; i < 10; i++) {
             counter++;
-            co_await Tasks::SampleDelay { 10 };
+            co_await Kriya::SampleDelay { 10 };
         }
     };
     auto routine = std::make_shared<Core::Scheduler::SoundRoutine>(task_func(*scheduler));
@@ -129,7 +129,7 @@ TEST_F(SchedulerTest, MetroTask)
     constexpr double interval = 0.01;
     u_int64_t expected_samples = scheduler->seconds_to_samples(interval);
 
-    auto metro_task = Tasks::metro(*scheduler, interval, [&metro_count]() {
+    auto metro_task = Kriya::metro(*scheduler, interval, [&metro_count]() {
         metro_count++;
     });
 
@@ -153,7 +153,7 @@ TEST_F(SchedulerTest, LineTask)
     u_int32_t step_duration = 10;
 
     // Create the task
-    auto line_task = Tasks::line(*scheduler, start_value, end_value, duration, step_duration, false);
+    auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, false);
     auto task_ptr = std::make_shared<Core::Scheduler::SoundRoutine>(std::move(line_task));
     ASSERT_NE(task_ptr, nullptr);
 
@@ -195,7 +195,7 @@ TEST_F(SchedulerTest, LineTaskRestart)
     u_int32_t step_duration = 10;
     bool restartable = true;
 
-    auto line_task = Tasks::line(*scheduler, start_value, end_value, duration, step_duration, restartable);
+    auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, restartable);
     auto task_ptr = std::make_shared<Core::Scheduler::SoundRoutine>(std::move(line_task));
     scheduler->add_task(task_ptr, true);
 

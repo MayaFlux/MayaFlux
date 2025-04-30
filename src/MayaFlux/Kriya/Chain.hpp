@@ -3,7 +3,7 @@
 #include "MayaFlux/Utils.hpp"
 #include "Operators.hpp"
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 /**
  * @class EventChain

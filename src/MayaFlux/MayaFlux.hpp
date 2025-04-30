@@ -38,7 +38,7 @@ namespace Nodes {
     class RootNode;
 }
 
-namespace Tasks {
+namespace Kriya {
     class ActionToken;
 }
 
@@ -345,7 +345,7 @@ bool update_task_params(const std::string& name, Args... args);
  *
  * Adds the node to the default engine's processing chain.
  */
-Tasks::ActionToken Play(std::shared_ptr<Nodes::Node> node);
+Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node);
 
 /**
  * @brief Creates a wait action
@@ -354,7 +354,7 @@ Tasks::ActionToken Play(std::shared_ptr<Nodes::Node> node);
  *
  * Uses the task scheduler from the default engine.
  */
-Tasks::ActionToken Wait(double seconds);
+Kriya::ActionToken Wait(double seconds);
 
 /**
  * @brief Creates a custom action
@@ -363,7 +363,7 @@ Tasks::ActionToken Wait(double seconds);
  *
  * Uses the task scheduler from the default engine.
  */
-Tasks::ActionToken Action(std::function<void()> func);
+Kriya::ActionToken Action(std::function<void()> func);
 
 //-------------------------------------------------------------------------
 // Audio Processing

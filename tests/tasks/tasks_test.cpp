@@ -1,8 +1,8 @@
 #include "../test_config.h"
+#include "MayaFlux/Kriya/Chain.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
-#include "MayaFlux/Tasks/Chain.hpp"
 
 namespace MayaFlux::Test {
 
@@ -30,7 +30,7 @@ TEST_F(TasksTest, EventChain)
     bool event2 = false;
     bool event3 = false;
 
-    Tasks::EventChain chain;
+    Kriya::EventChain chain;
 
     chain.then([&event1]() { event1 = true; })
         .then([&event2]() { event2 = true; }, 0.01)
@@ -49,7 +49,7 @@ TEST_F(TasksTest, EventChain)
 
 TEST_F(TasksTest, TimerOperations)
 {
-    Tasks::Timer timer(*scheduler);
+    Kriya::Timer timer(*scheduler);
     bool timer_triggered = false;
 
     timer.schedule(0.009, [&timer_triggered]() {
@@ -87,7 +87,7 @@ TEST_F(TasksTest, TimerOperations)
 
 TEST_F(TasksTest, TimedAction)
 {
-    Tasks::TimedAction action(*scheduler);
+    Kriya::TimedAction action(*scheduler);
     bool start_executed = false;
     bool end_executed = false;
 
@@ -128,7 +128,7 @@ TEST_F(TasksTest, NodeTimer)
 {
     EXPECT_NE(node_graph_manager, nullptr);
 
-    Tasks::NodeTimer node_timer(*scheduler, *node_graph_manager);
+    Kriya::NodeTimer node_timer(*scheduler, *node_graph_manager);
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
 
     node_timer.play_for(sine, 0.009);
@@ -199,18 +199,18 @@ TEST_F(TasksTest, NodeTimer)
 TEST_F(TasksTest, ActionTokens)
 {
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto node_token = Tasks::ActionToken(sine);
+    auto node_token = Kriya::ActionToken(sine);
 
     EXPECT_EQ(node_token.type, Utils::ActionType::NODE);
     EXPECT_EQ(node_token.node, sine);
 
-    auto time_token = Tasks::ActionToken(0.5);
+    auto time_token = Kriya::ActionToken(0.5);
 
     EXPECT_EQ(time_token.type, Utils::ActionType::TIME);
     EXPECT_DOUBLE_EQ(time_token.seconds, 0.5);
 
     bool func_called = false;
-    auto func_token = Tasks::ActionToken([&func_called]() { func_called = true; });
+    auto func_token = Kriya::ActionToken([&func_called]() { func_called = true; });
 
     EXPECT_EQ(func_token.type, Utils::ActionType::FUNCTION);
     EXPECT_FALSE(func_called);
@@ -221,7 +221,7 @@ TEST_F(TasksTest, ActionTokens)
 
 TEST_F(TasksTest, Sequence)
 {
-    Tasks::Sequence sequence;
+    Kriya::Sequence sequence;
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     bool func_called = false;
 
@@ -257,7 +257,7 @@ TEST_F(TasksTest, TimeOperator)
     auto& root = node_graph_manager->get_root_node();
     EXPECT_EQ(root.get_node_size(), 0);
 
-    sine >> Tasks::TimeOperation(0.01, *scheduler, *node_graph_manager);
+    sine >> Kriya::TimeOperation(0.01, *scheduler, *node_graph_manager);
 
     EXPECT_EQ(root.get_node_size(), 1);
 
@@ -279,7 +279,7 @@ TEST_F(TasksTest, CoroutineTasks)
     int metro_count = 0;
     double interval = 0.01;
 
-    auto metro_routine = std::make_shared<Core::Scheduler::SoundRoutine>(std::move(Tasks::metro(*scheduler, interval, [&]() {
+    auto metro_routine = std::make_shared<Core::Scheduler::SoundRoutine>(std::move(Kriya::metro(*scheduler, interval, [&]() {
         metro_called = true;
         metro_count++;
     })));
@@ -312,7 +312,7 @@ TEST_F(TasksTest, LineTask)
     float end_value = 1.0f;
     float duration = 0.05f;
 
-    auto line_routine = std::make_shared<Core::Scheduler::SoundRoutine>(Tasks::line(*scheduler, start_value, end_value, duration, 5, false));
+    auto line_routine = std::make_shared<Core::Scheduler::SoundRoutine>(Kriya::line(*scheduler, start_value, end_value, duration, 5, false));
     scheduler->add_task(line_routine, true);
 
     float* current_value = line_routine->get_state<float>("current_value");
@@ -329,7 +329,7 @@ TEST_F(TasksTest, LineTask)
 
     EXPECT_FLOAT_EQ(*current_value, end_value);
 
-    auto restartable_line = std::make_shared<Core::Scheduler::SoundRoutine>(Tasks::line(*scheduler, 0.0f, 10.f, 0.05f, 5, true));
+    auto restartable_line = std::make_shared<Core::Scheduler::SoundRoutine>(Kriya::line(*scheduler, 0.0f, 10.f, 0.05f, 5, true));
     scheduler->add_task(restartable_line, true);
 
     scheduler->process_buffer(scheduler->seconds_to_samples(0.05));
@@ -356,7 +356,7 @@ TEST_F(TasksTest, PatternTask)
         return static_cast<int>(index * 10);
     };
 
-    auto callback = std::make_shared<Core::Scheduler::SoundRoutine>(Tasks::pattern(*scheduler, pattern_func, [&](std::any value) {
+    auto callback = std::make_shared<Core::Scheduler::SoundRoutine>(Kriya::pattern(*scheduler, pattern_func, [&](std::any value) {
         pattern_count++;
         received_values.push_back(std::any_cast<int>(value)); }, 0.01));
 
@@ -380,7 +380,7 @@ TEST_F(TasksTest, SequenceTask)
 {
     std::vector<int> execution_order;
 
-    auto sequence_routine = std::make_shared<Core::Scheduler::SoundRoutine>(Tasks::sequence(*scheduler,
+    auto sequence_routine = std::make_shared<Core::Scheduler::SoundRoutine>(Kriya::sequence(*scheduler,
         { { 0.0, [&]() { execution_order.push_back(1); } },
             { 0.01, [&]() { execution_order.push_back(2); } },
             { 0.01, [&]() { execution_order.push_back(3); } } }));
@@ -414,7 +414,7 @@ TEST_F(TasksTest, SequenceI)
     MayaFlux::Start();
     AudioTestHelper::waitForAudio(100);
 
-    Tasks::Sequence sequence;
+    Kriya::Sequence sequence;
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     bool func_called = false;
 
@@ -444,7 +444,7 @@ TEST_F(TasksTest, SequenceIntegration)
     MayaFlux::Start();
     AudioTestHelper::waitForAudio(100);
 
-    Tasks::Sequence sequence;
+    Kriya::Sequence sequence;
     auto sine1 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f); // A4
     auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f); // A5
     bool sequence_completed = false;
@@ -489,7 +489,7 @@ TEST_F(TasksTest, TimeOperatorI)
 
     EXPECT_EQ(root.get_node_size(), 0);
 
-    sine >> Tasks::TimeOperation(0.1); // 100ms
+    sine >> Kriya::TimeOperation(0.1); // 100ms
 
     EXPECT_EQ(root.get_node_size(), 1);
 
@@ -509,7 +509,7 @@ TEST_F(TasksTest, DACOperator)
     AudioTestHelper::waitForAudio(100);
 
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto& dac = Tasks::DAC::instance();
+    auto& dac = Kriya::DAC::instance();
 
     auto& root = MayaFlux::get_node_graph_manager()->get_root_node();
     EXPECT_EQ(root.get_node_size(), 0);

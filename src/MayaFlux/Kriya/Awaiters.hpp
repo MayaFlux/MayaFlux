@@ -2,13 +2,13 @@
 
 #include "MayaFlux/Core/Scheduler/Promise.hpp"
 
-namespace MayaFlux::Tasks {
+namespace MayaFlux::Kriya {
 
 /**
  * @brief Type alias for the coroutine promise type
  *
  * This alias simplifies references to the Core::Scheduler::promise_type
- * throughout the Tasks namespace.
+ * throughout the Kriya namespace.
  */
 using promise_handle = Core::Scheduler::promise_type;
 
@@ -62,7 +62,7 @@ struct SampleDelay {
      * after the specified delay. It doesn't need to do anything since
      * the delay itself is the only effect needed.
      */
-    inline void await_resume() {};
+    inline void await_resume() { };
 
     /**
      * @brief Schedules the coroutine to resume after the delay
