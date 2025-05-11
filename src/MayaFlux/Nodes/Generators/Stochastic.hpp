@@ -4,6 +4,79 @@
 namespace MayaFlux::Nodes::Generator::Stochastics {
 
 /**
+ * @class StochasticContext
+ * @brief Specialized context for stochastic generator callbacks
+ *
+ * StochasticContext extends the base NodeContext to provide detailed information
+ * about a stochastic generator's current state to callbacks. It includes the
+ * current distribution type, amplitude scaling, range parameters, and statistical
+ * configuration values.
+ *
+ * This rich context enables callbacks to perform sophisticated analysis and
+ * monitoring of stochastic behavior, such as:
+ * - Tracking statistical properties of generated sequences
+ * - Implementing adaptive responses to emergent patterns
+ * - Visualizing probability distributions in real-time
+ * - Creating cross-domain mappings based on stochastic properties
+ * - Detecting and responding to specific statistical conditions
+ */
+class StochasticContext : public NodeContext {
+public:
+    /**
+     * @brief Constructs a StochasticContext with the current generator state
+     * @param value Current output sample value
+     * @param type Current probability distribution algorithm
+     * @param amplitude Current scaling factor for output values
+     * @param range_start Lower bound of the current output range
+     * @param range_end Upper bound of the current output range
+     * @param normal_spread Variance parameter for normal distribution
+     *
+     * Creates a context object that provides a complete snapshot of the
+     * stochastic generator's current state, including its most recent output
+     * value and all parameters that define its statistical behavior.
+     */
+    StochasticContext(double value, Utils::distribution type, double amplitude,
+        double range_start, double range_end, double normal_spread)
+        : NodeContext(value, typeid(StochasticContext).name())
+        , distribution_type(type)
+        , amplitude(amplitude)
+        , range_start(range_start)
+        , range_end(range_end)
+        , normal_spread(normal_spread)
+    {
+    }
+
+    /**
+     * @brief Current distribution type
+     *
+     * Identifies which probability algorithm is currently active in the
+     * generator (uniform, normal, exponential, etc.). This determines the
+     * fundamental statistical properties of the generated sequence.
+     */
+    Utils::distribution distribution_type;
+
+    /**
+     * @brief Current amplitude scaling factor
+     */
+    double amplitude;
+
+    /**
+     * @brief Current lower bound of the range
+     */
+    double range_start;
+
+    /**
+     * @brief Current upper bound of the range
+     */
+    double range_end;
+
+    /**
+     * @brief Current variance parameter for normal distribution
+     */
+    double normal_spread;
+};
+
+/**
  * @class NoiseEngine
  * @brief Computational stochastic signal generator with multiple probability distributions
  *
@@ -146,7 +219,94 @@ public:
         m_normal_spread = spread;
     }
 
+    /**
+     * @brief Gets the current amplitude scaling factor
+     * @return Current amplitude value
+     *
+     * Retrieves the current amplitude setting that controls the overall
+     * magnitude of the generated values. Useful for monitoring or
+     * adaptive systems that need to know the current scaling.
+     */
     inline double get_amplitude() { return m_amplitude; }
+
+    /**
+     * @brief Registers a callback for every generated value
+     * @param callback Function to call when a new value is generated
+     *
+     * This method allows external components to monitor or react to
+     * every value produced by the stochastic generator. The callback
+     * receives a NodeContext containing the generated value and
+     * distribution parameters.
+     */
+    void on_tick(NodeHook callback) override;
+
+    /**
+     * @brief Registers a conditional callback for generated values
+     * @param callback Function to call when condition is met
+     * @param condition Predicate that determines when callback is triggered
+     *
+     * This method enables selective monitoring of the stochastic process,
+     * where callbacks are only triggered when specific statistical conditions
+     * are met. This is useful for detecting emergent patterns or specific
+     * value ranges in the generated sequence.
+     */
+    void on_tick_if(NodeHook callback, NodeCondition condition) override;
+
+    /**
+     * @brief Removes a previously registered callback
+     * @param callback The callback function to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * Unregisters a callback previously added with on_tick(), stopping
+     * it from receiving further notifications about generated values.
+     */
+    bool remove_hook(const NodeHook& callback) override;
+
+    /**
+     * @brief Removes a previously registered conditional callback
+     * @param callback The condition function to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * Unregisters a conditional callback previously added with on_tick_if(),
+     * stopping it from receiving further notifications about generated values.
+     */
+    bool remove_conditional_hook(const NodeCondition& callback) override;
+
+    /**
+     * @brief Removes all registered callbacks
+     *
+     * Clears all standard and conditional callbacks, effectively
+     * disconnecting all external components from this generator's
+     * notification system. Useful when reconfiguring the processing
+     * graph or shutting down components.
+     */
+    inline void remove_all_hooks() override
+    {
+        m_callbacks.clear();
+        m_conditional_callbacks.clear();
+    }
+
+protected:
+    /**
+     * @brief Creates a context object for callbacks
+     * @param value The current generated value
+     * @return A unique pointer to a StochasticContext object
+     *
+     * This method creates a specialized context object containing
+     * the current value and all distribution parameters, providing
+     * callbacks with rich information about the generator's state.
+     */
+    std::unique_ptr<NodeContext> create_context(double value) override;
+
+    /**
+     * @brief Notifies all registered callbacks about a new value
+     * @param value The newly generated value
+     *
+     * This method is called internally whenever a new value is generated,
+     * creating the appropriate context and invoking all registered callbacks
+     * that should receive notification about this value.
+     */
+    void notify_tick(double value) override;
 
 private:
     /**
@@ -216,6 +376,25 @@ private:
      * Higher values increase entropy and distribution width.
      */
     double m_normal_spread;
-};
 
+    /**
+     * @brief Collection of standard callback functions
+     *
+     * Stores the registered callback functions that will be notified
+     * whenever the generator produces a new value. These callbacks
+     * enable external components to monitor and react to the generator's
+     * activity without interrupting the generation process.
+     */
+    std::vector<NodeHook> m_callbacks;
+
+    /**
+     * @brief Collection of conditional callback functions with their predicates
+     *
+     * Stores pairs of callback functions and their associated condition predicates.
+     * These callbacks are only invoked when their condition evaluates to true
+     * for a generated value, enabling selective monitoring of specific
+     * statistical conditions or value patterns.
+     */
+    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
+};
 }

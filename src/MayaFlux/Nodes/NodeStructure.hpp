@@ -118,6 +118,95 @@ public:
      */
     std::vector<double> processFull(unsigned int num_samples) override;
 
+    /**
+     * @brief Registers a callback for every output sample
+     * @param callback Function to call when a new sample is output
+     *
+     * This method delegates to the target node's on_tick method,
+     * ensuring that callbacks are triggered based on the final
+     * output of the chain rather than intermediate values.
+     * The callback receives the context from the target node.
+     */
+    inline void on_tick(NodeHook callback) override
+    {
+        m_Target->on_tick(callback);
+    }
+
+    /**
+     * @brief Registers a conditional callback for output samples
+     * @param callback Function to call when condition is met
+     * @param condition Predicate that determines when callback is triggered
+     *
+     * This method delegates to the target node's on_tick_if method,
+     * ensuring that conditional callbacks are evaluated based on the
+     * final output of the chain. The callback and condition both
+     * receive the context from the target node.
+     */
+    inline void on_tick_if(NodeHook callback, NodeCondition condition) override
+    {
+        m_Target->on_tick_if(callback, condition);
+    }
+
+    /**
+     * @brief Removes a previously registered callback
+     * @param callback The callback function to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * This method delegates to the target node's remove_hook method,
+     * removing the callback from the target node's notification system.
+     */
+    inline bool remove_hook(const NodeHook& callback) override
+    {
+        return m_Target->remove_hook(callback);
+    }
+
+    /**
+     * @brief Removes a previously registered conditional callback
+     * @param callback The condition function to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * This method delegates to the target node's remove_conditional_hook method,
+     * removing the conditional callback from the target node's notification system.
+     */
+    inline bool remove_conditional_hook(const NodeCondition& callback) override
+    {
+        return m_Target->remove_conditional_hook(callback);
+    }
+
+    /**
+     * @brief Removes all registered callbacks
+     *
+     * This method delegates to the target node's remove_all_hooks method,
+     * clearing all callbacks from the target node's notification system.
+     * After calling this method, no callbacks will be triggered for this chain.
+     */
+    inline void remove_all_hooks() override
+    {
+        m_Target->remove_all_hooks();
+    }
+
+protected:
+    /**
+     * @brief Empty implementation of notify_tick
+     * @param value The output value
+     *
+     * ChainNode doesn't implement its own notification system,
+     * instead delegating all callback handling to the target node.
+     * This method is a placeholder to satisfy the Node interface.
+     */
+    inline void notify_tick(double value) override { }
+
+    /**
+     * @brief Empty implementation of create_context
+     * @param value The output value
+     * @return nullptr as this node doesn't create contexts
+     *
+     * ChainNode doesn't create its own contexts for callbacks,
+     * instead relying on the target node to provide appropriate contexts.
+     * This method is a placeholder to satisfy the Node interface.
+     */
+    inline std::unique_ptr<NodeContext> create_context(double value) override { return nullptr; }
+
 private:
     /**
      * @brief The upstream node that processes input first
@@ -128,6 +217,60 @@ private:
      * @brief The downstream node that processes the source's output
      */
     std::shared_ptr<Node> m_Target;
+};
+
+/**
+ * @class BinaryOpContext
+ * @brief Specialized context for binary operation callbacks
+ *
+ * BinaryOpContext extends the base NodeContext to provide detailed information
+ * about a binary operation's inputs and output to callbacks. It includes the
+ * individual values from both the left and right nodes that were combined to
+ * produce the final output value.
+ *
+ * This rich context enables callbacks to perform sophisticated analysis and
+ * monitoring of signal combinations, such as:
+ * - Tracking the relative contributions of each input signal
+ * - Implementing adaptive responses based on input relationships
+ * - Detecting specific interaction patterns between signals
+ * - Creating visualizations that show both inputs and their combination
+ */
+class BinaryOpContext : public NodeContext {
+public:
+    /**
+     * @brief Constructs a BinaryOpContext with the current operation state
+     * @param value The combined output value
+     * @param lhs_value The value from the left-hand side node
+     * @param rhs_value The value from the right-hand side node
+     *
+     * Creates a context object that provides a complete snapshot of the
+     * binary operation's current state, including both input values and
+     * the resulting output value after combination.
+     */
+    BinaryOpContext(double value, double lhs_value, double rhs_value)
+        : NodeContext(value, typeid(BinaryOpContext).name())
+        , lhs_value(lhs_value)
+        , rhs_value(rhs_value)
+    {
+    }
+
+    /**
+     * @brief The value from the left-hand side node
+     *
+     * This is the output value from the left node before combination.
+     * It allows callbacks to analyze the individual contribution of
+     * the left node to the final combined output.
+     */
+    double lhs_value;
+
+    /**
+     * @brief The value from the right-hand side node
+     *
+     * This is the output value from the right node before combination.
+     * It allows callbacks to analyze the individual contribution of
+     * the right node to the final combined output.
+     */
+    double rhs_value;
 };
 
 /**
@@ -188,6 +331,96 @@ public:
      */
     std::vector<double> processFull(unsigned int num_samples) override;
 
+    /**
+     * @brief Registers a callback for every combined output value
+     * @param callback Function to call when a new value is produced
+     *
+     * This method allows external components to monitor or react to
+     * every value produced by the binary operation. The callback
+     * receives a BinaryOpContext containing the combined output value
+     * and the individual values from both input nodes.
+     */
+    void on_tick(NodeHook callback) override
+    {
+        // Store callback for our own output
+        m_callbacks.push_back(callback);
+    }
+
+    /**
+     * @brief Registers a conditional callback for combined output values
+     * @param callback Function to call when condition is met
+     * @param condition Predicate that determines when callback is triggered
+     *
+     * This method enables selective monitoring of the binary operation,
+     * where callbacks are only triggered when specific conditions are met.
+     * This is useful for detecting particular relationships between input
+     * signals or specific patterns in the combined output.
+     */
+    void on_tick_if(NodeHook callback, NodeCondition condition) override
+    {
+        m_conditional_callbacks.emplace_back(callback, condition);
+    }
+
+    /**
+     * @brief Removes a previously registered callback
+     * @param callback The callback function to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * Unregisters a callback previously added with on_tick(), stopping
+     * it from receiving further notifications about combined output values.
+     */
+    bool remove_hook(const NodeHook& callback) override;
+
+    /**
+     * @brief Removes a previously registered conditional callback
+     * @param callback The condition function to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * Unregisters a conditional callback previously added with on_tick_if(),
+     * stopping it from receiving further notifications about combined output values.
+     */
+    bool remove_conditional_hook(const NodeCondition& callback) override;
+
+    /**
+     * @brief Removes all registered callbacks
+     *
+     * Clears all standard and conditional callbacks, effectively
+     * disconnecting all external components from this node's
+     * notification system. After calling this method, no callbacks
+     * will be triggered for this binary operation.
+     */
+    inline void remove_all_hooks() override
+    {
+        m_callbacks.clear();
+        m_conditional_callbacks.clear();
+    }
+
+protected:
+    /**
+     * @brief Notifies all registered callbacks about a new output value
+     * @param value The newly combined output value
+     *
+     * This method is called internally whenever a new value is produced,
+     * creating the appropriate context with both input values and the output,
+     * and invoking all registered callbacks that should receive notification.
+     */
+    void notify_tick(double value) override;
+
+    /**
+     * @brief Creates a context object for callbacks
+     * @param value The current combined output value
+     * @return A unique pointer to a BinaryOpContext object
+     *
+     * This method creates a specialized context object containing
+     * the combined output value and the individual values from both
+     * input nodes, providing callbacks with rich information about
+     * the operation's inputs and output.
+     */
+    inline std::unique_ptr<NodeContext> create_context(double value) override
+    {
+        return std::make_unique<BinaryOpContext>(value, m_last_lhs_value, m_last_rhs_value);
+    }
+
 private:
     /**
      * @brief The left-hand side node
@@ -203,5 +436,43 @@ private:
      * @brief The function used to combine the outputs of both nodes
      */
     CombineFunc m_func;
+
+    /**
+     * @brief The last output value from the left-hand side node
+     *
+     * This value is stored to provide context information to callbacks,
+     * allowing them to access not just the combined result but also
+     * the individual contributions from each input node.
+     */
+    double m_last_lhs_value = 0.0;
+
+    /**
+     * @brief The last output value from the right-hand side node
+     *
+     * This value is stored to provide context information to callbacks,
+     * allowing them to access not just the combined result but also
+     * the individual contributions from each input node.
+     */
+    double m_last_rhs_value = 0.0;
+
+    /**
+     * @brief Collection of standard callback functions
+     *
+     * Stores the registered callback functions that will be notified
+     * whenever the binary operation produces a new output value. These callbacks
+     * enable external components to monitor and react to the combined output
+     * without interrupting the processing flow.
+     */
+    std::vector<NodeHook> m_callbacks;
+
+    /**
+     * @brief Collection of conditional callback functions with their predicates
+     *
+     * Stores pairs of callback functions and their associated condition predicates.
+     * These callbacks are only invoked when their condition evaluates to true
+     * for a combined output value, enabling selective monitoring of specific
+     * conditions or patterns in the combined signal.
+     */
+    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
 };
 }

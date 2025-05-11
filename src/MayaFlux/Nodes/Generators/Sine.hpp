@@ -54,7 +54,7 @@ public:
      * Creates a sine oscillator with frequency modulation, where the actual frequency
      * is the base frequency plus the output of the modulator node.
      */
-    Sine(std::shared_ptr<Node> frequency_modulator, float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = true);
+    Sine(std::shared_ptr<Node> frequency_modulator, float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = false);
 
     /**
      * @brief Constructor with amplitude modulation
@@ -67,7 +67,7 @@ public:
      * Creates a sine oscillator with amplitude modulation, where the actual amplitude
      * is the base amplitude multiplied by the output of the modulator node.
      */
-    Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude = 1, float offset = 0, bool bAuto_register = true);
+    Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude = 1, float offset = 0, bool bAuto_register = false);
 
     /**
      * @brief Constructor with both frequency and amplitude modulation
@@ -225,6 +225,85 @@ public:
      */
     void reset(float frequency = 440, float amplitude = 0.5f, float offset = 0);
 
+    /**
+     * @brief Registers a callback for every generated sample
+     * @param callback Function to call when a new sample is generated
+     *
+     * This method allows external components to monitor or react to
+     * every sample produced by the sine oscillator. The callback
+     * receives a GeneratorContext containing the generated value and
+     * oscillator parameters like frequency, amplitude, and phase.
+     */
+    void on_tick(NodeHook callback) override;
+
+    /**
+     * @brief Registers a conditional callback for generated samples
+     * @param callback Function to call when condition is met
+     * @param condition Predicate that determines when callback is triggered
+     *
+     * This method enables selective monitoring of the oscillator,
+     * where callbacks are only triggered when specific conditions
+     * are met. This is useful for detecting zero crossings, amplitude
+     * thresholds, or other specific points in the waveform cycle.
+     */
+    void on_tick_if(NodeHook callback, NodeCondition condition) override;
+
+    /**
+     * @brief Removes a previously registered callback
+     * @param callback The callback function to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * Unregisters a callback previously added with on_tick(), stopping
+     * it from receiving further notifications about generated samples.
+     */
+    bool remove_hook(const NodeHook& callback) override;
+
+    /**
+     * @brief Removes a previously registered conditional callback
+     * @param callback The condition function to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * Unregisters a conditional callback previously added with on_tick_if(),
+     * stopping it from receiving further notifications about generated samples.
+     */
+    bool remove_conditional_hook(const NodeCondition& callback) override;
+
+    /**
+     * @brief Removes all registered callbacks
+     *
+     * Clears all standard and conditional callbacks, effectively
+     * disconnecting all external components from this oscillator's
+     * notification system. Useful when reconfiguring the processing
+     * graph or shutting down components.
+     */
+    inline void remove_all_hooks() override
+    {
+        m_callbacks.clear();
+        m_conditional_callbacks.clear();
+    }
+
+protected:
+    /**
+     * @brief Creates a context object for callbacks
+     * @param value The current generated sample
+     * @return A unique pointer to a GeneratorContext object
+     *
+     * This method creates a specialized context object containing
+     * the current sample value and all oscillator parameters, providing
+     * callbacks with rich information about the oscillator's state.
+     */
+    std::unique_ptr<NodeContext> create_context(double value) override;
+
+    /**
+     * @brief Notifies all registered callbacks about a new sample
+     * @param value The newly generated sample
+     *
+     * This method is called internally whenever a new sample is generated,
+     * creating the appropriate context and invoking all registered callbacks
+     * that should receive notification about this sample.
+     */
+    void notify_tick(double value) override;
+
 private:
     /**
      * @brief Phase increment per sample
@@ -275,5 +354,25 @@ private:
      * the specified frequency at the current sample rate.
      */
     void update_phase_increment(float frequency);
+
+    /**
+     * @brief Collection of standard callback functions
+     *
+     * Stores the registered callback functions that will be notified
+     * whenever the oscillator produces a new sample. These callbacks
+     * enable external components to monitor and react to the oscillator's
+     * output without interrupting the generation process.
+     */
+    std::vector<NodeHook> m_callbacks;
+
+    /**
+     * @brief Collection of conditional callback functions with their predicates
+     *
+     * Stores pairs of callback functions and their associated condition predicates.
+     * These callbacks are only invoked when their condition evaluates to true
+     * for a generated sample, enabling selective monitoring of specific
+     * waveform characteristics or sample values.
+     */
+    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
 };
 }

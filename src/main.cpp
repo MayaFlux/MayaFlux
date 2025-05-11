@@ -1,6 +1,11 @@
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/version.h"
+
+#include <atomic>
+#include <chrono>
 #include <csignal>
+#include <iostream>
+#include <thread>
 
 std::atomic<bool> g_running { true };
 

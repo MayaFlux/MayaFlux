@@ -5,6 +5,75 @@
 namespace MayaFlux::Nodes::Filters {
 
 /**
+ * @class FilterContext
+ * @brief Specialized context for filter node callbacks
+ *
+ * FilterContext extends the base NodeContext to provide filter-specific
+ * information to callbacks. It includes references to the filter's internal
+ * state, including input and output history buffers and coefficient vectors.
+ *
+ * This rich context enables callbacks to perform sophisticated analysis and
+ * monitoring of filter behavior, such as:
+ * - Detecting resonance conditions or instability
+ * - Analyzing filter response characteristics in real-time
+ * - Implementing adaptive processing based on filter state
+ * - Visualizing filter behavior through external interfaces
+ * - Recording filter state for later analysis or debugging
+ */
+class FilterContext : public NodeContext {
+public:
+    /**
+     * @brief Constructs a FilterContext with the current filter state
+     * @param value Current output sample value
+     * @param input_history Reference to the filter's input history buffer
+     * @param output_history Reference to the filter's output history buffer
+     * @param coefs_a Reference to the filter's feedback coefficients
+     * @param coefs_b Reference to the filter's feedforward coefficients
+     *
+     * Creates a context object that provides a complete snapshot of the
+     * filter's current state, including its most recent output value,
+     * history buffers, and coefficient vectors.
+     */
+    FilterContext(double value, const std::vector<double>& input_history, const std::vector<double>& output_history,
+        const std::vector<double>& coefs_a, const std::vector<double>& coefs_b)
+        : NodeContext(value, typeid(FilterContext).name())
+        , input_history(input_history)
+        , output_history(output_history)
+        , coefs_a(coefs_a)
+        , coefs_b(coefs_b)
+    {
+    }
+
+    /**
+     * @brief Current input history buffer
+     *
+     * Contains the most recent input samples processed by the filter,
+     * with the newest sample at index 0. The size of this buffer depends
+     * on the filter's feedforward path configuration.
+     */
+    const std::vector<double>& input_history;
+
+    /**
+     * @brief Current output history buffer
+     *
+     * Contains the most recent output samples processed by the filter,
+     * with the newest sample at index 0. The size of this buffer depends
+     * on the filter's feedback path configuration.
+     */
+    const std::vector<double>& output_history;
+
+    /**
+     * @brief Current coefficients for input
+     */
+    const std::vector<double>& coefs_a;
+
+    /**
+     * @brief Current coefficients for output
+     */
+    const std::vector<double>& coefs_b;
+};
+
+/**
  * @brief Parses a string representation of filter order into input/output shift configuration
  * @param str String in format "N_M" where N is input order and M is output order
  * @return Pair of integers representing input and output shift values
@@ -107,6 +176,9 @@ protected:
      * without applying any filtering.
      */
     bool bypass_enabled = false;
+
+    std::vector<NodeHook> m_callbacks;
+    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
 
 public:
     /**
@@ -343,6 +415,80 @@ public:
      */
     std::vector<double> processFull(unsigned int num_samples) override;
 
+    /**
+     * @brief Registers a callback to be called on each tick
+     * @param callback Function to call with the current filter context
+     *
+     * Registers a callback function that will be called each time the filter
+     * produces a new output value. The callback receives a FilterContext object
+     * containing information about the filter's current state, including the
+     * current sample value, input/output history buffers, and coefficients.
+     *
+     * This mechanism enables external components to monitor and react to
+     * the filter's activity without interrupting the processing flow.
+     */
+    void on_tick(NodeHook callback) override;
+
+    /**
+     * @brief Registers a conditional callback
+     * @param callback Function to call when condition is met
+     * @param condition Predicate that determines when callback should be triggered
+     *
+     * Registers a callback function that will be called only when the specified
+     * condition is met. The condition is evaluated each time the filter produces
+     * a new output value, and the callback is triggered only if the condition
+     * returns true.
+     *
+     * This mechanism enables selective monitoring and reaction to specific
+     * filter states or events, such as threshold crossings, resonance detection,
+     * or other algorithmic criteria.
+     */
+    void on_tick_if(NodeHook callback, NodeCondition condition) override;
+
+    /**
+     * @brief Removes a previously registered callback
+     * @param callback The callback to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * Unregisters a callback that was previously registered with on_tick().
+     * After removal, the callback will no longer be triggered when the filter
+     * produces new output values.
+     *
+     * This method is useful for cleaning up callbacks when they are no longer
+     * needed, preventing memory leaks and unnecessary processing.
+     */
+    bool remove_hook(const NodeHook& callback) override;
+
+    /**
+     * @brief Removes a previously registered conditional callback
+     * @param callback The callback part of the conditional callback to remove
+     * @return True if the callback was found and removed, false otherwise
+     *
+     * Unregisters a conditional callback that was previously registered with
+     * on_tick_if(). After removal, the callback will no longer be triggered
+     * even when its condition is met.
+     *
+     * This method is useful for cleaning up conditional callbacks when they
+     * are no longer needed, preventing memory leaks and unnecessary processing.
+     */
+    bool remove_conditional_hook(const NodeCondition& callback) override;
+
+    /**
+     * @brief Removes all registered callbacks
+     *
+     * Unregisters all callbacks that were previously registered with on_tick()
+     * and on_tick_if(). After calling this method, no callbacks will be triggered
+     * when the filter produces new output values.
+     *
+     * This method is useful for completely resetting the filter's callback system,
+     * such as when repurposing a filter or preparing for cleanup.
+     */
+    inline void remove_all_hooks() override
+    {
+        m_callbacks.clear();
+        m_conditional_callbacks.clear();
+    }
+
 protected:
     /**
      * @brief Updates the feedback (denominator) coefficients
@@ -432,5 +578,38 @@ protected:
      * for the filter's feedback path.
      */
     virtual void update_outputs(double current_sample);
+
+    /**
+     * @brief Creates a filter-specific context object
+     * @param value The current output sample value
+     * @return A unique pointer to a FilterContext object
+     *
+     * Creates a FilterContext object that contains information about the filter's
+     * current state, including the current sample value, input/output history buffers,
+     * and coefficients. This context is passed to callbacks and conditions to provide
+     * them with the information they need to execute properly.
+     *
+     * The FilterContext allows callbacks to access filter-specific information
+     * beyond just the current sample value, enabling more sophisticated monitoring
+     * and analysis of filter behavior.
+     */
+    std::unique_ptr<NodeContext> create_context(double value) override;
+
+    /**
+     * @brief Notifies all registered callbacks with the current filter context
+     * @param value The current output sample value
+     *
+     * This method is called by the filter implementation when a new output value
+     * is produced. It creates a FilterContext object using create_context(), then
+     * calls all registered callbacks with that context.
+     *
+     * For unconditional callbacks (registered with on_tick()), the callback
+     * is always called. For conditional callbacks (registered with on_tick_if()),
+     * the callback is called only if its condition returns true.
+     *
+     * Filter implementations should call this method at appropriate points in their
+     * processing flow to trigger callbacks, typically after computing a new output value.
+     */
+    void notify_tick(double value) override;
 };
 }

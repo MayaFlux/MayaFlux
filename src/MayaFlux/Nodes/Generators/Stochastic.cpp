@@ -14,7 +14,9 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
 
 double NoiseEngine::process_sample(double input)
 {
-    return input + random_sample(m_current_start, m_current_end);
+    double sample = input + random_sample(m_current_start, m_current_end);
+    notify_tick(sample);
+    return sample;
 }
 
 double NoiseEngine::random_sample(double start, double end)
@@ -87,6 +89,62 @@ void NoiseEngine::validate_range(double start, double end) const
     if (start > end) {
         throw std::invalid_argument("Start must be less than or equal to end");
     }
+}
+
+std::unique_ptr<NodeContext> NoiseEngine::create_context(double value)
+{
+    return std::make_unique<StochasticContext>(value, m_type, m_amplitude, m_current_start, m_current_end, m_normal_spread);
+}
+
+void NoiseEngine::notify_tick(double value)
+{
+    auto context = create_context(value);
+    for (auto& callback : m_callbacks) {
+        callback(*context);
+    }
+    for (auto& [callback, condition] : m_conditional_callbacks) {
+        if (condition(*context)) {
+            callback(*context);
+        }
+    }
+}
+
+void NoiseEngine::on_tick(NodeHook callback)
+{
+    m_callbacks.push_back(callback);
+}
+
+void NoiseEngine::on_tick_if(NodeHook callback, NodeCondition condition)
+{
+    m_conditional_callbacks.emplace_back(callback, condition);
+}
+
+bool NoiseEngine::remove_hook(const NodeHook& callback)
+{
+    auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
+        [&callback](const NodeHook& hook) {
+            return hook.target_type() == callback.target_type();
+        });
+
+    if (it != m_callbacks.end()) {
+        m_callbacks.erase(it);
+        return true;
+    }
+    return false;
+}
+
+bool NoiseEngine::remove_conditional_hook(const NodeCondition& callback)
+{
+    auto it = std::find_if(m_conditional_callbacks.begin(), m_conditional_callbacks.end(),
+        [&callback](const std::pair<NodeHook, NodeCondition>& pair) {
+            return pair.first.target_type() == callback.target_type();
+        });
+
+    if (it != m_conditional_callbacks.end()) {
+        m_conditional_callbacks.erase(it);
+        return true;
+    }
+    return false;
 }
 
 void NoiseEngine::printGraph()

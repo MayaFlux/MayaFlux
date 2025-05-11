@@ -116,6 +116,8 @@ double Sine::process_sample(double input)
         current_sample *= 0.5f;
     }
 
+    notify_tick(current_sample);
+
     return current_sample;
 }
 
@@ -148,6 +150,63 @@ void Sine::reset(float frequency, float amplitude, float offset)
     m_amplitude = amplitude;
     m_offset = offset;
     m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_sample_rate();
+}
+
+std::unique_ptr<NodeContext> Sine::create_context(double value)
+{
+    return std::make_unique<GeneratorContext>(value, m_frequency, m_amplitude, m_phase);
+}
+
+void Sine::notify_tick(double value)
+{
+    auto context = create_context(value);
+
+    for (auto& callback : m_callbacks) {
+        callback(*context);
+    }
+    for (auto& [callback, condition] : m_conditional_callbacks) {
+        if (condition(*context)) {
+            callback(*context);
+        }
+    }
+}
+
+void Sine::on_tick(NodeHook callback)
+{
+    m_callbacks.push_back(callback);
+}
+
+void Sine::on_tick_if(NodeHook callback, NodeCondition condition)
+{
+    m_conditional_callbacks.emplace_back(callback, condition);
+}
+
+bool Sine::remove_hook(const NodeHook& callback)
+{
+    auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
+        [&callback](const NodeHook& hook) {
+            return hook.target_type() == callback.target_type();
+        });
+
+    if (it != m_callbacks.end()) {
+        m_callbacks.erase(it);
+        return true;
+    }
+    return false;
+}
+
+bool Sine::remove_conditional_hook(const NodeCondition& callback)
+{
+    auto it = std::find_if(m_conditional_callbacks.begin(), m_conditional_callbacks.end(),
+        [&callback](const std::pair<NodeHook, NodeCondition>& pair) {
+            return pair.first.target_type() == callback.target_type();
+        });
+
+    if (it != m_conditional_callbacks.end()) {
+        m_conditional_callbacks.erase(it);
+        return true;
+    }
+    return false;
 }
 
 void Sine::printGraph()

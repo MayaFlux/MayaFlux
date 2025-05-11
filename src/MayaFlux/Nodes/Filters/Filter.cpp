@@ -214,4 +214,61 @@ std::vector<double> Filter::processFull(unsigned int num_samples)
     return output;
 }
 
+std::unique_ptr<NodeContext> Filter::create_context(double value)
+{
+    return std::make_unique<FilterContext>(value, input_history, output_history, coef_a, coef_b);
+}
+
+void Filter::notify_tick(double value)
+{
+    auto context = create_context(value);
+
+    for (auto& callback : m_callbacks) {
+        callback(*context);
+    }
+    for (auto& [callback, condition] : m_conditional_callbacks) {
+        if (condition(*context)) {
+            callback(*context);
+        }
+    }
+}
+
+void Filter::on_tick(NodeHook callback)
+{
+    m_callbacks.push_back(callback);
+}
+
+void Filter::on_tick_if(NodeHook callback, NodeCondition condition)
+{
+    m_conditional_callbacks.emplace_back(callback, condition);
+}
+
+bool Filter::remove_hook(const NodeHook& callback)
+{
+    auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
+        [&callback](const NodeHook& hook) {
+            return hook.target_type() == callback.target_type();
+        });
+
+    if (it != m_callbacks.end()) {
+        m_callbacks.erase(it);
+        return true;
+    }
+    return false;
+}
+
+bool Filter::remove_conditional_hook(const NodeCondition& callback)
+{
+    auto it = std::find_if(m_conditional_callbacks.begin(), m_conditional_callbacks.end(),
+        [&callback](const std::pair<NodeHook, NodeCondition>& pair) {
+            return pair.first.target_type() == callback.target_type();
+        });
+
+    if (it != m_conditional_callbacks.end()) {
+        m_conditional_callbacks.erase(it);
+        return true;
+    }
+    return false;
+}
+
 }

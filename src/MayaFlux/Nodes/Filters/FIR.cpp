@@ -34,6 +34,8 @@ double FIR::process_sample(double input)
 
     update_outputs(output);
 
+    notify_tick(output);
+
     return output * get_gain();
 }
 
