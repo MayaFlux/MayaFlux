@@ -9,14 +9,16 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
     , m_amplitude(1.0f)
     , m_normal_spread(4.0f)
     , m_type(type)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
 }
 
 double NoiseEngine::process_sample(double input)
 {
-    double sample = input + random_sample(m_current_start, m_current_end);
-    notify_tick(sample);
-    return sample;
+    m_last_output = input + random_sample(m_current_start, m_current_end);
+    notify_tick(m_last_output);
+    return m_last_output;
 }
 
 double NoiseEngine::random_sample(double start, double end)
@@ -111,40 +113,22 @@ void NoiseEngine::notify_tick(double value)
 
 void NoiseEngine::on_tick(NodeHook callback)
 {
-    m_callbacks.push_back(callback);
+    safe_add_callback(m_callbacks, callback);
 }
 
 void NoiseEngine::on_tick_if(NodeHook callback, NodeCondition condition)
 {
-    m_conditional_callbacks.emplace_back(callback, condition);
+    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
 }
 
 bool NoiseEngine::remove_hook(const NodeHook& callback)
 {
-    auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
-        [&callback](const NodeHook& hook) {
-            return hook.target_type() == callback.target_type();
-        });
-
-    if (it != m_callbacks.end()) {
-        m_callbacks.erase(it);
-        return true;
-    }
-    return false;
+    return safe_remove_callback(m_callbacks, callback);
 }
 
 bool NoiseEngine::remove_conditional_hook(const NodeCondition& callback)
 {
-    auto it = std::find_if(m_conditional_callbacks.begin(), m_conditional_callbacks.end(),
-        [&callback](const std::pair<NodeHook, NodeCondition>& pair) {
-            return pair.first.target_type() == callback.target_type();
-        });
-
-    if (it != m_conditional_callbacks.end()) {
-        m_conditional_callbacks.erase(it);
-        return true;
-    }
-    return false;
+    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
 void NoiseEngine::printGraph()

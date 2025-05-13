@@ -73,6 +73,16 @@ public:
      * for each sample.
      */
     double process_sample(double input) override;
+
+    /**
+     * @brief Resets the processed state of the node and any attached input nodes
+     *
+     * This method is used by the processing system to reset the processed state
+     * of the node at the end of each processing cycle. This ensures that
+     * all nodes are marked as unprocessed before the cycle next begins, allowing
+     * the system to correctly identify which nodes need to be processed.
+     */
+    void reset_processed_state() override;
 };
 
 }

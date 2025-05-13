@@ -17,6 +17,8 @@ std::pair<int, int> shift_parser(const std::string& str)
 
 Filter::Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts)
     : inputNode(input)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
     shift_config = shift_parser(zindex_shifts);
     initialize_shift_buffers();
@@ -26,6 +28,8 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
     : inputNode(input)
     , coef_a(a_coef)
     , coef_b(b_coef)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
     shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
 
@@ -235,40 +239,22 @@ void Filter::notify_tick(double value)
 
 void Filter::on_tick(NodeHook callback)
 {
-    m_callbacks.push_back(callback);
+    safe_add_callback(m_callbacks, callback);
 }
 
 void Filter::on_tick_if(NodeHook callback, NodeCondition condition)
 {
-    m_conditional_callbacks.emplace_back(callback, condition);
+    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
 }
 
 bool Filter::remove_hook(const NodeHook& callback)
 {
-    auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
-        [&callback](const NodeHook& hook) {
-            return hook.target_type() == callback.target_type();
-        });
-
-    if (it != m_callbacks.end()) {
-        m_callbacks.erase(it);
-        return true;
-    }
-    return false;
+    return safe_remove_callback(m_callbacks, callback);
 }
 
 bool Filter::remove_conditional_hook(const NodeCondition& callback)
 {
-    auto it = std::find_if(m_conditional_callbacks.begin(), m_conditional_callbacks.end(),
-        [&callback](const std::pair<NodeHook, NodeCondition>& pair) {
-            return pair.first.target_type() == callback.target_type();
-        });
-
-    if (it != m_conditional_callbacks.end()) {
-        m_conditional_callbacks.erase(it);
-        return true;
-    }
-    return false;
+    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
 }

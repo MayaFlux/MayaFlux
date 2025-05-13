@@ -11,6 +11,8 @@ Sine::Sine(float frequency, float amplitude, float offset, bool bAuto_register)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
     Setup(bAuto_register);
 }
@@ -22,6 +24,8 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, float amp
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
     Setup(bAuto_register);
 }
@@ -33,6 +37,8 @@ Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amp
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
     Setup(bAuto_register);
 }
@@ -44,6 +50,8 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> ampl
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
     Setup(bAuto_register);
 }
@@ -90,7 +98,13 @@ double Sine::process_sample(double input)
 {
     if (m_frequency_modulator) {
         double current_freq = m_frequency;
-        current_freq += m_frequency_modulator->process_sample(0.f);
+        if (m_frequency_modulator->is_processed()) {
+            current_freq += m_frequency_modulator->get_last_output();
+            m_frequency_modulator->mark_processed(false);
+        } else {
+            current_freq += m_frequency_modulator->process_sample(0.f);
+            m_frequency_modulator->mark_processed(true);
+        }
         update_phase_increment(current_freq);
     }
 
@@ -105,9 +119,13 @@ double Sine::process_sample(double input)
 
     float current_amplitude = m_amplitude;
     if (m_amplitude_modulator) {
-        float mod_value = m_amplitude_modulator->process_sample(0.f);
-        current_amplitude += mod_value;
-        // m_amplitude = current_amplitude;
+        if (m_amplitude_modulator->is_processed()) {
+            current_amplitude += m_amplitude_modulator->get_last_output();
+            m_amplitude_modulator->mark_processed(false);
+        } else {
+            current_amplitude += m_amplitude_modulator->process_sample(0.f);
+            m_amplitude_modulator->mark_processed(true);
+        }
     }
     current_sample *= current_amplitude;
 
@@ -173,40 +191,33 @@ void Sine::notify_tick(double value)
 
 void Sine::on_tick(NodeHook callback)
 {
-    m_callbacks.push_back(callback);
+    safe_add_callback(m_callbacks, callback);
 }
 
 void Sine::on_tick_if(NodeHook callback, NodeCondition condition)
 {
-    m_conditional_callbacks.emplace_back(callback, condition);
+    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
 }
 
 bool Sine::remove_hook(const NodeHook& callback)
 {
-    auto it = std::find_if(m_callbacks.begin(), m_callbacks.end(),
-        [&callback](const NodeHook& hook) {
-            return hook.target_type() == callback.target_type();
-        });
-
-    if (it != m_callbacks.end()) {
-        m_callbacks.erase(it);
-        return true;
-    }
-    return false;
+    return safe_remove_callback(m_callbacks, callback);
 }
 
 bool Sine::remove_conditional_hook(const NodeCondition& callback)
 {
-    auto it = std::find_if(m_conditional_callbacks.begin(), m_conditional_callbacks.end(),
-        [&callback](const std::pair<NodeHook, NodeCondition>& pair) {
-            return pair.first.target_type() == callback.target_type();
-        });
+    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
+}
 
-    if (it != m_conditional_callbacks.end()) {
-        m_conditional_callbacks.erase(it);
-        return true;
+void Sine::reset_processed_state()
+{
+    mark_processed(false);
+    if (m_frequency_modulator) {
+        m_frequency_modulator->reset_processed_state();
     }
-    return false;
+    if (m_amplitude_modulator) {
+        m_amplitude_modulator->reset_processed_state();
+    }
 }
 
 void Sine::printGraph()

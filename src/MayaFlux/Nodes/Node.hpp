@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Utils.hpp"
+#include "NodeOperators.hpp"
 
 /**
  * @namespace MayaFlux::Nodes
@@ -87,41 +88,6 @@ protected:
     {
     }
 };
-
-/**
- * @typedef NodeHook
- * @brief Callback function type for node processing events
- *
- * A NodeHook is a function that receives a NodeContext object containing
- * information about the node's current state. These callbacks are triggered
- * during node processing to notify external components about node activity.
- *
- * Example:
- * ```cpp
- * node->on_tick([](const NodeContext& ctx) {
- *     std::cout << "Node produced value: " << ctx.value << std::endl;
- * });
- * ```
- */
-using NodeHook = std::function<void(const NodeContext&)>;
-
-/**
- * @typedef NodeCondition
- * @brief Predicate function type for conditional callbacks
- *
- * A NodeCondition is a function that evaluates whether a callback should
- * be triggered based on the node's current state. It receives a NodeContext
- * object and returns true if the condition is met, false otherwise.
- *
- * Example:
- * ```cpp
- * node->on_tick_if(
- *     [](const NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
- *     [](const NodeContext& ctx) { return ctx.value > 0.8; }
- * );
- * ```
- */
-using NodeCondition = std::function<bool(const NodeContext&)>;
 
 /**
  * @class Node
@@ -257,6 +223,84 @@ public:
      */
     virtual void remove_all_hooks() = 0;
 
+    /**
+     * @brief Marks the node as registered or unregistered for processing
+     * @param is_registered True to mark as registered, false to mark as unregistered
+     *
+     * This method is used by the node graph manager to track which nodes are currently
+     * part of the active processing graph. When a node is registered, it means it's
+     * included in the current processing cycle. When unregistered, it may be excluded
+     * from processing to save computational resources.
+     *
+     * This status flag helps optimize processing by allowing the system to skip
+     * nodes that aren't currently needed in the signal flow.
+     */
+    virtual void mark_registered_for_processing(bool is_registered) = 0;
+
+    /**
+     * @brief Checks if the node is currently registered for processing
+     * @return True if the node is registered, false otherwise
+     *
+     * This method allows checking whether the node is currently part of the
+     * active processing graph. Registered nodes are included in the processing
+     * cycle, while unregistered nodes may be skipped.
+     *
+     * This status check is useful for conditional processing logic and for
+     * debugging the state of the node graph.
+     */
+    virtual bool is_registered_for_processing() const = 0;
+
+    /**
+     * @brief Marks the node as processed or unprocessed in the current cycle
+     * @param is_processed True to mark as processed, false to mark as unprocessed
+     *
+     * This method is used by the processing system to track which nodes have already
+     * been processed in the current cycle. This is particularly important for nodes
+     * that may have multiple incoming connections, to ensure they are only processed
+     * once per cycle regardless of how many nodes feed into them.
+     *
+     * The processed flag is typically reset at the beginning of each processing cycle
+     * and set after the node has been processed.
+     */
+    virtual void mark_processed(bool is_processed) = 0;
+
+    /**
+     * @brief Resets the processed state of the node
+     *
+     * This method is used by the processing system to reset the processed state
+     * of the node at the end of each processing cycle. This ensures that
+     * all nodes are marked as unprocessed before the next cycle begins, allowing
+     * the system to correctly identify which nodes need to be processed.
+     */
+    virtual void reset_processed_state() = 0;
+
+    /**
+     * @brief Checks if the node has been processed in the current cycle
+     * @return True if the node has been processed, false otherwise
+     *
+     * This method allows checking whether the node has already been processed
+     * in the current cycle. This is used by the processing system to avoid
+     * redundant processing of nodes with multiple incoming connections.
+     *
+     * This status check is essential for maintaining the integrity of the
+     * processing flow and preventing duplicate processing.
+     */
+    virtual bool is_processed() const = 0;
+
+    /**
+     * @brief Retrieves the most recent output value produced by the node
+     * @return The last output sample value
+     *
+     * This method provides access to the node's most recent output without
+     * triggering additional processing. It's useful for monitoring node state,
+     * debugging, and for implementing feedback loops where a node needs to
+     * access its previous output.
+     *
+     * The returned value represents the last sample that was produced by
+     * the node's process_sample() method.
+     */
+    virtual double get_last_output() = 0;
+
 protected:
     /**
      * @brief Creates an appropriate context object for this node type
@@ -306,60 +350,4 @@ private:
      */
     std::string m_Name;
 };
-
-/**
- * @brief Connects two nodes in series (pipeline operator)
- * @param lhs Source node
- * @param rhs Target node
- * @return The target node for further chaining
- *
- * Creates a connection where the output of the left-hand node
- * becomes the input to the right-hand node. This allows for
- * intuitive creation of processing chains:
- *
- * ```cpp
- * auto chain = generator >> transformer >> output;
- * ```
- *
- * The returned node is the right-hand node, allowing for
- * further chaining of operations.
- */
-std::shared_ptr<Node> operator>>(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
-
-/**
- * @brief Combines two nodes in parallel (addition operator)
- * @param lhs First node
- * @param rhs Second node
- * @return A new node that outputs the sum of both nodes' outputs
- *
- * Creates a new node that processes both input nodes and sums their outputs.
- * This allows for mixing multiple data sources or transformations:
- *
- * ```cpp
- * auto combined = primary_source + secondary_source;
- * ```
- *
- * The resulting node takes an input, passes it to both source nodes,
- * and returns the sum of their outputs.
- */
-std::shared_ptr<Node> operator+(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
-
-/**
- * @brief Multiplies the outputs of two nodes (multiplication operator)
- * @param lhs First node
- * @param rhs Second node
- * @return A new node that outputs the product of both nodes' outputs
- *
- * Creates a new node that processes both input nodes and multiplies their outputs.
- * This is useful for amplitude modulation, scaling operations, and other
- * multiplicative transformations:
- *
- * ```cpp
- * auto modulated = carrier * modulator;
- * ```
- *
- * The resulting node takes an input, passes it to both source nodes,
- * and returns the product of their outputs.
- */
-std::shared_ptr<Node> operator*(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
 }
