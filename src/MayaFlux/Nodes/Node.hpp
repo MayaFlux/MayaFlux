@@ -125,6 +125,8 @@ public:
      *
      * For generator nodes that don't require input (like oscillators or stochastic generators),
      * the input parameter may be ignored.
+     * Note: This method does NOT mark the node as processed. That responsibility
+     * belongs to the caller, typically a chained parent node or the root node.
      */
     virtual double process_sample(double input) = 0;
 
