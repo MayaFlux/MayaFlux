@@ -268,21 +268,23 @@ Kriya::ActionToken Action(std::function<void()> func)
 // Audio Processing
 //-------------------------------------------------------------------------
 
-void attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer)
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer)
 {
-    get_buffer_manager()->attach_quick_process(processor, buffer);
+    return get_buffer_manager()->attach_quick_process(processor, buffer);
 }
 
-void attach_quick_process_to_channel(AudioProcessingFunction processor, unsigned int channel_id)
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_channel(AudioProcessingFunction processor, unsigned int channel_id)
 {
-    get_buffer_manager()->attach_quick_process_to_channel(processor, channel_id);
+    return get_buffer_manager()->attach_quick_process_to_channel(processor, channel_id);
 }
 
-void attach_quick_process_to_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels)
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels)
 {
+    std::shared_ptr<Buffers::BufferProcessor> quick_processor = nullptr;
     for (unsigned int channel : channels) {
-        get_buffer_manager()->attach_quick_process_to_channel(processor, channel);
+        quick_processor = get_buffer_manager()->attach_quick_process_to_channel(processor, channel);
     }
+    return quick_processor;
 }
 
 //-------------------------------------------------------------------------

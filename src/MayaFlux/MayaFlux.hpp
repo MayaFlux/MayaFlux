@@ -31,6 +31,7 @@ namespace Vruta {
 namespace Buffers {
     class AudioBuffer;
     class BufferManager;
+    class BufferProcessor;
 }
 
 namespace Nodes {
@@ -377,7 +378,7 @@ Kriya::ActionToken Action(std::function<void()> func);
  *
  * The processor will be called during the default engine's audio processing cycle.
  */
-void attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
 
 /**
  * @brief Attaches a processing function to a specific channel
@@ -387,7 +388,7 @@ void attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buf
  * The processor will be called during the default engine's audio processing cycle
  * and will operate on the specified output channel buffer.
  */
-void attach_quick_process_to_channel(AudioProcessingFunction processor, unsigned int channel_id = 0);
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_channel(AudioProcessingFunction processor, unsigned int channel_id = 0);
 
 /**
  * @brief Attaches a processing function to multiple channels
@@ -397,7 +398,7 @@ void attach_quick_process_to_channel(AudioProcessingFunction processor, unsigned
  * The processor will be called during the default engine's audio processing cycle
  * for each of the specified channel buffers.
  */
-void attach_quick_process_to_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
 
 //-------------------------------------------------------------------------
 // Buffer Management

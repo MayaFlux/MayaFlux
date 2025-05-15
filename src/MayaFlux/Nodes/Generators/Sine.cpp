@@ -167,7 +167,11 @@ void Sine::reset(float frequency, float amplitude, float offset)
     m_frequency = frequency;
     m_amplitude = amplitude;
     m_offset = offset;
-    m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_sample_rate();
+    if (MayaFlux::is_engine_initialized()) {
+        m_phase_inc = (2 * M_PI * m_frequency) / MayaFlux::get_sample_rate();
+    } else {
+        m_phase_inc = (2 * M_PI * m_frequency) / 48000.f;
+    }
 }
 
 std::unique_ptr<NodeContext> Sine::create_context(double value)

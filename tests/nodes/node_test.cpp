@@ -584,23 +584,34 @@ TEST_F(NodeCallbackTest, NodeChainCallbacks)
     int sine_count = 0;
     int filter_count = 0;
 
-    sine->on_tick([&sine_count](const Nodes::NodeContext&) {
+    auto test_sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto test_fir = std::make_shared<Nodes::Filters::FIR>(test_sine, fir_coeffs);
+
+    test_sine->on_tick([&sine_count](const Nodes::NodeContext&) {
         sine_count++;
     });
 
-    fir->on_tick([&filter_count](const Nodes::NodeContext&) {
+    test_fir->on_tick([&filter_count](const Nodes::NodeContext&) {
         filter_count++;
     });
 
-    auto chain_node = sine >> fir;
+    auto chain_node = test_sine >> test_fir;
+
+    MayaFlux::get_node_graph_manager()->add_to_root(chain_node);
 
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
-        MayaFlux::get_node_graph_manager()->get_root_node().process();
+        MayaFlux::get_root_node().process();
     }
 
     EXPECT_EQ(sine_count, num_samples);
     EXPECT_EQ(filter_count, num_samples);
+
+    MayaFlux::get_node_graph_manager()->get_root_node().unregister_node(chain_node);
+
+    chain_node->remove_all_hooks();
+    test_sine->remove_all_hooks();
+    test_fir->remove_all_hooks();
 }
 
 TEST_F(NodeCallbackTest, RemoveHooks)
@@ -698,6 +709,8 @@ TEST_F(NodeCallbackTest, ChainNodeCallbackPropagation)
         chain_count++;
     });
 
+    MayaFlux::get_node_graph_manager()->add_to_root(chain);
+
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
         MayaFlux::get_node_graph_manager()->get_root_node().process();
@@ -706,6 +719,16 @@ TEST_F(NodeCallbackTest, ChainNodeCallbackPropagation)
     EXPECT_EQ(source_count, num_samples);
     EXPECT_EQ(target_count, num_samples);
     EXPECT_EQ(chain_count, num_samples);
+
+    MayaFlux::get_node_graph_manager()->get_root_node().unregister_node(chain);
+
+    chain->remove_all_hooks();
+    source->remove_all_hooks();
+    target->remove_all_hooks();
+
+    // chain.reset();
+    // target.reset();
+    // source.reset();
 }
 
 TEST_F(NodeCallbackTest, NodeOperatorCallbacks)
