@@ -94,7 +94,7 @@ double ChainNode::process_sample(double input)
     return m_last_output;
 }
 
-std::vector<double> ChainNode::processFull(unsigned int num_samples)
+std::vector<double> ChainNode::process_batch(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (size_t i = 0; i < num_samples; i++) {
@@ -161,7 +161,7 @@ double BinaryOpNode::process_sample(double input)
     return m_last_output;
 }
 
-std::vector<double> BinaryOpNode::processFull(unsigned int num_samples)
+std::vector<double> BinaryOpNode::process_batch(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (unsigned int i = 0; i < num_samples; ++i) {

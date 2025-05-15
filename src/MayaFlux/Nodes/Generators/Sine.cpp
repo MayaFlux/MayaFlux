@@ -139,7 +139,7 @@ double Sine::process_sample(double input)
     return current_sample;
 }
 
-std::vector<double> Sine::processFull(unsigned int num_samples)
+std::vector<double> Sine::process_batch(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (unsigned int i = 0; i < num_samples; i++) {

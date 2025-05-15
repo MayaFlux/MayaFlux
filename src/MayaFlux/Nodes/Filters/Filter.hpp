@@ -413,7 +413,7 @@ public:
      * Computes the filter's phase response at the specified frequency,
      * representing the phase shift introduced by the filter at that frequency.
      */
-    std::vector<double> processFull(unsigned int num_samples) override;
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Registers a callback to be called on each tick

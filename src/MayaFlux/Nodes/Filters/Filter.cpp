@@ -110,14 +110,14 @@ void Filter::setBCoefficients(const std::vector<double>& new_coefs)
 
 void Filter::update_coefs_from_node(int length, std::shared_ptr<Node> source, Utils::coefficients type)
 {
-    std::vector<double> samples = source->processFull(length);
+    std::vector<double> samples = source->process_batch(length);
     set_coefs(samples, type);
 }
 
 void Filter::update_coef_from_input(int length, Utils::coefficients type)
 {
     if (inputNode) {
-        std::vector<double> samples = inputNode->processFull(length);
+        std::vector<double> samples = inputNode->process_batch(length);
         set_coefs(samples, type);
     } else {
         std::cerr << "No input node set for Filter. Use Filter::setInputNode() to set an input node.\n Alternatively, use Filter::updateCoefficientsFromNode() to specify a different source node.\n";
@@ -209,7 +209,7 @@ double Filter::get_phase_response(double frequency, double sample_rate) const
     return std::arg(get_frequency_response(frequency, sample_rate));
 }
 
-std::vector<double> Filter::processFull(unsigned int num_samples)
+std::vector<double> Filter::process_batch(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (unsigned int i = 0; i < num_samples; ++i) {

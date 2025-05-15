@@ -130,7 +130,7 @@ double Impulse::process_sample(double input)
     return output;
 }
 
-std::vector<double> Impulse::processFull(unsigned int num_samples)
+std::vector<double> Impulse::process_batch(unsigned int num_samples)
 {
     std::vector<double> output(num_samples, 0.0);
 

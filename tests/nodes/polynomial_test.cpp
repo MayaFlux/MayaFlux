@@ -137,10 +137,10 @@ TEST_F(PolynomialTest, Reset)
     EXPECT_NE(before_reset, after_reset); // Verify reset had an effect
 }
 
-TEST_F(PolynomialTest, ProcessFull)
+TEST_F(PolynomialTest, ProcessBatch)
 {
     unsigned int buffer_size = 10;
-    std::vector<double> buffer = polynomial->processFull(buffer_size);
+    std::vector<double> buffer = polynomial->process_batch(buffer_size);
 
     EXPECT_EQ(buffer.size(), buffer_size);
 
@@ -157,7 +157,7 @@ TEST_F(PolynomialTest, ProcessFull)
             return static_cast<double>(index++);
         });
 
-    buffer = index_poly->processFull(buffer_size);
+    buffer = index_poly->process_batch(buffer_size);
 
     // Should contain values 0 through 9
     for (size_t i = 0; i < buffer_size; i++) {
@@ -179,7 +179,7 @@ TEST_F(PolynomialTest, Callbacks)
     EXPECT_EQ(callback_count, 1);
     EXPECT_DOUBLE_EQ(last_value, result);
 
-    polynomial->processFull(5);
+    polynomial->process_batch(5);
     EXPECT_EQ(callback_count, 6); // 1 + 5 more callbacks
 }
 

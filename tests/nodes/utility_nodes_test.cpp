@@ -83,14 +83,14 @@ TEST_F(ImpulseTest, ConditionalCallback)
     impulse->set_amplitude(0.4);
     impulse->reset();
     impulse->set_frequency(880);
-    impulse->processFull(1760);
+    impulse->process_batch(1760);
     EXPECT_EQ(conditional_callback_count, 34);
 }
 
-TEST_F(ImpulseTest, ProcessFull)
+TEST_F(ImpulseTest, ProcessBatch)
 {
     unsigned int buffer_size = 10;
-    std::vector<double> buffer = impulse->processFull(buffer_size);
+    std::vector<double> buffer = impulse->process_batch(buffer_size);
 
     EXPECT_EQ(buffer.size(), buffer_size);
     EXPECT_DOUBLE_EQ(buffer[0], impulse->get_amplitude());
@@ -200,8 +200,8 @@ TEST_F(PhasorTest, FrequencyModulation)
 
     auto modulated_phasor = std::make_shared<Nodes::Generator::Phasor>(freq_mod, 1.0);
 
-    std::vector<double> modulated = modulated_phasor->processFull(20);
-    std::vector<double> unmodulated = phasor->processFull(20);
+    std::vector<double> modulated = modulated_phasor->process_batch(20);
+    std::vector<double> unmodulated = phasor->process_batch(20);
 
     bool differences_found = false;
     for (size_t i = 0; i < modulated.size(); i++) {
@@ -220,8 +220,8 @@ TEST_F(PhasorTest, AmplitudeModulation)
 
     auto modulated_phasor = std::make_shared<Nodes::Generator::Phasor>(1.0, amp_mod);
 
-    std::vector<double> modulated = modulated_phasor->processFull(20);
-    std::vector<double> unmodulated = phasor->processFull(20);
+    std::vector<double> modulated = modulated_phasor->process_batch(20);
+    std::vector<double> unmodulated = phasor->process_batch(20);
 
     bool differences_found = false;
     for (size_t i = 0; i < modulated.size(); i++) {

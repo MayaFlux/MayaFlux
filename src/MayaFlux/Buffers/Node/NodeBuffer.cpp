@@ -17,7 +17,7 @@ void NodeSourceProcessor::process(std::shared_ptr<AudioBuffer> buffer)
     }
 
     try {
-        std::vector<double> node_data = m_node->processFull(buffer->get_num_samples());
+        std::vector<double> node_data = m_node->process_batch(buffer->get_num_samples());
         auto& buffer_data = buffer->get_data();
 
         bool should_clear = m_clear_before_process;

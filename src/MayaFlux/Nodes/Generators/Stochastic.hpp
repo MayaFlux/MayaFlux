@@ -162,7 +162,7 @@ public:
      * This method efficiently generates multiple values in a single operation,
      * useful for batch processing or filling buffers.
      */
-    virtual std::vector<double> processFull(unsigned int num_samples) override;
+    virtual std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Generates an array of stochastic values within a specified range

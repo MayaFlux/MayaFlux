@@ -41,7 +41,7 @@ public:
      * @param num_samples Number of samples to process
      * @return Vector containing the combined output samples
      *
-     * This method calls processFull() on each registered node and
+     * This method calls process_batch() on each registered node and
      * aggregates their outputs together. The result is the combined output
      * of all nodes registered with this root node.
      */
@@ -129,7 +129,7 @@ public:
      * Each sample is processed through the source node and then
      * through the target node.
      */
-    std::vector<double> processFull(unsigned int num_samples) override;
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Registers a callback for every output sample
@@ -475,7 +475,7 @@ public:
      * Each sample is processed through both the left and right nodes, and
      * their outputs are combined using the specified function.
      */
-    std::vector<double> processFull(unsigned int num_samples) override;
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Registers a callback for every combined output value

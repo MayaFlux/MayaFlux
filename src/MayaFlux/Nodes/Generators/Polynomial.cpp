@@ -78,7 +78,7 @@ double Polynomial::process_sample(double input)
     return result;
 }
 
-std::vector<double> Polynomial::processFull(unsigned int num_samples)
+std::vector<double> Polynomial::process_batch(unsigned int num_samples)
 {
     std::vector<double> buffer(num_samples);
 

@@ -116,7 +116,7 @@ public:
      * This method is more efficient than calling process_sample() repeatedly
      * when generating multiple samples at once.
      */
-    virtual std::vector<double> processFull(unsigned int num_samples) override;
+    virtual std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Prints a visual representation of the sine wave

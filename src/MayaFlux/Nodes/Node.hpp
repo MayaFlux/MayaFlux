@@ -140,7 +140,7 @@ public:
      * calls process_sample() for each sample, but specialized nodes can
      * override this with more optimized batch processing algorithms.
      */
-    virtual std::vector<double> processFull(unsigned int num_samples) = 0;
+    virtual std::vector<double> process_batch(unsigned int num_samples) = 0;
 
     /**
      * @brief Registers a callback to be called on each tick

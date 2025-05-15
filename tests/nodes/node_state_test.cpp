@@ -191,13 +191,13 @@ TEST_F(NodeProcessStateTest, CyclicProcessingPrevention)
     EXPECT_FALSE(chain2->is_processed());
 }
 
-TEST_F(NodeProcessStateTest, ProcessFullWithState)
+TEST_F(NodeProcessStateTest, ProcessBatchWithState)
 {
     auto chain = std::make_shared<Nodes::ChainNode>(sine, fir);
     chain->initialize();
 
     unsigned int num_samples = 100;
-    std::vector<double> output = chain->processFull(num_samples);
+    std::vector<double> output = chain->process_batch(num_samples);
 
     EXPECT_EQ(output.size(), num_samples);
 

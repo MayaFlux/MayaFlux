@@ -45,7 +45,7 @@ std::vector<double> NoiseEngine::random_array(double start, double end, unsigned
     return samples;
 }
 
-std::vector<double> NoiseEngine::processFull(unsigned int num_samples)
+std::vector<double> NoiseEngine::process_batch(unsigned int num_samples)
 {
     return random_array(m_current_start, m_current_end, num_samples);
 }

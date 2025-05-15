@@ -144,7 +144,7 @@ TEST_F(SineNodeTest, AudioGeneration)
     EXPECT_LE(sample, sine->get_amplitude());
 
     unsigned int buffer_size = 1024;
-    std::vector<double> buffer = sine->processFull(buffer_size);
+    std::vector<double> buffer = sine->process_batch(buffer_size);
 
     EXPECT_EQ(buffer.size(), buffer_size);
 
@@ -167,10 +167,10 @@ TEST_F(SineNodeTest, Identity)
     auto sine1 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
 
     unsigned int buffer_size = 1024;
-    std::vector<double> buffer = sine1->processFull(buffer_size);
+    std::vector<double> buffer = sine1->process_batch(buffer_size);
 
     auto sine2 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    std::vector<double> unmod_buffer = sine2->processFull(buffer_size);
+    std::vector<double> unmod_buffer = sine2->process_batch(buffer_size);
 
     bool differences_found = false;
     for (size_t i = 0; i < buffer_size; i++) {
@@ -189,10 +189,10 @@ TEST_F(SineNodeTest, Modulation)
     sine->set_frequency_modulator(freq_mod);
 
     unsigned int buffer_size = 1024;
-    std::vector<double> buffer = sine->processFull(buffer_size);
+    std::vector<double> buffer = sine->process_batch(buffer_size);
 
     auto unmod_sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    std::vector<double> unmod_buffer = unmod_sine->processFull(buffer_size);
+    std::vector<double> unmod_buffer = unmod_sine->process_batch(buffer_size);
 
     bool differences_found = false;
     for (size_t i = 0; i < buffer_size; i++) {
@@ -207,8 +207,8 @@ TEST_F(SineNodeTest, Modulation)
     sine->clear_modulators();
     unmod_sine->reset();
 
-    std::vector<double> no_mod_buffer = sine->processFull(100);
-    std::vector<double> check_buffer = unmod_sine->processFull(100);
+    std::vector<double> no_mod_buffer = sine->process_batch(100);
+    std::vector<double> check_buffer = unmod_sine->process_batch(100);
 
     std::cout << "\nFirst few samples comparison:\n";
     for (size_t i = 0; i < 5; i++) {
@@ -355,7 +355,7 @@ protected:
 TEST_F(NoiseGeneratorTest, BasicNoise)
 {
     unsigned int num_samples = 1000;
-    std::vector<double> samples = noise->processFull(num_samples);
+    std::vector<double> samples = noise->process_batch(num_samples);
 
     EXPECT_EQ(samples.size(), num_samples);
 
@@ -370,7 +370,7 @@ TEST_F(NoiseGeneratorTest, BasicNoise)
     EXPECT_NEAR(mean, 0.0, 0.1);
 
     noise->set_amplitude(0.5);
-    samples = noise->processFull(num_samples);
+    samples = noise->process_batch(num_samples);
 
     for (const auto& sample : samples) {
         EXPECT_GE(sample, -0.5);
@@ -383,11 +383,11 @@ TEST_F(NoiseGeneratorTest, DifferentDistributions)
     unsigned int num_samples = 1000;
 
     noise->set_type(Utils::distribution::NORMAL);
-    std::vector<double> normal_samples = noise->processFull(num_samples);
+    std::vector<double> normal_samples = noise->process_batch(num_samples);
 
     noise->set_type(Utils::distribution::EXPONENTIAL);
     noise->random_array(0.0, 1.0, 1);
-    std::vector<double> exp_samples = noise->processFull(num_samples);
+    std::vector<double> exp_samples = noise->process_batch(num_samples);
 
     bool distributions_different = false;
     for (size_t i = 0; i < num_samples; i++) {
