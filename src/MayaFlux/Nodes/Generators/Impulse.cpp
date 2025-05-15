@@ -141,52 +141,6 @@ std::vector<double> Impulse::processFull(unsigned int num_samples)
     return output;
 }
 
-void Impulse::printGraph()
-{
-    const int width = 80;
-    const int height = 20;
-    const int samples = width * 4;
-
-    // Generate samples for visualization
-    std::vector<double> values = processFull(samples);
-
-    // Reset phase to maintain original state
-    m_phase = 0.0;
-
-    // Create a simple ASCII graph
-    std::cout << "Impulse Generator Graph (f=" << m_frequency << " Hz, amp=" << m_amplitude << "):" << std::endl;
-    std::cout << std::string(width + 2, '-') << std::endl;
-
-    for (int y = height - 1; y >= 0; --y) {
-        std::cout << "|";
-        for (int x = 0; x < width; ++x) {
-            int idx = x * samples / width;
-            double normalized_value = values[idx] / m_amplitude;
-            double threshold = 1.0 - (y * 2.0 / height);
-
-            if (normalized_value >= threshold) {
-                std::cout << "*";
-            } else {
-                std::cout << " ";
-            }
-        }
-        std::cout << "|" << std::endl;
-    }
-
-    std::cout << std::string(width + 2, '-') << std::endl;
-}
-
-void Impulse::printCurrent()
-{
-    std::cout << "Impulse Generator:" << std::endl;
-    std::cout << "  Frequency: " << m_frequency << " Hz" << std::endl;
-    std::cout << "  Amplitude: " << m_amplitude << std::endl;
-    std::cout << "  Offset: " << m_offset << std::endl;
-    std::cout << "  Phase: " << m_phase << std::endl;
-    std::cout << "  Frequency Modulator: " << (m_frequency_modulator ? "Connected" : "None") << std::endl;
-    std::cout << "  Amplitude Modulator: " << (m_amplitude_modulator ? "Connected" : "None") << std::endl;
-}
-
 void Impulse::reset(float frequency, float amplitude, float offset)
 {
     m_phase = 0.0;

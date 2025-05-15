@@ -114,7 +114,7 @@ public:
      * Outputs a text-based graph of the impulse pattern over time,
      * useful for debugging and visualization.
      */
-    virtual void printGraph() override;
+    inline virtual void printGraph() override { }
 
     /**
      * @brief Prints the current parameters of the impulse generator
@@ -122,7 +122,7 @@ public:
      * Outputs the current frequency, amplitude, offset, and modulation
      * settings of the generator.
      */
-    virtual void printCurrent() override;
+    inline virtual void printCurrent() override { }
 
     /**
      * @brief Sets the generator's frequency

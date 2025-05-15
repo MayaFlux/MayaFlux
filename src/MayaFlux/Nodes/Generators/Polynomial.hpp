@@ -249,14 +249,14 @@ public:
      *
      * Outputs a text-based graph of the polynomial function over a range of inputs.
      */
-    void printGraph() override;
+    inline void printGraph() override { }
 
     /**
      * @brief Prints the current state and parameters
      *
      * Outputs the current mode, buffer contents, and other relevant information.
      */
-    void printCurrent() override;
+    inline void printCurrent() override { }
 
     /**
      * @brief Registers a callback for every generated sample

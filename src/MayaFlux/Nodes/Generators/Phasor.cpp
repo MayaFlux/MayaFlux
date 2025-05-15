@@ -140,49 +140,6 @@ std::vector<double> Phasor::processFull(unsigned int num_samples)
     return output;
 }
 
-void Phasor::printGraph()
-{
-    const int width = 80;
-    const int height = 20;
-    const int samples = width * 4;
-
-    std::vector<double> values = processFull(samples);
-
-    m_phase = 0.0;
-
-    std::cout << "Phasor Generator Graph (f=" << m_frequency << " Hz, amp=" << m_amplitude << "):" << std::endl;
-    std::cout << std::string(width + 2, '-') << std::endl;
-
-    for (int y = height - 1; y >= 0; --y) {
-        std::cout << '|';
-        for (int x = 0; x < width; ++x) {
-            int sample_idx = x * 4;
-            double normalized_value = values[sample_idx] / m_amplitude;
-            double threshold = static_cast<double>(y) / (height - 1);
-
-            if (std::abs(normalized_value - threshold) < 0.05) {
-                std::cout << '*';
-            } else {
-                std::cout << ' ';
-            }
-        }
-        std::cout << '|' << std::endl;
-    }
-
-    std::cout << std::string(width + 2, '-') << std::endl;
-}
-
-void Phasor::printCurrent()
-{
-    std::cout << "Phasor Generator:" << std::endl;
-    std::cout << "  Frequency: " << m_frequency << " Hz" << std::endl;
-    std::cout << "  Amplitude: " << m_amplitude << std::endl;
-    std::cout << "  Offset: " << m_offset << std::endl;
-    std::cout << "  Current Phase: " << m_phase << std::endl;
-    std::cout << "  Frequency Modulator: " << (m_frequency_modulator ? "Connected" : "None") << std::endl;
-    std::cout << "  Amplitude Modulator: " << (m_amplitude_modulator ? "Connected" : "None") << std::endl;
-}
-
 void Phasor::reset(float frequency, float amplitude, float offset, double phase)
 {
     m_frequency = frequency;
