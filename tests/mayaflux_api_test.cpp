@@ -159,6 +159,8 @@ TEST_F(MayaFluxAPITest, TaskScheduling)
 {
     MayaFlux::Start();
 
+    AudioTestHelper::waitForAudio(100);
+
     int metro_count = 0;
     auto metro_task = MayaFlux::schedule_metro(0.01, [&metro_count]() {
         metro_count++;

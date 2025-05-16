@@ -210,20 +210,10 @@ TEST_F(SineNodeTest, Modulation)
     std::vector<double> no_mod_buffer = sine->process_batch(100);
     std::vector<double> check_buffer = unmod_sine->process_batch(100);
 
-    std::cout << "\nFirst few samples comparison:\n";
-    for (size_t i = 0; i < 5; i++) {
-        std::cout << "Sample " << i << ": "
-                  << "Cleared sine = " << no_mod_buffer[i]
-                  << ", New sine = " << check_buffer[i]
-                  << ", Diff = " << std::abs(no_mod_buffer[i] - check_buffer[i]) << "\n";
-    }
-
     differences_found = false;
     for (size_t i = 0; i < 100; i++) {
         if (std::abs(no_mod_buffer[i] - check_buffer[i]) > 0.01) {
             differences_found = true;
-            std::cout << "First difference found at sample " << i
-                      << ": " << no_mod_buffer[i] << " vs " << check_buffer[i] << "\n";
             break;
         }
     }
