@@ -10,6 +10,7 @@ namespace MayaFlux::Kakshya {
 
 class DataProcessor;
 class DataProcessingChain;
+// struct RegionSegment;
 
 /**
  * @struct RegionPoint
@@ -635,6 +636,24 @@ public:
      * modified through this reference.
      */
     virtual const std::vector<std::vector<double>>& get_processed_data() const = 0;
+
+    // template <typename ResultType>
+    // ResultType compute(const std::string& algorithm_name, const std::map<std::string, std::any>& params = {});
+    // {
+    //     auto matrix = std::make_shared<Yantra::ComputeMatrix>();
+    //     auto transformer = matrix->create_operation<Yantra::ComputeOperation<std::shared_ptr<SignalSourceContainer>, ResultType>>(algorithm_name);
+
+    //     for (const auto& [key, value] : params) {
+    //         transformer->set_parameter(key, value);
+    //     }
+
+    //     return transformer->compute(shared_from_this());
+    // }
+
+    // Specific transformations with intuitive names
+    // virtual std::vector<RegionSegment> extract_regions(const std::string& extractor_type, double threshold = 0.5) = 0;
+
+    // virtual std::shared_ptr<SignalSourceContainer> apply_effect(const std::string& effect_name, double intensity = 1.0) = 0;
 };
 
 }

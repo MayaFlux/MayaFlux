@@ -98,13 +98,14 @@ TEST_F(MayaFluxAPITest, AudioProcessingAndBuffers)
     MayaFlux::get_buffer_manager()->process_channel(0);
 
     EXPECT_TRUE(process_called);
-    // is limited
     EXPECT_DOUBLE_EQ(channel0.get_data()[0], 0.9);
 
     int multi_process_count = 0;
-    MayaFlux::attach_quick_process_to_channels([&multi_process_count](std::shared_ptr<Buffers::AudioBuffer> buffer) {
-        multi_process_count++;
-    },
+
+    std::shared_ptr<Buffers::BufferProcessor> inc_counter = MayaFlux::attach_quick_process_to_channels(
+        [&multi_process_count](std::shared_ptr<Buffers::AudioBuffer> buffer) {
+            multi_process_count++;
+        },
         { 0, 1 });
 
     MayaFlux::get_buffer_manager()->process_all_channels();
@@ -125,6 +126,8 @@ TEST_F(MayaFluxAPITest, AudioProcessingAndBuffers)
         }
     }
     EXPECT_TRUE(has_variation);
+
+    MayaFlux::get_buffer_manager()->remove_processor_from_all(inc_counter);
 }
 
 TEST_F(MayaFluxAPITest, NodeGraphOperations)
@@ -147,7 +150,6 @@ TEST_F(MayaFluxAPITest, NodeGraphOperations)
     auto filter = std::make_shared<Nodes::Filters::FIR>(sine2, std::vector<double> { 0.2, 0.2, 0.2, 0.2, 0.2 });
 
     MayaFlux::connect_nodes(sine2, filter);
-    MayaFlux::add_node_to_root(filter, 0);
 
     EXPECT_EQ(root.get_node_size(), 1);
     EXPECT_EQ(root1.get_node_size(), 1);
@@ -156,6 +158,8 @@ TEST_F(MayaFluxAPITest, NodeGraphOperations)
 TEST_F(MayaFluxAPITest, TaskScheduling)
 {
     MayaFlux::Start();
+
+    AudioTestHelper::waitForAudio(100);
 
     int metro_count = 0;
     auto metro_task = MayaFlux::schedule_metro(0.01, [&metro_count]() {
@@ -286,7 +290,6 @@ TEST_F(MayaFluxAPITest, StreamInfoInitialization)
 
 TEST_F(MayaFluxAPITest, EngineContextOperations)
 {
-    auto& engine = MayaFlux::get_context();
     EXPECT_TRUE(MayaFlux::is_engine_initialized());
 
     Core::Engine custom_engine = Core::Engine {};

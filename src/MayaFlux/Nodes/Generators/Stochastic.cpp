@@ -9,12 +9,16 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
     , m_amplitude(1.0f)
     , m_normal_spread(4.0f)
     , m_type(type)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
 }
 
 double NoiseEngine::process_sample(double input)
 {
-    return input + random_sample(m_current_start, m_current_end);
+    m_last_output = input + random_sample(m_current_start, m_current_end);
+    notify_tick(m_last_output);
+    return m_last_output;
 }
 
 double NoiseEngine::random_sample(double start, double end)
@@ -41,7 +45,7 @@ std::vector<double> NoiseEngine::random_array(double start, double end, unsigned
     return samples;
 }
 
-std::vector<double> NoiseEngine::processFull(unsigned int num_samples)
+std::vector<double> NoiseEngine::process_batch(unsigned int num_samples)
 {
     return random_array(m_current_start, m_current_end, num_samples);
 }
@@ -87,6 +91,44 @@ void NoiseEngine::validate_range(double start, double end) const
     if (start > end) {
         throw std::invalid_argument("Start must be less than or equal to end");
     }
+}
+
+std::unique_ptr<NodeContext> NoiseEngine::create_context(double value)
+{
+    return std::make_unique<StochasticContext>(value, m_type, m_amplitude, m_current_start, m_current_end, m_normal_spread);
+}
+
+void NoiseEngine::notify_tick(double value)
+{
+    auto context = create_context(value);
+    for (auto& callback : m_callbacks) {
+        callback(*context);
+    }
+    for (auto& [callback, condition] : m_conditional_callbacks) {
+        if (condition(*context)) {
+            callback(*context);
+        }
+    }
+}
+
+void NoiseEngine::on_tick(NodeHook callback)
+{
+    safe_add_callback(m_callbacks, callback);
+}
+
+void NoiseEngine::on_tick_if(NodeHook callback, NodeCondition condition)
+{
+    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
+}
+
+bool NoiseEngine::remove_hook(const NodeHook& callback)
+{
+    return safe_remove_callback(m_callbacks, callback);
+}
+
+bool NoiseEngine::remove_conditional_hook(const NodeCondition& callback)
+{
+    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
 void NoiseEngine::printGraph()

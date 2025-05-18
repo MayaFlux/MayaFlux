@@ -17,6 +17,8 @@ std::pair<int, int> shift_parser(const std::string& str)
 
 Filter::Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts)
     : inputNode(input)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
     shift_config = shift_parser(zindex_shifts);
     initialize_shift_buffers();
@@ -26,6 +28,8 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
     : inputNode(input)
     , coef_a(a_coef)
     , coef_b(b_coef)
+    , m_is_registered(false)
+    , m_is_processed(false)
 {
     shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
 
@@ -106,14 +110,14 @@ void Filter::setBCoefficients(const std::vector<double>& new_coefs)
 
 void Filter::update_coefs_from_node(int length, std::shared_ptr<Node> source, Utils::coefficients type)
 {
-    std::vector<double> samples = source->processFull(length);
+    std::vector<double> samples = source->process_batch(length);
     set_coefs(samples, type);
 }
 
 void Filter::update_coef_from_input(int length, Utils::coefficients type)
 {
     if (inputNode) {
-        std::vector<double> samples = inputNode->processFull(length);
+        std::vector<double> samples = inputNode->process_batch(length);
         set_coefs(samples, type);
     } else {
         std::cerr << "No input node set for Filter. Use Filter::setInputNode() to set an input node.\n Alternatively, use Filter::updateCoefficientsFromNode() to specify a different source node.\n";
@@ -205,13 +209,52 @@ double Filter::get_phase_response(double frequency, double sample_rate) const
     return std::arg(get_frequency_response(frequency, sample_rate));
 }
 
-std::vector<double> Filter::processFull(unsigned int num_samples)
+std::vector<double> Filter::process_batch(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (unsigned int i = 0; i < num_samples; ++i) {
         output[i] = process_sample(0.0); // The input value doesn't matter since we have an input node
     }
     return output;
+}
+
+std::unique_ptr<NodeContext> Filter::create_context(double value)
+{
+    return std::make_unique<FilterContext>(value, input_history, output_history, coef_a, coef_b);
+}
+
+void Filter::notify_tick(double value)
+{
+    auto context = create_context(value);
+
+    for (auto& callback : m_callbacks) {
+        callback(*context);
+    }
+    for (auto& [callback, condition] : m_conditional_callbacks) {
+        if (condition(*context)) {
+            callback(*context);
+        }
+    }
+}
+
+void Filter::on_tick(NodeHook callback)
+{
+    safe_add_callback(m_callbacks, callback);
+}
+
+void Filter::on_tick_if(NodeHook callback, NodeCondition condition)
+{
+    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
+}
+
+bool Filter::remove_hook(const NodeHook& callback)
+{
+    return safe_remove_callback(m_callbacks, callback);
+}
+
+bool Filter::remove_conditional_hook(const NodeCondition& callback)
+{
+    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
 }

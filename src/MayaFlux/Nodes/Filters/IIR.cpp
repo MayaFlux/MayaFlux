@@ -20,7 +20,12 @@ double IIR::process_sample(double input)
 
     double processed_input = input;
     if (inputNode) {
-        processed_input = inputNode->process_sample(input);
+        if (!inputNode->is_processed()) {
+            processed_input = inputNode->process_sample(input);
+            inputNode->mark_processed(true);
+        } else {
+            processed_input = inputNode->get_last_output();
+        }
     }
     update_inputs(input);
 
@@ -39,7 +44,17 @@ double IIR::process_sample(double input)
 
     update_outputs(output);
 
+    notify_tick(output);
+
     return output * get_gain();
+}
+
+void IIR::reset_processed_state()
+{
+    mark_processed(false);
+    if (inputNode) {
+        inputNode->reset_processed_state();
+    }
 }
 
 }

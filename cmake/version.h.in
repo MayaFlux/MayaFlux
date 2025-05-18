@@ -1,0 +1,26 @@
+#pragma once
+
+#define MAYAFLUX_VERSION "@PROJECT_VERSION@"
+#define MAYAFLUX_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define MAYAFLUX_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define MAYAFLUX_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
+#if defined(_WIN32) || defined(_WIN64)
+#if defined(MAYAFLUX_EXPORTS)
+#define MAYAFLUX_API __declspec(dllexport)
+#elif defined(MAYAFLUX_IMPORTS)
+#define MAYAFLUX_API __declspec(dllimport)
+#else
+#define MAYAFLUX_API
+#endif
+#else
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#if defined(MAYAFLUX_EXPORTS)
+#define MAYAFLUX_API __attribute__((visibility("default")))
+#else
+#define MAYAFLUX_API
+#endif
+#else
+#define MAYAFLUX_API
+#endif
+#endif

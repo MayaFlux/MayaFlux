@@ -1,5 +1,6 @@
 #include "../test_config.h"
 
+#include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Filters/IIR.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
@@ -143,7 +144,7 @@ TEST_F(SineNodeTest, AudioGeneration)
     EXPECT_LE(sample, sine->get_amplitude());
 
     unsigned int buffer_size = 1024;
-    std::vector<double> buffer = sine->processFull(buffer_size);
+    std::vector<double> buffer = sine->process_batch(buffer_size);
 
     EXPECT_EQ(buffer.size(), buffer_size);
 
@@ -161,15 +162,15 @@ TEST_F(SineNodeTest, AudioGeneration)
     EXPECT_NEAR(zero_crossings, expected_crossings, 2);
 }
 
-TEST_F(SineNodeTest, Indentity)
+TEST_F(SineNodeTest, Identity)
 {
     auto sine1 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
 
     unsigned int buffer_size = 1024;
-    std::vector<double> buffer = sine1->processFull(buffer_size);
+    std::vector<double> buffer = sine1->process_batch(buffer_size);
 
     auto sine2 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    std::vector<double> unmod_buffer = sine2->processFull(buffer_size);
+    std::vector<double> unmod_buffer = sine2->process_batch(buffer_size);
 
     bool differences_found = false;
     for (size_t i = 0; i < buffer_size; i++) {
@@ -188,10 +189,10 @@ TEST_F(SineNodeTest, Modulation)
     sine->set_frequency_modulator(freq_mod);
 
     unsigned int buffer_size = 1024;
-    std::vector<double> buffer = sine->processFull(buffer_size);
+    std::vector<double> buffer = sine->process_batch(buffer_size);
 
     auto unmod_sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    std::vector<double> unmod_buffer = unmod_sine->processFull(buffer_size);
+    std::vector<double> unmod_buffer = unmod_sine->process_batch(buffer_size);
 
     bool differences_found = false;
     for (size_t i = 0; i < buffer_size; i++) {
@@ -206,23 +207,13 @@ TEST_F(SineNodeTest, Modulation)
     sine->clear_modulators();
     unmod_sine->reset();
 
-    std::vector<double> no_mod_buffer = sine->processFull(100);
-    std::vector<double> check_buffer = unmod_sine->processFull(100);
-
-    std::cout << "\nFirst few samples comparison:\n";
-    for (size_t i = 0; i < 5; i++) {
-        std::cout << "Sample " << i << ": "
-                  << "Cleared sine = " << no_mod_buffer[i]
-                  << ", New sine = " << check_buffer[i]
-                  << ", Diff = " << std::abs(no_mod_buffer[i] - check_buffer[i]) << "\n";
-    }
+    std::vector<double> no_mod_buffer = sine->process_batch(100);
+    std::vector<double> check_buffer = unmod_sine->process_batch(100);
 
     differences_found = false;
     for (size_t i = 0; i < 100; i++) {
         if (std::abs(no_mod_buffer[i] - check_buffer[i]) > 0.01) {
             differences_found = true;
-            std::cout << "First difference found at sample " << i
-                      << ": " << no_mod_buffer[i] << " vs " << check_buffer[i] << "\n";
             break;
         }
     }
@@ -354,7 +345,7 @@ protected:
 TEST_F(NoiseGeneratorTest, BasicNoise)
 {
     unsigned int num_samples = 1000;
-    std::vector<double> samples = noise->processFull(num_samples);
+    std::vector<double> samples = noise->process_batch(num_samples);
 
     EXPECT_EQ(samples.size(), num_samples);
 
@@ -369,7 +360,7 @@ TEST_F(NoiseGeneratorTest, BasicNoise)
     EXPECT_NEAR(mean, 0.0, 0.1);
 
     noise->set_amplitude(0.5);
-    samples = noise->processFull(num_samples);
+    samples = noise->process_batch(num_samples);
 
     for (const auto& sample : samples) {
         EXPECT_GE(sample, -0.5);
@@ -382,11 +373,11 @@ TEST_F(NoiseGeneratorTest, DifferentDistributions)
     unsigned int num_samples = 1000;
 
     noise->set_type(Utils::distribution::NORMAL);
-    std::vector<double> normal_samples = noise->processFull(num_samples);
+    std::vector<double> normal_samples = noise->process_batch(num_samples);
 
     noise->set_type(Utils::distribution::EXPONENTIAL);
     noise->random_array(0.0, 1.0, 1);
-    std::vector<double> exp_samples = noise->processFull(num_samples);
+    std::vector<double> exp_samples = noise->process_batch(num_samples);
 
     bool distributions_different = false;
     for (size_t i = 0; i < num_samples; i++) {
@@ -416,4 +407,373 @@ TEST_F(NoiseGeneratorTest, RangeControl)
         EXPECT_LE(sample, max);
     }
 }
+
+class NodeCallbackTest : public ::testing::Test {
+protected:
+    void SetUp() override
+    {
+        sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+        noise = std::make_shared<Nodes::Generator::Stochastics::NoiseEngine>();
+        fir_coeffs = { 0.2, 0.2, 0.2, 0.2, 0.2 };
+        fir = std::make_shared<Nodes::Filters::FIR>(sine, fir_coeffs);
+    }
+
+    std::shared_ptr<Nodes::Generator::Sine> sine;
+    std::shared_ptr<Nodes::Generator::Stochastics::NoiseEngine> noise;
+    std::vector<double> fir_coeffs;
+    std::shared_ptr<Nodes::Filters::FIR> fir;
+};
+
+TEST_F(NodeCallbackTest, BasicTickCallback)
+{
+    bool callback_called = false;
+    double callback_value = 0.0;
+
+    sine->on_tick([&callback_called, &callback_value](const Nodes::NodeContext& context) {
+        callback_called = true;
+        callback_value = context.value;
+    });
+
+    double sample = sine->process_sample(0.0);
+
+    EXPECT_TRUE(callback_called);
+    EXPECT_DOUBLE_EQ(callback_value, sample);
+}
+
+TEST_F(NodeCallbackTest, ConditionalTickCallback)
+{
+    bool callback_called = false;
+    double callback_value = 0.0;
+
+    sine->on_tick_if(
+        [&callback_called, &callback_value](const Nodes::NodeContext& context) {
+            callback_called = true;
+            callback_value = context.value;
+        },
+        [](const Nodes::NodeContext& context) {
+            return context.value > 0.0;
+        });
+
+    bool positive_found = false;
+    bool negative_found = false;
+    callback_called = false;
+
+    for (int i = 0; i < 100 && (!positive_found || !negative_found); i++) {
+        double sample = sine->process_sample(0.0);
+
+        if (sample > 0.0)
+            positive_found = true;
+        if (sample < 0.0)
+            negative_found = true;
+
+        if (sample > 0.0 && !callback_called) {
+            EXPECT_TRUE(callback_called);
+            EXPECT_DOUBLE_EQ(callback_value, sample);
+        }
+
+        if (sample < 0.0) {
+            EXPECT_EQ(callback_value, callback_value);
+        }
+    }
+
+    EXPECT_TRUE(positive_found);
+    EXPECT_TRUE(negative_found);
+}
+
+TEST_F(NodeCallbackTest, MultipleCallbacks)
+{
+    int callback1_count = 0;
+    int callback2_count = 0;
+
+    sine->on_tick([&callback1_count](const Nodes::NodeContext&) {
+        callback1_count++;
+    });
+
+    sine->on_tick([&callback2_count](const Nodes::NodeContext&) {
+        callback2_count++;
+    });
+
+    const int num_samples = 10;
+    for (int i = 0; i < num_samples; i++) {
+        sine->process_sample(0.0);
+    }
+
+    EXPECT_EQ(callback1_count, num_samples);
+    EXPECT_EQ(callback2_count, num_samples);
+}
+
+TEST_F(NodeCallbackTest, NoiseEngineCallbacks)
+{
+    bool callback_called = false;
+    double callback_value = 0.0;
+
+    noise->on_tick([&callback_called, &callback_value](const Nodes::NodeContext& context) {
+        callback_called = true;
+        callback_value = context.value;
+    });
+
+    double sample = noise->process_sample(0.0);
+
+    EXPECT_TRUE(callback_called);
+    EXPECT_DOUBLE_EQ(callback_value, sample);
+}
+
+TEST_F(NodeCallbackTest, ConditionalNoiseCallbacks)
+{
+    int conditional_count = 0;
+    int total_count = 0;
+
+    noise->on_tick([&total_count](const Nodes::NodeContext&) {
+        total_count++;
+    });
+
+    noise->on_tick_if(
+        [&conditional_count](const Nodes::NodeContext&) {
+            conditional_count++;
+        },
+        [](const Nodes::NodeContext& context) {
+            return context.value > 0.5;
+        });
+
+    const int num_samples = 1000;
+    for (int i = 0; i < num_samples; i++) {
+        noise->process_sample(0.0);
+    }
+
+    EXPECT_EQ(total_count, num_samples);
+    EXPECT_GT(conditional_count, 0);
+    EXPECT_LT(conditional_count, num_samples);
+}
+
+TEST_F(NodeCallbackTest, FilterNodeCallbacks)
+{
+    bool input_callback_called = false;
+    bool output_callback_called = false;
+    double input_value = 0.0;
+    double output_value = 0.0;
+
+    sine->on_tick([&input_callback_called, &input_value](const Nodes::NodeContext& context) {
+        input_callback_called = true;
+        input_value = context.value;
+    });
+
+    fir->on_tick([&output_callback_called, &output_value](const Nodes::NodeContext& context) {
+        output_callback_called = true;
+        output_value = context.value;
+    });
+
+    double sample = fir->process_sample(0.0);
+
+    EXPECT_TRUE(input_callback_called);
+    EXPECT_TRUE(output_callback_called);
+    EXPECT_DOUBLE_EQ(output_value, sample);
+}
+
+TEST_F(NodeCallbackTest, NodeChainCallbacks)
+{
+    int sine_count = 0;
+    int filter_count = 0;
+
+    auto test_sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto test_fir = std::make_shared<Nodes::Filters::FIR>(test_sine, fir_coeffs);
+
+    test_sine->on_tick([&sine_count](const Nodes::NodeContext&) {
+        sine_count++;
+    });
+
+    test_fir->on_tick([&filter_count](const Nodes::NodeContext&) {
+        filter_count++;
+    });
+
+    auto chain_node = test_sine >> test_fir;
+
+    MayaFlux::get_node_graph_manager()->add_to_root(chain_node);
+
+    const int num_samples = 10;
+    for (int i = 0; i < num_samples; i++) {
+        MayaFlux::get_root_node().process();
+    }
+
+    EXPECT_EQ(sine_count, num_samples);
+    EXPECT_EQ(filter_count, num_samples);
+
+    MayaFlux::get_node_graph_manager()->get_root_node().unregister_node(chain_node);
+
+    chain_node->remove_all_hooks();
+    test_sine->remove_all_hooks();
+    test_fir->remove_all_hooks();
+}
+
+TEST_F(NodeCallbackTest, RemoveHooks)
+{
+    int sine_count = 0;
+
+    auto callback = [&sine_count](const Nodes::NodeContext&) {
+        sine_count++;
+    };
+
+    sine->on_tick(callback);
+
+    sine->process_sample(0.0);
+    EXPECT_EQ(sine_count, 1);
+
+    bool removed = sine->remove_hook(callback);
+    EXPECT_TRUE(removed);
+
+    for (int i = 0; i < 5; i++) {
+        sine->process_sample(0.0);
+    }
+    EXPECT_EQ(sine_count, 1);
+
+    auto nonexistent_callback = [](const Nodes::NodeContext&) { };
+    removed = sine->remove_hook(nonexistent_callback);
+    EXPECT_FALSE(removed);
+}
+
+TEST_F(NodeCallbackTest, RemoveConditionalHooks)
+{
+    int conditional_count = 0;
+
+    auto condition = [](const Nodes::NodeContext& context) {
+        return context.value > 0.0;
+    };
+
+    auto callback = [&conditional_count](const Nodes::NodeContext&) {
+        conditional_count++;
+    };
+
+    sine->on_tick_if(callback, condition);
+
+    for (int i = 0; i < 20; i++) {
+        sine->process_sample(0.0);
+    }
+
+    int initial_count = conditional_count;
+    EXPECT_GT(initial_count, 0);
+
+    bool removed = sine->remove_conditional_hook(condition);
+    EXPECT_TRUE(removed);
+
+    for (int i = 0; i < 20; i++) {
+        sine->process_sample(0.0);
+    }
+    EXPECT_EQ(conditional_count, initial_count);
+}
+
+TEST_F(NodeCallbackTest, DuplicateCallbackPrevention)
+{
+    int callback_count = 0;
+
+    auto callback = [&callback_count](const Nodes::NodeContext&) {
+        callback_count++;
+    };
+
+    sine->on_tick(callback);
+    sine->on_tick(callback);
+
+    sine->process_sample(0.0);
+
+    EXPECT_EQ(callback_count, 1);
+}
+
+TEST_F(NodeCallbackTest, ChainNodeCallbackPropagation)
+{
+    int source_count = 0;
+    int target_count = 0;
+    int chain_count = 0;
+
+    auto source = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto target = std::make_shared<Nodes::Filters::FIR>(source, fir_coeffs);
+
+    source->on_tick([&source_count](const Nodes::NodeContext&) {
+        source_count++;
+    });
+
+    target->on_tick([&target_count](const Nodes::NodeContext&) {
+        target_count++;
+    });
+
+    auto chain = source >> target;
+
+    chain->on_tick([&chain_count](const Nodes::NodeContext&) {
+        chain_count++;
+    });
+
+    MayaFlux::get_node_graph_manager()->add_to_root(chain);
+
+    const int num_samples = 10;
+    for (int i = 0; i < num_samples; i++) {
+        MayaFlux::get_node_graph_manager()->get_root_node().process();
+    }
+
+    EXPECT_EQ(source_count, num_samples);
+    EXPECT_EQ(target_count, num_samples);
+    EXPECT_EQ(chain_count, num_samples);
+
+    MayaFlux::get_node_graph_manager()->get_root_node().unregister_node(chain);
+
+    chain->remove_all_hooks();
+    source->remove_all_hooks();
+    target->remove_all_hooks();
+
+    // chain.reset();
+    // target.reset();
+    // source.reset();
+}
+
+TEST_F(NodeCallbackTest, NodeOperatorCallbacks)
+{
+    auto sine1 = std::make_shared<MayaFlux::Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto sine2 = std::make_shared<MayaFlux::Nodes::Generator::Sine>(880.0f, 0.3f);
+
+    int sine1_count = 0;
+    int sine2_count = 0;
+    int add_node_count = 0;
+
+    sine1->on_tick([&sine1_count](const Nodes::NodeContext&) {
+        sine1_count++;
+    });
+
+    sine2->on_tick([&sine2_count](const Nodes::NodeContext&) {
+        sine2_count++;
+    });
+
+    auto add_node = sine1 + sine2;
+
+    add_node->on_tick([&add_node_count](const Nodes::NodeContext&) {
+        add_node_count++;
+    });
+
+    const int num_samples = 10;
+    for (int i = 0; i < num_samples; i++) {
+        MayaFlux::get_node_graph_manager()->get_root_node().process();
+    }
+
+    EXPECT_EQ(sine1_count, num_samples);
+    EXPECT_EQ(sine2_count, num_samples);
+    EXPECT_EQ(add_node_count, num_samples);
+}
+
+TEST_F(NodeCallbackTest, ClearCallbacks)
+{
+    int callback_count = 0;
+
+    auto sine1 = std::make_shared<MayaFlux::Nodes::Generator::Sine>(440.0f, 0.5f);
+
+    sine1->on_tick([&callback_count](const MayaFlux::Nodes::NodeContext&) {
+        callback_count++;
+    });
+
+    sine1->process_sample(0.0);
+    EXPECT_EQ(callback_count, 1);
+
+    sine1->remove_all_hooks();
+
+    for (int i = 0; i < 10; i++) {
+        sine1->process_sample(0.0);
+    }
+
+    EXPECT_EQ(callback_count, 1);
+}
+
 }

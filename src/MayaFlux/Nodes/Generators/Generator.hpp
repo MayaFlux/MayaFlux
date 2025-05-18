@@ -5,6 +5,64 @@
 namespace MayaFlux::Nodes::Generator {
 
 /**
+ * @class GeneratorContext
+ * @brief Specialized context for generator node callbacks
+ *
+ * GeneratorContext extends the base NodeContext to provide detailed information
+ * about a generator's current state to callbacks. It includes fundamental
+ * oscillator parameters such as frequency, amplitude, and phase that define
+ * the generator's behavior at the moment a sample is produced.
+ *
+ * This rich context enables callbacks to perform sophisticated analysis and
+ * monitoring of generator behavior, such as:
+ * - Tracking parameter changes over time
+ * - Implementing frequency-dependent processing
+ * - Creating visualizations of generator state
+ * - Synchronizing multiple generators based on phase relationships
+ * - Implementing adaptive processing based on generator characteristics
+ */
+class GeneratorContext : public NodeContext {
+public:
+    /**
+     * @brief Constructs a GeneratorContext with the current generator state
+     * @param value Current output sample value
+     * @param frequency Current oscillation frequency in Hz
+     * @param amplitude Current scaling factor for output values
+     * @param phase Current phase position in radians
+     *
+     * Creates a context object that provides a complete snapshot of the
+     * generator's current state, including its most recent output value
+     * and all parameters that define its oscillation behavior.
+     */
+    GeneratorContext(double value, double frequency, float amplitude, double phase)
+        : NodeContext(value, typeid(GeneratorContext).name())
+        , frequency(frequency)
+        , amplitude(amplitude)
+        , phase(phase)
+    {
+    }
+
+    /**
+     * @brief Current frequency of the generator
+     *
+     * Represents the oscillation rate in Hertz (cycles per second).
+     * This parameter determines the pitch or periodicity of the
+     * generated signal.
+     */
+    double frequency;
+
+    /**
+     * @brief Current amplitude of the generator
+     */
+    float amplitude;
+
+    /**
+     * @brief Current phase of the generator
+     */
+    double phase;
+};
+
+/**
  * @class Generator
  * @brief Base class for all signal and pattern generators in Maya Flux
  *

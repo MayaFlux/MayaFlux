@@ -5,113 +5,103 @@
 namespace MayaFlux::Nodes::Generator {
 
 /**
- * @class Sine
- * @brief Sinusoidal oscillator generator node
+ * @class Impulse
+ * @brief Impulse generator node
  *
- * The Sine class generates a sinusoidal waveform, which is the fundamental
- * building block of audio synthesis. Despite its name, this class implements
- * a general sinusoidal oscillator that can be extended to produce various
- * waveforms beyond just the mathematical sine function.
+ * The Impulse class generates a single spike followed by zeros, which is a fundamental
+ * signal used in digital signal processing. It produces a value of 1.0 (or specified amplitude)
+ * at specified intervals, and 0.0 elsewhere.
  *
  * Key features:
  * - Configurable frequency, amplitude, and DC offset
- * - Support for frequency modulation (FM synthesis)
- * - Support for amplitude modulation (AM synthesis)
+ * - Support for frequency modulation (changing impulse rate)
+ * - Support for amplitude modulation (changing impulse height)
  * - Automatic registration with the node graph manager (optional)
- * - Phase continuity to prevent clicks when changing parameters
+ * - Precise timing control for impulse generation
  *
- * Sinusoidal oscillators are used extensively in audio synthesis for:
- * - Creating pure tones
- * - Serving as carriers or modulators in FM/AM synthesis
- * - Building more complex waveforms through additive synthesis
- * - LFOs (Low Frequency Oscillators) for parameter modulation
+ * Impulse generators are used extensively in audio and signal processing for:
+ * - Triggering events at specific intervals
+ * - Testing system responses (impulse response)
+ * - Creating click trains and metronome-like signals
+ * - Serving as the basis for more complex event-based generators
+ * - Synchronization signals for other generators
  *
- * The implementation uses a phase accumulation approach for sample-accurate
- * frequency control and efficient computation, avoiding repeated calls to
- * the computationally expensive sin() function.
+ * The implementation uses a phase accumulation approach similar to other oscillators
+ * but only outputs a non-zero value at the beginning of each cycle.
  */
-class Sine : public Generator, public std::enable_shared_from_this<Sine> {
+class Impulse : public Generator, public std::enable_shared_from_this<Impulse> {
 public:
     /**
      * @brief Basic constructor with fixed parameters
-     * @param frequency Oscillation frequency in Hz (default: 440Hz, A4 note)
-     * @param amplitude Output amplitude (default: 1.0)
+     * @param frequency Impulse repetition rate in Hz (default: 1Hz, one impulse per second)
+     * @param amplitude Impulse amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
      * @param bAuto_register Whether to automatically register with the node graph manager (default: false)
      *
-     * Creates a sine oscillator with fixed frequency and amplitude.
+     * Creates an impulse generator with fixed frequency and amplitude.
      */
-    Sine(float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(float frequency = 1, float amplitude = 1, float offset = 0, bool bAuto_register = false);
 
     /**
      * @brief Constructor with frequency modulation
      * @param frequency_modulator Node that modulates the frequency
-     * @param frequency Base frequency in Hz (default: 440Hz)
-     * @param amplitude Output amplitude (default: 1.0)
+     * @param frequency Base frequency in Hz (default: 1Hz)
+     * @param amplitude Impulse amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
      * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
-     * Creates a sine oscillator with frequency modulation, where the actual frequency
+     * Creates an impulse generator with frequency modulation, where the actual frequency
      * is the base frequency plus the output of the modulator node.
      */
-    Sine(std::shared_ptr<Node> frequency_modulator, float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(std::shared_ptr<Node> frequency_modulator, float frequency = 1, float amplitude = 1, float offset = 0, bool bAuto_register = false);
 
     /**
      * @brief Constructor with amplitude modulation
-     * @param frequency Oscillation frequency in Hz
+     * @param frequency Impulse repetition rate in Hz
      * @param amplitude_modulator Node that modulates the amplitude
      * @param amplitude Base amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
      * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
-     * Creates a sine oscillator with amplitude modulation, where the actual amplitude
+     * Creates an impulse generator with amplitude modulation, where the actual amplitude
      * is the base amplitude multiplied by the output of the modulator node.
      */
-    Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude = 1, float offset = 0, bool bAuto_register = false);
 
     /**
      * @brief Constructor with both frequency and amplitude modulation
      * @param frequency_modulator Node that modulates the frequency
      * @param amplitude_modulator Node that modulates the amplitude
-     * @param frequency Base frequency in Hz (default: 440Hz)
+     * @param frequency Base frequency in Hz (default: 1Hz)
      * @param amplitude Base amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
      * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
-     * Creates a sine oscillator with both frequency and amplitude modulation,
-     * enabling complex synthesis techniques like FM and AM simultaneously.
+     * Creates an impulse generator with both frequency and amplitude modulation,
+     * enabling complex timing and amplitude control.
      */
-    Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-        float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = true);
-
-    /**
-     * @brief Common setup code for all constructors
-     * @param bAuto_register Whether to automatically register with the node graph manager
-     *
-     * Initializes the oscillator's internal state and registers it with
-     * the node graph manager if requested.
-     */
-    void Setup(bool bAuto_register);
+    Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
+        float frequency = 1, float amplitude = 1, float offset = 0, bool bAuto_register = true);
 
     /**
      * @brief Virtual destructor
      */
-    virtual ~Sine() = default;
+    virtual ~Impulse() = default;
 
     /**
-     * @brief Processes a single input sample and generates a sine wave sample
+     * @brief Processes a single input sample and generates an impulse sample
      * @param input Input sample (used for modulation when modulators are connected)
-     * @return Generated sine wave sample
+     * @return Generated impulse sample (1.0 at the start of each cycle, 0.0 elsewhere)
      *
-     * This method advances the oscillator's phase and computes the next
-     * sample of the sine wave, applying any modulation from connected nodes.
+     * This method advances the generator's phase and computes the next
+     * sample of the impulse train, applying any modulation from connected nodes.
      */
     virtual double process_sample(double input) override;
 
     /**
      * @brief Processes multiple samples at once
      * @param num_samples Number of samples to generate
-     * @return Vector of generated sine wave samples
+     * @return Vector of generated impulse samples
      *
      * This method is more efficient than calling process_sample() repeatedly
      * when generating multiple samples at once.
@@ -119,35 +109,26 @@ public:
     virtual std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
-     * @brief Prints a visual representation of the sine wave
+     * @brief Prints a visual representation of the impulse train
      *
-     * Outputs a text-based graph of the sine wave's shape over time,
+     * Outputs a text-based graph of the impulse pattern over time,
      * useful for debugging and visualization.
      */
-    virtual void printGraph() override;
+    inline virtual void printGraph() override { }
 
     /**
-     * @brief Prints the current parameters of the sine oscillator
+     * @brief Prints the current parameters of the impulse generator
      *
      * Outputs the current frequency, amplitude, offset, and modulation
-     * settings of the oscillator.
+     * settings of the generator.
      */
-    virtual void printCurrent() override;
+    inline virtual void printCurrent() override { }
 
     /**
-     * @brief Registers this oscillator with the default node graph manager
-     *
-     * This method allows delayed registration with the node graph manager
-     * when the oscillator wasn't registered at construction time.
-     */
-    void register_to_defult();
-
-    /**
-     * @brief Sets the oscillator's frequency
+     * @brief Sets the generator's frequency
      * @param frequency New frequency in Hz
      *
-     * Updates the oscillator's frequency while maintaining phase continuity
-     * to prevent clicks or pops in the audio output.
+     * Updates the generator's frequency, which controls how often impulses occur.
      */
     void set_frequency(float frequency);
 
@@ -164,7 +145,7 @@ public:
     inline float get_amplitude() const { return m_amplitude; }
 
     /**
-     * @brief Sets the oscillator's amplitude
+     * @brief Sets the generator's amplitude
      * @param amplitude New amplitude
      */
     inline void set_amplitude(float amplitude)
@@ -189,50 +170,50 @@ public:
     }
 
     /**
-     * @brief Sets a node to modulate the oscillator's frequency
+     * @brief Sets a node to modulate the generator's frequency
      * @param modulator Node that will modulate the frequency
      *
      * The modulator's output is added to the base frequency,
-     * enabling FM synthesis techniques.
+     * enabling dynamic control of impulse timing.
      */
     void set_frequency_modulator(std::shared_ptr<Node> modulator);
 
     /**
-     * @brief Sets a node to modulate the oscillator's amplitude
+     * @brief Sets a node to modulate the generator's amplitude
      * @param modulator Node that will modulate the amplitude
      *
      * The modulator's output is multiplied with the base amplitude,
-     * enabling AM synthesis techniques.
+     * enabling dynamic control of impulse height.
      */
     void set_amplitude_modulator(std::shared_ptr<Node> modulator);
 
     /**
      * @brief Removes all modulation connections
      *
-     * After calling this method, the oscillator will use only its
+     * After calling this method, the generator will use only its
      * base frequency and amplitude without any modulation.
      */
     void clear_modulators();
 
     /**
-     * @brief Resets the oscillator's phase and parameters
-     * @param frequency New frequency in Hz (default: 440Hz)
-     * @param amplitude New amplitude (default: 0.5)
+     * @brief Resets the generator's phase and parameters
+     * @param frequency New frequency in Hz (default: 1Hz)
+     * @param amplitude New amplitude (default: 1.0)
      * @param offset New DC offset (default: 0)
      *
-     * This method resets the oscillator's internal state and parameters,
+     * This method resets the generator's internal state and parameters,
      * effectively restarting it from the beginning of its cycle.
      */
-    void reset(float frequency = 440, float amplitude = 0.5f, float offset = 0);
+    void reset(float frequency = 1, float amplitude = 1.0f, float offset = 0);
 
     /**
      * @brief Registers a callback for every generated sample
      * @param callback Function to call when a new sample is generated
      *
      * This method allows external components to monitor or react to
-     * every sample produced by the sine oscillator. The callback
+     * every sample produced by the impulse generator. The callback
      * receives a GeneratorContext containing the generated value and
-     * oscillator parameters like frequency, amplitude, and phase.
+     * generator parameters like frequency, amplitude, and phase.
      */
     void on_tick(NodeHook callback) override;
 
@@ -241,12 +222,23 @@ public:
      * @param callback Function to call when condition is met
      * @param condition Predicate that determines when callback is triggered
      *
-     * This method enables selective monitoring of the oscillator,
+     * This method enables selective monitoring of the generator,
      * where callbacks are only triggered when specific conditions
-     * are met. This is useful for detecting zero crossings, amplitude
-     * thresholds, or other specific points in the waveform cycle.
+     * are met. This is useful for detecting impulses or other specific
+     * points in the generator cycle.
      */
     void on_tick_if(NodeHook callback, NodeCondition condition) override;
+
+    /**
+     * @brief Registers a callback for every impulse
+     * @param callback Function to call when an impulse occurs
+     *
+     * This method allows external components to monitor or react to
+     * every impulse produced by the generator. The callback
+     * receives a GeneratorContext containing the generated value and
+     * generator parameters like frequency, amplitude, and phase.
+     */
+    void on_impulse(NodeHook callback);
 
     /**
      * @brief Removes a previously registered callback
@@ -272,7 +264,7 @@ public:
      * @brief Removes all registered callbacks
      *
      * Clears all standard and conditional callbacks, effectively
-     * disconnecting all external components from this oscillator's
+     * disconnecting all external components from this generator's
      * notification system. Useful when reconfiguring the processing
      * graph or shutting down components.
      */
@@ -285,63 +277,35 @@ public:
     /**
      * @brief Marks the node as registered or unregistered for processing
      * @param is_registered True to mark as registered, false to mark as unregistered
-     *
-     * This method is used by the node graph manager to track which nodes are currently
-     * part of the active processing graph. When a node is registered, it means it's
-     * included in the current processing cycle. When unregistered, it may be excluded
-     * from processing to save computational resources.
      */
     inline void mark_registered_for_processing(bool is_registered) override { m_is_registered = is_registered; }
 
     /**
      * @brief Checks if the node is currently registered for processing
      * @return True if the node is registered, false otherwise
-     *
-     * This method allows checking whether the oscillator is currently part of the
-     * active processing graph. Registered oscillators are included in the processing
-     * cycle, while unregistered ones may be skipped.
      */
     inline bool is_registered_for_processing() const override { return m_is_registered; }
 
     /**
      * @brief Marks the node as processed or unprocessed in the current cycle
      * @param is_processed True to mark as processed, false to mark as unprocessed
-     *
-     * This method is used by the processing system to track which nodes have already
-     * been processed in the current cycle. This is particularly important for oscillators
-     * that may be used as modulators for multiple other nodes, to ensure they are only
-     * processed once per cycle regardless of how many nodes they feed into.
      */
     inline void mark_processed(bool is_processed) override { m_is_processed = is_processed; }
 
     /**
      * @brief Resets the processed state of the node and any attached modulators
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the next cycle begins, allowing
-     * the system to correctly identify which nodes need to be processed.
      */
     void reset_processed_state() override;
 
     /**
      * @brief Checks if the node has been processed in the current cycle
      * @return True if the node has been processed, false otherwise
-     *
-     * This method allows checking whether the oscillator has already been processed
-     * in the current cycle. This is used by the processing system to avoid
-     * redundant processing of oscillators with multiple outgoing connections.
      */
     inline bool is_processed() const override { return m_is_processed; }
 
     /**
-     * @brief Retrieves the most recent output value produced by the oscillator
-     * @return The last generated sine wave sample
-     *
-     * This method provides access to the oscillator's most recent output without
-     * triggering additional processing. It's useful for monitoring the oscillator's state,
-     * debugging, and for implementing feedback loops where a node needs to
-     * access the oscillator's previous output.
+     * @brief Retrieves the most recent output value produced by the generator
+     * @return The last generated impulse sample
      */
     inline double get_last_output() override { return m_last_output; }
 
@@ -352,8 +316,8 @@ protected:
      * @return A unique pointer to a GeneratorContext object
      *
      * This method creates a specialized context object containing
-     * the current sample value and all oscillator parameters, providing
-     * callbacks with rich information about the oscillator's state.
+     * the current sample value and all generator parameters, providing
+     * callbacks with rich information about the generator's state.
      */
     std::unique_ptr<NodeContext> create_context(double value) override;
 
@@ -372,25 +336,25 @@ private:
      * @brief Phase increment per sample
      *
      * This value determines how much the phase advances with each sample,
-     * controlling the oscillator's frequency.
+     * controlling the generator's frequency.
      */
     double m_phase_inc;
 
     /**
-     * @brief Current phase of the oscillator
+     * @brief Current phase of the generator
      *
-     * The phase represents the current position in the sine wave cycle,
-     * ranging from 0 to 2π.
+     * The phase represents the current position in the impulse cycle,
+     * ranging from 0 to 1.
      */
     double m_phase;
 
     /**
-     * @brief Base amplitude of the oscillator
+     * @brief Base amplitude of the generator
      */
     float m_amplitude;
 
     /**
-     * @brief Base frequency of the oscillator in Hz
+     * @brief Base frequency of the generator in Hz
      */
     float m_frequency;
 
@@ -414,56 +378,40 @@ private:
      * @param frequency New frequency in Hz
      *
      * This method calculates the phase increment needed to produce
-     * the specified frequency at the current sample rate.
+     * impulses at the specified frequency at the current sample rate.
      */
     void update_phase_increment(float frequency);
 
     /**
      * @brief Collection of standard callback functions
-     *
-     * Stores the registered callback functions that will be notified
-     * whenever the oscillator produces a new sample. These callbacks
-     * enable external components to monitor and react to the oscillator's
-     * output without interrupting the generation process.
      */
     std::vector<NodeHook> m_callbacks;
 
     /**
+     * @brief Collection of impulse-specific callback functions
+     */
+    std::vector<NodeHook> m_impulse_callbacks;
+
+    /**
      * @brief Collection of conditional callback functions with their predicates
-     *
-     * Stores pairs of callback functions and their associated condition predicates.
-     * These callbacks are only invoked when their condition evaluates to true
-     * for a generated sample, enabling selective monitoring of specific
-     * waveform characteristics or sample values.
      */
     std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
 
     /**
-     * @brief Flag indicating whether this oscillator is registered with the node graph manager
-     *
-     * When true, the oscillator is part of the active processing graph and will be
-     * included in the processing cycle. When false, it may be excluded from processing
-     * to save computational resources.
+     * @brief Flag indicating whether this generator is registered with the node graph manager
      */
     bool m_is_registered;
 
     /**
-     * @brief Flag indicating whether this oscillator has been processed in the current cycle
-     *
-     * This flag is used by the processing system to track which nodes have already
-     * been processed in the current cycle, preventing redundant processing of
-     * oscillators with multiple outgoing connections.
+     * @brief Flag indicating whether this generator has been processed in the current cycle
      */
     bool m_is_processed;
 
     /**
-     * @brief The most recent sample value generated by this oscillator
-     *
-     * This value is updated each time process_sample() is called and can be
-     * accessed via get_last_output() without triggering additional processing.
-     * It's useful for monitoring the oscillator's state and for implementing
-     * feedback loops.
+     * @brief The most recent sample value generated by this generator
      */
     double m_last_output;
+
+    bool m_impulse_occurred;
 };
 }
