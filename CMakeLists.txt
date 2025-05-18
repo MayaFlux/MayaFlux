@@ -56,16 +56,23 @@ add_executable(MayaFlux src/main.cpp)
 target_link_libraries(MayaFlux PRIVATE MayaFluxLib)
 
 if(WIN32)
+    target_compile_definitions(MayaFluxLib
+        PRIVATE MAYAFLUX_STATIC)
+
     target_compile_definitions(MayaFluxLibShared
         PRIVATE MAYAFLUX_EXPORTS
         INTERFACE MAYAFLUX_IMPORTS)
 endif()
 
-add_compile_options(
-    -Wall
-    -Wextra
-    -Wpedantic
-)
+if(MSVC)
+    add_compile_options(/W4)
+else()
+    add_compile_options(
+        -Wall
+        -Wextra
+        -Wpedantic
+    )
+endif()
 
 add_subdirectory(tests)
 

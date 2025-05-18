@@ -6,7 +6,9 @@
 #define MAYAFLUX_VERSION_PATCH @PROJECT_VERSION_PATCH@
 
 #if defined(_WIN32) || defined(_WIN64)
-#if defined(MAYAFLUX_EXPORTS)
+#if defined(MAYAFLUX_STATIC)
+#define MAYAFLUX_API
+#elif defined(MAYAFLUX_EXPORTS)
 #define MAYAFLUX_API __declspec(dllexport)
 #elif defined(MAYAFLUX_IMPORTS)
 #define MAYAFLUX_API __declspec(dllimport)

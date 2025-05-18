@@ -27,3 +27,9 @@
 #include <random>
 #include <thread>
 #include <unordered_set>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <shlwapi.h>
+#pragma comment(lib, "shlwapi.lib")
+#endif
