@@ -17,8 +17,8 @@
 #include "vector"
 
 // C style
-#include <cassert>
 #include <cmath>
+#include <cassert>
 #include <complex>
 #include <cstdint>
 #include <exception>
@@ -32,4 +32,15 @@
 #include <windows.h>
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
+
+#include <optional>
+// Temporary workarounds
+using u_int32_t = uint32_t;
+using u_int64_t = uint64_t;
+
+//Ugly workarounds
+#ifdef CALLBACK
+#undef CALLBACK
+#endif
+
 #endif

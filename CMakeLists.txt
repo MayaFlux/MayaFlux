@@ -3,20 +3,32 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(MayaFlux VERSION 0.1.0)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
-pkg_check_modules(SNDFILE REQUIRED IMPORTED_TARGET sndfile)
-pkg_check_modules(NLOHMANN_JSON REQUIRED nlohmann_json)
-
-if(UNIX)
-    find_package(UUID QUIET)
-    if(NOT UUID_FOUND)
-        pkg_check_modules(UUID REQUIRED uuid)
+if(WIN32)
+    if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+        list(APPEND CMAKE_PREFIX_PATH "$ENV{VCPKG_ROOT}/installed/x64-windows")
+        message(STATUS "Using vcpkg toolchain: ${CMAKE_TOOLCHAIN_FILE}")
     endif()
+
+    if(NOT DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED VCPKG_ROOT)
+        message(WARNING "VCPKG_ROOT not found. Windows users should run setup_windows.bat before configuring CMake.")
+        message(STATUS "Alternatively, set CMAKE_TOOLCHAIN_FILE to point to your vcpkg installation.")
+    endif()
+endif()
+
+project(MayaFlux VERSION 0.1.0)
+
+if(WIN32)
+    find_package(RtAudio CONFIG REQUIRED)
+    find_package(SndFile CONFIG REQUIRED)
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
+    pkg_check_modules(SNDFILE REQUIRED IMPORTED_TARGET sndfile)
 endif()
 
 configure_file(
@@ -25,44 +37,43 @@ configure_file(
     @ONLY
 )
 
-find_package(GTest REQUIRED)
-enable_testing()
+#should work on windows, just havent spent time checking for its pkg definition, safe to disable for now
+if(UNIX)
+    find_package(GTest REQUIRED)
+    enable_testing()
+endif()
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 list(FILTER SOURCES EXCLUDE REGEX ".*main\\.cpp$")
 
-add_library(MayaFluxLib ${SOURCES})
+if(WIN32)
+    add_compile_definitions(_USE_MATH_DEFINES)
+    file(GLOB_RECURSE HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
+    add_library(MayaFluxLib ${SOURCES} ${HEADERS})
+    add_executable(MayaFlux src/main.cpp ${HEADERS})
+else()
+    add_library(MayaFluxLib ${SOURCES})
+    add_executable(MayaFlux src/main.cpp)
+endif()
 
-add_library(MayaFluxLibShared SHARED ${SOURCES})
-set_target_properties(MayaFluxLibShared PROPERTIES
-    OUTPUT_NAME MayaFluxLib
+set_target_properties(MayaFluxLib PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${NLOHMANN_JSON_INCLUDE_DIRS})
-target_include_directories(MayaFluxLibShared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${NLOHMANN_JSON_INCLUDE_DIRS})
-
-target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio PkgConfig::SNDFILE)
-if(UNIX)
-    target_link_libraries(MayaFluxLib PUBLIC ${UUID_LIBRARIES})
-endif()
-target_link_libraries(MayaFluxLibShared PUBLIC PkgConfig::RtAudio PkgConfig::SNDFILE)
-if(UNIX)
-    target_link_libraries(MayaFluxLibShared PUBLIC ${UUID_LIBRARIES})
-endif()
-
-add_executable(MayaFlux src/main.cpp)
-target_link_libraries(MayaFlux PRIVATE MayaFluxLib)
+target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 if(WIN32)
-    target_compile_definitions(MayaFluxLib
-        PRIVATE MAYAFLUX_STATIC)
-
-    target_compile_definitions(MayaFluxLibShared
-        PRIVATE MAYAFLUX_EXPORTS
-        INTERFACE MAYAFLUX_IMPORTS)
+    target_link_libraries(MayaFluxLib PUBLIC
+        RtAudio::rtaudio
+        SndFile::sndfile
+    )
+    target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_STATIC)
+else()
+    target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio PkgConfig::SNDFILE)
 endif()
+
+target_link_libraries(MayaFlux PRIVATE MayaFluxLib)
 
 if(MSVC)
     add_compile_options(/W4)
@@ -74,15 +85,18 @@ else()
     )
 endif()
 
-add_subdirectory(tests)
+if(UNIX)
+    add_subdirectory(tests)
 
-execute_process(
+    execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${CMAKE_BINARY_DIR}/compile_commands.json
     ${CMAKE_SOURCE_DIR}/compile_commands.json
 )
+endif()
 
-install(TARGETS MayaFluxLib MayaFluxLibShared DESTINATION lib)
+install(TARGETS MayaFluxLib DESTINATION lib)
+
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
         DESTINATION include
         FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h")
@@ -93,8 +107,10 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/mayaflux.pc
     @ONLY
 )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mayaflux.pc
-        DESTINATION lib/pkgconfig)
+
+if(UNIX)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mayaflux.pc DESTINATION lib/pkgconfig)
+endif()
 
 message(STATUS "MayaFlux configuration:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
