@@ -16,27 +16,27 @@ std::pair<int, int> shift_parser(const std::string& str)
 }
 
 Filter::Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts)
-    : inputNode(input)
+    : m_input_node(input)
     , m_is_registered(false)
     , m_is_processed(false)
 {
-    shift_config = shift_parser(zindex_shifts);
+    m_shift_config = shift_parser(zindex_shifts);
     initialize_shift_buffers();
 }
 
 Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<double> b_coef)
-    : inputNode(input)
-    , coef_a(a_coef)
-    , coef_b(b_coef)
+    : m_input_node(input)
+    , m_coef_a(a_coef)
+    , m_coef_b(b_coef)
     , m_is_registered(false)
     , m_is_processed(false)
 {
-    shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
+    m_shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
 
-    if (coef_a.empty() || coef_b.empty()) {
+    if (m_coef_a.empty() || m_coef_b.empty()) {
         throw std::invalid_argument("IIR coefficients cannot be empty");
     }
-    if (coef_a[0] == 0.0f) {
+    if (m_coef_a[0] == 0.0f) {
         throw std::invalid_argument("First denominator coefficient (a[0]) cannot be zero");
     }
 
@@ -45,8 +45,8 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
 
 void Filter::initialize_shift_buffers()
 {
-    input_history.resize(shift_config.first + 1, 0.0f);
-    output_history.resize(shift_config.second + 1, 0.0f);
+    m_input_history.resize(m_shift_config.first + 1, 0.0f);
+    m_output_history.resize(m_shift_config.second + 1, 0.0f);
 }
 
 void Filter::set_coefs(const std::vector<double>& new_coefs, Utils::coefficients type)
@@ -63,17 +63,17 @@ void Filter::set_coefs(const std::vector<double>& new_coefs, Utils::coefficients
 
 void Filter::update_inputs(double current_sample)
 {
-    for (unsigned int i = input_history.size() - 1; i > 0; i--) {
-        input_history[i] = input_history[i - 1];
+    for (unsigned int i = m_input_history.size() - 1; i > 0; i--) {
+        m_input_history[i] = m_input_history[i - 1];
     }
-    input_history[0] = current_sample;
+    m_input_history[0] = current_sample;
 }
 
 void Filter::update_outputs(double current_sample)
 {
-    output_history[0] = current_sample;
-    for (unsigned int i = output_history.size() - 1; i > 0; i--) {
-        output_history[i] = output_history[i - 1];
+    m_output_history[0] = current_sample;
+    for (unsigned int i = m_output_history.size() - 1; i > 0; i--) {
+        m_output_history[i] = m_output_history[i - 1];
     }
 }
 
@@ -86,10 +86,10 @@ void Filter::setACoefficients(const std::vector<double>& new_coefs)
         throw std::invalid_argument("First denominator coefficient (a[0]) cannot be zero");
     }
 
-    coef_a = new_coefs;
+    m_coef_a = new_coefs;
 
-    if (static_cast<int>(coef_a.size()) - 1 != shift_config.second) {
-        shift_config.second = static_cast<int>(coef_a.size()) - 1;
+    if (static_cast<int>(m_coef_a.size()) - 1 != m_shift_config.second) {
+        m_shift_config.second = static_cast<int>(m_coef_a.size()) - 1;
         initialize_shift_buffers();
     }
 }
@@ -100,10 +100,10 @@ void Filter::setBCoefficients(const std::vector<double>& new_coefs)
         throw std::invalid_argument("Numerator coefficients cannot be empty");
     }
 
-    coef_b = new_coefs;
+    m_coef_b = new_coefs;
 
-    if (static_cast<int>(coef_b.size()) - 1 != shift_config.first) {
-        shift_config.first = static_cast<int>(coef_b.size()) - 1;
+    if (static_cast<int>(m_coef_b.size()) - 1 != m_shift_config.first) {
+        m_shift_config.first = static_cast<int>(m_coef_b.size()) - 1;
         initialize_shift_buffers();
     }
 }
@@ -116,8 +116,8 @@ void Filter::update_coefs_from_node(int length, std::shared_ptr<Node> source, Ut
 
 void Filter::update_coef_from_input(int length, Utils::coefficients type)
 {
-    if (inputNode) {
-        std::vector<double> samples = inputNode->process_batch(length);
+    if (m_input_node) {
+        std::vector<double> samples = m_input_node->process_batch(length);
         set_coefs(samples, type);
     } else {
         std::cerr << "No input node set for Filter. Use Filter::setInputNode() to set an input node.\n Alternatively, use Filter::updateCoefficientsFromNode() to specify a different source node.\n";
@@ -136,44 +136,44 @@ void Filter::add_coef(int index, double value, Utils::coefficients type)
 {
     switch (type) {
     case Utils::coefficients::INPUT:
-        add_coef_internal(index, value, coef_a);
+        add_coef_internal(index, value, m_coef_a);
         break;
     case Utils::coefficients::OUTPUT:
-        add_coef_internal(index, value, coef_b);
+        add_coef_internal(index, value, m_coef_b);
         break;
     default:
-        add_coef_internal(index, value, coef_a);
-        add_coef_internal(index, value, coef_b);
+        add_coef_internal(index, value, m_coef_a);
+        add_coef_internal(index, value, m_coef_b);
         break;
     }
 }
 
 void Filter::reset()
 {
-    std::fill(input_history.begin(), input_history.end(), 0.0);
-    std::fill(output_history.begin(), output_history.end(), 0.0);
+    std::fill(m_input_history.begin(), m_input_history.end(), 0.0);
+    std::fill(m_output_history.begin(), m_output_history.end(), 0.0);
 }
 
 void Filter::normalize_coefficients(Utils::coefficients type)
 {
     if (type == Utils::coefficients::OUTPUT || type == Utils::coefficients::ALL) {
-        if (!coef_a.empty() && coef_a[0] != 0.0) {
-            double a0 = coef_a[0];
-            for (auto& coef : coef_a) {
+        if (!m_coef_a.empty() && m_coef_a[0] != 0.0) {
+            double a0 = m_coef_a[0];
+            for (auto& coef : m_coef_a) {
                 coef /= a0;
             }
         }
     }
 
     if (type == Utils::coefficients::INPUT || type == Utils::coefficients::ALL) {
-        if (!coef_b.empty()) {
+        if (!m_coef_b.empty()) {
             double max_coef = 0.0;
-            for (const auto& coef : coef_b) {
+            for (const auto& coef : m_coef_b) {
                 max_coef = std::max(max_coef, std::abs(coef));
             }
 
             if (max_coef > 0.0) {
-                for (auto& coef : coef_b) {
+                for (auto& coef : m_coef_b) {
                     coef /= max_coef;
                 }
             }
@@ -187,13 +187,13 @@ std::complex<double> Filter::get_frequency_response(double frequency, double sam
     std::complex<double> z = std::exp(std::complex<double>(0, omega));
 
     std::complex<double> numerator = 0.0;
-    for (size_t i = 0; i < coef_b.size(); ++i) {
-        numerator += coef_b[i] * std::pow(z, -static_cast<int>(i));
+    for (size_t i = 0; i < m_coef_b.size(); ++i) {
+        numerator += m_coef_b[i] * std::pow(z, -static_cast<int>(i));
     }
 
     std::complex<double> denominator = 0.0;
-    for (size_t i = 0; i < coef_a.size(); ++i) {
-        denominator += coef_a[i] * std::pow(z, -static_cast<int>(i));
+    for (size_t i = 0; i < m_coef_a.size(); ++i) {
+        denominator += m_coef_a[i] * std::pow(z, -static_cast<int>(i));
     }
 
     return numerator / denominator;
@@ -220,7 +220,7 @@ std::vector<double> Filter::process_batch(unsigned int num_samples)
 
 std::unique_ptr<NodeContext> Filter::create_context(double value)
 {
-    return std::make_unique<FilterContext>(value, input_history, output_history, coef_a, coef_b);
+    return std::make_unique<FilterContext>(value, m_input_history, m_output_history, m_coef_a, m_coef_b);
 }
 
 void Filter::notify_tick(double value)

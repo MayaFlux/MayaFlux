@@ -19,22 +19,22 @@ double FIR::process_sample(double input)
     }
 
     double processed_input = input;
-    if (inputNode) {
-        if (!inputNode->is_processed()) {
-            processed_input = inputNode->process_sample(input);
-            inputNode->mark_processed(true);
+    if (m_input_node) {
+        if (!m_input_node->is_processed()) {
+            processed_input = m_input_node->process_sample(input);
+            m_input_node->mark_processed(true);
         } else {
-            processed_input = inputNode->get_last_output();
+            processed_input = m_input_node->get_last_output();
         }
     }
 
     update_inputs(input);
 
     double output = 0.0;
-    const size_t num_taps = std::min(coef_b.size(), input_history.size());
+    const size_t num_taps = std::min(m_coef_b.size(), m_input_history.size());
 
     for (size_t i = 0; i < num_taps; ++i) {
-        output += coef_b[i] * input_history[i];
+        output += m_coef_b[i] * m_input_history[i];
     }
 
     update_outputs(output);
@@ -47,8 +47,8 @@ double FIR::process_sample(double input)
 void FIR::reset_processed_state()
 {
     mark_processed(false);
-    if (inputNode) {
-        inputNode->reset_processed_state();
+    if (m_input_node) {
+        m_input_node->reset_processed_state();
     }
 }
 

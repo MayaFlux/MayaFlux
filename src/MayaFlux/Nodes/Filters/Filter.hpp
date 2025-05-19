@@ -112,74 +112,6 @@ std::pair<int, int> shift_parser(const std::string& str);
  * physical simulation parameters.
  */
 class Filter : public Node {
-protected:
-    /**
-     * @brief Input node providing samples to filter
-     *
-     * The filter processes samples from this node, allowing filters
-     * to be chained together or connected to generators.
-     */
-    std::shared_ptr<Node> inputNode;
-
-    /**
-     * @brief Configuration for input and output buffer sizes
-     *
-     * Defines how many past input and output samples are stored,
-     * based on the filter's order.
-     */
-    std::pair<int, int> shift_config;
-
-    /**
-     * @brief Buffer storing previous input samples
-     *
-     * Maintains a history of input samples needed for the filter's
-     * feedforward path (b coefficients).
-     */
-    std::vector<double> input_history;
-
-    /**
-     * @brief Buffer storing previous output samples
-     *
-     * Maintains a history of output samples needed for the filter's
-     * feedback path (a coefficients).
-     */
-    std::vector<double> output_history;
-
-    /**
-     * @brief Feedback (denominator) coefficients
-     *
-     * The 'a' coefficients in the difference equation, applied to
-     * previous output samples. a[0] is typically normalized to 1.0.
-     */
-    std::vector<double> coef_a;
-
-    /**
-     * @brief Feedforward (numerator) coefficients
-     *
-     * The 'b' coefficients in the difference equation, applied to
-     * current and previous input samples.
-     */
-    std::vector<double> coef_b;
-
-    /**
-     * @brief Overall gain factor applied to the filter output
-     *
-     * Provides a simple way to adjust the filter's output level
-     * without changing its frequency response characteristics.
-     */
-    double gain = 1.0;
-
-    /**
-     * @brief Flag to bypass filter processing
-     *
-     * When enabled, the filter passes input directly to output
-     * without applying any filtering.
-     */
-    bool bypass_enabled = false;
-
-    std::vector<NodeHook> m_callbacks;
-    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
-
 public:
     /**
      * @brief Constructor using string-based filter configuration
@@ -218,7 +150,7 @@ public:
      */
     inline int get_current_latency() const
     {
-        return std::max(shift_config.first, shift_config.second);
+        return std::max(m_shift_config.first, m_shift_config.second);
     }
 
     /**
@@ -229,7 +161,7 @@ public:
      */
     inline std::pair<int, int> get_current_shift() const
     {
-        return shift_config;
+        return m_shift_config;
     }
 
     /**
@@ -241,7 +173,7 @@ public:
      */
     inline void set_shift(std::string& zindex_shifts)
     {
-        shift_config = shift_parser(zindex_shifts);
+        m_shift_config = shift_parser(zindex_shifts);
         initialize_shift_buffers();
     }
 
@@ -308,13 +240,13 @@ public:
      * Adjusts the overall output level of the filter without
      * changing its frequency response characteristics.
      */
-    inline void set_gain(double new_gain) { gain = new_gain; }
+    inline void set_gain(double new_gain) { m_gain = new_gain; }
 
     /**
      * @brief Gets the current gain value
      * @return Current gain value
      */
-    inline double get_gain() const { return gain; }
+    inline double get_gain() const { return m_gain; }
 
     /**
      * @brief Enables or disables filter bypass
@@ -324,13 +256,13 @@ public:
      * without applying any filtering, useful for A/B testing or
      * temporarily disabling filters.
      */
-    inline void set_bypass(bool enable) { bypass_enabled = enable; }
+    inline void set_bypass(bool enable) { m_bypass_enabled = enable; }
 
     /**
      * @brief Checks if bypass is currently enabled
      * @return True if bypass is enabled, false otherwise
      */
-    inline bool is_bypass_enabled() const { return bypass_enabled; }
+    inline bool is_bypass_enabled() const { return m_bypass_enabled; }
 
     /**
      * @brief Gets the filter's order
@@ -340,7 +272,7 @@ public:
      * coefficient counts minus one, representing the highest power of z⁻¹
      * in the filter's transfer function.
      */
-    inline int get_order() const { return std::max(coef_a.size() - 1, coef_b.size() - 1); }
+    inline int get_order() const { return std::max(m_coef_a.size() - 1, m_coef_b.size() - 1); }
 
     /**
      * @brief Gets the input history buffer
@@ -349,7 +281,7 @@ public:
      * Provides access to the filter's internal input history buffer,
      * useful for analysis and visualization.
      */
-    inline const std::vector<double>& get_input_history() const { return input_history; }
+    inline const std::vector<double>& get_input_history() const { return m_input_history; }
 
     /**
      * @brief Gets the output history buffer
@@ -358,7 +290,7 @@ public:
      * Provides access to the filter's internal output history buffer,
      * useful for analysis and visualization.
      */
-    inline const std::vector<double>& get_output_history() const { return output_history; }
+    inline const std::vector<double>& get_output_history() const { return m_output_history; }
 
     /**
      * @brief Normalizes filter coefficients
@@ -403,6 +335,17 @@ public:
      * representing the phase shift introduced by the filter at that frequency.
      */
     double get_phase_response(double frequency, double sample_rate) const;
+
+    /**
+     * @brief Processes a single sample through the filter
+     * @param input The input sample
+     * @return The filtered output sample
+     *
+     * This is the core processing method that implements the difference
+     * equation for a single sample. It must be implemented by derived
+     * filter classes to define their specific filtering behavior.
+     */
+    virtual double process_sample(double input) override = 0;
 
     /**
      * @brief Calculates the phase response at a specific frequency
@@ -544,7 +487,21 @@ public:
      */
     inline double get_last_output() override { return m_last_output; }
 
-protected:
+    /**
+     * @brief Sets the input node for the filter
+     * @param input_node Node providing input samples
+     *
+     * Connects the filter to a source of input samples, allowing
+     * filters to be chained together or connected to generators.
+     */
+    inline void set_input_node(std::shared_ptr<Node> input_node) { m_input_node = input_node; }
+
+    /**
+     * @brief Gets the input node for the filter
+     * @return Node providing input samples
+     */
+    inline std::shared_ptr<Node> get_input_node() { return m_input_node; }
+
     /**
      * @brief Updates the feedback (denominator) coefficients
      * @param new_coefs New coefficient values
@@ -572,7 +529,7 @@ protected:
      * Provides access to the filter's feedback coefficients for
      * analysis and visualization.
      */
-    inline const std::vector<double>& getACoefficients() const { return coef_a; }
+    inline const std::vector<double>& getACoefficients() const { return m_coef_a; }
 
     /**
      * @brief Gets the feedforward (numerator) coefficients
@@ -581,8 +538,9 @@ protected:
      * Provides access to the filter's feedforward coefficients for
      * analysis and visualization.
      */
-    inline const std::vector<double>& getBCoefficients() const { return coef_b; }
+    inline const std::vector<double>& getBCoefficients() const { return m_coef_b; }
 
+protected:
     /**
      * @brief Modifies a specific coefficient in a coefficient buffer
      * @param index Index of the coefficient to modify
@@ -602,17 +560,6 @@ protected:
      * the filter configuration changes.
      */
     virtual void initialize_shift_buffers();
-
-    /**
-     * @brief Processes a single sample through the filter
-     * @param input The input sample
-     * @return The filtered output sample
-     *
-     * This is the core processing method that implements the difference
-     * equation for a single sample. It must be implemented by derived
-     * filter classes to define their specific filtering behavior.
-     */
-    virtual double process_sample(double input) override = 0;
 
     /**
      * @brief Updates the input history buffer with a new sample
@@ -694,5 +641,87 @@ protected:
      * feedback loops.
      */
     double m_last_output;
+
+    /**
+     * @brief Input node providing samples to filter
+     *
+     * The filter processes samples from this node, allowing filters
+     * to be chained together or connected to generators.
+     */
+    std::shared_ptr<Node> m_input_node;
+
+    /**
+     * @brief Configuration for input and output buffer sizes
+     *
+     * Defines how many past input and output samples are stored,
+     * based on the filter's order.
+     */
+    std::pair<int, int> m_shift_config;
+
+    /**
+     * @brief Buffer storing previous input samples
+     *
+     * Maintains a history of input samples needed for the filter's
+     * feedforward path (b coefficients).
+     */
+    std::vector<double> m_input_history;
+
+    /**
+     * @brief Buffer storing previous output samples
+     *
+     * Maintains a history of output samples needed for the filter's
+     * feedback path (a coefficients).
+     */
+    std::vector<double> m_output_history;
+
+    /**
+     * @brief Feedback (denominator) coefficients
+     *
+     * The 'a' coefficients in the difference equation, applied to
+     * previous output samples. a[0] is typically normalized to 1.0.
+     */
+    std::vector<double> m_coef_a;
+
+    /**
+     * @brief Feedforward (numerator) coefficients
+     *
+     * The 'b' coefficients in the difference equation, applied to
+     * current and previous input samples.
+     */
+    std::vector<double> m_coef_b;
+
+    /**
+     * @brief Overall gain factor applied to the filter output
+     *
+     * Provides a simple way to adjust the filter's output level
+     * without changing its frequency response characteristics.
+     */
+    double m_gain = 1.0;
+
+    /**
+     * @brief Flag to bypass filter processing
+     *
+     * When enabled, the filter passes input directly to output
+     * without applying any filtering.
+     */
+    bool m_bypass_enabled = false;
+
+    /**
+     * @brief Collection of standard callback functions
+     *
+     * Stores functions that are called each time the filter produces
+     * a new output value, regardless of the value's characteristics.
+     */
+    std::vector<NodeHook> m_callbacks;
+
+    /**
+     * @brief Collection of conditional callback functions with their predicates
+     *
+     * Stores pairs of callback functions and their associated condition predicates.
+     * These callbacks are only invoked when their condition evaluates to true
+     * for a generated sample, enabling selective monitoring of specific
+     * filter states or events.
+     */
+    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
 };
 }
