@@ -17,7 +17,6 @@ namespace MayaFlux::Nodes::Generator {
  * - Configurable frequency, amplitude, and DC offset
  * - Support for frequency modulation (FM synthesis)
  * - Support for amplitude modulation (AM synthesis)
- * - Automatic registration with the node graph manager (optional)
  * - Phase continuity to prevent clicks when changing parameters
  *
  * Sinusoidal oscillators are used extensively in audio synthesis for:
@@ -30,18 +29,17 @@ namespace MayaFlux::Nodes::Generator {
  * frequency control and efficient computation, avoiding repeated calls to
  * the computationally expensive sin() function.
  */
-class Sine : public Generator, public std::enable_shared_from_this<Sine> {
+class Sine : public Generator {
 public:
     /**
      * @brief Basic constructor with fixed parameters
      * @param frequency Oscillation frequency in Hz (default: 440Hz, A4 note)
      * @param amplitude Output amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
-     * @param bAuto_register Whether to automatically register with the node graph manager (default: false)
      *
      * Creates a sine oscillator with fixed frequency and amplitude.
      */
-    Sine(float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Sine(float frequency = 440, float amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with frequency modulation
@@ -49,12 +47,11 @@ public:
      * @param frequency Base frequency in Hz (default: 440Hz)
      * @param amplitude Output amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
-     * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
      * Creates a sine oscillator with frequency modulation, where the actual frequency
      * is the base frequency plus the output of the modulator node.
      */
-    Sine(std::shared_ptr<Node> frequency_modulator, float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Sine(std::shared_ptr<Node> frequency_modulator, float frequency = 440, float amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with amplitude modulation
@@ -62,12 +59,11 @@ public:
      * @param amplitude_modulator Node that modulates the amplitude
      * @param amplitude Base amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
-     * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
      * Creates a sine oscillator with amplitude modulation, where the actual amplitude
      * is the base amplitude multiplied by the output of the modulator node.
      */
-    Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with both frequency and amplitude modulation
@@ -76,22 +72,12 @@ public:
      * @param frequency Base frequency in Hz (default: 440Hz)
      * @param amplitude Base amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
-     * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
      * Creates a sine oscillator with both frequency and amplitude modulation,
      * enabling complex synthesis techniques like FM and AM simultaneously.
      */
     Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-        float frequency = 440, float amplitude = 1, float offset = 0, bool bAuto_register = true);
-
-    /**
-     * @brief Common setup code for all constructors
-     * @param bAuto_register Whether to automatically register with the node graph manager
-     *
-     * Initializes the oscillator's internal state and registers it with
-     * the node graph manager if requested.
-     */
-    void Setup(bool bAuto_register);
+        float frequency = 440, float amplitude = 1, float offset = 0);
 
     /**
      * @brief Virtual destructor
@@ -133,14 +119,6 @@ public:
      * settings of the oscillator.
      */
     virtual void printCurrent() override;
-
-    /**
-     * @brief Registers this oscillator with the default node graph manager
-     *
-     * This method allows delayed registration with the node graph manager
-     * when the oscillator wasn't registered at construction time.
-     */
-    void register_to_defult();
 
     /**
      * @brief Sets the oscillator's frequency
