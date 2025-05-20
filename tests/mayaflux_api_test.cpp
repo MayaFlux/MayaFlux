@@ -38,7 +38,7 @@ TEST_F(MayaFluxAPITest, Initialization)
     auto stream_info = MayaFlux::get_global_stream_info();
     EXPECT_EQ(stream_info.sample_rate, TestConfig::SAMPLE_RATE);
     EXPECT_EQ(stream_info.buffer_size, TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(stream_info.num_channels, TestConfig::NUM_CHANNELS);
+    EXPECT_EQ(stream_info.output.channels, TestConfig::NUM_CHANNELS);
 }
 
 TEST_F(MayaFluxAPITest, ComponentAccess)
@@ -279,7 +279,7 @@ TEST_F(MayaFluxAPITest, StreamInfoInitialization)
     Core::GlobalStreamInfo custom_info;
     custom_info.sample_rate = 96000;
     custom_info.buffer_size = 128;
-    custom_info.num_channels = 4;
+    custom_info.output.channels = 4;
 
     MayaFlux::Init(custom_info);
 
@@ -293,7 +293,7 @@ TEST_F(MayaFluxAPITest, EngineContextOperations)
     EXPECT_TRUE(MayaFlux::is_engine_initialized());
 
     Core::Engine custom_engine = Core::Engine {};
-    custom_engine.Init({ .sample_rate = 44100, .buffer_size = 256, .num_channels = 1 });
+    custom_engine.Init(44100, 256, 1);
 
     MayaFlux::set_and_transfer_context(std::move(custom_engine));
 
@@ -308,10 +308,10 @@ TEST_F(MayaFluxAPITest, EngineMoveSemanticsAndReferenceManagement)
     auto initial_sample_rate = MayaFlux::get_sample_rate();
 
     Core::Engine engine1;
-    engine1.Init({ .sample_rate = 48000, .buffer_size = 512, .num_channels = 2 });
+    engine1.Init(48000, 512, 2);
 
     Core::Engine engine2;
-    engine2.Init({ .sample_rate = 96000, .buffer_size = 256, .num_channels = 1 });
+    engine2.Init(96000, 256, 1);
 
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     EXPECT_EQ(engine2.get_node_graph_manager()->get_root_node().get_node_size(), 0);
@@ -338,7 +338,7 @@ TEST_F(MayaFluxAPITest, EngineMoveSemanticsAndReferenceManagement)
     EXPECT_EQ(engine2.get_node_graph_manager(), nullptr);
 
     Core::Engine engine3;
-    engine3.Init({ .sample_rate = 44100, .buffer_size = 128, .num_channels = 1 });
+    engine3.Init(44100, 128, 1);
     MayaFlux::set_and_transfer_context(std::move(engine3));
     EXPECT_EQ(MayaFlux::get_sample_rate(), 44100);
     EXPECT_TRUE(MayaFlux::is_engine_initialized());

@@ -31,6 +31,7 @@ else()
     pkg_check_modules(SNDFILE REQUIRED IMPORTED_TARGET sndfile)
 endif()
 
+add_compile_definitions(RTAUDIO_BACKEND)
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/version.h

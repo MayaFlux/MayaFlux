@@ -34,7 +34,7 @@ protected:
 
 TEST_F(EngineTest, ConstructorInitializesBasicComponents)
 {
-    EXPECT_NE(engine->get_handle(), nullptr) << "RtAudio context not initialized";
+    EXPECT_NE(engine->get_audio_backend(), nullptr) << "RtAudio context not initialized";
     EXPECT_NE(engine->get_random_engine(), nullptr) << "Random engine not initialized";
 }
 
@@ -60,6 +60,12 @@ TEST_F(EngineTest, EngineStateTransitions)
     engine->Start();
     EXPECT_TRUE(engine->is_running()) << "Engine should be running after Start";
 
+    engine->Pause();
+    EXPECT_FALSE(engine->is_running()) << "Engine should not be running after End";
+
+    engine->Resume();
+    EXPECT_TRUE(engine->is_running()) << "Engine should not be running after End";
+
     engine->End();
     EXPECT_FALSE(engine->is_running()) << "Engine should not be running after End";
 }
@@ -69,7 +75,78 @@ TEST_F(EngineTest, StreamInfoConfiguration)
     const auto& stream_info = engine->get_stream_info();
     EXPECT_EQ(stream_info.sample_rate, TestConfig::SAMPLE_RATE);
     EXPECT_EQ(stream_info.buffer_size, TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(stream_info.num_channels, TestConfig::NUM_CHANNELS);
+    EXPECT_EQ(stream_info.output.channels, TestConfig::NUM_CHANNELS);
+}
+
+TEST_F(EngineTest, GlobalStreamInfoHelpers)
+{
+    Core::GlobalStreamInfo info;
+
+    EXPECT_EQ(info.get_num_channels(), 2);
+    EXPECT_EQ(info.get_total_channels(), 2);
+
+    info.input.enabled = true;
+    EXPECT_EQ(info.get_total_channels(), 4);
+
+    info.output.channels = 4;
+    info.input.channels = 1;
+    EXPECT_EQ(info.get_num_channels(), 4);
+    EXPECT_EQ(info.get_total_channels(), 5);
+
+    info.output.enabled = false;
+    EXPECT_EQ(info.get_total_channels(), 1);
+}
+
+TEST_F(EngineTest, AudioBackendAbstraction)
+{
+
+    auto* backend = engine->get_audio_backend();
+    ASSERT_NE(backend, nullptr);
+
+    EXPECT_FALSE(backend->get_version_string().empty());
+    EXPECT_GE(backend->get_api_type(), 0);
+
+    // auto devices = backend->get_devices();
+    auto device_manager = backend->create_device_manager();
+    auto devices = device_manager->get_output_devices();
+    EXPECT_GT(devices.size(), 0);
+
+    EXPECT_GE(device_manager->get_default_output_device(), 0);
+    EXPECT_GE(device_manager->get_default_input_device(), 0);
+
+    ASSERT_NE(device_manager, nullptr);
+
+    EXPECT_GT(device_manager->get_output_devices().size(), 0);
+    EXPECT_GE(device_manager->get_default_output_device(), 0);
+}
+
+TEST_F(EngineTest, CustomStreamConfiguration)
+{
+
+    Core::GlobalStreamInfo custom_config;
+    custom_config.sample_rate = 44100;
+    custom_config.buffer_size = 256;
+    custom_config.output.channels = 1;
+    custom_config.input.enabled = true;
+    custom_config.input.channels = 2;
+    custom_config.non_interleaved = true;
+    custom_config.priority = Core::GlobalStreamInfo::StreamPriority::REALTIME;
+
+    custom_config.backend_options["rtaudio.exclusive"] = true;
+
+    EXPECT_NO_THROW(engine->Init(custom_config));
+
+    const auto& applied_config = engine->get_stream_info();
+    EXPECT_EQ(applied_config.sample_rate, 44100);
+    EXPECT_EQ(applied_config.buffer_size, 256);
+    EXPECT_EQ(applied_config.output.channels, 1);
+    EXPECT_TRUE(applied_config.input.enabled);
+    EXPECT_EQ(applied_config.input.channels, 2);
+    EXPECT_TRUE(applied_config.non_interleaved);
+    EXPECT_EQ(applied_config.priority, Core::GlobalStreamInfo::StreamPriority::REALTIME);
+
+    EXPECT_EQ(engine->get_buffer_manager()->get_num_channels(), 1);
+    EXPECT_EQ(engine->get_buffer_manager()->get_num_frames(), 256);
 }
 
 TEST_F(EngineTest, BufferManagerConfiguration)
@@ -113,14 +190,12 @@ TEST_F(EngineTest, EngineLifecycle)
 
 TEST_F(EngineTest, MultipleInitializationHandling)
 {
-    EXPECT_NO_THROW(engine->Init({ .sample_rate = 44100,
-        .buffer_size = 256,
-        .num_channels = 1 }));
+    EXPECT_NO_THROW(engine->Init(44100, 256, 1));
 
     auto& stream_info = engine->get_stream_info();
     EXPECT_EQ(stream_info.sample_rate, 44100);
     EXPECT_EQ(stream_info.buffer_size, 256);
-    EXPECT_EQ(stream_info.num_channels, 1);
+    EXPECT_EQ(stream_info.output.channels, 1);
 
     EXPECT_NE(engine->get_stream_manager(), nullptr);
     EXPECT_NE(engine->get_buffer_manager(), nullptr);
@@ -137,10 +212,7 @@ TEST_F(EngineTest, ComponentCleanupOnDestruction)
 
     EXPECT_NO_THROW({
         engine = std::make_unique<Core::Engine>();
-        engine->Init({ .sample_rate = TestConfig::SAMPLE_RATE,
-            .buffer_size = TestConfig::BUFFER_SIZE,
-            .num_channels = TestConfig::NUM_CHANNELS });
-    });
+        engine->Init(  TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, TestConfig::NUM_CHANNELS ); });
 
     EXPECT_FALSE(engine->is_running());
     EXPECT_NO_THROW(engine->Start());
@@ -204,7 +276,7 @@ TEST_F(EngineTest, TaskScheduling)
 {
     float start_value = 0.0f;
     float end_value = 1.0f;
-    float duration = 0.01f; // Short duration for quick test
+    float duration = 0.01f;
 
     auto line_task = Kriya::line(*engine->get_scheduler(), start_value, end_value, duration, 5, false);
     engine->schedule_task("test_line", std::move(line_task), true);
@@ -223,8 +295,7 @@ TEST_F(EngineTest, TaskScheduling)
     EXPECT_GT(*value_ptr, start_value);
     EXPECT_LE(*value_ptr, end_value);
 
-    // Process several more buffers to ensure task completes
-    int buffers_needed = 10; // Use a fixed, reasonable number
+    int buffers_needed = 10;
     for (int i = 0; i < buffers_needed; i++) {
         engine->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
     }
@@ -390,6 +461,6 @@ TEST_F(EngineTest, NamedTaskLookup)
     EXPECT_TRUE(engine->cancel_task("task2"));
 }
 
-#endif // INTEGRATION_TEST
+#endif
 
-} // namespace MayaFlux::Test
+}

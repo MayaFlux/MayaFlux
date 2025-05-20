@@ -84,10 +84,10 @@ void set_and_transfer_context(Core::Engine instance)
     }
 }
 
-void Init(unsigned int sample_rate, unsigned int buffer_size, unsigned int num_out_channels)
+void Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_out_channels, u_int32_t num_in_channels)
 {
     auto& engine = internal::get_or_create_engine();
-    engine.Init({ sample_rate, buffer_size, num_out_channels });
+    engine.Init(sample_rate, buffer_size, num_out_channels, num_in_channels);
 }
 
 void Init(Core::GlobalStreamInfo stream_info)
@@ -144,7 +144,7 @@ u_int32_t get_buffer_size()
 
 u_int32_t get_num_out_channels()
 {
-    return get_global_stream_info().num_channels;
+    return get_global_stream_info().output.channels;
 }
 
 //-------------------------------------------------------------------------

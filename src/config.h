@@ -1,6 +1,8 @@
 #pragma once
 
+#ifdef RTAUDIO_BACKEND
 #include "RtAudio.h"
+#endif
 
 // System
 #include "algorithm"
@@ -17,8 +19,8 @@
 #include "vector"
 
 // C style
-#include <cmath>
 #include <cassert>
+#include <cmath>
 #include <complex>
 #include <cstdint>
 #include <exception>
@@ -29,8 +31,8 @@
 #include <unordered_set>
 
 #ifdef _WIN32
-#include <windows.h>
 #include <shlwapi.h>
+#include <windows.h>
 #pragma comment(lib, "shlwapi.lib")
 
 #include <optional>
@@ -38,7 +40,7 @@
 using u_int32_t = uint32_t;
 using u_int64_t = uint64_t;
 
-//Ugly workarounds
+// Ugly workarounds
 #ifdef CALLBACK
 #undef CALLBACK
 #endif

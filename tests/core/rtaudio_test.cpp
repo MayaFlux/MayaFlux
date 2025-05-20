@@ -425,7 +425,7 @@ TEST_F(RtAudioUtilityTest, StreamInfoVerification)
 
     EXPECT_EQ(info.sample_rate, TestConfig::SAMPLE_RATE);
     EXPECT_EQ(info.buffer_size, TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(info.num_channels, TestConfig::NUM_CHANNELS);
+    EXPECT_EQ(info.output.channels, TestConfig::NUM_CHANNELS);
 }
 
 TEST_F(RtAudioUtilityTest, GlobalInitialization)

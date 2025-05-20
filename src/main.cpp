@@ -1,11 +1,7 @@
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/version.h"
 
-#include <atomic>
-#include <chrono>
 #include <csignal>
-#include <iostream>
-#include <thread>
 
 std::atomic<bool> g_running { true };
 
@@ -32,9 +28,7 @@ int main()
         std::cout << "Sample rate: " << MayaFlux::get_sample_rate() << " Hz" << std::endl;
         std::cout << "Buffer size: " << MayaFlux::get_buffer_size() << " samples" << std::endl;
 
-        while (g_running) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+        std::cin.get();
 
         MayaFlux::End();
         std::cout << "MayaFlux shut down successfully." << std::endl;
