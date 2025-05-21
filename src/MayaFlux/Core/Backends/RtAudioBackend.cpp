@@ -1,23 +1,24 @@
 #include "RtAudioBackend.hpp"
+#include "RtAudioSingleton.hpp"
 
 namespace MayaFlux::Core {
 
 RtAudioBackend::RtAudioBackend()
-    : m_context(std::make_unique<RtAudio>())
 {
+    m_context = RtAudioSingleton::get_instance();
 }
 
 RtAudioBackend::~RtAudioBackend() = default;
 
 std::unique_ptr<AudioDevice> RtAudioBackend::create_device_manager()
 {
-    return std::make_unique<RtAudioDevice>(m_context.get());
+    return std::make_unique<RtAudioDevice>(m_context);
 }
 
 std::unique_ptr<AudioStream> RtAudioBackend::create_stream(unsigned int deviceId, const GlobalStreamInfo& stream_info, void* user_data)
 {
     return std::make_unique<RtAudioStream>(
-        m_context.get(),
+        m_context,
         deviceId,
         stream_info,
         user_data);
@@ -31,6 +32,11 @@ std::string RtAudioBackend::get_version_string() const
 int RtAudioBackend::get_api_type() const
 {
     return m_context->getCurrentApi();
+}
+
+void RtAudioBackend::cleanup()
+{
+    RtAudioSingleton::cleanup();
 }
 
 RtAudioDevice::RtAudioDevice(RtAudio* context)
@@ -196,6 +202,8 @@ void RtAudioStream::open()
             inputParamsPtr = &inputParams;
         }
 
+        RtAudioSingleton::mark_stream_open();
+
         m_context->openStream(
             &m_parameters,
             inputParamsPtr,
@@ -208,6 +216,7 @@ void RtAudioStream::open()
 
         m_isOpen = true;
     } catch (const RtAudioErrorType& e) {
+        RtAudioSingleton::mark_stream_closed();
         std::cerr << "RtAudio error: " << m_context->getErrorText() << " of type: " << e << std::endl;
         m_isOpen = false;
         throw std::runtime_error("Failed to open RtAudio stream");
@@ -261,11 +270,13 @@ void RtAudioStream::close()
     try {
         if (m_context->isStreamOpen()) {
             m_context->closeStream();
+            RtAudioSingleton::mark_stream_closed();
         }
         m_isOpen = false;
     } catch (const RtAudioErrorType& e) {
         std::cerr << "RtAudio error: " << m_context->getErrorText() << " of type: " << e << std::endl;
         m_isOpen = false;
+        RtAudioSingleton::mark_stream_closed();
     }
 }
 

@@ -166,33 +166,20 @@ void Engine::End()
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    /*
-        if (m_audio_stream) {
-            if (m_audio_stream->is_running()) {
-                m_audio_stream->stop();
-            }
-            if (m_audio_stream->is_open()) {
-                m_audio_stream->close();
-            }
-        } */
 
     if (m_audio_stream) {
         try {
-            // Only stop if running
             if (m_audio_stream->is_running()) {
                 m_audio_stream->stop();
 
-                // Add a small delay between stop and close
                 std::this_thread::sleep_for(std::chrono::milliseconds(5));
             }
 
-            // Only close if open
             if (m_audio_stream->is_open()) {
                 m_audio_stream->close();
             }
         } catch (const std::exception& e) {
             std::cerr << "Exception during audio stream shutdown: " << e.what() << std::endl;
-            // Continue cleanup despite exception
         }
     }
 

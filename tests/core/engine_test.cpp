@@ -97,16 +97,79 @@ TEST_F(EngineTest, GlobalStreamInfoHelpers)
     EXPECT_EQ(info.get_total_channels(), 1);
 }
 
+TEST_F(EngineTest, GlobalStreamInfoComprehensive)
+{
+    Core::GlobalStreamInfo info;
+
+    EXPECT_EQ(info.sample_rate, 48000);
+    EXPECT_EQ(info.buffer_size, 512);
+    EXPECT_EQ(info.format, Core::GlobalStreamInfo::AudioFormat::FLOAT64);
+    EXPECT_FALSE(info.non_interleaved);
+
+    EXPECT_TRUE(info.output.enabled);
+    EXPECT_EQ(info.output.channels, 2);
+    EXPECT_EQ(info.output.device_id, -1);
+    EXPECT_TRUE(info.output.device_name.empty());
+
+    EXPECT_FALSE(info.input.enabled);
+    EXPECT_EQ(info.input.channels, 2);
+    EXPECT_EQ(info.input.device_id, -1);
+    EXPECT_TRUE(info.input.device_name.empty());
+
+    EXPECT_EQ(info.priority, Core::GlobalStreamInfo::StreamPriority::REALTIME);
+
+    EXPECT_TRUE(info.auto_convert_format);
+    EXPECT_TRUE(info.handle_xruns);
+    EXPECT_TRUE(info.use_callback);
+    EXPECT_DOUBLE_EQ(info.stream_latency_ms, 0.0);
+
+    EXPECT_EQ(info.dither, Core::GlobalStreamInfo::DitherMethod::NONE);
+
+    EXPECT_FALSE(info.midi_input.enabled);
+    EXPECT_EQ(info.midi_input.device_id, -1);
+    EXPECT_FALSE(info.midi_output.enabled);
+    EXPECT_EQ(info.midi_output.device_id, -1);
+
+    EXPECT_FALSE(info.measure_latency);
+    EXPECT_FALSE(info.verbose_logging);
+
+    EXPECT_TRUE(info.backend_options.empty());
+
+    info.output.enabled = true;
+    info.output.channels = 4;
+    info.input.enabled = false;
+    EXPECT_EQ(info.get_num_channels(), 4);
+    EXPECT_EQ(info.get_total_channels(), 4);
+
+    info.output.enabled = true;
+    info.output.channels = 2;
+    info.input.enabled = true;
+    info.input.channels = 3;
+    EXPECT_EQ(info.get_num_channels(), 2);
+    EXPECT_EQ(info.get_total_channels(), 5);
+
+    info.output.enabled = false;
+    info.input.enabled = true;
+    info.input.channels = 1;
+    EXPECT_EQ(info.get_num_channels(), 2);
+    EXPECT_EQ(info.get_total_channels(), 1);
+
+    info.backend_options["rtaudio.exclusive"] = true;
+    info.backend_options["rtaudio.buffer_mapping"] = std::string("direct");
+
+    EXPECT_EQ(info.backend_options.size(), 2);
+    EXPECT_TRUE(std::any_cast<bool>(info.backend_options["rtaudio.exclusive"]));
+    EXPECT_EQ(std::any_cast<std::string>(info.backend_options["rtaudio.buffer_mapping"]), "direct");
+}
+
 TEST_F(EngineTest, AudioBackendAbstraction)
 {
-
     auto* backend = engine->get_audio_backend();
     ASSERT_NE(backend, nullptr);
 
     EXPECT_FALSE(backend->get_version_string().empty());
     EXPECT_GE(backend->get_api_type(), 0);
 
-    // auto devices = backend->get_devices();
     auto device_manager = backend->create_device_manager();
     auto devices = device_manager->get_output_devices();
     EXPECT_GT(devices.size(), 0);
@@ -118,6 +181,30 @@ TEST_F(EngineTest, AudioBackendAbstraction)
 
     EXPECT_GT(device_manager->get_output_devices().size(), 0);
     EXPECT_GE(device_manager->get_default_output_device(), 0);
+}
+
+TEST_F(EngineTest, RtAudioSingletonBehavior)
+{
+    auto second_engine = std::make_unique<Core::Engine>();
+    second_engine->Init(48000, 256, 2);
+
+    EXPECT_EQ(engine->get_audio_backend()->get_api_type(),
+        second_engine->get_audio_backend()->get_api_type());
+
+    engine->Start();
+    EXPECT_TRUE(engine->is_running());
+
+    engine->End();
+    EXPECT_FALSE(engine->is_running());
+
+    EXPECT_NO_THROW(second_engine->Start());
+    EXPECT_TRUE(second_engine->is_running());
+
+    second_engine->End();
+    EXPECT_FALSE(second_engine->is_running());
+
+    EXPECT_NO_THROW(engine->Start());
+    EXPECT_TRUE(engine->is_running());
 }
 
 TEST_F(EngineTest, CustomStreamConfiguration)

@@ -28,6 +28,8 @@ public:
 
     virtual std::string get_version_string() const = 0;
     virtual int get_api_type() const = 0;
+
+    virtual void cleanup() = 0;
 };
 
 class AudioDevice {

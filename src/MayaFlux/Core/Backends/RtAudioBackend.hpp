@@ -33,10 +33,12 @@ public:
     std::string get_version_string() const override;
     int get_api_type() const override;
 
-    RtAudio* getRawHandle() { return m_context.get(); }
+    RtAudio* getRawHandle() { return m_context; }
+
+    void cleanup() override;
 
 private:
-    std::unique_ptr<RtAudio> m_context;
+    RtAudio* m_context;
 };
 
 class RtAudioDevice : public AudioDevice {
