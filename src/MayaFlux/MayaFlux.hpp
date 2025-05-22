@@ -91,10 +91,11 @@ void set_and_transfer_context(Core::Engine instance);
  * @param sample_rate Audio sample rate in Hz
  * @param buffer_size Size of audio processing buffer in frames
  * @param num_out_channels Number of output channels
+ * @param num_in_channels Number of input channels
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-void Init(u_int32_t sample_rate = 48000, u_int32_t buffer_size = 512, u_int32_t num_out_channels = 2);
+void Init(u_int32_t sample_rate = 48000, u_int32_t buffer_size = 512, u_int32_t num_out_channels = 2, u_int32_t num_in_channels = 0);
 
 /**
  * @brief Initializes the default engine with specified stream info

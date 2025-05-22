@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Backends/AudioBackend.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Nodes {
@@ -14,19 +15,6 @@ class BufferManager;
 }
 
 namespace MayaFlux::Core {
-
-class Device;
-class Stream;
-
-/**
- * @struct GlobalStreamInfo
- * @brief Configuration settings for signal processing stream
- */
-struct GlobalStreamInfo {
-    unsigned int sample_rate = 48000; ///< Processing sample rate in Hz
-    unsigned int buffer_size = 512; ///< Size of processing buffer in frames
-    unsigned int num_channels = 2; ///< Number of processing channels
-};
 
 /**
  * @enum HookPosition
@@ -85,11 +73,13 @@ public:
 
     /**
      * @brief Constructs a new Engine instance
+     * @param type The type of audio backend to use (default: RtAudio)
      *
-     * Initializes the processing context and device but doesn't start data flow.
-     * Call Init() to configure and Start() to begin processing.
+     * Creates a new Engine instance with the specified audio backend.
+     * The backend type determines the underlying audio API used for device management
+     * and stream processing.
      */
-    Engine();
+    Engine(Utils::BackendType type = Utils::BackendType::RTAUDIO);
 
     /**
      * @brief Destroys the Engine instance and cleans up resources
@@ -115,13 +105,25 @@ public:
     Engine& operator=(Engine&& other) noexcept;
 
     /**
-     * @brief Initializes the processing engine with specified stream settings
-     * @param stream_info Configuration for sample rate, buffer size, and channels
+     * @brief Initializes the processing engine
+     * @param sample_rate Audio sample rate in Hz
+     * @param buffer_size Size of audio processing buffer in frames
+     * @param num_out_channels Number of output channels
+     * @param num_in_channels Number of input channels
      *
-     * Sets up the stream manager, scheduler, buffer manager, and node graph manager.
-     * Must be called before Start().
+     * Configures the processing engine with the specified parameters.
+     * This method must be called before starting the engine.
      */
-    void Init(GlobalStreamInfo stream_info = GlobalStreamInfo { 48000, 512, 2 });
+    void Init(u_int32_t sample_rate = 48000u, u_int32_t buffer_size = 512u, u_int32_t num_out_channels = 2u, u_int32_t num_in_channels = 0u);
+
+    /**
+     * @brief Initializes the processing engine with a custom stream configuration
+     * @param streamInfo Configuration for sample rate, buffer size, and channels
+     *
+     * Configures the processing engine with the specified stream information.
+     * This method must be called before starting the engine.
+     */
+    void Init(const GlobalStreamInfo& streamInfo);
 
     /**
      * @brief Starts data processing
@@ -167,17 +169,19 @@ public:
      */
     inline GlobalStreamInfo& get_stream_info() { return m_stream_info; }
 
+    IAudioBackend* get_audio_backend() { return m_audiobackend.get(); }
+
     /**
      * @brief Gets the stream manager
      * @return Pointer to the Stream object
      */
-    inline const Stream* get_stream_manager() const { return m_Stream_manager.get(); }
+    inline const AudioStream* get_stream_manager() const { return m_audio_stream.get(); }
 
     /**
-     * @brief Gets the RtAudio context handle
-     * @return Pointer to the RtAudio object
+     * @brief Gets the device manager
+     * @return Pointer to the Device object
      */
-    RtAudio* get_handle() { return m_Context.get(); }
+    inline const AudioDevice* get_device_manager() const { return m_audio_device.get(); }
 
     //-------------------------------------------------------------------------
     // Component Access
@@ -325,9 +329,9 @@ private:
     // System Components
     //-------------------------------------------------------------------------
 
-    std::unique_ptr<RtAudio> m_Context; ///< RtAudio context
-    std::unique_ptr<Device> m_Device; ///< Device manager
-    std::unique_ptr<Stream> m_Stream_manager; ///< Stream manager
+    std::unique_ptr<IAudioBackend> m_audiobackend; ///< RtAudio context
+    std::unique_ptr<AudioDevice> m_audio_device; ///< Device manager
+    std::unique_ptr<AudioStream> m_audio_stream; ///< Stream manager
     GlobalStreamInfo m_stream_info; ///< Stream configuration
 
     bool m_is_paused; ///< Pause state flag

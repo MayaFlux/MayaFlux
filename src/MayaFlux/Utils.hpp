@@ -4,6 +4,10 @@
 
 namespace MayaFlux::Utils {
 
+enum BackendType {
+    RTAUDIO
+};
+
 enum NodeProcessType {
     OneSample,
     Filter,

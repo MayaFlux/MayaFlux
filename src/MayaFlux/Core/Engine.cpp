@@ -1,9 +1,7 @@
 #include "Engine.hpp"
-#include "Device.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
-#include "Stream.hpp"
 
 namespace MayaFlux::Core {
 
@@ -11,9 +9,9 @@ namespace MayaFlux::Core {
 // Initialization and Lifecycle
 //-------------------------------------------------------------------------
 
-Engine::Engine()
-    : m_Context(std::make_unique<RtAudio>())
-    , m_Device(std::make_unique<Device>(get_handle()))
+Engine::Engine(Utils::BackendType type)
+    : m_audiobackend(AudioBackendFactory::create_backend(type))
+    , m_audio_device(m_audiobackend->create_device_manager())
     , m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
     , m_is_paused(false)
 {
@@ -26,9 +24,9 @@ Engine::~Engine()
 }
 
 Engine::Engine(Engine&& other) noexcept
-    : m_Context(std::move(other.m_Context))
-    , m_Device(std::move(other.m_Device))
-    , m_Stream_manager(std::move(other.m_Stream_manager))
+    : m_audiobackend(std::move(other.m_audiobackend))
+    , m_audio_device(std::move(other.m_audio_device))
+    , m_audio_stream(std::move(other.m_audio_stream))
     , m_stream_info(other.m_stream_info)
     , m_rng(std::exchange(other.m_rng, nullptr))
     , m_is_paused(other.m_is_paused)
@@ -44,9 +42,9 @@ Engine& Engine::operator=(Engine&& other) noexcept
     if (this != &other) {
         End();
 
-        m_Context = std::move(other.m_Context);
-        m_Device = std::move(other.m_Device);
-        m_Stream_manager = std::move(other.m_Stream_manager);
+        m_audiobackend = std::move(other.m_audiobackend);
+        m_audio_device = std::move(other.m_audio_device);
+        m_audio_stream = std::move(other.m_audio_stream);
         m_stream_info = other.m_stream_info;
         delete m_rng;
         m_rng = std::exchange(other.m_rng, nullptr);
@@ -59,25 +57,65 @@ Engine& Engine::operator=(Engine&& other) noexcept
     return *this;
 }
 
-void Engine::Init(GlobalStreamInfo stream_info)
+void Engine::Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_out_channels, u_int32_t num_in_channels)
 {
-    m_stream_info = stream_info;
-    m_Stream_manager = std::make_unique<Stream>(m_Device->get_default_output_device(), this);
-    m_scheduler = std::make_shared<Vruta::TaskScheduler>(stream_info.sample_rate);
-    m_Buffer_manager = std::make_shared<Buffers::BufferManager>(stream_info.num_channels, stream_info.buffer_size);
+    GlobalStreamInfo streamInfo;
+    streamInfo.sample_rate = sample_rate;
+    streamInfo.buffer_size = buffer_size;
+    streamInfo.output.channels = num_out_channels;
+
+    if (num_in_channels > 0) {
+        streamInfo.input.enabled = true;
+        streamInfo.input.channels = num_in_channels;
+    } else {
+        streamInfo.input.enabled = false;
+    }
+
+    Init(streamInfo);
+}
+
+void Engine::Init(const GlobalStreamInfo& streamInfo)
+{
+    m_stream_info = streamInfo;
+
+    m_audio_stream = m_audiobackend->create_stream(
+        m_audio_device->get_default_output_device(),
+        m_stream_info,
+        this);
+
+    m_audio_stream->set_process_callback(
+        [this](void* output_buffer, void* input_buffer, unsigned int num_frames) -> int {
+            if (input_buffer && output_buffer) {
+                return this->process_audio(static_cast<double*>(input_buffer), static_cast<double*>(output_buffer), num_frames);
+            } else if (output_buffer) {
+                return this->process_output(static_cast<double*>(output_buffer), num_frames);
+            } else if (input_buffer) {
+                return this->process_input(static_cast<double*>(input_buffer), num_frames);
+            }
+            return 0;
+        });
+
+    m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
+    m_Buffer_manager = std::make_shared<Buffers::BufferManager>(
+        m_stream_info.output.channels,
+        m_stream_info.buffer_size);
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
 }
 
 void Engine::Start()
 {
-    m_Stream_manager->open();
-    m_Stream_manager->start();
+    if (!m_audio_stream) {
+        throw std::runtime_error("Cannot start stream: stream not initialized");
+    }
+
+    m_audio_stream->open();
+    m_audio_stream->start();
 }
 
 void Engine::Pause()
 {
-    if (m_Stream_manager && m_Stream_manager->is_running()) {
-        m_Stream_manager->stop();
+    if (m_audio_stream && m_audio_stream->is_running()) {
+        m_audio_stream->stop();
     } else {
         return;
     }
@@ -111,8 +149,8 @@ void Engine::Resume()
         }
     }
 
-    if (m_Stream_manager && !m_Stream_manager->is_running() && m_Stream_manager->is_open()) {
-        m_Stream_manager->start();
+    if (m_audio_stream && !m_audio_stream->is_running() && m_audio_stream->is_open()) {
+        m_audio_stream->start();
     }
 }
 
@@ -129,12 +167,19 @@ void Engine::End()
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-    if (m_Stream_manager) {
-        if (m_Stream_manager->is_running()) {
-            m_Stream_manager->stop();
-        }
-        if (m_Stream_manager->is_open()) {
-            m_Stream_manager->close();
+    if (m_audio_stream) {
+        try {
+            if (m_audio_stream->is_running()) {
+                m_audio_stream->stop();
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+
+            if (m_audio_stream->is_open()) {
+                m_audio_stream->close();
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Exception during audio stream shutdown: " << e.what() << std::endl;
         }
     }
 
@@ -146,7 +191,7 @@ void Engine::End()
     m_named_tasks.clear();
 
     if (m_Buffer_manager && m_node_graph_manager) {
-        for (unsigned int i = 0; i < m_stream_info.num_channels; i++) {
+        for (unsigned int i = 0; i < m_stream_info.output.channels; i++) {
             auto channel_buffer = m_Buffer_manager->get_channel(i);
             if (channel_buffer) {
                 channel_buffer->clear();
@@ -165,10 +210,10 @@ void Engine::End()
 
 bool Engine::is_running() const
 {
-    if (!m_Stream_manager) {
+    if (!m_audio_stream) {
         return false;
     }
-    return m_Stream_manager->is_running();
+    return m_audio_stream->is_running();
 }
 
 //-------------------------------------------------------------------------
@@ -188,7 +233,7 @@ int Engine::process_output(double* output_buffer, unsigned int num_frames)
 
     m_scheduler->process_buffer(num_frames);
 
-    unsigned int num_channels = m_stream_info.num_channels;
+    unsigned int num_channels = m_stream_info.output.channels;
 
     if (m_Buffer_manager->get_num_frames() < num_frames) {
         m_Buffer_manager->resize(num_frames);
