@@ -3,9 +3,7 @@
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
-#include "MayaFlux/Core/Device.hpp"
 #include "MayaFlux/Core/Engine.hpp"
-#include "MayaFlux/Core/Stream.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"

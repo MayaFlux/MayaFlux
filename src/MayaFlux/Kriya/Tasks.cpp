@@ -1,5 +1,6 @@
 #include "Tasks.hpp"
 #include "Awaiters.hpp"
+#include "MayaFlux/Nodes/Generators/Logic.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Kriya {
@@ -99,4 +100,90 @@ Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::
     }
 }
 
+Vruta::SoundRoutine Gate(
+    Vruta::TaskScheduler& scheduler,
+    std::function<void()> callback,
+    std::shared_ptr<Nodes::Generator::Logic> logic_node,
+    bool open)
+{
+    auto& promise_ref = co_await GetPromise {};
+
+    if (!logic_node) {
+        logic_node = std::make_shared<Nodes::Generator::Logic>(0.5);
+    }
+
+    if (open) {
+        logic_node->while_true([callback](const Nodes::NodeContext& ctx) {
+            callback();
+        });
+    } else {
+        logic_node->while_false([callback](const Nodes::NodeContext& ctx) {
+            callback();
+        });
+    }
+
+    while (true) {
+        if (promise_ref.should_terminate) {
+            break;
+        }
+
+        logic_node->process_sample(0.0);
+
+        co_await SampleDelay { 1 };
+    }
+}
+
+Vruta::SoundRoutine Trigger(
+    Vruta::TaskScheduler& scheduler,
+    bool target_state,
+    std::function<void()> callback,
+    std::shared_ptr<Nodes::Generator::Logic> logic_node)
+{
+    auto& promise_ref = co_await GetPromise {};
+
+    if (!logic_node) {
+        logic_node = std::make_shared<Nodes::Generator::Logic>(0.5);
+    }
+
+    logic_node->on_change_to([callback](const Nodes::NodeContext& ctx) {
+        callback();
+    },
+        target_state);
+
+    while (true) {
+        if (promise_ref.should_terminate) {
+            break;
+        }
+
+        logic_node->process_sample(0.0);
+
+        co_await SampleDelay { 1 };
+    }
+}
+
+Vruta::SoundRoutine Toggle(
+    Vruta::TaskScheduler& scheduler,
+    std::function<void()> callback,
+    std::shared_ptr<Nodes::Generator::Logic> logic_node)
+{
+    auto& promise_ref = co_await GetPromise {};
+
+    if (!logic_node) {
+        logic_node = std::make_shared<Nodes::Generator::Logic>(0.5);
+    }
+
+    logic_node->on_change([callback](const Nodes::NodeContext& ctx) {
+        callback();
+    });
+
+    while (true) {
+        if (promise_ref.should_terminate) {
+            break;
+        }
+
+        logic_node->process_sample(0.0);
+
+        co_await SampleDelay { 1 };
+    }
+}
 }

@@ -1,6 +1,7 @@
 #include "../test_config.h"
 #include "MayaFlux/Kriya/Chain.hpp"
 #include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/Nodes/Generators/Logic.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
@@ -403,6 +404,227 @@ TEST_F(TasksTest, SequenceTask)
     EXPECT_FALSE(scheduler->cancel_task(sequence_routine));
 }
 
+TEST_F(TasksTest, GateTask)
+{
+    bool gate_called = false;
+    int gate_count = 0;
+
+    auto custom_logic = std::make_shared<Nodes::Generator::Logic>([](double input) -> bool {
+        static int counter = 0;
+        return (counter++ / 10) % 2 == 0; // True for samples 0-9, false for 10-19, etc.
+    });
+
+    auto gate_routine = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Gate(*scheduler, [&]() {
+            gate_called = true;
+            gate_count++; }, custom_logic, true));
+
+    scheduler->add_task(gate_routine);
+
+    scheduler->process_buffer(10);
+    EXPECT_TRUE(gate_called);
+    EXPECT_EQ(gate_count, 10);
+
+    gate_count = 0;
+    gate_called = false;
+
+    scheduler->process_buffer(10);
+    EXPECT_FALSE(gate_called);
+    EXPECT_EQ(gate_count, 0);
+
+    scheduler->process_buffer(10);
+    EXPECT_TRUE(gate_called);
+    EXPECT_EQ(gate_count, 10);
+
+    EXPECT_TRUE(scheduler->cancel_task(gate_routine));
+}
+
+TEST_F(TasksTest, GateTaskWithDefaultLogic)
+{
+    bool gate_called = false;
+
+    auto gate_routine = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Gate(*scheduler, [&]() { gate_called = true; }, nullptr, true));
+
+    scheduler->add_task(gate_routine);
+
+    scheduler->process_buffer(5);
+    EXPECT_FALSE(gate_called);
+
+    EXPECT_TRUE(scheduler->cancel_task(gate_routine));
+}
+
+TEST_F(TasksTest, TriggerTask)
+{
+    bool rising_triggered = false;
+    bool falling_triggered = false;
+    int rising_count = 0;
+    int falling_count = 0;
+
+    auto toggle_logic = std::make_shared<Nodes::Generator::Logic>([](double input) -> bool {
+        static int counter = 0;
+        return (counter++ / 5) % 2 == 1; // False for 0-4, true for 5-9, false for 10-14, etc.
+    });
+
+    auto rising_routine = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Trigger(*scheduler, true, [&]() {
+            rising_triggered = true;
+            rising_count++; }, toggle_logic));
+
+    auto toggle_logic2 = std::make_shared<Nodes::Generator::Logic>([](double input) -> bool {
+        static int counter = 0;
+        return (counter++ / 5) % 2 == 1;
+    });
+
+    auto falling_routine = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Trigger(*scheduler, false, [&]() {
+            falling_triggered = true;
+            falling_count++; }, toggle_logic2));
+
+    scheduler->add_task(rising_routine);
+    scheduler->add_task(falling_routine);
+
+    scheduler->process_buffer(5);
+    EXPECT_FALSE(rising_triggered);
+    EXPECT_FALSE(falling_triggered);
+
+    scheduler->process_sample();
+    EXPECT_TRUE(rising_triggered);
+    EXPECT_FALSE(falling_triggered);
+    EXPECT_EQ(rising_count, 1);
+
+    rising_triggered = false;
+
+    scheduler->process_buffer(4);
+    EXPECT_FALSE(rising_triggered);
+
+    scheduler->process_sample();
+    EXPECT_FALSE(rising_triggered);
+    EXPECT_TRUE(falling_triggered);
+    EXPECT_EQ(falling_count, 1);
+
+    EXPECT_TRUE(scheduler->cancel_task(rising_routine));
+    EXPECT_TRUE(scheduler->cancel_task(falling_routine));
+}
+
+TEST_F(TasksTest, ToggleTask)
+{
+    bool toggle_called = false;
+    int toggle_count = 0;
+
+    auto flip_logic = std::make_shared<Nodes::Generator::Logic>([](double input) -> bool {
+        static int counter = 0;
+        return (counter++ / 3) % 2 == 1;
+    });
+
+    auto toggle_routine = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Toggle(*scheduler, [&]() {
+            toggle_called = true;
+            toggle_count++; }, flip_logic));
+
+    scheduler->add_task(toggle_routine);
+
+    scheduler->process_buffer(3);
+    EXPECT_FALSE(toggle_called);
+
+    scheduler->process_sample();
+    EXPECT_TRUE(toggle_called);
+    EXPECT_EQ(toggle_count, 1);
+
+    toggle_called = false;
+
+    scheduler->process_buffer(2);
+    EXPECT_FALSE(toggle_called);
+
+    scheduler->process_sample();
+    EXPECT_TRUE(toggle_called);
+    EXPECT_EQ(toggle_count, 2);
+
+    EXPECT_TRUE(scheduler->cancel_task(toggle_routine));
+}
+
+TEST_F(TasksTest, LogicTasksWithEdgeDetection)
+{
+    bool edge_detected = false;
+
+    auto edge_logic = std::make_shared<Nodes::Generator::Logic>(
+        Nodes::Generator::LogicOperator::EDGE, 0.0);
+    edge_logic->set_edge_detection(Nodes::Generator::EdgeType::BOTH, 0.0);
+
+    auto edge_routine = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Toggle(*scheduler, [&]() { edge_detected = true; }, edge_logic));
+
+    scheduler->add_task(edge_routine);
+
+    scheduler->process_buffer(10);
+
+    EXPECT_TRUE(scheduler->cancel_task(edge_routine));
+}
+
+TEST_F(TasksTest, LogicTasksWithHysteresis)
+{
+    bool state_changed = false;
+
+    auto hysteresis_logic = std::make_shared<Nodes::Generator::Logic>(0.5);
+    hysteresis_logic->set_hysteresis(0.2, 0.8);
+
+    auto hysteresis_routine = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Trigger(*scheduler, true, [&]() { state_changed = true; }, hysteresis_logic));
+
+    scheduler->add_task(hysteresis_routine);
+
+    scheduler->process_buffer(5);
+    EXPECT_FALSE(state_changed);
+
+    EXPECT_TRUE(scheduler->cancel_task(hysteresis_routine));
+}
+
+TEST_F(TasksTest, MultipleLogicTasks)
+{
+    bool gate1_active = false;
+    bool gate2_active = false;
+    bool any_change = false;
+
+    auto always_true = std::make_shared<Nodes::Generator::Logic>([](double) { return true; });
+    auto toggle_logic = std::make_shared<Nodes::Generator::Logic>([](double) {
+        static int count = 0;
+        return (count++ / 4) % 2 == 1;
+    });
+    auto change_detector = std::make_shared<Nodes::Generator::Logic>([](double) {
+        static int count = 0;
+        return (count++ / 6) % 2 == 1;
+    });
+
+    auto gate1 = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Gate(*scheduler, [&]() { gate1_active = true; }, always_true));
+
+    auto gate2 = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Gate(*scheduler, [&]() { gate2_active = true; }, toggle_logic));
+
+    auto change_task = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::Toggle(*scheduler, [&]() { any_change = true; }, change_detector));
+
+    scheduler->add_task(gate1);
+    scheduler->add_task(gate2);
+    scheduler->add_task(change_task);
+
+    scheduler->process_sample();
+
+    EXPECT_TRUE(gate1_active);
+    EXPECT_FALSE(gate2_active);
+    EXPECT_FALSE(any_change);
+
+    gate1_active = false;
+
+    scheduler->process_buffer(10);
+
+    EXPECT_TRUE(gate1_active);
+
+    EXPECT_TRUE(scheduler->cancel_task(gate1));
+    EXPECT_TRUE(scheduler->cancel_task(gate2));
+    EXPECT_TRUE(scheduler->cancel_task(change_task));
+}
+
 #define INTEGRATION_TEST ;
 
 #ifdef INTEGRATION_TEST
@@ -524,6 +746,32 @@ TEST_F(TasksTest, DACOperator)
 
     auto& root1 = MayaFlux::get_node_graph_manager()->get_root_node(1);
     EXPECT_EQ(root1.get_node_size(), 1);
+}
+
+TEST_F(TasksTest, LogicTasksIntegration)
+{
+    MayaFlux::Init();
+
+    AudioTestHelper::waitForAudio(100);
+    MayaFlux::Start();
+    AudioTestHelper::waitForAudio(100);
+
+    bool integration_triggered = false;
+
+    auto time_logic = std::make_shared<Nodes::Generator::Logic>(
+        [](double input, double time) -> bool {
+            return fmod(time, 1.0) > 0.5;
+        });
+
+    MayaFlux::schedule_task("integration_gate",
+        Kriya::Gate(*MayaFlux::get_scheduler(), [&]() { integration_triggered = true; }, time_logic));
+
+    AudioTestHelper::waitForAudio(600);
+    EXPECT_TRUE(integration_triggered);
+
+    EXPECT_TRUE(MayaFlux::cancel_task("integration_gate"));
+
+    MayaFlux::End();
 }
 #endif
 }

@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/Engine.hpp"
-#include "MayaFlux/Core/Stream.hpp"
 #include "MayaFlux/Kriya/Tasks.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"

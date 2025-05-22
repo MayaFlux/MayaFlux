@@ -43,6 +43,20 @@ enum class EdgeType {
     BOTH ///< Any state transition
 };
 
+/**
+ * @enum LogicEventType
+ * @brief Events that can trigger callbacks
+ */
+enum class LogicEventType {
+    TICK, // Every sample
+    CHANGE, // Any state change
+    TRUE, // Change to true
+    FALSE, // Change to false
+    WHILE_TRUE, // Every tick while true
+    WHILE_FALSE, // Every tick while false
+    CONDITIONAL // Custom condition
+};
+
 class LogicContext : public NodeContext {
 public:
     /**
@@ -417,6 +431,31 @@ public:
     void on_tick_if(NodeHook callback, NodeCondition condition) override;
 
     /**
+     * @brief Registers a callback that executes continuously while output is true
+     * @param callback Function to call on each tick when output is true (1.0)
+     */
+    void while_true(NodeHook callback);
+
+    /**
+     * @brief Registers a callback that executes continuously while output is false
+     * @param callback Function to call on each tick when output is false (0.0)
+     */
+    void while_false(NodeHook callback);
+
+    /**
+     * @brief Registers a callback for when output changes to a specific state
+     * @param callback Function to call when state changes to target_state
+     * @param target_state The state to detect (true for 1.0, false for 0.0)
+     */
+    void on_change_to(NodeHook callback, bool target_state);
+
+    /**
+     * @brief Registers a callback for any state change (true↔false)
+     * @param callback Function to call when output changes state
+     */
+    void on_change(NodeHook callback);
+
+    /**
      * @brief Removes a previously registered callback
      * @param callback The callback function to remove
      * @return True if the callback was found and removed, false otherwise
@@ -440,9 +479,10 @@ public:
      */
     inline void remove_all_hooks() override
     {
-        m_callbacks.clear();
-        m_conditional_callbacks.clear();
+        m_all_callbacks.clear();
     }
+
+    void remove_hooks_of_type(LogicEventType type);
 
     /**
      * @brief Marks the node as registered or unregistered for processing
@@ -507,6 +547,19 @@ public:
      */
     inline double get_last_output() override { return m_last_output; }
 
+    struct LogicCallback {
+        NodeHook callback;
+        LogicEventType event_type;
+        std::optional<NodeCondition> condition; // Only used for CONDITIONAL type
+
+        LogicCallback(NodeHook cb, LogicEventType type, std::optional<NodeCondition> cond = std::nullopt)
+            : callback(cb)
+            , event_type(type)
+            , condition(cond)
+        {
+        }
+    };
+
 protected:
     /**
      * @brief Creates a context object for callbacks
@@ -554,24 +607,25 @@ private:
     void add_input(double input, size_t index);
 
     /**
-     * @brief Collection of standard callback functions
+     * @brief Adds a callback to the list of all callbacks
+     * @param callback The callback function to add
+     * @param type The type of event to trigger the callback
+     * @param condition Optional condition for conditional callbacks
+     */
+    void add_callback(NodeHook callback, LogicEventType type, std::optional<NodeCondition> condition = std::nullopt)
+    {
+        m_all_callbacks.emplace_back(callback, type, condition);
+    }
+
+    /**
+     * @brief Collection of all callback functions
      *
      * Stores the registered callback functions that will be notified
      * whenever the oscillator produces a new sample. These callbacks
      * enable external components to monitor and react to the oscillator's
      * output without interrupting the generation process.
      */
-    std::vector<NodeHook> m_callbacks;
-
-    /**
-     * @brief Collection of conditional callback functions with their predicates
-     *
-     * Stores pairs of callback functions and their associated condition predicates.
-     * These callbacks are only invoked when their condition evaluates to true
-     * for a generated sample, enabling selective monitoring of specific
-     * waveform characteristics or sample values.
-     */
-    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
+    std::vector<LogicCallback> m_all_callbacks;
 
     /**
      * @brief Flag indicating whether this oscillator is registered with the node graph manager

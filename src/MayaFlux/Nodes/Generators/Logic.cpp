@@ -236,10 +236,10 @@ double Logic::process_sample(double input)
     }
 
     m_input = input;
-    m_last_output = result ? 1.0 : 0.0;
+    auto current = result ? 1.0 : 0.0;
+    notify_tick(current);
 
-    notify_tick(m_last_output);
-
+    m_last_output = current;
     return m_last_output;
 }
 
@@ -505,36 +505,112 @@ std::unique_ptr<NodeContext> Logic::create_context(double value)
 void Logic::notify_tick(double value)
 {
     auto context = create_context(value);
+    bool state_changed = (value != m_last_output);
 
-    for (auto& callback : m_callbacks) {
-        callback(*context);
-    }
+    for (const auto& cb : m_all_callbacks) {
+        bool should_call = false;
 
-    for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*context)) {
-            callback(*context);
+        switch (cb.event_type) {
+        case LogicEventType::TICK:
+            should_call = true;
+            break;
+
+        case LogicEventType::WHILE_TRUE:
+            should_call = value;
+            break;
+
+        case LogicEventType::WHILE_FALSE:
+            should_call = !value;
+            break;
+
+        case LogicEventType::CHANGE:
+            should_call = state_changed;
+            break;
+
+        case LogicEventType::TRUE:
+            should_call = state_changed && value;
+            break;
+
+        case LogicEventType::FALSE:
+            should_call = state_changed && !value;
+            break;
+
+        case LogicEventType::CONDITIONAL:
+            should_call = cb.condition && cb.condition.value()(*context);
+            break;
+        }
+
+        if (should_call) {
+            cb.callback(*context);
         }
     }
 }
 
 void Logic::on_tick(NodeHook callback)
 {
-    safe_add_callback(m_callbacks, callback);
+    add_callback(callback, LogicEventType::TICK);
 }
 
 void Logic::on_tick_if(NodeHook callback, NodeCondition condition)
 {
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
+    add_callback(callback, LogicEventType::CONDITIONAL, condition);
+}
+
+void Logic::while_true(NodeHook callback)
+{
+    add_callback(callback, LogicEventType::WHILE_TRUE);
+}
+
+void Logic::while_false(NodeHook callback)
+{
+    add_callback(callback, LogicEventType::WHILE_FALSE);
+}
+
+void Logic::on_change(NodeHook callback)
+{
+    add_callback(callback, LogicEventType::CHANGE);
+}
+
+void Logic::on_change_to(NodeHook callback, bool target_state)
+{
+    add_callback(callback, target_state ? LogicEventType::TRUE : LogicEventType::FALSE);
 }
 
 bool Logic::remove_hook(const NodeHook& callback)
 {
-    return safe_remove_callback(m_callbacks, callback);
+    auto it = std::remove_if(m_all_callbacks.begin(), m_all_callbacks.end(),
+        [&callback](const LogicCallback& cb) {
+            return cb.callback.target_type() == callback.target_type();
+        });
+
+    if (it != m_all_callbacks.end()) {
+        m_all_callbacks.erase(it, m_all_callbacks.end());
+        return true;
+    }
+    return false;
 }
 
 bool Logic::remove_conditional_hook(const NodeCondition& callback)
 {
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
+    auto it = std::remove_if(m_all_callbacks.begin(), m_all_callbacks.end(),
+        [&callback](const LogicCallback& cb) {
+            return cb.event_type == LogicEventType::CONDITIONAL && cb.condition && cb.condition->target_type() == callback.target_type();
+        });
+
+    if (it != m_all_callbacks.end()) {
+        m_all_callbacks.erase(it, m_all_callbacks.end());
+        return true;
+    }
+    return false;
+}
+
+void Logic::remove_hooks_of_type(LogicEventType type)
+{
+    auto it = std::remove_if(m_all_callbacks.begin(), m_all_callbacks.end(),
+        [type](const LogicCallback& cb) {
+            return cb.event_type == type;
+        });
+    m_all_callbacks.erase(it, m_all_callbacks.end());
 }
 
 void Logic::reset_processed_state()
