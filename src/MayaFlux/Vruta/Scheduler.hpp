@@ -149,6 +149,12 @@ public:
      */
     bool cancel_task(std::shared_ptr<SoundRoutine> task);
 
+    /**
+     * @brief Generates a unique task ID for new tasks
+     * @return A unique task ID
+     */
+    const u_int64_t get_next_task_id() const;
+
 private:
     /**
      * @brief The master sample clock for the processing engine

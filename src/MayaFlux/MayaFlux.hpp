@@ -241,23 +241,45 @@ double get_poisson_random(double start = 0, double end = 1);
 //-------------------------------------------------------------------------
 
 /**
- * @brief Creates a metronome task that calls a function at regular intervals
+ * @brief Creates a simple task that calls a function at a specified interval
  * @param interval_seconds Time between calls in seconds
  * @param callback Function to call on each tick
- * @return SoundRoutine object representing the scheduled task
+ * This is conceptually similar to Metronomes in PureData and MaxMSP
+ */
+Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback);
+
+/**
+ * @brief Creates a metronome task and addes it to the default scheduler list for evaluation
+ * @param interval_seconds Time between calls in seconds
+ * @param callback Function to call on each tick
+ * @param name Name of the metronome task (optional but recommended).
+     If not provided, a default name will be generated.
  *
  * Uses the task scheduler from the default engine.
  */
-Vruta::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback);
+void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name = "");
 
 /**
  * @brief Creates a sequence task that calls functions at specified times
  * @param sequence Vector of (time, function) pairs
+ * @param name Name of the metronome task (optional but recommended).
+     If not provided, a default name will be generated.
  * @return SoundRoutine object representing the scheduled task
  *
  * Uses the task scheduler from the default engine.
  */
-Vruta::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
+Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
+
+/**
+ * @brief Creates a sequence task that calls functions at specified times
+ * and addes it to the default scheduler list for evaluation
+ * @param sequence Vector of (time, function) pairs
+ * @param name Name of the metronome task (optional but recommended).
+     If not provided, a default name will be generated.
+ *
+ * Uses the task scheduler from the default engine.
+ */
+void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence, std::string name = "");
 
 /**
  * @brief Creates a line generator that interpolates between values over time
@@ -281,7 +303,20 @@ Vruta::SoundRoutine create_line(float start_value, float end_value, float durati
  *
  * Uses the task scheduler from the default engine.
  */
-Vruta::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+Vruta::SoundRoutine create_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+
+/**
+ * @brief Schedules a pattern generator that produces values based on a pattern function
+ * and addes it to the default scheduler list for evaluation
+ * @param pattern_func Function that generates pattern values based on step index
+ * @param callback Function to call with each pattern value
+ * @param interval_seconds Time between pattern steps
+ * @param name Name of the metronome task (optional but recommended).
+     If not provided, a default name will be generated.
+ *
+ * Uses the task scheduler from the default engine.
+ */
+void schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "");
 
 /**
  * @brief Gets a pointer to a task's current value

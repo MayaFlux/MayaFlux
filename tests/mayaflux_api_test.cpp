@@ -162,7 +162,7 @@ TEST_F(MayaFluxAPITest, TaskScheduling)
     AudioTestHelper::waitForAudio(100);
 
     int metro_count = 0;
-    auto metro_task = MayaFlux::schedule_metro(0.01, [&metro_count]() {
+    auto metro_task = MayaFlux::create_metro(0.01, [&metro_count]() {
         metro_count++;
     });
 
@@ -198,7 +198,7 @@ TEST_F(MayaFluxAPITest, TaskScheduling)
     }
 
     std::vector<int> pattern_values;
-    auto pattern_task = MayaFlux::schedule_pattern(
+    auto pattern_task = MayaFlux::create_pattern(
         [](uint64_t idx) -> std::any { return static_cast<int>(idx); },
         [&pattern_values](std::any value) {
             pattern_values.push_back(std::any_cast<int>(value));
@@ -215,7 +215,7 @@ TEST_F(MayaFluxAPITest, TaskScheduling)
     }
 
     std::vector<int> seq_order;
-    auto seq_task = MayaFlux::schedule_sequence({ { 0.0, [&seq_order]() { seq_order.push_back(1); } },
+    auto seq_task = MayaFlux::create_sequence({ { 0.0, [&seq_order]() { seq_order.push_back(1); } },
         { 0.01, [&seq_order]() { seq_order.push_back(2); } },
         { 0.01, [&seq_order]() { seq_order.push_back(3); } } });
 
@@ -230,6 +230,47 @@ TEST_F(MayaFluxAPITest, TaskScheduling)
     EXPECT_EQ(seq_order[0], 1);
     EXPECT_EQ(seq_order[1], 2);
     EXPECT_EQ(seq_order[2], 3);
+
+    MayaFlux::End();
+}
+
+TEST_F(MayaFluxAPITest, DirectSchedulingFunctions)
+{
+    MayaFlux::Start();
+    AudioTestHelper::waitForAudio(100);
+
+    int metro_count = 0;
+    MayaFlux::schedule_metro(0.01, [&metro_count]() { metro_count++; }, "direct_metro");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    EXPECT_GE(metro_count, 1);
+    EXPECT_TRUE(MayaFlux::cancel_task("direct_metro"));
+
+    std::vector<int> pattern_values;
+    MayaFlux::schedule_pattern([](uint64_t index) -> std::any { return static_cast<int>(index * 2); },
+        [&pattern_values](std::any value) { pattern_values.push_back(std::any_cast<int>(value)); },
+        0.01, "direct_pattern");
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    EXPECT_GE(pattern_values.size(), 2);
+    for (size_t i = 1; i < pattern_values.size(); i++) {
+        EXPECT_EQ(pattern_values[i], pattern_values[i - 1] + 2);
+    }
+    EXPECT_TRUE(MayaFlux::cancel_task("direct_pattern"));
+
+    std::vector<int> seq_values;
+    MayaFlux::schedule_sequence({ { 0.0, [&seq_values]() { seq_values.push_back(10); } },
+                                    { 0.01, [&seq_values]() { seq_values.push_back(20); } },
+                                    { 0.01, [&seq_values]() { seq_values.push_back(30); } } },
+        "direct_sequence");
+
+    EXPECT_EQ(seq_values.size(), 1);
+    EXPECT_EQ(seq_values[0], 10);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    EXPECT_EQ(seq_values.size(), 3);
+    EXPECT_EQ(seq_values[1], 20);
+    EXPECT_EQ(seq_values[2], 30);
 
     MayaFlux::End();
 }

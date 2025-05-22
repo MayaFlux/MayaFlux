@@ -204,14 +204,35 @@ bool update_task_params(const std::string& name, Args... args)
     return get_context().update_task_params(name, args...);
 }
 
-Vruta::SoundRoutine schedule_metro(double interval_seconds, std::function<void()> callback)
+Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback)
 {
     return Kriya::metro(*get_scheduler(), interval_seconds, callback);
 }
 
-Vruta::SoundRoutine schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
+void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name)
+{
+    auto scheduler = get_scheduler();
+    if (name.empty()) {
+        name = "metro_" + std::to_string(scheduler->get_next_task_id());
+    }
+    auto metronome = Kriya::metro(*scheduler, interval_seconds, callback);
+
+    get_context().schedule_task(name, std::move(metronome), false);
+}
+
+Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
 {
     return Kriya::sequence(*get_scheduler(), seq);
+}
+
+void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name)
+{
+    auto scheduler = get_scheduler();
+    if (name.empty()) {
+        name = "seq_" + std::to_string(scheduler->get_next_task_id());
+    }
+    auto tseq = Kriya::sequence(*scheduler, seq);
+    get_context().schedule_task(name, std::move(tseq), false);
 }
 
 Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
@@ -219,9 +240,19 @@ Vruta::SoundRoutine create_line(float start_value, float end_value, float durati
     return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
 }
 
-Vruta::SoundRoutine schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
+Vruta::SoundRoutine create_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
 {
     return Kriya::pattern(*get_scheduler(), pattern_func, callback, interval_seconds);
+}
+
+void schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name)
+{
+    auto scheduler = get_scheduler();
+    if (name.empty()) {
+        name = "pattern_" + std::to_string(scheduler->get_next_task_id());
+    }
+    auto pattern = Kriya::pattern(*scheduler, pattern_func, callback, interval_seconds);
+    get_context().schedule_task(name, std::move(pattern), false);
 }
 
 float* get_line_value(const std::string& name)

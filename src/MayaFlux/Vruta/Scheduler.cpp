@@ -63,4 +63,12 @@ bool TaskScheduler::cancel_task(std::shared_ptr<SoundRoutine> task)
     }
     return false;
 }
+
+const u_int64_t TaskScheduler::get_next_task_id() const
+{
+    if (m_tasks.size()) {
+        return m_tasks.size() + 1;
+    }
+    return 1;
+}
 }
