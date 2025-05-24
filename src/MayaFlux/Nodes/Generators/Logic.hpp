@@ -360,6 +360,14 @@ public:
     void set_initial_conditions(const std::vector<bool>& initial_values);
 
     /**
+     * @brief Sets the input node to generate logic values from
+     * @param input_node Node providing the input values
+     *
+     * Configures the node to receive input from another node
+     */
+    inline void set_input_node(std::shared_ptr<Node> input_node) { m_input_node = input_node; }
+
+    /**
      * @brief Gets the current computational model
      * @return Current logic mode
      */
@@ -619,10 +627,11 @@ private:
     EdgeType m_edge_type; ///< Type of edge to detect
     bool m_edge_detected; ///< Whether an edge was detected in the last processing
     double m_last_output; ///< Most recent output value
-    bool m_hysteresis_state; // State for hysteresis operator
-    double m_temporal_time; // Time tracking for temporal mode
+    bool m_hysteresis_state; ///< State for hysteresis operator
+    double m_temporal_time; ///< Time tracking for temporal mode
     std::vector<double> m_input_buffer; // Buffer for multi-input mode
-    double m_input; // Current input value for multi-input mode
+    double m_input; ///< Current input value for multi-input mode
+    std::shared_ptr<Node> m_input_node; ///< Input node for processing
 
     // Helper method for multi-input mode
     void add_input(double input, size_t index);

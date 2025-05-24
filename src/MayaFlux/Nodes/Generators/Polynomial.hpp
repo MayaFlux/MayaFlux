@@ -215,6 +215,14 @@ public:
     void set_initial_conditions(const std::vector<double>& initial_values);
 
     /**
+     * @brief Sets the input node to generate polynomial values from
+     * @param input_node Node providing the input values
+     *
+     * Configures the node to receive input from another node
+     */
+    inline void set_input_node(std::shared_ptr<Node> input_node) { m_input_node = input_node; }
+
+    /**
      * @brief Gets the current polynomial mode
      * @return Current polynomial mode
      */
@@ -444,6 +452,7 @@ private:
     size_t m_buffer_size; ///< Maximum size of the buffers
     double m_last_output; ///< Most recent output value
     double m_scale_factor; ///< Scaling factor for output
+    std::shared_ptr<Node> m_input_node; ///< Input node for processing
 
     /**
      * @brief Collection of standard callback functions

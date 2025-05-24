@@ -44,6 +44,15 @@ double Polynomial::process_sample(double input)
 {
     double result = 0.0;
 
+    if (m_input_node) {
+        if (!m_input_node->is_processed()) {
+            input = m_input_node->process_sample(input);
+            m_input_node->mark_processed(true);
+        } else {
+            input += m_input_node->get_last_output();
+        }
+    }
+
     switch (m_mode) {
     case PolynomialMode::DIRECT:
         result = m_direct_function(input);

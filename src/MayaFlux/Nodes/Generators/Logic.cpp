@@ -147,6 +147,15 @@ double Logic::process_sample(double input)
     bool result = false;
     m_edge_detected = false;
 
+    if (m_input_node) {
+        if (!m_input_node->is_processed()) {
+            input = m_input_node->process_sample(input);
+            m_input_node->mark_processed(true);
+        } else {
+            input += m_input_node->get_last_output();
+        }
+    }
+
     bool current_bool = input > m_threshold;
     bool previous_bool = m_last_output > 0.5;
 
