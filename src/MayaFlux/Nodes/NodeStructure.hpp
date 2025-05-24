@@ -72,6 +72,8 @@ private:
      * node's process() method is called.
      */
     std::vector<std::shared_ptr<Node>> m_Nodes;
+
+    std::mutex m_mutex;
 };
 
 /**

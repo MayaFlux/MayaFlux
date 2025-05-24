@@ -1,4 +1,5 @@
 #include "NodeOperators.hpp"
+#include "Generators/Generator.hpp"
 #include "NodeStructure.hpp"
 
 namespace MayaFlux::Nodes {
@@ -23,4 +24,15 @@ std::shared_ptr<Node> operator*(std::shared_ptr<Node> lhs, std::shared_ptr<Node>
     result->initialize();
     return result;
 }
+
+void operator*(std::shared_ptr<Node> node, double value)
+{
+    if (auto gen = std::dynamic_pointer_cast<Generator::Generator>(node)) {
+        gen->set_amplitude(value);
+    } else {
+        std::cerr << "Error: Cannot multiply non-generator node by a scalar\n."
+                  << "Either use one of the set_[params] methods, or use the appropriate node to create BinaryOpNode" << std::endl;
+    }
+}
+
 }

@@ -6,7 +6,11 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
     : m_mode(PolynomialMode::DIRECT)
     , m_coefficients(coefficients)
     , m_buffer_size(0)
+    , m_is_registered(false)
+    , m_is_processed(false)
+    , m_mock_process(false)
     , m_last_output(0.0)
+    , m_scale_factor(1.f)
 {
 }
 
@@ -14,7 +18,11 @@ Polynomial::Polynomial(DirectFunction function)
     : m_mode(PolynomialMode::DIRECT)
     , m_direct_function(function)
     , m_buffer_size(0)
+    , m_is_registered(false)
+    , m_is_processed(false)
+    , m_mock_process(false)
     , m_last_output(0.0)
+    , m_scale_factor(1.f)
 {
 }
 
@@ -22,7 +30,11 @@ Polynomial::Polynomial(BufferFunction function, PolynomialMode mode, size_t buff
     : m_mode(mode)
     , m_buffer_function(function)
     , m_buffer_size(buffer_size)
+    , m_is_registered(false)
+    , m_is_processed(false)
+    , m_mock_process(false)
     , m_last_output(0.0)
+    , m_scale_factor(1.f)
 {
     m_input_buffer.resize(buffer_size, 0.0);
     m_output_buffer.resize(buffer_size, 0.0);
@@ -72,6 +84,8 @@ double Polynomial::process_sample(double input)
         }
         break;
     }
+
+    result *= m_scale_factor;
 
     m_last_output = result;
     notify_tick(result);

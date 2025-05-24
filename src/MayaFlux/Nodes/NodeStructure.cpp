@@ -1,4 +1,5 @@
 #include "NodeStructure.hpp"
+#include "Generators/Generator.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 
 namespace MayaFlux::Nodes {
@@ -35,7 +36,14 @@ std::vector<double> RootNode::process(unsigned int num_samples)
         double sample = 0.f;
 
         for (auto& node : m_Nodes) {
-            sample += node->process_sample(0.f);
+            std::lock_guard<std::mutex> lock(m_mutex);
+
+            auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
+            if (generator && generator->should_mock_process()) {
+                generator->process_sample(0.f);
+            } else {
+                sample += node->process_sample(0.f);
+            }
             node->mark_processed(true);
         }
         output[i] = sample;

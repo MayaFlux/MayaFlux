@@ -12,6 +12,7 @@ Sine::Sine(float frequency, float amplitude, float offset)
     , m_amplitude_modulator(nullptr)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
 {
     update_phase_increment(frequency);
 }
@@ -25,6 +26,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, float amp
     , m_amplitude_modulator(nullptr)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
 {
     update_phase_increment(frequency);
 }
@@ -38,6 +40,7 @@ Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amp
     , m_amplitude_modulator(amplitude_modulator)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
 {
     update_phase_increment(frequency);
 }
@@ -51,6 +54,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> ampl
     , m_amplitude_modulator(amplitude_modulator)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
 {
     update_phase_increment(frequency);
 }

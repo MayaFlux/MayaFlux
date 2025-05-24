@@ -11,6 +11,8 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
     , m_type(type)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
+    , m_last_output(0.0)
 {
 }
 

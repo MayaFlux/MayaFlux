@@ -525,6 +525,6 @@ void connect_nodes(std::shared_ptr<Nodes::Node> source, std::shared_ptr<Nodes::N
  * The root node is the top-level node in the processing hierarchy for a channel.
  * Uses the default engine's node graph manager.
  */
-Nodes::RootNode get_root_node(u_int32_t channel = 0);
+Nodes::RootNode& get_root_node(u_int32_t channel = 0);
 
 }

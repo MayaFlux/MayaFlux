@@ -58,4 +58,19 @@ std::shared_ptr<Node> operator+(std::shared_ptr<Node> lhs, std::shared_ptr<Node>
  * and returns the product of their outputs.
  */
 std::shared_ptr<Node> operator*(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
+
+/**
+ * @brief Sets the generator's amplitude
+ * @param node Generator node to modify
+ * @param value New amplitude value
+ *
+ * This operator allows setting the generator's amplitude using
+ * a more intuitive syntax, such as:
+ *
+ * ```cpp
+ * auto generator = std::make_shared<Sine>(440, 1, 0);
+ * generator * 0.5; // Halves the amplitude
+ * ```
+ */
+void operator*(std::shared_ptr<Node> node, double value);
 }

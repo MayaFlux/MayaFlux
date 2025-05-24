@@ -408,6 +408,11 @@ public:
     EdgeType get_edge_type() const { return m_edge_type; }
 
     /**
+     * @brief Sets the amplitude (not applicable for logic nodes)
+     */
+    inline void set_amplitude(double amplitude) override { }
+
+    /**
      * @brief Prints a visual representation of the logic function
      */
     inline void printGraph() override { }
@@ -537,6 +542,22 @@ public:
     inline bool is_processed() const override { return m_is_processed; }
 
     /**
+     * @brief Allows RootNode to process the Generator without using the processed sample
+     * @param bMock_process True to mock process, false to process normally
+     *
+     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
+     * This is ONLY used by the RootNode when processing the node graph.
+     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
+     */
+    inline void enable_mock_process(bool mock_process) override { m_mock_process = mock_process; }
+
+    /**
+     * @brief Checks if the node should mock process
+     * @return True if the node should mock process, false otherwise
+     */
+    inline bool should_mock_process() const override { return m_mock_process; }
+
+    /**
      * @brief Retrieves the most recent output value produced by the oscillator
      * @return The last generated sine wave sample
      *
@@ -644,6 +665,16 @@ private:
      * oscillators with multiple outgoing connections.
      */
     bool m_is_processed;
+
+    /**
+     * @brief Flag indicating whether this oscillator should mock process
+     *
+     * This flag is used by the processing system to determine whether the oscillator
+     * should actually process or just mock process. This is useful for when the
+     * oscillator is being used as a modulator for another node, but the output
+     * of the oscillator is not needed.
+     */
+    bool m_mock_process;
 };
 
 } // namespace MayaFlux::Nodes::Generator

@@ -366,7 +366,7 @@ void connect_nodes(std::shared_ptr<Nodes::Node> source, std::shared_ptr<Nodes::N
     source >> target;
 }
 
-Nodes::RootNode get_root_node(u_int32_t channel)
+Nodes::RootNode& get_root_node(u_int32_t channel)
 {
     return get_node_graph_manager()->get_root_node(channel);
 }

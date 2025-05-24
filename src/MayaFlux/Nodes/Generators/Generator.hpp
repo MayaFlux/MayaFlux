@@ -100,6 +100,35 @@ public:
     virtual ~Generator() = default;
 
     /**
+     * @brief Sets the generator's amplitude
+     * @param amplitude New amplitude value
+     *
+     * This method should update the generator's amplitude setting,
+     * which controls the overall scaling of the generated values.
+     */
+    virtual void set_amplitude(double amplitude) = 0;
+
+    /**
+     * @brief Allows RootNode to process the Generator without using the processed sample
+     * @param bMock_process True to mock process, false to process normally
+     *
+     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
+     * This is ONLY used by the RootNode when processing the node graph.
+     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
+     *
+     * Calling process manually can be cumbersome. Using a coroutine just to call process
+     * is overkill. This method allows the RootNode to process the Generator without
+     * using the processed sample, which is useful for mocking processing.
+     */
+    virtual void enable_mock_process(bool bMock_process) = 0;
+
+    /**
+     * @brief Checks if the generator should mock process
+     * @return True if the generator should mock process, false otherwise
+     */
+    virtual bool should_mock_process() const = 0;
+
+    /**
      * @brief Prints a visual representation of the generated pattern
      *
      * This method should output a visual representation of the

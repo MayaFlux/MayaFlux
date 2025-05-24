@@ -12,6 +12,7 @@ Impulse::Impulse(float frequency, float amplitude, float offset, bool bAuto_regi
     , m_amplitude_modulator(nullptr)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
     , m_last_output(0.0)
     , m_impulse_occurred(false)
 {
@@ -27,6 +28,7 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, float frequency, flo
     , m_amplitude_modulator(nullptr)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
     , m_last_output(0.0)
     , m_impulse_occurred(false)
 {
@@ -42,6 +44,7 @@ Impulse::Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, flo
     , m_amplitude_modulator(amplitude_modulator)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
     , m_last_output(0.0)
     , m_impulse_occurred(false)
 {
@@ -58,6 +61,7 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node
     , m_amplitude_modulator(amplitude_modulator)
     , m_is_registered(false)
     , m_is_processed(false)
+    , m_mock_process(false)
     , m_last_output(0.0)
     , m_impulse_occurred(false)
 {
