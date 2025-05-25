@@ -6,21 +6,16 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
     : m_mode(PolynomialMode::DIRECT)
     , m_coefficients(coefficients)
     , m_buffer_size(0)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
-    , m_scale_factor(1.f)
+    , m_scale_factor((m_state = { Utils::MF_NodeState::MFOP_INVALID },1.f))
 {
+   
 }
 
 Polynomial::Polynomial(DirectFunction function)
     : m_mode(PolynomialMode::DIRECT)
     , m_direct_function(function)
     , m_buffer_size(0)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
     , m_scale_factor(1.f)
 {
@@ -30,9 +25,6 @@ Polynomial::Polynomial(BufferFunction function, PolynomialMode mode, size_t buff
     : m_mode(mode)
     , m_buffer_function(function)
     , m_buffer_size(buffer_size)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
     , m_scale_factor(1.f)
 {
@@ -47,14 +39,14 @@ double Polynomial::process_sample(double input)
 
     if (m_input_node) {
 
-        auto state = m_input_node->GetState().load();
+        auto state = m_input_node->m_state.load();
 
         if (! (state & Utils::MF_NodeState::MFOP_IS_PROCESSING) ) {
 
             input = m_input_node->process_sample(input);
 
             state = static_cast<Utils::MF_NodeState>( state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
-            AtomicSetFlagStrong(m_input_node->GetState(), state);
+            AtomicSetFlagStrong(m_input_node->m_state, state);
 
         } else {
             input += m_input_node->get_last_output();

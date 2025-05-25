@@ -15,7 +15,7 @@ Phasor::Phasor(float frequency, float amplitude, float offset, bool bAuto_regist
     , m_mock_process(false)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed(false)
+    , m_threshold_crossed((m_state = { Utils::MF_NodeState::MFOP_INVALID },false))
 {
     update_phase_increment(frequency);
 }
@@ -32,7 +32,7 @@ Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, float
     , m_mock_process(false)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed(false)
+    , m_threshold_crossed((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
 {
     update_phase_increment(frequency);
 }
@@ -49,7 +49,7 @@ Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, float
     , m_mock_process(false)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed(false)
+    , m_threshold_crossed((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
 {
     update_phase_increment(frequency);
 }
@@ -67,7 +67,7 @@ Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> 
     , m_mock_process(false)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed(false)
+    , m_threshold_crossed((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
 {
     update_phase_increment(frequency);
 }

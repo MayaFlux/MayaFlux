@@ -12,7 +12,7 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
     , m_is_registered(false)
     , m_is_processed(false)
     , m_mock_process(false)
-    , m_last_output(0.0)
+    , m_last_output((m_state = {Utils::MF_NodeState::MFOP_INVALID},0.0))
 {
 }
 

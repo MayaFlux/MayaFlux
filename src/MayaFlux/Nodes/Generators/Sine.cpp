@@ -12,7 +12,7 @@ Sine::Sine(float frequency, float amplitude, float offset)
     , m_amplitude_modulator(nullptr)
     , m_is_registered(false)
     , m_is_processed(false)
-    , m_mock_process(false)
+    , m_mock_process((m_state = { Utils::MF_NodeState::MFOP_INVALID },false))
 {
     update_phase_increment(frequency);
 }
@@ -26,7 +26,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, float amp
     , m_amplitude_modulator(nullptr)
     , m_is_registered(false)
     , m_is_processed(false)
-    , m_mock_process(false)
+    , m_mock_process((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
 {
     update_phase_increment(frequency);
 }
@@ -40,7 +40,7 @@ Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amp
     , m_amplitude_modulator(amplitude_modulator)
     , m_is_registered(false)
     , m_is_processed(false)
-    , m_mock_process(false)
+    , m_mock_process((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
 {
     update_phase_increment(frequency);
 }
@@ -54,7 +54,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> ampl
     , m_amplitude_modulator(amplitude_modulator)
     , m_is_registered(false)
     , m_is_processed(false)
-    , m_mock_process(false)
+    , m_mock_process((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
 {
     update_phase_increment(frequency);
 }
@@ -96,7 +96,7 @@ double Sine::process_sample(double input)
 {
     if (m_frequency_modulator) {
 
-        auto state = m_frequency_modulator->GetState().load();
+        auto state = m_frequency_modulator->m_state.load();
 
 
         double current_freq = m_frequency;
@@ -109,7 +109,7 @@ double Sine::process_sample(double input)
         {
             current_freq += m_frequency_modulator->process_sample(0.f);
             state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
-            AtomicSetFlagStrong(m_frequency_modulator->GetState(), state);
+            AtomicSetFlagStrong(m_frequency_modulator->m_state, state);
 
         }
         update_phase_increment(current_freq);
@@ -127,7 +127,7 @@ double Sine::process_sample(double input)
     float current_amplitude = m_amplitude;
     if (m_amplitude_modulator) 
     {
-        auto state = m_amplitude_modulator->GetState().load();
+        auto state = m_amplitude_modulator->m_state.load();
 
         if (state & Utils::MF_NodeState::MFOP_IS_PROCESSING)
         {
@@ -137,7 +137,7 @@ double Sine::process_sample(double input)
         {
             current_amplitude += m_amplitude_modulator->process_sample(0.f);
             state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
-            AtomicSetFlagStrong(m_amplitude_modulator->GetState(), state);
+            AtomicSetFlagStrong(m_amplitude_modulator->m_state, state);
         }
     }
     current_sample *= current_amplitude;

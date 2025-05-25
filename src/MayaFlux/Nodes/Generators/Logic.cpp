@@ -23,7 +23,7 @@ Logic::Logic(double threshold)
     , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.0)
+    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID },0.0))
 {
     m_direct_function = [this](double input) {
         return input > m_threshold;
@@ -46,7 +46,7 @@ Logic::Logic(LogicOperator op, double threshold)
     , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.0)
+    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
 {
     set_operator(op);
 }
@@ -68,7 +68,7 @@ Logic::Logic(DirectFunction function)
     , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.0)
+    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
 {
 }
 
@@ -89,7 +89,7 @@ Logic::Logic(MultiInputFunction function, size_t input_count)
     , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.0)
+    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
 {
     m_input_buffer.resize(input_count, 0.0);
 }
@@ -111,7 +111,7 @@ Logic::Logic(SequentialFunction function, size_t history_size)
     , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.0)
+    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
 {
     // Initialize history buffer with false values
     m_history.assign(history_size, false);
@@ -134,7 +134,7 @@ Logic::Logic(TemporalFunction function)
     , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.0)
+    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
 {
 }
 
@@ -149,14 +149,14 @@ double Logic::process_sample(double input)
 
     if (m_input_node) {
 
-        auto state = m_input_node->GetState().load();
+        auto state = m_input_node->m_state.load();
 
         if (!(state & Utils::MF_NodeState::MFOP_IS_PROCESSING)) {
 
             input = m_input_node->process_sample(input);
 
             state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
-            AtomicSetFlagStrong(m_input_node->GetState(), state);
+            AtomicSetFlagStrong(m_input_node->m_state, state);
 
         }
         else {

@@ -423,24 +423,6 @@ private:
     std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
 
     /**
-     * @brief Flag indicating whether this oscillator is registered with the node graph manager
-     *
-     * When true, the oscillator is part of the active processing graph and will be
-     * included in the processing cycle. When false, it may be excluded from processing
-     * to save computational resources.
-     */
-    bool m_is_registered;
-
-    /**
-     * @brief Flag indicating whether this oscillator has been processed in the current cycle
-     *
-     * This flag is used by the processing system to track which nodes have already
-     * been processed in the current cycle, preventing redundant processing of
-     * oscillators with multiple outgoing connections.
-     */
-    bool m_is_processed;
-
-    /**
      * @brief Flag indicating whether this oscillator should mock process
      *
      * This flag is used by the processing system to determine whether the oscillator

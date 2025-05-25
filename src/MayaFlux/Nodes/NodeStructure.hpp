@@ -311,8 +311,8 @@ private:
 public:
     inline bool is_initialized() const
     {
-        auto sState = m_Source->GetStateConst().load();
-        auto tState = m_Target->GetStateConst().load();
+        auto sState = m_Source->m_state.load();
+        auto tState = m_Target->m_state.load();
 
         bool is_source_registered = m_Source ? (sState & Utils::MF_NodeState::MFOP_ACTIVE) : false;
         bool is_target_registered = m_Target ? (tState & Utils::MF_NodeState::MFOP_ACTIVE) : false;
@@ -638,7 +638,7 @@ private:
 public:
     inline bool is_initialized() const
     {
-        auto state = m_lhs->GetStateConst().load();
+        auto state = m_lhs->m_state.load();
         bool is_lhs_registered = m_lhs ? (state&Utils::MF_NodeState::MFOP_ACTIVE) : false;
         bool is_rhs_registered = m_rhs ? (state & Utils::MF_NodeState::MFOP_ACTIVE) : false;
         return !is_lhs_registered && !is_rhs_registered && m_is_registered;

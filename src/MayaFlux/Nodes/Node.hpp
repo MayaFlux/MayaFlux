@@ -107,8 +107,9 @@ protected:
  * and batch processing for more efficient offline processing.
  */
 class Node {
-
+   
 public:
+
     /**
      * @brief Virtual destructor for proper cleanup of derived classes
      */
@@ -239,8 +240,8 @@ public:
      */
     virtual double get_last_output() = 0;
 
-    std::atomic<Utils::MF_NodeState>& GetState() { return m_state; };
-    const std::atomic<Utils::MF_NodeState>& GetStateConst() { return m_state; };
+    //std::atomic<Utils::MF_NodeState>& GetState() { return m_state; };
+    //const std::atomic<Utils::MF_NodeState>& GetStateConst() { return m_state; };
     
 protected:
     /**
@@ -290,7 +291,9 @@ private:
      * Used for node lookup and connection management in the node graph
      */
     std::string m_Name;
-    std::atomic<Utils::MF_NodeState> m_state{ Utils::MF_NodeState::MFOP_INVALID };
+
+public:
+    std::atomic<Utils::MF_NodeState> m_state;// { Utils::MF_NodeState::MFOP_INVALID };
 
 };
 }
