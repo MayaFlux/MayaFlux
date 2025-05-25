@@ -65,6 +65,8 @@ public:
     inline void clear_all_nodes() { m_Nodes.clear(); }
 
 private:
+    void process_pending_additions();
+    void process_pending_removals();
     /**
      * @brief Collection of nodes registered with this root node
      *
@@ -72,8 +74,11 @@ private:
      * node's process() method is called.
      */
     std::vector<std::shared_ptr<Node>> m_Nodes;
+    std::vector<std::shared_ptr<Node>> m_nodes_pending_additions;
+    std::vector<std::shared_ptr<Node>> m_nodes_pending_removal;
 
-    std::mutex m_mutex;
+    mutable std::shared_mutex m_nodes_mutex;
+    std::mutex m_pending_mutex;
 };
 
 /**
