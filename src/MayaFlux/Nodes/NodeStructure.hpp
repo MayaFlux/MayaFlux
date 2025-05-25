@@ -65,8 +65,6 @@ public:
     inline void clear_all_nodes() { m_Nodes.clear(); }
 
 private:
-    void process_pending_additions();
-    void process_pending_removals();
     /**
      * @brief Collection of nodes registered with this root node
      *
@@ -74,11 +72,65 @@ private:
      * node's process() method is called.
      */
     std::vector<std::shared_ptr<Node>> m_Nodes;
-    std::vector<std::shared_ptr<Node>> m_nodes_pending_additions;
-    std::vector<std::shared_ptr<Node>> m_nodes_pending_removal;
 
-    mutable std::shared_mutex m_nodes_mutex;
-    std::mutex m_pending_mutex;
+    /**
+     * @brief Flag indicating whether the root node is currently processing
+     *
+     * This flag is used to prevent concurrent node operations from blocking
+     * each other while the root node is processing. It is set to true when
+     * the root node's process() method is called or when a new node is
+     * registered or unregistered.
+     */
+    std::atomic<bool> m_is_processing { false };
+
+    /**
+     * @brief Maximum number of pending operations that can be queued
+     *
+     * This constant defines the upper limit on how many node registration or
+     * unregistration operations can be pending while the root node is processing.
+     * Operations beyond this limit will block until processing completes.
+     */
+    static constexpr size_t MAX_PENDING = 256;
+
+    /**
+     * @brief Structure representing a pending node operation
+     *
+     * This structure holds information about a node operation (add or remove)
+     * that was requested while the root node was processing. These operations
+     * are queued and executed once processing completes to ensure thread safety.
+     */
+    struct PendingOp {
+        /**
+         * @brief Flag indicating if this slot contains an active pending operation
+         *
+         * When true, this slot contains a valid pending operation that needs to be
+         * processed. When false, this slot is available for new pending operations.
+         */
+        std::atomic<bool> active { false };
+
+        /**
+         * @brief Type of the pending operation
+         *
+         * True indicates an add operation (register_node), while
+         * false indicates a remove operation (unregister_node).
+         */
+        std::atomic<bool> is_add { true }; // true = add, false = remove
+
+        /**
+         * @brief The node to be added or removed
+         *
+         * This is the target node for the pending operation. It will be either
+         * added to or removed from the root node's collection when the pending
+         * operation is processed.
+         */
+        std::shared_ptr<Node> node;
+    };
+
+    PendingOp m_pending_ops[MAX_PENDING];
+
+    std::atomic<uint32_t> m_pending_count { 0 };
+
+    void process_pending_operations();
 };
 
 /**

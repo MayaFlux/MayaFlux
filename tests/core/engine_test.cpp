@@ -342,6 +342,8 @@ TEST_F(EngineTest, NodeProcessing)
 
     engine->get_node_graph_manager()->add_to_root(sine);
 
+    AudioTestHelper::waitForAudio(100);
+
     std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
     engine->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
 

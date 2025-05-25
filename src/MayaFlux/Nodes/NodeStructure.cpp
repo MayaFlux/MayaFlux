@@ -6,94 +6,79 @@ namespace MayaFlux::Nodes {
 
 void RootNode::register_node(std::shared_ptr<Node> node)
 {
-    std::unique_lock lock(m_nodes_mutex, std::try_to_lock);
+    if (m_is_processing.load(std::memory_order_acquire)) {
+        for (size_t i = 0; i < MAX_PENDING; ++i) {
+            bool expected = false;
+            if (m_pending_ops[i].active.compare_exchange_strong(
+                    expected, true,
+                    std::memory_order_acquire,
+                    std::memory_order_relaxed)) {
 
-    if (lock.owns_lock()) {
-        m_Nodes.push_back(node);
-        node->mark_registered_for_processing(true);
-    } else {
-        std::lock_guard<std::mutex> pending_lock(m_pending_mutex);
-        m_nodes_pending_additions.push_back(node);
-    }
-}
-
-void RootNode::process_pending_additions()
-{
-    std::vector<std::shared_ptr<Node>> nodes_to_add;
-    {
-        std::lock_guard<std::mutex> pending_lock(m_pending_mutex);
-        if (m_nodes_pending_additions.empty()) {
-            return;
+                m_pending_ops[i].node = node;
+                m_pending_ops[i].is_add.store(true, std::memory_order_release);
+                m_pending_count.fetch_add(1, std::memory_order_relaxed);
+                return;
+            }
         }
-        nodes_to_add.swap(m_nodes_pending_additions);
-    }
 
-    std::unique_lock lock(m_nodes_mutex);
-    for (auto& node : nodes_to_add) {
-        if (node) {
-            m_Nodes.push_back(node);
-            node->mark_registered_for_processing(true);
+        while (m_is_processing.load(std::memory_order_acquire)) {
+            std::this_thread::yield();
         }
     }
+
+    m_Nodes.push_back(node);
+    node->mark_registered_for_processing(true);
 }
 
 void RootNode::unregister_node(std::shared_ptr<Node> node)
 {
-    std::unique_lock lock(m_nodes_mutex, std::try_to_lock);
+    node->mark_registered_for_processing(false);
 
-    if (lock.owns_lock()) {
-        auto it = m_Nodes.begin();
-        while (it != m_Nodes.end()) {
-            if ((*it).get() == node.get()) {
-                it = m_Nodes.erase(it);
-                break;
+    if (m_is_processing.load(std::memory_order_acquire)) {
+        for (size_t i = 0; i < MAX_PENDING; ++i) {
+            bool expected = false;
+            if (m_pending_ops[i].active.compare_exchange_strong(
+                    expected, true,
+                    std::memory_order_acquire,
+                    std::memory_order_relaxed)) {
+
+                m_pending_ops[i].node = node;
+                m_pending_ops[i].is_add.store(false, std::memory_order_release);
+                m_pending_count.fetch_add(1, std::memory_order_relaxed);
+                return;
             }
-            ++it;
         }
 
-        node->reset_processed_state();
-        node->mark_registered_for_processing(false);
-    } else {
-        std::lock_guard<std::mutex> pending_lock(m_pending_mutex);
-        m_nodes_pending_removal.push_back(node);
-
-        node->mark_registered_for_processing(false);
-    }
-}
-
-void RootNode::process_pending_removals()
-{
-    std::vector<std::shared_ptr<Node>> nodes_to_remove;
-    {
-        std::lock_guard<std::mutex> pending_lock(m_pending_mutex);
-        if (m_nodes_pending_removal.empty()) {
-            return;
+        while (m_is_processing.load(std::memory_order_acquire)) {
+            std::this_thread::yield();
         }
-        nodes_to_remove.swap(m_nodes_pending_removal);
     }
 
-    std::unique_lock lock(m_nodes_mutex);
-    for (auto& node : nodes_to_remove) {
-        auto it = m_Nodes.begin();
-        while (it != m_Nodes.end()) {
-            if ((*it).get() == node.get()) {
-                it = m_Nodes.erase(it);
-                break;
-            }
-            ++it;
+    auto it = m_Nodes.begin();
+    while (it != m_Nodes.end()) {
+        if ((*it).get() == node.get()) {
+            it = m_Nodes.erase(it);
+            break;
         }
-
-        node->reset_processed_state();
+        ++it;
     }
+    node->reset_processed_state();
 }
 
 std::vector<double> RootNode::process(unsigned int num_samples)
 {
-    process_pending_additions();
+    bool expected = false;
+    if (!m_is_processing.compare_exchange_strong(expected, true,
+            std::memory_order_acquire,
+            std::memory_order_relaxed)) {
+        return std::vector<double>(num_samples, 0.0);
+    }
+
+    if (m_pending_count.load(std::memory_order_relaxed) > 0) {
+        process_pending_operations();
+    }
 
     std::vector<double> output(num_samples);
-    // std::unique_lock lock(m_nodes_mutex);
-    std::shared_lock lock(m_nodes_mutex);
 
     for (auto& node : m_Nodes) {
         node->mark_processed(false);
@@ -103,6 +88,10 @@ std::vector<double> RootNode::process(unsigned int num_samples)
         double sample = 0.f;
 
         for (auto& node : m_Nodes) {
+            if (!node->is_registered_for_processing()) {
+                continue;
+            }
+
             auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
             if (generator && generator->should_mock_process()) {
                 generator->process_sample(0.f);
@@ -118,11 +107,36 @@ std::vector<double> RootNode::process(unsigned int num_samples)
         node->reset_processed_state();
     }
 
-    lock.unlock();
-
-    process_pending_removals();
+    m_is_processing.store(false, std::memory_order_release);
 
     return output;
+}
+
+void RootNode::process_pending_operations()
+{
+    for (size_t i = 0; i < MAX_PENDING; ++i) {
+        if (m_pending_ops[i].active.load(std::memory_order_acquire)) {
+            auto& op = m_pending_ops[i];
+            if (op.is_add.load(std::memory_order_acquire)) {
+                m_Nodes.push_back(op.node);
+                op.node->mark_registered_for_processing(true);
+            } else {
+                auto it = m_Nodes.begin();
+                while (it != m_Nodes.end()) {
+                    if ((*it).get() == op.node.get()) {
+                        it = m_Nodes.erase(it);
+                        break;
+                    }
+                    ++it;
+                }
+                op.node->reset_processed_state();
+            }
+
+            op.node.reset();
+            op.active.store(false, std::memory_order_release);
+            m_pending_count.fetch_sub(1, std::memory_order_relaxed);
+        }
+    }
 }
 
 ChainNode::ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target)
