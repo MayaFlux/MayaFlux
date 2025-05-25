@@ -1,0 +1,186 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug MayaFlux (Linux/macOS)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/MayaFlux",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build MayaFlux (Debug)",
+      "osx": {
+        "MIMode": "lldb",
+        "program": "${workspaceFolder}/build/MayaFlux",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for lldb",
+            "text": "settings set target.inline-breakpoint-strategy always",
+            "ignoreFailures": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Debug MayaFlux (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Debug/MayaFlux.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build MayaFlux (Debug)",
+      "windows": {
+        "type": "cppvsdbg"
+      }
+    },
+    {
+      "name": "Debug Tests (Linux/macOS)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/tests/MayaFluxTests",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build MayaFlux (Debug)",
+      "osx": {
+        "MIMode": "lldb",
+        "program": "${workspaceFolder}/build/tests/MayaFluxTests",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for lldb",
+            "text": "settings set target.inline-breakpoint-strategy always",
+            "ignoreFailures": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Debug Tests (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/tests/Debug/MayaFluxTests.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build MayaFlux (Debug)",
+      "windows": {
+        "type": "cppvsdbg"
+      }
+    },
+    {
+      "name": "Debug Current Test File",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/tests/MayaFluxTests",
+      "args": ["--gtest_filter=*${fileBasenameNoExtension}*"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build MayaFlux (Debug)",
+      "osx": {
+        "MIMode": "lldb",
+        "program": "${workspaceFolder}/build/tests/MayaFluxTests",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for lldb",
+            "text": "settings set target.inline-breakpoint-strategy always",
+            "ignoreFailures": true
+          }
+        ]
+      },
+      "windows": {
+        "type": "cppvsdbg",
+        "program": "${workspaceFolder}/build/tests/Debug/MayaFluxTests.exe"
+      }
+    },
+    {
+      "name": "Attach to Process",
+      "type": "cppdbg",
+      "request": "attach",
+      "processId": "${command:pickProcess}",
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "osx": {
+        "MIMode": "lldb",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for lldb",
+            "text": "settings set target.inline-breakpoint-strategy always",
+            "ignoreFailures": true
+          }
+        ]
+      },
+      "windows": {
+        "type": "cppvsdbg",
+        "MIMode": "windows"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug All Tests",
+      "configurations": ["Debug Tests (Linux/macOS)", "Debug Tests (Windows)"]
+    }
+  ]
+}

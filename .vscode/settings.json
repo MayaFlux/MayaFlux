@@ -1,0 +1,168 @@
+{
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.cStandard": "c11",
+  "C_Cpp.default.intelliSenseMode": "${default}",
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.intelliSenseEngine": "default",
+  "C_Cpp.enhancedColorization": "enabled",
+  "C_Cpp.suggestSnippets": true,
+  "C_Cpp.vcpkg.enabled": true,
+  "C_Cpp.clang_format_style": "file",
+  "C_Cpp.clang_format_fallbackStyle": "WebKit",
+  "C_Cpp.formatting": "clangFormat",
+  "C_Cpp.experimentalFeatures": "enabled",
+  "C_Cpp.autocomplete": "default",
+  "C_Cpp.errorSquiggles": "enabled",
+  "C_Cpp.dimInactiveRegions": true,
+
+  "cmake.configureOnOpen": true,
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.installPrefix": "${workspaceFolder}/install",
+  "cmake.generator": "Ninja",
+  "cmake.parallelJobs": 0,
+  "cmake.debugConfig": {
+    "stopAtEntry": false,
+    "MIMode": "gdb",
+    "miDebuggerPath": "gdb",
+    "setupCommands": [
+      {
+        "description": "Enable pretty-printing for gdb",
+        "text": "-enable-pretty-printing",
+        "ignoreFailures": true
+      }
+    ]
+  },
+
+  "editor.formatOnSave": true,
+  "editor.formatOnType": false,
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": true,
+  "editor.rulers": [100],
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.semanticHighlighting.enabled": true,
+  "editor.suggestSelection": "first",
+  "editor.wordBasedSuggestions": "matchingDocuments",
+  "editor.wordWrap": "off",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+
+  "files.associations": {
+    "*.h": "cpp",
+    "*.hpp": "cpp",
+    "*.cpp": "cpp",
+    "*.inl": "cpp",
+    "CMakeLists.txt": "cmake",
+    "*.cmake": "cmake"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/build": false,
+    "**/vcpkg": false
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/build/**": true,
+    "**/vcpkg/**": true
+  },
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.eol": "\n",
+
+  "terminal.integrated.defaultProfile.windows": "Command Prompt",
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.env.windows": {
+    "PATH": "${env:PATH};${workspaceFolder}\\vcpkg"
+  },
+
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+
+  "search.exclude": {
+    "**/build": true,
+    "**/vcpkg": true,
+    "**/.git": true
+  },
+
+  "testMate.cpp.test.executables": "{build,Build,BUILD,out,Out,OUT}/**/*{test,Test,TEST}*",
+  "testMate.cpp.log.logpanel": true,
+  "testMate.cpp.debug.configTemplate": {
+    "type": "cppdbg",
+    "MIMode": "${debugger}",
+    "program": "${exec}",
+    "args": "${argsArray}",
+    "cwd": "${cwd}",
+    "env": "${envObj}",
+    "sourceFileMap": "${sourceFileMapObj}",
+    "setupCommands": [
+      {
+        "description": "Enable pretty-printing for gdb",
+        "text": "-enable-pretty-printing",
+        "ignoreFailures": true
+      }
+    ]
+  },
+
+  "clang-tidy.buildPath": "${workspaceFolder}/build",
+  "clang-tidy.lintOnSave": true,
+  "clang-tidy.fixOnSave": false,
+
+  "clang-format.executable": "clang-format",
+  "clang-format.style": "file",
+  "clang-format.fallbackStyle": "WebKit",
+  "clang-format.formatOnSave": true,
+
+  "doxdocgen.file.copyrightTag": [
+    "This project is licensed under GPLv3 and subject to the terms in ETHICAL_DECLARATIONS.md"
+  ],
+  "doxdocgen.file.versionTag": "@version 0.1.0",
+  "doxdocgen.generic.authorTag": "@author MAYAFLUX",
+  "doxdocgen.generic.dateFormat": "YYYY-MM-DD",
+  "doxdocgen.generic.autoGenerate": true,
+  "doxdocgen.generic.order": [
+    "brief",
+    "empty",
+    "tparam",
+    "param",
+    "return",
+    "empty",
+    "author",
+    "date"
+  ],
+  "doxdocgen.c.firstLine": "/**",
+  "doxdocgen.c.lastLine": " */",
+  "doxdocgen.c.triggerSequence": "/**",
+  "doxdocgen.c.commentPrefix": " * ",
+  "doxdocgen.cpp.tparamFormat": "@tparam {param} ",
+  "doxdocgen.cpp.paramFormat": "@param {param} ",
+  "doxdocgen.cpp.returnFormat": "@return ",
+  "doxdocgen.file.fileOrder": [
+    "file",
+    "brief",
+    "empty",
+    "author",
+    "date",
+    "empty",
+    "copyright",
+    "empty",
+    "version"
+  ],
+  "doxdocgen.file.fileTemplate": "@file {name}",
+  "doxdocgen.file.customTag": [
+    "The name MayaFlux is rooted in the Sanskrit concept of Māyā (माया),",
+    "referring to illusion, appearance, and the dynamic shaping of reality.",
+    "This project embraces these concepts through computational and generative systems design."
+  ]
+}

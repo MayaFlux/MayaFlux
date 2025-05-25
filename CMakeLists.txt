@@ -3,13 +3,26 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if(WIN32)
+    add_compile_definitions(MAYAFLUX_PLATFORM_WINDOWS)
+    add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX)
+    add_compile_definitions(_USE_MATH_DEFINES)
+elseif(APPLE)
+    add_compile_definitions(MAYAFLUX_PLATFORM_MACOS)
+elseif(UNIX)
+    add_compile_definitions(MAYAFLUX_PLATFORM_LINUX)
+else()
+    add_compile_definitions(MAYAFLUX_PLATFORM_UNKNOWN)
+endif()
+
+if(WIN32)
     if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-            CACHE STRING "Vcpkg toolchain file")
+        set(CMAKE_TOOLCHAIN_FILE
+            "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING
+            "Vcpkg toolchain file")
+
         list(APPEND CMAKE_PREFIX_PATH "$ENV{VCPKG_ROOT}/installed/x64-windows")
         message(STATUS "Using vcpkg toolchain: ${CMAKE_TOOLCHAIN_FILE}")
     endif()
@@ -38,7 +51,7 @@ configure_file(
     @ONLY
 )
 
-#should work on windows, just havent spent time checking for its pkg definition, safe to disable for now
+#should work on windows, just havent spent time checking for its pkg definition
 if(UNIX)
     find_package(GTest REQUIRED)
     enable_testing()
@@ -48,8 +61,9 @@ file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 list(FILTER SOURCES EXCLUDE REGEX ".*main\\.cpp$")
 
 if(WIN32)
-    add_compile_definitions(_USE_MATH_DEFINES)
-    file(GLOB_RECURSE HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
+    file(GLOB_RECURSE HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
+         ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
+
     add_library(MayaFluxLib ${SOURCES} ${HEADERS})
     add_executable(MayaFlux src/main.cpp ${HEADERS})
 else()
@@ -71,7 +85,10 @@ if(WIN32)
     )
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_STATIC)
 else()
-    target_link_libraries(MayaFluxLib PUBLIC PkgConfig::RtAudio PkgConfig::SNDFILE)
+    target_link_libraries(MayaFluxLib PUBLIC
+        PkgConfig::RtAudio
+        PkgConfig::SNDFILE
+    )
 endif()
 
 target_link_libraries(MayaFlux PRIVATE MayaFluxLib)

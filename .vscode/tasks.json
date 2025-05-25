@@ -1,0 +1,161 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CMake Configure (Debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Debug"],
+      "group": "build",
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "CMake Configure (Release)",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Release"],
+      "group": "build",
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "CMake Build",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "build",
+        "--config",
+        "${input:buildType}",
+        "--parallel"
+      ],
+      "group": "build",
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": [
+          {
+            "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        ]
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "CMake Clean",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "build", "--target", "clean"],
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "Build MayaFlux (Debug)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["CMake Configure (Debug)", "CMake Build"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build MayaFlux (Release)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["CMake Configure (Release)", "CMake Build"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/tests/MayaFluxTests",
+      "windows": {
+        "command": "${workspaceFolder}\\build\\tests\\Debug\\MayaFluxTests.exe"
+      },
+      "group": "test",
+      "dependsOn": ["Build MayaFlux (Debug)"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean and Rebuild (Debug)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["CMake Clean", "Build MayaFlux (Debug)"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean and Rebuild (Release)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["CMake Clean", "Build MayaFlux (Release)"],
+      "group": "build",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "buildType",
+      "type": "pickString",
+      "description": "Select the build type",
+      "options": ["Debug", "Release"],
+      "default": "Debug"
+    }
+  ]
+}

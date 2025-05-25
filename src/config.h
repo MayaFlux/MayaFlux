@@ -13,6 +13,7 @@
 #include "functional"
 #include "map"
 #include "numbers"
+#include "shared_mutex"
 #include "string"
 #include "unordered_map"
 #include "utility"
@@ -30,19 +31,47 @@
 #include <thread>
 #include <unordered_set>
 
-#ifdef _WIN32
-#include <shlwapi.h>
-#include <windows.h>
-#pragma comment(lib, "shlwapi.lib")
+// Windows-specific includes
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    #include <shlwapi.h>
+    #include <windows.h>
+    #pragma comment(lib, "shlwapi.lib")
+    #include <optional>
 
-#include <optional>
-// Temporary workarounds
-using u_int32_t = uint32_t;
-using u_int64_t = uint64_t;
+    // Type compatibility
+    using u_int32_t = uint32_t;
+    using u_int64_t = uint64_t;
 
-// Ugly workarounds
-#ifdef CALLBACK
-#undef CALLBACK
+    #ifdef CALLBACK
+        #undef CALLBACK
+    #endif
+
+    #ifdef TRUE
+        #undef TRUE
+    #endif
+
+    #ifdef FALSE
+        #undef FALSE
+    #endif
 #endif
 
+// Cross-platform definitions
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    #define MAYAFLUX_EXPORT __declspec(dllexport)
+    #define MAYAFLUX_IMPORT __declspec(dllimport)
+#else
+    #define MAYAFLUX_EXPORT __attribute__((visibility("default")))
+    #define MAYAFLUX_IMPORT
 #endif
+
+namespace MayaFlux {
+namespace Platform {
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    constexpr char PathSeparator = '\';  // Fixed the escape
+#else
+    constexpr char PathSeparator = '/';
+#endif
+
+} // namespace Platform
+} // namespace MayaFlux
