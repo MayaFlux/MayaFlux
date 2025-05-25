@@ -498,58 +498,6 @@ public:
     void remove_hooks_of_type(LogicEventType type);
 
     /**
-     * @brief Marks the node as registered or unregistered for processing
-     * @param is_registered True to mark as registered, false to mark as unregistered
-     *
-     * This method is used by the node graph manager to track which nodes are currently
-     * part of the active processing graph. When a node is registered, it means it's
-     * included in the current processing cycle. When unregistered, it may be excluded
-     * from processing to save computational resources.
-     */
-    inline void mark_registered_for_processing(bool is_registered) override { m_is_registered = is_registered; }
-
-    /**
-     * @brief Checks if the node is currently registered for processing
-     * @return True if the node is registered, false otherwise
-     *
-     * This method allows checking whether the oscillator is currently part of the
-     * active processing graph. Registered oscillators are included in the processing
-     * cycle, while unregistered ones may be skipped.
-     */
-    inline bool is_registered_for_processing() const override { return m_is_registered; }
-
-    /**
-     * @brief Marks the node as processed or unprocessed in the current cycle
-     * @param is_processed True to mark as processed, false to mark as unprocessed
-     *
-     * This method is used by the processing system to track which nodes have already
-     * been processed in the current cycle. This is particularly important for oscillators
-     * that may be used as modulators for multiple other nodes, to ensure they are only
-     * processed once per cycle regardless of how many nodes they feed into.
-     */
-    inline void mark_processed(bool is_processed) override { m_is_processed = is_processed; }
-
-    /**
-     * @brief Resets the processed state of the node and any attached modulators
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the next cycle begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    void reset_processed_state() override;
-
-    /**
-     * @brief Checks if the node has been processed in the current cycle
-     * @return True if the node has been processed, false otherwise
-     *
-     * This method allows checking whether the oscillator has already been processed
-     * in the current cycle. This is used by the processing system to avoid
-     * redundant processing of oscillators with multiple outgoing connections.
-     */
-    inline bool is_processed() const override { return m_is_processed; }
-
-    /**
      * @brief Allows RootNode to process the Generator without using the processed sample
      * @param bMock_process True to mock process, false to process normally
      *

@@ -148,10 +148,18 @@ double Logic::process_sample(double input)
     m_edge_detected = false;
 
     if (m_input_node) {
-        if (!m_input_node->is_processed()) {
+
+        auto state = m_input_node->GetState().load();
+
+        if (!(state & Utils::MF_NodeState::MFOP_IS_PROCESSING)) {
+
             input = m_input_node->process_sample(input);
-            m_input_node->mark_processed(true);
-        } else {
+
+            state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
+            AtomicSetFlagStrong(m_input_node->GetState(), state);
+
+        }
+        else {
             input += m_input_node->get_last_output();
         }
     }
@@ -628,8 +636,4 @@ void Logic::remove_hooks_of_type(LogicEventType type)
     m_all_callbacks.erase(it, m_all_callbacks.end());
 }
 
-void Logic::reset_processed_state()
-{
-    mark_processed(false);
-}
 }

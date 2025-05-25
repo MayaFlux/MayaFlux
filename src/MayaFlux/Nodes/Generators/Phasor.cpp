@@ -210,6 +210,8 @@ bool Phasor::remove_conditional_hook(const NodeCondition& callback)
     return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
+//TODO: set children flags
+/*
 void Phasor::reset_processed_state()
 {
     m_is_processed = false;
@@ -222,7 +224,7 @@ void Phasor::reset_processed_state()
         m_amplitude_modulator->reset_processed_state();
     }
 }
-
+*/
 std::unique_ptr<NodeContext> Phasor::create_context(double value)
 {
     return std::make_unique<GeneratorContext>(value, m_frequency, m_amplitude, m_phase);

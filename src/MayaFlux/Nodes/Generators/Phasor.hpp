@@ -337,35 +337,6 @@ public:
     }
 
     /**
-     * @brief Marks the node as registered or unregistered for processing
-     * @param is_registered True to mark as registered, false to mark as unregistered
-     */
-    inline void mark_registered_for_processing(bool is_registered) override { m_is_registered = is_registered; }
-
-    /**
-     * @brief Checks if the node is currently registered for processing
-     * @return True if the node is registered, false otherwise
-     */
-    inline bool is_registered_for_processing() const override { return m_is_registered; }
-
-    /**
-     * @brief Marks the node as processed or unprocessed in the current cycle
-     * @param is_processed True to mark as processed, false to mark as unprocessed
-     */
-    inline void mark_processed(bool is_processed) override { m_is_processed = is_processed; }
-
-    /**
-     * @brief Resets the processed state of the node and any attached modulators
-     */
-    void reset_processed_state() override;
-
-    /**
-     * @brief Checks if the node has been processed in the current cycle
-     * @return True if the node has been processed, false otherwise
-     */
-    inline bool is_processed() const override { return m_is_processed; }
-
-    /**
      * @brief Allows RootNode to process the Generator without using the processed sample
      * @param bMock_process True to mock process, false to process normally
      *

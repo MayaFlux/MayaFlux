@@ -1,6 +1,8 @@
 #pragma once
 #include "Node.hpp"
 
+#define MAX_PENDING 256
+
 namespace MayaFlux::Nodes {
 
 /**
@@ -73,49 +75,13 @@ private:
      */
     std::vector<std::shared_ptr<Node>> m_Nodes;
 
-    /**
-     * @brief Flag indicating whether the root node is currently processing
-     *
-     * This flag is used to prevent concurrent node operations from blocking
-     * each other while the root node is processing. It is set to true when
-     * the root node's process() method is called or when a new node is
-     * registered or unregistered.
-     */
-    std::atomic<bool> m_is_processing { false };
+  
 
-    /**
-     * @brief Maximum number of pending operations that can be queued
-     *
-     * This constant defines the upper limit on how many node registration or
-     * unregistration operations can be pending while the root node is processing.
-     * Operations beyond this limit will block until processing completes.
-     */
-    static constexpr size_t MAX_PENDING = 256;
 
-    /**
-     * @brief Structure representing a pending node operation
-     *
-     * This structure holds information about a node operation (add or remove)
-     * that was requested while the root node was processing. These operations
-     * are queued and executed once processing completes to ensure thread safety.
-     */
+   
+
     struct PendingOp {
-        /**
-         * @brief Flag indicating if this slot contains an active pending operation
-         *
-         * When true, this slot contains a valid pending operation that needs to be
-         * processed. When false, this slot is available for new pending operations.
-         */
-        std::atomic<bool> active { false };
-
-        /**
-         * @brief Type of the pending operation
-         *
-         * True indicates an add operation (register_node), while
-         * false indicates a remove operation (unregister_node).
-         */
-        std::atomic<bool> is_add { true }; // true = add, false = remove
-
+       
         /**
          * @brief The node to be added or removed
          *
@@ -123,10 +89,10 @@ private:
          * added to or removed from the root node's collection when the pending
          * operation is processed.
          */
-        std::shared_ptr<Node> node;
-    };
 
-    PendingOp m_pending_ops[MAX_PENDING];
+        std::shared_ptr<Node> node;
+    } m_pending_ops[MAX_PENDING];
+
 
     std::atomic<uint32_t> m_pending_count { 0 };
 
@@ -258,69 +224,6 @@ public:
     }
 
     /**
-     * @brief Marks the node as registered or unregistered for processing
-     * @param is_registered True to mark as registered, false to mark as unregistered
-     *
-     * This method is used by the node graph manager to track which chain nodes
-     * are currently part of the active processing graph. When a node is registered,
-     * it means it's included in the current processing cycle. When unregistered,
-     * it may be excluded from processing to save computational resources.
-     *
-     * For chain nodes, registration status affects whether the node will be processed
-     * in the audio graph traversal.
-     */
-    inline void mark_registered_for_processing(bool is_registered) override { m_is_registered = is_registered; }
-
-    /**
-     * @brief Checks if the node is currently registered for processing
-     * @return True if the node is registered, false otherwise
-     *
-     * This method allows checking whether the chain node is currently part of the
-     * active processing graph. Registered nodes are included in the processing cycle,
-     * while unregistered ones may be skipped.
-     *
-     * For chain nodes, this status is important for determining whether the node
-     * should be included in the current processing cycle.
-     */
-    inline bool is_registered_for_processing() const override { return m_is_registered; }
-
-    /**
-     * @brief Marks the node as processed or unprocessed in the current cycle
-     * @param is_processed True to mark as processed, false to mark as unprocessed
-     *
-     * This method is used by the processing system to track which chain nodes
-     * have already been processed in the current cycle. This prevents redundant processing
-     * of nodes that may be referenced multiple times in a complex node graph.
-     *
-     * For chain nodes, this is particularly important as they may be part of multiple
-     * signal paths in a complex audio graph.
-     */
-    inline void mark_processed(bool is_processed) override { m_is_processed = is_processed; }
-
-    /**
-     * @brief Resets the processed state of the node and the connected nodes in the chain
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the cycle begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    void reset_processed_state() override;
-
-    /**
-     * @brief Checks if the node has been processed in the current cycle
-     * @return True if the node has been processed, false otherwise
-     *
-     * This method allows checking whether the chain node has already been
-     * processed in the current cycle. This is useful for optimizing processing in
-     * complex node graphs where a node might be referenced multiple times.
-     *
-     * For chain nodes, this helps avoid redundant processing when the same chain
-     * appears in multiple signal paths.
-     */
-    inline bool is_processed() const override { return m_is_processed; }
-
-    /**
      * @brief Gets the most recent output value from this node
      * @return The last output value generated by this node
      *
@@ -408,8 +311,11 @@ private:
 public:
     inline bool is_initialized() const
     {
-        bool is_source_registered = m_Source ? m_Source->is_registered_for_processing() : false;
-        bool is_target_registered = m_Target ? m_Target->is_registered_for_processing() : false;
+        auto sState = m_Source->GetStateConst().load();
+        auto tState = m_Target->GetStateConst().load();
+
+        bool is_source_registered = m_Source ? (sState & Utils::MF_NodeState::MFOP_ACTIVE) : false;
+        bool is_target_registered = m_Target ? (tState & Utils::MF_NodeState::MFOP_ACTIVE) : false;
         return !is_source_registered && !is_target_registered && m_is_registered;
     }
 };
@@ -600,57 +506,6 @@ public:
     }
 
     /**
-     * @brief Marks the node as registered or unregistered for processing
-     * @param is_registered True to mark as registered, false to mark as unregistered
-     *
-     * This method is used by the node graph manager to track which binary operation nodes
-     * are currently part of the active processing graph. When a node is registered, it means
-     * it's included in the current processing cycle. When unregistered, it may be excluded
-     * from processing to save computational resources.
-     */
-    inline void mark_registered_for_processing(bool is_registered) override { m_is_registered = is_registered; }
-
-    /**
-     * @brief Checks if the node is currently registered for processing
-     * @return True if the node is registered, false otherwise
-     *
-     * This method allows checking whether the binary operation node is currently part of the
-     * active processing graph. Registered nodes are included in the processing cycle,
-     * while unregistered ones may be skipped.
-     */
-    inline bool is_registered_for_processing() const override { return m_is_registered; }
-
-    /**
-     * @brief Marks the node as processed or unprocessed in the current cycle
-     * @param is_processed True to mark as processed, false to mark as unprocessed
-     *
-     * This method is used by the processing system to track which binary operation nodes
-     * have already been processed in the current cycle. This prevents redundant processing
-     * of nodes that may be referenced multiple times in a complex node graph.
-     */
-    inline void mark_processed(bool is_processed) override { m_is_processed = is_processed; }
-
-    /**
-     * @brief Resets the processed state of the node and the operable nodes
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the cycle begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    void reset_processed_state() override;
-
-    /**
-     * @brief Checks if the node has been processed in the current cycle
-     * @return True if the node has been processed, false otherwise
-     *
-     * This method allows checking whether the binary operation node has already been
-     * processed in the current cycle. This is useful for optimizing processing in
-     * complex node graphs where a node might be referenced multiple times.
-     */
-    inline bool is_processed() const override { return m_is_processed; }
-
-    /**
      * @brief Gets the most recent output value from this node
      * @return The last output value generated by this node
      *
@@ -783,8 +638,9 @@ private:
 public:
     inline bool is_initialized() const
     {
-        bool is_lhs_registered = m_lhs ? m_lhs->is_registered_for_processing() : false;
-        bool is_rhs_registered = m_rhs ? m_rhs->is_registered_for_processing() : false;
+        auto state = m_lhs->GetStateConst().load();
+        bool is_lhs_registered = m_lhs ? (state&Utils::MF_NodeState::MFOP_ACTIVE) : false;
+        bool is_rhs_registered = m_rhs ? (state & Utils::MF_NodeState::MFOP_ACTIVE) : false;
         return !is_lhs_registered && !is_rhs_registered && m_is_registered;
     }
 };

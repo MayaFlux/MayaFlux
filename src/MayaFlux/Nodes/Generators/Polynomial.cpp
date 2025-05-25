@@ -44,10 +44,18 @@ double Polynomial::process_sample(double input)
 {
     double result = 0.0;
 
+
     if (m_input_node) {
-        if (!m_input_node->is_processed()) {
+
+        auto state = m_input_node->GetState().load();
+
+        if (! (state & Utils::MF_NodeState::MFOP_IS_PROCESSING) ) {
+
             input = m_input_node->process_sample(input);
-            m_input_node->mark_processed(true);
+
+            state = static_cast<Utils::MF_NodeState>( state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
+            AtomicSetFlagStrong(m_input_node->GetState(), state);
+
         } else {
             input += m_input_node->get_last_output();
         }
@@ -216,11 +224,6 @@ bool Polynomial::remove_hook(const NodeHook& callback)
 bool Polynomial::remove_conditional_hook(const NodeCondition& callback)
 {
     return safe_remove_conditional_callback(m_conditional_callbacks, callback);
-}
-
-void Polynomial::reset_processed_state()
-{
-    mark_processed(false);
 }
 
 } // namespace MayaFlux::Nodes::Generator

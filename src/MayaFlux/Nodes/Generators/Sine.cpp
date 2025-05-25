@@ -95,13 +95,22 @@ void Sine::clear_modulators()
 double Sine::process_sample(double input)
 {
     if (m_frequency_modulator) {
+
+        auto state = m_frequency_modulator->GetState().load();
+
+
         double current_freq = m_frequency;
-        if (m_frequency_modulator->is_processed()) {
+
+        if (state & Utils::MF_NodeState::MFOP_IS_PROCESSING)
+        {
             current_freq += m_frequency_modulator->get_last_output();
-            m_frequency_modulator->mark_processed(false);
-        } else {
+        } 
+        else 
+        {
             current_freq += m_frequency_modulator->process_sample(0.f);
-            m_frequency_modulator->mark_processed(true);
+            state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
+            AtomicSetFlagStrong(m_frequency_modulator->GetState(), state);
+
         }
         update_phase_increment(current_freq);
     }
@@ -116,13 +125,19 @@ double Sine::process_sample(double input)
     }
 
     float current_amplitude = m_amplitude;
-    if (m_amplitude_modulator) {
-        if (m_amplitude_modulator->is_processed()) {
+    if (m_amplitude_modulator) 
+    {
+        auto state = m_amplitude_modulator->GetState().load();
+
+        if (state & Utils::MF_NodeState::MFOP_IS_PROCESSING)
+        {
             current_amplitude += m_amplitude_modulator->get_last_output();
-            m_amplitude_modulator->mark_processed(false);
-        } else {
+        } 
+        else 
+        {
             current_amplitude += m_amplitude_modulator->process_sample(0.f);
-            m_amplitude_modulator->mark_processed(true);
+            state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
+            AtomicSetFlagStrong(m_amplitude_modulator->GetState(), state);
         }
     }
     current_sample *= current_amplitude;
@@ -194,6 +209,8 @@ bool Sine::remove_conditional_hook(const NodeCondition& callback)
     return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
+//TODO: Set children flags
+/*
 void Sine::reset_processed_state()
 {
     mark_processed(false);
@@ -204,7 +221,7 @@ void Sine::reset_processed_state()
         m_amplitude_modulator->reset_processed_state();
     }
 }
-
+*/
 void Sine::printGraph()
 {
 }

@@ -226,70 +226,6 @@ public:
     virtual void remove_all_hooks() = 0;
 
     /**
-     * @brief Marks the node as registered or unregistered for processing
-     * @param is_registered True to mark as registered, false to mark as unregistered
-     *
-     * This method is used by the node graph manager to track which nodes are currently
-     * part of the active processing graph. When a node is registered, it means it's
-     * included in the current processing cycle. When unregistered, it may be excluded
-     * from processing to save computational resources.
-     *
-     * This status flag helps optimize processing by allowing the system to skip
-     * nodes that aren't currently needed in the signal flow.
-     */
-    virtual void mark_registered_for_processing(bool is_registered) = 0;
-
-    /**
-     * @brief Checks if the node is currently registered for processing
-     * @return True if the node is registered, false otherwise
-     *
-     * This method allows checking whether the node is currently part of the
-     * active processing graph. Registered nodes are included in the processing
-     * cycle, while unregistered nodes may be skipped.
-     *
-     * This status check is useful for conditional processing logic and for
-     * debugging the state of the node graph.
-     */
-    virtual bool is_registered_for_processing() const = 0;
-
-    /**
-     * @brief Marks the node as processed or unprocessed in the current cycle
-     * @param is_processed True to mark as processed, false to mark as unprocessed
-     *
-     * This method is used by the processing system to track which nodes have already
-     * been processed in the current cycle. This is particularly important for nodes
-     * that may have multiple incoming connections, to ensure they are only processed
-     * once per cycle regardless of how many nodes feed into them.
-     *
-     * The processed flag is typically reset at the beginning of each processing cycle
-     * and set after the node has been processed.
-     */
-    virtual void mark_processed(bool is_processed) = 0;
-
-    /**
-     * @brief Resets the processed state of the node
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the next cycle begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    virtual void reset_processed_state() = 0;
-
-    /**
-     * @brief Checks if the node has been processed in the current cycle
-     * @return True if the node has been processed, false otherwise
-     *
-     * This method allows checking whether the node has already been processed
-     * in the current cycle. This is used by the processing system to avoid
-     * redundant processing of nodes with multiple incoming connections.
-     *
-     * This status check is essential for maintaining the integrity of the
-     * processing flow and preventing duplicate processing.
-     */
-    virtual bool is_processed() const = 0;
-
-    /**
      * @brief Retrieves the most recent output value produced by the node
      * @return The last output sample value
      *
@@ -303,6 +239,9 @@ public:
      */
     virtual double get_last_output() = 0;
 
+    std::atomic<Utils::MF_NodeState>& GetState() { return m_state; };
+    const std::atomic<Utils::MF_NodeState>& GetStateConst() { return m_state; };
+    
 protected:
     /**
      * @brief Creates an appropriate context object for this node type
@@ -351,5 +290,7 @@ private:
      * Used for node lookup and connection management in the node graph
      */
     std::string m_Name;
+    std::atomic<Utils::MF_NodeState> m_state{ Utils::MF_NodeState::MFOP_INVALID };
+
 };
 }
