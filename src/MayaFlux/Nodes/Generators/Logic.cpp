@@ -20,7 +20,7 @@ Logic::Logic(double threshold)
     , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
+    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_direct_function = [this](double input) {
         return input > m_threshold;
@@ -40,7 +40,7 @@ Logic::Logic(LogicOperator op, double threshold)
     , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
+    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     set_operator(op);
 }
@@ -59,7 +59,7 @@ Logic::Logic(DirectFunction function)
     , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
+    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
 }
 
@@ -77,7 +77,7 @@ Logic::Logic(MultiInputFunction function, size_t input_count)
     , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
+    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_input_buffer.resize(input_count, 0.0);
 }
@@ -96,7 +96,7 @@ Logic::Logic(SequentialFunction function, size_t history_size)
     , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
+    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     // Initialize history buffer with false values
     m_history.assign(history_size, false);
@@ -116,7 +116,7 @@ Logic::Logic(TemporalFunction function)
     , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
+    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
 }
 
@@ -130,6 +130,7 @@ double Logic::process_sample(double input)
     m_edge_detected = false;
 
     if (m_input_node) {
+        atomic_inc_modulator_count(m_input_node->m_modulator_count, 1);
         u_int32_t state = m_input_node->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             input += m_input_node->get_last_output();
@@ -236,6 +237,11 @@ double Logic::process_sample(double input)
     m_input = input;
     auto current = result ? 1.0 : 0.0;
     notify_tick(current);
+
+    if (m_input_node) {
+        atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);
+        try_reset_processed_state(m_input_node);
+    }
 
     m_last_output = current;
     return m_last_output;

@@ -186,8 +186,14 @@ void ChainNode::initialize()
 
 double ChainNode::process_sample(double input)
 {
+    if (!m_Source || !m_Target) {
+        return input;
+    }
     if (!is_initialized())
         initialize();
+
+    atomic_inc_modulator_count(m_Source->m_modulator_count, 1);
+    atomic_inc_modulator_count(m_Target->m_modulator_count, 1);
 
     m_last_output = input;
 
@@ -207,6 +213,12 @@ double ChainNode::process_sample(double input)
         tstate = tstate | Utils::NodeState::PROCESSED;
         atomic_add_flag(m_Target->m_state, Utils::NodeState::PROCESSED);
     }
+
+    atomic_dec_modulator_count(m_Source->m_modulator_count, 1);
+    atomic_dec_modulator_count(m_Target->m_modulator_count, 1);
+
+    try_reset_processed_state(m_Source);
+    try_reset_processed_state(m_Target);
 
     return m_last_output;
 }
@@ -253,8 +265,15 @@ void BinaryOpNode::initialize()
 
 double BinaryOpNode::process_sample(double input)
 {
+    if (!m_lhs || !m_rhs) {
+        return input;
+    }
+
     if (!is_initialized())
         initialize();
+
+    atomic_inc_modulator_count(m_lhs->m_modulator_count, 1);
+    atomic_inc_modulator_count(m_rhs->m_modulator_count, 1);
 
     u_int32_t lstate = m_lhs->m_state.load();
     if (lstate & Utils::NodeState::PROCESSED) {
@@ -275,6 +294,12 @@ double BinaryOpNode::process_sample(double input)
     m_last_output = m_func(m_last_lhs_value, m_last_rhs_value);
 
     notify_tick(m_last_output);
+
+    atomic_dec_modulator_count(m_lhs->m_modulator_count, 1);
+    atomic_dec_modulator_count(m_rhs->m_modulator_count, 1);
+
+    try_reset_processed_state(m_lhs);
+    try_reset_processed_state(m_rhs);
 
     return m_last_output;
 }

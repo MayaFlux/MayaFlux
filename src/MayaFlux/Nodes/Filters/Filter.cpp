@@ -17,6 +17,7 @@ std::pair<int, int> shift_parser(const std::string& str)
 
 Filter::Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts)
     : m_input_node(input)
+    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_shift_config = shift_parser(zindex_shifts);
     initialize_shift_buffers();
@@ -26,6 +27,7 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
     : m_input_node(input)
     , m_coef_a(a_coef)
     , m_coef_b(b_coef)
+    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
 
@@ -36,7 +38,7 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
         throw std::invalid_argument("First denominator coefficient (a[0]) cannot be zero");
     }
 
-    initialize_shift_buffers(); // Initialize the history buffers
+    initialize_shift_buffers();
 }
 
 void Filter::initialize_shift_buffers()

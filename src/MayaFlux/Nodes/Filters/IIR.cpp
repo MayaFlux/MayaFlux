@@ -20,6 +20,7 @@ double IIR::process_sample(double input)
 
     double processed_input = input;
     if (m_input_node) {
+        atomic_inc_modulator_count(m_input_node->m_modulator_count, 1);
         u_int32_t state = m_input_node->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             processed_input = m_input_node->get_last_output();
@@ -46,6 +47,11 @@ double IIR::process_sample(double input)
     update_outputs(output);
 
     notify_tick(output);
+
+    if (m_input_node) {
+        atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);
+        try_reset_processed_state(m_input_node);
+    }
 
     return output * get_gain();
 }

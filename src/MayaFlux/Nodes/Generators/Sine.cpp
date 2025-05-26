@@ -10,7 +10,7 @@ Sine::Sine(float frequency, float amplitude, float offset)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, 0.f))
+    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     update_phase_increment(frequency);
 }
@@ -22,7 +22,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, float amp
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
-    , m_last_output((m_state = { Utils::NodeState::INACTIVE }, 0.f))
+    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     update_phase_increment(frequency);
 }
@@ -34,7 +34,7 @@ Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amp
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output((m_state = { Utils::NodeState::INACTIVE }, 0.f))
+    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     update_phase_increment(frequency);
 }
@@ -46,7 +46,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> ampl
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output((m_state = { Utils::NodeState::INACTIVE }, 0.f))
+    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     update_phase_increment(frequency);
 }
@@ -87,14 +87,12 @@ void Sine::clear_modulators()
 double Sine::process_sample(double input)
 {
     if (m_frequency_modulator) {
+        atomic_inc_modulator_count(m_frequency_modulator->m_modulator_count, 1);
         u_int32_t state = m_frequency_modulator->m_state.load();
         double current_freq = m_frequency;
 
         if (state & Utils::NodeState::PROCESSED) {
             current_freq += m_frequency_modulator->get_last_output();
-            if (!(state & Utils::NodeState::ACTIVE)) {
-                atomic_remove_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
-            }
         } else {
             current_freq += m_frequency_modulator->process_sample(0.f);
             atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
@@ -113,6 +111,7 @@ double Sine::process_sample(double input)
 
     float current_amplitude = m_amplitude;
     if (m_amplitude_modulator) {
+        atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
         u_int32_t state = m_amplitude_modulator->m_state.load();
 
         if (state & Utils::NodeState::PROCESSED) {
@@ -134,6 +133,14 @@ double Sine::process_sample(double input)
 
     notify_tick(current_sample);
 
+    if (m_frequency_modulator) {
+        atomic_dec_modulator_count(m_frequency_modulator->m_modulator_count, 1);
+        try_reset_processed_state(m_frequency_modulator);
+    }
+    if (m_amplitude_modulator) {
+        atomic_dec_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
+        try_reset_processed_state(m_amplitude_modulator);
+    }
     return current_sample;
 }
 

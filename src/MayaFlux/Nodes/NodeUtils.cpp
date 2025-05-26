@@ -1,4 +1,5 @@
 #include "NodeUtils.hpp"
+#include "Node.hpp"
 
 namespace MayaFlux::Nodes {
 
@@ -115,4 +116,21 @@ void atomic_set_flag_weak(std::atomic<Utils::NodeState>& flag, Utils::NodeState&
 {
     flag.compare_exchange_weak(expected, desired);
 };
+
+void atomic_inc_modulator_count(std::atomic<u_int32_t>& count, int amount)
+{
+    count.fetch_add(amount, std::memory_order_relaxed);
+}
+
+void atomic_dec_modulator_count(std::atomic<u_int32_t>& count, int amount)
+{
+    count.fetch_sub(amount, std::memory_order_relaxed);
+}
+
+void try_reset_processed_state(std::shared_ptr<Node> node)
+{
+    if (node && node->m_modulator_count.load(std::memory_order_relaxed) == 0) {
+        node->reset_processed_state();
+    }
+}
 }

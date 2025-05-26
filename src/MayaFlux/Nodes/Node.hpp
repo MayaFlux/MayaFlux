@@ -249,6 +249,8 @@ public:
      */
     virtual double get_last_output() = 0;
 
+    // virtual std::atomic<uint32_t>& get_modulator_count() = 0;
+
 protected:
     /**
      * @brief Creates an appropriate context object for this node type
@@ -301,5 +303,7 @@ private:
 public:
     // std::atomic<Utils::MF_NodeState> m_state;
     std::atomic<Utils::NodeState> m_state;
+
+    std::atomic<uint32_t> m_modulator_count;
 };
 }

@@ -587,8 +587,6 @@ TEST_F(NodeCallbackTest, NodeChainCallbacks)
 
     auto chain_node = test_sine >> test_fir;
 
-    MayaFlux::get_node_graph_manager()->add_to_root(chain_node);
-
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
         MayaFlux::get_root_node().process();
@@ -597,7 +595,7 @@ TEST_F(NodeCallbackTest, NodeChainCallbacks)
     EXPECT_EQ(sine_count, num_samples);
     EXPECT_EQ(filter_count, num_samples);
 
-    MayaFlux::get_node_graph_manager()->get_root_node().unregister_node(chain_node);
+    MayaFlux::remove_node_from_root(chain_node);
 
     chain_node->remove_all_hooks();
     test_sine->remove_all_hooks();
@@ -699,8 +697,6 @@ TEST_F(NodeCallbackTest, ChainNodeCallbackPropagation)
         chain_count++;
     });
 
-    MayaFlux::get_node_graph_manager()->add_to_root(chain);
-
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
         MayaFlux::get_node_graph_manager()->get_root_node().process();
@@ -710,7 +706,7 @@ TEST_F(NodeCallbackTest, ChainNodeCallbackPropagation)
     EXPECT_EQ(target_count, num_samples);
     EXPECT_EQ(chain_count, num_samples);
 
-    MayaFlux::get_node_graph_manager()->get_root_node().unregister_node(chain);
+    MayaFlux::remove_node_from_root(chain);
 
     chain->remove_all_hooks();
     source->remove_all_hooks();

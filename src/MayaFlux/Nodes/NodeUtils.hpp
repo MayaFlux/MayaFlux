@@ -137,4 +137,11 @@ void atomic_add_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flag
 void atomic_remove_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flags);
 
 void atomic_set_flag_weak(std::atomic<Utils::NodeState>& flag, Utils::NodeState& expected, const Utils::NodeState& desired);
+
+void atomic_inc_modulator_count(std::atomic<u_int32_t>& count, int amount);
+
+void atomic_dec_modulator_count(std::atomic<u_int32_t>& count, int amount);
+
+void try_reset_processed_state(std::shared_ptr<Node> node);
+
 }

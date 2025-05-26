@@ -12,7 +12,7 @@ Phasor::Phasor(float frequency, float amplitude, float offset, bool bAuto_regist
     , m_amplitude_modulator(nullptr)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = { Utils::NodeState::INACTIVE }, false))
+    , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
     update_phase_increment(frequency);
 }
@@ -26,7 +26,7 @@ Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, float
     , m_amplitude_modulator(nullptr)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = { Utils::NodeState::INACTIVE }, false))
+    , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
     update_phase_increment(frequency);
 }
@@ -40,7 +40,7 @@ Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, float
     , m_amplitude_modulator(amplitude_modulator)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = { Utils::NodeState::INACTIVE }, false))
+    , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
     update_phase_increment(frequency);
 }
@@ -55,7 +55,7 @@ Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> 
     , m_amplitude_modulator(amplitude_modulator)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = { Utils::NodeState::INACTIVE }, false))
+    , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
     update_phase_increment(frequency);
 }
@@ -94,6 +94,7 @@ double Phasor::process_sample(double input)
     double effective_freq = m_frequency;
 
     if (m_frequency_modulator) {
+        atomic_inc_modulator_count(m_frequency_modulator->m_modulator_count, 1);
         u_int32_t state = m_frequency_modulator->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             effective_freq += m_frequency_modulator->get_last_output();
@@ -108,6 +109,7 @@ double Phasor::process_sample(double input)
     output = m_phase * m_amplitude;
 
     if (m_amplitude_modulator) {
+        atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
         u_int32_t state = m_amplitude_modulator->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             output *= m_amplitude_modulator->get_last_output();
@@ -128,6 +130,15 @@ double Phasor::process_sample(double input)
     m_last_output = output;
 
     notify_tick(output);
+
+    if (m_frequency_modulator) {
+        atomic_dec_modulator_count(m_frequency_modulator->m_modulator_count, 1);
+        try_reset_processed_state(m_frequency_modulator);
+    }
+    if (m_amplitude_modulator) {
+        atomic_dec_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
+        try_reset_processed_state(m_amplitude_modulator);
+    }
 
     return output;
 }

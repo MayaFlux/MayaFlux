@@ -7,7 +7,7 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
     , m_coefficients(coefficients)
     , m_buffer_size(0)
     , m_last_output(0.0)
-    , m_scale_factor((m_state = { Utils::NodeState::INACTIVE }, 1.f))
+    , m_scale_factor((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 1.f))
 {
 }
 
@@ -16,7 +16,7 @@ Polynomial::Polynomial(DirectFunction function)
     , m_direct_function(function)
     , m_buffer_size(0)
     , m_last_output(0.0)
-    , m_scale_factor(1.f)
+    , m_scale_factor((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 1.f))
 {
 }
 
@@ -25,7 +25,7 @@ Polynomial::Polynomial(BufferFunction function, PolynomialMode mode, size_t buff
     , m_buffer_function(function)
     , m_buffer_size(buffer_size)
     , m_last_output(0.0)
-    , m_scale_factor(1.f)
+    , m_scale_factor((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 1.f))
 {
     m_input_buffer.resize(buffer_size, 0.0);
     m_output_buffer.resize(buffer_size, 0.0);
@@ -36,6 +36,7 @@ double Polynomial::process_sample(double input)
     double result = 0.0;
 
     if (m_input_node) {
+        atomic_inc_modulator_count(m_input_node->m_modulator_count, 1);
         u_int32_t state = m_input_node->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             input += m_input_node->get_last_output();
@@ -90,6 +91,12 @@ double Polynomial::process_sample(double input)
 
     m_last_output = result;
     notify_tick(result);
+
+    if (m_input_node) {
+        atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);
+        try_reset_processed_state(m_input_node);
+    }
+
     return result;
 }
 

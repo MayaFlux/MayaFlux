@@ -11,7 +11,7 @@ Impulse::Impulse(float frequency, float amplitude, float offset, bool bAuto_regi
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
     , m_last_output(0.0)
-    , m_impulse_occurred((m_state = { Utils::NodeState::INACTIVE }, false))
+    , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
     update_phase_increment(frequency);
 }
@@ -24,7 +24,7 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, float frequency, flo
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
     , m_last_output(0.0)
-    , m_impulse_occurred((m_state = { Utils::NodeState::INACTIVE }, false))
+    , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
     update_phase_increment(frequency);
 }
@@ -37,7 +37,7 @@ Impulse::Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, flo
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
     , m_last_output(0.0)
-    , m_impulse_occurred((m_state = { Utils::NodeState::INACTIVE }, false))
+    , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
     update_phase_increment(frequency);
 }
@@ -51,7 +51,7 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
     , m_last_output(0.0)
-    , m_impulse_occurred((m_state = { Utils::NodeState::INACTIVE }, false))
+    , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
     update_phase_increment(frequency);
 }
@@ -90,6 +90,7 @@ double Impulse::process_sample(double input)
 
     double effective_freq = m_frequency;
     if (m_frequency_modulator) {
+        atomic_inc_modulator_count(m_frequency_modulator->m_modulator_count, 1);
         u_int32_t state = m_frequency_modulator->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             effective_freq += m_frequency_modulator->get_last_output();
@@ -113,6 +114,7 @@ double Impulse::process_sample(double input)
 
     double current_amplitude = m_amplitude;
     if (m_amplitude_modulator) {
+        atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
         u_int32_t state = m_amplitude_modulator->m_state.load();
 
         if (state & Utils::NodeState::PROCESSED) {
@@ -135,6 +137,15 @@ double Impulse::process_sample(double input)
     m_last_output = output;
 
     notify_tick(output);
+
+    if (m_frequency_modulator) {
+        atomic_dec_modulator_count(m_frequency_modulator->m_modulator_count, 1);
+        try_reset_processed_state(m_frequency_modulator);
+    }
+    if (m_amplitude_modulator) {
+        atomic_dec_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
+        try_reset_processed_state(m_amplitude_modulator);
+    }
 
     return output;
 }
