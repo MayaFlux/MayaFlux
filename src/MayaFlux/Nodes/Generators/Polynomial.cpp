@@ -7,9 +7,8 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
     , m_coefficients(coefficients)
     , m_buffer_size(0)
     , m_last_output(0.0)
-    , m_scale_factor((m_state = { Utils::MF_NodeState::MFOP_INVALID },1.f))
+    , m_scale_factor((m_state = { Utils::NodeState::INACTIVE }, 1.f))
 {
-   
 }
 
 Polynomial::Polynomial(DirectFunction function)
@@ -36,20 +35,13 @@ double Polynomial::process_sample(double input)
 {
     double result = 0.0;
 
-
     if (m_input_node) {
-
-        auto state = m_input_node->m_state.load();
-
-        if (! (state & Utils::MF_NodeState::MFOP_IS_PROCESSING) ) {
-
-            input = m_input_node->process_sample(input);
-
-            state = static_cast<Utils::MF_NodeState>( state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
-            AtomicSetFlagStrong(m_input_node->m_state, state);
-
-        } else {
+        u_int32_t state = m_input_node->m_state.load();
+        if (state & Utils::NodeState::PROCESSED) {
             input += m_input_node->get_last_output();
+        } else {
+            input = m_input_node->process_sample(input);
+            atomic_add_flag(m_input_node->m_state, Utils::NodeState::PROCESSED);
         }
     }
 
@@ -216,6 +208,14 @@ bool Polynomial::remove_hook(const NodeHook& callback)
 bool Polynomial::remove_conditional_hook(const NodeCondition& callback)
 {
     return safe_remove_conditional_callback(m_conditional_callbacks, callback);
+}
+
+void Polynomial::reset_processed_state()
+{
+    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
+    if (m_input_node) {
+        m_input_node->reset_processed_state();
+    }
 }
 
 } // namespace MayaFlux::Nodes::Generator

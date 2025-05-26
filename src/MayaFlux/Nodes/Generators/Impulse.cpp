@@ -10,11 +10,8 @@ Impulse::Impulse(float frequency, float amplitude, float offset, bool bAuto_regi
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
-    , m_impulse_occurred(false)
+    , m_impulse_occurred((m_state = { Utils::NodeState::INACTIVE }, false))
 {
     update_phase_increment(frequency);
 }
@@ -26,11 +23,8 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, float frequency, flo
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
-    , m_impulse_occurred(false)
+    , m_impulse_occurred((m_state = { Utils::NodeState::INACTIVE }, false))
 {
     update_phase_increment(frequency);
 }
@@ -42,11 +36,8 @@ Impulse::Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, flo
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
-    , m_impulse_occurred(false)
+    , m_impulse_occurred((m_state = { Utils::NodeState::INACTIVE }, false))
 {
     update_phase_increment(frequency);
 }
@@ -59,11 +50,8 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
-    , m_impulse_occurred(false)
+    , m_impulse_occurred((m_state = { Utils::NodeState::INACTIVE }, false))
 {
     update_phase_increment(frequency);
 }
@@ -102,7 +90,14 @@ double Impulse::process_sample(double input)
 
     double effective_freq = m_frequency;
     if (m_frequency_modulator) {
-        effective_freq += m_frequency_modulator->process_sample(input);
+        u_int32_t state = m_frequency_modulator->m_state.load();
+        if (state & Utils::NodeState::PROCESSED) {
+            effective_freq += m_frequency_modulator->get_last_output();
+        } else {
+            effective_freq = m_frequency_modulator->process_sample(0.f);
+            atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
+        }
+
         if (effective_freq <= 0) {
             effective_freq = 0.001;
         }
@@ -116,10 +111,20 @@ double Impulse::process_sample(double input)
         output = 0.0;
     }
 
+    double current_amplitude = m_amplitude;
     if (m_amplitude_modulator) {
-        output *= m_amplitude_modulator->process_sample(input);
+        u_int32_t state = m_amplitude_modulator->m_state.load();
+
+        if (state & Utils::NodeState::PROCESSED) {
+            current_amplitude += m_amplitude_modulator->get_last_output();
+        } else {
+            current_amplitude += m_amplitude_modulator->process_sample(0.f);
+            atomic_add_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
+        }
     }
 
+    output *= current_amplitude;
+    m_amplitude = current_amplitude;
     output += m_offset;
 
     m_phase += m_phase_inc;
@@ -183,7 +188,7 @@ bool Impulse::remove_conditional_hook(const NodeCondition& condition)
 
 void Impulse::reset_processed_state()
 {
-    m_is_processed = false;
+    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
 
     if (m_frequency_modulator) {
         m_frequency_modulator->reset_processed_state();

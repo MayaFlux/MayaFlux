@@ -68,7 +68,6 @@ bool safe_remove_conditional_callback(std::vector<std::pair<NodeHook, NodeCondit
 
     while (it != callbacks.end()) {
         if (it->second.target_type() == callback.target_type()) {
-            // it = callbacks.erase(it);
             callbacks.erase(it);
             removed = true;
         } else {
@@ -78,4 +77,42 @@ bool safe_remove_conditional_callback(std::vector<std::pair<NodeHook, NodeCondit
 
     return removed;
 }
+
+void atomic_set_strong(std::atomic<Utils::NodeState>& flag, Utils::NodeState& expected, const Utils::NodeState& desired)
+{
+    flag.compare_exchange_strong(expected, desired);
+};
+
+void atomic_set_flag_strong(std::atomic<Utils::NodeState>& flag, const Utils::NodeState& desired)
+{
+    auto expected = flag.load();
+    flag.compare_exchange_strong(expected, desired);
+};
+
+void atomic_add_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flag)
+{
+    auto current = state.load();
+    Utils::NodeState desired;
+    do {
+        desired = static_cast<Utils::NodeState>(current | flag);
+    } while (!state.compare_exchange_weak(current, desired,
+        std::memory_order_acq_rel,
+        std::memory_order_acquire));
+}
+
+void atomic_remove_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flag)
+{
+    auto current = state.load();
+    Utils::NodeState desired;
+    do {
+        desired = static_cast<Utils::NodeState>(current & ~flag);
+    } while (!state.compare_exchange_weak(current, desired,
+        std::memory_order_acq_rel,
+        std::memory_order_acquire));
+}
+
+void atomic_set_flag_weak(std::atomic<Utils::NodeState>& flag, Utils::NodeState& expected, const Utils::NodeState& desired)
+{
+    flag.compare_exchange_weak(expected, desired);
+};
 }

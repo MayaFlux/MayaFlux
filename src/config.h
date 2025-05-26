@@ -59,9 +59,11 @@ using u_int64_t = uint64_t;
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #define MAYAFLUX_EXPORT __declspec(dllexport)
 #define MAYAFLUX_IMPORT __declspec(dllimport)
+#define MAYFALUX_FORCEINLINE __forceinline
 #else
 #define MAYAFLUX_EXPORT __attribute__((visibility("default")))
 #define MAYAFLUX_IMPORT
+#define MAYAFLUX_FORCEINLINE __attribute__((always_inline))
 #endif
 
 namespace MayaFlux {

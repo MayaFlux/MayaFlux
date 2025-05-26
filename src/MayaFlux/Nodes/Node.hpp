@@ -107,9 +107,8 @@ protected:
  * and batch processing for more efficient offline processing.
  */
 class Node {
-   
-public:
 
+public:
     /**
      * @brief Virtual destructor for proper cleanup of derived classes
      */
@@ -227,6 +226,16 @@ public:
     virtual void remove_all_hooks() = 0;
 
     /**
+     * @brief Resets the processed state of the node and any attached input nodes
+     *
+     * This method is used by the processing system to reset the processed state
+     * of the node at the end of each processing cycle. This ensures that
+     * all nodes are marked as unprocessed before the cycle next begins, allowing
+     * the system to correctly identify which nodes need to be processed.
+     */
+    virtual void reset_processed_state() = 0;
+
+    /**
      * @brief Retrieves the most recent output value produced by the node
      * @return The last output sample value
      *
@@ -240,9 +249,6 @@ public:
      */
     virtual double get_last_output() = 0;
 
-    //std::atomic<Utils::MF_NodeState>& GetState() { return m_state; };
-    //const std::atomic<Utils::MF_NodeState>& GetStateConst() { return m_state; };
-    
 protected:
     /**
      * @brief Creates an appropriate context object for this node type
@@ -293,7 +299,7 @@ private:
     std::string m_Name;
 
 public:
-    std::atomic<Utils::MF_NodeState> m_state;// { Utils::MF_NodeState::MFOP_INVALID };
-
+    // std::atomic<Utils::MF_NodeState> m_state;
+    std::atomic<Utils::NodeState> m_state;
 };
 }

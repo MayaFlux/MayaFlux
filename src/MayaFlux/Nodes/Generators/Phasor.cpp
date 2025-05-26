@@ -10,12 +10,9 @@ Phasor::Phasor(float frequency, float amplitude, float offset, bool bAuto_regist
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = { Utils::MF_NodeState::MFOP_INVALID },false))
+    , m_threshold_crossed((m_state = { Utils::NodeState::INACTIVE }, false))
 {
     update_phase_increment(frequency);
 }
@@ -27,12 +24,9 @@ Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, float
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
+    , m_threshold_crossed((m_state = { Utils::NodeState::INACTIVE }, false))
 {
     update_phase_increment(frequency);
 }
@@ -44,12 +38,9 @@ Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, float
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
+    , m_threshold_crossed((m_state = { Utils::NodeState::INACTIVE }, false))
 {
     update_phase_increment(frequency);
 }
@@ -62,12 +53,9 @@ Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> 
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
+    , m_threshold_crossed((m_state = { Utils::NodeState::INACTIVE }, false))
 {
     update_phase_increment(frequency);
 }
@@ -104,18 +92,29 @@ double Phasor::process_sample(double input)
     double output = 0.0;
 
     double effective_freq = m_frequency;
+
     if (m_frequency_modulator) {
-        effective_freq += m_frequency_modulator->process_sample(input);
-        if (effective_freq <= 0) {
-            effective_freq = 0.001;
+        u_int32_t state = m_frequency_modulator->m_state.load();
+        if (state & Utils::NodeState::PROCESSED) {
+            effective_freq += m_frequency_modulator->get_last_output();
+        } else {
+            effective_freq = m_frequency_modulator->process_sample(0.f);
+            atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
         }
+
         update_phase_increment(effective_freq);
     }
 
     output = m_phase * m_amplitude;
 
     if (m_amplitude_modulator) {
-        output *= m_amplitude_modulator->process_sample(input);
+        u_int32_t state = m_amplitude_modulator->m_state.load();
+        if (state & Utils::NodeState::PROCESSED) {
+            output *= m_amplitude_modulator->get_last_output();
+        } else {
+            output *= m_amplitude_modulator->process_sample(0.f);
+            atomic_add_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
+        }
     }
 
     output += m_offset;
@@ -210,11 +209,9 @@ bool Phasor::remove_conditional_hook(const NodeCondition& callback)
     return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
-//TODO: set children flags
-/*
 void Phasor::reset_processed_state()
 {
-    m_is_processed = false;
+    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
 
     if (m_frequency_modulator) {
         m_frequency_modulator->reset_processed_state();
@@ -224,7 +221,7 @@ void Phasor::reset_processed_state()
         m_amplitude_modulator->reset_processed_state();
     }
 }
-*/
+
 std::unique_ptr<NodeContext> Phasor::create_context(double value)
 {
     return std::make_unique<GeneratorContext>(value, m_frequency, m_amplitude, m_phase);

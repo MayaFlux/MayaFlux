@@ -20,11 +20,12 @@ double IIR::process_sample(double input)
 
     double processed_input = input;
     if (m_input_node) {
-        if (!m_input_node->is_processed()) {
-            processed_input = m_input_node->process_sample(input);
-            m_input_node->mark_processed(true);
-        } else {
+        u_int32_t state = m_input_node->m_state.load();
+        if (state & Utils::NodeState::PROCESSED) {
             processed_input = m_input_node->get_last_output();
+        } else {
+            processed_input = m_input_node->process_sample(input);
+            atomic_add_flag(m_input_node->m_state, Utils::NodeState::PROCESSED);
         }
     }
     update_inputs(input);
@@ -51,7 +52,7 @@ double IIR::process_sample(double input)
 
 void IIR::reset_processed_state()
 {
-    mark_processed(false);
+    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
     if (m_input_node) {
         m_input_node->reset_processed_state();
     }

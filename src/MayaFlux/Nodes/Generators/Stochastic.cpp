@@ -9,10 +9,7 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
     , m_amplitude(1.0f)
     , m_normal_spread(4.0f)
     , m_type(type)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
-    , m_last_output((m_state = {Utils::MF_NodeState::MFOP_INVALID},0.0))
+    , m_last_output((m_state = { Utils::NodeState::INACTIVE }, 0.0))
 {
 }
 

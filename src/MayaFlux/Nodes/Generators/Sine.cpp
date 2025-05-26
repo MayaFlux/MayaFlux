@@ -10,9 +10,7 @@ Sine::Sine(float frequency, float amplitude, float offset)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process((m_state = { Utils::MF_NodeState::MFOP_INVALID },false))
+    , m_last_output((m_state = Utils::NodeState::INACTIVE, 0.f))
 {
     update_phase_increment(frequency);
 }
@@ -24,9 +22,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, float amp
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
+    , m_last_output((m_state = { Utils::NodeState::INACTIVE }, 0.f))
 {
     update_phase_increment(frequency);
 }
@@ -38,9 +34,7 @@ Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amp
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
+    , m_last_output((m_state = { Utils::NodeState::INACTIVE }, 0.f))
 {
     update_phase_increment(frequency);
 }
@@ -52,9 +46,7 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> ampl
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process((m_state = { Utils::MF_NodeState::MFOP_INVALID }, false))
+    , m_last_output((m_state = { Utils::NodeState::INACTIVE }, 0.f))
 {
     update_phase_increment(frequency);
 }
@@ -95,22 +87,17 @@ void Sine::clear_modulators()
 double Sine::process_sample(double input)
 {
     if (m_frequency_modulator) {
-
-        auto state = m_frequency_modulator->m_state.load();
-
-
+        u_int32_t state = m_frequency_modulator->m_state.load();
         double current_freq = m_frequency;
 
-        if (state & Utils::MF_NodeState::MFOP_IS_PROCESSING)
-        {
+        if (state & Utils::NodeState::PROCESSED) {
             current_freq += m_frequency_modulator->get_last_output();
-        } 
-        else 
-        {
+            if (!(state & Utils::NodeState::ACTIVE)) {
+                atomic_remove_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
+            }
+        } else {
             current_freq += m_frequency_modulator->process_sample(0.f);
-            state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
-            AtomicSetFlagStrong(m_frequency_modulator->m_state, state);
-
+            atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
         }
         update_phase_increment(current_freq);
     }
@@ -125,19 +112,17 @@ double Sine::process_sample(double input)
     }
 
     float current_amplitude = m_amplitude;
-    if (m_amplitude_modulator) 
-    {
-        auto state = m_amplitude_modulator->m_state.load();
+    if (m_amplitude_modulator) {
+        u_int32_t state = m_amplitude_modulator->m_state.load();
 
-        if (state & Utils::MF_NodeState::MFOP_IS_PROCESSING)
-        {
+        if (state & Utils::NodeState::PROCESSED) {
             current_amplitude += m_amplitude_modulator->get_last_output();
-        } 
-        else 
-        {
+            if (!(state & Utils::NodeState::ACTIVE)) {
+                atomic_remove_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
+            }
+        } else {
             current_amplitude += m_amplitude_modulator->process_sample(0.f);
-            state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
-            AtomicSetFlagStrong(m_amplitude_modulator->m_state, state);
+            atomic_add_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
         }
     }
     current_sample *= current_amplitude;
@@ -209,11 +194,9 @@ bool Sine::remove_conditional_hook(const NodeCondition& callback)
     return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
-//TODO: Set children flags
-/*
 void Sine::reset_processed_state()
 {
-    mark_processed(false);
+    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
     if (m_frequency_modulator) {
         m_frequency_modulator->reset_processed_state();
     }
@@ -221,7 +204,7 @@ void Sine::reset_processed_state()
         m_amplitude_modulator->reset_processed_state();
     }
 }
-*/
+
 void Sine::printGraph()
 {
 }

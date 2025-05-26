@@ -18,12 +18,9 @@ Logic::Logic(double threshold)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_last_output(0.0)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID },0.0))
+    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
 {
     m_direct_function = [this](double input) {
         return input > m_threshold;
@@ -41,12 +38,9 @@ Logic::Logic(LogicOperator op, double threshold)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_last_output(0.0)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
+    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
 {
     set_operator(op);
 }
@@ -63,12 +57,9 @@ Logic::Logic(DirectFunction function)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_last_output(0.0)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
+    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
 {
 }
 
@@ -84,12 +75,9 @@ Logic::Logic(MultiInputFunction function, size_t input_count)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_last_output(0.0)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
+    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
 {
     m_input_buffer.resize(input_count, 0.0);
 }
@@ -106,12 +94,9 @@ Logic::Logic(SequentialFunction function, size_t history_size)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_last_output(0.0)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
+    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
 {
     // Initialize history buffer with false values
     m_history.assign(history_size, false);
@@ -129,12 +114,9 @@ Logic::Logic(TemporalFunction function)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_last_output(0.0)
-    , m_is_registered(false)
-    , m_is_processed(false)
-    , m_mock_process(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = { Utils::MF_NodeState::MFOP_INVALID }, 0.0))
+    , m_input((m_state = { Utils::NodeState::INACTIVE }, 0.0))
 {
 }
 
@@ -148,19 +130,12 @@ double Logic::process_sample(double input)
     m_edge_detected = false;
 
     if (m_input_node) {
-
-        auto state = m_input_node->m_state.load();
-
-        if (!(state & Utils::MF_NodeState::MFOP_IS_PROCESSING)) {
-
-            input = m_input_node->process_sample(input);
-
-            state = static_cast<Utils::MF_NodeState>(state | Utils::MF_NodeState::MFOP_IS_PROCESSING);
-            AtomicSetFlagStrong(m_input_node->m_state, state);
-
-        }
-        else {
+        u_int32_t state = m_input_node->m_state.load();
+        if (state & Utils::NodeState::PROCESSED) {
             input += m_input_node->get_last_output();
+        } else {
+            input = m_input_node->process_sample(input);
+            atomic_add_flag(m_input_node->m_state, Utils::NodeState::PROCESSED);
         }
     }
 
@@ -634,6 +609,14 @@ void Logic::remove_hooks_of_type(LogicEventType type)
             return cb.event_type == type;
         });
     m_all_callbacks.erase(it, m_all_callbacks.end());
+}
+
+void Logic::reset_processed_state()
+{
+    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
+    if (m_input_node) {
+        m_input_node->reset_processed_state();
+    }
 }
 
 }

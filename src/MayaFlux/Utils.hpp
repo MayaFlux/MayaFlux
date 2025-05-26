@@ -35,29 +35,16 @@ enum ActionType {
     FUNCTION
 };
 
-enum MF_NodeState
-{
-    MFOP_INVALID = 0x0,
-    MFOP_ACTIVE = 0x01,
-    MFOP_IS_PROCESSING = 0x02,
-    //MFOP_IS_ADD = 0x04,
+enum NodeState : u_int32_t {
+    INACTIVE = 0x00, ///< Engine is not processing this node
+    ACTIVE = 0x01, ///< Engine is processing this node
+    PENDING_REMOVAL = 0x02, ///< Node is marked for removal
+
+    MOCK_PROCESS = 0x04, ///< Node should be processed but output ignored
+    PROCESSED = 0x08, ///< Node has been processed this cycle
+
+    ENGINE_PROCESSED = ACTIVE | PROCESSED, ///< Engine has processed this node
+    EXTERMAL_PROCESSED = INACTIVE | PROCESSED, ///< External source has processed this node
+    ENGINE_MOCK_PROCESSED = ACTIVE | MOCK_PROCESS | PROCESSED, ///< Engine has mock processed this node
 };
-
-__forceinline void AtomicSetFlagStrong(std::atomic<MF_NodeState>& flag, MF_NodeState& expected, const MF_NodeState& desired)
-{
-    flag.compare_exchange_strong(expected, desired);
-};
-
-__forceinline void AtomicSetFlagStrong(std::atomic<MF_NodeState>& flag, const MF_NodeState& desired)
-{
-    auto expected = flag.load();
-    flag.compare_exchange_strong(expected, desired);
-};
-
-__forceinline void AtomicSetFlagWeak(std::atomic<MF_NodeState>& flag, MF_NodeState& expected, const MF_NodeState& desired)
-{
-    flag.compare_exchange_weak(expected, desired);
-};
-
-
 }

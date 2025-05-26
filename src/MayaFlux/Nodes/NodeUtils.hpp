@@ -1,6 +1,6 @@
 #pragma once
 
-#include "config.h"
+#include "MayaFlux/Utils.hpp"
 
 namespace MayaFlux::Nodes {
 
@@ -127,4 +127,14 @@ bool safe_remove_callback(std::vector<NodeHook>& callbacks, const NodeHook& call
  * callbacks when they're no longer needed.
  */
 bool safe_remove_conditional_callback(std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeCondition& callback);
+
+void atomic_set_strong(std::atomic<Utils::NodeState>& flag, Utils::NodeState& expected, const Utils::NodeState& desired);
+
+void atomic_set_flag_strong(std::atomic<Utils::NodeState>& flag, const Utils::NodeState& desired);
+
+void atomic_add_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flag);
+
+void atomic_remove_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flags);
+
+void atomic_set_flag_weak(std::atomic<Utils::NodeState>& flag, Utils::NodeState& expected, const Utils::NodeState& desired);
 }
