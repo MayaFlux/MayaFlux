@@ -301,9 +301,33 @@ private:
     std::string m_Name;
 
 public:
-    // std::atomic<Utils::MF_NodeState> m_state;
+    /**
+     * @brief Atomic state flag tracking the node's processing status
+     *
+     * This atomic state variable tracks the node's current operational status using
+     * bit flags defined in Utils::NodeState. It indicates whether the node is:
+     * - ACTIVE: Currently part of the processing graph
+     * - PROCESSED: Has been processed in the current cycle
+     * - PENDING_REMOVAL: Marked for removal from the processing graph
+     * - MOCK_PROCESS: Should be processed but output ignored
+     *
+     * The atomic nature ensures thread-safe state transitions, allowing the audio
+     * engine to safely coordinate processing across multiple threads without data races.
+     */
     std::atomic<Utils::NodeState> m_state;
 
+    /**
+     * @brief Counter tracking how many other nodes are using this node as a modulator
+     *
+     * This counter is incremented when another node begins using this node as a
+     * modulation source, and decremented when that relationship ends. It's critical
+     * for the node lifecycle management system, as it prevents premature state resets
+     * when a node's output is still needed by downstream nodes.
+     *
+     * When this counter is non-zero, the node's processed state will not be reset
+     * automatically after processing, ensuring that all dependent nodes can access
+     * its output before it's cleared.
+     */
     std::atomic<uint32_t> m_modulator_count;
 };
 }

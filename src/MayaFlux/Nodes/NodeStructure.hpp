@@ -75,15 +75,55 @@ private:
      */
     std::vector<std::shared_ptr<Node>> m_Nodes;
 
+    /**
+     * @brief Flag indicating if the root node is currently processing nodes
+     *
+     * This atomic flag prevents concurrent modifications to the node collection
+     * during processing cycles. When set to true, any attempts to register or
+     * unregister nodes will be queued as pending operations rather than being
+     * executed immediately, ensuring thread safety and preventing data corruption
+     * during audio processing.
+     */
     std::atomic<bool> m_is_processing;
 
+    /**
+     * @brief Structure for storing pending node registration/unregistration operations
+     *
+     * When nodes need to be added or removed while the root node is processing,
+     * these operations are stored in this structure and executed later when it's
+     * safe to modify the node collection. This prevents race conditions and ensures
+     * consistent audio processing without interruptions.
+     */
     struct PendingOp {
+        /**
+         * @brief Flag indicating if this pending operation slot is in use
+         */
         std::atomic<bool> active;
+
+        /**
+         * @brief The node to be registered or unregistered
+         */
         std::shared_ptr<Node> node;
     } m_pending_ops[MAX_PENDING];
 
+    /**
+     * @brief Counter tracking the number of pending operations
+     *
+     * This counter helps efficiently manage the pending operations array,
+     * allowing the system to quickly determine if there are operations
+     * waiting to be processed without scanning the entire array.
+     */
     std::atomic<uint32_t> m_pending_count { 0 };
 
+    /**
+     * @brief Processes any pending node registration/unregistration operations
+     *
+     * This method is called after the processing cycle completes to handle any
+     * node registration or unregistration requests that came in during processing.
+     * It ensures that node collection modifications happen safely between
+     * processing cycles, maintaining audio continuity while allowing dynamic
+     * changes to the node graph.
+     */
     void process_pending_operations();
 };
 

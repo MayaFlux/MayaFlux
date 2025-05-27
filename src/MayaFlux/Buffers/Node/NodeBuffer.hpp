@@ -82,6 +82,16 @@ private:
      * @brief Whether to reset the buffer before adding node output
      */
     bool m_clear_before_process;
+
+    /**
+     * @brief Gets a batch of data from the node
+     * @param num_samples Number of samples to retrieve
+     * @return Vector of data samples
+     *
+     * This method handles the interaction with the node's processing mechanism,
+     * ensuring thread-safe access and proper state management.
+     */
+    std::vector<double> get_node_data(u_int32_t num_samples);
 };
 
 /**

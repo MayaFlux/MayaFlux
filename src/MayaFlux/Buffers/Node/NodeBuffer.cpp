@@ -17,7 +17,7 @@ void NodeSourceProcessor::process(std::shared_ptr<AudioBuffer> buffer)
     }
 
     try {
-        std::vector<double> node_data = m_node->process_batch(buffer->get_num_samples());
+        std::vector<double> node_data = get_node_data(buffer->get_num_samples());
         auto& buffer_data = buffer->get_data();
 
         bool should_clear = m_clear_before_process;
@@ -38,6 +38,25 @@ void NodeSourceProcessor::process(std::shared_ptr<AudioBuffer> buffer)
     } catch (...) {
         std::cerr << "Unknown error processing node" << std::endl;
     }
+}
+
+std::vector<double> NodeSourceProcessor::get_node_data(u_int32_t num_samples)
+{
+    auto state = m_node->m_state.load();
+    std::vector<double> output(num_samples);
+
+    for (size_t i = 0; i < num_samples; i++) {
+        Nodes::atomic_inc_modulator_count(m_node->m_modulator_count, 1);
+        if (state & Utils::NodeState::PROCESSED) {
+            output[i] = m_node->get_last_output();
+        } else {
+            output[i] = m_node->process_sample(0.f);
+            Nodes::atomic_add_flag(m_node->m_state, Utils::NodeState::PROCESSED);
+        }
+        Nodes::atomic_dec_modulator_count(m_node->m_modulator_count, 1);
+        Nodes::try_reset_processed_state(m_node);
+    }
+    return output;
 }
 
 NodeBuffer::NodeBuffer(u_int32_t channel_id, u_int32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process)
