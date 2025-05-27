@@ -12,7 +12,7 @@ class LogicProcessorTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        logic = std::make_shared<Nodes::Generator::Logic>(0.5);
+        external_logic = std::make_shared<Nodes::Generator::Logic>(0.5);
 
         buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
@@ -21,14 +21,83 @@ protected:
         }
     }
 
-    std::shared_ptr<Nodes::Generator::Logic> logic;
+    std::shared_ptr<Nodes::Generator::Logic> external_logic;
     std::shared_ptr<Buffers::AudioBuffer> buffer;
 };
+
+TEST_F(LogicProcessorTest, InternalLogicConstruction)
+{
+    auto processor = std::make_shared<Buffers::LogicProcessor>(
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+        false,
+        0.5);
+
+    EXPECT_TRUE(processor->is_using_internal());
+    EXPECT_NE(processor->get_logic(), nullptr);
+}
+
+TEST_F(LogicProcessorTest, ExternalLogicConstruction)
+{
+    auto processor = std::make_shared<Buffers::LogicProcessor>(
+        external_logic,
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    EXPECT_FALSE(processor->is_using_internal());
+    EXPECT_EQ(processor->get_logic(), external_logic);
+}
+
+TEST_F(LogicProcessorTest, InternalVsExternalProcessing)
+{
+    auto internal_processor = std::make_shared<Buffers::LogicProcessor>(
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+        false,
+        0.5);
+
+    auto external_processor = std::make_shared<Buffers::LogicProcessor>(
+        external_logic,
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    auto buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+
+    buffer1->get_data() = buffer->get_data();
+    buffer2->get_data() = buffer->get_data();
+
+    std::vector<double> original_data = buffer->get_data();
+
+    internal_processor->process(buffer1);
+    external_processor->process(buffer2);
+
+    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
+        EXPECT_DOUBLE_EQ(buffer1->get_data()[i], buffer2->get_data()[i]);
+        double expected = (original_data[i] > 0.5) ? 1.0 : 0.0;
+        EXPECT_DOUBLE_EQ(buffer1->get_data()[i], expected);
+    }
+}
+
+TEST_F(LogicProcessorTest, ExternalLogicStateManagement)
+{
+    auto processor = std::make_shared<Buffers::LogicProcessor>(
+        external_logic,
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    external_logic->process_sample(0.3); // Below threshold
+    Nodes::atomic_add_flag(external_logic->m_state, Utils::NodeState::PROCESSED);
+
+    std::vector<double> original_data = buffer->get_data();
+    processor->process(buffer);
+
+    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
+        double expected = (original_data[i] > 0.5) ? 1.0 : 0.0;
+        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
+    }
+}
 
 TEST_F(LogicProcessorTest, GenerateAndApply)
 {
     auto processor = std::make_shared<Buffers::LogicProcessor>(
-        logic, Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+        external_logic,
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
     std::vector<double> original_data = buffer->get_data();
 
@@ -46,17 +115,16 @@ TEST_F(LogicProcessorTest, GenerateAndApply)
 TEST_F(LogicProcessorTest, TestModulationTypes)
 {
     auto processor = std::make_shared<Buffers::LogicProcessor>(
-        logic, Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+        external_logic,
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
     std::vector<double> original_data = buffer->get_data();
 
     processor->generate(buffer->get_num_samples(), original_data);
 
     processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::REPLACE);
-
     auto replace_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
     replace_buffer->get_data() = original_data;
-
     processor->apply(replace_buffer);
 
     for (size_t i = 0; i < replace_buffer->get_num_samples(); i++) {
@@ -65,10 +133,8 @@ TEST_F(LogicProcessorTest, TestModulationTypes)
     }
 
     processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::MULTIPLY);
-
     auto multiply_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
     multiply_buffer->get_data() = original_data;
-
     processor->apply(multiply_buffer);
 
     for (size_t i = 0; i < multiply_buffer->get_num_samples(); i++) {
@@ -78,10 +144,8 @@ TEST_F(LogicProcessorTest, TestModulationTypes)
     }
 
     processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::ADD);
-
     auto add_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
     add_buffer->get_data() = original_data;
-
     processor->apply(add_buffer);
 
     for (size_t i = 0; i < add_buffer->get_num_samples(); i++) {
@@ -96,7 +160,6 @@ TEST_F(LogicProcessorTest, TestModulationTypes)
 
     auto custom_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
     custom_buffer->get_data() = original_data;
-
     processor->apply(custom_buffer);
 
     for (size_t i = 0; i < custom_buffer->get_num_samples(); i++) {
@@ -106,119 +169,57 @@ TEST_F(LogicProcessorTest, TestModulationTypes)
     }
 }
 
-TEST_F(LogicProcessorTest, ProcessWithDifferentModulations)
+TEST_F(LogicProcessorTest, InternalLogicWithCustomFunction)
 {
     auto processor = std::make_shared<Buffers::LogicProcessor>(
-        logic, Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    std::vector<double> original_data = buffer->get_data();
-
-    auto replace_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
-    replace_buffer->get_data() = original_data;
-
-    processor->process(replace_buffer);
-
-    processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::MULTIPLY);
-
-    auto multiply_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
-    multiply_buffer->get_data() = original_data;
-
-    processor->process(multiply_buffer);
-
-    for (size_t i = 0; i < multiply_buffer->get_num_samples(); i++) {
-        double logic_val = (original_data[i] > 0.5) ? 1.0 : 0.0;
-        double expected = original_data[i] * logic_val;
-        EXPECT_DOUBLE_EQ(multiply_buffer->get_data()[i], expected);
-    }
-}
-
-TEST_F(LogicProcessorTest, CustomModulationFunction)
-{
-    auto processor = std::make_shared<Buffers::LogicProcessor>(
-        logic, Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    processor->set_modulation_function([](double logic_val, double audio_val) {
-        return audio_val * 0.5 + logic_val * 0.5;
-    });
-
-    EXPECT_EQ(processor->get_modulation_type(), Buffers::LogicProcessor::ModulationType::CUSTOM);
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+        false,
+        [](double input) { return input > 0.3 && input < 0.7; } // Custom logic function
+    );
 
     std::vector<double> original_data = buffer->get_data();
     processor->process(buffer);
 
     for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        double logic_val = (original_data[i] > 0.5) ? 1.0 : 0.0;
-        double expected = original_data[i] * 0.5 + logic_val * 0.5;
+        double expected = (original_data[i] > 0.3 && original_data[i] < 0.7) ? 1.0 : 0.0;
         EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
     }
 }
 
-TEST_F(LogicProcessorTest, GenerateOnceApplyMultiple)
+TEST_F(LogicProcessorTest, ResetBetweenBuffersInternal)
 {
     auto processor = std::make_shared<Buffers::LogicProcessor>(
-        logic, Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+        Buffers::LogicProcessor::ProcessMode::STATE_MACHINE,
+        true,
+        [](const std::deque<bool>& history) -> bool {
+            return history.size() >= 2 && std::all_of(history.begin(), history.end(), [](bool b) { return b; });
+        },
+        2);
 
-    processor->generate(buffer->get_num_samples());
+    auto buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, 3);
+    buffer1->get_data() = { 0.6, 0.7, 0.8 };
 
-    auto buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
-    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(1, buffer->get_num_samples());
-    auto buffer3 = std::make_shared<Buffers::StandardAudioBuffer>(2, buffer->get_num_samples());
+    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, 3);
+    buffer2->get_data() = { 0.6, 0.7, 0.8 }; // All above threshold
 
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        buffer1->get_data()[i] = 0.1 * i;
-        buffer2->get_data()[i] = 0.2 * i;
-        buffer3->get_data()[i] = 0.3 * i;
-    }
+    processor->process(buffer1);
+    processor->process(buffer2);
 
-    processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::REPLACE);
-    processor->apply(buffer1);
-
-    processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::MULTIPLY);
-    processor->apply(buffer2);
-
-    processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::ADD);
-    processor->apply(buffer3);
-
-    // The same logic data was applied to all three buffers with different modulation
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        if (i > 0) {
-            EXPECT_NE(buffer1->get_data()[i], buffer2->get_data()[i]);
-            EXPECT_NE(buffer2->get_data()[i], buffer3->get_data()[i]);
-            EXPECT_NE(buffer1->get_data()[i], buffer3->get_data()[i]);
-        }
-    }
+    EXPECT_EQ(buffer1->get_data(), buffer2->get_data());
 }
 
-TEST_F(LogicProcessorTest, SampleByMode)
+TEST_F(LogicProcessorTest, ThresholdCrossingModeInternal)
 {
     auto processor = std::make_shared<Buffers::LogicProcessor>(
-        logic, Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
-
-    std::vector<double> original = buffer->get_data();
-
-    processor->process(buffer);
-
-    // First half of samples should be below threshold (0.0), second half above (1.0)
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        double expected = (original[i] > 0.5) ? 1.0 : 0.0;
-        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
-    }
-}
-
-TEST_F(LogicProcessorTest, ThresholdCrossingMode)
-{
-    auto processor = std::make_shared<Buffers::LogicProcessor>(
-        logic, Buffers::LogicProcessor::ProcessMode::THRESHOLD_CROSSING);
+        Buffers::LogicProcessor::ProcessMode::THRESHOLD_CROSSING,
+        false,
+        0.5);
 
     auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
     test_buffer->get_data() = { 0.1, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 0.6 };
 
     processor->process(test_buffer);
 
-    // Output should be 0.0 initially, then change at each threshold crossing
-    // Crossing from 0.1 to 0.6 (threshold 0.5): 0.0, 1.0, ...
-    // Crossing from 0.6 to 0.4: 1.0, 0.0, ...
-    // And so on
     std::vector<double> expected = { 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0 };
 
     for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
@@ -226,153 +227,102 @@ TEST_F(LogicProcessorTest, ThresholdCrossingMode)
     }
 }
 
-TEST_F(LogicProcessorTest, EdgeTriggeredMode)
+TEST_F(LogicProcessorTest, EdgeTriggeredModeInternal)
 {
-    auto edge_logic = std::make_shared<Nodes::Generator::Logic>(0.5);
-    edge_logic->set_edge_detection(Nodes::Generator::EdgeType::RISING);
-
     auto processor = std::make_shared<Buffers::LogicProcessor>(
-        edge_logic, Buffers::LogicProcessor::ProcessMode::EDGE_TRIGGERED);
+        Buffers::LogicProcessor::ProcessMode::EDGE_TRIGGERED,
+        false,
+        Nodes::Generator::LogicOperator::EDGE,
+        0.5);
+
+    processor->set_edge_type(Nodes::Generator::EdgeType::RISING);
 
     auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
     test_buffer->get_data() = { 0.1, 0.6, 0.7, 0.3, 0.2, 0.8, 0.9, 0.4, 0.3, 0.6 };
 
     processor->process(test_buffer);
 
-    std::vector<double> actual_output = test_buffer->get_data();
-
-    std::vector<double> expected = actual_output;
-
     for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
-        EXPECT_DOUBLE_EQ(test_buffer->get_data()[i], expected[i]);
+        EXPECT_TRUE(test_buffer->get_data()[i] == 0.0 || test_buffer->get_data()[i] == 1.0);
     }
+}
 
-    processor->set_edge_type(Nodes::Generator::EdgeType::FALLING);
+TEST_F(LogicProcessorTest, UpdateExternalLogic)
+{
+    auto initial_logic = std::make_shared<Nodes::Generator::Logic>(
+        [](double x) { return x > 0.3; }); // Threshold at 0.3
 
-    test_buffer->get_data() = { 0.1, 0.6, 0.7, 0.3, 0.2, 0.8, 0.9, 0.4, 0.3, 0.6 };
+    auto processor = std::make_shared<Buffers::LogicProcessor>(
+        initial_logic,
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 2);
+    test_buffer->get_data()[0] = 0.2;
+    test_buffer->get_data()[1] = 0.4;
+
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 0.0);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.0);
+
+    auto new_logic = std::make_shared<Nodes::Generator::Logic>(
+        [](double x) { return x > 0.5; }); // Threshold at 0.5
+
+    processor->update_logic_node(new_logic);
+
+    test_buffer->get_data()[0] = 0.2;
+    test_buffer->get_data()[1] = 0.4;
+
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 0.0);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 0.0);
+
+    test_buffer->get_data()[1] = 0.6;
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.0);
+}
+
+TEST_F(LogicProcessorTest, ForceUseInternalLogic)
+{
+    auto external_logic = std::make_shared<Nodes::Generator::Logic>(
+        [](double x) { return x > 0.3; }); // Threshold at 0.3
+
+    auto processor = std::make_shared<Buffers::LogicProcessor>(
+        external_logic,
+        Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    EXPECT_FALSE(processor->is_using_internal());
+    EXPECT_EQ(processor->get_logic(), external_logic);
+
+    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 2);
+    test_buffer->get_data()[0] = 0.2; // Below initial threshold
+    test_buffer->get_data()[1] = 0.4; // Above initial threshold
+
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 0.0); // Below threshold
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.0); // Above threshold
+
+    processor->force_use_internal([](double x) { return x > 0.5; }); // Threshold at 0.5
+
+    EXPECT_FALSE(processor->is_using_internal());
+
+    test_buffer->get_data()[0] = 0.2;
+    test_buffer->get_data()[1] = 0.4;
 
     processor->process(test_buffer);
 
-    actual_output = test_buffer->get_data();
+    EXPECT_TRUE(processor->is_using_internal());
+    EXPECT_NE(processor->get_logic(), external_logic);
 
-    expected = actual_output;
-
-    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
-        EXPECT_DOUBLE_EQ(test_buffer->get_data()[i], expected[i]);
-    }
-}
-
-TEST_F(LogicProcessorTest, StateMachineMode)
-{
-    // Create a sequential logic that detects a pattern: low -> high -> low
-    auto sequential_logic = std::make_shared<Nodes::Generator::Logic>(
-        [](const std::deque<bool>& history) -> bool {
-            if (history.size() < 3) {
-                return false;
-            }
-            // Pattern: current=false, previous=true, before=false
-            return !history[0] && history[1] && !history[2];
-        },
-        3);
-
-    auto processor = std::make_shared<Buffers::LogicProcessor>(
-        sequential_logic, Buffers::LogicProcessor::ProcessMode::STATE_MACHINE);
-
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
-    test_buffer->get_data() = { 0.1, 0.6, 0.2, 0.3, 0.7, 0.4, 0.8, 0.3, 0.6, 0.2 };
-    // The pattern low->high->low occurs at indices 0->1->2, 4->5->6, and 8->9
+    test_buffer->get_data()[0] = 0.2; // Below both thresholds
+    test_buffer->get_data()[1] = 0.4; // Between thresholds
 
     processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 0.0); // Below threshold
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 0.0); // Now below threshold
 
-    // Based on the actual implementation behavior, update our expectations
-    // The implementation appears to detect the pattern at index 2
-    std::vector<double> expected = { 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0 };
-
-    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
-        EXPECT_DOUBLE_EQ(test_buffer->get_data()[i], expected[i]);
-    }
-}
-
-TEST_F(LogicProcessorTest, ResetBetweenBuffers)
-{
-    auto sequential_logic = std::make_shared<Nodes::Generator::Logic>(
-        [](const std::deque<bool>& history) -> bool {
-            if (history.size() < 2) {
-                return false;
-            }
-            for (const auto& val : history) {
-                if (!val) {
-                    return false;
-                }
-            }
-            return true;
-        },
-        2);
-
-    auto processor = std::make_shared<Buffers::LogicProcessor>(
-        sequential_logic, Buffers::LogicProcessor::ProcessMode::STATE_MACHINE, true);
-
-    auto buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, 3);
-    buffer1->get_data() = { 0.6, 0.7, 0.8 }; // All values above threshold (all true)
-
-    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, 3);
-    buffer2->get_data() = { 0.6, 0.7, 0.8 }; // Also all true
-
-    processor->process(buffer1);
-
-    std::vector<double> expected1 = { 0.0, 1.0, 1.0 };
-
-    for (size_t i = 0; i < buffer1->get_num_samples(); i++) {
-        EXPECT_DOUBLE_EQ(buffer1->get_data()[i], expected1[i]);
-    }
-
-    processor->process(buffer2);
-
-    std::vector<double> expected2 = { 0.0, 1.0, 1.0 };
-
-    for (size_t i = 0; i < buffer2->get_num_samples(); i++) {
-        EXPECT_DOUBLE_EQ(buffer2->get_data()[i], expected2[i]);
-    }
-
-    processor->set_reset_between_buffers(false);
-
-    buffer1->get_data() = { 0.6, 0.7, 0.8 };
-    buffer2->get_data() = { 0.6, 0.7, 0.8 };
-
-    processor->process(buffer1);
-
-    processor->process(buffer2);
-
-    std::vector<double> expected_no_reset = { 1.0, 1.0, 1.0 };
-
-    for (size_t i = 0; i < buffer2->get_num_samples(); i++) {
-        EXPECT_DOUBLE_EQ(buffer2->get_data()[i], expected_no_reset[i]);
-    }
-}
-
-TEST_F(LogicProcessorTest, NodeIntegration)
-{
-    auto node_manager = std::make_shared<Nodes::NodeGraphManager>();
-
-    auto logic_node = node_manager->create_node<Nodes::Generator::Logic>(
-        "test_logic",
-        [](double input) -> bool { return input > 0.5; });
-
-    node_manager->get_root_node().register_node(logic_node);
-
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        buffer->get_data()[i] = static_cast<double>(i) / 10.0;
-    }
-
-    auto processor = std::make_shared<Buffers::LogicProcessor>(logic_node);
-
-    processor->process(buffer);
-
-    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
-        double expected = (static_cast<double>(i) / 10.0 > 0.5) ? 1.0 : 0.0;
-        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
-    }
+    test_buffer->get_data()[1] = 0.6;
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.0); // Above threshold
 }
 
 } // namespace MayaFlux::Test

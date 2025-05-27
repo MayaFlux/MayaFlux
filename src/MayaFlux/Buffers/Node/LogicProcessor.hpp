@@ -69,10 +69,49 @@ public:
     using ModulationFunction = std::function<double(double, double)>;
 
     /**
+     * @brief Constructs a LogicProcessor with the specified processing mode
+     * @param mode The processing mode to use
+     * @param reset_between_buffers Whether to reset logic state between buffer calls
+     * @param args Arguments to pass to the Logic constructor
+     *
+     * Creates a LogicProcessor that applies digital logic processing
+     * to audio buffers according to the specified mode and configuration.
+     */
+    template <typename... Args>
+        requires std::constructible_from<Nodes::Generator::Logic, Args...>
+    LogicProcessor(ProcessMode mode = ProcessMode::SAMPLE_BY_SAMPLE,
+        bool reset_between_buffers = false,
+        Args&&... args)
+        : m_logic(std::make_shared<Nodes::Generator::Logic>(std::forward<Args>(args)...))
+        , m_process_mode(mode)
+        , m_reset_between_buffers(reset_between_buffers)
+        , m_threshold(0.5)
+        , m_edge_type(Nodes::Generator::EdgeType::BOTH)
+        , m_last_value(0.0)
+        , m_last_state(false)
+        , m_use_internal(true)
+        , m_modulation_type(ModulationType::REPLACE)
+        , m_has_generated_data(false)
+    {
+        if (m_logic && m_logic->get_operator() == Nodes::Generator::LogicOperator::THRESHOLD) {
+            m_threshold = m_logic->get_threshold();
+        }
+
+        if (m_logic && m_logic->get_operator() == Nodes::Generator::LogicOperator::EDGE) {
+            m_edge_type = m_logic->get_edge_type();
+        }
+    }
+
+    /**
      * @brief Constructs a LogicProcessor with the specified logic node
      * @param logic The logic node to use for processing
      * @param mode The processing mode to use
      * @param reset_between_buffers Whether to reset logic state between buffer calls
+     *
+     * Creates a LogicProcessor that applies digital logic processing
+     * to audio buffers using the provided logic node and configuration.
+     * NOTE: Using external Logic node implies side effects of any progessing chain the node
+     * is connected to. This could mean that the buffer data is not used as input when used node's cached value.
      */
     LogicProcessor(
         std::shared_ptr<Nodes::Generator::Logic> logic,
@@ -247,6 +286,48 @@ public:
      */
     inline Nodes::Generator::EdgeType get_edge_type() const { return m_edge_type; }
 
+    /**
+     * @brief Checks if the processor is using the internal logic node
+     * @return True if using internal logic node, false otherwise
+     *
+     * This is useful when the logic node is connected to other nodes
+     * and we want to ensure that the processor uses its own internal
+     * logic node instead of the one provided in the constructor.
+     */
+    inline bool is_using_internal() const { return m_use_internal; }
+
+    /**
+     * @brief Forces the processor to use the internal logic node
+     *
+     * This is useful when the logic node is connected to other nodes
+     * and we want to ensure that the processor uses its own internal
+     * logic node instead of the one provided in the constructor.
+     */
+    template <typename... Args>
+        requires std::constructible_from<Nodes::Generator::Logic, Args...>
+    void force_use_internal(Args&&... args)
+    {
+        m_pending_logic = std::make_shared<Nodes::Generator::Logic>(std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief Updates the logic node used for processing
+     * @param logic New logic node to use
+     *
+     * NOTE: Using external Logic node implies side effects of any progessing chain the node
+     * is connected to. This could mean that the buffer data is not used as input when used node's cached value.
+     */
+    inline void update_logic_node(std::shared_ptr<Nodes::Generator::Logic> logic)
+    {
+        m_pending_logic = logic;
+    }
+
+    /**
+     * @brief Gets the logic node used for processing
+     * @return Logic node used for processing
+     */
+    inline std::shared_ptr<Nodes::Generator::Logic> get_logic() const { return m_logic; }
+
 private:
     std::shared_ptr<Nodes::Generator::Logic> m_logic; ///< Logic node for processing
     ProcessMode m_process_mode; ///< Current processing mode
@@ -255,11 +336,16 @@ private:
     Nodes::Generator::EdgeType m_edge_type; ///< Edge type for transition detection
     double m_last_value; ///< Last processed value (for state tracking)
     bool m_last_state; ///< Last boolean state
-    ModulationType m_modulation_type;
+    bool m_use_internal; ///< Whether to use the buffer's internal previous state
+    ModulationType m_modulation_type; ///< How logic values modulate buffer content
+    std::shared_ptr<Nodes::Generator::Logic> m_pending_logic; ///< Internal logic node
 
     ModulationFunction m_modulation_function; ///< Custom transformation function
     std::vector<double> m_logic_data; ///< Stored logic processing results
     bool m_has_generated_data; ///< Whether logic data has been generated
+
+    void process_sample_by_sample(std::span<double> data);
+    void process_single_sample(double& input, double& output);
 };
 
 } // namespace MayaFlux::Buffers

@@ -183,6 +183,7 @@ TEST_F(PolynomialTest, Callbacks)
     EXPECT_EQ(callback_count, 6); // 1 + 5 more callbacks
 }
 
+/*
 class PolynomialProcessorTest : public ::testing::Test {
 protected:
     void SetUp() override
@@ -338,6 +339,305 @@ TEST_F(PolynomialProcessorTest, NodeIntegration)
         double expected = (static_cast<double>(i) / 10.0) * (static_cast<double>(i) / 10.0);
         EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
     }
+} */
+
+class PolynomialProcessorTest : public ::testing::Test {
+protected:
+    void SetUp() override
+    {
+        // External polynomial for testing shared usage
+        auto quadratic = [](double x) -> double {
+            return 2.0 * x * x + 3.0 * x + 1.0;
+        };
+        external_polynomial = std::make_shared<Nodes::Generator::Polynomial>(quadratic);
+
+        buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+
+        // Fill buffer with values 0.0 to 1.0
+        for (size_t i = 0; i < buffer->get_num_samples(); i++) {
+            buffer->get_data()[i] = static_cast<double>(i) / buffer->get_num_samples();
+        }
+    }
+
+    std::shared_ptr<Nodes::Generator::Polynomial> external_polynomial;
+    std::shared_ptr<Buffers::AudioBuffer> buffer;
+};
+
+// Test internal polynomial construction
+TEST_F(PolynomialProcessorTest, InternalPolynomialConstruction)
+{
+    // Create processor with internal polynomial using DirectFunction
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+        64,
+        [](double x) { return x * x; } // DirectFunction
+    );
+
+    EXPECT_TRUE(processor->is_using_internal());
+    EXPECT_NE(processor->get_polynomial(), nullptr);
+}
+
+TEST_F(PolynomialProcessorTest, InternalPolynomialWithCoefficients)
+{
+    std::vector<double> coefficients = { 2.f, 3.f, 1.f };
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+        64,
+        std::ref(coefficients));
+
+    EXPECT_TRUE(processor->is_using_internal());
+
+    // Test the polynomial: f(2) = 1 + 3*2 + 2*4 = 1 + 6 + 8 = 15
+    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 1);
+    test_buffer->get_data()[0] = 2.0;
+
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 15.0);
+}
+
+TEST_F(PolynomialProcessorTest, ExternalPolynomialConstruction)
+{
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        external_polynomial,
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    EXPECT_FALSE(processor->is_using_internal());
+    EXPECT_EQ(processor->get_polynomial(), external_polynomial);
+}
+
+TEST_F(PolynomialProcessorTest, InternalVsExternalProcessing)
+{
+    auto internal_processor = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+        64,
+        [](double x) { return 2.0 * x * x + 3.0 * x + 1.0; } // Same as external_polynomial
+    );
+
+    auto external_processor = std::make_shared<Buffers::PolynomialProcessor>(
+        external_polynomial,
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    auto buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+
+    buffer1->get_data() = buffer->get_data();
+    buffer2->get_data() = buffer->get_data();
+
+    std::vector<double> original_data = buffer->get_data();
+
+    internal_processor->process(buffer1);
+    external_processor->process(buffer2);
+
+    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
+        EXPECT_DOUBLE_EQ(buffer1->get_data()[i], buffer2->get_data()[i]);
+        double x = original_data[i];
+        double expected = 2.0 * x * x + 3.0 * x + 1.0;
+        EXPECT_DOUBLE_EQ(buffer1->get_data()[i], expected);
+    }
+}
+
+TEST_F(PolynomialProcessorTest, ExternalPolynomialStateManagement)
+{
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        external_polynomial,
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 1);
+    test_buffer->get_data()[0] = 0.5;
+
+    double expected_value = 2.0 * 0.5 * 0.5 + 3.0 * 0.5 + 1.0; // 2.25
+
+    double processed_value = external_polynomial->process_sample(0.5);
+    Nodes::atomic_add_flag(external_polynomial->m_state, Utils::NodeState::PROCESSED);
+
+    processor->process(test_buffer);
+
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], processed_value);
+    EXPECT_DOUBLE_EQ(processed_value, expected_value);
+
+    EXPECT_FALSE(external_polynomial->m_state.load() & Utils::NodeState::PROCESSED);
+}
+
+TEST_F(PolynomialProcessorTest, SampleByModeInternal)
+{
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+        64,
+        [](double x) { return 2.0 * x * x + 3.0 * x + 1.0; });
+
+    std::vector<double> original = buffer->get_data();
+    processor->process(buffer);
+
+    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
+        double x = original[i];
+        double expected = 2.0 * x * x + 3.0 * x + 1.0;
+        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
+    }
+}
+
+TEST_F(PolynomialProcessorTest, BatchModeInternal)
+{
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::BATCH,
+        64,
+        [](const std::deque<double>& buffer) -> double {
+            double input = buffer[0];
+            if (buffer.size() <= 1)
+                return input;
+            if (buffer.size() <= 2)
+                return input + 0.5 * buffer[1];
+            return input + 0.5 * buffer[1] + 0.2 * buffer[2];
+        },
+        Nodes::Generator::PolynomialMode::RECURSIVE,
+        3);
+
+    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 5);
+    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
+        test_buffer->get_data()[i] = 1.0;
+    }
+
+    processor->process(test_buffer);
+
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0); // First: input only
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5); // Second: 1.0 + 0.5*1.0
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[2], 1.95); // Third: 1.0 + 0.5*1.5 + 0.2*1.0
+}
+
+TEST_F(PolynomialProcessorTest, WindowedModeInternal)
+{
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::WINDOWED,
+        5,
+        [](const std::deque<double>& buffer) -> double {
+            double input = buffer[0];
+            if (buffer.size() <= 1)
+                return input;
+            return input + 0.5 * buffer[1];
+        },
+        Nodes::Generator::PolynomialMode::RECURSIVE,
+        2);
+
+    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
+    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
+        test_buffer->get_data()[i] = 1.0;
+    }
+
+    processor->process(test_buffer);
+
+    // First window (0-4): should reset at start of window
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0); // First sample
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5); // 1.0 + 0.5*1.0
+
+    // Second window (5-9): should reset at start of second window
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[5], 1.0); // First sample of second window
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[6], 1.5); // 1.0 + 0.5*1.0
+}
+
+TEST_F(PolynomialProcessorTest, SampleByModeExternal)
+{
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        external_polynomial,
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    std::vector<double> original = buffer->get_data();
+    processor->process(buffer);
+
+    for (size_t i = 0; i < buffer->get_num_samples(); i++) {
+        double x = original[i];
+        double expected = 2.0 * x * x + 3.0 * x + 1.0;
+        EXPECT_DOUBLE_EQ(buffer->get_data()[i], expected);
+    }
+}
+
+TEST_F(PolynomialProcessorTest, PerformanceDifference)
+{
+    // This test demonstrates that internal processing should be faster
+    // (no atomic operations) but both should produce same results
+
+    auto internal_proc = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
+        64,
+        [](double x) { return x * x; });
+
+    auto external_proc = std::make_shared<Buffers::PolynomialProcessor>(
+        std::make_shared<Nodes::Generator::Polynomial>([](double x) { return x * x; }),
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    auto large_buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, 10000);
+    auto large_buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, 10000);
+
+    for (size_t i = 0; i < 10000; i++) {
+        large_buffer1->get_data()[i] = static_cast<double>(i) / 10000.0;
+        large_buffer2->get_data()[i] = static_cast<double>(i) / 10000.0;
+    }
+
+    internal_proc->process(large_buffer1);
+    external_proc->process(large_buffer2);
+
+    for (size_t i = 0; i < 10000; i++) {
+        EXPECT_DOUBLE_EQ(large_buffer1->get_data()[i], large_buffer2->get_data()[i]);
+    }
+}
+
+TEST_F(PolynomialProcessorTest, UpdateExternalPolynomial)
+{
+    auto initial_polynomial = std::make_shared<Nodes::Generator::Polynomial>(
+        [](double x) { return x * x; }); // f(x) = x²
+
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        initial_polynomial,
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 1);
+    test_buffer->get_data()[0] = 2.0;
+
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 4.0); // 2² = 4
+
+    auto new_polynomial = std::make_shared<Nodes::Generator::Polynomial>(
+        [](double x) { return x * x * x; }); // f(x) = x³
+
+    processor->update_polynomial_node(new_polynomial);
+
+    test_buffer->get_data()[0] = 2.0;
+
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 8.0); // 2³ = 8
+}
+
+TEST_F(PolynomialProcessorTest, ForceUseInternalPolynomial)
+{
+    auto external_poly = std::make_shared<Nodes::Generator::Polynomial>(
+        [](double x) { return x * x; }); // f(x) = x²
+
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        external_poly,
+        Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
+
+    EXPECT_FALSE(processor->is_using_internal());
+    EXPECT_EQ(processor->get_polynomial(), external_poly);
+
+    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 1);
+    test_buffer->get_data()[0] = 2.0;
+
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 4.0); // 2² = 4
+
+    processor->force_use_internal([](double x) { return x * x * x; }); // f(x) = x³
+
+    EXPECT_FALSE(processor->is_using_internal());
+
+    test_buffer->get_data()[0] = 2.0;
+
+    processor->process(test_buffer);
+
+    EXPECT_TRUE(processor->is_using_internal());
+    EXPECT_NE(processor->get_polynomial(), external_poly);
+
+    test_buffer->get_data()[0] = 2.0;
+
+    processor->process(test_buffer);
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 8.0); // 2³ = 8
 }
 
 } // namespace MayaFlux::Test

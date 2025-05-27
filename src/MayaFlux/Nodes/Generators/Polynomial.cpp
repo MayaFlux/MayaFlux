@@ -9,6 +9,7 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
     , m_last_output(0.0)
     , m_scale_factor((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 1.f))
 {
+    m_direct_function = create_polynomial_function(coefficients);
 }
 
 Polynomial::Polynomial(DirectFunction function)
@@ -163,7 +164,7 @@ void Polynomial::set_initial_conditions(const std::vector<double>& initial_value
     }
 }
 
-/* Polynomial::DirectFunction Polynomial::create_polynomial_function(const std::vector<double>& coefficients)
+Polynomial::DirectFunction Polynomial::create_polynomial_function(const std::vector<double>& coefficients)
 {
     return [coefficients](double x) {
         double result = 0.0;
@@ -176,7 +177,7 @@ void Polynomial::set_initial_conditions(const std::vector<double>& initial_value
 
         return result;
     };
-} */
+}
 
 std::unique_ptr<NodeContext> Polynomial::create_context(double value)
 {

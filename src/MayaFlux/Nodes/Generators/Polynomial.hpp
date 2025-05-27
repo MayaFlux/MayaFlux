@@ -215,6 +215,17 @@ public:
     void set_initial_conditions(const std::vector<double>& initial_values);
 
     /**
+     * @brief Creates a polynomial function from coefficients
+     * @param coefficients Vector of polynomial coefficients (highest power first)
+     * @return Function that evaluates the polynomial
+     *
+     * Generates a function that evaluates the polynomial defined by the
+     * specified coefficients.
+     * The cofficients are ordered from highest power to lowest.
+     */
+    DirectFunction create_polynomial_function(const std::vector<double>& coefficients);
+
+    /**
      * @brief Sets the input node to generate polynomial values from
      * @param input_node Node providing the input values
      *
