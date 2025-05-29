@@ -1,200 +1,165 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
-
-namespace MayaFlux::Kakshya {
+#include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 
 /**
  * @class ContiguousAccessProcessor
- * @brief Default processor for SignalSourceContainer that prepares data for efficient audio processing
+ * @brief Data Processor for efficient, sequential access to N-dimensional data containers.
  *
- * ContiguousAccessProcessor serves as the default processor for SignalSourceContainer objects,
- * providing essential functionality to transform arbitrary data sources into a format suitable
- * for audio processing. As a default processor, it handles the fundamental tasks required
- * before specialized audio processing can occur:
+ * ContiguousAccessProcessor is the default processor for streaming, reading, and processing
+ * N-dimensional data in a linear, memory-efficient manner. It is designed for digital-first,
+ * data-driven workflows and supports:
+ * - Efficient sequential access to multi-dimensional data (audio, images, tensors, etc.)
+ * - Both row-major and column-major memory layouts
+ * - Automatic or manual advancement of read position for streaming or block-based processing
+ * - Looping and region-based access for playback, streaming, or repeated analysis
+ * - Flexible output buffer sizing and dimension selection for custom workflows
  *
- * Key responsibilities:
- * - Organizing data into proper channel structure
- * - Converting interleaved data to per-channel format when needed
- * - Validating data integrity and structure
- * - Managing playback position with looping support
- * - Ensuring contiguous memory access for optimal processing performance
+ * This processor is foundational for scenarios such as:
+ * - Real-time audio or signal streaming
+ * - Batch or block-based data processing
+ * - Efficient extraction of contiguous regions for machine learning or DSP
+ * - Integration with digital-first nodes, routines, and buffer systems
  *
- * This processor is considered "default" because it handles the common preprocessing steps
- * required by virtually all audio processing workflows, regardless of the data source.
- * It bridges the gap between arbitrary data containers and the audio processing system
- * by ensuring data is accessible in a consistent, optimized format.
+ * Unlike analog-inspired processors, ContiguousAccessProcessor is unconstrained by
+ * legacy metaphors and is optimized for modern, data-centric applications.
  */
+namespace MayaFlux::Kakshya {
+
 class ContiguousAccessProcessor : public DataProcessor {
 public:
-    /**
-     * @brief Constructs a new ContiguousAccessProcessor with default settings
-     */
-    ContiguousAccessProcessor();
-
-    /**
-     * @brief Virtual destructor for proper cleanup
-     */
+    ContiguousAccessProcessor() = default;
     ~ContiguousAccessProcessor() = default;
 
     /**
-     * @brief Initializes the processor when attached to a container
-     * @param container The SignalSourceContainer this processor is being attached to
-     *
-     * During attachment, the processor:
-     * - Stores a weak reference to the container
-     * - Extracts and stores metadata (sample rate, channels, etc.)
-     * - Deinterleaves data if necessary
-     * - Prepares internal buffers for efficient processing
-     * - Validates the data structure
+     * @brief Attach the processor to a signal source container.
+     * Initializes dimension metadata, memory layout, and prepares for processing.
+     * @param container The SignalSourceContainer to attach to.
      */
     void on_attach(std::shared_ptr<SignalSourceContainer> container) override;
 
     /**
-     * @brief Cleans up resources when detached from a container
-     * @param container The SignalSourceContainer this processor is being detached from
-     *
-     * Releases any resources specific to the container and clears internal state.
+     * @brief Detach the processor from its container.
+     * Cleans up internal state and metadata.
+     * @param container The SignalSourceContainer to detach from.
      */
     void on_detach(std::shared_ptr<SignalSourceContainer> container) override;
 
     /**
-     * @brief Processes the container's data for audio playback or further processing
-     * @param container The SignalSourceContainer to process
-     *
-     * This method:
-     * - Ensures data is in the correct format (deinterleaved if needed)
-     * - Handles read position advancement with looping support
-     * - Prepares contiguous blocks of audio data for efficient processing
-     * - Updates the container's processed data for consumption by audio system
-     *
-     * The processor maintains the container's current read position and handles
-     * looping behavior when enabled, ensuring seamless playback across buffer boundaries.
+     * @brief Process the current region or block of data.
+     * Advances the read position if auto-advance is enabled.
+     * @param container The SignalSourceContainer to process.
      */
     void process(std::shared_ptr<SignalSourceContainer> container) override;
 
-    bool is_processing() const override;
-
-protected:
     /**
-     * @brief Extracts and stores metadata from the container
-     * @param sample_buffer The container to extract metadata from
-     *
-     * Captures essential information like sample rate, channel count,
-     * total frames, and looping state for efficient processing.
+     * @brief Query if the processor is currently performing processing.
+     * @return true if processing is in progress, false otherwise.
      */
-    void store_metadata(std::shared_ptr<SignalSourceContainer> sample_buffer);
+    bool is_processing() const override { return m_is_processing.load(); }
 
     /**
-     * @brief Converts interleaved data to per-channel format if needed
-     * @param sample_buffer The container with potentially interleaved data
-     *
-     * If the container's data is interleaved (samples alternating between channels),
-     * this method reorganizes it into separate channel arrays for more efficient
-     * processing and to match the expected format of the audio system.
+     * @brief Set the output buffer size (shape) for each processing call.
+     * @param shape Vector specifying the size in each dimension.
      */
-    void deinterleave_data(std::shared_ptr<SignalSourceContainer> sample_buffer);
+    void set_output_size(const std::vector<u_int64_t>& shape) { m_output_shape = shape; }
 
     /**
-     * @brief Validates the container's data structure and integrity
-     * @param sample_buffer The container to validate
-     *
-     * Performs checks to ensure the data is properly structured and
-     * consistent with the metadata (correct channel count, sample counts, etc.).
+     * @brief Set which dimensions to process (by index).
+     * Allows for partial or selective processing of multi-dimensional data.
+     * @param dims Indices of active dimensions.
      */
-    void validate_data(std::shared_ptr<SignalSourceContainer> sample_buffer);
+    void set_active_dimensions(const std::vector<u_int32_t>& dims) { m_active_dimensions = dims; }
+
+    /**
+     * @brief Enable or disable automatic advancement of the read position after each process call.
+     * @param enable true to auto-advance, false for manual control.
+     */
+    void set_auto_advance(bool enable) { m_auto_advance = enable; }
+
+    /**
+     * @brief Set the current read position (N-dimensional coordinates).
+     * @param new_position New position vector.
+     */
+    inline void set_current_position(const std::vector<u_int64_t> new_position)
+    {
+        m_current_position = new_position;
+    }
 
 private:
-    /**
-     * @brief Flag indicating if the processor has been properly initialized
-     */
-    bool m_prepared;
+    // Processing state
+    std::atomic<bool> m_is_processing { false };
+    bool m_prepared = false;
+    bool m_auto_advance = true;
 
-    /**
-     * @brief Flag indicating if looping playback is enabled
-     */
-    bool m_is_looping;
-
-    /**
-     * @brief Flag indicating if the processor should handle interleaved data
-     */
-    bool m_handle_interleaved;
-
-    /**
-     * @brief Flag indicating if the source data is interleaved
-     */
-    bool m_data_interleaved;
-
-    /**
-     * @brief Sample rate of the audio data in Hz
-     */
-    u_int32_t m_sample_rate;
-
-    /**
-     * @brief Number of audio channels in the data
-     */
-    u_int32_t m_num_channels;
-
-    /**
-     * @brief Total number of samples across all channels
-     */
-    u_int64_t m_total_samples;
-
-    /**
-     * @brief Total number of frames (multi-channel samples)
-     */
-    u_int64_t m_total_frames;
-
-    /**
-     * @brief Current read position in frames
-     */
-    u_int64_t m_current_position;
-
-    /**
-     * @brief Duration of a single frame in milliseconds
-     */
-    double m_frame_duration_ms;
-
-    /**
-     * @brief Weak reference to the source container
-     *
-     * Using a weak reference prevents circular dependencies and memory leaks.
-     */
+    // Container reference
     std::weak_ptr<SignalSourceContainer> m_source_container_weak;
 
-    /**
-     * @brief Processed data organized by channel
-     *
-     * This buffer holds the processed audio data in a format optimized for
-     * the audio system, with each channel's samples stored contiguously.
-     */
-    std::vector<std::vector<double>> m_channel_data;
+    // Dimension information
+    std::vector<DataDimension> m_dimensions;
+    std::vector<u_int32_t> m_active_dimensions;
+    MemoryLayout m_memory_layout;
+
+    // Position tracking
+    std::vector<u_int64_t> m_current_position;
+    std::vector<u_int64_t> m_output_shape;
+
+    // Loop configuration
+    bool m_looping_enabled = false;
+    RegionPoint m_loop_region;
+
+    // Metadata
+    u_int64_t m_total_elements = 0;
+    std::chrono::steady_clock::time_point m_last_process_time;
+
+    // ===== Helper methods =====
 
     /**
-     * @brief Processes data with looping enabled
-     * @param signal_source The container to process
-     * @param output_data Buffer to store processed data
-     * @param num_frames_to_process Number of frames to process
-     *
-     * Handles the special case of looping playback, where reading can
-     * wrap around from the end to the beginning of the data.
+     * @brief Store dimension and layout metadata from the container.
+     * @param container The SignalSourceContainer to query.
      */
-    void process_with_looping(
-        std::shared_ptr<SignalSourceContainer> signal_source,
-        std::vector<std::vector<double>>& output_data, u_int32_t num_frames_to_process);
+    void store_metadata(std::shared_ptr<SignalSourceContainer> container);
 
     /**
-     * @brief Processes data without looping
-     * @param signal_source The container to process
-     * @param output_data Buffer to store processed data
-     * @param num_frames_to_process Number of frames to process
-     *
-     * Standard processing for non-looping playback, which stops
-     * when it reaches the end of the data.
+     * @brief Validate the container's structure and output configuration.
+     * Throws if configuration is invalid.
+     * @param container The SignalSourceContainer to validate.
      */
-    void process_without_looping(
-        std::shared_ptr<SignalSourceContainer> signal_source,
-        std::vector<std::vector<double>>& output_data, u_int32_t num_frames_to_process);
+    void validate_container(std::shared_ptr<SignalSourceContainer> container);
+
+    /**
+     * @brief Process a specific region and write to the output buffer.
+     * @param container The SignalSourceContainer to read from.
+     * @param region The region to process.
+     * @param output Output DataVariant to fill.
+     */
+    void process_region(std::shared_ptr<SignalSourceContainer> container,
+        const RegionPoint& region,
+        DataVariant& output);
+
+    /**
+     * @brief Advance the read position by the output shape.
+     * Handles looping if enabled.
+     * @param position Current position vector (modified in place).
+     * @param shape Output shape vector.
+     */
+    void advance_read_position(std::vector<u_int64_t>& position, const std::vector<u_int64_t>& shape);
+
+    /**
+     * @brief Calculate the output region based on current position and shape.
+     * @param current_pos Current position vector.
+     * @param output_shape Output shape vector.
+     * @return RegionPoint representing the region to process.
+     */
+    RegionPoint calculate_output_region(const std::vector<u_int64_t>& current_pos,
+        const std::vector<u_int64_t>& output_shape) const;
+
+    /**
+     * @brief Handle looping logic for the current position.
+     * @param position Position vector to update.
+     */
+    void handle_looping(std::vector<u_int64_t>& position);
 };
 
-}
+} // namespace MayaFlux::Kakshya

@@ -1,36 +1,50 @@
 #pragma once
 
 #include "DataProcessor.hpp"
-#include "SignalSourceContainer.hpp"
 
 namespace MayaFlux::Kakshya {
 
 /**
  * @class DataProcessingChain
- * @brief Manages collections of data processors that operate on signal containers.
+ * @brief Manages collection of data processors or flexible, composable pipelines.
  *
- * The DataProcessingChain provides a flexible framework for applying multiple processing
- * operations to signal data. Rather than modeling analog signal chains, it implements a
- * data-driven approach where processors can be dynamically added, removed, and selectively
- * applied to specific signal containers.
+ * DataProcessingChain orchestrates collections of DataProcessor objects, enabling the construction
+ * of modular, extensible, and container-specific processing pipelines. Unlike traditional analog
+ * "signal chains," this class is designed for digital-first workflows, supporting dynamic, data-driven
+ * processing scenarios unconstrained by fixed or linear analog metaphors.
  *
  * Key features:
- * - Container-specific processing chains
- * - Type-based processor filtering
- * - Tag-based processor organization
- * - Custom filtering of processors during execution
+ * - **Container-specific chains:** Each SignalSourceContainer can have its own unique sequence of processors,
+ *   supporting heterogeneous and context-aware processing across the system.
+ * - **Dynamic composition:** Processors can be added, removed, or reordered at runtime, enabling adaptive
+ *   workflows and on-the-fly reconfiguration.
+ * - **Type-based and tag-based filtering:** Processors can be grouped and selectively applied based on type
+ *   or user-defined tags, supporting advanced routing, conditional processing, and logical grouping.
+ * - **Custom filtering:** Arbitrary filter functions allow for runtime selection of processors based on
+ *   data characteristics, state, or external criteria.
+ * - **Composable with digital-first nodes, routines, and buffer systems:** Designed to integrate seamlessly
+ *   with the broader Maya Flux ecosystem, enabling robust, data-driven orchestration of complex workflows.
  *
- * This design enables complex signal processing workflows where different types of
- * operations can be applied conditionally based on data characteristics rather than
- * fixed signal paths.
+ * This abstraction enables advanced scenarios such as:
+ * - Multi-stage, container-specific data transformation pipelines
+ * - Selective or conditional processing based on data type, tag, or runtime state
+ * - Integration of analysis, transformation, and feature extraction in a unified pipeline
+ * - Dynamic adaptation to changing data, user interaction, or system state
+ *
+ * DataProcessingChain is foundational for building scalable, maintainable, and future-proof
+ * data processing architectures in digital-first, data-driven applications.
  */
 class DataProcessingChain {
 public:
+    DataProcessingChain() = default;
+
     /**
      * @brief Adds a processor to the chain for a specific container.
      * @param processor The data processor to add
      * @param container The signal container the processor will operate on
-     * @param tag Optional tag for categorizing processors
+     * @param tag Optional tag for categorizing processors (enables logical grouping and selective execution)
+     *
+     * Processors are appended to the end of the container's processing sequence by default.
      */
     void add_processor(std::shared_ptr<DataProcessor> processor, std::shared_ptr<SignalSourceContainer> container, const std::string& tag = "");
 
@@ -38,7 +52,9 @@ public:
      * @brief Adds a processor at a specific position in the chain.
      * @param processor The data processor to add
      * @param container The signal container the processor will operate on
-     * @param position The position in the processing sequence
+     * @param position The position in the processing sequence (0-based index)
+     *
+     * Enables precise control over processing order for advanced workflows.
      */
     void add_processor_at(std::shared_ptr<DataProcessor> processor,
         std::shared_ptr<SignalSourceContainer> container,
@@ -48,12 +64,17 @@ public:
      * @brief Removes a processor from a container's chain.
      * @param processor The data processor to remove
      * @param container The signal container to remove the processor from
+     *
+     * Supports dynamic reconfiguration and resource management.
      */
     void remove_processor(std::shared_ptr<DataProcessor> processor, std::shared_ptr<SignalSourceContainer> container);
 
     /**
-     * @brief Processes a container with all its associated processors.
+     * @brief Processes a container with all its associated processors, in sequence.
      * @param container The signal container to process
+     *
+     * Applies each processor in the container's chain, enabling multi-stage transformation,
+     * analysis, or feature extraction.
      */
     void process(std::shared_ptr<SignalSourceContainer> container);
 
@@ -62,8 +83,8 @@ public:
      * @tparam ProcessorType The type of processors to apply
      * @param container The signal container to process
      *
-     * This template method allows for selective processing based on processor types,
-     * enabling specialized processing paths for different data transformations.
+     * Enables selective processing based on processor type, supporting specialized
+     * data transformations or analysis paths.
      */
     template <typename ProcessorType>
     inline void process_typed(std::shared_ptr<SignalSourceContainer> container)
@@ -83,7 +104,8 @@ public:
      * @param container The signal container to process
      * @param filter Function that determines which processors to apply
      *
-     * Enables dynamic, runtime filtering of processors based on arbitrary criteria.
+     * Enables dynamic, runtime filtering of processors based on arbitrary criteria,
+     * such as processor state, metadata, or external conditions.
      */
     void process_filtered(std::shared_ptr<SignalSourceContainer> container,
         std::function<bool(std::shared_ptr<DataProcessor>)> filter);
@@ -93,22 +115,25 @@ public:
      * @param container The signal container to process
      * @param tag The tag to filter processors by
      *
-     * Allows for logical grouping and selective application of processors.
+     * Allows for logical grouping and selective application of processors, supporting
+     * scenarios like feature extraction, effect routing, or conditional processing.
      */
     void process_tagged(std::shared_ptr<SignalSourceContainer> container, const std::string& tag);
 
 private:
     /**
-     * Maps containers to their associated processors in sequence order.
-     * This structure enables container-specific processing chains.
+     * @brief Maps containers to their associated processors in sequence order.
+     *
+     * Enables each container to maintain its own independent, ordered processing pipeline.
      */
     std::unordered_map<std::shared_ptr<SignalSourceContainer>,
         std::vector<std::shared_ptr<DataProcessor>>>
         m_container_processors;
 
     /**
-     * Maps processors to their associated tags for categorization.
+     * @brief Maps processors to their associated tags for categorization and filtering.
      */
     std::unordered_map<std::shared_ptr<DataProcessor>, std::string> m_processor_tags;
 };
+
 }

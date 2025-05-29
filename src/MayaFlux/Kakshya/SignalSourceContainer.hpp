@@ -1,78 +1,12 @@
 #pragma once
 
-#include "config.h"
-
-namespace MayaFlux::Buffers {
-class AudioBuffer;
-}
+#include "MayaFlux/Kakshya/Region.hpp"
+#include "NDimensionalContainer.hpp"
 
 namespace MayaFlux::Kakshya {
 
 class DataProcessor;
 class DataProcessingChain;
-// struct RegionSegment;
-
-/**
- * @struct RegionPoint
- * @brief Defines a point or segment within signal data
- *
- * RegionPoints represent precise locations or segments within signal data,
- * defined by start and end frame positions. Each point can have additional
- * attributes stored in a flexible key-value map, allowing for rich metadata
- * association with each point.
- *
- * Common DSP-specific uses include:
- * - Marking transients and onset detection points
- * - Identifying spectral features or frequency domain events
- * - Defining zero-crossing boundaries for phase analysis
- * - Marking signal transformation points (e.g., filter application boundaries)
- * - Storing analysis results like RMS peaks, harmonic content points, or noise floors
- *
- * The flexible attribute system allows for storing any computed values or metadata
- * associated with specific signal locations, enabling advanced signal processing
- * workflows and algorithmic decision-making.
- */
-struct RegionPoint {
-    /** @brief Starting frame index (inclusive) */
-    uint64_t start_frame;
-
-    /** @brief Ending frame index (inclusive) */
-    uint64_t end_frame;
-
-    /** @brief Flexible key-value store for point-specific attributes */
-    std::unordered_map<std::string, std::any> point_attributes;
-};
-
-/**
- * @struct RegionGroup
- * @brief Organizes related signal points into a categorized collection
- *
- * RegionGroups provide a way to categorize and organize related points within
- * signal data based on algorithmic or analytical criteria. Each group has a name
- * and can contain multiple RegionPoints, as well as group-level attributes that
- * apply to the entire collection.
- *
- * Common DSP-specific applications include:
- * - Grouping frequency-domain features (e.g., "formants", "resonances", "harmonics")
- * - Categorizing time-domain events (e.g., "transients", "steady_states", "decays")
- * - Organizing analysis results (e.g., "zero_crossings", "spectral_centroids")
- * - Defining processing boundaries (e.g., "convolution_segments", "filter_regions")
- * - Storing algorithmic detection results (e.g., "noise_gates", "compression_thresholds")
- *
- * This data-driven approach enables sophisticated signal processing workflows
- * where algorithms can operate on categorized signal segments without requiring
- * predefined musical or content-specific structures.
- */
-struct RegionGroup {
-    /** @brief Descriptive name of the group */
-    std::string name;
-
-    /** @brief Collection of points belonging to this group */
-    std::vector<RegionPoint> points;
-
-    /** @brief Flexible key-value store for group-specific attributes */
-    std::unordered_map<std::string, std::any> group_attributes;
-};
 
 /**
  * @enum ProcessingState
@@ -123,537 +57,205 @@ enum class ProcessingState {
      * Container is marked for removal from the system.
      * Resources should be released and references cleared.
      */
-    NEEDS_REMOVAL
+    NEEDS_REMOVAL,
+
+    /**
+     * Container is in an error state and cannot proceed.
+     * Typically requires external intervention to resolve.
+     */
+    ERROR
 };
 
 /**
  * @class SignalSourceContainer
- * @brief Interface for managing arbitrary data sources as processable audio signals
+ * @brief Data-driven interface for managing arbitrary processable signal sources.
  *
- * SignalSourceContainer provides a flexible abstraction for handling various types of data
- * that can be interpreted and processed as audio signals. Unlike AudioBuffer which is designed
- * for direct audio processing, this container can manage data from diverse sources such as:
- * - Audio files of any format
- * - Network streams
- * - External buffers from other applications
- * - Generated data from algorithms
+ * SignalSourceContainer provides a flexible, extensible abstraction for handling any data source
+ * that can be interpreted and processed as an audio signal or multi-dimensional stream. Unlike
+ * AudioBuffer, which is specialized for direct audio sample storage, this container is designed
+ * for digital-first workflows and can manage:
+ * - Audio files of any format or structure
+ * - Network or streaming sources
+ * - External buffers from other applications or devices
+ * - Algorithmically generated or procedurally synthesized data
  * - Any data source larger than or structurally different from AudioBuffer
  *
- * The container maintains its own processing state and can operate independently of the
- * engine's BufferManager, allowing for asynchronous or scheduled processing. It bridges
- * between raw data sources and the Maya Flux audio processing system through DataProcessor
- * objects that transform the raw data into processable audio channels.
+ * The container maintains its own processing state and lifecycle, decoupled from the engine's
+ * BufferManager, enabling asynchronous, scheduled, or on-demand processing. It acts as a bridge
+ * between raw, heterogeneous data sources and the Maya Flux processing system, using DataProcessor
+ * objects to transform and organize data into processable, channel-oriented forms.
  *
- * The default processor typically handles channel organization, ensuring that data is
- * properly structured for audio processing when needed. This approach enables data-driven
- * development where processing strategies can be adapted to the specific characteristics
- * of each data source.
+ * Key features:
+ * - Explicit, observable processing state for robust orchestration and resource management
+ * - Support for registering state change callbacks for event-driven workflows
+ * - Pluggable processing chains and processors for custom or default data transformation
+ * - Fine-grained reader/consumer tracking for safe, concurrent, and efficient access
+ * - Designed for composability with digital-first nodes, routines, and buffer systems
+ * - Enables data-driven, non-analog-centric development and integration of new data modalities
+ *
+ * This interface is foundational for advanced, data-driven workflows in Maya Flux, supporting
+ * real-time streaming, offline analysis, hybrid computation, and seamless integration of
+ * unconventional or future-facing signal sources.
  */
-class SignalSourceContainer : public std::enable_shared_from_this<SignalSourceContainer> {
+class SignalSourceContainer : public NDDataContainer, public std::enable_shared_from_this<SignalSourceContainer> {
 public:
     virtual ~SignalSourceContainer() = default;
 
     /**
-     * @brief Initializes the container with a specific frame capacity
-     * @param num_frames Number of frames to allocate
+     * @brief Get the current processing state of the container.
+     * @return Current ProcessingState (IDLE, READY, PROCESSING, etc.)
      *
-     * This method prepares the container to hold the specified number of frames,
-     * allocating necessary resources and initializing internal structures.
-     */
-    virtual void setup(u_int32_t num_frames, u_int32_t sample_rate, u_int32_t num_channels = 1) = 0;
-
-    /**
-     * @brief Changes the container's frame capacity
-     * @param num_frames New number of frames
-     *
-     * Resizes the container to accommodate a different number of frames,
-     * preserving existing data where possible.
-     */
-    virtual void resize(u_int32_t num_frames) = 0;
-
-    /**
-     * @brief Removes all data from the container
-     *
-     * Clears all sample data while maintaining the container's structure and capacity.
-     */
-    virtual void clear() = 0;
-
-    /**
-     * @brief Gets the current frame capacity of the container
-     * @return Number of frames the container can hold
-     */
-    virtual u_int32_t get_num_frames() const = 0;
-
-    /**
-     * @brief Retrieves a single sample value
-     * @param sample_index Index of the sample to retrieve
-     * @param channel Channel to retrieve from (default: 0)
-     * @return Sample value at the specified position
-     */
-    virtual double get_sample_at(u_int64_t sample_index, u_int32_t channel = 0) const = 0;
-
-    /**
-     * @brief Retrieves all channel values for a specific frame
-     * @param frame_index Index of the frame to retrieve
-     * @return Vector containing sample values for all channels at the specified frame
-     */
-    virtual std::vector<double> get_frame_at(u_int64_t frame_index) const = 0;
-
-    /**
-     * @brief Checks if the data is stored in interleaved format
-     * @return true if data is interleaved, false if data is stored per-channel
-     *
-     * Interleaved format stores samples as [ch1, ch2, ch1, ch2, ...] while
-     * non-interleaved stores as separate channel arrays.
-     */
-    virtual const bool is_interleaved() const = 0;
-
-    /**
-     * @brief Makrs the interleaved state of stored data
-     * @param interleaved Is data interleaved?
-     *
-     * Interleaved format stores samples as [ch1, ch2, ch1, ch2, ...] while
-     * non-interleaved stores as separate channel arrays.
-     */
-    virtual void set_interleaved(bool interleaved) const = 0;
-
-    /**
-     * @brief Checks if the container is ready for processing
-     * @return true if the container is ready for processing, false otherwise
-     *
-     * A container is typically ready when it has valid data loaded and any
-     * necessary preprocessing has been completed.
-     */
-    virtual const bool is_ready_for_processing() const = 0;
-
-    /**
-     * @brief Sets the processing readiness state
-     * @param ready Whether the container should be marked as ready
-     *
-     * This allows external components to signal when the container's data
-     * is ready to be processed or when processing should be deferred.
-     */
-    virtual void mark_ready_for_processing(bool ready) = 0;
-
-    /**
-     * @brief Fills a buffer with samples from a specific channel
-     * @param start Starting sample index
-     * @param num_samples Number of samples to retrieve
-     * @param output_buffer Buffer to fill with samples
-     * @param channel Channel to retrieve from (default: 0)
-     *
-     * Copies a range of samples from the specified channel into the provided buffer.
-     */
-    virtual void fill_sample_range(
-        u_int64_t start, u_int32_t num_samples, std::vector<double>& output_buffer, u_int32_t channel = 0) const
-        = 0;
-
-    /**
-     * @brief Fills multiple buffers with frame data for specified channels
-     * @param start_frame Starting frame index
-     * @param num_frames Number of frames to retrieve
-     * @param output_buffers Vector of buffers to fill (one per channel)
-     * @param channels Vector of channel indices to retrieve
-     *
-     * Copies frame data for multiple channels into separate buffers.
-     */
-    virtual void fill_frame_range(u_int64_t start_frame, u_int32_t num_frames, std::vector<std::vector<double>>& output_buffers, const std::vector<u_int32_t>& channels) const = 0;
-
-    /**
-     * @brief Checks if a specified range of frames is valid
-     * @param start_frame Starting frame index
-     * @param num_frames Number of frames to check
-     * @return true if the entire range is valid, false otherwise
-     *
-     * A range is valid if it falls entirely within the container's data bounds.
-     */
-    virtual bool is_range_valid(u_int64_t start_frame, u_int32_t num_frames) const = 0;
-
-    /**
-     * @brief Sets the current read position
-     * @param frame_position Frame index to set as the current position
-     *
-     * This position is used by methods like advance() and is_read_at_end().
-     */
-    virtual void set_read_position(u_int64_t frame_position) = 0;
-
-    /**
-     * @brief Gets the current read position
-     * @return Current frame index for reading
-     */
-    virtual u_int64_t get_read_position() const = 0;
-
-    /**
-     * @brief Advances the read position by a specified number of frames
-     * @param num_frames Number of frames to advance
-     *
-     * Moves the read position forward, handling looping if enabled.
-     */
-    virtual void advance(u_int32_t num_frames) = 0;
-
-    /**
-     * @brief Checks if the read position has reached the end of the data
-     * @return true if at end, false otherwise
-     */
-    virtual bool is_read_at_end() const = 0;
-
-    /**
-     * @brief Resets the read position to the beginning
-     */
-    virtual void reset_read_position() = 0;
-
-    /**
-     * @brief Generates a normalized preview of the data for visualization
-     * @param channel Channel to generate preview for
-     * @param max_points Maximum number of points in the preview
-     * @return Vector of normalized sample values suitable for display
-     *
-     * This is typically used for waveform displays and other visualizations.
-     */
-    virtual std::vector<double> get_normalized_preview(u_int32_t channel, u_int32_t max_points) const = 0;
-
-    /**
-     * @brief Gets all markers in the data
-     * @return Vector of marker name and position pairs
-     *
-     * Markers are named positions within the data, often used for navigation.
-     */
-    virtual std::vector<std::pair<std::string, u_int64_t>> get_markers() const = 0;
-
-    /**
-     * @brief Gets the position of a specific marker
-     * @param marker_name Name of the marker to find
-     * @return Frame position of the marker
-     */
-    virtual u_int64_t get_marker_position(const std::string& marker_name) const = 0;
-
-    /**
-     * @brief Adds a region group to the container
-     * @param group RegionGroup to add
-     *
-     * Adds a named collection of region points to the container. If a group with the
-     * same name already exists, it will be replaced with the new group.
-     */
-    virtual void add_region_group(const RegionGroup& group) = 0;
-
-    /**
-     * @brief Adds a region point to a specific group
-     * @param group_name Name of the group to add the point to
-     * @param point RegionPoint to add
-     *
-     * Adds a region point to the specified group. If the group doesn't exist,
-     * behavior is implementation-defined (typically creates the group or throws an exception).
-     */
-    virtual void add_region_point(const std::string& group_name, const RegionPoint& point) = 0;
-
-    /**
-     * @brief Retrieves a region group by name
-     * @param group_name Name of the group to retrieve
-     * @return Constant reference to the requested RegionGroup
-     *
-     * Gets a specific region group by its name. If the group doesn't exist,
-     * behavior is implementation-defined (typically throws an exception).
-     */
-    virtual const RegionGroup& get_region_group(const std::string& group_name) const = 0;
-
-    virtual const std::unordered_map<std::string, RegionGroup> get_all_region_groups() const = 0;
-
-    /**
-     * @brief Gets direct access to raw sample data for a channel
-     * @param channel Channel to access (default: 0)
-     * @return Constant reference to the raw sample vector
-     *
-     * Provides direct read access to the underlying sample data.
-     */
-    virtual const std::vector<double>& get_raw_samples(uint32_t channel = 0) const = 0;
-
-    /**
-     * @brief Gets mutable access to all channel data
-     * @return Reference to vector of channel sample vectors
-     *
-     * Provides direct read/write access to all channel data.
-     */
-    virtual std::vector<std::vector<double>>& get_all_raw_samples() = 0;
-
-    /**
-     * @brief Gets immutable access to all channel data
-     * @return Constant reference to vector of channel sample vectors
-     */
-    virtual const std::vector<std::vector<double>>& get_all_raw_samples() const = 0;
-
-    /**
-     * @brief Sets the sample data for a specific channel
-     * @param samples Vector of sample values to set
-     * @param channel Channel to set (default: 0)
-     *
-     * Replaces the entire sample data for the specified channel.
-     */
-    virtual void set_raw_samples(const std::vector<double>& samples, uint32_t channel = 0) = 0;
-
-    /**
-     * @brief Sets the sample data for all channels
-     * @param samples Vector of sample vectors, one per channel
-     *
-     * Replaces the entire sample data for all channels.
-     */
-    virtual void set_all_raw_samples(const std::vector<std::vector<double>>& samples) = 0;
-
-    /**
-     * @brief Enables or disables looping playback
-     * @param enable Whether looping should be enabled
-     *
-     * When looping is enabled, advancing past the end will wrap to the beginning.
-     */
-    virtual void set_looping(bool enable) = 0;
-
-    /**
-     * @brief Checks if looping is enabled
-     * @return true if looping is enabled, false otherwise
-     */
-    virtual bool get_looping() const = 0;
-
-    /**
-     * @brief Sets the default processor for this container
-     * @param processor Processor to use as default
-     *
-     * The default processor is typically responsible for organizing data into
-     * channels and preparing it for audio processing.
-     */
-    virtual void set_default_processor(std::shared_ptr<DataProcessor> processor) = 0;
-
-    /**
-     * @brief Gets the default processor
-     * @return Shared pointer to the default processor
-     */
-    virtual std::shared_ptr<DataProcessor> get_default_processor() const = 0;
-
-    /**
-     * @brief Gets the processing chain for this container
-     * @return Shared pointer to the processing chain
-     *
-     * The processing chain manages the sequence of processors applied to the data.
-     */
-    virtual std::shared_ptr<DataProcessingChain> get_processing_chain() = 0;
-
-    /**
-     * @brief Sets the processing chain for this container
-     * @param chain Processing chain to use
-     */
-    virtual void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) = 0;
-
-    /**
-     * @brief Marks all associated buffers for processing or skipping
-     * @param should_process Whether buffers should be processed
-     *
-     * This affects how the container's data is handled during the next processing cycle.
-     */
-    virtual void mark_buffers_for_processing(bool should_process) = 0;
-
-    /**
-     * @brief Marks all associated buffers for removal
-     *
-     * Signals that the buffers should be removed during the next cleanup cycle.
-     */
-    virtual void mark_buffers_for_removal() = 0;
-
-    /**
-     * @brief Gets the AudioBuffer for a specific channel
-     * @param channel Channel index
-     * @return Shared pointer to the channel's AudioBuffer
-     *
-     * This provides access to the AudioBuffer representation of the channel data,
-     * which can be used with the standard audio processing system.
-     */
-    virtual std::shared_ptr<Buffers::AudioBuffer> get_channel_buffer(u_int32_t channel) = 0;
-
-    /**
-     * @brief Gets all AudioBuffers for this container
-     * @return Vector of shared pointers to all AudioBuffers
-     */
-    virtual std::vector<std::shared_ptr<Buffers::AudioBuffer>> get_all_buffers() = 0;
-
-    /**
-     * @brief Gets the sample rate of the data
-     * @return Sample rate in Hz
-     */
-    virtual u_int32_t get_sample_rate() const = 0;
-
-    /**
-     * @brief Gets the number of audio channels
-     * @return Number of channels
-     */
-    virtual u_int32_t get_num_audio_channels() const = 0;
-
-    /**
-     * @brief Gets the total number of frames in the data
-     * @return Total frame count
-     *
-     * This represents the entire data size, which may be larger than
-     * the container's current capacity.
-     */
-    virtual u_int64_t get_num_frames_total() const = 0;
-
-    /**
-     * @brief Gets the total duration of the data in seconds
-     * @return Duration in seconds
-     */
-    virtual double get_duration_seconds() const = 0;
-
-    /**
-     * @brief Acquires a lock on the container
-     *
-     * This should be used to ensure thread-safe access when the container
-     * might be accessed from multiple threads.
-     */
-    virtual void lock() = 0;
-
-    /**
-     * @brief Releases the lock on the container
-     */
-    virtual void unlock() = 0;
-
-    /**
-     * @brief Attempts to acquire the lock without blocking
-     * @return true if the lock was acquired, false otherwise
-     */
-    virtual bool try_lock() = 0;
-
-    /**
-     * @brief Gets the current processing state
-     * @return Current state of the container
+     * Enables orchestration and coordination of processing across the system.
      */
     virtual ProcessingState get_processing_state() const = 0;
 
     /**
-     * @brief Updates the processing state
-     * @param new_state New state to set
+     * @brief Update the processing state of the container.
+     * @param new_state New ProcessingState to set
      *
-     * This may trigger state change callbacks if registered.
+     * May trigger registered state change callbacks for event-driven workflows.
      */
     virtual void update_processing_state(ProcessingState new_state) = 0;
 
     /**
-     * @brief Registers a callback for state changes
-     * @param callback Function to call when state changes
+     * @brief Register a callback to be invoked on processing state changes.
+     * @param callback Function to call when state changes (receives container and new state)
      *
-     * The callback receives the container and its new state.
+     * Enables external components to react to lifecycle transitions for orchestration,
+     * resource management, or UI updates.
      */
     virtual void register_state_change_callback(
         std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> callback)
         = 0;
 
     /**
-     * @brief Unregisters the state change callback
+     * @brief Unregister the state change callback, if any.
      */
     virtual void unregister_state_change_callback() = 0;
 
     /**
-     * @brief Creates a default processor for this container
+     * @brief Check if the container is ready for processing.
+     * @return true if ready to process, false otherwise
      *
-     * Initializes and configures a standard DataProcessor that will handle
-     * the basic processing needs of this container's data. This is typically
-     * called during initialization if no custom processor is provided.
+     * Used for scheduling and dependency resolution in data-driven pipelines.
+     */
+    virtual bool is_ready_for_processing() const = 0;
+
+    /**
+     * @brief Mark the container as ready or not ready for processing.
+     * @param ready true to mark as ready, false otherwise
+     */
+    virtual void mark_ready_for_processing(bool ready) = 0;
+
+    /**
+     * @brief Create and configure a default processor for this container.
+     *
+     * Instantiates a standard DataProcessor to handle basic processing needs,
+     * such as channel organization or format conversion. Called during initialization
+     * if no custom processor is provided.
      */
     virtual void create_default_processor() = 0;
 
     /**
-     * @brief Processes the container data using the default processor
+     * @brief Process the container's data using the default processor.
      *
-     * Executes the default processing chain on the container's data.
-     * This method is a convenience wrapper that applies standard processing
-     * without requiring manual configuration of the processing chain.
+     * Executes the default processing chain, transforming raw data into a
+     * processable form. This is a convenience wrapper for standard workflows.
      */
     virtual void process_default() = 0;
 
     /**
-     * @brief Registers a component as a reader for a specific channel
-     * @param channel Channel index to register for reading
-     *
-     * Tracks which components are actively reading from each channel,
-     * allowing the container to optimize processing and resource allocation
-     * based on actual usage patterns.
+     * @brief Set the default data processor for this container.
+     * @param processor Shared pointer to the DataProcessor to use
      */
-    virtual void register_channel_reader(u_int32_t channel) = 0;
+    virtual void set_default_processor(std::shared_ptr<DataProcessor> processor) = 0;
 
     /**
-     * @brief Unregisters a component as a reader for a specific channel
-     * @param channel Channel index to unregister from reading
-     *
-     * Removes a component from the list of active readers for a channel.
-     * When a channel has no active readers, it may be eligible for
-     * optimization or resource reclamation.
+     * @brief Get the current default data processor.
+     * @return Shared pointer to the current DataProcessor, or nullptr if none
      */
-    virtual void unregister_channel_reader(u_int32_t channel) = 0;
+    virtual std::shared_ptr<DataProcessor> get_default_processor() const = 0;
 
     /**
-     * @brief Checks if any channels have active readers
-     * @return true if at least one channel has active readers, false otherwise
-     *
-     * This method helps determine if the container's data is currently
-     * being consumed by any components, which can inform processing and
-     * resource management decisions.
+     * @brief Get the current processing chain for this container.
+     * @return Shared pointer to the DataProcessingChain, or nullptr if none
      */
-    virtual bool has_active_channel_readers() const = 0;
+    virtual std::shared_ptr<DataProcessingChain> get_processing_chain() = 0;
 
     /**
-     * @brief Marks a specific channel as consumed
-     * @param channel Channel index to mark as consumed
-     *
-     * Indicates that a reading component has finished consuming data from
-     * the specified channel for the current processing cycle. This helps
-     * track when all expected reads have completed.
+     * @brief Set the processing chain for this container.
+     * @param chain Shared pointer to the DataProcessingChain to use
      */
-    virtual void mark_channel_consumed(u_int32_t channel) = 0;
+    virtual void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) = 0;
 
     /**
-     * @brief Checks if all channels with active readers have been consumed
-     * @return true if all channels have been consumed, false otherwise
+     * @brief Register a reader for a specific dimension.
+     * @param dimension_index Index of the dimension being read
      *
-     * This method helps determine when a processing cycle is complete by
-     * checking if all channels that were expected to be read have been
-     * marked as consumed.
+     * Used for tracking active readers in multi-threaded or streaming scenarios,
+     * enabling safe concurrent access and efficient resource management.
      */
-    virtual bool all_channels_consumed() const = 0;
+    virtual void register_dimension_reader(u_int32_t dimension_index) = 0;
 
     /**
-     * @brief Gets the processed data
-     * @return Reference to vector of processed sample vectors
-     *
-     * Provides access to the data after it has been transformed by the
-     * processing chain. Each inner vector represents one channel of
-     * processed samples. This is a mutable reference, allowing modifications
-     * to the processed data if needed.
+     * @brief Unregister a reader for a specific dimension.
+     * @param dimension_index Index of the dimension no longer being read
      */
-    virtual std::vector<std::vector<double>>& get_processed_data() = 0;
+    virtual void unregister_dimension_reader(u_int32_t dimension_index) = 0;
 
     /**
-     * @brief Gets the processed data (const version)
-     * @return Constant reference to vector of processed sample vectors
-     *
-     * Provides read-only access to the data after it has been transformed
-     * by the processing chain. Each inner vector represents one channel of
-     * processed samples. This const version ensures the data cannot be
-     * modified through this reference.
+     * @brief Check if any dimensions currently have active readers.
+     * @return true if any dimension is being read, false otherwise
      */
-    virtual const std::vector<std::vector<double>>& get_processed_data() const = 0;
+    virtual bool has_active_readers() const = 0;
 
-    // template <typename ResultType>
-    // ResultType compute(const std::string& algorithm_name, const std::map<std::string, std::any>& params = {});
-    // {
-    //     auto matrix = std::make_shared<Yantra::ComputeMatrix>();
-    //     auto transformer = matrix->create_operation<Yantra::ComputeOperation<std::shared_ptr<SignalSourceContainer>, ResultType>>(algorithm_name);
+    /**
+     * @brief Mark a dimension as consumed for the current processing cycle.
+     * @param dimension_index Index of the dimension that was processed
+     */
+    virtual void mark_dimension_consumed(u_int32_t dimension_index) = 0;
 
-    //     for (const auto& [key, value] : params) {
-    //         transformer->set_parameter(key, value);
-    //     }
+    /**
+     * @brief Check if all active dimensions have been consumed in this cycle.
+     * @return true if all active dimensions have been processed
+     */
+    virtual bool all_dimensions_consumed() const = 0;
 
-    //     return transformer->compute(shared_from_this());
-    // }
+    // ===== Processed Data Access =====
 
-    // Specific transformations with intuitive names
-    // virtual std::vector<RegionSegment> extract_regions(const std::string& extractor_type, double threshold = 0.5) = 0;
+    /**
+     * @brief Get a mutable reference to the processed data buffer.
+     * @return Reference to the processed DataVariant
+     *
+     * The structure and type of this data is implementation-specific and may
+     * depend on the processing chain or data source.
+     */
+    virtual DataVariant& get_processed_data() = 0;
 
-    // virtual std::shared_ptr<SignalSourceContainer> apply_effect(const std::string& effect_name, double intensity = 1.0) = 0;
+    /**
+     * @brief Get a const reference to the processed data buffer.
+     * @return Const reference to the processed DataVariant
+     */
+    virtual const DataVariant& get_processed_data() const = 0;
+
+    // ===== Buffer Integration =====
+
+    /**
+     * @brief Mark associated buffers for processing in the next cycle.
+     * @param should_process true to enable processing, false to disable
+     *
+     * Used to coordinate buffer state with the container's processing lifecycle,
+     * ensuring that buffers are processed only when needed in data-driven flows.
+     */
+    virtual void mark_buffers_for_processing(bool should_process) = 0;
+
+    /**
+     * @brief Mark associated buffers for removal from the system.
+     *
+     * Signals that buffers should be released and references cleared, supporting
+     * efficient resource management in dynamic, digital-first workflows.
+     */
+    virtual void mark_buffers_for_removal() = 0;
 };
 
 }

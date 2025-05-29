@@ -1,723 +1,540 @@
 #include "SoundFileContainer.hpp"
-
-#include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 
 namespace MayaFlux::Kakshya {
 
 SoundFileContainer::SoundFileContainer()
-    : m_ready_for_processing(false)
-    , m_looping(false)
-    , m_read_position(0)
-    , m_processing_state(ProcessingState::IDLE)
-    , m_num_channels(1)
 {
+    setup_dimensions();
 }
 
-void SoundFileContainer::create_default_processor()
+void SoundFileContainer::setup(u_int64_t num_frames, u_int32_t sample_rate, u_int32_t num_channels)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    std::unique_lock lock(m_data_mutex);
 
-    try {
-        m_default_processor = std::make_shared<ContiguousAccessProcessor>();
-
-        if (m_default_processor && !m_samples.empty()) {
-            try {
-                m_default_processor->on_attach(shared_from_this());
-                m_ready_for_processing = true;
-                update_processing_state(ProcessingState::READY);
-            } catch (const std::bad_weak_ptr& e) {
-                std::cerr << "Cannot attach processor - container not owned by shared_ptr yet" << std::endl;
-            }
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Exception in create_default_processor: " << e.what() << std::endl;
-    }
-}
-
-std::string SoundFileContainer::get_file_path() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_file_path;
-}
-
-void SoundFileContainer::setup(u_int32_t num_frames, u_int32_t sample_rate, u_int32_t num_channels)
-{
     m_num_frames = num_frames;
     m_sample_rate = sample_rate;
     m_num_channels = num_channels;
 
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    m_processed_data.resize(m_num_channels);
-
-    for (auto& channel : m_processed_data) {
-        channel.resize(num_frames, 0.0);
-    }
-
-    m_buffers.clear();
+    setup_dimensions();
+    update_processing_state(ProcessingState::IDLE);
 }
 
-void SoundFileContainer::create_container_buffers()
+void SoundFileContainer::set_raw_data(const DataVariant& data)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    std::unique_lock lock(m_data_mutex);
 
-    if (m_buffers.empty() && !m_samples.empty()) {
-        try {
-            auto self = shared_from_this();
+    if (std::holds_alternative<std::vector<double>>(data)) {
+        std::vector<double> new_data = std::get<std::vector<double>>(data);
+        m_data = std::move(new_data);
+        const auto& vec = std::get<std::vector<double>>(m_data);
 
-            m_buffers.reserve(m_num_channels);
+        if (!vec.empty() && m_num_channels > 0) {
+            m_num_frames = vec.size() / m_num_channels;
+            setup_dimensions();
+        }
+    } else {
+        auto vec = get_typed_data<double>(data);
 
-            for (size_t channel = 0; channel < m_num_channels; ++channel) {
-                try {
-                    auto buffer = std::make_shared<Buffers::ContainerBuffer>(
-                        static_cast<u_int32_t>(channel),
-                        512,
-                        self,
-                        static_cast<u_int32_t>(channel));
-
-                    if (buffer) {
-                        buffer->initialize();
-                        m_buffers.push_back(std::move(buffer));
-                    }
-                } catch (const std::exception& e) {
-                    std::cerr << "Exception creating buffer for channel " << channel
-                              << ": " << e.what() << std::endl;
-                }
-            }
-        } catch (const std::bad_weak_ptr& e) {
-            std::cerr << "Cannot create buffers - container not owned by shared_ptr" << std::endl;
-            std::cerr << "Exception details: " << e.what() << std::endl;
+        if (vec.empty() && m_num_channels > 0) {
+            m_data = data;
+            m_num_frames = vec.size() / m_num_channels;
+            setup_dimensions();
         }
     }
 }
 
-void SoundFileContainer::resize(u_int32_t num_frames)
+void SoundFileContainer::set_all_raw_data(const DataVariant& data)
 {
+    set_raw_data(data);
+}
 
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+void SoundFileContainer::setup_dimensions()
+{
+    m_dimensions.clear();
 
-    for (auto& channel : m_processed_data) {
-        channel.resize(num_frames, 0.0);
+    if (m_num_frames > 0) {
+        m_dimensions.push_back(DataDimension::time(m_num_frames, "frames"));
     }
+
+    if (m_num_channels > 1) {
+        u_int64_t stride = (m_memory_layout == MemoryLayout::ROW_MAJOR) ? 1 : m_num_frames;
+        m_dimensions.push_back(DataDimension::channel(m_num_channels, stride));
+    }
+}
+
+std::vector<DataDimension> SoundFileContainer::get_dimensions() const
+{
+    std::shared_lock lock(m_data_mutex);
+    return m_dimensions;
+}
+
+u_int64_t SoundFileContainer::get_total_elements() const
+{
+    return calculate_total_elements(m_dimensions);
+}
+
+void SoundFileContainer::set_memory_layout(MemoryLayout layout)
+{
+    if (layout != m_memory_layout) {
+        std::unique_lock lock(m_data_mutex);
+        reorganize_data_layout(layout);
+        m_memory_layout = layout;
+        setup_dimensions();
+    }
+}
+
+u_int64_t SoundFileContainer::get_frame_size() const
+{
+    return m_num_channels;
+}
+
+u_int64_t SoundFileContainer::get_num_frames() const
+{
+    return m_num_frames;
+}
+
+DataVariant SoundFileContainer::get_region_data(const RegionPoint& region) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    return std::visit([&](const auto& vec) -> DataVariant {
+        using T = typename std::decay_t<decltype(vec)>::value_type;
+        auto extracted = extract_region(vec, region, m_dimensions);
+        return DataVariant(std::move(extracted));
+    },
+        m_data);
+}
+
+void SoundFileContainer::set_region_data(const RegionPoint& region, const DataVariant& data)
+{
+    std::unique_lock lock(m_data_mutex);
+
+    std::visit([&](auto& dest_vec, const auto& src_data) {
+        using DestT = typename std::decay_t<decltype(dest_vec)>::value_type;
+        using SrcT = typename std::decay_t<decltype(src_data)>::value_type;
+
+        if constexpr (std::is_same_v<DestT, SrcT>) {
+            set_or_update_region_data(std::span<DestT>(dest_vec), std::span<const SrcT>(src_data), region, m_dimensions);
+        } else {
+            auto converted = convert_data_type<SrcT, DestT>(src_data);
+            set_or_update_region_data(std::span<DestT>(dest_vec), std::span<const DestT>(converted), region, m_dimensions);
+        }
+    },
+        m_data, data);
+}
+
+std::span<const double> SoundFileContainer::get_frame(u_int64_t frame_index) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    auto data_span = get_data_as_double();
+
+    if (data_span.empty() || frame_index >= m_num_frames) {
+        return {};
+    }
+
+    u_int64_t offset = frame_index * m_num_channels;
+    return data_span.subspan(offset, m_num_channels);
+}
+
+void SoundFileContainer::get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    auto data_span = get_data_as_double();
+    if (data_span.empty())
+        return;
+
+    u_int64_t frames_to_copy = std::min(num_frames, m_num_frames - start_frame);
+    u_int64_t elements_to_copy = frames_to_copy * m_num_channels;
+    u_int64_t offset = start_frame * m_num_channels;
+
+    std::copy_n(data_span.begin() + offset,
+        std::min(elements_to_copy, output.size()),
+        output.begin());
+}
+
+double SoundFileContainer::get_value_at(const std::vector<u_int64_t>& coordinates) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    if (!has_data() || coordinates.size() != m_dimensions.size()) {
+        return 0.0;
+    }
+
+    u_int64_t linear_index = coordinates_to_linear_index(coordinates);
+
+    auto result = extract_from_variant_at<double>(m_data, linear_index);
+    return result.value_or(0.0);
+}
+
+void SoundFileContainer::set_value_at(const std::vector<u_int64_t>& coordinates, double value)
+{
+    std::unique_lock lock(m_data_mutex);
+
+    u_int64_t linear_index = coordinates_to_linear_index(coordinates);
+
+    std::visit([linear_index, value](auto& vec) {
+        using T = typename std::decay_t<decltype(vec)>::value_type;
+        if (linear_index < vec.size()) {
+            vec[linear_index] = static_cast<T>(value);
+        }
+    },
+        m_data);
+}
+
+u_int64_t SoundFileContainer::coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const
+{
+    return coordinates_to_linear(coordinates, m_dimensions);
+}
+
+std::vector<u_int64_t> SoundFileContainer::linear_index_to_coordinates(u_int64_t linear_index) const
+{
+    return linear_to_coordinates(linear_index, m_dimensions);
 }
 
 void SoundFileContainer::clear()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    std::unique_lock lock(m_data_mutex);
 
-    for (auto& channel : m_processed_data) {
-        std::fill(channel.begin(), channel.end(), 0.0);
-    }
+    std::visit([](auto& vec) { vec.clear(); }, m_data);
+    std::visit([](auto& vec) { vec.clear(); }, m_processed_data);
 
-    for (auto& samples : m_samples) {
-        std::fill(samples.begin(), samples.end(), 0.0);
-    }
-
+    m_num_frames = 0;
+    m_num_channels = 0;
     m_read_position = 0;
+
+    setup_dimensions();
+    update_processing_state(ProcessingState::IDLE);
 }
 
-u_int32_t SoundFileContainer::get_num_frames() const
+const void* SoundFileContainer::get_raw_data() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_samples.empty()) {
-        return 0;
-    }
-
-    return static_cast<u_int32_t>(m_samples[0].size());
-}
-
-double SoundFileContainer::get_sample_at(u_int64_t sample_index, u_int32_t channel) const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_samples.empty() || channel >= m_num_channels || sample_index >= m_num_frames || m_processing_state < ProcessingState::READY || m_processing_state == ProcessingState::NEEDS_REMOVAL) {
-        return 0.0;
-    }
-
-    if (is_interleaved() && !m_samples.empty()) {
-        u_int64_t interleaved_index = sample_index * m_num_channels + channel;
-        if (interleaved_index < m_samples[0].size()) {
-            return m_samples[0][interleaved_index];
+    std::shared_lock lock(m_data_mutex);
+    return std::visit([](const auto& vec) -> const void* {
+        if (vec.empty()) {
+            return nullptr;
         }
-    } else if (channel < m_samples.size() && sample_index < m_samples[channel].size()) {
-        return m_samples[channel][sample_index];
-    }
+        return vec.data();
+    },
+        m_data);
 }
 
-std::vector<double> SoundFileContainer::get_frame_at(u_int64_t frame_index) const
+bool SoundFileContainer::has_data() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    std::vector<double> frame;
-    if (m_samples.empty() || frame_index >= m_num_frames) {
-        return frame;
-    }
-
-    frame.reserve(m_num_channels);
-    for (auto samples : m_samples) {
-        frame.push_back(samples[frame_index]);
-    }
-
-    return frame;
-}
-
-const bool SoundFileContainer::is_ready_for_processing() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_ready_for_processing;
-}
-
-void SoundFileContainer::mark_ready_for_processing(bool ready)
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    m_ready_for_processing = ready;
-
-    if (ready && m_processing_state == ProcessingState::IDLE) {
-        update_processing_state(ProcessingState::READY);
-    }
-}
-
-void SoundFileContainer::fill_sample_range(u_int64_t start, u_int32_t num_samples, std::vector<double>& output_buffer, u_int32_t channel) const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (channel >= m_samples.size() || m_samples[channel].empty()) {
-        output_buffer.assign(num_samples, 0.0);
-        return;
-    }
-
-    if (output_buffer.size() < num_samples) {
-        output_buffer.resize(num_samples);
-    }
-
-    const auto& channel_data = m_samples[channel];
-    const u_int64_t channel_size = channel_data.size();
-
-    for (u_int32_t i = 0; i < num_samples; ++i) {
-        u_int64_t pos = start + i;
-
-        if (pos < channel_size) {
-            output_buffer[i] = channel_data[pos];
-        } else if (m_looping && channel_size > 0) {
-            output_buffer[i] = channel_data[pos % channel_size];
-        } else {
-            output_buffer[i] = 0.0;
-        }
-    }
-}
-
-void SoundFileContainer::fill_frame_range(u_int64_t start_frame, u_int32_t num_frames, std::vector<std::vector<double>>& output_buffers, const std::vector<u_int32_t>& channels) const
-{
-}
-
-bool SoundFileContainer::is_range_valid(u_int64_t start_frame, u_int32_t num_frames) const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_samples.empty() || m_samples[0].empty()) {
-        return false;
-    }
-
-    const u_int64_t channel_size = m_samples[0].size();
-    return start_frame < channel_size && (start_frame + num_frames) <= channel_size;
-}
-
-void SoundFileContainer::set_read_position(u_int64_t frame_position)
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_samples.empty() || m_samples[0].empty()) {
-        m_read_position = 0;
-        return;
-    }
-
-    const u_int64_t channel_size = m_samples[0].size();
-
-    if (frame_position < channel_size) {
-        m_read_position = frame_position;
-    } else if (m_looping && channel_size > 0) {
-        m_read_position = frame_position % channel_size;
-    } else {
-        m_read_position = channel_size;
-    }
-}
-
-u_int64_t SoundFileContainer::get_read_position() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_read_position;
-}
-
-void SoundFileContainer::advance(u_int32_t num_frames)
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_samples.empty() || m_samples[0].empty()) {
-        return;
-    }
-
-    const u_int64_t channel_size = m_samples[0].size();
-
-    if (m_looping && channel_size > 0) {
-        m_read_position = (m_read_position + num_frames) % channel_size;
-    } else {
-        m_read_position += num_frames;
-        if (m_read_position > channel_size) {
-            m_read_position = channel_size;
-        }
-    }
-}
-
-bool SoundFileContainer::is_read_at_end() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_samples.empty() || m_samples[0].empty()) {
-        return true;
-    }
-
-    return m_read_position >= m_samples[0].size();
-}
-
-void SoundFileContainer::reset_read_position()
-{
-    set_read_position(0);
-}
-
-std::vector<double> SoundFileContainer::get_normalized_preview(u_int32_t channel, u_int32_t max_points) const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (channel >= m_samples.size() || m_samples[channel].empty() || max_points == 0) {
-        return std::vector<double>();
-    }
-
-    const auto& channel_data = m_samples[channel];
-    const u_int64_t channel_size = channel_data.size();
-
-    std::vector<double> preview;
-    preview.reserve(max_points);
-
-    if (channel_size <= max_points) {
-        return channel_data;
-    }
-
-    auto [min_it, max_it] = std::minmax_element(channel_data.begin(), channel_data.end());
-    double min_val = *min_it;
-    double max_val = *max_it;
-    double range = max_val - min_val;
-
-    if (std::abs(range) < 1e-6) {
-        preview.resize(max_points, 0.0);
-        return preview;
-    }
-
-    double step = static_cast<double>(channel_size) / max_points;
-
-    for (u_int32_t i = 0; i < max_points; ++i) {
-        u_int64_t start_idx = static_cast<u_int64_t>(i * step);
-        u_int64_t end_idx = static_cast<u_int64_t>((i + 1) * step);
-        if (end_idx > channel_size)
-            end_idx = channel_size;
-        if (start_idx >= end_idx)
-            start_idx = end_idx - 1;
-
-        double seg_min = channel_data[start_idx];
-        double seg_max = channel_data[start_idx];
-
-        for (u_int64_t j = start_idx + 1; j < end_idx; ++j) {
-            if (channel_data[j] < seg_min)
-                seg_min = channel_data[j];
-            if (channel_data[j] > seg_max)
-                seg_max = channel_data[j];
-        }
-
-        double value = (std::abs(seg_min) > std::abs(seg_max)) ? seg_min : seg_max;
-
-        preview.push_back((value - min_val) / range * 2.0 - 1.0);
-    }
-
-    return preview;
-}
-
-std::vector<std::pair<std::string, u_int64_t>> SoundFileContainer::get_markers() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_markers;
-}
-
-u_int64_t SoundFileContainer::get_marker_position(const std::string& marker_name) const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    for (const auto& marker : m_markers) {
-        if (marker.first == marker_name) {
-            return marker.second;
-        }
-    }
-
-    return 0;
+    std::shared_lock lock(m_data_mutex);
+    return std::visit([](const auto& vec) {
+        return !vec.empty();
+    },
+        m_data);
 }
 
 void SoundFileContainer::add_region_group(const RegionGroup& group)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_state_mutex);
     m_region_groups[group.name] = group;
 }
 
-void SoundFileContainer::add_region_point(const std::string& group_name, const RegionPoint& point)
+const RegionGroup& SoundFileContainer::get_region_group(const std::string& name) const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    m_region_groups[group_name].points.push_back(point);
+    std::lock_guard<std::mutex> lock(m_state_mutex);
+
+    auto it = m_region_groups.find(name);
+    if (it == m_region_groups.end()) {
+        static const RegionGroup empty_group;
+        return empty_group;
+    }
+    return it->second;
 }
 
-const RegionGroup& SoundFileContainer::get_region_group(const std::string& group_name) const
+std::unordered_map<std::string, RegionGroup> SoundFileContainer::get_all_region_groups() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_region_groups.at(group_name);
-}
-
-const std::unordered_map<std::string, RegionGroup> SoundFileContainer::get_all_region_groups() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_state_mutex);
     return m_region_groups;
 }
 
-const std::vector<double>& SoundFileContainer::get_raw_samples(uint32_t channel) const
+void SoundFileContainer::remove_region_group(const std::string& name)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    static const std::vector<double> empty_vector;
-
-    if (is_interleaved() && !m_samples.empty()) {
-        return m_samples[0];
-    }
-
-    if (channel < m_samples.size()) {
-        return m_samples[channel];
-    }
-
-    return empty_vector;
+    std::lock_guard<std::mutex> lock(m_state_mutex);
+    m_region_groups.erase(name);
 }
 
-std::vector<std::vector<double>>& SoundFileContainer::get_all_raw_samples()
+bool SoundFileContainer::is_region_loaded(const RegionPoint& region) const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_samples;
+    return has_data();
 }
 
-const std::vector<std::vector<double>>& SoundFileContainer::get_all_raw_samples() const
+void SoundFileContainer::load_region(const RegionPoint& region)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_samples;
+    // No-op for in-memory container
 }
 
-void SoundFileContainer::set_raw_samples(const std::vector<double>& samples, uint32_t channel)
+void SoundFileContainer::unload_region(const RegionPoint& region)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (channel == 0 && m_num_channels > 1) {
-        m_samples.clear();
-        m_samples.resize(1);
-        m_samples[0] = samples;
-
-        m_num_frames = samples.size() / m_num_channels;
-
-    } else {
-        if (channel >= m_samples.size()) {
-            m_samples.resize(channel + 1);
-        }
-        m_samples[channel] = samples;
-
-        if (channel >= m_num_channels) {
-            m_num_channels = channel + 1;
-        }
-
-        m_num_frames = samples.size();
-    }
-
-    if (m_default_processor) {
-        m_ready_for_processing = true;
-        if (m_processing_state == ProcessingState::IDLE) {
-            update_processing_state(ProcessingState::READY);
-        }
-    }
-
-    if (!m_buffers.empty() && m_buffers[channel]) {
-        m_buffers[channel]->clear();
-    }
+    // No-op for in-memory container
 }
 
-void SoundFileContainer::set_all_raw_samples(const std::vector<std::vector<double>>& samples)
+void SoundFileContainer::set_read_position(u_int64_t position)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    m_read_position = wrap_position_with_loop(position, m_loop_region, 0, m_looping_enabled);
+}
 
-    if (samples.empty()) {
-        return;
-    }
+u_int64_t SoundFileContainer::get_read_position() const
+{
+    return m_read_position.load();
+}
 
-    m_samples = samples;
-    m_num_channels = static_cast<u_int32_t>(samples.size());
+void SoundFileContainer::advance_read_position(u_int64_t frames)
+{
+    u_int64_t current = m_read_position.load();
+    u_int64_t loop_start = m_loop_region.start_coordinates.empty() ? 0 : m_loop_region.start_coordinates[0];
+    u_int64_t loop_end = m_loop_region.end_coordinates.empty() ? m_num_frames : m_loop_region.end_coordinates[0];
 
-    u_int64_t num_frames = 0;
-    if (!samples[0].empty()) {
-        num_frames = samples[0].size();
-    }
+    u_int64_t new_pos = advance_position(current, frames, m_num_frames, loop_start, loop_end, m_looping_enabled);
+    m_read_position = new_pos;
+}
 
-    m_buffers.clear();
+bool SoundFileContainer::is_at_end() const
+{
+    return !m_looping_enabled && m_read_position >= m_num_frames;
+}
 
-    if (m_processed_data.size() != samples.size()) {
-        m_processed_data.resize(samples.size());
-        for (auto& channel : m_processed_data) {
-            channel.resize(512, 0.0);
-        }
-    }
+void SoundFileContainer::reset_read_position()
+{
+    u_int64_t start_pos = (m_looping_enabled && !m_loop_region.start_coordinates.empty())
+        ? m_loop_region.start_coordinates[0]
+        : 0;
+    m_read_position = start_pos;
+}
 
-    if (m_default_processor) {
-        m_ready_for_processing = true;
-        if (m_processing_state == ProcessingState::IDLE) {
-            update_processing_state(ProcessingState::READY);
-        }
-    }
+u_int64_t SoundFileContainer::time_to_position(double time) const
+{
+    return Kakshya::time_to_position(time, m_sample_rate);
+}
+
+double SoundFileContainer::position_to_time(u_int64_t position) const
+{
+    return Kakshya::position_to_time(position, m_sample_rate);
 }
 
 void SoundFileContainer::set_looping(bool enable)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    m_looping = enable;
-}
-
-bool SoundFileContainer::get_looping() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_looping;
-}
-
-void SoundFileContainer::set_default_processor(std::shared_ptr<DataProcessor> processor)
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_default_processor) {
-        m_default_processor->on_detach(shared_from_this());
-    }
-
-    m_default_processor = processor;
-
-    if (m_default_processor && !m_samples.empty()) {
-        m_default_processor->on_attach(shared_from_this());
-        m_ready_for_processing = true;
+    m_looping_enabled = enable;
+    if (enable && m_loop_region.start_coordinates.empty()) {
+        m_loop_region = RegionPoint::time_span(0, m_num_frames - 1);
     }
 }
 
-std::shared_ptr<DataProcessor> SoundFileContainer::get_default_processor() const
+void SoundFileContainer::set_loop_region(const RegionPoint& region)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_default_processor;
-}
+    m_loop_region = region;
 
-std::shared_ptr<DataProcessingChain> SoundFileContainer::get_processing_chain()
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_processing_chain;
-}
-
-void SoundFileContainer::set_processing_chain(std::shared_ptr<DataProcessingChain> chain)
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    m_processing_chain = chain;
-}
-
-void SoundFileContainer::mark_buffers_for_processing(bool should_process)
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    for (auto& buffer : m_buffers) {
-        buffer->mark_for_processing(should_process);
-        buffer->enforce_default_processing(should_process);
+    if (m_looping_enabled && !region.start_coordinates.empty()) {
+        u_int64_t current = m_read_position.load();
+        if (current < region.start_coordinates[0] || current > region.end_coordinates[0]) {
+            m_read_position = region.start_coordinates[0];
+        }
     }
 }
 
-void SoundFileContainer::mark_buffers_for_removal()
+RegionPoint SoundFileContainer::get_loop_region() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    for (auto& buffer : m_buffers) {
-        buffer->mark_for_removal();
-    }
+    return m_loop_region;
 }
 
-std::shared_ptr<Buffers::AudioBuffer> SoundFileContainer::get_channel_buffer(u_int32_t channel)
+bool SoundFileContainer::is_ready() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    auto state = get_processing_state();
+    return has_data() && (state == ProcessingState::READY || state == ProcessingState::PROCESSED);
+}
 
-    if (m_buffers.empty()) {
-        create_container_buffers();
-    }
-
-    if (channel >= m_buffers.size()) {
-        return nullptr;
+u_int64_t SoundFileContainer::get_remaining_frames() const
+{
+    if (m_looping_enabled) {
+        return std::numeric_limits<u_int64_t>::max();
     }
 
-    return m_buffers[channel];
+    u_int64_t current = m_read_position.load();
+    return (current < m_num_frames) ? (m_num_frames - current) : 0;
 }
 
-std::vector<std::shared_ptr<Buffers::AudioBuffer>> SoundFileContainer::get_all_buffers()
+u_int64_t SoundFileContainer::read_sequential(std::span<double> output, u_int64_t count)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    u_int64_t frames_read = peek_sequential(output, count, 0);
+    advance_read_position(frames_read / m_num_channels);
+    return frames_read;
+}
 
-    if (m_buffers.empty()) {
-        create_container_buffers();
+u_int64_t SoundFileContainer::peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset) const
+{
+    std::shared_lock lock(m_data_mutex);
+
+    auto data_span = get_data_as_double();
+    if (data_span.empty())
+        return 0;
+
+    u_int64_t start_pos = m_read_position.load() + offset;
+    u_int64_t elements_to_read = std::min(count, output.size());
+    u_int64_t elements_read = 0;
+
+    if (m_looping_enabled && !m_loop_region.start_coordinates.empty()) {
+        u_int64_t loop_start = m_loop_region.start_coordinates[0] * m_num_channels;
+        u_int64_t loop_end = (m_loop_region.end_coordinates[0] + 1) * m_num_channels;
+        u_int64_t loop_length = loop_end - loop_start;
+
+        for (u_int64_t i = 0; i < elements_to_read; ++i) {
+            u_int64_t pos = (start_pos * m_num_channels + i - loop_start) % loop_length + loop_start;
+            output[i] = data_span[pos];
+            elements_read++;
+        }
+    } else {
+        u_int64_t linear_start = start_pos * m_num_channels;
+        u_int64_t available = data_span.size() - linear_start;
+        elements_read = std::min(elements_to_read, available);
+
+        std::copy_n(data_span.begin() + linear_start, elements_read, output.begin());
     }
-    return m_buffers;
-}
 
-u_int32_t SoundFileContainer::get_sample_rate() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_sample_rate;
-}
-
-u_int32_t SoundFileContainer::get_num_audio_channels() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_num_channels;
-}
-
-u_int64_t SoundFileContainer::get_num_frames_total() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_num_frames;
-}
-
-double SoundFileContainer::get_duration_seconds() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_sample_rate <= 0) {
-        return 0.0;
-    }
-
-    return static_cast<double>(m_num_frames) / m_sample_rate;
-}
-
-void SoundFileContainer::lock()
-{
-    m_mutex.lock();
-}
-
-void SoundFileContainer::unlock()
-{
-    m_mutex.unlock();
-}
-
-bool SoundFileContainer::try_lock()
-{
-    return m_mutex.try_lock();
-}
-
-ProcessingState SoundFileContainer::get_processing_state() const
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_processing_state;
+    return elements_read;
 }
 
 void SoundFileContainer::update_processing_state(ProcessingState new_state)
 {
-    if (m_processing_state == new_state) {
-        return;
+    ProcessingState old_state = m_processing_state.exchange(new_state);
+
+    if (old_state != new_state) {
+        notify_state_change(new_state);
+
+        if (new_state == ProcessingState::READY) {
+            std::lock_guard<std::mutex> lock(m_reader_mutex);
+            m_consumed_dimensions.clear();
+        }
     }
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+}
 
-    if (new_state == ProcessingState::READY) {
-        m_channels_consumed_this_cycle.clear();
-    }
-
-    if (new_state == ProcessingState::NEEDS_REMOVAL) {
-        mark_buffers_for_removal();
-    }
-
-    m_processing_state = new_state;
-
+void SoundFileContainer::notify_state_change(ProcessingState new_state)
+{
+    std::lock_guard<std::mutex> lock(m_state_mutex);
     if (m_state_callback) {
         m_state_callback(shared_from_this(), new_state);
     }
 }
 
-void SoundFileContainer::register_state_change_callback(std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> callback)
+bool SoundFileContainer::is_ready_for_processing() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    m_state_callback = callback;
+    auto state = get_processing_state();
+    return has_data() && (state == ProcessingState::READY || state == ProcessingState::PROCESSED);
 }
 
-void SoundFileContainer::unregister_state_change_callback()
+void SoundFileContainer::mark_ready_for_processing(bool ready)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    m_state_callback = nullptr;
+    if (ready && has_data()) {
+        update_processing_state(ProcessingState::READY);
+    } else if (!ready) {
+        update_processing_state(ProcessingState::IDLE);
+    }
 }
 
-void SoundFileContainer::register_channel_reader(u_int32_t channel)
+void SoundFileContainer::create_default_processor()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    m_active_channel_readers[channel]++;
+    auto processor = std::make_shared<ContiguousAccessProcessor>();
+    set_default_processor(processor);
 }
 
-void SoundFileContainer::unregister_channel_reader(u_int32_t channel)
+void SoundFileContainer::process_default()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    if (m_active_channel_readers[channel]) {
-        if (--m_active_channel_readers[channel] <= 0) {
-            m_active_channel_readers.erase(channel);
+    if (m_default_processor && is_ready_for_processing()) {
+        update_processing_state(ProcessingState::PROCESSING);
+        m_default_processor->process(shared_from_this());
+        update_processing_state(ProcessingState::PROCESSED);
+    }
+}
+
+void SoundFileContainer::set_default_processor(std::shared_ptr<DataProcessor> processor)
+{
+    auto old_processor = std::atomic_exchange(&m_default_processor, processor);
+
+    if (old_processor) {
+        old_processor->on_detach(shared_from_this());
+    }
+
+    if (processor) {
+        processor->on_attach(shared_from_this());
+    }
+}
+
+std::shared_ptr<DataProcessor> SoundFileContainer::get_default_processor() const
+{
+    std::lock_guard<std::mutex> lock(m_state_mutex);
+    return m_default_processor;
+}
+
+void SoundFileContainer::register_dimension_reader(u_int32_t dimension_index)
+{
+    std::lock_guard<std::mutex> lock(m_reader_mutex);
+    m_active_readers[dimension_index]++;
+}
+
+void SoundFileContainer::unregister_dimension_reader(u_int32_t dimension_index)
+{
+    std::lock_guard<std::mutex> lock(m_reader_mutex);
+    if (auto it = m_active_readers.find(dimension_index); it != m_active_readers.end()) {
+        if (--it->second <= 0) {
+            m_active_readers.erase(it);
         }
     }
 }
 
-bool SoundFileContainer::has_active_channel_readers() const
+bool SoundFileContainer::has_active_readers() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return !m_active_channel_readers.empty();
+    std::lock_guard<std::mutex> lock(m_reader_mutex);
+    return !m_active_readers.empty();
 }
 
-void SoundFileContainer::mark_channel_consumed(u_int32_t channel)
+void SoundFileContainer::mark_dimension_consumed(u_int32_t dimension_index)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    m_channels_consumed_this_cycle.insert(channel);
+    std::lock_guard<std::mutex> lock(m_reader_mutex);
+    m_consumed_dimensions.insert(dimension_index);
 }
 
-bool SoundFileContainer::all_channels_consumed() const
+bool SoundFileContainer::all_dimensions_consumed() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    for (const auto& [channel, count] : m_active_channel_readers) {
-        if (m_channels_consumed_this_cycle.find(channel) == m_channels_consumed_this_cycle.end()) {
+    std::lock_guard<std::mutex> lock(m_reader_mutex);
+
+    for (const auto& [dim, count] : m_active_readers) {
+        if (m_consumed_dimensions.find(dim) == m_consumed_dimensions.end()) {
             return false;
         }
     }
     return true;
 }
 
-std::vector<std::vector<double>>& SoundFileContainer::get_processed_data()
+double SoundFileContainer::get_duration_seconds() const
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_processed_data;
+    return position_to_time(m_num_frames);
 }
 
-const std::vector<std::vector<double>>& SoundFileContainer::get_processed_data() const
+void SoundFileContainer::reorganize_data_layout(MemoryLayout new_layout)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    return m_processed_data;
-}
-
-void SoundFileContainer::process_default()
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
-
-    if (m_default_processor) {
-        update_processing_state(ProcessingState::PROCESSING);
-
-        m_default_processor->process(shared_from_this());
-
-        update_processing_state(ProcessingState::PROCESSED);
+    if (new_layout == m_memory_layout || m_num_channels <= 1) {
+        return;
     }
+
+    std::visit([&](auto& vec) {
+        using T = typename std::decay_t<decltype(vec)>::value_type;
+
+        if (new_layout == MemoryLayout::COLUMN_MAJOR && m_memory_layout == MemoryLayout::ROW_MAJOR) {
+            auto deinterleaved = deinterleave_channels<T>(
+                std::span<const T>(vec.data(), vec.size()), m_num_channels);
+            vec = interleave_channels(deinterleaved);
+        } else if (new_layout == MemoryLayout::ROW_MAJOR && m_memory_layout == MemoryLayout::COLUMN_MAJOR) {
+            auto channels = deinterleave_channels<T>(
+                std::span<const T>(vec.data(), vec.size()), m_num_channels);
+            vec = interleave_channels(channels);
+        }
+    },
+        m_data);
 }
-}
+
+} // namespace MayaFlux::Kakshya

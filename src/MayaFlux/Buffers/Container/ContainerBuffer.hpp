@@ -2,174 +2,124 @@
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
-
-namespace MayaFlux::Kakshya {
-class SignalSourceContainer;
-enum class ProcessingState;
-}
+#include "MayaFlux/Kakshya/StreamContainer.hpp"
 
 namespace MayaFlux::Buffers {
+
 /**
- * @brief Adapter to connect SignalSourceContainer to AudioBuffer system
+ * @class ContainerToBufferAdapter
+ * @brief Adapter for bridging N-dimensional containers and AudioBuffer interface.
  *
- * This processor bridges the gap between containers and buffers by
- * handling the transfer of data and state between the two systems.
- *
- * ContainerToBufferAdapter serves as the primary integration point between the
- * container-based data management system and the buffer-based audio processing system.
- * It translates between these two paradigms, allowing containers to participate in
- * the real-time audio processing workflow while maintaining their independence.
+ * ContainerToBufferAdapter enables seamless integration between N-dimensional
+ * data containers (such as Kakshya::StreamContainer or SoundFileContainer) and the AudioBuffer
+ * processing system. It extracts audio data from containers and presents it as a standard
+ * AudioBuffer for use in block-based DSP, node networks, and hardware output.
  *
  * Key responsibilities:
- * - Transferring data from containers to buffers at processing time
- * - Synchronizing processing states between systems
- * - Managing lifecycle events for both container and buffer
- * - Optimizing processing by tracking state changes
- * - Providing channel mapping between container and buffer domains
+ * - Maps N-dimensional container data (time/channel/other axes) to linear audio buffer format.
+ * - Handles dimension selection, channel extraction, and position tracking.
+ * - Synchronizes processing state and lifecycle between container and buffer.
+ * - Supports automatic or manual advancement of read position for streaming or block-based workflows.
+ * - Enables zero-copy operation when possible, falling back to cached extraction as needed.
  *
- * This adapter implements an intelligent processing strategy that only transfers
- * data when the container has been updated, avoiding redundant operations and
- * maintaining processing efficiency in the real-time audio path.
+ * This adapter is foundational for digital-first workflows where data may originate from
+ * files, streams, or procedural sources, and must be routed into the buffer system for
+ * further processing or output. While currently focused on audio, the design can be
+ * extended to support other data container types as more reader processors are implemented.
+ *
+ * @see ContainerBuffer, StreamContainer, SoundFileContainer, ContiguousAccessProcessor
  */
-class ContainerToBufferAdapter : public Buffers::BufferProcessor {
+class ContainerToBufferAdapter : public BufferProcessor {
 public:
-    /**
-     * @brief Creates a new adapter connected to the specified container
-     * @param container The SignalSourceContainer to adapt to the buffer system
-     *
-     * Initializes the adapter with default settings:
-     * - Source channel: 0 (first channel)
-     * - Auto advance: false (container position not automatically updated)
-     * - Update flags: true (buffer processing flags updated after transfer)
-     */
-    ContainerToBufferAdapter(std::shared_ptr<Kakshya::SignalSourceContainer> container);
+    explicit ContainerToBufferAdapter(std::shared_ptr<Kakshya::StreamContainer> container);
 
     /**
-     * @brief Transfers data from container to buffer during processing
-     * @param buffer The destination AudioBuffer to receive container data
-     *
-     * This method is called during the buffer processing cycle and performs
-     * the actual data transfer from container to buffer. It checks the container's
-     * processing state to avoid redundant transfers and only updates the buffer
-     * when the container has new data available.
+     * @brief Extracts and processes data from the container into the target AudioBuffer.
+     * Handles dimension mapping, position tracking, and state synchronization.
+     * @param buffer The AudioBuffer to fill.
      */
-    void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override;
+    void process(std::shared_ptr<AudioBuffer> buffer) override;
 
     /**
-     * @brief Initializes the connection when attached to a buffer
-     * @param buffer The AudioBuffer this adapter is being attached to
-     *
-     * When attached to a buffer, this method:
-     * - Validates the container's readiness
-     * - Performs initial data transfer
-     * - Sets up state tracking
-     * - Configures buffer processing flags
-     *
-     * This ensures the buffer immediately has valid data from the container
-     * and is properly configured for subsequent processing cycles.
+     * @brief Attach the adapter to an AudioBuffer.
+     * Registers for container state changes and prepares for processing.
+     * @param buffer The AudioBuffer to attach to.
      */
-    void on_attach(std::shared_ptr<Buffers::AudioBuffer> buffer) override;
+    void on_attach(std::shared_ptr<AudioBuffer> buffer) override;
 
     /**
-     * @brief Cleans up the connection when detached from a buffer
-     * @param buffer The AudioBuffer this adapter is being detached from
-     *
-     * Performs cleanup operations when the adapter is removed from a buffer,
-     * ensuring proper resource management and state cleanup.
+     * @brief Detach the adapter from its AudioBuffer.
+     * Cleans up state and unregisters callbacks.
+     * @param buffer The AudioBuffer to detach from.
      */
-    void on_detach(std::shared_ptr<Buffers::AudioBuffer> buffer) override;
+    void on_detach(std::shared_ptr<AudioBuffer> buffer) override;
 
     /**
-     * @brief Sets which channel from the container to use as source
-     * @param channel Channel index in the container
-     *
-     * For multi-channel containers, this specifies which channel's data
-     * should be transferred to the buffer. Defaults to channel 0.
+     * @brief Set which channel dimension to extract from the container.
+     * @param channel_index Index in the channel dimension (default: 0)
      */
-    void set_source_channel(u_int32_t channel);
+    void set_source_channel(u_int32_t channel_index);
+    u_int32_t get_source_channel() const { return m_source_channel; }
 
     /**
-     * @brief Gets the currently selected source channel
-     * @return Current source channel index
+     * @brief Set the container to adapt.
+     * @param container The StreamContainer to extract data from.
      */
-    u_int32_t get_source_channel() const;
+    void set_container(std::shared_ptr<Kakshya::StreamContainer> container);
+    std::shared_ptr<Kakshya::StreamContainer> get_container() const { return m_container; }
 
     /**
-     * @brief Changes the container this adapter is connected to
-     * @param container New container to use as data source
-     *
-     * Allows dynamically switching the data source without recreating
-     * the adapter or disrupting the buffer processing chain.
+     * @brief Enable or disable automatic advancement of the container's read position.
+     * When enabled, the adapter will advance the container after each process call.
+     * @param enable True to enable auto-advance, false for manual control.
      */
-    void set_container(std::shared_ptr<Kakshya::SignalSourceContainer> container);
+    void set_auto_advance(bool enable) { m_auto_advance = enable; }
+    bool get_auto_advance() const { return m_auto_advance; }
 
     /**
-     * @brief Gets the currently connected container
-     * @return Current container used as data source
+     * @brief Enable or disable buffer state flag updates.
+     * When enabled, the adapter will update buffer processing/removal flags based on container state.
+     * @param update True to enable state updates.
      */
-    std::shared_ptr<Kakshya::SignalSourceContainer> get_container() const;
-
-    /**
-     * @brief Controls whether the container's position advances automatically
-     * @param enable True to enable auto-advancement, false to disable
-     *
-     * When enabled, the container's read position is automatically advanced
-     * after each data transfer, simulating continuous playback. When disabled,
-     * the position must be managed externally.
-     */
-    void set_auto_advance(bool enable);
-
-    /**
-     * @brief Checks if auto-advancement is enabled
-     * @return True if enabled, false if disabled
-     */
-    bool get_auto_advance() const;
-
-    /**
-     * @brief Controls whether buffer processing flags are updated after transfer
-     * @param update True to update flags, false to leave unchanged
-     *
-     * When enabled, the buffer's processing flags are updated after data transfer
-     * to indicate new data is available. This ensures downstream processors are
-     * triggered appropriately.
-     */
-    void set_update_flags(bool update);
-
-    /**
-     * @brief Checks if flag updating is enabled
-     * @return True if enabled, false if disabled
-     */
-    bool get_update_flags() const;
+    void set_update_flags(bool update) { m_update_flags = update; }
+    bool get_update_flags() const { return m_update_flags; }
 
 private:
-    /**
-     * @brief Container providing the source data
-     */
-    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
+    std::shared_ptr<Kakshya::StreamContainer> m_container;
+    u_int32_t m_source_channel = 0;
+    bool m_auto_advance = true;
+    bool m_update_flags = true;
+
+    // Dimension indices for audio data
+    struct DimensionInfo {
+        size_t time_dim = 0; ///< Index of time dimension
+        size_t channel_dim = 1; ///< Index of channel dimension
+        bool has_channels = false;
+        u_int32_t num_channels = 1;
+        u_int64_t frames_per_buffer = 512;
+    } m_dim_info;
+
+    // Cache for efficiency
+    mutable std::vector<double> m_temp_buffer;
 
     /**
-     * @brief Channel index to read from the container
+     * @brief Analyze the container's dimensions and update mapping info.
      */
-    u_int32_t m_source_channel;
+    void analyze_container_dimensions();
 
     /**
-     * @brief Flag controlling automatic position advancement
+     * @brief Extract channel data from the container into the output buffer.
+     * @param output Output span to fill.
+     * @param start_frame Starting frame index.
+     * @param num_frames Number of frames to extract.
      */
-    bool m_auto_advance;
+    void extract_channel_data(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames);
 
     /**
-     * @brief Flag controlling buffer processing flag updates
-     */
-    bool m_update_flags;
-
-    /**
-     * @brief Handles container state changes
-     * @param container Container whose state has changed
-     * @param state New processing state
-     *
-     * This callback is triggered when the container's processing state changes,
-     * allowing the adapter to respond appropriately (e.g., marking the buffer
-     * for processing when new data is available).
+     * @brief Respond to container state changes (e.g., READY, PROCESSED, NEEDS_REMOVAL).
+     * Updates buffer state flags as needed.
+     * @param container The container whose state changed.
+     * @param state The new processing state.
      */
     void on_container_state_change(std::shared_ptr<Kakshya::SignalSourceContainer> container,
         Kakshya::ProcessingState state);
@@ -177,77 +127,84 @@ private:
 
 /**
  * @class ContainerBuffer
- * @brief Specialized AudioBuffer that directly integrates with a SignalSourceContainer
+ * @brief AudioBuffer implementation backed by a StreamContainer.
  *
- * ContainerBuffer provides a convenient wrapper that combines a standard audio buffer
- * with a ContainerToBufferAdapter, creating a seamless integration point between
- * the container and buffer processing systems.
+ * ContainerBuffer provides a bridge between the digital-first container system and
+ * the traditional AudioBuffer interface. It enables zero-copy or efficient extraction
+ * of audio data from StreamContainers (such as SoundFileContainer) for use in
+ * block-based DSP, node networks, and hardware output.
  *
- * This buffer type serves as the default and recommended method for bringing container
- * data into the buffer processing workflow, offering a simplified interface that
- * handles the complexities of adapter configuration and lifecycle management.
+ * Key responsibilities:
+ * - Maintains a reference to the backing StreamContainer and source channel.
+ * - Supports zero-copy operation when container memory layout matches buffer needs.
+ * - Falls back to cached extraction when zero-copy is not possible.
+ * - Integrates with ContainerToBufferAdapter for data extraction and state management.
+ * - Can be initialized and reconfigured at runtime for flexible routing.
  *
- * Unlike standard buffers that generate or process data directly, ContainerBuffer
- * delegates data sourcing to its connected container, acting as a view or window
- * into the container's data that participates in the buffer processing system.
+ * While currently focused on audio, this pattern can be extended to other data types
+ * as more container reader processors are implemented.
+ *
+ * @see ContainerToBufferAdapter, StreamContainer, SoundFileContainer
  */
 class ContainerBuffer : public StandardAudioBuffer {
 public:
     /**
-     * @brief Creates a new buffer connected to a container
-     * @param channel_id Channel ID in the buffer system
-     * @param num_samples Number of samples this buffer can hold
-     * @param container Container to use as data source
-     * @param source_channel Channel index to read from the container
-     *
-     * Initializes a buffer that automatically pulls data from the specified
-     * container during processing cycles. The buffer's default processor is
-     * configured as a ContainerToBufferAdapter connected to the container.
+     * @brief Construct a ContainerBuffer for a specific channel and container.
+     * @param channel_id Buffer channel index.
+     * @param num_samples Number of samples in the buffer.
+     * @param container Backing StreamContainer.
+     * @param source_channel Channel index in the container (default: 0).
      */
-    ContainerBuffer(u_int32_t channel_id, u_int32_t num_samples,
-        std::shared_ptr<Kakshya::SignalSourceContainer> container,
+    ContainerBuffer(u_int32_t channel_id,
+        u_int32_t num_samples,
+        std::shared_ptr<Kakshya::StreamContainer> container,
         u_int32_t source_channel = 0);
 
     /**
-     * @brief Gets the container this buffer is connected to
-     * @return Container used as data source
-     */
-    inline std::shared_ptr<Kakshya::SignalSourceContainer> get_container() const
-    {
-        return m_container;
-    }
-
-    /**
-     * @brief Gets the channel index being read from the container
-     * @return Source channel index
-     */
-    inline u_int32_t get_source_channel() const
-    {
-        return m_source_channel;
-    }
-
-    /**
-     * @brief Initilaize default processor
-     * Workaround to let shared_from_this() evaluate after constructor
+     * @brief Initialize the buffer after construction.
+     * Must be called after the buffer is owned by a shared_ptr.
      */
     void initialize();
 
+    /**
+     * @brief Get the backing StreamContainer.
+     */
+    std::shared_ptr<Kakshya::StreamContainer> get_container() const { return m_container; }
+
+    /**
+     * @brief Get the source channel in the container.
+     */
+    u_int32_t get_source_channel() const { return m_source_channel; }
+
+    /**
+     * @brief Update the container reference.
+     * @param container New StreamContainer to use.
+     */
+    void set_container(std::shared_ptr<Kakshya::StreamContainer> container);
+
+    /**
+     * @brief Check if buffer data is directly mapped to container (zero-copy).
+     * @return True if zero-copy mode is active.
+     */
+    bool is_zero_copy() const { return m_zero_copy_mode; }
+
 protected:
     /**
-     * @brief Container providing the source data
+     * @brief Create the default processor (ContainerToBufferAdapter) for this buffer.
+     * @return Shared pointer to the created processor.
      */
-    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
+    std::shared_ptr<BufferProcessor> create_default_processor() override;
 
-    /**
-     * @brief Channel index to read from the container
-     */
+private:
+    std::shared_ptr<Kakshya::StreamContainer> m_container;
     u_int32_t m_source_channel;
+    std::shared_ptr<BufferProcessor> m_pending_adapter;
+    bool m_zero_copy_mode = false;
 
     /**
-     * @brief Default processor (ContainerToBufferAdapter) for this buffer.
-     * Marked pending to allow post constructor initialization
+     * @brief Attempt to enable zero-copy operation if container layout allows.
      */
-    std::shared_ptr<BufferProcessor> m_pending_adapter;
+    void setup_zero_copy_if_possible();
 };
 
-}
+} // namespace MayaFlux::Buffers

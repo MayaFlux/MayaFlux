@@ -1,290 +1,208 @@
 #include "ContiguousAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/StreamContainer.hpp"
 
 namespace MayaFlux::Kakshya {
 
-ContiguousAccessProcessor::ContiguousAccessProcessor()
-    : m_prepared(false)
-    , m_is_looping(false)
-    , m_handle_interleaved(true)
-    , m_data_interleaved(false)
-    , m_sample_rate(0)
-    , m_num_channels(0)
-    , m_total_samples(0)
-    , m_total_frames(0)
-    , m_current_position(0)
-    , m_frame_duration_ms(0.0)
+void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer> container)
 {
-}
-
-void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer> signal_source)
-{
-    if (!signal_source) {
+    if (!container) {
         return;
     }
 
-    m_source_container_weak = signal_source;
-
-    store_metadata(signal_source);
-
-    if (m_data_interleaved) {
-        deinterleave_data(signal_source);
-    }
-
-    validate_data(signal_source);
-
-    m_prepared = true;
-
-    signal_source->mark_ready_for_processing(m_prepared);
-
-    std::cout << std::format("ContiguousAccessProcessor attached and prepared: {} channels, {} Hz, {} total samples",
-        m_num_channels, m_sample_rate, m_total_samples)
-              << std::endl;
-}
-
-void ContiguousAccessProcessor::store_metadata(std::shared_ptr<SignalSourceContainer> signal)
-{
-    m_sample_rate = signal->get_sample_rate();
-    m_num_channels = signal->get_num_audio_channels();
-    m_total_samples = signal->get_num_frames_total() * m_num_channels;
-    m_total_frames = signal->get_num_frames_total();
-
-    m_is_looping = signal->get_looping();
-    m_current_position = signal->get_read_position();
-    m_data_interleaved = signal->is_interleaved();
-
-    if (m_sample_rate > 0) {
-        m_frame_duration_ms = 1000.0 / m_sample_rate;
-    }
-}
-
-void ContiguousAccessProcessor::deinterleave_data(std::shared_ptr<SignalSourceContainer> signal_source)
-{
-    if (m_num_channels == 0 || m_total_frames == 0) {
-        return;
-    }
-
-    std::cout << "Deinterleaving data for " << m_num_channels << " channels, "
-              << m_total_frames << " frames" << std::endl;
+    m_source_container_weak = container;
 
     try {
-        signal_source->lock();
+        store_metadata(container);
+        validate_container(container);
 
-        const auto& interleaved_data = signal_source->get_raw_samples();
+        m_prepared = true;
+        container->mark_ready_for_processing(true);
 
-        // For interleaved data, we expect size = frames * channels
-        u_int64_t expected_interleaved_size = m_total_frames * m_num_channels;
-
-        std::cout << "Interleaved data size: " << interleaved_data.size()
-                  << ", Expected: " << expected_interleaved_size << std::endl;
-
-        // Check if the data is actually interleaved
-        if (interleaved_data.size() != expected_interleaved_size) {
-            // The data size doesn't match what we expect for interleaved data
-            // It might be already deinterleaved or there's an error
-            throw std::runtime_error(std::format(
-                "Interleaved data size ({}) doesn't match expected size ({}) for {} frames and {} channels",
-                interleaved_data.size(), expected_interleaved_size, m_total_frames, m_num_channels));
-        }
-
-        m_channel_data.resize(m_num_channels);
-        for (u_int32_t ch = 0; ch < m_num_channels; ch++) {
-            m_channel_data[ch].resize(m_total_frames);
-        }
-
-        for (u_int64_t frame = 0; frame < m_total_frames; frame++) {
-            for (u_int32_t ch = 0; ch < m_num_channels; ch++) {
-                m_channel_data[ch][frame] = interleaved_data[frame * m_num_channels + ch];
-            }
-        }
-
-        signal_source->set_all_raw_samples(m_channel_data);
-        m_data_interleaved = false;
-
-        signal_source->unlock();
+        std::cout << std::format("ContiguousAccessProcessor attached: {} dimensions, {} total elements",
+            m_dimensions.size(), m_total_elements)
+                  << std::endl;
 
     } catch (const std::exception& e) {
-        std::cerr << "Error during deinterleaving: " << e.what() << std::endl;
-        signal_source->unlock();
-        m_channel_data.clear();
+        std::cerr << "Failed to attach processor: " << e.what() << std::endl;
+        m_prepared = false;
         throw;
     }
 }
 
-void ContiguousAccessProcessor::validate_data(std::shared_ptr<SignalSourceContainer> signal_source)
+void ContiguousAccessProcessor::store_metadata(std::shared_ptr<SignalSourceContainer> container)
 {
-    if (!m_data_interleaved && !m_channel_data.empty()) {
-        for (u_int32_t ch = 0; ch < m_num_channels; ch++) {
-            if (ch >= m_channel_data.size() || m_channel_data[ch].size() != m_total_frames) {
-                throw std::runtime_error(std::format(
-                    "Channel {} data size invalid: expected {} frames",
-                    ch, m_total_frames));
+    m_dimensions = container->get_dimensions();
+    m_memory_layout = container->get_memory_layout();
+    m_total_elements = container->get_total_elements();
+
+    m_current_position.assign(m_dimensions.size(), 0);
+
+    if (m_output_shape.empty() && !m_dimensions.empty()) {
+        m_output_shape.resize(m_dimensions.size(), 1);
+
+        for (size_t i = 0; i < m_dimensions.size(); ++i) {
+            if (m_dimensions[i].role == DataDimension::Role::CHANNEL) {
+                m_output_shape[i] = m_dimensions[i].size;
             }
         }
-    } else if (m_prepared) {
-        try {
-            signal_source->lock();
-            double test_sample = signal_source->get_sample_at(0, 0);
-            (void)test_sample;
-            signal_source->unlock();
-        } catch (const std::exception& e) {
-            signal_source->unlock();
-            throw std::runtime_error(std::format(
-                "Failed to access interleaved data: {}", e.what()));
+    }
+
+    if (m_active_dimensions.empty()) {
+        m_active_dimensions.resize(m_dimensions.size());
+        std::iota(m_active_dimensions.begin(), m_active_dimensions.end(), 0);
+    }
+
+    if (auto stream = std::dynamic_pointer_cast<StreamContainer>(container)) {
+        m_looping_enabled = stream->is_looping();
+        m_loop_region = stream->get_loop_region();
+
+        if (!m_dimensions.empty()) {
+            m_current_position[0] = stream->get_read_position();
         }
-    }
-
-    if (m_num_channels == 0) {
-        throw std::runtime_error("Buffer has no channels");
-    }
-
-    if (m_total_frames == 0) {
-        std::cerr << "Warning: Buffer has no frames" << std::endl;
     }
 }
 
-void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer> buffer)
+void ContiguousAccessProcessor::validate_container(std::shared_ptr<SignalSourceContainer> container)
+{
+    if (m_dimensions.empty()) {
+        throw std::runtime_error("Container has no dimensions");
+    }
+
+    if (m_total_elements == 0) {
+        std::cerr << "Warning: Container has no data elements" << std::endl;
+    }
+
+    if (m_output_shape.size() != m_dimensions.size()) {
+        throw std::runtime_error(std::format(
+            "Output shape dimensionality ({}) doesn't match container dimensions ({})",
+            m_output_shape.size(), m_dimensions.size()));
+    }
+
+    for (size_t i = 0; i < m_dimensions.size(); ++i) {
+        if (m_output_shape[i] == 0) {
+            throw std::runtime_error(std::format(
+                "Output shape[{}] is zero, which is invalid", i));
+        }
+        if (m_output_shape[i] > m_dimensions[i].size) {
+            throw std::runtime_error(std::format(
+                "Output shape[{}] = {} exceeds dimension size {}",
+                i, m_output_shape[i], m_dimensions[i].size));
+        }
+    }
+}
+
+void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer> container)
 {
     m_source_container_weak.reset();
-    m_channel_data.clear();
-
+    m_dimensions.clear();
+    m_current_position.clear();
     m_prepared = false;
-    m_sample_rate = 0;
-    m_num_channels = 0;
-    m_total_samples = 0;
-    m_total_frames = 0;
-    m_current_position = 0;
-    m_is_looping = false;
-    m_data_interleaved = false;
+    m_total_elements = 0;
 }
 
-void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> signal_source)
+void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> container)
 {
     if (!m_prepared) {
-        std::cerr << "ContiguousAccessProcessor::process called before preparation" << std::endl;
+        std::cerr << "ContiguousAccessProcessor not prepared" << std::endl;
         return;
     }
 
-    auto sample_buffer_ptr = m_source_container_weak.lock();
-    if (!sample_buffer_ptr) {
-        std::cerr << "SampleSourceBuffer has been destroyed" << std::endl;
+    auto source_container = m_source_container_weak.lock();
+    if (!source_container || source_container.get() != container.get()) {
+        std::cerr << "Container mismatch or expired" << std::endl;
         return;
     }
 
-    const u_int32_t HARDWARE_BUFFER_SIZE = 512;
+    m_is_processing = true;
+    m_last_process_time = std::chrono::steady_clock::now();
 
-    m_current_position = signal_source->get_read_position();
-    m_is_looping = signal_source->get_looping();
+    try {
+        RegionPoint output_region = calculate_output_region(m_current_position, m_output_shape);
 
-    auto& processed_data = signal_source->get_processed_data();
+        DataVariant& processed_data = container->get_processed_data();
 
-    if (processed_data.size() != m_num_channels) {
-        processed_data.resize(m_num_channels);
-    }
+        process_region(container, output_region, processed_data);
 
-    for (auto& channel_data : processed_data) {
-        if (channel_data.size() != HARDWARE_BUFFER_SIZE) {
-            channel_data.resize(HARDWARE_BUFFER_SIZE);
-        }
-    }
+        if (m_auto_advance) {
+            advance_read_position(m_current_position, m_output_shape);
 
-    if (m_is_looping) {
-        process_with_looping(signal_source, processed_data, HARDWARE_BUFFER_SIZE);
-    } else {
-        process_without_looping(signal_source, processed_data, HARDWARE_BUFFER_SIZE);
-    }
-
-    signal_source->set_read_position(m_current_position);
-}
-
-void ContiguousAccessProcessor::process_with_looping(
-    std::shared_ptr<SignalSourceContainer> signal_source,
-    std::vector<std::vector<double>>& processed_data,
-    u_int32_t hardware_buffer_size)
-{
-    if (m_total_frames == 0)
-        return;
-
-    for (u_int32_t ch = 0; ch < m_num_channels && ch < processed_data.size(); ch++) {
-        auto& channel_output = processed_data[ch];
-
-        for (u_int32_t i = 0; i < hardware_buffer_size; i++) {
-            u_int64_t pos = (m_current_position + i) % m_total_frames;
-
-            if (!m_data_interleaved) {
-                if (ch < m_channel_data.size() && pos < m_channel_data[ch].size()) {
-                    channel_output[i] = m_channel_data[ch][pos];
-                } else {
-                    channel_output[i] = 0.0;
-                }
-            } else {
-                u_int64_t source_idx = pos * m_num_channels + ch;
-                const auto& raw_data = signal_source->get_raw_samples();
-                if (source_idx < raw_data.size()) {
-                    channel_output[i] = raw_data[source_idx];
-                } else {
-                    channel_output[i] = 0.0;
-                }
+            if (m_looping_enabled) {
+                handle_looping(m_current_position);
             }
-        }
-    }
 
-    m_current_position = (m_current_position + hardware_buffer_size) % m_total_frames;
-}
-
-void ContiguousAccessProcessor::process_without_looping(
-    std::shared_ptr<SignalSourceContainer> signal_source,
-    std::vector<std::vector<double>>& processed_data,
-    u_int32_t hardware_buffer_size)
-{
-    if (m_total_frames == 0)
-        return;
-
-    u_int32_t available_frames = static_cast<u_int32_t>(
-        std::min(static_cast<u_int64_t>(hardware_buffer_size),
-            m_total_frames - m_current_position));
-
-    for (u_int32_t ch = 0; ch < m_num_channels && ch < processed_data.size(); ch++) {
-        auto& channel_output = processed_data[ch];
-
-        for (u_int32_t i = 0; i < available_frames; i++) {
-            u_int64_t pos = m_current_position + i;
-
-            if (!m_data_interleaved) {
-                if (ch < m_channel_data.size() && pos < m_channel_data[ch].size()) {
-                    channel_output[i] = m_channel_data[ch][pos];
-                } else {
-                    channel_output[i] = 0.0;
-                }
-            } else {
-                u_int64_t source_idx = pos * m_num_channels + ch;
-                const auto& raw_data = signal_source->get_raw_samples();
-                if (source_idx < raw_data.size()) {
-                    channel_output[i] = raw_data[source_idx];
-                } else {
-                    channel_output[i] = 0.0;
+            if (auto stream = std::dynamic_pointer_cast<StreamContainer>(container)) {
+                if (!m_dimensions.empty()) {
+                    stream->set_read_position(m_current_position[0]);
                 }
             }
         }
 
-        for (u_int32_t i = available_frames; i < hardware_buffer_size; i++) {
-            channel_output[i] = 0.0;
-        }
+        container->update_processing_state(ProcessingState::PROCESSED);
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error during processing: " << e.what() << std::endl;
+        container->update_processing_state(ProcessingState::ERROR);
     }
 
-    m_current_position += available_frames;
-
-    if (m_current_position >= m_total_frames) {
-        signal_source->update_processing_state(ProcessingState::NEEDS_REMOVAL);
-    }
+    m_is_processing = false;
 }
 
-bool ContiguousAccessProcessor::is_processing() const
+void ContiguousAccessProcessor::process_region(std::shared_ptr<SignalSourceContainer> container,
+    const RegionPoint& region,
+    DataVariant& output)
 {
-    if (auto container = m_source_container_weak.lock()) {
-        return container->get_processing_state() == ProcessingState::PROCESSING;
+    DataVariant region_data = container->get_region_data(region);
+
+    safe_copy_data_variant(region_data, output);
+}
+
+RegionPoint ContiguousAccessProcessor::calculate_output_region(
+    const std::vector<u_int64_t>& current_pos,
+    const std::vector<u_int64_t>& output_shape) const
+{
+    std::vector<u_int64_t> end;
+    for (size_t i = 0; i < current_pos.size(); ++i) {
+        end.push_back(current_pos[i] + output_shape[i] - 1);
+    }
+    return RegionPoint(current_pos, end);
+}
+
+void ContiguousAccessProcessor::advance_read_position(std::vector<u_int64_t>& position, const std::vector<u_int64_t>& shape)
+{
+    assert(position.size() == shape.size() && "advance_read_position: position and shape size mismatch");
+
+    if (!position.empty()) {
+        u_int64_t loop_start = 0;
+        u_int64_t loop_end = m_dimensions[0].size;
+
+        if (!m_loop_region.start_coordinates.empty()) {
+            loop_start = m_loop_region.start_coordinates[0];
+        }
+        if (!m_loop_region.end_coordinates.empty()) {
+            loop_end = m_loop_region.end_coordinates[0];
+        }
+
+        position[0] = advance_position(
+            position[0],
+            shape[0],
+            m_dimensions[0].size,
+            loop_start,
+            loop_end,
+            m_looping_enabled);
+    }
+    m_current_position = position;
+}
+
+void ContiguousAccessProcessor::handle_looping(std::vector<u_int64_t>& position)
+{
+    if (!m_looping_enabled || m_loop_region.start_coordinates.empty()) {
+        return;
     }
 
-    return false;
+    for (size_t i = 0; i < position.size(); ++i) {
+        position[i] = wrap_position_with_loop(position[i], m_loop_region, i, m_looping_enabled);
+    }
 }
-}
+
+} // namespace MayaFlux::Kakshya

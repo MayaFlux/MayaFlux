@@ -11,12 +11,17 @@
 #include "deque"
 #include "format"
 #include "functional"
+#include "list"
 #include "map"
 #include "numbers"
+#include "numeric"
+#include "optional"
 #include "shared_mutex"
+#include "span"
 #include "string"
 #include "unordered_map"
 #include "utility"
+#include "variant"
 #include "vector"
 
 // C style
@@ -36,7 +41,6 @@
 #include <shlwapi.h>
 #include <windows.h>
 #pragma comment(lib, "shlwapi.lib")
-#include <optional>
 
 // Type compatibility
 using u_int32_t = uint32_t;
