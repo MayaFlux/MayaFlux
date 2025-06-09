@@ -157,7 +157,7 @@ void RtAudioStream::configure_stream_options()
             bool exclusive = std::any_cast<bool>(rtSpecificOpt->second);
             if (exclusive) {
 #ifdef _WIN32
-                m_options.flags |= RTAUDIO_WASAPI_EXCLUSIVE;
+                m_options.flags |= RtAudio::Api::WINDOWS_WASAPI;
 #endif
             }
         } catch (const std::bad_any_cast&) {

@@ -43,6 +43,8 @@
 #pragma comment(lib, "shlwapi.lib")
 
 // Type compatibility
+using u_int8_t = uint8_t;
+using u_int16_t = uint16_t;
 using u_int32_t = uint32_t;
 using u_int64_t = uint64_t;
 
@@ -56,6 +58,10 @@ using u_int64_t = uint64_t;
 
 #ifdef FALSE
 #undef FALSE
+#endif
+
+#ifdef ERROR
+#undef ERROR
 #endif
 #endif
 
