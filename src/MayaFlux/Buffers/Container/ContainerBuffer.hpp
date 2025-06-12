@@ -90,6 +90,9 @@ private:
     bool m_auto_advance = true;
     bool m_update_flags = true;
 
+    u_int32_t m_time_reader_id = UINT32_MAX;
+    u_int32_t m_channel_reader_id = UINT32_MAX;
+
     // Dimension indices for audio data
     struct DimensionInfo {
         size_t time_dim = 0; ///< Index of time dimension

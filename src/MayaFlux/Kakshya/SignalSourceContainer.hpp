@@ -191,11 +191,12 @@ public:
     /**
      * @brief Register a reader for a specific dimension.
      * @param dimension_index Index of the dimension being read
+     * @return Reader ID for the registered dimension
      *
      * Used for tracking active readers in multi-threaded or streaming scenarios,
      * enabling safe concurrent access and efficient resource management.
      */
-    virtual void register_dimension_reader(u_int32_t dimension_index) = 0;
+    virtual u_int32_t register_dimension_reader(u_int32_t dimension_index) = 0;
 
     /**
      * @brief Unregister a reader for a specific dimension.
@@ -212,8 +213,9 @@ public:
     /**
      * @brief Mark a dimension as consumed for the current processing cycle.
      * @param dimension_index Index of the dimension that was processed
+     * @param reader_id Reader ID for the dimension
      */
-    virtual void mark_dimension_consumed(u_int32_t dimension_index) = 0;
+    virtual void mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id) = 0;
 
     /**
      * @brief Check if all active dimensions have been consumed in this cycle.

@@ -112,11 +112,13 @@ public:
     std::shared_ptr<DataProcessingChain> get_processing_chain() override { return m_processing_chain; }
     void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) override { m_processing_chain = chain; }
 
-    void register_dimension_reader(u_int32_t dimension_index) override;
+    u_int32_t register_dimension_reader(u_int32_t dimension_index) override;
     void unregister_dimension_reader(u_int32_t dimension_index) override;
     bool has_active_readers() const override;
-    void mark_dimension_consumed(u_int32_t dimension_index) override;
+    void mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id) override;
     bool all_dimensions_consumed() const override;
+
+    void clear_all_consumption();
 
     DataVariant& get_processed_data() override { return m_processed_data; }
     const DataVariant& get_processed_data() const override { return m_processed_data; }
@@ -139,10 +141,25 @@ public:
         return get_typed_data<double>(m_data);
     }
 
+    inline void reset_processing_token() override { m_processing_token_channel.store(-1); }
+
+    inline bool try_acquire_processing_token(int channel) override
+    {
+        int expected = -1;
+        return m_processing_token_channel.compare_exchange_strong(expected, channel);
+    }
+
+    inline bool has_processing_token(int channel) const override
+    {
+        return m_processing_token_channel.load() == channel;
+    }
+
 private:
     // ===== Core Data =====
     DataVariant m_data; // Raw audio data
     DataVariant m_processed_data; // Processed data output
+
+    std::atomic<int> m_processing_token_channel { -1 };
 
     // ===== Dimensions =====
     std::vector<DataDimension> m_dimensions;
@@ -169,6 +186,9 @@ private:
     // ===== Reader Tracking =====
     std::unordered_map<u_int32_t, int> m_active_readers;
     std::unordered_set<u_int32_t> m_consumed_dimensions;
+
+    std::unordered_map<u_int32_t, std::unordered_set<u_int32_t>> m_reader_consumed_dimensions;
+    std::unordered_map<u_int32_t, u_int32_t> m_dimension_to_next_reader_id;
 
     // ===== Callbacks =====
     std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_callback;

@@ -197,9 +197,9 @@ TEST_F(SoundFileContainerTest, ProcessorsAndReaders)
     container->set_processing_chain(chain);
     EXPECT_EQ(container->get_processing_chain(), chain);
 
-    container->register_dimension_reader(0);
+    auto id = container->register_dimension_reader(0);
     EXPECT_TRUE(container->has_active_readers());
-    container->mark_dimension_consumed(0);
+    container->mark_dimension_consumed(0, id);
     EXPECT_TRUE(container->all_dimensions_consumed());
     container->unregister_dimension_reader(0);
     EXPECT_FALSE(container->has_active_readers());

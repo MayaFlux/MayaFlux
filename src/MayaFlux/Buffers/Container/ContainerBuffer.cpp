@@ -1,6 +1,7 @@
 #include "ContainerBuffer.hpp"
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
+#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -55,11 +56,17 @@ void ContainerToBufferAdapter::process(std::shared_ptr<AudioBuffer> buffer)
             return;
         }
 
+        // if (state != Kakshya::ProcessingState::PROCESSED && state != Kakshya::ProcessingState::READY) {
+        //     std::cout << "EARLY RETURN: State not READY or PROCESSED (state=" << (int)state << ")" << std::endl;
+        //     return;
+        // }
+
         if (state != Kakshya::ProcessingState::PROCESSED) {
             if (state == Kakshya::ProcessingState::READY) {
-                m_container->process_default();
+                if (m_container->try_acquire_processing_token(m_source_channel)) {
+                    m_container->process_default();
+                }
             }
-            return;
         }
 
         auto& buffer_data = buffer->get_data();
@@ -76,16 +83,17 @@ void ContainerToBufferAdapter::process(std::shared_ptr<AudioBuffer> buffer)
             buffer->mark_for_processing(true);
         }
 
-        if (m_auto_advance) {
-            m_container->advance_read_position(buffer_size);
+        m_container->mark_dimension_consumed(m_dim_info.time_dim, m_time_reader_id);
+        if (m_dim_info.has_channels) {
+            m_container->mark_dimension_consumed(m_dim_info.channel_dim, m_channel_reader_id);
+        }
 
-            m_container->mark_dimension_consumed(m_dim_info.time_dim);
-            if (m_dim_info.has_channels) {
-                m_container->mark_dimension_consumed(m_dim_info.channel_dim);
-            }
-
-            if (m_container->all_dimensions_consumed()) {
-                m_container->update_processing_state(Kakshya::ProcessingState::READY);
+        if (m_container->all_dimensions_consumed()) {
+            m_container->update_processing_state(Kakshya::ProcessingState::READY);
+            std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(m_container)->clear_all_consumption();
+            m_container->reset_processing_token();
+            if (m_auto_advance) {
+                m_container->advance_read_position(buffer_size);
             }
         }
 
@@ -109,8 +117,15 @@ void ContainerToBufferAdapter::extract_channel_data(std::span<double> output,
         return;
     }
 
+    auto data_span = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(m_container)->get_data_as_double();
+    if (data_span.empty()) {
+        std::fill(output.begin(), output.end(), 0.0);
+        return;
+    }
+
     u_int64_t available_frames = dimensions[m_dim_info.time_dim].size;
     u_int64_t loop_start = 0, loop_end = available_frames;
+
     bool looping = m_container->is_looping();
     if (looping) {
         auto region = m_container->get_loop_region();
@@ -153,9 +168,9 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<AudioBuffer> buffer)
         return;
     }
 
-    m_container->register_dimension_reader(m_dim_info.time_dim);
+    m_time_reader_id = m_container->register_dimension_reader(m_dim_info.time_dim);
     if (m_dim_info.has_channels) {
-        m_container->register_dimension_reader(m_dim_info.channel_dim);
+        m_channel_reader_id = m_container->register_dimension_reader(m_dim_info.channel_dim);
     }
 
     if (!m_container->is_ready_for_processing()) {

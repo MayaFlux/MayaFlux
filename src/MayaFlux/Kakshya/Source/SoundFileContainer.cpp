@@ -470,10 +470,15 @@ std::shared_ptr<DataProcessor> SoundFileContainer::get_default_processor() const
     return m_default_processor;
 }
 
-void SoundFileContainer::register_dimension_reader(u_int32_t dimension_index)
+u_int32_t SoundFileContainer::register_dimension_reader(u_int32_t dimension_index)
 {
     std::lock_guard<std::mutex> lock(m_reader_mutex);
     m_active_readers[dimension_index]++;
+
+    u_int32_t reader_id = m_dimension_to_next_reader_id[dimension_index]++;
+    m_reader_consumed_dimensions[reader_id] = std::unordered_set<u_int32_t>();
+
+    return reader_id;
 }
 
 void SoundFileContainer::unregister_dimension_reader(u_int32_t dimension_index)
@@ -482,6 +487,7 @@ void SoundFileContainer::unregister_dimension_reader(u_int32_t dimension_index)
     if (auto it = m_active_readers.find(dimension_index); it != m_active_readers.end()) {
         if (--it->second <= 0) {
             m_active_readers.erase(it);
+            m_dimension_to_next_reader_id.erase(dimension_index);
         }
     }
 }
@@ -492,22 +498,41 @@ bool SoundFileContainer::has_active_readers() const
     return !m_active_readers.empty();
 }
 
-void SoundFileContainer::mark_dimension_consumed(u_int32_t dimension_index)
+void SoundFileContainer::mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id)
 {
-    std::lock_guard<std::mutex> lock(m_reader_mutex);
-    m_consumed_dimensions.insert(dimension_index);
+    if (m_reader_consumed_dimensions.find(reader_id) != m_reader_consumed_dimensions.end()) {
+        m_reader_consumed_dimensions[reader_id].insert(dimension_index);
+    } else {
+        std::cerr << "WARNING: Unknown reader_id " << reader_id << " for dimension " << dimension_index << std::endl;
+    }
 }
 
 bool SoundFileContainer::all_dimensions_consumed() const
 {
     std::lock_guard<std::mutex> lock(m_reader_mutex);
 
-    for (const auto& [dim, count] : m_active_readers) {
-        if (m_consumed_dimensions.find(dim) == m_consumed_dimensions.end()) {
+    for (const auto& [dim, expected_reader_count] : m_active_readers) {
+        u_int32_t actual_consumed_count = 0;
+
+        for (const auto& [reader_id, consumed_dims] : m_reader_consumed_dimensions) {
+            if (consumed_dims.find(dim) != consumed_dims.end()) {
+                actual_consumed_count++;
+            }
+        }
+
+        if (actual_consumed_count < expected_reader_count) {
             return false;
         }
     }
     return true;
+}
+
+void SoundFileContainer::clear_all_consumption()
+{
+    std::lock_guard<std::mutex> lock(m_reader_mutex);
+    for (auto& [reader_id, consumed_dims] : m_reader_consumed_dimensions) {
+        consumed_dims.clear();
+    }
 }
 
 double SoundFileContainer::get_duration_seconds() const

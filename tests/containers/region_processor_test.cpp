@@ -231,9 +231,10 @@ public:
         m_processing_chain = chain;
     }
 
-    void register_dimension_reader(u_int32_t dimension_index) override
+    u_int32_t register_dimension_reader(u_int32_t dimension_index) override
     {
         // No-op for mock
+        return 0;
     }
 
     void unregister_dimension_reader(u_int32_t dimension_index) override
@@ -246,7 +247,7 @@ public:
         return false;
     }
 
-    void mark_dimension_consumed(u_int32_t dimension_index) override
+    void mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id) override
     {
         // No-op for mock
     }

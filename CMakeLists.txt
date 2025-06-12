@@ -37,11 +37,16 @@ project(MayaFlux VERSION 0.1.0)
 
 if(WIN32)
     find_package(RtAudio CONFIG REQUIRED)
-    find_package(SndFile CONFIG REQUIRED)
+    find_package(ffmpeg CONFIG REQUIRED)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
-    pkg_check_modules(SNDFILE REQUIRED IMPORTED_TARGET sndfile)
+
+    pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
+    pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
+    pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
+    pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
+    pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
 endif()
 
 add_compile_definitions(RTAUDIO_BACKEND)
@@ -81,13 +86,21 @@ target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
         RtAudio::rtaudio
-        SndFile::sndfile
+        ffmpeg::avcodec
+        ffmpeg::avformat
+        ffmpeg::avutil
+        ffmpeg::swresample
+        ffmpeg::swscale
     )
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_STATIC)
 else()
     target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::RtAudio
-        PkgConfig::SNDFILE
+        PkgConfig::LIBAVCODEC
+        PkgConfig::LIBAVFORMAT
+        PkgConfig::LIBAVUTIL
+        PkgConfig::LIBSWRESAMPLE
+        PkgConfig::LIBSWSCALE
     )
 endif()
 

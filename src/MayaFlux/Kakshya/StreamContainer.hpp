@@ -168,6 +168,12 @@ public:
      * Enables lookahead, preview, or non-destructive inspection of stream data.
      */
     virtual u_int64_t peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset = 0) const = 0;
+
+    virtual void reset_processing_token() = 0;
+
+    virtual bool try_acquire_processing_token(int channel) = 0;
+
+    virtual bool has_processing_token(int channel) const = 0;
 };
 
 } // namespace MayaFlux::Kakshya
