@@ -37,7 +37,11 @@ project(MayaFlux VERSION 0.1.0)
 
 if(WIN32)
     find_package(RtAudio CONFIG REQUIRED)
-    find_package(ffmpeg CONFIG REQUIRED)
+    find_package(avcodec CONFIG REQUIRED)
+    find_package(avformat CONFIG REQUIRED)
+    find_package(avutil CONFIG REQUIRED)
+    find_package(swresample CONFIG REQUIRED)
+    find_package(swscale CONFIG REQUIRED)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
@@ -86,11 +90,11 @@ target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
         RtAudio::rtaudio
-        ffmpeg::avcodec
-        ffmpeg::avformat
-        ffmpeg::avutil
-        ffmpeg::swresample
-        ffmpeg::swscale
+        avcodec::avcodec
+        avformat::avformat
+        avutil::avutil
+        swresample::swresample
+        swscale::swscale
     )
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_STATIC)
 else()

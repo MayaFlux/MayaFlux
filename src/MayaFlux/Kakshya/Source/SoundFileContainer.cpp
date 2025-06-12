@@ -1,5 +1,6 @@
 #include "SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
+#include <algorithm> // Ensure this is included for std::min
 
 namespace MayaFlux::Kakshya {
 
@@ -146,12 +147,13 @@ void SoundFileContainer::get_frames(std::span<double> output, u_int64_t start_fr
     if (data_span.empty())
         return;
 
-    u_int64_t frames_to_copy = std::min(num_frames, m_num_frames - start_frame);
+    u_int64_t frames_to_copy = std::min<u_int64_t>(num_frames, m_num_frames - start_frame);
     u_int64_t elements_to_copy = frames_to_copy * m_num_channels;
     u_int64_t offset = start_frame * m_num_channels;
 
-    std::copy_n(data_span.begin() + offset,
-        std::min(elements_to_copy, output.size()),
+    std::copy_n(
+        data_span.begin() + offset,
+        std::min<u_int64_t>(elements_to_copy, static_cast<u_int64_t>(output.size())),
         output.begin());
 }
 
@@ -375,7 +377,7 @@ u_int64_t SoundFileContainer::peek_sequential(std::span<double> output, u_int64_
         return 0;
 
     u_int64_t start_pos = m_read_position.load() + offset;
-    u_int64_t elements_to_read = std::min(count, output.size());
+    u_int64_t elements_to_read = std::min<u_int64_t>(count, static_cast<u_int64_t>(output.size()));
     u_int64_t elements_read = 0;
 
     if (m_looping_enabled && !m_loop_region.start_coordinates.empty()) {
@@ -391,7 +393,7 @@ u_int64_t SoundFileContainer::peek_sequential(std::span<double> output, u_int64_
     } else {
         u_int64_t linear_start = start_pos * m_num_channels;
         u_int64_t available = data_span.size() - linear_start;
-        elements_read = std::min(elements_to_read, available);
+        elements_read = std::min<u_int64_t>(elements_to_read, available);
 
         std::copy_n(data_span.begin() + linear_start, elements_read, output.begin());
     }
