@@ -255,7 +255,11 @@ std::optional<FileMetadata> SoundFileReader::get_metadata() const
 
     metadata.file_size = std::filesystem::file_size(m_filepath);
     auto ftime = std::filesystem::last_write_time(m_filepath);
-    metadata.modification_time = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+    // metadata.modification_time = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+    // TODO: Update once mac implements clock cast
+    metadata.modification_time = std::chrono::system_clock::time_point(
+        std::chrono::seconds(std::chrono::duration_cast<std::chrono::seconds>(
+            ftime.time_since_epoch())));
 
     metadata.attributes["codec"] = avcodec_get_name(m_codec_context->codec_id);
     metadata.attributes["codec_long_name"] = m_codec_context->codec->long_name;

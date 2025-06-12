@@ -37,11 +37,7 @@ project(MayaFlux VERSION 0.1.0)
 
 if(WIN32)
     find_package(RtAudio CONFIG REQUIRED)
-    find_package(avcodec CONFIG REQUIRED)
-    find_package(avformat CONFIG REQUIRED)
-    find_package(avutil CONFIG REQUIRED)
-    find_package(swresample CONFIG REQUIRED)
-    find_package(swscale CONFIG REQUIRED)
+    # Delegate FFMPEG to find library
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
@@ -88,13 +84,29 @@ set_target_properties(MayaFluxLib PROPERTIES
 target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 if(WIN32)
+    # For vcpkg FFmpeg installation
+    # Find include directory
+    find_path(FFMPEG_INCLUDE_DIR libavcodec/avcodec.h)
+    if(NOT FFMPEG_INCLUDE_DIR)
+        message(FATAL_ERROR "FFmpeg headers not found. Make sure FFmpeg is installed via vcpkg.")
+    endif()
+
+    # Find individual libraries
+    find_library(AVCODEC_LIB avcodec REQUIRED)
+    find_library(AVFORMAT_LIB avformat REQUIRED)
+    find_library(AVUTIL_LIB avutil REQUIRED)
+    find_library(SWRESAMPLE_LIB swresample REQUIRED)
+    find_library(SWSCALE_LIB swscale REQUIRED)
+
+    target_include_directories(MayaFluxLib PUBLIC ${FFMPEG_INCLUDE_DIR})
+
     target_link_libraries(MayaFluxLib PUBLIC
         RtAudio::rtaudio
-        avcodec::avcodec
-        avformat::avformat
-        avutil::avutil
-        swresample::swresample
-        swscale::swscale
+        ${AVCODEC_LIB}
+        ${AVFORMAT_LIB}
+        ${AVUTIL_LIB}
+        ${SWRESAMPLE_LIB}
+        ${SWSCALE_LIB}
     )
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_STATIC)
 else()
