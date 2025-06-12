@@ -16,24 +16,24 @@ namespace MayaFlux::IO {
 std::atomic<bool> SoundFileReader::s_ffmpeg_initialized { false };
 std::mutex SoundFileReader::s_ffmpeg_init_mutex;
 
-Kakshya::RegionPoint FileRegion::to_region_point() const
+Kakshya::Region FileRegion::to_region() const
 {
     if (start_coordinates.size() == 1 && end_coordinates.size() == 1) {
         if (start_coordinates[0] == end_coordinates[0]) {
-            return Kakshya::RegionPoint::time_point(start_coordinates[0], name);
+            return Kakshya::Region::time_point(start_coordinates[0], name);
         } else {
-            return Kakshya::RegionPoint::time_span(start_coordinates[0], end_coordinates[0], name);
+            return Kakshya::Region::time_span(start_coordinates[0], end_coordinates[0], name);
         }
     }
 
-    Kakshya::RegionPoint point(start_coordinates, end_coordinates);
-    point.set_attribute("label", name);
-    point.set_attribute("type", type);
+    Kakshya::Region region(start_coordinates, end_coordinates);
+    region.set_attribute("label", name);
+    region.set_attribute("type", type);
 
     for (const auto& [key, value] : attributes) {
-        point.set_attribute(key, value);
+        region.set_attribute(key, value);
     }
-    return point;
+    return region;
 }
 
 std::unordered_map<std::string, Kakshya::RegionGroup>
@@ -44,7 +44,7 @@ FileReader::regions_to_groups(const std::vector<FileRegion>& regions)
     for (const auto& region : regions) {
         auto& group = groups[region.type];
         group.name = region.type;
-        group.add_point(region.to_region_point());
+        group.add_region(region.to_region());
     }
 
     return groups;

@@ -36,7 +36,7 @@ u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
 std::vector<u_int64_t> calculate_strides(const std::vector<DataDimension>& dimensions);
 
 /**
- * @brief Extract a region of data from a flat data span using a RegionPoint and dimension info.
+ * @brief Extract a region of data from a flat data span using a Region and dimension info.
  * @tparam T Data type.
  * @param source_data Source data span.
  * @param region Region to extract.
@@ -45,7 +45,7 @@ std::vector<u_int64_t> calculate_strides(const std::vector<DataDimension>& dimen
  * @throws std::out_of_range if region is out of bounds.
  */
 template <typename T>
-std::vector<T> extract_region_data(std::span<const T>& source_data, const RegionPoint& region, const std::vector<DataDimension>& dimensions)
+std::vector<T> extract_region_data(std::span<const T>& source_data, const Region& region, const std::vector<DataDimension>& dimensions)
 {
     for (size_t i = 0; i < region.start_coordinates.size(); ++i) {
         if (region.end_coordinates[i] >= dimensions[i].size) {
@@ -81,14 +81,14 @@ template <typename T>
 std::vector<std::vector<T>> extract_group_data(std::span<const T>& source_data, const RegionGroup& group, const std::vector<DataDimension>& dimensions)
 {
     std::vector<std::vector<T>> result;
-    for (const auto& point : group.points) {
-        result.push_back(extract_region_data(source_data, point, dimensions));
+    for (const auto& region : group.regions) {
+        result.push_back(extract_region_data(source_data, region, dimensions));
     }
     return result;
 }
 
 /**
- * @brief Extract a region of data from a vector using a RegionPoint and dimension info.
+ * @brief Extract a region of data from a vector using a Region and dimension info.
  * @tparam T Data type.
  * @param data Source data vector.
  * @param region Region to extract.
@@ -96,7 +96,7 @@ std::vector<std::vector<T>> extract_group_data(std::span<const T>& source_data, 
  * @return Vector containing the extracted region data.
  */
 template <typename T>
-std::vector<T> extract_region(const std::vector<T>& data, const RegionPoint& region, const std::vector<DataDimension>& dimensions)
+std::vector<T> extract_region(const std::vector<T>& data, const Region& region, const std::vector<DataDimension>& dimensions)
 {
     std::span<const T> data_span(data.data(), data.size());
     return extract_region_data(data_span, region, dimensions);
@@ -111,7 +111,7 @@ std::vector<T> extract_region(const std::vector<T>& data, const RegionPoint& reg
  * @param dimensions Dimension descriptors.
  */
 template <typename T>
-void set_or_update_region_data(std::span<T> dest_data, std::span<const T> source_data, const RegionPoint& region, const std::vector<DataDimension>& dimensions)
+void set_or_update_region_data(std::span<T> dest_data, std::span<const T> source_data, const Region& region, const std::vector<DataDimension>& dimensions)
 {
     std::vector<u_int64_t> current = region.start_coordinates;
     size_t source_index = 0;
@@ -135,23 +135,23 @@ void set_or_update_region_data(std::span<T> dest_data, std::span<const T> source
 
 /**
  * @brief Calculate the total number of elements in a region.
- * @param region RegionPoint to query.
+ * @param region Region to query.
  * @return Product of spans across all dimensions.
  */
-u_int64_t calculate_region_size(const RegionPoint& region);
+u_int64_t calculate_region_size(const Region& region);
 
 /**
- * @brief Get an attribute value from a RegionPoint by key.
+ * @brief Get an attribute value from a Region by key.
  * @tparam T Expected type.
- * @param point RegionPoint to query.
+ * @param region Region to query.
  * @param key Attribute key.
  * @return Optional value if present and convertible.
  */
 template <typename T>
-std::optional<T> get_region_attribute(const RegionPoint& point, const std::string& key)
+std::optional<T> get_region_attribute(const Region& region, const std::string& key)
 {
-    auto it = point.attributes.find(key);
-    if (it != point.attributes.end()) {
+    auto it = region.attributes.find(key);
+    if (it != region.attributes.end()) {
         try {
             return std::any_cast<T>(it->second);
         } catch (const std::bad_any_cast&) {
@@ -162,105 +162,105 @@ std::optional<T> get_region_attribute(const RegionPoint& point, const std::strin
 }
 
 /**
- * @brief Set an attribute value on a RegionPoint.
- * @param point RegionPoint to modify.
+ * @brief Set an attribute value on a Region.
+ * @param region Region to modify.
  * @param key Attribute key.
  * @param value Value to set.
  */
-void set_region_attribute(RegionPoint& point, const std::string& key, std::any value);
+void set_region_attribute(Region& region, const std::string& key, std::any value);
 
 /**
- * @brief Find all points in a RegionGroup with a given label.
+ * @brief Find all regions in a RegionGroup with a given label.
  * @param group RegionGroup to search.
  * @param label Label to match.
- * @return Vector of matching RegionPoints.
+ * @return Vector of matching Regions.
  */
-std::vector<RegionPoint> find_points_with_label(const RegionGroup& group, const std::string& label);
+std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label);
 
 /**
- * @brief Find all points in a RegionGroup with a specific attribute value.
+ * @brief Find all regions in a RegionGroup with a specific attribute value.
  * @param group RegionGroup to search.
  * @param key Attribute key.
  * @param value Attribute value to match.
- * @return Vector of matching RegionPoints.
+ * @return Vector of matching Regions.
  */
-std::vector<RegionPoint> find_points_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value);
+std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value);
 
 /**
- * @brief Find all points in a RegionGroup that contain the given coordinates.
+ * @brief Find all regions in a RegionGroup that contain the given coordinates.
  * @param group RegionGroup to search.
  * @param coordinates N-dimensional coordinates.
- * @return Vector of matching RegionPoints.
+ * @return Vector of matching Regions.
  */
-std::vector<RegionPoint> find_points_containing_coordinates(const RegionGroup& group, const std::vector<u_int64_t>& coordinates);
+std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<u_int64_t>& coordinates);
 
 /**
- * @brief Translate a RegionPoint by an offset vector.
- * @param point RegionPoint to translate.
+ * @brief Translate a Region by an offset vector.
+ * @param region Region to translate.
  * @param offset Offset for each dimension (can be negative).
- * @return New translated RegionPoint.
+ * @return New translated Region.
  */
-RegionPoint translate_region(const RegionPoint& point, const std::vector<int64_t>& offset);
+Region translate_region(const Region& region, const std::vector<int64_t>& offset);
 
 /**
- * @brief Scale a RegionPoint about its center by the given factors.
- * @param point RegionPoint to scale.
+ * @brief Scale a Region about its center by the given factors.
+ * @param region Region to scale.
  * @param factors Scaling factors for each dimension.
- * @return New scaled RegionPoint.
+ * @return New scaled Region.
  */
-RegionPoint scale_region(const RegionPoint& point, const std::vector<double>& factors);
+Region scale_region(const Region& region, const std::vector<double>& factors);
 
 /**
- * @brief Get the bounding region that contains all points in a RegionGroup.
+ * @brief Get the bounding region that contains all regions in a RegionGroup.
  * @param group RegionGroup to query.
- * @return RegionPoint representing the bounding box.
+ * @return Region representing the bounding box.
  */
-RegionPoint get_bounding_region(const RegionGroup& group);
+Region get_bounding_region(const RegionGroup& group);
 
 /**
- * @brief Sort a vector of RegionPoints by a specific dimension.
- * @param points Vector of RegionPoints to sort.
+ * @brief Sort a vector of Regions by a specific dimension.
+ * @param points Vector of Regions to sort.
  * @param dimension Dimension index to sort by.
  */
-void sort_points_by_dimension(std::vector<RegionPoint>& points, size_t dimension);
+void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension);
 
 /**
- * @brief Sort a vector of RegionPoints by a specific attribute (numeric).
- * @param points Vector of RegionPoints to sort.
+ * @brief Sort a vector of Regions by a specific attribute (numeric).
+ * @param regions Vector of Regions to sort.
  * @param attr_name Attribute name to sort by.
  */
-void sort_points_by_attribute(std::vector<RegionPoint>& points, const std::string& attr_name);
+void sort_regions_by_attribute(std::vector<Region>& regions, const std::string& attr_name);
 
 /**
- * @brief Add a named reference point to a reference list.
- * @param refs Reference list (name, RegionPoint) pairs.
+ * @brief Add a named reference region to a reference list.
+ * @param refs Reference list (name, Region) pairs.
  * @param name Name for the reference.
- * @param point RegionPoint to add.
+ * @param region Region to add.
  */
-void add_reference_point(std::vector<std::pair<std::string, RegionPoint>>& refs, const std::string& name, const RegionPoint& point);
+void add_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name, const Region& region);
 
 /**
- * @brief Remove a named reference point from a reference list.
- * @param refs Reference list (name, RegionPoint) pairs.
+ * @brief Remove a named reference region from a reference list.
+ * @param refs Reference list (name, Region) pairs.
  * @param name Name of the reference to remove.
  */
-void remove_reference_point(std::vector<std::pair<std::string, RegionPoint>>& refs, const std::string& name);
+void remove_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name);
 
 /**
- * @brief Get a named reference point from a reference list.
- * @param refs Reference list (name, RegionPoint) pairs.
+ * @brief Get a named reference region from a reference list.
+ * @param refs Reference list (name, Region) pairs.
  * @param name Name of the reference to retrieve.
- * @return Optional RegionPoint if found.
+ * @return Optional Region if found.
  */
-std::optional<RegionPoint> get_reference_point(const std::vector<std::pair<std::string, RegionPoint>>& refs, const std::string& name);
+std::optional<Region> get_reference_region(const std::vector<std::pair<std::string, Region>>& refs, const std::string& name);
 
 /**
  * @brief Find all references in a reference list that overlap a given region.
- * @param refs Reference list (name, RegionPoint) pairs.
+ * @param refs Reference list (name, Region) pairs.
  * @param region Region to check for overlap.
- * @return Vector of (name, RegionPoint) pairs that overlap.
+ * @return Vector of (name, Region) pairs that overlap.
  */
-std::vector<std::pair<std::string, RegionPoint>> find_references_in_region(const std::vector<std::pair<std::string, RegionPoint>>& refs, const RegionPoint& region);
+std::vector<std::pair<std::string, Region>> find_references_in_region(const std::vector<std::pair<std::string, Region>>& refs, const Region& region);
 
 /**
  * @brief Add a RegionGroup to a group map.
@@ -326,12 +326,12 @@ u_int64_t wrap_position_with_loop(u_int64_t position, u_int64_t loop_start, u_in
 /**
  * @brief Wrap a position within a loop region and dimension if looping is enabled.
  * @param position Current position.
- * @param loop_region RegionPoint defining the loop.
+ * @param loop_region Region defining the loop.
  * @param dim Dimension index.
  * @param looping_enabled Whether looping is enabled.
  * @return Wrapped position.
  */
-u_int64_t wrap_position_with_loop(u_int64_t position, const RegionPoint& loop_region, size_t dim, bool looping_enabled);
+u_int64_t wrap_position_with_loop(u_int64_t position, const Region& loop_region, size_t dim, bool looping_enabled);
 
 /**
  * @brief Advance a position by a given amount, with optional looping.
@@ -495,10 +495,10 @@ std::vector<T> extract_frame(const std::vector<T>& data, u_int64_t frame_index, 
 bool transition_state(ProcessingState& current_state, ProcessingState new_state, std::function<void()> on_transition = nullptr);
 
 /**
- * @brief Hash functor for RegionPoint, for use in unordered containers.
+ * @brief Hash functor for Region, for use in unordered containers.
  */
-struct RegionPointHash {
-    std::size_t operator()(const RegionPoint& region) const;
+struct RegionHash {
+    std::size_t operator()(const Region& region) const;
 };
 
 /**
@@ -509,16 +509,16 @@ struct RegionPointHash {
  * supporting efficient repeated/random access to region data.
  */
 class RegionCacheManager {
-    std::unordered_map<RegionPoint, RegionCache, RegionPointHash> m_cache;
-    std::list<RegionPoint> m_lru_list;
+    std::unordered_map<Region, RegionCache, RegionHash> m_cache;
+    std::list<Region> m_lru_list;
     size_t m_max_cache_size;
     size_t m_current_size = 0;
     bool m_initialized = false;
     mutable std::recursive_mutex m_mutex;
 
     void evict_lru_if_needed();
-    std::optional<RegionCache> get_cached_region_internal(const RegionPoint& region);
-    void update_lru(const RegionPoint& region);
+    std::optional<RegionCache> get_cached_region_internal(const Region& region);
+    void update_lru(const Region& region);
 
 public:
     explicit RegionCacheManager(size_t max_size);
@@ -541,7 +541,7 @@ public:
 
     void cache_region(const RegionCache& cache);
     void cache_segment(const RegionSegment& segment);
-    std::optional<RegionCache> get_cached_region(const RegionPoint& region);
+    std::optional<RegionCache> get_cached_region(const Region& region);
     std::optional<RegionCache> get_cached_segment(const RegionSegment& segment);
     std::optional<RegionSegment> get_segment_with_cache(const RegionSegment& segment);
     void clear();

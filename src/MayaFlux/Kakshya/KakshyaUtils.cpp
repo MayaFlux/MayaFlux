@@ -51,37 +51,37 @@ std::vector<u_int64_t> calculate_strides(const std::vector<DataDimension>& dimen
     return strides;
 }
 
-void set_region_attribute(RegionPoint& point, const std::string& key, std::any value)
+void set_region_attribute(Region& region, const std::string& key, std::any value)
 {
-    point.attributes[key] = std::move(value);
+    region.attributes[key] = std::move(value);
 }
 
-std::string get_region_label(const RegionPoint& point)
+std::string get_region_label(const Region& region)
 {
-    auto label = get_region_attribute<std::string>(point, "label");
+    auto label = get_region_attribute<std::string>(region, "label");
     return label.value_or("");
 }
 
-void set_region_label(RegionPoint& point, const std::string& label)
+void set_region_label(Region& region, const std::string& label)
 {
-    set_region_attribute(point, "label", label);
+    set_region_attribute(region, "label", label);
 }
 
-std::vector<RegionPoint> find_points_with_label(const RegionGroup& group, const std::string& label)
+std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label)
 {
-    std::vector<RegionPoint> result;
-    std::copy_if(group.points.begin(), group.points.end(), std::back_inserter(result),
-        [&](const RegionPoint& pt) {
+    std::vector<Region> result;
+    std::copy_if(group.regions.begin(), group.regions.end(), std::back_inserter(result),
+        [&](const Region& pt) {
             return get_region_label(pt) == label;
         });
     return result;
 }
 
-std::vector<RegionPoint> find_points_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value)
+std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value)
 {
-    std::vector<RegionPoint> result;
-    std::copy_if(group.points.begin(), group.points.end(), std::back_inserter(result),
-        [&](const RegionPoint& pt) {
+    std::vector<Region> result;
+    std::copy_if(group.regions.begin(), group.regions.end(), std::back_inserter(result),
+        [&](const Region& pt) {
             auto it = pt.attributes.find(key);
             if (it != pt.attributes.end()) {
                 try {
@@ -98,32 +98,32 @@ std::vector<RegionPoint> find_points_with_attribute(const RegionGroup& group, co
     return result;
 }
 
-std::vector<RegionPoint> find_points_containing_coordinates(const RegionGroup& group, const std::vector<u_int64_t>& coordinates)
+std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<u_int64_t>& coordinates)
 {
-    std::vector<RegionPoint> result;
-    std::copy_if(group.points.begin(), group.points.end(), std::back_inserter(result),
-        [&](const RegionPoint& pt) {
+    std::vector<Region> result;
+    std::copy_if(group.regions.begin(), group.regions.end(), std::back_inserter(result),
+        [&](const Region& pt) {
             return pt.contains(coordinates);
         });
     return result;
 }
 
-RegionPoint translate_region(const RegionPoint& point, const std::vector<int64_t>& offset)
+Region translate_region(const Region& region, const std::vector<int64_t>& offset)
 {
-    RegionPoint result = point;
-    for (size_t i = 0; i < std::min(offset.size(), point.start_coordinates.size()); ++i) {
+    Region result = region;
+    for (size_t i = 0; i < std::min(offset.size(), region.start_coordinates.size()); ++i) {
         result.start_coordinates[i] = static_cast<u_int64_t>(static_cast<int64_t>(result.start_coordinates[i]) + offset[i]);
         result.end_coordinates[i] = static_cast<u_int64_t>(static_cast<int64_t>(result.end_coordinates[i]) + offset[i]);
     }
     return result;
 }
 
-RegionPoint scale_region(const RegionPoint& point, const std::vector<double>& factors)
+Region scale_region(const Region& region, const std::vector<double>& factors)
 {
-    RegionPoint result = point;
-    for (size_t i = 0; i < std::min(factors.size(), point.start_coordinates.size()); ++i) {
-        u_int64_t center = (point.start_coordinates[i] + point.end_coordinates[i]) / 2;
-        u_int64_t half_span = (point.end_coordinates[i] - point.start_coordinates[i]) / 2;
+    Region result = region;
+    for (size_t i = 0; i < std::min(factors.size(), region.start_coordinates.size()); ++i) {
+        u_int64_t center = (region.start_coordinates[i] + region.end_coordinates[i]) / 2;
+        u_int64_t half_span = (region.end_coordinates[i] - region.start_coordinates[i]) / 2;
         u_int64_t new_half_span = static_cast<u_int64_t>(half_span * factors[i]);
         result.start_coordinates[i] = center - new_half_span;
         result.end_coordinates[i] = center + new_half_span;
@@ -131,13 +131,13 @@ RegionPoint scale_region(const RegionPoint& point, const std::vector<double>& fa
     return result;
 }
 
-RegionPoint get_bounding_region(const RegionGroup& group)
+Region get_bounding_region(const RegionGroup& group)
 {
-    if (group.points.empty())
-        return RegionPoint {};
-    auto min_coords = group.points.front().start_coordinates;
-    auto max_coords = group.points.front().end_coordinates;
-    for (const auto& pt : group.points) {
+    if (group.regions.empty())
+        return Region {};
+    auto min_coords = group.regions.front().start_coordinates;
+    auto max_coords = group.regions.front().end_coordinates;
+    for (const auto& pt : group.regions) {
         for (size_t i = 0; i < min_coords.size(); ++i) {
             if (i < pt.start_coordinates.size()) {
                 min_coords[i] = std::min(min_coords[i], pt.start_coordinates[i]);
@@ -145,44 +145,44 @@ RegionPoint get_bounding_region(const RegionGroup& group)
             }
         }
     }
-    RegionPoint bounds(min_coords, max_coords);
+    Region bounds(min_coords, max_coords);
     set_region_attribute(bounds, "type", std::string("bounding_box"));
     return bounds;
 }
 
-void sort_points_by_dimension(std::vector<RegionPoint>& points, size_t dimension)
+void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension)
 {
-    std::sort(points.begin(), points.end(),
-        [dimension](const RegionPoint& a, const RegionPoint& b) {
+    std::sort(regions.begin(), regions.end(),
+        [dimension](const Region& a, const Region& b) {
             if (dimension < a.start_coordinates.size() && dimension < b.start_coordinates.size())
                 return a.start_coordinates[dimension] < b.start_coordinates[dimension];
             return false;
         });
 }
 
-void sort_points_by_attribute(std::vector<RegionPoint>& points, const std::string& attr_name)
+void sort_regions_by_attribute(std::vector<Region>& regions, const std::string& attr_name)
 {
-    std::sort(points.begin(), points.end(),
-        [&attr_name](const RegionPoint& a, const RegionPoint& b) {
+    std::sort(regions.begin(), regions.end(),
+        [&attr_name](const Region& a, const Region& b) {
             auto aval = get_region_attribute<std::string>(a, attr_name);
             auto bval = get_region_attribute<std::string>(b, attr_name);
             return aval.value_or("") < bval.value_or("");
         });
 }
 
-void add_reference_point(std::vector<std::pair<std::string, RegionPoint>>& refs, const std::string& name, const RegionPoint& point)
+void add_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name, const Region& region)
 {
-    refs.emplace_back(name, point);
+    refs.emplace_back(name, region);
 }
 
-void remove_reference_point(std::vector<std::pair<std::string, RegionPoint>>& refs, const std::string& name)
+void remove_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name)
 {
     refs.erase(std::remove_if(refs.begin(), refs.end(),
                    [&](const auto& pair) { return pair.first == name; }),
         refs.end());
 }
 
-std::optional<RegionPoint> get_reference_point(const std::vector<std::pair<std::string, RegionPoint>>& refs, const std::string& name)
+std::optional<Region> get_reference_region(const std::vector<std::pair<std::string, Region>>& refs, const std::string& name)
 {
     auto it = std::find_if(refs.begin(), refs.end(),
         [&](const auto& pair) { return pair.first == name; });
@@ -191,10 +191,10 @@ std::optional<RegionPoint> get_reference_point(const std::vector<std::pair<std::
     return std::nullopt;
 }
 
-std::vector<std::pair<std::string, RegionPoint>> find_references_in_region(
-    const std::vector<std::pair<std::string, RegionPoint>>& refs, const RegionPoint& region)
+std::vector<std::pair<std::string, Region>> find_references_in_region(
+    const std::vector<std::pair<std::string, Region>>& refs, const Region& region)
 {
-    std::vector<std::pair<std::string, RegionPoint>> result;
+    std::vector<std::pair<std::string, Region>> result;
     std::copy_if(refs.begin(), refs.end(), std::back_inserter(result),
         [&](const auto& pair) { return region.contains(pair.second.start_coordinates); });
     return result;
@@ -234,7 +234,7 @@ u_int64_t wrap_position_with_loop(u_int64_t position, u_int64_t loop_start, u_in
     return loop_start + ((position - loop_start) % loop_length);
 }
 
-u_int64_t wrap_position_with_loop(u_int64_t position, const RegionPoint& loop_region, size_t dim, bool looping_enabled)
+u_int64_t wrap_position_with_loop(u_int64_t position, const Region& loop_region, size_t dim, bool looping_enabled)
 {
     if (!looping_enabled || loop_region.start_coordinates.empty() || dim >= loop_region.start_coordinates.size() || dim >= loop_region.end_coordinates.size()) {
         return position;
@@ -292,7 +292,7 @@ bool transition_state(ProcessingState& current_state, ProcessingState new_state,
     return false;
 }
 
-std::size_t RegionPointHash::operator()(const RegionPoint& region) const
+std::size_t RegionHash::operator()(const Region& region) const
 {
     std::size_t h1 = 0;
     std::size_t h2 = 0;
@@ -316,7 +316,7 @@ RegionCacheManager::RegionCacheManager(size_t max_size)
 void RegionCacheManager::cache_region(const RegionCache& cache)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
-    const RegionPoint& region = cache.source_region;
+    const Region& region = cache.source_region;
 
     auto it = m_cache.find(region);
     if (it != m_cache.end()) {
@@ -336,7 +336,7 @@ void RegionCacheManager::cache_segment(const RegionSegment& segment)
     }
 }
 
-std::optional<RegionCache> RegionCacheManager::get_cached_region(const RegionPoint& region)
+std::optional<RegionCache> RegionCacheManager::get_cached_region(const Region& region)
 {
     if (!m_initialized) {
         return std::nullopt;
@@ -396,7 +396,7 @@ std::optional<RegionSegment> RegionCacheManager::get_segment_with_cache(const Re
     return std::nullopt;
 }
 
-std::optional<RegionCache> RegionCacheManager::get_cached_region_internal(const RegionPoint& region)
+std::optional<RegionCache> RegionCacheManager::get_cached_region_internal(const Region& region)
 {
     auto it = m_cache.find(region);
     if (it != m_cache.end()) {
@@ -426,7 +426,7 @@ void RegionCacheManager::evict_lru_if_needed()
     }
 }
 
-void RegionCacheManager::update_lru(const RegionPoint& region)
+void RegionCacheManager::update_lru(const Region& region)
 {
     auto it = std::find(m_lru_list.begin(), m_lru_list.end(), region);
     if (it != m_lru_list.end()) {

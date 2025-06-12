@@ -118,18 +118,18 @@ public:
     virtual bool is_looping() const = 0;
 
     /**
-     * @brief Set the loop region using a RegionPoint.
+     * @brief Set the loop region using a Region.
      * @param region The region to use for looping
      *
      * Defines the temporal bounds for looped playback or processing.
      */
-    virtual void set_loop_region(const RegionPoint& region) = 0;
+    virtual void set_loop_region(const Region& region) = 0;
 
     /**
      * @brief Get the current loop region.
-     * @return RegionPoint representing the loop region
+     * @return Region representing the loop region
      */
-    virtual RegionPoint get_loop_region() const = 0;
+    virtual Region get_loop_region() const = 0;
 
     /**
      * @brief Check if the stream is ready for reading.

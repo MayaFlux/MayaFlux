@@ -55,7 +55,7 @@ void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, s
     }
 }
 
-DataVariant RegionProcessorBase::extract_region_data(const RegionPoint& region, std::shared_ptr<SignalSourceContainer> container)
+DataVariant RegionProcessorBase::extract_region_data(const Region& region, std::shared_ptr<SignalSourceContainer> container)
 {
     return container->get_region_data(region);
 }

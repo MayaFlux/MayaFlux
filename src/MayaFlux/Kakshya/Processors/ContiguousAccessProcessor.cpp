@@ -118,7 +118,7 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
     m_last_process_time = std::chrono::steady_clock::now();
 
     try {
-        RegionPoint output_region = calculate_output_region(m_current_position, m_output_shape);
+        Region output_region = calculate_output_region(m_current_position, m_output_shape);
 
         DataVariant& processed_data = container->get_processed_data();
 
@@ -149,7 +149,7 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
 }
 
 void ContiguousAccessProcessor::process_region(std::shared_ptr<SignalSourceContainer> container,
-    const RegionPoint& region,
+    const Region& region,
     DataVariant& output)
 {
     DataVariant region_data = container->get_region_data(region);
@@ -157,7 +157,7 @@ void ContiguousAccessProcessor::process_region(std::shared_ptr<SignalSourceConta
     safe_copy_data_variant(region_data, output);
 }
 
-RegionPoint ContiguousAccessProcessor::calculate_output_region(
+Region ContiguousAccessProcessor::calculate_output_region(
     const std::vector<u_int64_t>& current_pos,
     const std::vector<u_int64_t>& output_shape) const
 {
@@ -165,7 +165,7 @@ RegionPoint ContiguousAccessProcessor::calculate_output_region(
     for (size_t i = 0; i < current_pos.size(); ++i) {
         end.push_back(current_pos[i] + output_shape[i] - 1);
     }
-    return RegionPoint(current_pos, end);
+    return Region(current_pos, end);
 }
 
 void ContiguousAccessProcessor::advance_read_position(std::vector<u_int64_t>& position, const std::vector<u_int64_t>& shape)

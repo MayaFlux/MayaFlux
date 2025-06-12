@@ -73,19 +73,19 @@ void RegionOrganizationProcessor::add_region_group(const std::string& group_name
 }
 
 void RegionOrganizationProcessor::add_segment_to_region(const std::string& group_name,
-    size_t point_index,
+    size_t region_index,
     const std::vector<u_int64_t>& start_coords,
     const std::vector<u_int64_t>& end_coords,
     const std::unordered_map<std::string, std::any>& attributes)
 {
     auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
         [&](const OrganizedRegion& region) {
-            return region.group_name == group_name && region.point_index == point_index;
+            return region.group_name == group_name && region.region_index == region_index;
         });
 
     if (region_it != m_organized_regions.end()) {
-        RegionPoint region_point(start_coords, end_coords, attributes);
-        RegionSegment segment(region_point);
+        Region region(start_coords, end_coords, attributes);
+        RegionSegment segment(region);
 
         region_it->segments.push_back(std::move(segment));
 
@@ -96,13 +96,13 @@ void RegionOrganizationProcessor::add_segment_to_region(const std::string& group
 }
 
 void RegionOrganizationProcessor::set_region_transition(const std::string& group_name,
-    size_t point_index,
+    size_t region_index,
     RegionTransition type,
     double duration_ms)
 {
     auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
         [&](OrganizedRegion& region) {
-            return region.group_name == group_name && region.point_index == point_index;
+            return region.group_name == group_name && region.region_index == region_index;
         });
 
     if (region_it != m_organized_regions.end()) {
@@ -112,12 +112,12 @@ void RegionOrganizationProcessor::set_region_transition(const std::string& group
 }
 
 void RegionOrganizationProcessor::set_selection_pattern(const std::string& group_name,
-    size_t point_index,
-    PointSelectionPattern pattern)
+    size_t region_index,
+    RegionSelectionPattern pattern)
 {
     auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
         [&](OrganizedRegion& region) {
-            return region.group_name == group_name && region.point_index == point_index;
+            return region.group_name == group_name && region.region_index == region_index;
         });
 
     if (region_it != m_organized_regions.end()) {
@@ -126,14 +126,14 @@ void RegionOrganizationProcessor::set_selection_pattern(const std::string& group
 }
 
 void RegionOrganizationProcessor::set_region_looping(const std::string& group_name,
-    size_t point_index,
+    size_t region_index,
     bool enabled,
     const std::vector<u_int64_t>& loop_start,
     const std::vector<u_int64_t>& loop_end)
 {
     auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
         [&](OrganizedRegion& region) {
-            return region.group_name == group_name && region.point_index == point_index;
+            return region.group_name == group_name && region.region_index == region_index;
         });
 
     if (region_it != m_organized_regions.end()) {
@@ -145,11 +145,11 @@ void RegionOrganizationProcessor::set_region_looping(const std::string& group_na
     }
 }
 
-void RegionOrganizationProcessor::jump_to_region(const std::string& group_name, size_t point_index)
+void RegionOrganizationProcessor::jump_to_region(const std::string& group_name, size_t region_index)
 {
     auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
         [&](const OrganizedRegion& region) {
-            return region.group_name == group_name && region.point_index == point_index;
+            return region.group_name == group_name && region.region_index == region_index;
         });
 
     if (region_it != m_organized_regions.end()) {
@@ -321,18 +321,18 @@ size_t RegionOrganizationProcessor::select_next_segment(const OrganizedRegion& r
         return 0;
 
     switch (region.selection_pattern) {
-    case PointSelectionPattern::SEQUENTIAL:
+    case RegionSelectionPattern::SEQUENTIAL:
         return region.active_segment_index % region.segments.size();
 
-    case PointSelectionPattern::RANDOM: {
+    case RegionSelectionPattern::RANDOM: {
         std::uniform_int_distribution<size_t> dist(0, region.segments.size() - 1);
         return dist(m_random_engine);
     }
 
-    case PointSelectionPattern::ROUND_ROBIN:
+    case RegionSelectionPattern::ROUND_ROBIN:
         return (region.active_segment_index + 1) % region.segments.size();
 
-    case PointSelectionPattern::WEIGHTED: {
+    case RegionSelectionPattern::WEIGHTED: {
         if (m_segment_weights.size() != region.segments.size()) {
             // Equal weights if not set
             return region.active_segment_index % region.segments.size();
@@ -350,12 +350,12 @@ size_t RegionOrganizationProcessor::select_next_segment(const OrganizedRegion& r
 void RegionOrganizationProcessor::organize_group(std::shared_ptr<SignalSourceContainer> container,
     const RegionGroup& group)
 {
-    for (size_t i = 0; i < group.points.size(); ++i) {
-        const auto& point = group.points[i];
+    for (size_t i = 0; i < group.regions.size(); ++i) {
+        const auto& region = group.regions[i];
 
         OrganizedRegion organized_region(group.name, i);
 
-        RegionSegment segment(point);
+        RegionSegment segment(region);
 
         cache_region_if_needed(segment, container);
 
@@ -364,11 +364,11 @@ void RegionOrganizationProcessor::organize_group(std::shared_ptr<SignalSourceCon
         for (const auto& [key, value] : group.attributes) {
             organized_region.attributes[key] = value;
         }
-        for (const auto& [key, value] : point.attributes) {
+        for (const auto& [key, value] : region.attributes) {
             organized_region.attributes[key] = value;
         }
 
-        organized_region.current_position = point.start_coordinates;
+        organized_region.current_position = region.start_coordinates;
         organized_region.state = RegionState::READY;
 
         m_organized_regions.push_back(std::move(organized_region));

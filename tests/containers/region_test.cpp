@@ -9,36 +9,36 @@ using namespace MayaFlux::Kakshya;
 
 namespace MayaFlux::Test {
 
-class RegionPointTest : public ::testing::Test {
+class RegionTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        point = Kakshya::RegionPoint({ 100 });
+        region = Kakshya::Region({ 100 });
 
-        audio_span = RegionPoint::audio_span(0, 1000, 0, 1, "test_audio");
+        audio_span = Region::audio_span(0, 1000, 0, 1, "test_audio");
 
-        time_span = RegionPoint::time_span(50, 150, "test_span");
+        time_span = Region::time_span(50, 150, "test_span");
         time_span.set_attribute("energy", 0.75);
         time_span.set_attribute("frequency", 440.0);
 
         std::vector<u_int64_t> start_index = { 10, 20, 30 };
         std::vector<u_int64_t> end_index = { 50, 60, 70 };
-        multi_dim = Kakshya::RegionPoint(start_index, end_index);
+        multi_dim = Kakshya::Region(start_index, end_index);
     }
 
-    RegionPoint point;
-    RegionPoint audio_span;
-    RegionPoint time_span;
-    RegionPoint multi_dim;
+    Region region;
+    Region audio_span;
+    Region time_span;
+    Region multi_dim;
 };
 
-TEST_F(RegionPointTest, BasicConstruction)
+TEST_F(RegionTest, BasicConstruction)
 {
-    EXPECT_EQ(point.start_coordinates.size(), 1);
-    EXPECT_EQ(point.end_coordinates.size(), 1);
-    EXPECT_EQ(point.start_coordinates[0], 100);
-    EXPECT_EQ(point.end_coordinates[0], 100);
-    EXPECT_TRUE(point.is_point());
+    EXPECT_EQ(region.start_coordinates.size(), 1);
+    EXPECT_EQ(region.end_coordinates.size(), 1);
+    EXPECT_EQ(region.start_coordinates[0], 100);
+    EXPECT_EQ(region.end_coordinates[0], 100);
+    EXPECT_TRUE(region.is_point());
 
     EXPECT_FALSE(audio_span.is_point());
     EXPECT_EQ(audio_span.start_coordinates[0], 0);
@@ -46,19 +46,19 @@ TEST_F(RegionPointTest, BasicConstruction)
     EXPECT_EQ(audio_span.start_coordinates[1], 0);
     EXPECT_EQ(audio_span.end_coordinates[1], 1);
 
-    RegionPoint empty;
+    Region empty;
     EXPECT_TRUE(empty.start_coordinates.empty());
     EXPECT_TRUE(empty.end_coordinates.empty());
 }
 
-TEST_F(RegionPointTest, StaticFactoryMethods)
+TEST_F(RegionTest, StaticFactoryMethods)
 {
-    auto time_point = RegionPoint::time_point(500, "onset");
+    auto time_point = Region::time_point(500, "onset");
     EXPECT_TRUE(time_point.is_point());
     EXPECT_EQ(time_point.start_coordinates[0], 500);
     EXPECT_EQ(time_point.get_label(), "onset");
 
-    auto audio_point = RegionPoint::audio_point(100, 1, "transient");
+    auto audio_point = Region::audio_point(100, 1, "transient");
     EXPECT_EQ(audio_point.start_coordinates[0], 100);
     EXPECT_EQ(audio_point.start_coordinates[1], 1);
     EXPECT_EQ(audio_point.get_label(), "transient");
@@ -69,14 +69,14 @@ TEST_F(RegionPointTest, StaticFactoryMethods)
         EXPECT_EQ(*type, "audio_point");
     }
 
-    auto img_rect = RegionPoint::image_rect(10, 20, 100, 200, "roi");
+    auto img_rect = Region::image_rect(10, 20, 100, 200, "roi");
     EXPECT_EQ(img_rect.start_coordinates[0], 10);
     EXPECT_EQ(img_rect.start_coordinates[1], 20);
     EXPECT_EQ(img_rect.end_coordinates[0], 100);
     EXPECT_EQ(img_rect.end_coordinates[1], 200);
     EXPECT_EQ(img_rect.get_label(), "roi");
 
-    auto video_region = RegionPoint::video_region(0, 30, 50, 60, 150, 160, "scene");
+    auto video_region = Region::video_region(0, 30, 50, 60, 150, 160, "scene");
     EXPECT_EQ(video_region.start_coordinates.size(), 3);
     EXPECT_EQ(video_region.start_coordinates[0], 0);
     EXPECT_EQ(video_region.start_coordinates[1], 50); // x1
@@ -86,41 +86,41 @@ TEST_F(RegionPointTest, StaticFactoryMethods)
     EXPECT_EQ(video_region.end_coordinates[2], 160); // y2
 }
 
-TEST_F(RegionPointTest, AttributeManagement)
+TEST_F(RegionTest, AttributeManagement)
 {
-    point.set_attribute("gain", 0.8);
-    point.set_attribute("label", std::string("test_point"));
-    point.set_attribute("active", true);
+    region.set_attribute("gain", 0.8);
+    region.set_attribute("label", std::string("test_region"));
+    region.set_attribute("active", true);
 
-    auto gain = point.get_attribute<double>("gain");
+    auto gain = region.get_attribute<double>("gain");
     EXPECT_TRUE(gain.has_value());
     EXPECT_DOUBLE_EQ(*gain, 0.8);
 
-    auto label = point.get_attribute<std::string>("label");
+    auto label = region.get_attribute<std::string>("label");
     EXPECT_TRUE(label.has_value());
-    EXPECT_EQ(*label, "test_point");
+    EXPECT_EQ(*label, "test_region");
 
-    auto active = point.get_attribute<bool>("active");
+    auto active = region.get_attribute<bool>("active");
     EXPECT_TRUE(active.has_value());
     EXPECT_TRUE(*active);
 
-    auto missing = point.get_attribute<int>("missing");
+    auto missing = region.get_attribute<int>("missing");
     EXPECT_FALSE(missing.has_value());
 
-    auto wrong_type = point.get_attribute<int>("gain");
+    auto wrong_type = region.get_attribute<int>("gain");
     EXPECT_FALSE(wrong_type.has_value());
 
-    point.set_label("convenience_label");
-    EXPECT_EQ(point.get_label(), "convenience_label");
+    region.set_label("convenience_label");
+    EXPECT_EQ(region.get_label(), "convenience_label");
 }
 
-TEST_F(RegionPointTest, GeometryOperations)
+TEST_F(RegionTest, GeometryOperations)
 {
     EXPECT_EQ(time_span.get_span(0), 101); // 150 - 50 + 1
     EXPECT_EQ(audio_span.get_span(0), 1001); // 1000 - 0 + 1
     EXPECT_EQ(audio_span.get_span(1), 2); // 1 - 0 + 1
 
-    EXPECT_EQ(point.get_volume(), 1);
+    EXPECT_EQ(region.get_volume(), 1);
     EXPECT_EQ(time_span.get_volume(), 101);
     EXPECT_EQ(audio_span.get_volume(), 2002); // 1001 * 2
     EXPECT_EQ(multi_dim.get_volume(), 41 * 41 * 41); // (50-10+1) * (60-20+1) * (70-30+1)
@@ -128,15 +128,15 @@ TEST_F(RegionPointTest, GeometryOperations)
     EXPECT_EQ(time_span.get_duration(0), 101);
     EXPECT_EQ(audio_span.get_duration(1), 2);
 
-    EXPECT_EQ(point.get_span(1), 0);
-    EXPECT_EQ(point.get_duration(5), 0);
+    EXPECT_EQ(region.get_span(1), 0);
+    EXPECT_EQ(region.get_duration(5), 0);
 }
 
-TEST_F(RegionPointTest, ContainmentAndOverlap)
+TEST_F(RegionTest, ContainmentAndOverlap)
 {
-    EXPECT_TRUE(point.contains({ 100 }));
-    EXPECT_FALSE(point.contains({ 99 }));
-    EXPECT_FALSE(point.contains({ 101 }));
+    EXPECT_TRUE(region.contains({ 100 }));
+    EXPECT_FALSE(region.contains({ 99 }));
+    EXPECT_FALSE(region.contains({ 101 }));
 
     EXPECT_TRUE(time_span.contains({ 75 }));
     EXPECT_TRUE(time_span.contains({ 50 }));
@@ -151,12 +151,12 @@ TEST_F(RegionPointTest, ContainmentAndOverlap)
     EXPECT_FALSE(multi_dim.contains({ 25, 19, 50 }));
     EXPECT_FALSE(multi_dim.contains({ 25, 40, 71 }));
 
-    EXPECT_FALSE(point.contains({ 100, 200 }));
+    EXPECT_FALSE(region.contains({ 100, 200 }));
     EXPECT_FALSE(multi_dim.contains({ 25, 40 }));
 
-    RegionPoint overlap1(std::vector<u_int64_t>({ 75 }), std::vector<u_int64_t>({ 125 }));
-    RegionPoint overlap2(std::vector<u_int64_t>({ 125 }), std::vector<u_int64_t>({ 175 }));
-    RegionPoint no_overlap(std::vector<u_int64_t>({ 200 }), std::vector<u_int64_t>({ 250 }));
+    Region overlap1(std::vector<u_int64_t>({ 75 }), std::vector<u_int64_t>({ 125 }));
+    Region overlap2(std::vector<u_int64_t>({ 125 }), std::vector<u_int64_t>({ 175 }));
+    Region no_overlap(std::vector<u_int64_t>({ 200 }), std::vector<u_int64_t>({ 250 }));
 
     EXPECT_TRUE(time_span.overlaps(overlap1));
     EXPECT_TRUE(time_span.overlaps(overlap2));
@@ -164,14 +164,14 @@ TEST_F(RegionPointTest, ContainmentAndOverlap)
 
     EXPECT_TRUE(time_span.overlaps(time_span));
 
-    RegionPoint multi_overlap(std::vector<u_int64_t>({ 40, 50, 60 }), std::vector<u_int64_t>({ 80, 90, 100 }));
+    Region multi_overlap(std::vector<u_int64_t>({ 40, 50, 60 }), std::vector<u_int64_t>({ 80, 90, 100 }));
     EXPECT_TRUE(multi_dim.overlaps(multi_overlap));
 
-    RegionPoint multi_no_overlap(std::vector<u_int64_t>({ 100, 100, 100 }), std::vector<u_int64_t>({ 200, 200, 200 }));
+    Region multi_no_overlap(std::vector<u_int64_t>({ 100, 100, 100 }), std::vector<u_int64_t>({ 200, 200, 200 }));
     EXPECT_FALSE(multi_dim.overlaps(multi_no_overlap));
 }
 
-TEST_F(RegionPointTest, Transformations)
+TEST_F(RegionTest, Transformations)
 {
     auto translated = time_span.translate({ 10 });
     EXPECT_EQ(translated.start_coordinates[0], 60); // 50 + 10
@@ -185,7 +185,7 @@ TEST_F(RegionPointTest, Transformations)
     EXPECT_EQ(multi_translated.end_coordinates[1], 55); // 60 - 5
     EXPECT_EQ(multi_translated.end_coordinates[2], 80); // 70 + 10
 
-    auto negative_translate = RegionPoint::time_span(5, 10).translate({ -10 });
+    auto negative_translate = Region::time_span(5, 10).translate({ -10 });
     EXPECT_EQ(negative_translate.start_coordinates[0], 0);
 
     auto scaled = time_span.scale({ 2.0 });
@@ -206,42 +206,42 @@ TEST_F(RegionPointTest, Transformations)
     EXPECT_EQ(multi_scaled.get_span(2), multi_dim.get_span(2)); // Should be same
 }
 
-TEST_F(RegionPointTest, EqualityOperators)
+TEST_F(RegionTest, EqualityOperators)
 {
-    RegionPoint identical({ 100 });
-    RegionPoint different({ 101 });
+    Region identical({ 100 });
+    Region different({ 101 });
 
-    EXPECT_TRUE(point == identical);
-    EXPECT_FALSE(point == different);
-    EXPECT_FALSE(point != identical);
-    EXPECT_TRUE(point != different);
+    EXPECT_TRUE(region == identical);
+    EXPECT_FALSE(region == different);
+    EXPECT_FALSE(region != identical);
+    EXPECT_TRUE(region != different);
 
-    RegionPoint span_identical = RegionPoint::time_span(50, 150);
-    RegionPoint span_different = RegionPoint::time_span(50, 151);
+    Region span_identical = Region::time_span(50, 150);
+    Region span_different = Region::time_span(50, 151);
 
     EXPECT_TRUE(time_span == span_identical);
     EXPECT_FALSE(time_span == span_different);
 
-    RegionPoint multi_identical(std::vector<u_int64_t>({ 10, 20, 30 }), std::vector<u_int64_t>({ 50, 60, 70 }));
-    RegionPoint multi_different(std::vector<u_int64_t>({ 10, 20, 30 }), std::vector<u_int64_t>({ 50, 60, 71 }));
+    Region multi_identical(std::vector<u_int64_t>({ 10, 20, 30 }), std::vector<u_int64_t>({ 50, 60, 70 }));
+    Region multi_different(std::vector<u_int64_t>({ 10, 20, 30 }), std::vector<u_int64_t>({ 50, 60, 71 }));
 
     EXPECT_TRUE(multi_dim == multi_identical);
     EXPECT_FALSE(multi_dim == multi_different);
 }
 
-TEST_F(RegionPointTest, DSPSpecificUseCases)
+TEST_F(RegionTest, DSPSpecificUseCases)
 {
-    auto onset_point = RegionPoint::time_point(1000, "onset");
-    onset_point.set_attribute("energy", 0.85);
-    onset_point.set_attribute("spectral_centroid", 2500.0);
-    onset_point.set_attribute("detected_by", std::string("peak_picker"));
+    auto onset_region = Region::time_point(1000, "onset");
+    onset_region.set_attribute("energy", 0.85);
+    onset_region.set_attribute("spectral_centroid", 2500.0);
+    onset_region.set_attribute("detected_by", std::string("peak_picker"));
 
-    EXPECT_EQ(onset_point.get_label(), "onset");
-    auto energy = onset_point.get_attribute<double>("energy");
+    EXPECT_EQ(onset_region.get_label(), "onset");
+    auto energy = onset_region.get_attribute<double>("energy");
     EXPECT_TRUE(energy.has_value());
     EXPECT_DOUBLE_EQ(*energy, 0.85);
 
-    auto spectral_region = RegionPoint::audio_span(0, 2048, 100, 200, "formant");
+    auto spectral_region = Region::audio_span(0, 2048, 100, 200, "formant");
     spectral_region.set_attribute("center_frequency", 1000.0);
     spectral_region.set_attribute("bandwidth", 100.0);
     spectral_region.set_attribute("q_factor", 10.0);
@@ -250,7 +250,7 @@ TEST_F(RegionPointTest, DSPSpecificUseCases)
     EXPECT_TRUE(center_freq.has_value());
     EXPECT_DOUBLE_EQ(*center_freq, 1000.0);
 
-    auto zero_crossing = RegionPoint::time_span(500, 600, "zero_crossing_cluster");
+    auto zero_crossing = Region::time_span(500, 600, "zero_crossing_cluster");
     zero_crossing.set_attribute("crossing_rate", 15.5);
     zero_crossing.set_attribute("rms_level", -20.0);
 
@@ -263,7 +263,7 @@ class RegionSegmentTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        source_region = RegionPoint::audio_span(0, 1000, 0, 1, "audio_segment");
+        source_region = Region::audio_span(0, 1000, 0, 1, "audio_segment");
         segment = RegionSegment(source_region);
 
         custom_segment = RegionSegment(
@@ -273,7 +273,7 @@ protected:
         );
     }
 
-    RegionPoint source_region;
+    Region source_region;
     RegionSegment segment;
     RegionSegment custom_segment;
 };
@@ -459,16 +459,16 @@ class RegionGroupTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        points.push_back(RegionPoint::time_point(100, "onset"));
-        points.push_back(RegionPoint::time_span(200, 300, "sustain"));
-        points.push_back(RegionPoint::time_point(400, "release"));
+        region.push_back(Region::time_point(100, "onset"));
+        region.push_back(Region::time_span(200, 300, "sustain"));
+        region.push_back(Region::time_point(400, "release"));
 
-        group = RegionGroup("test_group", points);
+        group = RegionGroup("test_group", region);
         group.set_attribute("tempo", 120.0);
         group.set_attribute("key", std::string("C_major"));
     }
 
-    std::vector<RegionPoint> points;
+    std::vector<Region> region;
     RegionGroup group;
 };
 
@@ -476,17 +476,17 @@ TEST_F(RegionGroupTest, BasicConstruction)
 {
     RegionGroup empty_group;
     EXPECT_TRUE(empty_group.name.empty());
-    EXPECT_TRUE(empty_group.points.empty());
-    EXPECT_EQ(empty_group.current_point_index, 0);
+    EXPECT_TRUE(empty_group.regions.empty());
+    EXPECT_EQ(empty_group.current_region_index, 0);
     EXPECT_EQ(empty_group.state, RegionState::IDLE);
     EXPECT_EQ(empty_group.transition_type, RegionTransition::IMMEDIATE);
-    EXPECT_EQ(empty_group.point_selection_pattern, PointSelectionPattern::SEQUENTIAL);
+    EXPECT_EQ(empty_group.region_selection_pattern, RegionSelectionPattern::SEQUENTIAL);
 
     EXPECT_EQ(group.name, "test_group");
-    EXPECT_EQ(group.points.size(), 3);
-    EXPECT_EQ(group.points[0].get_label(), "onset");
-    EXPECT_EQ(group.points[1].get_label(), "sustain");
-    EXPECT_EQ(group.points[2].get_label(), "release");
+    EXPECT_EQ(group.regions.size(), 3);
+    EXPECT_EQ(group.regions[0].get_label(), "onset");
+    EXPECT_EQ(group.regions[1].get_label(), "sustain");
+    EXPECT_EQ(group.regions[2].get_label(), "release");
 
     std::unordered_map<std::string, std::any> attrs;
     attrs["volume"] = 0.8;
@@ -502,47 +502,46 @@ TEST_F(RegionGroupTest, BasicConstruction)
     EXPECT_EQ(*category, "percussion");
 }
 
-TEST_F(RegionGroupTest, PointManagement)
+TEST_F(RegionGroupTest, RegionManagement)
 {
-    auto new_point = RegionPoint::time_point(500, "fade_out");
-    group.add_point(new_point);
-    EXPECT_EQ(group.points.size(), 4);
-    EXPECT_EQ(group.points[3].get_label(), "fade_out");
+    auto new_point = Region::time_point(500, "fade_out");
+    group.add_region(new_point);
+    EXPECT_EQ(group.regions.size(), 4);
+    EXPECT_EQ(group.regions[3].get_label(), "fade_out");
 
-    auto insert_point = RegionPoint::time_point(150, "attack");
-    group.insert_point(1, insert_point);
-    EXPECT_EQ(group.points.size(), 5);
-    EXPECT_EQ(group.points[1].get_label(), "attack");
-    EXPECT_EQ(group.points[2].get_label(), "sustain"); // shifted
+    auto insert_point = Region::time_point(150, "attack");
+    group.insert_region(1, insert_point);
+    EXPECT_EQ(group.regions.size(), 5);
+    EXPECT_EQ(group.regions[1].get_label(), "attack");
+    EXPECT_EQ(group.regions[2].get_label(), "sustain"); // shifted
 
-    auto end_point = RegionPoint::time_point(600, "end");
-    group.insert_point(group.points.size(), end_point);
-    EXPECT_EQ(group.points.size(), 6);
-    EXPECT_EQ(group.points[5].get_label(), "end");
+    auto end_point = Region::time_point(600, "end");
+    group.insert_region(group.regions.size(), end_point);
+    EXPECT_EQ(group.regions.size(), 6);
+    EXPECT_EQ(group.regions[5].get_label(), "end");
 
     // Fix: Check what happens when inserting at an invalid index
-    auto invalid_insert = RegionPoint::time_point(700, "invalid");
-    group.insert_point(100, invalid_insert);
-    EXPECT_EQ(group.points.size(), 7);
-    // The point should be appended to the end, so it should be at the last index
-    EXPECT_EQ(group.points[group.points.size() - 1].get_label(), "invalid");
+    auto invalid_insert = Region::time_point(700, "invalid");
+    group.insert_region(100, invalid_insert);
+    EXPECT_EQ(group.regions.size(), 7);
+    EXPECT_EQ(group.regions[group.regions.size() - 1].get_label(), "invalid");
 
-    group.remove_point(1); // remove the inserted attack point
-    EXPECT_EQ(group.points.size(), 6);
-    EXPECT_EQ(group.points[1].get_label(), "sustain"); // back to original
+    group.remove_region(1);
+    EXPECT_EQ(group.regions.size(), 6);
+    EXPECT_EQ(group.regions[1].get_label(), "sustain"); // back to original
 
-    group.current_point_index = 5;
-    group.remove_point(5); // remove end point
-    EXPECT_EQ(group.points.size(), 5);
-    EXPECT_EQ(group.current_point_index, 4); // adjusted to valid index
+    group.current_region_index = 5;
+    group.remove_region(5);
+    EXPECT_EQ(group.regions.size(), 5);
+    EXPECT_EQ(group.current_region_index, 4); // adjusted to valid index
 
-    size_t original_size = group.points.size();
-    group.remove_point(100);
-    EXPECT_EQ(group.points.size(), original_size);
+    size_t original_size = group.regions.size();
+    group.remove_region(100);
+    EXPECT_EQ(group.regions.size(), original_size);
 
-    group.clear_points();
-    EXPECT_TRUE(group.points.empty());
-    EXPECT_EQ(group.current_point_index, 0);
+    group.clear_regions();
+    EXPECT_TRUE(group.regions.empty());
+    EXPECT_EQ(group.current_region_index, 0);
     EXPECT_TRUE(group.active_indices.empty());
 }
 
@@ -589,29 +588,29 @@ TEST_F(RegionGroupTest, AttributeManagement)
 
 TEST_F(RegionGroupTest, SortingOperations)
 {
-    group.clear_points();
-    group.add_point(RegionPoint::time_point(300, "third"));
-    group.add_point(RegionPoint::time_point(100, "first"));
-    group.add_point(RegionPoint::time_point(200, "second"));
+    group.clear_regions();
+    group.add_region(Region::time_point(300, "third"));
+    group.add_region(Region::time_point(100, "first"));
+    group.add_region(Region::time_point(200, "second"));
 
     group.sort_by_dimension(0);
-    EXPECT_EQ(group.points[0].start_coordinates[0], 100);
-    EXPECT_EQ(group.points[1].start_coordinates[0], 200);
-    EXPECT_EQ(group.points[2].start_coordinates[0], 300);
-    EXPECT_EQ(group.points[0].get_label(), "first");
-    EXPECT_EQ(group.points[1].get_label(), "second");
-    EXPECT_EQ(group.points[2].get_label(), "third");
+    EXPECT_EQ(group.regions[0].start_coordinates[0], 100);
+    EXPECT_EQ(group.regions[1].start_coordinates[0], 200);
+    EXPECT_EQ(group.regions[2].start_coordinates[0], 300);
+    EXPECT_EQ(group.regions[0].get_label(), "first");
+    EXPECT_EQ(group.regions[1].get_label(), "second");
+    EXPECT_EQ(group.regions[2].get_label(), "third");
 
-    group.points[0].set_attribute("priority", 3.0);
-    group.points[1].set_attribute("priority", 1.0);
-    group.points[2].set_attribute("priority", 2.0);
+    group.regions[0].set_attribute("priority", 3.0);
+    group.regions[1].set_attribute("priority", 1.0);
+    group.regions[2].set_attribute("priority", 2.0);
 
     group.sort_by_attribute("priority");
-    EXPECT_EQ(group.points[0].get_label(), "second"); // priority 1.0
-    EXPECT_EQ(group.points[1].get_label(), "third"); // priority 2.0
-    EXPECT_EQ(group.points[2].get_label(), "first"); // priority 3.0
+    EXPECT_EQ(group.regions[0].get_label(), "second"); // priority 1.0
+    EXPECT_EQ(group.regions[1].get_label(), "third"); // priority 2.0
+    EXPECT_EQ(group.regions[2].get_label(), "first"); // priority 3.0
 
-    group.points[0].set_attribute("energy", 0.5);
+    group.regions[0].set_attribute("energy", 0.5);
     // points[1] and points[2] don't have "energy" attribute
     group.sort_by_attribute("energy");
 
@@ -624,53 +623,53 @@ TEST_F(RegionGroupTest, SortingOperations)
 
 TEST_F(RegionGroupTest, SearchOperations)
 {
-    auto onset_points = group.find_points_with_label("onset");
+    auto onset_points = group.find_regions_with_label("onset");
     EXPECT_EQ(onset_points.size(), 1);
     EXPECT_EQ(onset_points[0].start_coordinates[0], 100);
 
-    auto nonexistent = group.find_points_with_label("nonexistent");
+    auto nonexistent = group.find_regions_with_label("nonexistent");
     EXPECT_TRUE(nonexistent.empty());
 
-    group.add_point(RegionPoint::time_point(500, "onset"));
-    auto multiple_onsets = group.find_points_with_label("onset");
+    group.add_region(Region::time_point(500, "onset"));
+    auto multiple_onsets = group.find_regions_with_label("onset");
     EXPECT_EQ(multiple_onsets.size(), 2);
 
-    group.points[0].set_attribute("type", std::string("percussive"));
-    group.points[1].set_attribute("type", std::string("tonal"));
-    group.points[2].set_attribute("type", std::string("percussive"));
-    group.points[3].set_attribute("type", std::string("noise"));
+    group.regions[0].set_attribute("type", std::string("percussive"));
+    group.regions[1].set_attribute("type", std::string("tonal"));
+    group.regions[2].set_attribute("type", std::string("percussive"));
+    group.regions[3].set_attribute("type", std::string("noise"));
 
-    auto percussive_points = group.find_points_with_attribute("type", std::string("percussive"));
+    auto percussive_points = group.find_regions_with_attribute("type", std::string("percussive"));
     EXPECT_EQ(percussive_points.size(), 2);
     EXPECT_EQ(percussive_points[0].get_label(), "onset");
     EXPECT_EQ(percussive_points[1].get_label(), "release");
 
-    auto tonal_points = group.find_points_with_attribute("type", std::string("tonal"));
+    auto tonal_points = group.find_regions_with_attribute("type", std::string("tonal"));
     EXPECT_EQ(tonal_points.size(), 1);
     EXPECT_EQ(tonal_points[0].get_label(), "sustain");
 
-    group.points[0].set_attribute("energy", 0.8);
-    group.points[1].set_attribute("energy", 0.8);
-    auto high_energy = group.find_points_with_attribute("energy", 0.8);
+    group.regions[0].set_attribute("energy", 0.8);
+    group.regions[1].set_attribute("energy", 0.8);
+    auto high_energy = group.find_regions_with_attribute("energy", 0.8);
     EXPECT_EQ(high_energy.size(), 2);
 
-    auto containing_250 = group.find_points_containing_coordinates({ 250 });
+    auto containing_250 = group.find_regions_containing_coordinates({ 250 });
     EXPECT_EQ(containing_250.size(), 1); // Only the sustain span (200-300) contains 250
     EXPECT_EQ(containing_250[0].get_label(), "sustain");
 
-    auto containing_100 = group.find_points_containing_coordinates({ 100 });
+    auto containing_100 = group.find_regions_containing_coordinates({ 100 });
     EXPECT_EQ(containing_100.size(), 1); // Only the onset point at 100
     EXPECT_EQ(containing_100[0].get_label(), "onset");
 
-    auto containing_none = group.find_points_containing_coordinates({ 1000 });
+    auto containing_none = group.find_regions_containing_coordinates({ 1000 });
     EXPECT_TRUE(containing_none.empty()); // No points contain 1000
 
-    group.add_point(RegionPoint::audio_span(600, 700, 0, 1, "multi_dim"));
-    auto containing_multi = group.find_points_containing_coordinates({ 650, 0 });
+    group.add_region(Region::audio_span(600, 700, 0, 1, "multi_dim"));
+    auto containing_multi = group.find_regions_containing_coordinates({ 650, 0 });
     EXPECT_EQ(containing_multi.size(), 1);
     EXPECT_EQ(containing_multi[0].get_label(), "multi_dim");
 
-    auto dimension_mismatch = group.find_points_containing_coordinates({ 250, 0, 0 }); // 3D coords
+    auto dimension_mismatch = group.find_regions_containing_coordinates({ 250, 0, 0 }); // 3D coords
     EXPECT_TRUE(dimension_mismatch.empty()); // Sustain is 1D, won't match
 }
 
@@ -692,9 +691,9 @@ TEST_F(RegionGroupTest, BoundingRegion)
     EXPECT_EQ(*source_group, "test_group");
 
     RegionGroup multi_group("multi_group");
-    multi_group.add_point(RegionPoint::audio_span(0, 100, 0, 1, "a"));
-    multi_group.add_point(RegionPoint::audio_span(50, 200, 1, 3, "b"));
-    multi_group.add_point(RegionPoint::audio_span(25, 150, 2, 2, "c"));
+    multi_group.add_region(Region::audio_span(0, 100, 0, 1, "a"));
+    multi_group.add_region(Region::audio_span(50, 200, 1, 3, "b"));
+    multi_group.add_region(Region::audio_span(25, 150, 2, 2, "c"));
 
     auto multi_bounding = multi_group.get_bounding_region();
     EXPECT_EQ(multi_bounding.start_coordinates[0], 0);
@@ -708,7 +707,7 @@ TEST_F(RegionGroupTest, BoundingRegion)
     EXPECT_TRUE(empty_bounding.end_coordinates.empty());
 
     RegionGroup single_group("single");
-    single_group.add_point(RegionPoint::time_point(500, "single"));
+    single_group.add_region(Region::time_point(500, "single"));
     auto single_bounding = single_group.get_bounding_region();
     EXPECT_EQ(single_bounding.start_coordinates[0], 500);
     EXPECT_EQ(single_bounding.end_coordinates[0], 500);
@@ -719,7 +718,7 @@ TEST_F(RegionGroupTest, StateAndTransitionManagement)
 
     EXPECT_EQ(group.state, RegionState::IDLE);
     EXPECT_EQ(group.transition_type, RegionTransition::IMMEDIATE);
-    EXPECT_EQ(group.point_selection_pattern, PointSelectionPattern::SEQUENTIAL);
+    EXPECT_EQ(group.region_selection_pattern, RegionSelectionPattern::SEQUENTIAL);
     EXPECT_EQ(group.transition_duration_ms, 0.0);
 
     group.state = RegionState::ACTIVE;
@@ -742,29 +741,29 @@ TEST_F(RegionGroupTest, StateAndTransitionManagement)
     group.transition_type = RegionTransition::CALLBACK;
     EXPECT_EQ(group.transition_type, RegionTransition::CALLBACK);
 
-    group.point_selection_pattern = PointSelectionPattern::RANDOM;
-    EXPECT_EQ(group.point_selection_pattern, PointSelectionPattern::RANDOM);
+    group.region_selection_pattern = RegionSelectionPattern::RANDOM;
+    EXPECT_EQ(group.region_selection_pattern, RegionSelectionPattern::RANDOM);
 
-    group.point_selection_pattern = PointSelectionPattern::ROUND_ROBIN;
-    EXPECT_EQ(group.point_selection_pattern, PointSelectionPattern::ROUND_ROBIN);
+    group.region_selection_pattern = RegionSelectionPattern::ROUND_ROBIN;
+    EXPECT_EQ(group.region_selection_pattern, RegionSelectionPattern::ROUND_ROBIN);
 
-    group.point_selection_pattern = PointSelectionPattern::WEIGHTED;
-    EXPECT_EQ(group.point_selection_pattern, PointSelectionPattern::WEIGHTED);
+    group.region_selection_pattern = RegionSelectionPattern::WEIGHTED;
+    EXPECT_EQ(group.region_selection_pattern, RegionSelectionPattern::WEIGHTED);
 
-    group.point_selection_pattern = PointSelectionPattern::OVERLAP;
-    EXPECT_EQ(group.point_selection_pattern, PointSelectionPattern::OVERLAP);
+    group.region_selection_pattern = RegionSelectionPattern::OVERLAP;
+    EXPECT_EQ(group.region_selection_pattern, RegionSelectionPattern::OVERLAP);
 
-    group.point_selection_pattern = PointSelectionPattern::EXCLUSIVE;
-    EXPECT_EQ(group.point_selection_pattern, PointSelectionPattern::EXCLUSIVE);
+    group.region_selection_pattern = RegionSelectionPattern::EXCLUSIVE;
+    EXPECT_EQ(group.region_selection_pattern, RegionSelectionPattern::EXCLUSIVE);
 
-    group.point_selection_pattern = PointSelectionPattern::CUSTOM;
-    EXPECT_EQ(group.point_selection_pattern, PointSelectionPattern::CUSTOM);
+    group.region_selection_pattern = RegionSelectionPattern::CUSTOM;
+    EXPECT_EQ(group.region_selection_pattern, RegionSelectionPattern::CUSTOM);
 }
 
 TEST_F(RegionGroupTest, ActiveIndicesManagement)
 {
 
-    EXPECT_EQ(group.current_point_index, 0);
+    EXPECT_EQ(group.current_region_index, 0);
     EXPECT_TRUE(group.active_indices.empty());
 
     group.active_indices = { 0, 2 };
@@ -772,11 +771,11 @@ TEST_F(RegionGroupTest, ActiveIndicesManagement)
     EXPECT_EQ(group.active_indices[0], 0);
     EXPECT_EQ(group.active_indices[1], 2);
 
-    group.current_point_index = 1;
-    EXPECT_EQ(group.current_point_index, 1);
+    group.current_region_index = 1;
+    EXPECT_EQ(group.current_region_index, 1);
 
-    group.current_point_index = 100;
-    EXPECT_EQ(group.current_point_index, 100);
+    group.current_region_index = 100;
+    EXPECT_EQ(group.current_region_index, 100);
 
     group.active_indices.clear();
     EXPECT_TRUE(group.active_indices.empty());
@@ -787,7 +786,7 @@ protected:
     void SetUp() override
     {
         test_data = std::vector<double> { 1.0, 2.0, 3.0, 4.0, 5.0 };
-        region = RegionPoint::time_span(100, 200, "cached_region");
+        region = Region::time_span(100, 200, "cached_region");
 
         cache.data = test_data;
         cache.source_region = region;
@@ -797,7 +796,7 @@ protected:
     }
 
     DataVariant test_data;
-    RegionPoint region;
+    Region region;
     RegionCache cache;
 };
 
@@ -890,23 +889,23 @@ protected:
     void SetUp() override
     {
 
-        region1 = RegionPoint::time_span(100, 200, "region1");
-        region2 = RegionPoint::time_span(150, 250, "region2");
-        region3 = RegionPoint::time_span(300, 400, "region3");
+        region1 = Region::time_span(100, 200, "region1");
+        region2 = Region::time_span(150, 250, "region2");
+        region3 = Region::time_span(300, 400, "region3");
 
-        point1 = RegionPoint::time_point(125, "point1");
-        point2 = RegionPoint::time_point(350, "point2");
+        reg1 = Region::time_point(125, "point1");
+        reg2 = Region::time_point(350, "point2");
 
         test_group = RegionGroup("utility_test");
-        test_group.add_point(region1);
-        test_group.add_point(region2);
-        test_group.add_point(region3);
-        test_group.add_point(point1);
-        test_group.add_point(point2);
+        test_group.add_region(region1);
+        test_group.add_region(region2);
+        test_group.add_region(region3);
+        test_group.add_region(reg1);
+        test_group.add_region(reg2);
     }
 
-    RegionPoint region1, region2, region3;
-    RegionPoint point1, point2;
+    Region region1, region2, region3;
+    Region reg1, reg2;
     RegionGroup test_group;
 };
 
@@ -917,11 +916,11 @@ TEST_F(RegionUtilityTest, RegionOverlapDetection)
     EXPECT_FALSE(region1.overlaps(region3)); // 100-200 doesn't overlap 300-400
     EXPECT_FALSE(region1.overlaps(region3)); // 150-250 doesn't overlap 300-400
 
-    EXPECT_TRUE(point1.overlaps(region1)); // point at 125 overlaps 100-200
-    EXPECT_FALSE(point2.overlaps(region1)); // point at 350 doesn't overlap 100-200
+    EXPECT_TRUE(reg1.overlaps(region1)); // point at 125 overlaps 100-200
+    EXPECT_FALSE(reg2.overlaps(region1)); // point at 350 doesn't overlap 100-200
 
     EXPECT_TRUE(region1.overlaps(region1));
-    EXPECT_TRUE(point1.overlaps(point1));
+    EXPECT_TRUE(reg1.overlaps(reg1));
 }
 
 TEST_F(RegionUtilityTest, RegionContainment)
@@ -935,7 +934,7 @@ TEST_F(RegionUtilityTest, RegionContainment)
     EXPECT_FALSE(region1.contains({ 99 })); // just before
     EXPECT_FALSE(region1.contains({ 201 })); // just after
 
-    auto multi_region = RegionPoint::audio_span(100, 200, 0, 2, "multi");
+    auto multi_region = Region::audio_span(100, 200, 0, 2, "multi");
     EXPECT_TRUE(multi_region.contains({ 150, 1 }));
     EXPECT_FALSE(multi_region.contains({ 150, 3 }));
     EXPECT_FALSE(multi_region.contains({ 250, 1 }));
@@ -952,7 +951,7 @@ TEST_F(RegionUtilityTest, RegionTransformations)
     EXPECT_EQ(neg_translated.start_coordinates[0], 50); // 100 - 50
     EXPECT_EQ(neg_translated.end_coordinates[0], 150); // 200 - 50
 
-    auto multi_region = RegionPoint::audio_span(100, 200, 1, 2, "multi");
+    auto multi_region = Region::audio_span(100, 200, 1, 2, "multi");
     auto multi_translated = translate_region(multi_region, { 10, -1 });
     EXPECT_EQ(multi_translated.start_coordinates[0], 110);
     EXPECT_EQ(multi_translated.start_coordinates[1], 0);
@@ -985,7 +984,7 @@ TEST_F(RegionUtilityTest, GroupBoundingRegion)
     EXPECT_TRUE(empty_bounding.start_coordinates.empty());
 
     RegionGroup single_group("single");
-    single_group.add_point(point1);
+    single_group.add_region(reg1);
     auto single_bounding = get_bounding_region(single_group);
     EXPECT_EQ(single_bounding.start_coordinates[0], 125);
     EXPECT_EQ(single_bounding.end_coordinates[0], 125);
@@ -993,9 +992,9 @@ TEST_F(RegionUtilityTest, GroupBoundingRegion)
 
 TEST_F(RegionUtilityTest, PointSorting)
 {
-    std::vector<RegionPoint> points = { region3, region1, region2, point2, point1 };
+    std::vector<Region> points = { region3, region1, region2, reg2, reg1 };
 
-    sort_points_by_dimension(points, 0);
+    sort_regions_by_dimension(points, 0);
     EXPECT_EQ(points[0].start_coordinates[0], 100); // region1
     EXPECT_EQ(points[1].start_coordinates[0], 125); // point1
     EXPECT_EQ(points[2].start_coordinates[0], 150); // region2
@@ -1013,14 +1012,14 @@ TEST_F(RegionUtilityTest, PointSorting)
             point.set_attribute("priority", std::string("high"));
     }
 
-    sort_points_by_attribute(points, "priority");
+    sort_regions_by_attribute(points, "priority");
     // Should group by priority: high, low, medium (alphabetical)
     // Implementation may vary, but should handle string sorting
 }
 
 TEST_F(RegionUtilityTest, AttributeUtilities)
 {
-    RegionPoint test_point = RegionPoint::time_point(100, "test");
+    Region test_point = Region::time_point(100, "test");
 
     set_region_attribute(test_point, "energy", 0.75);
     set_region_attribute(test_point, "frequency", 440.0);
@@ -1041,17 +1040,17 @@ TEST_F(RegionUtilityTest, AttributeUtilities)
     test_point.set_label("test_label");
     EXPECT_EQ(test_point.get_label(), "test_label");
 
-    test_group.points[0].set_attribute("category", std::string("onset"));
-    test_group.points[1].set_attribute("category", std::string("sustain"));
-    test_group.points[2].set_attribute("category", std::string("release"));
+    test_group.regions[0].set_attribute("category", std::string("onset"));
+    test_group.regions[1].set_attribute("category", std::string("sustain"));
+    test_group.regions[2].set_attribute("category", std::string("release"));
 
-    auto onset_points = find_points_with_label(test_group, "region1");
+    auto onset_points = find_regions_with_label(test_group, "region1");
     EXPECT_EQ(onset_points.size(), 1);
 
-    auto category_points = find_points_with_attribute(test_group, "category", std::string("onset"));
+    auto category_points = find_regions_with_attribute(test_group, "category", std::string("onset"));
     EXPECT_EQ(category_points.size(), 1);
 
-    auto containing_points = find_points_containing_coordinates(test_group, { 175 });
+    auto containing_points = find_regions_containing_coordinates(test_group, { 175 });
     EXPECT_EQ(containing_points.size(), 2);
 }
 
@@ -1060,30 +1059,30 @@ protected:
     void SetUp() override
     {
 
-        onset_detection = RegionPoint::time_point(1000, "onset");
+        onset_detection = Region::time_point(1000, "onset");
         onset_detection.set_attribute("energy", 0.85);
         onset_detection.set_attribute("spectral_flux", 0.72);
         onset_detection.set_attribute("algorithm", std::string("complex_domain"));
 
-        formant_region = RegionPoint::audio_span(500, 1500, 800, 1200, "formant_f1");
+        formant_region = Region::audio_span(500, 1500, 800, 1200, "formant_f1");
         formant_region.set_attribute("center_frequency", 950.0);
         formant_region.set_attribute("bandwidth", 100.0);
         formant_region.set_attribute("formant_number", 1);
 
-        zero_crossing_cluster = RegionPoint::time_span(2000, 2100, "zc_cluster");
+        zero_crossing_cluster = Region::time_span(2000, 2100, "zc_cluster");
         zero_crossing_cluster.set_attribute("crossing_rate", 25.5);
         zero_crossing_cluster.set_attribute("rms_level", -18.0);
         zero_crossing_cluster.set_attribute("spectral_centroid", 3500.0);
 
-        transient_segment = RegionSegment(RegionPoint::time_span(0, 512, "transient"));
+        transient_segment = RegionSegment(Region::time_span(0, 512, "transient"));
         transient_segment.set_processing_metadata("attack_time", 0.003);
         transient_segment.set_processing_metadata("decay_coefficient", 0.95);
         transient_segment.set_processing_metadata("filter_cutoff", 8000.0);
     }
 
-    RegionPoint onset_detection;
-    RegionPoint formant_region;
-    RegionPoint zero_crossing_cluster;
+    Region onset_detection;
+    Region formant_region;
+    Region zero_crossing_cluster;
     RegionSegment transient_segment;
 };
 
@@ -1102,22 +1101,22 @@ TEST_F(DSPRegionTest, OnsetDetectionAnalysis)
     EXPECT_DOUBLE_EQ(*flux, 0.72);
 
     RegionGroup onset_group("onset_analysis");
-    onset_group.add_point(onset_detection);
+    onset_group.add_region(onset_detection);
 
-    auto onset2 = RegionPoint::time_point(1500, "onset");
+    auto onset2 = Region::time_point(1500, "onset");
     onset2.set_attribute("energy", 0.92);
     onset2.set_attribute("spectral_flux", 0.81);
     onset2.set_attribute("algorithm", std::string("complex_domain"));
-    onset_group.add_point(onset2);
+    onset_group.add_region(onset2);
 
-    auto onset3 = RegionPoint::time_point(2200, "onset");
+    auto onset3 = Region::time_point(2200, "onset");
     onset3.set_attribute("energy", 0.78);
     onset3.set_attribute("spectral_flux", 0.65);
     onset3.set_attribute("algorithm", std::string("phase_deviation"));
-    onset_group.add_point(onset3);
+    onset_group.add_region(onset3);
 
-    std::vector<RegionPoint> high_energy_onsets;
-    for (const auto& point : onset_group.points) {
+    std::vector<Region> high_energy_onsets;
+    for (const auto& point : onset_group.regions) {
         auto energy_val = point.get_attribute<double>("energy");
         if (energy_val && *energy_val > 0.8) {
             high_energy_onsets.push_back(point);
@@ -1127,10 +1126,10 @@ TEST_F(DSPRegionTest, OnsetDetectionAnalysis)
     EXPECT_EQ(high_energy_onsets.size(), 2); // onset1 and onset2
 
     std::vector<double> ioi_values;
-    if (onset_group.points.size() > 1) {
-        sort_points_by_dimension(onset_group.points, 0);
-        for (size_t i = 1; i < onset_group.points.size(); i++) {
-            double ioi = onset_group.points[i].start_coordinates[0] - onset_group.points[i - 1].start_coordinates[0];
+    if (onset_group.regions.size() > 1) {
+        sort_regions_by_dimension(onset_group.regions, 0);
+        for (size_t i = 1; i < onset_group.regions.size(); i++) {
+            double ioi = onset_group.regions[i].start_coordinates[0] - onset_group.regions[i - 1].start_coordinates[0];
             ioi_values.push_back(ioi);
         }
     }
@@ -1154,25 +1153,25 @@ TEST_F(DSPRegionTest, SpectralRegionAnalysis)
     EXPECT_DOUBLE_EQ(*center_freq, 950.0);
 
     RegionGroup formant_group("formant_tracking");
-    formant_group.add_point(formant_region);
+    formant_group.add_region(formant_region);
 
-    auto formant2 = RegionPoint::audio_span(500, 1500, 1800, 2200, "formant_f2");
+    auto formant2 = Region::audio_span(500, 1500, 1800, 2200, "formant_f2");
     formant2.set_attribute("center_frequency", 2000.0);
     formant2.set_attribute("bandwidth", 150.0);
     formant2.set_attribute("formant_number", 2);
-    formant_group.add_point(formant2);
+    formant_group.add_region(formant2);
 
-    auto formant3 = RegionPoint::audio_span(500, 1500, 2700, 3300, "formant_f3");
+    auto formant3 = Region::audio_span(500, 1500, 2700, 3300, "formant_f3");
     formant3.set_attribute("center_frequency", 3000.0);
     formant3.set_attribute("bandwidth", 200.0);
     formant3.set_attribute("formant_number", 3);
-    formant_group.add_point(formant3);
+    formant_group.add_region(formant3);
 
     std::vector<double> formant_ratios;
-    if (formant_group.points.size() >= 3) {
-        auto f1 = formant_group.points[0].get_attribute<double>("center_frequency");
-        auto f2 = formant_group.points[1].get_attribute<double>("center_frequency");
-        auto f3 = formant_group.points[2].get_attribute<double>("center_frequency");
+    if (formant_group.regions.size() >= 3) {
+        auto f1 = formant_group.regions[0].get_attribute<double>("center_frequency");
+        auto f2 = formant_group.regions[1].get_attribute<double>("center_frequency");
+        auto f3 = formant_group.regions[2].get_attribute<double>("center_frequency");
 
         if (f1 && f2 && f3) {
             formant_ratios.push_back(*f2 / *f1);
@@ -1187,7 +1186,7 @@ TEST_F(DSPRegionTest, SpectralRegionAnalysis)
     double weighted_sum = 0.0;
     double total_weight = 0.0;
 
-    for (const auto& formant : formant_group.points) {
+    for (const auto& formant : formant_group.regions) {
         auto center = formant.get_attribute<double>("center_frequency");
         auto bandwidth = formant.get_attribute<double>("bandwidth");
 
@@ -1200,7 +1199,7 @@ TEST_F(DSPRegionTest, SpectralRegionAnalysis)
     double spectral_centroid = weighted_sum / total_weight;
     EXPECT_GT(spectral_centroid, 0.0);
 
-    auto f2_formants = find_points_containing_coordinates(formant_group, { 1000, 2000 });
+    auto f2_formants = find_regions_containing_coordinates(formant_group, { 1000, 2000 });
     EXPECT_EQ(f2_formants.size(), 1);
     EXPECT_EQ(f2_formants[0].get_label(), "formant_f2");
 }
@@ -1222,21 +1221,21 @@ TEST_F(DSPRegionTest, TransientProcessing)
 
     std::vector<RegionSegment> drum_hits;
 
-    auto kick = RegionSegment(RegionPoint::time_span(1000, 1512, "kick"));
+    auto kick = RegionSegment(Region::time_span(1000, 1512, "kick"));
     kick.set_processing_metadata("attack_time", 0.005);
     kick.set_processing_metadata("decay_coefficient", 0.98);
     kick.set_processing_metadata("peak_frequency", 80.0);
     kick.set_processing_metadata("instrument", std::string("kick_drum"));
     drum_hits.push_back(kick);
 
-    auto snare = RegionSegment(RegionPoint::time_span(2000, 2512, "snare"));
+    auto snare = RegionSegment(Region::time_span(2000, 2512, "snare"));
     snare.set_processing_metadata("attack_time", 0.002);
     snare.set_processing_metadata("decay_coefficient", 0.92);
     snare.set_processing_metadata("peak_frequency", 240.0);
     snare.set_processing_metadata("instrument", std::string("snare_drum"));
     drum_hits.push_back(snare);
 
-    auto hihat = RegionSegment(RegionPoint::time_span(3000, 3256, "hihat"));
+    auto hihat = RegionSegment(Region::time_span(3000, 3256, "hihat"));
     hihat.set_processing_metadata("attack_time", 0.001);
     hihat.set_processing_metadata("decay_coefficient", 0.85);
     hihat.set_processing_metadata("peak_frequency", 8000.0);
@@ -1297,24 +1296,24 @@ TEST_F(DSPRegionTest, ZeroCrossingAnalysis)
     EXPECT_DOUBLE_EQ(*rms_level, -18.0);
 
     RegionGroup zc_group("zero_crossing_analysis");
-    zc_group.add_point(zero_crossing_cluster);
+    zc_group.add_region(zero_crossing_cluster);
 
-    auto zc2 = RegionPoint::time_span(2200, 2300, "zc_cluster");
+    auto zc2 = Region::time_span(2200, 2300, "zc_cluster");
     zc2.set_attribute("crossing_rate", 35.2);
     zc2.set_attribute("rms_level", -15.0);
     zc2.set_attribute("spectral_centroid", 4200.0);
-    zc_group.add_point(zc2);
+    zc_group.add_region(zc2);
 
-    auto zc3 = RegionPoint::time_span(2400, 2500, "zc_cluster");
+    auto zc3 = Region::time_span(2400, 2500, "zc_cluster");
     zc3.set_attribute("crossing_rate", 18.7);
     zc3.set_attribute("rms_level", -22.0);
     zc3.set_attribute("spectral_centroid", 2800.0);
-    zc_group.add_point(zc3);
+    zc_group.add_region(zc3);
 
-    std::vector<RegionPoint> noise_regions;
-    std::vector<RegionPoint> tonal_regions;
+    std::vector<Region> noise_regions;
+    std::vector<Region> tonal_regions;
 
-    for (auto& region : zc_group.points) {
+    for (auto& region : zc_group.regions) {
         auto zcr = region.get_attribute<double>("crossing_rate");
         if (zcr) {
             if (*zcr > 30.0) {
@@ -1331,11 +1330,11 @@ TEST_F(DSPRegionTest, ZeroCrossingAnalysis)
     EXPECT_EQ(tonal_regions.size(), 2);
 
     bool correlation_positive = true;
-    for (size_t i = 1; i < zc_group.points.size(); i++) {
-        auto zcr1 = zc_group.points[i - 1].get_attribute<double>("crossing_rate");
-        auto zcr2 = zc_group.points[i].get_attribute<double>("crossing_rate");
-        auto sc1 = zc_group.points[i - 1].get_attribute<double>("spectral_centroid");
-        auto sc2 = zc_group.points[i].get_attribute<double>("spectral_centroid");
+    for (size_t i = 1; i < zc_group.regions.size(); i++) {
+        auto zcr1 = zc_group.regions[i - 1].get_attribute<double>("crossing_rate");
+        auto zcr2 = zc_group.regions[i].get_attribute<double>("crossing_rate");
+        auto sc1 = zc_group.regions[i - 1].get_attribute<double>("spectral_centroid");
+        auto sc2 = zc_group.regions[i].get_attribute<double>("spectral_centroid");
 
         if (zcr1 && zcr2 && sc1 && sc2) {
 

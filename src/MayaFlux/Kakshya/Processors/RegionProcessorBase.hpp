@@ -142,7 +142,7 @@ protected:
      * @param container The container providing the data.
      * @return DataVariant containing the region's data.
      */
-    virtual DataVariant extract_region_data(const RegionPoint& region,
+    virtual DataVariant extract_region_data(const Region& region,
         std::shared_ptr<SignalSourceContainer> container);
 
     /**

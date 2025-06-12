@@ -32,8 +32,8 @@ public:
     u_int64_t get_frame_size() const override;
     u_int64_t get_num_frames() const override;
 
-    DataVariant get_region_data(const RegionPoint& region) const override;
-    void set_region_data(const RegionPoint& region, const DataVariant& data) override;
+    DataVariant get_region_data(const Region& region) const override;
+    void set_region_data(const Region& region, const DataVariant& data) override;
 
     std::span<const double> get_frame(u_int64_t frame_index) const override;
     void get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const override;
@@ -58,9 +58,9 @@ public:
     std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
-    bool is_region_loaded(const RegionPoint& region) const override;
-    void load_region(const RegionPoint& region) override;
-    void unload_region(const RegionPoint& region) override;
+    bool is_region_loaded(const Region& region) const override;
+    void load_region(const Region& region) override;
+    void unload_region(const Region& region) override;
 
     // ===== StreamContainer Implementation =====
     void set_read_position(u_int64_t position) override;
@@ -75,8 +75,8 @@ public:
 
     void set_looping(bool enable) override;
     bool is_looping() const override { return m_looping_enabled; }
-    void set_loop_region(const RegionPoint& region) override;
-    RegionPoint get_loop_region() const override;
+    void set_loop_region(const Region& region) override;
+    Region get_loop_region() const override;
 
     bool is_ready() const override;
     u_int64_t get_remaining_frames() const override;
@@ -173,7 +173,7 @@ private:
     // ===== Stream State =====
     std::atomic<u_int64_t> m_read_position { 0 };
     bool m_looping_enabled = false;
-    RegionPoint m_loop_region;
+    Region m_loop_region;
 
     // ===== Processing State =====
     std::atomic<ProcessingState> m_processing_state { ProcessingState::IDLE };

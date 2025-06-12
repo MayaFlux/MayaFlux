@@ -7,7 +7,7 @@ namespace MayaFlux::Kakshya {
 /**
  * @brief Forward declarations for region structures used in N-dimensional data containers.
  */
-struct RegionPoint;
+struct Region;
 struct RegionGroup;
 
 /**
@@ -234,14 +234,14 @@ public:
      * @param region The region to extract data from
      * @return DataVariant containing the region's data
      */
-    virtual DataVariant get_region_data(const RegionPoint& region) const = 0;
+    virtual DataVariant get_region_data(const Region& region) const = 0;
 
     /**
      * @brief Set data for a specific region.
      * @param region The region to write data to
      * @param data The data to write
      */
-    virtual void set_region_data(const RegionPoint& region, const DataVariant& data) = 0;
+    virtual void set_region_data(const Region& region, const DataVariant& data) = 0;
 
     /**
      * @brief Get a single frame of data efficiently.
@@ -302,19 +302,19 @@ public:
      * @param region Region to check
      * @return true if region is loaded, false otherwise
      */
-    virtual bool is_region_loaded(const RegionPoint& region) const = 0;
+    virtual bool is_region_loaded(const Region& region) const = 0;
 
     /**
      * @brief Load a region into memory.
      * @param region Region to load
      */
-    virtual void load_region(const RegionPoint& region) = 0;
+    virtual void load_region(const Region& region) = 0;
 
     /**
      * @brief Unload a region from memory.
      * @param region Region to unload
      */
-    virtual void unload_region(const RegionPoint& region) = 0;
+    virtual void unload_region(const Region& region) = 0;
 
     /**
      * @brief Convert coordinates to linear index based on current memory layout.

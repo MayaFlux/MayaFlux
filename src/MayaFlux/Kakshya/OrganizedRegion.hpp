@@ -13,12 +13,12 @@ namespace MayaFlux::Kakshya {
  */
 struct OrganizedRegion {
     std::string group_name; ///< Name of the region group
-    size_t point_index; ///< Index within the group
+    size_t region_index; ///< Index within the group
     std::vector<RegionSegment> segments; ///< Audio segments in this region
     std::unordered_map<std::string, std::any> attributes; ///< Extensible metadata
     RegionTransition transition_type = RegionTransition::IMMEDIATE; ///< Transition to next region
     double transition_duration_ms = 0.0; ///< Duration of transition in milliseconds
-    PointSelectionPattern selection_pattern = PointSelectionPattern::SEQUENTIAL;
+    RegionSelectionPattern selection_pattern = RegionSelectionPattern::SEQUENTIAL;
 
     RegionState state = RegionState::IDLE;
     std::vector<u_int64_t> current_position; ///< Current read position
@@ -34,7 +34,7 @@ struct OrganizedRegion {
 
     OrganizedRegion(const std::string& name, size_t index)
         : group_name(name)
-        , point_index(index)
+        , region_index(index)
     {
     }
 

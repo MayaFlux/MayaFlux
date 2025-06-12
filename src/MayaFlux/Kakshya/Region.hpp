@@ -5,14 +5,14 @@
 namespace MayaFlux::Kakshya {
 
 /**
- * @enum PointSelectionPattern
- * @brief Describes how points or regions are selected for processing or playback.
+ * @enum RegionSelectionPattern
+ * @brief Describes how regions are selected for processing or playback.
  */
-enum class PointSelectionPattern {
-    ALL, ///< Process all points
-    SEQUENTIAL, ///< Process points in order
+enum class RegionSelectionPattern {
+    ALL, ///< Process all regions
+    SEQUENTIAL, ///< Process regions in order
     RANDOM, ///< Random selection
-    ROUND_ROBIN, ///< Cycle through points
+    ROUND_ROBIN, ///< Cycle through regions
     WEIGHTED, ///< Weighted random selection
     OVERLAP, ///< Overlapping selection
     EXCLUSIVE, ///< Mutually exclusive selection
@@ -45,11 +45,11 @@ enum class RegionState {
 };
 
 /**
- * @struct RegionPoint
+ * @struct Region
  * @brief Represents a point or span in N-dimensional space.
  *
- * RegionPoints represent precise locations or segments within signal data,
- * defined by start and end frame positions. Each point can have additional
+ * Regions represent precise locations or segments within signal data,
+ * defined by start and end frame positions. Each region can have additional
  * attributes stored in a flexible key-value map, allowing for rich metadata
  * association with each point.
  *
@@ -64,24 +64,24 @@ enum class RegionState {
  * associated with specific signal locations, enabling advanced signal processing
  * workflows and algorithmic decision-making.
  */
-struct RegionPoint {
+struct Region {
     /** @brief Starting frame index (inclusive) */
     std::vector<u_int64_t> start_coordinates;
 
     /** @brief Ending frame index (inclusive) */
     std::vector<u_int64_t> end_coordinates;
 
-    /** @brief Flexible key-value store for point-specific attributes */
+    /** @brief Flexible key-value store for region-specific attributes */
     std::unordered_map<std::string, std::any> attributes;
 
-    RegionPoint() = default;
+    Region() = default;
 
     /**
      * @brief Construct a point-like region (single coordinate).
      * @param coordinates The N-dimensional coordinates.
      * @param attributes Optional metadata.
      */
-    RegionPoint(std::vector<u_int64_t> coordinates,
+    Region(std::vector<u_int64_t> coordinates,
         std::unordered_map<std::string, std::any> attributes = {})
         : start_coordinates(coordinates)
         , end_coordinates(coordinates)
@@ -95,7 +95,7 @@ struct RegionPoint {
      * @param end End coordinates (inclusive).
      * @param attributes Optional metadata.
      */
-    RegionPoint(std::vector<u_int64_t> start,
+    Region(std::vector<u_int64_t> start,
         std::vector<u_int64_t> end,
         std::unordered_map<std::string, std::any> attributes = {})
         : start_coordinates(std::move(start))
@@ -105,13 +105,13 @@ struct RegionPoint {
     }
 
     /**
-     * @brief Create a RegionPoint representing a single time point (e.g., a frame or sample).
+     * @brief Create a Region representing a single time point (e.g., a frame or sample).
      * @param frame The frame index (time coordinate).
      * @param label Optional label for this point.
      * @param extra_data Optional extra metadata (e.g., analysis result).
-     * @return RegionPoint at the specified frame.
+     * @return Region at the specified frame.
      */
-    static RegionPoint time_point(u_int64_t frame,
+    static Region time_point(u_int64_t frame,
         const std::string& label = "",
         std::any extra_data = {})
     {
@@ -121,18 +121,18 @@ struct RegionPoint {
         if (extra_data.has_value())
             attrs["data"] = extra_data;
         attrs["type"] = "time_point";
-        return RegionPoint({ frame }, attrs);
+        return Region({ frame }, attrs);
     }
 
     /**
-     * @brief Create a RegionPoint representing a time span (e.g., a segment of frames).
+     * @brief Create a Region representing a time span (e.g., a segment of frames).
      * @param start_frame Start frame index (inclusive).
      * @param end_frame End frame index (inclusive).
      * @param label Optional label for this span.
      * @param extra_data Optional extra metadata.
-     * @return RegionPoint covering the specified time span.
+     * @return Region covering the specified time span.
      */
-    static RegionPoint time_span(u_int64_t start_frame,
+    static Region time_span(u_int64_t start_frame,
         u_int64_t end_frame,
         const std::string& label = "",
         std::any extra_data = {})
@@ -143,17 +143,17 @@ struct RegionPoint {
         if (extra_data.has_value())
             attrs["data"] = extra_data;
         attrs["type"] = "time_span";
-        return RegionPoint({ start_frame }, { end_frame }, attrs);
+        return Region({ start_frame }, { end_frame }, attrs);
     }
 
     /**
-     * @brief Create a RegionPoint for a single audio sample/channel location.
+     * @brief Create a Region for a single audio sample/channel location.
      * @param frame The frame index (time).
      * @param channel The channel index.
-     * @param label Optional label for this point.
-     * @return RegionPoint at the specified frame/channel.
+     * @param label Optional label for this region.
+     * @return Region at the specified frame/channel.
      */
-    static RegionPoint audio_point(u_int64_t frame,
+    static Region audio_point(u_int64_t frame,
         u_int32_t channel,
         const std::string& label = "")
     {
@@ -161,19 +161,19 @@ struct RegionPoint {
         if (!label.empty())
             attrs["label"] = label;
         attrs["type"] = "audio_point";
-        return RegionPoint({ frame, channel }, attrs);
+        return Region({ frame, channel }, attrs);
     }
 
     /**
-     * @brief Create a RegionPoint representing a span in audio (frames and channels).
+     * @brief Create a Region representing a span in audio (frames and channels).
      * @param start_frame Start frame index (inclusive).
      * @param end_frame End frame index (inclusive).
      * @param start_channel Start channel index (inclusive).
      * @param end_channel End channel index (inclusive).
      * @param label Optional label for this region.
-     * @return RegionPoint covering the specified audio region.
+     * @return Region covering the specified audio region.
      */
-    static RegionPoint audio_span(u_int64_t start_frame,
+    static Region audio_span(u_int64_t start_frame,
         u_int64_t end_frame,
         u_int32_t start_channel,
         u_int32_t end_channel,
@@ -183,20 +183,20 @@ struct RegionPoint {
         if (!label.empty())
             attrs["label"] = label;
         attrs["type"] = "audio_region";
-        return RegionPoint({ start_frame, start_channel },
+        return Region({ start_frame, start_channel },
             { end_frame, end_channel }, attrs);
     }
 
     /**
-     * @brief Create a RegionPoint representing a rectangular region in an image.
+     * @brief Create a Region representing a rectangular region in an image.
      * @param x1 Top-left X coordinate.
      * @param y1 Top-left Y coordinate.
      * @param x2 Bottom-right X coordinate.
      * @param y2 Bottom-right Y coordinate.
      * @param label Optional label for this rectangle.
-     * @return RegionPoint covering the specified image rectangle.
+     * @return Region covering the specified image rectangle.
      */
-    static RegionPoint image_rect(u_int64_t x1, u_int64_t y1,
+    static Region image_rect(u_int64_t x1, u_int64_t y1,
         u_int64_t x2, u_int64_t y2,
         const std::string& label = "")
     {
@@ -204,11 +204,11 @@ struct RegionPoint {
         if (!label.empty())
             attrs["label"] = label;
         attrs["type"] = "image_rect";
-        return RegionPoint({ x1, y1 }, { x2, y2 }, attrs);
+        return Region({ x1, y1 }, { x2, y2 }, attrs);
     }
 
     /**
-     * @brief Create a RegionPoint representing a region in a video (frames and spatial rectangle).
+     * @brief Create a Region representing a region in a video (frames and spatial rectangle).
      * @param start_frame Start frame index (inclusive).
      * @param end_frame End frame index (inclusive).
      * @param x1 Top-left X coordinate.
@@ -216,9 +216,9 @@ struct RegionPoint {
      * @param x2 Bottom-right X coordinate.
      * @param y2 Bottom-right Y coordinate.
      * @param label Optional label for this region.
-     * @return RegionPoint covering the specified video region.
+     * @return Region covering the specified video region.
      */
-    static RegionPoint video_region(u_int64_t start_frame,
+    static Region video_region(u_int64_t start_frame,
         u_int64_t end_frame,
         u_int64_t x1, u_int64_t y1,
         u_int64_t x2, u_int64_t y2,
@@ -228,7 +228,7 @@ struct RegionPoint {
         if (!label.empty())
             attrs["label"] = label;
         attrs["type"] = "video_region";
-        return RegionPoint({ start_frame, x1, y1 },
+        return Region({ start_frame, x1, y1 },
             { end_frame, x2, y2 }, attrs);
     }
 
@@ -263,7 +263,7 @@ struct RegionPoint {
      * @param other The other region.
      * @return True if overlapping, false otherwise.
      */
-    bool overlaps(const RegionPoint& other) const
+    bool overlaps(const Region& other) const
     {
         if (start_coordinates.size() != other.start_coordinates.size())
             return false;
@@ -395,11 +395,11 @@ struct RegionPoint {
     /**
      * @brief Translate the region by an offset vector.
      * @param offset The offset for each dimension (can be negative).
-     * @return A new translated RegionPoint.
+     * @return A new translated Region.
      */
-    RegionPoint translate(const std::vector<int64_t>& offset) const
+    Region translate(const std::vector<int64_t>& offset) const
     {
-        RegionPoint result = *this;
+        Region result = *this;
         for (size_t i = 0; i < std::min(offset.size(), start_coordinates.size()); i++) {
             if (offset[i] < 0 && std::abs(offset[i]) > result.start_coordinates[i]) {
                 result.start_coordinates[i] = 0;
@@ -419,11 +419,11 @@ struct RegionPoint {
     /**
      * @brief Scale the region about its center by the given factors.
      * @param factors Scaling factors for each dimension.
-     * @return A new scaled RegionPoint.
+     * @return A new scaled Region.
      */
-    RegionPoint scale(const std::vector<double>& factors) const
+    Region scale(const std::vector<double>& factors) const
     {
-        RegionPoint result = *this;
+        Region result = *this;
         for (size_t i = 0; i < std::min(factors.size(), start_coordinates.size()); i++) {
             u_int64_t center = (start_coordinates[i] + end_coordinates[i]) / 2;
             u_int64_t half_span = get_span(i) / 2;
@@ -436,9 +436,9 @@ struct RegionPoint {
     }
 
     /**
-     * @brief Equality comparison for RegionPoints.
+     * @brief Equality comparison for Regions.
      */
-    bool operator==(const RegionPoint& other) const
+    bool operator==(const Region& other) const
     {
         if (start_coordinates.size() != other.start_coordinates.size() || end_coordinates.size() != other.end_coordinates.size()) {
             return false;
@@ -460,9 +460,9 @@ struct RegionPoint {
     }
 
     /**
-     * @brief Inequality comparison for RegionPoints.
+     * @brief Inequality comparison for Regions.
      */
-    bool operator!=(const RegionPoint& other) const
+    bool operator!=(const Region& other) const
     {
         return !(*this == other);
     }
@@ -474,7 +474,7 @@ struct RegionPoint {
  */
 struct RegionCache {
     DataVariant data; ///< Cached data
-    RegionPoint source_region; ///< Region this cache corresponds to
+    Region source_region; ///< Region this cache corresponds to
     std::chrono::steady_clock::time_point load_time; ///< When cache was loaded
     size_t access_count = 0; ///< Number of times accessed
     bool is_dirty = false; ///< Whether cache is dirty
@@ -503,7 +503,7 @@ struct RegionCache {
  * playback and manipulation in non-linear processing contexts.
  */
 struct RegionSegment {
-    RegionPoint source_region; ///< Associated region point
+    Region source_region; ///< Associated region
     std::vector<u_int64_t> offset_in_region; ///< Offset within the source region
     std::vector<u_int64_t> segment_size; ///< Size in each dimension
 
@@ -522,7 +522,7 @@ struct RegionSegment {
      * @brief Construct a segment from a region (full region).
      * @param region The source region.
      */
-    explicit RegionSegment(const RegionPoint& region)
+    explicit RegionSegment(const Region& region)
         : source_region(region)
         , offset_in_region(region.start_coordinates.size(), 0)
         , segment_size(region.start_coordinates.size())
@@ -539,7 +539,7 @@ struct RegionSegment {
      * @param offset Offset within the region.
      * @param size Size of the segment.
      */
-    RegionSegment(const RegionPoint& region,
+    RegionSegment(const Region& region,
         const std::vector<u_int64_t>& offset,
         const std::vector<u_int64_t>& size)
         : source_region(region)
@@ -718,11 +718,11 @@ struct RegionSegment {
 
 /**
  * @struct RegionGroup
- * @brief Organizes related signal points into a categorized collection.
+ * @brief Organizes related signal regions into a categorized collection.
  *
- * RegionGroups provide a way to categorize and organize related points within
+ * RegionGroups provide a way to categorize and organize related regions within
  * signal data based on algorithmic or analytical criteria. Each group has a name
- * and can contain multiple RegionPoints, as well as group-level attributes that
+ * and can contain multiple Regions, as well as group-level attributes that
  * apply to the entire collection.
  *
  * Common DSP-specific applications include:
@@ -740,113 +740,113 @@ struct RegionGroup {
     /** @brief Descriptive name of the group */
     std::string name;
 
-    /** @brief Collection of points belonging to this group */
-    std::vector<RegionPoint> points;
+    /** @brief Collection of regions belonging to this group */
+    std::vector<Region> regions;
 
     /** @brief Flexible key-value store for group-specific attributes */
     std::unordered_map<std::string, std::any> attributes;
 
     RegionState state = RegionState::IDLE;
     RegionTransition transition_type = RegionTransition::IMMEDIATE;
-    PointSelectionPattern point_selection_pattern = PointSelectionPattern::SEQUENTIAL;
+    RegionSelectionPattern region_selection_pattern = RegionSelectionPattern::SEQUENTIAL;
     double transition_duration_ms = 0.0;
 
-    size_t current_point_index = 0;
+    size_t current_region_index = 0;
     std::vector<size_t> active_indices;
 
     // Optional processing callbacks
-    std::function<void(const RegionPoint&)> on_region_start;
-    std::function<void(const RegionPoint&)> on_region_end;
-    std::function<void(const RegionPoint&, const RegionPoint&)> on_transition;
+    std::function<void(const Region&)> on_region_start;
+    std::function<void(const Region&)> on_region_end;
+    std::function<void(const Region&, const Region&)> on_transition;
 
     RegionGroup() = default;
 
     /**
      * @brief Construct a region group.
      * @param group_name Name of the group.
-     * @param region_points Points to include.
+     * @param regions Regions to include.
      * @param attrs Optional group-level attributes.
      */
     RegionGroup(std::string group_name,
-        std::vector<RegionPoint> region_points = {},
+        std::vector<Region> regions = {},
         std::unordered_map<std::string, std::any> attrs = {})
         : name(std::move(group_name))
-        , points(std::move(region_points))
+        , regions(std::move(regions))
         , attributes(std::move(attrs))
     {
     }
 
     /* static RegionGroup create_sequential_group(std::string group_name,
-        std::vector<RegionPoint> region_points,
+        std::vector<Region> regions,
         std::unordered_map<std::string, std::any> attributes = {})
     {
-        RegionGroup group(group_name, region_points, attributes);
-        group.point_selection_pattern = PointSelectionPattern::SEQUENTIAL;
-        group.set_attribute("point_selection_pattern", PointSelectionPattern::SEQUENTIAL);
+        RegionGroup group(group_name, regions, attributes);
+        group.region_selection_pattern = RegionSelectionPattern::SEQUENTIAL;
+        group.set_attribute("region_selection_pattern", RegionSelectionPattern::SEQUENTIAL);
         return group;
     }
 
     static RegionGroup create_random_pool(std::string group_name,
-        std::vector<RegionPoint> region_points,
+        std::vector<Region> regions,
         std::unordered_map<std::string, std::any> attributes = {})
     {
-        RegionGroup group(group_name, region_points, attributes);
-        group.point_selection_pattern = PointSelectionPattern::RANDOM;
-        group.set_attribute("point_selection_pattern", PointSelectionPattern::RANDOM);
+        RegionGroup group(group_name, regions, attributes);
+        group.region_selection_pattern = RegionSelectionPattern::RANDOM;
+        group.set_attribute("region_selection_pattern", RegionSelectionPattern::RANDOM);
         return group;
     } */
 
-    void add_point(const RegionPoint& point)
+    void add_region(const Region& region)
     {
-        points.push_back(point);
+        regions.push_back(region);
     }
 
     /**
-     * @brief Insert a point at a specific index.
+     * @brief Insert a region at a specific index.
      * @param index Position to insert at.
-     * @param point The RegionPoint to insert.
+     * @param region The Region to insert.
      */
-    void insert_point(size_t index, const RegionPoint& point)
+    void insert_region(size_t index, const Region& region)
     {
-        if (index >= points.size()) {
-            points.push_back(point);
+        if (index >= regions.size()) {
+            regions.push_back(region);
         } else {
-            points.insert(points.begin() + index, point);
+            regions.insert(regions.begin() + index, region);
         }
     }
 
     /**
-     * @brief Remove a point by index.
-     * @param index Index of the point to remove.
+     * @brief Remove a region by index.
+     * @param index Index of the region to remove.
      */
-    void remove_point(size_t index)
+    void remove_region(size_t index)
     {
-        if (index < points.size()) {
-            points.erase(points.begin() + index);
-            if (current_point_index >= points.size() && !points.empty()) {
-                current_point_index = points.size() - 1;
+        if (index < regions.size()) {
+            regions.erase(regions.begin() + index);
+            if (current_region_index >= regions.size() && !regions.empty()) {
+                current_region_index = regions.size() - 1;
             }
         }
     }
 
     /**
-     * @brief Remove all points from the group.
+     * @brief Remove all regions from the group.
      */
-    void clear_points()
+    void clear_regions()
     {
-        points.clear();
-        current_point_index = 0;
+        regions.clear();
+        current_region_index = 0;
         active_indices.clear();
     }
 
     /**
-     * @brief Sort points by a specific dimension.
+     * @brief Sort region by a specific dimension.
      * @param dimension_index The dimension to sort by.
      */
     void sort_by_dimension(size_t dimension_index)
     {
-        std::sort(points.begin(), points.end(),
-            [dimension_index](const RegionPoint& a, const RegionPoint& b) {
+        std::sort(regions.begin(), regions.end(),
+            [dimension_index](const Region& a, const Region& b) {
                 if (dimension_index < a.start_coordinates.size() && dimension_index < b.start_coordinates.size()) {
                     return a.start_coordinates[dimension_index] < b.start_coordinates[dimension_index];
                 }
@@ -855,13 +855,13 @@ struct RegionGroup {
     }
 
     /**
-     * @brief Sort points by a specific attribute (numeric).
+     * @brief Sort regions by a specific attribute (numeric).
      * @param attr_name The attribute name.
      */
     void sort_by_attribute(const std::string& attr_name)
     {
-        std::sort(points.begin(), points.end(),
-            [&attr_name](const RegionPoint& a, const RegionPoint& b) {
+        std::sort(regions.begin(), regions.end(),
+            [&attr_name](const Region& a, const Region& b) {
                 auto a_val = a.get_attribute<double>(attr_name);
                 auto b_val = b.get_attribute<double>(attr_name);
                 if (a_val && b_val)
@@ -871,78 +871,78 @@ struct RegionGroup {
     }
 
     /**
-     * @brief Find all points with a given label.
+     * @brief Find all regions with a given label.
      * @param label The label to search for.
-     * @return Vector of matching RegionPoints.
+     * @return Vector of matching Regions.
      */
-    std::vector<RegionPoint> find_points_with_label(const std::string& label) const
+    std::vector<Region> find_regions_with_label(const std::string& label) const
     {
-        std::vector<RegionPoint> result;
-        for (const auto& point : points) {
-            if (point.get_label() == label) {
-                result.push_back(point);
+        std::vector<Region> result;
+        for (const auto& region : regions) {
+            if (region.get_label() == label) {
+                result.push_back(region);
             }
         }
         return result;
     }
 
     /**
-     * @brief Get the bounding region that contains all points in the group.
-     * @return RegionPoint representing the bounding box.
+     * @brief Get the bounding region that contains all regions in the group.
+     * @return Region representing the bounding box.
      */
-    RegionPoint get_bounding_region() const
+    Region get_bounding_region() const
     {
-        if (points.empty())
-            return RegionPoint {};
+        if (regions.empty())
+            return Region {};
 
-        auto first = points[0];
+        auto first = regions[0];
         std::vector<u_int64_t> min_coords = first.start_coordinates;
         std::vector<u_int64_t> max_coords = first.end_coordinates;
 
-        for (const auto& point : points) {
+        for (const auto& region : regions) {
             for (size_t i = 0; i < min_coords.size(); i++) {
-                if (i < point.start_coordinates.size()) {
-                    min_coords[i] = std::min(min_coords[i], point.start_coordinates[i]);
-                    max_coords[i] = std::max(max_coords[i], point.end_coordinates[i]);
+                if (i < region.start_coordinates.size()) {
+                    min_coords[i] = std::min(min_coords[i], region.start_coordinates[i]);
+                    max_coords[i] = std::max(max_coords[i], region.end_coordinates[i]);
                 }
             }
         }
 
-        RegionPoint bounds(min_coords, max_coords);
+        Region bounds(min_coords, max_coords);
         bounds.set_attribute("type", "bounding_box");
         bounds.set_attribute("source_group", name);
         return bounds;
     }
 
     /**
-     * @brief Find all points with a specific attribute value.
+     * @brief Find all regions with a specific attribute value.
      * @param key Attribute key.
      * @param value Attribute value to match.
-     * @return Vector of matching RegionPoints.
+     * @return Vector of matching Regions.
      */
-    std::vector<RegionPoint> find_points_with_attribute(const std::string& key, const std::any& value) const
+    std::vector<Region> find_regions_with_attribute(const std::string& key, const std::any& value) const
     {
-        std::vector<RegionPoint> result;
-        for (const auto& point : points) {
-            auto it = point.attributes.find(key);
-            if (it != point.attributes.end()) {
+        std::vector<Region> result;
+        for (const auto& region : regions) {
+            auto it = region.attributes.find(key);
+            if (it != region.attributes.end()) {
                 try {
                     if (it->second.type() == value.type()) {
                         if (value.type() == typeid(std::string)) {
                             if (std::any_cast<std::string>(it->second) == std::any_cast<std::string>(value)) {
-                                result.push_back(point);
+                                result.push_back(region);
                             }
                         } else if (value.type() == typeid(double)) {
                             if (std::any_cast<double>(it->second) == std::any_cast<double>(value)) {
-                                result.push_back(point);
+                                result.push_back(region);
                             }
                         } else if (value.type() == typeid(int)) {
                             if (std::any_cast<int>(it->second) == std::any_cast<int>(value)) {
-                                result.push_back(point);
+                                result.push_back(region);
                             }
                         } else if (value.type() == typeid(bool)) {
                             if (std::any_cast<bool>(it->second) == std::any_cast<bool>(value)) {
-                                result.push_back(point);
+                                result.push_back(region);
                             }
                         }
                     }
@@ -954,16 +954,16 @@ struct RegionGroup {
     }
 
     /**
-     * @brief Find all points containing the given coordinates.
+     * @brief Find all regions containing the given coordinates.
      * @param coordinates N-dimensional coordinates.
-     * @return Vector of matching RegionPoints.
+     * @return Vector of matching Regions.
      */
-    std::vector<RegionPoint> find_points_containing_coordinates(const std::vector<u_int64_t>& coordinates) const
+    std::vector<Region> find_regions_containing_coordinates(const std::vector<u_int64_t>& coordinates) const
     {
-        std::vector<RegionPoint> result;
-        for (const auto& point : points) {
-            if (point.contains(coordinates)) {
-                result.push_back(point);
+        std::vector<Region> result;
+        for (const auto& region : regions) {
+            if (region.contains(coordinates)) {
+                result.push_back(region);
             }
         }
         return result;

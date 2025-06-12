@@ -107,7 +107,7 @@ private:
 
     // Loop configuration
     bool m_looping_enabled = false;
-    RegionPoint m_loop_region;
+    Region m_loop_region;
 
     // Metadata
     u_int64_t m_total_elements = 0;
@@ -135,7 +135,7 @@ private:
      * @param output Output DataVariant to fill.
      */
     void process_region(std::shared_ptr<SignalSourceContainer> container,
-        const RegionPoint& region,
+        const Region& region,
         DataVariant& output);
 
     /**
@@ -150,9 +150,9 @@ private:
      * @brief Calculate the output region based on current position and shape.
      * @param current_pos Current position vector.
      * @param output_shape Output shape vector.
-     * @return RegionPoint representing the region to process.
+     * @return Region representing the region to process.
      */
-    RegionPoint calculate_output_region(const std::vector<u_int64_t>& current_pos,
+    Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
         const std::vector<u_int64_t>& output_shape) const;
 
     /**

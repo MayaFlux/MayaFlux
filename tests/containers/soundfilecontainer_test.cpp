@@ -73,7 +73,7 @@ TEST_F(SoundFileContainerTest, RegionDataAccess)
     // Set value at (1,1) to 1.23 for this test
     container->set_value_at({ 1, 1 }, 1.23);
 
-    RegionPoint region(std::vector<u_int64_t>({ 1, 0 }), std::vector<u_int64_t>({ 2, 1 }));
+    Region region(std::vector<u_int64_t>({ 1, 0 }), std::vector<u_int64_t>({ 2, 1 }));
     auto region_data = container->get_region_data(region);
     auto vec = std::get<std::vector<double>>(region_data);
 
@@ -115,7 +115,7 @@ TEST_F(SoundFileContainerTest, SequentialReadAndPeek)
 TEST_F(SoundFileContainerTest, LoopingBehavior)
 {
     container->set_looping(true);
-    RegionPoint loop_region = RegionPoint::time_span(1, 2);
+    Region loop_region = Region::time_span(1, 2);
     container->set_loop_region(loop_region);
     container->set_read_position(2);
 
@@ -135,12 +135,12 @@ TEST_F(SoundFileContainerTest, LoopingBehavior)
 TEST_F(SoundFileContainerTest, RegionGroupManagement)
 {
     RegionGroup group("test_group");
-    group.add_point(RegionPoint::time_point(1, "onset"));
+    group.add_region(Region::time_point(1, "onset"));
     container->add_region_group(group);
 
     auto retrieved = container->get_region_group("test_group");
     EXPECT_EQ(retrieved.name, "test_group");
-    EXPECT_EQ(retrieved.points.size(), 1);
+    EXPECT_EQ(retrieved.regions.size(), 1);
 
     container->remove_region_group("test_group");
     auto missing = container->get_region_group("test_group");

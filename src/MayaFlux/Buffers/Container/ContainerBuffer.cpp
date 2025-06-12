@@ -150,7 +150,7 @@ void ContainerToBufferAdapter::extract_channel_data(std::span<double> output,
             }
         }
 
-        Kakshya::RegionPoint region = Kakshya::RegionPoint::audio_span(
+        Kakshya::Region region = Kakshya::Region::audio_span(
             pos, pos + to_copy - 1,
             m_source_channel, m_source_channel);
 

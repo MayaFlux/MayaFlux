@@ -95,7 +95,7 @@ u_int64_t SoundFileContainer::get_num_frames() const
     return m_num_frames;
 }
 
-DataVariant SoundFileContainer::get_region_data(const RegionPoint& region) const
+DataVariant SoundFileContainer::get_region_data(const Region& region) const
 {
     std::shared_lock lock(m_data_mutex);
 
@@ -107,7 +107,7 @@ DataVariant SoundFileContainer::get_region_data(const RegionPoint& region) const
         m_data);
 }
 
-void SoundFileContainer::set_region_data(const RegionPoint& region, const DataVariant& data)
+void SoundFileContainer::set_region_data(const Region& region, const DataVariant& data)
 {
     std::unique_lock lock(m_data_mutex);
 
@@ -262,17 +262,17 @@ void SoundFileContainer::remove_region_group(const std::string& name)
     m_region_groups.erase(name);
 }
 
-bool SoundFileContainer::is_region_loaded(const RegionPoint& region) const
+bool SoundFileContainer::is_region_loaded(const Region& region) const
 {
     return has_data();
 }
 
-void SoundFileContainer::load_region(const RegionPoint& region)
+void SoundFileContainer::load_region(const Region& region)
 {
     // No-op for in-memory container
 }
 
-void SoundFileContainer::unload_region(const RegionPoint& region)
+void SoundFileContainer::unload_region(const Region& region)
 {
     // No-op for in-memory container
 }
@@ -324,11 +324,11 @@ void SoundFileContainer::set_looping(bool enable)
 {
     m_looping_enabled = enable;
     if (enable && m_loop_region.start_coordinates.empty()) {
-        m_loop_region = RegionPoint::time_span(0, m_num_frames - 1);
+        m_loop_region = Region::time_span(0, m_num_frames - 1);
     }
 }
 
-void SoundFileContainer::set_loop_region(const RegionPoint& region)
+void SoundFileContainer::set_loop_region(const Region& region)
 {
     m_loop_region = region;
 
@@ -340,7 +340,7 @@ void SoundFileContainer::set_loop_region(const RegionPoint& region)
     }
 }
 
-RegionPoint SoundFileContainer::get_loop_region() const
+Region SoundFileContainer::get_loop_region() const
 {
     return m_loop_region;
 }

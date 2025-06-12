@@ -145,7 +145,7 @@ TEST_F(ContiguousAccessProcessorTest, ProcessWithLoopingRegion)
     processor->on_attach(container);
 
     container->set_looping(true);
-    container->set_loop_region(RegionPoint(std::vector<u_int64_t>({ 1, 0 }), std::vector<u_int64_t>({ 2, 1 })));
+    container->set_loop_region(Region(std::vector<u_int64_t>({ 1, 0 }), std::vector<u_int64_t>({ 2, 1 })));
 
     processor->set_current_position({ 1, 0 });
 

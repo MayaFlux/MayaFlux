@@ -95,10 +95,10 @@ struct FileRegion {
     std::unordered_map<std::string, std::any> attributes; ///< Region-specific metadata
 
     /**
-     * @brief Convert this FileRegion to a RegionPoint for use in processing.
-     * @return RegionPoint with equivalent coordinates and attributes.
+     * @brief Convert this FileRegion to a Region for use in processing.
+     * @return Region with equivalent coordinates and attributes.
      */
-    Kakshya::RegionPoint to_region_point() const;
+    Kakshya::Region to_region() const;
 };
 
 /**

@@ -27,10 +27,10 @@ public:
         m_region_groups[name] = group;
     }
 
-    void add_test_point_to_group(const std::string& group_name, const RegionPoint& point)
+    void add_test_region_to_group(const std::string& group_name, const Region& region)
     {
         if (m_region_groups.find(group_name) != m_region_groups.end()) {
-            m_region_groups[group_name].add_point(point);
+            m_region_groups[group_name].add_region(region);
         }
     }
 
@@ -64,12 +64,12 @@ public:
         return 1;
     }
 
-    DataVariant get_region_data(const RegionPoint& region) const override
+    DataVariant get_region_data(const Region& region) const override
     {
         return DataVariant(m_processed_data);
     }
 
-    void set_region_data(const RegionPoint& region, const DataVariant& data) override
+    void set_region_data(const Region& region, const DataVariant& data) override
     {
         // No-op for mock
     }
@@ -125,17 +125,17 @@ public:
         m_region_groups.erase(name);
     }
 
-    bool is_region_loaded(const RegionPoint& region) const override
+    bool is_region_loaded(const Region& region) const override
     {
         return true;
     }
 
-    void load_region(const RegionPoint& region) override
+    void load_region(const Region& region) override
     {
         // No-op for mock
     }
 
-    void unload_region(const RegionPoint& region) override
+    void unload_region(const Region& region) override
     {
         // No-op for mock
     }
@@ -322,19 +322,19 @@ protected:
         container->add_test_region_group("perc");
         container->add_test_region_group("line");
 
-        auto drum_kick = RegionPoint::audio_span(0, 1024, 0, 256, "kick");
-        auto drum_snare = RegionPoint::audio_span(0, 1024, 256, 512, "snare");
-        auto drum_hihat = RegionPoint::audio_span(0, 1024, 512, 768, "hihat");
+        auto drum_kick = Region::audio_span(0, 1024, 0, 256, "kick");
+        auto drum_snare = Region::audio_span(0, 1024, 256, 512, "snare");
+        auto drum_hihat = Region::audio_span(0, 1024, 512, 768, "hihat");
 
-        auto line_a = RegionPoint::audio_span(0, 1024, 0, 384, "line_a");
-        auto line_b = RegionPoint::audio_span(0, 1024, 384, 768, "line_b");
+        auto line_a = Region::audio_span(0, 1024, 0, 384, "line_a");
+        auto line_b = Region::audio_span(0, 1024, 384, 768, "line_b");
 
-        container->add_test_point_to_group("perc", drum_kick);
-        container->add_test_point_to_group("perc", drum_snare);
-        container->add_test_point_to_group("perc", drum_hihat);
+        container->add_test_region_to_group("perc", drum_kick);
+        container->add_test_region_to_group("perc", drum_snare);
+        container->add_test_region_to_group("perc", drum_hihat);
 
-        container->add_test_point_to_group("line", line_a);
-        container->add_test_point_to_group("line", line_b);
+        container->add_test_region_to_group("line", line_a);
+        container->add_test_region_to_group("line", line_b);
     }
 
     std::unique_ptr<RegionOrganizationProcessor> processor;
@@ -351,19 +351,19 @@ protected:
         container->add_test_region_group("perc");
         container->add_test_region_group("line");
 
-        auto drum_kick = RegionPoint::audio_span(0, 1024, 0, 256, "kick");
-        auto drum_snare = RegionPoint::audio_span(0, 1024, 256, 512, "snare");
-        auto drum_hihat = RegionPoint::audio_span(0, 1024, 512, 768, "hihat");
+        auto drum_kick = Region::audio_span(0, 1024, 0, 256, "kick");
+        auto drum_snare = Region::audio_span(0, 1024, 256, 512, "snare");
+        auto drum_hihat = Region::audio_span(0, 1024, 512, 768, "hihat");
 
-        auto line_a = RegionPoint::audio_span(0, 1024, 0, 384, "line_a");
-        auto line_b = RegionPoint::audio_span(0, 1024, 384, 768, "line_b");
+        auto line_a = Region::audio_span(0, 1024, 0, 384, "line_a");
+        auto line_b = Region::audio_span(0, 1024, 384, 768, "line_b");
 
-        container->add_test_point_to_group("perc", drum_kick);
-        container->add_test_point_to_group("perc", drum_snare);
-        container->add_test_point_to_group("perc", drum_hihat);
+        container->add_test_region_to_group("perc", drum_kick);
+        container->add_test_region_to_group("perc", drum_snare);
+        container->add_test_region_to_group("perc", drum_hihat);
 
-        container->add_test_point_to_group("line", line_a);
-        container->add_test_point_to_group("line", line_b);
+        container->add_test_region_to_group("line", line_a);
+        container->add_test_region_to_group("line", line_b);
     }
 
     std::unique_ptr<DynamicRegionProcessor> processor;
@@ -412,10 +412,10 @@ TEST_F(RegionProcessorTest, SelectionPatterns)
 {
     processor->organize_container_data(container);
 
-    processor->set_selection_pattern("perc", 0, PointSelectionPattern::SEQUENTIAL);
-    processor->set_selection_pattern("perc", 1, PointSelectionPattern::RANDOM);
-    processor->set_selection_pattern("line", 0, PointSelectionPattern::ROUND_ROBIN);
-    processor->set_selection_pattern("line", 1, PointSelectionPattern::WEIGHTED);
+    processor->set_selection_pattern("perc", 0, RegionSelectionPattern::SEQUENTIAL);
+    processor->set_selection_pattern("perc", 1, RegionSelectionPattern::RANDOM);
+    processor->set_selection_pattern("line", 0, RegionSelectionPattern::ROUND_ROBIN);
+    processor->set_selection_pattern("line", 1, RegionSelectionPattern::WEIGHTED);
 
     for (int i = 0; i < 5; i++) {
         processor->process(container);
@@ -580,8 +580,8 @@ TEST_F(DynamicRegionProcessorTest, DataDrivenReorganization)
             if (regions.size() <= spectral_energy.size()) {
                 std::sort(regions.begin(), regions.end(),
                     [&spectral_energy](const OrganizedRegion& a, const OrganizedRegion& b) {
-                        size_t a_idx = a.point_index;
-                        size_t b_idx = b.point_index;
+                        size_t a_idx = a.region_index;
+                        size_t b_idx = b.region_index;
 
                         if (a_idx < spectral_energy.size() && b_idx < spectral_energy.size()) {
                             return spectral_energy[a_idx] > spectral_energy[b_idx];
@@ -634,13 +634,13 @@ TEST_F(RegionProcessorTest, ChainedProcessors)
     auto second_processor = std::make_unique<RegionOrganizationProcessor>(container);
 
     processor->organize_container_data(container);
-    processor->set_selection_pattern("perc", 0, PointSelectionPattern::SEQUENTIAL);
+    processor->set_selection_pattern("perc", 0, RegionSelectionPattern::SEQUENTIAL);
 
     processor->process(container);
     EXPECT_EQ(container->get_processing_state(), ProcessingState::PROCESSED);
 
     second_processor->organize_container_data(container);
-    second_processor->set_selection_pattern("line", 0, PointSelectionPattern::RANDOM);
+    second_processor->set_selection_pattern("line", 0, RegionSelectionPattern::RANDOM);
     second_processor->process(container);
 
     EXPECT_EQ(container->get_processing_state(), ProcessingState::PROCESSED);
@@ -674,21 +674,21 @@ TEST_F(RegionProcessorTest, SpectralRegionProcessing)
 
     container->add_test_region_group("spectral");
 
-    auto formant1 = RegionPoint::audio_span(0, 1024, 100, 150, "formant1");
+    auto formant1 = Region::audio_span(0, 1024, 100, 150, "formant1");
     formant1.set_attribute("center_frequency", 125.0);
     formant1.set_attribute("bandwidth", 50.0);
 
-    auto formant2 = RegionPoint::audio_span(0, 1024, 300, 350, "formant2");
+    auto formant2 = Region::audio_span(0, 1024, 300, 350, "formant2");
     formant2.set_attribute("center_frequency", 325.0);
     formant2.set_attribute("bandwidth", 50.0);
 
-    auto formant3 = RegionPoint::audio_span(0, 1024, 700, 750, "formant3");
+    auto formant3 = Region::audio_span(0, 1024, 700, 750, "formant3");
     formant3.set_attribute("center_frequency", 725.0);
     formant3.set_attribute("bandwidth", 50.0);
 
-    container->add_test_point_to_group("spectral", formant1);
-    container->add_test_point_to_group("spectral", formant2);
-    container->add_test_point_to_group("spectral", formant3);
+    container->add_test_region_to_group("spectral", formant1);
+    container->add_test_region_to_group("spectral", formant2);
+    container->add_test_region_to_group("spectral", formant3);
 
     processor->organize_container_data(container);
     processor->process(container);

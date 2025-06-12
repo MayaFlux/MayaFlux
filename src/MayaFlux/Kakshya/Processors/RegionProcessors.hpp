@@ -56,14 +56,14 @@ public:
     /**
      * @brief Adds a segment to an existing region.
      * @param group_name Name of the group containing the region.
-     * @param point_index Index of the region within the group.
+     * @param region_index Index of the region within the group.
      * @param start_coords Starting coordinates of the segment.
      * @param end_coords Ending coordinates of the segment.
      * @param attributes Arbitrary metadata for the segment.
      */
     void add_segment_to_region(
         const std::string& group_name,
-        size_t point_index,
+        size_t region_index,
         const std::vector<uint64_t>& start_coords,
         const std::vector<uint64_t>& end_coords,
         const std::unordered_map<std::string, std::any>& attributes);
@@ -71,23 +71,23 @@ public:
     /**
      * @brief Configures the transition between regions.
      * @param group_name Name of the group containing the region.
-     * @param point_index Index of the region within the group.
+     * @param region_index Index of the region within the group.
      * @param type Type of transition to apply (e.g., IMMEDIATE, FADE).
      * @param duration_ms Duration of the transition in milliseconds.
      */
     void set_region_transition(const std::string& group_name,
-        size_t point_index, RegionTransition type, double duration_ms = 0.0);
+        size_t region_index, RegionTransition type, double duration_ms = 0.0);
 
     /**
      * @brief Enable or disable looping for a region.
      * @param group_name Name of the group containing the region.
-     * @param point_index Index of the region within the group.
+     * @param region_index Index of the region within the group.
      * @param enabled True to enable looping.
      * @param loop_start Optional start coordinates for the loop.
      * @param loop_end Optional end coordinates for the loop.
      */
     void set_region_looping(const std::string& group_name,
-        size_t point_index,
+        size_t region_index,
         bool enabled,
         const std::vector<u_int64_t>& loop_start = {},
         const std::vector<u_int64_t>& loop_end = {});
@@ -95,9 +95,9 @@ public:
     /**
      * @brief Jump to a specific region for processing or playback.
      * @param group_name Name of the group.
-     * @param point_index Index of the region within the group.
+     * @param region_index Index of the region within the group.
      */
-    void jump_to_region(const std::string& group_name, size_t point_index);
+    void jump_to_region(const std::string& group_name, size_t region_index);
 
     /**
      * @brief Jump to a specific position in the data.
@@ -108,10 +108,10 @@ public:
     /**
      * @brief Set the selection pattern for a region (e.g., sequential, random).
      * @param group_name Name of the group.
-     * @param point_index Index of the region within the group.
+     * @param region_index Index of the region within the group.
      * @param pattern Selection pattern to use.
      */
-    void set_selection_pattern(const std::string& group_name, size_t point_index, PointSelectionPattern pattern);
+    void set_selection_pattern(const std::string& group_name, size_t region_index, RegionSelectionPattern pattern);
 
 protected:
     /**
