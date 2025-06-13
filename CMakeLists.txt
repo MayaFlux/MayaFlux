@@ -56,11 +56,8 @@ configure_file(
     @ONLY
 )
 
-#should work on windows, just havent spent time checking for its pkg definition
-if(UNIX)
-    find_package(GTest REQUIRED)
-    enable_testing()
-endif()
+find_package(GTest REQUIRED)
+enable_testing()
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 list(FILTER SOURCES EXCLUDE REGEX ".*main\\.cpp$")
@@ -132,9 +129,9 @@ else()
     )
 endif()
 
-if(UNIX)
-    add_subdirectory(tests)
+add_subdirectory(tests)
 
+if(UNIX)
     execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${CMAKE_BINARY_DIR}/compile_commands.json
