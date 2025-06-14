@@ -37,10 +37,12 @@ project(MayaFlux VERSION 0.1.0)
 
 if(WIN32)
     find_package(RtAudio CONFIG REQUIRED)
+    find_package(Eigen3 CONFIG REQUIRED)
     # Delegate FFMPEG to find library
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
+    pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
 
     pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
     pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
@@ -99,6 +101,7 @@ if(WIN32)
 
     target_link_libraries(MayaFluxLib PUBLIC
         RtAudio::rtaudio
+        Eigen3::Eigen
         ${AVCODEC_LIB}
         ${AVFORMAT_LIB}
         ${AVUTIL_LIB}
@@ -109,6 +112,7 @@ if(WIN32)
 else()
     target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::RtAudio
+        PkgConfig::Eigen
         PkgConfig::LIBAVCODEC
         PkgConfig::LIBAVFORMAT
         PkgConfig::LIBAVUTIL

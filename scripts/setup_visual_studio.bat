@@ -117,7 +117,7 @@ if not defined VCPKG_ROOT (
 
 echo.
 echo Installing dependencies (x64-windows)...
-"%VCPKG_DIR%\vcpkg" install --triplet x64-windows rtaudio ffmpeg gtest
+"%VCPKG_DIR%\vcpkg" install --triplet x64-windows rtaudio ffmpeg gtest eigen3
 if errorlevel 1 (
     echo Dependency installation failed
     exit /b 1
@@ -131,6 +131,8 @@ if errorlevel 1 echo Warning: rtaudio may not be installed correctly.
 if errorlevel 1 echo Warning: ffmpeg may not be installed correctly.
 "%VCPKG_DIR%\vcpkg" list | findstr /i "gtest" > nul
 if errorlevel 1 echo Warning: gtest may not be installed correctly.
+"%VCPKG_DIR%\vcpkg" list | findstr /i "eigen3" > nul
+if errorlevel 1 echo Warning: eigen3 may not be installed correctly.
 
 :: Create build directory with solution folder classification
 if not exist "%PROJECT_ROOT%\build" (

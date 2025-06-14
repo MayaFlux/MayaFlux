@@ -63,15 +63,8 @@ if ! command -v brew &>/dev/null; then
     fi
 fi
 
-# Update Homebrew
-echo "Updating Homebrew..."
-brew update
-if [ $? -ne 0 ]; then
-    echo "Warning: Failed to update Homebrew. Continuing anyway..."
-fi
-
 echo "Installing required packages..."
-brew install cmake rtaudio ffmpeg googletest pkg-config
+brew install cmake rtaudio ffmpeg googletest pkg-config eigen
 if [ $? -ne 0 ]; then
     echo "Error: Failed to install one or more packages."
     echo "Please check the output above for details."
@@ -81,7 +74,7 @@ fi
 # Verify package installation
 echo "Verifying package installation..."
 MISSING_PACKAGES=""
-for pkg in cmake rtaudio ffmpeg googletest pkg-config; do
+for pkg in cmake rtaudio ffmpeg googletest pkg-config eigen; do
     if ! brew list --formula | grep -q "^${pkg}$"; then
         MISSING_PACKAGES="$MISSING_PACKAGES $pkg"
     fi

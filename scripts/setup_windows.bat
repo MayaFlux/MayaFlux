@@ -98,7 +98,7 @@ if not defined VCPKG_ROOT (
 
 echo.
 echo Installing required packages (x64-windows)...
-"%VCPKG_DIR%\vcpkg" install --triplet x64-windows rtaudio ffmpeg gtest
+"%VCPKG_DIR%\vcpkg" install --triplet x64-windows rtaudio ffmpeg gtest eigen3
 if errorlevel 1 (
     echo Package installation failed
     exit /b 1
@@ -106,7 +106,7 @@ if errorlevel 1 (
 
 :: Add this after the vcpkg install command
 echo Verifying package installation...
-"%VCPKG_DIR%\vcpkg" list | findstr "rtaudio ffmpeg gtest" > nul
+"%VCPKG_DIR%\vcpkg" list | findstr "rtaudio ffmpeg gtest eigen3" > nul
 if errorlevel 1 (
     echo Warning: Some packages may not have installed correctly.
     echo Please check the output above for errors.
