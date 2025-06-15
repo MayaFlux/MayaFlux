@@ -197,4 +197,4 @@ std::map<std::string, std::any> ParallelOperations<InputType>::apply_operation(I
 
     return results;
 }
-}
+} // namespace MayaFlux::Yantra

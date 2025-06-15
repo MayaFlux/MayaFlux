@@ -516,4 +516,44 @@ void safe_copy_data_variant_to_span(const DataVariant& input, std::span<double> 
         input);
 }
 
+std::vector<double> convert_variant_to_double(const Kakshya::DataVariant& data)
+{
+    return std::visit([](const auto& vec) -> std::vector<double> {
+        using T = typename std::decay_t<decltype(vec)>::value_type;
+
+        if constexpr (std::is_same_v<T, double>) {
+            return vec;
+        } else if constexpr (std::is_same_v<T, float>) {
+            return { vec.begin(), vec.end() };
+        } else if constexpr (std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>) {
+            std::vector<double> result;
+            result.reserve(vec.size());
+            for (const auto& val : vec) {
+                result.push_back(std::abs(val));
+            }
+            return result;
+        } else if constexpr (std::is_same_v<T, u_int8_t> || std::is_same_v<T, u_int16_t> || std::is_same_v<T, u_int32_t>) {
+            constexpr double norm = [] {
+                if constexpr (std::is_same_v<T, u_int8_t>)
+                    return 255.0;
+                if constexpr (std::is_same_v<T, u_int16_t>)
+                    return 65535.0;
+                if constexpr (std::is_same_v<T, u_int32_t>)
+                    return 4294967295.0;
+            }();
+
+            std::vector<double> result;
+            result.reserve(vec.size());
+            for (auto val : vec) {
+                result.push_back(static_cast<double>(val) / norm);
+            }
+            return result;
+        } else {
+            static_assert(!std::is_same_v<T, T>,
+                "Unsupported data type in variant");
+        }
+    },
+        data);
+}
+
 } // namespace MayaFlux::Kakshya

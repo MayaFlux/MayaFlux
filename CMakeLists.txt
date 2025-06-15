@@ -40,6 +40,7 @@ if(WIN32)
     find_package(Eigen3 CONFIG REQUIRED)
     # Delegate FFMPEG to find library
 else()
+    find_package(TBB REQUIRED)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
@@ -82,6 +83,8 @@ set_target_properties(MayaFluxLib PROPERTIES
 
 target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+
+
 if(WIN32)
     # For vcpkg FFmpeg installation
     # Find include directory
@@ -99,6 +102,9 @@ if(WIN32)
 
     target_include_directories(MayaFluxLib PUBLIC ${FFMPEG_INCLUDE_DIR})
 
+    add_compile_definitions(USE_PPL_BACKEND)
+    message(STATUS "Using PPL backend for parallel algorithms on Windows")
+
     target_link_libraries(MayaFluxLib PUBLIC
         RtAudio::rtaudio
         Eigen3::Eigen
@@ -109,7 +115,11 @@ if(WIN32)
         ${SWSCALE_LIB}
     )
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_STATIC)
+
 else()
+    add_compile_definitions(USE_TBB_BACKEND)
+    message(STATUS "Using TBB backend for parallel algorithms on Unix")
+
     target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::RtAudio
         PkgConfig::Eigen
@@ -119,6 +129,7 @@ else()
         PkgConfig::LIBSWRESAMPLE
         PkgConfig::LIBSWSCALE
     )
+    target_link_libraries(MayaFluxLib PRIVATE TBB::tbb)
 endif()
 
 target_link_libraries(MayaFlux PRIVATE MayaFluxLib)

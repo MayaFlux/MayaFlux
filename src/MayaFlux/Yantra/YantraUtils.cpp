@@ -1,0 +1,13 @@
+#include "MayaFlux/Yantra/YantraUtils.hpp"
+
+namespace MayaFlux::Yantra {
+
+std::any safe_get_parameter(const std::string& parameter_name, const std::map<std::string, std::any> parameters)
+{
+    auto it = parameters.find(parameter_name);
+    if (it != parameters.end()) {
+        return it->second;
+    }
+    throw std::runtime_error("Parameter not found: " + parameter_name);
+}
+}

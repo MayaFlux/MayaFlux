@@ -639,9 +639,11 @@ std::span<const T> get_typed_data(const DataVariant& data)
 {
     if (std::holds_alternative<std::vector<T>>(data)) {
         const auto& vec = std::get<std::vector<T>>(data);
-        return std::span<const double>(vec.data(), vec.size());
+        return std::span<const T>(vec.data(), vec.size());
     }
     return {};
 }
+
+std::vector<double> convert_variant_to_double(const Kakshya::DataVariant& data);
 
 } // namespace MayaFlux::Kakshya
