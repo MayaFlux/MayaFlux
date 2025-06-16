@@ -8,6 +8,7 @@ std::any safe_get_parameter(const std::string& parameter_name, const std::map<st
     if (it != parameters.end()) {
         return it->second;
     }
-    throw std::runtime_error("Parameter not found: " + parameter_name);
+    std::cerr << "Parameter not found: " + parameter_name << std::endl;
+    return std::any {};
 }
 }

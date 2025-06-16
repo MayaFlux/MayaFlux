@@ -627,7 +627,7 @@ std::string EnergyAnalyzer::method_to_string(Method method)
 
 EnergyAnalyzer::Method EnergyAnalyzer::string_to_method(const std::string& str)
 {
-    if (str == "rms")
+    if (str == "rms" || str == "default")
         return Method::RMS;
     if (str == "peak")
         return Method::PEAK;

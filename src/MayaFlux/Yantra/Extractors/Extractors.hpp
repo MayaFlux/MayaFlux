@@ -1,97 +1,175 @@
-#pragma once
-
-#include "MayaFlux/Yantra/ComputeMatrix.hpp"
-
-namespace MayaFlux::Kakshya {
-class SignalSourceContainer;
-struct RegionSegment;
-}
+#include "UniversalExtractor.hpp"
 
 namespace MayaFlux::Yantra {
 
 /**
- * @class RegionExtractor
- * @brief Base template class for operations that identify and extract regions of interest from signal data
+ * @class FeatureExtractor
+ * @brief Extracts mathematical and statistical features from input data.
  *
- * Defines the interface for all extraction operations that analyze signal data
- * to identify meaningful segments or features based on various criteria.
+ * FeatureExtractor provides a set of standard feature extraction methods for numeric and signal data,
+ * such as mean, variance, energy, zero-crossings, and spectral centroid. It is designed to be used
+ * as a building block in extraction pipelines or as a standalone extractor.
  *
- * @tparam OutputType The type of data produced by the extraction operation
+ * ## Key Features
+ * - **Multiple extraction methods:** Supports a variety of statistical and signal-based features.
+ * - **Extensible:** Can be subclassed to add custom feature extraction logic.
+ * - **Integration:** Compatible with UniversalExtractor pipelines and analyzer delegation.
  */
-template <typename OutputType>
-class RegionExtractor : public ComputeOperation<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType> {
+class FeatureExtractor : public UniversalExtractor {
 public:
     /**
-     * @brief Analyzes the input signal and extracts regions of interest
-     * @param input Container with the signal data to analyze
-     * @return Extracted data according to the specific extractor's criteria
+     * @brief Get the list of available extraction methods supported by this extractor.
+     * @return Vector of method names (e.g., "mean", "variance", etc.).
      */
-    virtual OutputType apply_operation(std::shared_ptr<Kakshya::SignalSourceContainer> input) override = 0;
+    inline std::vector<std::string> get_available_methods() const override
+    {
+        return { "mean", "variance", "energy", "zero_crossings", "spectral_centroid" };
+    }
+
+protected:
+    /**
+     * @brief Core extraction logic for Kakshya::DataVariant input.
+     *        Dispatches to the appropriate feature extraction method based on configuration.
+     * @param data Input data variant.
+     * @return ExtractorOutput containing the extracted feature(s).
+     */
+    ExtractorOutput extract_impl(const Kakshya::DataVariant& data) override;
+
+    /**
+     * @brief Get supported extraction methods for a specific input type.
+     * @param type_info Type index of the input.
+     * @return Vector of method names.
+     */
+    inline std::vector<std::string> get_methods_for_type_impl(std::type_index type_info) const override
+    {
+        return get_available_methods();
+    }
 };
 
 /**
- * @class SpectralDensityExtractor
- * @brief Extractor that identifies regions based on spectral energy distribution
- *
- * Analyzes the frequency domain representation of a signal to identify
- * regions where the spectral energy exceeds a specified threshold,
- * indicating areas of significant frequency content.
+ * @brief Utility function to create a new extractor instance of the specified type.
+ * @tparam ExtractorType The type of extractor to create.
+ * @return Shared pointer to the created extractor.
  */
-class SpectralDensityExtractor : public RegionExtractor<std::vector<Kakshya::RegionSegment>> {
-public:
-    /**
-     * @brief Constructs a spectral density-based region extractor
-     * @param threshold Energy threshold for region detection (0.0-1.0)
-     * @param fft_size Size of the FFT window for spectral analysis
-     * @param hop_size Step size between consecutive FFT windows
-     */
-    SpectralDensityExtractor(double threshold = 0.5, u_int32_t fft_size = 2048, u_int32_t hop_size = 512);
-
-    /**
-     * @brief Extracts regions with significant spectral density
-     * @param input Container with the signal data to analyze
-     * @return Vector of region segments where spectral density exceeds the threshold
-     */
-    virtual std::vector<Kakshya::RegionSegment> apply_operation(std::shared_ptr<Kakshya::SignalSourceContainer> input) override;
-
-private:
-    /** @brief Energy threshold for region detection */
-    double m_threshold;
-    /** @brief Size of the FFT window for spectral analysis */
-    uint32_t m_fft_size;
-    /** @brief Step size between consecutive FFT windows */
-    uint32_t m_hop_size;
-};
+template <typename ExtractorType>
+std::shared_ptr<ExtractorType> create_extractor()
+{
+    return std::make_shared<ExtractorType>();
+}
 
 /**
- * @class ZeroCrossingExtractor
- * @brief Extractor that identifies regions based on signal zero-crossing rates
- *
- * Analyzes the time-domain representation of a signal to identify
- * regions where the zero-crossing rate falls within a specified range,
- * which can indicate areas with specific frequency characteristics.
+ * @brief Utility function to create a new extractor instance with an attached analyzer.
+ * @tparam ExtractorType The type of extractor to create.
+ * @param analyzer Shared pointer to the UniversalAnalyzer to use for delegation.
+ * @return Shared pointer to the created extractor with analyzer configured.
  */
-class ZeroCrossingExtractor : public RegionExtractor<std::vector<Kakshya::RegionSegment>> {
+template <typename ExtractorType>
+std::shared_ptr<ExtractorType> create_extractor_with_analyzer(std::shared_ptr<UniversalAnalyzer> analyzer)
+{
+    auto extractor = std::make_shared<ExtractorType>();
+    extractor->set_analyzer(analyzer);
+    extractor->set_use_analyzer(true);
+    return extractor;
+}
+
+/**
+ * @class ExtractionGrammar
+ * @brief Provides grammar-based, rule-driven extraction for advanced workflows.
+ *
+ * ExtractionGrammar enables the definition and application of pattern-matching rules for extraction.
+ * Each rule specifies a matcher, an extraction function, dependencies, and context. This allows for
+ * flexible, composable, and context-aware extraction pipelines that can adapt to complex data structures.
+ *
+ * ## Key Features
+ * - **Rule-based extraction:** Define custom rules for matching and extracting features.
+ * - **Context-aware:** Supports multiple extraction contexts (temporal, spectral, spatial, etc.).
+ * - **Dependencies:** Specify dependencies between rules for staged extraction.
+ * - **Integration:** Can be used standalone or as part of a UniversalExtractor pipeline.
+ */
+class ExtractionGrammar {
 public:
     /**
-     * @brief Constructs a zero-crossing rate-based region extractor
-     * @param min_rate Minimum zero-crossing rate for region detection
-     * @param max_rate Maximum zero-crossing rate for region detection
+     * @enum ExtractionContext
+     * @brief Contexts in which extraction rules can be applied.
      */
-    ZeroCrossingExtractor(double min_rate = 0.01, double max_rate = 0.2);
+    enum class ExtractionContext {
+        TEMPORAL, ///< Time-domain or sequential context.
+        SPECTRAL, ///< Frequency-domain or spectral context.
+        SPATIAL, ///< Spatial or geometric context.
+        SEMANTIC, ///< Semantic or label-based context.
+        STRUCTURAL ///< Structural or hierarchical context.
+    };
 
     /**
-     * @brief Extracts regions with zero-crossing rates in the specified range
-     * @param input Container with the signal data to analyze
-     * @return Vector of region segments with matching zero-crossing characteristics
+     * @struct Rule
+     * @brief Represents a single extraction rule.
+     *
+     * Each rule contains a name, a matcher function, an extraction function, a list of dependencies,
+     * a context, and a priority for rule ordering.
      */
-    virtual std::vector<Kakshya::RegionSegment> apply_operation(
-        std::shared_ptr<Kakshya::SignalSourceContainer> input) override;
+    struct Rule {
+        std::string name; ///< Unique rule name.
+        std::function<bool(const ExtractorInput&)> matcher; ///< Predicate to determine if rule applies.
+        std::function<ExtractorOutput(const ExtractorInput&)> extractor; ///< Extraction logic.
+        std::vector<std::string> dependencies; ///< Names of rules this rule depends on.
+        ExtractionContext context; ///< Context in which this rule is valid.
+        int priority = 0; ///< Rule priority for ordering (higher runs first).
+    };
+
+    /**
+     * @brief Add a new extraction rule to the grammar.
+     * @param rule The rule to add.
+     */
+    void add_rule(const Rule& rule);
+
+    /**
+     * @brief Attempt to extract using a specific rule by name.
+     * @param rule_name Name of the rule to apply.
+     * @param input Extraction input.
+     * @return Optional ExtractorOutput if the rule matches and extraction succeeds.
+     */
+    std::optional<ExtractorOutput> extract_by_rule(const std::string& rule_name, const ExtractorInput& input) const;
+
+    /**
+     * @brief Extract using all rules that match the input.
+     * @param input Extraction input.
+     * @return Vector of ExtractorOutputs for all matching rules.
+     */
+    std::vector<ExtractorOutput> extract_all_matching(const ExtractorInput& input) const;
+
+    /**
+     * @brief Get the list of available rule names in this grammar.
+     * @return Vector of rule names.
+     */
+    std::vector<std::string> get_available_rules() const;
 
 private:
-    /** @brief Minimum zero-crossing rate for region detection */
-    double m_min_rate;
-    /** @brief Maximum zero-crossing rate for region detection */
-    double m_max_rate;
+    std::vector<Rule> m_rules; ///< List of registered extraction rules.
 };
+
+/*
+// TODO: This should be added to the UniversalExtractor class definition:
+inline void add_grammar_support_to_universal_extractor()
+{
+private:
+    ExtractionGrammar m_grammar;
+
+public:
+    void add_grammar_rule(const ExtractionGrammar::Rule& rule) {
+        m_grammar.add_rule(rule);
+    }
+
+    ExtractorOutput extract_by_grammar(const ExtractorInput& input, const std::string& rule_name) {
+        if (auto result = m_grammar.extract_by_rule(rule_name, input)) {
+            return *result;
+        }
+        throw std::runtime_error("Grammar rule not found or doesn't match: " + rule_name);
+    }
+
+    std::vector<ExtractorOutput> extract_all_patterns(const ExtractorInput& input) {
+        return m_grammar.extract_all_matching(input);
+    }
+}
+*/
+
 }
