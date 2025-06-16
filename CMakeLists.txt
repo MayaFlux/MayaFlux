@@ -40,7 +40,11 @@ if(WIN32)
     find_package(Eigen3 CONFIG REQUIRED)
     # Delegate FFMPEG to find library
 else()
+    if(APPLE)
+        find_package(oneDPL)
+    endif()
     find_package(TBB REQUIRED)
+
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
@@ -83,8 +87,6 @@ set_target_properties(MayaFluxLib PROPERTIES
 
 target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-
-
 if(WIN32)
     # For vcpkg FFmpeg installation
     # Find include directory
@@ -117,8 +119,14 @@ if(WIN32)
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_STATIC)
 
 else()
-    add_compile_definitions(USE_TBB_BACKEND)
-    message(STATUS "Using TBB backend for parallel algorithms on Unix")
+    if(APPLE)
+        target_include_directories(MayaFluxLib PUBLIC ${oneDPL_INCLUDE_DIRS})
+        target_link_libraries(MayaFluxLib PRIVATE oneDPL)
+    else()
+        add_compile_definitions(USE_TBB_BACKEND)
+        message(STATUS "Using TBB backend for parallel algorithms on Linux")
+    endif()
+    target_link_libraries(MayaFluxLib PRIVATE TBB::tbb)
 
     target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::RtAudio
@@ -129,7 +137,6 @@ else()
         PkgConfig::LIBSWRESAMPLE
         PkgConfig::LIBSWSCALE
     )
-    target_link_libraries(MayaFluxLib PRIVATE TBB::tbb)
 endif()
 
 target_link_libraries(MayaFlux PRIVATE MayaFluxLib)

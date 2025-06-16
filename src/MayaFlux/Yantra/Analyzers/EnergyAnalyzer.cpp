@@ -6,7 +6,12 @@
 #include "unsupported/Eigen/FFT"
 #include <Eigen/Geometry>
 
-#include <execution>
+#ifdef MAYAFLUX_PLATFORM_MACOS
+#include "oneapi/dpl/algorithm"
+#include "oneapi/dpl/execution"
+#else
+#include "execution"
+#endif
 
 namespace MayaFlux::Yantra {
 
