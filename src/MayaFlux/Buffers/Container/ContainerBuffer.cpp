@@ -204,12 +204,12 @@ void ContainerToBufferAdapter::on_detach(std::shared_ptr<AudioBuffer> buffer)
     }
 }
 
-void ContainerToBufferAdapter::set_source_channel(u_int32_t channel)
+void ContainerToBufferAdapter::set_source_channel(u_int32_t channel_index)
 {
-    if (m_dim_info.has_channels && channel >= m_dim_info.num_channels) {
+    if (m_dim_info.has_channels && channel_index >= m_dim_info.num_channels) {
         throw std::out_of_range("Channel index exceeds container channel count");
     }
-    m_source_channel = channel;
+    m_source_channel = channel_index;
 }
 
 void ContainerToBufferAdapter::set_container(std::shared_ptr<Kakshya::StreamContainer> container)

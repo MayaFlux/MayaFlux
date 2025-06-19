@@ -14,10 +14,6 @@ public:
     {
         m_processed_data = std::vector<double>(1024, 0.0f);
         m_frame_size = 1024;
-        // m_dimensions = {
-        //     DataDimension("time", m_frame_size),
-        //     DataDimension("channels", 1)
-        // };
 
         DataDimension time_dim("time", m_frame_size);
         time_dim.role = DataDimension::Role::TIME;
@@ -26,6 +22,21 @@ public:
         chan_dim.role = DataDimension::Role::CHANNEL;
 
         m_dimensions = { time_dim, chan_dim };
+    }
+
+    void add_dimension(DataDimension dim)
+    {
+        bool dim_found = false;
+        for (auto& dimen : m_dimensions) {
+            if (dimen.role == dim.role) {
+                dimen = dim;
+                dim_found = true;
+            }
+        }
+
+        if (!dim_found) {
+            m_dimensions.push_back(dim);
+        }
     }
 
     void add_test_region_group(const std::string& name)

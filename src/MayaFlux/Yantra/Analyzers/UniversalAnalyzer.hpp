@@ -1,14 +1,14 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/Region.hpp"
-#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Yantra/ComputeMatrix.hpp"
 #include "MayaFlux/Yantra/YantraUtils.hpp"
+
+#include "AnalysisHelpers.hpp"
 
 #include <typeindex>
 
 /**
- * @file Analyzer.hpp
+ * @file UniversalAnalyzer.hpp
  * @brief Modern, digital-first universal analyzer framework for Maya Flux
  *
  * This header defines the core analyzer abstractions for the Maya Flux ecosystem,
@@ -29,88 +29,6 @@
  */
 
 namespace MayaFlux::Yantra {
-
-/**
- * @brief Unified input variant for analyzers.
- *
- * Encapsulates all supported input types for analysis operations, including:
- * - Raw data (Kakshya::DataVariant)
- * - Signal source containers (shared_ptr)
- * - Single regions
- * - Groups of regions
- * - Lists of region segments
- *
- * This enables analyzers to operate generically across a wide range of data sources
- * and organizational structures, supporting both low-level and high-level workflows.
- */
-using AnalyzerInput = std::variant<
-    Kakshya::DataVariant, ///< Raw, multi-type data
-    std::shared_ptr<Kakshya::SignalSourceContainer>, ///< N-dimensional signal container
-    Kakshya::Region, ///< Single region of interest
-    Kakshya::RegionGroup, ///< Group of regions (organized)
-    std::vector<Kakshya::RegionSegment> ///< List of attributed segments
-    >;
-
-/**
- * @brief Unified output variant for analyzers.
- *
- * Encapsulates all supported output types for analysis operations, including:
- * - Raw numeric values (e.g., energy, features)
- * - Organized region groups (with metadata/classification)
- * - Attributed region segments
- * - Processed data variants
- *
- * This enables downstream consumers to flexibly select the desired output granularity
- * and structure, supporting both low-level feature extraction and high-level organization.
- */
-using AnalyzerOutput = std::variant<
-    std::vector<double>, ///< Raw analysis values
-    Kakshya::RegionGroup, ///< Organized region groups
-    std::vector<Kakshya::RegionSegment>, ///< Attributed region segments
-    Kakshya::DataVariant ///< Processed data (optional)
-    >;
-
-/**
- * @brief Analysis granularity levels.
- *
- * Controls the structure and detail of analyzer outputs, enabling flexible integration
- * with downstream processing, visualization, or organization routines.
- */
-enum class AnalysisGranularity {
-    RAW_VALUES, ///< Output is a vector of raw numeric values (e.g., per-frame energy)
-    ATTRIBUTED_SEGMENTS, ///< Output is a vector of RegionSegment with attributes
-    ORGANIZED_GROUPS ///< Output is a RegionGroup with classification/organization
-};
-
-// ===== Concepts for Type Safety =====
-
-/**
- * @brief Concept: Valid analyzer input type.
- *
- * Ensures that a type is a valid alternative in AnalyzerInput.
- */
-template <typename T>
-concept AnalyzerInputType = requires {
-    std::holds_alternative<T>(std::declval<AnalyzerInput>());
-};
-
-/**
- * @brief Concept: Valid analyzer output type.
- *
- * Ensures that a type is a valid alternative in AnalyzerOutput.
- */
-template <typename T>
-concept AnalyzerOutputType = requires {
-    std::holds_alternative<T>(std::declval<AnalyzerOutput>());
-};
-
-/**
- * @brief Concept: Numeric analysis result.
- *
- * Used for analyzers that produce numeric outputs (e.g., vectors of double/float).
- */
-template <typename T>
-concept NumericAnalysisResult = std::is_arithmetic_v<T> || std::same_as<T, std::vector<double>> || std::same_as<T, std::vector<float>>;
 
 /**
  * @class UniversalAnalyzer
@@ -141,7 +59,6 @@ public:
     AnalyzerOutput apply_operation(AnalyzerInput input) override
     {
         return std::visit([this](auto&& arg) -> AnalyzerOutput {
-            using T = std::decay_t<decltype(arg)>;
             return this->analyze_impl(arg);
         },
             input);
@@ -243,27 +160,32 @@ public:
 protected:
     virtual AnalyzerOutput analyze_impl(const Kakshya::DataVariant& data)
     {
-        throw std::runtime_error("DataVariant analysis not implemented");
+        std::cerr << "[UniversalAnalyzer] Warning: DataVariant analysis not implemented for this analyzer." << std::endl;
+        return AnalyzerOutput {}; // or a sentinel value if you prefer
     }
 
     virtual AnalyzerOutput analyze_impl(std::shared_ptr<Kakshya::SignalSourceContainer> container)
     {
-        throw std::runtime_error("Container analysis not implemented");
+        std::cerr << "[UniversalAnalyzer] Warning: Container analysis not implemented for this analyzer." << std::endl;
+        return AnalyzerOutput {};
     }
 
     virtual AnalyzerOutput analyze_impl(const Kakshya::Region& region)
     {
-        throw std::runtime_error("Region analysis not implemented");
+        std::cerr << "[UniversalAnalyzer] Warning: Region analysis not implemented for this analyzer." << std::endl;
+        return AnalyzerOutput {};
     }
 
     virtual AnalyzerOutput analyze_impl(const Kakshya::RegionGroup& group)
     {
-        throw std::runtime_error("RegionGroup analysis not implemented");
+        std::cerr << "[UniversalAnalyzer] Warning: RegionGroup analysis not implemented for this analyzer." << std::endl;
+        return AnalyzerOutput {};
     }
 
     virtual AnalyzerOutput analyze_impl(const std::vector<Kakshya::RegionSegment>& segments)
     {
-        throw std::runtime_error("RegionSegment analysis not implemented");
+        std::cerr << "[UniversalAnalyzer] Warning: RegionSegment analysis not implemented for this analyzer." << std::endl;
+        return AnalyzerOutput {};
     }
 
     /**

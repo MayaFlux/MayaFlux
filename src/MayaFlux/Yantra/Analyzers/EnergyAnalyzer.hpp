@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Analyzer.hpp"
+#include "UniversalAnalyzer.hpp"
 #include <Eigen/Dense>
 
 /**

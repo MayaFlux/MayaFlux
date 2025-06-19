@@ -2,6 +2,7 @@
 #include "AnalysisHelpers.hpp"
 
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
+#include "MayaFlux/Nodes/Generators/Generator.hpp"
 
 #include "unsupported/Eigen/FFT"
 #include <Eigen/Geometry>
@@ -23,9 +24,9 @@ EnergyAnalyzer::EnergyAnalyzer(uint32_t window_size, uint32_t hop_size)
         throw std::invalid_argument("Window size and hop size must be greater than 0");
     }
 
-    set_parameter("window_function", std::string("hanning"));
-    set_parameter("overlap_add", true);
-    set_parameter("zero_padding", false);
+    UniversalAnalyzer::set_parameter("window_function", std::string("hanning"));
+    UniversalAnalyzer::set_parameter("overlap_add", true);
+    UniversalAnalyzer::set_parameter("zero_padding", false);
 }
 
 std::vector<std::string> EnergyAnalyzer::get_available_methods() const
@@ -64,21 +65,17 @@ AnalyzerOutput EnergyAnalyzer::analyze_impl(std::shared_ptr<Kakshya::SignalSourc
         throw std::invalid_argument("Container is null or has no data");
     }
 
-    // Get dimensions to understand data structure
     auto dimensions = container->get_dimensions();
     if (dimensions.empty()) {
         throw std::runtime_error("Container has no dimensions");
     }
 
-    // Detect data modality based on dimensions
     DataModality modality = detect_data_modality(dimensions);
 
-    // Only handle audio data - delegate others
     if (modality != DataModality::AUDIO_1D && modality != DataModality::AUDIO_MULTICHANNEL && modality != DataModality::SPECTRAL_2D) {
-        throw std::runtime_error("EnergyAnalyzer only handles audio and spectral data. Use specialized analyzers for images/video.");
+        throw std::runtime_error("EnergyAnalyzer only handles audio and spectral data as the concepts of RMS/PEAK etc.. dont yield themsleves to multimodal data.\n Use specialized analyzers for images/video.");
     }
 
-    // Create region covering entire container
     Kakshya::Region full_region;
     full_region.start_coordinates.resize(dimensions.size(), 0);
     full_region.end_coordinates.resize(dimensions.size());
@@ -89,7 +86,6 @@ AnalyzerOutput EnergyAnalyzer::analyze_impl(std::shared_ptr<Kakshya::SignalSourc
 
     auto data = container->get_region_data(full_region);
 
-    // Store modality info and delegate to variant analysis
     set_parameter("data_modality", static_cast<int>(modality));
     set_parameter("dimensions", dimensions);
 
@@ -108,7 +104,6 @@ AnalyzerOutput EnergyAnalyzer::analyze_impl(const Kakshya::Region& region)
         throw std::invalid_argument("Container context is invalid");
     }
 
-    // Get the region data and analyze it
     auto data = container->get_region_data(region);
     return analyze_impl(data);
 }
@@ -131,7 +126,6 @@ DataModality EnergyAnalyzer::detect_data_modality(const std::vector<Kakshya::Dat
     if (dimensions.empty())
         return DataModality::UNKNOWN;
 
-    // Count different dimension types
     size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0;
 
     for (const auto& dim : dimensions) {
@@ -155,7 +149,6 @@ DataModality EnergyAnalyzer::detect_data_modality(const std::vector<Kakshya::Dat
         }
     }
 
-    // Classify based on dimension structure - focus on audio/spectral only
     if (time_dims == 1 && spatial_dims == 0 && channel_dims <= 1) {
         return (channel_dims == 0) ? DataModality::AUDIO_1D : DataModality::AUDIO_MULTICHANNEL;
     } else if (time_dims == 1 && frequency_dims == 1) {
@@ -168,8 +161,6 @@ DataModality EnergyAnalyzer::detect_data_modality(const std::vector<Kakshya::Dat
 
     return DataModality::TENSOR_ND;
 }
-
-// ===== Core Audio Energy Calculation Methods =====
 
 std::vector<double> EnergyAnalyzer::calculate_energy_for_method(const std::vector<double>& data, Method method)
 {
@@ -203,10 +194,8 @@ std::vector<double> EnergyAnalyzer::calculate_rms_energy(const std::vector<doubl
     const size_t num_windows = (data.size() - m_window_size) / m_hop_size + 1;
     rms_values.reserve(num_windows);
 
-    // Create Hanning window for windowing
     Eigen::VectorXd window = create_window_function("hanning", m_window_size);
 
-    // Use parallel execution for performance
     std::vector<size_t> indices(num_windows);
     std::iota(indices.begin(), indices.end(), 0);
 
@@ -217,16 +206,13 @@ std::vector<double> EnergyAnalyzer::calculate_rms_energy(const std::vector<doubl
             const size_t start_idx = i * m_hop_size;
             const size_t end_idx = std::min(start_idx + m_window_size, data.size());
 
-            // Map data window to Eigen vector for efficient computation
             Eigen::Map<const Eigen::VectorXd> data_window(
                 data.data() + start_idx,
                 end_idx - start_idx);
 
-            // Apply window function
             Eigen::VectorXd windowed = data_window.cwiseProduct(
                 window.head(end_idx - start_idx));
 
-            // Calculate RMS: sqrt(mean(x^2))
             double rms = std::sqrt(windowed.array().square().mean());
             temp_rms[i] = rms;
         });
@@ -244,7 +230,6 @@ std::vector<double> EnergyAnalyzer::calculate_peak_energy(const std::vector<doub
         const size_t start_idx = i * m_hop_size;
         const size_t end_idx = std::min(start_idx + m_window_size, data.size());
 
-        // Use Eigen for efficient max computation
         Eigen::Map<const Eigen::VectorXd> data_window(
             data.data() + start_idx,
             end_idx - start_idx);
@@ -262,7 +247,6 @@ std::vector<double> EnergyAnalyzer::calculate_spectral_energy(const std::vector<
     const size_t num_windows = (data.size() - m_window_size) / m_hop_size + 1;
     spectral_energy.reserve(num_windows);
 
-    // Initialize FFT
     Eigen::FFT<double> fft;
     Eigen::VectorXd window = create_window_function("hanning", m_window_size);
 
@@ -270,7 +254,6 @@ std::vector<double> EnergyAnalyzer::calculate_spectral_energy(const std::vector<
         const size_t start_idx = i * m_hop_size;
         const size_t end_idx = std::min(start_idx + m_window_size, data.size());
 
-        // Prepare windowed data
         Eigen::VectorXd windowed_data(m_window_size);
         windowed_data.setZero();
 
@@ -281,11 +264,9 @@ std::vector<double> EnergyAnalyzer::calculate_spectral_energy(const std::vector<
         windowed_data.head(actual_size) = data_segment.cwiseProduct(
             window.head(actual_size));
 
-        // Compute FFT
         Eigen::VectorXcd fft_result;
         fft.fwd(fft_result, windowed_data);
 
-        // Calculate spectral energy (sum of magnitude squared)
         double energy = fft_result.cwiseAbs2().sum();
         spectral_energy.push_back(energy);
     }
@@ -303,7 +284,6 @@ std::vector<double> EnergyAnalyzer::calculate_zero_crossing_energy(const std::ve
         const size_t start_idx = i * m_hop_size;
         const size_t end_idx = std::min(start_idx + m_window_size, data.size());
 
-        // Count zero crossings in window
         size_t zero_crossings = 0;
         for (size_t j = start_idx + 1; j < end_idx; ++j) {
             if ((data[j] >= 0.0) != (data[j - 1] >= 0.0)) {
@@ -311,7 +291,6 @@ std::vector<double> EnergyAnalyzer::calculate_zero_crossing_energy(const std::ve
             }
         }
 
-        // Normalize by window size to get crossing rate
         double crossing_rate = static_cast<double>(zero_crossings) / (end_idx - start_idx);
         zc_energy.push_back(crossing_rate);
     }
@@ -332,7 +311,6 @@ std::vector<double> EnergyAnalyzer::calculate_harmonic_energy(const std::vector<
         const size_t start_idx = i * m_hop_size;
         const size_t end_idx = std::min(start_idx + m_window_size, data.size());
 
-        // Prepare windowed data
         Eigen::VectorXd windowed_data(m_window_size);
         windowed_data.setZero();
 
@@ -343,11 +321,9 @@ std::vector<double> EnergyAnalyzer::calculate_harmonic_energy(const std::vector<
         windowed_data.head(actual_size) = data_segment.cwiseProduct(
             window.head(actual_size));
 
-        // Compute FFT
         Eigen::VectorXcd fft_result;
         fft.fwd(fft_result, windowed_data);
 
-        // Calculate harmonic energy (focus on lower frequencies)
         const size_t harmonic_bins = fft_result.size() / 8; // Focus on lower 1/8 of spectrum
         double energy = fft_result.head(harmonic_bins).cwiseAbs2().sum();
         harmonic_energy.push_back(energy);
@@ -370,7 +346,6 @@ std::vector<double> EnergyAnalyzer::calculate_power_energy(const std::vector<dou
             data.data() + start_idx,
             end_idx - start_idx);
 
-        // Power is sum of squares
         double power = data_window.array().square().sum();
         power_values.push_back(power);
     }
@@ -395,7 +370,6 @@ std::vector<double> EnergyAnalyzer::calculate_dynamic_range_energy(const std::ve
         double max_val = data_window.cwiseAbs().maxCoeff();
         double min_val = data_window.cwiseAbs().minCoeff();
 
-        // Dynamic range in dB
         double range_db = (max_val > 0.0 && min_val > 0.0) ? 20.0 * std::log10(max_val / std::max(min_val, 1e-10)) : 0.0;
 
         dynamic_range.push_back(range_db);
@@ -404,35 +378,23 @@ std::vector<double> EnergyAnalyzer::calculate_dynamic_range_energy(const std::ve
     return dynamic_range;
 }
 
-// ===== Utility Methods =====
-
 Eigen::VectorXd EnergyAnalyzer::create_window_function(const std::string& window_type, size_t size)
 {
-    Eigen::VectorXd window(size);
+    std::vector<double> window_vector;
 
     if (window_type == "hanning" || window_type == "hann") {
-        for (size_t i = 0; i < size; ++i) {
-            window[i] = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (size - 1)));
-        }
+        window_vector = MayaFlux::Nodes::Generator::HannWindow(size);
     } else if (window_type == "hamming") {
-        for (size_t i = 0; i < size; ++i) {
-            window[i] = 0.54 - 0.46 * std::cos(2.0 * M_PI * i / (size - 1));
-        }
+        window_vector = MayaFlux::Nodes::Generator::HammingWindow(size);
     } else if (window_type == "blackman") {
-        for (size_t i = 0; i < size; ++i) {
-            double factor = 2.0 * M_PI * i / (size - 1);
-            window[i] = 0.42 - 0.5 * std::cos(factor) + 0.08 * std::cos(2.0 * factor);
-        }
+        window_vector = MayaFlux::Nodes::Generator::BlackmanWindow(size);
     } else if (window_type == "rectangular" || window_type == "rect") {
-        window.setOnes();
+        window_vector.resize(size, 1.0);
     } else {
-        // Default to Hanning
-        for (size_t i = 0; i < size; ++i) {
-            window[i] = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (size - 1)));
-        }
+        window_vector = MayaFlux::Nodes::Generator::HannWindow(size);
     }
 
-    return window;
+    return Eigen::Map<Eigen::VectorXd>(window_vector.data(), window_vector.size());
 }
 
 AnalyzerOutput EnergyAnalyzer::format_output_based_on_granularity(
@@ -471,8 +433,6 @@ Kakshya::RegionGroup EnergyAnalyzer::create_energy_regions(
             bool above_threshold = values[i] > m_quiet_threshold;
 
             if (above_threshold && !in_region) {
-                // Start new region
-
                 region_start = i * m_hop_size;
                 in_region = true;
             } else if (!above_threshold && in_region) {
@@ -645,22 +605,17 @@ EnergyAnalyzer::Method EnergyAnalyzer::string_to_method(const std::string& str)
     throw std::invalid_argument("Unknown energy analysis method: " + str);
 }
 
-// ===== Factory Functions =====
-// TODO: Need to rewrite parent to allow consturcor params
-
 /* void register_analyzer_operations(std::shared_ptr<ComputeMatrix> matrix)
 {
     if (!matrix) {
         throw std::invalid_argument("ComputeMatrix cannot be null");
     }
 
-    matrix->register_operation<UniversalAnalyzer>("universal_analyzer");
+    REGISTER_OPERATION(matrix, "EnergyAnalyzer", EnergyAnalyzer);
 
-    matrix->register_operation<EnergyAnalyzer>("energy_analyzer");
-
-    matrix->register_operation<DataToValues>("data_to_energy_values");
-    matrix->register_operation<ContainerToRegions>("container_to_energy_regions");
-    matrix->register_operation<RegionToSegments>("region_to_energy_segments");
+    REGISTER_OPERATION(matrix, "DataToValues", DataToValues);
+    REGISTER_OPERATION(matrix, "ContainerToRegions", ContainerToRegions);
+    REGISTER_OPERATION(matrix, "RegionToSegments", RegionToSegments);
 } */
 
 }
