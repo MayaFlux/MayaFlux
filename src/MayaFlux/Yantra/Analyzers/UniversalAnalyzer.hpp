@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Yantra/ComputeMatrix.hpp"
-#include "MayaFlux/Yantra/YantraUtils.hpp"
 
 #include "AnalysisHelpers.hpp"
 
@@ -238,7 +237,7 @@ public:
      */
     inline std::any get_parameter(const std::string& name) const override
     {
-        return safe_get_parameter(name, m_parameters);
+        return Utils::safe_get_parameter(name, m_parameters);
     }
 
     /**

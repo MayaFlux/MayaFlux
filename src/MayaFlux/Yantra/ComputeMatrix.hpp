@@ -1,5 +1,5 @@
 #pragma once
-#include "config.h"
+#include "MayaFlux/Utils.hpp"
 
 /**
  * @namespace MayaFlux::Yantra

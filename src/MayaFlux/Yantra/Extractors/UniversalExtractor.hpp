@@ -524,7 +524,7 @@ public:
      */
     inline std::any get_parameter(const std::string& name) const override
     {
-        return Yantra::safe_get_parameter(name, m_parameters);
+        return Utils::safe_get_parameter(name, m_parameters);
     }
 
     /**

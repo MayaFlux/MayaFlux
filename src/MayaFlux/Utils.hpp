@@ -47,4 +47,6 @@ enum NodeState : u_int32_t {
     EXTERMAL_PROCESSED = INACTIVE | PROCESSED, ///< External source has processed this node
     ENGINE_MOCK_PROCESSED = ACTIVE | MOCK_PROCESS | PROCESSED, ///< Engine has mock processed this node
 };
+
+std::any safe_get_parameter(const std::string& parameter_name, const std::map<std::string, std::any> parameters);
 }
