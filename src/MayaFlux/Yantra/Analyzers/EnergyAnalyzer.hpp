@@ -111,7 +111,9 @@ public:
      */
     AnalyzerOutput analyze_impl(const Kakshya::Region& region) override;
 
-    // ===== Core Audio Energy Calculation Methods =====
+    AnalyzerOutput analyze_impl(const std::vector<Kakshya::RegionSegment>& segments) override;
+
+    AnalyzerOutput analyze_impl(const Kakshya::RegionGroup& group) override;
 
     /**
      * @brief Computes energy values for the given method.
@@ -164,14 +166,17 @@ public:
      * @return Normalized data as double
      */
     template <typename IntType>
-    std::vector<double> normalize_integer_data(const std::vector<IntType>& data, double max_value);
+    std::vector<double> normalize_integer_data(const std::vector<IntType>& data, double max_value)
+    {
+        std::vector<double> result;
+        result.reserve(data.size());
 
-    /**
-     * @brief Detects the data modality (audio, spectral, etc.) from dimensions.
-     * @param dimensions Data dimensions
-     * @return Detected DataModality
-     */
-    DataModality detect_data_modality(const std::vector<Kakshya::DataDimension>& dimensions);
+        const double scale = 1.0 / max_value;
+        std::transform(data.begin(), data.end(), std::back_inserter(result),
+            [scale](IntType val) { return static_cast<double>(val) * scale; });
+
+        return result;
+    }
 
     /**
      * @brief Creates a window function (Hanning, Hamming, etc.) for analysis.
@@ -289,6 +294,25 @@ private:
     double m_moderate_threshold = 0.1; ///< Threshold for "moderate"
     double m_loud_threshold = 0.5; ///< Threshold for "loud"
     bool m_classification_enabled = true; ///< Enable/disable energy level classification
+
+    /**
+     * @brief Safe parameter extraction with default values
+     */
+    template <typename T>
+    T get_parameter_or_default(const std::string& name, const T& default_value)
+    {
+        auto param = get_parameter(name);
+        if (param.has_value()) {
+            try {
+                return std::any_cast<T>(param);
+            } catch (const std::bad_any_cast&) {
+                std::cerr << "Warning: Parameter '" << name << "' has incorrect type, using default" << std::endl;
+            }
+        }
+        return default_value;
+    }
+
+    size_t get_min_size_for_method(Method method) const;
 };
 
 } // namespace MayaFlux::Yantra

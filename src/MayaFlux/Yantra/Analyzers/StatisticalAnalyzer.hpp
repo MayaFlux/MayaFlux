@@ -141,7 +141,7 @@ protected:
     std::vector<double> process_by_modality(
         const std::vector<double>& data,
         const std::vector<Kakshya::DataDimension>& dimensions,
-        DataModality modality,
+        Kakshya::DataModality modality,
         Method method);
 
 private:
@@ -175,14 +175,6 @@ private:
      * @brief Create attributed region segments from statistical values
      */
     std::vector<Kakshya::RegionSegment> create_statistical_segments(const std::vector<double>& values, const std::string& method);
-
-    /**
-     * @brief Detect data modality for appropriate processing
-     */
-    // DataModality detect_data_modality(const std::vector<size_t>& dimensions);
-    DataModality detect_data_modality(const std::vector<Kakshya::DataDimension>& dimensions);
-
-    // ===== Core Statistical Functions =====
 
     /**
      * @brief Calculate mean of data
@@ -256,10 +248,7 @@ private:
         return default_value;
     }
 
-    /**
-     * @brief Validate input data for statistical computations
-     */
-    void validate_data(const std::vector<double>& data, Method method);
+    size_t get_min_size_for_method(Method method) const;
 };
 
 } // namespace MayaFlux::Yantra

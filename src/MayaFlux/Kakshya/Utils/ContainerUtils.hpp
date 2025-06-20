@@ -101,4 +101,33 @@ std::vector<std::vector<T>> deinterleave_channels(std::span<const T> interleaved
 DataVariant extract_channel_data(std::shared_ptr<SignalSourceContainer> container,
     u_int32_t channel_index);
 
+/**
+ * @brief Validates container for analysis operations with comprehensive checks
+ * @param container Container to validate
+ * @return Pair of validated container and its dimensions
+ * @throws std::invalid_argument if container is null or has no data
+ * @throws std::runtime_error if container has no dimensions
+ */
+std::pair<std::shared_ptr<SignalSourceContainer>, std::vector<DataDimension>>
+validate_container_for_analysis(std::shared_ptr<SignalSourceContainer> container);
+
+/**
+ * @brief Extracts numeric data from container with fallback handling
+ * @param container Container to extract from
+ * @return Vector of double values from container data
+ * @throws std::runtime_error if no numeric data can be extracted
+ */
+std::vector<double> extract_numeric_data_from_container(std::shared_ptr<SignalSourceContainer> container);
+
+/**
+ * @brief Validates numeric data for analysis operations
+ * @param data Data to validate
+ * @param operation_name Name of operation for error messages
+ * @param min_size Minimum required data size (default 1)
+ * @throws std::invalid_argument if data is invalid for analysis
+ */
+void validate_numeric_data_for_analysis(const std::vector<double>& data,
+    const std::string& operation_name,
+    size_t min_size = 1);
+
 }

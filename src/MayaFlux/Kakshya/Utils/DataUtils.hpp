@@ -236,4 +236,13 @@ DataVariant extract_subsample_data(std::shared_ptr<SignalSourceContainer> contai
     u_int32_t subsample_factor,
     u_int64_t start_offset = 0);
 
+/**
+ * @brief Detects data modality from dimension information
+ * @param dimensions Vector of data dimensions with role information
+ * @return Detected DataModality type
+ *
+ * Consolidates modality detection logic that was duplicated across analyzers.
+ * Uses dimension roles and count to determine appropriate processing approach.
+ */
+DataModality detect_data_modality(const std::vector<DataDimension>& dimensions);
 }

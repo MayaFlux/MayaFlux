@@ -42,63 +42,32 @@ AnalyzerOutput StatisticalAnalyzer::analyze_impl(const Kakshya::DataVariant& dat
     const std::string method = get_analysis_method();
     const Method stat_method = string_to_method(method);
 
-    auto numeric_data_opt = Kakshya::extract_from_variant<double>(data);
-    if (!numeric_data_opt.has_value()) {
-        auto float_data_opt = Kakshya::extract_from_variant<float>(data);
-        if (float_data_opt.has_value()) {
-            std::vector<double> numeric_data(float_data_opt->begin(), float_data_opt->end());
-            validate_data(numeric_data, stat_method);
-            double result = calculate_statistic_for_method(numeric_data, stat_method);
-            std::vector<double> result_vector = { result };
-            return format_output_based_on_granularity(result_vector, method);
-        }
-        throw std::runtime_error("Cannot extract numeric data from DataVariant");
-    }
+    std::vector<double> numeric_data = Kakshya::convert_variant_to_double(data);
 
-    std::vector<double> numeric_data = numeric_data_opt.value();
-    validate_data(numeric_data, stat_method);
+    Kakshya::validate_numeric_data_for_analysis(numeric_data, method, get_min_size_for_method(stat_method));
 
     double result = calculate_statistic_for_method(numeric_data, stat_method);
     std::vector<double> result_vector = { result };
-    return format_output_based_on_granularity(result_vector, method);
+
+    return format_analyzer_output(*this, result_vector, method, [this](const auto& values, const auto& method_name) { return create_statistical_regions(values, method_name); }, [this](const auto& values, const auto& method_name) { return create_statistical_segments(values, method_name); });
 }
 
 AnalyzerOutput StatisticalAnalyzer::analyze_impl(std::shared_ptr<Kakshya::SignalSourceContainer> container)
 {
-    if (!container || !container->has_data()) {
-        throw std::invalid_argument("Container is null or has no data");
-    }
-
-    auto dimensions = container->get_dimensions();
-    if (dimensions.empty()) {
-        throw std::runtime_error("Container has no dimensions");
-    }
+    auto [validated_container, dimensions] = Kakshya::validate_container_for_analysis(container);
 
     const std::string method = get_analysis_method();
     const Method stat_method = string_to_method(method);
 
-    DataModality modality = detect_data_modality(dimensions);
+    Kakshya::DataModality modality = Kakshya::detect_data_modality(dimensions);
 
-    const Kakshya::DataVariant& container_data = container->get_processed_data();
+    std::vector<double> numeric_data = Kakshya::extract_numeric_data_from_container(validated_container);
 
-    auto numeric_data_opt = Kakshya::extract_from_variant<double>(container_data);
-    if (!numeric_data_opt.has_value()) {
-        auto float_data_opt = Kakshya::extract_from_variant<float>(container_data);
-        if (!float_data_opt.has_value()) {
-            throw std::runtime_error("Cannot extract numeric data from container");
-        }
-        std::vector<double> numeric_data(float_data_opt->begin(), float_data_opt->end());
-        validate_data(numeric_data, stat_method);
-
-        std::vector<double> results = process_by_modality(numeric_data, dimensions, modality, stat_method);
-        return format_output_based_on_granularity(results, method);
-    }
-
-    std::vector<double> numeric_data = numeric_data_opt.value();
-    validate_data(numeric_data, stat_method);
+    Kakshya::validate_numeric_data_for_analysis(numeric_data, method, get_min_size_for_method(stat_method));
 
     std::vector<double> results = process_by_modality(numeric_data, dimensions, modality, stat_method);
-    return format_output_based_on_granularity(results, method);
+
+    return format_analyzer_output(*this, results, method, [this](const auto& values, const auto& method_name) { return create_statistical_regions(values, method_name); }, [this](const auto& values, const auto& method_name) { return create_statistical_segments(values, method_name); });
 }
 
 AnalyzerOutput StatisticalAnalyzer::analyze_impl(const Kakshya::Region& region)
@@ -109,20 +78,41 @@ AnalyzerOutput StatisticalAnalyzer::analyze_impl(const Kakshya::Region& region)
             const auto& data = std::any_cast<const std::vector<double>&>(it->second);
             const std::string method = get_analysis_method();
             const Method stat_method = string_to_method(method);
-            validate_data(data, stat_method);
+
+            Kakshya::validate_numeric_data_for_analysis(data, method, get_min_size_for_method(stat_method));
+
             double result = calculate_statistic_for_method(data, stat_method);
             std::vector<double> result_vector = { result };
-            return format_output_based_on_granularity(result_vector, method);
+
+            return format_analyzer_output(
+                *this, result_vector, method,
+                [this](const auto& values, const auto& method_name) {
+                    return create_statistical_regions(values, method_name);
+                },
+                [this](const auto& values, const auto& method_name) {
+                    return create_statistical_segments(values, method_name);
+                });
         }
+
         if (it->second.type() == typeid(std::vector<float>)) {
             const auto& data = std::any_cast<const std::vector<float>&>(it->second);
             std::vector<double> ddata(data.begin(), data.end());
             const std::string method = get_analysis_method();
             const Method stat_method = string_to_method(method);
-            validate_data(ddata, stat_method);
+
+            Kakshya::validate_numeric_data_for_analysis(ddata, method, get_min_size_for_method(stat_method));
+
             double result = calculate_statistic_for_method(ddata, stat_method);
             std::vector<double> result_vector = { result };
-            return format_output_based_on_granularity(result_vector, method);
+
+            return format_analyzer_output(
+                *this, result_vector, method,
+                [this](const auto& values, const auto& method_name) {
+                    return create_statistical_regions(values, method_name);
+                },
+                [this](const auto& values, const auto& method_name) {
+                    return create_statistical_segments(values, method_name);
+                });
         }
     }
 
@@ -132,120 +122,51 @@ AnalyzerOutput StatisticalAnalyzer::analyze_impl(const Kakshya::Region& region)
     }
 
     auto container = std::any_cast<std::shared_ptr<Kakshya::SignalSourceContainer>>(container_param);
-    if (!container || !container->has_data()) {
-        throw std::invalid_argument("Container context is invalid");
-    }
-
     auto region_data = container->get_region_data(region);
     return analyze_impl(region_data);
 }
 
 AnalyzerOutput StatisticalAnalyzer::analyze_impl(const Kakshya::RegionGroup& group)
 {
-    const std::string method = get_analysis_method();
-    const Method stat_method = string_to_method(method);
-
-    bool all_have_data = true;
-    for (const auto& region : group.regions) {
-        if (region.attributes.find("data") == region.attributes.end()) {
-            all_have_data = false;
-            break;
-        }
-    }
-    if (all_have_data && !group.regions.empty()) {
-        std::vector<double> results;
-        for (const auto& region : group.regions) {
-            const auto& attr = region.attributes.at("data");
-            if (attr.type() == typeid(std::vector<double>)) {
-                const auto& data = std::any_cast<const std::vector<double>&>(attr);
-                validate_data(data, stat_method);
-                results.push_back(calculate_statistic_for_method(data, stat_method));
-            } else if (attr.type() == typeid(std::vector<float>)) {
-                const auto& data = std::any_cast<const std::vector<float>&>(attr);
-                std::vector<double> ddata(data.begin(), data.end());
-                validate_data(ddata, stat_method);
-                results.push_back(calculate_statistic_for_method(ddata, stat_method));
-            }
-        }
-        return format_output_based_on_granularity(results, method);
-    }
-
-    auto container_param = get_parameter("current_container");
-    if (!container_param.has_value()) {
-        std::vector<double> results;
-
-        for (const auto& region : group.regions) {
-            if (!region.start_coordinates.empty() && !region.end_coordinates.empty()) {
-                double span = static_cast<double>(region.get_span(0));
-                results.push_back(span);
-            }
-        }
-
-        if (results.empty()) {
-            throw std::runtime_error("RegionGroup analysis requires container context or regions with coordinate data");
-        }
-
-        return format_output_based_on_granularity(results, method);
-    }
-
-    auto container = std::any_cast<std::shared_ptr<Kakshya::SignalSourceContainer>>(container_param);
-    std::vector<double> all_data;
+    std::vector<double> results;
 
     for (const auto& region : group.regions) {
         try {
-            auto region_data = container->get_region_data(region);
-            auto numeric_opt = Kakshya::extract_from_variant<double>(region_data);
-            if (numeric_opt.has_value()) {
-                all_data.insert(all_data.end(), numeric_opt->begin(), numeric_opt->end());
+            auto region_result = analyze_impl(region);
+            if (std::holds_alternative<std::vector<double>>(region_result)) {
+                const auto& values = std::get<std::vector<double>>(region_result);
+                if (!values.empty()) {
+                    results.insert(results.end(), values.begin(), values.end());
+                }
             }
         } catch (const std::exception& e) {
             continue;
         }
     }
 
-    if (all_data.empty()) {
+    if (results.empty()) {
         throw std::runtime_error("No data could be extracted from regions in group");
     }
 
-    validate_data(all_data, stat_method);
-    double result = calculate_statistic_for_method(all_data, stat_method);
-    std::vector<double> results = { result };
-
+    const std::string method = get_analysis_method();
     return format_output_based_on_granularity(results, method);
 }
 
 AnalyzerOutput StatisticalAnalyzer::analyze_impl(const std::vector<Kakshya::RegionSegment>& segments)
 {
-    const std::string method = get_analysis_method();
-    const Method stat_method = string_to_method(method);
-
     std::vector<double> results;
 
     for (const auto& segment : segments) {
-        // if (segment.is_cached && std::holds_alternative<Kakshya::DataVariant>(segment.cache.data)) {
-        if (segment.is_cached) {
-            auto numeric_opt = Kakshya::extract_from_variant<double>(segment.cache.data);
-            if (numeric_opt.has_value()) {
-                validate_data(numeric_opt.value(), stat_method);
-                double result = calculate_statistic_for_method(numeric_opt.value(), stat_method);
-                results.push_back(result);
-            }
-        } else {
-            auto container_param = get_parameter("current_container");
-            if (container_param.has_value()) {
-                auto container = std::any_cast<std::shared_ptr<Kakshya::SignalSourceContainer>>(container_param);
-                try {
-                    auto region_data = container->get_region_data(segment.source_region);
-                    auto numeric_opt = Kakshya::extract_from_variant<double>(region_data);
-                    if (numeric_opt.has_value()) {
-                        validate_data(numeric_opt.value(), stat_method);
-                        double result = calculate_statistic_for_method(numeric_opt.value(), stat_method);
-                        results.push_back(result);
-                    }
-                } catch (const std::exception& e) {
-                    continue;
+        try {
+            auto segment_result = analyze_impl(segment.source_region);
+            if (std::holds_alternative<std::vector<double>>(segment_result)) {
+                const auto& values = std::get<std::vector<double>>(segment_result);
+                if (!values.empty()) {
+                    results.insert(results.end(), values.begin(), values.end());
                 }
             }
+        } catch (const std::exception& e) {
+            continue;
         }
     }
 
@@ -253,7 +174,23 @@ AnalyzerOutput StatisticalAnalyzer::analyze_impl(const std::vector<Kakshya::Regi
         throw std::runtime_error("No segments have analyzable data");
     }
 
+    const std::string method = get_analysis_method();
     return format_output_based_on_granularity(results, method);
+}
+
+size_t StatisticalAnalyzer::get_min_size_for_method(Method method) const
+{
+    switch (method) {
+    case Method::VARIANCE:
+    case Method::STD_DEV:
+        return 2;
+    case Method::SKEWNESS:
+        return 3;
+    case Method::KURTOSIS:
+        return 4;
+    default:
+        return 1;
+    }
 }
 
 double StatisticalAnalyzer::calculate_statistic_for_method(const std::vector<double>& data, Method method)
@@ -461,61 +398,10 @@ double StatisticalAnalyzer::calculate_rms(const std::vector<double>& data)
     return std::sqrt(eigen_data.array().square().mean());
 }
 
-void StatisticalAnalyzer::validate_data(const std::vector<double>& data, Method method)
-{
-    if (data.empty()) {
-        throw std::invalid_argument("Cannot perform statistical analysis on empty data");
-    }
-
-    switch (method) {
-    case Method::VARIANCE:
-    case Method::STD_DEV:
-        if (data.size() < 2) {
-            throw std::invalid_argument("Variance and standard deviation require at least 2 data points");
-        }
-        break;
-    case Method::SKEWNESS:
-        if (data.size() < 3) {
-            throw std::invalid_argument("Skewness requires at least 3 data points");
-        }
-        break;
-    case Method::KURTOSIS:
-        if (data.size() < 4) {
-            throw std::invalid_argument("Kurtosis requires at least 4 data points");
-        }
-        break;
-    default:
-        break;
-    }
-
-    for (double value : data) {
-        if (!std::isfinite(value)) {
-            throw std::invalid_argument("Data contains NaN or infinite values");
-        }
-    }
-}
-
-DataModality StatisticalAnalyzer::detect_data_modality(const std::vector<Kakshya::DataDimension>& dimensions)
-{
-    if (dimensions.empty()) {
-        return DataModality::UNKNOWN;
-    }
-
-    if (dimensions.size() == 1) {
-        return DataModality::AUDIO_1D;
-    } else if (dimensions.size() == 2) {
-        return DataModality::SPECTRAL_2D;
-    } else if (dimensions.size() == 3) {
-        return DataModality::VOLUMETRIC_3D;
-    }
-
-    return DataModality::TENSOR_ND;
-}
-
 std::vector<double> StatisticalAnalyzer::process_by_modality(
     const std::vector<double>& data,
     const std::vector<Kakshya::DataDimension>& dimensions,
-    DataModality /*modality*/,
+    Kakshya::DataModality /*modality*/,
     Method method)
 {
     size_t time_frames = 0;
@@ -552,21 +438,14 @@ std::vector<double> StatisticalAnalyzer::process_by_modality(
 
 AnalyzerOutput StatisticalAnalyzer::format_output_based_on_granularity(const std::vector<double>& values, const std::string& method)
 {
-    AnalysisGranularity granularity = get_output_granularity();
-
-    switch (granularity) {
-    case AnalysisGranularity::RAW_VALUES:
-        return AnalyzerOutput { values };
-
-    case AnalysisGranularity::ATTRIBUTED_SEGMENTS:
-        return AnalyzerOutput { create_statistical_segments(values, method) };
-
-    case AnalysisGranularity::ORGANIZED_GROUPS:
-        return AnalyzerOutput { create_statistical_regions(values, method) };
-
-    default:
-        return AnalyzerOutput { values };
-    }
+    return format_analyzer_output(
+        *this, values, method,
+        [this](const auto& values, const auto& method_name) {
+            return create_statistical_regions(values, method_name);
+        },
+        [this](const auto& values, const auto& method_name) {
+            return create_statistical_segments(values, method_name);
+        });
 }
 
 Kakshya::RegionGroup StatisticalAnalyzer::create_statistical_regions(const std::vector<double>& values, const std::string& method)

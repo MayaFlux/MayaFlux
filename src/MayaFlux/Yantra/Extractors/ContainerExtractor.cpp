@@ -30,7 +30,7 @@ const std::unordered_map<ContainerExtractionMethod, std::string> ContainerExtrac
 
 ContainerExtractor::ContainerExtractor()
     : m_contiguous_processor(std::make_shared<Kakshya::ContiguousAccessProcessor>())
-    , m_region_processor(std::make_shared<Kakshya::RegionOrganizationProcessor>(m_current_container))
+    , m_region_processor(std::make_shared<Kakshya::RegionOrganizationProcessor>(m_container))
 {
     set_parameter("channel_index", 0u);
     set_parameter("frame_index", 0u);
@@ -343,11 +343,6 @@ std::string ContainerExtractor::method_to_string(ContainerExtractionMethod metho
         return it->second;
     }
     return "unknown";
-}
-
-std::shared_ptr<Kakshya::SignalSourceContainer> ContainerExtractor::get_context_container() const
-{
-    return m_current_container;
 }
 
 }

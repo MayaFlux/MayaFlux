@@ -1,5 +1,6 @@
 #include "ContainerUtils.hpp"
 // #include "DataUtils.hpp"
+#include "DataUtils.hpp"
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 #include "RegionUtils.hpp"
 
@@ -206,6 +207,57 @@ DataVariant extract_channel_data(std::shared_ptr<SignalSourceContainer> containe
 
     Region channel_region(start_coords, end_coords);
     return container->get_region_data(channel_region);
+}
+
+std::pair<std::shared_ptr<SignalSourceContainer>, std::vector<DataDimension>>
+validate_container_for_analysis(std::shared_ptr<SignalSourceContainer> container)
+{
+    if (!container || !container->has_data()) {
+        throw std::invalid_argument("Container is null or has no data");
+    }
+
+    auto dimensions = container->get_dimensions();
+    if (dimensions.empty()) {
+        throw std::runtime_error("Container has no dimensions");
+    }
+
+    return std::make_pair(container, std::move(dimensions));
+}
+
+std::vector<double> extract_numeric_data_from_container(std::shared_ptr<SignalSourceContainer> container)
+{
+    if (!container || !container->has_data()) {
+        throw std::invalid_argument("Container is null or has no data");
+    }
+
+    const Kakshya::DataVariant& container_data = container->get_processed_data();
+
+    // Use existing convert_variant_to_double function from DataUtils
+    try {
+        return convert_variant_to_double(container_data);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Cannot extract numeric data from container: " + std::string(e.what()));
+    }
+}
+
+void validate_numeric_data_for_analysis(const std::vector<double>& data,
+    const std::string& operation_name,
+    size_t min_size)
+{
+    if (data.empty()) {
+        throw std::invalid_argument("Cannot perform " + operation_name + " on empty data");
+    }
+
+    if (data.size() < min_size) {
+        throw std::invalid_argument(operation_name + " requires at least " + std::to_string(min_size) + " data points, got " + std::to_string(data.size()));
+    }
+
+    // Check for invalid values
+    for (size_t i = 0; i < data.size(); ++i) {
+        if (!std::isfinite(data[i])) {
+            throw std::invalid_argument(operation_name + " data contains NaN or infinite values at index " + std::to_string(i));
+        }
+    }
 }
 
 }

@@ -44,7 +44,6 @@ std::vector<std::string> EnergyAnalyzer::get_available_methods() const
 
 std::vector<std::string> EnergyAnalyzer::get_methods_for_type_impl(std::type_index type_info) const
 {
-    // All methods support all input types for this analyzer
     return get_available_methods();
 }
 
@@ -54,26 +53,27 @@ AnalyzerOutput EnergyAnalyzer::analyze_impl(const Kakshya::DataVariant& data)
     const Method energy_method = string_to_method(method);
 
     std::vector<double> audio_data = Kakshya::convert_variant_to_double(data);
+
     std::vector<double> energy_values = calculate_energy_for_method(audio_data, energy_method);
 
-    return format_output_based_on_granularity(energy_values, method);
+    return format_analyzer_output(
+        *this, energy_values, method,
+        [this](const auto& values, const auto& method_name) {
+            return create_energy_regions(values, method_name);
+        },
+        [this](const auto& values, const auto& method_name) {
+            return create_energy_segments(values, method_name);
+        });
 }
 
 AnalyzerOutput EnergyAnalyzer::analyze_impl(std::shared_ptr<Kakshya::SignalSourceContainer> container)
 {
-    if (!container || !container->has_data()) {
-        throw std::invalid_argument("Container is null or has no data");
-    }
+    auto [validated_container, dimensions] = Kakshya::validate_container_for_analysis(container);
 
-    auto dimensions = container->get_dimensions();
-    if (dimensions.empty()) {
-        throw std::runtime_error("Container has no dimensions");
-    }
+    Kakshya::DataModality modality = Kakshya::detect_data_modality(dimensions);
 
-    DataModality modality = detect_data_modality(dimensions);
-
-    if (modality != DataModality::AUDIO_1D && modality != DataModality::AUDIO_MULTICHANNEL && modality != DataModality::SPECTRAL_2D) {
-        throw std::runtime_error("EnergyAnalyzer only handles audio and spectral data as the concepts of RMS/PEAK etc.. dont yield themsleves to multimodal data.\n Use specialized analyzers for images/video.");
+    if (modality != Kakshya::DataModality::AUDIO_1D && modality != Kakshya::DataModality::AUDIO_MULTICHANNEL && modality != Kakshya::DataModality::SPECTRAL_2D) {
+        throw std::runtime_error("EnergyAnalyzer only handles audio and spectral data as the concepts of RMS/PEAK etc.. dont yield themselves to multimodal data.\n Use specialized analyzers for images/video.");
     }
 
     Kakshya::Region full_region;
@@ -84,7 +84,7 @@ AnalyzerOutput EnergyAnalyzer::analyze_impl(std::shared_ptr<Kakshya::SignalSourc
         full_region.end_coordinates[i] = dimensions[i].size - 1;
     }
 
-    auto data = container->get_region_data(full_region);
+    auto data = validated_container->get_region_data(full_region);
 
     set_parameter("data_modality", static_cast<int>(modality));
     set_parameter("dimensions", dimensions);
@@ -100,66 +100,65 @@ AnalyzerOutput EnergyAnalyzer::analyze_impl(const Kakshya::Region& region)
     }
 
     auto container = std::any_cast<std::shared_ptr<Kakshya::SignalSourceContainer>>(container_param);
-    if (!container || !container->has_data()) {
-        throw std::invalid_argument("Container context is invalid");
-    }
+
+    Kakshya::validate_container_for_analysis(container);
 
     auto data = container->get_region_data(region);
     return analyze_impl(data);
 }
 
-template <typename IntType>
-std::vector<double> EnergyAnalyzer::normalize_integer_data(const std::vector<IntType>& data, double max_value)
+AnalyzerOutput EnergyAnalyzer::analyze_impl(const Kakshya::RegionGroup& group)
 {
-    std::vector<double> result;
-    result.reserve(data.size());
+    std::vector<double> results;
 
-    const double scale = 1.0 / max_value;
-    std::transform(data.begin(), data.end(), std::back_inserter(result),
-        [scale](IntType val) { return static_cast<double>(val) * scale; });
-
-    return result;
-}
-
-DataModality EnergyAnalyzer::detect_data_modality(const std::vector<Kakshya::DataDimension>& dimensions)
-{
-    if (dimensions.empty())
-        return DataModality::UNKNOWN;
-
-    size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0;
-
-    for (const auto& dim : dimensions) {
-        switch (dim.role) {
-        case Kakshya::DataDimension::Role::TIME:
-            time_dims++;
-            break;
-        case Kakshya::DataDimension::Role::SPATIAL_X:
-        case Kakshya::DataDimension::Role::SPATIAL_Y:
-        case Kakshya::DataDimension::Role::SPATIAL_Z:
-            spatial_dims++;
-            break;
-        case Kakshya::DataDimension::Role::CHANNEL:
-            channel_dims++;
-            break;
-        case Kakshya::DataDimension::Role::FREQUENCY:
-            frequency_dims++;
-            break;
-        default:
-            break;
+    for (const auto& region : group.regions) {
+        try {
+            auto region_result = analyze_impl(region);
+            if (std::holds_alternative<std::vector<double>>(region_result)) {
+                const auto& values = std::get<std::vector<double>>(region_result);
+                if (!values.empty()) {
+                    double region_energy = std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+                    results.push_back(region_energy);
+                }
+            }
+        } catch (const std::exception& e) {
+            continue;
         }
     }
 
-    if (time_dims == 1 && spatial_dims == 0 && channel_dims <= 1) {
-        return (channel_dims == 0) ? DataModality::AUDIO_1D : DataModality::AUDIO_MULTICHANNEL;
-    } else if (time_dims == 1 && frequency_dims == 1) {
-        return DataModality::SPECTRAL_2D;
-    } else if (time_dims == 0 && spatial_dims >= 2) {
-        return DataModality::IMAGE_2D; // Will be rejected
-    } else if (time_dims == 1 && spatial_dims >= 2) {
-        return DataModality::VIDEO_GRAYSCALE; // Will be rejected
+    if (results.empty()) {
+        throw std::runtime_error("No energy data could be extracted from regions in group");
     }
 
-    return DataModality::TENSOR_ND;
+    const std::string method = get_analysis_method();
+    return format_output_based_on_granularity(results, method);
+}
+
+AnalyzerOutput EnergyAnalyzer::analyze_impl(const std::vector<Kakshya::RegionSegment>& segments)
+{
+    std::vector<double> results;
+
+    for (const auto& segment : segments) {
+        try {
+            auto segment_result = analyze_impl(segment.source_region);
+            if (std::holds_alternative<std::vector<double>>(segment_result)) {
+                const auto& values = std::get<std::vector<double>>(segment_result);
+                if (!values.empty()) {
+                    double segment_energy = std::accumulate(values.begin(), values.end(), 0.0) / values.size();
+                    results.push_back(segment_energy);
+                }
+            }
+        } catch (const std::exception& e) {
+            continue;
+        }
+    }
+
+    if (results.empty()) {
+        throw std::runtime_error("No energy data could be extracted from segments");
+    }
+
+    const std::string method = get_analysis_method();
+    return format_output_based_on_granularity(results, method);
 }
 
 std::vector<double> EnergyAnalyzer::calculate_energy_for_method(const std::vector<double>& data, Method method)
@@ -397,114 +396,67 @@ Eigen::VectorXd EnergyAnalyzer::create_window_function(const std::string& window
     return Eigen::Map<Eigen::VectorXd>(window_vector.data(), window_vector.size());
 }
 
-AnalyzerOutput EnergyAnalyzer::format_output_based_on_granularity(
-    const std::vector<double>& energy_values,
-    const std::string& method)
+AnalyzerOutput EnergyAnalyzer::format_output_based_on_granularity(const std::vector<double>& energy_values, const std::string& method)
 {
-    const AnalysisGranularity granularity = get_output_granularity();
-
-    switch (granularity) {
-    case AnalysisGranularity::RAW_VALUES:
-        return energy_values;
-
-    case AnalysisGranularity::ATTRIBUTED_SEGMENTS:
-        return create_energy_segments(energy_values, method);
-
-    case AnalysisGranularity::ORGANIZED_GROUPS:
-        return create_energy_regions(energy_values, method);
-
-    default:
-        return energy_values;
-    }
+    return format_analyzer_output(*this, energy_values, method, [this](const auto& values, const auto& method_name) { return create_energy_regions(values, method_name); }, [this](const auto& values, const auto& method_name) { return create_energy_segments(values, method_name); });
 }
 
-Kakshya::RegionGroup EnergyAnalyzer::create_energy_regions(
-    const std::vector<double>& values,
-    const std::string& method)
+Kakshya::RegionGroup EnergyAnalyzer::create_energy_regions(const std::vector<double>& values, const std::string& method)
 {
     Kakshya::RegionGroup group;
-    group.name = "energy_analysis_" + method;
+    group.name = std::string("Energy Analysis - " + method);
+    group.attributes["description"] = std::string("Energy regions based on " + method + " analysis");
 
-    if (!m_classification_enabled) {
-        bool in_region = false;
-        size_t region_start = 0;
+    if (!values.empty()) {
+        double silent_threshold = get_parameter_or_default<double>("silent_threshold", 0.001);
+        double quiet_threshold = get_parameter_or_default<double>("quiet_threshold", 0.01);
+        double moderate_threshold = get_parameter_or_default<double>("moderate_threshold", 0.1);
+        double loud_threshold = get_parameter_or_default<double>("loud_threshold", 0.5);
 
         for (size_t i = 0; i < values.size(); ++i) {
-            bool above_threshold = values[i] > m_quiet_threshold;
+            Kakshya::Region region;
+            region.start_coordinates = { static_cast<u_int64_t>(i * m_hop_size) };
+            region.end_coordinates = { static_cast<u_int64_t>((i + 1) * m_hop_size) };
 
-            if (above_threshold && !in_region) {
-                region_start = i * m_hop_size;
-                in_region = true;
-            } else if (!above_threshold && in_region) {
+            region.attributes["energy_value"] = values[i];
+            region.attributes["frame_index"] = static_cast<int>(i);
 
-                // End current region
-                Kakshya::Region region;
-                region.start_coordinates = { region_start };
-                region.end_coordinates = { i * m_hop_size };
-                Kakshya::set_region_attribute(region, "energy_method", method);
-
-                // region_start is in samples, m_hop_size is in samples per window, so convert to window index
-                size_t region_start_window = region_start / m_hop_size;
-                size_t region_end_window = i;
-                size_t num_windows = region_end_window - region_start_window;
-                double avg_energy = (num_windows > 0)
-                    ? std::accumulate(values.begin() + region_start_window, values.begin() + region_end_window, 0.0) / num_windows
-                    : 0.0;
-                Kakshya::set_region_attribute(region, "average_energy", avg_energy);
-
-                group.regions.push_back(std::move(region));
-                in_region = false;
+            std::string classification;
+            if (values[i] < silent_threshold) {
+                classification = "silent";
+            } else if (values[i] < quiet_threshold) {
+                classification = "quiet";
+            } else if (values[i] < moderate_threshold) {
+                classification = "moderate";
+            } else if (values[i] < loud_threshold) {
+                classification = "loud";
+            } else {
+                classification = "very_loud";
             }
-        }
 
-        if (in_region) {
-            Kakshya::Region region;
-            region.start_coordinates = { region_start };
-            region.end_coordinates = { values.size() * m_hop_size };
-            Kakshya::set_region_attribute(region, "energy_method", method);
-            group.regions.push_back(std::move(region));
-        }
-    } else {
-        for (size_t i = 0; i < values.size(); ++i) {
-            EnergyLevel level = classify_energy_level(values[i]);
-
-            Kakshya::Region region;
-            region.start_coordinates = { i * m_hop_size };
-            region.end_coordinates = { (i + 1) * m_hop_size };
-
-            Kakshya::set_region_attribute(region, "energy_method", method);
-            Kakshya::set_region_attribute(region, "energy_value", values[i]);
-            Kakshya::set_region_attribute(region, "energy_level", energy_level_to_string(level));
-
-            group.regions.push_back(std::move(region));
+            region.attributes["energy_level"] = classification;
+            group.regions.push_back(region);
         }
     }
 
     return group;
 }
 
-std::vector<Kakshya::RegionSegment> EnergyAnalyzer::create_energy_segments(
-    const std::vector<double>& values,
-    const std::string& method)
+std::vector<Kakshya::RegionSegment> EnergyAnalyzer::create_energy_segments(const std::vector<double>& values, const std::string& method)
 {
     std::vector<Kakshya::RegionSegment> segments;
-    segments.reserve(values.size());
 
     for (size_t i = 0; i < values.size(); ++i) {
         Kakshya::RegionSegment segment;
-        segment.source_region.start_coordinates = { i * m_hop_size };
-        segment.source_region.end_coordinates = { (i + 1) * m_hop_size };
 
-        Kakshya::set_region_attribute(segment.source_region, "energy_method", method);
-        Kakshya::set_region_attribute(segment.source_region, "energy_value", values[i]);
+        segment.source_region.start_coordinates = { static_cast<u_int64_t>(i * m_hop_size) };
+        segment.source_region.end_coordinates = { static_cast<u_int64_t>((i + 1) * m_hop_size) };
 
-        if (m_classification_enabled) {
-            EnergyLevel level = classify_energy_level(values[i]);
-            Kakshya::set_region_attribute(segment.source_region, "energy_level",
-                energy_level_to_string(level));
-        }
+        segment.source_region.attributes["method"] = method;
+        segment.source_region.attributes["energy_value"] = values[i];
+        segment.source_region.attributes["frame_index"] = static_cast<int>(i);
 
-        segments.push_back(std::move(segment));
+        segments.push_back(segment);
     }
 
     return segments;

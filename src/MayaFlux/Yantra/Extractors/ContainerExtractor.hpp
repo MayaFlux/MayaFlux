@@ -167,13 +167,11 @@ private:
         }
     }
 
-    std::shared_ptr<Kakshya::SignalSourceContainer> get_context_container() const;
-
     std::shared_ptr<Kakshya::ContiguousAccessProcessor> m_contiguous_processor;
     std::shared_ptr<Kakshya::RegionOrganizationProcessor> m_region_processor;
 
     mutable std::unordered_map<std::string, std::any> m_extraction_cache;
-    mutable std::shared_ptr<Kakshya::SignalSourceContainer> m_current_container;
+    mutable std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
 
     static const std::unordered_map<std::string, ContainerExtractionMethod> s_method_map;
     static const std::unordered_map<ContainerExtractionMethod, std::string> s_method_names;

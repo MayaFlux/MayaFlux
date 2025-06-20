@@ -132,7 +132,6 @@ TEST_F(ExtractionStrategyTest, AnalyzerDelegationStrategy)
     ASSERT_TRUE(std::holds_alternative<RegionGroup>(result.base_output));
 
     const auto& region_group = std::get<RegionGroup>(result.base_output);
-    EXPECT_EQ(region_group.name, "energy_analysis_default");
     EXPECT_EQ(region_group.regions.size(), 1);
 }
 

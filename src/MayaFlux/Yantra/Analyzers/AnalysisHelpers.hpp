@@ -39,23 +39,6 @@ struct DataTypeTraits<std::complex<T>> {
 };
 
 /**
- * @brief Data modality types for cross-modal analysis
- */
-enum class DataModality {
-    AUDIO_1D, // 1D audio signal
-    AUDIO_MULTICHANNEL, // Multi-channel audio
-    IMAGE_2D, // 2D image (grayscale or single channel)
-    IMAGE_COLOR, // 2D RGB/RGBA image
-    VIDEO_GRAYSCALE, // 3D video (time + 2D grayscale)
-    VIDEO_COLOR, // 4D video (time + 2D + color)
-    TEXTURE_2D, // 2D texture data
-    TENSOR_ND, // N-dimensional tensor
-    SPECTRAL_2D, // 2D spectral data (time + frequency)
-    VOLUMETRIC_3D, // 3D volumetric data
-    UNKNOWN
-};
-
-/**
  * @brief Unified input variant for analyzers.
  *
  * Encapsulates all supported input types for analysis operations, including:

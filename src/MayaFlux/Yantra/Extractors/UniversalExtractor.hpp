@@ -504,6 +504,8 @@ protected:
      */
     ExtractorOutput convert_from_analyzer_output(const AnalyzerOutput& output);
 
+    mutable std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
+
 public:
     /**
      * @brief Set a named parameter for extraction configuration.
@@ -542,7 +544,6 @@ private:
     std::map<std::string, std::any> m_parameters; ///< Extraction parameters.
     std::shared_ptr<UniversalAnalyzer> m_analyzer; ///< Optional analyzer for delegation.
     bool m_use_analyzer = false; ///< Whether to delegate extraction to analyzer.
-    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
 };
 
 }

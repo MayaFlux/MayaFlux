@@ -1,6 +1,8 @@
 #include "DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 
+#include "MayaFlux/Yantra/Analyzers/AnalysisHelpers.hpp"
+
 namespace MayaFlux::Kakshya {
 
 u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
@@ -223,6 +225,73 @@ DataVariant extract_subsample_data(std::shared_ptr<SignalSourceContainer> contai
         return DataVariant { subsampled };
     },
         full_data);
+}
+
+// Add this implementation to DataUtils.cpp
+
+DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
+{
+    if (dimensions.empty()) {
+        return DataModality::UNKNOWN;
+    }
+
+    size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0;
+
+    // Count dimensions by role
+    for (const auto& dim : dimensions) {
+        switch (dim.role) {
+        case DataDimension::Role::TIME:
+            time_dims++;
+            break;
+        case DataDimension::Role::SPATIAL_X:
+        case DataDimension::Role::SPATIAL_Y:
+        case DataDimension::Role::SPATIAL_Z:
+            spatial_dims++;
+            break;
+        case DataDimension::Role::CHANNEL:
+            channel_dims++;
+            break;
+        case DataDimension::Role::FREQUENCY:
+            frequency_dims++;
+            break;
+        default:
+            break;
+        }
+    }
+
+    // Audio modalities
+    if (time_dims == 1 && spatial_dims == 0 && channel_dims <= 1) {
+        return (channel_dims == 0) ? DataModality::AUDIO_1D : DataModality::AUDIO_MULTICHANNEL;
+    }
+
+    // Spectral data (time + frequency)
+    if (time_dims == 1 && frequency_dims == 1) {
+        return DataModality::SPECTRAL_2D;
+    }
+
+    // Spatial modalities
+    if (spatial_dims == 2 && time_dims == 0) {
+        return DataModality::IMAGE_2D;
+    }
+
+    if (spatial_dims == 2 && time_dims == 1) {
+        return DataModality::VIDEO_GRAYSCALE;
+    }
+
+    if (spatial_dims == 3 && time_dims == 0) {
+        return DataModality::VOLUMETRIC_3D;
+    }
+
+    // Fallback based on dimension count
+    if (dimensions.size() == 1) {
+        return DataModality::AUDIO_1D;
+    } else if (dimensions.size() == 2) {
+        return DataModality::SPECTRAL_2D;
+    } else if (dimensions.size() == 3) {
+        return DataModality::VOLUMETRIC_3D;
+    }
+
+    return DataModality::TENSOR_ND;
 }
 
 }

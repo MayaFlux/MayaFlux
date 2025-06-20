@@ -157,6 +157,22 @@ public:
         set_parameter("granularity", granularity);
     }
 
+    /**
+     * @brief Gets the current output granularity.
+     */
+    AnalysisGranularity get_output_granularity() const
+    {
+        auto param = get_parameter("granularity");
+        if (param.has_value()) {
+            try {
+                return std::any_cast<AnalysisGranularity>(param);
+            } catch (const std::bad_any_cast&) {
+                std::cerr << "Warning: 'granularity' parameter is not of AnalysisGranularity type" << std::endl;
+            }
+        }
+        return AnalysisGranularity::ORGANIZED_GROUPS;
+    }
+
 protected:
     virtual AnalyzerOutput analyze_impl(const Kakshya::DataVariant& data)
     {
@@ -186,22 +202,6 @@ protected:
     {
         std::cerr << "[UniversalAnalyzer] Warning: RegionSegment analysis not implemented for this analyzer." << std::endl;
         return AnalyzerOutput {};
-    }
-
-    /**
-     * @brief Gets the current output granularity.
-     */
-    AnalysisGranularity get_output_granularity() const
-    {
-        auto param = get_parameter("granularity");
-        if (param.has_value()) {
-            try {
-                return std::any_cast<AnalysisGranularity>(param);
-            } catch (const std::bad_any_cast&) {
-                std::cerr << "Warning: 'granularity' parameter is not of AnalysisGranularity type" << std::endl;
-            }
-        }
-        return AnalysisGranularity::ORGANIZED_GROUPS;
     }
 
     /**
@@ -320,5 +320,64 @@ void register_analyzer_operations(std::shared_ptr<ComputeMatrix> matrix);
 using DataToValues = TypedAnalyzerWrapper<Kakshya::DataVariant, std::vector<double>>;
 using ContainerToRegions = TypedAnalyzerWrapper<std::shared_ptr<Kakshya::SignalSourceContainer>, Kakshya::RegionGroup>;
 using RegionToSegments = TypedAnalyzerWrapper<Kakshya::Region, std::vector<Kakshya::RegionSegment>>;
+
+/**
+ * @brief Generic output formatting based on granularity with custom region/segment creators
+ * @tparam RegionCreatorFunc Function type for creating region groups
+ * @tparam SegmentCreatorFunc Function type for creating region segments
+ * @param values Computed analysis values
+ * @param method Method name for metadata
+ * @param granularity Output granularity setting
+ * @param create_regions Function to create RegionGroup from values and method
+ * @param create_segments Function to create RegionSegments from values and method
+ * @return AnalyzerOutput formatted according to granularity
+ */
+template <typename RegionCreatorFunc, typename SegmentCreatorFunc>
+AnalyzerOutput format_analysis_output(
+    const std::vector<double>& values,
+    const std::string& method,
+    AnalysisGranularity granularity,
+    RegionCreatorFunc&& create_regions,
+    SegmentCreatorFunc&& create_segments)
+{
+    switch (granularity) {
+    case AnalysisGranularity::RAW_VALUES:
+        return AnalyzerOutput { values };
+
+    case AnalysisGranularity::ATTRIBUTED_SEGMENTS:
+        return AnalyzerOutput { create_segments(values, method) };
+
+    case AnalysisGranularity::ORGANIZED_GROUPS:
+        return AnalyzerOutput { create_regions(values, method) };
+
+    default:
+        return AnalyzerOutput { values };
+    }
+}
+
+/**
+ * @brief Simplified output formatting for analyzers with UniversalAnalyzer base
+ * @param analyzer Analyzer instance to get granularity from
+ * @param values Computed analysis values
+ * @param method Method name for metadata
+ * @param create_regions Function to create RegionGroup from values and method
+ * @param create_segments Function to create RegionSegments from values and method
+ * @return AnalyzerOutput formatted according to analyzer's granularity setting
+ */
+template <typename RegionCreatorFunc, typename SegmentCreatorFunc>
+AnalyzerOutput format_analyzer_output(
+    const UniversalAnalyzer& analyzer,
+    const std::vector<double>& values,
+    const std::string& method,
+    RegionCreatorFunc&& create_regions,
+    SegmentCreatorFunc&& create_segments)
+{
+    // Get granularity from analyzer (assumes analyzer has get_output_granularity method)
+    auto granularity = analyzer.get_output_granularity();
+
+    return format_analysis_output(values, method, granularity,
+        std::forward<RegionCreatorFunc>(create_regions),
+        std::forward<SegmentCreatorFunc>(create_segments));
+}
 
 } // namespace MayaFlux::Yantra
