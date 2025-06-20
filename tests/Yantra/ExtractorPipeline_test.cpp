@@ -184,7 +184,6 @@ protected:
 
         chain = std::make_shared<ExtractorChain>();
 
-        // Create extractors for chaining
         mean_extractor = std::make_shared<FeatureExtractor>();
         mean_extractor->set_extraction_method("mean");
 

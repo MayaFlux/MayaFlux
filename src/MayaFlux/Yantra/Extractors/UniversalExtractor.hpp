@@ -356,7 +356,8 @@ protected:
      */
     virtual ExtractorOutput extract_impl(const Kakshya::DataVariant& data)
     {
-        throw std::runtime_error("DataVariant extraction not implemented");
+        std::cerr << "[UniversalExtractor] Warning: DataVariant extraction not implemented" << std::endl;
+        return ExtractorOutput {};
     }
 
     /**
@@ -367,7 +368,8 @@ protected:
      */
     virtual ExtractorOutput extract_impl(std::shared_ptr<Kakshya::SignalSourceContainer> container)
     {
-        throw std::runtime_error("Container extraction not implemented");
+        std::cerr << "[UniversalExtractor] Warning: Container extraction not implemented" << std::endl;
+        return ExtractorOutput {};
     }
 
     /**
@@ -378,7 +380,8 @@ protected:
      */
     virtual ExtractorOutput extract_impl(const Kakshya::Region& region)
     {
-        throw std::runtime_error("Region extraction not implemented");
+        std::cerr << "[UniversalExtractor] Warning: Region extraction not implemented" << std::endl;
+        return ExtractorOutput {};
     }
 
     /**
@@ -389,7 +392,8 @@ protected:
      */
     virtual ExtractorOutput extract_impl(const Kakshya::RegionGroup& group)
     {
-        throw std::runtime_error("RegionGroup extraction not implemented");
+        std::cerr << "[UniversalExtractor] Warning: RegionGroup extraction not implemented" << std::endl;
+        return ExtractorOutput {};
     }
 
     /**
@@ -400,7 +404,8 @@ protected:
      */
     virtual ExtractorOutput extract_impl(const std::vector<Kakshya::RegionSegment>& segments)
     {
-        throw std::runtime_error("RegionSegment extraction not implemented");
+        std::cerr << "[UniversalExtractor] Warning: RegionSegment extraction not implemented" << std::endl;
+        return ExtractorOutput {};
     }
 
     /**
@@ -411,7 +416,8 @@ protected:
      */
     virtual ExtractorOutput extract_impl(const AnalyzerOutput& analyzer_output)
     {
-        throw std::runtime_error("AnalyzerOutput extraction not implemented");
+        std::cerr << "[UniversalExtractor] Warning: AnalyzerOutput extraction not implemented" << std::endl;
+        return ExtractorOutput {};
     }
 
     /**
@@ -528,10 +534,15 @@ public:
         return m_parameters;
     }
 
+    inline std::shared_ptr<Kakshya::SignalSourceContainer> get_context_container() { return m_container; }
+
+    inline void set_context_container(std::shared_ptr<Kakshya::SignalSourceContainer> container) { m_container = container; }
+
 private:
     std::map<std::string, std::any> m_parameters; ///< Extraction parameters.
     std::shared_ptr<UniversalAnalyzer> m_analyzer; ///< Optional analyzer for delegation.
     bool m_use_analyzer = false; ///< Whether to delegate extraction to analyzer.
+    std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
 };
 
 }

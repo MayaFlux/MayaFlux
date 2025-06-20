@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
-#include "MayaFlux/Yantra/Analyzers/Analyzer.hpp"
+#include "MayaFlux/Yantra/Analyzers/UniversalAnalyzer.hpp"
 #include "MayaFlux/Yantra/ComputeMatrix.hpp"
 
 namespace MayaFlux::Yantra {
@@ -148,7 +148,7 @@ struct ExtractorOutput {
     BaseExtractorOutput base_output; ///< Main output value (variant)
     std::vector<std::shared_ptr<ExtractorNode>> recursive_outputs; ///< Recursive/lazy outputs
 
-    // --- Constructors for seamless usage ---
+    ExtractorOutput() = default;
 
     /**
      * @brief Construct from a base output variant.

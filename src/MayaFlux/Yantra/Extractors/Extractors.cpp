@@ -31,12 +31,14 @@ ExtractorOutput FeatureExtractor::extract_impl(const Kakshya::DataVariant& data)
 
     return ExtractorOutput { audio_data }; // Default: return input
 }
+
 void ExtractionGrammar::add_rule(const Rule& rule)
 {
     m_rules.push_back(rule);
     std::sort(m_rules.begin(), m_rules.end(),
         [](const Rule& a, const Rule& b) { return a.priority > b.priority; });
 }
+
 std::optional<ExtractorOutput> ExtractionGrammar::extract_by_rule(const std::string& rule_name, const ExtractorInput& input) const
 {
     auto it = std::find_if(m_rules.begin(), m_rules.end(),
@@ -46,6 +48,7 @@ std::optional<ExtractorOutput> ExtractionGrammar::extract_by_rule(const std::str
     }
     return std::nullopt;
 }
+
 std::vector<ExtractorOutput> ExtractionGrammar::extract_all_matching(const ExtractorInput& input) const
 {
     std::vector<ExtractorOutput> results;
@@ -56,6 +59,7 @@ std::vector<ExtractorOutput> ExtractionGrammar::extract_all_matching(const Extra
     }
     return results;
 }
+
 std::vector<std::string> ExtractionGrammar::get_available_rules() const
 {
     std::vector<std::string> names;

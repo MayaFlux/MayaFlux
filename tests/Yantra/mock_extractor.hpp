@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 #include "MayaFlux/Yantra/Extractors/ExtractionHelper.hpp"
 #include "MayaFlux/Yantra/Extractors/UniversalExtractor.hpp"
 
@@ -82,7 +83,6 @@ protected:
             throw std::runtime_error("Mock extractor container error");
         }
 
-        // Mock container processing
         return ExtractorOutput { std::vector<double> { static_cast<double>(container->get_total_elements()) } };
     }
 
@@ -159,7 +159,7 @@ public:
 protected:
     ExtractorOutput extract_impl(const DataVariant& data) override
     {
-        std::vector<double> audio_data = convert_variant_to_double(data);
+        std::vector<double> audio_data = Kakshya::convert_variant_to_double(data);
         const std::string method = get_extraction_method();
 
         if (!m_simulate_realistic_features) {
@@ -250,28 +250,6 @@ protected:
 
 private:
     bool m_simulate_realistic_features;
-
-    // Helper function to convert DataVariant to double vector
-    std::vector<double> convert_variant_to_double(const DataVariant& data)
-    {
-        return std::visit([](auto&& arg) -> std::vector<double> {
-            using T = std::decay_t<decltype(arg)>;
-
-            if constexpr (std::is_same_v<T, std::vector<double>>) {
-                return arg;
-            } else if constexpr (std::is_same_v<T, std::vector<float>>) {
-                std::vector<double> result;
-                result.reserve(arg.size());
-                std::transform(arg.begin(), arg.end(), std::back_inserter(result),
-                    [](float f) { return static_cast<double>(f); });
-                return result;
-            } else {
-                // For other types, return a default vector
-                return std::vector<double> { 1.0, 2.0, 3.0, 4.0, 5.0 };
-            }
-        },
-            data);
-    }
 };
 
 /**

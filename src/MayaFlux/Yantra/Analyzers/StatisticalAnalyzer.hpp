@@ -2,7 +2,6 @@
 
 #include "UniversalAnalyzer.hpp"
 
-#include <Eigen/Core>
 #include <Eigen/Dense>
 
 /**
