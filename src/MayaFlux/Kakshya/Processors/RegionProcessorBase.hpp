@@ -3,6 +3,7 @@
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 #include "MayaFlux/Kakshya/OrganizedRegion.hpp"
+#include "MayaFlux/Kakshya/RegionCacheManager.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -137,22 +138,6 @@ protected:
         std::shared_ptr<SignalSourceContainer> container);
 
     /**
-     * @brief Extract data from a region using coordinates.
-     * @param region The region to extract.
-     * @param container The container providing the data.
-     * @return DataVariant containing the region's data.
-     */
-    virtual DataVariant extract_region_data(const Region& region,
-        std::shared_ptr<SignalSourceContainer> container);
-
-    /**
-     * @brief Find the index of the region containing the given position.
-     * @param position N-dimensional coordinates.
-     * @return Optional index of the containing region, or std::nullopt if not found.
-     */
-    virtual std::optional<size_t> find_region_for_position(const std::vector<u_int64_t>& position) const;
-
-    /**
      * @brief Advance position according to memory layout and looping.
      * Supports both linear and multi-dimensional advancement, and respects region-specific looping.
      * @param position Position vector to advance (modified in place).
@@ -172,16 +157,6 @@ protected:
      */
     virtual void ensure_output_dimensioning(DataVariant& output_data,
         const std::vector<u_int64_t>& required_shape);
-
-    /**
-     * @brief Apply coordinate transformations (scaling, translation, rotation).
-     * Enables flexible mapping between logical and physical coordinates.
-     * @param coords Input coordinates.
-     * @param transform_params Transformation parameters (e.g., scale, offset).
-     * @return Transformed coordinates.
-     */
-    virtual std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coords,
-        const std::unordered_map<std::string, std::any>& transform_params);
 };
 
 }

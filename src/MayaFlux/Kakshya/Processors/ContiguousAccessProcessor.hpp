@@ -129,37 +129,12 @@ private:
     void validate_container(std::shared_ptr<SignalSourceContainer> container);
 
     /**
-     * @brief Process a specific region and write to the output buffer.
-     * @param container The SignalSourceContainer to read from.
-     * @param region The region to process.
-     * @param output Output DataVariant to fill.
-     */
-    void process_region(std::shared_ptr<SignalSourceContainer> container,
-        const Region& region,
-        DataVariant& output);
-
-    /**
      * @brief Advance the read position by the output shape.
      * Handles looping if enabled.
      * @param position Current position vector (modified in place).
      * @param shape Output shape vector.
      */
     void advance_read_position(std::vector<u_int64_t>& position, const std::vector<u_int64_t>& shape);
-
-    /**
-     * @brief Calculate the output region based on current position and shape.
-     * @param current_pos Current position vector.
-     * @param output_shape Output shape vector.
-     * @return Region representing the region to process.
-     */
-    Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
-        const std::vector<u_int64_t>& output_shape) const;
-
-    /**
-     * @brief Handle looping logic for the current position.
-     * @param position Position vector to update.
-     */
-    void handle_looping(std::vector<u_int64_t>& position);
 };
 
 } // namespace MayaFlux::Kakshya

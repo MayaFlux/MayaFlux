@@ -44,7 +44,7 @@ void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, s
     if (segment_size <= m_max_cache_size / 10) { // Use max 10% of cache per segment
         try {
             RegionCache cache;
-            cache.data = extract_region_data(segment.source_region, container);
+            cache.data = container->get_region_data(segment.source_region);
             cache.source_region = segment.source_region;
             cache.load_time = std::chrono::steady_clock::now();
 
@@ -53,21 +53,6 @@ void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, s
             // Silently fail caching - not critical
         }
     }
-}
-
-DataVariant RegionProcessorBase::extract_region_data(const Region& region, std::shared_ptr<SignalSourceContainer> container)
-{
-    return container->get_region_data(region);
-}
-
-std::optional<size_t> RegionProcessorBase::find_region_for_position(const std::vector<u_int64_t>& position) const
-{
-    for (size_t i = 0; i < m_organized_regions.size(); ++i) {
-        if (m_organized_regions[i].contains_position(position)) {
-            return i;
-        }
-    }
-    return std::nullopt;
 }
 
 bool RegionProcessorBase::advance_position(std::vector<u_int64_t>& position, u_int64_t steps, const OrganizedRegion* region)
@@ -112,24 +97,4 @@ void RegionProcessorBase::ensure_output_dimensioning(DataVariant& output_data, c
         output_data);
 }
 
-std::vector<u_int64_t> RegionProcessorBase::transform_coordinates(const std::vector<u_int64_t>& coords, const std::unordered_map<std::string, std::any>& transform_params)
-{
-    std::vector<u_int64_t> result = coords;
-
-    // Apply translation
-    if (auto translation = get_metadata_value<std::vector<int64_t>>(transform_params, "translation")) {
-        for (size_t i = 0; i < std::min(result.size(), translation->size()); ++i) {
-            result[i] = static_cast<u_int64_t>(std::max<int64_t>(0, static_cast<int64_t>(result[i]) + (*translation)[i]));
-        }
-    }
-
-    // Apply scaling
-    if (auto scale = get_metadata_value<std::vector<double>>(transform_params, "scale")) {
-        for (size_t i = 0; i < std::min(result.size(), scale->size()); ++i) {
-            result[i] = static_cast<u_int64_t>(result[i] * (*scale)[i]);
-        }
-    }
-
-    return result;
-}
 }

@@ -164,8 +164,7 @@ void RegionOrganizationProcessor::jump_to_position(const std::vector<u_int64_t>&
 {
     m_current_position = position;
 
-    // Find region containing this position
-    auto region_index = find_region_for_position(position);
+    auto region_index = find_region_for_position(position, m_organized_regions);
     if (region_index) {
         m_current_region_index = *region_index;
     }
@@ -232,7 +231,8 @@ void RegionOrganizationProcessor::process_region_segment(const OrganizedRegion& 
         safe_copy_data_variant(cached_data->data, output_data);
 
     } else {
-        DataVariant segment_data = extract_region_data(segment.source_region, container);
+        // DataVariant segment_data = extract_region_data(segment.source_region, container);
+        DataVariant segment_data = container->get_region_data(segment.source_region);
         safe_copy_data_variant(segment_data, output_data);
         cache_region_if_needed(segment, container);
     }
@@ -252,7 +252,7 @@ void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion&
             output_data);
 
         if (!next_region.segments.empty()) {
-            next_data = extract_region_data(next_region.segments[0].source_region, container);
+            next_data = container->get_region_data(next_region.segments[0].source_region);
         }
 
         std::visit([&](auto& current_vec, const auto& next_vec) {
@@ -287,7 +287,7 @@ void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion&
             output_data);
 
         if (!next_region.segments.empty()) {
-            next_data = extract_region_data(next_region.segments[0].source_region, container);
+            next_data = container->get_region_data(next_region.segments[0].source_region);
         }
 
         std::visit([&](auto& current_vec) {
