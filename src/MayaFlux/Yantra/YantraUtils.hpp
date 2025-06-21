@@ -200,19 +200,18 @@ concept CoordinateSortable = requires(T t) {
  */
 template <typename Container>
     requires std::ranges::random_access_range<Container> && StandardSortable<typename Container::value_type>
-std::vector<std::span<const typename Container::value_type>> sort_chunked_standard(const Container& container, size_t chunk_size,
+std::vector<Container> sort_chunked_standard(const Container& container, size_t chunk_size,
     SortDirection direction, SortingAlgorithm algorithm)
 {
-    std::vector<std::span<const typename Container::value_type>> chunks;
+    std::vector<Container> chunks;
     using ValueType = typename Container::value_type;
     auto comparator = create_standard_comparator<ValueType>(direction);
 
     for (size_t i = 0; i < container.size(); i += chunk_size) {
         size_t end = std::min(i + chunk_size, container.size());
-        std::span<const ValueType> chunk(&container[i], end - i);
-        // Note: You can't sort a span directly, but you could sort a copy if needed.
-        // execute_sorting_algorithm(chunk.begin(), chunk.end(), comparator, algorithm);
-        chunks.emplace_back(chunk);
+        Container chunk(container.begin() + i, container.begin() + end);
+        execute_sorting_algorithm(chunk.begin(), chunk.end(), comparator, algorithm);
+        chunks.emplace_back(std::move(chunk));
     }
     return chunks;
 }
