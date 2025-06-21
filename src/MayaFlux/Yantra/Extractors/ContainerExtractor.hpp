@@ -136,8 +136,8 @@ private:
     ExtractorOutput extract_coordinate_mapping(std::shared_ptr<Kakshya::SignalSourceContainer> container);
 
     // Utility methods
-    ContainerExtractionMethod string_to_method(const std::string& method_str) const;
-    std::string method_to_string(ContainerExtractionMethod method) const;
+    static ContainerExtractionMethod string_to_method(const std::string& method_str);
+    static std::string method_to_string(ContainerExtractionMethod method);
 
     template <ExtractableContainerData T>
     std::vector<T> extract_typed_data(
@@ -172,9 +172,6 @@ private:
 
     mutable std::unordered_map<std::string, std::any> m_extraction_cache;
     mutable std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
-
-    static const std::unordered_map<std::string, ContainerExtractionMethod> s_method_map;
-    static const std::unordered_map<ContainerExtractionMethod, std::string> s_method_names;
 
     ExtractorOutput extract_parametric_region_data(std::shared_ptr<Kakshya::SignalSourceContainer> container,
         const std::string& extraction_type);

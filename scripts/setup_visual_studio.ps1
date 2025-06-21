@@ -117,7 +117,7 @@ if (-not $env:VCPKG_ROOT) {
 
 Write-Host ""
 Write-Host "Installing dependencies (x64-windows)..."
-& (Join-Path $VCPKG_DIR "vcpkg") install --triplet x64-windows rtaudio ffmpeg gtest eigen3
+& (Join-Path $VCPKG_DIR "vcpkg") install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic_enum
 if (-not $?) {
     Write-Host "Dependency installation failed"
     exit 1
@@ -130,6 +130,7 @@ if (-not ($installed -match "rtaudio")) { Write-Host "Warning: rtaudio may not b
 if (-not ($installed -match "ffmpeg")) { Write-Host "Warning: ffmpeg may not be installed correctly." }
 if (-not ($installed -match "gtest")) { Write-Host "Warning: gtest may not be installed correctly." }
 if (-not ($installed -match "eigen3")) { Write-Host "Warning: eigen3 may not be installed correctly." }
+if (-not ($installed -match "magic_enum")) { Write-Host "Warning: magic_enum may not be installed correctly." }
 
 # Create build directory
 $buildDir = Join-Path $PROJECT_ROOT "build"

@@ -1,32 +1,8 @@
 #include "ContainerExtractor.hpp"
 
-namespace MayaFlux::Yantra {
+#include "MayaFlux/EnumUtils.hpp"
 
-const std::unordered_map<ContainerExtractionMethod, std::string> ContainerExtractor::s_method_names = {
-    { ContainerExtractionMethod::DIMENSIONS, "dimensions" },
-    { ContainerExtractionMethod::TOTAL_ELEMENTS, "total_elements" },
-    { ContainerExtractionMethod::FRAME_SIZE, "frame_size" },
-    { ContainerExtractionMethod::NUM_FRAMES, "num_frames" },
-    { ContainerExtractionMethod::MEMORY_LAYOUT, "memory_layout" },
-    { ContainerExtractionMethod::DATA_TYPE, "data_type" },
-    { ContainerExtractionMethod::CHANNEL_DATA, "channel_data" },
-    { ContainerExtractionMethod::FRAME_DATA, "frame_data" },
-    { ContainerExtractionMethod::SLICE_DATA, "slice_data" },
-    { ContainerExtractionMethod::REGION_DATA, "region_data" },
-    { ContainerExtractionMethod::REGION_BOUNDS, "region_bounds" },
-    { ContainerExtractionMethod::REGION_METADATA, "region_metadata" },
-    { ContainerExtractionMethod::ALL_REGIONS, "all_regions" },
-    { ContainerExtractionMethod::PROCESSING_STATE, "processing_state" },
-    { ContainerExtractionMethod::READ_POSITION, "read_position" },
-    { ContainerExtractionMethod::PROCESSOR_INFO, "processor_info" },
-    { ContainerExtractionMethod::DIMENSION_ROLES, "dimension_roles" },
-    { ContainerExtractionMethod::DIMENSION_SIZES, "dimension_sizes" },
-    { ContainerExtractionMethod::STRIDES, "strides" },
-    { ContainerExtractionMethod::COORDINATE_MAPPING, "coordinate_mapping" },
-    { ContainerExtractionMethod::SUBSAMPLE_DATA, "subsample_data" },
-    { ContainerExtractionMethod::INTERLEAVED_DATA, "interleaved_data" },
-    { ContainerExtractionMethod::CONTIGUOUS_DATA, "contiguous_data" }
-};
+namespace MayaFlux::Yantra {
 
 ContainerExtractor::ContainerExtractor()
     : m_contiguous_processor(std::make_shared<Kakshya::ContiguousAccessProcessor>())
@@ -42,14 +18,8 @@ ContainerExtractor::ContainerExtractor()
 
 std::vector<std::string> ContainerExtractor::get_available_methods() const
 {
-    std::vector<std::string> methods;
-    methods.reserve(s_method_names.size());
-
-    for (const auto& [method, name] : s_method_names) {
-        methods.push_back(name);
-    }
-
-    return methods;
+    auto names = Utils::get_enum_names_lowercase<ContainerExtractionMethod>();
+    return std::vector<std::string>(names.begin(), names.end());
 }
 
 std::vector<std::string> ContainerExtractor::get_methods_for_type_impl(std::type_index type_info) const
@@ -327,22 +297,14 @@ ExtractorOutput ContainerExtractor::extract_group_metadata(const Kakshya::Region
     return create_typed_output(std::move(metadata));
 }
 
-ContainerExtractionMethod ContainerExtractor::string_to_method(const std::string& method_str) const
+ContainerExtractionMethod ContainerExtractor::string_to_method(const std::string& method_str)
 {
-    auto it = s_method_map.find(method_str);
-    if (it != s_method_map.end()) {
-        return it->second;
-    }
-    throw std::invalid_argument("Unknown extraction method: " + method_str);
+    return Utils::string_to_enum_or_throw_case_insensitive<ContainerExtractionMethod>(method_str, "ContainerExtractionMethod");
 }
 
-std::string ContainerExtractor::method_to_string(ContainerExtractionMethod method) const
+std::string ContainerExtractor::method_to_string(ContainerExtractionMethod method)
 {
-    auto it = s_method_names.find(method);
-    if (it != s_method_names.end()) {
-        return it->second;
-    }
-    return "unknown";
+    return static_cast<std::string>(Utils::enum_to_lowercase_string(method));
 }
 
 }

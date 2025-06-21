@@ -49,4 +49,5 @@ enum NodeState : u_int32_t {
 };
 
 std::any safe_get_parameter(const std::string& parameter_name, const std::map<std::string, std::any> parameters);
+
 }

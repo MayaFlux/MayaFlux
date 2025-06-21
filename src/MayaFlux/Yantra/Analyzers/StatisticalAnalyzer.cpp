@@ -1,4 +1,5 @@
 #include "StatisticalAnalyzer.hpp"
+#include "MayaFlux/EnumUtils.hpp"
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 
 namespace MayaFlux::Yantra {
@@ -12,24 +13,8 @@ StatisticalAnalyzer::StatisticalAnalyzer()
 
 std::vector<std::string> StatisticalAnalyzer::get_available_methods() const
 {
-    return {
-        method_to_string(Method::MEAN),
-        method_to_string(Method::VARIANCE),
-        method_to_string(Method::STD_DEV),
-        method_to_string(Method::SKEWNESS),
-        method_to_string(Method::KURTOSIS),
-        method_to_string(Method::MIN),
-        method_to_string(Method::MAX),
-        method_to_string(Method::MEDIAN),
-        method_to_string(Method::RANGE),
-        method_to_string(Method::PERCENTILE),
-        method_to_string(Method::MODE),
-        method_to_string(Method::MAD),
-        method_to_string(Method::CV),
-        method_to_string(Method::SUM),
-        method_to_string(Method::COUNT),
-        method_to_string(Method::RMS)
-    };
+    auto names = Utils::get_enum_names_lowercase<StatisticalAnalyzer::Method>();
+    return std::vector<std::string>(names.begin(), names.end());
 }
 
 std::vector<std::string> StatisticalAnalyzer::get_methods_for_type_impl(std::type_index type_info) const
@@ -511,71 +496,12 @@ std::vector<Kakshya::RegionSegment> StatisticalAnalyzer::create_statistical_segm
 
 std::string StatisticalAnalyzer::method_to_string(Method method)
 {
-    switch (method) {
-    case Method::MEAN:
-        return "mean";
-    case Method::VARIANCE:
-        return "variance";
-    case Method::STD_DEV:
-        return "std_dev";
-    case Method::SKEWNESS:
-        return "skewness";
-    case Method::KURTOSIS:
-        return "kurtosis";
-    case Method::MIN:
-        return "min";
-    case Method::MAX:
-        return "max";
-    case Method::MEDIAN:
-        return "median";
-    case Method::RANGE:
-        return "range";
-    case Method::PERCENTILE:
-        return "percentile";
-    case Method::MODE:
-        return "mode";
-    case Method::MAD:
-        return "mad";
-    case Method::CV:
-        return "cv";
-    case Method::SUM:
-        return "sum";
-    case Method::COUNT:
-        return "count";
-    case Method::RMS:
-        return "rms";
-    default:
-        throw std::invalid_argument("Unknown statistical method enum value");
-    }
+    return static_cast<std::string>(Utils::enum_to_lowercase_string(method));
 }
 
 StatisticalAnalyzer::Method StatisticalAnalyzer::string_to_method(const std::string& str)
 {
-    static const std::unordered_map<std::string, Method> method_map = {
-        { "mean", Method::MEAN },
-        { "variance", Method::VARIANCE },
-        { "std_dev", Method::STD_DEV },
-        { "skewness", Method::SKEWNESS },
-        { "kurtosis", Method::KURTOSIS },
-        { "min", Method::MIN },
-        { "max", Method::MAX },
-        { "median", Method::MEDIAN },
-        { "range", Method::RANGE },
-        { "percentile", Method::PERCENTILE },
-        { "mode", Method::MODE },
-        { "mad", Method::MAD },
-        { "cv", Method::CV },
-        { "sum", Method::SUM },
-        { "count", Method::COUNT },
-        { "rms", Method::RMS }
-    };
-
-    auto it = method_map.find(str);
-    if (it == method_map.end()) {
-        throw std::invalid_argument("Unknown statistical method: " + str);
-    }
-
-    return it->second;
+    return Utils::string_to_enum_or_throw_case_insensitive<StatisticalAnalyzer::Method>(str);
 }
 
 Eigen::VectorXd StatisticalAnalyzer::calculate_matrix_statistics(const Eigen::MatrixXd& matrix, Method method)

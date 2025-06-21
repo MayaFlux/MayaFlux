@@ -256,6 +256,15 @@ public:
      */
     static Method string_to_method(const std::string& str);
 
+    static EnergyLevel string_to_energy_level(const std::string& str);
+
+    /**
+     * @brief Converts EnergyLevel enum to string.
+     * @param level EnergyLevel value
+     * @return String representation
+     */
+    static std::string energy_level_to_string(EnergyLevel level);
+
 private:
     /**
      * @brief Creates region groups from energy values and method.
@@ -279,13 +288,6 @@ private:
      * @return EnergyLevel classification
      */
     EnergyLevel classify_energy_level(double energy) const;
-
-    /**
-     * @brief Converts EnergyLevel enum to string.
-     * @param level EnergyLevel value
-     * @return String representation
-     */
-    std::string energy_level_to_string(EnergyLevel level) const;
 
     uint32_t m_window_size; ///< Analysis window size (samples)
     uint32_t m_hop_size; ///< Hop size between windows (samples)

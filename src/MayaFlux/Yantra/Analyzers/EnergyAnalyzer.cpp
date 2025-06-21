@@ -4,6 +4,8 @@
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 #include "MayaFlux/Nodes/Generators/Generator.hpp"
 
+#include "MayaFlux/EnumUtils.hpp"
+
 #include "unsupported/Eigen/FFT"
 #include <Eigen/Geometry>
 
@@ -31,15 +33,8 @@ EnergyAnalyzer::EnergyAnalyzer(uint32_t window_size, uint32_t hop_size)
 
 std::vector<std::string> EnergyAnalyzer::get_available_methods() const
 {
-    return {
-        method_to_string(Method::RMS),
-        method_to_string(Method::PEAK),
-        method_to_string(Method::SPECTRAL),
-        method_to_string(Method::ZERO_CROSSING),
-        method_to_string(Method::HARMONIC),
-        method_to_string(Method::POWER),
-        method_to_string(Method::DYNAMIC_RANGE)
-    };
+    auto names = Utils::get_enum_names_lowercase<Method>();
+    return std::vector<std::string>(names.begin(), names.end());
 }
 
 std::vector<std::string> EnergyAnalyzer::get_methods_for_type_impl(std::type_index type_info) const
@@ -497,64 +492,27 @@ EnergyAnalyzer::EnergyLevel EnergyAnalyzer::classify_energy_level(double energy)
     return EnergyLevel::PEAK;
 }
 
-std::string EnergyAnalyzer::energy_level_to_string(EnergyLevel level) const
+std::string EnergyAnalyzer::energy_level_to_string(EnergyLevel level)
 {
-    switch (level) {
-    case EnergyLevel::SILENT:
-        return "silent";
-    case EnergyLevel::QUIET:
-        return "quiet";
-    case EnergyLevel::MODERATE:
-        return "moderate";
-    case EnergyLevel::LOUD:
-        return "loud";
-    case EnergyLevel::PEAK:
-        return "peak";
-    default:
-        return "unknown";
-    }
+    return static_cast<std::string>(Utils::enum_to_lowercase_string(level));
 }
 
 std::string EnergyAnalyzer::method_to_string(Method method)
 {
-    switch (method) {
-    case Method::RMS:
-        return "rms";
-    case Method::PEAK:
-        return "peak";
-    case Method::SPECTRAL:
-        return "spectral";
-    case Method::ZERO_CROSSING:
-        return "zero_crossing";
-    case Method::HARMONIC:
-        return "harmonic";
-    case Method::POWER:
-        return "power";
-    case Method::DYNAMIC_RANGE:
-        return "dynamic_range";
-    default:
-        return "unknown";
-    }
+    return static_cast<std::string>(Utils::enum_to_lowercase_string(method));
 }
 
 EnergyAnalyzer::Method EnergyAnalyzer::string_to_method(const std::string& str)
 {
-    if (str == "rms" || str == "default")
+    if (str == "default") {
         return Method::RMS;
-    if (str == "peak")
-        return Method::PEAK;
-    if (str == "spectral")
-        return Method::SPECTRAL;
-    if (str == "zero_crossing")
-        return Method::ZERO_CROSSING;
-    if (str == "harmonic")
-        return Method::HARMONIC;
-    if (str == "power")
-        return Method::POWER;
-    if (str == "dynamic_range")
-        return Method::DYNAMIC_RANGE;
+    }
+    return Utils::string_to_enum_or_throw_case_insensitive<Method>(str, "EnergyAnalyzer method");
+}
 
-    throw std::invalid_argument("Unknown energy analysis method: " + str);
+EnergyAnalyzer::EnergyLevel EnergyAnalyzer::string_to_energy_level(const std::string& str)
+{
+    return Utils::string_to_enum_or_throw_case_insensitive<EnergyLevel>(str, "EnergyLevel");
 }
 
 /* void register_analyzer_operations(std::shared_ptr<ComputeMatrix> matrix)
