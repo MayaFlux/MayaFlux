@@ -30,51 +30,6 @@ std::vector<std::string> ExtractorChain::get_extractor_names() const
 
 ExtractorInput ExtractorChain::convert_output_to_input(const ExtractorOutput& output) const
 {
-    /* return std::visit([&output](auto&& arg) -> ExtractorInput {
-        using T = std::decay_t<decltype(arg)>;
-
-        if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
-            ExtractorInput result { arg };
-            for (auto& recursive_output : output.recursive_outputs) {
-                result.add_recursive_input(recursive_output);
-            }
-            return result;
-        } else if constexpr (std::is_same_v<T, std::vector<double>>) {
-            ExtractorInput result { Kakshya::DataVariant { arg } };
-            for (auto& recursive_output : output.recursive_outputs) {
-                result.add_recursive_input(recursive_output);
-            }
-            return result;
-        } else if constexpr (std::is_same_v<T, std::vector<float>>) {
-            ExtractorInput result { Kakshya::DataVariant { arg } };
-            for (auto& recursive_output : output.recursive_outputs) {
-                result.add_recursive_input(recursive_output);
-            }
-            return result;
-        } else if constexpr (std::is_same_v<T, std::vector<std::complex<double>>>) {
-            ExtractorInput result { Kakshya::DataVariant { arg } };
-            for (auto& recursive_output : output.recursive_outputs) {
-                result.add_recursive_input(recursive_output);
-            }
-            return result;
-        } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
-            ExtractorInput result { arg };
-            for (auto& recursive_output : output.recursive_outputs) {
-                result.add_recursive_input(recursive_output);
-            }
-            return result;
-        } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
-            ExtractorInput result { arg };
-            for (auto& recursive_output : output.recursive_outputs) {
-                result.add_recursive_input(recursive_output);
-            }
-            return result;
-        } else {
-            throw std::runtime_error("Cannot convert output type to input type in chain");
-        }
-    },
-        output.base_output); */
-
     return std::visit(
         [](auto&& value) -> ExtractorInput {
             using T = std::decay_t<decltype(value)>;
