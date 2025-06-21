@@ -576,13 +576,4 @@ std::vector<std::string> SortingGrammar::get_available_rules() const
     return names;
 }
 
-/* void register_sorter_operations(std::shared_ptr<ComputeMatrix> matrix)
-{
-    REGISTER_OPERATION(matrix, "UniversalSorter", UniversalSorter);
-    REGISTER_OPERATION(matrix, "DataToSortedData", DataToSortedData);
-    REGISTER_OPERATION(matrix, "SegmentsToSortedSegments", SegmentsToSortedSegments);
-    REGISTER_OPERATION(matrix, "ValuesToSortedValues", ValuesToSortedValues);
-    REGISTER_OPERATION(matrix, "MatrixToSortedMatrix", MatrixToSortedMatrix);
-} */
-
 } // namespace MayaFlux::Yantra

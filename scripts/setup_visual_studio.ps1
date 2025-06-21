@@ -117,7 +117,7 @@ if (-not $env:VCPKG_ROOT) {
 
 Write-Host ""
 Write-Host "Installing dependencies (x64-windows)..."
-& (Join-Path $VCPKG_DIR "vcpkg") install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic_enum
+& (Join-Path $VCPKG_DIR "vcpkg") install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic-enum
 if (-not $?) {
     Write-Host "Dependency installation failed"
     exit 1

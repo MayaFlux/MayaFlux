@@ -225,8 +225,6 @@ protected:
     }
 
 public:
-    // ===== Parameterization Interface =====
-
     /**
      * @brief Sets a named parameter for the analyzer.
      */
@@ -248,77 +246,6 @@ public:
 private:
     std::map<std::string, std::any> m_parameters;
 };
-
-/**
- * @class TypedAnalyzerWrapper
- * @brief Strongly-typed analyzer wrapper for ComputeMatrix pipelines.
- *
- * Wraps a UniversalAnalyzer with fixed input/output types for use in
- * type-safe, composable processing chains.
- *
- * @tparam InputT Input type (must be in AnalyzerInput)
- * @tparam OutputT Output type (must be in AnalyzerOutput)
- */
-template <AnalyzerInputType InputT, AnalyzerOutputType OutputT>
-class TypedAnalyzerWrapper : public ComputeOperation<InputT, OutputT> {
-public:
-    TypedAnalyzerWrapper(std::shared_ptr<UniversalAnalyzer> analyzer, const std::string& method = "default")
-        : m_analyzer(analyzer)
-        , m_method(method)
-    {
-    }
-
-    OutputT apply_operation(InputT input) override
-    {
-        return m_analyzer->analyze_typed<InputT, OutputT>(input, m_method);
-    }
-
-    void set_parameter(const std::string& name, std::any value) override
-    {
-        m_analyzer->set_parameter(name, value);
-    }
-
-    std::any get_parameter(const std::string& name) const override
-    {
-        return m_analyzer->get_parameter(name);
-    }
-
-private:
-    std::shared_ptr<UniversalAnalyzer> m_analyzer;
-    std::string m_method;
-};
-
-/**
- * @brief Creates strongly-typed analyzer wrappers for ComputeMatrix pipelines.
- *
- * @tparam InputT Input type (must be in AnalyzerInput)
- * @tparam OutputT Output type (must be in AnalyzerOutput)
- * @param analyzer Shared pointer to UniversalAnalyzer
- * @param method Analysis method (optional)
- * @return Shared pointer to ComputeOperation<InputT, OutputT>
- */
-template <AnalyzerInputType InputT, AnalyzerOutputType OutputT>
-std::shared_ptr<ComputeOperation<InputT, OutputT>>
-create_typed_analyzer(std::shared_ptr<UniversalAnalyzer> analyzer, const std::string& method = "default")
-{
-    return std::make_shared<TypedAnalyzerWrapper<InputT, OutputT>>(analyzer, method);
-}
-
-// ===== Registration Helpers =====
-
-/**
- * @brief Registers analyzer operations with a ComputeMatrix.
- *
- * Enables dynamic discovery and integration of analyzers in processing pipelines.
- * @param matrix Shared pointer to ComputeMatrix
- */
-void register_analyzer_operations(std::shared_ptr<ComputeMatrix> matrix);
-
-// ===== Type Aliases for Common Use Cases =====
-
-using DataToValues = TypedAnalyzerWrapper<Kakshya::DataVariant, std::vector<double>>;
-using ContainerToRegions = TypedAnalyzerWrapper<std::shared_ptr<Kakshya::SignalSourceContainer>, Kakshya::RegionGroup>;
-using RegionToSegments = TypedAnalyzerWrapper<Kakshya::Region, std::vector<Kakshya::RegionSegment>>;
 
 /**
  * @brief Generic output formatting based on granularity with custom region/segment creators

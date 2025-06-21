@@ -2,7 +2,13 @@
 
 #include "MayaFlux/Yantra/Sorters/SorterHelpers.hpp"
 
-#include <execution>
+#ifdef MAYAFLUX_PLATFORM_MACOS
+#include "oneapi/dpl/algorithm"
+#include "oneapi/dpl/execution"
+#else
+#include "execution"
+#endif
+
 #include <type_traits>
 
 namespace MayaFlux::Yantra {

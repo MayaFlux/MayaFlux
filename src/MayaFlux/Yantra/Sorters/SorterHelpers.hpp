@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MayaFlux/Yantra/Analyzers/UniversalAnalyzer.hpp"
+#include "MayaFlux/Yantra/Analyzers/AnalysisHelpers.hpp"
 
-#include <Eigen/Dense>
+#include "Eigen/Dense"
 
 namespace MayaFlux::Yantra {
 

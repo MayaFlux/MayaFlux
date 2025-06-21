@@ -515,17 +515,4 @@ EnergyAnalyzer::EnergyLevel EnergyAnalyzer::string_to_energy_level(const std::st
     return Utils::string_to_enum_or_throw_case_insensitive<EnergyLevel>(str, "EnergyLevel");
 }
 
-/* void register_analyzer_operations(std::shared_ptr<ComputeMatrix> matrix)
-{
-    if (!matrix) {
-        throw std::invalid_argument("ComputeMatrix cannot be null");
-    }
-
-    REGISTER_OPERATION(matrix, "EnergyAnalyzer", EnergyAnalyzer);
-
-    REGISTER_OPERATION(matrix, "DataToValues", DataToValues);
-    REGISTER_OPERATION(matrix, "ContainerToRegions", ContainerToRegions);
-    REGISTER_OPERATION(matrix, "RegionToSegments", RegionToSegments);
-} */
-
 }

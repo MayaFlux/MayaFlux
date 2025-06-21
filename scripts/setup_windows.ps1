@@ -51,7 +51,7 @@ if ($env:VCPKG_ROOT) {
 
 # Install required packages
 Write-Host "Installing required packages (x64-windows)..."
-& "$vcpkgDir\vcpkg.exe" install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic_enum
+& "$vcpkgDir\vcpkg.exe" install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic-enum
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Package installation failed"
     exit 1

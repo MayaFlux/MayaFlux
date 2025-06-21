@@ -1,5 +1,8 @@
 #pragma once
+
 #include "ComputeOperation.hpp"
+#include "Extractors/ExtractionHelper.hpp"
+#include "Sorters/SorterHelpers.hpp"
 
 /**
  * @namespace MayaFlux::Yantra
@@ -8,44 +11,44 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @class TypeErasedOperationWrapper
- * @brief Wrapper that converts strongly-typed operations to type-erased operations
- *
- * This wrapper allows operations with specific input/output types to be stored
- * in the ComputeMatrix registry which expects ComputeOperation<std::any, std::any>.
- * It handles the conversion between std::any and the concrete types.
- *
- * @tparam T The concrete operation type to wrap
+ * @brief Universal input/output types that encompass all operation types
+ * This replaces std::any with a proper variant system
  */
-template <typename T>
-class TypeErasedOperationWrapper : public ComputeOperation<std::any, std::any> {
+using UniversalInput = std::variant<
+    AnalyzerInput,
+    SorterInput,
+    ExtractorInput>;
+
+using UniversalOutput = std::variant<
+    AnalyzerOutput,
+    SorterOutput,
+    ExtractorOutput>;
+
+/**
+ * @class VariantOperationWrapper
+ * @brief Wraps specific operation types to work with universal variant system
+ * This replaces TypeErasedOperationWrapper with a cleaner approach
+ */
+template <typename SpecificInput, typename SpecificOutput>
+class VariantOperationWrapper : public ComputeOperation<UniversalInput, UniversalOutput> {
 private:
-    std::shared_ptr<T> m_wrapped;
+    std::shared_ptr<ComputeOperation<SpecificInput, SpecificOutput>> m_wrapped;
 
 public:
-    TypeErasedOperationWrapper()
-        : m_wrapped(std::make_shared<T>())
-    {
-    }
-
-    explicit TypeErasedOperationWrapper(std::shared_ptr<T> wrapped)
+    explicit VariantOperationWrapper(std::shared_ptr<ComputeOperation<SpecificInput, SpecificOutput>> wrapped)
         : m_wrapped(std::move(wrapped))
     {
     }
 
-    std::any apply_operation(std::any input) override
+    UniversalOutput apply_operation(UniversalInput input) override
     {
-        using InputType = typename T::input_type;
-        using OutputType = typename T::output_type;
-
         try {
-            auto typed_input = std::any_cast<InputType>(input);
-            auto result = m_wrapped->apply_operation(typed_input);
-            return std::any(result);
-
-        } catch (const std::bad_any_cast& e) {
+            auto specific_input = std::get<SpecificInput>(input);
+            auto result = m_wrapped->apply_operation(specific_input);
+            return UniversalOutput { result };
+        } catch (const std::bad_variant_access& e) {
             throw std::runtime_error(
-                std::string("Type mismatch in TypeErasedOperationWrapper: ") + e.what() + "\nExpected type: " + typeid(InputType).name() + "\nActual type: " + input.type().name());
+                std::string("Variant type mismatch: expected ") + typeid(SpecificInput).name() + ", got variant index " + std::to_string(input.index()));
         }
     }
 
@@ -64,48 +67,91 @@ public:
         return m_wrapped->get_all_parameters();
     }
 
-    bool validate_input(const std::any& input) const override
+    bool validate_input(const UniversalInput& input) const override
     {
-        using InputType = typename T::input_type;
-
-        // Check if the input can be cast to the expected type
         try {
-            auto typed_input = std::any_cast<InputType>(input);
-            return m_wrapped->validate_input(typed_input);
-        } catch (const std::bad_any_cast&) {
+            auto specific_input = std::get<SpecificInput>(input);
+            return m_wrapped->validate_input(specific_input);
+        } catch (const std::bad_variant_access&) {
             return false;
         }
     }
 
-    // Provide access to the wrapped operation for debugging/introspection
-    std::shared_ptr<T> get_wrapped() const { return m_wrapped; }
+    std::shared_ptr<ComputeOperation<SpecificInput, SpecificOutput>> get_wrapped() const
+    {
+        return m_wrapped;
+    }
 };
 
 /**
  * @class ComputeMatrix
  * @brief Central registry and factory for computational operations
  *
- * Manages operation registration, instantiation, composition, and result caching.
- * Provides a fluent interface for building operation chains and pipelines.
+ * Focused on operation registration, instantiation, and cross-type pipelines.
+ * Chain building is handled by dedicated pipeline classes to avoid circular dependencies.
  */
 class ComputeMatrix : public std::enable_shared_from_this<ComputeMatrix> {
 public:
     /**
-     * @brief Registers an operation type with a unique name
-     * @tparam T Operation class type to register
-     * @param name Unique identifier for the operation type
+     * @brief Operation type enumeration for proper registration
+     */
+    enum class OperationType {
+        ANALYZER,
+        SORTER,
+        EXTRACTOR,
+        TRANSFORMER
+    };
+
+    /**
+     * @brief Register an analyzer operation
      */
     template <typename T>
-    void register_operation(const std::string& name)
+    void register_analyzer(const std::string& name)
     {
-        m_operation_factories[name] = []() -> std::shared_ptr<ComputeOperation<std::any, std::any>> {
-            // return std::static_pointer_cast<ComputeOperation<std::any, std::any>>(std::make_shared<T>());
-            return std::make_shared<TypeErasedOperationWrapper<T>>();
+        static_assert(std::is_base_of_v<ComputeOperation<AnalyzerInput, AnalyzerOutput>, T>,
+            "T must inherit from ComputeOperation<AnalyzerInput, AnalyzerOutput>");
+
+        m_operation_factories[name] = []() -> std::shared_ptr<ComputeOperation<UniversalInput, UniversalOutput>> {
+            auto operation = std::make_shared<T>();
+            return std::make_shared<VariantOperationWrapper<AnalyzerInput, AnalyzerOutput>>(operation);
         };
+        m_operation_types[name] = OperationType::ANALYZER;
     }
 
     /**
-     * @brief Creates an instance of a registered operation type
+     * @brief Register a sorter operation
+     */
+    template <typename T>
+    void register_sorter(const std::string& name)
+    {
+        static_assert(std::is_base_of_v<ComputeOperation<SorterInput, SorterOutput>, T>,
+            "T must inherit from ComputeOperation<SorterInput, SorterOutput>");
+
+        m_operation_factories[name] = []() -> std::shared_ptr<ComputeOperation<UniversalInput, UniversalOutput>> {
+            auto operation = std::make_shared<T>();
+            return std::make_shared<VariantOperationWrapper<SorterInput, SorterOutput>>(operation);
+        };
+        m_operation_types[name] = OperationType::SORTER;
+    }
+
+    /**
+     * @brief Register an extractor operation
+     */
+    template <typename T>
+    void register_extractor(const std::string& name)
+    {
+        static_assert(std::is_base_of_v<ComputeOperation<ExtractorInput, ExtractorOutput>, T>,
+            "T must inherit from ComputeOperation<ExtractorInput, ExtractorOutput>");
+
+        m_operation_factories[name] = []() -> std::shared_ptr<ComputeOperation<UniversalInput, UniversalOutput>> {
+            auto operation = std::make_shared<T>();
+            return std::make_shared<VariantOperationWrapper<ExtractorInput, ExtractorOutput>>(operation);
+        };
+        m_operation_types[name] = OperationType::EXTRACTOR;
+    }
+
+    /**
+     * @brief Creates an instance of a registered operation type with proper type recovery
      * @tparam T Expected operation class type
      * @param name Identifier of the registered operation type
      * @return Shared pointer to the created operation instance
@@ -118,67 +164,106 @@ public:
             return nullptr;
         }
 
-        auto base_operation = it->second();
-        return std::dynamic_pointer_cast<T>(base_operation);
+        auto type_it = m_operation_types.find(name);
+        if (type_it == m_operation_types.end()) {
+            return nullptr;
+        }
+
+        auto wrapper = it->second();
+
+        switch (type_it->second) {
+        case OperationType::ANALYZER: {
+            if constexpr (std::is_base_of_v<ComputeOperation<AnalyzerInput, AnalyzerOutput>, T>) {
+                auto analyzer_wrapper = std::dynamic_pointer_cast<VariantOperationWrapper<AnalyzerInput, AnalyzerOutput>>(wrapper);
+                if (analyzer_wrapper) {
+                    return std::dynamic_pointer_cast<T>(analyzer_wrapper->get_wrapped());
+                }
+            }
+            break;
+        }
+        case OperationType::SORTER: {
+            if constexpr (std::is_base_of_v<ComputeOperation<SorterInput, SorterOutput>, T>) {
+                auto sorter_wrapper = std::dynamic_pointer_cast<VariantOperationWrapper<SorterInput, SorterOutput>>(wrapper);
+                if (sorter_wrapper) {
+                    return std::dynamic_pointer_cast<T>(sorter_wrapper->get_wrapped());
+                }
+            }
+            break;
+        }
+        case OperationType::EXTRACTOR: {
+            if constexpr (std::is_base_of_v<ComputeOperation<ExtractorInput, ExtractorOutput>, T>) {
+                auto extractor_wrapper = std::dynamic_pointer_cast<VariantOperationWrapper<ExtractorInput, ExtractorOutput>>(wrapper);
+                if (extractor_wrapper) {
+                    return std::dynamic_pointer_cast<T>(extractor_wrapper->get_wrapped());
+                }
+            }
+            break;
+        }
+        }
+
+        return nullptr;
     }
 
     /**
-     * @brief Creates a two-stage pipeline by connecting two operations
-     * @tparam InputType Data type accepted by the first operation
-     * @tparam IntermediateType Data type passed between operations
-     * @tparam OutputType Data type produced by the second operation
-     * @param first First operation in the pipeline
-     * @param second Second operation in the pipeline
-     * @return Composite operation representing the pipeline
+     * @brief Apply an operation with automatic type routing
      */
-    template <typename InputType, typename IntermediateType, typename OutputType>
-    std::shared_ptr<ComputeOperation<InputType, OutputType>>
-    create_pipeline(std::shared_ptr<ComputeOperation<InputType, IntermediateType>> first,
-        std::shared_ptr<ComputeOperation<IntermediateType, OutputType>> second)
+    UniversalOutput apply_operation(const std::string& name, UniversalInput input)
     {
-        auto pipeline = std::make_shared<OperationChain<InputType, OutputType>>();
+        auto it = m_operation_factories.find(name);
+        if (it == m_operation_factories.end()) {
+            throw std::runtime_error("Operation not found: " + name);
+        }
 
-        auto first_any = std::static_pointer_cast<ComputeOperation<std::any, std::any>>(
-            std::shared_ptr<ComputeOperation<InputType, IntermediateType>>(first));
-
-        auto second_any = std::static_pointer_cast<ComputeOperation<std::any, std::any>>(
-            std::shared_ptr<ComputeOperation<IntermediateType, OutputType>>(second));
-
-        pipeline->add_operation(first_any);
-        pipeline->add_operation(second_any);
-
-        return pipeline;
+        auto operation = it->second();
+        return operation->apply_operation(input);
     }
 
     /**
-     * @brief Retrieves a cached result for an operation and input, computing if not found
-     * @tparam InputType Type of the operation input
-     * @tparam OutputType Type of the operation output
-     * @param operation_id Identifier for the operation
-     * @param input Input data for the operation
-     * @return Cached or newly computed result
+     * @brief Create two-stage cross-type pipeline with automatic conversion
+     * This is the main pipeline creation method - handles cross-type compatibility
      */
-    template <typename InputType, typename OutputType>
-    OutputType get_cached_result(const std::string& operation_id,
-        const InputType& input)
+    template <typename FirstOp, typename SecondOp>
+    auto create_cross_type_pipeline(const std::string& first_name, const std::string& second_name)
     {
-        std::string cache_key = operation_id + "_" + std::to_string(std::hash<InputType> {}(input));
+        auto first = create_operation<FirstOp>(first_name);
+        auto second = create_operation<SecondOp>(second_name);
 
-        auto cached_result = find_in_cache<OutputType>(cache_key);
-        if (cached_result) {
-            return *cached_result;
+        if (!first || !second) {
+            throw std::runtime_error("Failed to create pipeline operations");
         }
 
-        auto operation = create_operation<ComputeOperation<InputType, OutputType>>(operation_id);
-        if (!operation) {
-            throw std::runtime_error("Operation not found: " + operation_id);
+        return [first, second, this](auto input) {
+            auto intermediate = first->apply_operation(input);
+            auto converted_input = convert_between_types(intermediate);
+            return second->apply_operation(converted_input);
+        };
+    }
+
+    /**
+     * @brief Create three-stage pipeline
+     */
+    template <typename FirstOp, typename SecondOp, typename ThirdOp>
+    auto create_triple_pipeline(const std::string& first_name,
+        const std::string& second_name,
+        const std::string& third_name)
+    {
+        auto first = create_operation<FirstOp>(first_name);
+        auto second = create_operation<SecondOp>(second_name);
+        auto third = create_operation<ThirdOp>(third_name);
+
+        if (!first || !second || !third) {
+            throw std::runtime_error("Failed to create pipeline operations");
         }
 
-        OutputType result = operation->apply_operation(input);
+        return [first, second, third, this](auto input) {
+            auto intermediate1 = first->apply_operation(input);
+            auto converted1 = convert_between_types(intermediate1);
 
-        cache_result(cache_key, result);
+            auto intermediate2 = second->apply_operation(converted1);
+            auto converted2 = convert_between_types(intermediate2);
 
-        return result;
+            return third->apply_operation(converted2);
+        };
     }
 
     /**
@@ -196,112 +281,108 @@ public:
         std::vector<OutputType> results;
         results.reserve(inputs.size());
 
-        auto operation = create_operation<ComputeOperation<InputType, OutputType>>(operation_id);
-        if (!operation) {
+        auto it = m_operation_factories.find(operation_id);
+        if (it == m_operation_factories.end()) {
             throw std::runtime_error("Operation not found: " + operation_id);
         }
 
+        auto operation = it->second();
+
         for (const auto& input : inputs) {
-            results.push_back(operation->apply_operation(input));
+            UniversalInput universal_input = convert_to_universal_input(input);
+            auto universal_output = operation->apply_operation(universal_input);
+            auto specific_output = extract_specific_output<OutputType>(universal_output);
+            results.push_back(specific_output);
         }
 
         return results;
     }
 
     /**
-     * @class ChainBuilder
-     * @brief Fluent interface for constructing operation chains
-     *
-     * Provides a declarative API for building sequential operation chains
-     * with type safety between connected operations.
-     *
-     * @tparam InputType Type accepted by the first operation in the chain
-     * @tparam OutputType Type produced by the last operation in the chain
+     * @brief Cached operation execution
      */
     template <typename InputType, typename OutputType>
-    class ChainBuilder {
-    public:
-        /**
-         * @brief Constructs a chain builder associated with a compute matrix
-         * @param matrix Parent compute matrix for operation creation
-         */
-        ChainBuilder(ComputeMatrix* matrix)
-            : m_matrix(matrix)
-        {
-        }
-
-        /**
-         * @brief Adds the next operation to the chain
-         * @tparam IntermediateType Expected output type of the added operation
-         * @param operation_name Identifier of the registered operation to add
-         * @return Reference to this builder for method chaining
-         */
-        template <typename IntermediateType>
-        ChainBuilder& then(const std::string& operation_name)
-        {
-            if (!m_chain) {
-                m_chain = std::make_shared<OperationChain<InputType, OutputType>>();
-            }
-
-            auto operation = m_matrix->create_operation<ComputeOperation<InputType, IntermediateType>>(operation_name);
-            if (!operation) {
-                throw std::runtime_error("Operation not found: " + operation_name);
-            }
-
-            auto op_any = std::static_pointer_cast<ComputeOperation<std::any, std::any>>(operation);
-            m_chain->add_operation(op_any);
-
-            return *this;
-        }
-
-        /**
-         * @brief Finalizes and returns the constructed operation chain
-         * @return Shared pointer to the complete operation chain
-         */
-        std::shared_ptr<ComputeOperation<InputType, OutputType>> build()
-        {
-            if (!m_chain) {
-                m_chain = std::make_shared<OperationChain<InputType, OutputType>>();
-            }
-            return m_chain;
-        }
-
-    private:
-        /** @brief Parent compute matrix for operation creation */
-        ComputeMatrix* m_matrix;
-
-        /** @brief The operation chain being constructed */
-        std::shared_ptr<OperationChain<InputType, OutputType>> m_chain;
-    };
-
-    /**
-     * @brief Creates a new chain builder for constructing operation sequences
-     * @tparam InputType Type accepted by the first operation in the chain
-     * @tparam OutputType Type produced by the last operation in the chain
-     * @return Chain builder instance for fluent chain construction
-     */
-    template <typename InputType, typename OutputType>
-    ChainBuilder<InputType, OutputType> create_chain()
+    OutputType get_cached_result(const std::string& operation_id, const InputType& input)
     {
-        return ChainBuilder<InputType, OutputType>(this);
+        std::string cache_key = operation_id + "_" + std::to_string(std::hash<InputType> {}(input));
+
+        auto cached_result = find_in_cache<OutputType>(cache_key);
+        if (cached_result) {
+            return *cached_result;
+        }
+
+        // Use the universal system for execution
+        UniversalInput universal_input = convert_to_universal_input(input);
+        auto universal_output = apply_operation(operation_id, universal_input);
+        auto result = extract_specific_output<OutputType>(universal_output);
+
+        cache_result(cache_key, result);
+        return result;
     }
 
     /**
-     * @brief Gets or creates the singleton instance of ComputeMatrix
-     * @return Shared pointer to the global ComputeMatrix instance
+     * @brief Get singleton instance
      */
-    inline static std::shared_ptr<ComputeMatrix> get_instance()
+    static std::shared_ptr<ComputeMatrix> get_instance()
     {
         static std::shared_ptr<ComputeMatrix> instance(new ComputeMatrix());
         return instance;
     }
 
 private:
-    /** @brief Registry of operation factories indexed by name */
-    std::unordered_map<std::string, std::function<std::shared_ptr<ComputeOperation<std::any, std::any>>()>> m_operation_factories;
+    std::map<std::string, std::function<std::shared_ptr<ComputeOperation<UniversalInput, UniversalOutput>>()>> m_operation_factories;
+    std::map<std::string, OperationType> m_operation_types;
 
-    /** @brief Cache of operation results indexed by operation and input hash */
     std::unordered_map<std::string, std::any> m_result_cache;
+
+    /**
+     * @brief Type conversion helpers
+     */
+    template <typename InputType>
+    UniversalInput convert_to_universal_input(const InputType& input)
+    {
+        if constexpr (std::same_as<InputType, AnalyzerInput>) {
+            return UniversalInput { input };
+        } else if constexpr (std::same_as<InputType, SorterInput>) {
+            return UniversalInput { input };
+        } else if constexpr (std::same_as<InputType, ExtractorInput>) {
+            return UniversalInput { input };
+        } else {
+            static_assert(std::same_as<InputType, void>, "Unsupported input type");
+        }
+    }
+
+    template <typename OutputType>
+    OutputType extract_specific_output(const UniversalOutput& output)
+    {
+        if constexpr (std::same_as<OutputType, AnalyzerOutput>) {
+            return std::get<AnalyzerOutput>(output);
+        } else if constexpr (std::same_as<OutputType, SorterOutput>) {
+            return std::get<SorterOutput>(output);
+        } else if constexpr (std::same_as<OutputType, ExtractorOutput>) {
+            return std::get<ExtractorOutput>(output);
+        } else {
+            static_assert(std::same_as<OutputType, void>, "Unsupported output type");
+        }
+    }
+
+    /**
+     * @brief Cross-type conversion logic
+     * Fixed: Handle multiple AnalyzerOutput conversion cases properly
+     */
+    template <typename OutputType>
+    auto convert_between_types(const OutputType& output)
+    {
+        if constexpr (std::same_as<OutputType, AnalyzerOutput>) {
+            // For now, assume we want ExtractorInput - you can add logic to determine this
+            return ExtractorInput { output };
+        } else if constexpr (std::same_as<OutputType, ExtractorOutput>) {
+            // Convert ExtractorOutput to SorterInput by extracting the base output
+            return SorterInput { output.base_output }; // Assuming SorterInput can take BaseExtractorOutput
+        } else {
+            return output; // No conversion needed
+        }
+    }
 
     /** @brief Mutex for thread-safe cache access */
     std::mutex m_cache_mutex;
@@ -316,7 +397,6 @@ private:
     std::optional<T> find_in_cache(const std::string& key)
     {
         std::lock_guard<std::mutex> lock(m_cache_mutex);
-
         auto it = m_result_cache.find(key);
         if (it != m_result_cache.end()) {
             try {
@@ -325,7 +405,6 @@ private:
                 return std::nullopt;
             }
         }
-
         return std::nullopt;
     }
 
@@ -343,13 +422,14 @@ private:
     }
 };
 
-/**
- * @def REGISTER_OPERATION(Matrix, Name, Type)
- * @brief Convenience macro for registering operations with a compute matrix
- * @param Matrix Pointer to the compute matrix
- * @param Name String identifier for the operation
- * @param Type C++ type of the operation class
- */
-#define REGISTER_OPERATION(Matrix, Name, Type) \
-    Matrix->register_operation<Type>(Name)
-}
+// Convenience macros
+#define REGISTER_ANALYZER(Matrix, Name, Type) \
+    Matrix->register_analyzer<Type>(Name)
+
+#define REGISTER_SORTER(Matrix, Name, Type) \
+    Matrix->register_sorter<Type>(Name)
+
+#define REGISTER_EXTRACTOR(Matrix, Name, Type) \
+    Matrix->register_extractor<Type>(Name)
+
+} // namespace MayaFlux::Yantra
