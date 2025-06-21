@@ -1,5 +1,5 @@
 #pragma once
-#include "MayaFlux/Utils.hpp"
+#include "ComputeOperation.hpp"
 
 /**
  * @namespace MayaFlux::Yantra
@@ -8,130 +8,77 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @class ComputeOperation
- * @brief Base interface for all computational operations in the processing pipeline
+ * @class TypeErasedOperationWrapper
+ * @brief Wrapper that converts strongly-typed operations to type-erased operations
  *
- * Defines the core contract for operations that transform data from one type to another.
- * Operations can be parameterized, validated, and composed into complex processing networks.
+ * This wrapper allows operations with specific input/output types to be stored
+ * in the ComputeMatrix registry which expects ComputeOperation<std::any, std::any>.
+ * It handles the conversion between std::any and the concrete types.
  *
- * @tparam InputType The data type accepted by this operation
- * @tparam OutputType The data type produced by this operation, defaults to InputType
+ * @tparam T The concrete operation type to wrap
  */
-template <typename InputType, typename OutputType = InputType>
-class ComputeOperation {
-public:
-    /**
-     * @brief Virtual destructor for proper cleanup of derived classes
-     */
-    virtual ~ComputeOperation() = default;
-
-    /**
-     * @brief Executes the computational transformation on the input data
-     * @param input Data to be processed
-     * @return Transformed output data
-     */
-    virtual OutputType apply_operation(InputType input) = 0;
-
-    /**
-     * @brief Sets a named parameter that configures the operation's behavior
-     * @param name Parameter identifier
-     * @param value Parameter value stored as std::any
-     */
-    virtual void set_parameter(const std::string& name, std::any value) = 0;
-
-    /**
-     * @brief Retrieves a parameter's current value
-     * @param name Parameter identifier
-     * @return Current parameter value as std::any
-     */
-    virtual std::any get_parameter(const std::string& name) const = 0;
-
-    /**
-     * @brief Retrieves all parameters and their values
-     * @return Map of parameter names to their values
-     */
-    virtual std::map<std::string, std::any> get_all_parameters() const { return {}; }
-
-    /**
-     * @brief Validates if the input data meets the operation's requirements
-     * @param input Data to validate
-     * @return True if input is valid, false otherwise
-     */
-    virtual bool validate_input(const InputType& input) const { return true; }
-};
-
-/**
- * @class OperationChain
- * @brief Sequential composition of operations forming a processing pipeline
- *
- * Chains multiple operations where the output of one operation becomes the input
- * to the next, enabling complex data transformations through simple composable units.
- *
- * @tparam InputType The data type accepted by the first operation in the chain
- * @tparam OutputType The data type produced by the last operation in the chain
- */
-template <typename InputType, typename OutputType>
-class OperationChain : public ComputeOperation<InputType, OutputType> {
-public:
-    /**
-     * @brief Adds an operation to the end of the processing chain
-     * @param operation The operation to append to the chain
-     */
-    void add_operation(std::shared_ptr<ComputeOperation<std::any, std::any>> operation);
-
-    /**
-     * @brief Processes input data through the entire operation chain
-     * @param input Data to be processed by the chain
-     * @return Result after passing through all operations in the chain
-     */
-    virtual OutputType apply_operation(InputType input) override;
-
-    /**
-     * @brief Removes all operations from the chain
-     */
-    void clear_operations();
-
-    /**
-     * @brief Gets the number of operations in the chain
-     * @return Count of operations in the chain
-     */
-    size_t get_operation_count() const;
-
+template <typename T>
+class TypeErasedOperationWrapper : public ComputeOperation<std::any, std::any> {
 private:
-    /** @brief Ordered sequence of operations in the chain */
-    std::vector<std::shared_ptr<ComputeOperation<std::any, std::any>>> m_operations;
-};
+    std::shared_ptr<T> m_wrapped;
 
-/**
- * @class ParallelOperations
- * @brief Concurrent execution of multiple operations on the same input
- *
- * Processes the same input data through multiple independent operations simultaneously,
- * collecting all results into a named map.
- *
- * @tparam InputType The data type accepted by all parallel operations
- */
-template <typename InputType>
-class ParallelOperations : public ComputeOperation<InputType, std::map<std::string, std::any>> {
 public:
-    /**
-     * @brief Adds a named operation to the parallel execution set
-     * @param name Identifier for the operation's result in the output map
-     * @param operation The operation to execute in parallel
-     */
-    void add_operation(const std::string& name,
-        std::shared_ptr<ComputeOperation<InputType, std::any>> operation);
+    TypeErasedOperationWrapper()
+        : m_wrapped(std::make_shared<T>())
+    {
+    }
 
-    /**
-     * @brief Processes input data through all registered operations concurrently
-     * @param input Data to be processed by all operations
-     * @return Map of operation names to their respective results
-     */
-    virtual std::map<std::string, std::any> apply_operation(InputType input) override;
+    explicit TypeErasedOperationWrapper(std::shared_ptr<T> wrapped)
+        : m_wrapped(std::move(wrapped))
+    {
+    }
 
-private:
-    /** @brief Named operations to execute in parallel */
-    std::map<std::string, std::shared_ptr<ComputeOperation<InputType, std::any>>> m_operations;
+    std::any apply_operation(std::any input) override
+    {
+        using InputType = typename T::input_type;
+        using OutputType = typename T::output_type;
+
+        try {
+            auto typed_input = std::any_cast<InputType>(input);
+            auto result = m_wrapped->apply_operation(typed_input);
+            return std::any(result);
+
+        } catch (const std::bad_any_cast& e) {
+            throw std::runtime_error(
+                std::string("Type mismatch in TypeErasedOperationWrapper: ") + e.what() + "\nExpected type: " + typeid(InputType).name() + "\nActual type: " + input.type().name());
+        }
+    }
+
+    void set_parameter(const std::string& name, std::any value) override
+    {
+        m_wrapped->set_parameter(name, value);
+    }
+
+    std::any get_parameter(const std::string& name) const override
+    {
+        return m_wrapped->get_parameter(name);
+    }
+
+    std::map<std::string, std::any> get_all_parameters() const override
+    {
+        return m_wrapped->get_all_parameters();
+    }
+
+    bool validate_input(const std::any& input) const override
+    {
+        using InputType = typename T::input_type;
+
+        // Check if the input can be cast to the expected type
+        try {
+            auto typed_input = std::any_cast<InputType>(input);
+            return m_wrapped->validate_input(typed_input);
+        } catch (const std::bad_any_cast&) {
+            return false;
+        }
+    }
+
+    // Provide access to the wrapped operation for debugging/introspection
+    std::shared_ptr<T> get_wrapped() const { return m_wrapped; }
 };
 
 /**
@@ -149,7 +96,13 @@ public:
      * @param name Unique identifier for the operation type
      */
     template <typename T>
-    void register_operation(const std::string& name);
+    void register_operation(const std::string& name)
+    {
+        m_operation_factories[name] = []() -> std::shared_ptr<ComputeOperation<std::any, std::any>> {
+            // return std::static_pointer_cast<ComputeOperation<std::any, std::any>>(std::make_shared<T>());
+            return std::make_shared<TypeErasedOperationWrapper<T>>();
+        };
+    }
 
     /**
      * @brief Creates an instance of a registered operation type
@@ -158,7 +111,16 @@ public:
      * @return Shared pointer to the created operation instance
      */
     template <typename T>
-    std::shared_ptr<T> create_operation(const std::string& name);
+    std::shared_ptr<T> create_operation(const std::string& name)
+    {
+        auto it = m_operation_factories.find(name);
+        if (it == m_operation_factories.end()) {
+            return nullptr;
+        }
+
+        auto base_operation = it->second();
+        return std::dynamic_pointer_cast<T>(base_operation);
+    }
 
     /**
      * @brief Creates a two-stage pipeline by connecting two operations
@@ -172,7 +134,21 @@ public:
     template <typename InputType, typename IntermediateType, typename OutputType>
     std::shared_ptr<ComputeOperation<InputType, OutputType>>
     create_pipeline(std::shared_ptr<ComputeOperation<InputType, IntermediateType>> first,
-        std::shared_ptr<ComputeOperation<IntermediateType, OutputType>> second);
+        std::shared_ptr<ComputeOperation<IntermediateType, OutputType>> second)
+    {
+        auto pipeline = std::make_shared<OperationChain<InputType, OutputType>>();
+
+        auto first_any = std::static_pointer_cast<ComputeOperation<std::any, std::any>>(
+            std::shared_ptr<ComputeOperation<InputType, IntermediateType>>(first));
+
+        auto second_any = std::static_pointer_cast<ComputeOperation<std::any, std::any>>(
+            std::shared_ptr<ComputeOperation<IntermediateType, OutputType>>(second));
+
+        pipeline->add_operation(first_any);
+        pipeline->add_operation(second_any);
+
+        return pipeline;
+    }
 
     /**
      * @brief Retrieves a cached result for an operation and input, computing if not found
@@ -184,7 +160,26 @@ public:
      */
     template <typename InputType, typename OutputType>
     OutputType get_cached_result(const std::string& operation_id,
-        const InputType& input);
+        const InputType& input)
+    {
+        std::string cache_key = operation_id + "_" + std::to_string(std::hash<InputType> {}(input));
+
+        auto cached_result = find_in_cache<OutputType>(cache_key);
+        if (cached_result) {
+            return *cached_result;
+        }
+
+        auto operation = create_operation<ComputeOperation<InputType, OutputType>>(operation_id);
+        if (!operation) {
+            throw std::runtime_error("Operation not found: " + operation_id);
+        }
+
+        OutputType result = operation->apply_operation(input);
+
+        cache_result(cache_key, result);
+
+        return result;
+    }
 
     /**
      * @brief Processes a batch of inputs through the same operation
@@ -196,7 +191,22 @@ public:
      */
     template <typename InputType, typename OutputType>
     std::vector<OutputType> process_batch(const std::string& operation_id,
-        const std::vector<InputType>& inputs);
+        const std::vector<InputType>& inputs)
+    {
+        std::vector<OutputType> results;
+        results.reserve(inputs.size());
+
+        auto operation = create_operation<ComputeOperation<InputType, OutputType>>(operation_id);
+        if (!operation) {
+            throw std::runtime_error("Operation not found: " + operation_id);
+        }
+
+        for (const auto& input : inputs) {
+            results.push_back(operation->apply_operation(input));
+        }
+
+        return results;
+    }
 
     /**
      * @class ChainBuilder
@@ -227,13 +237,34 @@ public:
          * @return Reference to this builder for method chaining
          */
         template <typename IntermediateType>
-        ChainBuilder& then(const std::string& operation_name);
+        ChainBuilder& then(const std::string& operation_name)
+        {
+            if (!m_chain) {
+                m_chain = std::make_shared<OperationChain<InputType, OutputType>>();
+            }
+
+            auto operation = m_matrix->create_operation<ComputeOperation<InputType, IntermediateType>>(operation_name);
+            if (!operation) {
+                throw std::runtime_error("Operation not found: " + operation_name);
+            }
+
+            auto op_any = std::static_pointer_cast<ComputeOperation<std::any, std::any>>(operation);
+            m_chain->add_operation(op_any);
+
+            return *this;
+        }
 
         /**
          * @brief Finalizes and returns the constructed operation chain
          * @return Shared pointer to the complete operation chain
          */
-        std::shared_ptr<ComputeOperation<InputType, OutputType>> build();
+        std::shared_ptr<ComputeOperation<InputType, OutputType>> build()
+        {
+            if (!m_chain) {
+                m_chain = std::make_shared<OperationChain<InputType, OutputType>>();
+            }
+            return m_chain;
+        }
 
     private:
         /** @brief Parent compute matrix for operation creation */
@@ -250,7 +281,10 @@ public:
      * @return Chain builder instance for fluent chain construction
      */
     template <typename InputType, typename OutputType>
-    ChainBuilder<InputType, OutputType> create_chain();
+    ChainBuilder<InputType, OutputType> create_chain()
+    {
+        return ChainBuilder<InputType, OutputType>(this);
+    }
 
     /**
      * @brief Gets or creates the singleton instance of ComputeMatrix
@@ -279,7 +313,21 @@ private:
      * @return Optional containing the cached value if found
      */
     template <typename T>
-    std::optional<T> find_in_cache(const std::string& key);
+    std::optional<T> find_in_cache(const std::string& key)
+    {
+        std::lock_guard<std::mutex> lock(m_cache_mutex);
+
+        auto it = m_result_cache.find(key);
+        if (it != m_result_cache.end()) {
+            try {
+                return std::any_cast<T>(it->second);
+            } catch (const std::bad_any_cast&) {
+                return std::nullopt;
+            }
+        }
+
+        return std::nullopt;
+    }
 
     /**
      * @brief Stores a result in the cache
@@ -288,7 +336,11 @@ private:
      * @param result Value to cache
      */
     template <typename T>
-    void cache_result(const std::string& key, const T& result);
+    void cache_result(const std::string& key, const T& result)
+    {
+        std::lock_guard<std::mutex> lock(m_cache_mutex);
+        m_result_cache[key] = result;
+    }
 };
 
 /**
