@@ -2,6 +2,8 @@
 
 #include "ExtractionHelper.hpp"
 
+#include "MayaFlux/Yantra/YantraUtils.hpp"
+
 #include "MayaFlux/Yantra/Analyzers/UniversalAnalyzer.hpp"
 
 /**

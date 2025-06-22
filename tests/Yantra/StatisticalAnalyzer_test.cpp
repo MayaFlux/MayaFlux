@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
 
+#include <random>
+
 using namespace MayaFlux::Yantra;
 using namespace MayaFlux::Kakshya;
 

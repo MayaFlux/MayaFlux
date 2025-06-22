@@ -2,6 +2,8 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
+#include "format"
+
 namespace MayaFlux::Kakshya {
 
 void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer> container)

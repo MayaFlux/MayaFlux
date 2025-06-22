@@ -3,6 +3,10 @@
 
 #include "chrono"
 
+#ifdef RTAUDIO_BACKEND
+#include "RtAudio.h"
+#endif
+
 namespace MayaFlux::Test {
 struct TestConfig {
     static constexpr unsigned int SAMPLE_RATE = 48000;

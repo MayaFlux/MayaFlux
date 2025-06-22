@@ -3,6 +3,8 @@
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
 #include "MayaFlux/Yantra/Sorters/UniversalSorter.hpp"
 
+#include <random>
+
 using namespace MayaFlux::Yantra;
 using namespace MayaFlux::Kakshya;
 

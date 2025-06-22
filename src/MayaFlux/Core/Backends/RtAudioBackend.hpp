@@ -1,6 +1,10 @@
 #pragma once
 #include "AudioBackend.hpp"
 
+#ifdef RTAUDIO_BACKEND
+#include "RtAudio.h"
+#endif
+
 namespace MayaFlux::Core {
 
 /**
