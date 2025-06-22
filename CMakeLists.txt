@@ -88,8 +88,8 @@ set_target_properties(MayaFluxLib PROPERTIES
 )
 
 target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_precompile_headers(MayaFluxLib PUBLIC src/pch.h)
-target_precompile_headers(MayaFlux PUBLIC src/pch.h)
+target_precompile_headers(MayaFluxLib PUBLIC cmake/pch.h)
+target_precompile_headers(MayaFlux PUBLIC cmake/pch.h)
 
 if(WIN32)
     # For vcpkg FFmpeg installation
