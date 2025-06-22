@@ -8,6 +8,8 @@
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 
+#include "RtAudio.h"
+
 // Define INTEGRATION_TEST to enable tests that interact with real audio devices
 // Comment out for CI environments without audio hardware
 // #define INTEGRATION_TEST
