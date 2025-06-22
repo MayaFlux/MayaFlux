@@ -6,6 +6,6 @@ includedir=${prefix}/include
 Name: MayaFlux
 Description: A data-driven audio processing library
 Version: @PROJECT_VERSION@
-Requires: rtaudio libavcodec libavformat libavutil libswresample libswscale
+Requires: rtaudio eigen3 libavcodec libavformat libavutil libswresample libswscale
 Libs: -L${libdir} -lMayaFluxLib
 Cflags: -I${includedir}

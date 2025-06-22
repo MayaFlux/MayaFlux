@@ -1,62 +1,45 @@
 #pragma once
 
-// System
-#include "algorithm"
-#include "any"
-#include "atomic"
-#include "deque"
-#include "exception"
-#include "functional"
-#include "iostream"
-#include "list"
-#include "map"
-#include "memory"
-#include "mutex"
-#include "numbers"
-#include "numeric"
-#include "optional"
-#include "shared_mutex"
-#include "span"
-#include "string"
-#include "thread"
-#include "unordered_map"
-#include "unordered_set"
-#include "utility"
-#include "variant"
-#include "vector"
-
-// C style
-#include <cassert>
-#include <cmath>
-#include <complex>
-#include <cstdint>
-
 // Cross-platform definitions
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-
-// Type compatibility
 using u_int8_t = uint8_t;
 using u_int16_t = uint16_t;
 using u_int32_t = uint32_t;
 using u_int64_t = uint64_t;
-
-#define MAYAFLUX_EXPORT __declspec(dllexport)
-#define MAYAFLUX_IMPORT __declspec(dllimport)
-#define MAYFALUX_FORCEINLINE __forceinline
+#define MAYAFLUX_FORCEINLINE __forceinline
 #else
-#define MAYAFLUX_EXPORT __attribute__((visibility("default")))
-#define MAYAFLUX_IMPORT
 #define MAYAFLUX_FORCEINLINE __attribute__((always_inline))
+#endif
+
+// Unified export macro
+#if defined(_WIN32) || defined(_WIN64)
+#if defined(MAYAFLUX_STATIC)
+#define MAYAFLUX_API
+#elif defined(MAYAFLUX_EXPORTS)
+#define MAYAFLUX_API __declspec(dllexport)
+#elif defined(MAYAFLUX_IMPORTS)
+#define MAYAFLUX_API __declspec(dllimport)
+#else
+#define MAYAFLUX_API
+#endif
+#else
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#if defined(MAYAFLUX_EXPORTS)
+#define MAYAFLUX_API __attribute__((visibility("default")))
+#else
+#define MAYAFLUX_API
+#endif
+#else
+#define MAYAFLUX_API
+#endif
 #endif
 
 namespace MayaFlux {
 namespace Platform {
-
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    constexpr char PathSeparator = '\\'; // Fixed the escape
+    constexpr char PathSeparator = '\\';
 #else
     constexpr char PathSeparator = '/';
 #endif
-
 } // namespace Platform
 } // namespace MayaFlux

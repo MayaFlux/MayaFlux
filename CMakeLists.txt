@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12...3.27)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -88,6 +88,8 @@ set_target_properties(MayaFluxLib PROPERTIES
 )
 
 target_include_directories(MayaFluxLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_precompile_headers(MayaFluxLib PUBLIC src/pch.h)
+target_precompile_headers(MayaFlux PUBLIC src/pch.h)
 
 if(WIN32)
     # For vcpkg FFmpeg installation

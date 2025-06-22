@@ -3,6 +3,8 @@ file(GLOB_RECURSE TEST_SOURCES
 )
 
 add_executable(MayaFluxTests ${TEST_SOURCES})
+
+target_precompile_headers(MayaFluxTests PUBLIC ../src/pch.h)
 target_link_libraries(MayaFluxTests
     PRIVATE
     MayaFluxLib
