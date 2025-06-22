@@ -465,11 +465,9 @@ protected:
 
     /**
      * @brief Determine if extraction should be delegated to an analyzer.
-     * @tparam T Input type.
-     * @param input Input value.
      * @return True if analyzer should be used, false otherwise.
      */
-    inline bool should_use_analyzer(const auto& input) const
+    inline bool should_use_analyzer() const
     {
         return m_use_analyzer && m_analyzer != nullptr;
     }
@@ -481,7 +479,17 @@ protected:
      * @return ExtractorOutput from analyzer.
      * @throws std::runtime_error if no analyzer is set.
      */
-    ExtractorOutput extract_via_analyzer(const auto& input);
+    ExtractorOutput extract_via_analyzer(const auto& input)
+    {
+        if (!m_analyzer) {
+            throw std::runtime_error("No analyzer available for delegation");
+        }
+
+        AnalyzerInput analyzer_input = convert_to_analyzer_input(input);
+        auto analyzer_result = m_analyzer->apply_operation(analyzer_input);
+
+        return convert_from_analyzer_output(analyzer_result);
+    }
 
     /**
      * @brief Perform extraction using analyzer strategy.
@@ -489,14 +497,6 @@ protected:
      * @return ExtractorOutput from analyzer.
      */
     virtual ExtractorOutput extract_via_analyzer_strategy(ExtractorInput input);
-
-    /**
-     * @brief Convert an extractor input to an analyzer input.
-     * @tparam T Input type.
-     * @param input Input value.
-     * @return AnalyzerInput for analyzer delegation.
-     */
-    AnalyzerInput convert_to_analyzer_input(const auto& input);
 
     /**
      * @brief Convert an AnalyzerOutput to an ExtractorOutput.

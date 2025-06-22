@@ -1,6 +1,8 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "gtest/gtest.h"
 
+#include "chrono"
+
 namespace MayaFlux::Test {
 struct TestConfig {
     static constexpr unsigned int SAMPLE_RATE = 48000;

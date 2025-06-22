@@ -1,4 +1,5 @@
 #include "UniversalExtractor.hpp"
+#include "MayaFlux/Yantra/YantraUtils.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -11,7 +12,7 @@ ExtractorOutput UniversalExtractor::apply_operation(ExtractorInput input)
     return std::visit([this](auto&& arg) -> ExtractorOutput {
         using T = std::decay_t<decltype(arg)>;
 
-        if (should_use_analyzer(arg)) {
+        if (should_use_analyzer()) {
             return extract_via_analyzer(arg);
         }
 
@@ -110,40 +111,6 @@ ExtractorOutput UniversalExtractor::convert_from_analyzer_output(const AnalyzerO
         }
     },
         output);
-}
-
-AnalyzerInput UniversalExtractor::convert_to_analyzer_input(const auto& input)
-{
-    using T = std::decay_t<decltype(input)>;
-
-    if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, Kakshya::Region>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, AnalyzerOutput>) {
-        // Need to extract something from AnalyzerOutput to create AnalyzerInput
-        throw std::runtime_error("Cannot convert AnalyzerOutput back to AnalyzerInput");
-    } else {
-        throw std::runtime_error("Cannot convert input type for analyzer delegation");
-    }
-}
-
-ExtractorOutput UniversalExtractor::extract_via_analyzer(const auto& input)
-{
-    if (!m_analyzer) {
-        throw std::runtime_error("No analyzer available for delegation");
-    }
-
-    AnalyzerInput analyzer_input = convert_to_analyzer_input(input);
-    auto analyzer_result = m_analyzer->apply_operation(analyzer_input);
-
-    return convert_from_analyzer_output(analyzer_result);
 }
 
 ExtractorOutput RecursiveExtractorNode::extract()

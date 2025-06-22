@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Yantra/Analyzers/UniversalAnalyzer.hpp"
-#include "SorterHelpers.hpp"
+#include "MayaFlux/Yantra/YantraUtils.hpp"
 
 /**
  * @file UniversalSorter.hpp
@@ -241,25 +241,29 @@ protected:
 
     /**
      * @brief Determine if sorting should be delegated to an analyzer
-     * @param input Input value
      * @return True if analyzer should be used, false otherwise
      */
-    bool should_use_analyzer(const auto& input) const;
+    bool should_use_analyzer() const;
 
     /**
      * @brief Delegate sorting to the configured analyzer
+     * @tparam T Input type.
      * @param input Input value
      * @return SorterOutput from analyzer
      * @throws std::runtime_error if no analyzer is set
      */
-    SorterOutput sort_via_analyzer(const auto& input);
+    inline SorterOutput sort_via_analyzer(const auto& input)
+    {
+        if (!m_analyzer) {
+            throw std::runtime_error("No analyzer available for delegation");
+        }
 
-    /**
-     * @brief Convert sorter input to analyzer input
-     * @param input Input value
-     * @return AnalyzerInput for analyzer delegation
-     */
-    AnalyzerInput convert_to_analyzer_input(const auto& input);
+        AnalyzerInput analyzer_input = convert_to_analyzer_input(input);
+
+        AnalyzerOutput analyzer_output = m_analyzer->apply_operation(analyzer_input);
+
+        return convert_from_analyzer_output(analyzer_output);
+    }
 
     /**
      * @brief Convert AnalyzerOutput to SorterOutput

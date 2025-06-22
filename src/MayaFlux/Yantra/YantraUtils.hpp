@@ -236,4 +236,32 @@ bool is_complex_data(const Kakshya::DataVariant& data);
  */
 bool is_standard_sortable_data(const Kakshya::DataVariant& data);
 
+/**
+ * @brief Convert sorter input to analyzer input
+ * @tparam T Input type.
+ * @param input Input value
+ * @return AnalyzerInput for analyzer delegation
+ */
+AnalyzerInput convert_to_analyzer_input(const auto& input)
+{
+    using T = std::decay_t<decltype(input)>;
+
+    if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
+        return AnalyzerInput { input };
+    } else if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
+        return AnalyzerInput { input };
+    } else if constexpr (std::is_same_v<T, Kakshya::Region>) {
+        return AnalyzerInput { input };
+    } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
+        return AnalyzerInput { input };
+    } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
+        return AnalyzerInput { input };
+    } else if constexpr (std::is_same_v<T, AnalyzerOutput>) {
+        // Need to extract something from AnalyzerOutput to create AnalyzerInput
+        throw std::runtime_error("Cannot convert AnalyzerOutput back to AnalyzerInput");
+    } else {
+        throw std::runtime_error("Cannot convert input type for analyzer delegation");
+    }
+}
+
 } // namespace MayaFlux::Yantra

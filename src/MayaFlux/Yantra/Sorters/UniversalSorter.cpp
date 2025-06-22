@@ -1,7 +1,5 @@
 #include "UniversalSorter.hpp"
 
-#include "MayaFlux/Yantra/YantraUtils.hpp"
-
 namespace MayaFlux::Yantra {
 
 SorterOutput UniversalSorter::apply_operation(SorterInput input)
@@ -13,7 +11,7 @@ SorterOutput UniversalSorter::apply_operation(SorterInput input)
     return std::visit([this](const auto& data) -> SorterOutput {
         using InputType = std::decay_t<decltype(data)>;
 
-        if (should_use_analyzer(data)) {
+        if (should_use_analyzer()) {
             return sort_via_analyzer(data);
         }
 
@@ -281,7 +279,7 @@ SorterOutput UniversalSorter::sort_impl(const std::vector<std::any>& data)
     return indices;
 }
 
-bool UniversalSorter::should_use_analyzer(const auto& input) const
+bool UniversalSorter::should_use_analyzer() const
 {
     if (!m_use_analyzer || !m_analyzer) {
         return false;
@@ -289,38 +287,6 @@ bool UniversalSorter::should_use_analyzer(const auto& input) const
 
     std::string method = get_sorting_method();
     return requires_analyzer_delegation(method);
-}
-
-SorterOutput UniversalSorter::sort_via_analyzer(const auto& input)
-{
-    if (!m_analyzer) {
-        throw std::runtime_error("No analyzer available for delegation");
-    }
-
-    AnalyzerInput analyzer_input = convert_to_analyzer_input(input);
-
-    AnalyzerOutput analyzer_output = m_analyzer->apply_operation(analyzer_input);
-
-    return convert_from_analyzer_output(analyzer_output);
-}
-
-AnalyzerInput UniversalSorter::convert_to_analyzer_input(const auto& input)
-{
-    using T = std::decay_t<decltype(input)>;
-
-    if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, Kakshya::Region>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
-        return AnalyzerInput { input };
-    } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
-        return AnalyzerInput { input };
-    } else {
-        throw std::runtime_error("Cannot convert input type for analyzer delegation");
-    }
 }
 
 SorterOutput UniversalSorter::convert_from_analyzer_output(const AnalyzerOutput& output)
