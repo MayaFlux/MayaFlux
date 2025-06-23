@@ -9,8 +9,8 @@ namespace MayaFlux::Core {
 // Initialization and Lifecycle
 //-------------------------------------------------------------------------
 
-Engine::Engine(Utils::BackendType type)
-    : m_audiobackend(AudioBackendFactory::create_backend(type))
+Engine::Engine(Utils::AudioBackendType audio_type)
+    : m_audiobackend(AudioBackendFactory::create_backend(audio_type))
     , m_audio_device(m_audiobackend->create_device_manager())
     , m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
     , m_is_paused(false)

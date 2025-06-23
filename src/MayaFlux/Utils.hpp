@@ -4,8 +4,12 @@
 
 namespace MayaFlux::Utils {
 
-enum BackendType {
+enum AudioBackendType {
     RTAUDIO
+};
+
+enum class WindowingBackendType {
+    GLFW
 };
 
 enum NodeProcessType {

@@ -229,6 +229,6 @@ public:
      * based on the specified type, abstracting the details of backend
      * selection and initialization.
      */
-    static std::unique_ptr<IAudioBackend> create_backend(Utils::BackendType type);
+    static std::unique_ptr<IAudioBackend> create_backend(Utils::AudioBackendType type);
 };
 }

@@ -79,7 +79,7 @@ public:
      * The backend type determines the underlying audio API used for device management
      * and stream processing.
      */
-    Engine(Utils::BackendType type = Utils::BackendType::RTAUDIO);
+    Engine(Utils::AudioBackendType audio_type = Utils::AudioBackendType::RTAUDIO);
 
     /**
      * @brief Destroys the Engine instance and cleans up resources
