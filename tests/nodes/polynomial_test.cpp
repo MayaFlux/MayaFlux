@@ -194,7 +194,7 @@ protected:
 
         polynomial = std::make_shared<Nodes::Generator::Polynomial>(quadratic);
 
-        buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+        buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
         // Fill buffer with values 0.0 to 1.0
         for (size_t i = 0; i < buffer->get_num_samples(); i++) {
@@ -246,7 +246,7 @@ TEST_F(PolynomialProcessorTest, BatchMode)
     auto processor = std::make_shared<Buffers::PolynomialProcessor>(
         recursive_poly, Buffers::PolynomialProcessor::ProcessMode::BATCH);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 5);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 5);
     for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
         test_buffer->get_data()[i] = 1.0;
     }
@@ -290,7 +290,7 @@ TEST_F(PolynomialProcessorTest, WindowedMode)
     auto recursive_poly = std::make_shared<Nodes::Generator::Polynomial>(
         recursive_func, Nodes::Generator::PolynomialMode::RECURSIVE, 3);
 
-    auto small_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
+    auto small_buffer = std::make_shared<Buffers::AudioBuffer>(0, 10);
     for (size_t i = 0; i < small_buffer->get_num_samples(); i++) {
         small_buffer->get_data()[i] = 1.0; // All inputs are 1.0
     }
@@ -326,7 +326,7 @@ TEST_F(PolynomialProcessorTest, NodeIntegration)
 
     node_manager->get_root_node().register_node(poly_node);
 
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, 10);
     for (size_t i = 0; i < buffer->get_num_samples(); i++) {
         buffer->get_data()[i] = static_cast<double>(i) / 10.0;
     }
@@ -351,7 +351,7 @@ protected:
         };
         external_polynomial = std::make_shared<Nodes::Generator::Polynomial>(quadratic);
 
-        buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+        buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
         // Fill buffer with values 0.0 to 1.0
         for (size_t i = 0; i < buffer->get_num_samples(); i++) {
@@ -388,7 +388,7 @@ TEST_F(PolynomialProcessorTest, InternalPolynomialWithCoefficients)
     EXPECT_TRUE(processor->is_using_internal());
 
     // Test the polynomial: f(2) = 1 + 3*2 + 2*4 = 1 + 6 + 8 = 15
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 1);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 1);
     test_buffer->get_data()[0] = 2.0;
 
     processor->process(test_buffer);
@@ -417,8 +417,8 @@ TEST_F(PolynomialProcessorTest, InternalVsExternalProcessing)
         external_polynomial,
         Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
-    auto buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
-    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+    auto buffer1 = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
+    auto buffer2 = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
 
     buffer1->get_data() = buffer->get_data();
     buffer2->get_data() = buffer->get_data();
@@ -442,7 +442,7 @@ TEST_F(PolynomialProcessorTest, ExternalPolynomialStateManagement)
         external_polynomial,
         Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 1);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 1);
     test_buffer->get_data()[0] = 0.5;
 
     double expected_value = 2.0 * 0.5 * 0.5 + 3.0 * 0.5 + 1.0; // 2.25
@@ -491,7 +491,7 @@ TEST_F(PolynomialProcessorTest, BatchModeInternal)
         Nodes::Generator::PolynomialMode::RECURSIVE,
         3);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 5);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 5);
     for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
         test_buffer->get_data()[i] = 1.0;
     }
@@ -517,7 +517,7 @@ TEST_F(PolynomialProcessorTest, WindowedModeInternal)
         Nodes::Generator::PolynomialMode::RECURSIVE,
         2);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 10);
     for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
         test_buffer->get_data()[i] = 1.0;
     }
@@ -563,8 +563,8 @@ TEST_F(PolynomialProcessorTest, PerformanceDifference)
         std::make_shared<Nodes::Generator::Polynomial>([](double x) { return x * x; }),
         Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
-    auto large_buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, 10000);
-    auto large_buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, 10000);
+    auto large_buffer1 = std::make_shared<Buffers::AudioBuffer>(0, 10000);
+    auto large_buffer2 = std::make_shared<Buffers::AudioBuffer>(0, 10000);
 
     for (size_t i = 0; i < 10000; i++) {
         large_buffer1->get_data()[i] = static_cast<double>(i) / 10000.0;
@@ -588,7 +588,7 @@ TEST_F(PolynomialProcessorTest, UpdateExternalPolynomial)
         initial_polynomial,
         Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 1);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 1);
     test_buffer->get_data()[0] = 2.0;
 
     processor->process(test_buffer);
@@ -617,7 +617,7 @@ TEST_F(PolynomialProcessorTest, ForceUseInternalPolynomial)
     EXPECT_FALSE(processor->is_using_internal());
     EXPECT_EQ(processor->get_polynomial(), external_poly);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 1);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 1);
     test_buffer->get_data()[0] = 2.0;
 
     processor->process(test_buffer);

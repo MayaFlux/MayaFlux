@@ -46,9 +46,9 @@ void PolynomialProcessor::process_single_sample(double& sample)
     Nodes::try_reset_processed_state(m_polynomial);
 }
 
-void PolynomialProcessor::process(std::shared_ptr<AudioBuffer> buffer)
+void PolynomialProcessor::process(std::shared_ptr<Buffer> buffer)
 {
-    if (!m_polynomial || !buffer || buffer->get_data().empty()) {
+    if (!m_polynomial || !buffer || std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data().empty()) {
         return;
     }
     if (m_pending_polynomial) {
@@ -57,7 +57,7 @@ void PolynomialProcessor::process(std::shared_ptr<AudioBuffer> buffer)
         m_use_internal = true;
     }
 
-    auto& data = buffer->get_data();
+    auto& data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
 
     switch (m_process_mode) {
     case ProcessMode::SAMPLE_BY_SAMPLE:
@@ -79,7 +79,7 @@ void PolynomialProcessor::process(std::shared_ptr<AudioBuffer> buffer)
     }
 }
 
-void PolynomialProcessor::on_attach(std::shared_ptr<AudioBuffer> buffer)
+void PolynomialProcessor::on_attach(std::shared_ptr<Buffer> buffer)
 {
     m_polynomial->reset();
 }

@@ -38,21 +38,21 @@ public:
      * Handles dimension mapping, position tracking, and state synchronization.
      * @param buffer The AudioBuffer to fill.
      */
-    void process(std::shared_ptr<AudioBuffer> buffer) override;
+    void process(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Attach the adapter to an AudioBuffer.
      * Registers for container state changes and prepares for processing.
      * @param buffer The AudioBuffer to attach to.
      */
-    void on_attach(std::shared_ptr<AudioBuffer> buffer) override;
+    void on_attach(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Detach the adapter from its AudioBuffer.
      * Cleans up state and unregisters callbacks.
      * @param buffer The AudioBuffer to detach from.
      */
-    void on_detach(std::shared_ptr<AudioBuffer> buffer) override;
+    void on_detach(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Set which channel dimension to extract from the container.
@@ -149,7 +149,7 @@ private:
  *
  * @see ContainerToBufferAdapter, StreamContainer, SoundFileContainer
  */
-class ContainerBuffer : public StandardAudioBuffer {
+class ContainerBuffer : public AudioBuffer {
 public:
     /**
      * @brief Construct a ContainerBuffer for a specific channel and container.

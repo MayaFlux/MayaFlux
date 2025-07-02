@@ -14,7 +14,7 @@ protected:
     {
         external_logic = std::make_shared<Nodes::Generator::Logic>(0.5);
 
-        buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+        buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
         for (size_t i = 0; i < buffer->get_num_samples(); i++) {
             buffer->get_data()[i] = static_cast<double>(i) / buffer->get_num_samples();
@@ -57,8 +57,8 @@ TEST_F(LogicProcessorTest, InternalVsExternalProcessing)
         external_logic,
         Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
-    auto buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
-    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+    auto buffer1 = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
+    auto buffer2 = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
 
     buffer1->get_data() = buffer->get_data();
     buffer2->get_data() = buffer->get_data();
@@ -123,7 +123,7 @@ TEST_F(LogicProcessorTest, TestModulationTypes)
     processor->generate(buffer->get_num_samples(), original_data);
 
     processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::REPLACE);
-    auto replace_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+    auto replace_buffer = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
     replace_buffer->get_data() = original_data;
     processor->apply(replace_buffer);
 
@@ -133,7 +133,7 @@ TEST_F(LogicProcessorTest, TestModulationTypes)
     }
 
     processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::MULTIPLY);
-    auto multiply_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+    auto multiply_buffer = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
     multiply_buffer->get_data() = original_data;
     processor->apply(multiply_buffer);
 
@@ -144,7 +144,7 @@ TEST_F(LogicProcessorTest, TestModulationTypes)
     }
 
     processor->set_modulation_type(Buffers::LogicProcessor::ModulationType::ADD);
-    auto add_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+    auto add_buffer = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
     add_buffer->get_data() = original_data;
     processor->apply(add_buffer);
 
@@ -158,7 +158,7 @@ TEST_F(LogicProcessorTest, TestModulationTypes)
         return audio_val - logic_val;
     });
 
-    auto custom_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, buffer->get_num_samples());
+    auto custom_buffer = std::make_shared<Buffers::AudioBuffer>(0, buffer->get_num_samples());
     custom_buffer->get_data() = original_data;
     processor->apply(custom_buffer);
 
@@ -196,10 +196,10 @@ TEST_F(LogicProcessorTest, ResetBetweenBuffersInternal)
         },
         2);
 
-    auto buffer1 = std::make_shared<Buffers::StandardAudioBuffer>(0, 3);
+    auto buffer1 = std::make_shared<Buffers::AudioBuffer>(0, 3);
     buffer1->get_data() = { 0.6, 0.7, 0.8 };
 
-    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>(0, 3);
+    auto buffer2 = std::make_shared<Buffers::AudioBuffer>(0, 3);
     buffer2->get_data() = { 0.6, 0.7, 0.8 }; // All above threshold
 
     processor->process(buffer1);
@@ -215,7 +215,7 @@ TEST_F(LogicProcessorTest, ThresholdCrossingModeInternal)
         false,
         0.5);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 10);
     test_buffer->get_data() = { 0.1, 0.6, 0.4, 0.7, 0.3, 0.8, 0.2, 0.9, 0.1, 0.6 };
 
     processor->process(test_buffer);
@@ -237,7 +237,7 @@ TEST_F(LogicProcessorTest, EdgeTriggeredModeInternal)
 
     processor->set_edge_type(Nodes::Generator::EdgeType::RISING);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 10);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 10);
     test_buffer->get_data() = { 0.1, 0.6, 0.7, 0.3, 0.2, 0.8, 0.9, 0.4, 0.3, 0.6 };
 
     processor->process(test_buffer);
@@ -256,7 +256,7 @@ TEST_F(LogicProcessorTest, UpdateExternalLogic)
         initial_logic,
         Buffers::LogicProcessor::ProcessMode::SAMPLE_BY_SAMPLE);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 2);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 2);
     test_buffer->get_data()[0] = 0.2;
     test_buffer->get_data()[1] = 0.4;
 
@@ -293,7 +293,7 @@ TEST_F(LogicProcessorTest, ForceUseInternalLogic)
     EXPECT_FALSE(processor->is_using_internal());
     EXPECT_EQ(processor->get_logic(), external_logic);
 
-    auto test_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, 2);
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 2);
     test_buffer->get_data()[0] = 0.2; // Below initial threshold
     test_buffer->get_data()[1] = 0.4; // Above initial threshold
 

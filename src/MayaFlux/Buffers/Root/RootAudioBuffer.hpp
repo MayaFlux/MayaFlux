@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RootBuffer.hpp"
+
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 
@@ -23,7 +25,7 @@ namespace MayaFlux::Buffers {
  * computational streams (child buffers and node output) are combined through a
  * configurable mixing algorithm before being transmitted to hardware interfaces.
  */
-class RootAudioBuffer : public StandardAudioBuffer {
+class RootAudioBuffer : public RootBuffer<AudioBuffer> {
 public:
     /**
      * @brief Creates a new root aggregation buffer for a channel
@@ -42,28 +44,6 @@ public:
     ~RootAudioBuffer() override = default;
 
     /**
-     * @brief Adds a tributary buffer to this root buffer
-     * @param buffer Child buffer to add to the aggregation hierarchy
-     *
-     * Tributary buffers contribute their data to the root buffer
-     * when the root buffer is processed. This allows multiple computational
-     * streams to be combined into a single output channel.
-     */
-    void add_child_buffer(std::shared_ptr<AudioBuffer> buffer);
-
-    /**
-     * @brief Removes a tributary buffer from this root buffer
-     * @param buffer Child buffer to remove from the aggregation hierarchy
-     */
-    void remove_child_buffer(std::shared_ptr<AudioBuffer> buffer);
-
-    /**
-     * @brief Gets all tributary buffers in the aggregation hierarchy
-     * @return Constant reference to the vector of tributary buffers
-     */
-    const std::vector<std::shared_ptr<AudioBuffer>>& get_child_buffers() const;
-
-    /**
      * @brief Processes this buffer using its default aggregation processor
      *
      * For a root buffer, this typically involves:
@@ -74,14 +54,6 @@ public:
      * This method is thread-safe and can be called from real-time threads.
      */
     virtual void process_default() override;
-
-    /**
-     * @brief Resets all data values in this buffer and its tributaries
-     *
-     * Initializes all sample values to zero in this buffer and optionally
-     * in all tributary buffers in the aggregation hierarchy.
-     */
-    virtual void clear() override;
 
     /**
      * @brief Resizes this buffer and all tributary buffers
@@ -115,17 +87,22 @@ public:
     inline bool has_node_output() const { return m_has_node_output; }
 
     /**
-     * @brief Gets the number of tributary buffers in the aggregation hierarchy
-     * @return Number of tributary buffers
+     * @brief Activates/deactivates processing for the current token
+     * @param active Whether this buffer should process when its token is active
+     *
+     * For RootAudioBuffer, this controls whether the buffer participates in
+     * token-based processing cycles. When inactive, the buffer won't process
+     * even if its token is being processed by the system.
      */
-    inline size_t get_num_children() const { return m_child_buffers.size(); }
+    inline virtual void set_token_active(bool active) override { m_token_active = active; }
+
+    /**
+     * @brief Checks if the buffer is active for its assigned token
+     * @return True if the buffer will process when its token is processed
+     */
+    inline virtual bool is_token_active() const override { return m_token_active; }
 
 protected:
-    /**
-     * @brief Vector of tributary buffers that contribute to this root buffer
-     */
-    std::vector<std::shared_ptr<AudioBuffer>> m_child_buffers;
-
     /**
      * @brief Creates the default processor for this buffer type
      * @return Shared pointer to a ChannelProcessor
@@ -147,13 +124,9 @@ private:
     bool m_has_node_output;
 
     /**
-     * @brief Mutex for thread-safe access to shared data resources
-     *
-     * Protects access to the buffer data during processing and
-     * when setting node output, ensuring thread safety between
-     * real-time processing threads and other computational threads.
+     * @brief Flag indicating if this buffer is active for token processing
      */
-    std::mutex m_mutex;
+    bool m_token_active;
 };
 
 /**
@@ -166,6 +139,11 @@ private:
  *
  * This processor is automatically created and attached to root buffers,
  * but can be replaced with custom aggregation algorithms if needed.
+ *
+ * Token Compatibility:
+ * - Primary Token: AUDIO_BACKEND (sample-rate, CPU, sequential processing)
+ * - Compatible with other audio processing tokens through token compatibility rules
+ * - Not compatible with GRAPHICS_BACKEND tokens due to different processing models
  */
 class ChannelProcessor : public BufferProcessor {
 public:
@@ -190,7 +168,23 @@ public:
      *
      * The combination algorithm can be customized in the implementation.
      */
-    void process(std::shared_ptr<AudioBuffer> buffer) override;
+    void process(std::shared_ptr<Buffer> buffer) override;
+
+    /**
+     * @brief Called when processor is attached to a buffer
+     * @param buffer Buffer being attached to
+     *
+     * Validates that the buffer is a compatible RootAudioBuffer and ensures
+     * token compatibility for proper processing pipeline integration.
+     */
+    void on_attach(std::shared_ptr<Buffer> buffer) override;
+
+    /**
+     * @brief Checks compatibility with a specific buffer type
+     * @param buffer Buffer to check compatibility with
+     * @return True if compatible (buffer is RootAudioBuffer), false otherwise
+     */
+    bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
 
 private:
     /**
@@ -214,9 +208,22 @@ private:
  * This boundary enforcement is critical for root buffers since they connect
  * directly to hardware interfaces, where out-of-range values can cause
  * distortion, artifacts, or potentially damage physical components.
+ *
+ * Token Compatibility:
+ * - Primary Token: AUDIO_BACKEND (optimized for audio sample rate processing)
+ * - Can adapt to GPU_PROCESS tokens for parallel limiting when beneficial
+ * - Compatible with SEQUENTIAL and PARALLEL processing modes
  */
-class FinalLimiterProcessor : public Buffers::BufferProcessor {
+class FinalLimiterProcessor : public BufferProcessor {
 public:
+    /**
+     * @brief Creates a new final limiter processor
+     *
+     * Initializes the processor with default AUDIO_BACKEND token for
+     * standard audio processing compatibility.
+     */
+    FinalLimiterProcessor();
+
     /**
      * @brief Processes a buffer by enforcing boundary conditions
      * @param buffer Buffer to process
@@ -226,7 +233,23 @@ public:
      * being transmitted to hardware interfaces, while preserving the perceptual
      * characteristics of the original signal.
      */
-    void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override;
+    void process(std::shared_ptr<Buffer> buffer) override;
+
+    /**
+     * @brief Called when processor is attached to a buffer
+     * @param buffer Buffer being attached to
+     *
+     * Validates that the buffer is an AudioBuffer-derived type and ensures
+     * token compatibility for proper audio processing.
+     */
+    void on_attach(std::shared_ptr<Buffer> buffer) override;
+
+    /**
+     * @brief Checks compatibility with a specific buffer type
+     * @param buffer Buffer to check compatibility with
+     * @return True if compatible (buffer is AudioBuffer-derived), false otherwise
+     */
+    bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
 };
 
 }

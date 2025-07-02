@@ -169,13 +169,13 @@ bool LogicProcessor::generate(size_t num_samples, const std::vector<double>& inp
     return true;
 }
 
-bool LogicProcessor::apply(std::shared_ptr<AudioBuffer> buffer, ModulationFunction modulation_func)
+bool LogicProcessor::apply(std::shared_ptr<Buffer> buffer, ModulationFunction modulation_func)
 {
     if (!buffer || !m_has_generated_data) {
         return false;
     }
 
-    auto& buffer_data = buffer->get_data();
+    auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
     size_t min_size = std::min(m_logic_data.size(), buffer_data.size());
 
     if (!modulation_func) {
@@ -216,18 +216,18 @@ bool LogicProcessor::apply(std::shared_ptr<AudioBuffer> buffer, ModulationFuncti
     return true;
 }
 
-void LogicProcessor::process(std::shared_ptr<AudioBuffer> buffer)
+void LogicProcessor::process(std::shared_ptr<Buffer> buffer)
 {
-    if (!m_logic || !buffer || buffer->get_data().empty()) {
+    if (!m_logic || !buffer || std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data().empty()) {
         return;
     }
 
-    generate(buffer->get_num_samples(), buffer->get_data());
+    generate(std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples(), std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data());
 
     apply(buffer);
 }
 
-void LogicProcessor::on_attach(std::shared_ptr<AudioBuffer> buffer)
+void LogicProcessor::on_attach(std::shared_ptr<Buffer> buffer)
 {
     if (m_logic) {
         m_logic->reset();

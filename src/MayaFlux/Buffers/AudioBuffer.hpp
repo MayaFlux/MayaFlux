@@ -1,440 +1,369 @@
 #pragma once
 
-#include "config.h"
+#include "Buffer.hpp"
 
 namespace MayaFlux::Buffers {
 
-class BufferProcessor;
-class BufferProcessingChain;
-
 /**
  * @class AudioBuffer
- * @brief Interface for sequential data storage and transformation
+ * @brief Concrete audio implementation of the Buffer interface for double-precision audio data
  *
- * AudioBuffer provides a common interface for all buffer types in the MayaFlux engine.
- * Buffers store sequential data samples and provide mechanisms for transforming
- * that data through attached processors. Unlike nodes which operate on individual values,
- * buffers process blocks of data, enabling efficient batch operations and transformations.
+ * AudioBuffer provides the primary concrete implementation for audio data storage and processing
+ * in the MayaFlux engine. It specializes the generic Buffer interface for audio-specific operations,
+ * storing sequential audio samples as double-precision floating-point values and providing
+ * optimized processing capabilities for audio backends.
  *
- * Buffers can:
- * - Store and provide access to sequential numerical data
- * - Be transformed by one or more BufferProcessor objects
- * - Be arranged in processing networks via BufferProcessingChain
- * - Bridge between continuous (node) and discrete (buffer) computational domains
+ * This implementation serves as the foundation for audio processing in MayaFlux and is the
+ * preferred buffer type for audio backends due to its optimized memory layout and processing
+ * characteristics. Other specialized audio buffer types can inherit from AudioBuffer to extend
+ * its functionality while maintaining compatibility with the audio processing pipeline.
  *
- * The buffer system complements the node system by providing block-based processing
- * capabilities, which are more efficient for certain operations and essential for
- * interfacing with hardware and external systems that operate on data blocks.
+ * AudioBuffer capabilities:
+ * - Store and manage sequential double-precision audio samples
+ * - Support multi-channel audio through channel identification
+ * - Provide efficient block-based audio processing via BufferProcessor objects
+ * - Integrate with BufferProcessingChain for complex audio transformation pipelines
+ * - Bridge between continuous audio streams (nodes) and discrete audio blocks (buffers)
+ * - Support dynamic buffer lifecycle management for streaming audio applications
+ *
+ * The AudioBuffer complements the node system by providing block-based audio processing
+ * capabilities essential for real-time audio processing, hardware interfacing, and
+ * computationally intensive audio transformations that benefit from batch operations.
  */
-class AudioBuffer : public std::enable_shared_from_this<AudioBuffer> {
+class AudioBuffer : public Buffer {
 public:
     /**
+     * @brief Creates a new uninitialized audio buffer
+     *
+     * Initializes an audio buffer with no channel assignment and no allocated capacity.
+     * The buffer must be configured with setup() before use. This constructor is useful
+     * when buffer parameters will be determined at runtime.
+     */
+    AudioBuffer();
+
+    /**
+     * @brief Creates a new audio buffer with specified channel and capacity
+     * @param channel_id Audio channel identifier for this buffer
+     * @param num_samples Buffer capacity in audio samples (default: 512)
+     *
+     * Initializes an audio buffer with the specified channel ID and allocates
+     * memory for the specified number of double-precision audio samples.
+     * The default capacity of 512 samples is optimized for typical audio
+     * processing block sizes.
+     */
+    AudioBuffer(u_int32_t channel_id, u_int32_t num_samples = 512);
+
+    /**
      * @brief Virtual destructor for proper resource management
-     */
-    virtual ~AudioBuffer() = default;
-
-    /**
-     * @brief Initializes the buffer with specified channel and capacity
-     * @param channel Channel identifier for this buffer
-     * @param num_samples Buffer capacity in samples
      *
-     * Sets up the buffer with the specified channel ID and allocates
-     * memory for the specified number of samples.
+     * Ensures proper cleanup of audio buffer resources and any attached
+     * audio processors when the buffer is destroyed.
      */
-    virtual void setup(u_int32_t channel, u_int32_t num_samples) = 0;
+    virtual ~AudioBuffer() override = default;
 
     /**
-     * @brief Adjusts the buffer's capacity
-     * @param num_samples New buffer capacity
+     * @brief Initializes the audio buffer with specified channel and capacity
+     * @param channel Audio channel identifier for this buffer
+     * @param num_samples Buffer capacity in audio samples
      *
-     * Changes the buffer's capacity while preserving existing data
-     * where possible. If the new size is smaller, data may be truncated.
+     * Configures the audio buffer with the specified channel ID and allocates
+     * memory for the specified number of audio samples. This method should be
+     * called on uninitialized buffers before use.
      */
-    virtual void resize(u_int32_t num_samples) = 0;
+    virtual void setup(u_int32_t channel, u_int32_t num_samples);
 
     /**
-     * @brief Resets all data values in the buffer
+     * @brief Adjusts the audio buffer's sample capacity
+     * @param num_samples New buffer capacity in audio samples
      *
-     * Initializes all sample values to zero without changing the buffer capacity.
+     * Changes the buffer's capacity while preserving existing audio data
+     * where possible. If the new size is smaller, audio data may be truncated.
+     * This operation maintains audio continuity when possible.
      */
-    virtual void clear() = 0;
+    virtual void resize(u_int32_t num_samples);
 
     /**
-     * @brief Gets the current capacity of the buffer
-     * @return Buffer capacity in samples
-     */
-    virtual u_int32_t get_num_samples() const = 0;
-
-    /**
-     * @brief Gets mutable access to the buffer's underlying data
-     * @return Reference to the vector containing sample data
+     * @brief Resets all audio samples in the buffer to silence
      *
-     * Provides direct access to the underlying data for reading
-     * or modification. Use with caution as it bypasses any transformation chain.
+     * Initializes all audio sample values to zero (silence) without changing
+     * the buffer capacity. This is the audio-specific implementation of the
+     * Buffer interface's clear() method.
      */
-    virtual std::vector<double>& get_data() = 0;
+    virtual void clear() override;
 
     /**
-     * @brief Gets read-only access to the buffer's underlying data
-     * @return Const reference to the vector containing sample data
-     */
-    virtual const std::vector<double>& get_data() const = 0;
-
-    /**
-     * @brief Applies the default transformation to the buffer's data
+     * @brief Gets the current capacity of the audio buffer
+     * @return Buffer capacity in audio samples
      *
-     * Executes the default processing algorithm on the buffer's data.
-     * The specific transformation depends on the buffer type and its
-     * configured default processor.
+     * Returns the number of double-precision audio samples that can be
+     * stored in this buffer.
      */
-    virtual void process_default() = 0;
-    // virtual void process(const std::any& params) = 0;
+    inline virtual u_int32_t get_num_samples() const { return m_num_samples; }
 
     /**
-     * @brief Gets the channel identifier for this buffer
-     * @return Channel ID
+     * @brief Gets mutable access to the buffer's underlying audio data
+     * @return Reference to the vector containing audio sample data
      *
-     * The channel ID typically corresponds to a logical data stream
-     * in multi-channel systems.
+     * Provides direct access to the underlying double-precision audio data
+     * for reading or modification. Use with caution as it bypasses any
+     * audio transformation chain that may be configured.
      */
-    virtual u_int32_t get_channel_id() const = 0;
+    inline virtual std::vector<double>& get_data() { return m_data; }
 
     /**
-     * @brief Sets the channel identifier for this buffer
-     * @param id New channel ID
-     */
-    virtual void set_channel_id(u_int32_t id) = 0;
-
-    /**
-     * @brief Sets the capacity of the buffer
-     * @param num_samples New buffer capacity
+     * @brief Gets read-only access to the buffer's underlying audio data
+     * @return Const reference to the vector containing audio sample data
      *
-     * Similar to resize(), but implementation may vary in derived classes.
+     * Provides read-only access to the underlying double-precision audio
+     * samples for analysis or copying without modification risk.
      */
-    virtual void set_num_samples(u_int32_t num_samples) = 0;
+    inline virtual const std::vector<double>& get_data() const { return m_data; }
 
     /**
-     * @brief Sets the default transformation processor for this buffer
-     * @param processor Processor to use as default
+     * @brief Applies the default audio transformation to the buffer's data
      *
-     * The default processor is used when process_default() is called.
+     * Executes the default audio processing algorithm on the buffer's sample data.
+     * The specific transformation depends on the configured default audio processor,
+     * which may perform operations like normalization, filtering, or effects processing.
      */
-    virtual void set_default_processor(std::shared_ptr<BufferProcessor> processor) = 0;
+    virtual void process_default() override;
 
     /**
-     * @brief Gets the current default transformation processor
-     * @return Shared pointer to the default processor
-     */
-    virtual std::shared_ptr<BufferProcessor> get_default_processor() const = 0;
-
-    /**
-     * @brief Gets the transformation chain attached to this buffer
-     * @return Shared pointer to the buffer processing chain
+     * @brief Gets the audio channel identifier for this buffer
+     * @return Audio channel ID
      *
-     * The processing chain contains multiple transformations that are
-     * applied in sequence when the buffer is processed.
+     * Returns the audio channel identifier, which typically corresponds to a
+     * logical audio stream in multi-channel audio systems (e.g., left/right
+     * for stereo, or numbered channels in surround sound configurations).
      */
-    virtual std::shared_ptr<BufferProcessingChain> get_processing_chain() = 0;
+    virtual u_int32_t get_channel_id() const { return m_channel_id; }
 
     /**
-     * @brief Sets the transformation chain for this buffer
-     * @param chain New processing chain
-     */
-    virtual void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain) = 0;
-
-    /**
-     * @brief Gets a reference to a specific value in the buffer
-     * @param index Sample index
-     * @return Reference to the value at the specified index
+     * @brief Sets the audio channel identifier for this buffer
+     * @param id New audio channel ID
      *
-     * Provides direct access to a specific value for reading or modification.
-     * No bounds checking is performed, so the caller must ensure the index is valid.
+     * Updates the channel identifier for this audio buffer, allowing it to
+     * be reassigned to different audio channels in multi-channel configurations.
      */
-    virtual double& get_sample(u_int32_t index) = 0;
+    inline void set_channel_id(u_int32_t id) { m_channel_id = id; }
 
     /**
-     * @brief Checks if the buffer has data for the current cycle to be processed
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always return true unless specified otherwise by their derived class implementations.
-     * @return True if the buffer has data for the current cycle, false otherwise
+     * @brief Sets the capacity of the audio buffer
+     * @param num_samples New buffer capacity in audio samples
+     *
+     * Updates the buffer's sample capacity. Similar to resize(), but the
+     * implementation may vary in derived audio buffer classes to provide
+     * specialized behavior for different audio buffer types.
      */
-    virtual bool has_data_for_cycle() const = 0;
+    virtual void set_num_samples(u_int32_t num_samples);
+
+    /**
+     * @brief Sets the default audio transformation processor for this buffer
+     * @param processor Audio processor to use as default transformation
+     *
+     * Configures the default audio processor that will be used when
+     * process_default() is called. The processor should be compatible
+     * with double-precision audio data processing.
+     */
+    virtual void set_default_processor(std::shared_ptr<BufferProcessor> processor) override;
+
+    /**
+     * @brief Gets the current default audio transformation processor
+     * @return Shared pointer to the default audio processor
+     *
+     * Returns the audio processor that will be used for default transformations
+     * on this buffer's audio data, or nullptr if no default processor is set.
+     */
+    inline virtual std::shared_ptr<BufferProcessor> get_default_processor() const override { return m_default_processor; }
+
+    /**
+     * @brief Gets the audio transformation chain attached to this buffer
+     * @return Shared pointer to the audio buffer processing chain
+     *
+     * Returns the processing chain that contains multiple audio transformations
+     * applied in sequence when the buffer is processed. This enables complex
+     * audio processing pipelines for effects, filtering, and analysis.
+     */
+    inline virtual std::shared_ptr<BufferProcessingChain> get_processing_chain() override { return m_processing_chain.lock(); }
+
+    /**
+     * @brief Sets the audio transformation chain for this buffer
+     * @param chain New audio processing chain for sequential transformations
+     *
+     * Replaces the current audio processing chain with the provided one.
+     * The chain should contain processors compatible with double-precision
+     * audio data.
+     */
+    inline virtual void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain) override { m_processing_chain = chain; }
+
+    /**
+     * @brief Gets a reference to a specific audio sample in the buffer
+     * @param index Audio sample index
+     * @return Reference to the audio sample value at the specified index
+     *
+     * Provides direct access to a specific audio sample for reading or modification.
+     * No bounds checking is performed, so the caller must ensure the index is valid
+     * within the buffer's capacity.
+     */
+    inline virtual double& get_sample(u_int32_t index) { return get_data()[index]; }
+
+    /**
+     * @brief Checks if the audio buffer has data for the current processing cycle
+     * @return True if the buffer has audio data for processing, false otherwise
+     *
+     * This method is particularly relevant when using SignalSourceContainers or
+     * streaming audio systems. Standard audio buffers typically return true unless
+     * explicitly marked otherwise, but derived classes may implement different
+     * behavior based on streaming state or data availability.
+     */
+    inline virtual bool has_data_for_cycle() const override { return m_has_data; }
 
     /**
      * @brief Checks if the buffer should be removed from the processing chain
      * This is relevant when using SignalSourceContainers. Standard audio buffers will
      * always return false unless specified otherwise by their derived class implementations.
      * @return True if the buffer should be removed, false otherwise
-     */
-    virtual bool needs_removal() const = 0;
-
-    /**
-     * @brief Marks the buffer for processing in the current cycle
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always be marked true unless specified otherwise by their derived class implementations.
-     * @param has_data True if the buffer has data to process, false otherwise
-     */
-    virtual void mark_for_processing(bool has_data) = 0;
-
-    /** @brief Marks the buffer for removal from the processing chain
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * never be marked for removal unless specified otherwise by their derived class implementations.
-     */
-    virtual void mark_for_removal() = 0;
-
-    /** @brief Marks the buffer for default processing in the current cycle
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always be marked true unless specified otherwise by their derived class implementations.
-     * @param should_process True if the buffer should be processed, false otherwise
-     */
-    virtual void enforce_default_processing(bool should_process) = 0;
-
-    /** @brief Checks if the buffer should be processed using its default processor
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always return true unless specified otherwise by their derived class implementations.
-     * @return True if the buffer should be processed, false otherwise
-     */
-    virtual bool needs_default_processing() = 0;
-};
-
-/**
- * @class StandardAudioBuffer
- * @brief Standard implementation of the AudioBuffer interface
- *
- * StandardAudioBuffer provides a concrete implementation of the AudioBuffer
- * interface with a vector-based storage for sequential numerical data.
- * It serves as the base class for more specialized buffer types and can be
- * used directly for general-purpose data storage and transformation.
- *
- * This class implements all the required methods from the AudioBuffer interface
- * and adds some additional functionality specific to standard buffers.
- */
-class StandardAudioBuffer : public AudioBuffer {
-public:
-    /**
-     * @brief Creates a new uninitialized buffer
      *
-     * Initializes a buffer with no channel assignment and no allocated capacity.
-     * The buffer must be set up with setup() before use.
+     * This method enables dynamic audio buffer lifecycle management. Standard audio
+     * buffers typically return false unless explicitly marked for removal, but
+     * derived classes may implement automatic removal based on streaming end
+     * conditions or resource management policies.
      */
-    StandardAudioBuffer();
+    inline virtual bool needs_removal() const override { return m_should_remove; }
 
     /**
-     * @brief Creates a new buffer with specified channel and capacity
-     * @param channel_id Channel identifier for this buffer
-     * @param num_samples Buffer capacity in samples (default: 512)
+     * @brief Marks the audio buffer for processing in the current cycle
+     * @param has_data True if the buffer has audio data to process, false otherwise
      *
-     * Initializes a buffer with the specified channel ID and allocates
-     * memory for the specified number of samples.
-     */
-    StandardAudioBuffer(u_int32_t channel_id, u_int32_t num_samples = 512);
-
-    /**
-     * @brief Virtual destructor for proper resource management
-     */
-    ~StandardAudioBuffer() override = default;
-
-    /**
-     * @brief Initializes the buffer with specified channel and capacity
-     * @param channel Channel identifier for this buffer
-     * @param num_samples Buffer capacity in samples
-     */
-    void setup(u_int32_t channel, u_int32_t num_samples) override;
-
-    /**
-     * @brief Adjusts the buffer's capacity
-     * @param num_samples New buffer capacity
-     */
-    void resize(u_int32_t num_samples) override;
-
-    /**
-     * @brief Resets all data values in the buffer
-     */
-    void clear() override;
-
-    /**
-     * @brief Gets the current capacity of the buffer
-     * @return Buffer capacity in samples
-     */
-    u_int32_t get_num_samples() const override { return m_num_samples; }
-
-    /**
-     * @brief Gets the channel identifier for this buffer
-     * @return Channel ID
-     */
-    u_int32_t get_channel_id() const override { return m_channel_id; }
-
-    /**
-     * @brief Sets the channel identifier for this buffer
-     * @param id New channel ID
-     */
-    void set_channel_id(u_int32_t id) override { m_channel_id = id; }
-
-    /**
-     * @brief Sets the capacity of the buffer
-     * @param num_samples New buffer capacity
-     */
-    void set_num_samples(u_int32_t num_samples) override;
-
-    /**
-     * @brief Gets mutable access to the buffer's underlying data
-     * @return Reference to the vector containing sample data
-     */
-    std::vector<double>& get_data() override { return m_data; }
-
-    /**
-     * @brief Gets read-only access to the buffer's underlying data
-     * @return Const reference to the vector containing sample data
-     */
-    const std::vector<double>& get_data() const override { return m_data; }
-
-    /**
-     * @brief Applies the default transformation to the buffer's data
-     *
-     * If no default processor is set, this may do nothing or use
-     * a fallback algorithm depending on the implementation.
-     */
-    void process_default() override;
-    // void process(const std::any& params) override;
-
-    /**
-     * @brief Sets the default transformation processor for this buffer
-     * @param processor Processor to use as default
-     */
-    void set_default_processor(std::shared_ptr<BufferProcessor> processor) override;
-
-    /**
-     * @brief Gets the current default transformation processor
-     * @return Shared pointer to the default processor
-     */
-    std::shared_ptr<BufferProcessor> get_default_processor() const override { return m_default_processor; }
-
-    /**
-     * @brief Gets the transformation chain attached to this buffer
-     * @return Shared pointer to the buffer processing chain
-     */
-    std::shared_ptr<BufferProcessingChain> get_processing_chain() override { return m_processing_chain.lock(); }
-
-    /**
-     * @brief Sets the transformation chain for this buffer
-     * @param chain New processing chain
-     */
-    void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain) override;
-
-    /**
-     * @brief Gets a reference to a specific value in the buffer
-     * @param index Sample index
-     * @return Reference to the value at the specified index
-     */
-    inline virtual double& get_sample(u_int32_t index) override { return get_data()[index]; }
-
-    /**
-     * @brief Checks if the buffer has data for the current cycle to be processed
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always return true unless specified otherwise by their derived class implementations.
-     * @return True if the buffer has data for the current cycle, false otherwise
-     */
-    inline virtual bool has_data_for_cycle() const override { return true; }
-
-    /**
-     * @brief Checks if the buffer should be removed from the processing chain
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always return false unless specified otherwise by their derived class implementations.
-     * @return True if the buffer should be removed, false otherwise
-     */
-    inline virtual bool needs_removal() const override { return false; }
-
-    /**
-     * @brief Marks the buffer for processing in the current cycle
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always be marked true unless specified otherwise by their derived class implementations.
-     * @param has_data True if the buffer has data to process, false otherwise
+     * This method allows external audio systems to control whether the buffer should
+     * be considered for processing in the current audio cycle. Standard audio buffers
+     * are typically always marked as having data unless explicitly disabled.
      */
     inline virtual void mark_for_processing(bool has_data) override { m_has_data = has_data; }
 
     /**
-     * @brief Marks the buffer for removal from the processing chain
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * never be marked for removal unless specified otherwise by their derived class implementations.
+     * @brief Marks the audio buffer for removal from processing chains
+     *
+     * Sets the buffer's removal flag, indicating it should be removed from
+     * any audio processing chains or management systems. Standard audio buffers
+     * rarely need removal unless explicitly requested by the application or
+     * when audio streams end.
      */
     inline virtual void mark_for_removal() override { m_should_remove = true; }
 
-    /** @brief Marks the buffer for default processing in the current cycle
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always be marked true unless specified otherwise by their derived class implementations.
-     * @param should_process True if the buffer should be processed, false otherwise
+    /**
+     * @brief Controls whether the audio buffer should use default processing
+     * @param should_process True if default audio processing should be applied, false otherwise
+     *
+     * This method allows fine-grained control over when the buffer's default
+     * audio processor is applied. Standard audio buffers typically always use
+     * default processing unless specific audio processing requirements dictate
+     * otherwise.
      */
     inline virtual void enforce_default_processing(bool should_process) override { m_process_default = should_process; }
 
-    /** @brief Checks if the buffer should be processed using its default processor
-     * This is relevant when using SignalSourceContainers. Standard audio buffers will
-     * always return true unless specified otherwise by their derived class implementations.
-     * @return True if the buffer should be processed, false otherwise
+    /**
+     * @brief Checks if the audio buffer should undergo default processing
+     * @return True if default audio processing should be applied, false otherwise
+     *
+     * Determines whether the buffer's default audio processor should be executed
+     * during the current processing cycle. Standard audio buffers typically always
+     * need default processing unless specifically configured otherwise for
+     * specialized audio processing scenarios.
      */
     inline virtual bool needs_default_processing() override { return m_process_default; }
 
 protected:
     /**
-     * @brief Channel identifier for this buffer
+     * @brief Audio channel identifier for this buffer
      *
-     * Typically corresponds to a logical data stream in multi-channel systems.
+     * Identifies which audio channel this buffer represents in multi-channel
+     * audio systems. Typically corresponds to logical audio channels like
+     * left/right for stereo or numbered channels in surround configurations.
      */
     u_int32_t m_channel_id;
 
     /**
-     * @brief Capacity of the buffer in samples
+     * @brief Capacity of the buffer in audio samples
+     *
+     * Stores the maximum number of double-precision audio samples this
+     * buffer can contain. This determines the buffer's memory allocation
+     * and processing block size.
      */
     u_int32_t m_num_samples;
 
     /**
-     * @brief Vector storing the actual numerical data
+     * @brief Vector storing the actual double-precision audio sample data
+     *
+     * Contains the raw audio sample data as double-precision floating-point
+     * values. This provides high precision for audio processing while
+     * maintaining compatibility with most audio processing algorithms.
      */
     std::vector<double> m_data;
 
     /**
      * @brief Sample rate for this buffer (default: 48000 Hz)
+     *
+     * Note: Currently commented out but available for future implementation
+     * of sample-rate-aware audio processing.
      */
-    u_int32_t m_sample_rate = 48000;
+    // u_int32_t m_sample_rate = 48000;
 
     /**
-     * @brief Default transformation processor for this buffer
+     * @brief Default audio transformation processor for this buffer
      *
-     * Used when process_default() is called.
+     * Stores the audio processor that will be used when process_default()
+     * is called. This enables automatic audio processing without explicit
+     * processor management.
      */
     std::shared_ptr<BufferProcessor> m_default_processor;
 
     /**
-     * @brief Weak reference to the transformation chain
+     * @brief Weak reference to the audio transformation chain
      *
-     * Using a weak_ptr prevents circular references between
-     * the buffer and its processing chain.
+     * Using a weak_ptr prevents circular references between the audio buffer
+     * and its processing chain, while still allowing access to complex
+     * audio processing pipelines.
      */
     std::weak_ptr<BufferProcessingChain> m_processing_chain;
 
     /**
-     * @brief Creates a default transformation processor for this buffer type
-     * @return Shared pointer to the created processor, or nullptr if none
+     * @brief Creates a default audio transformation processor for this buffer type
+     * @return Shared pointer to the created audio processor, or nullptr if none
      *
-     * This method is called when a default processor is needed but none
-     * has been explicitly set. The base implementation returns nullptr,
-     * but derived classes can override this to provide type-specific
-     * default processors.
+     * This method is called when a default audio processor is needed but none
+     * has been explicitly set. The base AudioBuffer implementation returns nullptr,
+     * but derived audio buffer classes can override this to provide type-specific
+     * default audio processors.
      */
     virtual std::shared_ptr<BufferProcessor> create_default_processor() { return nullptr; }
 
     /**
-     * @brief Whether the buffer has data to process this cycle
+     * @brief Whether the audio buffer has data to process this cycle
+     *
+     * Tracks whether this audio buffer contains valid audio data for the
+     * current processing cycle. Relevant for streaming audio systems and
+     * dynamic buffer management.
      */
-    bool m_has_data { true };
+    bool m_has_data;
 
     /**
-     * @brief Whether the buffer should be removed from the processing chain
+     * @brief Whether the audio buffer should be removed from processing chains
+     *
+     * Indicates whether this audio buffer should be removed from any
+     * processing chains or management systems. Used for dynamic audio
+     * buffer lifecycle management.
      */
-    bool m_should_remove { false };
+    bool m_should_remove;
 
     /**
-     * @brief Whether the buffer should be processed using its default processor
+     * @brief Whether the audio buffer should be processed using its default processor
+     *
+     * Controls whether the buffer's default audio processor should be
+     * applied during processing cycles. Allows for selective audio
+     * processing based on current requirements.
      */
-    bool m_process_default { true };
+    bool m_process_default;
 };
+
 }

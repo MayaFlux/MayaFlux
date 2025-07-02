@@ -1,5 +1,6 @@
 #include "../test_config.h"
 
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
 #include "MayaFlux/Buffers/Recursive/FeedbackBuffer.hpp"
@@ -12,7 +13,7 @@ class AudioBufferTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        standard_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+        standard_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
     }
     std::shared_ptr<Buffers::AudioBuffer> standard_buffer;
 };
@@ -23,7 +24,7 @@ TEST_F(AudioBufferTest, Initialization)
     EXPECT_EQ(standard_buffer->get_num_samples(), TestConfig::BUFFER_SIZE);
     EXPECT_EQ(standard_buffer->get_data().size(), TestConfig::BUFFER_SIZE);
 
-    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>();
+    auto buffer2 = std::make_shared<Buffers::AudioBuffer>();
     EXPECT_EQ(buffer2->get_num_samples(), 0);
     EXPECT_EQ(buffer2->get_data().size(), 0);
 
@@ -77,20 +78,20 @@ TEST_F(AudioBufferTest, ProcessorManagement)
         {
         }
 
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void process(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             process_called = true;
-            for (auto& sample : buffer->get_data()) {
+            for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
                 sample *= 2.0;
             }
         }
 
-        void on_attach(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void on_attach(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             attach_called = true;
         }
 
-        void on_detach(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void on_detach(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             detach_called = true;
         }
@@ -135,10 +136,10 @@ TEST_F(AudioBufferTest, ProcessingChain)
         {
         }
 
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void process(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
-            for (auto& sample : buffer->get_data()) {
+            for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
                 sample += 1.0;
             }
         }
@@ -158,10 +159,10 @@ TEST_F(AudioBufferTest, ProcessingChain)
         {
         }
 
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void process(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
-            for (auto& sample : buffer->get_data()) {
+            for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
                 sample *= 2.0;
             }
         }
@@ -267,7 +268,7 @@ TEST_F(FeedbackBufferTest, FeedbackProcessor)
 {
     auto processor = std::make_shared<Buffers::FeedbackProcessor>(0.75f);
 
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
     processor->on_attach(buffer);
 
@@ -346,7 +347,7 @@ TEST_F(NodeBufferTest, NodeSourceProcessor)
     bool clear_before = true;
     auto processor = std::make_shared<Buffers::NodeSourceProcessor>(sine, mix_amount, clear_before);
 
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
     std::fill(buffer->get_data().begin(), buffer->get_data().end(), 1.0);
 
@@ -396,8 +397,8 @@ TEST_F(RootAudioBufferTest, Initialization)
 
 TEST_F(RootAudioBufferTest, ChildBufferManagement)
 {
-    auto child1 = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    auto child2 = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto child1 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto child2 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
     root_buffer->add_child_buffer(child1);
     root_buffer->add_child_buffer(child2);
@@ -453,8 +454,8 @@ TEST_F(RootAudioBufferTest, NodeOutputHandling)
 
 TEST_F(RootAudioBufferTest, ChannelProcessing)
 {
-    auto child1 = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    auto child2 = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto child1 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto child2 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
     std::fill(child1->get_data().begin(), child1->get_data().end(), 0.3);
     std::fill(child2->get_data().begin(), child2->get_data().end(), 0.7);

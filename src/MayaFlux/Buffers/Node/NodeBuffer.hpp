@@ -53,7 +53,7 @@ public:
      * 2. Generates sequential values from the computational node
      * 3. Applies the specified interpolation between existing and incoming data
      */
-    void process(std::shared_ptr<AudioBuffer> buffer) override;
+    void process(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Sets the interpolation coefficient between existing and incoming data
@@ -98,7 +98,7 @@ private:
  * @class NodeBuffer
  * @brief Specialized buffer that automatically captures output from computational nodes
  *
- * NodeBuffer extends StandardAudioBuffer to create a buffer with an intrinsic connection
+ * NodeBuffer extends AudioBuffer to create a buffer with an intrinsic connection
  * to a computational node. It automatically captures and persists the node's sequential
  * output, creating a bridge between ephemeral computation and persistent data storage.
  *
@@ -112,7 +112,7 @@ private:
  * - Building data bridges between different computational domains
  * - Enabling analysis and visualization of dynamic computational processes
  */
-class NodeBuffer : public StandardAudioBuffer {
+class NodeBuffer : public AudioBuffer {
 
 public:
     /**

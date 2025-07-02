@@ -58,7 +58,7 @@ TEST_F(BufferManagerTest, ChannelAccess)
 
 TEST_F(BufferManagerTest, BufferOperations)
 {
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
     manager->add_buffer_to_channel(0, buffer);
 
@@ -77,7 +77,7 @@ TEST_F(BufferManagerTest, BufferOperations)
 
 TEST_F(BufferManagerTest, BufferProcessing)
 {
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
     std::fill(buffer->get_data().begin(), buffer->get_data().end(), 0.5);
 
@@ -131,7 +131,7 @@ TEST_F(BufferManagerTest, Resize)
         EXPECT_EQ(manager->get_channel(i)->get_num_samples(), new_size);
     }
 
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
     manager->add_buffer_to_channel(0, buffer);
 
     u_int32_t newer_size = new_size + 100;
@@ -152,10 +152,10 @@ TEST_F(BufferManagerTest, ProcessorManagement)
         {
         }
 
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void process(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
-            for (auto& sample : buffer->get_data()) {
+            for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
                 sample += 1.0;
             }
         }
@@ -166,7 +166,7 @@ TEST_F(BufferManagerTest, ProcessorManagement)
 
     auto test_processor = std::make_shared<TestProcessor>(processor_called);
 
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
     manager->add_buffer_to_channel(0, buffer);
     manager->add_processor(test_processor, buffer);
 
@@ -196,10 +196,10 @@ TEST_F(BufferManagerTest, ChannelProcessors)
         {
         }
 
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void process(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
-            for (auto& sample : buffer->get_data()) {
+            for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
                 sample += 2.0;
             }
         }
@@ -238,10 +238,10 @@ TEST_F(BufferManagerTest, GlobalProcessors)
         {
         }
 
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void process(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
-            for (auto& sample : buffer->get_data()) {
+            for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
                 sample += 3.0;
             }
         }
@@ -285,7 +285,7 @@ TEST_F(BufferManagerTest, QuickProcess)
         }
     };
 
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
     manager->add_buffer_to_channel(0, buffer);
     manager->attach_quick_process(quick_process, buffer);
 
@@ -318,7 +318,7 @@ TEST_F(BufferManagerTest, QuickProcess)
 
 TEST_F(BufferManagerTest, FinalProcessorEnsuresLimiting)
 {
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
     manager->add_buffer_to_channel(0, buffer);
 
     auto aggressive_processor = [](std::shared_ptr<Buffers::AudioBuffer> buffer) {
@@ -380,7 +380,7 @@ TEST_F(BufferManagerTest, NodeConnection)
     }
     EXPECT_TRUE(has_signal);
 
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(1, TestConfig::BUFFER_SIZE);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
     manager->add_buffer_to_channel(1, buffer);
     manager->connect_node_to_buffer(sine, buffer, 1.0);
 

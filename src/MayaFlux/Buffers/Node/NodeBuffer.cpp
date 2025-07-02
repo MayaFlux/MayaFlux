@@ -9,7 +9,7 @@ NodeSourceProcessor::NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, floa
 {
 }
 
-void NodeSourceProcessor::process(std::shared_ptr<AudioBuffer> buffer)
+void NodeSourceProcessor::process(std::shared_ptr<Buffer> buffer)
 {
     if (!m_node) {
         std::cerr << "Warning: NodeSourceProcessor has null node" << std::endl;
@@ -17,8 +17,8 @@ void NodeSourceProcessor::process(std::shared_ptr<AudioBuffer> buffer)
     }
 
     try {
-        std::vector<double> node_data = get_node_data(buffer->get_num_samples());
-        auto& buffer_data = buffer->get_data();
+        std::vector<double> node_data = get_node_data(std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples());
+        auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
 
         bool should_clear = m_clear_before_process;
         if (auto node_buffer = std::dynamic_pointer_cast<NodeBuffer>(buffer)) {
@@ -60,7 +60,7 @@ std::vector<double> NodeSourceProcessor::get_node_data(u_int32_t num_samples)
 }
 
 NodeBuffer::NodeBuffer(u_int32_t channel_id, u_int32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process)
-    : StandardAudioBuffer(channel_id, num_samples)
+    : AudioBuffer(channel_id, num_samples)
     , m_source_node(source)
     , m_clear_before_process(clear_before_process)
 {

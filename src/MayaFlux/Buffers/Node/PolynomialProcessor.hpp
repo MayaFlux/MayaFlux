@@ -60,19 +60,19 @@ public:
      * Applies the polynomial transformation to the buffer data according
      * to the configured processing mode and parameters.
      */
-    void process(std::shared_ptr<AudioBuffer> buffer) override;
+    void process(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when the processor is attached to a buffer
      * @param buffer Buffer being attached to
      */
-    void on_attach(std::shared_ptr<AudioBuffer> buffer) override;
+    void on_attach(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when the processor is detached from a buffer
      * @param buffer Buffer being detached from
      */
-    inline void on_detach(std::shared_ptr<AudioBuffer> buffer) override { }
+    inline void on_detach(std::shared_ptr<Buffer> buffer) override { }
 
     /**
      * @brief Sets the processing mode

@@ -1,34 +1,59 @@
 #pragma once
 
-#include "config.h"
+#include "BufferUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
-class AudioBuffer;
+class Buffer;
 
 /**
  * @class BufferProcessor
- * @brief Interface for computational transformations on data buffers
+ * @brief Central computational transformation interface for continuous buffer processing
  *
- * BufferProcessor defines the interface for components that transform
- * data stored in buffer objects. This design follows the Strategy
- * pattern, allowing different algorithmic transformations to be applied
- * to buffers without changing the underlying buffer implementation.
+ * BufferProcessor defines the interface for components that transform data stored in buffer objects
+ * within the continuous processing domain of the MayaFlux engine. This design follows the Strategy
+ * pattern, allowing different algorithmic transformations to be applied to buffers without changing
+ * the underlying buffer implementation, while providing processors with significant agency over
+ * processing backend selection and execution strategies.
  *
- * This abstraction enables a wide range of computational processes:
+ * Unlike Kakshya::DataProcessor which operates on-demand for arbitrary data sources, BufferProcessor
+ * is designed for continuous, cycle-based processing within the engine's real-time processing pipeline.
+ * Processors have expanded capabilities including:
+ *
+ * **Backend Influence and Override Capabilities:**
+ * - Processors can influence or override which processing backend a buffer uses
+ * - Support for both sequential (CPU) and parallel (GPU) execution strategies
+ * - Dynamic backend selection based on data characteristics and processing requirements
+ * - Ability to leverage specialized hardware acceleration when available
+ *
+ * **Data Type Agnostic Processing:**
+ * - Can work on any data type supported by the attached buffer (audio, video, texture, etc.)
+ * - Automatic adaptation to buffer-specific data formats and layouts
+ * - Type-safe processing through buffer interface abstraction
+ * - Support for multi-modal data processing within unified pipelines
+ *
+ * **Advanced Processing Capabilities:**
  * - Mathematical transformations (FFT, convolution, statistical analysis)
- * - Signal processing algorithms (filtering, modulation, synthesis)
- * - Data manipulation (normalization, scaling, interpolation)
- * - Cross-domain mappings and transformations
+ * - Signal processing algorithms (filtering, modulation, synthesis, effects)
+ * - Data manipulation (normalization, scaling, interpolation, format conversion)
+ * - Cross-domain mappings and transformations between different data types
+ * - Real-time analysis and feature extraction
+ * - Hardware-accelerated compute operations
  *
- * The processor system provides a flexible framework for block-based
- * computational operations, complementing the sample-by-sample processing
- * of the node system and enabling efficient parallel transformations.
+ * The processor system provides a flexible framework for block-based computational operations,
+ * complementing the sample-by-sample processing of the node system while enabling efficient
+ * parallel transformations and backend-specific optimizations. Processors maintain full
+ * compatibility with the buffer architecture while providing the agency to optimize
+ * processing strategies based on runtime conditions and hardware capabilities.
  */
 class BufferProcessor {
 public:
     /**
      * @brief Virtual destructor for proper cleanup of derived classes
+     *
+     * Ensures proper cleanup of processor resources, including any backend-specific
+     * allocations, GPU contexts, or hardware acceleration resources that may have
+     * been acquired during the processor's lifetime.
      */
     virtual ~BufferProcessor() = default;
 
@@ -36,162 +61,162 @@ public:
      * @brief Applies a computational transformation to the data in the provided buffer
      * @param buffer Buffer to transform
      *
-     * This is the main transformation method that must be implemented by all
-     * concrete processor classes. It applies the processor's algorithm
-     * to the data in the buffer, potentially modifying it in-place or
-     * generating derived information.
+     * This is the main transformation method that must be implemented by all concrete
+     * processor classes. It applies the processor's algorithm to the data in the buffer,
+     * potentially modifying it in-place or generating derived information. The processor
+     * has full agency over how the transformation is executed, including:
+     *
+     * - **Backend Selection**: Choosing between CPU, GPU, or specialized hardware backends
+     * - **Execution Strategy**: Sequential vs parallel processing based on data characteristics
+     * - **Memory Management**: Optimizing data layout and access patterns for performance
+     * - **Resource Utilization**: Leveraging available hardware acceleration when beneficial
+     *
+     * The method works seamlessly with any data type supported by the buffer interface,
+     * automatically adapting to audio samples, video frames, texture data, or other
+     * specialized buffer contents while maintaining type safety through the buffer abstraction.
      */
-    virtual void process(std::shared_ptr<AudioBuffer> buffer) = 0;
+    virtual void process(std::shared_ptr<Buffer> buffer) = 0;
 
     /**
      * @brief Called when this processor is attached to a buffer
      * @param buffer Buffer this processor is being attached to
      *
-     * Provides an opportunity for the processor to initialize any
-     * buffer-specific state, allocate resources, or perform validation.
-     * Default implementation does nothing.
+     * Provides an opportunity for the processor to initialize buffer-specific state,
+     * allocate resources, or perform validation. With expanded processor capabilities,
+     * this method can also:
+     *
+     * - **Analyze Buffer Characteristics**: Examine data type, size, and format requirements
+     * - **Select Optimal Backend**: Choose the most appropriate processing backend for the buffer
+     * - **Initialize Hardware Resources**: Set up GPU contexts, CUDA streams, or other acceleration
+     * - **Configure Processing Parameters**: Adapt algorithm parameters to buffer characteristics
+     * - **Establish Processing Strategy**: Determine whether to use sequential or parallel execution
+     * - **Validate Compatibility**: Ensure the processor can handle the buffer's data type and format
+     *
+     * Default implementation does nothing, but derived classes should override this method
+     * to leverage the full capabilities of the expanded processor architecture.
      */
-    virtual void on_attach(std::shared_ptr<AudioBuffer> buffer) {};
+    virtual void on_attach(std::shared_ptr<Buffer> buffer) { };
 
     /**
      * @brief Called when this processor is detached from a buffer
      * @param buffer Buffer this processor is being detached from
      *
-     * Provides an opportunity for the processor to clean up any
-     * buffer-specific state or release resources.
-     * Default implementation does nothing.
+     * Provides an opportunity for the processor to clean up buffer-specific state or
+     * release resources. With expanded processor capabilities, this method should also:
+     *
+     * - **Release Hardware Resources**: Clean up GPU memory, CUDA contexts, or other acceleration resources
+     * - **Finalize Backend Operations**: Ensure all pending backend operations are completed
+     * - **Reset Processing State**: Clear any buffer-specific optimization parameters or cached data
+     * - **Restore Default Backend**: Return to default processing backend if override was applied
+     * - **Synchronize Operations**: Ensure all parallel processing operations have completed
+     *
+     * Default implementation does nothing, but proper resource management in derived classes
+     * is crucial for optimal performance and preventing resource leaks.
      */
-    virtual void on_detach(std::shared_ptr<AudioBuffer> buffer) {};
+    virtual void on_detach(std::shared_ptr<Buffer> buffer) { };
+
+    /**
+     * @brief Gets the preferred processing backend for this processor
+     * @param buffer Buffer that will be processed
+     * @return Preferred backend identifier, or default if no preference
+     *
+     * This method allows processors to influence or override the processing backend
+     * used by the buffer. Processors can analyze the buffer's characteristics and
+     * current system state to recommend the most appropriate backend:
+     *
+     * - **CPU_SEQUENTIAL**: For lightweight operations or when parallel overhead exceeds benefits
+     * - **CPU_PARALLEL**: For CPU-intensive operations that benefit from multi-threading
+     * - **GPU_COMPUTE**: For massively parallel operations suitable for GPU acceleration
+     * - **SPECIALIZED_HARDWARE**: For operations optimized for specific hardware (DSP, FPGA, etc.)
+     *
+     * The buffer management system may use this recommendation to optimize processing
+     * performance, though the final backend selection may depend on system availability
+     * and resource constraints.
+     */
+    virtual void set_processing_token(ProcessingToken token)
+    {
+        validate_token(token);
+        m_processing_token = token;
+    }
+
+    /**
+     * @brief Gets the current processing token for this buffer
+     * @return Current processing domain
+     */
+    virtual ProcessingToken get_processing_token() const { return m_processing_token; }
+
+    /**
+     * @brief Checks if this processor can handle the specified buffer type
+     * @param buffer Buffer to check compatibility with
+     * @return True if the processor can process this buffer type, false otherwise
+     *
+     * This method enables dynamic processor validation and selection based on buffer
+     * characteristics. Processors can examine the buffer's data type, format, size,
+     * and other properties to determine compatibility, enabling robust error handling
+     * and automatic processor selection in complex processing pipelines.
+     */
+    virtual bool is_compatible_with(std::shared_ptr<Buffer> buffer) const { return true; }
+
+    /**
+     * @brief Gets the processing complexity estimate for this processor
+     * @param buffer Buffer that will be processed
+     * @return Relative complexity score (higher values indicate more complex processing)
+     *
+     * This method provides a hint about the computational complexity of the processor's
+     * operations, enabling intelligent scheduling and resource allocation decisions.
+     * The complexity estimate can influence backend selection, parallel processing
+     * strategies, and overall system performance optimization.
+     */
+    // virtual double get_processing_complexity(std::shared_ptr<Buffer> buffer) const { return 1.0; }
+
+protected:
+    ProcessingToken m_processing_token;
 };
 
-/**
- * @class BufferProcessingChain
- * @brief Manages computational transformation pipelines for data buffers
+/** * @struct ProcessorTokenInfo
+ * @brief Holds information about a processor's compatibility with a buffer's processing token
  *
- * BufferProcessingChain organizes multiple BufferProcessor objects into
- * sequential transformation pipelines for one or more buffers. This allows
- * complex multi-stage computational processes to be applied to data in a
- * controlled, deterministic order.
- *
- * The chain implements a directed acyclic graph (DAG) of transformations,
- * maintaining separate processor sequences for each buffer while allowing
- * processors to be shared across multiple buffers when appropriate.
- *
- * Key features:
- * - Enables construction of complex computational pipelines
- * - Supports both parallel and sequential transformation patterns
- * - Preserves transformation order based on the sequence processors are added
- * - Provides special "final" processors for post-processing operations
- * - Allows dynamic reconfiguration of transformation pipelines
+ * This structure encapsulates the relationship between a buffer processor and its processing token,
+ * including whether the processor is compatible with the buffer's preferred processing token,
+ * and how it will be handled based on the token enforcement strategy.
  */
-class BufferProcessingChain {
-public:
-    /**
-     * @brief Adds a processor to the transformation pipeline for a specific buffer
-     * @param processor Processor to add
-     * @param buffer Buffer to associate with this processor
-     *
-     * The processor is added to the end of the transformation sequence
-     * for the specified buffer. If this is the first processor for
-     * the buffer, a new sequence is created.
-     */
-    void add_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer);
+struct ProcessorTokenInfo {
+    std::shared_ptr<BufferProcessor> processor;
+    ProcessingToken processor_token;
+    bool is_compatible;
+    bool will_be_skipped; // For OVERRIDE_SKIP strategy
+    bool pending_removal; // For OVERRIDE_REJECT strategy
+};
 
-    /**
-     * @brief Removes a processor from the pipeline for a specific buffer
-     * @param processor Processor to remove
-     * @param buffer Buffer to remove the processor from
-     *
-     * If the processor is found in the buffer's transformation sequence,
-     * it is removed and its on_detach method is called.
-     */
-    void remove_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer);
+/** * @struct TokenCompatibilityReport
+ * @brief Holds the results of token compatibility analysis for a buffer processing chain
+ *
+ * This structure provides a comprehensive report on the compatibility of processors within a
+ * buffer processing chain, including the preferred processing token, enforcement strategy,
+ * and detailed information about each processor's compatibility status.
+ */
+struct TokenCompatibilityReport {
+    std::shared_ptr<Buffer> buffer;
+    ProcessingToken chain_preferred_token;
+    TokenEnforcementStrategy enforcement_strategy;
+    std::vector<ProcessorTokenInfo> processor_infos;
 
-    /**
-     * @brief Applies the transformation pipeline to a buffer
-     * @param buffer Buffer to transform
-     *
-     * Applies each processor in the buffer's sequence in order.
-     * This does not include the final processor, which must be
-     * applied separately with process_final().
-     */
-    void process(std::shared_ptr<AudioBuffer> buffer);
-
-    /**
-     * @brief Sets a special processor to be applied after the main pipeline
-     * @param processor Final processor to add
-     * @param buffer Buffer to associate with this final processor
-     *
-     * The final processor is applied after all regular processors
-     * when process_final() is called. This is useful for operations
-     * like normalization, boundary enforcement, or validation that
-     * should be applied as the last step in a transformation pipeline.
-     */
-    void add_final_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer);
-
-    /**
-     * @brief Checks if a buffer has any processors in its pipeline
-     * @param buffer Buffer to check
-     * @return true if the buffer has processors, false otherwise
-     */
-    bool has_processors(std::shared_ptr<AudioBuffer> buffer) const;
-
-    /**
-     * @brief Gets all processors in a buffer's transformation pipeline
-     * @param buffer Buffer to get processors for
-     * @return Constant reference to the vector of processors
-     *
-     * Returns an empty vector if the buffer has no processors.
-     */
-    const std::vector<std::shared_ptr<BufferProcessor>>& get_processors(std::shared_ptr<AudioBuffer> buffer) const;
-
-    /**
-     * @brief Gets the entire transformation pipeline structure
-     * @return Map of buffers to their processor sequences
-     *
-     * This provides access to the internal structure of the pipeline,
-     * mapping each buffer to its sequence of transformation processors.
-     */
-    inline const std::unordered_map<std::shared_ptr<AudioBuffer>, std::vector<std::shared_ptr<BufferProcessor>>> get_chain() const { return m_buffer_processors; }
-
-    /**
-     * @brief Combines another processing pipeline into this one
-     * @param other Chain to merge into this one
-     *
-     * Adds all processors from the other chain to this one,
-     * preserving their buffer associations and order. This enables
-     * the composition of complex transformation pipelines from
-     * simpler, reusable components.
-     */
-    void merge_chain(const std::shared_ptr<BufferProcessingChain> other);
-
-    /**
-     * @brief Applies the final processor to a buffer
-     * @param buffer Buffer to process
-     *
-     * If the buffer has a final processor, it is applied.
-     * This is typically called after process() to apply
-     * final-stage transformations like normalization or
-     * boundary enforcement.
-     */
-    void process_final(std::shared_ptr<AudioBuffer> buffer);
-
-private:
-    /**
-     * @brief Map of buffers to their processor sequences
-     *
-     * Each buffer has its own vector of processors that are
-     * applied in order when the buffer is processed.
-     */
-    std::unordered_map<std::shared_ptr<AudioBuffer>, std::vector<std::shared_ptr<BufferProcessor>>> m_buffer_processors;
-
-    /**
-     * @brief Map of buffers to their final processors
-     *
-     * Each buffer can have one final processor that is
-     * applied after the main processing sequence.
-     */
-    std::unordered_map<std::shared_ptr<AudioBuffer>, std::shared_ptr<BufferProcessor>> m_final_processors;
+    size_t total_processors() const { return processor_infos.size(); }
+    size_t compatible_processors() const
+    {
+        return std::count_if(processor_infos.begin(), processor_infos.end(),
+            [](const auto& info) { return info.is_compatible; });
+    }
+    size_t skipped_processors() const
+    {
+        return std::count_if(processor_infos.begin(), processor_infos.end(),
+            [](const auto& info) { return info.will_be_skipped; });
+    }
+    size_t pending_removal_processors() const
+    {
+        return std::count_if(processor_infos.begin(), processor_infos.end(),
+            [](const auto& info) { return info.pending_removal; });
+    }
 };
 
 }

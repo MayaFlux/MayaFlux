@@ -1,4 +1,5 @@
 #include "BufferManager.hpp"
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "Node/NodeBuffer.hpp"
 
 namespace MayaFlux::Buffers {
@@ -10,9 +11,9 @@ public:
     {
     }
 
-    virtual void process(std::shared_ptr<AudioBuffer> buffer) override
+    virtual void process(std::shared_ptr<Buffer> buffer) override
     {
-        m_function(buffer);
+        m_function(std::dynamic_pointer_cast<AudioBuffer>(buffer));
     }
 
 private:
