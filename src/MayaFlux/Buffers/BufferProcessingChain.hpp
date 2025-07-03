@@ -171,7 +171,7 @@ public:
      * The token can be used to optimize the entire pipeline based on the expected data type,
      * processing requirements, and available hardware resources.
      */
-    void set_preferred_token(ProcessingToken token);
+    inline void set_preferred_token(ProcessingToken token) { m_token_filter_mask = token; }
 
     /** * @brief Gets the preferred processing token for this chain
      * @return Current preferred processing token

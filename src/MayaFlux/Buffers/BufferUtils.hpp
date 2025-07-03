@@ -323,3 +323,13 @@ inline ProcessingToken get_optimal_token(const std::string& buffer_type, u_int32
 }
 
 }
+
+namespace std {
+template <>
+struct hash<std::pair<MayaFlux::Buffers::ProcessingToken, MayaFlux::Buffers::ProcessingToken>> {
+    size_t operator()(const std::pair<MayaFlux::Buffers::ProcessingToken, MayaFlux::Buffers::ProcessingToken>& pair) const
+    {
+        return hash<uint32_t>()(static_cast<uint32_t>(pair.first)) ^ (hash<uint32_t>()(static_cast<uint32_t>(pair.second)) << 1);
+    }
+};
+}
