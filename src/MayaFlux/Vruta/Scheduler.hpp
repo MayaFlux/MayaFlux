@@ -1,7 +1,5 @@
 #pragma once
 
-#include "config.h"
-
 #include "Clock.hpp"
 #include "Routine.hpp"
 

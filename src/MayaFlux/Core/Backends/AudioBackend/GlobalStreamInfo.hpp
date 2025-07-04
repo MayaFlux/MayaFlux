@@ -1,5 +1,4 @@
 #pragma once
-#include "config.h"
 
 namespace MayaFlux::Core {
 

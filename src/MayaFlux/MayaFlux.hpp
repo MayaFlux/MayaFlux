@@ -1,7 +1,5 @@
 #pragma once
 
-#include "config.h"
-
 /**
  * @namespace MayaFlux
  * @brief Main namespace for the Maya Flux audio engine

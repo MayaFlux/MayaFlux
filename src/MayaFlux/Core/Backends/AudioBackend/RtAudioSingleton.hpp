@@ -1,5 +1,4 @@
 #pragma once
-#include "config.h"
 
 #ifdef RTAUDIO_BACKEND
 #include "RtAudio.h"
