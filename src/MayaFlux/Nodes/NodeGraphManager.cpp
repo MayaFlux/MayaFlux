@@ -6,7 +6,6 @@ namespace MayaFlux::Nodes {
 
 NodeGraphManager::NodeGraphManager()
 {
-    // m_channel_root_nodes[0] = std::make_shared<Nodes::RootNode>();
     ensure_token_root_exists(ProcessingToken::AUDIO_RATE, 0);
 }
 
@@ -51,6 +50,44 @@ void NodeGraphManager::process_token(ProcessingToken token, unsigned int num_sam
             root->process(num_samples);
         }
     }
+}
+
+void NodeGraphManager::register_token_channel_processor(ProcessingToken token,
+    std::function<std::vector<double>(RootNode*, unsigned int)> processor)
+{
+    m_token_channel_processors[token] = processor;
+}
+
+std::vector<double> NodeGraphManager::process_token_channel(ProcessingToken token,
+    unsigned int channel, unsigned int num_samples)
+{
+    auto& root = get_token_root(token, channel);
+
+    if (auto it = m_token_channel_processors.find(token); it != m_token_channel_processors.end()) {
+        return it->second(&root, num_samples);
+    } else {
+        return root.process(num_samples);
+    }
+}
+
+std::unordered_map<unsigned int, std::vector<double>> NodeGraphManager::process_token_with_channel_data(
+    ProcessingToken token, unsigned int num_samples)
+{
+    std::unordered_map<unsigned int, std::vector<double>> channel_data;
+
+    auto channels = get_token_channels(token);
+
+    for (unsigned int channel : channels) {
+        channel_data[channel] = process_token_channel(token, channel, num_samples);
+    }
+
+    return channel_data;
+}
+
+unsigned int NodeGraphManager::get_token_channel_count(ProcessingToken token) const
+{
+    auto channels = get_token_channels(token);
+    return static_cast<unsigned int>(channels.size());
 }
 
 std::vector<RootNode*> NodeGraphManager::get_token_roots(ProcessingToken token)

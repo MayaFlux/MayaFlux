@@ -199,6 +199,51 @@ public:
     void process_token(ProcessingToken token, unsigned int num_samples = 1);
 
     /**
+     * @brief Register per-channel processor for a specific token
+     * @param token Processing domain to handle (e.g., AUDIO_RATE, VISUAL_RATE)
+     * @param processor Function that receives a single root node and returns processed data
+     *
+     * Registers a per-channel processing function that processes one root node at a time
+     * and returns the processed data. This enables coordination with buffer management
+     * on a per-channel basis.
+     */
+    void register_token_channel_processor(ProcessingToken token,
+        std::function<std::vector<double>(RootNode*, unsigned int)> processor);
+
+    /**
+     * @brief Process a specific channel within a token domain
+     * @param token Processing domain
+     * @param channel Channel index within that domain
+     * @param num_samples Number of samples/frames to process
+     * @return Processed data from the channel's root node
+     *
+     * Processes a single channel's root node and returns the processed data.
+     * If a custom per-channel processor is registered, it is used; otherwise,
+     * the default root node processing is performed.
+     */
+    std::vector<double> process_token_channel(ProcessingToken token, unsigned int channel, unsigned int num_samples);
+
+    /**
+     * @brief Process all channels for a token and return channel-separated data
+     * @param token Processing domain
+     * @param num_samples Number of samples/frames to process
+     * @return Map of channel index to processed data
+     *
+     * Processes all channels for a token and returns a map where each channel
+     * index maps to its processed data. This enables bulk processing while
+     * maintaining per-channel data separation.
+     */
+    std::unordered_map<unsigned int, std::vector<double>> process_token_with_channel_data(
+        ProcessingToken token, unsigned int num_samples);
+
+    /**
+     * @brief Get the number of active channels for a specific token
+     * @param token Processing domain
+     * @return Number of channels that have active root nodes
+     */
+    unsigned int get_token_channel_count(ProcessingToken token) const;
+
+    /**
      * @brief Get spans of root nodes for a token (for custom processing)
      * @param token Processing domain
      * @return Vector of RootNode pointers for that domain
@@ -302,6 +347,17 @@ private:
     std::unordered_map<ProcessingToken,
         std::function<void(std::span<RootNode*>)>>
         m_token_processors;
+
+    /**
+     * @brief Per-channel processors for each processing token
+     *
+     * Maps each processing domain to a per-channel processing function that
+     * processes a single root node and returns processed data. This enables
+     * fine-grained processing with data extraction capabilities.
+     */
+    std::unordered_map<ProcessingToken,
+        std::function<std::vector<double>(RootNode*, unsigned int)>>
+        m_token_channel_processors;
 
     /**
      * @brief Gets or creates the root node for a specific token and channel

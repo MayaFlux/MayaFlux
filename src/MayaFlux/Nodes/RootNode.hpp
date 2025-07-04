@@ -1,25 +1,12 @@
 #pragma once
 
+#include "MayaFlux/Core/ProcessingTokens.hpp"
+
 #define MAX_PENDING 256
 
 namespace MayaFlux::Nodes {
 
 class Node;
-
-/**
- * @enum ProcessingToken
- * @brief Enumerates the different processing domains for nodes
- *
- * This enum defines the various processing rates or domains that nodes can operate in.
- * Each token represents a specific type of processing, such as audio rate, visual rate,
- * or custom processing rates. Nodes can be registered under these tokens to indicate
- * their intended processing behavior within a RootNode.
- */
-enum class ProcessingToken {
-    AUDIO_RATE, ///< Nodes that process at the audio sample rate
-    VISUAL_RATE, ///< Nodes that process at the visual frame rate
-    CUSTOM_RATE ///< Nodes that process at a custom-defined rate
-};
 
 /**
  * @class RootNode
