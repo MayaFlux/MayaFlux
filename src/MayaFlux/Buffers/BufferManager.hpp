@@ -69,8 +69,13 @@ public:
      * @param token Processing domain
      * @param channel Channel index within that domain
      * @param processing_units Number of processing units to process
+     * @param node_output_data Optional output data from a node
      */
-    void process_token_channel(ProcessingToken token, u_int32_t channel, u_int32_t processing_units);
+    void process_token_channel(
+        ProcessingToken token,
+        u_int32_t channel,
+        u_int32_t processing_units,
+        const std::vector<double>& node_output_data = {});
 
     /**
      * @brief Gets all currently active processing tokens
@@ -378,6 +383,14 @@ public:
     std::shared_ptr<BufferType> create_specialized_buffer(u_int32_t channel_index, Args&&... args)
     {
         return create_buffer_for_token<BufferType>(m_default_token, channel_index, std::forward<Args>(args)...);
+    }
+
+    inline void validate_num_channels_for_token(ProcessingToken token, u_int32_t num_channels, u_int32_t buffer_size)
+    {
+        set_token_buffer_size(token, buffer_size);
+        for (size_t i = 0; i < num_channels; i++) {
+            ensure_token_channel_exists(token, i);
+        }
     }
 
 private:

@@ -238,7 +238,11 @@ void BufferManager::process_all_tokens()
     }
 }
 
-void BufferManager::process_token_channel(ProcessingToken token, u_int32_t channel, u_int32_t processing_units)
+void BufferManager::process_token_channel(
+    ProcessingToken token,
+    u_int32_t channel,
+    u_int32_t processing_units,
+    const std::vector<double>& node_output_data)
 {
     std::lock_guard<std::mutex> lock(m_manager_mutex);
 
@@ -249,6 +253,10 @@ void BufferManager::process_token_channel(ProcessingToken token, u_int32_t chann
 
     auto& root_buffer = token_it->second[channel];
     auto& processing_chains = m_token_processing_chains[token];
+
+    if (!node_output_data.empty()) {
+        root_buffer->set_node_output(node_output_data);
+    }
 
     for (auto& child : root_buffer->get_child_buffers()) {
         if (child->needs_default_processing()) {

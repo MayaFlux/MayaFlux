@@ -1,6 +1,4 @@
 #include "AudioSubsystem.hpp"
-#include "MayaFlux/Buffers/BufferManager.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
 namespace MayaFlux::Core {
 
@@ -16,10 +14,9 @@ AudioSubsystem::AudioSubsystem(GlobalStreamInfo& stream_info, Utils::AudioBacken
 {
 }
 
-void AudioSubsystem::initialize(std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager, std::shared_ptr<Buffers::BufferManager> buffer_manager)
+void AudioSubsystem::initialize(SubsystemProcessingHandle& handle)
 {
-    m_node_graph_manager = node_graph_manager;
-    m_buffer_manager = buffer_manager;
+    m_handle = &handle;
 
     m_audio_stream = m_audiobackend->create_stream(
         m_audio_device->get_default_output_device(),
@@ -49,50 +46,18 @@ void AudioSubsystem::register_callbacks()
             }
             return 0;
         });
-
-    register_token_processors();
-}
-
-void AudioSubsystem::register_token_processors()
-{
-    m_node_graph_manager->register_token_channel_processor(
-        m_subsystem_tokens.Node,
-        [this](MayaFlux::Nodes::RootNode* root, unsigned int num_samples) -> std::vector<double> {
-            return root->process(num_samples);
-        });
-
-    m_buffer_manager->register_token_processor(
-        m_subsystem_tokens.Buffer,
-        [this](std::vector<std::shared_ptr<Buffers::RootAudioBuffer>>& buffers, u_int32_t units) {
-            for (auto& buffer : buffers) {
-                buffer->process_default();
-            }
-        });
 }
 
 int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frames)
 {
-    if (m_buffer_manager->get_num_frames() < num_frames) {
-        m_buffer_manager->resize(num_frames);
+    if (m_handle) {
+        unsigned int num_channels = m_stream_info.output.channels;
+        for (unsigned int channel = 0; channel < num_channels; channel++) {
+            auto channel_data = m_handle->nodes.process_channel(channel, num_frames);
+            m_handle->buffers.process_channel_with_node_data(channel, num_frames, channel_data);
+        }
+        m_handle->buffers.fill_interleaved(output_buffer, num_frames, num_channels);
     }
-
-    unsigned int num_channels = m_stream_info.output.channels;
-
-    for (unsigned int channel = 0; channel < num_channels; channel++) {
-        auto channel_data = m_node_graph_manager->process_token_channel(
-            m_subsystem_tokens.Node, channel, num_frames);
-
-        auto root_buffer = m_buffer_manager->get_root_buffer(
-            m_subsystem_tokens.Buffer, channel);
-
-        root_buffer->set_node_output(channel_data);
-
-        m_buffer_manager->process_token_channel(
-            m_subsystem_tokens.Buffer, channel, num_frames);
-    }
-
-    m_buffer_manager->fill_interleaved(output_buffer, num_frames);
-
     return 0;
 }
 
@@ -129,8 +94,6 @@ void AudioSubsystem::shutdown()
     }
     m_audio_device.reset();
     m_audiobackend.reset();
-    m_node_graph_manager.reset();
-    m_buffer_manager.reset();
     m_is_ready = false;
 }
 
