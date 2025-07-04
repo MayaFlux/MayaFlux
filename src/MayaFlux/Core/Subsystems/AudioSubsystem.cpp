@@ -67,6 +67,38 @@ int AudioSubsystem::process_input(double* input_buffer, unsigned int num_frames)
     return 0;
 }
 
+int AudioSubsystem::audio_callback(void* output_buffer, void* input_buffer, unsigned int num_frames)
+{
+    double* output = static_cast<double*>(output_buffer);
+    double* input = static_cast<double*>(input_buffer);
+
+    if (input && output) {
+        return process_audio(input, output, num_frames);
+    } else if (output) {
+        return process_output(output, num_frames);
+    } else if (input) {
+        return process_input(input, num_frames);
+    }
+
+    return 0; // Success
+}
+
+int AudioSubsystem::process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames)
+{
+    for (const auto& [name, hook] : m_handle->pre_process_hooks) {
+        hook(num_frames);
+    }
+
+    process_input(input_buffer, num_frames);
+    process_output(output_buffer, num_frames);
+
+    for (const auto& [name, hook] : m_handle->post_process_hooks) {
+        hook(num_frames);
+    }
+
+    return 0;
+}
+
 void AudioSubsystem::start()
 {
     if (!m_is_ready || !m_audio_stream) {

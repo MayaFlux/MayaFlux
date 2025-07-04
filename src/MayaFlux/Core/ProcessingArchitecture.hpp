@@ -10,8 +10,6 @@ namespace MayaFlux::Buffers {
 class BufferManager;
 }
 
-namespace MayaFlux::Core {
-
 /**
  * @file ProcessingArchitecture.hpp
  * @brief Unified processing architecture for multimodal subsystem coordination
@@ -19,6 +17,29 @@ namespace MayaFlux::Core {
  * Token-based system where each processing domain (audio, video, custom) can have
  * its own processing characteristics while maintaining unified interfaces.
  */
+namespace MayaFlux::Core {
+
+/**
+ * @enum HookPosition
+ * @brief Defines the position in the processing cycle where a hook should be executed
+ *
+ * Process hooks can be registered to run either before or after the main audio processing
+ * to perform additional operations or monitoring at specific points in the signal chain.
+ */
+enum class HookPosition {
+    PRE_PROCESS, ///< Execute hook before any audio processing occurs
+    POST_PROCESS ///< Execute hook after all audio processing is complete
+};
+
+/**
+ * @typedef ProcessHook
+ * @brief Function type for process hooks that can be registered with the engine
+ *
+ * Process hooks are callbacks that execute at specific points in the audio processing cycle.
+ * They receive the current number of frames being processed and can be used for monitoring,
+ * debugging, or additional processing operations.
+ */
+using ProcessHook = std::function<void(unsigned int num_frames)>;
 
 /**
  * @struct SubsystemTokens
@@ -148,6 +169,9 @@ public:
 
     /** @brief Get processing token configuration */
     inline SubsystemTokens get_tokens() const { return m_tokens; }
+
+    std::map<std::string, ProcessHook> pre_process_hooks;
+    std::map<std::string, ProcessHook> post_process_hooks;
 
 private:
     SubsystemTokens m_tokens;

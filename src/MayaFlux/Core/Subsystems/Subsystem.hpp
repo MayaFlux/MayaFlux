@@ -3,6 +3,14 @@
 
 namespace MayaFlux::Core {
 
+enum class SubsystemType {
+    AUDIO,
+    VISUAL,
+    WINDOWING,
+    NETWORK,
+    CUSTOM
+};
+
 /**
  * @class ISubsystem
  * @brief Base interface for all subsystems in the MayaFlux processing architecture
@@ -78,6 +86,12 @@ public:
 
     /** @brief Shutdown and cleanup subsystem resources */
     virtual void shutdown() = 0;
+
+    /** @brief Get the type of this subsystem */
+    virtual const SubsystemType get_type() const = 0;
+
+    /** @brief Get the processing context handle for this subsystem */
+    virtual SubsystemProcessingHandle* get_processing_context_handle() = 0;
 };
 
 }

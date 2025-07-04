@@ -654,6 +654,7 @@ std::shared_ptr<RootAudioBuffer> BufferManager::create_root_buffer_for_token(Pro
 {
     // FAKE
     auto root_buffer = std::make_shared<RootAudioBuffer>(channel, buffer_size);
+    root_buffer->initialize();
     root_buffer->set_token_active(true);
     return root_buffer;
 }

@@ -4,6 +4,8 @@
 
 namespace MayaFlux::Core {
 
+class AudioSubsystem;
+
 /**
  * @class SubsystemManager
  * @brief Central coordinator for all subsystems in the MayaFlux processing architecture
@@ -34,66 +36,105 @@ public:
         std::shared_ptr<Buffers::BufferManager> buffer_manager);
 
     /**
-     * @brief Create and register a new subsystem with specified tokens
-     * @tparam SubsystemType Type of subsystem to create
+     * @brief Internal template method for type-safe subsystem creation
+     * @tparam SType Type of subsystem to create
      * @tparam Args Constructor argument types
-     * @param tokens Processing tokens that define the subsystem's domain
+     * @param type SubsystemType enum value identifying the subsystem category
      * @param args Constructor arguments for the subsystem
      *
-     * Template method for type-safe subsystem creation. The subsystem is
-     * automatically registered, initialized with a token-scoped handle,
-     * and prepared for operation.
+     * Creates a subsystem instance and registers it with the manager.
+     * Used internally by specific subsystem creation methods.
      */
-    template <typename SubsystemType, typename... Args>
-    void create_subsystem(SubsystemTokens tokens, Args&&... args)
+    template <typename SType, typename... Args>
+    void create_subsystem_internal(SubsystemType type, Args&&... args)
     {
-        auto subsystem = std::make_unique<SubsystemType>(tokens, std::forward<Args>(args)...);
-        add_subsystem(tokens, std::move(subsystem));
+        auto subsystem = std::make_shared<SType>(std::forward<Args>(args)...);
+        add_subsystem(type, std::move(subsystem));
+    }
+
+    /**
+     * @brief Create and register the audio subsystem
+     * @tparam Args Constructor argument types
+     * @param args Constructor arguments for AudioSubsystem
+     *
+     * Specialized creation method for AudioSubsystem. Only one audio subsystem
+     * is allowed per manager instance.
+     */
+    template <typename... Args>
+    void create_audio_subsystem(Args&&... args)
+    {
+        create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, std::forward<Args>(args)...);
     }
 
     /** @brief Start all registered subsystems in coordination */
     void start_all_subsystems();
 
     /**
-     * @brief Get typed access to a specific subsystem
-     * @tparam SubsystemType Expected type of the subsystem
-     * @param tokens Token configuration identifying the subsystem
-     * @return Pointer to subsystem or nullptr if not found/wrong type
+     * @brief Get access to a specific subsystem by type
+     * @param type SubsystemType enum value identifying the subsystem
+     * @return Shared pointer to subsystem or nullptr if not found
      *
-     * Provides type-safe access to registered subsystems for direct
-     * interaction when needed. Returns nullptr if subsystem doesn't
-     * exist or type doesn't match.
+     * Provides access to registered subsystems for direct interaction.
+     * Returns nullptr if subsystem of specified type doesn't exist.
      */
-    template <typename SubsystemType>
-    SubsystemType* get_subsystem(SubsystemTokens tokens)
+    std::shared_ptr<ISubsystem> get_subsystem(SubsystemType type);
+
+    /**
+     * @brief Get typed access to the audio subsystem
+     * @return Shared pointer to AudioSubsystem or nullptr if not created
+     *
+     * Convenience method that automatically casts to AudioSubsystem type.
+     * Equivalent to dynamic_cast on get_subsystem(SubsystemType::AUDIO).
+     */
+    std::shared_ptr<AudioSubsystem> get_audio_subsystem()
     {
-        if (auto it = m_subsystems.find(tokens); it != m_subsystems.end()) {
-            return dynamic_cast<SubsystemType*>(it->second.get());
-        }
-        return nullptr;
+        return std::dynamic_pointer_cast<AudioSubsystem>(get_subsystem(SubsystemType::AUDIO));
     }
 
     /**
-     * @brief Dynamically add a new subsystem to the manager
-     * @param tokens Identifier for the subsystem
-     * @param subsystem The subsystem instance
+     * @brief Check if a subsystem type exists
+     * @param type SubsystemType to check for existence
+     * @return True if subsystem of this type is registered
      *
-     * The subsystem receives a handle that can only access its designated tokens.
-     * The handle is owned by SubsystemManager but can be borrowed by the subsystem.
+     * Fast existence check without retrieving the subsystem instance.
      */
-    void add_subsystem(SubsystemTokens tokens, std::unique_ptr<ISubsystem> subsystem);
+    inline bool has_subsystem(SubsystemType type) const { return m_subsystems.count(type) > 0; }
 
     /**
-     * @brief Remove a subsystem from the manager
-     * @param tokens Identifier for the subsystem
+     * @brief Get all currently active subsystem types
+     * @return Vector of SubsystemType values for all registered subsystems
+     *
+     * Returns the types of all subsystems currently managed by this instance.
      */
-    void remove_subsystem(SubsystemTokens tokens);
+    std::vector<SubsystemType> get_active_subsystem_types() const;
 
     /**
-     * @brief Query the current status of all subsystems
-     * @return Map of subsystem tokens to their ready/running status
+     * @brief Register a subsystem instance with the manager
+     * @param type SubsystemType enum value identifying the subsystem category
+     * @param subsystem Shared pointer to the subsystem instance
+     *
+     * Registers a pre-constructed subsystem with the manager and creates
+     * its processing handle. The subsystem is initialized but not started.
      */
-    std::unordered_map<SubsystemTokens, bool> query_subsystem_status() const;
+    void add_subsystem(SubsystemType type, std::shared_ptr<ISubsystem> subsystem);
+
+    /**
+     * @brief Remove and shutdown a subsystem
+     * @param type SubsystemType enum value identifying the subsystem to remove
+     *
+     * Stops, shuts down, and removes the specified subsystem from management.
+     * Cleans up associated processing handles and resources.
+     */
+    void remove_subsystem(SubsystemType type);
+
+    /**
+     * @brief Query operational status of all subsystems
+     * @return Map of SubsystemType to boolean indicating ready/running status
+     *
+     * Returns the current operational status of all managed subsystems.
+     * Status reflects whether each subsystem is ready for operation.
+     */
+    std::unordered_map<SubsystemType, bool> query_subsystem_status() const;
 
     /**
      * @brief Execute an operation with temporary elevated permissions
@@ -130,34 +171,73 @@ public:
     /** @brief Shutdown all subsystems in proper order */
     void shutdown();
 
-    /** @brief Configure cross-subsystem access permissions */
-    void allow_cross_access(SubsystemTokens from, SubsystemTokens to);
+    /**
+     * @brief Configure cross-subsystem data access permissions
+     * @param from SubsystemType that requests access
+     * @param to SubsystemType that provides data
+     *
+     * Establishes permission for one subsystem to read data from another.
+     * Required for cross-subsystem operations like audio-reactive visuals.
+     */
+    void allow_cross_access(SubsystemType from, SubsystemType to);
 
     /**
-     * @brief Get read-only access to another subsystem's data
-     * @param requesting_tokens Tokens of the requesting subsystem
-     * @param target_tokens Tokens of the target subsystem
-     * @param channel Channel to read from
+     * @brief Read data from another subsystem's buffers
+     * @param requesting_type SubsystemType making the data request
+     * @param target_type SubsystemType providing the data
+     * @param channel Channel index to read from
      * @return Read-only span if access allowed, nullopt otherwise
      *
-     * Allows controlled cross-subsystem data sharing with permission checking.
-     * Used for scenarios like audio-reactive visuals where one subsystem
-     * needs to read another's processed data.
+     * Enables controlled cross-subsystem data sharing with permission checking.
+     * Used for scenarios where one subsystem needs processed data from another.
      */
     std::optional<std::span<const double>> read_cross_subsystem_buffer(
-        SubsystemTokens requesting_tokens,
-        SubsystemTokens target_tokens,
+        SubsystemType requesting_type,
+        SubsystemType target_type,
         u_int32_t channel);
 
-private:
-    bool is_cross_access_allowed(SubsystemTokens from, SubsystemTokens to) const;
+    /**
+     * @brief Register a processing hook for a specific subsystem
+     * @param type SubsystemType to attach the hook to
+     * @param name Unique identifier for the hook
+     * @param hook Callback function to execute
+     * @param position When to execute the hook (PRE_PROCESS or POST_PROCESS)
+     *
+     * Process hooks allow custom code execution at specific points in the
+     * processing cycle. Used for monitoring, debugging, or additional processing.
+     */
+    void register_process_hook(SubsystemType type, const std::string& name, ProcessHook hook, HookPosition position = HookPosition::POST_PROCESS);
 
-    std::unordered_map<SubsystemTokens, std::unique_ptr<ISubsystem>> m_subsystems;
+    /**
+     * @brief Remove a previously registered processing hook
+     * @param type SubsystemType the hook is attached to
+     * @param name Unique identifier of the hook to remove
+     *
+     * Removes the named hook from the specified subsystem's processing cycle.
+     */
+    void unregister_process_hook(SubsystemType type, const std::string& name);
+
+    /**
+     * @brief Check if a processing hook exists
+     * @param type SubsystemType to check
+     * @param name Hook identifier to look for
+     * @return True if hook exists (in either pre or post position)
+     *
+     * Checks both pre-process and post-process hook collections for the named hook.
+     */
+    bool has_process_hook(SubsystemType type, const std::string& name);
+
+private:
+    bool is_cross_access_allowed(SubsystemType from, SubsystemType to) const;
+
+    SubsystemTokens get_tokens_for_type(SubsystemType type) const;
+
     std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager;
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
 
-    std::unordered_map<SubsystemTokens, std::unique_ptr<SubsystemProcessingHandle>> m_handles;
-    std::unordered_map<SubsystemTokens, std::unordered_set<SubsystemTokens>> m_cross_access_permissions;
+    std::unordered_map<SubsystemType, std::shared_ptr<ISubsystem>> m_subsystems;
+    std::unordered_map<SubsystemType, std::unique_ptr<SubsystemProcessingHandle>> m_handles;
+    std::unordered_map<SubsystemType, std::unordered_set<SubsystemType>> m_cross_access_permissions;
 
     mutable std::shared_mutex m_mutex; ///< Thread safety for subsystem operations
 };

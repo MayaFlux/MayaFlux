@@ -6,8 +6,6 @@
 
 namespace MayaFlux::Core {
 
-class Engine;
-
 /**
  * @class AudioSubsystem
  * @brief Audio processing subsystem managing real-time audio I/O and processing
@@ -91,19 +89,21 @@ public:
      */
     int process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames);
 
-private:
-    friend class Engine;
-
     /**
      * @brief Constructs AudioSubsystem with stream configuration
      * @param stream_info Global stream configuration
      * @param backend_type Audio backend type to use (default: RTAUDIO)
      *
-     * Private constructor - AudioSubsystem instances are created by Engine.
+     * Constructor - AudioSubsystem instances are created by Engine.
      * Initializes audio backend and configures processing tokens.
      */
     explicit AudioSubsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type = Utils::AudioBackendType::RTAUDIO);
 
+    inline virtual const SubsystemType get_type() const override { return m_type; }
+
+    virtual SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
+
+private:
     /**
      * @brief Internal audio callback handler
      * @param output_buffer Output buffer from audio backend
@@ -127,6 +127,8 @@ private:
 
     bool m_is_ready; ///< Subsystem ready state
     bool m_is_running; ///< Subsystem running state
+
+    static const SubsystemType m_type = SubsystemType::AUDIO;
 };
 
 }

@@ -38,6 +38,8 @@ public:
      */
     RootAudioBuffer(u_int32_t channel_id, u_int32_t num_samples = 512);
 
+    void initialize();
+
     /**
      * @brief Virtual destructor for proper resource management
      */
@@ -149,13 +151,13 @@ class ChannelProcessor : public BufferProcessor {
 public:
     /**
      * @brief Creates a new channel aggregation processor
-     * @param root_buffer Pointer to the root buffer this processor will manage
+     * @param root_buffer Shared pointer to the root buffer this processor will manage
      *
      * The processor maintains a raw pointer to its root buffer to avoid
      * circular references, as the root buffer already owns a shared_ptr
      * to this processor in the object composition hierarchy.
      */
-    ChannelProcessor(RootAudioBuffer* root_buffer);
+    ChannelProcessor(std::shared_ptr<Buffer> root_buffer);
 
     /**
      * @brief Processes a buffer by combining tributary buffers and node network output
@@ -188,13 +190,9 @@ public:
 
 private:
     /**
-     * @brief Pointer to the root buffer this processor manages
-     *
-     * This is a raw pointer to avoid circular references in the object
-     * composition hierarchy, as the root buffer already owns a shared_ptr
-     * to this processor.
+     * @brief Shared pointer to the root buffer this processor manages
      */
-    RootAudioBuffer* m_root_buffer;
+    std::shared_ptr<RootAudioBuffer> m_root_buffer;
 };
 
 /**

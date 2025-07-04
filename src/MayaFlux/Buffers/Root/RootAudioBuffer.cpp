@@ -2,8 +2,8 @@
 
 namespace MayaFlux::Buffers {
 
-ChannelProcessor::ChannelProcessor(RootAudioBuffer* root_buffer)
-    : m_root_buffer(root_buffer)
+ChannelProcessor::ChannelProcessor(std::shared_ptr<Buffer> root_buffer)
+    : m_root_buffer(std::dynamic_pointer_cast<RootAudioBuffer>(root_buffer))
 {
     m_processing_token = ProcessingToken::AUDIO_BACKEND;
 }
@@ -12,7 +12,7 @@ void ChannelProcessor::process(std::shared_ptr<Buffer> buffer)
 {
 
     auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
-    if (!root_audio_buffer || root_audio_buffer.get() != m_root_buffer) {
+    if (!root_audio_buffer || root_audio_buffer != m_root_buffer) {
         return;
     }
 
@@ -83,7 +83,10 @@ RootAudioBuffer::RootAudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
 {
     m_preferred_processing_token = ProcessingToken::AUDIO_BACKEND;
     m_token_enforcement_strategy = TokenEnforcementStrategy::STRICT;
+}
 
+void RootAudioBuffer::initialize()
+{
     auto channel_processor = create_default_processor();
     if (channel_processor) {
         set_default_processor(channel_processor);
@@ -133,7 +136,7 @@ void RootAudioBuffer::resize(u_int32_t num_samples)
 
 std::shared_ptr<BufferProcessor> RootAudioBuffer::create_default_processor()
 {
-    return std::make_shared<ChannelProcessor>(this);
+    return std::make_shared<ChannelProcessor>(shared_from_this());
 }
 
 FinalLimiterProcessor::FinalLimiterProcessor()
