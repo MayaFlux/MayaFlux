@@ -1,6 +1,8 @@
 #include "SubsystemManager.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 
+#include "Subsystems/AudioSubsystem.hpp"
+
 namespace MayaFlux::Core {
 
 SubsystemManager::SubsystemManager(
@@ -9,6 +11,11 @@ SubsystemManager::SubsystemManager(
     : m_node_graph_manager(node_graph_manager)
     , m_buffer_manager(buffer_manager)
 {
+}
+
+void SubsystemManager::create_audio_subsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type)
+{
+    create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, stream_info, backend_type);
 }
 
 void SubsystemManager::add_subsystem(SubsystemType type, std::shared_ptr<ISubsystem> subsystem)
@@ -22,6 +29,11 @@ void SubsystemManager::add_subsystem(SubsystemType type, std::shared_ptr<ISubsys
 
     m_subsystems[type] = subsystem;
     m_handles[type] = std::move(handle);
+}
+
+std::shared_ptr<AudioSubsystem> SubsystemManager::get_audio_subsystem()
+{
+    return std::dynamic_pointer_cast<AudioSubsystem>(get_subsystem(SubsystemType::AUDIO));
 }
 
 void SubsystemManager::start_all_subsystems()

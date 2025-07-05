@@ -25,7 +25,7 @@ enum class SubsystemType {
  */
 class ISubsystem {
 public:
-    // virtual ~ISubsystem() = default;
+    virtual ~ISubsystem() = default;
 
     /**
      * @brief Register callback hooks for this domain

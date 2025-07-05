@@ -2,9 +2,12 @@
 
 #include "Subsystems/Subsystem.hpp"
 
+#include "MayaFlux/Utils.hpp"
+
 namespace MayaFlux::Core {
 
 class AudioSubsystem;
+struct GlobalStreamInfo;
 
 /**
  * @class SubsystemManager
@@ -60,11 +63,7 @@ public:
      * Specialized creation method for AudioSubsystem. Only one audio subsystem
      * is allowed per manager instance.
      */
-    template <typename... Args>
-    void create_audio_subsystem(Args&&... args)
-    {
-        create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, std::forward<Args>(args)...);
-    }
+    void create_audio_subsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type);
 
     /** @brief Start all registered subsystems in coordination */
     void start_all_subsystems();
@@ -86,10 +85,7 @@ public:
      * Convenience method that automatically casts to AudioSubsystem type.
      * Equivalent to dynamic_cast on get_subsystem(SubsystemType::AUDIO).
      */
-    std::shared_ptr<AudioSubsystem> get_audio_subsystem()
-    {
-        return std::dynamic_pointer_cast<AudioSubsystem>(get_subsystem(SubsystemType::AUDIO));
-    }
+    std::shared_ptr<AudioSubsystem> get_audio_subsystem();
 
     /**
      * @brief Check if a subsystem type exists
