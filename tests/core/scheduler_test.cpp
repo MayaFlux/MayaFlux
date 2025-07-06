@@ -35,19 +35,19 @@ TEST_F(SchedulerTest, SampleConversion)
 
 TEST_F(SchedulerTest, ClockFunctionality)
 {
-    const auto& clock = scheduler->get_clock();
+    const auto& clock = scheduler->get_sample_clock();
 
-    EXPECT_EQ(clock.current_sample(), 0);
+    EXPECT_EQ(clock.current_position(), 0);
     EXPECT_EQ(clock.current_time(), 0.0);
 
     scheduler->process_sample();
 
-    EXPECT_EQ(clock.current_sample(), 1);
+    EXPECT_EQ(clock.current_position(), 1);
     EXPECT_DOUBLE_EQ(clock.current_time(), 1.0 / TestConfig::SAMPLE_RATE);
 
     scheduler->process_buffer(TestConfig::BUFFER_SIZE);
 
-    EXPECT_EQ(clock.current_sample(), 1 + TestConfig::BUFFER_SIZE);
+    EXPECT_EQ(clock.current_position(), 1 + TestConfig::BUFFER_SIZE);
     EXPECT_DOUBLE_EQ(clock.current_time(), (1.0 + TestConfig::BUFFER_SIZE) / TestConfig::SAMPLE_RATE);
 }
 

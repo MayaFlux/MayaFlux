@@ -10,7 +10,7 @@ namespace MayaFlux::Kriya {
  * This alias simplifies references to the Vruta::promise_type
  * throughout the Kriya namespace.
  */
-using promise_handle = Vruta::promise_type;
+using promise_handle = Vruta::audio_promise;
 
 /**
  * @struct SampleDelay
@@ -72,10 +72,41 @@ struct SampleDelay {
      * the coroutine's next_sample field to schedule it for resumption
      * after the specified number of time units have been processed.
      */
-    inline void await_suspend(std::coroutine_handle<promise_handle> h)
+    void await_suspend(std::coroutine_handle<promise_handle> h) noexcept;
+};
+
+/**
+ * @struct FrameDelay
+ * @brief graphics-domain awaiter for frame-accurate timing delays
+ *
+ * Future awaiter for visual processing routines that operate at frame rates.
+ * This will work with visual_promise types that have next_frame fields.
+ */
+struct FrameDelay {
+    u_int32_t frames_to_wait;
+
+    constexpr bool await_ready() const noexcept
     {
-        h.promise().next_sample += samples_to_wait;
+        return frames_to_wait == 0;
     }
+
+    constexpr void await_resume() const noexcept { }
+
+    void await_suspend(std::coroutine_handle<Vruta::graphics_promise> h) noexcept;
+};
+
+struct MultiRateDelay {
+    u_int64_t samples_to_wait;
+    u_int32_t frames_to_wait;
+
+    constexpr bool await_ready() const noexcept
+    {
+        return samples_to_wait == 0 && frames_to_wait == 0;
+    }
+
+    constexpr void await_resume() const noexcept { }
+
+    void await_suspend(std::coroutine_handle<Vruta::complex_promise> h) noexcept;
 };
 
 /**

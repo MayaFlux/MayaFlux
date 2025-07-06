@@ -4,40 +4,43 @@
 
 namespace MayaFlux::Vruta {
 
+enum class ProcessingToken {
+    SAMPLE_ACCURATE, ///< Coroutine is sample-accurate
+    FRAME_ACCURATE, ///< Coroutine is frame-accurate
+    MULTI_RATE, ///< Coroutine can handle multiple sample rates. Picks the frame-accurate processing token by default
+    ON_DEMAND, ///< Coroutine is executed on demand, not scheduled
+    CUSTOM
+};
+
 class SoundRoutine;
+class GraphicsRoutine;
+class ComplexRoutine;
 
 /**
- * @struct promise_type
- * @brief Coroutine promise type for audio processing tasks with sample-accurate timing
+ * @struct routine_promise
+ * @brief Base coroutine promise type for audio processing tasks
+ *
+ * This promise_type serves as the base class for all coroutine promises in the
+ * MayaFlux engine. It defines the common behavior and interface for
+ * coroutines, including lifecycle management, state storage, and execution flags.
  *
  * The promise_type is a crucial component of C++20 coroutines that defines the
  * behavior of SoundRoutine coroutines. It serves as the control interface between
  * the coroutine machinery and the audio engine, managing:
  *
- * 1. Coroutine lifecycle (creation, suspension, resumption, and destruction)
- * 2. Timing information for sample-accurate scheduling
- * 3. State storage for persistent data between suspensions
- * 4. Control flags for execution behavior
- *
  * In the coroutine model, the promise object is created first when a coroutine
  * function is called. It then creates and returns the SoundRoutine object that
  * the caller receives. The promise remains associated with the coroutine frame
- * throughout its lifetime, while the SoundRoutine provides the external interface
+ * throughout its lifetime, while the RoutineType provides the external interface
  * to manipulate the coroutine.
- *
- * This separation of concerns allows the audio engine to schedule and manage
- * coroutines efficiently while providing a clean API for audio processing code.
  */
-struct promise_type {
-    /**
-     * @brief Creates the SoundRoutine object returned to the caller
-     * @return A new SoundRoutine that wraps this promise
-     *
-     * This method is called by the compiler-generated code when a coroutine
-     * function is invoked. It creates the SoundRoutine object that will be
-     * returned to the caller and associates it with this promise.
-     */
-    SoundRoutine get_return_object();
+template <typename RoutineType>
+struct routine_promise {
+
+    RoutineType get_return_object()
+    {
+        return RoutineType(std::coroutine_handle<routine_promise>::from_promise(*this));
+    }
 
     /**
      * @brief Determines whether the coroutine suspends immediately upon creation
@@ -77,20 +80,16 @@ struct promise_type {
     void unhandled_exception() { std::terminate(); }
 
     /**
-     * @brief The sample position when this coroutine should next execute
-     *
-     * This is the core timing mechanism for sample-accurate scheduling.
-     * When a coroutine co_awaits a SampleDelay, this value is updated to
-     * indicate when the coroutine should be resumed next.
+     * @brief Token indicating how this coroutine should be processed
      */
-    u_int64_t next_sample = 0;
+    const ProcessingToken processing_token { ProcessingToken::ON_DEMAND };
 
     /**
      * @brief Flag indicating whether the coroutine should be automatically resumed
      *
      * When true, the scheduler will automatically resume the coroutine when
      * the current sample position reaches next_sample. When false, the coroutine
-     * must be manually resumed by calling SoundRoutine::try_resume.
+     * must be manually resumed by calling ::try_resume.
      */
     bool auto_resume = true;
 
@@ -116,6 +115,14 @@ struct promise_type {
      * requiring the promise type to be templated.
      */
     std::unordered_map<std::string, std::any> state;
+
+    /**
+     * @brief Flag indicating whether the coroutine should synchronize with the audio clock
+     *
+     * When true, the coroutine will be scheduled to run in sync with the specificed clock,
+     * via tokens ensuring sample-accurate timing. When false, it has to be "proceeded" manually
+     */
+    const bool sync_to_clock = false;
 
     /**
      * @brief Stores a value in the state dictionary
@@ -153,5 +160,95 @@ struct promise_type {
         }
         return nullptr;
     }
+
+    void domain_mismatch_error(const std::string& awaiter_name, const std::string& suggestion)
+    {
+        set_state("domain_error", awaiter_name + ": " + suggestion);
+        should_terminate = true;
+    }
+};
+
+/**
+ * @struct audio_promise
+ * @brief Coroutine promise type for audio processing tasks with sample-accurate timing
+ *
+ * The promise_type is a crucial component of C++20 coroutines that defines the
+ * behavior of SoundRoutine coroutines. It serves as the control interface between
+ * the coroutine machinery and the audio engine, managing:
+ *
+ * 1. Coroutine lifecycle (creation, suspension, resumption, and destruction)
+ * 2. Timing information for sample-accurate scheduling
+ * 3. State storage for persistent data between suspensions
+ * 4. Control flags for execution behavior
+ *
+ * In the coroutine model, the promise object is created first when a coroutine
+ * function is called. It then creates and returns the SoundRoutine object that
+ * the caller receives. The promise remains associated with the coroutine frame
+ * throughout its lifetime, while the SoundRoutine provides the external interface
+ * to manipulate the coroutine.
+ *
+ * This separation of concerns allows the audio engine to schedule and manage
+ * coroutines efficiently while providing a clean API for audio processing code.
+ */
+struct audio_promise : public routine_promise<SoundRoutine> {
+    /**
+     * @brief Creates the SoundRoutine object returned to the caller
+     * @return A new SoundRoutine that wraps this promise
+     *
+     * This method is called by the compiler-generated code when a coroutine
+     * function is invoked. It creates the SoundRoutine object that will be
+     * returned to the caller and associates it with this promise.
+     */
+    SoundRoutine get_return_object();
+
+    ProcessingToken processing_token { ProcessingToken::SAMPLE_ACCURATE };
+
+    bool sync_to_clock = true;
+
+    /**
+     * @brief The sample position when this coroutine should next execute
+     *
+     * This is the core timing mechanism for sample-accurate scheduling.
+     * When a coroutine co_awaits a SampleDelay, this value is updated to
+     * indicate when the coroutine should be resumed next.
+     */
+    u_int64_t next_sample = 0;
+};
+
+// TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first
+/** * @struct graphics_promise
+ * @brief Coroutine promise type for graphics processing tasks with frame-accurate timing
+ */
+struct graphics_promise : public routine_promise<GraphicsRoutine> {
+    GraphicsRoutine get_return_object();
+
+    ProcessingToken processing_token { ProcessingToken::FRAME_ACCURATE };
+
+    bool sync_to_clock = true;
+
+    /**
+     * @brief The frame index when this coroutine should next execute
+     *
+     * This is the core timing mechanism for frame-accurate scheduling.
+     * When a coroutine co_awaits a FrameDelay, this value is updated to
+     * indicate when the coroutine should be resumed next.
+     */
+    u_int64_t next_frame = 0;
+};
+
+// TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first
+/** * @struct complex_promise
+ * @brief Coroutine promise type for complex processing tasks with multi-rate scheduling
+ */
+struct complex_promise : public routine_promise<ComplexRoutine> {
+    ComplexRoutine get_return_object();
+
+    ProcessingToken processing_token { ProcessingToken::MULTI_RATE };
+
+    bool sync_to_clock = true;
+
+    u_int64_t next_sample = 0;
+
+    u_int64_t next_frame = 0;
 };
 }

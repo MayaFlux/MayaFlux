@@ -52,4 +52,93 @@ enum NodeState : u_int32_t {
 
 std::any safe_get_parameter(const std::string& parameter_name, const std::map<std::string, std::any> parameters);
 
+/**
+ * @brief Convert frames to seconds at a given frame rate
+ * @param frames Number of frames
+ * @param frame_rate Frame rate in Hz
+ * @return Time duration in seconds
+ */
+inline u_int64_t frames_to_seconds(u_int64_t frames, u_int32_t frame_rate)
+{
+    return frames / frame_rate;
+}
+
+/** * @brief Convert samples to seconds at a given sample rate
+ * @param samples Number of samples
+ * @param sample_rate Sample rate in Hz
+ * @return Time duration in seconds
+ */
+inline u_int64_t samples_to_seconds(u_int64_t samples, u_int32_t sample_rate)
+{
+    return samples / sample_rate;
+}
+
+/**
+ * @brief Convert frames to samples at a given sample rate and frame rate
+ * @param frames Number of frames
+ * @param sample_rate Sample rate in Hz
+ * @param frame_rate Frame rate in Hz
+ * @return Number of samples
+ */
+inline u_int64_t frames_to_samples(u_int64_t frames, u_int32_t sample_rate, u_int32_t frame_rate)
+{
+    return (frames * sample_rate) / frame_rate;
+}
+
+/**
+ * @brief Convert samples to frames at a given sample rate and frame rate
+ * @param samples Number of samples
+ * @param sample_rate Sample rate in Hz
+ * @param frame_rate Frame rate in Hz
+ * @return Number of frames
+ */
+inline u_int64_t samples_to_frames(u_int64_t samples, u_int32_t sample_rate, u_int32_t frame_rate)
+{
+    return (samples * frame_rate) / sample_rate;
+}
+
+/**
+ * @brief Convert seconds to samples at a given sample rate
+ * @param seconds Time duration in seconds
+ * @param sample_rate Sample rate in Hz
+ * @return Number of samples
+ */
+inline u_int64_t seconds_to_samples(double seconds, u_int32_t sample_rate)
+{
+    return static_cast<u_int64_t>(seconds * sample_rate);
+}
+
+/**
+ * @brief Convert seconds to frames at a given frame rate
+ * @param seconds Time duration in seconds
+ * @param frame_rate Frame rate in Hz
+ * @return Number of frames
+ */
+inline u_int64_t seconds_to_frames(double seconds, u_int32_t frame_rate)
+{
+    return static_cast<u_int64_t>(seconds * frame_rate);
+}
+
+/**
+ * @brief Convert seconds to processing units for any rate
+ * @param seconds Time duration in seconds
+ * @param rate Processing rate (samples/sec, frames/sec, etc.)
+ * @return Number of processing units
+ */
+inline u_int64_t seconds_to_units(double seconds, u_int32_t rate)
+{
+    return static_cast<u_int64_t>(seconds * rate);
+}
+
+/**
+ * @brief Convert processing units to seconds for any rate
+ * @param units Number of processing units
+ * @param rate Processing rate (samples/sec, frames/sec, etc.)
+ * @return Time duration in seconds
+ */
+inline double units_to_seconds(u_int64_t units, u_int32_t rate)
+{
+    return static_cast<double>(units) / rate;
+}
+
 }
