@@ -5,6 +5,17 @@
 
 namespace MayaFlux::Vruta {
 
+struct TaskEntry {
+    std::shared_ptr<Routine> routine;
+    std::string name;
+
+    TaskEntry(std::shared_ptr<Routine> r, const std::string& n)
+        : routine(std::move(r))
+        , name(std::move(n))
+    {
+    }
+};
+
 /**
  * @class TaskScheduler
  * @brief Token-based multimodal task scheduling system for unified coroutine processing
@@ -42,27 +53,53 @@ public:
     /**
      * @brief Add a routine to the scheduler based on its processing token
      * @param routine Routine to add (SoundRoutine, GraphicsRoutine, or ComplexRoutine)
+     * @param name Optional name for the routine (for task management)
      * @param initialize Whether to initialize the routine's state immediately
      *
      * The routine's processing token determines which domain it belongs to and
      * which clock it synchronizes with. Automatically dispatches to the appropriate
      * token-specific task list and clock synchronization.
      */
-    void add_task(std::shared_ptr<Routine> routine, bool initialize = false);
+    void add_task(std::shared_ptr<Routine> routine, const std::string& name = "", bool initialize = false);
 
     /**
-     * @brief Adds a task to the scheduler
-     * @param task Shared pointer to the computational routine to schedule
-     * @param initialize Whether to initialize the task's state (default: false)
-     *
-     * Registers a computational routine with the scheduler, making it eligible for
-     * execution according to its timing requirements. If initialize is true,
-     * the task's state is initialized with the current sample position.
-     *
-     * The scheduler takes shared ownership of the task, allowing it to be
-     * safely referenced from multiple places in the codebase.
+     * @brief Get a named task
+     * @param name Task name
+     * @return Shared pointer to routine or nullptr
      */
-    void add_task(std::shared_ptr<SoundRoutine> task, bool initialize = false);
+    std::shared_ptr<Routine> get_task(const std::string& name) const;
+
+    /**
+     * @brief Cancels and removes a task from the scheduler
+     * @param task Shared pointer to the task to cancel
+     * @return True if the task was found and cancelled, false otherwise
+     *
+     * This method removes a task from the scheduler, preventing it from
+     * executing further. It's used to stop tasks that are no longer needed
+     * or to clean up before shutting down the engine.
+     */
+    bool cancel_task(std::shared_ptr<Routine> task);
+
+    /**
+     * @brief Cancel a task by name
+     * @param name Task name to cancel
+     * @return True if found and cancelled
+     */
+    bool cancel_task(const std::string& name);
+
+    /**
+     * @brief Restart a named task
+     * @param name Task name to restart
+     * @return True if found and restarted
+     */
+    bool restart_task(const std::string& name);
+
+    /**
+     * @brief Get all tasks for a specific processing domain
+     * @param token Processing domain
+     * @return Vector of tasks in the domain
+     */
+    std::vector<std::shared_ptr<Routine>> get_tasks_for_token(ProcessingToken token) const;
 
     /**
      * @brief Process all tasks for a specific processing domain
@@ -98,32 +135,6 @@ public:
         std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)> processor);
 
     /**
-     * @brief Processes a single sample of time
-     *
-     * Advances the sample clock by one sample and executes any tasks that
-     * are scheduled for the current sample position. This is the core method
-     * that drives the execution of all scheduled tasks.
-     *
-     * This method is typically called once per sample in sample-by-sample
-     * processing scenarios, or indirectly via process_buffer for buffer-based
-     * processing.
-     */
-    void process_sample();
-
-    /**
-     * @brief Processes a block of samples
-     * @param buffer_size Number of samples in the buffer
-     *
-     * Advances the sample clock by buffer_size samples and executes any tasks
-     * that are scheduled during this time period. This method is optimized for
-     * buffer-based processing, which is the common case in most real-time systems.
-     *
-     * This method is typically called once per processing buffer in the main
-     * processing callback.
-     */
-    void process_buffer(unsigned int buffer_size);
-
-    /**
      * @brief Convert seconds to processing units for a specific domain
      * @param seconds Time in seconds
      * @param token Processing domain (default: audio)
@@ -154,17 +165,6 @@ public:
      * For domain-specific conversions, use seconds_to_units() with the appropriate token.
      */
     u_int64_t seconds_to_samples(double seconds) const;
-
-    /**
-     * @brief Gets the sample rate used by the audio scheduling domain
-     * @return The number of samples per second for audio processing
-     *
-     * Legacy method for compatibility. Equivalent to get_rate(ProcessingToken::SAMPLE_ACCURATE).
-     */
-    inline unsigned int task_sample_rate()
-    {
-        return get_rate(ProcessingToken::SAMPLE_ACCURATE);
-    }
 
     /**
      * @brief Get the audio domain's SampleClock (legacy interface)
@@ -210,53 +210,61 @@ public:
     }
 
     /**
-     * @brief Gets a const reference to the collection of active tasks
-     * @return Const reference to the vector of task pointers
-     *
-     * This method provides read-only access to the scheduler's task collection,
-     * which is useful for monitoring and debugging purposes.
+     * @brief Update parameters of a named task
+     * @tparam Args Parameter types
+     * @param name Task name
+     * @param args New parameters
+     * @return True if task found and updated
      */
-    inline const std::vector<std::shared_ptr<SoundRoutine>>& get_tasks() const { return m_tasks; }
+    template <typename... Args>
+    bool update_task_params(const std::string& name, Args&&... args)
+    {
+        std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
+
+        auto it = find_task_by_name(name);
+        if (it != m_tasks.end() && it->routine && it->routine->is_active()) {
+            it->routine->update_params(std::forward<Args>(args)...);
+            return true;
+        }
+        return false;
+    }
 
     /**
-     * @brief Gets a mutable reference to the collection of active tasks
-     * @return Mutable reference to the vector of task pointers
-     *
-     * This method provides read-write access to the scheduler's task collection,
-     * which is useful for advanced task management operations.
+     * @brief Get task state value by name and key
+     * @tparam T State value type
+     * @param name Task name
+     * @param state_key State key
+     * @return Pointer to value or nullptr
      */
-    inline std::vector<std::shared_ptr<SoundRoutine>>& get_tasks() { return m_tasks; }
+    template <typename T>
+    T* get_task_state(const std::string& name, const std::string& state_key) const
+    {
+        std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
+
+        auto it = find_task_by_name(name);
+        if (it != m_tasks.end() && it->routine && it->routine->is_active()) {
+            return it->routine->get_state<T>(state_key);
+        }
+        return nullptr;
+    }
 
     /**
-     * @brief Get all tasks for a specific processing domain
-     * @param token Processing domain
-     * @return Vector of tasks in the domain
+     * @brief Create value accessor function for named task
+     * @tparam T Value type
+     * @param name Task name
+     * @param state_key State key
+     * @return Function returning current value
      */
-    const std::vector<std::shared_ptr<Routine>>& get_tasks(ProcessingToken token) const;
-
-    /**
-     * @brief Get all audio tasks (legacy interface)
-     * @return Vector of audio tasks
-     */
-    std::vector<std::shared_ptr<SoundRoutine>> get_audio_tasks() const;
-
-    /**
-     * @brief Cancel a specific routine
-     * @param routine Routine to cancel
-     * @return True if routine was found and cancelled, false otherwise
-     */
-    bool cancel_task(std::shared_ptr<Routine> routine);
-
-    /**
-     * @brief Cancels and removes a task from the scheduler
-     * @param task Shared pointer to the task to cancel
-     * @return True if the task was found and cancelled, false otherwise
-     *
-     * This method removes a task from the scheduler, preventing it from
-     * executing further. It's used to stop tasks that are no longer needed
-     * or to clean up before shutting down the engine.
-     */
-    bool cancel_task(std::shared_ptr<SoundRoutine> task);
+    template <typename T>
+    std::function<T()> create_value_accessor(const std::string& name, const std::string& state_key) const
+    {
+        return [this, name, state_key]() -> T {
+            if (auto value = get_task_state<T>(name, state_key)) {
+                return *value;
+            }
+            return T {};
+        };
+    }
 
     /**
      * @brief Generates a unique task ID for new tasks
@@ -271,7 +279,51 @@ public:
      */
     bool has_active_tasks(ProcessingToken token) const;
 
+    /**
+     * @brief Get all task names for debugging/inspection
+     * @return Vector of all task names
+     */
+    std::vector<std::string> get_task_names() const;
+
+    /**
+     * @brief Pause all active tasks
+     */
+    void pause_all_tasks();
+
+    /**
+     * @brief Resume all previously paused tasks
+     */
+    void resume_all_tasks();
+
+    /**
+     * @brief Terminate and clear all tasks
+     */
+    void terminate_all_tasks();
+
 private:
+    /**
+     * @brief Generate automatic name for a routine based on its type
+     * @param routine The routine to name
+     * @return Generated name
+     */
+    std::string auto_generate_name(std::shared_ptr<Routine> routine) const;
+
+    /**
+     * @brief Find task entry by name
+     * @param name Task name to find
+     * @return Iterator to task entry or end()
+     */
+    std::vector<TaskEntry>::iterator find_task_by_name(const std::string& name);
+
+    std::vector<TaskEntry>::const_iterator find_task_by_name(const std::string& name) const;
+
+    /**
+     * @brief Find task entry by routine pointer
+     * @param routine Routine to find
+     * @return Iterator to task entry or end()
+     */
+    std::vector<TaskEntry>::iterator find_task_by_routine(std::shared_ptr<Routine> routine);
+
     /**
      * @brief Initialize a processing domain if it doesn't exist
      * @param token Processing domain to initialize
@@ -295,9 +347,8 @@ private:
 
     /**
      * @brief Clean up completed tasks in a domain
-     * @param token Processing domain to clean
      */
-    void cleanup_completed_tasks(ProcessingToken token);
+    void cleanup_completed_tasks();
 
     /**
      * @brief Initialize a routine's state for a specific domain
@@ -305,14 +356,6 @@ private:
      * @param token Processing domain
      */
     bool initialize_routine_state(std::shared_ptr<Routine> routine, ProcessingToken token);
-
-    /**
-     * @brief Storage for tasks organized by processing token
-     *
-     * Each processing domain maintains its own task list for efficient
-     * scheduling and clock synchronization.
-     */
-    std::unordered_map<ProcessingToken, std::vector<std::shared_ptr<Routine>>> m_token_tasks;
 
     /**
      * @brief Clock instances for each processing domain
@@ -348,6 +391,10 @@ private:
      */
     mutable std::atomic<u_int64_t> m_next_task_id { 1 };
 
+    std::vector<TaskEntry> m_tasks;
+
+    mutable std::shared_mutex m_tasks_mutex;
+
     /**
      * @brief The master sample clock for the processing engine
      *
@@ -356,23 +403,6 @@ private:
      * the processing stream.
      */
     SampleClock m_clock;
-
-    /**
-     * @brief Legacy audio domain clock for backward compatibility
-     *
-     * Maintained for existing code that expects direct SampleClock access.
-     * The multimodal system stores this same clock in m_token_clocks for
-     * the SAMPLE_ACCURATE token.
-     */
-    SampleClock m_audio_clock;
-
-    /**
-     * @brief Legacy audio tasks collection for backward compatibility
-     *
-     * Maintained for existing code. The multimodal system stores audio tasks
-     * in m_token_tasks under the SAMPLE_ACCURATE token.
-     */
-    std::vector<std::shared_ptr<SoundRoutine>> m_tasks;
 };
 
 }

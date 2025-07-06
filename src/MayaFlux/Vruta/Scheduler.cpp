@@ -13,91 +13,119 @@ TaskScheduler::TaskScheduler(u_int32_t default_sample_rate, u_int32_t default_fr
     ensure_token_domain(ProcessingToken::ON_DEMAND, 1);
 }
 
-void TaskScheduler::add_task(std::shared_ptr<Routine> routine, bool initialize)
+void TaskScheduler::add_task(std::shared_ptr<Routine> routine, const std::string& name, bool initialize)
 {
     if (!routine) {
         return;
     }
 
-    std::lock_guard<std::mutex> lock(m_scheduler_mutex);
-
+    std::string task_name = name.empty() ? auto_generate_name(routine) : name;
     ProcessingToken token = routine->get_processing_token();
 
-    ensure_token_domain(token);
+    {
+        std::unique_lock<std::shared_mutex> lock(m_tasks_mutex);
 
-    m_token_tasks[token].push_back(routine);
+        // Remove existing task with same name
+        auto existing_it = find_task_by_name(task_name);
+        if (existing_it != m_tasks.end()) {
+            if (existing_it->routine && existing_it->routine->is_active()) {
+                existing_it->routine->set_should_terminate(true);
+            }
+            m_tasks.erase(existing_it);
+        }
+
+        m_tasks.emplace_back(routine, task_name);
+    }
 
     if (initialize) {
+        std::lock_guard<std::mutex> sched_lock(m_scheduler_mutex);
+        ensure_token_domain(token);
         initialize_routine_state(routine, token);
+    } else {
+        std::lock_guard<std::mutex> sched_lock(m_scheduler_mutex);
+        ensure_token_domain(token);
     }
 }
 
-void TaskScheduler::add_task(std::shared_ptr<SoundRoutine> task, bool initialize)
+bool TaskScheduler::cancel_task(const std::string& name)
 {
-    add_task(std::static_pointer_cast<Routine>(task), initialize);
+    std::unique_lock<std::shared_mutex> lock(m_tasks_mutex);
+
+    auto it = find_task_by_name(name);
+    if (it != m_tasks.end()) {
+        if (it->routine && it->routine->is_active()) {
+            it->routine->set_should_terminate(true);
+        }
+        m_tasks.erase(it);
+        return true;
+    }
+    return false;
 }
 
 bool TaskScheduler::cancel_task(std::shared_ptr<Routine> routine)
 {
-    if (!routine) {
-        return false;
-    }
+    std::unique_lock<std::shared_mutex> lock(m_tasks_mutex);
 
-    std::lock_guard<std::mutex> lock(m_scheduler_mutex);
-
-    ProcessingToken token = routine->get_processing_token();
-    auto token_it = m_token_tasks.find(token);
-
-    if (token_it == m_token_tasks.end()) {
-        return false;
-    }
-
-    auto& tasks = token_it->second;
-    auto it = std::find(tasks.begin(), tasks.end(), routine);
-
-    if (it != tasks.end()) {
-        if (routine->is_active()) {
-            routine->set_state("should_terminate", true);
-            routine->set_state("auto_resume", true);
+    auto it = find_task_by_routine(routine);
+    if (it != m_tasks.end()) {
+        if (routine && routine->is_active()) {
+            routine->set_should_terminate(true);
         }
-
-        tasks.erase(it);
+        m_tasks.erase(it);
         return true;
     }
-
     return false;
 }
 
-bool TaskScheduler::cancel_task(std::shared_ptr<SoundRoutine> task)
+std::shared_ptr<Routine> TaskScheduler::get_task(const std::string& name) const
 {
-    return cancel_task(std::static_pointer_cast<Routine>(task));
+    std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
+    auto it = find_task_by_name(name);
+    return (it != m_tasks.end()) ? it->routine : nullptr;
+}
+
+std::vector<std::shared_ptr<Routine>> TaskScheduler::get_tasks_for_token(ProcessingToken token) const
+{
+    std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
+
+    std::vector<std::shared_ptr<Routine>> result;
+    for (const auto& entry : m_tasks) {
+        if (entry.routine && entry.routine->get_processing_token() == token) {
+            result.push_back(entry.routine);
+        }
+    }
+    return result;
 }
 
 void TaskScheduler::process_token(ProcessingToken token, u_int64_t processing_units)
 {
-    std::lock_guard<std::mutex> lock(m_scheduler_mutex);
-
-    auto token_it = m_token_tasks.find(token);
-    if (token_it == m_token_tasks.end() || token_it->second.empty()) {
-        return;
-    }
+    std::lock_guard<std::mutex> sched_lock(m_scheduler_mutex);
 
     auto processor_it = m_token_processors.find(token);
     if (processor_it != m_token_processors.end()) {
-        processor_it->second(token_it->second, processing_units);
+        auto tasks = get_tasks_for_token(token);
+        processor_it->second(tasks, processing_units);
     } else {
         process_token_default(token, processing_units);
     }
 
-    cleanup_completed_tasks(token);
+    static uint64_t cleanup_counter = 0;
+    if (++cleanup_counter % 1000 == 0) {
+        cleanup_completed_tasks();
+    }
 }
 
 void TaskScheduler::process_all_tokens()
 {
-    for (const auto& [token, tasks] : m_token_tasks) {
-        if (!tasks.empty()) {
-            process_token(token, 1);
-        }
+    std::lock_guard<std::mutex> sched_lock(m_scheduler_mutex);
+
+    for (const auto& token : m_token_clocks) {
+        process_token(token.first, 0);
+    }
+
+    static uint64_t cleanup_counter = 0;
+    if (++cleanup_counter % 1000 == 0) {
+        cleanup_completed_tasks();
     }
 }
 
@@ -109,16 +137,6 @@ void TaskScheduler::register_token_processor(
 
     ensure_token_domain(token);
     m_token_processors[token] = std::move(processor);
-}
-
-void TaskScheduler::process_sample()
-{
-    process_token(ProcessingToken::SAMPLE_ACCURATE, 1);
-}
-
-void TaskScheduler::process_buffer(unsigned int buffer_size)
-{
-    process_token(ProcessingToken::SAMPLE_ACCURATE, buffer_size);
 }
 
 const IClock& TaskScheduler::get_clock(ProcessingToken token) const
@@ -167,83 +185,42 @@ unsigned int TaskScheduler::get_rate(ProcessingToken token) const
     return get_default_rate(token);
 }
 
-const std::vector<std::shared_ptr<Routine>>& TaskScheduler::get_tasks(ProcessingToken token) const
-{
-    std::lock_guard<std::mutex> lock(m_scheduler_mutex);
-
-    auto token_it = m_token_tasks.find(token);
-    if (token_it != m_token_tasks.end()) {
-        return token_it->second;
-    }
-
-    // Return empty vector if token not found
-    static const std::vector<std::shared_ptr<Routine>> empty_tasks;
-    return empty_tasks;
-}
-
-std::vector<std::shared_ptr<SoundRoutine>> TaskScheduler::get_audio_tasks() const
-{
-    std::vector<std::shared_ptr<SoundRoutine>> audio_tasks;
-
-    const auto& routines = get_tasks(ProcessingToken::SAMPLE_ACCURATE);
-    for (const auto& routine : routines) {
-        if (auto sound_routine = std::dynamic_pointer_cast<SoundRoutine>(routine)) {
-            audio_tasks.push_back(sound_routine);
-        }
-    }
-
-    return audio_tasks;
-}
-
 bool TaskScheduler::has_active_tasks(ProcessingToken token) const
 {
-    const auto& tasks = get_tasks(token);
-    return std::any_of(tasks.begin(), tasks.end(),
-        [](const std::shared_ptr<Routine>& routine) {
-            return routine && routine->is_active();
+    std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
+
+    return std::any_of(m_tasks.begin(), m_tasks.end(),
+        [token](const TaskEntry& entry) {
+            return entry.routine && entry.routine->is_active() && entry.routine->get_processing_token() == token;
         });
 }
 
 const u_int64_t TaskScheduler::get_next_task_id() const
 {
-    if (m_tasks.size()) {
-        return m_tasks.size() + 1;
-    }
-    return 1;
+    return m_next_task_id.fetch_add(1);
 }
 
-void TaskScheduler::ensure_token_domain(ProcessingToken token, unsigned int rate)
+std::string TaskScheduler::auto_generate_name(std::shared_ptr<Routine> routine) const
 {
-    if (m_token_clocks.find(token) != m_token_clocks.end()) {
-        return;
-    }
+    return "task_" + std::to_string(get_next_task_id());
+}
 
-    if (rate == 0) {
-        rate = get_default_rate(token);
-    }
+std::vector<TaskEntry>::iterator TaskScheduler::find_task_by_name(const std::string& name)
+{
+    return std::find_if(m_tasks.begin(), m_tasks.end(),
+        [&name](const TaskEntry& entry) { return entry.name == name; });
+}
 
-    std::unique_ptr<IClock> clock;
-    switch (token) {
-    case ProcessingToken::SAMPLE_ACCURATE:
-    case ProcessingToken::MULTI_RATE: // Use sample clock as primary for multi-rate
-        clock = std::make_unique<SampleClock>(rate);
-        break;
+std::vector<TaskEntry>::const_iterator TaskScheduler::find_task_by_name(const std::string& name) const
+{
+    return std::find_if(m_tasks.begin(), m_tasks.end(),
+        [&name](const TaskEntry& entry) { return entry.name == name; });
+}
 
-    case ProcessingToken::FRAME_ACCURATE:
-        clock = std::make_unique<FrameClock>(rate);
-        break;
-
-    case ProcessingToken::ON_DEMAND:
-    case ProcessingToken::CUSTOM:
-    default:
-        clock = std::make_unique<CustomClock>(rate, "units");
-        break;
-    }
-
-    m_token_clocks[token] = std::move(clock);
-    m_token_rates[token] = rate;
-
-    m_token_tasks[token] = std::vector<std::shared_ptr<Routine>>();
+std::vector<TaskEntry>::iterator TaskScheduler::find_task_by_routine(std::shared_ptr<Routine> routine)
+{
+    return std::find_if(m_tasks.begin(), m_tasks.end(),
+        [&routine](const TaskEntry& entry) { return entry.routine == routine; });
 }
 
 unsigned int TaskScheduler::get_default_rate(ProcessingToken token) const
@@ -264,20 +241,51 @@ unsigned int TaskScheduler::get_default_rate(ProcessingToken token) const
     }
 }
 
+void TaskScheduler::ensure_token_domain(ProcessingToken token, unsigned int rate)
+{
+    if (m_token_clocks.find(token) != m_token_clocks.end()) {
+        return;
+    }
+
+    if (rate == 0) {
+        rate = get_default_rate(token);
+    }
+
+    std::unique_ptr<IClock> clock;
+    switch (token) {
+    case ProcessingToken::SAMPLE_ACCURATE:
+    case ProcessingToken::MULTI_RATE:
+        clock = std::make_unique<SampleClock>(rate);
+        break;
+    case ProcessingToken::FRAME_ACCURATE:
+        clock = std::make_unique<FrameClock>(rate);
+        break;
+    case ProcessingToken::ON_DEMAND:
+    case ProcessingToken::CUSTOM:
+    default:
+        clock = std::make_unique<CustomClock>(rate, "units");
+        break;
+    }
+
+    m_token_clocks[token] = std::move(clock);
+    m_token_rates[token] = rate;
+}
+
 void TaskScheduler::process_token_default(ProcessingToken token, u_int64_t processing_units)
 {
     auto clock_it = m_token_clocks.find(token);
-    auto tasks_it = m_token_tasks.find(token);
+    if (clock_it == m_token_clocks.end()) {
+        return;
+    }
 
-    if (clock_it == m_token_clocks.end() || tasks_it == m_token_tasks.end()) {
+    auto tasks = get_tasks_for_token(token);
+    if (tasks.empty()) {
         return;
     }
 
     auto& clock = *clock_it->second;
-    auto& tasks = tasks_it->second;
-
     clock.tick(processing_units);
-    u_int64_t current_context = clock.current_position();
+    uint64_t current_context = clock.current_position();
 
     for (auto& routine : tasks) {
         if (routine && routine->is_active()) {
@@ -292,21 +300,16 @@ void TaskScheduler::process_token_default(ProcessingToken token, u_int64_t proce
     }
 }
 
-void TaskScheduler::cleanup_completed_tasks(ProcessingToken token)
+void TaskScheduler::cleanup_completed_tasks()
 {
-    auto tasks_it = m_token_tasks.find(token);
-    if (tasks_it == m_token_tasks.end()) {
-        return;
-    }
+    std::unique_lock<std::shared_mutex> lock(m_tasks_mutex);
 
-    auto& tasks = tasks_it->second;
-
-    tasks.erase(
-        std::remove_if(tasks.begin(), tasks.end(),
-            [](const std::shared_ptr<Routine>& routine) {
-                return !routine || !routine->is_active();
+    m_tasks.erase(
+        std::remove_if(m_tasks.begin(), m_tasks.end(),
+            [](const TaskEntry& entry) {
+                return !entry.routine || !entry.routine->is_active();
             }),
-        tasks.end());
+        m_tasks.end());
 }
 
 bool TaskScheduler::initialize_routine_state(std::shared_ptr<Routine> routine, ProcessingToken token)
@@ -322,6 +325,56 @@ bool TaskScheduler::initialize_routine_state(std::shared_ptr<Routine> routine, P
 
     u_int64_t current_context = clock_it->second->current_position();
     return routine->initialize_state(current_context);
+}
+
+void TaskScheduler::pause_all_tasks()
+{
+    std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
+
+    for (auto& entry : m_tasks) {
+        if (entry.routine && entry.routine->is_active()) {
+            bool current_auto_resume = entry.routine->get_auto_resume();
+            entry.routine->set_state<bool>("was_auto_resume", current_auto_resume);
+            entry.routine->set_auto_resume(false);
+        }
+    }
+}
+
+void TaskScheduler::resume_all_tasks()
+{
+    std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
+
+    for (auto& entry : m_tasks) {
+        if (entry.routine && entry.routine->is_active()) {
+            bool* was_auto_resume = entry.routine->get_state<bool>("was_auto_resume");
+            if (was_auto_resume) {
+                entry.routine->set_auto_resume(*was_auto_resume);
+            } else {
+                entry.routine->set_auto_resume(true);
+            }
+        }
+    }
+}
+
+void TaskScheduler::terminate_all_tasks()
+{
+    {
+        std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
+
+        for (auto& entry : m_tasks) {
+            if (entry.routine && entry.routine->is_active()) {
+                entry.routine->set_should_terminate(true);
+                entry.routine->set_auto_resume(true);
+            }
+        }
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    {
+        std::unique_lock<std::shared_mutex> lock(m_tasks_mutex);
+        m_tasks.clear();
+    }
 }
 
 }

@@ -14,8 +14,6 @@ namespace MayaFlux::Vruta {
  */
 class Routine {
 public:
-    // using promise_type = MayaFlux::Vruta::routine_promise<Routine>;
-
     /**
      * @brief Destructor
      *
@@ -91,6 +89,61 @@ public:
     virtual bool restart() = 0;
 
     /**
+     * @brief Get auto_resume flag from promise
+     * @return True if coroutine should be automatically resumed
+     */
+    virtual bool get_auto_resume() const = 0;
+
+    /**
+     * @brief Set auto_resume flag in promise
+     * @param auto_resume Whether the coroutine should be automatically resumed
+     */
+    virtual void set_auto_resume(bool auto_resume) = 0;
+
+    /**
+     * @brief Get should_terminate flag from promise
+     * @return True if coroutine should be terminated
+     */
+    virtual bool get_should_terminate() const = 0;
+
+    /**
+     * @brief Set should_terminate flag in promise
+     * @param should_terminate Whether the coroutine should be terminated
+     */
+    virtual void set_should_terminate(bool should_terminate) = 0;
+
+    /**
+     * @brief Get sync_to_clock flag from promise
+     * @return True if coroutine should synchronize with clock
+     */
+    virtual bool get_sync_to_clock() const = 0;
+
+    // Domain-specific timing methods (return 0/false for unsupported domains)
+    /**
+     * @brief Get next sample execution time (audio domain)
+     * @return Sample position for next execution, or 0 if not audio domain
+     */
+    virtual u_int64_t get_next_sample() const = 0;
+
+    /**
+     * @brief Set next sample execution time (audio domain)
+     * @param next_sample Sample position for next execution
+     */
+    virtual void set_next_sample(u_int64_t next_sample) = 0;
+
+    /**
+     * @brief Get next frame execution time (graphics domain)
+     * @return Frame position for next execution, or 0 if not graphics domain
+     */
+    virtual u_int64_t get_next_frame() const = 0;
+
+    /**
+     * @brief Set next frame execution time (graphics domain)
+     * @param next_frame Frame position for next execution
+     */
+    virtual void set_next_frame(u_int64_t next_frame) = 0;
+
+    /**
      * @brief Updates multiple named parameters in the coroutine's state
      * @param args Variable number of key-value pairs to update
      *
@@ -135,7 +188,7 @@ public:
     template <typename T>
     inline T* get_state(const std::string& key)
     {
-        get_state_impl<T>(key);
+        return get_state_impl<T>(key);
     }
 
 protected:
@@ -299,14 +352,45 @@ public:
 
     bool requires_clock_sync() const override;
 
-    /**
-     * @brief Gets the underlying coroutine handle
-     * @return Handle to the coroutine
-     *
-     * Provides access to the raw coroutine handle, which can be used
-     * for advanced operations not covered by the SoundRoutine interface.
-     */
-    inline std::coroutine_handle<promise_type> get_handle() { return m_handle; }
+    bool get_auto_resume() const override
+    {
+        return m_handle.promise().auto_resume;
+    }
+
+    void set_auto_resume(bool auto_resume) override
+    {
+        m_handle.promise().auto_resume = auto_resume;
+    }
+
+    bool get_should_terminate() const override
+    {
+        return m_handle.promise().should_terminate;
+    }
+
+    void set_should_terminate(bool should_terminate) override
+    {
+        m_handle.promise().should_terminate = should_terminate;
+    }
+
+    bool get_sync_to_clock() const override
+    {
+        return m_handle.promise().sync_to_clock;
+    }
+
+    // Audio domain timing implementations
+    u_int64_t get_next_sample() const override
+    {
+        return m_handle.promise().next_sample;
+    }
+
+    void set_next_sample(u_int64_t next_sample) override
+    {
+        m_handle.promise().next_sample = next_sample;
+    }
+
+    // Non-audio domain methods (return defaults for audio routines)
+    u_int64_t get_next_frame() const override { return 0; }
+    void set_next_frame(u_int64_t next_frame) override { /* no-op for audio */ }
 
 protected:
     void set_state_impl(const std::string& key, std::any value) override;
@@ -324,6 +408,7 @@ private:
 
 // TODO: Dummy class, will implement when visual subsystem is ready
 class GraphicalRoutine : public Routine {
+public:
     ProcessingToken get_processing_token() const override
     {
         return ProcessingToken::FRAME_ACCURATE;
@@ -334,12 +419,27 @@ class GraphicalRoutine : public Routine {
         return true; // Visual routines sync to frame clock
     }
 
+    // Promise state access implementations (TODO: implement when graphics promise is ready)
+    bool get_auto_resume() const override { return true; }
+    void set_auto_resume(bool auto_resume) override { /* TODO */ }
+    bool get_should_terminate() const override { return false; }
+    void set_should_terminate(bool should_terminate) override { /* TODO */ }
+    bool get_sync_to_clock() const override { return true; }
+
+    // Graphics domain timing implementations
+    u_int64_t get_next_frame() const override { return 0; }
+    void set_next_frame(u_int64_t next_frame) override { /* TODO */ }
+
+    // Non-graphics domain methods (return defaults)
+    u_int64_t get_next_sample() const override { return 0; }
+    void set_next_sample(u_int64_t next_sample) override { /* no-op for graphics */ }
+
     // TODO: Implement when visual subsystem is ready
     bool is_active() const override { return false; }
     bool initialize_state(u_int64_t current_frame = 0u) override { return false; }
     bool try_resume(u_int64_t current_frame) override { return false; }
     bool restart() override { return false; }
-    u_int64_t next_execution() const override { return UINT64_MAX; }
+    u_int64_t next_execution() const override { return 0; }
 
 protected:
     void set_state_impl(const std::string& key, std::any value) override { }
@@ -369,12 +469,25 @@ public:
         return true; // Complex routines need clock sync for coordination
     }
 
+    // Promise state access implementations (TODO: implement when complex promise is ready)
+    bool get_auto_resume() const override { return true; }
+    void set_auto_resume(bool auto_resume) override { /* TODO */ }
+    bool get_should_terminate() const override { return false; }
+    void set_should_terminate(bool should_terminate) override { /* TODO */ }
+    bool get_sync_to_clock() const override { return true; }
+
+    // Multi-domain timing implementations (supports both audio and graphics)
+    u_int64_t get_next_sample() const override { return 0; }
+    void set_next_sample(u_int64_t next_sample) override { /* TODO */ }
+    u_int64_t get_next_frame() const override { return 0; }
+    void set_next_frame(u_int64_t next_frame) override { /* TODO */ }
+
     // TODO: Implement when multi-domain scheduling is ready
     bool is_active() const override { return false; }
     bool initialize_state(u_int64_t current_context = 0u) override { return false; }
     bool try_resume(u_int64_t current_context) override { return false; }
     bool restart() override { return false; }
-    u_int64_t next_execution() const override { return UINT64_MAX; }
+    u_int64_t next_execution() const override { return 0; }
 
 protected:
     void set_state_impl(const std::string& key, std::any value) override { }
