@@ -51,6 +51,8 @@ void AudioSubsystem::register_callbacks()
 int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frames)
 {
     if (m_handle) {
+        m_handle->tasks.process(num_frames);
+
         unsigned int num_channels = m_stream_info.output.channels;
         for (unsigned int channel = 0; channel < num_channels; channel++) {
             auto channel_data = m_handle->nodes.process_channel(channel, num_frames);

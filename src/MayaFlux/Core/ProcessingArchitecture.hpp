@@ -10,6 +10,10 @@ namespace MayaFlux::Buffers {
 class BufferManager;
 }
 
+namespace MayaFlux::Vruta {
+class TaskScheduler;
+}
+
 /**
  * @file ProcessingArchitecture.hpp
  * @brief Unified processing architecture for multimodal subsystem coordination
@@ -55,10 +59,13 @@ struct SubsystemTokens {
     /** @brief Processing token for node graph operations */
     MayaFlux::Nodes::ProcessingToken Node;
 
+    /** @brief Processing token for task scheduling operations */
+    MayaFlux::Vruta::ProcessingToken Task;
+
     /** @brief Equality comparison for efficient token matching */
     bool operator==(const SubsystemTokens& other) const
     {
-        return Buffer == other.Buffer && Node == other.Node;
+        return Buffer == other.Buffer && Node == other.Node && Task == other.Task;
     }
 };
 
@@ -147,6 +154,20 @@ private:
     Nodes::ProcessingToken m_token;
 };
 
+class TaskSchedulerHandle {
+public:
+    TaskSchedulerHandle(
+        std::shared_ptr<MayaFlux::Vruta::TaskScheduler> task_manager,
+        MayaFlux::Vruta::ProcessingToken token);
+
+    /** @brief Process all tasks in token domain */
+    void process(u_int64_t processing_units);
+
+private:
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
+    Vruta::ProcessingToken m_token;
+};
+
 /**
  * @class SubsystemProcessingHandle
  * @brief Unified interface combining buffer and node processing for subsystems
@@ -159,6 +180,7 @@ public:
     SubsystemProcessingHandle(
         std::shared_ptr<Buffers::BufferManager> buffer_manager,
         std::shared_ptr<Nodes::NodeGraphManager> node_manager,
+        std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
         SubsystemTokens tokens);
 
     /** @brief Buffer processing interface */
@@ -166,6 +188,8 @@ public:
 
     /** @brief Node processing interface */
     NodeProcessingHandle nodes;
+
+    TaskSchedulerHandle tasks;
 
     /** @brief Get processing token configuration */
     inline SubsystemTokens get_tokens() const { return m_tokens; }
@@ -186,7 +210,7 @@ template <>
 struct hash<MayaFlux::Core::SubsystemTokens> {
     size_t operator()(const MayaFlux::Core::SubsystemTokens& tokens) const noexcept
     {
-        return hash<int>()(static_cast<int>(tokens.Node)) ^ hash<int>()(static_cast<int>(tokens.Buffer));
+        return hash<int>()(static_cast<int>(tokens.Node)) ^ hash<int>()(static_cast<int>(tokens.Buffer)) ^ hash<int>()(static_cast<int>(tokens.Task));
     }
 };
 

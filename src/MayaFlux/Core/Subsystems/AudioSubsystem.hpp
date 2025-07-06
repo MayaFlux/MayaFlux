@@ -12,7 +12,7 @@ namespace MayaFlux::Core {
  *
  * Implements the ISubsystem interface to provide audio-specific processing capabilities
  * within the MayaFlux engine. Manages audio backends, devices, and streams while
- * coordinating with the token-based processing architecture for buffer and node operations.
+ * coordinating with the token-based processing architecture for buffer, node and scheduling operations.
  *
  * Uses AUDIO_BACKEND token for buffer processing and AUDIO_RATE token for node processing,
  * enabling real-time audio processing with proper thread safety and resource isolation.

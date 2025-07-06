@@ -2,15 +2,9 @@
 
 #include <coroutine>
 
-namespace MayaFlux::Vruta {
+#include "MayaFlux/Core/ProcessingTokens.hpp"
 
-enum class ProcessingToken {
-    SAMPLE_ACCURATE, ///< Coroutine is sample-accurate
-    FRAME_ACCURATE, ///< Coroutine is frame-accurate
-    MULTI_RATE, ///< Coroutine can handle multiple sample rates. Picks the frame-accurate processing token by default
-    ON_DEMAND, ///< Coroutine is executed on demand, not scheduled
-    CUSTOM
-};
+namespace MayaFlux::Vruta {
 
 class SoundRoutine;
 class GraphicsRoutine;

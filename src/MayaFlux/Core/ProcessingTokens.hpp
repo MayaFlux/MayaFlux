@@ -1,5 +1,16 @@
 #pragma once
 
+namespace MayaFlux::Vruta {
+
+enum class ProcessingToken {
+    SAMPLE_ACCURATE, ///< Coroutine is sample-accurate
+    FRAME_ACCURATE, ///< Coroutine is frame-accurate
+    MULTI_RATE, ///< Coroutine can handle multiple sample rates. Picks the frame-accurate processing token by default
+    ON_DEMAND, ///< Coroutine is executed on demand, not scheduled
+    CUSTOM
+};
+}
+
 namespace MayaFlux::Nodes {
 /**
  * @enum ProcessingToken
@@ -123,4 +134,5 @@ enum ProcessingToken : u_int32_t {
      */
     AUDIO_PARALLEL = SAMPLE_RATE | GPU_PPOCESS | PARALLEL
 };
+
 }

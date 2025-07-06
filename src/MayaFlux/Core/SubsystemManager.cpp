@@ -7,10 +7,21 @@ namespace MayaFlux::Core {
 
 SubsystemManager::SubsystemManager(
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
-    std::shared_ptr<Buffers::BufferManager> buffer_manager)
+    std::shared_ptr<Buffers::BufferManager> buffer_manager,
+    std::shared_ptr<Vruta::TaskScheduler> task_scheduler)
     : m_node_graph_manager(node_graph_manager)
     , m_buffer_manager(buffer_manager)
+    , m_task_scheduler(task_scheduler)
 {
+    if (!m_node_graph_manager) {
+        throw std::runtime_error("SubsystemManager requires valid NodeGraphManager");
+    }
+    if (!m_buffer_manager) {
+        throw std::runtime_error("SubsystemManager requires valid BufferManager");
+    }
+    if (!m_task_scheduler) {
+        throw std::runtime_error("SubsystemManager requires valid TaskScheduler");
+    }
 }
 
 void SubsystemManager::create_audio_subsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type)
@@ -22,7 +33,10 @@ void SubsystemManager::add_subsystem(SubsystemType type, std::shared_ptr<ISubsys
 {
     auto tokens = subsystem->get_tokens();
     auto handle = std::make_unique<SubsystemProcessingHandle>(
-        m_buffer_manager, m_node_graph_manager, tokens);
+        m_buffer_manager,
+        m_node_graph_manager,
+        m_task_scheduler,
+        tokens);
 
     subsystem->initialize(*handle);
     subsystem->register_callbacks();

@@ -29,6 +29,7 @@ public:
      * @brief Constructs SubsystemManager with required processing managers
      * @param node_graph_manager Shared node graph manager for all subsystems
      * @param buffer_manager Shared buffer manager for all subsystems
+     * @param task_scheduler Shared task scheduler for all subsystems
      *
      * Initializes the manager with references to the core processing systems.
      * These managers are shared across all subsystems but accessed through
@@ -36,7 +37,8 @@ public:
      */
     SubsystemManager(
         std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
-        std::shared_ptr<Buffers::BufferManager> buffer_manager);
+        std::shared_ptr<Buffers::BufferManager> buffer_manager,
+        std::shared_ptr<Vruta::TaskScheduler> task_scheduler);
 
     /**
      * @brief Internal template method for type-safe subsystem creation
@@ -153,12 +155,14 @@ public:
 
         SubsystemTokens combined_tokens {
             .Buffer = primary_tokens.Buffer,
-            .Node = primary_tokens.Node
+            .Node = primary_tokens.Node,
+            .Task = primary_tokens.Task
         };
 
         SubsystemProcessingHandle temp_handle(
             m_buffer_manager,
             m_node_graph_manager,
+            m_task_scheduler,
             combined_tokens);
 
         operation(temp_handle);
@@ -230,6 +234,7 @@ private:
 
     std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager;
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
+    std::shared_ptr<Vruta::TaskScheduler> m_task_scheduler;
 
     std::unordered_map<SubsystemType, std::shared_ptr<ISubsystem>> m_subsystems;
     std::unordered_map<SubsystemType, std::unique_ptr<SubsystemProcessingHandle>> m_handles;

@@ -2,6 +2,8 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
+#include "MayaFlux/Vruta/Scheduler.hpp"
+
 namespace MayaFlux::Core {
 
 BufferProcessingHandle::BufferProcessingHandle(
@@ -91,12 +93,30 @@ std::vector<double> NodeProcessingHandle::process_channel(unsigned int channel, 
     return m_manager->process_token_channel(m_token, channel, num_samples);
 }
 
+TaskSchedulerHandle::TaskSchedulerHandle(
+    std::shared_ptr<Vruta::TaskScheduler> scheduler,
+    Vruta::ProcessingToken token)
+    : m_scheduler(scheduler)
+    , m_token(token)
+{
+    if (!m_scheduler) {
+        throw std::runtime_error("TaskProcessingHandle requires valid TaskScheduler");
+    }
+}
+
+void TaskSchedulerHandle::process(u_int64_t processing_units)
+{
+    m_scheduler->process_token(m_token, processing_units);
+}
+
 SubsystemProcessingHandle::SubsystemProcessingHandle(
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Nodes::NodeGraphManager> node_manager,
+    std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
     SubsystemTokens tokens)
     : buffers(buffer_manager, tokens.Buffer)
     , nodes(node_manager, tokens.Node)
+    , tasks(task_scheduler, tokens.Task)
     , m_tokens(tokens)
 {
 }
