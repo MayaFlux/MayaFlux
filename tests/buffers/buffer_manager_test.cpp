@@ -63,18 +63,18 @@ TEST_F(BufferManagerTest, BufferOperations)
 {
     auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
-    manager->add_buffer_to_channel(0, buffer);
+    manager->add_buffer_to_token_channel(buffer, default_token, 0);
 
     auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_root_buffer(default_token, 0));
     EXPECT_NE(root, nullptr);
     EXPECT_EQ(root->get_child_buffers().size(), 1);
     EXPECT_EQ(root->get_child_buffers()[0], buffer);
 
-    const auto& channel_buffers = manager->get_channel_buffers(0);
+    const auto& channel_buffers = manager->get_token_channel_buffers(default_token, 0);
     EXPECT_EQ(channel_buffers.size(), 1);
     EXPECT_EQ(channel_buffers[0], buffer);
 
-    manager->remove_buffer_from_channel(0, buffer);
+    manager->remove_buffer_from_token_channel(buffer, default_token, 0);
     EXPECT_EQ(root->get_child_buffers().size(), 0);
 }
 
@@ -84,7 +84,7 @@ TEST_F(BufferManagerTest, BufferProcessing)
 
     std::fill(buffer->get_data().begin(), buffer->get_data().end(), 0.5);
 
-    manager->add_buffer_to_channel(0, buffer);
+    manager->add_buffer_to_token_channel(buffer, default_token, 0);
 
     manager->process_channel(0);
 
@@ -127,7 +127,7 @@ TEST_F(BufferManagerTest, Resize)
 {
     u_int32_t new_size = TestConfig::BUFFER_SIZE * 2;
 
-    manager->resize(new_size);
+    manager->resize_token_buffers(default_token, new_size);
     EXPECT_EQ(manager->get_num_frames(), new_size);
 
     for (u_int32_t i = 0; i < TestConfig::NUM_CHANNELS; i++) {
@@ -135,10 +135,10 @@ TEST_F(BufferManagerTest, Resize)
     }
 
     auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    manager->add_buffer_to_channel(0, buffer);
+    manager->add_buffer_to_token_channel(buffer, default_token, 0);
 
     u_int32_t newer_size = new_size + 100;
-    manager->resize(newer_size);
+    manager->resize_token_buffers(default_token, newer_size);
 
     auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_root_buffer(default_token, 0));
     EXPECT_EQ(root->get_child_buffers()[0]->get_num_samples(), newer_size);
@@ -170,7 +170,7 @@ TEST_F(BufferManagerTest, ProcessorManagement)
     auto test_processor = std::make_shared<TestProcessor>(processor_called);
 
     auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    manager->add_buffer_to_channel(0, buffer);
+    manager->add_buffer_to_token_channel(buffer, default_token, 0);
     manager->add_processor(test_processor, buffer);
 
     manager->process_channel(0);
@@ -212,7 +212,7 @@ TEST_F(BufferManagerTest, ChannelProcessors)
     };
 
     auto channel_processor = std::make_shared<ChannelProcessor>(processor_called);
-    manager->add_processor_to_channel(channel_processor, 0);
+    manager->add_processor_to_token_channel(channel_processor, default_token, 0);
 
     manager->process_channel(0);
     EXPECT_TRUE(processor_called);
@@ -221,7 +221,7 @@ TEST_F(BufferManagerTest, ChannelProcessors)
     EXPECT_DOUBLE_EQ(manager->get_channel_data(0)[0], 0.9);
 
     processor_called = false;
-    manager->remove_processor_from_channel(channel_processor, 0);
+    manager->remove_processor_from_token_channel(channel_processor, default_token, 0);
 
     std::fill(manager->get_channel_data(0).begin(), manager->get_channel_data(0).end(), 0.0);
 
@@ -255,7 +255,7 @@ TEST_F(BufferManagerTest, GlobalProcessors)
 
     auto global_processor = std::make_shared<GlobalProcessor>(processor_called);
 
-    manager->add_processor_to_all(global_processor);
+    manager->add_processor_to_token(global_processor, default_token);
 
     manager->process_channel(0);
     EXPECT_TRUE(processor_called);
@@ -269,7 +269,7 @@ TEST_F(BufferManagerTest, GlobalProcessors)
     EXPECT_DOUBLE_EQ(manager->get_channel_data(1)[0], 0.9);
 
     processor_called = false;
-    manager->remove_processor_from_all(global_processor);
+    manager->remove_processor_from_token(global_processor, default_token);
 
     std::fill(manager->get_channel_data(0).begin(), manager->get_channel_data(0).end(), 0.0);
     std::fill(manager->get_channel_data(1).begin(), manager->get_channel_data(1).end(), 0.0);
@@ -289,7 +289,7 @@ TEST_F(BufferManagerTest, QuickProcess)
     };
 
     auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    manager->add_buffer_to_channel(0, buffer);
+    manager->add_buffer_to_token_channel(buffer, default_token, 0);
     manager->attach_quick_process(quick_process, buffer);
 
     manager->process_channel(0);
@@ -299,7 +299,7 @@ TEST_F(BufferManagerTest, QuickProcess)
 
     process_count = 0;
     std::fill(manager->get_channel_data(0).begin(), manager->get_channel_data(0).end(), 0.0);
-    manager->attach_quick_process_to_channel(quick_process, 0);
+    manager->attach_quick_process_to_token_channel(quick_process, default_token, 0);
 
     manager->process_channel(0);
     EXPECT_EQ(process_count, 2);
@@ -310,7 +310,7 @@ TEST_F(BufferManagerTest, QuickProcess)
     process_count = 0;
     std::fill(manager->get_channel_data(0).begin(), manager->get_channel_data(0).end(), 0.0);
     std::fill(manager->get_channel_data(1).begin(), manager->get_channel_data(1).end(), 0.0);
-    manager->attach_quick_process_to_all(quick_process);
+    manager->attach_quick_process_to_token(quick_process, default_token);
 
     manager->process_all_channels();
     EXPECT_EQ(process_count, 4);
@@ -322,7 +322,7 @@ TEST_F(BufferManagerTest, QuickProcess)
 TEST_F(BufferManagerTest, FinalProcessorEnsuresLimiting)
 {
     auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    manager->add_buffer_to_channel(0, buffer);
+    manager->add_buffer_to_token_channel(buffer, default_token, 0);
 
     auto aggressive_processor = [](std::shared_ptr<Buffers::AudioBuffer> buffer) {
         for (auto& sample : buffer->get_data()) {
@@ -331,7 +331,7 @@ TEST_F(BufferManagerTest, FinalProcessorEnsuresLimiting)
     };
 
     auto buffer_processor = manager->attach_quick_process(aggressive_processor, buffer);
-    auto channel_processor = manager->attach_quick_process_to_channel(aggressive_processor, 0);
+    auto channel_processor = manager->attach_quick_process_to_token_channel(aggressive_processor, default_token, 0);
 
     manager->process_channel(0);
 
@@ -346,7 +346,7 @@ TEST_F(BufferManagerTest, FinalProcessorEnsuresLimiting)
         }
     };
 
-    auto global_processor_obj = manager->attach_quick_process_to_all(global_processor);
+    auto global_processor_obj = manager->attach_quick_process_to_token(global_processor, default_token);
 
     std::fill(manager->get_channel_data(0).begin(), manager->get_channel_data(0).end(), 0.0);
 
@@ -384,7 +384,7 @@ TEST_F(BufferManagerTest, NodeConnection)
     EXPECT_TRUE(has_signal);
 
     auto buffer = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
-    manager->add_buffer_to_channel(1, buffer);
+    manager->add_buffer_to_token_channel(buffer, default_token, 1);
     manager->connect_node_to_buffer(sine, buffer, 1.0);
 
     manager->process_channel(1);
@@ -401,7 +401,7 @@ TEST_F(BufferManagerTest, NodeConnection)
 
 TEST_F(BufferManagerTest, SpecializedBufferCreation)
 {
-    auto feedback_buffer = manager->create_specialized_buffer<Buffers::FeedbackBuffer>(0, 0.5f);
+    auto feedback_buffer = manager->create_buffer_for_token<Buffers::FeedbackBuffer>(default_token, 0, 0.5f);
 
     EXPECT_NE(feedback_buffer, nullptr);
     EXPECT_EQ(feedback_buffer->get_channel_id(), 0);
@@ -412,7 +412,7 @@ TEST_F(BufferManagerTest, SpecializedBufferCreation)
     EXPECT_EQ(root->get_child_buffers().size(), 1);
 
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto node_buffer = manager->create_specialized_buffer<Buffers::NodeBuffer>(1, sine);
+    auto node_buffer = manager->create_buffer_for_token<Buffers::NodeBuffer>(default_token, 1, sine);
 
     EXPECT_NE(node_buffer, nullptr);
     EXPECT_EQ(node_buffer->get_channel_id(), 1);

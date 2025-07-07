@@ -147,6 +147,6 @@ std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_channel(AudioP
  * The processor will be called during the default engine's audio processing cycle
  * for each of the specified channel buffers.
  */
-std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
 
 }

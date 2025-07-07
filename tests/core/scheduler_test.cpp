@@ -15,12 +15,15 @@ protected:
     }
 
     std::shared_ptr<Vruta::TaskScheduler> scheduler;
+
+public:
+    Vruta::ProcessingToken token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
 };
 
 TEST_F(SchedulerTest, Initialize)
 {
-    EXPECT_EQ(scheduler->task_sample_rate(), TestConfig::SAMPLE_RATE);
-    EXPECT_TRUE(scheduler->get_tasks().empty());
+    EXPECT_EQ(scheduler->get_rate(), TestConfig::SAMPLE_RATE);
+    EXPECT_TRUE(scheduler->get_tasks_for_token(token).empty());
 }
 
 TEST_F(SchedulerTest, SampleConversion)
@@ -40,12 +43,12 @@ TEST_F(SchedulerTest, ClockFunctionality)
     EXPECT_EQ(clock.current_position(), 0);
     EXPECT_EQ(clock.current_time(), 0.0);
 
-    scheduler->process_sample();
+    scheduler->process_token(token);
 
     EXPECT_EQ(clock.current_position(), 1);
     EXPECT_DOUBLE_EQ(clock.current_time(), 1.0 / TestConfig::SAMPLE_RATE);
 
-    scheduler->process_buffer(TestConfig::BUFFER_SIZE);
+    scheduler->process_token(token, TestConfig::BUFFER_SIZE);
 
     EXPECT_EQ(clock.current_position(), 1 + TestConfig::BUFFER_SIZE);
     EXPECT_DOUBLE_EQ(clock.current_time(), (1.0 + TestConfig::BUFFER_SIZE) / TestConfig::SAMPLE_RATE);
@@ -63,11 +66,11 @@ TEST_F(SchedulerTest, AddAndProcessTask)
     auto routine = std::make_shared<Vruta::SoundRoutine>(task_func(*scheduler));
     scheduler->add_task(routine);
 
-    EXPECT_EQ(scheduler->get_tasks().size(), 1);
+    EXPECT_EQ(scheduler->get_tasks_for_token(token).size(), 1);
     EXPECT_TRUE(task_completed);
 
-    scheduler->process_sample();
-    EXPECT_TRUE(scheduler->get_tasks().empty());
+    scheduler->process_token(token);
+    EXPECT_TRUE(scheduler->get_tasks_for_token(token).empty());
 }
 
 TEST_F(SchedulerTest, DelayedTask)
@@ -83,20 +86,20 @@ TEST_F(SchedulerTest, DelayedTask)
     auto routine = std::make_shared<Vruta::SoundRoutine>(task_func(*scheduler));
     scheduler->add_task(routine);
 
-    EXPECT_EQ(scheduler->get_tasks().size(), 1);
+    EXPECT_EQ(scheduler->get_tasks_for_token(token).size(), 1);
     EXPECT_FALSE(task_completed);
 
     for (int i = 0; i < 10; i++) {
-        scheduler->process_sample();
+        scheduler->process_token(token);
     }
     EXPECT_FALSE(task_completed);
-    EXPECT_EQ(scheduler->get_tasks().size(), 1);
+    EXPECT_EQ(scheduler->get_tasks_for_token(token).size(), 1);
 
-    scheduler->process_sample();
+    scheduler->process_token(token);
     EXPECT_TRUE(task_completed);
 
-    scheduler->process_sample();
-    EXPECT_TRUE(scheduler->get_tasks().empty());
+    scheduler->process_token(token);
+    EXPECT_TRUE(scheduler->get_tasks_for_token(token).empty());
 }
 
 TEST_F(SchedulerTest, CancelTask)
@@ -112,14 +115,14 @@ TEST_F(SchedulerTest, CancelTask)
     auto routine = std::make_shared<Vruta::SoundRoutine>(task_func(*scheduler));
     scheduler->add_task(routine);
 
-    scheduler->process_buffer(10);
+    scheduler->process_token(token, 10);
     EXPECT_EQ(counter, 1);
 
     EXPECT_TRUE(scheduler->cancel_task(routine));
 
-    EXPECT_TRUE(scheduler->get_tasks().empty());
+    EXPECT_TRUE(scheduler->get_tasks_for_token(token).empty());
 
-    scheduler->process_buffer(100);
+    scheduler->process_token(token, 100);
     EXPECT_EQ(counter, 1);
 }
 
@@ -136,15 +139,16 @@ TEST_F(SchedulerTest, MetroTask)
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(metro_task));
     scheduler->add_task(task_ptr);
 
-    scheduler->process_buffer(expected_samples);
+    scheduler->process_token(token, expected_samples);
     EXPECT_EQ(metro_count, 1);
 
-    scheduler->process_buffer(expected_samples);
+    scheduler->process_token(token, expected_samples);
     EXPECT_EQ(metro_count, 2);
 
     EXPECT_TRUE(scheduler->cancel_task(task_ptr));
 }
 
+// FIX
 TEST_F(SchedulerTest, LineTask)
 {
     float start_value = 0.0f;
@@ -158,15 +162,15 @@ TEST_F(SchedulerTest, LineTask)
     ASSERT_NE(task_ptr, nullptr);
 
     // Add task to scheduler and process to initialize
-    scheduler->add_task(task_ptr, true);
+    scheduler->add_task(task_ptr, "", true);
 
     float* current_value = task_ptr->get_state<float>("current_value");
     ASSERT_NE(current_value, nullptr) << "current_value should be initialized";
     EXPECT_FLOAT_EQ(*current_value, start_value);
 
-    scheduler->process_sample();
+    scheduler->process_token(token);
 
-    scheduler->process_buffer(step_duration);
+    scheduler->process_token(token, step_duration);
 
     u_int64_t total_samples = scheduler->seconds_to_samples(duration);
     float expected_step = (end_value - start_value) * step_duration / total_samples;
@@ -174,19 +178,20 @@ TEST_F(SchedulerTest, LineTask)
     EXPECT_NEAR(*current_value, start_value + expected_step, 0.001f);
 
     int steps_to_middle = (total_samples / step_duration) / 2 - 1;
-    scheduler->process_buffer(steps_to_middle * step_duration);
+    scheduler->process_token(token, steps_to_middle * step_duration);
 
     float expected_mid = start_value + (steps_to_middle + 1) * expected_step;
     EXPECT_NEAR(*current_value, expected_mid, 0.001f);
 
-    scheduler->process_buffer(total_samples);
+    scheduler->process_token(token, total_samples);
 
     EXPECT_FLOAT_EQ(*current_value, end_value);
 
-    scheduler->process_sample();
-    EXPECT_TRUE(scheduler->get_tasks().empty());
+    scheduler->process_token(token);
+    EXPECT_TRUE(scheduler->get_tasks_for_token(token).empty());
 }
 
+// FIX
 TEST_F(SchedulerTest, LineTaskRestart)
 {
     float start_value = 0.0f;
@@ -197,29 +202,29 @@ TEST_F(SchedulerTest, LineTaskRestart)
 
     auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, restartable);
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
-    scheduler->add_task(task_ptr, true);
+    scheduler->add_task(task_ptr, "", true);
 
     float* current_value = task_ptr->get_state<float>("current_value");
     ASSERT_NE(current_value, nullptr);
     EXPECT_FLOAT_EQ(*current_value, start_value);
 
-    scheduler->process_sample();
+    scheduler->process_token(token);
 
     u_int64_t total_samples = scheduler->seconds_to_samples(duration);
-    scheduler->process_buffer(total_samples);
+    scheduler->process_token(token, total_samples);
 
     EXPECT_FLOAT_EQ(*current_value, end_value);
 
-    EXPECT_FALSE(scheduler->get_tasks().empty());
+    EXPECT_FALSE(scheduler->get_tasks_for_token(token).empty());
     EXPECT_TRUE(task_ptr->is_active());
 
     EXPECT_TRUE(task_ptr->restart());
 
-    scheduler->process_sample();
+    scheduler->process_token(token);
 
     EXPECT_FLOAT_EQ(*current_value, start_value);
 
-    scheduler->process_buffer(total_samples / 2);
+    scheduler->process_token(token, total_samples / 2);
 
     EXPECT_GT(*current_value, start_value);
     EXPECT_LT(*current_value, end_value);

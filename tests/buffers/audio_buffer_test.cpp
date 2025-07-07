@@ -25,8 +25,8 @@ TEST_F(AudioBufferTest, Initialization)
     EXPECT_EQ(standard_buffer->get_data().size(), TestConfig::BUFFER_SIZE);
 
     auto buffer2 = std::make_shared<Buffers::AudioBuffer>();
-    EXPECT_EQ(buffer2->get_num_samples(), 0);
-    EXPECT_EQ(buffer2->get_data().size(), 0);
+    EXPECT_EQ(buffer2->get_num_samples(), 512);
+    EXPECT_EQ(buffer2->get_data().size(), 512);
 
     buffer2->setup(1, 1024);
     EXPECT_EQ(buffer2->get_channel_id(), 1);
