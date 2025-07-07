@@ -151,19 +151,6 @@ public:
     void connect(const std::string& source_id, const std::string& target_id);
 
     /**
-     * @brief Connects two nodes directly
-     * @param source Source node
-     * @param target Target node
-     *
-     * Establishes a connection where the output of the source node
-     * becomes an input to the target node. This creates a ChainNode
-     * internally to manage the connection.
-     *
-     * This is the implementation behind the '>>' operator for nodes.
-     */
-    void connect(std::shared_ptr<Node> source, std::shared_ptr<Node> target);
-
-    /**
      * @brief Checks if a node is registered with this manager
      * @param node Node to check
      * @return true if the node is registered, false otherwise

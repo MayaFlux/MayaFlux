@@ -83,24 +83,6 @@ const std::vector<double>& BufferManager::get_channel_data(u_int32_t channel_ind
 }
 
 // Deprecated
-void BufferManager::add_buffer_to_channel(u_int32_t channel_index, std::shared_ptr<AudioBuffer> buffer)
-{
-    add_buffer_to_token_channel(buffer, m_default_token, channel_index);
-}
-
-// Deprecated
-void BufferManager::remove_buffer_from_channel(u_int32_t channel_index, std::shared_ptr<AudioBuffer> buffer)
-{
-    remove_buffer_from_token_channel(buffer, m_default_token, channel_index);
-}
-
-// Deprecated
-const std::vector<std::shared_ptr<AudioBuffer>>& BufferManager::get_channel_buffers(u_int32_t channel_index) const
-{
-    return get_token_channel_buffers(m_default_token, channel_index);
-}
-
-// Deprecated
 void BufferManager::process_channel(u_int32_t channel_index)
 {
     u_int32_t processing_units = get_token_buffer_size(m_default_token);
@@ -112,54 +94,6 @@ void BufferManager::process_all_channels()
 {
     u_int32_t processing_units = get_token_buffer_size(m_default_token);
     process_token(m_default_token, processing_units);
-}
-
-// deprecated
-std::shared_ptr<BufferProcessingChain> BufferManager::get_channel_processing_chain(u_int32_t channel_index)
-{
-    return get_token_processing_chain(m_default_token, channel_index);
-}
-
-// deprecated
-void BufferManager::add_processor_to_channel(std::shared_ptr<BufferProcessor> processor, u_int32_t channel_index)
-{
-    add_processor_to_token_channel(processor, m_default_token, channel_index);
-}
-
-// deprecated
-void BufferManager::add_processor_to_all(std::shared_ptr<BufferProcessor> processor)
-{
-    add_processor_to_token(processor, m_default_token);
-}
-
-// deprecated
-void BufferManager::remove_processor_from_channel(std::shared_ptr<BufferProcessor> processor, u_int32_t channel_index)
-{
-    remove_processor_from_token_channel(processor, m_default_token, channel_index);
-}
-
-// deprecated
-void BufferManager::remove_processor_from_all(std::shared_ptr<BufferProcessor> processor)
-{
-    remove_processor_from_token(processor, m_default_token);
-}
-
-// deprecated
-void BufferManager::set_final_processor_for_root_buffers(std::shared_ptr<BufferProcessor> processor)
-{
-    set_final_processor_for_token(processor, m_default_token);
-}
-
-// deprecated
-std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index)
-{
-    return attach_quick_process_to_token_channel(processor, m_default_token, channel_index);
-}
-
-// deprecated
-std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process_to_all(AudioProcessingFunction processor)
-{
-    return attach_quick_process_to_token(processor, m_default_token);
 }
 
 // deprecated
@@ -176,16 +110,8 @@ void BufferManager::fill_interleaved(double* interleaved_data, u_int32_t num_fra
     fill_interleaved(interleaved_data, num_frames, m_default_token, num_channels);
 }
 
-// deprecated
-void BufferManager::resize(u_int32_t num_frames)
-{
-    resize_token_buffers(m_default_token, num_frames);
-}
-
 void BufferManager::process_token(ProcessingToken token, u_int32_t processing_units)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end()) {
         return;
@@ -220,8 +146,6 @@ void BufferManager::process_token_channel(
     u_int32_t processing_units,
     const std::vector<double>& node_output_data)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end() || channel >= token_it->second.size()) {
         return;
@@ -261,8 +185,6 @@ void BufferManager::process_token_channel(
 
 std::vector<ProcessingToken> BufferManager::get_active_tokens() const
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     std::vector<ProcessingToken> active_tokens;
     for (const auto& [token, root_buffers] : m_token_root_buffers) {
         if (!root_buffers.empty()) {
@@ -292,8 +214,6 @@ std::vector<double>& BufferManager::get_buffer_data(ProcessingToken token, u_int
 
 const std::vector<double>& BufferManager::get_buffer_data(ProcessingToken token, u_int32_t channel) const
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end() || channel >= token_it->second.size()) {
         throw std::out_of_range("Token/channel combination out of range");
@@ -304,16 +224,12 @@ const std::vector<double>& BufferManager::get_buffer_data(ProcessingToken token,
 
 u_int32_t BufferManager::get_token_channel_count(ProcessingToken token) const
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto it = m_token_channel_counts.find(token);
     return (it != m_token_channel_counts.end()) ? it->second : 0;
 }
 
 u_int32_t BufferManager::get_token_buffer_size(ProcessingToken token) const
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto it = m_token_buffer_sizes.find(token);
     return (it != m_token_buffer_sizes.end()) ? it->second : 512;
 }
@@ -324,7 +240,6 @@ void BufferManager::set_token_buffer_size(ProcessingToken token, u_int32_t buffe
 
     m_token_buffer_sizes[token] = buffer_size;
 
-    // Resize existing buffers for this token
     auto token_it = m_token_root_buffers.find(token);
     if (token_it != m_token_root_buffers.end()) {
         for (auto& root_buffer : token_it->second) {
@@ -365,8 +280,6 @@ void BufferManager::remove_buffer_from_token_channel(std::shared_ptr<AudioBuffer
 
 const std::vector<std::shared_ptr<AudioBuffer>>& BufferManager::get_token_channel_buffers(ProcessingToken token, u_int32_t channel) const
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end() || channel >= token_it->second.size()) {
         throw std::out_of_range("Token/channel combination out of range");
@@ -527,8 +440,6 @@ void BufferManager::connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, st
 
 void BufferManager::fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames, ProcessingToken token, u_int32_t num_channels)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end()) {
         return;
@@ -549,8 +460,6 @@ void BufferManager::fill_from_interleaved(const double* interleaved_data, u_int3
 
 void BufferManager::fill_interleaved(double* interleaved_data, u_int32_t num_frames, ProcessingToken token, u_int32_t num_channels) const
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end()) {
         return;

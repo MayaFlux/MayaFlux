@@ -219,8 +219,6 @@ public:
     template <typename... Args>
     bool update_task_params(const std::string& name, Args&&... args)
     {
-        std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
-
         auto it = find_task_by_name(name);
         if (it != m_tasks.end() && it->routine && it->routine->is_active()) {
             it->routine->update_params(std::forward<Args>(args)...);
@@ -239,8 +237,6 @@ public:
     template <typename T>
     T* get_task_state(const std::string& name, const std::string& state_key) const
     {
-        std::shared_lock<std::shared_mutex> lock(m_tasks_mutex);
-
         auto it = find_task_by_name(name);
         if (it != m_tasks.end() && it->routine && it->routine->is_active()) {
             return it->routine->get_state<T>(state_key);
@@ -315,6 +311,11 @@ private:
      */
     std::vector<TaskEntry>::iterator find_task_by_name(const std::string& name);
 
+    /**
+     * @brief Find task entry by name (const version)
+     * @param name Task name to find
+     * @return Const iterator to task entry or end()
+     */
     std::vector<TaskEntry>::const_iterator find_task_by_name(const std::string& name) const;
 
     /**
@@ -382,18 +383,11 @@ private:
     std::unordered_map<ProcessingToken, unsigned int> m_token_rates;
 
     /**
-     * @brief Mutex for thread-safe access to scheduler state
-     */
-    mutable std::mutex m_scheduler_mutex;
-
-    /**
      * @brief Task ID counter for unique identification
      */
     mutable std::atomic<u_int64_t> m_next_task_id { 1 };
 
     std::vector<TaskEntry> m_tasks;
-
-    mutable std::shared_mutex m_tasks_mutex;
 
     /**
      * @brief The master sample clock for the processing engine

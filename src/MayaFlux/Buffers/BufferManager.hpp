@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MayaFlux/Buffers/BufferUtils.hpp"
 #include "MayaFlux/Buffers/Root/RootAudioBuffer.hpp"
 
 namespace MayaFlux::Nodes {
@@ -349,35 +348,6 @@ public:
 
     inline ProcessingToken get_default_processing_token() const { return m_default_token; }
 
-    /**
-     * @brief Legacy methods that delegate to token-based equivalents
-     */
-    void add_buffer_to_channel(u_int32_t channel_index, std::shared_ptr<AudioBuffer> buffer);
-    void remove_buffer_from_channel(u_int32_t channel_index, std::shared_ptr<AudioBuffer> buffer);
-    const std::vector<std::shared_ptr<AudioBuffer>>& get_channel_buffers(u_int32_t channel_index) const;
-    void process_channel(u_int32_t channel_index);
-    void process_all_channels();
-    std::shared_ptr<BufferProcessingChain> get_channel_processing_chain(u_int32_t channel_index);
-    void add_processor_to_channel(std::shared_ptr<BufferProcessor> processor, u_int32_t channel_index);
-    void add_processor_to_all(std::shared_ptr<BufferProcessor> processor);
-    void remove_processor_from_channel(std::shared_ptr<BufferProcessor> processor, u_int32_t channel_index);
-    void remove_processor_from_all(std::shared_ptr<BufferProcessor> processor);
-    void set_final_processor_for_root_buffers(std::shared_ptr<BufferProcessor> processor);
-    std::shared_ptr<BufferProcessor> attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index);
-    std::shared_ptr<BufferProcessor> attach_quick_process_to_all(AudioProcessingFunction processor);
-    void fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames);
-    void fill_interleaved(double* interleaved_data, u_int32_t num_frames) const;
-    void resize(u_int32_t num_frames);
-
-    /**
-     * @brief Legacy template method for creating specialized buffers
-     */
-    template <typename BufferType, typename... Args>
-    std::shared_ptr<BufferType> create_specialized_buffer(u_int32_t channel_index, Args&&... args)
-    {
-        return create_buffer_for_token<BufferType>(m_default_token, channel_index, std::forward<Args>(args)...);
-    }
-
     inline void validate_num_channels_for_token(ProcessingToken token, u_int32_t num_channels, u_int32_t buffer_size)
     {
         set_token_buffer_size(token, buffer_size);
@@ -385,6 +355,14 @@ public:
             ensure_token_channel_exists(token, i);
         }
     }
+
+    /**
+     * @brief Legacy methods that delegate to token-based equivalents
+     */
+    void process_channel(u_int32_t channel_index);
+    void process_all_channels();
+    void fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames);
+    void fill_interleaved(double* interleaved_data, u_int32_t num_frames) const;
 
 private:
     /**

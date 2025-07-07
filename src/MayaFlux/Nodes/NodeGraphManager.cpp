@@ -209,11 +209,4 @@ void NodeGraphManager::connect(const std::string& source_id, const std::string& 
     }
 }
 
-void NodeGraphManager::connect(std::shared_ptr<Nodes::Node> source, std::shared_ptr<Nodes::Node> target)
-{
-    if (source && target) {
-        source >> target;
-    }
-}
-
 }

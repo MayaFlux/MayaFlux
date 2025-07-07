@@ -151,8 +151,6 @@ public:
         SubsystemTokens secondary_tokens,
         Func operation)
     {
-        std::shared_lock lock(m_mutex);
-
         SubsystemTokens combined_tokens {
             .Buffer = primary_tokens.Buffer,
             .Node = primary_tokens.Node,

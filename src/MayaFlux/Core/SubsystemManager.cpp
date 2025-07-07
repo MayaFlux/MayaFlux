@@ -99,7 +99,6 @@ bool SubsystemManager::is_cross_access_allowed(SubsystemType from, SubsystemType
 
 void SubsystemManager::allow_cross_access(SubsystemType from, SubsystemType to)
 {
-    std::unique_lock lock(m_mutex);
     m_cross_access_permissions[from].insert(to);
 }
 
@@ -108,7 +107,6 @@ std::optional<std::span<const double>> SubsystemManager::read_cross_subsystem_bu
     SubsystemType target_type,
     u_int32_t channel)
 {
-
     std::shared_lock lock(m_mutex);
 
     if (m_subsystems.find(requesting_type) == m_subsystems.end()) {
