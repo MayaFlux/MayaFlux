@@ -13,14 +13,14 @@ ChainNode::ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target)
 void ChainNode::initialize()
 {
     if (m_Source) {
-        MayaFlux::remove_node_from_root(m_Source);
+        MayaFlux::unregister_audio_node(m_Source);
     }
     if (m_Target) {
-        MayaFlux::remove_node_from_root(m_Target);
+        MayaFlux::unregister_audio_node(m_Target);
     }
     if (!m_is_initialized) {
         auto self = shared_from_this();
-        MayaFlux::add_node_to_root(self);
+        MayaFlux::register_audio_node(self);
         m_is_initialized = true;
     }
 }
@@ -92,14 +92,14 @@ BinaryOpNode::BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs,
 void BinaryOpNode::initialize()
 {
     if (m_lhs) {
-        MayaFlux::remove_node_from_root(m_lhs);
+        MayaFlux::unregister_audio_node(m_lhs);
     }
     if (m_rhs) {
-        MayaFlux::remove_node_from_root(m_rhs);
+        MayaFlux::unregister_audio_node(m_rhs);
     }
     if (!m_is_initialized) {
         auto self = shared_from_this();
-        MayaFlux::add_node_to_root(self);
+        MayaFlux::register_audio_node(self);
         m_is_initialized = true;
     }
 }

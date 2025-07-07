@@ -1,5 +1,6 @@
 #include "BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
 namespace MayaFlux::Buffers {
@@ -67,25 +68,6 @@ BufferManager::BufferManager(u_int32_t default_channels, u_int32_t default_buffe
         auto limiter = std::make_shared<FinalLimiterProcessor>();
         set_final_processor_for_token(limiter, default_processing_token);
     }
-}
-
-// Deprecated
-std::shared_ptr<AudioBuffer> BufferManager::get_channel(u_int32_t channel_index)
-{
-    return get_root_buffer(m_default_token, channel_index);
-}
-
-// Deprecated
-const std::shared_ptr<AudioBuffer> BufferManager::get_channel(u_int32_t channel_index) const
-{
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
-    auto token_it = m_token_root_buffers.find(m_default_token);
-    if (token_it == m_token_root_buffers.end() || channel_index >= token_it->second.size()) {
-        throw std::out_of_range("Channel index out of range");
-    }
-
-    return token_it->second[channel_index];
 }
 
 // Deprecated
@@ -166,12 +148,6 @@ void BufferManager::remove_processor_from_all(std::shared_ptr<BufferProcessor> p
 void BufferManager::set_final_processor_for_root_buffers(std::shared_ptr<BufferProcessor> processor)
 {
     set_final_processor_for_token(processor, m_default_token);
-}
-
-// deprecated
-void BufferManager::connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix, bool clear_before)
-{
-    connect_node_to_token_channel(node, m_default_token, channel_index, mix, clear_before);
 }
 
 // deprecated
@@ -538,15 +514,15 @@ void BufferManager::connect_node_to_token_channel(std::shared_ptr<Nodes::Node> n
 
     ensure_token_channel_exists(token, channel);
 
-    // auto processor = std::make_shared<NodeSourceProcessor>(node, mix, clear_before);
-    // add_processor_to_token_channel(processor, token, channel);
+    auto processor = std::make_shared<NodeSourceProcessor>(node, mix, clear_before);
+    add_processor_to_token_channel(processor, token, channel);
 }
 
 void BufferManager::connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<AudioBuffer> buffer, float mix, bool clear_before)
 {
     // TODO: Implement NodeSourceProcessor for generic Buffer interface
-    // auto processor = std::make_shared<NodeSourceProcessor>(node, mix, clear_before);
-    // add_processor(processor, buffer);
+    auto processor = std::make_shared<NodeSourceProcessor>(node, mix, clear_before);
+    add_processor(processor, buffer);
 }
 
 void BufferManager::fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames, ProcessingToken token, u_int32_t num_channels)

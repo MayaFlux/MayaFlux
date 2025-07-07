@@ -340,20 +340,14 @@ public:
     inline u_int32_t get_num_frames() const { return get_token_buffer_size(m_default_token); }
 
     /**
-     * @brief Gets a channel buffer from the default domain (legacy compatibility)
-     * @param channel_index Channel index
-     * @return Shared pointer to the root buffer for that channel
-     */
-    std::shared_ptr<AudioBuffer> get_channel(u_int32_t channel_index);
-    const std::shared_ptr<AudioBuffer> get_channel(u_int32_t channel_index) const;
-
-    /**
      * @brief Gets channel data from the default domain (legacy compatibility)
      * @param channel_index Channel index
      * @return Reference to the channel's data vector
      */
     std::vector<double>& get_channel_data(u_int32_t channel_index);
     const std::vector<double>& get_channel_data(u_int32_t channel_index) const;
+
+    inline ProcessingToken get_default_processing_token() const { return m_default_token; }
 
     /**
      * @brief Legacy methods that delegate to token-based equivalents
@@ -369,7 +363,6 @@ public:
     void remove_processor_from_channel(std::shared_ptr<BufferProcessor> processor, u_int32_t channel_index);
     void remove_processor_from_all(std::shared_ptr<BufferProcessor> processor);
     void set_final_processor_for_root_buffers(std::shared_ptr<BufferProcessor> processor);
-    void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index, float mix = 0.5f, bool clear_before = false);
     std::shared_ptr<BufferProcessor> attach_quick_process_to_channel(AudioProcessingFunction processor, u_int32_t channel_index);
     std::shared_ptr<BufferProcessor> attach_quick_process_to_all(AudioProcessingFunction processor);
     void fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames);

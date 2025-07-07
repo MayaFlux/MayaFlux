@@ -128,20 +128,27 @@ void Engine::End()
     m_is_initialized = false;
     m_is_paused = false;
 
-    if (m_buffer_manager && m_node_graph_manager) {
-        for (unsigned int i = 0; i < m_stream_info.output.channels; i++) {
-            auto channel_buffer = m_buffer_manager->get_channel(i);
-            if (channel_buffer) {
-                channel_buffer->clear();
-
-                if (auto root_buffer = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(channel_buffer)) {
-                    for (auto& child : root_buffer->get_child_buffers()) {
+    if (m_buffer_manager) {
+        for (auto token : m_buffer_manager->get_active_tokens()) {
+            for (size_t i = 0; i < m_stream_info.output.channels; i++) {
+                auto root = m_buffer_manager->get_root_buffer(token, i);
+                if (root) {
+                    root->clear();
+                    for (auto& child : root->get_child_buffers()) {
                         child->clear();
                     }
                 }
             }
+        }
+    }
 
-            m_node_graph_manager->get_root_node(i).clear_all_nodes();
+    if (m_node_graph_manager) {
+        for (auto token : m_node_graph_manager->get_active_tokens()) {
+            for (auto root : m_node_graph_manager->get_token_roots(token)) {
+                if (root) {
+                    root->clear_all_nodes();
+                }
+            }
         }
     }
 }

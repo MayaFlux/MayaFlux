@@ -57,33 +57,19 @@ public:
     /**
      * @brief Adds a node to a channel's root node by its identifier
      * @param node_id Identifier of the node to add
+     @ param token Processing domain to add the node to (default is AUDIO_RATE)
      * @param channel Channel index to add the node to (AUDIO_RATE domain)
      *
      * Looks up the node by its identifier and adds it to the specified
-     * channel's root node in the AUDIO_RATE domain.
+     * channel's root node in the specified processing domain (default is AUDIO_RATE).
      * Throws an exception if the node identifier is not found.
      */
-    inline void add_to_root(const std::string& node_id, unsigned int channel = 0)
+    inline void add_to_root(const std::string& node_id, ProcessingToken token = ProcessingToken::AUDIO_RATE, unsigned int channel = 0)
     {
         auto node = get_node(node_id);
         if (node) {
-            add_to_root(node, ProcessingToken::AUDIO_RATE, channel);
+            add_to_root(node, token, channel);
         }
-    }
-
-    /**
-     * @brief Adds a node directly to a channel's root node (AUDIO_RATE domain)
-     * @param node Node to add
-     * @param channel Channel index to add the node to
-     *
-     * Adds the node to the specified channel's root node in the AUDIO_RATE domain.
-     * The node's output will contribute to that channel's audio output.
-     * If the node is not already registered, it will be automatically registered
-     * with a generated identifier based on its memory address.
-     */
-    inline void add_to_root(std::shared_ptr<Node> node, unsigned int channel = 0)
-    {
-        add_to_root(node, ProcessingToken::AUDIO_RATE, channel);
     }
 
     /**
@@ -101,13 +87,14 @@ public:
 
     /**
      * @brief Gets all channel root nodes for the AUDIO_RATE domain
+     * @param token Processing domain to get the root nodes for (default is AUDIO_RATE)
      * @return Constant reference to the map of channel indices to root nodes
      *
-     * This provides access to all AUDIO_RATE channel root nodes that have been created.
+     * This provides access to all channel root nodes of the specified domain that have been created.
      * Useful for processing all channels or inspecting the node graph structure.
      * For multi-modal access, use get_token_roots().
      */
-    const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& get_all_channel_root_nodes() const;
+    const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& get_all_channel_root_nodes(ProcessingToken token = ProcessingToken::AUDIO_RATE) const;
 
     /**
      * @brief Creates and registers a new node of the specified type
@@ -254,18 +241,14 @@ public:
     std::vector<RootNode*> get_token_roots(ProcessingToken token);
 
     /**
-     * @brief Gets the root node for a specific channel and token
-     * @param channel The channel index
-     * @return Reference to the channel's root node in the AUDIO_RATE domain
+     * @brief Gets or creates the root node for a specific token and channel
+     * @param token Processing domain
+     * @param channel Channel index
+     * @return Reference to the root node for the given token and channel
      *
-     * If a root node doesn't exist for the specified channel, one is created.
-     * The root node collects all nodes that should output to that channel.
-     * For multi-modal access, use get_token_root(token, channel).
+     * If the root node does not exist, it is created and registered.
      */
-    inline RootNode& get_root_node(unsigned int channel = 0)
-    {
-        return get_token_root(ProcessingToken::AUDIO_RATE, channel);
-    }
+    RootNode& get_token_root(ProcessingToken token, unsigned int channel);
 
     /**
      * @brief Process all active tokens sequentially
@@ -358,16 +341,6 @@ private:
     std::unordered_map<ProcessingToken,
         std::function<std::vector<double>(RootNode*, unsigned int)>>
         m_token_channel_processors;
-
-    /**
-     * @brief Gets or creates the root node for a specific token and channel
-     * @param token Processing domain
-     * @param channel Channel index
-     * @return Reference to the root node for the given token and channel
-     *
-     * If the root node does not exist, it is created and registered.
-     */
-    RootNode& get_token_root(ProcessingToken token, unsigned int channel);
 
     /**
      * @brief Ensures a root node exists for the given token and channel

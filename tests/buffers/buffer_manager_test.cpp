@@ -20,6 +20,9 @@ protected:
     }
 
     std::shared_ptr<Buffers::BufferManager> manager;
+
+public:
+    Buffers::ProcessingToken default_token = Buffers::ProcessingToken::AUDIO_BACKEND;
 };
 
 TEST_F(BufferManagerTest, Initialization)
@@ -28,7 +31,7 @@ TEST_F(BufferManagerTest, Initialization)
     EXPECT_EQ(manager->get_num_frames(), TestConfig::BUFFER_SIZE);
 
     for (u_int32_t i = 0; i < TestConfig::NUM_CHANNELS; i++) {
-        auto buffer = manager->get_channel(i);
+        auto buffer = manager->get_root_buffer(default_token, i);
         EXPECT_NE(buffer, nullptr);
 
         auto root_buffer = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(buffer);
@@ -41,12 +44,12 @@ TEST_F(BufferManagerTest, Initialization)
 
 TEST_F(BufferManagerTest, ChannelAccess)
 {
-    auto channel0 = manager->get_channel(0);
-    auto channel1 = manager->get_channel(1);
+    auto channel0 = manager->get_root_buffer(default_token, 0);
+    auto channel1 = manager->get_root_buffer(default_token, 1);
 
     EXPECT_NE(channel0, channel1);
 
-    EXPECT_THROW(manager->get_channel(TestConfig::NUM_CHANNELS), std::out_of_range);
+    EXPECT_THROW(manager->get_root_buffer(default_token, TestConfig::NUM_CHANNELS), std::out_of_range);
 
     auto& data0 = manager->get_channel_data(0);
     EXPECT_EQ(data0.size(), TestConfig::BUFFER_SIZE);
@@ -62,7 +65,7 @@ TEST_F(BufferManagerTest, BufferOperations)
 
     manager->add_buffer_to_channel(0, buffer);
 
-    auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_channel(0));
+    auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_root_buffer(default_token, 0));
     EXPECT_NE(root, nullptr);
     EXPECT_EQ(root->get_child_buffers().size(), 1);
     EXPECT_EQ(root->get_child_buffers()[0], buffer);
@@ -128,7 +131,7 @@ TEST_F(BufferManagerTest, Resize)
     EXPECT_EQ(manager->get_num_frames(), new_size);
 
     for (u_int32_t i = 0; i < TestConfig::NUM_CHANNELS; i++) {
-        EXPECT_EQ(manager->get_channel(i)->get_num_samples(), new_size);
+        EXPECT_EQ(manager->get_root_buffer(default_token, i)->get_num_samples(), new_size);
     }
 
     auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
@@ -137,7 +140,7 @@ TEST_F(BufferManagerTest, Resize)
     u_int32_t newer_size = new_size + 100;
     manager->resize(newer_size);
 
-    auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_channel(0));
+    auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_root_buffer(default_token, 0));
     EXPECT_EQ(root->get_child_buffers()[0]->get_num_samples(), newer_size);
 }
 
@@ -366,7 +369,7 @@ TEST_F(BufferManagerTest, NodeConnection)
 {
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
 
-    manager->connect_node_to_channel(sine, 0, 1.0);
+    manager->connect_node_to_token_channel(sine, default_token, 0, 1.0);
 
     manager->process_channel(0);
 
@@ -405,7 +408,7 @@ TEST_F(BufferManagerTest, SpecializedBufferCreation)
     EXPECT_EQ(feedback_buffer->get_num_samples(), TestConfig::BUFFER_SIZE);
     EXPECT_FLOAT_EQ(feedback_buffer->get_feedback(), 0.5f);
 
-    auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_channel(0));
+    auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_root_buffer(default_token, 0));
     EXPECT_EQ(root->get_child_buffers().size(), 1);
 
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);

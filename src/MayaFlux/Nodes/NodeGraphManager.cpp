@@ -25,12 +25,12 @@ void NodeGraphManager::register_token_processor(ProcessingToken token,
     m_token_processors[token] = processor;
 }
 
-const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& NodeGraphManager::get_all_channel_root_nodes() const
+const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& NodeGraphManager::get_all_channel_root_nodes(ProcessingToken token) const
 {
     static std::unordered_map<unsigned int, std::shared_ptr<RootNode>> audio_roots;
     audio_roots.clear();
 
-    auto it = m_token_roots.find(ProcessingToken::AUDIO_RATE);
+    auto it = m_token_roots.find(token);
     if (it != m_token_roots.end()) {
         for (const auto& [channel, root] : it->second) {
             audio_roots[channel] = root;
