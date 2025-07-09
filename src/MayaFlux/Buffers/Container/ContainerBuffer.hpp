@@ -38,7 +38,7 @@ public:
      * Handles dimension mapping, position tracking, and state synchronization.
      * @param buffer The AudioBuffer to fill.
      */
-    void process(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Attach the adapter to an AudioBuffer.

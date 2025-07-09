@@ -273,6 +273,51 @@ public:
      */
     inline virtual bool needs_default_processing() override { return m_process_default; }
 
+    /**
+     * @brief Attempts to acquire processing rights for the buffer
+     * @return True if processing rights were successfully acquired, false otherwise
+     *
+     * This method is used to control access to the buffer's data during processing.
+     * It allows the buffer to manage concurrent access and ensure that only one
+     * processing operation occurs at a time. The specific implementation may vary
+     * based on the buffer type and its processing backend.
+     */
+    inline bool try_acquire_processing() override
+    {
+        bool expected = false;
+        return m_is_processing.compare_exchange_strong(expected, true,
+            std::memory_order_acquire, std::memory_order_relaxed);
+    }
+
+    /**
+     * @brief Releases processing rights for the buffer
+     *
+     * This method is called to release the processing rights acquired by
+     * try_acquire_processing(). It allows other processing operations to
+     * access the buffer's data once the current operation is complete.
+     * The specific implementation may vary based on the buffer type and
+     * its processing backend.
+     */
+    inline void release_processing() override
+    {
+        m_is_processing.store(false, std::memory_order_release);
+    }
+
+    /**
+     * @brief Checks if the buffer is currently being processed
+     * @return True if the buffer is in a processing state, false otherwise
+     *
+     * This method indicates whether the buffer is currently undergoing
+     * a processing operation. It is used to manage concurrent access and
+     * ensure that processing operations do not interfere with each other.
+     * The specific implementation may vary based on the buffer type and
+     * its processing backend.
+     */
+    inline bool is_processing() const override
+    {
+        return m_is_processing.load(std::memory_order_acquire);
+    }
+
 protected:
     /**
      * @brief Audio channel identifier for this buffer
@@ -364,6 +409,9 @@ protected:
      * processing based on current requirements.
      */
     bool m_process_default;
+
+private:
+    std::atomic<bool> m_is_processing;
 };
 
 }

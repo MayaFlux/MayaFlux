@@ -170,7 +170,7 @@ public:
      *
      * The combination algorithm can be customized in the implementation.
      */
-    void process(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer
@@ -231,7 +231,7 @@ public:
      * being transmitted to hardware interfaces, while preserving the perceptual
      * characteristics of the original signal.
      */
-    void process(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer

@@ -53,7 +53,7 @@ public:
      * 2. Generates sequential values from the computational node
      * 3. Applies the specified interpolation between existing and incoming data
      */
-    void process(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Sets the interpolation coefficient between existing and incoming data

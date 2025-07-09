@@ -14,7 +14,7 @@ public:
     }
 
     // For now hardcoded to AUDIO_BACKEND, but can be extended later
-    void process(std::shared_ptr<Buffer> buffer) override
+    void processing_function(std::shared_ptr<Buffer> buffer) override
     {
         auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
         if (audio_buffer) {

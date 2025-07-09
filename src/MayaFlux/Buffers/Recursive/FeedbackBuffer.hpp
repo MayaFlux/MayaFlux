@@ -160,7 +160,7 @@ public:
      * The combination is weighted by the feedback coefficient, with higher
      * values resulting in stronger influence from the previous state.
      */
-    void process(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when this processor is attached to a buffer

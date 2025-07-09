@@ -46,7 +46,7 @@ void PolynomialProcessor::process_single_sample(double& sample)
     Nodes::try_reset_processed_state(m_polynomial);
 }
 
-void PolynomialProcessor::process(std::shared_ptr<Buffer> buffer)
+void PolynomialProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     if (!m_polynomial || !buffer || std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data().empty()) {
         return;

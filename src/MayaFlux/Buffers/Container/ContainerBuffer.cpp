@@ -40,7 +40,7 @@ void ContainerToBufferAdapter::analyze_container_dimensions()
     }
 }
 
-void ContainerToBufferAdapter::process(std::shared_ptr<Buffer> buffer)
+void ContainerToBufferAdapter::processing_function(std::shared_ptr<Buffer> buffer)
 {
     if (!m_container || !buffer) {
         return;

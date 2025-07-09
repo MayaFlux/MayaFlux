@@ -74,8 +74,28 @@ public:
      * The method works seamlessly with any data type supported by the buffer interface,
      * automatically adapting to audio samples, video frames, texture data, or other
      * specialized buffer contents while maintaining type safety through the buffer abstraction.
+     * This method calls the core processing function defined in derived classes, with atomic
+     * thread-safe management of processing state to ensure that concurrent access does
+     * not lead to race conditions or data corruption.
      */
-    virtual void process(std::shared_ptr<Buffer> buffer) = 0;
+    void process(std::shared_ptr<Buffer> buffer);
+
+    /**
+     * @brief The core processing function that must be implemented by derived classes
+     * @param buffer Buffer to process
+     *
+     * This method is where the actual transformation logic is implemented. It should
+     * contain the algorithmic details of how the buffer's data is transformed, analyzed,
+     * or processed. The implementation can utilize any backend capabilities available
+     * to the processor, including:
+     *
+     * - **Parallel Processing**: Using multi-threading or GPU compute for large datasets
+     * - **Data Transformations**: Applying mathematical operations, filters, or effects
+     * - **Feature Extraction**: Analyzing data characteristics for further processing
+     *
+     * Derived classes must override this method to provide specific processing behavior.
+     */
+    virtual void processing_function(std::shared_ptr<Buffer> buffer) = 0;
 
     /**
      * @brief Called when this processor is attached to a buffer
@@ -171,6 +191,9 @@ public:
 
 protected:
     ProcessingToken m_processing_token;
+
+private:
+    std::atomic<size_t> m_active_processing { 0 };
 };
 
 /** * @struct ProcessorTokenInfo

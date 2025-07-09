@@ -176,6 +176,40 @@ public:
      * - Texture buffers may skip processing when not visible
      */
     virtual bool needs_default_processing() = 0;
+
+    /**
+     * @brief Attempts to acquire processing rights for the buffer
+     * @return True if processing rights were successfully acquired, false otherwise
+     *
+     * This method is used to control access to the buffer's data during processing.
+     * It allows the buffer to manage concurrent access and ensure that only one
+     * processing operation occurs at a time. The specific implementation may vary
+     * based on the buffer type and its processing backend.
+     */
+    bool virtual try_acquire_processing() = 0;
+
+    /**
+     * @brief Releases processing rights for the buffer
+     *
+     * This method is called to release the processing rights acquired by
+     * try_acquire_processing(). It allows other processing operations to
+     * access the buffer's data once the current operation is complete.
+     * The specific implementation may vary based on the buffer type and
+     * its processing backend.
+     */
+    virtual void release_processing() = 0;
+
+    /**
+     * @brief Checks if the buffer is currently being processed
+     * @return True if the buffer is in a processing state, false otherwise
+     *
+     * This method indicates whether the buffer is currently undergoing
+     * a processing operation. It is used to manage concurrent access and
+     * ensure that processing operations do not interfere with each other.
+     * The specific implementation may vary based on the buffer type and
+     * its processing backend.
+     */
+    virtual bool is_processing() const = 0;
 };
 
 }

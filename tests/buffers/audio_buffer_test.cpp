@@ -78,7 +78,7 @@ TEST_F(AudioBufferTest, ProcessorManagement)
         {
         }
 
-        void process(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             process_called = true;
             for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
@@ -86,12 +86,12 @@ TEST_F(AudioBufferTest, ProcessorManagement)
             }
         }
 
-        void on_attach(std::shared_ptr<Buffers::Buffer> buffer) override
+        void on_attach(std::shared_ptr<Buffers::Buffer>) override
         {
             attach_called = true;
         }
 
-        void on_detach(std::shared_ptr<Buffers::Buffer> buffer) override
+        void on_detach(std::shared_ptr<Buffers::Buffer>) override
         {
             detach_called = true;
         }
@@ -136,7 +136,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
         {
         }
 
-        void process(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
             for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
@@ -159,7 +159,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
         {
         }
 
-        void process(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
             for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {

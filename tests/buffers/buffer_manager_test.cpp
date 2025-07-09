@@ -155,7 +155,7 @@ TEST_F(BufferManagerTest, ProcessorManagement)
         {
         }
 
-        void process(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
             for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
@@ -199,7 +199,7 @@ TEST_F(BufferManagerTest, ChannelProcessors)
         {
         }
 
-        void process(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
             for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {
@@ -241,7 +241,7 @@ TEST_F(BufferManagerTest, GlobalProcessors)
         {
         }
 
-        void process(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
             for (auto& sample : std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)->get_data()) {

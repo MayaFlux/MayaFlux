@@ -33,7 +33,7 @@ FeedbackProcessor::FeedbackProcessor(float feedback)
 {
 }
 
-void FeedbackProcessor::process(std::shared_ptr<Buffer> buffer)
+void FeedbackProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     std::vector<double>* previous_data = nullptr;
     std::vector<double> current_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();

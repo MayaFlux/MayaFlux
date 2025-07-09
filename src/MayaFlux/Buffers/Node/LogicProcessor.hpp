@@ -134,7 +134,7 @@ public:
      * - Hysteresis implementation for noisy signals
      * - Sequential pattern recognition
      */
-    void process(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when the processor is attached to a buffer

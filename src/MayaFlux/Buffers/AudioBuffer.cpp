@@ -16,6 +16,7 @@ AudioBuffer::AudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
     , m_should_remove(false)
     , m_process_default(true)
     , m_processing_chain(std::make_shared<BufferProcessingChain>())
+    , m_is_processing(false)
 {
     m_data.resize(num_samples);
 }

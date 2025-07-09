@@ -60,7 +60,7 @@ public:
      * Applies the polynomial transformation to the buffer data according
      * to the configured processing mode and parameters.
      */
-    void process(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when the processor is attached to a buffer

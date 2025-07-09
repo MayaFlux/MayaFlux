@@ -216,7 +216,7 @@ bool LogicProcessor::apply(std::shared_ptr<Buffer> buffer, ModulationFunction mo
     return true;
 }
 
-void LogicProcessor::process(std::shared_ptr<Buffer> buffer)
+void LogicProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     if (!m_logic || !buffer || std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data().empty()) {
         return;

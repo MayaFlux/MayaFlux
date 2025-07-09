@@ -9,7 +9,7 @@ NodeSourceProcessor::NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, floa
 {
 }
 
-void NodeSourceProcessor::process(std::shared_ptr<Buffer> buffer)
+void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     if (!m_node) {
         std::cerr << "Warning: NodeSourceProcessor has null node" << std::endl;
