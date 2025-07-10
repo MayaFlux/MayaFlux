@@ -79,7 +79,8 @@ bool ChannelProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
 }
 
 RootAudioBuffer::RootAudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
-    : m_has_node_output(false)
+    : RootBuffer<AudioBuffer>(channel_id, num_samples)
+    , m_has_node_output(false)
 {
     m_preferred_processing_token = ProcessingToken::AUDIO_BACKEND;
     m_token_enforcement_strategy = TokenEnforcementStrategy::STRICT;
@@ -104,16 +105,6 @@ void RootAudioBuffer::set_node_output(const std::vector<double>& data)
 
 void RootAudioBuffer::process_default()
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
-
-    clear();
-
-    for (auto& child : m_child_buffers) {
-        if (child && child->has_data_for_cycle()) {
-            child->process_default();
-        }
-    }
-
     if (m_default_processor && m_process_default) {
         m_default_processor->process(shared_from_this());
     }
@@ -121,8 +112,6 @@ void RootAudioBuffer::process_default()
 
 void RootAudioBuffer::resize(u_int32_t num_samples)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
-
     AudioBuffer::resize(num_samples);
 
     m_node_output.resize(num_samples, 0.0);

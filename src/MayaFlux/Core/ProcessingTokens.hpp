@@ -93,7 +93,7 @@ enum ProcessingToken : u_int32_t {
      * without parallelization. This is essential for operations where execution
      * order affects the final result or when shared resources require serialized access.
      */
-    SEQUENTIAL = 0x16,
+    SEQUENTIAL = 0x10,
 
     /**
      * @brief Processes operations in parallel when possible
@@ -102,7 +102,7 @@ enum ProcessingToken : u_int32_t {
      * safely parallelized. This maximizes throughput for operations that can
      * benefit from parallel execution without introducing race conditions.
      */
-    PARALLEL = 0x32,
+    PARALLEL = 0x20,
 
     /**
      * @brief Standard audio processing backend configuration
