@@ -6,6 +6,7 @@ namespace MayaFlux::Vruta {
 
 TaskScheduler::TaskScheduler(u_int32_t default_sample_rate, u_int32_t default_frame_rate)
     : m_clock(default_sample_rate)
+    , m_cleanup_threshold(512)
 {
     ensure_token_domain(ProcessingToken::SAMPLE_ACCURATE, default_sample_rate);
     ensure_token_domain(ProcessingToken::FRAME_ACCURATE, default_frame_rate);
@@ -97,7 +98,7 @@ void TaskScheduler::process_token(ProcessingToken token, u_int64_t processing_un
     }
 
     static uint64_t cleanup_counter = 0;
-    if (++cleanup_counter % 1000 == 0) {
+    if (++cleanup_counter % (m_cleanup_threshold * 2) == 0) {
         cleanup_completed_tasks();
     }
 }
@@ -109,7 +110,7 @@ void TaskScheduler::process_all_tokens()
     }
 
     static uint64_t cleanup_counter = 0;
-    if (++cleanup_counter % 1000 == 0) {
+    if (++cleanup_counter % m_cleanup_threshold == 0) {
         cleanup_completed_tasks();
     }
 }
@@ -220,32 +221,25 @@ unsigned int TaskScheduler::get_default_rate(ProcessingToken token) const
 
 void TaskScheduler::ensure_token_domain(ProcessingToken token, unsigned int rate)
 {
-    if (m_token_clocks.find(token) != m_token_clocks.end()) {
-        return;
-    }
+    auto clock_it = m_token_clocks.find(token);
+    if (clock_it == m_token_clocks.end()) {
+        unsigned int domain_rate = (rate > 0) ? rate : get_default_rate(token);
 
-    if (rate == 0) {
-        rate = get_default_rate(token);
+        switch (token) {
+        case ProcessingToken::SAMPLE_ACCURATE:
+            m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
+            break;
+        case ProcessingToken::FRAME_ACCURATE:
+            m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
+            break;
+        case ProcessingToken::ON_DEMAND:
+            m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
+            break;
+        default:
+            m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
+            break;
+        }
     }
-
-    std::unique_ptr<IClock> clock;
-    switch (token) {
-    case ProcessingToken::SAMPLE_ACCURATE:
-    case ProcessingToken::MULTI_RATE:
-        clock = std::make_unique<SampleClock>(rate);
-        break;
-    case ProcessingToken::FRAME_ACCURATE:
-        clock = std::make_unique<FrameClock>(rate);
-        break;
-    case ProcessingToken::ON_DEMAND:
-    case ProcessingToken::CUSTOM:
-    default:
-        clock = std::make_unique<CustomClock>(rate, "units");
-        break;
-    }
-
-    m_token_clocks[token] = std::move(clock);
-    m_token_rates[token] = rate;
 }
 
 void TaskScheduler::process_token_default(ProcessingToken token, u_int64_t processing_units)
@@ -258,7 +252,6 @@ void TaskScheduler::process_token_default(ProcessingToken token, u_int64_t proce
     auto tasks = get_tasks_for_token(token);
     if (tasks.empty()) {
         auto& clock = *clock_it->second;
-        // TODO: Maybe a better way to record progress
         clock.tick(processing_units);
         return;
     }
@@ -266,7 +259,6 @@ void TaskScheduler::process_token_default(ProcessingToken token, u_int64_t proce
     auto& clock = *clock_it->second;
 
     for (u_int64_t i = 0; i < processing_units; i++) {
-        clock.tick(1);
         uint64_t current_context = clock.current_position();
 
         for (auto& routine : tasks) {
@@ -280,6 +272,8 @@ void TaskScheduler::process_token_default(ProcessingToken token, u_int64_t proce
                 }
             }
         }
+
+        clock.tick(1);
     }
 }
 

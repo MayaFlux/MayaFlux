@@ -296,6 +296,22 @@ public:
      */
     void terminate_all_tasks();
 
+    /** @brief Get the task cleanup threshold
+     *
+     * This value determines how many processing units must pass before
+     * the scheduler cleans up completed tasks.
+     */
+    inline u_int32_t get_cleanup_threshold() const { return m_cleanup_threshold; }
+
+    /** @brief Set the task cleanup threshold
+     * @param threshold New threshold value
+     *
+     * This value determines how many processing units must pass before
+     * the scheduler cleans up completed tasks. Lower values increase
+     * cleanup frequency, while higher values reduce overhead.
+     */
+    inline void set_cleanup_threshold(u_int32_t threshold) { m_cleanup_threshold = threshold; }
+
 private:
     /**
      * @brief Generate automatic name for a routine based on its type
@@ -397,6 +413,14 @@ private:
      * the processing stream.
      */
     SampleClock m_clock;
+
+    /** @brief Threshold for task cleanup
+     *
+     * This value determines how many processing units must pass before
+     * the scheduler cleans up completed tasks. It helps manage memory
+     * and performance by removing inactive tasks periodically.
+     */
+    u_int32_t m_cleanup_threshold;
 };
 
 }
