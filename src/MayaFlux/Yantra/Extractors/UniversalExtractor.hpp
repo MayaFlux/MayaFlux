@@ -357,7 +357,7 @@ protected:
      * @return ExtractorOutput containing the result.
      * @throws std::runtime_error if not implemented in derived class.
      */
-    virtual ExtractorOutput extract_impl(const Kakshya::DataVariant& data)
+    virtual ExtractorOutput extract_impl(const Kakshya::DataVariant&)
     {
         std::cerr << "[UniversalExtractor] Warning: DataVariant extraction not implemented" << std::endl;
         return ExtractorOutput {};
@@ -369,7 +369,7 @@ protected:
      * @return ExtractorOutput containing the result.
      * @throws std::runtime_error if not implemented in derived class.
      */
-    virtual ExtractorOutput extract_impl(std::shared_ptr<Kakshya::SignalSourceContainer> container)
+    virtual ExtractorOutput extract_impl(std::shared_ptr<Kakshya::SignalSourceContainer>)
     {
         std::cerr << "[UniversalExtractor] Warning: Container extraction not implemented" << std::endl;
         return ExtractorOutput {};
@@ -381,7 +381,7 @@ protected:
      * @return ExtractorOutput containing the result.
      * @throws std::runtime_error if not implemented in derived class.
      */
-    virtual ExtractorOutput extract_impl(const Kakshya::Region& region)
+    virtual ExtractorOutput extract_impl(const Kakshya::Region&)
     {
         std::cerr << "[UniversalExtractor] Warning: Region extraction not implemented" << std::endl;
         return ExtractorOutput {};
@@ -393,7 +393,7 @@ protected:
      * @return ExtractorOutput containing the result.
      * @throws std::runtime_error if not implemented in derived class.
      */
-    virtual ExtractorOutput extract_impl(const Kakshya::RegionGroup& group)
+    virtual ExtractorOutput extract_impl(const Kakshya::RegionGroup&)
     {
         std::cerr << "[UniversalExtractor] Warning: RegionGroup extraction not implemented" << std::endl;
         return ExtractorOutput {};
@@ -405,7 +405,7 @@ protected:
      * @return ExtractorOutput containing the result.
      * @throws std::runtime_error if not implemented in derived class.
      */
-    virtual ExtractorOutput extract_impl(const std::vector<Kakshya::RegionSegment>& segments)
+    virtual ExtractorOutput extract_impl(const std::vector<Kakshya::RegionSegment>&)
     {
         std::cerr << "[UniversalExtractor] Warning: RegionSegment extraction not implemented" << std::endl;
         return ExtractorOutput {};
@@ -417,7 +417,7 @@ protected:
      * @return ExtractorOutput containing the result.
      * @throws std::runtime_error if not implemented in derived class.
      */
-    virtual ExtractorOutput extract_impl(const AnalyzerOutput& analyzer_output)
+    virtual ExtractorOutput extract_impl(const AnalyzerOutput&)
     {
         std::cerr << "[UniversalExtractor] Warning: AnalyzerOutput extraction not implemented" << std::endl;
         return ExtractorOutput {};
@@ -458,7 +458,7 @@ protected:
      * @return Combined ExtractorOutput (default: base_result).
      */
     inline virtual ExtractorOutput combine_results(const ExtractorOutput& base_result,
-        const std::vector<ExtractorOutput>& recursive_results)
+        const std::vector<ExtractorOutput>&)
     {
         // Default: just return base result
         // Derived classes can override for specific combination logic

@@ -42,7 +42,7 @@ TEST_F(AdvancedExtractorNodeTest, RecursiveNodeChaining)
 TEST_F(AdvancedExtractorNodeTest, LazyNodeCaching)
 {
     int call_count = 0;
-    auto lazy_func = [&call_count, this]() -> ExtractorOutput {
+    auto lazy_func = [&call_count]() -> ExtractorOutput {
         call_count++;
         return ExtractorOutput { std::vector<double> { static_cast<double>(call_count) } };
     };
@@ -65,7 +65,7 @@ TEST_F(AdvancedExtractorNodeTest, MixedNodeTypeChaining)
     // Create a mixed chain: Concrete -> Lazy -> Recursive
     auto concrete_node = extractor->create_node(test_data);
 
-    auto lazy_node = extractor->create_lazy_node([this]() {
+    auto lazy_node = extractor->create_lazy_node([]() {
         return ExtractorOutput { std::vector<double> { 99.0 } };
     });
 
@@ -259,7 +259,7 @@ protected:
             }
             return false;
         };
-        onset_rule.extractor = [](const ExtractorInput& input) {
+        onset_rule.extractor = [](const ExtractorInput&) {
             return ExtractorOutput { std::vector<double> { 1.0, 3.0, 5.0 } }; // Mock onset times
         };
 
@@ -267,7 +267,7 @@ protected:
         tempo_rule.matcher = [](const ExtractorInput& input) {
             return std::holds_alternative<DataVariant>(input.base_input);
         };
-        tempo_rule.extractor = [](const ExtractorInput& input) {
+        tempo_rule.extractor = [](const ExtractorInput&) {
             return ExtractorOutput { std::vector<double> { 120.0 } }; // Mock tempo in BPM
         };
 
@@ -275,7 +275,7 @@ protected:
         harmony_rule.matcher = [](const ExtractorInput& input) {
             return std::holds_alternative<DataVariant>(input.base_input);
         };
-        harmony_rule.extractor = [](const ExtractorInput& input) {
+        harmony_rule.extractor = [](const ExtractorInput&) {
             return ExtractorOutput { std::vector<double> { 0.8, 0.2, 0.6, 0.1 } }; // Mock chord probabilities
         };
 
@@ -385,7 +385,7 @@ TEST_F(ExtractorPerformanceTest, ConcurrentExtractionStress)
     std::vector<bool> thread_results(num_threads, false);
 
     for (size_t t = 0; t < num_threads; ++t) {
-        threads.emplace_back([this, t, &thread_results, extractions_per_thread]() {
+        threads.emplace_back([this, t, &thread_results]() {
             try {
                 auto feature_extractor = std::make_shared<MockFeatureExtractor>();
 
@@ -742,7 +742,7 @@ TEST_F(ExtractorFutureExpansionTest, GrammarExpansionReadiness)
     complex_rule.matcher = [](const ExtractorInput& input) {
         return std::holds_alternative<DataVariant>(input.base_input);
     };
-    complex_rule.extractor = [](const ExtractorInput& input) {
+    complex_rule.extractor = [](const ExtractorInput&) {
         return ExtractorOutput { std::vector<double> { 42.0 } };
     };
 

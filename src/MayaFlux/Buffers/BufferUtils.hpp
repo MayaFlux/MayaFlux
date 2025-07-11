@@ -93,17 +93,14 @@ enum class TokenEnforcementStrategy {
  */
 inline void validate_token(ProcessingToken token)
 {
-    // Ensure SAMPLE_RATE and FRAME_RATE are mutually exclusive
     if ((token & SAMPLE_RATE) && (token & FRAME_RATE)) {
         throw std::invalid_argument("SAMPLE_RATE and FRAME_RATE are mutually exclusive.");
     }
 
-    // Ensure CPU_PROCESS and GPU_PROCESS are mutually exclusive
     if ((token & CPU_PROCESS) && (token & GPU_PPOCESS)) {
         throw std::invalid_argument("CPU_PROCESS and GPU_PROCESS are mutually exclusive.");
     }
 
-    // Ensure SEQUENTIAL and PARALLEL are mutually exclusive
     if ((token & SEQUENTIAL) && (token & PARALLEL)) {
         throw std::invalid_argument("SEQUENTIAL and PARALLEL are mutually exclusive.");
     }
@@ -154,7 +151,7 @@ inline bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken cur
         return true;
     // If both are SAMPLE_RATE or both are FRAME_RATE, compatible
     if ((preferred_sample && current_sample) || (preferred_frame && current_frame))
-        ;
+        return true;
 
     // Device compatibility: SAMPLE_RATE can't run on GPU, but FRAME_RATE can run on CPU
     bool preferred_cpu = preferred & CPU_PROCESS;

@@ -40,7 +40,7 @@ protected:
      * @param type_info Type index of the input.
      * @return Vector of method names.
      */
-    inline std::vector<std::string> get_methods_for_type_impl(std::type_index type_info) const override
+    inline std::vector<std::string> get_methods_for_type_impl(std::type_index) const override
     {
         return get_available_methods();
     }

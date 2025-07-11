@@ -159,7 +159,7 @@ protected:
      * instead delegating all callback handling to the target node.
      * This method is a placeholder to satisfy the Node interface.
      */
-    inline void notify_tick(double value) override { }
+    inline void notify_tick(double) override { }
 
     /**
      * @brief Empty implementation of create_context
@@ -170,7 +170,7 @@ protected:
      * instead relying on the target node to provide appropriate contexts.
      * This method is a placeholder to satisfy the Node interface.
      */
-    inline std::unique_ptr<NodeContext> create_context(double value) override { return nullptr; }
+    inline std::unique_ptr<NodeContext> create_context(double) override { return nullptr; }
 
 private:
     /**

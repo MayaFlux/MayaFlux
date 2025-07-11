@@ -490,8 +490,8 @@ public:
     u_int64_t next_execution() const override { return 0; }
 
 protected:
-    void set_state_impl(const std::string& key, std::any value) override { }
-    void* get_state_impl_raw(const std::string& key) override { return nullptr; }
+    void set_state_impl(const std::string&, std::any) override { }
+    void* get_state_impl_raw(const std::string&) override { return nullptr; }
 
 private:
     ProcessingToken m_primary_token = ProcessingToken::SAMPLE_ACCURATE;

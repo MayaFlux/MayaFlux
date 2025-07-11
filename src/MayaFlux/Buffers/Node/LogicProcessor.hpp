@@ -146,7 +146,7 @@ public:
      * @brief Called when the processor is detached from a buffer
      * @param buffer The buffer this processor is being detached from
      */
-    inline void on_detach(std::shared_ptr<Buffer> buffer) override { }
+    inline void on_detach(std::shared_ptr<Buffer>) override { }
 
     /**
      * @brief Generates discrete logic data from input without modifying any buffer

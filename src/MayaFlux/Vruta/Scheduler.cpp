@@ -173,7 +173,7 @@ bool TaskScheduler::has_active_tasks(ProcessingToken token) const
         });
 }
 
-const u_int64_t TaskScheduler::get_next_task_id() const
+u_int64_t TaskScheduler::get_next_task_id() const
 {
     return m_next_task_id.fetch_add(1);
 }

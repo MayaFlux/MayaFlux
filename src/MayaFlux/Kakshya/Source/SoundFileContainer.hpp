@@ -123,7 +123,7 @@ public:
     DataVariant& get_processed_data() override { return m_processed_data; }
     const DataVariant& get_processed_data() const override { return m_processed_data; }
 
-    void mark_buffers_for_processing(bool should_process) override { /* Delegate to buffer integration */ }
+    void mark_buffers_for_processing(bool) override { /* Delegate to buffer integration */ }
     void mark_buffers_for_removal() override { /* Delegate to buffer integration */ }
 
     // ===== Data Setup (for IO classes) =====

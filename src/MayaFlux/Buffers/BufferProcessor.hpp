@@ -117,7 +117,7 @@ public:
      * Default implementation does nothing, but derived classes should override this method
      * to leverage the full capabilities of the expanded processor architecture.
      */
-    virtual void on_attach(std::shared_ptr<Buffer> buffer) { };
+    virtual void on_attach(std::shared_ptr<Buffer>) {};
 
     /**
      * @brief Called when this processor is detached from a buffer
@@ -135,7 +135,7 @@ public:
      * Default implementation does nothing, but proper resource management in derived classes
      * is crucial for optimal performance and preventing resource leaks.
      */
-    virtual void on_detach(std::shared_ptr<Buffer> buffer) { };
+    virtual void on_detach(std::shared_ptr<Buffer>) {};
 
     /**
      * @brief Gets the preferred processing backend for this processor
@@ -177,7 +177,7 @@ public:
      * and other properties to determine compatibility, enabling robust error handling
      * and automatic processor selection in complex processing pipelines.
      */
-    virtual bool is_compatible_with(std::shared_ptr<Buffer> buffer) const { return true; }
+    virtual bool is_compatible_with(std::shared_ptr<Buffer>) const { return true; }
 
     /**
      * @brief Gets the processing complexity estimate for this processor

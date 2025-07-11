@@ -20,7 +20,6 @@ Engine::Engine()
 Engine::~Engine()
 {
     End();
-    delete m_rng;
 }
 
 Engine::Engine(Engine&& other) noexcept

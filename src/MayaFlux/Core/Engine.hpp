@@ -236,7 +236,7 @@ public:
      * The NoiseEngine provides various stochastic signal sources.
      * Managed directly by Engine for optimal performance in generator nodes.
      */
-    inline Nodes::Generator::Stochastics::NoiseEngine* get_random_engine() { return m_rng; }
+    inline Nodes::Generator::Stochastics::NoiseEngine* get_random_engine() { return m_rng.get(); }
 
     /**
      * @brief Gets the subsystem manager for advanced component access
@@ -276,7 +276,7 @@ private:
     std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager; ///< Node graph manager
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager; ///< Buffer manager
     std::shared_ptr<SubsystemManager> m_subsystem_manager;
-    Nodes::Generator::Stochastics::NoiseEngine* m_rng; ///< Stochastic signal generator
+    std::unique_ptr<Nodes::Generator::Stochastics::NoiseEngine> m_rng; ///< Stochastic signal generator
 };
 
 } // namespace MayaFlux::Core

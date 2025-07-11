@@ -88,7 +88,7 @@ public:
     virtual void shutdown() = 0;
 
     /** @brief Get the type of this subsystem */
-    virtual const SubsystemType get_type() const = 0;
+    virtual SubsystemType get_type() const = 0;
 
     /** @brief Get the processing context handle for this subsystem */
     virtual SubsystemProcessingHandle* get_processing_context_handle() = 0;

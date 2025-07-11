@@ -401,13 +401,13 @@ struct Region {
     {
         Region result = *this;
         for (size_t i = 0; i < std::min(offset.size(), start_coordinates.size()); i++) {
-            if (offset[i] < 0 && std::abs(offset[i]) > result.start_coordinates[i]) {
+            if (offset[i] < 0 && std::abs(offset[i]) > static_cast<int64_t>(result.start_coordinates[i])) {
                 result.start_coordinates[i] = 0;
             } else {
                 result.start_coordinates[i] += offset[i];
             }
 
-            if (offset[i] < 0 && std::abs(offset[i]) > result.end_coordinates[i]) {
+            if (offset[i] < 0 && std::abs(offset[i]) > static_cast<int64_t>(result.end_coordinates[i])) {
                 result.end_coordinates[i] = 0;
             } else {
                 result.end_coordinates[i] += offset[i];

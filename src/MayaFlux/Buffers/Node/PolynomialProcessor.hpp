@@ -36,9 +36,9 @@ public:
         requires std::constructible_from<Nodes::Generator::Polynomial, Args...>
     PolynomialProcessor(ProcessMode mode = ProcessMode::SAMPLE_BY_SAMPLE, size_t window_size = 64, Args&&... args)
         : m_polynomial(std::make_shared<Nodes::Generator::Polynomial>(std::forward<Args>(args)...))
-        , m_use_internal(true)
         , m_process_mode(mode)
         , m_window_size(window_size)
+        , m_use_internal(true)
     {
     }
 
@@ -72,7 +72,7 @@ public:
      * @brief Called when the processor is detached from a buffer
      * @param buffer Buffer being detached from
      */
-    inline void on_detach(std::shared_ptr<Buffer> buffer) override { }
+    inline void on_detach(std::shared_ptr<Buffer>) override { }
 
     /**
      * @brief Sets the processing mode

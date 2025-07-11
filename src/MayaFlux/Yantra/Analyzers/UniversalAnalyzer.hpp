@@ -173,31 +173,31 @@ public:
     }
 
 protected:
-    virtual AnalyzerOutput analyze_impl(const Kakshya::DataVariant& data)
+    virtual AnalyzerOutput analyze_impl(const Kakshya::DataVariant&)
     {
         std::cerr << "[UniversalAnalyzer] Warning: DataVariant analysis not implemented for this analyzer." << std::endl;
         return AnalyzerOutput {}; // or a sentinel value if you prefer
     }
 
-    virtual AnalyzerOutput analyze_impl(std::shared_ptr<Kakshya::SignalSourceContainer> container)
+    virtual AnalyzerOutput analyze_impl(std::shared_ptr<Kakshya::SignalSourceContainer>)
     {
         std::cerr << "[UniversalAnalyzer] Warning: Container analysis not implemented for this analyzer." << std::endl;
         return AnalyzerOutput {};
     }
 
-    virtual AnalyzerOutput analyze_impl(const Kakshya::Region& region)
+    virtual AnalyzerOutput analyze_impl(const Kakshya::Region&)
     {
         std::cerr << "[UniversalAnalyzer] Warning: Region analysis not implemented for this analyzer." << std::endl;
         return AnalyzerOutput {};
     }
 
-    virtual AnalyzerOutput analyze_impl(const Kakshya::RegionGroup& group)
+    virtual AnalyzerOutput analyze_impl(const Kakshya::RegionGroup&)
     {
         std::cerr << "[UniversalAnalyzer] Warning: RegionGroup analysis not implemented for this analyzer." << std::endl;
         return AnalyzerOutput {};
     }
 
-    virtual AnalyzerOutput analyze_impl(const std::vector<Kakshya::RegionSegment>& segments)
+    virtual AnalyzerOutput analyze_impl(const std::vector<Kakshya::RegionSegment>&)
     {
         std::cerr << "[UniversalAnalyzer] Warning: RegionSegment analysis not implemented for this analyzer." << std::endl;
         return AnalyzerOutput {};

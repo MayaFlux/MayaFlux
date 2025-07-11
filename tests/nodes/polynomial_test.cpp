@@ -2,9 +2,7 @@
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/Node/PolynomialProcessor.hpp"
-#include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Generators/Polynomial.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
 namespace MayaFlux::Test {
 
@@ -152,7 +150,7 @@ TEST_F(PolynomialTest, ProcessBatch)
 
     // Create a polynomial that depends on the sample index
     auto index_poly = std::make_shared<Nodes::Generator::Polynomial>(
-        [](double x) -> double {
+        [](double) -> double {
             static int index = 0;
             return static_cast<double>(index++);
         });

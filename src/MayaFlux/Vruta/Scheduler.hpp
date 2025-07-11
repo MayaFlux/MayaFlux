@@ -266,7 +266,7 @@ public:
      * @brief Generates a unique task ID for new tasks
      * @return A unique task ID
      */
-    const u_int64_t get_next_task_id() const;
+    u_int64_t get_next_task_id() const;
 
     /**
      * @brief Check if a processing domain has any active tasks

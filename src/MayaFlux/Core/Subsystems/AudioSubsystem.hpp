@@ -99,7 +99,7 @@ public:
      */
     explicit AudioSubsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type = Utils::AudioBackendType::RTAUDIO);
 
-    inline virtual const SubsystemType get_type() const override { return m_type; }
+    inline virtual SubsystemType get_type() const override { return m_type; }
 
     virtual SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
 
