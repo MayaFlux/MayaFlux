@@ -48,6 +48,8 @@ class Buffer;
  */
 class BufferProcessor {
 public:
+    friend class BufferProcessingChain;
+
     /**
      * @brief Virtual destructor for proper cleanup of derived classes
      *

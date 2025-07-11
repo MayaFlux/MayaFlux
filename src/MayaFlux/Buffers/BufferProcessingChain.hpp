@@ -182,7 +182,6 @@ public:
      */
     inline ProcessingToken get_preferred_token() const
     {
-        std::lock_guard<std::mutex> lock(m_chain_mutex);
         return m_token_filter_mask;
     }
 
@@ -196,7 +195,6 @@ public:
      */
     inline void set_enforcement_strategy(TokenEnforcementStrategy strategy)
     {
-        std::lock_guard<std::mutex> lock(m_chain_mutex);
         m_enforcement_strategy = strategy;
     }
 
@@ -210,7 +208,6 @@ public:
      */
     inline TokenEnforcementStrategy get_enforcement_strategy() const
     {
-        std::lock_guard<std::mutex> lock(m_chain_mutex);
         return m_enforcement_strategy;
     }
 
@@ -258,11 +255,27 @@ public:
      */
     void enforce_chain_token_on_processors();
 
+    inline bool has_pending_operations() const
+    {
+        return m_pending_count.load(std::memory_order_relaxed) > 0;
+    }
+
+protected:
+    bool add_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, std::string* rejection_reason = nullptr);
+    void remove_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer);
+
 private:
     /**
      * @brief Validates the processing token against the chain's preferred token
      */
     void cleanup_rejected_processors(std::shared_ptr<Buffer> buffer);
+
+    /**
+     * @brief Process pending processor operations
+     */
+    void process_pending_processor_operations();
+
+    bool queue_pending_processor_op(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, bool is_addition, std::string* rejection_reason = nullptr);
 
     /**
      * @brief Map of buffers to their processor sequences
@@ -292,11 +305,6 @@ private:
     std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<BufferProcessor>> m_final_processors;
 
     /**
-     * @brief Mutex for thread-safe access to the processing chain
-     */
-    mutable std::mutex m_chain_mutex;
-
-    /**
      * @brief Preferred processing token for this chain
      *
      * This token represents the preferred processing domain that influences how processors
@@ -314,5 +322,20 @@ private:
      * The default strategy is FILTERED, which applies the token only to compatible processors.
      */
     TokenEnforcementStrategy m_enforcement_strategy { TokenEnforcementStrategy::FILTERED };
+
+    static constexpr size_t MAX_PENDING_PROCESSORS = 32;
+
+    struct PendingProcessorOp {
+        std::atomic<bool> active { false };
+        std::shared_ptr<BufferProcessor> processor;
+        std::shared_ptr<Buffer> buffer;
+        bool is_addition { true }; // true = add, false = remove
+    };
+
+    std::atomic<bool> m_is_processing;
+
+    PendingProcessorOp m_pending_ops[MAX_PENDING_PROCESSORS];
+
+    std::atomic<u_int32_t> m_pending_count { 0 };
 };
 }

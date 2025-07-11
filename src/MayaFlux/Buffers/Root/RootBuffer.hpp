@@ -21,18 +21,20 @@ public:
      */
     virtual void add_child_buffer(std::shared_ptr<BufferType> buffer)
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        if (this->is_processing()) {
+            for (size_t i = 0; i < MAX_PENDING; ++i) {
+                bool expected = false;
+                if (m_pending_ops[i].active.compare_exchange_strong(expected, true, std::memory_order_acquire, std::memory_order_relaxed)) {
+                    m_pending_ops[i].buffer = buffer;
+                    m_pending_ops[i].is_addition = true;
+                    m_pending_count.fetch_add(1, std::memory_order_relaxed);
+                    return;
+                }
+            }
 
-        std::string rejection_reason;
-        if (!is_buffer_acceptable(buffer, &rejection_reason)) {
-            throw std::runtime_error("Cannot add child buffer: " + rejection_reason);
+            return;
         }
-
-        m_child_buffers.push_back(buffer);
-
-        if (!buffer->get_processing_chain() && this->get_processing_chain()) {
-            buffer->set_processing_chain(this->get_processing_chain());
-        }
+        add_child_buffer_direct(buffer);
     }
 
     /**
@@ -46,18 +48,11 @@ public:
      */
     virtual bool try_add_child_buffer(std::shared_ptr<BufferType> buffer, std::string* rejection_reason = nullptr)
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
-
         if (!is_buffer_acceptable(buffer, rejection_reason)) {
             return false;
         }
 
-        m_child_buffers.push_back(buffer);
-
-        if (!buffer->get_processing_chain() && this->get_processing_chain()) {
-            buffer->set_processing_chain(this->get_processing_chain());
-        }
-
+        add_child_buffer(buffer);
         return true;
     }
 
@@ -67,11 +62,21 @@ public:
      */
     virtual void remove_child_buffer(std::shared_ptr<BufferType> buffer)
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        auto it = std::find(m_child_buffers.begin(), m_child_buffers.end(), buffer);
-        if (it != m_child_buffers.end()) {
-            m_child_buffers.erase(it);
+        if (this->is_processing()) {
+            for (size_t i = 0; i < MAX_PENDING; ++i) {
+                bool expected = false;
+                if (m_pending_ops[i].active.compare_exchange_strong(expected, true, std::memory_order_acquire, std::memory_order_relaxed)) {
+                    m_pending_ops[i].buffer = buffer;
+                    m_pending_ops[i].is_addition = false;
+                    m_pending_count.fetch_add(1, std::memory_order_relaxed);
+                    return;
+                }
+            }
+
+            return;
         }
+
+        remove_child_buffer_direct(buffer);
     }
 
     /**
@@ -210,7 +215,57 @@ public:
         return true;
     }
 
+    bool has_pending_operations() const
+    {
+        return m_pending_count.load(std::memory_order_relaxed) > 0;
+    }
+
 protected:
+    void add_child_buffer_direct(std::shared_ptr<BufferType> buffer)
+    {
+        std::string rejection_reason;
+        if (!is_buffer_acceptable(buffer, &rejection_reason)) {
+            throw std::runtime_error("Cannot add child buffer: " + rejection_reason);
+        }
+
+        m_child_buffers.push_back(buffer);
+
+        if (!buffer->get_processing_chain() && this->get_processing_chain()) {
+            buffer->set_processing_chain(this->get_processing_chain());
+        }
+    }
+
+    void remove_child_buffer_direct(std::shared_ptr<BufferType> buffer)
+    {
+        auto it = std::find(m_child_buffers.begin(), m_child_buffers.end(), buffer);
+        if (it != m_child_buffers.end()) {
+            m_child_buffers.erase(it);
+        }
+    }
+
+    /**
+     * @brief Process pending operations - call this at start of processing cycles
+     */
+    void process_pending_buffer_operations()
+    {
+        for (size_t i = 0; i < MAX_PENDING; ++i) {
+            if (m_pending_ops[i].active.load(std::memory_order_acquire)) {
+                auto& op = m_pending_ops[i];
+
+                if (op.is_addition) {
+                    add_child_buffer_direct(op.buffer);
+                } else {
+                    remove_child_buffer_direct(op.buffer);
+                }
+
+                // Clear operation
+                op.buffer.reset();
+                op.active.store(false, std::memory_order_release);
+                m_pending_count.fetch_sub(1, std::memory_order_relaxed);
+            }
+        }
+    }
+
     /**
      * @brief Vector of tributary buffers that contribute to this root buffer
      */
@@ -260,5 +315,21 @@ protected:
      * the primary processing stream for this root buffer.
      */
     ProcessingToken m_preferred_processing_token;
+
+    std::atomic<u_int32_t> m_pending_count { 0 };
+
+    static constexpr size_t MAX_PENDING = 64;
+
+    /**
+     * @brief Structure for storing pending buffer add/remove operations
+     *
+     * Similar to RootNode's PendingOp, this handles buffer operations
+     * that need to be deferred when the buffer is currently processing.
+     */
+    struct PendingBufferOp {
+        std::atomic<bool> active { false };
+        std::shared_ptr<BufferType> buffer;
+        bool is_addition { true }; // true = add, false = remove
+    } m_pending_ops[MAX_PENDING];
 };
 }

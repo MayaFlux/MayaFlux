@@ -105,6 +105,10 @@ void RootAudioBuffer::set_node_output(const std::vector<double>& data)
 
 void RootAudioBuffer::process_default()
 {
+    if (this->has_pending_operations()) {
+        this->process_pending_buffer_operations();
+    }
+
     if (m_default_processor && m_process_default) {
         m_default_processor->process(shared_from_this());
     }

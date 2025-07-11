@@ -197,7 +197,6 @@ std::vector<ProcessingToken> BufferManager::get_active_tokens() const
 void BufferManager::register_token_processor(ProcessingToken token,
     std::function<void(std::vector<std::shared_ptr<RootAudioBuffer>>&, u_int32_t)> processor)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
     m_token_processors[token] = processor;
 }
 
@@ -268,8 +267,6 @@ void BufferManager::add_buffer_to_token_channel(std::shared_ptr<AudioBuffer> buf
 
 void BufferManager::remove_buffer_from_token_channel(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end() || channel >= token_it->second.size()) {
         return;
@@ -324,8 +321,6 @@ void BufferManager::add_processor_to_token_channel(std::shared_ptr<BufferProcess
 
 void BufferManager::add_processor_to_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end()) {
         return;
@@ -341,8 +336,6 @@ void BufferManager::add_processor_to_token(std::shared_ptr<BufferProcessor> proc
 
 void BufferManager::remove_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     for (const auto& [token, processing_chains] : m_token_processing_chains) {
         for (auto& chain : processing_chains) {
             chain->remove_processor(processor, buffer);
@@ -354,8 +347,6 @@ void BufferManager::remove_processor(std::shared_ptr<BufferProcessor> processor,
 
 void BufferManager::remove_processor_from_token_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, u_int32_t channel)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_processing_chains.find(token);
     if (token_it == m_token_processing_chains.end() || channel >= token_it->second.size()) {
         return;
@@ -367,8 +358,6 @@ void BufferManager::remove_processor_from_token_channel(std::shared_ptr<BufferPr
 
 void BufferManager::remove_processor_from_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_processing_chains.find(token);
     if (token_it == m_token_processing_chains.end()) {
         return;
@@ -384,8 +373,6 @@ void BufferManager::remove_processor_from_token(std::shared_ptr<BufferProcessor>
 
 void BufferManager::set_final_processor_for_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_processing_chains.find(token);
     if (token_it == m_token_processing_chains.end()) {
         return;
@@ -428,6 +415,9 @@ void BufferManager::connect_node_to_token_channel(std::shared_ptr<Nodes::Node> n
     ensure_token_channel_exists(token, channel);
 
     auto processor = std::make_shared<NodeSourceProcessor>(node, mix, clear_before);
+
+    processor->set_processing_token(token);
+
     add_processor_to_token_channel(processor, token, channel);
 }
 
@@ -485,8 +475,6 @@ void BufferManager::resize_token_buffers(ProcessingToken token, u_int32_t buffer
 
 void BufferManager::ensure_token_channel_exists(ProcessingToken token, u_int32_t channel)
 {
-    std::lock_guard<std::mutex> lock(m_manager_mutex);
-
     auto token_it = m_token_root_buffers.find(token);
     if (token_it == m_token_root_buffers.end()) {
         u_int32_t default_channels = (token == m_default_token) ? m_token_channel_counts[token] : 2;
