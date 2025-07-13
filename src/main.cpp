@@ -1,13 +1,15 @@
-#include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/version.h"
+
 #include "MayaFlux/Nodes/Generators/Impulse.hpp"
 #include "MayaFlux/Nodes/Generators/Phasor.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
-#include "MayaFlux/version.h"
 
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
+#include "MayaFlux/Buffers/Recursive/FeedbackBuffer.hpp"
 
-#include "MayaFlux/API/Proxy/NodeProxy.hpp"
+#include "MayaFlux/API/Proxy/Creator.hpp"
 
 #include <csignal>
 
@@ -35,19 +37,25 @@ int main()
         MayaFlux::Start();
 
         MayaFlux::register_all_nodes();
+        MayaFlux::register_all_buffers();
 
         auto sine = create.sine(20.f, 100.f);
-        auto sine1 = create.sine(20.f, 10.f);
-        // auto sine2 = create.sine(200).domain(Audio).channel(0);
+        auto sine1 = create.sine(200.f, 0.1f);
+        auto sine2 = create.sine(500.f, 0.1f).domain(Audio).channel(0);
         // auto sine2 = create.domain(Audio).channel(1).sine(sine, sine1, 200.f, 0.1);
-        auto phasor = create.phasor(5);
-        sine1* sine* phasor;
+
+        // auto fb = bbcreate.domain(Audio).channel(0).feedback(0, 512, 0.9f);
+        // for (auto& sample : fb->get_data()) {
+        //     sample = MayaFlux::get_uniform_random();
+        //     sample *= 0.1;
+        // }
 
         auto impulse = create.impulse(1)[0] | Audio;
-        // auto impulse = create.domain(MayaFlux::Audio).channel(0).impulse(1);
         impulse->on_impulse([](auto&) {
             std::cout << "Foo\n";
         });
+
+        auto nn = create.node(0, 512, sine1, false)[1] | Audio;
 
         MayaFlux::attach_quick_process_to_audio_channel(
             [](std::shared_ptr<MayaFlux::Buffers::AudioBuffer> buffer) {

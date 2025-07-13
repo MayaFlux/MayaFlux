@@ -5,7 +5,7 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
-#include "Proxy/NodeProxy.hpp"
+#include "Proxy/Creator.hpp"
 
 namespace MayaFlux {
 
@@ -35,16 +35,14 @@ Nodes::RootNode& get_audio_channel_root(u_int32_t channel)
 
 void register_all_nodes()
 {
-    MayaFlux::NodeProxy::set_context_applier(
-        [](std::shared_ptr<MayaFlux::Nodes::Node> node, const MayaFlux::CreationContext& context) {
+    ContextAppliers::set_node_context_applier(
+        [](std::shared_ptr<Nodes::Node> node, const CreationContext& context) {
+            std::cout << "Calling add node\n";
             if (context.domain && context.channel) {
+                std::cout << "Adding node\n";
                 auto token = get_node_token(*context.domain);
-                get_node_graph_manager()->add_to_root(node, token, *context.channel);
+                get_node_graph_manager()->add_to_root(node, token, context.channel.value());
             }
-
-            // for (const auto& [key, value] : context.metadata) {
-            //     apply_metadata_to_node(node, key, value);
-            // }
         });
 }
 
@@ -92,6 +90,19 @@ std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels
     std::shared_ptr<Buffers::BufferProcessor> quick_processor = nullptr;
     quick_processor = get_buffer_manager()->attach_quick_process_to_token(processor, Buffers::ProcessingToken::AUDIO_BACKEND);
     return quick_processor;
+}
+
+void register_all_buffers()
+{
+    ContextAppliers::set_buffer_context_applier(
+        [](std::shared_ptr<Buffers::Buffer> buffer, const CreationContext& context) {
+            if (context.domain && context.channel) {
+                auto token = get_buffer_token(*context.domain);
+                if (auto t_buffer = dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)) {
+                    get_buffer_manager()->add_buffer_to_token_channel(t_buffer, token, context.channel.value());
+                }
+            }
+        });
 }
 
 }

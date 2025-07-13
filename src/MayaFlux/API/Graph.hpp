@@ -151,4 +151,6 @@ std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channel(
  */
 std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
 
+void register_all_buffers();
+
 }
