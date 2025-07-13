@@ -1,69 +1,73 @@
 #pragma once
 
-#include "Backends/AudioBackend.hpp"
-#include "MayaFlux/Vruta/Scheduler.hpp"
+#include "SubsystemManager.hpp"
 
-namespace MayaFlux::Nodes {
-class NodeGraphManager;
-namespace Generator::Stochastics {
-    class NoiseEngine;
-}
+namespace MayaFlux::Nodes::Generator::Stochastics {
+class NoiseEngine;
 }
 
-namespace MayaFlux::Buffers {
-class BufferManager;
-}
+#include "Backends/AudioBackend/GlobalStreamInfo.hpp"
 
 namespace MayaFlux::Core {
 
-/**
- * @enum HookPosition
- * @brief Defines the position in the processing cycle where a hook should be executed
- *
- * Process hooks can be registered to run either before or after the main audio processing
- * to perform additional operations or monitoring at specific points in the signal chain.
- */
-enum class HookPosition {
-    PRE_PROCESS, ///< Execute hook before any audio processing occurs
-    POST_PROCESS ///< Execute hook after all audio processing is complete
-};
+class SubsystemManager;
 
-/**
- * @typedef ProcessHook
- * @brief Function type for process hooks that can be registered with the engine
- *
- * Process hooks are callbacks that execute at specific points in the audio processing cycle.
- * They receive the current number of frames being processed and can be used for monitoring,
- * debugging, or additional processing operations.
- */
-using ProcessHook = std::function<void(unsigned int num_frames)>;
+// struct GlobalEngineInfo {
+//     GlobalStreamInfo audio;
+//     GlobalWindowInfo window;
+// };
 
 /**
  * @class Engine
- * @brief Core processing engine that manages signal flow, scheduling, and node graph operations
+ * @brief Central lifecycle manager and component orchestrator for the MayaFlux processing system
  *
- * The Engine is the central component of Maya Flux, responsible for initializing the processing system,
- * managing data streams, scheduling tasks, and coordinating the node-based computational graph.
+ * The Engine serves as the primary entry point and lifecycle coordinator for MayaFlux, acting as:
+ * - **Lifecycle Manager**: Controls initialization, startup, pause/resume, and shutdown sequences
+ * - **Component Initializer**: Creates and configures core system components with proper dependencies
+ * - **Access Router**: Provides centralized access to all major subsystems and managers
+ * - **Reference Holder**: Maintains shared ownership of core components to ensure proper lifetime management
  *
- * Engine provides centrally managed instances of key components:
- * - NodeGraphManager: Manages the computational processing node graph
- * - BufferManager: Handles data buffer allocation and management
- * - TaskScheduler: Schedules and executes processing tasks with precise timing
+ * **Core Responsibilities:**
+ * 1. **System Initialization**: Orchestrates the creation and configuration of all core components
+ * 2. **Lifecycle Control**: Manages the start/stop/pause/resume cycle of the entire processing system
+ * 3. **Component Access**: Provides unified access to subsystems (audio, scheduling, node graph, buffers)
+ * 4. **Resource Management**: Ensures proper construction/destruction order and shared ownership
  *
- * While these centrally managed components provide a convenient way to work with Maya Flux,
- * users are free to:
- * - Create their own instances of these components
- * - Make custom connections between nodes
- * - Call processing methods manually for offline processing
- * - Process data without sending to hardware output
+ * **Architecture Philosophy:**
+ * The Engine follows a "batteries included but replaceable" approach:
+ * - Provides sensible defaults and automatic component wiring for ease of use
+ * - Allows advanced users to access individual components directly for custom workflows
+ * - Enables completely custom component instantiation when needed
  *
- * For core system components like Device and Stream, users can create their own instances,
- * but this is risky unless they're familiar with the underlying factory API. Custom implementations
- * lose the guarantees provided by the Engine class, but advanced users are free to create and
- * manage these components directly if needed.
+ * **Usage Patterns:**
  *
- * Future versions will provide more methods to override default behaviors beyond
- * just swapping the contents of the shared pointers.
+ * *Simple Usage (Recommended):*
+ * ```cpp
+ * Engine engine;
+ * engine.Init(48000, 512, 2, 0);  // 48kHz, 512 samples, stereo out
+ * engine.Start();
+ * // Use engine.get_scheduler(), engine.get_node_graph_manager(), etc.
+ * ```
+ *
+ * *Advanced Usage:*
+ * ```cpp
+ * Engine engine;
+ * auto custom_scheduler = std::make_shared<CustomScheduler>();
+ * engine.Init(stream_info);
+ * // Replace default scheduler with custom implementation
+ * engine.get_scheduler() = custom_scheduler;
+ * ```
+ *
+ * *Offline Processing:*
+ * ```cpp
+ * // Engine components can be used without hardware I/O
+ * auto scheduler = engine.get_scheduler();
+ * auto node_graph = engine.get_node_graph_manager();
+ * // Process manually without Start()
+ * ```
+ *
+ * The Engine does not perform direct signal processing or scheduling - it delegates these
+ * responsibilities to specialized subsystems while ensuring they work together coherently.
  */
 class Engine {
 public:
@@ -79,7 +83,8 @@ public:
      * The backend type determines the underlying audio API used for device management
      * and stream processing.
      */
-    Engine(Utils::BackendType type = Utils::BackendType::RTAUDIO);
+    // Engine(Utils::AudioBackendType audio_type = Utils::AudioBackendType::RTAUDIO);
+    Engine();
 
     /**
      * @brief Destroys the Engine instance and cleans up resources
@@ -105,14 +110,19 @@ public:
     Engine& operator=(Engine&& other) noexcept;
 
     /**
-     * @brief Initializes the processing engine
+     * @brief Initializes all system components and prepares for processing
      * @param sample_rate Audio sample rate in Hz
      * @param buffer_size Size of audio processing buffer in frames
      * @param num_out_channels Number of output channels
      * @param num_in_channels Number of input channels
      *
-     * Configures the processing engine with the specified parameters.
-     * This method must be called before starting the engine.
+     * Orchestrates the initialization sequence for all core components:
+     * - Creates and configures the task scheduler with the specified sample rate
+     * - Initializes the node graph manager and buffer manager
+     * - Sets up subsystem managers and audio backend
+     * - Establishes proper component interconnections
+     *
+     * This method must be called before Start().
      */
     void Init(u_int32_t sample_rate = 48000u, u_int32_t buffer_size = 512u, u_int32_t num_out_channels = 2u, u_int32_t num_in_channels = 0u);
 
@@ -126,36 +136,55 @@ public:
     void Init(const GlobalStreamInfo& streamInfo);
 
     /**
-     * @brief Starts data processing
+     * @brief Starts the coordinated processing of all subsystems
      *
-     * Opens and starts the processing stream. Init() must be called first.
+     * Initiates the processing lifecycle by:
+     * - Starting the audio backend and opening streams
+     * - Beginning task scheduler execution
+     * - Activating node graph processing
+     * - Enabling real-time audio I/O
+     *
+     * Init() must be called first to prepare all components.
      */
     void Start();
 
     /**
-     * @brief Pauses processing
+     * @brief Pauses all processing while maintaining system state
      *
-     * Stops the data stream but maintains the current state of all components.
+     * Temporarily halts processing activities:
+     * - Pauses the audio stream
+     * - Suspends task scheduler execution
+     * - Maintains all component state for later resumption
      */
     void Pause();
 
     /**
-     * @brief Resumes processing after a pause
+     * @brief Resumes processing from paused state
      *
-     * Restarts the data stream with the current state of all components.
+     * Restarts all processing activities:
+     * - Resumes the audio stream
+     * - Reactivates task scheduler
+     * - Continues from the exact state when paused
      */
     void Resume();
 
     /**
-     * @brief Stops and cleans up all processing
+     * @brief Stops all processing and performs clean shutdown
      *
-     * Terminates all tasks, stops and closes the data stream, and clears buffers.
+     * Orchestrates the shutdown sequence:
+     * - Terminates all active tasks and coroutines
+     * - Stops and closes audio streams
+     * - Releases all resources and buffers
+     * - Resets components to uninitialized state
      */
     void End();
 
     /**
-     * @brief Checks if the processing engine is currently running
-     * @return true if the data stream is active, false otherwise
+     * @brief Checks if the coordinated processing system is currently active
+     * @return true if all subsystems are running and processing, false otherwise
+     *
+     * This reflects the overall system state - true only when the audio stream
+     * is active, schedulers are running, and the system is processing data.
      */
     bool is_running() const;
 
@@ -169,172 +198,75 @@ public:
      */
     inline GlobalStreamInfo& get_stream_info() { return m_stream_info; }
 
-    IAudioBackend* get_audio_backend() { return m_audiobackend.get(); }
-
-    /**
-     * @brief Gets the stream manager
-     * @return Pointer to the Stream object
-     */
-    inline const AudioStream* get_stream_manager() const { return m_audio_stream.get(); }
-
-    /**
-     * @brief Gets the device manager
-     * @return Pointer to the Device object
-     */
-    inline const AudioDevice* get_device_manager() const { return m_audio_device.get(); }
-
     //-------------------------------------------------------------------------
-    // Component Access
+    // Component Access - Engine acts as access router to all subsystems
     //-------------------------------------------------------------------------
 
     /**
      * @brief Gets the node graph manager
-     * @return Shared pointer to the NodeGraphManager
+     * @return Shared pointer to the NodeGraphManager for node-based processing
+     *
+     * The NodeGraphManager handles the computational graph of processing nodes.
+     * Access through Engine ensures proper initialization and lifetime management.
      */
     inline std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager() { return m_node_graph_manager; }
 
     /**
      * @brief Gets the task scheduler
-     * @return Shared pointer to the TaskScheduler
+     * @return Shared pointer to the TaskScheduler for coroutine-based timing
+     *
+     * The TaskScheduler manages sample-accurate timing and coroutine execution.
+     * Access through Engine ensures proper clock synchronization with audio.
      */
     inline std::shared_ptr<Vruta::TaskScheduler> get_scheduler() { return m_scheduler; }
 
     /**
      * @brief Gets the buffer manager
-     * @return Shared pointer to the BufferManager
+     * @return Shared pointer to the BufferManager for memory management
+     *
+     * The BufferManager handles efficient allocation and reuse of audio buffers.
+     * Access through Engine ensures buffers are sized correctly for the stream.
      */
-    inline std::shared_ptr<Buffers::BufferManager> get_buffer_manager() { return m_Buffer_manager; }
+    inline std::shared_ptr<Buffers::BufferManager> get_buffer_manager() { return m_buffer_manager; }
 
     /**
      * @brief Gets the stochastic signal generator engine
-     * @return Pointer to the NoiseEngine
-     */
-    inline Nodes::Generator::Stochastics::NoiseEngine* get_random_engine() { return m_rng; }
-
-    //-------------------------------------------------------------------------
-    // Signal Processing
-    //-------------------------------------------------------------------------
-
-    /**
-     * @brief Processes input data
-     * @param input_buffer Pointer to input data buffer
-     * @param num_frames Number of frames to process
-     * @return Status code (0 for success)
-     */
-    int process_input(double* input_buffer, unsigned int num_frames);
-
-    /**
-     * @brief Processes output data
-     * @param output_buffer Pointer to output data buffer
-     * @param num_frames Number of frames to process
-     * @return Status code (0 for success)
+     * @return Pointer to the NoiseEngine for random signal generation
      *
-     * Processes scheduled tasks and fills the output buffer with processed data.
+     * The NoiseEngine provides various stochastic signal sources.
+     * Managed directly by Engine for optimal performance in generator nodes.
      */
-    int process_output(double* output_buffer, unsigned int num_frames);
+    inline Nodes::Generator::Stochastics::NoiseEngine* get_random_engine() { return m_rng.get(); }
 
     /**
-     * @brief Processes both input and output data
-     * @param input_buffer Pointer to input data buffer
-     * @param output_buffer Pointer to output data buffer
-     * @param num_frames Number of frames to process
-     * @return Status code (0 for success)
+     * @brief Gets the subsystem manager for advanced component access
+     * @return Shared pointer to SubsystemManager for subsystem coordination
+     *
+     * The SubsystemManager provides access to specialized subsystems like
+     * audio backends, graphics systems, and custom processing domains.
      */
-    int process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames);
-
-    //-------------------------------------------------------------------------
-    // Task Scheduling
-    //-------------------------------------------------------------------------
+    inline std::shared_ptr<SubsystemManager> get_subsystem_manager() { return m_subsystem_manager; }
 
     /**
-     * @brief Gets a pointer to a task's current value
-     * @param name Name of the task
-     * @return Pointer to the float value, or nullptr if not found
+     * @brief Get typed access to a specific subsystem
+     * @tparam SubsystemType Expected type of the subsystem
+     * @param tokens Token configuration identifying the subsystem
+     * @return Shared pointer to subsystem or nullptr if not found
      */
-    float* get_line_value(const std::string& name);
-
-    /**
-     * @brief Creates a function that returns a task's current value
-     * @param name Name of the task
-     * @return Function that returns the current float value
-     */
-    std::function<float()> line_value(const std::string& name);
-
-    /**
-     * @brief Schedules a new computational routine task
-     * @param name Unique name for the task
-     * @param task The computational routine to schedule
-     * @param initialize Whether to initialize the task immediately
-     */
-    void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize = false);
-
-    /**
-     * @brief Cancels a scheduled task
-     * @param name Name of the task to cancel
-     * @return true if task was found and canceled, false otherwise
-     */
-    bool cancel_task(const std::string& name);
-
-    /**
-     * @brief Restarts a scheduled task
-     * @param name Name of the task to restart
-     * @return true if task was found and restarted, false otherwise
-     */
-    bool restart_task(const std::string& name);
-
-    /**
-     * @brief Updates parameters of a scheduled task
-     * @tparam Args Parameter types
-     * @param name Name of the task to update
-     * @param args New parameter values
-     * @return true if task was found and updated, false otherwise
-     */
-    template <typename... Args>
-    inline bool update_task_params(const std::string& name, Args... args)
+    std::shared_ptr<ISubsystem> get_subsystem(SubsystemType type)
     {
-        auto it = m_named_tasks.find(name);
-        if (it != m_named_tasks.end() && it->second->is_active()) {
-            it->second->update_params(std::forward<Args>(args)...);
-            return true;
-        }
-        return false;
+        return m_subsystem_manager->get_subsystem(type);
     }
-
-    /**
-     * @brief Registers a process hook to be executed at a specific point in the processing cycle
-     * @param name Unique identifier for the hook
-     * @param hook The callback function to execute
-     * @param position When to execute the hook (pre or post processing)
-     *
-     * Process hooks allow for custom code execution at specific points in the audio processing cycle.
-     * They can be used for monitoring, debugging, or additional processing operations.
-     */
-    void register_process_hook(const std::string& name, ProcessHook hook, HookPosition position = HookPosition::POST_PROCESS);
-
-    /**
-     * @brief Removes a previously registered process hook
-     * @param name The identifier of the hook to remove
-     */
-    void unregister_process_hook(const std::string& name);
-
-    /**
-     * @brief Checks if a process hook with the given name exists
-     * @param name The identifier of the hook to check
-     * @return true if a hook with the given name exists, false otherwise
-     */
-    bool has_process_hook(const std::string& name) const;
 
 private:
     //-------------------------------------------------------------------------
     // System Components
     //-------------------------------------------------------------------------
 
-    std::unique_ptr<IAudioBackend> m_audiobackend; ///< RtAudio context
-    std::unique_ptr<AudioDevice> m_audio_device; ///< Device manager
-    std::unique_ptr<AudioStream> m_audio_stream; ///< Stream manager
     GlobalStreamInfo m_stream_info; ///< Stream configuration
 
     bool m_is_paused; ///< Pause state flag
+    bool m_is_initialized;
 
     //-------------------------------------------------------------------------
     // Core Components
@@ -342,17 +274,9 @@ private:
 
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler; ///< Task scheduler
     std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager; ///< Node graph manager
-    std::shared_ptr<Buffers::BufferManager> m_Buffer_manager; ///< Buffer manager
-    Nodes::Generator::Stochastics::NoiseEngine* m_rng; ///< Stochastic signal generator
-
-    //-------------------------------------------------------------------------
-    // Task Management
-    //-------------------------------------------------------------------------
-
-    std::unordered_map<std::string, std::shared_ptr<Vruta::SoundRoutine>> m_named_tasks; ///< Named task registry
-
-    std::map<std::string, ProcessHook> m_pre_process_hooks;
-    std::map<std::string, ProcessHook> m_post_process_hooks;
+    std::shared_ptr<Buffers::BufferManager> m_buffer_manager; ///< Buffer manager
+    std::shared_ptr<SubsystemManager> m_subsystem_manager;
+    std::unique_ptr<Nodes::Generator::Stochastics::NoiseEngine> m_rng; ///< Stochastic signal generator
 };
 
 } // namespace MayaFlux::Core

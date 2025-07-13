@@ -313,10 +313,10 @@ int RtAudioStream::rtAudioCallback(
     return 0;
 }
 
-std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(Utils::BackendType type)
+std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(Utils::AudioBackendType type)
 {
     switch (type) {
-    case Utils::BackendType::RTAUDIO:
+    case Utils::AudioBackendType::RTAUDIO:
         return std::make_unique<RtAudioBackend>();
     default:
         throw std::runtime_error("Unsupported audio backend type");

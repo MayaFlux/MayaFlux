@@ -1,38 +1,101 @@
 #pragma once
 
-#include "Promise.hpp"
-
 namespace MayaFlux::Vruta {
 
 /**
- * @class SampleClock
- * @brief Precise sample-based timing system for audio processing
+ * @class IClock
+ * @brief Abstract base interface for all clock types in the multimodal scheduling system
  *
- * The SampleClock is a fundamental component of the audio engine that provides
- * sample-accurate timing services. Unlike wall-clock time which can be imprecise
- * and subject to system load variations, the SampleClock advances strictly based
- * on the number of audio samples processed, ensuring perfect synchronization with
- * the audio stream.
+ * IClock provides a unified interface that enables polymorphic handling of different
+ * timing domains while maintaining domain-specific implementations. This abstraction
+ * allows the TaskScheduler to work with any clock type (audio, visual, custom) through
+ * a common interface, enabling seamless multimodal coroutine scheduling.
  *
- * This sample-based approach to timing is essential for audio applications where:
- * - Precise timing is critical for musical events
- * - Operations must align perfectly with the audio buffer boundaries
- * - Deterministic behavior is required regardless of system load
- * - Time must be measured in the same units as audio processing (samples)
+ * The interface supports:
+ * - Domain-agnostic time advancement through tick()
+ * - Position queries in domain-specific units
+ * - Time conversion to universal seconds
+ * - Rate queries for time calculations
+ * - Clock reset for testing and initialization
  *
- * The SampleClock serves as the authoritative timekeeper for the entire audio
- * engine, providing a consistent time reference for all scheduled tasks and
- * audio processing operations.
+ * Implementations must ensure thread-safety if used in multi-threaded contexts.
  */
-class SampleClock {
+class IClock {
+public:
+    virtual ~IClock() = default;
+
+    /**
+     * @brief Advance the clock by specified processing units
+     * @param units Number of domain-specific units to advance (samples, frames, etc.)
+     *
+     * This is the primary method for advancing time in any processing domain.
+     * The scheduler calls this after processing each block to maintain synchronization.
+     */
+    virtual void tick(u_int64_t units = 1) = 0;
+
+    /**
+     * @brief Get current position in the domain's timeline
+     * @return Current position in domain-specific units (samples, frames, etc.)
+     *
+     * This position serves as the primary time reference for scheduling tasks
+     * in this domain. Routines use this value to determine execution timing.
+     */
+    virtual u_int64_t current_position() const = 0;
+
+    /**
+     * @brief Get current time converted to seconds
+     * @return Current time in seconds based on position and processing rate
+     *
+     * Provides a universal time representation for cross-domain coordination
+     * and user interface display purposes.
+     */
+    virtual double current_time() const = 0;
+
+    /**
+     * @brief Get the processing rate for this timing domain
+     * @return Rate in units per second (sample rate, frame rate, etc.)
+     *
+     * Used for time conversions and calculating delays in domain-specific units.
+     */
+    virtual unsigned int rate() const = 0;
+
+    /**
+     * @brief Reset clock to initial state (position 0)
+     *
+     * Resets the clock position to zero. Useful for testing, initialization,
+     * or when restarting processing sequences.
+     */
+    virtual void reset() = 0;
+};
+
+/**
+ * @class SampleClock
+ * @brief Sample-accurate timing system for audio processing domain
+ *
+ * SampleClock provides precise sample-based timing for audio processing tasks.
+ * Unlike wall-clock time which can be imprecise and subject to system load variations,
+ * SampleClock advances strictly based on audio samples processed, ensuring perfect
+ * synchronization with the audio stream.
+ *
+ * **Key Characteristics:**
+ * - **Sample-Accurate Precision**: Time measured in audio samples, not milliseconds
+ * - **Deterministic Timing**: Behavior is consistent regardless of system load
+ * - **Audio Stream Synchronization**: Advances in lockstep with audio processing
+ * - **Musical Timing**: Ideal for precisely timed musical events and audio effects
+ *
+ * This sample-based approach is essential for audio applications where precise timing
+ * is critical and operations must align perfectly with audio buffer boundaries.
+ * SampleClock serves as the authoritative timekeeper for the audio processing domain.
+ */
+class SampleClock : public IClock {
 public:
     /**
      * @brief Constructs a SampleClock with the specified sample rate
      * @param sample_rate The number of samples per second (default: 48000)
      *
-     * Creates a new SampleClock initialized at sample position 0 with the
-     * given sample rate. The sample rate determines the relationship between
-     * sample counts and real-time durations.
+     * Creates a new SampleClock initialized at sample position 0.
+     * The sample rate determines the relationship between sample counts
+     * and real-time durations for all audio timing calculations.
      */
     SampleClock(unsigned int sample_rate = 48000);
 
@@ -40,60 +103,203 @@ public:
      * @brief Advances the clock by the specified number of samples
      * @param samples Number of samples to advance (default: 1)
      *
-     * This method is called by the audio engine after processing each block
-     * of audio samples, advancing the clock to maintain synchronization with
-     * the audio stream. The TaskScheduler typically calls this once per
-     * audio buffer to keep all scheduled tasks in sync with audio processing.
+     * Called by the audio engine after processing each audio buffer.
+     * This maintains synchronization between the clock and the audio stream,
+     * ensuring sample-accurate timing for all scheduled audio tasks.
      */
-    void tick(unsigned int samples = 1);
+    void tick(u_int64_t samples = 1) override;
 
     /**
      * @brief Gets the current sample position
-     * @return The current sample count since the clock started
+     * @return The current sample count since clock initialization
      *
-     * This sample count serves as the primary time reference for the audio engine.
-     * SoundRoutines use this value to determine when they should execute, and
-     * audio processing code can use it to calculate time-based parameters.
+     * This sample count serves as the primary time reference for audio tasks.
+     * Audio routines use this value for precise scheduling and timing calculations.
      */
-    unsigned int current_sample() const;
+    inline u_int64_t current_sample() const { return current_position(); }
+
+    u_int64_t current_position() const override;
 
     /**
-     * @brief Converts the current sample position to seconds
-     * @return The current time in seconds
+     * @brief Converts current sample position to seconds
+     * @return Current time in seconds
      *
-     * This method provides a convenient way to express the current sample
-     * position in real-time units, which is useful for user interfaces and
-     * when interfacing with non-sample-based timing systems.
+     * Provides real-time representation useful for user interfaces,
+     * cross-domain synchronization, and integration with non-audio systems.
      */
-    double current_time() const;
+    double current_time() const override;
 
     /**
-     * @brief Gets the clock's sample rate
-     * @return The number of samples per second
+     * @brief Gets the audio sample rate
+     * @return Number of samples per second
      *
-     * The sample rate defines the relationship between sample counts and
-     * real-time durations. It's used for converting between samples and
-     * seconds, and for calculating time-based parameters.
+     * The sample rate defines the clock's time scale and is used for
+     * converting between samples and real-time durations.
      */
-    unsigned int sample_rate() const;
+    u_int32_t sample_rate() const;
+
+    u_int32_t rate() const override;
+
+    void reset() override;
 
 private:
     /**
-     * @brief The number of samples per second
+     * @brief Audio sample rate in samples per second
      *
-     * This value defines the clock's time scale and is typically set to match
-     * the audio engine's processing rate (e.g., 44100 or 48000 Hz).
+     * Defines the clock's time scale, typically matching the audio engine's
+     * processing rate (e.g., 44100, 48000, or 96000 Hz).
      */
-    unsigned int m_sample_rate;
+    u_int32_t m_sample_rate;
 
     /**
-     * @brief The current sample position
+     * @brief Current sample position counter
      *
-     * This counter represents the number of samples processed since the clock
-     * started. It's the primary time reference for the audio engine and increases
-     * monotonically as audio is processed.
+     * Monotonically increasing counter representing processed samples.
+     * This is the authoritative time reference for the audio domain.
      */
     u_int64_t m_current_sample;
+};
+
+/**
+ * @class FrameClock
+ * @brief Frame-accurate timing system for visual processing domain
+ *
+ * FrameClock provides frame-based timing precision for visual processing tasks.
+ * It advances based on rendered frames rather than samples, making it ideal
+ * for graphics, animation, and visual effect scheduling.
+ *
+ * **Key Characteristics:**
+ * - **Frame-Accurate Precision**: Time measured in video frames
+ * - **Visual Synchronization**: Advances with frame rendering cycles
+ * - **Animation Timing**: Perfect for frame-based animations and visual effects
+ * - **Cross-Domain Coordination**: Can synchronize with audio through common time base
+ *
+ * Currently provides basic functionality - will be fully implemented when
+ * the graphics subsystem is integrated.
+ */
+class FrameClock : public IClock {
+public:
+    /**
+     * @brief Constructs a FrameClock with the specified frame rate
+     * @param frame_rate Number of frames per second (default: 60)
+     *
+     * Creates a FrameClock initialized at frame 0. The frame rate determines
+     * the relationship between frame counts and real-time durations.
+     */
+    FrameClock(unsigned int frame_rate = 60);
+
+    /**
+     * @brief Advances the clock by the specified number of frames
+     * @param frames Number of frames to advance (default: 1)
+     *
+     * Called by the graphics engine after rendering frames.
+     * Maintains synchronization between the clock and visual output.
+     */
+    void tick(u_int64_t frames = 1) override;
+
+    u_int64_t current_position() const override;
+
+    /**
+     * @brief Gets the current frame number
+     * @return Current frame count since clock initialization
+     *
+     * Frame-specific accessor for compatibility with existing visual code.
+     */
+    u_int64_t current_frame() const;
+
+    /**
+     * @brief Converts current frame position to seconds
+     * @return Current time in seconds based on frame rate
+     */
+    double current_time() const override;
+
+    u_int32_t rate() const override;
+
+    /**
+     * @brief Gets the video frame rate
+     * @return Number of frames per second
+     */
+    unsigned int frame_rate() const;
+
+    void reset() override;
+
+private:
+    /**
+     * @brief Video frame rate in frames per second
+     */
+    unsigned int m_frame_rate;
+
+    /**
+     * @brief Current frame position counter
+     */
+    u_int64_t m_current_frame;
+};
+
+/**
+ * @class CustomClock
+ * @brief Configurable timing system for custom processing domains
+ *
+ * CustomClock provides a flexible timing implementation for arbitrary processing
+ * domains that don't fit standard audio/visual patterns. It can be configured
+ * with any processing rate and unit name for specialized scheduling needs.
+ *
+ * **Use Cases:**
+ * - Custom processing pipelines with specific timing requirements
+ * - Integration with external systems that have unique timing patterns
+ * - Experimental processing domains during development
+ * - On-demand processing that doesn't follow regular timing patterns
+ */
+class CustomClock : public IClock {
+public:
+    /**
+     * @brief Constructs a CustomClock with configurable parameters
+     * @param processing_rate Rate in units per second (default: 1000)
+     * @param unit_name Name for the processing units (default: "units")
+     *
+     * Creates a flexible clock for custom processing domget_clockains.
+     * The unit name is stored for debugging and logging purposes.
+     */
+    CustomClock(unsigned int processing_rate = 1000, const std::string& unit_name = "units");
+
+    /**
+     * @brief Advances the clock by the specified number of custom units
+     * @param units Number of custom processing units to advance (default: 1)
+     */
+    void tick(u_int64_t units = 1) override;
+
+    u_int64_t current_position() const override;
+
+    /**
+     * @brief Converts current position to seconds using custom rate
+     * @return Current time in seconds
+     */
+    double current_time() const override;
+
+    unsigned int rate() const override;
+
+    /**
+     * @brief Gets the name of the processing units
+     * @return String describing the unit type (e.g., "events", "packets", "cycles")
+     */
+    const std::string& unit_name() const;
+
+    void reset() override;
+
+private:
+    /**
+     * @brief Custom processing rate in units per second
+     */
+    unsigned int m_processing_rate;
+
+    /**
+     * @brief Current position in custom units
+     */
+    u_int64_t m_current_position;
+
+    /**
+     * @brief Name describing the custom units
+     */
+    std::string m_unit_name;
 };
 
 }

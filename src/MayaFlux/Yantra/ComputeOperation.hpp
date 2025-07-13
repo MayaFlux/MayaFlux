@@ -56,7 +56,7 @@ public:
      * @param input Data to validate
      * @return True if input is valid, false otherwise
      */
-    virtual bool validate_input(const InputType& input) const { return true; }
+    virtual bool validate_input(const InputType&) const { return true; }
 };
 
 /**

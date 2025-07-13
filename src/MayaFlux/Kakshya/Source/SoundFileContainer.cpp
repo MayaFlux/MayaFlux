@@ -455,7 +455,8 @@ void SoundFileContainer::process_default()
 
 void SoundFileContainer::set_default_processor(std::shared_ptr<DataProcessor> processor)
 {
-    auto old_processor = std::atomic_exchange(&m_default_processor, processor);
+    auto old_processor = m_default_processor;
+    m_default_processor = processor;
 
     if (old_processor) {
         old_processor->on_detach(shared_from_this());

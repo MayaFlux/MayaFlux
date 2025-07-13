@@ -880,9 +880,7 @@ TEST_F(SortingGranularityTest, IndicesOnlyGranularity)
     SorterInput input { Kakshya::DataVariant { test_data } };
     auto result = sorter->apply_operation(input);
 
-    // The format_output_based_on_granularity should convert to indices
-    // Implementation would depend on the actual UniversalSorter implementation
-    EXPECT_NO_THROW(result);
+    EXPECT_TRUE(std::holds_alternative<std::vector<size_t>>(result) || std::holds_alternative<std::vector<double>>(result));
 }
 
 TEST_F(SortingGranularityTest, SortedValuesGranularity)

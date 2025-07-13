@@ -2,23 +2,31 @@
 
 namespace MayaFlux::Buffers {
 
-ChannelProcessor::ChannelProcessor(RootAudioBuffer* root_buffer)
-    : m_root_buffer(root_buffer)
+ChannelProcessor::ChannelProcessor(std::shared_ptr<Buffer> root_buffer)
+    : m_root_buffer(std::dynamic_pointer_cast<RootAudioBuffer>(root_buffer))
 {
+    m_processing_token = ProcessingToken::AUDIO_BACKEND;
 }
 
-void ChannelProcessor::process(std::shared_ptr<AudioBuffer> buffer)
+void ChannelProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
-    if (!m_root_buffer || buffer.get() != m_root_buffer)
+
+    auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
+    if (!root_audio_buffer || root_audio_buffer != m_root_buffer) {
         return;
+    }
 
-    auto& root_data = buffer->get_data();
-    std::fill(root_data.begin(), root_data.end(), 0.0);
+    auto& output_data = root_audio_buffer->get_data();
+    const size_t buffer_size = output_data.size();
+    std::fill(output_data.begin(), output_data.end(), 0.0);
 
-    if (m_root_buffer->has_node_output()) {
-        const auto& node_data = m_root_buffer->get_node_output();
-        for (size_t i = 0; i < std::min(node_data.size(), root_data.size()); i++) {
-            root_data[i] = node_data[i];
+    if (root_audio_buffer->has_node_output()) {
+        const auto& node_output = root_audio_buffer->get_node_output();
+        const size_t node_size = node_output.size();
+        const size_t add_size = std::min(buffer_size, node_size);
+
+        for (size_t i = 0; i < add_size; ++i) {
+            output_data[i] += node_output[i];
         }
     }
 
@@ -40,8 +48,8 @@ void ChannelProcessor::process(std::shared_ptr<AudioBuffer> buffer)
         for (auto& child : m_root_buffer->get_child_buffers()) {
             if (child->has_data_for_cycle() && !child->needs_removal()) {
                 const auto& child_data = child->get_data();
-                for (size_t i = 0; i < std::min(child_data.size(), root_data.size()); i++) {
-                    root_data[i] += child_data[i] / active_buffers;
+                for (size_t i = 0; i < std::min(child_data.size(), output_data.size()); i++) {
+                    output_data[i] += child_data[i] / active_buffers;
                 }
             }
         }
@@ -52,11 +60,38 @@ void ChannelProcessor::process(std::shared_ptr<AudioBuffer> buffer)
     }
 }
 
+void ChannelProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+{
+    auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
+    if (!root_audio_buffer) {
+        throw std::runtime_error("ChannelProcessor can only be attached to RootAudioBuffer");
+    }
+
+    if (!are_tokens_compatible(ProcessingToken::AUDIO_BACKEND, m_processing_token)) {
+        throw std::runtime_error("ChannelProcessor token incompatible with RootAudioBuffer requirements");
+    }
+}
+
+bool ChannelProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+{
+    auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
+    return root_audio_buffer != nullptr;
+}
+
 RootAudioBuffer::RootAudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
-    : StandardAudioBuffer(channel_id, num_samples)
+    : RootBuffer<AudioBuffer>(channel_id, num_samples)
     , m_has_node_output(false)
 {
-    m_default_processor = create_default_processor();
+    m_preferred_processing_token = ProcessingToken::AUDIO_BACKEND;
+    m_token_enforcement_strategy = TokenEnforcementStrategy::STRICT;
+}
+
+void RootAudioBuffer::initialize()
+{
+    auto channel_processor = create_default_processor();
+    if (channel_processor) {
+        set_default_processor(channel_processor);
+    }
 }
 
 void RootAudioBuffer::set_node_output(const std::vector<double>& data)
@@ -68,82 +103,79 @@ void RootAudioBuffer::set_node_output(const std::vector<double>& data)
     m_has_node_output = true;
 }
 
-void RootAudioBuffer::add_child_buffer(std::shared_ptr<AudioBuffer> buffer)
-{
-    std::lock_guard<std::mutex> lock(m_mutex);
-
-    if (buffer->get_num_samples() != get_num_samples()) {
-        buffer->resize(get_num_samples());
-    }
-
-    if (!buffer->get_processing_chain() && get_processing_chain()) {
-        buffer->set_processing_chain(get_processing_chain());
-    }
-
-    m_child_buffers.push_back(buffer);
-}
-
-void RootAudioBuffer::remove_child_buffer(std::shared_ptr<AudioBuffer> buffer)
-{
-    std::lock_guard<std::mutex> lock(m_mutex);
-    auto it = std::find(m_child_buffers.begin(), m_child_buffers.end(), buffer);
-    if (it != m_child_buffers.end()) {
-        m_child_buffers.erase(it);
-    }
-}
-
-const std::vector<std::shared_ptr<AudioBuffer>>& RootAudioBuffer::get_child_buffers() const
-{
-    return m_child_buffers;
-}
-
 void RootAudioBuffer::process_default()
 {
-    if (m_default_processor) {
-        m_default_processor->process(shared_from_this());
+    if (this->has_pending_operations()) {
+        this->process_pending_buffer_operations();
     }
-}
 
-void RootAudioBuffer::clear()
-{
-    StandardAudioBuffer::clear();
-
-    for (auto& child : m_child_buffers) {
-        child->clear();
+    if (m_default_processor && m_process_default) {
+        m_default_processor->process(shared_from_this());
     }
 }
 
 void RootAudioBuffer::resize(u_int32_t num_samples)
 {
-    StandardAudioBuffer::resize(num_samples);
+    AudioBuffer::resize(num_samples);
+
+    m_node_output.resize(num_samples, 0.0);
 
     for (auto& child : m_child_buffers) {
-        child->resize(num_samples);
+        if (child) {
+            child->resize(num_samples);
+        }
     }
 }
 
 std::shared_ptr<BufferProcessor> RootAudioBuffer::create_default_processor()
 {
-    return std::make_shared<ChannelProcessor>(this);
+    return std::make_shared<ChannelProcessor>(shared_from_this());
 }
 
-void FinalLimiterProcessor::process(std::shared_ptr<Buffers::AudioBuffer> buffer)
+FinalLimiterProcessor::FinalLimiterProcessor()
 {
-    auto& data = buffer->get_data();
-    const double ceiling = 1.0;
-    const double softKnee = 0.9;
+    m_processing_token = ProcessingToken::AUDIO_BACKEND;
+}
+
+void FinalLimiterProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+{
+    auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
+    if (!audio_buffer) {
+        throw std::runtime_error("FinalLimiterProcessor can only be attached to AudioBuffer-derived types");
+    }
+
+    if (!are_tokens_compatible(ProcessingToken::AUDIO_BACKEND, m_processing_token)) {
+        throw std::runtime_error("FinalLimiterProcessor token incompatible with audio processing requirements");
+    }
+}
+
+bool FinalLimiterProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+{
+    return std::dynamic_pointer_cast<AudioBuffer>(buffer) != nullptr;
+}
+
+void FinalLimiterProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+{
+    auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
+    if (!audio_buffer) {
+        return;
+    }
+
+    auto& data = audio_buffer->get_data();
+
+    constexpr double threshold = 0.95;
+    constexpr double knee = 0.1;
 
     for (double& sample : data) {
-        double abs_sample = std::abs(sample);
-        if (abs_sample > softKnee) {
-            double excess = std::min(abs_sample - softKnee, ceiling - softKnee);
-            double compression_factor = 1.0 - (excess / (ceiling - softKnee));
-            compression_factor = std::max(0.0, compression_factor);
-            sample = std::copysign(
-                softKnee + excess * compression_factor,
-                sample);
+        const double abs_sample = std::abs(sample);
+
+        if (abs_sample > threshold) {
+            const double excess = abs_sample - threshold;
+            const double compressed_excess = std::tanh(excess / knee) * knee;
+            const double limited_abs = threshold + compressed_excess;
+
+            sample = (sample >= 0.0) ? limited_abs : -limited_abs;
         }
-        sample = std::clamp(sample, -ceiling, ceiling);
     }
 }
 }

@@ -4,6 +4,8 @@
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+static auto node_token = MayaFlux::Nodes::ProcessingToken::AUDIO_RATE;
+
 namespace MayaFlux::Kriya {
 
 EventChain::EventChain()
@@ -87,7 +89,7 @@ void Sequence::execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, st
 
         if (token.type == Utils::ActionType::NODE) {
             chain.then([node = token.node, node_manager]() {
-                auto& root = node_manager->get_root_node();
+                auto& root = node_manager->get_token_root(node_token, 0);
                 root.register_node(node);
             },
                 accumulated_time);

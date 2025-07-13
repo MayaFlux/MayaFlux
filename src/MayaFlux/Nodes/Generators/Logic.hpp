@@ -418,7 +418,7 @@ public:
     /**
      * @brief Sets the amplitude (not applicable for logic nodes)
      */
-    inline void set_amplitude(double amplitude) override { }
+    inline void set_amplitude(double) override { }
 
     /**
      * @brief Prints a visual representation of the logic function

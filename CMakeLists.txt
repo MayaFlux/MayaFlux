@@ -39,6 +39,7 @@ if(WIN32)
     find_package(RtAudio CONFIG REQUIRED)
     find_package(Eigen3 CONFIG REQUIRED)
     find_package(magic_enum CONFIG REQUIRED)
+    find_package(glfw3 CONFIG REQUIRED)
     # Delegate FFMPEG to find library
 else()
     if(APPLE)
@@ -50,6 +51,7 @@ else()
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
     pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
+    pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3)
 
     pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
     pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
@@ -58,7 +60,7 @@ else()
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
 endif()
 
-add_compile_definitions(RTAUDIO_BACKEND)
+add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/version.h
@@ -114,6 +116,7 @@ if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
         RtAudio::rtaudio
         Eigen3::Eigen
+        glfw3_LIBRARIES
         ${AVCODEC_LIB}
         ${AVFORMAT_LIB}
         ${AVUTIL_LIB}
@@ -135,6 +138,7 @@ else()
     target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::RtAudio
         PkgConfig::Eigen
+        PkgConfig::Glfw
         PkgConfig::LIBAVCODEC
         PkgConfig::LIBAVFORMAT
         PkgConfig::LIBAVUTIL

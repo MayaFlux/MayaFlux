@@ -19,7 +19,7 @@ TimeOperation::TimeOperation(double seconds, Vruta::TaskScheduler& scheduler, No
 
 void operator>>(std::shared_ptr<Nodes::Node> node, DAC& dac)
 {
-    MayaFlux::add_node_to_root(node, dac.channel);
+    MayaFlux::register_audio_node(node, dac.channel);
 }
 
 void operator>>(std::shared_ptr<Nodes::Node> node, const TimeOperation& time_op)

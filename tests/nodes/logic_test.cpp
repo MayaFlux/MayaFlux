@@ -1,10 +1,6 @@
 #include "../test_config.h"
 
-#include "MayaFlux/Buffers/AudioBuffer.hpp"
-#include "MayaFlux/Buffers/Node/LogicProcessor.hpp"
-#include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Generators/Logic.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
 namespace MayaFlux::Test {
 
@@ -170,7 +166,7 @@ TEST_F(LogicTest, SequentialMode)
 
 TEST_F(LogicTest, TemporalMode)
 {
-    auto pulse_generator = [](double input, double time) -> bool {
+    auto pulse_generator = [](double, double time) -> bool {
         // Pulse with 50% duty cycle at 2Hz
         return std::fmod(time, 0.5) < 0.25;
     };
@@ -189,7 +185,7 @@ TEST_F(LogicTest, TemporalMode)
     // all samples in our test should be true (1.0) except possibly the very last one
 
     // Check that all samples are 1.0 (true)
-    for (int i = 0; i < results.size(); i++) {
+    for (size_t i = 0; i < results.size(); i++) {
         double time = i * (1.0 / 48000.0);
 
         bool expected = std::fmod(time, 0.5) < 0.25;

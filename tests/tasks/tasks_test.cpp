@@ -4,6 +4,7 @@
 #include "MayaFlux/Nodes/Generators/Logic.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Vruta/Scheduler.hpp"
 
 namespace MayaFlux::Test {
 
@@ -13,6 +14,7 @@ protected:
     {
         scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
         node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
+        processing_token = Nodes::ProcessingToken::AUDIO_RATE;
     }
 
     void TearDown() override
@@ -23,6 +25,7 @@ protected:
 
     std::shared_ptr<Vruta::TaskScheduler> scheduler;
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager;
+    Nodes::ProcessingToken processing_token;
 };
 
 TEST_F(TasksTest, EventChain)
@@ -31,7 +34,7 @@ TEST_F(TasksTest, EventChain)
     bool event2 = false;
     bool event3 = false;
 
-    Kriya::EventChain chain;
+    Kriya::EventChain chain(*scheduler);
 
     chain.then([&event1]() { event1 = true; })
         .then([&event2]() { event2 = true; }, 0.01)
@@ -61,12 +64,12 @@ TEST_F(TasksTest, TimerOperations)
     EXPECT_FALSE(timer_triggered);
 
     u_int64_t samples_5ms = scheduler->seconds_to_samples(0.005);
-    scheduler->process_buffer(samples_5ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_5ms);
 
     EXPECT_TRUE(timer.is_active());
     EXPECT_FALSE(timer_triggered);
 
-    scheduler->process_buffer(samples_5ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_5ms);
 
     EXPECT_FALSE(timer.is_active());
     EXPECT_TRUE(timer_triggered);
@@ -82,7 +85,7 @@ TEST_F(TasksTest, TimerOperations)
 
     EXPECT_FALSE(timer.is_active());
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.03));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.03));
     EXPECT_FALSE(timer_triggered);
 }
 
@@ -101,7 +104,7 @@ TEST_F(TasksTest, TimedAction)
     EXPECT_TRUE(start_executed);
     EXPECT_FALSE(end_executed);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.02));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.02));
 
     EXPECT_FALSE(action.is_pending());
     EXPECT_TRUE(end_executed);
@@ -121,7 +124,7 @@ TEST_F(TasksTest, TimedAction)
 
     EXPECT_FALSE(action.is_pending());
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.03));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.03));
     EXPECT_FALSE(end_executed);
 }
 
@@ -136,12 +139,12 @@ TEST_F(TasksTest, NodeTimer)
 
     EXPECT_TRUE(node_timer.is_active());
 
-    auto& root = node_graph_manager->get_root_node();
+    auto& root = node_graph_manager->get_token_root(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 1);
 
     u_int64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
-    scheduler->process_buffer(samples_10ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
     root.process(samples_10ms);
 
     EXPECT_FALSE(node_timer.is_active());
@@ -152,10 +155,10 @@ TEST_F(TasksTest, NodeTimer)
 
     node_timer.play_with_processing(
         sine,
-        [&setup_called](std::shared_ptr<Nodes::Node> node) {
+        [&setup_called](std::shared_ptr<Nodes::Node>) {
             setup_called = true;
         },
-        [&cleanup_called](std::shared_ptr<Nodes::Node> node) {
+        [&cleanup_called](std::shared_ptr<Nodes::Node>) {
             cleanup_called = true;
         },
         0.009);
@@ -165,7 +168,7 @@ TEST_F(TasksTest, NodeTimer)
     EXPECT_FALSE(cleanup_called);
     EXPECT_EQ(root.get_node_size(), 1);
 
-    scheduler->process_buffer(samples_10ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
     root.process(samples_10ms);
 
     EXPECT_FALSE(node_timer.is_active());
@@ -177,10 +180,10 @@ TEST_F(TasksTest, NodeTimer)
 
     node_timer.play_with_processing(
         sine,
-        [&setup_called](std::shared_ptr<Nodes::Node> node) {
+        [&setup_called](std::shared_ptr<Nodes::Node>) {
             setup_called = true;
         },
-        [&cleanup_called](std::shared_ptr<Nodes::Node> node) {
+        [&cleanup_called](std::shared_ptr<Nodes::Node>) {
             cleanup_called = true;
         },
         0.009);
@@ -188,7 +191,7 @@ TEST_F(TasksTest, NodeTimer)
     EXPECT_TRUE(setup_called);
     EXPECT_FALSE(cleanup_called);
 
-    scheduler->process_buffer(samples_10ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
     node_timer.cancel();
     root.process(samples_10ms);
 
@@ -236,16 +239,16 @@ TEST_F(TasksTest, Sequence)
 
     sequence.execute(node_graph_manager, scheduler);
 
-    auto& root = node_graph_manager->get_root_node();
+    auto& root = node_graph_manager->get_token_root(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 1);
 
     auto samples_9ms = scheduler->seconds_to_samples(0.009);
-    scheduler->process_buffer(samples_9ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_9ms - 1);
     root.process(samples_9ms);
     EXPECT_FALSE(func_called);
 
     auto samples_1ms = scheduler->seconds_to_samples(0.001);
-    scheduler->process_buffer(samples_1ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_1ms);
     root.process(samples_1ms);
 
     EXPECT_TRUE(func_called);
@@ -255,7 +258,7 @@ TEST_F(TasksTest, TimeOperator)
 {
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
 
-    auto& root = node_graph_manager->get_root_node();
+    auto& root = node_graph_manager->get_token_root(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 0);
 
     sine >> Kriya::TimeOperation(0.01, *scheduler, *node_graph_manager);
@@ -264,11 +267,11 @@ TEST_F(TasksTest, TimeOperator)
 
     u_int64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
-    scheduler->process_buffer(samples_10ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms - 1);
     root.process(samples_10ms);
     EXPECT_EQ(root.get_node_size(), 1);
 
-    scheduler->process_buffer(samples_10ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
     root.process(samples_10ms);
 
     EXPECT_EQ(root.get_node_size(), 0);
@@ -280,30 +283,30 @@ TEST_F(TasksTest, CoroutineTasks)
     int metro_count = 0;
     double interval = 0.01;
 
-    auto metro_routine = std::make_shared<Vruta::SoundRoutine>(std::move(Kriya::metro(*scheduler, interval, [&]() {
+    auto metro_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*scheduler, interval, [&]() {
         metro_called = true;
         metro_count++;
-    })));
+    }));
 
     scheduler->add_task(metro_routine);
 
     u_int64_t samples_5ms = scheduler->seconds_to_samples(0.005);
 
-    scheduler->process_buffer(samples_5ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_5ms);
     EXPECT_TRUE(metro_called);
     EXPECT_EQ(metro_count, 1);
 
-    scheduler->process_buffer(samples_5ms);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_5ms - 1);
     EXPECT_EQ(metro_count, 1);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.01));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.01));
     EXPECT_EQ(metro_count, 2);
 
     EXPECT_TRUE(scheduler->cancel_task(metro_routine));
 
     metro_count = 0;
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.02));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.02));
     EXPECT_EQ(metro_count, 0);
 }
 
@@ -314,37 +317,37 @@ TEST_F(TasksTest, LineTask)
     float duration = 0.05f;
 
     auto line_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, start_value, end_value, duration, 5, false));
-    scheduler->add_task(line_routine, true);
+    scheduler->add_task(line_routine, "", true);
 
     float* current_value = line_routine->get_state<float>("current_value");
     ASSERT_NE(current_value, nullptr);
     EXPECT_FLOAT_EQ(*current_value, start_value);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(duration / 2));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(duration / 2));
 
     EXPECT_GT(*current_value, start_value);
     EXPECT_LT(*current_value, end_value);
     EXPECT_NEAR(*current_value, (start_value + end_value) / 2, 0.1);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(duration / 2));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(duration / 2));
 
     EXPECT_FLOAT_EQ(*current_value, end_value);
 
     auto restartable_line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, 0.0f, 10.f, 0.05f, 5, true));
-    scheduler->add_task(restartable_line, true);
+    scheduler->add_task(restartable_line, "", true);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.05));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.05));
 
     float* restartable_value = restartable_line->get_state<float>("current_value");
     ASSERT_NE(restartable_value, nullptr);
     EXPECT_NEAR(*restartable_value, 10.0f, 0.001f);
 
     restartable_line->restart();
-    scheduler->process_sample();
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     EXPECT_NEAR(*restartable_value, 0.0f, 0.1f);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.025));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.025));
     EXPECT_NEAR(*restartable_value, 5.0f, 0.5f);
 }
 
@@ -363,12 +366,12 @@ TEST_F(TasksTest, PatternTask)
 
     scheduler->add_task(callback);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.01));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.009));
     EXPECT_EQ(pattern_count, 1);
     EXPECT_EQ(received_values.size(), 1);
     EXPECT_EQ(received_values[0], 0);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.02));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.02));
     EXPECT_EQ(pattern_count, 3);
     EXPECT_EQ(received_values.size(), 3);
     EXPECT_EQ(received_values[1], 10);
@@ -391,17 +394,17 @@ TEST_F(TasksTest, SequenceTask)
     EXPECT_EQ(execution_order.size(), 1);
     EXPECT_EQ(execution_order[0], 1);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.015));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.015));
     EXPECT_EQ(execution_order.size(), 2);
     EXPECT_EQ(execution_order[1], 2);
 
-    scheduler->process_buffer(scheduler->seconds_to_samples(0.01));
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.01));
     EXPECT_EQ(execution_order.size(), 3);
     EXPECT_EQ(execution_order[2], 3);
 
-    scheduler->process_sample();
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
-    EXPECT_FALSE(scheduler->cancel_task(sequence_routine));
+    EXPECT_TRUE(scheduler->cancel_task(sequence_routine));
 }
 
 TEST_F(TasksTest, GateTask)
@@ -409,9 +412,9 @@ TEST_F(TasksTest, GateTask)
     bool gate_called = false;
     int gate_count = 0;
 
-    auto custom_logic = std::make_shared<Nodes::Generator::Logic>([](double input) -> bool {
+    auto custom_logic = std::make_shared<Nodes::Generator::Logic>([](double) -> bool {
         static int counter = 0;
-        return (counter++ / 10) % 2 == 0; // True for samples 0-9, false for 10-19, etc.
+        return (counter++ / 10) % 2 == 0;
     });
 
     auto gate_routine = std::make_shared<Vruta::SoundRoutine>(
@@ -421,18 +424,18 @@ TEST_F(TasksTest, GateTask)
 
     scheduler->add_task(gate_routine);
 
-    scheduler->process_buffer(10);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 10);
     EXPECT_TRUE(gate_called);
     EXPECT_EQ(gate_count, 10);
 
     gate_count = 0;
     gate_called = false;
 
-    scheduler->process_buffer(10);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 10);
     EXPECT_FALSE(gate_called);
     EXPECT_EQ(gate_count, 0);
 
-    scheduler->process_buffer(10);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 10);
     EXPECT_TRUE(gate_called);
     EXPECT_EQ(gate_count, 10);
 
@@ -448,7 +451,7 @@ TEST_F(TasksTest, GateTaskWithDefaultLogic)
 
     scheduler->add_task(gate_routine);
 
-    scheduler->process_buffer(5);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 5);
     EXPECT_FALSE(gate_called);
 
     EXPECT_TRUE(scheduler->cancel_task(gate_routine));
@@ -461,9 +464,9 @@ TEST_F(TasksTest, TriggerTask)
     int rising_count = 0;
     int falling_count = 0;
 
-    auto toggle_logic = std::make_shared<Nodes::Generator::Logic>([](double input) -> bool {
+    auto toggle_logic = std::make_shared<Nodes::Generator::Logic>([](double) -> bool {
         static int counter = 0;
-        return (counter++ / 5) % 2 == 1; // False for 0-4, true for 5-9, false for 10-14, etc.
+        return (counter++ / 5) % 2 == 1;
     });
 
     auto rising_routine = std::make_shared<Vruta::SoundRoutine>(
@@ -471,7 +474,7 @@ TEST_F(TasksTest, TriggerTask)
             rising_triggered = true;
             rising_count++; }, toggle_logic));
 
-    auto toggle_logic2 = std::make_shared<Nodes::Generator::Logic>([](double input) -> bool {
+    auto toggle_logic2 = std::make_shared<Nodes::Generator::Logic>([](double) -> bool {
         static int counter = 0;
         return (counter++ / 5) % 2 == 1;
     });
@@ -484,21 +487,21 @@ TEST_F(TasksTest, TriggerTask)
     scheduler->add_task(rising_routine);
     scheduler->add_task(falling_routine);
 
-    scheduler->process_buffer(5);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 5);
     EXPECT_FALSE(rising_triggered);
     EXPECT_FALSE(falling_triggered);
 
-    scheduler->process_sample();
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE);
     EXPECT_TRUE(rising_triggered);
     EXPECT_FALSE(falling_triggered);
     EXPECT_EQ(rising_count, 1);
 
     rising_triggered = false;
 
-    scheduler->process_buffer(4);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 4);
     EXPECT_FALSE(rising_triggered);
 
-    scheduler->process_sample();
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE);
     EXPECT_FALSE(rising_triggered);
     EXPECT_TRUE(falling_triggered);
     EXPECT_EQ(falling_count, 1);
@@ -512,7 +515,7 @@ TEST_F(TasksTest, ToggleTask)
     bool toggle_called = false;
     int toggle_count = 0;
 
-    auto flip_logic = std::make_shared<Nodes::Generator::Logic>([](double input) -> bool {
+    auto flip_logic = std::make_shared<Nodes::Generator::Logic>([](double) -> bool {
         static int counter = 0;
         return (counter++ / 3) % 2 == 1;
     });
@@ -524,19 +527,19 @@ TEST_F(TasksTest, ToggleTask)
 
     scheduler->add_task(toggle_routine);
 
-    scheduler->process_buffer(3);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 3);
     EXPECT_FALSE(toggle_called);
 
-    scheduler->process_sample();
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE);
     EXPECT_TRUE(toggle_called);
     EXPECT_EQ(toggle_count, 1);
 
     toggle_called = false;
 
-    scheduler->process_buffer(2);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 2);
     EXPECT_FALSE(toggle_called);
 
-    scheduler->process_sample();
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE);
     EXPECT_TRUE(toggle_called);
     EXPECT_EQ(toggle_count, 2);
 
@@ -556,7 +559,7 @@ TEST_F(TasksTest, LogicTasksWithEdgeDetection)
 
     scheduler->add_task(edge_routine);
 
-    scheduler->process_buffer(10);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 10);
 
     EXPECT_TRUE(scheduler->cancel_task(edge_routine));
 }
@@ -573,7 +576,7 @@ TEST_F(TasksTest, LogicTasksWithHysteresis)
 
     scheduler->add_task(hysteresis_routine);
 
-    scheduler->process_buffer(5);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 5);
     EXPECT_FALSE(state_changed);
 
     EXPECT_TRUE(scheduler->cancel_task(hysteresis_routine));
@@ -608,7 +611,7 @@ TEST_F(TasksTest, MultipleLogicTasks)
     scheduler->add_task(gate2);
     scheduler->add_task(change_task);
 
-    scheduler->process_sample();
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
     EXPECT_TRUE(gate1_active);
     EXPECT_FALSE(gate2_active);
@@ -616,7 +619,7 @@ TEST_F(TasksTest, MultipleLogicTasks)
 
     gate1_active = false;
 
-    scheduler->process_buffer(10);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 10);
 
     EXPECT_TRUE(gate1_active);
 
@@ -648,7 +651,7 @@ TEST_F(TasksTest, SequenceI)
 
     sequence.execute();
 
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node();
+    auto& root = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
     EXPECT_EQ(root.get_node_size(), 1);
 
     AudioTestHelper::waitForAudio(1);
@@ -667,10 +670,10 @@ TEST_F(TasksTest, SequenceIntegration)
     AudioTestHelper::waitForAudio(100);
 
     Kriya::Sequence sequence;
-    auto sine1 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f); // A4
-    auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f); // A5
+    auto sine1 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f);
     bool sequence_completed = false;
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node();
+    auto& root = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
 
     sequence
         >> Play(sine1)
@@ -706,17 +709,17 @@ TEST_F(TasksTest, TimeOperatorI)
     AudioTestHelper::waitForAudio(100);
 
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node();
+    auto& root = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
     auto scheduler = MayaFlux::get_scheduler();
 
     EXPECT_EQ(root.get_node_size(), 0);
 
-    sine >> Kriya::TimeOperation(0.1); // 100ms
+    sine >> Kriya::TimeOperation(0.1);
 
     EXPECT_EQ(root.get_node_size(), 1);
 
     u_int64_t samples = scheduler->seconds_to_samples(0.11);
-    scheduler->process_buffer(samples);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples);
     root.process(samples);
 
     EXPECT_EQ(root.get_node_size(), 0);
@@ -733,7 +736,7 @@ TEST_F(TasksTest, DACOperator)
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     auto& dac = Kriya::DAC::instance();
 
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node();
+    auto& root = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
     EXPECT_EQ(root.get_node_size(), 0);
 
     sine >> dac;
@@ -744,8 +747,10 @@ TEST_F(TasksTest, DACOperator)
     auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f);
     sine2 >> dac;
 
-    auto& root1 = MayaFlux::get_node_graph_manager()->get_root_node(1);
+    auto& root1 = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 1);
     EXPECT_EQ(root1.get_node_size(), 1);
+
+    MayaFlux::End();
 }
 
 TEST_F(TasksTest, LogicTasksIntegration)
@@ -759,19 +764,99 @@ TEST_F(TasksTest, LogicTasksIntegration)
     bool integration_triggered = false;
 
     auto time_logic = std::make_shared<Nodes::Generator::Logic>(
-        [](double input, double time) -> bool {
-            return fmod(time, 1.0) > 0.5;
+        [](double) -> bool {
+            static int call_count = 0;
+            return (call_count++ % 100) > 50;
         });
 
-    MayaFlux::schedule_task("integration_gate",
+    auto gate_routine = std::make_shared<Vruta::SoundRoutine>(
         Kriya::Gate(*MayaFlux::get_scheduler(), [&]() { integration_triggered = true; }, time_logic));
+
+    MayaFlux::get_scheduler()->add_task(gate_routine, "integration_gate");
 
     AudioTestHelper::waitForAudio(600);
     EXPECT_TRUE(integration_triggered);
 
-    EXPECT_TRUE(MayaFlux::cancel_task("integration_gate"));
+    EXPECT_TRUE(MayaFlux::get_scheduler()->cancel_task("integration_gate"));
 
     MayaFlux::End();
 }
 #endif
+
+TEST_F(TasksTest, ProcessingTokens)
+{
+
+    auto routine = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*scheduler, 0.01, []() { }));
+
+    EXPECT_EQ(routine->get_processing_token(), Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    scheduler->add_task(routine, "test_metro");
+    EXPECT_TRUE(scheduler->cancel_task("test_metro"));
+}
+
+TEST_F(TasksTest, NodeGraphManagerIntegration)
+{
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+
+    node_graph_manager->add_to_root(sine, processing_token, 0);
+
+    auto& root = node_graph_manager->get_token_root(processing_token, 0);
+    EXPECT_EQ(root.get_node_size(), 1);
+
+    root.unregister_node(sine);
+    EXPECT_EQ(root.get_node_size(), 0);
+}
+
+TEST_F(TasksTest, TaskSchedulerTokenDomains)
+{
+
+    auto sample_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::metro(*scheduler, 0.01, []() { }));
+
+    scheduler->add_task(sample_routine, "sample_test");
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 100);
+    scheduler->process_token(Vruta::ProcessingToken::FRAME_ACCURATE, 10);
+    scheduler->process_token(Vruta::ProcessingToken::ON_DEMAND, 1);
+
+    EXPECT_TRUE(scheduler->cancel_task("sample_test"));
+}
+
+TEST_F(TasksTest, CoroutineStatePersistence)
+{
+    auto line_routine = std::make_shared<Vruta::SoundRoutine>(
+        Kriya::line(*scheduler, 0.0f, 10.0f, 0.1f, 5, true));
+
+    scheduler->add_task(line_routine, "persistent_line", true);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.05));
+
+    float* value = line_routine->get_state<float>("current_value");
+    ASSERT_NE(value, nullptr);
+
+    float mid_value = *value;
+    EXPECT_GT(mid_value, 0.0f);
+    EXPECT_LT(mid_value, 10.0f);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.05));
+
+    EXPECT_NEAR(*value, 10.0f, 0.1f);
+
+    EXPECT_TRUE(scheduler->cancel_task("persistent_line"));
+}
+
+TEST_F(TasksTest, ErrorHandling)
+{
+    scheduler->add_task(nullptr, "null_test");
+    EXPECT_FALSE(scheduler->cancel_task("null_test"));
+
+    EXPECT_FALSE(scheduler->cancel_task("non_existent"));
+
+    Kriya::Timer timer(*scheduler);
+    bool called = false;
+    timer.schedule(0.0, [&called]() { called = true; });
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 1);
+    EXPECT_TRUE(called);
+}
+
 }

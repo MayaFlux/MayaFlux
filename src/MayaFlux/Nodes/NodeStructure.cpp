@@ -1,166 +1,7 @@
 #include "NodeStructure.hpp"
-#include "Generators/Generator.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 
 namespace MayaFlux::Nodes {
-
-void RootNode::register_node(std::shared_ptr<Node> node)
-{
-    if (m_is_processing.load(std::memory_order_acquire)) {
-        if (m_Nodes.end() != std::find(m_Nodes.begin(), m_Nodes.end(), node)) {
-            u_int32_t state = node->m_state.load();
-            if (state & Utils::NodeState::INACTIVE) {
-                atomic_remove_flag(node->m_state, Utils::NodeState::INACTIVE);
-                atomic_add_flag(node->m_state, Utils::NodeState::ACTIVE);
-            }
-            return;
-        }
-
-        for (size_t i = 0; i < MAX_PENDING; ++i) {
-            bool expected = false;
-            if (m_pending_ops[i].active.compare_exchange_strong(
-                    expected, true,
-                    std::memory_order_acquire,
-                    std::memory_order_relaxed)) {
-                m_pending_ops[i].node = node;
-                atomic_remove_flag(node->m_state, Utils::NodeState::ACTIVE);
-                atomic_add_flag(node->m_state, Utils::NodeState::INACTIVE);
-                m_pending_count.fetch_add(1, std::memory_order_relaxed);
-                return;
-            }
-        }
-
-        while (m_is_processing.load(std::memory_order_acquire)) {
-            std::this_thread::yield();
-        }
-    }
-
-    m_Nodes.push_back(node);
-    u_int32_t state = node->m_state.load();
-    atomic_add_flag(node->m_state, Utils::NodeState::ACTIVE);
-}
-
-void RootNode::unregister_node(std::shared_ptr<Node> node)
-{
-    u_int32_t state = node->m_state.load();
-    atomic_add_flag(node->m_state, Utils::NodeState::PENDING_REMOVAL);
-
-    if (m_is_processing.load(std::memory_order_acquire)) {
-        for (size_t i = 0; i < MAX_PENDING; ++i) {
-            bool expected = false;
-            if (m_pending_ops[i].active.compare_exchange_strong(
-                    expected, true,
-                    std::memory_order_acquire,
-                    std::memory_order_relaxed)) {
-
-                m_pending_ops[i].node = node;
-                m_pending_count.fetch_add(1, std::memory_order_relaxed);
-                return;
-            }
-        }
-
-        while (m_is_processing.load(std::memory_order_acquire)) {
-            std::this_thread::yield();
-        }
-    }
-
-    auto it = m_Nodes.begin();
-    while (it != m_Nodes.end()) {
-        if ((*it).get() == node.get()) {
-            it = m_Nodes.erase(it);
-            break;
-        }
-        ++it;
-    }
-    node->reset_processed_state();
-
-    u_int32_t flag = node->m_state.load();
-    flag &= ~static_cast<u_int32_t>(Utils::NodeState::PENDING_REMOVAL);
-    flag &= ~static_cast<u_int32_t>(Utils::NodeState::ACTIVE);
-    flag |= static_cast<u_int32_t>(Utils::NodeState::INACTIVE);
-    atomic_set_flag_strong(node->m_state, static_cast<Utils::NodeState>(flag));
-}
-
-std::vector<double> RootNode::process(unsigned int num_samples)
-{
-    bool expected = false;
-    if (!m_is_processing.compare_exchange_strong(expected, true,
-            std::memory_order_acquire, std::memory_order_relaxed)) {
-        return std::vector<double>(num_samples, 0.0);
-    }
-
-    if (m_pending_count.load(std::memory_order_relaxed) > 0) {
-        process_pending_operations();
-    }
-
-    std::vector<double> output(num_samples);
-
-    for (auto& node : m_Nodes) {
-        node->reset_processed_state();
-    }
-
-    for (unsigned int i = 0; i < num_samples; i++) {
-        double sample = 0.f;
-
-        for (auto& node : m_Nodes) {
-
-            auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
-            if (generator && generator->should_mock_process()) {
-                generator->process_sample(0.f);
-            } else {
-                sample += node->process_sample(0.f);
-            }
-            u_int32_t state = node->m_state.load();
-            atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
-        }
-        output[i] = sample;
-    }
-
-    for (auto& node : m_Nodes) {
-        node->reset_processed_state();
-    }
-
-    m_is_processing.store(false, std::memory_order_release);
-
-    return output;
-}
-
-void RootNode::process_pending_operations()
-{
-    for (size_t i = 0; i < MAX_PENDING; ++i) {
-        if (m_pending_ops[i].active.load(std::memory_order_acquire)) {
-            auto& op = m_pending_ops[i];
-            u_int32_t state = op.node->m_state.load();
-
-            if (!(state & Utils::NodeState::ACTIVE)) {
-                m_Nodes.push_back(op.node);
-
-                state &= ~static_cast<u_int32_t>(Utils::NodeState::INACTIVE);
-                state |= static_cast<u_int32_t>(Utils::NodeState::ACTIVE);
-                atomic_set_flag_strong(op.node->m_state, static_cast<Utils::NodeState>(state));
-            } else if (state & Utils::NodeState::PENDING_REMOVAL) {
-                auto it = m_Nodes.begin();
-                while (it != m_Nodes.end()) {
-                    if ((*it).get() == op.node.get()) {
-                        it = m_Nodes.erase(it);
-                        break;
-                    }
-                    ++it;
-                }
-                op.node->reset_processed_state();
-
-                state &= ~static_cast<u_int32_t>(Utils::NodeState::PENDING_REMOVAL);
-                state &= ~static_cast<u_int32_t>(Utils::NodeState::ACTIVE);
-                state |= static_cast<u_int32_t>(Utils::NodeState::INACTIVE);
-                atomic_set_flag_strong(op.node->m_state, static_cast<Utils::NodeState>(state));
-            }
-
-            op.node.reset();
-            op.active.store(false, std::memory_order_release);
-            m_pending_count.fetch_sub(1, std::memory_order_relaxed);
-        }
-    }
-}
 
 ChainNode::ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target)
     : m_Source(source)
@@ -172,14 +13,14 @@ ChainNode::ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target)
 void ChainNode::initialize()
 {
     if (m_Source) {
-        MayaFlux::remove_node_from_root(m_Source);
+        MayaFlux::unregister_audio_node(m_Source);
     }
     if (m_Target) {
-        MayaFlux::remove_node_from_root(m_Target);
+        MayaFlux::unregister_audio_node(m_Target);
     }
     if (!m_is_initialized) {
         auto self = shared_from_this();
-        MayaFlux::add_node_to_root(self);
+        MayaFlux::register_audio_node(self);
         m_is_initialized = true;
     }
 }
@@ -251,14 +92,14 @@ BinaryOpNode::BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs,
 void BinaryOpNode::initialize()
 {
     if (m_lhs) {
-        MayaFlux::remove_node_from_root(m_lhs);
+        MayaFlux::unregister_audio_node(m_lhs);
     }
     if (m_rhs) {
-        MayaFlux::remove_node_from_root(m_rhs);
+        MayaFlux::unregister_audio_node(m_rhs);
     }
     if (!m_is_initialized) {
         auto self = shared_from_this();
-        MayaFlux::add_node_to_root(self);
+        MayaFlux::register_audio_node(self);
         m_is_initialized = true;
     }
 }

@@ -72,7 +72,7 @@ public:
         return MemoryLayout::ROW_MAJOR;
     }
 
-    void set_memory_layout(MemoryLayout layout) override
+    void set_memory_layout(MemoryLayout) override
     {
         // No-op for mock
     }
@@ -82,17 +82,17 @@ public:
         return 1;
     }
 
-    DataVariant get_region_data(const Region& region) const override
+    DataVariant get_region_data(const Region&) const override
     {
         return DataVariant(m_processed_data);
     }
 
-    void set_region_data(const Region& region, const DataVariant& data) override
+    void set_region_data(const Region&, const DataVariant&) override
     {
         // No-op for mock
     }
 
-    std::span<const double> get_frame(u_int64_t frame_index) const override
+    std::span<const double> get_frame(u_int64_t) const override
     {
         static std::vector<double> empty;
         return std::span<const double>(empty);
@@ -103,17 +103,17 @@ public:
         return m_frame_size;
     }
 
-    void get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const override
+    void get_frames(std::span<double>, u_int64_t, u_int64_t) const override
     {
         // No-op for mock
     }
 
-    double get_value_at(const std::vector<u_int64_t>& coordinates) const override
+    double get_value_at(const std::vector<u_int64_t>&) const override
     {
         return 0.0;
     }
 
-    void set_value_at(const std::vector<u_int64_t>& coordinates, double value) override
+    void set_value_at(const std::vector<u_int64_t>&, double) override
     {
         // No-op for mock
     }
@@ -143,27 +143,27 @@ public:
         m_region_groups.erase(name);
     }
 
-    bool is_region_loaded(const Region& region) const override
+    bool is_region_loaded(const Region&) const override
     {
         return true;
     }
 
-    void load_region(const Region& region) override
+    void load_region(const Region&) override
     {
         // No-op for mock
     }
 
-    void unload_region(const Region& region) override
+    void unload_region(const Region&) override
     {
         // No-op for mock
     }
 
-    u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const override
+    u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>&) const override
     {
         return 0;
     }
 
-    std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t linear_index) const override
+    std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t) const override
     {
         return { 0, 0 };
     }
@@ -249,13 +249,13 @@ public:
         m_processing_chain = chain;
     }
 
-    u_int32_t register_dimension_reader(u_int32_t dimension_index) override
+    u_int32_t register_dimension_reader(u_int32_t) override
     {
         // No-op for mock
         return 0;
     }
 
-    void unregister_dimension_reader(u_int32_t dimension_index) override
+    void unregister_dimension_reader(u_int32_t) override
     {
         // No-op for mock
     }
@@ -265,7 +265,7 @@ public:
         return false;
     }
 
-    void mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id) override
+    void mark_dimension_consumed(u_int32_t, u_int32_t) override
     {
         // No-op for mock
     }
@@ -275,7 +275,7 @@ public:
         return true;
     }
 
-    void mark_buffers_for_processing(bool should_process) override
+    void mark_buffers_for_processing(bool) override
     {
         // No-op for mock
     }
@@ -285,7 +285,7 @@ public:
         // No-op for mock
     }
 
-    ProcessingState get_processing_state() const
+    ProcessingState get_processing_state() const override
     {
         return m_processing_state;
     }

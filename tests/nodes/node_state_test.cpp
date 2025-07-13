@@ -68,7 +68,7 @@ TEST_F(NodeProcessStateTest, RootNodeOwnershipTrumpsCounter)
 {
     auto node = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
 
-    MayaFlux::add_node_to_root(node);
+    MayaFlux::register_audio_node(node);
     EXPECT_TRUE(node->m_state.load() & Utils::NodeState::ACTIVE);
 
     Nodes::atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
@@ -76,7 +76,7 @@ TEST_F(NodeProcessStateTest, RootNodeOwnershipTrumpsCounter)
     node->reset_processed_state();
     EXPECT_FALSE(node->m_state.load() & Utils::NodeState::PROCESSED);
 
-    MayaFlux::remove_node_from_root(node);
+    MayaFlux::unregister_audio_node(node);
 }
 
 TEST_F(NodeProcessStateTest, FunctionalCorrectness)
@@ -105,10 +105,10 @@ TEST_F(NodeProcessStateTest, RealisticProcessingCycle)
     auto amp_mod = std::make_shared<Nodes::Generator::Sine>(3.0f, 0.3f);
     auto carrier = std::make_shared<Nodes::Generator::Sine>(freq_mod, amp_mod);
 
-    MayaFlux::add_node_to_root(carrier);
+    MayaFlux::register_audio_node(carrier);
 
     const int buffer_size = 512;
-    std::vector<double> output = MayaFlux::get_root_node().process(buffer_size);
+    std::vector<double> output = MayaFlux::get_audio_channel_root().process(buffer_size);
 
     EXPECT_EQ(output.size(), buffer_size);
 
@@ -121,7 +121,7 @@ TEST_F(NodeProcessStateTest, RealisticProcessingCycle)
     }
     EXPECT_TRUE(has_signal);
 
-    MayaFlux::remove_node_from_root(carrier);
+    MayaFlux::unregister_audio_node(carrier);
 }
 
 TEST_F(NodeProcessStateTest, CounterEdgeCases)

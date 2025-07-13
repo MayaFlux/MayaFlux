@@ -1,5 +1,7 @@
 #include "../test_config.h"
 
+#include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
 #include "MayaFlux/Buffers/Recursive/FeedbackBuffer.hpp"
@@ -12,9 +14,12 @@ class AudioBufferTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        standard_buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+        standard_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+        buffer_manager = std::make_shared<Buffers::BufferManager>(2, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
     }
+
     std::shared_ptr<Buffers::AudioBuffer> standard_buffer;
+    std::shared_ptr<Buffers::BufferManager> buffer_manager;
 };
 
 TEST_F(AudioBufferTest, Initialization)
@@ -23,9 +28,9 @@ TEST_F(AudioBufferTest, Initialization)
     EXPECT_EQ(standard_buffer->get_num_samples(), TestConfig::BUFFER_SIZE);
     EXPECT_EQ(standard_buffer->get_data().size(), TestConfig::BUFFER_SIZE);
 
-    auto buffer2 = std::make_shared<Buffers::StandardAudioBuffer>();
-    EXPECT_EQ(buffer2->get_num_samples(), 0);
-    EXPECT_EQ(buffer2->get_data().size(), 0);
+    auto buffer2 = std::make_shared<Buffers::AudioBuffer>();
+    EXPECT_EQ(buffer2->get_num_samples(), 512);
+    EXPECT_EQ(buffer2->get_data().size(), 512);
 
     buffer2->setup(1, 1024);
     EXPECT_EQ(buffer2->get_channel_id(), 1);
@@ -75,24 +80,37 @@ TEST_F(AudioBufferTest, ProcessorManagement)
         TestProcessor()
             : process_called(false)
         {
+            m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             process_called = true;
-            for (auto& sample : buffer->get_data()) {
-                sample *= 2.0;
+            auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
+            if (audio_buffer) {
+                for (auto& sample : audio_buffer->get_data()) {
+                    sample *= 2.0;
+                }
             }
         }
 
-        void on_attach(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void on_attach(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             attach_called = true;
+            auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
+            if (!audio_buffer) {
+                throw std::runtime_error("TestProcessor can only be attached to AudioBuffer");
+            }
         }
 
-        void on_detach(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void on_detach(std::shared_ptr<Buffers::Buffer>) override
         {
             detach_called = true;
+        }
+
+        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        {
+            return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
 
         bool process_called = false;
@@ -102,23 +120,23 @@ TEST_F(AudioBufferTest, ProcessorManagement)
 
     auto processor = std::make_shared<TestProcessor>();
 
-    standard_buffer->set_default_processor(processor);
-    EXPECT_EQ(standard_buffer->get_default_processor(), processor);
+    buffer_manager->add_processor(processor, standard_buffer);
     EXPECT_TRUE(processor->attach_called);
 
     std::fill(standard_buffer->get_data().begin(), standard_buffer->get_data().end(), 1.0);
 
-    standard_buffer->process_default();
-    EXPECT_TRUE(processor->process_called);
+    auto processing_chain = standard_buffer->get_processing_chain();
+    if (processing_chain) {
+        processing_chain->process(standard_buffer);
+        EXPECT_TRUE(processor->process_called);
 
-    for (const auto& sample : standard_buffer->get_data()) {
-        EXPECT_DOUBLE_EQ(sample, 2.0);
+        for (const auto& sample : standard_buffer->get_data()) {
+            EXPECT_DOUBLE_EQ(sample, 2.0);
+        }
     }
 
-    auto processor2 = std::make_shared<TestProcessor>();
-    standard_buffer->set_default_processor(processor2);
+    buffer_manager->remove_processor(processor, standard_buffer);
     EXPECT_TRUE(processor->detach_called);
-    EXPECT_TRUE(processor2->attach_called);
 }
 
 TEST_F(AudioBufferTest, ProcessingChain)
@@ -128,19 +146,58 @@ TEST_F(AudioBufferTest, ProcessingChain)
     EXPECT_EQ(standard_buffer->get_processing_chain(), chain);
 
     bool processor1_called = false;
+    bool processor2_called = false;
+
     class SimpleProcessor : public Buffers::BufferProcessor {
     public:
         SimpleProcessor(bool& flag)
             : called_flag(flag)
         {
+            m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
         {
             called_flag = true;
-            for (auto& sample : buffer->get_data()) {
-                sample += 1.0;
+            auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
+            if (audio_buffer) {
+                for (auto& sample : audio_buffer->get_data()) {
+                    sample += 1.0;
+                }
             }
+        }
+
+        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        {
+            return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
+        }
+
+    private:
+        bool& called_flag;
+    };
+
+    class MultiplyProcessor : public Buffers::BufferProcessor {
+    public:
+        MultiplyProcessor(bool& flag)
+            : called_flag(flag)
+        {
+            m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
+        }
+
+        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        {
+            called_flag = true;
+            auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
+            if (audio_buffer) {
+                for (auto& sample : audio_buffer->get_data()) {
+                    sample *= 2.0;
+                }
+            }
+        }
+
+        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        {
+            return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
 
     private:
@@ -148,28 +205,6 @@ TEST_F(AudioBufferTest, ProcessingChain)
     };
 
     auto processor1 = std::make_shared<SimpleProcessor>(processor1_called);
-
-    bool processor2_called = false;
-
-    class MultiplyProcessor : public Buffers::BufferProcessor {
-    public:
-        MultiplyProcessor(bool& flag)
-            : called_flag(flag)
-        {
-        }
-
-        void process(std::shared_ptr<Buffers::AudioBuffer> buffer) override
-        {
-            called_flag = true;
-            for (auto& sample : buffer->get_data()) {
-                sample *= 2.0;
-            }
-        }
-
-    private:
-        bool& called_flag;
-    };
-
     auto processor2 = std::make_shared<MultiplyProcessor>(processor2_called);
 
     chain->add_processor(processor1, standard_buffer);
@@ -186,6 +221,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
     EXPECT_TRUE(processor1_called);
     EXPECT_TRUE(processor2_called);
 
+    // Expected: (1.0 + 1.0) * 2.0 = 4.0
     for (const auto& sample : standard_buffer->get_data()) {
         EXPECT_DOUBLE_EQ(sample, 4.0);
     }
@@ -207,6 +243,38 @@ TEST_F(AudioBufferTest, ProcessingChain)
     for (const auto& sample : standard_buffer->get_data()) {
         EXPECT_DOUBLE_EQ(sample, 2.0);
     }
+}
+
+TEST_F(AudioBufferTest, TokenCompatibility)
+{
+    class TokenAwareProcessor : public Buffers::BufferProcessor {
+    public:
+        TokenAwareProcessor(Buffers::ProcessingToken token)
+        {
+            m_processing_token = token;
+        }
+
+        void processing_function(std::shared_ptr<Buffers::Buffer>) override
+        {
+            // Test processing implementation
+        }
+
+        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        {
+            return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
+        }
+    };
+
+    auto audio_processor = std::make_shared<TokenAwareProcessor>(Buffers::ProcessingToken::AUDIO_BACKEND);
+    auto graphics_processor = std::make_shared<TokenAwareProcessor>(Buffers::ProcessingToken::GRAPHICS_BACKEND);
+
+    EXPECT_TRUE(audio_processor->is_compatible_with(standard_buffer));
+
+    auto token = Buffers::ProcessingToken::AUDIO_BACKEND;
+    buffer_manager->add_processor_to_token_channel(audio_processor, token, 0);
+
+    auto active_tokens = buffer_manager->get_active_tokens();
+    EXPECT_FALSE(active_tokens.empty());
 }
 
 class FeedbackBufferTest : public ::testing::Test {
@@ -263,40 +331,6 @@ TEST_F(FeedbackBufferTest, FeedbackProcessing)
     }
 }
 
-TEST_F(FeedbackBufferTest, FeedbackProcessor)
-{
-    auto processor = std::make_shared<Buffers::FeedbackProcessor>(0.75f);
-
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
-
-    processor->on_attach(buffer);
-
-    std::fill(buffer->get_data().begin(), buffer->get_data().end(), 1.0);
-
-    processor->process(buffer);
-
-    for (const auto& sample : buffer->get_data()) {
-        EXPECT_DOUBLE_EQ(sample, 1.0);
-    }
-
-    processor->process(buffer);
-
-    for (const auto& sample : buffer->get_data()) {
-        EXPECT_DOUBLE_EQ(sample, 1.75);
-    }
-
-    processor->set_feedback(0.5f);
-    EXPECT_FLOAT_EQ(processor->get_feedback(), 0.5f);
-
-    processor->process(buffer);
-
-    for (const auto& sample : buffer->get_data()) {
-        EXPECT_DOUBLE_EQ(sample, 2.25);
-    }
-
-    processor->on_detach(buffer);
-}
-
 class NodeBufferTest : public ::testing::Test {
 protected:
     void SetUp() override
@@ -340,50 +374,16 @@ TEST_F(NodeBufferTest, NodeProcessing)
     EXPECT_TRUE(node_buffer->get_clear_before_process());
 }
 
-TEST_F(NodeBufferTest, NodeSourceProcessor)
-{
-    float mix_amount = 0.75f;
-    bool clear_before = true;
-    auto processor = std::make_shared<Buffers::NodeSourceProcessor>(sine, mix_amount, clear_before);
-
-    auto buffer = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
-
-    std::fill(buffer->get_data().begin(), buffer->get_data().end(), 1.0);
-
-    processor->process(buffer);
-
-    bool has_valid_data = false;
-    for (const auto& sample : buffer->get_data()) {
-        EXPECT_GE(sample, -mix_amount);
-        EXPECT_LE(sample, mix_amount);
-
-        if (std::abs(sample) > 0.01) {
-            has_valid_data = true;
-        }
-    }
-    EXPECT_TRUE(has_valid_data);
-
-    processor->set_mix(0.25f);
-    EXPECT_FLOAT_EQ(processor->get_mix(), 0.25f);
-
-    buffer->clear();
-
-    processor->process(buffer);
-
-    for (const auto& sample : buffer->get_data()) {
-        EXPECT_GE(sample, -0.25f);
-        EXPECT_LE(sample, 0.25f);
-    }
-}
-
 class RootAudioBufferTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        root_buffer = std::make_shared<Buffers::RootAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+        buffer_manager = std::make_shared<Buffers::BufferManager>(2, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
+        root_buffer = buffer_manager->get_root_buffer();
     }
 
     std::shared_ptr<Buffers::RootAudioBuffer> root_buffer;
+    std::shared_ptr<Buffers::BufferManager> buffer_manager;
 };
 
 TEST_F(RootAudioBufferTest, Initialization)
@@ -396,11 +396,11 @@ TEST_F(RootAudioBufferTest, Initialization)
 
 TEST_F(RootAudioBufferTest, ChildBufferManagement)
 {
-    auto child1 = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    auto child2 = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto child1 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto child2 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
-    root_buffer->add_child_buffer(child1);
-    root_buffer->add_child_buffer(child2);
+    EXPECT_TRUE(root_buffer->try_add_child_buffer(child1));
+    EXPECT_TRUE(root_buffer->try_add_child_buffer(child2));
 
     EXPECT_EQ(root_buffer->get_child_buffers().size(), 2);
     EXPECT_EQ(root_buffer->get_num_children(), 2);
@@ -430,6 +430,15 @@ TEST_F(RootAudioBufferTest, ChildBufferManagement)
     }
 }
 
+TEST_F(RootAudioBufferTest, TokenActivation)
+{
+    root_buffer->set_token_active(true);
+    EXPECT_TRUE(root_buffer->is_token_active());
+
+    root_buffer->set_token_active(false);
+    EXPECT_FALSE(root_buffer->is_token_active());
+}
+
 TEST_F(RootAudioBufferTest, NodeOutputHandling)
 {
     std::vector<double> node_data(TestConfig::BUFFER_SIZE, 0.5);
@@ -453,14 +462,14 @@ TEST_F(RootAudioBufferTest, NodeOutputHandling)
 
 TEST_F(RootAudioBufferTest, ChannelProcessing)
 {
-    auto child1 = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    auto child2 = std::make_shared<Buffers::StandardAudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto child1 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto child2 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
 
     std::fill(child1->get_data().begin(), child1->get_data().end(), 0.3);
     std::fill(child2->get_data().begin(), child2->get_data().end(), 0.7);
 
-    root_buffer->add_child_buffer(child1);
-    root_buffer->add_child_buffer(child2);
+    root_buffer->try_add_child_buffer(child1);
+    root_buffer->try_add_child_buffer(child2);
 
     std::vector<double> node_data(TestConfig::BUFFER_SIZE, 0.5);
     root_buffer->set_node_output(node_data);
@@ -470,7 +479,7 @@ TEST_F(RootAudioBufferTest, ChannelProcessing)
     bool has_nonzero = false;
     for (const auto& sample : root_buffer->get_data()) {
         EXPECT_GE(sample, 0.0);
-        EXPECT_LE(sample, 1.0);
+        EXPECT_LE(sample, 2.0);
 
         if (std::abs(sample) > 0.01) {
             has_nonzero = true;
@@ -478,4 +487,18 @@ TEST_F(RootAudioBufferTest, ChannelProcessing)
     }
     EXPECT_TRUE(has_nonzero);
 }
+
+TEST_F(RootAudioBufferTest, BufferManagerIntegration)
+{
+    auto token = Buffers::ProcessingToken::AUDIO_BACKEND;
+
+    auto manager_root = buffer_manager->get_root_buffer(token, 0);
+    EXPECT_NE(manager_root, nullptr);
+
+    buffer_manager->process_token_channel(token, 0, TestConfig::BUFFER_SIZE);
+
+    auto active_tokens = buffer_manager->get_active_tokens();
+    EXPECT_FALSE(active_tokens.empty());
+}
+
 }

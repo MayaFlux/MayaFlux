@@ -1,7 +1,5 @@
 #pragma once
 
-#include "config.h"
-
 #include "magic_enum/magic_enum.hpp"
 
 namespace MayaFlux::Utils {

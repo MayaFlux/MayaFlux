@@ -214,6 +214,9 @@ private:
  * This is particularly useful for activating temporary processes, applying time-limited
  * transformations, or creating precisely timed events in any computational domain.
  *
+ * NOTE: As this class is centered around audio playback,
+ * it enforces use of AUDIO_RATE processing token that cant be overridden.
+ *
  * Example usage:
  * ```cpp
  * // Create a node timer

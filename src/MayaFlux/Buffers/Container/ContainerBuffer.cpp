@@ -1,6 +1,6 @@
 #include "ContainerBuffer.hpp"
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
-#include "MayaFlux/Kakshya/KakshyaUtils.hpp"
+// #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
 namespace MayaFlux::Buffers {
@@ -40,7 +40,7 @@ void ContainerToBufferAdapter::analyze_container_dimensions()
     }
 }
 
-void ContainerToBufferAdapter::process(std::shared_ptr<AudioBuffer> buffer)
+void ContainerToBufferAdapter::processing_function(std::shared_ptr<Buffer> buffer)
 {
     if (!m_container || !buffer) {
         return;
@@ -69,8 +69,8 @@ void ContainerToBufferAdapter::process(std::shared_ptr<AudioBuffer> buffer)
             }
         }
 
-        auto& buffer_data = buffer->get_data();
-        u_int32_t buffer_size = buffer->get_num_samples();
+        auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
+        u_int32_t buffer_size = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples();
         u_int64_t current_pos = m_container->get_read_position();
 
         if (buffer_data.size() != buffer_size) {
@@ -162,7 +162,7 @@ void ContainerToBufferAdapter::extract_channel_data(std::span<double> output,
     }
 }
 
-void ContainerToBufferAdapter::on_attach(std::shared_ptr<AudioBuffer> buffer)
+void ContainerToBufferAdapter::on_attach(std::shared_ptr<Buffer> buffer)
 {
     if (!m_container || !buffer) {
         return;
@@ -178,8 +178,8 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<AudioBuffer> buffer)
     }
 
     try {
-        auto& buffer_data = buffer->get_data();
-        u_int32_t num_samples = buffer->get_num_samples();
+        auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
+        u_int32_t num_samples = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples();
         u_int64_t position = m_container->get_read_position();
 
         extract_channel_data(buffer_data, position, num_samples);
@@ -193,7 +193,7 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<AudioBuffer> buffer)
     }
 }
 
-void ContainerToBufferAdapter::on_detach(std::shared_ptr<AudioBuffer> buffer)
+void ContainerToBufferAdapter::on_detach(std::shared_ptr<Buffer> buffer)
 {
     if (m_container) {
         m_container->unregister_state_change_callback();
@@ -249,7 +249,7 @@ void ContainerToBufferAdapter::on_container_state_change(
 ContainerBuffer::ContainerBuffer(u_int32_t channel_id, u_int32_t num_samples,
     std::shared_ptr<Kakshya::StreamContainer> container,
     u_int32_t source_channel)
-    : StandardAudioBuffer(channel_id, num_samples)
+    : AudioBuffer(channel_id, num_samples)
     , m_container(container)
     , m_source_channel(source_channel)
 {

@@ -1,11 +1,8 @@
 #include "../test_config.h"
 
-#include "MayaFlux/Buffers/AudioBuffer.hpp"
-#include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Generators/Impulse.hpp"
 #include "MayaFlux/Nodes/Generators/Phasor.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
 namespace MayaFlux::Test {
 
@@ -46,7 +43,7 @@ TEST_F(ImpulseTest, ImpulseCallback)
 {
     int impulse_callback_count = 0;
 
-    impulse->on_impulse([&impulse_callback_count](const Nodes::NodeContext& ctx) {
+    impulse->on_impulse([&impulse_callback_count](const Nodes::NodeContext&) {
         impulse_callback_count++;
     });
 
@@ -68,7 +65,7 @@ TEST_F(ImpulseTest, ConditionalCallback)
     int conditional_callback_count = 0;
 
     impulse->on_tick_if(
-        [&conditional_callback_count](const Nodes::NodeContext& ctx) {
+        [&conditional_callback_count](const Nodes::NodeContext&) {
             conditional_callback_count++;
         },
         [](const Nodes::NodeContext& ctx) {
@@ -142,7 +139,7 @@ TEST_F(PhasorTest, PhaseWrapCallback)
 {
     int wrap_callback_count = 0;
 
-    phasor->on_phase_wrap([&wrap_callback_count](const Nodes::NodeContext& ctx) {
+    phasor->on_phase_wrap([&wrap_callback_count](const Nodes::NodeContext&) {
         wrap_callback_count++;
     });
 
@@ -161,12 +158,12 @@ TEST_F(PhasorTest, ThresholdCallback)
     double threshold = 0.5;
 
     phasor->on_threshold(
-        [&threshold_callback_count](const Nodes::NodeContext& ctx) {
+        [&threshold_callback_count](const Nodes::NodeContext&) {
             threshold_callback_count++;
         },
         threshold);
 
-    for (int i = 0; i < TestConfig::SAMPLE_RATE; i++) {
+    for (unsigned int i = 0; i < TestConfig::SAMPLE_RATE; i++) {
         phasor->process_sample(0.0);
     }
 
@@ -238,7 +235,7 @@ TEST_F(PhasorTest, RemoveCallbacks)
 {
     int callback_count = 0;
 
-    auto callback = [&callback_count](const Nodes::NodeContext& ctx) {
+    auto callback = [&callback_count](const Nodes::NodeContext&) {
         callback_count++;
     };
 

@@ -36,7 +36,7 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
     promise_ref.set_state("end_value", end_value);
     promise_ref.set_state("restart", false);
 
-    const unsigned int sample_rate = scheduler.task_sample_rate();
+    const unsigned int sample_rate = scheduler.get_rate();
     if (step_duration < 1) {
         step_duration = 1;
     }

@@ -96,7 +96,6 @@ TEST_F(FeatureExtractorTest, InvalidMethodThrows)
     extractor->set_extraction_method("invalid_method");
 
     ExtractorInput input { DataVariant { test_data } };
-    // Should not throw for unsupported method, but return default behavior
     EXPECT_NO_THROW(extractor->apply_operation(input));
 }
 
@@ -115,7 +114,7 @@ protected:
         test_result = std::vector<double> { 1.0, 2.0, 3.0 };
         concrete_node = std::make_shared<ConcreteExtractorNode<std::vector<double>>>(test_result);
 
-        lazy_func = [this]() {
+        lazy_func = []() {
             return ExtractorOutput { std::vector<double> { 4.0, 5.0, 6.0 } };
         };
         lazy_node = std::make_shared<LazyExtractorNode>(lazy_func);
@@ -144,11 +143,9 @@ TEST_F(ExtractorNodeTest, LazyNodeEvaluation)
 {
     EXPECT_TRUE(lazy_node->is_lazy());
 
-    // First extraction should evaluate the function
     auto result1 = lazy_node->extract();
     ASSERT_TRUE(std::holds_alternative<std::vector<double>>(result1.base_output));
 
-    // Second extraction should return cached result
     auto result2 = lazy_node->extract();
     ASSERT_TRUE(std::holds_alternative<std::vector<double>>(result2.base_output));
 
@@ -220,7 +217,6 @@ TEST_F(ExtractorChainTest, MultipleExtractorChain)
     auto result = chain->extract(input);
 
     ASSERT_TRUE(std::holds_alternative<std::vector<double>>(result.base_output));
-    // Should process mean first, then energy of the mean result
 }
 
 TEST_F(ExtractorChainTest, ChainNameRetrieval)
@@ -332,14 +328,12 @@ protected:
         test_data = std::vector<double> { 0.1, 0.5, 0.9, 0.3, 0.7 };
         grammar = std::make_shared<ExtractionGrammar>();
 
-        // Add test rules
         ExtractionGrammar::Rule peak_rule {
             "find_peaks",
             [](const ExtractorInput& input) -> bool {
-                // Always matches for testing
                 return std::holds_alternative<DataVariant>(input.base_input);
             },
-            [](const ExtractorInput& input) -> ExtractorOutput {
+            [](const ExtractorInput&) -> ExtractorOutput {
                 return ExtractorOutput { std::vector<double> { 0.9, 0.7 } }; // Mock peaks
             },
             {},
@@ -352,7 +346,7 @@ protected:
             [](const ExtractorInput& input) -> bool {
                 return std::holds_alternative<DataVariant>(input.base_input);
             },
-            [](const ExtractorInput& input) -> ExtractorOutput {
+            [](const ExtractorInput&) -> ExtractorOutput {
                 return ExtractorOutput { std::vector<double> { 1.59 } }; // Mock energy
             },
             { "find_peaks" },
@@ -394,7 +388,6 @@ TEST_F(ExtractionGrammarTest, SpecificRuleExtraction)
 
 TEST_F(ExtractionGrammarTest, NonMatchingRuleReturnsNullopt)
 {
-    // Create input that doesn't match any rules
     ExtractorInput input { Region { { 0 }, { 100 }, {} } };
 
     auto result = grammar->extract_by_rule("find_peaks", input);
@@ -408,7 +401,7 @@ TEST_F(ExtractionGrammarTest, ExtractAllMatchingRules)
 
     auto results = grammar->extract_all_matching(input);
 
-    EXPECT_EQ(results.size(), 2); // Both rules should match
+    EXPECT_EQ(results.size(), 2);
 }
 
 TEST_F(ExtractionGrammarTest, NonExistentRuleReturnsNullopt)
@@ -437,7 +430,6 @@ protected:
 
 TEST_F(ExtractorIOTest, ExtractorInputConstruction)
 {
-    // Test various constructor forms
     ExtractorInput input1 { DataVariant { test_data } };
     ExtractorInput input2 { std::static_pointer_cast<Kakshya::SignalSourceContainer>(container) };
     ExtractorInput input3 { Region { { 0 }, { 100 }, {} } };
@@ -449,7 +441,6 @@ TEST_F(ExtractorIOTest, ExtractorInputConstruction)
 
 TEST_F(ExtractorIOTest, ExtractorOutputConstruction)
 {
-    // Test various constructor forms
     ExtractorOutput output1 { test_data };
     ExtractorOutput output2 { DataVariant { test_data } };
     ExtractorOutput output3 { RegionGroup { "test_group" } };
@@ -487,13 +478,12 @@ class ExtractorIntegrationTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        // Create complex test signal
         test_data.resize(1024);
         for (size_t i = 0; i < test_data.size(); ++i) {
             double t = static_cast<double>(i) / 1024.0;
             test_data[i] = 0.5 * std::sin(2.0 * M_PI * 5 * t) + // 5 Hz component
                 0.3 * std::sin(2.0 * M_PI * 15 * t) + // 15 Hz component
-                0.1 * (static_cast<double>(rand()) / RAND_MAX - 0.5); // Noise
+                0.1 * (static_cast<double>(rand()) / RAND_MAX - 0.5);
         }
 
         container = std::make_shared<MockSignalSourceContainer>();

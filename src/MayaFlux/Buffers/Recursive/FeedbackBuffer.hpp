@@ -9,7 +9,7 @@ namespace MayaFlux::Buffers {
  * @class FeedbackBuffer
  * @brief Specialized buffer implementing computational feedback systems
  *
- * FeedbackBuffer extends StandardAudioBuffer to create a buffer that maintains memory
+ * FeedbackBuffer extends AudioBuffer to create a buffer that maintains memory
  * of its previous state, enabling the creation of recursive computational systems.
  * This implementation transcends traditional audio effects, providing a foundation
  * for complex dynamical systems, emergent behaviors, and self-modifying algorithms.
@@ -25,7 +25,7 @@ namespace MayaFlux::Buffers {
  * controlled way to introduce recursive elements without the risks of uncontrolled
  * recursion or stack overflow that can occur in node-based feedback.
  */
-class FeedbackBuffer : public StandardAudioBuffer {
+class FeedbackBuffer : public AudioBuffer {
 public:
     /**
      * @brief Creates a new feedback buffer
@@ -160,7 +160,7 @@ public:
      * The combination is weighted by the feedback coefficient, with higher
      * values resulting in stronger influence from the previous state.
      */
-    void process(std::shared_ptr<AudioBuffer> buffer) override;
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when this processor is attached to a buffer
@@ -170,7 +170,7 @@ public:
      * attached buffer. If the buffer is a FeedbackBuffer, the processor
      * will use its internal previous state.
      */
-    void on_attach(std::shared_ptr<AudioBuffer> buffer) override;
+    void on_attach(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Called when this processor is detached from a buffer
@@ -178,7 +178,7 @@ public:
      *
      * Cleans up any buffer-specific state.
      */
-    void on_detach(std::shared_ptr<AudioBuffer> buffer) override;
+    void on_detach(std::shared_ptr<Buffer> buffer) override;
 
     /**
      * @brief Sets the feedback coefficient

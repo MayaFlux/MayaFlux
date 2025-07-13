@@ -55,7 +55,7 @@ public:
     }
 
 protected:
-    ExtractorOutput extract_impl(const DataVariant& data) override
+    ExtractorOutput extract_impl(const DataVariant&) override
     {
         m_extraction_count++;
 
@@ -123,7 +123,7 @@ protected:
             static_cast<double>(segments.size()) } };
     }
 
-    std::vector<std::string> get_methods_for_type_impl(std::type_index type_info) const override
+    std::vector<std::string> get_methods_for_type_impl(std::type_index) const override
     {
         return get_available_methods();
     }
@@ -243,7 +243,7 @@ protected:
         return ExtractorOutput { std::vector<double> { static_cast<double>(group.regions.size()) } };
     }
 
-    std::vector<std::string> get_methods_for_type_impl(std::type_index type_info) const override
+    std::vector<std::string> get_methods_for_type_impl(std::type_index) const override
     {
         return get_available_methods();
     }
@@ -375,7 +375,7 @@ public:
             };
 
             // Default extractor - returns rule name as feature
-            extractor = [rule_name](const ExtractorInput& input) {
+            extractor = [rule_name](const ExtractorInput&) {
                 return ExtractorOutput { std::vector<double> { static_cast<double>(rule_name.length()) } };
             };
         }
@@ -512,7 +512,7 @@ protected:
         return ExtractorOutput { std::vector<double> { static_cast<double>(container->get_total_elements()) } };
     }
 
-    std::vector<std::string> get_methods_for_type_impl(std::type_index type_info) const override
+    std::vector<std::string> get_methods_for_type_impl(std::type_index) const override
     {
         return get_available_methods();
     }
