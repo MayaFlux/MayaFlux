@@ -5,6 +5,8 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
+#include "Proxy/NodeProxy.hpp"
+
 namespace MayaFlux {
 
 //-------------------------------------------------------------------------
@@ -31,8 +33,23 @@ Nodes::RootNode& get_audio_channel_root(u_int32_t channel)
     return *get_context().get_node_graph_manager()->get_token_roots(Nodes::ProcessingToken::AUDIO_RATE)[channel];
 }
 
+void register_all_nodes()
+{
+    MayaFlux::NodeProxy::set_context_applier(
+        [](std::shared_ptr<MayaFlux::Nodes::Node> node, const MayaFlux::CreationContext& context) {
+            if (context.domain && context.channel) {
+                auto token = get_node_token(*context.domain);
+                get_node_graph_manager()->add_to_root(node, token, *context.channel);
+            }
+
+            // for (const auto& [key, value] : context.metadata) {
+            //     apply_metadata_to_node(node, key, value);
+            // }
+        });
+}
+
 //-------------------------------------------------------------------------
-// Buffer Management
+//  Buffer Management
 //-------------------------------------------------------------------------
 
 std::shared_ptr<Buffers::BufferManager> get_buffer_manager()

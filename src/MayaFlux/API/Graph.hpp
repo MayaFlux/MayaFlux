@@ -72,6 +72,8 @@ auto create_node(NodeType, Args&&... args) -> std::shared_ptr<NodeType>
     return node;
 }
 
+void register_all_nodes();
+
 //-------------------------------------------------------------------------
 // Buffer Management
 //-------------------------------------------------------------------------
