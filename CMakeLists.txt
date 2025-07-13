@@ -116,7 +116,7 @@ if(WIN32)
     target_link_libraries(MayaFluxLib PUBLIC
         RtAudio::rtaudio
         Eigen3::Eigen
-        glfw3_LIBRARIES
+        glfw
         ${AVCODEC_LIB}
         ${AVFORMAT_LIB}
         ${AVUTIL_LIB}
