@@ -390,7 +390,7 @@ public:
 
     // Non-audio domain methods (return defaults for audio routines)
     u_int64_t get_next_frame() const override { return 0; }
-    void set_next_frame(u_int64_t next_frame) override { /* no-op for audio */ }
+    void set_next_frame(u_int64_t /*next_frame*/) override { /* no-op for audio */ }
 
 protected:
     void set_state_impl(const std::string& key, std::any value) override;
@@ -421,29 +421,29 @@ public:
 
     // Promise state access implementations (TODO: implement when graphics promise is ready)
     bool get_auto_resume() const override { return true; }
-    void set_auto_resume(bool auto_resume) override { /* TODO */ }
+    void set_auto_resume(bool /*auto_resume*/) override { /* TODO */ }
     bool get_should_terminate() const override { return false; }
-    void set_should_terminate(bool should_terminate) override { /* TODO */ }
+    void set_should_terminate(bool /*should_terminate*/) override { /* TODO */ }
     bool get_sync_to_clock() const override { return true; }
 
     // Graphics domain timing implementations
     u_int64_t get_next_frame() const override { return 0; }
-    void set_next_frame(u_int64_t next_frame) override { /* TODO */ }
+    void set_next_frame(u_int64_t /*next_frame*/) override { /* TODO */ }
 
     // Non-graphics domain methods (return defaults)
     u_int64_t get_next_sample() const override { return 0; }
-    void set_next_sample(u_int64_t next_sample) override { /* no-op for graphics */ }
+    void set_next_sample(u_int64_t /*next_sample*/) override { /* no-op for graphics */ }
 
     // TODO: Implement when visual subsystem is ready
     bool is_active() const override { return false; }
-    bool initialize_state(u_int64_t current_frame = 0u) override { return false; }
-    bool try_resume(u_int64_t current_frame) override { return false; }
+    bool initialize_state(u_int64_t /*current_frame*/ = 0u) override { return false; }
+    bool try_resume(u_int64_t /*current_frame*/) override { return false; }
     bool restart() override { return false; }
     u_int64_t next_execution() const override { return 0; }
 
 protected:
-    void set_state_impl(const std::string& key, std::any value) override { }
-    void* get_state_impl_raw(const std::string& key) override { return nullptr; }
+    void set_state_impl(const std::string& /*key*/, std::any /*value*/) override { }
+    void* get_state_impl_raw(const std::string& /*key*/) override { return nullptr; }
 };
 
 /**
@@ -471,27 +471,27 @@ public:
 
     // Promise state access implementations (TODO: implement when complex promise is ready)
     bool get_auto_resume() const override { return true; }
-    void set_auto_resume(bool auto_resume) override { /* TODO */ }
+    void set_auto_resume(bool /*auto_resume*/) override { /* TODO */ }
     bool get_should_terminate() const override { return false; }
-    void set_should_terminate(bool should_terminate) override { /* TODO */ }
+    void set_should_terminate(bool /*should_terminate*/) override { /* TODO */ }
     bool get_sync_to_clock() const override { return true; }
 
     // Multi-domain timing implementations (supports both audio and graphics)
     u_int64_t get_next_sample() const override { return 0; }
-    void set_next_sample(u_int64_t next_sample) override { /* TODO */ }
+    void set_next_sample(u_int64_t /*next_sample*/) override { /* TODO */ }
     u_int64_t get_next_frame() const override { return 0; }
-    void set_next_frame(u_int64_t next_frame) override { /* TODO */ }
+    void set_next_frame(u_int64_t /*next_frame*/) override { /* TODO */ }
 
     // TODO: Implement when multi-domain scheduling is ready
     bool is_active() const override { return false; }
-    bool initialize_state(u_int64_t current_context = 0u) override { return false; }
-    bool try_resume(u_int64_t current_context) override { return false; }
+    bool initialize_state(u_int64_t /*current_context*/ = 0u) override { return false; }
+    bool try_resume(u_int64_t /*current_context*/) override { return false; }
     bool restart() override { return false; }
     u_int64_t next_execution() const override { return 0; }
 
 protected:
-    void set_state_impl(const std::string&, std::any) override { }
-    void* get_state_impl_raw(const std::string&) override { return nullptr; }
+    void set_state_impl(const std::string& /*key*/, std::any /*value*/) override { }
+    void* get_state_impl_raw(const std::string& /*key*/) override { return nullptr; }
 
 private:
     ProcessingToken m_primary_token = ProcessingToken::SAMPLE_ACCURATE;

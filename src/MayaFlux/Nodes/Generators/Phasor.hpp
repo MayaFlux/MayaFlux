@@ -4,33 +4,6 @@
 
 namespace MayaFlux::Nodes::Generator {
 
-/* class PhasorContext : public NodeContext {
-public:
-    PhasorContext(double value, float frequency, float amplitude, float offset, double phase)
-        : m_value(value)
-        , m_frequency(frequency)
-        , m_amplitude(amplitude)
-        , m_offset(offset)
-        , m_phase(phase)
-    {
-    }
-
-    double get_value() const override { return m_value; }
-
-    // Phasor-specific context information
-    float get_frequency() const { return m_frequency; }
-    float get_amplitude() const { return m_amplitude; }
-    float get_offset() const { return m_offset; }
-    double get_phase() const { return m_phase; }
-
-private:
-    double m_value;
-    float m_frequency;
-    float m_amplitude;
-    float m_offset;
-    double m_phase;
-}; */
-
 /**
  * @class Phasor
  * @brief Phase ramp generator node

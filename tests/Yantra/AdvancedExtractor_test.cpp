@@ -254,7 +254,7 @@ protected:
 
         MockExtractionGrammar::MockRule onset_rule("detect_onsets", 10);
         onset_rule.matcher = [](const ExtractorInput& input) {
-            if (auto* data = std::get_if<DataVariant>(&input.base_input)) {
+            if (std::get_if<DataVariant>(&input.base_input)) {
                 return true;
             }
             return false;
