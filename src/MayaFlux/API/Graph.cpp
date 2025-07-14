@@ -25,7 +25,7 @@ void register_audio_node(std::shared_ptr<Nodes::Node> node, unsigned int channel
 
 void unregister_audio_node(std::shared_ptr<Nodes::Node> node, unsigned int channel)
 {
-    get_context().get_node_graph_manager()->get_token_roots(Nodes::ProcessingToken::AUDIO_RATE)[channel]->unregister_node(node);
+    get_context().get_node_graph_manager()->remove_from_root(node, Nodes::ProcessingToken::AUDIO_RATE, channel);
 }
 
 Nodes::RootNode& get_audio_channel_root(u_int32_t channel)

@@ -70,6 +70,17 @@ bool TaskScheduler::cancel_task(std::shared_ptr<Routine> routine)
     return false;
 }
 
+bool TaskScheduler::restart_task(const std::string& name)
+{
+    auto it = find_task_by_name(name);
+    if (it != m_tasks.end()) {
+        if (it->routine && it->routine->is_active()) {
+            it->routine->restart();
+        }
+    }
+    return false;
+}
+
 std::shared_ptr<Routine> TaskScheduler::get_task(const std::string& name) const
 {
     auto it = find_task_by_name(name);

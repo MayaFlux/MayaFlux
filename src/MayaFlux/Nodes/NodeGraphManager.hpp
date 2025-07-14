@@ -55,6 +55,17 @@ public:
     void add_to_root(std::shared_ptr<Node> node, ProcessingToken token, unsigned int channel = 0);
 
     /**
+     * @brief Remove node from a specific processing token and channel
+     * @param node Node to remove
+     * @param token Processing domain (AUDIO_RATE, VISUAL_RATE, etc.)
+     * @param channel Channel within that domain
+     *
+     * Removes the specified node from the root node of the given processing domain and channel.
+     * If the node is not found in that root, no action is taken.
+     */
+    void remove_from_root(std::shared_ptr<Node> node, ProcessingToken token, unsigned int channel = 0);
+
+    /**
      * @brief Adds a node to a channel's root node by its identifier
      * @param node_id Identifier of the node to add
      @ param token Processing domain to add the node to (default is AUDIO_RATE)
@@ -345,6 +356,14 @@ private:
      * Assigns a generated identifier if needed and adds the node to the registry.
      */
     void register_node_globally(std::shared_ptr<Node> node);
+
+    /**
+     * @brief Unregisters a node globally
+     * @param node Node to unregister
+     *
+     * Removes the node from the global registry and cleans up any references.
+     */
+    void unregister_node_globally(std::shared_ptr<Node> node);
 };
 
 }

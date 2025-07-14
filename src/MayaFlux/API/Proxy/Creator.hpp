@@ -312,7 +312,7 @@ void CreationProxy::apply_buffer_context(std::shared_ptr<T> obj)
 static constexpr auto Audio = Domain::AUDIO;
 static constexpr auto Graphics = Domain::GRAPHICS;
 
-inline Creator create;
+inline Creator vega;
 
 template <typename T>
 auto operator|(std::shared_ptr<T> obj, Domain d) -> CreationHandle<T>
