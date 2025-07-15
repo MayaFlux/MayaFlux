@@ -9,8 +9,9 @@ namespace MayaFlux::Kakshya {
  *
  * All disk I/O, file format, and metadata operations must be handled by IO classes.
  * This interface exists for semantic clarity and future extension.
+ * Uses virtual inheritance to support diamond inheritance pattern with SoundStreamContainer.
  */
-class FileContainer : public StreamContainer {
+class FileContainer : public virtual StreamContainer {
 public:
     virtual ~FileContainer() = default;
     // No additional methods; all functionality is inherited or delegated.
