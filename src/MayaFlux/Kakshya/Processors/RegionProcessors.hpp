@@ -163,6 +163,10 @@ protected:
      */
     virtual size_t select_next_segment(const OrganizedRegion& region) const;
 
+    std::optional<size_t> find_region_for_position(
+        const std::vector<u_int64_t>& position,
+        const std::vector<OrganizedRegion>& regions) const;
+
 private:
     // Random number generation for stochastic selection
     mutable std::mt19937 m_random_engine { std::random_device {}() };

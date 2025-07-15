@@ -1,7 +1,5 @@
 #include "RegionProcessors.hpp"
 
-#include "MayaFlux/Kakshya/KakshyaUtils.hpp"
-
 namespace MayaFlux::Kakshya {
 
 RegionOrganizationProcessor::RegionOrganizationProcessor(std::shared_ptr<SignalSourceContainer> container)
@@ -68,6 +66,8 @@ void RegionOrganizationProcessor::process(std::shared_ptr<SignalSourceContainer>
 void RegionOrganizationProcessor::add_region_group(const std::string& group_name)
 {
     if (auto container = m_container_weak.lock()) {
+        RegionGroup new_group(group_name);
+        container->add_region_group(new_group);
         refresh_organized_data();
     }
 }
@@ -182,7 +182,6 @@ void RegionOrganizationProcessor::process_organized_regions(std::shared_ptr<Sign
     }
 
     auto& current_region = m_organized_regions[m_current_region_index];
-
     current_region.state = RegionState::ACTIVE;
 
     size_t segment_index = select_next_segment(current_region);
@@ -194,6 +193,7 @@ void RegionOrganizationProcessor::process_organized_regions(std::shared_ptr<Sign
             container, output_data, output_offset, output_shape);
     }
 
+    // Handle transitions to next region
     if (m_current_region_index < m_organized_regions.size() - 1) {
         auto& next_region = m_organized_regions[m_current_region_index + 1];
 
@@ -213,11 +213,10 @@ void RegionOrganizationProcessor::process_organized_regions(std::shared_ptr<Sign
         }
 
         if (should_transition && current_region.transition_type != RegionTransition::IMMEDIATE) {
-            apply_region_transition(current_region, next_region, container, output_data, output_shape);
+            std::vector<u_int64_t> transition_shape = output_shape;
+            apply_region_transition(current_region, next_region, container, output_data, transition_shape);
         }
     }
-
-    advance_position(m_current_position, 1, &current_region);
 }
 
 void RegionOrganizationProcessor::process_region_segment(const OrganizedRegion& region,
@@ -227,15 +226,18 @@ void RegionOrganizationProcessor::process_region_segment(const OrganizedRegion& 
     const std::vector<u_int64_t>& output_offset,
     const std::vector<u_int64_t>& output_shape)
 {
-    if (auto cached_data = m_cache_manager->get_cached_segment(segment)) {
-        safe_copy_data_variant(cached_data->data, output_data);
-
-    } else {
-        // DataVariant segment_data = extract_region_data(segment.source_region, container);
-        DataVariant segment_data = container->get_region_data(segment.source_region);
-        safe_copy_data_variant(segment_data, output_data);
-        cache_region_if_needed(segment, container);
+    // Check if segment data is cached first
+    if (m_cache_manager) {
+        auto cached_data = m_cache_manager->get_cached_segment(segment);
+        if (cached_data) {
+            // Use existing safe_copy_data_variant from KakshyaUtils
+            safe_copy_data_variant(cached_data->data, output_data);
+            return;
+        }
     }
+
+    auto region_data = container->get_region_data(segment.source_region);
+    safe_copy_data_variant(region_data, output_data);
 }
 
 void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion& current_region,
@@ -246,70 +248,58 @@ void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion&
 {
     switch (current_region.transition_type) {
     case RegionTransition::CROSSFADE: {
-        DataVariant next_data = std::visit([](const auto& vec) -> DataVariant {
-            return std::decay_t<decltype(vec)>(vec.size());
-        },
-            output_data);
-
+        // Get data from next region
         if (!next_region.segments.empty()) {
-            next_data = container->get_region_data(next_region.segments[0].source_region);
-        }
+            auto next_data = container->get_region_data(next_region.segments[0].source_region);
 
-        std::visit([&](auto& current_vec, const auto& next_vec) {
-            if constexpr (std::is_same_v<typename std::decay_t<decltype(current_vec)>::value_type,
-                              std::complex<float>>
-                || std::is_same_v<typename std::decay_t<decltype(current_vec)>::value_type,
-                    std::complex<double>>
-                || std::is_same_v<typename std::decay_t<decltype(next_vec)>::value_type,
-                    std::complex<float>>
-                || std::is_same_v<typename std::decay_t<decltype(next_vec)>::value_type,
-                    std::complex<double>>) {
-                throw std::runtime_error("Complex type conversion not supported");
-            } else {
-                if constexpr (std::is_same_v<typename std::decay_t<decltype(current_vec)>::value_type,
-                                  typename std::decay_t<decltype(next_vec)>::value_type>) {
-                    size_t fade_samples = std::min(current_vec.size(), next_vec.size());
-                    for (size_t i = 0; i < fade_samples; ++i) {
-                        double fade_factor = static_cast<double>(i) / fade_samples;
-                        current_vec[i] = (1.0 - fade_factor) * current_vec[i] + fade_factor * next_vec[i];
+            // Apply crossfade by modifying output_data in place
+            std::visit([&next_data](auto& current_vec) -> void {
+                std::visit([&current_vec](const auto& next_vec) -> void {
+                    using CurrentType = std::decay_t<decltype(current_vec)>;
+                    using NextType = std::decay_t<decltype(next_vec)>;
+
+                    if constexpr (std::is_same_v<CurrentType, NextType>) {
+                        if constexpr (!std::is_same_v<typename CurrentType::value_type, std::complex<float>> && !std::is_same_v<typename CurrentType::value_type, std::complex<double>>) {
+                            size_t min_size = std::min(current_vec.size(), next_vec.size());
+                            for (size_t i = 0; i < min_size; ++i) {
+                                double fade_factor = static_cast<double>(i) / min_size;
+                                current_vec[i] = current_vec[i] * (1.0 - fade_factor) + next_vec[i] * fade_factor;
+                            }
+                        }
                     }
-                }
-            }
-        },
-            output_data, next_data);
-        break;
-    }
-
-    case RegionTransition::OVERLAP: {
-        DataVariant next_data = std::visit([](const auto& vec) -> DataVariant {
-            return std::decay_t<decltype(vec)>(vec.size());
-        },
-            output_data);
-
-        if (!next_region.segments.empty()) {
-            next_data = container->get_region_data(next_region.segments[0].source_region);
-        }
-
-        std::visit([&](auto& current_vec) {
-            std::visit([&](const auto& next_vec) {
-                using CurrentType = std::decay_t<decltype(current_vec)>;
-                using NextType = std::decay_t<decltype(next_vec)>;
-
-                if constexpr (std::is_same_v<typename CurrentType::value_type,
-                                  typename NextType::value_type>) {
-                    size_t overlap_samples = std::min(current_vec.size(), next_vec.size());
-                    for (size_t i = 0; i < overlap_samples; ++i) {
-                        current_vec[i] = static_cast<typename CurrentType::value_type>(
-                            current_vec[i] + next_vec[i]);
-                    }
-                }
+                },
+                    next_data);
             },
-                next_data);
-        },
-            output_data);
+                output_data);
+        }
         break;
     }
+    case RegionTransition::OVERLAP: {
+        // Overlap regions using 50% blend
+        if (!next_region.segments.empty()) {
+            auto next_data = container->get_region_data(next_region.segments[0].source_region);
 
+            // Blend data with 50% overlap
+            std::visit([&next_data](auto& current_vec) -> void {
+                std::visit([&current_vec](const auto& next_vec) -> void {
+                    using CurrentType = std::decay_t<decltype(current_vec)>;
+                    using NextType = std::decay_t<decltype(next_vec)>;
+
+                    if constexpr (std::is_same_v<CurrentType, NextType>) {
+                        if constexpr (!std::is_same_v<typename CurrentType::value_type, std::complex<float>> && !std::is_same_v<typename CurrentType::value_type, std::complex<double>>) {
+                            size_t min_size = std::min(current_vec.size(), next_vec.size());
+                            for (size_t i = 0; i < min_size; ++i) {
+                                current_vec[i] = current_vec[i] * 0.5 + next_vec[i] * 0.5;
+                            }
+                        }
+                    }
+                },
+                    next_data);
+            },
+                output_data);
+        }
+        break;
+    }
     default:
         break;
     }
@@ -322,18 +312,15 @@ size_t RegionOrganizationProcessor::select_next_segment(const OrganizedRegion& r
 
     switch (region.selection_pattern) {
     case RegionSelectionPattern::SEQUENTIAL:
-        return region.active_segment_index % region.segments.size();
+        return (region.active_segment_index + 1) % region.segments.size();
 
     case RegionSelectionPattern::RANDOM: {
         std::uniform_int_distribution<size_t> dist(0, region.segments.size() - 1);
         return dist(m_random_engine);
     }
 
-    case RegionSelectionPattern::ROUND_ROBIN:
-        return (region.active_segment_index + 1) % region.segments.size();
-
     case RegionSelectionPattern::WEIGHTED: {
-        if (m_segment_weights.size() != region.segments.size()) {
+        if (m_segment_weights.empty() || m_segment_weights.size() != region.segments.size()) {
             // Equal weights if not set
             return region.active_segment_index % region.segments.size();
         }
@@ -346,6 +333,21 @@ size_t RegionOrganizationProcessor::select_next_segment(const OrganizedRegion& r
         return 0;
     }
 }
+
+std::optional<size_t> RegionOrganizationProcessor::find_region_for_position(
+    const std::vector<u_int64_t>& position,
+    const std::vector<OrganizedRegion>& regions) const
+{
+    for (size_t i = 0; i < regions.size(); ++i) {
+        const auto& region = regions[i];
+        if (region.contains_position(position)) {
+            return i;
+        }
+    }
+    return std::nullopt;
+}
+
+// Remove the custom utility methods and use existing KakshyaUtils instead
 
 void RegionOrganizationProcessor::organize_group(std::shared_ptr<SignalSourceContainer> container,
     const RegionGroup& group)
@@ -381,6 +383,10 @@ void RegionOrganizationProcessor::refresh_organized_data()
         organize_container_data(container);
     }
 }
+
+// =============================================================================
+// DynamicRegionProcessor Implementation
+// =============================================================================
 
 DynamicRegionProcessor::DynamicRegionProcessor(std::shared_ptr<SignalSourceContainer> container)
     : RegionOrganizationProcessor(container)
@@ -424,4 +430,5 @@ void DynamicRegionProcessor::trigger_reorganization()
 {
     m_needs_reorganization.store(true);
 }
+
 }
