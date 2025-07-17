@@ -18,6 +18,12 @@ namespace Buffers {
     class FeedbackBuffer;
     class ContainerBuffer;
 }
+
+namespace Kakshya {
+    class SignalSourceContainer;
+    class DynamicSoundStream;
+    class SoundFileContainer;
+}
 }
 
 #define ALL_NODE_REGISTRATIONS                    \

@@ -10,10 +10,12 @@ struct CreationContext {
     std::map<std::string, std::any> metadata;
 
     CreationContext() = default;
+
     CreationContext(Domain d)
         : domain(d)
     {
     }
+
     CreationContext(Domain d, uint32_t ch)
         : domain(d)
         , channel(ch)
@@ -86,6 +88,8 @@ public:
     ALL_BUFFER_REGISTRATION
 #undef B
 
+    auto read(const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer>;
+
     // Future: Analyzer creation, Shader creation, etc.
     // #define A(method_name, full_type_name) DECLARE_ANALYZER_CREATION_METHOD(method_name, full_type_name)
     // ALL_ANALYZER_REGISTRATIONS
@@ -98,11 +102,15 @@ private:
     template <typename T, typename... Args>
     std::shared_ptr<T> create_buffer_impl(Args&&... args);
 
+    std::shared_ptr<Kakshya::SoundFileContainer> create_container_impl(const std::string& filepath);
+
     template <typename T>
     void apply_node_context(std::shared_ptr<T> obj);
 
     template <typename T>
     void apply_buffer_context(std::shared_ptr<T> obj);
+
+    void apply_container_context(std::shared_ptr<Kakshya::SoundFileContainer> container);
 
     CreationContext m_context;
     Creator* m_creator;
@@ -122,6 +130,18 @@ public:
         return applier;
     }
 
+    static auto& get_container_context_applier()
+    {
+        static std::function<void(std::shared_ptr<Kakshya::SoundFileContainer>, const CreationContext&)> applier;
+        return applier;
+    }
+
+    static auto& get_container_loader()
+    {
+        static std::function<std::shared_ptr<Kakshya::SoundFileContainer>(const std::string&)> loader;
+        return loader;
+    }
+
     static void set_node_context_applier(std::function<void(std::shared_ptr<Nodes::Node>, const CreationContext&)> applier)
     {
         get_node_context_applier() = std::move(applier);
@@ -130,6 +150,16 @@ public:
     static void set_buffer_context_applier(std::function<void(std::shared_ptr<Buffers::Buffer>, const CreationContext&)> applier)
     {
         get_buffer_context_applier() = std::move(applier);
+    }
+
+    static void set_container_context_applier(std::function<void(std::shared_ptr<Kakshya::SoundFileContainer>, const CreationContext&)> applier)
+    {
+        get_container_context_applier() = std::move(applier);
+    }
+
+    static void set_container_loader(std::function<std::shared_ptr<Kakshya::SoundFileContainer>(const std::string&)> loader)
+    {
+        get_container_loader() = std::move(loader);
     }
 };
 
@@ -174,19 +204,50 @@ public:
 private:
     void try_apply_context() const
     {
-        if (m_accumulated_context.domain && m_accumulated_context.channel) {
-            if constexpr (std::is_base_of_v<Nodes::Node, T>) {
+        /* if constexpr (std::is_base_of_v<Kakshya::SignalSourceContainer, T>) {
+            if (m_accumulated_context.domain) {
+                if (auto& applier = ContextAppliers::get_container_context_applier()) {
+                    applier(std::static_pointer_cast<T>(*this), m_accumulated_context);
+                }
+                m_accumulated_context = CreationContext {};
+            }
+        } else {
+            if (m_accumulated_context.domain && m_accumulated_context.channel) {
+                if constexpr (std::is_base_of_v<Nodes::Node, T>) {
+                    if (auto& applier = ContextAppliers::get_node_context_applier()) {
+                        applier(std::static_pointer_cast<Nodes::Node>(*this), m_accumulated_context);
+                    }
+                } else if constexpr (std::is_base_of_v<Buffers::Buffer, T>) {
+                    if (auto& applier = ContextAppliers::get_buffer_context_applier()) {
+                        applier(std::static_pointer_cast<Buffers::Buffer>(*this), m_accumulated_context);
+                    }
+                }
+
+                m_accumulated_context = CreationContext {};
+            }
+        } */
+
+        if constexpr (std::is_base_of_v<Nodes::Node, T>) {
+            if (m_accumulated_context.domain && m_accumulated_context.channel) {
                 if (auto& applier = ContextAppliers::get_node_context_applier()) {
                     applier(std::static_pointer_cast<Nodes::Node>(*this), m_accumulated_context);
                 }
-            } else if constexpr (std::is_base_of_v<Buffers::Buffer, T>) {
+                m_accumulated_context = CreationContext {};
+            }
+        } else if constexpr (std::is_base_of_v<Buffers::Buffer, T>) {
+            if (m_accumulated_context.domain && m_accumulated_context.channel) {
                 if (auto& applier = ContextAppliers::get_buffer_context_applier()) {
                     applier(std::static_pointer_cast<Buffers::Buffer>(*this), m_accumulated_context);
                 }
+                m_accumulated_context = CreationContext {};
             }
-            // Future: else if for Analyzers, Shaders, etc.
-
-            m_accumulated_context = CreationContext {};
+        } else if constexpr (std::is_base_of_v<Kakshya::SignalSourceContainer, T>) {
+            if (m_accumulated_context.domain) {
+                if (auto& applier = ContextAppliers::get_container_context_applier()) {
+                    applier(std::static_pointer_cast<T>(*this), m_accumulated_context);
+                }
+                m_accumulated_context = CreationContext {};
+            }
         }
     }
 
@@ -219,6 +280,15 @@ public:
     ALL_BUFFER_REGISTRATION
 #undef B
 
+    auto read(const std::string& filepath) -> CreationHandle<Kakshya::SoundFileContainer>
+    {
+        if (auto& loader = ContextAppliers::get_container_loader()) {
+            auto container = loader(filepath);
+            return CreationHandle<Kakshya::SoundFileContainer>(container);
+        }
+        return CreationHandle<Kakshya::SoundFileContainer>(nullptr);
+    }
+
     CreationProxy domain(Domain d)
     {
         return CreationProxy(this, CreationContext(d));
@@ -249,6 +319,14 @@ public:
     std::shared_ptr<T> create_buffer_for_proxy(Args&&... args)
     {
         return create_buffer_impl<T>(std::forward<Args>(args)...);
+    }
+
+    std::shared_ptr<Kakshya::SoundFileContainer> create_container_for_proxy(const std::string& filepath)
+    {
+        if (auto& loader = ContextAppliers::get_container_loader()) {
+            return loader(filepath);
+        }
+        return nullptr;
     }
 
 private:
