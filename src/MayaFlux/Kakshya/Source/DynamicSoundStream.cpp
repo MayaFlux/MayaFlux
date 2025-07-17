@@ -3,6 +3,14 @@
 
 namespace MayaFlux::Kakshya {
 
+DynamicSoundStream::DynamicSoundStream(u_int32_t sample_rate, u_int32_t num_channels)
+    : SoundStreamContainer(sample_rate, num_channels)
+    , m_auto_resize(true)
+    , m_is_circular(false)
+    , m_circular_capacity(0)
+{
+}
+
 u_int64_t DynamicSoundStream::write_frames(std::span<const double> data, u_int64_t start_frame)
 {
     u_int64_t num_frames = data.size() / get_num_channels();
