@@ -5,15 +5,15 @@
 namespace MayaFlux::Kakshya {
 
 /**
- * @class SSCExt
+ * @class DynamicSoundStream
  * @brief Minimal extension for dynamic resizing and buffer-sized operations
  *
  * Adds only what's missing: dynamic capacity management and buffer-sized wrappers.
  * Everything else delegates to existing SoundStreamContainer infrastructure.
  */
-class SSCExt : public SoundStreamContainer {
+class DynamicSoundStream : public SoundStreamContainer {
 public:
-    SSCExt(u_int32_t sample_rate = 48000, u_int32_t num_channels = 2)
+    DynamicSoundStream(u_int32_t sample_rate = 48000, u_int32_t num_channels = 2)
         : SoundStreamContainer(sample_rate, num_channels)
         , m_auto_resize(true)
     {

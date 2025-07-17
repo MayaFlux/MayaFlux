@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/Container/StreamWriteProcessor.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
-#include "MayaFlux/Kakshya/Source/SoundStreamEXT.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Buffers;
@@ -11,29 +11,29 @@ using namespace MayaFlux::Buffers;
 namespace MayaFlux::Test {
 
 // ============================================================================
-// SSCExt (SoundStreamEXT) Tests
+// DynamicSoundStream (SoundStreamEXT) Tests
 // ============================================================================
 
-class SSCExtTest : public ::testing::Test {
+class DynamicSoundStreamTest : public ::testing::Test {
 protected:
-    std::shared_ptr<SSCExt> container;
+    std::shared_ptr<DynamicSoundStream> container;
 
     void SetUp() override
     {
-        container = std::make_shared<SSCExt>(48000, 2);
+        container = std::make_shared<DynamicSoundStream>(48000, 2);
     }
 };
 
-TEST_F(SSCExtTest, DefaultConstructorSetsCorrectValues)
+TEST_F(DynamicSoundStreamTest, DefaultConstructorSetsCorrectValues)
 {
-    auto default_container = std::make_shared<SSCExt>(44100);
+    auto default_container = std::make_shared<DynamicSoundStream>(44100);
     EXPECT_EQ(default_container->get_sample_rate(), 44100);
     EXPECT_EQ(default_container->get_num_channels(), 2);
     EXPECT_TRUE(default_container->get_auto_resize());
     EXPECT_FALSE(default_container->is_circular());
 }
 
-TEST_F(SSCExtTest, CustomConstructorSetsCorrectValues)
+TEST_F(DynamicSoundStreamTest, CustomConstructorSetsCorrectValues)
 {
     EXPECT_EQ(container->get_sample_rate(), 48000);
     EXPECT_EQ(container->get_num_channels(), 2);
@@ -41,7 +41,7 @@ TEST_F(SSCExtTest, CustomConstructorSetsCorrectValues)
     EXPECT_FALSE(container->is_circular());
 }
 
-TEST_F(SSCExtTest, WriteFramesWithAutoResize)
+TEST_F(DynamicSoundStreamTest, WriteFramesWithAutoResize)
 {
     std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
     std::span<const double> data_span(test_data);
@@ -52,7 +52,7 @@ TEST_F(SSCExtTest, WriteFramesWithAutoResize)
     EXPECT_GE(container->get_num_frames(), 4);
 }
 
-TEST_F(SSCExtTest, WriteFramesAtNonZeroStartFrame)
+TEST_F(DynamicSoundStreamTest, WriteFramesAtNonZeroStartFrame)
 {
     std::vector<double> first_data = { 0.1, 0.2, 0.3, 0.4 };
     std::vector<double> second_data = { 0.5, 0.6, 0.7, 0.8 };
@@ -64,7 +64,7 @@ TEST_F(SSCExtTest, WriteFramesAtNonZeroStartFrame)
     EXPECT_GE(container->get_num_frames(), 5);
 }
 
-TEST_F(SSCExtTest, WriteFramesWithAutoResizeDisabled)
+TEST_F(DynamicSoundStreamTest, WriteFramesWithAutoResizeDisabled)
 {
     container->set_auto_resize(false);
     container->ensure_capacity(2);
@@ -74,7 +74,7 @@ TEST_F(SSCExtTest, WriteFramesWithAutoResizeDisabled)
     EXPECT_NO_THROW(container->write_frames(std::span<const double>(test_data), 0));
 }
 
-TEST_F(SSCExtTest, UnderstandDataLayout)
+TEST_F(DynamicSoundStreamTest, UnderstandDataLayout)
 {
     std::vector<double> write_data = { 1.0, 2.0, 3.0, 4.0 }; // Frame0: [1,2], Frame1: [3,4]
 
@@ -111,7 +111,7 @@ TEST_F(SSCExtTest, UnderstandDataLayout)
     EXPECT_GT(samples_read, 0);
 }
 
-TEST_F(SSCExtTest, ReadFramesAfterWrite)
+TEST_F(DynamicSoundStreamTest, ReadFramesAfterWrite)
 {
     std::vector<double> write_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
     container->write_frames(std::span<const double>(write_data), 0);
@@ -126,7 +126,7 @@ TEST_F(SSCExtTest, ReadFramesAfterWrite)
     // TODO: Fix the layout issue and add proper data verification
 }
 
-TEST_F(SSCExtTest, EnsureCapacityExpandsContainer)
+TEST_F(DynamicSoundStreamTest, EnsureCapacityExpandsContainer)
 {
     u_int64_t initial_frames = container->get_num_frames();
     container->ensure_capacity(100);
@@ -135,7 +135,7 @@ TEST_F(SSCExtTest, EnsureCapacityExpandsContainer)
     EXPECT_GE(container->get_num_frames(), initial_frames);
 }
 
-TEST_F(SSCExtTest, CircularBufferEnableAndDisable)
+TEST_F(DynamicSoundStreamTest, CircularBufferEnableAndDisable)
 {
     EXPECT_FALSE(container->is_circular());
 
@@ -149,7 +149,7 @@ TEST_F(SSCExtTest, CircularBufferEnableAndDisable)
     EXPECT_FALSE(container->is_looping());
 }
 
-TEST_F(SSCExtTest, CircularBufferWriteAndLoop)
+TEST_F(DynamicSoundStreamTest, CircularBufferWriteAndLoop)
 {
     container->enable_circular_buffer(4);
 
@@ -163,7 +163,7 @@ TEST_F(SSCExtTest, CircularBufferWriteAndLoop)
     EXPECT_GT(frames_read, 0);
 }
 
-TEST_F(SSCExtTest, AutoResizeToggle)
+TEST_F(DynamicSoundStreamTest, AutoResizeToggle)
 {
     EXPECT_TRUE(container->get_auto_resize());
 
@@ -180,13 +180,13 @@ TEST_F(SSCExtTest, AutoResizeToggle)
 
 class StreamWriteProcessorTest : public ::testing::Test {
 protected:
-    std::shared_ptr<SSCExt> container;
+    std::shared_ptr<DynamicSoundStream> container;
     std::shared_ptr<AudioBuffer> buffer;
     std::shared_ptr<StreamWriteProcessor> processor;
 
     void SetUp() override
     {
-        container = std::make_shared<SSCExt>(48000, 2);
+        container = std::make_shared<DynamicSoundStream>(48000, 2);
         buffer = std::make_shared<AudioBuffer>(0, 4);
         processor = std::make_shared<StreamWriteProcessor>(container);
 
@@ -264,20 +264,20 @@ TEST_F(StreamWriteProcessorTest, MultipleProcessCallsAccumulateData)
 }
 
 // ============================================================================
-// SSCExt Buffer Interop Tests
+// DynamicSoundStream Buffer Interop Tests
 // ============================================================================
 
-class SSCExtBufferInteropTest : public ::testing::Test {
+class DynamicSoundStreamBufferInteropTest : public ::testing::Test {
 protected:
-    std::shared_ptr<SSCExt> source_container;
-    std::shared_ptr<SSCExt> sink_container;
+    std::shared_ptr<DynamicSoundStream> source_container;
+    std::shared_ptr<DynamicSoundStream> sink_container;
     std::shared_ptr<AudioBuffer> buffer;
     std::shared_ptr<StreamWriteProcessor> write_processor;
 
     void SetUp() override
     {
-        source_container = std::make_shared<SSCExt>(48000, 2);
-        sink_container = std::make_shared<SSCExt>(48000, 2);
+        source_container = std::make_shared<DynamicSoundStream>(48000, 2);
+        sink_container = std::make_shared<DynamicSoundStream>(48000, 2);
         buffer = std::make_shared<AudioBuffer>(0, 4);
         write_processor = std::make_shared<StreamWriteProcessor>(sink_container);
 
@@ -287,7 +287,7 @@ protected:
     }
 };
 
-TEST_F(SSCExtBufferInteropTest, ReadFromSSCExtWriteToBuffer)
+TEST_F(DynamicSoundStreamBufferInteropTest, ReadFromDynamicSoundStreamWriteToBuffer)
 {
     std::vector<double> temp_buffer(4, 0.0);
     u_int64_t frames_read = source_container->read_frames(std::span<double>(temp_buffer), 4);
@@ -323,7 +323,7 @@ TEST_F(SSCExtBufferInteropTest, ReadFromSSCExtWriteToBuffer)
     EXPECT_NEAR(temp_buffer[3], 0.6, 1e-9) << "Fourth value should be 0.6 (from frame 2, channel 1)";
 }
 
-TEST_F(SSCExtBufferInteropTest, WriteFromBufferToSSCExt)
+TEST_F(DynamicSoundStreamBufferInteropTest, WriteFromBufferToDynamicSoundStream)
 {
     auto& buffer_data = buffer->get_data();
     buffer_data[0] = 1.1;
@@ -363,7 +363,7 @@ TEST_F(SSCExtBufferInteropTest, WriteFromBufferToSSCExt)
     }
 }
 
-TEST_F(SSCExtBufferInteropTest, FullPipelineSourceToSink)
+TEST_F(DynamicSoundStreamBufferInteropTest, FullPipelineSourceToSink)
 {
     std::vector<double> temp_buffer(4, 0.0);
     u_int64_t frames_read = source_container->read_frames(std::span<double>(temp_buffer), 4);
@@ -386,7 +386,7 @@ TEST_F(SSCExtBufferInteropTest, FullPipelineSourceToSink)
     // TODO: Add exact data verification once layout issue is resolved
 }
 
-TEST_F(SSCExtBufferInteropTest, CircularBufferInterop)
+TEST_F(DynamicSoundStreamBufferInteropTest, CircularBufferInterop)
 {
     sink_container->enable_circular_buffer(2);
 
@@ -405,17 +405,17 @@ TEST_F(SSCExtBufferInteropTest, CircularBufferInterop)
 }
 
 // ============================================================================
-// SSCExt with ContiguousAccessProcessor Integration Tests
+// DynamicSoundStream with ContiguousAccessProcessor Integration Tests
 // ============================================================================
 
-class SSCExtProcessorIntegrationTest : public ::testing::Test {
+class DynamicSoundStreamProcessorIntegrationTest : public ::testing::Test {
 protected:
-    std::shared_ptr<SSCExt> container;
+    std::shared_ptr<DynamicSoundStream> container;
     std::shared_ptr<ContiguousAccessProcessor> processor;
 
     void SetUp() override
     {
-        container = std::make_shared<SSCExt>(48000, 2);
+        container = std::make_shared<DynamicSoundStream>(48000, 2);
         processor = std::make_shared<ContiguousAccessProcessor>();
 
         std::vector<double> test_data = {
@@ -427,13 +427,13 @@ protected:
     }
 };
 
-TEST_F(SSCExtProcessorIntegrationTest, ProcessorAttachesToSSCExt)
+TEST_F(DynamicSoundStreamProcessorIntegrationTest, ProcessorAttachesToDynamicSoundStream)
 {
     EXPECT_NO_THROW(processor->on_attach(container));
     EXPECT_NO_THROW(processor->on_detach(container));
 }
 
-TEST_F(SSCExtProcessorIntegrationTest, ProcessorProcessesSSCExtData)
+TEST_F(DynamicSoundStreamProcessorIntegrationTest, ProcessorProcessesDynamicSoundStreamData)
 {
     processor->set_output_size({ 4, 2 });
     processor->on_attach(container);
@@ -447,7 +447,7 @@ TEST_F(SSCExtProcessorIntegrationTest, ProcessorProcessesSSCExtData)
     EXPECT_EQ(vec.size(), 8);
 }
 
-TEST_F(SSCExtProcessorIntegrationTest, AutoAdvanceWithSSCExt)
+TEST_F(DynamicSoundStreamProcessorIntegrationTest, AutoAdvanceWithDynamicSoundStream)
 {
     processor->set_output_size({ 2, 2 });
     processor->set_auto_advance(true);
@@ -460,7 +460,7 @@ TEST_F(SSCExtProcessorIntegrationTest, AutoAdvanceWithSSCExt)
     EXPECT_GT(final_position, initial_position);
 }
 
-TEST_F(SSCExtProcessorIntegrationTest, LoopingRegionWithSSCExt)
+TEST_F(DynamicSoundStreamProcessorIntegrationTest, LoopingRegionWithDynamicSoundStream)
 {
     container->enable_circular_buffer(4);
     processor->set_output_size({ 2, 2 });
@@ -477,48 +477,48 @@ TEST_F(SSCExtProcessorIntegrationTest, LoopingRegionWithSSCExt)
 // Edge Cases and Error Handling Tests
 // ============================================================================
 
-class SSCExtEdgeCasesTest : public ::testing::Test {
+class DynamicSoundStreamEdgeCasesTest : public ::testing::Test {
 protected:
-    std::shared_ptr<SSCExt> container;
+    std::shared_ptr<DynamicSoundStream> container;
 
     void SetUp() override
     {
-        container = std::make_shared<SSCExt>(48000, 2);
+        container = std::make_shared<DynamicSoundStream>(48000, 2);
     }
 };
 
-TEST_F(SSCExtEdgeCasesTest, WriteEmptyData)
+TEST_F(DynamicSoundStreamEdgeCasesTest, WriteEmptyData)
 {
     std::vector<double> empty_data;
     u_int64_t frames_written = container->write_frames(std::span<const double>(empty_data), 0);
     EXPECT_EQ(frames_written, 0);
 }
 
-TEST_F(SSCExtEdgeCasesTest, ReadFromEmptyContainer)
+TEST_F(DynamicSoundStreamEdgeCasesTest, ReadFromEmptyContainer)
 {
     std::vector<double> read_buffer(4);
     u_int64_t frames_read = container->read_frames(std::span<double>(read_buffer), 4);
     EXPECT_EQ(frames_read, 0);
 }
 
-TEST_F(SSCExtEdgeCasesTest, WriteWithMismatchedChannelData)
+TEST_F(DynamicSoundStreamEdgeCasesTest, WriteWithMismatchedChannelData)
 {
     std::vector<double> odd_data = { 0.1, 0.2, 0.3 };
 
     EXPECT_NO_THROW(container->write_frames(std::span<const double>(odd_data), 0));
 }
 
-TEST_F(SSCExtEdgeCasesTest, EnsureCapacityWithZero)
+TEST_F(DynamicSoundStreamEdgeCasesTest, EnsureCapacityWithZero)
 {
     EXPECT_NO_THROW(container->ensure_capacity(0));
 }
 
-TEST_F(SSCExtEdgeCasesTest, CircularBufferWithZeroCapacity)
+TEST_F(DynamicSoundStreamEdgeCasesTest, CircularBufferWithZeroCapacity)
 {
     EXPECT_NO_THROW(container->enable_circular_buffer(0));
 }
 
-TEST_F(SSCExtEdgeCasesTest, WriteAtLargeStartFrame)
+TEST_F(DynamicSoundStreamEdgeCasesTest, WriteAtLargeStartFrame)
 {
     container->set_auto_resize(true);
     std::vector<double> test_data = { 0.1, 0.2 };

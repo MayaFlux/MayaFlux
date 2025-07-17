@@ -1,9 +1,9 @@
-#include "SoundStreamEXT.hpp"
+#include "DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
 namespace MayaFlux::Kakshya {
 
-u_int64_t SSCExt::write_frames(std::span<const double> data, u_int64_t start_frame)
+u_int64_t DynamicSoundStream::write_frames(std::span<const double> data, u_int64_t start_frame)
 {
     u_int64_t num_frames = data.size() / get_num_channels();
 
@@ -44,7 +44,7 @@ u_int64_t SSCExt::write_frames(std::span<const double> data, u_int64_t start_fra
     return num_frames;
 }
 
-void SSCExt::ensure_capacity(u_int64_t required_frames)
+void DynamicSoundStream::ensure_capacity(u_int64_t required_frames)
 {
     u_int64_t current_frames = get_total_elements() / get_num_channels();
     if (required_frames > current_frames) {
@@ -52,7 +52,7 @@ void SSCExt::ensure_capacity(u_int64_t required_frames)
     }
 }
 
-void SSCExt::enable_circular_buffer(u_int64_t capacity)
+void DynamicSoundStream::enable_circular_buffer(u_int64_t capacity)
 {
     ensure_capacity(capacity);
 
@@ -67,14 +67,14 @@ void SSCExt::enable_circular_buffer(u_int64_t capacity)
     m_is_circular = true;
 }
 
-void SSCExt::disable_circular_buffer()
+void DynamicSoundStream::disable_circular_buffer()
 {
     set_looping(false);
     m_is_circular = false;
     m_circular_capacity = 0;
 }
 
-void SSCExt::set_all_data(const DataVariant& data)
+void DynamicSoundStream::set_all_data(const DataVariant& data)
 {
     std::unique_lock lock(m_data_mutex);
 
@@ -92,7 +92,7 @@ void SSCExt::set_all_data(const DataVariant& data)
     update_processing_state(ProcessingState::READY);
 }
 
-void SSCExt::expand_to(u_int64_t target_frames)
+void DynamicSoundStream::expand_to(u_int64_t target_frames)
 {
     u_int64_t current_frames = get_total_elements() / get_num_channels();
     u_int64_t new_capacity = std::max(target_frames, current_frames * 2);
@@ -101,7 +101,7 @@ void SSCExt::expand_to(u_int64_t target_frames)
     set_all_data(new_data);
 }
 
-DataVariant SSCExt::create_expanded_data(u_int64_t new_frame_count)
+DataVariant DynamicSoundStream::create_expanded_data(u_int64_t new_frame_count)
 {
     auto current_data = get_typed_data<double>(m_data);
 

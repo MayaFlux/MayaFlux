@@ -1,7 +1,7 @@
 #include "StreamWriteProcessor.hpp"
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 
-#include "MayaFlux/Kakshya/Source/SoundStreamEXT.hpp"
+#include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
 namespace MayaFlux::Buffers {
 
