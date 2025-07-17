@@ -2,23 +2,48 @@
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
 namespace MayaFlux::Kakshya {
+
 u_int64_t SSCExt::write_frames(std::span<const double> data, u_int64_t start_frame)
 {
     u_int64_t num_frames = data.size() / get_num_channels();
 
+    if (num_frames == 0) {
+        std::cerr << "Attempting to write to container with insufficient data for complete frame. Returning" << std::endl;
+        return 0;
+    }
+
+    u_int64_t required_end_frame = start_frame + num_frames;
+    u_int64_t current_frames = get_num_frames();
+
     if (m_auto_resize) {
-        ensure_capacity(start_frame + num_frames);
+        if (required_end_frame > current_frames) {
+            expand_to(required_end_frame);
+        }
+    } else {
+        u_int64_t available_frames = (start_frame < current_frames) ? (current_frames - start_frame) : 0;
+
+        if (available_frames == 0) {
+            return 0;
+        }
+
+        if (num_frames > available_frames) {
+            num_frames = available_frames;
+        }
     }
 
     Region write_region;
     write_region.start_coordinates = { start_frame, 0 };
     write_region.end_coordinates = { start_frame + num_frames - 1, get_num_channels() - 1 };
 
-    DataVariant data_variant = std::vector<double>(data.begin(), data.end());
+    u_int64_t samples_to_write = num_frames * get_num_channels();
+    std::vector<double> clamped_data(data.begin(), data.begin() + samples_to_write);
+    DataVariant data_variant = std::move(clamped_data);
+
     set_region_data(write_region, data_variant);
 
     return num_frames;
 }
+
 void SSCExt::ensure_capacity(u_int64_t required_frames)
 {
     u_int64_t current_frames = get_total_elements() / get_num_channels();
@@ -26,6 +51,7 @@ void SSCExt::ensure_capacity(u_int64_t required_frames)
         expand_to(required_frames);
     }
 }
+
 void SSCExt::enable_circular_buffer(u_int64_t capacity)
 {
     ensure_capacity(capacity);

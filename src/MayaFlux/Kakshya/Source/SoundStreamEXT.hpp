@@ -13,7 +13,7 @@ namespace MayaFlux::Kakshya {
  */
 class SSCExt : public SoundStreamContainer {
 public:
-    SSCExt(u_int32_t sample_rate = 44100, u_int32_t num_channels = 2)
+    SSCExt(u_int32_t sample_rate = 48000, u_int32_t num_channels = 2)
         : SoundStreamContainer(sample_rate, num_channels)
         , m_auto_resize(true)
     {
