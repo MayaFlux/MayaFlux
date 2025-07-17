@@ -92,6 +92,16 @@ std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels
     return quick_processor;
 }
 
+void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel)
+{
+    get_buffer_manager()->add_buffer_to_token_channel(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+}
+
+void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel)
+{
+    get_buffer_manager()->remove_buffer_from_token_channel(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+}
+
 void register_all_buffers()
 {
     ContextAppliers::set_buffer_context_applier(
