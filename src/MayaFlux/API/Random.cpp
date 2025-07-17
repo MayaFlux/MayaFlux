@@ -1,6 +1,7 @@
-#include "MayaFlux.hpp"
+#include "Random.hpp"
 
-#include "Core/Engine.hpp"
+#include "Core.hpp"
+#include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 
 namespace MayaFlux {
@@ -32,9 +33,4 @@ double get_poisson_random(double start, double end)
     get_context().get_random_engine()->set_type(Utils::distribution::POISSON);
     return get_context().get_random_engine()->random_sample(start, end);
 }
-
-//-------------------------------------------------------------------------
-// Task Scheduling
-//-------------------------------------------------------------------------
-
-} // namespace MayaFlux
+}
