@@ -167,32 +167,4 @@ bool Engine::is_running() const
     return false;
 }
 
-/* float* Engine::get_line_value(const std::string& name)
-{
-    auto it = m_named_tasks.find(name);
-    if (it != m_named_tasks.end() && it->second->is_active()) {
-        auto& promise = it->second->get_handle().promise();
-        float* value = promise.get_state<float>("current_value");
-        if (value) {
-            return value;
-        }
-    }
-    return nullptr;
-} */
-
-/* std::function<float()> Engine::line_value(const std::string& name)
-{
-    return [this, name]() -> float {
-        auto it = m_named_tasks.find(name);
-        if (it != m_named_tasks.end() && it->second->is_active()) {
-            auto& promise = it->second->get_handle().promise();
-            float* value = promise.get_state<float>("current_value");
-            if (value) {
-                return *value;
-            }
-        }
-        return 0.0f;
-    };
-} */
-
 } // namespace MayaFlux::Core

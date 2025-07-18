@@ -19,6 +19,16 @@ void NodeGraphManager::add_to_root(std::shared_ptr<Node> node,
     root.register_node(node);
 }
 
+void NodeGraphManager::remove_from_root(std::shared_ptr<Node> node,
+    ProcessingToken token,
+    unsigned int channel)
+{
+    unregister_node_globally(node);
+
+    auto& root = get_token_root(token, channel);
+    root.unregister_node(node);
+}
+
 void NodeGraphManager::register_token_processor(ProcessingToken token,
     std::function<void(std::span<RootNode*>)> processor)
 {
@@ -131,6 +141,16 @@ void NodeGraphManager::register_node_globally(std::shared_ptr<Node> node)
         ss << "node_" << node.get();
         std::string generated_id = ss.str();
         m_Node_registry[generated_id] = node;
+    }
+}
+
+void NodeGraphManager::unregister_node_globally(std::shared_ptr<Node> node)
+{
+    for (const auto& pair : m_Node_registry) {
+        if (pair.second == node) {
+            m_Node_registry.erase(pair.first);
+            break;
+        }
     }
 }
 

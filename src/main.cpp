@@ -1,37 +1,40 @@
+#define MAYASIMPLE ;
+
 #include "MayaFlux/MayaFlux.hpp"
-#include "MayaFlux/version.h"
 
-#include <csignal>
+#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
-std::atomic<bool> g_running { true };
-
-void signal_handler(int signal)
+void create()
 {
-    if (signal == SIGINT) {
-        std::cout << "\nShutting down MayaFlux..." << std::endl;
-        g_running = false;
-    }
+    // All user code goes here
+
+    // For examplle - Load audio file into memory and send to RtAudio sequentially
+    auto container = vega.read("res/2.wav") | Audio;
 }
 
 int main()
 {
-    std::cout << "MayaFlux Audio Engine v" << MAYAFLUX_VERSION << std::endl;
 
-    std::signal(SIGINT, signal_handler);
+#ifdef MAYASIMPLE
+    register_container_context_operations();
+    register_all_buffers();
+    register_all_nodes();
+#endif // MAYASIMPLE
 
     try {
+        std::cout << "Initializing MayaFlux..." << std::endl;
+
         MayaFlux::Init();
 
         MayaFlux::Start();
 
-        std::cout << "Audio engine running. Press Ctrl+C to stop." << std::endl;
-        std::cout << "Sample rate: " << MayaFlux::get_sample_rate() << " Hz" << std::endl;
-        std::cout << "Buffer size: " << MayaFlux::get_buffer_size() << " samples" << std::endl;
+        std::cout << "\n=== Audio Processing Active ===" << std::endl;
+
+        create();
 
         std::cin.get();
-
         MayaFlux::End();
-        std::cout << "MayaFlux shut down successfully." << std::endl;
+        std::cout << "✓ Clean shutdown" << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

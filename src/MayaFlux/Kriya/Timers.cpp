@@ -17,12 +17,11 @@ Timer::Timer(Vruta::TaskScheduler& scheduler)
 void Timer::schedule(double delay_seconds, std::function<void()> callback)
 {
     cancel();
-
     m_callback = callback;
-
     m_active = true;
 
     auto routine_func = [](Vruta::TaskScheduler& scheduler, u_int64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
+        auto& promise = co_await Kriya::GetPromise {};
         co_await SampleDelay { delay_samples };
 
         if (timer_ptr && timer_ptr->is_active()) {
@@ -33,7 +32,13 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
 
     m_routine = std::make_shared<Vruta::SoundRoutine>(
         routine_func(m_Scheduler, m_Scheduler.seconds_to_samples(delay_seconds), this));
-    m_Scheduler.add_task(m_routine);
+
+    Vruta::ProcessingToken token = m_routine->get_processing_token();
+    u_int64_t current_time = m_Scheduler.current_units(token);
+
+    m_Scheduler.add_task(m_routine, "", false);
+
+    m_routine->initialize_state(current_time);
 }
 
 void Timer::cancel()
