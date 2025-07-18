@@ -90,11 +90,6 @@ public:
 
     auto read(const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer>;
 
-    // Future: Analyzer creation, Shader creation, etc.
-    // #define A(method_name, full_type_name) DECLARE_ANALYZER_CREATION_METHOD(method_name, full_type_name)
-    // ALL_ANALYZER_REGISTRATIONS
-    // #undef A
-
 private:
     template <typename T, typename... Args>
     std::shared_ptr<T> create_node_impl(Args&&... args);
@@ -204,7 +199,7 @@ public:
 private:
     void try_apply_context() const
     {
-        /* if constexpr (std::is_base_of_v<Kakshya::SignalSourceContainer, T>) {
+        if constexpr (std::is_base_of_v<Kakshya::SignalSourceContainer, T>) {
             if (m_accumulated_context.domain) {
                 if (auto& applier = ContextAppliers::get_container_context_applier()) {
                     applier(std::static_pointer_cast<T>(*this), m_accumulated_context);
@@ -223,29 +218,6 @@ private:
                     }
                 }
 
-                m_accumulated_context = CreationContext {};
-            }
-        } */
-
-        if constexpr (std::is_base_of_v<Nodes::Node, T>) {
-            if (m_accumulated_context.domain && m_accumulated_context.channel) {
-                if (auto& applier = ContextAppliers::get_node_context_applier()) {
-                    applier(std::static_pointer_cast<Nodes::Node>(*this), m_accumulated_context);
-                }
-                m_accumulated_context = CreationContext {};
-            }
-        } else if constexpr (std::is_base_of_v<Buffers::Buffer, T>) {
-            if (m_accumulated_context.domain && m_accumulated_context.channel) {
-                if (auto& applier = ContextAppliers::get_buffer_context_applier()) {
-                    applier(std::static_pointer_cast<Buffers::Buffer>(*this), m_accumulated_context);
-                }
-                m_accumulated_context = CreationContext {};
-            }
-        } else if constexpr (std::is_base_of_v<Kakshya::SignalSourceContainer, T>) {
-            if (m_accumulated_context.domain) {
-                if (auto& applier = ContextAppliers::get_container_context_applier()) {
-                    applier(std::static_pointer_cast<T>(*this), m_accumulated_context);
-                }
                 m_accumulated_context = CreationContext {};
             }
         }

@@ -37,9 +37,7 @@ void register_all_nodes()
 {
     ContextAppliers::set_node_context_applier(
         [](std::shared_ptr<Nodes::Node> node, const CreationContext& context) {
-            std::cout << "Calling add node\n";
             if (context.domain && context.channel) {
-                std::cout << "Adding node\n";
                 auto token = get_node_token(*context.domain);
                 get_node_graph_manager()->add_to_root(node, token, context.channel.value());
             }
