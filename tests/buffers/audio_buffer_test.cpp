@@ -378,7 +378,7 @@ class RootAudioBufferTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        buffer_manager = std::make_shared<Buffers::BufferManager>(2, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
+        buffer_manager = std::make_shared<Buffers::BufferManager>(2, 0, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
         root_buffer = buffer_manager->get_root_audio_buffer();
     }
 

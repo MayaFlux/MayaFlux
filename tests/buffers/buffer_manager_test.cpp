@@ -12,7 +12,7 @@ class BufferManagerTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        manager = std::make_shared<Buffers::BufferManager>(TestConfig::NUM_CHANNELS, TestConfig::BUFFER_SIZE, default_token);
+        manager = std::make_shared<Buffers::BufferManager>(TestConfig::NUM_CHANNELS, 0, TestConfig::BUFFER_SIZE, default_token);
     }
 
     void TearDown() override
@@ -59,7 +59,7 @@ TEST_F(BufferManagerTest, TokenBasedAccess)
     EXPECT_EQ(const_data0.size(), TestConfig::BUFFER_SIZE);
 
     auto graphics_token = Buffers::ProcessingToken::GRAPHICS_BACKEND;
-    manager->set_root_audio_buffer_size(graphics_token, TestConfig::BUFFER_SIZE);
+    manager->resize_root_audio_buffers(graphics_token, TestConfig::BUFFER_SIZE);
 
     auto graphics_buffer = manager->get_root_audio_buffer(graphics_token, 0);
     EXPECT_NE(graphics_buffer, nullptr);
@@ -141,7 +141,7 @@ TEST_F(BufferManagerTest, Resize)
 {
     u_int32_t new_size = TestConfig::BUFFER_SIZE * 2;
 
-    manager->resize_root_buffers(default_token, new_size);
+    manager->resize_root_audio_buffers(default_token, new_size);
     EXPECT_EQ(manager->get_root_audio_buffer_size(default_token), new_size);
 
     for (u_int32_t i = 0; i < TestConfig::NUM_CHANNELS; i++) {
@@ -152,7 +152,7 @@ TEST_F(BufferManagerTest, Resize)
     manager->add_audio_buffer(buffer, default_token, 0);
 
     u_int32_t newer_size = new_size + 100;
-    manager->resize_root_buffers(default_token, newer_size);
+    manager->resize_root_audio_buffers(default_token, newer_size);
 
     auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_root_audio_buffer(default_token, 0));
     EXPECT_EQ(root->get_child_buffers()[0]->get_num_samples(), newer_size);
@@ -505,7 +505,7 @@ TEST_F(BufferManagerTest, ActiveTokensAndMultimodal)
     EXPECT_TRUE(has_audio_backend);
 
     auto graphics_token = Buffers::ProcessingToken::GRAPHICS_BACKEND;
-    manager->set_root_audio_buffer_size(graphics_token, TestConfig::BUFFER_SIZE);
+    manager->resize_root_audio_buffers(graphics_token, TestConfig::BUFFER_SIZE);
     auto graphics_root = manager->get_root_audio_buffer(graphics_token, 0);
     EXPECT_NE(graphics_root, nullptr);
 

@@ -9,6 +9,29 @@ class Node;
 namespace MayaFlux::Buffers {
 
 using AudioProcessingFunction = std::function<void(std::shared_ptr<AudioBuffer>)>;
+using RootProcessingFunction = std::function<void(std::vector<std::shared_ptr<RootAudioBuffer>>&, u_int32_t)>;
+
+struct RootAudioUnit {
+    std::vector<std::shared_ptr<RootAudioBuffer>> root_buffers;
+    std::vector<std::shared_ptr<BufferProcessingChain>> processing_chains;
+    RootProcessingFunction custom_processor;
+    u_int32_t channel_count = 0;
+    u_int32_t buffer_size = 512;
+
+    std::shared_ptr<RootAudioBuffer> get_buffer(u_int32_t channel) const
+    {
+        return root_buffers[channel];
+    }
+
+    std::shared_ptr<BufferProcessingChain> get_chain(u_int32_t channel) const
+    {
+        return processing_chains[channel];
+    }
+
+    void resize_channels(u_int32_t new_count, u_int32_t new_buffer_size, ProcessingToken token);
+
+    void resize_buffers(u_int32_t new_buffer_size);
+};
 
 /**
  * @class BufferManager
@@ -37,7 +60,8 @@ public:
     /**
      * @brief Creates a new multimodal buffer manager
      * @param default_processing_token Primary processing domain (default: AUDIO_BACKEND)
-     * @param default_channels Number of channels for the default domain (default: 2)
+     * @param default_out_channels Number of output channels for the default domain (default: 2)
+     * @param default_in_channels Number of input channels for the default domain (default: 0)
      * @param default_buffer_size Buffer size for the default domain (default: 512)
      *
      * Initializes the buffer manager with a default processing domain. Additional domains
@@ -45,7 +69,8 @@ public:
      * This maintains backward compatibility while enabling multimodal processing.
      */
     BufferManager(
-        u_int32_t default_channels = 2,
+        u_int32_t default_out_channels = 2,
+        u_int32_t default_in_channels = 0,
         u_int32_t default_buffer_size = 512,
         ProcessingToken default_processing_token = ProcessingToken::AUDIO_BACKEND);
 
@@ -87,10 +112,16 @@ public:
      * @param token Processing domain to handle
      * @param processor Function that processes all channels for this domain
      */
-    void register_token_processor(ProcessingToken token,
-        std::function<void(std::vector<std::shared_ptr<RootAudioBuffer>>&, u_int32_t)> processor);
+    void register_token_processor(ProcessingToken token, RootProcessingFunction processor);
 
-    // ===== GENERIC CHANNEL ACCESS (Token-Aware) =====
+    /**
+     * @brief Gets the root audio unit for a specific processing token
+     * @param token Processing domain
+     * @return Reference to the root audio unit for that token
+     *
+     * This method does not create a new unit or channel if they don't exist.
+     */
+    const RootAudioUnit& get_audio_unit(ProcessingToken token) const;
 
     /**
      * @brief Gets a root buffer for a specific token and channel
@@ -124,11 +155,11 @@ public:
     u_int32_t get_root_audio_buffer_size(ProcessingToken token) const;
 
     /**
-     * @brief Sets the buffer size for a specific processing token
+     * @brief Resizes all buffers in a specific token domain
      * @param token Processing domain
-     * @param buffer_size New buffer size in processing units
+     * @param buffer_size New buffer size
      */
-    void set_root_audio_buffer_size(ProcessingToken token, u_int32_t buffer_size);
+    void resize_root_audio_buffers(ProcessingToken token, u_int32_t buffer_size);
 
     /**
      * @brief Adds a buffer to a specific token and channel
@@ -166,25 +197,15 @@ public:
     template <typename BufferType, typename... Args>
     std::shared_ptr<BufferType> create_buffer(ProcessingToken token, u_int32_t channel, Args&&... args)
     {
-        ensure_channel_exists(token, channel);
+        auto& unit = ensure_and_get_unit(token, channel);
+        auto buffer = std::make_shared<BufferType>(channel, get_root_audio_buffer_size(token), std::forward<Args>(args)...);
 
-        u_int32_t buffer_size = get_root_audio_buffer_size(token);
-        auto buffer = std::make_shared<BufferType>(channel, buffer_size, std::forward<Args>(args)...);
-
-        // Configure buffer for this token
-        auto processing_chain = get_processing_chain(token, channel);
-        buffer->set_processing_chain(processing_chain);
-
-        // Add to appropriate root buffer (explicit type-based routing)
-        if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
-            auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
-            if (audio_buffer) {
-                add_audio_buffer(audio_buffer, token, channel);
-            }
+        if (auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer)) {
+            add_audio_buffer(audio_buffer, token, channel);
         }
-        // TODO: Add handling for GRAPHICS_BACKEND when RootVideoBuffer exists
-
         return buffer;
+
+        // TODO: Add handling for GRAPHICS_BACKEND when RootVideoBuffer exists
     }
 
     /**
@@ -318,46 +339,38 @@ public:
         ProcessingToken token, u_int32_t num_channels) const;
 
     /**
-     * @brief Resizes all buffers in a specific token domain
-     * @param token Processing domain
-     * @param buffer_size New buffer size
+     * @brief Gets the default processing token used by the manager
      */
-    void resize_root_buffers(ProcessingToken token, u_int32_t buffer_size);
-
     inline ProcessingToken get_default_processing_token() const { return m_default_token; }
 
     inline void validate_num_channels(ProcessingToken token, u_int32_t num_channels, u_int32_t buffer_size)
     {
-        set_root_audio_buffer_size(token, buffer_size);
-        for (size_t i = 0; i < num_channels; i++) {
-            ensure_channel_exists(token, i);
-        }
+        ensure_channels(token, num_channels);
+        resize_root_audio_buffers(token, buffer_size);
     }
 
-    /**
-     * @brief Legacy methods that delegate to token-based equivalents
-     */
-    void process_channel(u_int32_t channel_index);
-    void process_all_channels();
-    void fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames);
-    void fill_interleaved(double* interleaved_data, u_int32_t num_frames) const;
-
 private:
+    /**
+     * @brief Gets or creates the root audio unit for a specific processing token
+     * @param token Processing domain
+     * @return Reference to the root audio unit for that token
+     */
+    RootAudioUnit& get_or_create_unit(ProcessingToken token);
+
     /**
      * @brief Ensures a token/channel combination exists
      * @param token Processing domain
      * @param channel Channel index
      */
-    void ensure_channel_exists(ProcessingToken token, u_int32_t channel);
+    void ensure_channels(ProcessingToken token, u_int32_t channel_count);
 
     /**
-     * @brief Creates a root buffer of appropriate type for a token
+     * @brief Ensures a root audio unit exists for a specific token and channel
      * @param token Processing domain
      * @param channel Channel index
-     * @param buffer_size Buffer size for this domain
-     * @return Shared pointer to the created root buffer
+     * @return Reference to the root audio unit for that token/channel
      */
-    std::shared_ptr<RootAudioBuffer> create_root_audio_buffer(ProcessingToken token, u_int32_t channel, u_int32_t buffer_size);
+    RootAudioUnit& ensure_and_get_unit(ProcessingToken token, u_int32_t channel);
 
     /**
      * @brief Default processing token for legacy compatibility
@@ -365,36 +378,15 @@ private:
     ProcessingToken m_default_token;
 
     /**
-     * @brief Token-based map of root buffers
-     * Maps processing domain -> channel -> root buffer
+     * @brief Token-based map of root buffer units
+     * Maps processing domain -> channel -> {root_buffers, processing chains}
      */
-    std::unordered_map<ProcessingToken, std::vector<std::shared_ptr<RootAudioBuffer>>> m_token_root_buffers;
-
-    /**
-     * @brief Token-based map of processing chains
-     * Maps processing domain -> channel -> processing chain
-     */
-    std::unordered_map<ProcessingToken, std::vector<std::shared_ptr<BufferProcessingChain>>> m_token_processing_chains;
+    std::unordered_map<ProcessingToken, RootAudioUnit> m_audio_units;
 
     /**
      * @brief Global processing chain applied to all tokens
      */
     std::shared_ptr<BufferProcessingChain> m_global_processing_chain;
-
-    /**
-     * @brief Custom processors for each token domain
-     */
-    std::unordered_map<ProcessingToken, std::function<void(std::vector<std::shared_ptr<RootAudioBuffer>>&, u_int32_t)>> m_token_processors;
-
-    /**
-     * @brief Number of channels per token domain
-     */
-    std::unordered_map<ProcessingToken, u_int32_t> m_token_channel_counts;
-
-    /**
-     * @brief Buffer size per token domain
-     */
-    std::unordered_map<ProcessingToken, u_int32_t> m_token_buffer_sizes;
 
     /**
      * @brief Mutex for thread-safe access
