@@ -82,7 +82,7 @@ void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFil
     std::cout << "Setting up audio playback for " << num_channels << " channels..." << std::endl;
 
     for (u_int32_t channel = 0; channel < num_channels; ++channel) {
-        auto container_buffer = buffer_manager->create_buffer_for_token<MayaFlux::Buffers::ContainerBuffer>(
+        auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
             MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND,
             channel,
             container,
@@ -109,7 +109,7 @@ void hook_sound_container_to_buffers_with_context(
     if (context.channel.has_value()) {
         u_int32_t target_channel = context.channel.value();
         if (target_channel < num_channels) {
-            auto container_buffer = buffer_manager->create_buffer_for_token<MayaFlux::Buffers::ContainerBuffer>(
+            auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
                 token, target_channel, container, target_channel);
             container_buffer->initialize();
             std::cout << "✓ Created buffer for channel " << target_channel << std::endl;
@@ -118,7 +118,7 @@ void hook_sound_container_to_buffers_with_context(
         }
     } else {
         for (u_int32_t channel = 0; channel < num_channels; ++channel) {
-            auto container_buffer = buffer_manager->create_buffer_for_token<MayaFlux::Buffers::ContainerBuffer>(
+            auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
                 token, channel, container, channel);
             container_buffer->initialize();
             std::cout << "✓ Created buffer for channel " << channel << std::endl;

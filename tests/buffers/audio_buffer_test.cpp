@@ -271,7 +271,7 @@ TEST_F(AudioBufferTest, TokenCompatibility)
     EXPECT_TRUE(audio_processor->is_compatible_with(standard_buffer));
 
     auto token = Buffers::ProcessingToken::AUDIO_BACKEND;
-    buffer_manager->add_processor_to_token_channel(audio_processor, token, 0);
+    buffer_manager->add_processor_to_channel(audio_processor, token, 0);
 
     auto active_tokens = buffer_manager->get_active_tokens();
     EXPECT_FALSE(active_tokens.empty());
@@ -379,7 +379,7 @@ protected:
     void SetUp() override
     {
         buffer_manager = std::make_shared<Buffers::BufferManager>(2, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
-        root_buffer = buffer_manager->get_root_buffer();
+        root_buffer = buffer_manager->get_root_audio_buffer();
     }
 
     std::shared_ptr<Buffers::RootAudioBuffer> root_buffer;
@@ -492,10 +492,10 @@ TEST_F(RootAudioBufferTest, BufferManagerIntegration)
 {
     auto token = Buffers::ProcessingToken::AUDIO_BACKEND;
 
-    auto manager_root = buffer_manager->get_root_buffer(token, 0);
+    auto manager_root = buffer_manager->get_root_audio_buffer(token, 0);
     EXPECT_NE(manager_root, nullptr);
 
-    buffer_manager->process_token_channel(token, 0, TestConfig::BUFFER_SIZE);
+    buffer_manager->process_channel(token, 0, TestConfig::BUFFER_SIZE);
 
     auto active_tokens = buffer_manager->get_active_tokens();
     EXPECT_FALSE(active_tokens.empty());

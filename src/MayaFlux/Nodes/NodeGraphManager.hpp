@@ -206,7 +206,7 @@ public:
      * If a custom per-channel processor is registered, it is used; otherwise,
      * the default root node processing is performed.
      */
-    std::vector<double> process_token_channel(ProcessingToken token, unsigned int channel, unsigned int num_samples);
+    std::vector<double> process_channel(ProcessingToken token, unsigned int channel, unsigned int num_samples);
 
     /**
      * @brief Process all channels for a token and return channel-separated data
@@ -226,7 +226,7 @@ public:
      * @param token Processing domain
      * @return Number of channels that have active root nodes
      */
-    unsigned int get_token_channel_count(ProcessingToken token) const;
+    unsigned int get_channel_count(ProcessingToken token) const;
 
     /**
      * @brief Get spans of root nodes for a token (for custom processing)
@@ -236,7 +236,7 @@ public:
      * Returns a vector of pointers to all root nodes for the specified processing domain.
      * Useful for custom processing, introspection, or multi-channel operations.
      */
-    std::vector<RootNode*> get_token_roots(ProcessingToken token);
+    std::vector<RootNode*> get_all_root_nodes(ProcessingToken token);
 
     /**
      * @brief Gets or creates the root node for a specific token and channel
@@ -246,7 +246,7 @@ public:
      *
      * If the root node does not exist, it is created and registered.
      */
-    RootNode& get_token_root(ProcessingToken token, unsigned int channel);
+    RootNode& get_root_node(ProcessingToken token, unsigned int channel);
 
     /**
      * @brief Process all active tokens sequentially
@@ -272,14 +272,14 @@ public:
      * @param token Processing domain
      * @return Vector of channel indices that have root nodes for this token
      */
-    std::vector<unsigned int> get_token_channels(ProcessingToken token) const;
+    std::vector<unsigned int> get_all_channels(ProcessingToken token) const;
 
     /**
      * @brief Gets the total number of nodes registered under a given token
      * @param token Processing domain
      * @return Total number of nodes across all channels for this token
      */
-    size_t get_token_node_count(ProcessingToken token) const;
+    size_t get_node_count(ProcessingToken token) const;
 
     /**
      * @brief Prints a summary of all tokens, channels, and node counts
@@ -288,7 +288,7 @@ public:
      * including the number of tokens, channels, and nodes per domain.
      * Useful for debugging and introspection.
      */
-    void print_token_summary() const;
+    void print_summary() const;
 
 private:
     /**
@@ -347,7 +347,7 @@ private:
      *
      * Creates and registers a new root node if one does not already exist.
      */
-    void ensure_token_root_exists(ProcessingToken token, unsigned int channel);
+    void ensure_root_exists(ProcessingToken token, unsigned int channel);
 
     /**
      * @brief Registers a node globally if not already registered

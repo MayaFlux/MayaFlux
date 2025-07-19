@@ -30,6 +30,9 @@ protected:
     }
 
     std::unique_ptr<Core::Engine> engine;
+
+    Nodes::ProcessingToken node_token = Nodes::ProcessingToken::AUDIO_RATE;
+    Buffers::ProcessingToken buf_token = Buffers::ProcessingToken::AUDIO_BACKEND;
 };
 
 #ifdef INTEGRATION_TEST
@@ -98,8 +101,8 @@ TEST_F(EngineTest, InitializationCreatesAndWiresComponents)
     EXPECT_NE(test_engine->get_scheduler(), nullptr) << "TaskScheduler not created";
 
     EXPECT_EQ(test_engine->get_scheduler()->get_rate(), TestConfig::SAMPLE_RATE);
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_num_channels(), TestConfig::NUM_CHANNELS);
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_num_frames(), TestConfig::BUFFER_SIZE);
+    EXPECT_EQ(test_engine->get_buffer_manager()->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
+    EXPECT_EQ(test_engine->get_buffer_manager()->get_root_audio_buffer_size(buf_token), TestConfig::BUFFER_SIZE);
 
     const auto& stream_info = test_engine->get_stream_info();
     EXPECT_EQ(stream_info.sample_rate, TestConfig::SAMPLE_RATE);
@@ -131,8 +134,8 @@ TEST_F(EngineTest, InitializationWithCustomStreamInfo)
     EXPECT_TRUE(applied_config.non_interleaved);
     EXPECT_EQ(applied_config.priority, Core::GlobalStreamInfo::StreamPriority::REALTIME);
 
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_num_channels(), 1);
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_num_frames(), 256);
+    EXPECT_EQ(test_engine->get_buffer_manager()->get_num_channels(buf_token), 1);
+    EXPECT_EQ(test_engine->get_buffer_manager()->get_root_audio_buffer_size(buf_token), 256);
     EXPECT_EQ(test_engine->get_scheduler()->get_rate(), 44100);
 }
 
@@ -180,9 +183,9 @@ TEST_F(EngineTest, ComponentAccessRouting)
     EXPECT_NE(random_engine, nullptr);
 
     EXPECT_EQ(scheduler->get_rate(), TestConfig::SAMPLE_RATE);
-    auto& root = node_graph->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
+    auto& root = node_graph->get_root_node(node_token, 0);
     EXPECT_NE(&(root), nullptr);
-    EXPECT_EQ(buffer_manager->get_num_channels(), TestConfig::NUM_CHANNELS);
+    EXPECT_EQ(buffer_manager->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
 }
 
 //-------------------------------------------------------------------------
@@ -202,7 +205,7 @@ TEST_F(EngineTest, SharedOwnershipOfComponents)
     EXPECT_NE(buffer_manager_ref, nullptr);
 
     EXPECT_EQ(scheduler_ref->get_rate(), TestConfig::SAMPLE_RATE);
-    EXPECT_EQ(buffer_manager_ref->get_num_channels(), TestConfig::NUM_CHANNELS);
+    EXPECT_EQ(buffer_manager_ref->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
 }
 
 TEST_F(EngineTest, CleanShutdownAndResourceManagement)
@@ -248,11 +251,11 @@ TEST_F(EngineTest, NodeGraphIntegration)
     auto node_graph = engine->get_node_graph_manager();
     ASSERT_NE(node_graph, nullptr);
 
-    EXPECT_NO_THROW(node_graph->add_to_root(sine, Nodes::ProcessingToken::AUDIO_RATE));
+    EXPECT_NO_THROW(node_graph->add_to_root(sine, node_token));
 
     AudioTestHelper::waitForAudio(50);
 
-    EXPECT_NO_THROW(node_graph->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0).unregister_node(sine));
+    EXPECT_NO_THROW(node_graph->get_root_node(node_token, 0).unregister_node(sine));
 }
 
 TEST_F(EngineTest, SchedulerIntegrationWithCoroutines)
@@ -283,11 +286,11 @@ TEST_F(EngineTest, BufferSystemIntegration)
     auto buffer_manager = engine->get_buffer_manager();
     ASSERT_NE(buffer_manager, nullptr);
 
-    EXPECT_EQ(buffer_manager->get_num_frames(), TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(buffer_manager->get_num_channels(), TestConfig::NUM_CHANNELS);
+    EXPECT_EQ(buffer_manager->get_root_audio_buffer_size(buf_token), TestConfig::BUFFER_SIZE);
+    EXPECT_EQ(buffer_manager->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
 
     for (unsigned int i = 0; i < TestConfig::NUM_CHANNELS; i++) {
-        auto channel = buffer_manager->get_root_buffer(Buffers::ProcessingToken::AUDIO_BACKEND, i);
+        auto channel = buffer_manager->get_root_audio_buffer(buf_token, i);
         EXPECT_NE(channel, nullptr);
         EXPECT_EQ(channel->get_channel_id(), i);
         EXPECT_EQ(channel->get_num_samples(), TestConfig::BUFFER_SIZE);

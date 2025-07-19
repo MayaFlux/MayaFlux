@@ -8,10 +8,10 @@ TaskScheduler::TaskScheduler(u_int32_t default_sample_rate, u_int32_t default_fr
     : m_clock(default_sample_rate)
     , m_cleanup_threshold(512)
 {
-    ensure_token_domain(ProcessingToken::SAMPLE_ACCURATE, default_sample_rate);
-    ensure_token_domain(ProcessingToken::FRAME_ACCURATE, default_frame_rate);
-    ensure_token_domain(ProcessingToken::MULTI_RATE, default_sample_rate);
-    ensure_token_domain(ProcessingToken::ON_DEMAND, 1);
+    ensure_domain(ProcessingToken::SAMPLE_ACCURATE, default_sample_rate);
+    ensure_domain(ProcessingToken::FRAME_ACCURATE, default_frame_rate);
+    ensure_domain(ProcessingToken::MULTI_RATE, default_sample_rate);
+    ensure_domain(ProcessingToken::ON_DEMAND, 1);
 }
 
 void TaskScheduler::add_task(std::shared_ptr<Routine> routine, const std::string& name, bool initialize)
@@ -37,10 +37,10 @@ void TaskScheduler::add_task(std::shared_ptr<Routine> routine, const std::string
     }
 
     if (initialize) {
-        ensure_token_domain(token);
+        ensure_domain(token);
         initialize_routine_state(routine, token);
     } else {
-        ensure_token_domain(token);
+        ensure_domain(token);
     }
 }
 
@@ -105,7 +105,7 @@ void TaskScheduler::process_token(ProcessingToken token, u_int64_t processing_un
         auto tasks = get_tasks_for_token(token);
         processor_it->second(tasks, processing_units);
     } else {
-        process_token_default(token, processing_units);
+        process_default(token, processing_units);
     }
 
     static uint64_t cleanup_counter = 0;
@@ -130,7 +130,7 @@ void TaskScheduler::register_token_processor(
     ProcessingToken token,
     std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)> processor)
 {
-    ensure_token_domain(token);
+    ensure_domain(token);
     m_token_processors[token] = std::move(processor);
 }
 
@@ -230,7 +230,7 @@ unsigned int TaskScheduler::get_default_rate(ProcessingToken token) const
     }
 }
 
-void TaskScheduler::ensure_token_domain(ProcessingToken token, unsigned int rate)
+void TaskScheduler::ensure_domain(ProcessingToken token, unsigned int rate)
 {
     auto clock_it = m_token_clocks.find(token);
     if (clock_it == m_token_clocks.end()) {
@@ -253,7 +253,7 @@ void TaskScheduler::ensure_token_domain(ProcessingToken token, unsigned int rate
     }
 }
 
-void TaskScheduler::process_token_default(ProcessingToken token, u_int64_t processing_units)
+void TaskScheduler::process_default(ProcessingToken token, u_int64_t processing_units)
 {
     auto clock_it = m_token_clocks.find(token);
     if (clock_it == m_token_clocks.end()) {

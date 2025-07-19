@@ -24,7 +24,7 @@ public:
 
 TEST_F(NodeTest, RootNodeOperations)
 {
-    auto& root = node_manager->get_token_root(token, 0);
+    auto& root = node_manager->get_root_node(token, 0);
     EXPECT_EQ(root.get_node_size(), 0);
 
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
@@ -51,8 +51,8 @@ TEST_F(NodeTest, NodeRegistry)
 
 TEST_F(NodeTest, MultiChannelRootNodes)
 {
-    auto& root0 = node_manager->get_token_root(token, 0);
-    auto& root1 = node_manager->get_token_root(token, 1);
+    auto& root0 = node_manager->get_root_node(token, 0);
+    auto& root1 = node_manager->get_root_node(token, 1);
 
     EXPECT_NE(&root0, &root1);
 
@@ -75,17 +75,17 @@ TEST_F(NodeTest, AddNodeToRoot)
     auto sine = node_manager->create_node<Nodes::Generator::Sine>(node_id, 440.0f, 0.5f);
 
     node_manager->add_to_root(node_id);
-    EXPECT_EQ(node_manager->get_token_root(token, 0).get_node_size(), 1);
+    EXPECT_EQ(node_manager->get_root_node(token, 0).get_node_size(), 1);
 
     const std::string node_id2 = "test_sine2";
     auto sine2 = node_manager->create_node<Nodes::Generator::Sine>(node_id2, 880.0f, 0.5f);
 
     node_manager->add_to_root(node_id2, Nodes::ProcessingToken::AUDIO_RATE, 1);
-    EXPECT_EQ(node_manager->get_token_root(token, 1).get_node_size(), 1);
+    EXPECT_EQ(node_manager->get_root_node(token, 1).get_node_size(), 1);
 
     auto sine3 = std::make_shared<Nodes::Generator::Sine>(660.0f, 0.5f);
     node_manager->add_to_root(sine3, token, 2);
-    EXPECT_EQ(node_manager->get_token_root(token, 2).get_node_size(), 1);
+    EXPECT_EQ(node_manager->get_root_node(token, 2).get_node_size(), 1);
 }
 
 TEST_F(NodeTest, NodeConnections)
@@ -705,7 +705,7 @@ TEST_F(NodeCallbackTest, ChainNodeCallbackPropagation)
 
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
-        MayaFlux::get_node_graph_manager()->get_token_root(token, 0).process();
+        MayaFlux::get_node_graph_manager()->get_root_node(token, 0).process();
     }
 
     EXPECT_EQ(source_count, num_samples);
@@ -748,7 +748,7 @@ TEST_F(NodeCallbackTest, NodeOperatorCallbacks)
 
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
-        MayaFlux::get_node_graph_manager()->get_token_root(token, 0).process();
+        MayaFlux::get_node_graph_manager()->get_root_node(token, 0).process();
     }
 
     EXPECT_EQ(sine1_count, num_samples);
