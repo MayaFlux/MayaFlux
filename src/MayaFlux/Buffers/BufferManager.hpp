@@ -200,7 +200,7 @@ public:
     std::shared_ptr<BufferType> create_buffer(ProcessingToken token, u_int32_t channel, Args&&... args)
     {
         auto& unit = ensure_and_get_unit(token, channel);
-        auto buffer = std::make_shared<BufferType>(channel, get_root_audio_buffer_size(token), std::forward<Args>(args)...);
+        auto buffer = std::make_shared<BufferType>(channel, unit.buffer_size, std::forward<Args>(args)...);
 
         if (auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer)) {
             add_audio_buffer(audio_buffer, token, channel);

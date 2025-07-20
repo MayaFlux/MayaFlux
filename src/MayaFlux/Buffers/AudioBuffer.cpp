@@ -1,10 +1,12 @@
 #include "AudioBuffer.hpp"
 #include "BufferProcessingChain.hpp"
 
+#include "MayaFlux/API/Core.hpp"
+
 namespace MayaFlux::Buffers {
 
 AudioBuffer::AudioBuffer()
-    : AudioBuffer(0, 512)
+    : AudioBuffer(0, MayaFlux::get_buffer_size())
 {
 }
 
@@ -18,6 +20,10 @@ AudioBuffer::AudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
     , m_processing_chain(std::make_shared<BufferProcessingChain>())
     , m_is_processing(false)
 {
+    if (num_samples != MayaFlux::get_buffer_size()) {
+        std::cerr << "Warning: AudioBuffer initialized with a non-default number of samples ("
+                  << num_samples << "). This may lead to unexpected behavior." << std::endl;
+    }
     m_data.resize(num_samples);
 }
 

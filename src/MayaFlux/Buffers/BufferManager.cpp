@@ -228,6 +228,14 @@ void BufferManager::add_audio_buffer(std::shared_ptr<AudioBuffer> buffer, Proces
         buffer->set_processing_chain(processing_chain);
     }
 
+    {
+        if (buffer->get_num_samples() != unit.buffer_size) {
+            std::cerr << "BufferManager: Resizing buffer to match unit size: " << unit.buffer_size << std::endl;
+            std::lock_guard<std::mutex> lock(m_manager_mutex);
+            buffer->resize(unit.buffer_size);
+        }
+    }
+
     unit.get_buffer(channel)->add_child_buffer(buffer);
 }
 
