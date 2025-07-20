@@ -414,6 +414,10 @@ void BufferManager::fill_interleaved(double* interleaved_data, u_int32_t num_fra
     }
 }
 
+void BufferManager::process_input(void* input_data, u_int32_t num_channels, u_int32_t num_frames)
+{
+}
+
 RootAudioUnit& BufferManager::get_or_create_unit(ProcessingToken token)
 {
     auto it = m_audio_units.find(token);

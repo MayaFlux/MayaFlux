@@ -15,11 +15,16 @@ std::unique_ptr<AudioDevice> RtAudioBackend::create_device_manager()
     return std::make_unique<RtAudioDevice>(m_context);
 }
 
-std::unique_ptr<AudioStream> RtAudioBackend::create_stream(unsigned int deviceId, const GlobalStreamInfo& stream_info, void* user_data)
+std::unique_ptr<AudioStream> RtAudioBackend::create_stream(
+    unsigned int output_device_id,
+    unsigned int input_device_id,
+    const GlobalStreamInfo& stream_info,
+    void* user_data)
 {
     return std::make_unique<RtAudioStream>(
         m_context,
-        deviceId,
+        output_device_id,
+        input_device_id,
         stream_info,
         user_data);
 }
@@ -96,11 +101,12 @@ unsigned int RtAudioDevice::get_default_input_device() const
 
 RtAudioStream::RtAudioStream(
     RtAudio* context,
-    unsigned int deviceId,
+    unsigned int output_device_id,
+    unsigned int input_device_id,
     const GlobalStreamInfo& streamInfo,
     void* userData)
     : m_context(context)
-    , m_parameters()
+    , m_out_parameters()
     , m_options()
     , m_userData(userData)
     , m_isOpen(false)
@@ -111,8 +117,10 @@ RtAudioStream::RtAudioStream(
         throw std::invalid_argument("RtAudioStream: context must not be null");
     }
 
-    m_parameters.deviceId = deviceId;
-    m_parameters.nChannels = streamInfo.output.channels;
+    m_out_parameters.deviceId = output_device_id;
+    m_out_parameters.nChannels = streamInfo.output.channels;
+
+    m_in_parameters.deviceId = input_device_id;
 
     configure_stream_options();
 }
@@ -192,20 +200,19 @@ void RtAudioStream::open()
             break;
         }
 
-        RtAudio::StreamParameters inputParams;
         RtAudio::StreamParameters* inputParamsPtr = nullptr;
 
         if (m_stream_info.input.enabled && m_stream_info.input.channels > 0) {
-            inputParams.deviceId = m_stream_info.input.device_id >= 0 ? m_stream_info.input.device_id : m_context->getDefaultInputDevice();
-            inputParams.nChannels = m_stream_info.input.channels;
-            inputParams.firstChannel = 0;
-            inputParamsPtr = &inputParams;
+            // inputParams.deviceId = m_stream_info.input.device_id >= 0 ? m_stream_info.input.device_id : m_context->getDefaultInputDevice();
+            m_in_parameters.nChannels = m_stream_info.input.channels;
+            // inputParams.firstChannel = 0;
+            inputParamsPtr = &m_in_parameters;
         }
 
         RtAudioSingleton::mark_stream_open();
 
         m_context->openStream(
-            &m_parameters,
+            &m_out_parameters,
             inputParamsPtr,
             format,
             m_stream_info.sample_rate,

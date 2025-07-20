@@ -50,6 +50,11 @@ void BufferProcessingHandle::process_channel_with_node_data(
     m_manager->process_channel(m_token, channel, processing_units, node_data);
 }
 
+void BufferProcessingHandle::process_input(void* input_data, u_int32_t num_channels, u_int32_t num_frames)
+{
+    m_manager->process_input(input_data, num_channels, num_frames);
+}
+
 std::span<const double> BufferProcessingHandle::read_channel_data(u_int32_t channel) const
 {
     ensure_valid();

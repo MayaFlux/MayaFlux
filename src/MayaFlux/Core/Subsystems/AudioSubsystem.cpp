@@ -20,6 +20,7 @@ void AudioSubsystem::initialize(SubsystemProcessingHandle& handle)
 
     m_audio_stream = m_audiobackend->create_stream(
         m_audio_device->get_default_output_device(),
+        m_audio_device->get_default_input_device(),
         m_stream_info,
         this);
 
@@ -38,7 +39,7 @@ void AudioSubsystem::register_callbacks()
             double* output_ptr = static_cast<double*>(output_buffer);
 
             if (input_ptr && output_ptr) {
-                return this->audio_callback(input_ptr, output_ptr, num_frames);
+                return this->process_audio(input_ptr, output_ptr, num_frames);
             } else if (output_ptr) {
                 return this->process_output(output_ptr, num_frames);
             } else if (input_ptr) {
@@ -65,24 +66,8 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
 
 int AudioSubsystem::process_input(double* input_buffer, unsigned int num_frames)
 {
-    // Future: Process input buffers using token-based system
+    m_handle->buffers.process_input(input_buffer, m_stream_info.input.channels, num_frames);
     return 0;
-}
-
-int AudioSubsystem::audio_callback(void* output_buffer, void* input_buffer, unsigned int num_frames)
-{
-    double* output = static_cast<double*>(output_buffer);
-    double* input = static_cast<double*>(input_buffer);
-
-    if (input && output) {
-        return process_audio(input, output, num_frames);
-    } else if (output) {
-        return process_output(output, num_frames);
-    } else if (input) {
-        return process_input(input, num_frames);
-    }
-
-    return 0; // Success
 }
 
 int AudioSubsystem::process_audio(double* input_buffer, double* output_buffer, unsigned int num_frames)

@@ -42,6 +42,9 @@ public:
     /** @brief Check if audio subsystem is ready for operation */
     inline virtual bool is_ready() const override { return m_is_ready; }
 
+    /** @brief Check if audio subsystem is currently running */
+    inline virtual bool is_running() const override { return m_is_running; }
+
     /** @brief Get access to the underlying audio backend */
     inline IAudioBackend* get_audio_backend() { return m_audiobackend.get(); }
 
@@ -104,18 +107,6 @@ public:
     virtual SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
 
 private:
-    /**
-     * @brief Internal audio callback handler
-     * @param output_buffer Output buffer from audio backend
-     * @param input_buffer Input buffer from audio backend
-     * @param num_frames Number of frames to process
-     * @return Status code for audio backend
-     *
-     * Low-level callback that interfaces with the audio backend.
-     * Routes to appropriate process_* methods based on I/O configuration.
-     */
-    int audio_callback(void* output_buffer, void* input_buffer, unsigned int num_frames);
-
     GlobalStreamInfo m_stream_info; ///< Audio stream configuration
 
     std::unique_ptr<IAudioBackend> m_audiobackend; ///< Audio backend implementation

@@ -349,6 +349,14 @@ public:
         resize_root_audio_buffers(token, buffer_size);
     }
 
+    /**
+     * @brief Processes input data for a specific token and number of channels
+     * @param input_data Pointer to the input data buffer
+     * @param num_channels Number of channels in the input data
+     * @param num_frames Number of frames to process
+     */
+    void process_input(void* input_data, u_int32_t num_channels, u_int32_t num_frames);
+
 private:
     /**
      * @brief Gets or creates the root audio unit for a specific processing token

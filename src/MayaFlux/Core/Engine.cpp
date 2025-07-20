@@ -92,6 +92,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo)
         m_node_graph_manager, m_buffer_manager, m_scheduler);
 
     m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
+    m_is_initialized = true;
 }
 
 void Engine::Start()
@@ -159,10 +160,13 @@ bool Engine::is_running() const
         return false;
     }
 
-    auto status = m_subsystem_manager->query_subsystem_status();
-    for (const auto& [tokens, is_ready] : status) {
-        if (is_ready) {
-            return true;
+    if (m_is_initialized) {
+        auto status = m_subsystem_manager->query_subsystem_status();
+        for (const auto& [type, readiness] : status) {
+            const auto& [is_ready, is_running] = readiness;
+            if (is_ready && is_running) {
+                return true;
+            }
         }
     }
     return false;
