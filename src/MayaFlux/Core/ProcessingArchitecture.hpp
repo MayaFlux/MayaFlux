@@ -101,7 +101,7 @@ public:
         const std::vector<double>& node_data);
 
     /** @brienf Process Input from backend into buffer manager */
-    void process_input(void* input_data, u_int32_t num_channels, u_int32_t num_frames);
+    void process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames);
 
     /** @brief Get read-only access to channel data */
     std::span<const double> read_channel_data(u_int32_t channel) const;

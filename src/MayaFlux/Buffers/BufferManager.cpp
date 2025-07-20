@@ -3,6 +3,8 @@
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
+#include "Input/InputAudioBuffer.hpp"
+
 namespace MayaFlux::Buffers {
 
 class QuickProcess : public BufferProcessor {
@@ -78,6 +80,10 @@ BufferManager::BufferManager(u_int32_t default_out_channels, u_int32_t default_i
 {
     ensure_channels(default_processing_token, default_out_channels);
     resize_root_audio_buffers(default_processing_token, default_buffer_size);
+
+    if (default_in_channels) {
+        setup_input_buffers(default_in_channels, default_buffer_size);
+    }
 
     if (default_processing_token == ProcessingToken::AUDIO_BACKEND || default_processing_token == ProcessingToken::AUDIO_PARALLEL) {
         auto limiter = std::make_shared<FinalLimiterProcessor>();
@@ -414,8 +420,25 @@ void BufferManager::fill_interleaved(double* interleaved_data, u_int32_t num_fra
     }
 }
 
-void BufferManager::process_input(void* input_data, u_int32_t num_channels, u_int32_t num_frames)
+void BufferManager::process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames)
 {
+    if (m_input_buffers.empty() || m_input_buffers.size() < num_channels) {
+        setup_input_buffers(num_channels, num_frames);
+    }
+
+    if (!input_data) {
+        std::cerr << "BufferManager: Invalid input data pointer" << std::endl;
+        return;
+    }
+
+    for (u_int32_t i = 0; i < m_input_buffers.size(); ++i) {
+        auto& data = m_input_buffers[i]->get_data();
+
+        for (u_int32_t frame = 0; frame < data.size(); ++frame) {
+            data[frame] = static_cast<double*>(input_data)[frame * num_channels + i];
+        }
+        m_input_buffers[i]->process_default();
+    }
 }
 
 RootAudioUnit& BufferManager::get_or_create_unit(ProcessingToken token)
@@ -448,6 +471,16 @@ void BufferManager::ensure_channels(ProcessingToken token, u_int32_t channel_cou
     }
 }
 
+void BufferManager::setup_input_buffers(u_int32_t default_in_channels, u_int32_t default_buffer_size)
+{
+    for (u_int32_t i = 0; i < default_in_channels; ++i) {
+        auto input = std::make_shared<InputAudioBuffer>(i, default_buffer_size);
+        auto processor = std::make_shared<InputAccessProcessor>();
+        input->set_default_processor(processor);
+        m_input_buffers.push_back(input);
+    }
+}
+
 RootAudioUnit& BufferManager::ensure_and_get_unit(ProcessingToken token, u_int32_t channel)
 {
     auto& unit = get_or_create_unit(token);
@@ -455,6 +488,31 @@ RootAudioUnit& BufferManager::ensure_and_get_unit(ProcessingToken token, u_int32
         ensure_channels(token, channel + 1);
     }
     return unit;
+}
+
+void BufferManager::register_input_listener(std::shared_ptr<AudioBuffer> buffer, u_int32_t channel)
+{
+    if (channel >= m_input_buffers.size()) {
+        std::cerr << "BufferManager: Input channel " << channel << " out of range" << std::endl;
+        return;
+    }
+
+    auto input_buffer = m_input_buffers[channel];
+    if (input_buffer) {
+        input_buffer->register_listener(buffer);
+    }
+}
+
+void BufferManager::unregister_input_listener(std::shared_ptr<AudioBuffer> buffer, u_int32_t channel)
+{
+    if (channel >= m_input_buffers.size()) {
+        return;
+    }
+
+    auto input_buffer = m_input_buffers[channel];
+    if (input_buffer) {
+        input_buffer->unregister_listener(buffer);
+    }
 }
 
 } // namespace MayaFlux::Buffers

@@ -8,6 +8,8 @@ class Node;
 
 namespace MayaFlux::Buffers {
 
+class InputAudioBuffer;
+
 using AudioProcessingFunction = std::function<void(std::shared_ptr<AudioBuffer>)>;
 using RootProcessingFunction = std::function<void(std::vector<std::shared_ptr<RootAudioBuffer>>&, u_int32_t)>;
 
@@ -355,7 +357,21 @@ public:
      * @param num_channels Number of channels in the input data
      * @param num_frames Number of frames to process
      */
-    void process_input(void* input_data, u_int32_t num_channels, u_int32_t num_frames);
+    void process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames);
+
+    /**
+     * @brief Registers a listener buffer for input channel
+     * @param buffer Buffer to receive input data
+     * @param input_channel Input channel to listen to
+     */
+    void register_input_listener(std::shared_ptr<AudioBuffer> buffer, u_int32_t channel);
+
+    /**
+     * @brief Unregisters a listener buffer from input channel
+     * @param buffer Buffer to stop receiving input data
+     * @param input_channel Input channel to stop listening to
+     */
+    void unregister_input_listener(std::shared_ptr<AudioBuffer> buffer, u_int32_t input_channel);
 
 private:
     /**
@@ -380,6 +396,8 @@ private:
      */
     RootAudioUnit& ensure_and_get_unit(ProcessingToken token, u_int32_t channel);
 
+    void setup_input_buffers(u_int32_t default_in_channels, u_int32_t default_buffer_size);
+
     /**
      * @brief Default processing token for legacy compatibility
      */
@@ -390,6 +408,8 @@ private:
      * Maps processing domain -> channel -> {root_buffers, processing chains}
      */
     std::unordered_map<ProcessingToken, RootAudioUnit> m_audio_units;
+
+    std::vector<std::shared_ptr<InputAudioBuffer>> m_input_buffers;
 
     /**
      * @brief Global processing chain applied to all tokens
