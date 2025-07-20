@@ -12,7 +12,7 @@ class BufferManagerTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        manager = std::make_shared<Buffers::BufferManager>(TestConfig::NUM_CHANNELS, 0, TestConfig::BUFFER_SIZE, default_token);
+        manager = std::make_shared<Buffers::BufferManager>(TestConfig::NUM_CHANNELS, 2, TestConfig::BUFFER_SIZE, default_token);
     }
 
     void TearDown() override
@@ -535,6 +535,168 @@ TEST_F(BufferManagerTest, NodeDataIntegration)
         }
     }
     EXPECT_TRUE(has_node_data);
+}
+
+//-------------------------------------------------------------------------
+// Input Buffer Management and Processing Tests
+//-------------------------------------------------------------------------
+
+TEST_F(BufferManagerTest, InputBufferCreationAndProcessing)
+{
+    const u_int32_t input_channels = 2;
+    const u_int32_t buffer_size = TestConfig::BUFFER_SIZE;
+
+    std::vector<double> input_data(buffer_size * input_channels, 0.0);
+
+    for (u_int32_t frame = 0; frame < buffer_size; ++frame) {
+        double t = static_cast<double>(frame) / 48000.0;
+        input_data[frame * input_channels + 0] = 0.5 * std::sin(2 * M_PI * 440.0 * t);
+        input_data[frame * input_channels + 1] = 0.3 * std::sin(2 * M_PI * 880.0 * t);
+    }
+
+    EXPECT_NO_THROW(manager->process_input(input_data.data(), input_channels, buffer_size));
+
+    EXPECT_NO_THROW(manager->process_input(nullptr, input_channels, buffer_size));
+
+    std::vector<double> mono_input(buffer_size, 0.7);
+    EXPECT_NO_THROW(manager->process_input(mono_input.data(), 1, buffer_size));
+
+    for (int i = 0; i < 5; ++i) {
+        for (auto& sample : input_data) {
+            sample *= 0.9;
+        }
+        EXPECT_NO_THROW(manager->process_input(input_data.data(), input_channels, buffer_size));
+    }
+
+    std::cout << "Input buffer processing completed successfully" << std::endl;
+}
+
+TEST_F(BufferManagerTest, InputListenerRegistrationAndDispatch)
+{
+    const u_int32_t input_channel = 0;
+
+    auto listener1 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto listener2 = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
+    auto listener3 = std::make_shared<Buffers::AudioBuffer>(2, TestConfig::BUFFER_SIZE);
+
+    std::fill(listener1->get_data().begin(), listener1->get_data().end(), 0.0);
+    std::fill(listener2->get_data().begin(), listener2->get_data().end(), 0.0);
+    std::fill(listener3->get_data().begin(), listener3->get_data().end(), 0.0);
+
+    EXPECT_NO_THROW(manager->register_input_listener(listener1, input_channel));
+    EXPECT_NO_THROW(manager->register_input_listener(listener2, input_channel));
+    EXPECT_NO_THROW(manager->register_input_listener(listener3, input_channel));
+
+    std::vector<double> input_signal(TestConfig::BUFFER_SIZE, 0.8); // Constant signal for easy verification
+
+    EXPECT_NO_THROW(manager->process_input(input_signal.data(), 1, TestConfig::BUFFER_SIZE));
+
+    bool listener1_received = std::any_of(listener1->get_data().begin(), listener1->get_data().end(),
+        [](double sample) { return std::abs(sample - 0.8) < 1e-6; });
+    bool listener2_received = std::any_of(listener2->get_data().begin(), listener2->get_data().end(),
+        [](double sample) { return std::abs(sample - 0.8) < 1e-6; });
+    bool listener3_received = std::any_of(listener3->get_data().begin(), listener3->get_data().end(),
+        [](double sample) { return std::abs(sample - 0.8) < 1e-6; });
+
+    EXPECT_TRUE(listener1_received) << "Listener 1 should have received input data";
+    EXPECT_TRUE(listener2_received) << "Listener 2 should have received input data";
+    EXPECT_TRUE(listener3_received) << "Listener 3 should have received input data";
+
+    EXPECT_NO_THROW(manager->unregister_input_listener(listener2, input_channel));
+
+    std::fill(listener1->get_data().begin(), listener1->get_data().end(), 0.0);
+    std::fill(listener2->get_data().begin(), listener2->get_data().end(), 0.0);
+    std::fill(listener3->get_data().begin(), listener3->get_data().end(), 0.0);
+
+    std::fill(input_signal.begin(), input_signal.end(), 0.6);
+
+    EXPECT_NO_THROW(manager->process_input(input_signal.data(), 1, TestConfig::BUFFER_SIZE));
+
+    listener1_received = std::any_of(listener1->get_data().begin(), listener1->get_data().end(),
+        [](double sample) { return std::abs(sample - 0.6) < 1e-6; });
+    bool listener2_not_received = std::all_of(listener2->get_data().begin(), listener2->get_data().end(),
+        [](double sample) { return std::abs(sample) < 1e-6; });
+    listener3_received = std::any_of(listener3->get_data().begin(), listener3->get_data().end(),
+        [](double sample) { return std::abs(sample - 0.6) < 1e-6; });
+
+    EXPECT_TRUE(listener1_received) << "Listener 1 should still be receiving data";
+    EXPECT_TRUE(listener2_not_received) << "Listener 2 should not receive data after unregistering";
+    EXPECT_TRUE(listener3_received) << "Listener 3 should still be receiving data";
+
+    // Clean up remaining listeners
+    EXPECT_NO_THROW(manager->unregister_input_listener(listener1, input_channel));
+    EXPECT_NO_THROW(manager->unregister_input_listener(listener3, input_channel));
+
+    std::cout << "Input listener system validated successfully" << std::endl;
+}
+
+TEST_F(BufferManagerTest, InputToOutputRouting)
+{
+    const u_int32_t input_channels = 2;
+    const u_int32_t output_channels = TestConfig::NUM_CHANNELS;
+
+    auto input_router_ch0 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    auto input_router_ch1 = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
+
+    EXPECT_NO_THROW(manager->register_input_listener(input_router_ch0, 0)); // Listen to input channel 0
+    EXPECT_NO_THROW(manager->register_input_listener(input_router_ch1, 1)); // Listen to input channel 1
+
+    input_router_ch0->mark_for_processing(true);
+    input_router_ch1->mark_for_processing(true);
+
+    manager->add_audio_buffer(input_router_ch0, default_token, 0); // Route to output channel 0
+    if (output_channels > 1) {
+        manager->add_audio_buffer(input_router_ch1, default_token, 1); // Route to output channel 1
+    }
+
+    std::vector<double> input_data(TestConfig::BUFFER_SIZE * input_channels, 0.0);
+    for (u_int32_t frame = 0; frame < TestConfig::BUFFER_SIZE; ++frame) {
+        input_data[frame * input_channels + 0] = 0.7; // Channel 0: constant
+        input_data[frame * input_channels + 1] = static_cast<double>(frame) / TestConfig::BUFFER_SIZE; // Channel 1: ramp
+    }
+
+    EXPECT_NO_THROW(manager->process_input(input_data.data(), input_channels, TestConfig::BUFFER_SIZE));
+
+    EXPECT_NO_THROW(manager->process_channel(default_token, 0, TestConfig::BUFFER_SIZE));
+    if (output_channels > 1) {
+        EXPECT_NO_THROW(manager->process_channel(default_token, 1, TestConfig::BUFFER_SIZE));
+    }
+
+    const auto& output_ch0 = manager->get_buffer_data(default_token, 0);
+    bool ch0_has_input_signal = std::any_of(output_ch0.begin(), output_ch0.end(),
+        [](double sample) { return std::abs(sample - 0.7) < 0.1; });
+    EXPECT_TRUE(ch0_has_input_signal) << "Output channel 0 should contain input data";
+
+    if (output_channels > 1) {
+        const auto& output_ch1 = manager->get_buffer_data(default_token, 1);
+        bool ch1_has_varying_signal = false;
+        for (size_t i = 1; i < output_ch1.size(); ++i) {
+            if (std::abs(output_ch1[i] - output_ch1[i - 1]) > 1e-6) {
+                ch1_has_varying_signal = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(ch1_has_varying_signal) << "Output channel 1 should contain varying ramp signal";
+    }
+
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.3f);
+    manager->connect_node_to_channel(sine, default_token, 0, 0.5f); // Mix with input
+
+    std::fill(manager->get_buffer_data(default_token, 0).begin(),
+        manager->get_buffer_data(default_token, 0).end(), 0.0);
+
+    EXPECT_NO_THROW(manager->process_input(input_data.data(), input_channels, TestConfig::BUFFER_SIZE));
+    EXPECT_NO_THROW(manager->process_channel(default_token, 0, TestConfig::BUFFER_SIZE));
+
+    const auto& mixed_output = manager->get_buffer_data(default_token, 0);
+    bool has_mixed_signal = std::any_of(mixed_output.begin(), mixed_output.end(),
+        [](double sample) { return std::abs(sample) > 0.1; });
+    EXPECT_TRUE(has_mixed_signal) << "Output should contain mixed input and generated signals";
+
+    manager->unregister_input_listener(input_router_ch0, 0);
+    manager->unregister_input_listener(input_router_ch1, 1);
+
+    std::cout << "Input-to-output routing validated successfully" << std::endl;
 }
 
 }
