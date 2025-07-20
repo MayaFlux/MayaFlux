@@ -139,7 +139,7 @@ TEST_F(TasksTest, NodeTimer)
 
     EXPECT_TRUE(node_timer.is_active());
 
-    auto& root = node_graph_manager->get_token_root(processing_token, 0);
+    auto& root = node_graph_manager->get_root_node(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 1);
 
     u_int64_t samples_10ms = scheduler->seconds_to_samples(0.01);
@@ -239,7 +239,7 @@ TEST_F(TasksTest, Sequence)
 
     sequence.execute(node_graph_manager, scheduler);
 
-    auto& root = node_graph_manager->get_token_root(processing_token, 0);
+    auto& root = node_graph_manager->get_root_node(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 1);
 
     auto samples_9ms = scheduler->seconds_to_samples(0.009);
@@ -258,7 +258,7 @@ TEST_F(TasksTest, TimeOperator)
 {
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
 
-    auto& root = node_graph_manager->get_token_root(processing_token, 0);
+    auto& root = node_graph_manager->get_root_node(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 0);
 
     sine >> Kriya::TimeOperation(0.01, *scheduler, *node_graph_manager);
@@ -651,7 +651,7 @@ TEST_F(TasksTest, SequenceI)
 
     sequence.execute();
 
-    auto& root = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
+    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
     EXPECT_EQ(root.get_node_size(), 1);
 
     AudioTestHelper::waitForAudio(1);
@@ -673,7 +673,7 @@ TEST_F(TasksTest, SequenceIntegration)
     auto sine1 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f);
     bool sequence_completed = false;
-    auto& root = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
+    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
 
     sequence
         >> Play(sine1)
@@ -709,7 +709,7 @@ TEST_F(TasksTest, TimeOperatorI)
     AudioTestHelper::waitForAudio(100);
 
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto& root = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
+    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
     auto scheduler = MayaFlux::get_scheduler();
 
     EXPECT_EQ(root.get_node_size(), 0);
@@ -736,7 +736,7 @@ TEST_F(TasksTest, DACOperator)
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     auto& dac = Kriya::DAC::instance();
 
-    auto& root = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 0);
+    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
     EXPECT_EQ(root.get_node_size(), 0);
 
     sine >> dac;
@@ -747,7 +747,7 @@ TEST_F(TasksTest, DACOperator)
     auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f);
     sine2 >> dac;
 
-    auto& root1 = MayaFlux::get_node_graph_manager()->get_token_root(Nodes::ProcessingToken::AUDIO_RATE, 1);
+    auto& root1 = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 1);
     EXPECT_EQ(root1.get_node_size(), 1);
 
     MayaFlux::End();
@@ -800,7 +800,7 @@ TEST_F(TasksTest, NodeGraphManagerIntegration)
 
     node_graph_manager->add_to_root(sine, processing_token, 0);
 
-    auto& root = node_graph_manager->get_token_root(processing_token, 0);
+    auto& root = node_graph_manager->get_root_node(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 1);
 
     root.unregister_node(sine);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Capture.hpp"
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
@@ -74,6 +75,51 @@ public:
     static BufferOperation capture(BufferCapture capture)
     {
         return BufferOperation(OpType::CAPTURE, std::move(capture));
+    }
+
+    /**
+     * @brief Create capture operation from input channel using convenience API.
+     * Creates input buffer automatically and returns configured capture operation.
+     * @param buffer_manager System buffer manager
+     * @param input_channel Input channel to capture from
+     * @param mode Capture mode (default: ACCUMULATE)
+     * @param cycle_count Number of cycles (0 = continuous, default)
+     * @return BufferOperation configured for input capture with default settings
+     */
+    static BufferOperation capture_input(
+        std::shared_ptr<Buffers::BufferManager> buffer_manager,
+        uint32_t input_channel,
+        BufferCapture::CaptureMode mode = BufferCapture::CaptureMode::ACCUMULATE,
+        uint32_t cycle_count = 0)
+    {
+        // auto input_buffer = MayaFlux::create_input_listener_buffer(input_channel, true);
+        auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
+        buffer_manager->register_input_listener(input_buffer, input_channel);
+        buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
+
+        BufferCapture capture(input_buffer, mode, cycle_count);
+        if (mode == BufferCapture::CaptureMode::ACCUMULATE && cycle_count == 0) {
+            capture.as_circular(4096);
+        }
+
+        return BufferOperation(BufferOperation::OpType::CAPTURE, std::move(capture));
+    }
+
+    /**
+     * @brief Create CaptureBuilder for input channel with fluent configuration.
+     * Uses the existing CaptureBuilder pattern but with input buffer creation.
+     * @param buffer_manager System buffer manager
+     * @param input_channel Input channel to capture from
+     * @return CaptureBuilder for fluent configuration
+     */
+    static CaptureBuilder capture_input_from(
+        std::shared_ptr<Buffers::BufferManager> buffer_manager,
+        uint32_t input_channel)
+    {
+        auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
+        buffer_manager->register_input_listener(input_buffer, input_channel);
+        buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
+        return CaptureBuilder(input_buffer);
     }
 
     /**

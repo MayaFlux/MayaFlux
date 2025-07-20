@@ -65,7 +65,8 @@ public:
 
     /**
      * @brief Creates an audio stream for a specific device
-     * @param deviceId System identifier for the target audio device
+     * @param output_device_id System identifier for the target audio output device
+     * @param input_device_id System identifier for the target audio input device
      * @param stream_info Configuration parameters for the audio stream
      * @param user_data Optional context pointer passed to callbacks
      * @return Unique pointer to an AudioStream implementation
@@ -73,7 +74,12 @@ public:
      * Establishes a digital audio pipeline between the application and
      * the specified hardware endpoint with the requested configuration.
      */
-    virtual std::unique_ptr<AudioStream> create_stream(unsigned int deviceId, const GlobalStreamInfo& stream_info, void* user_data) = 0;
+    virtual std::unique_ptr<AudioStream> create_stream(
+        unsigned int output_device_id,
+        unsigned int input_device_id,
+        const GlobalStreamInfo& stream_info,
+        void* user_data)
+        = 0;
 
     /**
      * @brief Retrieves the backend implementation version

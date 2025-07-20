@@ -84,6 +84,9 @@ public:
     /** @brief Check if subsystem is ready for operation */
     virtual bool is_ready() const = 0;
 
+    /** @brief Check if subsystem is currently processing */
+    virtual bool is_running() const = 0;
+
     /** @brief Shutdown and cleanup subsystem resources */
     virtual void shutdown() = 0;
 

@@ -132,7 +132,7 @@ public:
      * Returns the current operational status of all managed subsystems.
      * Status reflects whether each subsystem is ready for operation.
      */
-    std::unordered_map<SubsystemType, bool> query_subsystem_status() const;
+    std::unordered_map<SubsystemType, std::pair<bool, bool>> query_subsystem_status() const;
 
     /**
      * @brief Execute an operation with temporary elevated permissions

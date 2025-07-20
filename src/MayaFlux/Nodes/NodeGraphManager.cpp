@@ -6,7 +6,7 @@ namespace MayaFlux::Nodes {
 
 NodeGraphManager::NodeGraphManager()
 {
-    ensure_token_root_exists(ProcessingToken::AUDIO_RATE, 0);
+    ensure_root_exists(ProcessingToken::AUDIO_RATE, 0);
 }
 
 void NodeGraphManager::add_to_root(std::shared_ptr<Node> node,
@@ -15,7 +15,7 @@ void NodeGraphManager::add_to_root(std::shared_ptr<Node> node,
 {
     register_node_globally(node);
 
-    auto& root = get_token_root(token, channel);
+    auto& root = get_root_node(token, channel);
     root.register_node(node);
 }
 
@@ -25,7 +25,7 @@ void NodeGraphManager::remove_from_root(std::shared_ptr<Node> node,
 {
     unregister_node_globally(node);
 
-    auto& root = get_token_root(token, channel);
+    auto& root = get_root_node(token, channel);
     root.unregister_node(node);
 }
 
@@ -51,7 +51,7 @@ const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& NodeGraphMana
 
 void NodeGraphManager::process_token(ProcessingToken token, unsigned int num_samples)
 {
-    auto roots = get_token_roots(token);
+    auto roots = get_all_root_nodes(token);
 
     if (auto it = m_token_processors.find(token); it != m_token_processors.end()) {
         it->second(std::span<RootNode*>(roots.data(), roots.size()));
@@ -68,10 +68,10 @@ void NodeGraphManager::register_token_channel_processor(ProcessingToken token,
     m_token_channel_processors[token] = processor;
 }
 
-std::vector<double> NodeGraphManager::process_token_channel(ProcessingToken token,
+std::vector<double> NodeGraphManager::process_channel(ProcessingToken token,
     unsigned int channel, unsigned int num_samples)
 {
-    auto& root = get_token_root(token, channel);
+    auto& root = get_root_node(token, channel);
 
     if (auto it = m_token_channel_processors.find(token); it != m_token_channel_processors.end()) {
         return it->second(&root, num_samples);
@@ -85,22 +85,22 @@ std::unordered_map<unsigned int, std::vector<double>> NodeGraphManager::process_
 {
     std::unordered_map<unsigned int, std::vector<double>> channel_data;
 
-    auto channels = get_token_channels(token);
+    auto channels = get_all_channels(token);
 
     for (unsigned int channel : channels) {
-        channel_data[channel] = process_token_channel(token, channel, num_samples);
+        channel_data[channel] = process_channel(token, channel, num_samples);
     }
 
     return channel_data;
 }
 
-unsigned int NodeGraphManager::get_token_channel_count(ProcessingToken token) const
+unsigned int NodeGraphManager::get_channel_count(ProcessingToken token) const
 {
-    auto channels = get_token_channels(token);
+    auto channels = get_all_channels(token);
     return static_cast<unsigned int>(channels.size());
 }
 
-std::vector<RootNode*> NodeGraphManager::get_token_roots(ProcessingToken token)
+std::vector<RootNode*> NodeGraphManager::get_all_root_nodes(ProcessingToken token)
 {
     std::vector<RootNode*> roots;
 
@@ -121,13 +121,13 @@ void NodeGraphManager::process_all_tokens(unsigned int num_samples)
     }
 }
 
-RootNode& NodeGraphManager::get_token_root(ProcessingToken token, unsigned int channel)
+RootNode& NodeGraphManager::get_root_node(ProcessingToken token, unsigned int channel)
 {
-    ensure_token_root_exists(token, channel);
+    ensure_root_exists(token, channel);
     return *m_token_roots[token][channel];
 }
 
-void NodeGraphManager::ensure_token_root_exists(ProcessingToken token, unsigned int channel)
+void NodeGraphManager::ensure_root_exists(ProcessingToken token, unsigned int channel)
 {
     if (m_token_roots[token].find(channel) == m_token_roots[token].end()) {
         m_token_roots[token][channel] = std::make_shared<RootNode>(token, channel);
@@ -165,7 +165,7 @@ std::vector<ProcessingToken> NodeGraphManager::get_active_tokens() const
     return tokens;
 }
 
-std::vector<unsigned int> NodeGraphManager::get_token_channels(ProcessingToken token) const
+std::vector<unsigned int> NodeGraphManager::get_all_channels(ProcessingToken token) const
 {
     std::vector<unsigned int> channels;
     auto it = m_token_roots.find(token);
@@ -177,7 +177,7 @@ std::vector<unsigned int> NodeGraphManager::get_token_channels(ProcessingToken t
     return channels;
 }
 
-size_t NodeGraphManager::get_token_node_count(ProcessingToken token) const
+size_t NodeGraphManager::get_node_count(ProcessingToken token) const
 {
     size_t count = 0;
     auto it = m_token_roots.find(token);
@@ -189,13 +189,13 @@ size_t NodeGraphManager::get_token_node_count(ProcessingToken token) const
     return count;
 }
 
-void NodeGraphManager::print_token_summary() const
+void NodeGraphManager::print_summary() const
 {
     std::cout << "=== NodeGraphManager Token Summary ===" << std::endl;
     for (auto token : get_active_tokens()) {
         std::cout << "Token " << static_cast<int>(token)
-                  << ": " << get_token_node_count(token) << " nodes across "
-                  << get_token_channels(token).size() << " channels" << std::endl;
+                  << ": " << get_node_count(token) << " nodes across "
+                  << get_all_channels(token).size() << " channels" << std::endl;
     }
 }
 

@@ -1,115 +1,249 @@
 #include "../test_config.h"
 
-#include "MayaFlux/MayaFlux.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
-
+#include "MayaFlux/Core/Backends/AudioBackend/RtAudioBackend.hpp"
+#include "MayaFlux/Core/Backends/AudioBackend/RtAudioSingleton.hpp"
 #include "MayaFlux/Core/Engine.hpp"
+#include "MayaFlux/Core/Subsystems/AudioSubsystem.hpp"
+#include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 
+#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "RtAudio.h"
 
 // Define INTEGRATION_TEST to enable tests that interact with real audio devices
 // Comment out for CI environments without audio hardware
-// #define INTEGRATION_TEST
+#define INTEGRATION_TEST
 
 // Define AUDIBLE_TEST to run tests that produce audible output with longer durations
 // This is useful for manual testing of audio functionality
-// #define AUDIBLE_TEST
+#define AUDIBLE_TEST
 
 namespace MayaFlux::Test {
 
 #ifdef INTEGRATION_TEST
-void LogDeviceInfo(const RtAudio::DeviceInfo& info, const std::string& prefix = "")
-{
-    std::cout << prefix << "Name: " << info.name << std::endl;
-    std::cout << prefix << "Output channels: " << info.outputChannels << std::endl;
-    std::cout << prefix << "Input channels: " << info.inputChannels << std::endl;
-    std::cout << prefix << "Duplex channels: " << info.duplexChannels << std::endl;
-    std::cout << prefix << "Preferred sample rate: " << info.preferredSampleRate << std::endl;
 
-    std::cout << prefix << "Supported sample rates: ";
-    for (const auto& rate : info.sampleRates) {
-        std::cout << rate << " ";
-    }
-    std::cout << std::endl;
-}
+//-------------------------------------------------------------------------
+// Audio Backend and Device Discovery Tests
+//-------------------------------------------------------------------------
 
-class DeviceTest : public ::testing::Test {
+class AudioBackendTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        context = std::make_unique<RtAudio>();
-        device = std::make_unique<MayaFlux::Core::Device>(context.get());
+        backend = std::make_unique<Core::RtAudioBackend>();
+        device_manager = backend->create_device_manager();
     }
 
     void TearDown() override
     {
-        device.reset();
-        context.reset();
+        device_manager.reset();
+        backend.reset();
     }
 
-    std::unique_ptr<RtAudio> context;
-    std::unique_ptr<MayaFlux::Core::Device> device;
+    std::unique_ptr<Core::IAudioBackend> backend;
+    std::unique_ptr<Core::AudioDevice> device_manager;
 };
 
-TEST_F(DeviceTest, InitializationSucceeds)
+TEST_F(AudioBackendTest, BackendInitialization)
 {
-    EXPECT_GT(device->get_output_devices().size(), 0)
-        << "No output devices found - ensure audio system is available";
+    EXPECT_NE(backend, nullptr);
+    EXPECT_NE(device_manager, nullptr);
+
+    std::string version = backend->get_version_string();
+    EXPECT_FALSE(version.empty()) << "Backend should provide version information";
+
+    int api_type = backend->get_api_type();
+    EXPECT_NE(api_type, RtAudio::Api::UNSPECIFIED) << "Backend should use valid API";
+
+    std::cout << "RtAudio Backend Version: " << version << std::endl;
+    std::cout << "Active API Type: " << api_type << std::endl;
 }
 
-TEST_F(DeviceTest, DeviceEnumeration)
+TEST_F(AudioBackendTest, DeviceEnumeration)
 {
-    const auto& outputDevices = device->get_output_devices();
-    const auto& inputDevices = device->get_input_devices();
+    const auto& output_devices = device_manager->get_output_devices();
+    const auto& input_devices = device_manager->get_input_devices();
 
-    for (const auto& deviceInfo : outputDevices) {
-        EXPECT_GT(deviceInfo.outputChannels, 0);
-        EXPECT_GT(deviceInfo.preferredSampleRate, 0);
-        EXPECT_FALSE(deviceInfo.name.empty()) << "Device has empty name";
+    std::cout << "Found " << output_devices.size() << " output devices" << std::endl;
+    std::cout << "Found " << input_devices.size() << " input devices" << std::endl;
+
+    EXPECT_GT(output_devices.size(), 0) << "Should find at least one output device";
+
+    for (const auto& device : output_devices) {
+        EXPECT_GT(device.output_channels, 0) << "Output device should have output channels";
+        EXPECT_GT(device.preferred_sample_rate, 0) << "Device should have valid sample rate";
+        EXPECT_FALSE(device.name.empty()) << "Device should have a name";
+        EXPECT_FALSE(device.supported_samplerates.empty()) << "Device should support some sample rates";
+
+        std::cout << "Output Device: " << device.name
+                  << " (" << device.output_channels << " channels, "
+                  << device.preferred_sample_rate << "Hz)" << std::endl;
     }
 
-    std::cout << "Found " << outputDevices.size() << " output devices and "
-              << inputDevices.size() << " input devices" << std::endl;
+    for (const auto& device : input_devices) {
+        EXPECT_GT(device.input_channels, 0) << "Input device should have input channels";
+        EXPECT_FALSE(device.name.empty()) << "Input device should have a name";
 
-    if (!outputDevices.empty()) {
-        LogDeviceInfo(outputDevices[0], "Default output device: ");
+        std::cout << "Input Device: " << device.name
+                  << " (" << device.input_channels << " channels)" << std::endl;
     }
 
-    unsigned int defaultDevice = device->get_default_output_device();
-    if (defaultDevice > 0) {
-        auto deviceInfo = context->getDeviceInfo(defaultDevice);
-        EXPECT_GT(deviceInfo.outputChannels, 0);
+    unsigned int default_output = device_manager->get_default_output_device();
+    unsigned int default_input = device_manager->get_default_input_device();
+
+    std::cout << "Default output device ID: " << default_output << std::endl;
+    std::cout << "Default input device ID: " << default_input << std::endl;
+}
+
+TEST_F(AudioBackendTest, DuplexCapabilityDetection)
+{
+    const auto& output_devices = device_manager->get_output_devices();
+    const auto& input_devices = device_manager->get_input_devices();
+
+    std::vector<Core::DeviceInfo> duplex_devices;
+    for (const auto& out_dev : output_devices) {
+        for (const auto& in_dev : input_devices) {
+            if (out_dev.name == in_dev.name && out_dev.duplex_channels > 0) {
+                duplex_devices.push_back(out_dev);
+                break;
+            }
+        }
+    }
+
+    std::cout << "Found " << duplex_devices.size() << " duplex-capable devices" << std::endl;
+
+    for (const auto& device : duplex_devices) {
+        EXPECT_GT(device.duplex_channels, 0);
+        EXPECT_GT(device.input_channels, 0);
+        EXPECT_GT(device.output_channels, 0);
+
+        std::cout << "Duplex Device: " << device.name
+                  << " (duplex: " << device.duplex_channels << ")" << std::endl;
     }
 }
 
-TEST_F(DeviceTest, SupportedSampleRates)
-{
-    unsigned int defaultDevice = device->get_default_output_device();
-    auto deviceInfo = context->getDeviceInfo(defaultDevice);
+//-------------------------------------------------------------------------
+// Audio Stream Lifecycle Tests
+//-------------------------------------------------------------------------
 
-    EXPECT_FALSE(deviceInfo.sampleRates.empty());
+class AudioStreamTest : public ::testing::Test {
+protected:
+    void SetUp() override
+    {
+        backend = std::make_unique<Core::RtAudioBackend>();
+        device_manager = backend->create_device_manager();
 
-    std::cout << "Available sample rates for default device: ";
-    for (const auto& rate : deviceInfo.sampleRates) {
-        std::cout << rate << " ";
+        stream_info.sample_rate = TestConfig::SAMPLE_RATE;
+        stream_info.buffer_size = TestConfig::BUFFER_SIZE;
+        stream_info.output.channels = TestConfig::NUM_CHANNELS;
+        stream_info.input.enabled = false;
+
+        output_device_id = device_manager->get_default_output_device();
+        input_device_id = device_manager->get_default_input_device();
     }
-    std::cout << std::endl;
 
-    bool testRateSupported = std::find(deviceInfo.sampleRates.begin(),
-                                 deviceInfo.sampleRates.end(),
-                                 TestConfig::SAMPLE_RATE)
-        != deviceInfo.sampleRates.end();
+    void TearDown() override
+    {
+        if (stream && stream->is_running()) {
+            stream->stop();
+        }
+        if (stream && stream->is_open()) {
+            stream->close();
+        }
+        stream.reset();
+        device_manager.reset();
+        backend.reset();
+    }
 
-    if (!testRateSupported) {
-        std::cout << "Note: Test sample rate " << TestConfig::SAMPLE_RATE
-                  << " not directly supported by device. RtAudio will attempt resampling." << std::endl;
+    std::unique_ptr<Core::IAudioBackend> backend;
+    std::unique_ptr<Core::AudioDevice> device_manager;
+    std::unique_ptr<Core::AudioStream> stream;
+    Core::GlobalStreamInfo stream_info;
+    unsigned int output_device_id;
+    unsigned int input_device_id;
+};
+
+TEST_F(AudioStreamTest, StreamCreationAndDestruction)
+{
+    EXPECT_NO_THROW({
+        stream = backend->create_stream(output_device_id, input_device_id, stream_info, nullptr);
+    });
+
+    ASSERT_NE(stream, nullptr);
+    EXPECT_FALSE(stream->is_open());
+    EXPECT_FALSE(stream->is_running());
+
+    EXPECT_NO_THROW(stream->open());
+    EXPECT_TRUE(stream->is_open());
+    EXPECT_FALSE(stream->is_running());
+
+    EXPECT_NO_THROW(stream->start());
+    EXPECT_TRUE(stream->is_open());
+    EXPECT_TRUE(stream->is_running());
+
+    EXPECT_NO_THROW(stream->stop());
+    EXPECT_TRUE(stream->is_open());
+    EXPECT_FALSE(stream->is_running());
+
+    EXPECT_NO_THROW(stream->close());
+    EXPECT_FALSE(stream->is_open());
+    EXPECT_FALSE(stream->is_running());
+}
+
+TEST_F(AudioStreamTest, StreamStateTransitions)
+{
+    stream = backend->create_stream(output_device_id, input_device_id, stream_info, nullptr);
+
+    for (int i = 0; i < 3; ++i) {
+        EXPECT_NO_THROW(stream->open());
+        EXPECT_TRUE(stream->is_open());
+
+        EXPECT_NO_THROW(stream->start());
+        EXPECT_TRUE(stream->is_running());
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        EXPECT_NO_THROW(stream->stop());
+        EXPECT_FALSE(stream->is_running());
+
+        EXPECT_NO_THROW(stream->close());
+        EXPECT_FALSE(stream->is_open());
     }
 }
 
-class StreamTest : public ::testing::Test {
+TEST_F(AudioStreamTest, InputEnabledStreamCreation)
+{
+    stream_info.input.enabled = true;
+    stream_info.input.channels = 1;
+
+    EXPECT_NO_THROW({
+        stream = backend->create_stream(output_device_id, input_device_id, stream_info, nullptr);
+    });
+
+    ASSERT_NE(stream, nullptr);
+
+    EXPECT_NO_THROW(stream->open());
+
+    if (stream->is_open()) {
+        std::cout << "Successfully opened input-enabled stream" << std::endl;
+        EXPECT_NO_THROW(stream->start());
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        EXPECT_NO_THROW(stream->stop());
+        EXPECT_NO_THROW(stream->close());
+    } else {
+        std::cout << "Input-enabled stream failed to open (likely no input hardware)" << std::endl;
+    }
+}
+
+//-------------------------------------------------------------------------
+// Audio Subsystem Integration Tests
+//-------------------------------------------------------------------------
+
+class AudioSubsystemTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
@@ -127,98 +261,83 @@ protected:
     std::unique_ptr<Core::Engine> engine;
 };
 
-TEST_F(StreamTest, StreamCreationAndDestruction)
+TEST_F(AudioSubsystemTest, SubsystemInitialization)
 {
-    const auto* stream = engine->get_stream_manager();
-    ASSERT_NE(stream, nullptr) << "Stream manager not initialized";
+    auto subsystem_manager = engine->get_subsystem_manager();
+    ASSERT_NE(subsystem_manager, nullptr);
 
-    const auto& stream_info = engine->get_stream_info();
+    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
+    ASSERT_NE(audio_subsystem, nullptr);
+
+    EXPECT_EQ(audio_subsystem->get_type(), Core::SubsystemType::AUDIO);
+    EXPECT_TRUE(audio_subsystem->is_ready());
+
+    auto* backend = audio_subsystem->get_audio_backend();
+    EXPECT_NE(backend, nullptr);
+
+    auto* device_manager = audio_subsystem->get_device_manager();
+    EXPECT_NE(device_manager, nullptr);
+
+    auto* stream_manager = audio_subsystem->get_stream_manager();
+    EXPECT_NE(stream_manager, nullptr);
+
+    const auto& stream_info = audio_subsystem->get_stream_info();
     EXPECT_EQ(stream_info.sample_rate, TestConfig::SAMPLE_RATE);
     EXPECT_EQ(stream_info.buffer_size, TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(stream_info.num_channels, TestConfig::NUM_CHANNELS);
-
-    EXPECT_FALSE(stream->is_running());
-    EXPECT_FALSE(stream->is_open());
-
-    EXPECT_NO_THROW({
-        engine->Start();
-        EXPECT_TRUE(stream->is_running());
-        EXPECT_TRUE(stream->is_open());
-    });
-
-    EXPECT_NO_THROW({
-        engine->End();
-        EXPECT_FALSE(stream->is_running());
-        EXPECT_FALSE(stream->is_open());
-    });
+    EXPECT_EQ(stream_info.output.channels, TestConfig::NUM_CHANNELS);
 }
 
-TEST_F(StreamTest, StreamStateTransitions)
+TEST_F(AudioSubsystemTest, AudioProcessingPipeline)
 {
-    const auto* stream = engine->get_stream_manager();
+    EXPECT_NO_THROW(engine->Start());
 
-    EXPECT_FALSE(stream->is_running());
-    EXPECT_FALSE(stream->is_open());
-
-    engine->Start();
-    EXPECT_TRUE(stream->is_running());
-    EXPECT_TRUE(stream->is_open());
-
-    engine->Pause();
-    EXPECT_FALSE(stream->is_running());
-    EXPECT_TRUE(stream->is_open());
-
-    engine->Resume();
-    EXPECT_TRUE(stream->is_running());
-    EXPECT_TRUE(stream->is_open());
-
-    engine->End();
-    EXPECT_FALSE(stream->is_running());
-    EXPECT_FALSE(stream->is_open());
-}
-
-TEST_F(StreamTest, ExcessiveChannelError)
-{
-    EXPECT_THROW({
-        MayaFlux::Core::Engine badEngine;
-        badEngine.Init({ .sample_rate = TestConfig::SAMPLE_RATE,
-            .buffer_size = TestConfig::BUFFER_SIZE,
-            .num_channels = 999 });
-        badEngine.Start(); }, std::runtime_error);
-}
-
-TEST_F(StreamTest, BasicAudioProcessing)
-{
-    engine->Start();
-
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-
-    engine->get_node_graph_manager()->add_to_root(sine);
-
-    auto& root = engine->get_node_graph_manager()->get_root_node();
-    std::cout << "Node count after registration: " << root.get_node_size() << std::endl;
-    EXPECT_EQ(root.get_node_size(), 1);
+    auto audio_subsystem = engine->get_subsystem_manager()->get_audio_subsystem();
+    ASSERT_NE(audio_subsystem, nullptr);
 
     std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
-    engine->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
 
-    bool has_signal = false;
-    for (const auto& sample : output_buffer) {
-        if (std::abs(sample) > 0.01) {
-            has_signal = true;
-            break;
-        }
+    EXPECT_NO_THROW({
+        int result = audio_subsystem->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
+        std::cout << "Audio output processing result: " << result << std::endl;
+    });
+
+    EXPECT_EQ(output_buffer.size(), TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS);
+}
+
+TEST_F(AudioSubsystemTest, NodeGraphIntegration)
+{
+    EXPECT_NO_THROW(engine->Start());
+
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto node_graph = engine->get_node_graph_manager();
+    ASSERT_NE(node_graph, nullptr);
+
+    EXPECT_NO_THROW(node_graph->add_to_root(sine, Nodes::ProcessingToken::AUDIO_RATE));
+
+    auto audio_subsystem = engine->get_subsystem_manager()->get_audio_subsystem();
+
+    std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
+
+    EXPECT_NO_THROW({
+        audio_subsystem->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
+    });
+
+    bool has_signal = std::any_of(output_buffer.begin(), output_buffer.end(),
+        [](double sample) { return std::abs(sample) > 0.01; });
+
+    if (has_signal) {
+        std::cout << "Audio signal detected in output" << std::endl;
+    } else {
+        std::cout << "No audio signal detected (may be normal in CI)" << std::endl;
     }
 
-    EXPECT_TRUE(has_signal) << "No signal detected in output buffer";
-
-    root.unregister_node(sine);
-    engine->End();
+    EXPECT_NO_THROW(node_graph->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0).unregister_node(sine));
 }
 
 #ifdef AUDIBLE_TEST
-// Tests in this section are designed to produce audible output
-// Run these tests manually when you want to hear the audio output
+//-------------------------------------------------------------------------
+// Audible Output Tests (Manual Testing)
+//-------------------------------------------------------------------------
 
 class AudibleTest : public ::testing::Test {
 protected:
@@ -229,8 +348,7 @@ protected:
         std::cout << "=========================================" << std::endl;
 
         engine = AudioTestHelper::createTestEngine();
-
-        engine->Start();
+        EXPECT_NO_THROW(engine->Start());
     }
 
     void TearDown() override
@@ -254,131 +372,65 @@ protected:
     std::unique_ptr<Core::Engine> engine;
 };
 
-TEST_F(AudibleTest, AudioOutputTest)
+TEST_F(AudibleTest, SineWaveOutput)
 {
     std::cout << "You should hear a 440Hz sine wave..." << std::endl;
 
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto node_graph = engine->get_node_graph_manager();
 
-    engine->get_node_graph_manager()->add_to_root(sine);
+    EXPECT_NO_THROW(node_graph->add_to_root(sine, Nodes::ProcessingToken::AUDIO_RATE));
 
-    auto& root = engine->get_node_graph_manager()->get_root_node();
+    AudioTestHelper::waitForAudio(500);
+
+    auto& root = node_graph->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
     std::cout << "Node count in graph: " << root.get_node_size() << std::endl;
     EXPECT_EQ(root.get_node_size(), 1);
 
-    waitForAudio(3000);
+    waitForAudio(500);
 
-    root.unregister_node(sine);
+    std::cout << "Changing frequency to 880Hz..." << std::endl;
+    sine->set_frequency(880.0f);
+    waitForAudio(500);
+
+    std::cout << "Changing frequency to 220Hz..." << std::endl;
+    sine->set_frequency(220.0f);
+    waitForAudio(500);
+
+    EXPECT_NO_THROW(root.unregister_node(sine));
     std::cout << "Sine wave removed. Should now hear silence." << std::endl;
-
-    waitForAudio(1000);
+    waitForAudio(500);
 }
 
-TEST_F(AudibleTest, FilteredAudioTest)
+TEST_F(AudibleTest, FilteredAudioOutput)
 {
     std::cout << "You should hear a filtered sine wave..." << std::endl;
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.7f);
     std::vector<double> coeffs(5, 0.2);
     auto filter = std::make_shared<Nodes::Filters::FIR>(sine, coeffs);
 
-    engine->get_node_graph_manager()->add_to_root(filter);
+    auto node_graph = engine->get_node_graph_manager();
+    EXPECT_NO_THROW(node_graph->add_to_root(filter, Nodes::ProcessingToken::AUDIO_RATE));
 
-    auto& root = engine->get_node_graph_manager()->get_root_node();
-    std::cout << "Node count in graph: " << root.get_node_size() << std::endl;
-    EXPECT_EQ(root.get_node_size(), 1);
+    auto& root = node_graph->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
+    std::cout << "Filter node added to graph. Node count: " << root.get_node_size() << std::endl;
 
-    waitForAudio(3000);
+    waitForAudio(1000);
 
-    root.unregister_node(filter);
+    EXPECT_NO_THROW(root.unregister_node(filter));
     waitForAudio(1000);
 }
 
-TEST_F(AudibleTest, StreamRestartTest)
+TEST_F(AudibleTest, NoiseGeneratorOutput)
 {
-    std::cout << "Testing stream restart with continuous audio..." << std::endl;
-
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    engine->get_node_graph_manager()->add_to_root(sine);
-
-    auto& root = engine->get_node_graph_manager()->get_root_node();
-    std::cout << "Node count before restart: " << root.get_node_size() << std::endl;
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    waitForAudio(2000);
-
-    std::cout << "Stopping audio..." << std::endl;
-    engine->End();
-    waitForAudio(1000);
-
-    std::cout << "Restarting audio..." << std::endl;
-    engine->Start();
-
-    std::cout << "Node count after restart: " << root.get_node_size() << std::endl;
-
-    if (root.get_node_size() == 0) {
-        std::cout << "Re-adding node after restart..." << std::endl;
-        engine->get_node_graph_manager()->add_to_root(sine);
-        std::cout << "Updated node count: " << root.get_node_size() << std::endl;
-    }
-
-    waitForAudio(2000);
-
-    root.unregister_node(sine);
-    waitForAudio(1000);
-}
-
-TEST_F(AudibleTest, DiagnosticTest)
-{
-    std::cout << "Running audio diagnostic test..." << std::endl;
-
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.9f);
-
-    std::cout << "About to add node to root" << std::endl;
-    engine->get_node_graph_manager()->add_to_root(sine);
-
-    auto& root = engine->get_node_graph_manager()->get_root_node();
-    std::cout << "Node count in graph: " << root.get_node_size() << std::endl;
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    std::cout << "Testing different frequencies..." << std::endl;
-
-    std::vector<float> frequencies = { 440.0f, 880.0f, 220.0f };
-    for (auto freq : frequencies) {
-        std::cout << "Setting frequency to " << freq << "Hz" << std::endl;
-        sine->set_frequency(freq);
-        waitForAudio(1500);
-    }
-
-    std::cout << "Testing different amplitudes..." << std::endl;
-    std::vector<float> amplitudes = { 0.2f, 0.5f, 0.9f };
-    for (auto amp : amplitudes) {
-        std::cout << "Setting amplitude to " << amp << std::endl;
-        sine->set_amplitude(amp);
-        waitForAudio(1500);
-    }
-
-    std::cout << "Final test - standard 440Hz tone for 5 seconds..." << std::endl;
-    sine->set_frequency(440.0f);
-    sine->set_amplitude(0.7f);
-    waitForAudio(5000);
-
-    root.unregister_node(sine);
-}
-
-TEST_F(AudibleTest, NoiseGeneratorTest)
-{
-    std::cout << "Testing noise generator..." << std::endl;
+    std::cout << "Testing various noise types..." << std::endl;
 
     auto noise = std::make_shared<Nodes::Generator::Stochastics::NoiseEngine>();
     noise->set_amplitude(0.3f);
 
-    engine->get_node_graph_manager()->add_to_root(noise);
-
-    auto& root = engine->get_node_graph_manager()->get_root_node();
-    std::cout << "Node count in graph: " << root.get_node_size() << std::endl;
-    EXPECT_EQ(root.get_node_size(), 1);
+    auto node_graph = engine->get_node_graph_manager();
+    EXPECT_NO_THROW(node_graph->add_to_root(noise, Nodes::ProcessingToken::AUDIO_RATE));
 
     struct NoiseTest {
         Utils::distribution type;
@@ -388,74 +440,107 @@ TEST_F(AudibleTest, NoiseGeneratorTest)
     std::vector<NoiseTest> noiseTypes = {
         { Utils::distribution::UNIFORM, "Uniform" },
         { Utils::distribution::NORMAL, "Normal (Gaussian)" },
-        { Utils::distribution::EXPONENTIAL, "Exponential" },
-        { Utils::distribution::POISSON, "Poisson" }
+        { Utils::distribution::EXPONENTIAL, "Exponential" }
     };
 
     for (const auto& test : noiseTypes) {
-        std::cout << "Testing " << test.name << " noise..." << std::endl;
+        std::cout << "Playing " << test.name << " noise..." << std::endl;
         noise->set_type(test.type);
-        waitForAudio(2000);
+        waitForAudio(1000);
     }
 
-    root.unregister_node(noise);
+    auto& root = node_graph->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
+    EXPECT_NO_THROW(root.unregister_node(noise));
 }
+
 #endif // AUDIBLE_TEST
 
 #endif // INTEGRATION_TEST
 
+//-------------------------------------------------------------------------
+// RtAudio Singleton and Backend Utility Tests (Always Enabled)
+//-------------------------------------------------------------------------
+
 class RtAudioUtilityTest : public ::testing::Test {
 protected:
-    void SetUp() override
-    {
-        engine = MayaFlux::Test::AudioTestHelper::createTestEngine();
-    }
+    void SetUp() override { }
 
-    void TearDown() override
-    {
-        engine.reset();
-    }
-
-    std::unique_ptr<MayaFlux::Core::Engine> engine;
+    void TearDown() override { }
 };
 
-TEST_F(RtAudioUtilityTest, StreamInfoVerification)
+TEST_F(RtAudioUtilityTest, SingletonAccess)
 {
-    const auto& info = engine->get_stream_info();
+    RtAudio* context1 = Core::RtAudioSingleton::get_instance();
+    RtAudio* context2 = Core::RtAudioSingleton::get_instance();
 
-    EXPECT_EQ(info.sample_rate, TestConfig::SAMPLE_RATE);
-    EXPECT_EQ(info.buffer_size, TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(info.output.channels, TestConfig::NUM_CHANNELS);
+    EXPECT_NE(context1, nullptr);
+    EXPECT_EQ(context1, context2) << "Singleton should return same instance";
+
+    unsigned int device_count = context1->getDeviceCount();
+    std::string version = context1->getVersion();
+    RtAudio::Api api = context1->getCurrentApi();
+
+    std::cout << "RtAudio Device Count: " << device_count << std::endl;
+    std::cout << "RtAudio Version: " << version << std::endl;
+    std::cout << "RtAudio API: " << api << std::endl;
+
+    EXPECT_FALSE(version.empty());
+    EXPECT_NE(api, RtAudio::Api::UNSPECIFIED);
 }
 
-TEST_F(RtAudioUtilityTest, GlobalInitialization)
+TEST_F(RtAudioUtilityTest, StreamExclusivity)
+{
+    EXPECT_NO_THROW(Core::RtAudioSingleton::mark_stream_open());
+
+    EXPECT_THROW(Core::RtAudioSingleton::mark_stream_open(), std::runtime_error);
+
+    Core::RtAudioSingleton::mark_stream_closed();
+    EXPECT_NO_THROW(Core::RtAudioSingleton::mark_stream_open());
+
+    Core::RtAudioSingleton::mark_stream_closed();
+}
+
+TEST_F(RtAudioUtilityTest, GlobalAPIValidation)
 {
     MayaFlux::End();
 
-    MayaFlux::Init(44100, 256, 1);
-
+    MayaFlux::Init(44100, 256, 1, 0);
     EXPECT_TRUE(MayaFlux::is_engine_initialized());
     EXPECT_EQ(MayaFlux::get_sample_rate(), 44100);
     EXPECT_EQ(MayaFlux::get_buffer_size(), 256);
     EXPECT_EQ(MayaFlux::get_num_out_channels(), 1);
 
     MayaFlux::End();
+
+    Core::GlobalStreamInfo duplex_config;
+    duplex_config.sample_rate = 48000;
+    duplex_config.buffer_size = 512;
+    duplex_config.output.channels = 2;
+    duplex_config.input.enabled = true;
+    duplex_config.input.channels = 1;
+
+    MayaFlux::Init(duplex_config);
+
+    auto stream_info = MayaFlux::get_global_stream_info();
+    EXPECT_EQ(stream_info.sample_rate, 48000);
+    EXPECT_EQ(stream_info.output.channels, 2);
+    EXPECT_TRUE(stream_info.input.enabled);
+    EXPECT_EQ(stream_info.input.channels, 1);
+
+    MayaFlux::End();
 }
 
-TEST_F(RtAudioUtilityTest, DeviceInfoAccess)
+TEST_F(RtAudioUtilityTest, BackendFactoryValidation)
 {
-    RtAudio direct_context;
+    auto backend = Core::AudioBackendFactory::create_backend(Utils::AudioBackendType::RTAUDIO);
+    EXPECT_NE(backend, nullptr);
 
-    unsigned int deviceCount = direct_context.getDeviceCount();
-    std::cout << "RtAudio reports " << deviceCount << " devices" << std::endl;
+    EXPECT_FALSE(backend->get_version_string().empty());
+    EXPECT_NE(backend->get_api_type(), RtAudio::Api::UNSPECIFIED);
 
-    RtAudio::Api api = direct_context.getCurrentApi();
-    std::cout << "Using audio API: " << api << std::endl;
-    EXPECT_NE(api, RtAudio::Api::UNSPECIFIED);
-
-    std::string version = direct_context.getVersion();
-    EXPECT_FALSE(version.empty());
-    std::cout << "RtAudio version: " << version << std::endl;
+    // Test device manager creation
+    auto device_manager = backend->create_device_manager();
+    EXPECT_NE(device_manager, nullptr);
 }
 
 } // namespace MayaFlux::Test

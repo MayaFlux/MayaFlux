@@ -83,6 +83,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo)
 
     m_buffer_manager = std::make_shared<Buffers::BufferManager>(
         m_stream_info.output.channels,
+        m_stream_info.input.enabled ? m_stream_info.input.channels : 0,
         m_stream_info.buffer_size);
 
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
@@ -91,6 +92,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo)
         m_node_graph_manager, m_buffer_manager, m_scheduler);
 
     m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
+    m_is_initialized = true;
 }
 
 void Engine::Start()
@@ -130,7 +132,7 @@ void Engine::End()
     if (m_buffer_manager) {
         for (auto token : m_buffer_manager->get_active_tokens()) {
             for (size_t i = 0; i < m_stream_info.output.channels; i++) {
-                auto root = m_buffer_manager->get_root_buffer(token, i);
+                auto root = m_buffer_manager->get_root_audio_buffer(token, i);
                 if (root) {
                     root->clear();
                     for (auto& child : root->get_child_buffers()) {
@@ -143,7 +145,7 @@ void Engine::End()
 
     if (m_node_graph_manager) {
         for (auto token : m_node_graph_manager->get_active_tokens()) {
-            for (auto root : m_node_graph_manager->get_token_roots(token)) {
+            for (auto root : m_node_graph_manager->get_all_root_nodes(token)) {
                 if (root) {
                     root->clear_all_nodes();
                 }
@@ -158,10 +160,13 @@ bool Engine::is_running() const
         return false;
     }
 
-    auto status = m_subsystem_manager->query_subsystem_status();
-    for (const auto& [tokens, is_ready] : status) {
-        if (is_ready) {
-            return true;
+    if (m_is_initialized) {
+        auto status = m_subsystem_manager->query_subsystem_status();
+        for (const auto& [type, readiness] : status) {
+            const auto& [is_ready, is_running] = readiness;
+            if (is_ready && is_running) {
+                return true;
+            }
         }
     }
     return false;

@@ -73,11 +73,12 @@ public:
      * Instantiates a device manager that uses the RtAudio API to
      * enumerate and provide information about available audio endpoints.
      */
-    std::unique_ptr<AudioDevice> create_device_manager();
+    std::unique_ptr<AudioDevice> create_device_manager() override;
 
     /**
      * @brief Creates an RtAudio-specific audio stream
-     * @param deviceId System identifier for the target audio device
+     * @param output_device_id System identifier for the target audio output device
+     * @param input_device_id System identifier for the target audio input device
      * @param stream_info Configuration parameters for the audio stream
      * @param user_data Optional context pointer passed to callbacks
      * @return Unique pointer to an RtAudioStream implementation
@@ -85,7 +86,11 @@ public:
      * Establishes a digital audio pipeline between the application and
      * the specified hardware endpoint using the RtAudio API.
      */
-    std::unique_ptr<AudioStream> create_stream(unsigned int deviceId, const GlobalStreamInfo& stream_info, void* user_data) override;
+    std::unique_ptr<AudioStream> create_stream(
+        unsigned int output_device_id,
+        unsigned int input_device_id,
+        const GlobalStreamInfo& stream_info,
+        void* user_data) override;
 
     /**
      * @brief Retrieves the RtAudio library version
@@ -205,7 +210,8 @@ public:
     /**
      * @brief Initializes an audio stream with the specified configuration
      * @param context Pointer to an active RtAudio instance
-     * @param deviceId System identifier for the target audio device
+     * @param output_device_id System identifier for the target audio output device
+     * @param input_device_id System identifier for the target audio input device
      * @param streamInfo Configuration parameters for the audio stream
      * @param userData Optional context pointer passed to callbacks
      *
@@ -214,7 +220,8 @@ public:
      */
     RtAudioStream(
         RtAudio* context,
-        unsigned int deviceId,
+        unsigned int output_device_id,
+        unsigned int input_device_id,
         const GlobalStreamInfo& streamInfo,
         void* userData);
 
@@ -305,8 +312,11 @@ private:
     /** @brief Pointer to the underlying RtAudio context */
     RtAudio* m_context;
 
-    /** @brief RtAudio-specific stream configuration parameters */
-    RtAudio::StreamParameters m_parameters;
+    /** @brief RtAudio-specific stream output configuration parameters */
+    RtAudio::StreamParameters m_out_parameters;
+
+    /** @brief RtAudio-specific stream input configuration parameters */
+    RtAudio::StreamParameters m_in_parameters;
 
     /** @brief RtAudio-specific stream options */
     RtAudio::StreamOptions m_options;

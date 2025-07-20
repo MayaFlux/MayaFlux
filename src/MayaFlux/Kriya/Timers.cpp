@@ -97,7 +97,7 @@ void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seco
     m_node_graph_manager.add_to_root(node, token, channel);
 
     m_timer.schedule(duration_seconds, [this, node, channel]() {
-        m_node_graph_manager.get_token_root(token, channel).unregister_node(node);
+        m_node_graph_manager.get_root_node(token, channel).unregister_node(node);
         m_current_node = nullptr;
     });
 }
@@ -114,7 +114,7 @@ void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::fun
 
     m_timer.schedule(duration_seconds, [this, node, cleanup_func, channel]() {
         cleanup_func(node);
-        m_node_graph_manager.get_token_root(Nodes::ProcessingToken::AUDIO_RATE, channel).unregister_node(node);
+        m_node_graph_manager.get_root_node(Nodes::ProcessingToken::AUDIO_RATE, channel).unregister_node(node);
         m_current_node = nullptr;
     });
 }
@@ -122,7 +122,7 @@ void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::fun
 void NodeTimer::cancel()
 {
     if (m_timer.is_active() && m_current_node) {
-        m_node_graph_manager.get_token_root(token, m_current_channel).unregister_node(m_current_node);
+        m_node_graph_manager.get_root_node(token, m_current_channel).unregister_node(m_current_node);
         m_current_node = nullptr;
     }
     m_timer.cancel();

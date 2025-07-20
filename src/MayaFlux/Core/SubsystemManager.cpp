@@ -74,11 +74,11 @@ void SubsystemManager::remove_subsystem(SubsystemType type)
     }
 }
 
-std::unordered_map<SubsystemType, bool> SubsystemManager::query_subsystem_status() const
+std::unordered_map<SubsystemType, std::pair<bool, bool>> SubsystemManager::query_subsystem_status() const
 {
-    std::unordered_map<SubsystemType, bool> statuses;
+    std::unordered_map<SubsystemType, std::pair<bool, bool>> statuses;
     for (const auto& [type, subsystem] : m_subsystems) {
-        statuses[type] = subsystem->is_ready();
+        statuses[type] = { subsystem->is_ready(), subsystem->is_running() };
     }
     return statuses;
 }

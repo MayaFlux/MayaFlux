@@ -272,15 +272,6 @@ protected:
     std::vector<std::shared_ptr<BufferType>> m_child_buffers;
 
     /**
-     * @brief Mutex for thread-safe access to shared data resources
-     *
-     * Protects access to the buffer data during processing and
-     * when setting node output, ensuring thread safety between
-     * real-time processing threads and other computational threads.
-     */
-    std::mutex m_mutex;
-
-    /**
      * @brief Processing rate hint for this buffer
      *
      * This is used to optimize processing based on expected

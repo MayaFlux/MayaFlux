@@ -3,6 +3,8 @@
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
+#include "Input/InputAudioBuffer.hpp"
+
 namespace MayaFlux::Buffers {
 
 class QuickProcess : public BufferProcessor {
@@ -39,120 +41,95 @@ private:
     AudioProcessingFunction m_function;
 };
 
-BufferManager::BufferManager(u_int32_t default_channels, u_int32_t default_buffer_size, ProcessingToken default_processing_token)
+void RootAudioUnit::resize_channels(u_int32_t new_count, u_int32_t new_buffer_size, ProcessingToken token)
+{
+    if (new_count <= channel_count)
+        return;
+
+    u_int32_t old_count = channel_count;
+    channel_count = new_count;
+    buffer_size = new_buffer_size;
+
+    root_buffers.resize(new_count);
+    processing_chains.resize(new_count);
+
+    for (u_int32_t i = old_count; i < new_count; ++i) {
+        root_buffers[i] = std::make_shared<RootAudioBuffer>(i, buffer_size);
+        root_buffers[i]->initialize();
+        root_buffers[i]->set_token_active(true);
+
+        processing_chains[i] = std::make_shared<BufferProcessingChain>();
+        processing_chains[i]->set_preferred_token(token);
+        processing_chains[i]->set_enforcement_strategy(TokenEnforcementStrategy::FILTERED);
+
+        root_buffers[i]->set_processing_chain(processing_chains[i]);
+    }
+}
+
+void RootAudioUnit::resize_buffers(u_int32_t new_buffer_size)
+{
+    buffer_size = new_buffer_size;
+    for (auto& buffer : root_buffers) {
+        buffer->resize(new_buffer_size);
+    }
+}
+
+BufferManager::BufferManager(u_int32_t default_out_channels, u_int32_t default_in_channels, u_int32_t default_buffer_size, ProcessingToken default_processing_token)
     : m_default_token(default_processing_token)
     , m_global_processing_chain(std::make_shared<BufferProcessingChain>())
 {
-    m_token_channel_counts[default_processing_token] = default_channels;
-    m_token_buffer_sizes[default_processing_token] = default_buffer_size;
+    ensure_channels(default_processing_token, default_out_channels);
+    resize_root_audio_buffers(default_processing_token, default_buffer_size);
 
-    auto& root_buffers = m_token_root_buffers[default_processing_token];
-    auto& processing_chains = m_token_processing_chains[default_processing_token];
-
-    root_buffers.reserve(default_channels);
-    processing_chains.reserve(default_channels);
-
-    for (u_int32_t i = 0; i < default_channels; i++) {
-        auto root_buffer = create_root_buffer_for_token(default_processing_token, i, default_buffer_size);
-        root_buffers.push_back(root_buffer);
-
-        auto processing_chain = std::make_shared<BufferProcessingChain>();
-        processing_chain->set_preferred_token(default_processing_token);
-        processing_chain->set_enforcement_strategy(TokenEnforcementStrategy::FILTERED);
-        processing_chains.push_back(processing_chain);
-
-        root_buffer->set_processing_chain(processing_chain);
+    if (default_in_channels) {
+        setup_input_buffers(default_in_channels, default_buffer_size);
     }
 
     if (default_processing_token == ProcessingToken::AUDIO_BACKEND || default_processing_token == ProcessingToken::AUDIO_PARALLEL) {
         auto limiter = std::make_shared<FinalLimiterProcessor>();
-        set_final_processor_for_token(limiter, default_processing_token);
+        set_final_processor(limiter, default_processing_token);
     }
-}
-
-// Deprecated
-std::vector<double>& BufferManager::get_channel_data(u_int32_t channel_index)
-{
-    return get_buffer_data(m_default_token, channel_index);
-}
-
-// Deprecated
-const std::vector<double>& BufferManager::get_channel_data(u_int32_t channel_index) const
-{
-    return get_buffer_data(m_default_token, channel_index);
-}
-
-// Deprecated
-void BufferManager::process_channel(u_int32_t channel_index)
-{
-    u_int32_t processing_units = get_token_buffer_size(m_default_token);
-    process_token_channel(m_default_token, channel_index, processing_units);
-}
-
-// Deprecated
-void BufferManager::process_all_channels()
-{
-    u_int32_t processing_units = get_token_buffer_size(m_default_token);
-    process_token(m_default_token, processing_units);
-}
-
-// deprecated
-void BufferManager::fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames)
-{
-    u_int32_t num_channels = get_token_channel_count(m_default_token);
-    fill_from_interleaved(interleaved_data, num_frames, m_default_token, num_channels);
-}
-
-// deprecated
-void BufferManager::fill_interleaved(double* interleaved_data, u_int32_t num_frames) const
-{
-    u_int32_t num_channels = get_token_channel_count(m_default_token);
-    fill_interleaved(interleaved_data, num_frames, m_default_token, num_channels);
 }
 
 void BufferManager::process_token(ProcessingToken token, u_int32_t processing_units)
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end())
+        return;
+
+    auto& unit = it->second;
+
+    if (unit.custom_processor) {
+        unit.custom_processor(unit.root_buffers, processing_units);
         return;
     }
 
-    auto& root_buffers = token_it->second;
-
-    auto processor_it = m_token_processors.find(token);
-    if (processor_it != m_token_processors.end()) {
-        processor_it->second(root_buffers, processing_units);
-        return;
-    }
-
-    for (u_int32_t channel = 0; channel < root_buffers.size(); channel++) {
-        process_token_channel(token, channel, processing_units);
+    for (u_int32_t channel = 0; channel < unit.channel_count; ++channel) {
+        process_channel(token, channel, processing_units);
     }
 }
 
 void BufferManager::process_all_tokens()
 {
-    for (const auto& [token, root_buffers] : m_token_root_buffers) {
-        if (!root_buffers.empty()) {
-            u_int32_t processing_units = m_token_buffer_sizes[token];
-            process_token(token, processing_units);
+    for (const auto& [token, unit] : m_audio_units) {
+        if (!unit.root_buffers.empty()) {
+            process_token(token, unit.buffer_size);
         }
     }
 }
 
-void BufferManager::process_token_channel(
+void BufferManager::process_channel(
     ProcessingToken token,
     u_int32_t channel,
     u_int32_t processing_units,
     const std::vector<double>& node_output_data)
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end() || channel >= token_it->second.size()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end() || channel >= it->second.channel_count)
         return;
-    }
 
-    auto& root_buffer = token_it->second[channel];
-    auto& processing_chains = m_token_processing_chains[token];
+    auto& unit = it->second;
+    auto root_buffer = unit.get_buffer(channel);
 
     if (!node_output_data.empty()) {
         root_buffer->set_node_output(node_output_data);
@@ -172,9 +149,7 @@ void BufferManager::process_token_channel(
 
     root_buffer->process_default();
 
-    if (channel < processing_chains.size()) {
-        processing_chains[channel]->process(root_buffer);
-    }
+    unit.get_chain(channel)->process(root_buffer);
 
     m_global_processing_chain->process(root_buffer);
 
@@ -185,204 +160,191 @@ void BufferManager::process_token_channel(
 
 std::vector<ProcessingToken> BufferManager::get_active_tokens() const
 {
-    std::vector<ProcessingToken> active_tokens;
-    for (const auto& [token, root_buffers] : m_token_root_buffers) {
-        if (!root_buffers.empty()) {
-            active_tokens.push_back(token);
+    std::vector<ProcessingToken> tokens;
+    for (const auto& [token, unit] : m_audio_units) {
+        if (!unit.root_buffers.empty()) {
+            tokens.push_back(token);
         }
     }
-    return active_tokens;
+    return tokens;
 }
 
-void BufferManager::register_token_processor(ProcessingToken token,
-    std::function<void(std::vector<std::shared_ptr<RootAudioBuffer>>&, u_int32_t)> processor)
+void BufferManager::register_token_processor(ProcessingToken token, RootProcessingFunction processor)
 {
-    m_token_processors[token] = processor;
+    auto& unit = get_or_create_unit(token);
+    unit.custom_processor = processor;
 }
 
-std::shared_ptr<RootAudioBuffer> BufferManager::get_root_buffer(ProcessingToken token, u_int32_t channel)
+std::shared_ptr<RootAudioBuffer> BufferManager::get_root_audio_buffer(ProcessingToken token, u_int32_t channel)
 {
-    ensure_token_channel_exists(token, channel);
-    return m_token_root_buffers[token][channel];
+    auto& unit = ensure_and_get_unit(token, channel);
+    return unit.get_buffer(channel);
 }
 
 std::vector<double>& BufferManager::get_buffer_data(ProcessingToken token, u_int32_t channel)
 {
-    return get_root_buffer(token, channel)->get_data();
+    return get_root_audio_buffer(token, channel)->get_data();
 }
 
 const std::vector<double>& BufferManager::get_buffer_data(ProcessingToken token, u_int32_t channel) const
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end() || channel >= token_it->second.size()) {
+    auto& unit = get_audio_unit(token);
+    if (channel >= unit.channel_count) {
         throw std::out_of_range("Token/channel combination out of range");
     }
-
-    return token_it->second[channel]->get_data();
+    return unit.get_buffer(channel)->get_data();
 }
 
-u_int32_t BufferManager::get_token_channel_count(ProcessingToken token) const
+u_int32_t BufferManager::get_num_channels(ProcessingToken token) const
 {
-    auto it = m_token_channel_counts.find(token);
-    return (it != m_token_channel_counts.end()) ? it->second : 0;
+    auto it = m_audio_units.find(token);
+    return (it != m_audio_units.end()) ? it->second.channel_count : 0;
 }
 
-u_int32_t BufferManager::get_token_buffer_size(ProcessingToken token) const
+u_int32_t BufferManager::get_root_audio_buffer_size(ProcessingToken token) const
 {
-    auto it = m_token_buffer_sizes.find(token);
-    return (it != m_token_buffer_sizes.end()) ? it->second : 512;
+    auto it = m_audio_units.find(token);
+    return (it != m_audio_units.end()) ? it->second.buffer_size : 512;
 }
 
-void BufferManager::set_token_buffer_size(ProcessingToken token, u_int32_t buffer_size)
+void BufferManager::resize_root_audio_buffers(ProcessingToken token, u_int32_t buffer_size)
 {
+    auto& unit = get_or_create_unit(token);
     std::lock_guard<std::mutex> lock(m_manager_mutex);
-
-    m_token_buffer_sizes[token] = buffer_size;
-
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it != m_token_root_buffers.end()) {
-        for (auto& root_buffer : token_it->second) {
-            root_buffer->resize(buffer_size);
-        }
-    }
+    unit.resize_buffers(buffer_size);
 }
 
-void BufferManager::add_buffer_to_token_channel(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel)
+void BufferManager::add_audio_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel)
 {
-    ensure_token_channel_exists(token, channel);
-
+    auto& unit = ensure_and_get_unit(token, channel);
+    auto processing_chain = unit.get_chain(channel);
     buffer->set_channel_id(channel);
 
-    auto& processing_chains = m_token_processing_chains[token];
     if (auto buf_chain = buffer->get_processing_chain()) {
-        if (buf_chain != processing_chains[channel]) {
-            processing_chains[channel]->merge_chain(buf_chain);
+        if (buf_chain != processing_chain) {
+            processing_chain->merge_chain(buf_chain);
         }
     } else {
-        buffer->set_processing_chain(processing_chains[channel]);
+        buffer->set_processing_chain(processing_chain);
     }
 
-    m_token_root_buffers[token][channel]->add_child_buffer(buffer);
+    {
+        if (buffer->get_num_samples() != unit.buffer_size) {
+            std::cerr << "BufferManager: Resizing buffer to match unit size: " << unit.buffer_size << std::endl;
+            std::lock_guard<std::mutex> lock(m_manager_mutex);
+            buffer->resize(unit.buffer_size);
+        }
+    }
+
+    unit.get_buffer(channel)->add_child_buffer(buffer);
 }
 
-void BufferManager::remove_buffer_from_token_channel(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel)
+void BufferManager::remove_audio_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel)
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end() || channel >= token_it->second.size()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end() || channel >= it->second.channel_count)
         return;
-    }
 
-    token_it->second[channel]->remove_child_buffer(buffer);
+    it->second.get_buffer(channel)->remove_child_buffer(buffer);
 }
 
-const std::vector<std::shared_ptr<AudioBuffer>>& BufferManager::get_token_channel_buffers(ProcessingToken token, u_int32_t channel) const
+const std::vector<std::shared_ptr<AudioBuffer>>& BufferManager::get_audio_buffers(ProcessingToken token, u_int32_t channel) const
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end() || channel >= token_it->second.size()) {
+
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end() || channel >= it->second.channel_count) {
         throw std::out_of_range("Token/channel combination out of range");
     }
-
-    return token_it->second[channel]->get_child_buffers();
+    return it->second.get_buffer(channel)->get_child_buffers();
 }
 
-std::shared_ptr<BufferProcessingChain> BufferManager::get_token_processing_chain(ProcessingToken token, u_int32_t channel)
+std::shared_ptr<BufferProcessingChain> BufferManager::get_processing_chain(ProcessingToken token, u_int32_t channel)
 {
-    ensure_token_channel_exists(token, channel);
-    return m_token_processing_chains[token][channel];
+    auto& unit = ensure_and_get_unit(token, channel);
+    return unit.get_chain(channel);
 }
 
 void BufferManager::add_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer)
 {
     u_int32_t channel_id = buffer->get_channel_id();
 
-    for (const auto& [token, root_buffers] : m_token_root_buffers) {
-        if (channel_id < root_buffers.size()) {
-            auto& processing_chains = m_token_processing_chains[token];
-            if (channel_id < processing_chains.size()) {
-                processing_chains[channel_id]->add_processor(processor, buffer);
-                buffer->set_processing_chain(processing_chains[channel_id]);
-                return;
-            }
+    for (auto& [token, unit] : m_audio_units) {
+        if (channel_id < unit.channel_count) {
+            auto processing_chain = unit.get_chain(channel_id);
+            processing_chain->add_processor(processor, buffer);
+            buffer->set_processing_chain(processing_chain);
+            return;
         }
     }
 
     m_global_processing_chain->add_processor(processor, buffer);
 }
 
-void BufferManager::add_processor_to_token_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, u_int32_t channel)
+void BufferManager::add_processor_to_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, u_int32_t channel)
 {
-    ensure_token_channel_exists(token, channel);
-
-    auto& root_buffer = m_token_root_buffers[token][channel];
-    auto& processing_chain = m_token_processing_chains[token][channel];
-
-    processing_chain->add_processor(processor, root_buffer);
+    get_processing_chain(token, channel)->add_processor(processor, get_root_audio_buffer(token, channel));
 }
 
 void BufferManager::add_processor_to_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end())
         return;
-    }
 
-    auto& root_buffers = token_it->second;
-    auto& processing_chains = m_token_processing_chains[token];
-
-    for (size_t i = 0; i < root_buffers.size() && i < processing_chains.size(); i++) {
-        processing_chains[i]->add_processor(processor, root_buffers[i]);
+    auto& unit = it->second;
+    for (u_int32_t i = 0; i < unit.channel_count; ++i) {
+        unit.get_chain(i)->add_processor(processor, unit.get_buffer(i));
     }
 }
 
 void BufferManager::remove_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer)
 {
-    for (const auto& [token, processing_chains] : m_token_processing_chains) {
-        for (auto& chain : processing_chains) {
-            chain->remove_processor(processor, buffer);
+    u_int32_t channel_id = buffer->get_channel_id();
+
+    for (const auto& [token, unit] : m_audio_units) {
+        if (channel_id < unit.channel_count) {
+            auto processing_chain = unit.get_chain(channel_id);
+            processing_chain->remove_processor(processor, buffer);
+            if (auto buf_chain = buffer->get_processing_chain()) {
+                buf_chain->remove_processor(processor, buffer);
+            }
         }
     }
 
     m_global_processing_chain->remove_processor(processor, buffer);
 }
 
-void BufferManager::remove_processor_from_token_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, u_int32_t channel)
+void BufferManager::remove_processor_from_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, u_int32_t channel)
 {
-    auto token_it = m_token_processing_chains.find(token);
-    if (token_it == m_token_processing_chains.end() || channel >= token_it->second.size()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end() || channel >= it->second.channel_count) {
         return;
     }
-
-    auto& root_buffer = m_token_root_buffers[token][channel];
-    token_it->second[channel]->remove_processor(processor, root_buffer);
+    it->second.get_chain(channel)->remove_processor(processor, it->second.get_buffer(channel));
 }
 
 void BufferManager::remove_processor_from_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
 {
-    auto token_it = m_token_processing_chains.find(token);
-    if (token_it == m_token_processing_chains.end()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end()) {
         return;
     }
 
-    auto& root_buffers = m_token_root_buffers[token];
-    auto& processing_chains = token_it->second;
-
-    for (size_t i = 0; i < processing_chains.size() && i < root_buffers.size(); i++) {
-        processing_chains[i]->remove_processor(processor, root_buffers[i]);
+    auto& unit = it->second;
+    for (u_int32_t i = 0; i < unit.channel_count; ++i) {
+        unit.get_chain(i)->remove_processor(processor, unit.get_buffer(i));
     }
 }
 
-void BufferManager::set_final_processor_for_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
+void BufferManager::set_final_processor(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
 {
-    auto token_it = m_token_processing_chains.find(token);
-    if (token_it == m_token_processing_chains.end()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end())
         return;
-    }
 
-    auto& root_buffers = m_token_root_buffers[token];
-    auto& processing_chains = token_it->second;
-
-    for (size_t i = 0; i < processing_chains.size() && i < root_buffers.size(); i++) {
-        processing_chains[i]->add_final_processor(processor, root_buffers[i]);
+    auto& unit = it->second;
+    for (u_int32_t i = 0; i < unit.channel_count; ++i) {
+        unit.get_chain(i)->add_final_processor(processor, unit.get_buffer(i));
     }
 }
 
@@ -393,10 +355,10 @@ std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(AudioProces
     return quick_process;
 }
 
-std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process_to_token_channel(AudioProcessingFunction processor, ProcessingToken token, u_int32_t channel)
+std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process_to_channel(AudioProcessingFunction processor, ProcessingToken token, u_int32_t channel)
 {
     auto quick_process = std::make_shared<QuickProcess>(processor);
-    add_processor_to_token_channel(quick_process, token, channel);
+    add_processor_to_channel(quick_process, token, channel);
     return quick_process;
 }
 
@@ -407,18 +369,18 @@ std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process_to_token(Au
     return quick_process;
 }
 
-void BufferManager::connect_node_to_token_channel(std::shared_ptr<Nodes::Node> node, ProcessingToken token, u_int32_t channel, float mix, bool clear_before)
+void BufferManager::connect_node_to_channel(std::shared_ptr<Nodes::Node> node, ProcessingToken token, u_int32_t channel, float mix, bool clear_before)
 {
     // TODO: Implement NodeSourceProcessor for generic Buffer interface
     // For now, placeholder that shows the integration pattern
 
-    ensure_token_channel_exists(token, channel);
+    ensure_channels(token, channel + 1);
 
     auto processor = std::make_shared<NodeSourceProcessor>(node, mix, clear_before);
 
     processor->set_processing_token(token);
 
-    add_processor_to_token_channel(processor, token, channel);
+    add_processor_to_channel(processor, token, channel);
 }
 
 void BufferManager::connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<AudioBuffer> buffer, float mix, bool clear_before)
@@ -430,106 +392,135 @@ void BufferManager::connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, st
 
 void BufferManager::fill_from_interleaved(const double* interleaved_data, u_int32_t num_frames, ProcessingToken token, u_int32_t num_channels)
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end())
         return;
-    }
 
-    auto& root_buffers = token_it->second;
-    u_int32_t channels_to_process = std::min(num_channels, static_cast<u_int32_t>(root_buffers.size()));
+    auto& unit = it->second;
+    u_int32_t channels_to_process = std::min(num_channels, unit.channel_count);
 
-    for (u_int32_t channel = 0; channel < channels_to_process; channel++) {
-        auto& data = root_buffers[channel]->get_data();
-        u_int32_t frames_to_copy = std::min(num_frames, static_cast<u_int32_t>(data.size()));
+    for (u_int32_t channel = 0; channel < channels_to_process; ++channel) {
+        auto& buffer_data = unit.get_buffer(channel)->get_data();
+        u_int32_t frames_to_copy = std::min(num_frames, static_cast<u_int32_t>(buffer_data.size()));
 
-        for (u_int32_t frame = 0; frame < frames_to_copy; frame++) {
-            data[frame] = interleaved_data[frame * num_channels + channel];
+        for (u_int32_t frame = 0; frame < frames_to_copy; ++frame) {
+            buffer_data[frame] = interleaved_data[frame * num_channels + channel];
         }
     }
 }
 
 void BufferManager::fill_interleaved(double* interleaved_data, u_int32_t num_frames, ProcessingToken token, u_int32_t num_channels) const
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end()) {
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end())
+        return;
+
+    const auto& unit = it->second;
+    u_int32_t channels_to_process = std::min(num_channels, unit.channel_count);
+
+    for (u_int32_t channel = 0; channel < channels_to_process; ++channel) {
+        const auto& buffer_data = unit.get_buffer(channel)->get_data();
+        u_int32_t frames_to_copy = std::min(num_frames, static_cast<u_int32_t>(buffer_data.size()));
+
+        for (u_int32_t frame = 0; frame < frames_to_copy; ++frame) {
+            interleaved_data[frame * num_channels + channel] = buffer_data[frame];
+        }
+    }
+}
+
+void BufferManager::process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames)
+{
+    if (m_input_buffers.empty() || m_input_buffers.size() < num_channels) {
+        setup_input_buffers(num_channels, num_frames);
+    }
+
+    if (!input_data) {
+        std::cerr << "BufferManager: Invalid input data pointer" << std::endl;
         return;
     }
 
-    const auto& root_buffers = token_it->second;
-    u_int32_t channels_to_process = std::min(num_channels, static_cast<u_int32_t>(root_buffers.size()));
+    for (u_int32_t i = 0; i < m_input_buffers.size(); ++i) {
+        auto& data = m_input_buffers[i]->get_data();
 
-    for (u_int32_t channel = 0; channel < channels_to_process; channel++) {
-        const auto& data = root_buffers[channel]->get_data();
-        u_int32_t frames_to_copy = std::min(num_frames, static_cast<u_int32_t>(data.size()));
-
-        for (u_int32_t frame = 0; frame < frames_to_copy; frame++) {
-            interleaved_data[frame * num_channels + channel] = data[frame];
+        for (u_int32_t frame = 0; frame < data.size(); ++frame) {
+            data[frame] = static_cast<double*>(input_data)[frame * num_channels + i];
         }
+        m_input_buffers[i]->process_default();
     }
 }
 
-void BufferManager::resize_token_buffers(ProcessingToken token, u_int32_t buffer_size)
+RootAudioUnit& BufferManager::get_or_create_unit(ProcessingToken token)
 {
-    set_token_buffer_size(token, buffer_size);
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end()) {
+
+        std::lock_guard<std::mutex> lock(m_manager_mutex);
+        auto [inserted_it, success] = m_audio_units.emplace(token, RootAudioUnit {});
+        return inserted_it->second;
+    }
+    return it->second;
 }
 
-void BufferManager::ensure_token_channel_exists(ProcessingToken token, u_int32_t channel)
+const RootAudioUnit& BufferManager::get_audio_unit(ProcessingToken token) const
 {
-    auto token_it = m_token_root_buffers.find(token);
-    if (token_it == m_token_root_buffers.end()) {
-        u_int32_t default_channels = (token == m_default_token) ? m_token_channel_counts[token] : 2;
-        u_int32_t default_buffer_size = (token == m_default_token) ? m_token_buffer_sizes[token] : 512;
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end()) {
+        throw std::out_of_range("Token not found");
+    }
+    return it->second;
+}
 
-        m_token_channel_counts[token] = std::max(default_channels, channel + 1);
-        m_token_buffer_sizes[token] = default_buffer_size;
-
-        auto& root_buffers = m_token_root_buffers[token];
-        auto& processing_chains = m_token_processing_chains[token];
-
-        root_buffers.resize(channel + 1);
-        processing_chains.resize(channel + 1);
-
-        for (u_int32_t i = 0; i <= channel; i++) {
-            if (!root_buffers[i]) {
-                root_buffers[i] = create_root_buffer_for_token(token, i, default_buffer_size);
-                processing_chains[i] = std::make_shared<BufferProcessingChain>();
-                processing_chains[i]->set_preferred_token(token);
-                processing_chains[i]->set_enforcement_strategy(TokenEnforcementStrategy::FILTERED);
-                root_buffers[i]->set_processing_chain(processing_chains[i]);
-            }
-        }
-    } else {
-        auto& root_buffers = token_it->second;
-        auto& processing_chains = m_token_processing_chains[token];
-
-        if (channel >= root_buffers.size()) {
-            u_int32_t old_size = root_buffers.size();
-            u_int32_t new_size = channel + 1;
-
-            root_buffers.resize(new_size);
-            processing_chains.resize(new_size);
-            m_token_channel_counts[token] = new_size;
-
-            u_int32_t buffer_size = m_token_buffer_sizes[token];
-
-            for (u_int32_t i = old_size; i < new_size; i++) {
-                root_buffers[i] = create_root_buffer_for_token(token, i, buffer_size);
-                processing_chains[i] = std::make_shared<BufferProcessingChain>();
-                processing_chains[i]->set_preferred_token(token);
-                processing_chains[i]->set_enforcement_strategy(TokenEnforcementStrategy::FILTERED);
-                root_buffers[i]->set_processing_chain(processing_chains[i]);
-            }
-        }
+void BufferManager::ensure_channels(ProcessingToken token, u_int32_t channel_count)
+{
+    auto& unit = get_or_create_unit(token);
+    if (channel_count > unit.channel_count) {
+        std::lock_guard<std::mutex> lock(m_manager_mutex);
+        unit.resize_channels(channel_count, unit.buffer_size, token);
     }
 }
 
-std::shared_ptr<RootAudioBuffer> BufferManager::create_root_buffer_for_token(ProcessingToken token, u_int32_t channel, u_int32_t buffer_size)
+void BufferManager::setup_input_buffers(u_int32_t default_in_channels, u_int32_t default_buffer_size)
 {
-    // FAKE
-    auto root_buffer = std::make_shared<RootAudioBuffer>(channel, buffer_size);
-    root_buffer->initialize();
-    root_buffer->set_token_active(true);
-    return root_buffer;
+    for (u_int32_t i = 0; i < default_in_channels; ++i) {
+        auto input = std::make_shared<InputAudioBuffer>(i, default_buffer_size);
+        auto processor = std::make_shared<InputAccessProcessor>();
+        input->set_default_processor(processor);
+        m_input_buffers.push_back(input);
+    }
+}
+
+RootAudioUnit& BufferManager::ensure_and_get_unit(ProcessingToken token, u_int32_t channel)
+{
+    auto& unit = get_or_create_unit(token);
+    if (channel >= unit.channel_count) {
+        ensure_channels(token, channel + 1);
+    }
+    return unit;
+}
+
+void BufferManager::register_input_listener(std::shared_ptr<AudioBuffer> buffer, u_int32_t channel)
+{
+    if (channel >= m_input_buffers.size()) {
+        std::cerr << "BufferManager: Input channel " << channel << " out of range" << std::endl;
+        return;
+    }
+
+    auto input_buffer = m_input_buffers[channel];
+    if (input_buffer) {
+        input_buffer->register_listener(buffer);
+    }
+}
+
+void BufferManager::unregister_input_listener(std::shared_ptr<AudioBuffer> buffer, u_int32_t channel)
+{
+    if (channel >= m_input_buffers.size()) {
+        return;
+    }
+
+    auto input_buffer = m_input_buffers[channel];
+    if (input_buffer) {
+        input_buffer->unregister_listener(buffer);
+    }
 }
 
 } // namespace MayaFlux::Buffers

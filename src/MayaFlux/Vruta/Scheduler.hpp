@@ -346,7 +346,7 @@ private:
      * @param token Processing domain to initialize
      * @param rate Processing rate for the domain
      */
-    void ensure_token_domain(ProcessingToken token, unsigned int rate = 0);
+    void ensure_domain(ProcessingToken token, unsigned int rate = 0);
 
     /**
      * @brief Get the default rate for a processing token
@@ -360,7 +360,7 @@ private:
      * @param token Processing domain
      * @param processing_units Number of units to process
      */
-    void process_token_default(ProcessingToken token, u_int64_t processing_units);
+    void process_default(ProcessingToken token, u_int64_t processing_units);
 
     /**
      * @brief Clean up completed tasks in a domain

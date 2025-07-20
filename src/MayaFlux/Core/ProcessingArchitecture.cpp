@@ -38,7 +38,7 @@ void BufferProcessingHandle::process(u_int32_t processing_units)
 void BufferProcessingHandle::process_channel(u_int32_t channel, u_int32_t processing_units)
 {
     ensure_valid();
-    m_manager->process_token_channel(m_token, channel, processing_units);
+    m_manager->process_channel(m_token, channel, processing_units);
 }
 
 void BufferProcessingHandle::process_channel_with_node_data(
@@ -47,7 +47,12 @@ void BufferProcessingHandle::process_channel_with_node_data(
     const std::vector<double>& node_data)
 {
     ensure_valid();
-    m_manager->process_token_channel(m_token, channel, processing_units, node_data);
+    m_manager->process_channel(m_token, channel, processing_units, node_data);
+}
+
+void BufferProcessingHandle::process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames)
+{
+    m_manager->process_input(input_data, num_channels, num_frames);
 }
 
 std::span<const double> BufferProcessingHandle::read_channel_data(u_int32_t channel) const
@@ -66,7 +71,7 @@ std::span<double> BufferProcessingHandle::write_channel_data(u_int32_t channel)
 void BufferProcessingHandle::setup_channels(u_int32_t num_channels, u_int32_t buffer_size)
 {
     ensure_valid();
-    m_manager->validate_num_channels_for_token(m_token, num_channels, buffer_size);
+    m_manager->validate_num_channels(m_token, num_channels, buffer_size);
 }
 
 void BufferProcessingHandle::fill_interleaved(double* interleaved_data, u_int32_t num_frames, u_int32_t num_channels)
@@ -90,7 +95,7 @@ void NodeProcessingHandle::process(unsigned int num_samples)
 
 std::vector<double> NodeProcessingHandle::process_channel(unsigned int channel, unsigned int num_samples)
 {
-    return m_manager->process_token_channel(m_token, channel, num_samples);
+    return m_manager->process_channel(m_token, channel, num_samples);
 }
 
 TaskSchedulerHandle::TaskSchedulerHandle(
