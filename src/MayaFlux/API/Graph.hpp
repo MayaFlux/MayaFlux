@@ -184,6 +184,36 @@ void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32
 void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
 
 /**
+ * @brief Reads audio data from the default input source into a buffer
+ * @param buffer Buffer to read audio data into
+ * @param channel Channel index to read from (default: 0)
+ *
+ * Reads audio data from the default input source (e.g., microphone)
+ * and fills the provided AudioBuffer with the captured audio samples.
+ * This function is typically used to capture live audio input for processing.
+ */
+void read_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
+
+/**
+ * @brief Stops reading audio data from the default input source
+ * @param buffer Buffer to stop reading audio data from
+ * @param channel Channel index to stop reading from (default: 0)
+ */
+void detach_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
+
+/**
+ * @brief Creates a new AudioBuffer for input listening
+ * @param channel Channel index to create the buffer for (default: 0)
+ * @param add_to_output Whether to add this buffer to the output channel (default: false)
+ * @return Shared pointer to the created AudioBuffer
+ *
+ * This function creates a new AudioBuffer that can be used to listen to audio input.
+ * If `add_to_output` is true, the buffer will be automatically added to the output channel
+ * for processing.
+ */
+std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(u_int32_t channel = 0, bool add_to_output = false);
+
+/**
  * @brief Registers all built-in buffer types with the default engine
  *
  * Initializes and registers all available buffer types including AudioBuffer,

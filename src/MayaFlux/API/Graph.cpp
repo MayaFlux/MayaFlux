@@ -100,6 +100,28 @@ void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int
     get_buffer_manager()->remove_audio_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
 }
 
+void read_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel)
+{
+    get_buffer_manager()->register_input_listener(buffer, channel);
+}
+
+void detach_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel)
+{
+    get_buffer_manager()->unregister_input_listener(buffer, channel);
+}
+
+std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(u_int32_t channel, bool add_to_output)
+{
+    std::shared_ptr<Buffers::AudioBuffer> buffer = std::make_shared<Buffers::AudioBuffer>(channel);
+
+    if (add_to_output) {
+        register_audio_buffer(buffer, channel);
+    }
+    read_from_audio_input(buffer, channel);
+
+    return buffer;
+}
+
 void register_all_buffers()
 {
     ContextAppliers::set_buffer_context_applier(
