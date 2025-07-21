@@ -47,7 +47,10 @@ void SubsystemManager::add_subsystem(SubsystemType type, std::shared_ptr<ISubsys
 
 std::shared_ptr<AudioSubsystem> SubsystemManager::get_audio_subsystem()
 {
-    return std::dynamic_pointer_cast<AudioSubsystem>(get_subsystem(SubsystemType::AUDIO));
+    if (auto subsystem = std::dynamic_pointer_cast<AudioSubsystem>(get_subsystem(SubsystemType::AUDIO))) {
+        return subsystem;
+    }
+    return nullptr;
 }
 
 void SubsystemManager::start_all_subsystems()
@@ -126,9 +129,33 @@ std::optional<std::span<const double>> SubsystemManager::read_cross_subsystem_bu
     }
 }
 
+SubsystemProcessingHandle* SubsystemManager::get_validated_handle(SubsystemType type) const
+{
+    auto subsystem_it = m_subsystems.find(type);
+    if (subsystem_it == m_subsystems.end()) {
+        std::cerr << "Invalid subsystem type: Subsystem not found." << std::endl;
+        return nullptr;
+    }
+
+    auto handle = subsystem_it->second->get_processing_context_handle();
+    if (!handle) {
+        std::cerr << "Failed to get a valid processing context handle." << std::endl;
+        return nullptr;
+    }
+
+    return handle;
+}
+
 void SubsystemManager::register_process_hook(SubsystemType type, const std::string& name, ProcessHook hook, HookPosition position)
 {
-    auto handle = m_subsystems[type]->get_processing_context_handle();
+    auto handle = get_validated_handle(type);
+    if (!handle)
+        return;
+
+    if (!hook) {
+        std::cerr << "Invalid process hook: Hook cannot be null or invalid." << std::endl;
+        return;
+    }
 
     if (position == HookPosition::PRE_PROCESS) {
         handle->pre_process_hooks[name] = std::move(hook);
@@ -139,23 +166,21 @@ void SubsystemManager::register_process_hook(SubsystemType type, const std::stri
 
 void SubsystemManager::unregister_process_hook(SubsystemType type, const std::string& name)
 {
-    auto handle = m_subsystems[type]->get_processing_context_handle();
-    auto pre_it = handle->pre_process_hooks.find(name);
-    if (pre_it != handle->pre_process_hooks.end()) {
-        handle->pre_process_hooks.erase(pre_it);
+    auto handle = get_validated_handle(type);
+    if (!handle)
         return;
-    }
 
-    auto post_it = handle->post_process_hooks.find(name);
-    if (post_it != handle->post_process_hooks.end()) {
-        handle->post_process_hooks.erase(post_it);
+    if (handle->pre_process_hooks.erase(name) == 0) {
+        handle->post_process_hooks.erase(name);
     }
 }
 
 bool SubsystemManager::has_process_hook(SubsystemType type, const std::string& name)
 {
-    auto handle = m_subsystems[type]->get_processing_context_handle();
+    auto handle = get_validated_handle(type);
+    if (!handle)
+        return false;
 
-    return handle->pre_process_hooks.find(name) != handle->pre_process_hooks.end() || handle->post_process_hooks.find(name) != handle->post_process_hooks.end();
+    return handle->pre_process_hooks.contains(name) || handle->post_process_hooks.contains(name);
 }
 }

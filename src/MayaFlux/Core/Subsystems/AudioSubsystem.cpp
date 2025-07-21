@@ -51,6 +51,11 @@ void AudioSubsystem::register_callbacks()
 
 int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frames)
 {
+    if (!output_buffer) {
+        std::cerr << "Now output available this cycle. Debug xruns as no data should still fill 0s" << std::endl;
+        return 1;
+    }
+
     if (m_handle) {
         m_handle->tasks.process(num_frames);
 

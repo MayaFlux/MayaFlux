@@ -225,6 +225,13 @@ public:
      */
     bool has_process_hook(SubsystemType type, const std::string& name);
 
+    /**
+     * @brief Get processing handle with validation
+     * @param type Subsystem type
+     * @return Valid handle or nullptr if validation fails
+     */
+    SubsystemProcessingHandle* get_validated_handle(SubsystemType type) const;
+
 private:
     bool is_cross_access_allowed(SubsystemType from, SubsystemType to) const;
 
