@@ -3,9 +3,8 @@
 
 namespace MayaFlux::Nodes::Generator {
 
-Impulse::Impulse(float frequency, float amplitude, float offset, bool bAuto_register)
+Impulse::Impulse(float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
@@ -13,12 +12,12 @@ Impulse::Impulse(float frequency, float amplitude, float offset, bool bAuto_regi
     , m_last_output(0.0)
     , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, float frequency, float amplitude, float offset, bool bAuto_register)
+Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
@@ -26,12 +25,12 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, float frequency, flo
     , m_last_output(0.0)
     , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Impulse::Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude, float offset, bool bAuto_register)
+Impulse::Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
@@ -39,13 +38,13 @@ Impulse::Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, flo
     , m_last_output(0.0)
     , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
 Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-    float frequency, float amplitude, float offset, bool bAuto_register)
+    float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
@@ -53,6 +52,7 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node
     , m_last_output(0.0)
     , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 

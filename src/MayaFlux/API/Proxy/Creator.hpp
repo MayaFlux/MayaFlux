@@ -308,11 +308,7 @@ private:
         try {
             return std::make_shared<T>(std::forward<Args>(args)...);
         } catch (...) {
-            try {
-                return std::make_shared<T>();
-            } catch (...) {
-                return nullptr;
-            }
+            return nullptr;
         }
     }
 

@@ -372,6 +372,24 @@ std::vector<double> EnergyAnalyzer::calculate_dynamic_range_energy(const std::ve
     return dynamic_range;
 }
 
+Eigen::VectorXd EnergyAnalyzer::create_window_function(Utils::WindowType window_type, size_t size)
+{
+    std::vector<double> window_vector;
+    if (window_type == Utils::WindowType::HANNING) {
+        window_vector = MayaFlux::Nodes::Generator::HannWindow(size);
+    } else if (window_type == Utils::WindowType::HAMMING) {
+        window_vector = MayaFlux::Nodes::Generator::HammingWindow(size);
+    } else if (window_type == Utils::WindowType::BLACKMAN) {
+        window_vector = MayaFlux::Nodes::Generator::BlackmanWindow(size);
+    } else if (window_type == Utils::WindowType::RECTANGULAR) {
+        window_vector.resize(size, 1.0);
+    } else {
+        window_vector = MayaFlux::Nodes::Generator::HannWindow(size);
+    }
+
+    return Eigen::Map<Eigen::VectorXd>(window_vector.data(), window_vector.size());
+}
+
 Eigen::VectorXd EnergyAnalyzer::create_window_function(const std::string& window_type, size_t size)
 {
     std::vector<double> window_vector;

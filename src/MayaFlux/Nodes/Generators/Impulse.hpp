@@ -40,7 +40,7 @@ public:
      *
      * Creates an impulse generator with fixed frequency and amplitude.
      */
-    Impulse(float frequency = 1, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(float frequency = 1, double amplitude = 1, float offset = 0, bool bAuto_register = false);
 
     /**
      * @brief Constructor with frequency modulation
@@ -53,7 +53,7 @@ public:
      * Creates an impulse generator with frequency modulation, where the actual frequency
      * is the base frequency plus the output of the modulator node.
      */
-    Impulse(std::shared_ptr<Node> frequency_modulator, float frequency = 1, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(std::shared_ptr<Node> frequency_modulator, float frequency = 1, double amplitude = 1, float offset = 0, bool bAuto_register = false);
 
     /**
      * @brief Constructor with amplitude modulation
@@ -66,7 +66,7 @@ public:
      * Creates an impulse generator with amplitude modulation, where the actual amplitude
      * is the base amplitude multiplied by the output of the modulator node.
      */
-    Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude = 1, float offset = 0, bool bAuto_register = false);
 
     /**
      * @brief Constructor with both frequency and amplitude modulation
@@ -81,7 +81,7 @@ public:
      * enabling complex timing and amplitude control.
      */
     Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-        float frequency = 1, float amplitude = 1, float offset = 0, bool bAuto_register = true);
+        float frequency = 1, double amplitude = 1, float offset = 0, bool bAuto_register = true);
 
     /**
      * @brief Virtual destructor
@@ -139,21 +139,6 @@ public:
     inline float get_frequency() const { return m_frequency; }
 
     /**
-     * @brief Gets the current base amplitude
-     * @return Current amplitude
-     */
-    inline float get_amplitude() const { return m_amplitude; }
-
-    /**
-     * @brief Sets the generator's amplitude
-     * @param amplitude New amplitude
-     */
-    inline void set_amplitude(double amplitude) override
-    {
-        m_amplitude = amplitude;
-    }
-
-    /**
      * @brief Sets all basic parameters at once
      * @param frequency New frequency in Hz
      * @param amplitude New amplitude
@@ -162,7 +147,7 @@ public:
      * This is more efficient than setting parameters individually
      * when multiple parameters need to be changed.
      */
-    inline void set_params(float frequency, float amplitude, float offset)
+    inline void set_params(float frequency, double amplitude, float offset)
     {
         m_amplitude = amplitude;
         m_offset = offset;
@@ -275,32 +260,6 @@ public:
     }
 
     /**
-     * @brief Allows RootNode to process the Generator without using the processed sample
-     * @param bMock_process True to mock process, false to process normally
-     *
-     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
-     * This is ONLY used by the RootNode when processing the node graph.
-     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
-     */
-    inline void enable_mock_process(bool mock_process) override
-    {
-        if (mock_process) {
-            atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        } else {
-            atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        }
-    }
-
-    /**
-     * @brief Checks if the node should mock process
-     * @return True if the node should mock process, false otherwise
-     */
-    inline bool should_mock_process() const override
-    {
-        return m_state.load() & Utils::NodeState::MOCK_PROCESS;
-    }
-
-    /**
      * @brief Resets the processed state of the node and any attached input nodes
      *
      * This method is used by the processing system to reset the processed state
@@ -354,11 +313,6 @@ private:
      * ranging from 0 to 1.
      */
     double m_phase;
-
-    /**
-     * @brief Base amplitude of the generator
-     */
-    float m_amplitude;
 
     /**
      * @brief Base frequency of the generator in Hz

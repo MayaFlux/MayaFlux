@@ -249,8 +249,6 @@ public:
      */
     virtual double get_last_output() = 0;
 
-    // virtual std::atomic<uint32_t>& get_modulator_count() = 0;
-
 protected:
     /**
      * @brief Creates an appropriate context object for this node type
@@ -283,22 +281,6 @@ protected:
      * processing flow to trigger callbacks.
      */
     virtual void notify_tick(double value) = 0;
-
-private:
-    /**
-     * @brief Specifies the processing behavior of the node
-     *
-     * Determines how the node processes input and generates output
-     * (e.g., generator, processor, transformer, etc.)
-     */
-    MayaFlux::Utils::NodeProcessType node_type;
-
-    /**
-     * @brief Unique identifier for the node
-     *
-     * Used for node lookup and connection management in the node graph
-     */
-    std::string m_Name;
 
 public:
     /**

@@ -103,10 +103,16 @@ public:
      * @brief Sets the generator's amplitude
      * @param amplitude New amplitude value
      *
-     * This method should update the generator's amplitude setting,
+     * This method updates the generator's amplitude setting,
      * which controls the overall scaling of the generated values.
      */
-    virtual void set_amplitude(double amplitude) = 0;
+    inline virtual void set_amplitude(double amplitude) { m_amplitude = amplitude; }
+
+    /**
+     * @brief Gets the current base amplitude
+     * @return Current amplitude
+     */
+    inline virtual double get_amplitude() const { return m_amplitude; }
 
     /**
      * @brief Allows RootNode to process the Generator without using the processed sample
@@ -120,13 +126,23 @@ public:
      * is overkill. This method allows the RootNode to process the Generator without
      * using the processed sample, which is useful for mocking processing.
      */
-    virtual void enable_mock_process(bool bMock_process) = 0;
+    inline virtual void enable_mock_process(bool mock_process)
+    {
+        if (mock_process) {
+            atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
+        } else {
+            atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
+        }
+    }
 
     /**
      * @brief Checks if the generator should mock process
      * @return True if the generator should mock process, false otherwise
      */
-    virtual bool should_mock_process() const = 0;
+    inline virtual bool should_mock_process() const
+    {
+        return m_state.load() & Utils::NodeState::MOCK_PROCESS;
+    }
 
     /**
      * @brief Prints a visual representation of the generated pattern
@@ -145,6 +161,12 @@ public:
      * phase, or any other generator-specific settings.
      */
     virtual void printCurrent() = 0;
+
+protected:
+    /**
+     * @brief Base amplitude of the generator
+     */
+    double m_amplitude { 1.0f };
 };
 
 /**

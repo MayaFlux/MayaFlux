@@ -195,19 +195,6 @@ public:
     virtual void printCurrent() override;
 
     /**
-     * @brief Sets the scaling factor for the output values
-     * @param amplitude New scaling value
-     *
-     * This controls the overall magnitude of the generated values.
-     * Higher values produce larger numerical outputs, while lower values
-     * produce smaller numerical outputs.
-     */
-    inline void set_amplitude(double amplitude) override
-    {
-        m_amplitude = amplitude;
-    }
-
-    /**
      * @brief Sets the variance parameter for normal distribution
      * @param spread New variance value
      *
@@ -220,16 +207,6 @@ public:
     {
         m_normal_spread = spread;
     }
-
-    /**
-     * @brief Gets the current amplitude scaling factor
-     * @return Current amplitude value
-     *
-     * Retrieves the current amplitude setting that controls the overall
-     * magnitude of the generated values. Useful for monitoring or
-     * adaptive systems that need to know the current scaling.
-     */
-    inline double get_amplitude() { return m_amplitude; }
 
     /**
      * @brief Registers a callback for every generated value
@@ -286,32 +263,6 @@ public:
     {
         m_callbacks.clear();
         m_conditional_callbacks.clear();
-    }
-
-    /**
-     * @brief Allows RootNode to process the Generator without using the processed sample
-     * @param bMock_process True to mock process, false to process normally
-     *
-     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
-     * This is ONLY used by the RootNode when processing the node graph.
-     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
-     */
-    inline void enable_mock_process(bool mock_process) override
-    {
-        if (mock_process) {
-            atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        } else {
-            atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        }
-    }
-
-    /**
-     * @brief Checks if the node should mock process
-     * @return True if the node should mock process, false otherwise
-     */
-    inline bool should_mock_process() const override
-    {
-        return m_state.load() & Utils::NodeState::MOCK_PROCESS;
     }
 
     /**
@@ -415,11 +366,6 @@ private:
      * @brief Upper bound of the current output range
      */
     double m_current_end;
-
-    /**
-     * @brief Scaling factor for the output values
-     */
-    double m_amplitude;
 
     /**
      * @brief Variance parameter for normal distribution

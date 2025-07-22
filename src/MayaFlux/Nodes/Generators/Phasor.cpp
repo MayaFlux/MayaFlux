@@ -3,9 +3,8 @@
 
 namespace MayaFlux::Nodes::Generator {
 
-Phasor::Phasor(float frequency, float amplitude, float offset, bool bAuto_register)
+Phasor::Phasor(float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
@@ -14,12 +13,12 @@ Phasor::Phasor(float frequency, float amplitude, float offset, bool bAuto_regist
     , m_phase_wrapped(false)
     , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, float amplitude, float offset, bool bAuto_register)
+Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
@@ -28,12 +27,12 @@ Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, float
     , m_phase_wrapped(false)
     , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude, float offset, bool bAuto_register)
+Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
@@ -42,13 +41,13 @@ Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, float
     , m_phase_wrapped(false)
     , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
 Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-    float frequency, float amplitude, float offset, bool bAuto_register)
+    float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
@@ -57,6 +56,7 @@ Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> 
     , m_phase_wrapped(false)
     , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 

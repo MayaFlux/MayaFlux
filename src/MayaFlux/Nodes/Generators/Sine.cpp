@@ -3,51 +3,52 @@
 
 namespace MayaFlux::Nodes::Generator {
 
-Sine::Sine(float frequency, float amplitude, float offset)
+Sine::Sine(float frequency, double amplitude, float offset)
     : m_phase(0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
     , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
+
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, float amplitude, float offset)
+Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, double amplitude, float offset)
     : m_phase(0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
     , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude, float offset)
+Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude, float offset)
     : m_phase(0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
     , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator, float frequency, float amplitude, float offset)
+Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator, float frequency, double amplitude, float offset)
     : m_phase(0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
     , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 

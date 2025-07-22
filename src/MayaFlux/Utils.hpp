@@ -10,12 +10,6 @@ enum class WindowingBackendType {
     GLFW
 };
 
-enum NodeProcessType {
-    OneSample,
-    Filter,
-    Buffer
-};
-
 enum class distribution {
     UNIFORM,
     NORMAL,
@@ -29,6 +23,13 @@ enum coefficients {
     INPUT,
     OUTPUT,
     ALL
+};
+
+enum WindowType {
+    HANNING,
+    HAMMING,
+    BLACKMAN,
+    RECTANGULAR,
 };
 
 enum ActionType {

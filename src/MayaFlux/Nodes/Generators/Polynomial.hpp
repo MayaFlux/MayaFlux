@@ -280,10 +280,16 @@ public:
     /**
      * @brief Sets the scaling factor for the output values
      */
-    inline void set_amplitude(double amplitude) override
-    {
-        m_scale_factor = amplitude;
-    }
+    inline void set_amplitude(double amplitude) override { m_scale_factor = amplitude; }
+
+    /**
+     * @brief Gets the current amplitude scaling factor
+     * @return Current amplitude scaling factor
+     *
+     * This method retrieves the scaling factor applied to the output values,
+     * which controls the overall amplitude of the generated signal.
+     */
+    inline double get_amplitude() const override { return m_scale_factor; }
 
     /**
      * @brief Registers a callback for every generated sample
@@ -340,32 +346,6 @@ public:
     {
         m_callbacks.clear();
         m_conditional_callbacks.clear();
-    }
-
-    /**
-     * @brief Allows RootNode to process the Generator without using the processed sample
-     * @param bMock_process True to mock process, false to process normally
-     *
-     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
-     * This is ONLY used by the RootNode when processing the node graph.
-     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
-     */
-    inline void enable_mock_process(bool mock_process) override
-    {
-        if (mock_process) {
-            atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        } else {
-            atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        }
-    }
-
-    /**
-     * @brief Checks if the node should mock process
-     * @return True if the node should mock process, false otherwise
-     */
-    inline bool should_mock_process() const override
-    {
-        return m_state.load() & Utils::NodeState::MOCK_PROCESS;
     }
 
     /**
