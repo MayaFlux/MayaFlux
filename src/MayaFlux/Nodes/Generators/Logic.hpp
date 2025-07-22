@@ -502,17 +502,6 @@ public:
      */
     void reset_processed_state() override;
 
-    /**
-     * @brief Retrieves the most recent output value produced by the oscillator
-     * @return The last generated sine wave sample
-     *
-     * This method provides access to the oscillator's most recent output without
-     * triggering additional processing. It's useful for monitoring the oscillator's state,
-     * debugging, and for implementing feedback loops where a node needs to
-     * access the oscillator's previous output.
-     */
-    inline double get_last_output() override { return m_last_output; }
-
     struct LogicCallback {
         NodeHook callback;
         LogicEventType event_type;
@@ -563,7 +552,6 @@ private:
     double m_high_threshold; ///< High threshold for hysteresis
     EdgeType m_edge_type; ///< Type of edge to detect
     bool m_edge_detected; ///< Whether an edge was detected in the last processing
-    double m_last_output; ///< Most recent output value
     bool m_hysteresis_state; ///< State for hysteresis operator
     double m_temporal_time; ///< Time tracking for temporal mode
     std::vector<double> m_input_buffer; // Buffer for multi-input mode

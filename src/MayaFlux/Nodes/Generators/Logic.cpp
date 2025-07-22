@@ -1,5 +1,5 @@
 #include "Logic.hpp"
-#include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/API/Core.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
@@ -17,10 +17,9 @@ Logic::Logic(double threshold)
     , m_high_threshold(threshold)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
-    , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
+    , m_input(0.f)
 {
     m_direct_function = [this](double input) {
         return input > m_threshold;
@@ -37,10 +36,9 @@ Logic::Logic(LogicOperator op, double threshold)
     , m_high_threshold(threshold)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
-    , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
+    , m_input(0.f)
 {
     set_operator(op);
 }
@@ -56,10 +54,9 @@ Logic::Logic(DirectFunction function)
     , m_high_threshold(0.5)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
-    , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
+    , m_input(0.f)
 {
 }
 
@@ -74,10 +71,9 @@ Logic::Logic(MultiInputFunction function, size_t input_count)
     , m_high_threshold(0.5)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
-    , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
+    , m_input(0.f)
 {
     m_input_buffer.resize(input_count, 0.0);
 }
@@ -93,10 +89,9 @@ Logic::Logic(SequentialFunction function, size_t history_size)
     , m_high_threshold(0.5)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
-    , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
+    , m_input(0.f)
 {
     // Initialize history buffer with false values
     m_history.assign(history_size, false);
@@ -113,10 +108,9 @@ Logic::Logic(TemporalFunction function)
     , m_high_threshold(0.5)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
-    , m_last_output(0.0)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
+    , m_input(0.f)
 {
 }
 

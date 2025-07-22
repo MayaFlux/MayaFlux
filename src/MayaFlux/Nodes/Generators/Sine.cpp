@@ -1,5 +1,5 @@
 #include "Sine.hpp"
-#include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/API/Core.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
@@ -9,7 +9,6 @@ Sine::Sine(float frequency, double amplitude, float offset)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
 
     m_amplitude = amplitude;
@@ -22,7 +21,6 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, double am
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_amplitude = amplitude;
     update_phase_increment(frequency);
@@ -34,7 +32,6 @@ Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, double am
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_amplitude = amplitude;
     update_phase_increment(frequency);
@@ -46,7 +43,6 @@ Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> ampl
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_amplitude = amplitude;
     update_phase_increment(frequency);
@@ -180,26 +176,6 @@ void Sine::notify_tick(double value)
             callback(*context);
         }
     }
-}
-
-void Sine::on_tick(NodeHook callback)
-{
-    safe_add_callback(m_callbacks, callback);
-}
-
-void Sine::on_tick_if(NodeHook callback, NodeCondition condition)
-{
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
-}
-
-bool Sine::remove_hook(const NodeHook& callback)
-{
-    return safe_remove_callback(m_callbacks, callback);
-}
-
-bool Sine::remove_conditional_hook(const NodeCondition& callback)
-{
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
 void Sine::reset_processed_state()

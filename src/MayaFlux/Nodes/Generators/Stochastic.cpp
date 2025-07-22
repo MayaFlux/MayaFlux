@@ -8,7 +8,6 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
     , m_current_end(1.0f)
     , m_normal_spread(4.0f)
     , m_type(type)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
 }
 
@@ -107,26 +106,6 @@ void NoiseEngine::notify_tick(double value)
             callback(*context);
         }
     }
-}
-
-void NoiseEngine::on_tick(NodeHook callback)
-{
-    safe_add_callback(m_callbacks, callback);
-}
-
-void NoiseEngine::on_tick_if(NodeHook callback, NodeCondition condition)
-{
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
-}
-
-bool NoiseEngine::remove_hook(const NodeHook& callback)
-{
-    return safe_remove_callback(m_callbacks, callback);
-}
-
-bool NoiseEngine::remove_conditional_hook(const NodeCondition& callback)
-{
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
 void NoiseEngine::printGraph()

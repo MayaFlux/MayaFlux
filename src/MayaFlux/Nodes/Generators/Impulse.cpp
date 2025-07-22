@@ -1,5 +1,5 @@
 #include "Impulse.hpp"
-#include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/API/Core.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
@@ -9,8 +9,7 @@ Impulse::Impulse(float frequency, double amplitude, float offset, bool bAuto_reg
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
-    , m_last_output(0.0)
-    , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
+    , m_impulse_occurred(false)
 {
     m_amplitude = amplitude;
     update_phase_increment(frequency);
@@ -22,8 +21,7 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, float frequency, dou
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
-    , m_last_output(0.0)
-    , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
+    , m_impulse_occurred(false)
 {
     m_amplitude = amplitude;
     update_phase_increment(frequency);
@@ -35,8 +33,7 @@ Impulse::Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, dou
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output(0.0)
-    , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
+    , m_impulse_occurred(false)
 {
     m_amplitude = amplitude;
     update_phase_increment(frequency);
@@ -49,8 +46,7 @@ Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output(0.0)
-    , m_impulse_occurred((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
+    , m_impulse_occurred(false)
 {
     m_amplitude = amplitude;
     update_phase_increment(frequency);
@@ -170,19 +166,9 @@ void Impulse::reset(float frequency, float amplitude, float offset)
     m_last_output = 0.0;
 }
 
-void Impulse::on_tick(NodeHook callback)
-{
-    safe_add_callback(m_callbacks, callback);
-}
-
 void Impulse::on_impulse(NodeHook callback)
 {
     safe_add_callback(m_impulse_callbacks, callback);
-}
-
-void Impulse::on_tick_if(NodeHook callback, NodeCondition condition)
-{
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
 }
 
 bool Impulse::remove_hook(const NodeHook& callback)
@@ -190,11 +176,6 @@ bool Impulse::remove_hook(const NodeHook& callback)
     bool removed_from_tick = safe_remove_callback(m_callbacks, callback);
     bool removed_from_impulse = safe_remove_callback(m_impulse_callbacks, callback);
     return removed_from_tick || removed_from_impulse;
-}
-
-bool Impulse::remove_conditional_hook(const NodeCondition& condition)
-{
-    return safe_remove_conditional_callback(m_conditional_callbacks, condition);
 }
 
 void Impulse::reset_processed_state()
