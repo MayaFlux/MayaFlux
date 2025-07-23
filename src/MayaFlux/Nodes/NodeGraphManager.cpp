@@ -13,7 +13,7 @@ void NodeGraphManager::add_to_root(std::shared_ptr<Node> node,
     ProcessingToken token,
     unsigned int channel)
 {
-    register_node_globally(node);
+    set_channel_mask(node, channel);
 
     auto& root = get_root_node(token, channel);
     root.register_node(node);
@@ -23,7 +23,7 @@ void NodeGraphManager::remove_from_root(std::shared_ptr<Node> node,
     ProcessingToken token,
     unsigned int channel)
 {
-    unregister_node_globally(node);
+    unset_channel_mask(node, channel);
 
     auto& root = get_root_node(token, channel);
     root.unregister_node(node);
@@ -134,7 +134,7 @@ void NodeGraphManager::ensure_root_exists(ProcessingToken token, unsigned int ch
     }
 }
 
-void NodeGraphManager::register_node_globally(std::shared_ptr<Node> node)
+void NodeGraphManager::register_global(std::shared_ptr<Node> node)
 {
     if (!is_node_registered(node)) {
         std::stringstream ss;
@@ -144,7 +144,13 @@ void NodeGraphManager::register_node_globally(std::shared_ptr<Node> node)
     }
 }
 
-void NodeGraphManager::unregister_node_globally(std::shared_ptr<Node> node)
+void NodeGraphManager::set_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id)
+{
+    register_global(node);
+    node->register_channel_usage(channel_id);
+}
+
+void NodeGraphManager::unregister_global(std::shared_ptr<Node> node)
 {
     for (const auto& pair : m_Node_registry) {
         if (pair.second == node) {
@@ -152,6 +158,12 @@ void NodeGraphManager::unregister_node_globally(std::shared_ptr<Node> node)
             break;
         }
     }
+}
+
+void NodeGraphManager::unset_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id)
+{
+    unregister_global(node);
+    node->unregister_channel_usage(channel_id);
 }
 
 std::vector<ProcessingToken> NodeGraphManager::get_active_tokens() const

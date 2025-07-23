@@ -355,7 +355,23 @@ private:
      *
      * Assigns a generated identifier if needed and adds the node to the registry.
      */
-    void register_node_globally(std::shared_ptr<Node> node);
+    void register_global(std::shared_ptr<Node> node);
+
+    /**
+     * @brief Adds the specified channel mask to a node's global registration
+     * @param node Node to modify
+     * @param channel_id Channel mask to set
+     */
+    void set_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id);
+
+    /**
+     * @brief Unsets the specified channel mask from a node's global registration
+     * @param node Node to modify
+     * @param channel_id Channel mask to unset
+     *
+     * Removes the specified channel mask from the node's global registration.
+     */
+    void unset_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id);
 
     /**
      * @brief Unregisters a node globally
@@ -363,7 +379,7 @@ private:
      *
      * Removes the node from the global registry and cleans up any references.
      */
-    void unregister_node_globally(std::shared_ptr<Node> node);
+    void unregister_global(std::shared_ptr<Node> node);
 };
 
 }

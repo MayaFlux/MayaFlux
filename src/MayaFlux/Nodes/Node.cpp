@@ -28,4 +28,61 @@ void Node::remove_all_hooks()
     m_conditional_callbacks.clear();
 }
 
+void Node::register_channel_usage(u_int32_t channel_id)
+{
+    if (channel_id >= 32)
+        return;
+
+    uint32_t channel_bit = 1u << channel_id;
+    m_active_channels_mask.fetch_or(channel_bit, std::memory_order_acq_rel);
+}
+
+void Node::unregister_channel_usage(uint32_t channel_id)
+{
+    if (channel_id >= 32)
+        return;
+
+    uint32_t channel_bit = 1u << channel_id;
+    m_active_channels_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
+    m_pending_reset_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
+}
+
+bool Node::is_used_by_channel(uint32_t channel_id) const
+{
+    if (channel_id >= 32)
+        return false;
+
+    uint32_t channel_bit = 1u << channel_id;
+    uint32_t active_mask = m_active_channels_mask.load(std::memory_order_acquire);
+    return (active_mask & channel_bit) != 0;
+}
+
+void Node::request_reset_from_channel(u_int32_t channel_id)
+{
+    u_int32_t channel_bit = 1u << channel_id;
+    u_int32_t old_pending = m_pending_reset_mask.fetch_or(channel_bit, std::memory_order_acq_rel);
+    u_int32_t new_pending = old_pending | channel_bit;
+    u_int32_t active_channels = m_active_channels_mask.load(std::memory_order_acquire);
+
+    if ((new_pending & active_channels) == active_channels && active_channels != 0) {
+        uint32_t expected = new_pending;
+        if (m_pending_reset_mask.compare_exchange_strong(expected, 0, std::memory_order_acq_rel)) {
+            reset_processed_state_internal();
+        }
+    }
+}
+
+/* void Node::reset_processed_state()
+{
+    uint32_t active_mask = m_active_channels_mask.load(std::memory_order_acquire);
+    if (active_mask == 0) {
+        reset_processed_state_internal();
+    }
+} */
+
+void Node::reset_processed_state_internal()
+{
+    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
+}
+
 }
