@@ -58,6 +58,10 @@ public:
      */
     void unregister_node(std::shared_ptr<Node> node);
 
+    bool preprocess();
+
+    double process();
+
     /**
      * @brief Processes all registered nodes and combines their outputs
      * @param num_samples Number of samples to process
@@ -69,7 +73,7 @@ public:
      * If nodes are added or removed during processing, those operations are
      * deferred until after processing completes.
      */
-    std::vector<double> process(unsigned int num_samples = 1);
+    std::vector<double> process(unsigned int num_samples);
 
     /**
      * @brief Gets the number of nodes registered with this root node

@@ -1,4 +1,6 @@
 #include "RootNode.hpp"
+#include "RootNode.hpp"
+#include "RootNode.hpp"
 #include "MayaFlux/Nodes/Generators/Generator.hpp"
 
 namespace MayaFlux::Nodes {
@@ -88,39 +90,65 @@ void RootNode::unregister_node(std::shared_ptr<Node> node)
     atomic_set_flag_strong(node->m_state, static_cast<Utils::NodeState>(flag));
 }
 
-std::vector<double> RootNode::process(unsigned int num_samples)
+
+bool RootNode::preprocess()
 {
+    if (bNoOp)
+        return true;
+
     bool expected = false;
     if (!m_is_processing.compare_exchange_strong(expected, true,
-            std::memory_order_acquire, std::memory_order_relaxed)) {
-        return std::vector<double>(num_samples, 0.0);
+        std::memory_order_acquire, std::memory_order_relaxed)) {
+        return false;
     }
 
     if (m_pending_count.load(std::memory_order_relaxed) > 0) {
         process_pending_operations();
     }
 
-    std::vector<double> output(num_samples);
-
     for (auto& node : m_Nodes) {
         node->reset_processed_state();
     }
+    return true;
+
+}
+
+double RootNode::process()
+{
+    auto sample = 0.;
+
+    if (!preprocess())
+        return  0.;
+
+    for (auto& node : m_Nodes) {
+
+        auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
+        if (generator && generator->should_mock_process()) {
+            generator->process_sample(0.);
+        }
+        else {
+            sample += node->process_sample(0.);
+        }
+        u_int32_t state = node->m_state.load();
+        atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
+    }
+
+    return sample;
+}
+
+std::vector<double> RootNode::process(unsigned int num_samples)
+{
+    
+
+    if (!preprocess())
+        return std::vector<double>(num_samples,0.);
+
+    std::vector<double> output(num_samples);
+
 
     for (unsigned int i = 0; i < num_samples; i++) {
-        double sample = 0.f;
-
-        for (auto& node : m_Nodes) {
-
-            auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
-            if (generator && generator->should_mock_process()) {
-                generator->process_sample(0.f);
-            } else {
-                sample += node->process_sample(0.f);
-            }
-            u_int32_t state = node->m_state.load();
-            atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
-        }
-        output[i] = sample;
+        
+        output[i] = process();
     }
 
     for (auto& node : m_Nodes) {
@@ -134,6 +162,7 @@ std::vector<double> RootNode::process(unsigned int num_samples)
 
 void RootNode::process_pending_operations()
 {
+
     for (size_t i = 0; i < MAX_PENDING; ++i) {
         if (m_pending_ops[i].active.load(std::memory_order_acquire)) {
             auto& op = m_pending_ops[i];
