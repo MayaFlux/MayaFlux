@@ -58,11 +58,30 @@ public:
      */
     void unregister_node(std::shared_ptr<Node> node);
 
+    /** @brief Checks if the root node can process pending operations
+     * @return True if successful
+     *
+     * This method can be used to determine if the root node is in the middle
+     * of a processing cycle. If true, queued pending operations will be executed
+     */
     bool preprocess();
 
-    double process();
-
+    /** @brief Performs post-processing after all nodes have been processed
+     *
+     * This method unregisters channel usage on the node, cleans up state
+     * and resets processing flags.
+     */
     void postprocess();
+
+    /**
+     * @brief Processes a single sample from all registered nodes
+     * @return Combined output sample from all nodes
+     *
+     * This method processes each registered node and combines their outputs
+     * into a single sample. It is typically called in a loop to process
+     * multiple samples, but can also be used for single-sample processing.
+     */
+    double process_sample();
 
     /**
      * @brief Processes all registered nodes and combines their outputs
@@ -75,7 +94,7 @@ public:
      * If nodes are added or removed during processing, those operations are
      * deferred until after processing completes.
      */
-    std::vector<double> process(unsigned int num_samples);
+    std::vector<double> process_batch(unsigned int num_samples);
 
     /**
      * @brief Gets the number of nodes registered with this root node

@@ -222,6 +222,17 @@ public:
      */
     std::vector<double> process_channel(ProcessingToken token, unsigned int channel, unsigned int num_samples);
 
+    /**
+     * @brief Process a single sample for a specific channel
+     * @param token Processing domain
+     * @param channel Channel index within that domain
+     * @return Processed sample value from the channel's root node
+     *
+     * Processes a single sample for the specified channel and returns the processed value.
+     * If a custom per-sample processor is registered, it is used; otherwise, the default
+     * root node processing is performed.
+     * As node graph manager feeds into hardware audio output, the value returned is normalized
+     */
     double process_sample(ProcessingToken token, u_int32_t channel);
 
     /**
@@ -404,6 +415,13 @@ private:
      */
     void unregister_global(std::shared_ptr<Node> node);
 
+    /**
+     * @brief Normalizes a sample to the range [-1, 1] based on the number of nodes
+     * @param sample Reference to the sample value to normalize
+     * @param num_nodes Number of nodes in the processing chain
+     *
+     * Ensures that the sample value is within the valid range for audio processing.
+     */
     void normalize_sample(double& sample, u_int32_t num_nodes);
 };
 

@@ -88,12 +88,12 @@ NodeProcessingHandle::NodeProcessingHandle(
 {
 }
 
-void NodeProcessingHandle::process(unsigned int num_samples)
+void NodeProcessingHandle::process(u_int32_t num_samples)
 {
     m_manager->process_token(m_token, num_samples);
 }
 
-std::vector<double> NodeProcessingHandle::process_channel(unsigned int channel, unsigned int num_samples)
+std::vector<double> NodeProcessingHandle::process_channel(u_int32_t channel, u_int32_t num_samples)
 {
     return m_manager->process_channel(m_token, channel, num_samples);
 }

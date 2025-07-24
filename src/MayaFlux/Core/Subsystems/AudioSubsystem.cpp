@@ -58,18 +58,21 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
 
     if (m_handle) {
 
-        unsigned int num_channels = m_stream_info.output.channels;
+        u_int32_t num_channels = m_stream_info.output.channels;
+        std::vector<std::span<const double>> buffer_data(num_channels);
 
-        for (unsigned int channel = 0; channel < num_channels; channel++) {
+        for (u_int32_t channel = 0; channel < num_channels; channel++) {
             m_handle->buffers.process_channel(channel, num_frames);
+            buffer_data[channel] = (m_handle->buffers.read_channel_data(channel));
         }
-        m_handle->buffers.fill_interleaved(output_buffer, num_frames, num_channels);
+        // m_handle->buffers.fill_interleaved(output_buffer, num_frames, num_channels);
 
         for (size_t i = 0; i < num_frames; ++i) {
             m_handle->tasks.process(1);
             for (size_t j = 0; j < num_channels; ++j) {
-                output_buffer[i * num_channels + j] += m_handle->nodes.process_sample(j);
-                output_buffer[i * num_channels + j] *= 0.5;
+                // output_buffer[i * num_channels + j] += (m_handle->nodes.process_sample(j)) * 0.5;
+                double sample = m_handle->nodes.process_sample(j) + buffer_data[j][i];
+                output_buffer[i * num_channels + j] = std::clamp(sample, -1., 1.);
             }
         }
     }

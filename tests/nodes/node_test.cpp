@@ -595,7 +595,7 @@ TEST_F(NodeCallbackTest, NodeChainCallbacks)
 
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
-        MayaFlux::get_audio_channel_root().process();
+        MayaFlux::get_audio_channel_root().process_sample();
     }
 
     EXPECT_EQ(sine_count, num_samples);
@@ -705,7 +705,7 @@ TEST_F(NodeCallbackTest, ChainNodeCallbackPropagation)
 
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
-        MayaFlux::get_node_graph_manager()->get_root_node(token, 0).process();
+        MayaFlux::get_node_graph_manager()->get_root_node(token, 0).process_sample();
     }
 
     EXPECT_EQ(source_count, num_samples);
@@ -748,7 +748,7 @@ TEST_F(NodeCallbackTest, NodeOperatorCallbacks)
 
     const int num_samples = 10;
     for (int i = 0; i < num_samples; i++) {
-        MayaFlux::get_node_graph_manager()->get_root_node(token, 0).process();
+        MayaFlux::get_node_graph_manager()->get_root_node(token, 0).process_sample();
     }
 
     EXPECT_EQ(sine1_count, num_samples);

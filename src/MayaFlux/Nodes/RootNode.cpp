@@ -107,12 +107,12 @@ bool RootNode::preprocess()
     return true;
 }
 
-double RootNode::process()
+double RootNode::process_sample()
 {
-    auto sample = 0.;
-
     if (!preprocess())
         return 0.;
+
+    auto sample = 0.;
 
     for (auto& node : m_Nodes) {
 
@@ -147,21 +147,13 @@ void RootNode::postprocess()
     m_is_processing.store(false, std::memory_order_release);
 }
 
-std::vector<double> RootNode::process(unsigned int num_samples)
+std::vector<double> RootNode::process_batch(unsigned int num_samples)
 {
-
-    if (!preprocess())
-        return std::vector<double>(num_samples, 0.);
-
     std::vector<double> output(num_samples);
 
     for (unsigned int i = 0; i < num_samples; i++) {
-
-        output[i] = process();
+        output[i] = process_sample();
     }
-
-    postprocess();
-
     return output;
 }
 
