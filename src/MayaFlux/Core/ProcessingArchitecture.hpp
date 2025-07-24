@@ -143,6 +143,8 @@ public:
     /** @brief Process nodes for specific channel and return output */
     std::vector<double> process_channel(unsigned int channel, unsigned int num_samples);
 
+    double process_sample(u_int32_t channel);
+
     /** @brief Create node with automatic token assignment */
     template <typename NodeType, typename... Args>
     std::shared_ptr<NodeType> create_node(Args&&... args)

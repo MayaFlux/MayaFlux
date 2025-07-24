@@ -80,6 +80,17 @@ std::vector<double> NodeGraphManager::process_channel(ProcessingToken token,
     }
 }
 
+double NodeGraphManager::process_sample(ProcessingToken token, u_int32_t channel)
+{
+    auto& root = get_root_node(token, channel);
+
+    // if (auto it = m_token_channel_processors.find(token); it != m_token_channel_processors.end()) {
+    //     return it->second(&root, sample);
+    // } else {
+    return root.process();
+    // }
+}
+
 std::unordered_map<unsigned int, std::vector<double>> NodeGraphManager::process_token_with_channel_data(
     ProcessingToken token, unsigned int num_samples)
 {

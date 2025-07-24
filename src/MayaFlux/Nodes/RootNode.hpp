@@ -62,6 +62,8 @@ public:
 
     double process();
 
+    void postprocess();
+
     /**
      * @brief Processes all registered nodes and combines their outputs
      * @param num_samples Number of samples to process
@@ -169,6 +171,16 @@ private:
      * node collections and processing logic.
      */
     uint32_t m_channel;
+
+    /**
+     * @brief Flag indicating whether to skip preprocessing and post processing
+     *
+     * This flag can be set to true to skip the pre and post processing steps,
+     * which is useful in scenarios where the root node is not expected
+     * to sync processing state with other channels or is used outside of the
+     * Engine context.
+     */
+    bool m_skip_state_management;
 
     /**
      * @brief The processing token indicating the domain of this root node

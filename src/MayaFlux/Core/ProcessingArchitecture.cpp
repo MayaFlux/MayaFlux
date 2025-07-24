@@ -98,6 +98,11 @@ std::vector<double> NodeProcessingHandle::process_channel(unsigned int channel, 
     return m_manager->process_channel(m_token, channel, num_samples);
 }
 
+double NodeProcessingHandle::process_sample(u_int32_t channel)
+{
+    return m_manager->process_sample(m_token, channel);
+}
+
 TaskSchedulerHandle::TaskSchedulerHandle(
     std::shared_ptr<Vruta::TaskScheduler> scheduler,
     Vruta::ProcessingToken token)

@@ -208,6 +208,8 @@ public:
      */
     std::vector<double> process_channel(ProcessingToken token, unsigned int channel, unsigned int num_samples);
 
+    double process_sample(ProcessingToken token, u_int32_t channel);
+
     /**
      * @brief Process all channels for a token and return channel-separated data
      * @param token Processing domain
