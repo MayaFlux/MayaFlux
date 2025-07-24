@@ -57,23 +57,21 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
     }
 
     if (m_handle) {
-        m_handle->tasks.process(num_frames);
 
         unsigned int num_channels = m_stream_info.output.channels;
 
+        for (unsigned int channel = 0; channel < num_channels; channel++) {
+            m_handle->buffers.process_channel(channel, num_frames);
+        }
+        m_handle->buffers.fill_interleaved(output_buffer, num_frames, num_channels);
+
         for (size_t i = 0; i < num_frames; ++i) {
+            m_handle->tasks.process(1);
             for (size_t j = 0; j < num_channels; ++j) {
-                output_buffer[i * num_channels + j] = m_handle->nodes.process_sample(j);
+                output_buffer[i * num_channels + j] += m_handle->nodes.process_sample(j);
+                output_buffer[i * num_channels + j] *= 0.5;
             }
         }
-
-        for (unsigned int channel = 0; channel < num_channels; channel++) {
-
-            // auto channel_data = m_handle->nodes.process_channel(channel, 1);
-            // m_handle->buffers.process_channel_with_node_data(channel, 1, channel_data);
-            m_handle->buffers.process_channel(channel, 1);
-        }
-        m_handle->buffers.fill_interleaved(output_buffer, 1, num_channels);
     }
     return 0;
 }

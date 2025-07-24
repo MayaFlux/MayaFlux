@@ -4,6 +4,9 @@
 
 namespace MayaFlux::Nodes {
 
+using TokenChannelProcessor = std::function<std::vector<double>(RootNode*, u_int32_t)>;
+using TokenSampleProcessor = std::function<double(RootNode*, u_int32_t)>;
+
 /**
  * @class NodeGraphManager
  * @brief Central manager for the computational processing node graph
@@ -193,7 +196,18 @@ public:
      * on a per-channel basis.
      */
     void register_token_channel_processor(ProcessingToken token,
-        std::function<std::vector<double>(RootNode*, unsigned int)> processor);
+        TokenChannelProcessor processor);
+
+    /**
+     * @brief Register per-sample processor for a specific token
+     * @param token Processing domain to handle (e.g., AUDIO_RATE, VISUAL_RATE)
+     * @param processor Function that processes a single sample and returns the processed value
+     *
+     * Registers a per-sample processing function that processes one sample at a time
+     * and returns the processed value. This is useful for low-level sample manipulation.
+     */
+    void register_token_sample_processor(ProcessingToken token,
+        TokenSampleProcessor processor);
 
     /**
      * @brief Process a specific channel within a token domain
@@ -338,9 +352,16 @@ private:
      * processes a single root node and returns processed data. This enables
      * fine-grained processing with data extraction capabilities.
      */
-    std::unordered_map<ProcessingToken,
-        std::function<std::vector<double>(RootNode*, unsigned int)>>
-        m_token_channel_processors;
+    std::unordered_map<ProcessingToken, TokenChannelProcessor> m_token_channel_processors;
+
+    /**
+     * @brief Per-sample processors for each processing token
+     *
+     * Maps each processing domain to a per-sample processing function that
+     * processes a single sample and returns the processed value. This is useful
+     * for low-level sample manipulation and custom processing.
+     */
+    std::unordered_map<ProcessingToken, TokenSampleProcessor> m_token_sample_processors;
 
     /**
      * @brief Ensures a root node exists for the given token and channel
@@ -382,6 +403,8 @@ private:
      * Removes the node from the global registry and cleans up any references.
      */
     void unregister_global(std::shared_ptr<Node> node);
+
+    void normalize_sample(double& sample, u_int32_t num_nodes);
 };
 
 }

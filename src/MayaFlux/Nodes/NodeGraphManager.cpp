@@ -63,9 +63,15 @@ void NodeGraphManager::process_token(ProcessingToken token, unsigned int num_sam
 }
 
 void NodeGraphManager::register_token_channel_processor(ProcessingToken token,
-    std::function<std::vector<double>(RootNode*, unsigned int)> processor)
+    TokenChannelProcessor processor)
 {
     m_token_channel_processors[token] = processor;
+}
+
+void NodeGraphManager::register_token_sample_processor(ProcessingToken token,
+    TokenSampleProcessor processor)
+{
+    m_token_sample_processors[token] = processor;
 }
 
 std::vector<double> NodeGraphManager::process_channel(ProcessingToken token,
@@ -76,7 +82,12 @@ std::vector<double> NodeGraphManager::process_channel(ProcessingToken token,
     if (auto it = m_token_channel_processors.find(token); it != m_token_channel_processors.end()) {
         return it->second(&root, num_samples);
     } else {
-        return root.process(num_samples);
+        std::vector<double> samples = root.process(num_samples);
+        u_int32_t node_size = root.get_node_size();
+        for (double& sample : samples) {
+            normalize_sample(sample, node_size);
+        }
+        return samples;
     }
 }
 
@@ -84,11 +95,32 @@ double NodeGraphManager::process_sample(ProcessingToken token, u_int32_t channel
 {
     auto& root = get_root_node(token, channel);
 
-    // if (auto it = m_token_channel_processors.find(token); it != m_token_channel_processors.end()) {
-    //     return it->second(&root, sample);
-    // } else {
-    return root.process();
-    // }
+    if (auto it = m_token_sample_processors.find(token); it != m_token_sample_processors.end()) {
+        return it->second(&root, channel);
+    } else {
+        double sample = root.process();
+        normalize_sample(sample, root.get_node_size());
+        return sample;
+    }
+}
+
+void NodeGraphManager::normalize_sample(double& sample, u_int32_t num_nodes)
+{
+    if (num_nodes == 0)
+        return;
+
+    sample /= std::sqrt(static_cast<double>(num_nodes));
+
+    const double threshold = 0.95;
+    const double knee = 0.1;
+    const double abs_sample = std::abs(sample);
+
+    if (abs_sample > threshold) {
+        const double excess = abs_sample - threshold;
+        const double compressed_excess = std::tanh(excess / knee) * knee;
+        const double limited_abs = threshold + compressed_excess;
+        sample = (sample >= 0.0) ? limited_abs : -limited_abs;
+    }
 }
 
 std::unordered_map<unsigned int, std::vector<double>> NodeGraphManager::process_token_with_channel_data(

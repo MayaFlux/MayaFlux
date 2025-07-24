@@ -128,6 +128,8 @@ double Sine::process_sample(double input)
         current_sample *= 0.5f;
     }
 
+    m_last_output = current_sample;
+
     notify_tick(current_sample);
 
     if (m_frequency_modulator) {
@@ -178,7 +180,7 @@ void Sine::notify_tick(double value)
     }
 }
 
-void Sine::reset_processed_state()
+/* void Sine::reset_processed_state()
 {
     atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
     if (m_frequency_modulator) {
@@ -187,7 +189,7 @@ void Sine::reset_processed_state()
     if (m_amplitude_modulator) {
         m_amplitude_modulator->reset_processed_state();
     }
-}
+} */
 
 void Sine::printGraph()
 {

@@ -232,7 +232,7 @@ public:
      * all nodes are marked as unprocessed before the cycle next begins, allowing
      * the system to correctly identify which nodes need to be processed.
      */
-    virtual void reset_processed_state() = 0;
+    virtual void reset_processed_state();
 
     /**
      * @brief Retrieves the most recent output value produced by the node

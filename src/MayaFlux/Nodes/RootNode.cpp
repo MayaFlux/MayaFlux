@@ -104,11 +104,6 @@ bool RootNode::preprocess()
         process_pending_operations();
     }
 
-    // NOTE: Will be removed in subsequent revisions, the functionality replaced
-    //  with new channel tracking bit masks
-    for (auto& node : m_Nodes) {
-        node->reset_processed_state();
-    }
     return true;
 }
 
@@ -121,14 +116,18 @@ double RootNode::process()
 
     for (auto& node : m_Nodes) {
 
-        auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
-        if (generator && generator->should_mock_process()) {
-            generator->process_sample(0.);
-        } else {
-            sample += node->process_sample(0.);
-        }
         u_int32_t state = node->m_state.load();
-        atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
+        if (!(state & Utils::NodeState::PROCESSED)) {
+            auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
+            if (generator && generator->should_mock_process()) {
+                generator->process_sample(0.);
+            } else {
+                sample += node->process_sample(0.);
+            }
+            atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
+        } else {
+            sample += node->get_last_output();
+        }
     }
 
     postprocess();
@@ -142,7 +141,7 @@ void RootNode::postprocess()
         return;
 
     for (auto& node : m_Nodes) {
-        node->reset_processed_state();
+        node->request_reset_from_channel(m_channel);
     }
 
     m_is_processing.store(false, std::memory_order_release);
