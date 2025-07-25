@@ -112,9 +112,6 @@ public:
     /** @brief Configure channel layout for token domain */
     void setup_channels(u_int32_t num_channels, u_int32_t buffer_size);
 
-    /** @brief Fill interleaved data buffer from token channels */
-    void fill_interleaved(double* interleaved_data, u_int32_t num_frames, u_int32_t num_channels);
-
 private:
     void ensure_valid() const;
     void acquire_write_lock();

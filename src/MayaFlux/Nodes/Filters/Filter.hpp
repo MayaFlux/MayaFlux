@@ -359,27 +359,6 @@ public:
     std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
-     * @brief Resets the processed state of the node and any attached input nodes
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the cycle next begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    virtual void reset_processed_state() override = 0;
-
-    /**
-     * @brief Retrieves the most recent output value produced by the oscillator
-     * @return The last generated sine wave sample
-     *
-     * This method provides access to the oscillator's most recent output without
-     * triggering additional processing. It's useful for monitoring the oscillator's state,
-     * debugging, and for implementing feedback loops where a node needs to
-     * access the oscillator's previous output.
-     */
-    // inline double get_last_output() override { return m_last_output; }
-
-    /**
      * @brief Sets the input node for the filter
      * @param input_node Node providing input samples
      *

@@ -56,12 +56,4 @@ double IIR::process_sample(double input)
     return output * get_gain();
 }
 
-void IIR::reset_processed_state()
-{
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-    if (m_input_node) {
-        m_input_node->reset_processed_state();
-    }
-}
-
 }

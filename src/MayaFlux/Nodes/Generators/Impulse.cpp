@@ -178,19 +178,6 @@ bool Impulse::remove_hook(const NodeHook& callback)
     return removed_from_tick || removed_from_impulse;
 }
 
-void Impulse::reset_processed_state()
-{
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-
-    if (m_frequency_modulator) {
-        m_frequency_modulator->reset_processed_state();
-    }
-
-    if (m_amplitude_modulator) {
-        m_amplitude_modulator->reset_processed_state();
-    }
-}
-
 std::unique_ptr<NodeContext> Impulse::create_context(double value)
 {
     return std::make_unique<GeneratorContext>(value, m_frequency, m_amplitude, m_phase);

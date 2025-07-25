@@ -195,12 +195,4 @@ void Polynomial::notify_tick(double value)
     }
 }
 
-void Polynomial::reset_processed_state()
-{
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-    if (m_input_node) {
-        m_input_node->reset_processed_state();
-    }
-}
-
 } // namespace MayaFlux::Nodes::Generator

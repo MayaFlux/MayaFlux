@@ -180,17 +180,6 @@ void Sine::notify_tick(double value)
     }
 }
 
-/* void Sine::reset_processed_state()
-{
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-    if (m_frequency_modulator) {
-        m_frequency_modulator->reset_processed_state();
-    }
-    if (m_amplitude_modulator) {
-        m_amplitude_modulator->reset_processed_state();
-    }
-} */
-
 void Sine::printGraph()
 {
 }

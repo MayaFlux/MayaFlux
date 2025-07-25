@@ -74,12 +74,6 @@ void BufferProcessingHandle::setup_channels(u_int32_t num_channels, u_int32_t bu
     m_manager->validate_num_channels(m_token, num_channels, buffer_size);
 }
 
-void BufferProcessingHandle::fill_interleaved(double* interleaved_data, u_int32_t num_frames, u_int32_t num_channels)
-{
-    ensure_valid();
-    m_manager->fill_interleaved(interleaved_data, num_frames, m_token, num_channels);
-}
-
 NodeProcessingHandle::NodeProcessingHandle(
     std::shared_ptr<Nodes::NodeGraphManager> manager,
     Nodes::ProcessingToken token)

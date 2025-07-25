@@ -611,12 +611,4 @@ void Logic::remove_hooks_of_type(LogicEventType type)
     m_all_callbacks.erase(it, m_all_callbacks.end());
 }
 
-void Logic::reset_processed_state()
-{
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-    if (m_input_node) {
-        m_input_node->reset_processed_state();
-    }
-}
-
 }
