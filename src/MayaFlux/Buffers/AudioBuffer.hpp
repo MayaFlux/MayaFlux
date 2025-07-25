@@ -318,6 +318,33 @@ public:
         return m_is_processing.load(std::memory_order_acquire);
     }
 
+    /**
+     * @brief Creates a clone of this audio buffer for a specific channel
+     * @param channel Channel identifier for the cloned buffer
+     * @return Shared pointer to the cloned audio buffer
+     *
+     * This method creates a new instance of the audio buffer with the same
+     * data and properties, but assigned to a different audio channel. The
+     * cloned buffer can be used independently in audio processing chains.
+     *
+     * NOTE: The moment of cloning is the divergence point between the original
+     * and the cloned. While they both will follow the same processing chain or have the same
+     * default procesor, any changes made to one buffer after cloning will not affect the other.
+     */
+    virtual std::shared_ptr<AudioBuffer> clone_to(u_int32_t channel);
+
+    /**
+     * @brief Reads audio data into the buffer from the audio backend
+     * @param buffer Shared pointer to the AudioBuffer to read data into
+     * @param force Whether to force reading even if in processing state
+     * @return True if data was successfully read, false otherwise
+     *
+     * This method attempts to read audio data from the audio backend into the
+     * provided AudioBuffer. If force is true, it will attempt to read even if
+     * the current buffer or the copy buffer are in processing state
+     */
+    virtual bool read_once(std::shared_ptr<AudioBuffer> buffer, bool force = false);
+
 protected:
     /**
      * @brief Audio channel identifier for this buffer
@@ -345,14 +372,6 @@ protected:
      * maintaining compatibility with most audio processing algorithms.
      */
     std::vector<double> m_data;
-
-    /**
-     * @brief Sample rate for this buffer (default: 48000 Hz)
-     *
-     * Note: Currently commented out but available for future implementation
-     * of sample-rate-aware audio processing.
-     */
-    // u_int32_t m_sample_rate = 48000;
 
     /**
      * @brief Default audio transformation processor for this buffer

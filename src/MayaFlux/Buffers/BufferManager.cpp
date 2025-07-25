@@ -428,6 +428,28 @@ void BufferManager::fill_interleaved(double* interleaved_data, u_int32_t num_fra
     }
 }
 
+void BufferManager::clone_buffer_for_channels(std::shared_ptr<AudioBuffer> buffer, std::vector<u_int32_t> channels)
+{
+    if (channels.empty()) {
+        std::cerr << "BufferManager: No channels specified for cloning" << std::endl;
+        return;
+    }
+    if (!buffer) {
+        std::cerr << "BufferManager: Invalid buffer for cloning" << std::endl;
+        return;
+    }
+
+    for (const auto channel : channels) {
+        if (channel >= m_audio_units[m_default_token].channel_count) {
+            std::cerr << "BufferManager: Channel " << channel << " out of range for cloning" << std::endl;
+            return;
+        }
+
+        auto cloned_buffer = buffer->clone_to(channel);
+        add_audio_buffer(cloned_buffer, m_default_token, channel);
+    }
+}
+
 void BufferManager::process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames)
 {
     if (m_input_buffers.empty() || m_input_buffers.size() < num_channels) {
