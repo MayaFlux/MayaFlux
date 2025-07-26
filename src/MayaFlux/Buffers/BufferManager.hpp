@@ -344,11 +344,13 @@ public:
      * @brief Clones the buffer for each channel in the specified vector
      * @param buffer Buffer to clone
      * @param channels Vector of channel indices to clone for
+     * @param token Processing domain (default: AUDIO_BACKEND)
      *
      * This method is a wrapper around AudioBuffer::clone_to() that creates a new buffer
      * but can accomodate multiple channels at once
      */
-    void clone_buffer_for_channels(std::shared_ptr<AudioBuffer> buffer, std::vector<u_int32_t> channels);
+    void clone_buffer_for_channels(std::shared_ptr<AudioBuffer> buffer, std::vector<u_int32_t> channels,
+        ProcessingToken token = ProcessingToken::AUDIO_BACKEND);
 
     /**
      * @brief Gets the default processing token used by the manager

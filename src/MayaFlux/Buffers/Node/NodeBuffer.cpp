@@ -17,7 +17,6 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 
     try {
-        std::vector<double> node_data = get_node_data(std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples());
         auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
 
         bool should_clear = m_clear_before_process;
@@ -29,8 +28,8 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
             buffer->clear();
         }
 
-        for (size_t i = 0; i < std::min(node_data.size(), buffer_data.size()); i++) {
-            buffer_data[i] += node_data[i] * m_mix;
+        for (size_t i = 0; i < buffer_data.size(); i++) {
+            buffer_data[i] += get_node_sample() * m_mix;
         }
 
     } catch (const std::exception& e) {
@@ -42,20 +41,29 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
 std::vector<double> NodeSourceProcessor::get_node_data(u_int32_t num_samples)
 {
-    auto state = m_node->m_state.load();
     std::vector<double> output(num_samples);
 
     for (size_t i = 0; i < num_samples; i++) {
-        Nodes::atomic_inc_modulator_count(m_node->m_modulator_count, 1);
-        if (state & Utils::NodeState::PROCESSED) {
-            output[i] = m_node->get_last_output();
-        } else {
-            output[i] = m_node->process_sample(0.f);
-            Nodes::atomic_add_flag(m_node->m_state, Utils::NodeState::PROCESSED);
-        }
-        Nodes::atomic_dec_modulator_count(m_node->m_modulator_count, 1);
-        Nodes::try_reset_processed_state(m_node);
+        output[i] = get_node_sample();
     }
+    return output;
+}
+
+double NodeSourceProcessor::get_node_sample()
+{
+    auto state = m_node->m_state.load();
+    double output = 0.;
+
+    Nodes::atomic_inc_modulator_count(m_node->m_modulator_count, 1);
+    if (state & Utils::NodeState::PROCESSED) {
+        output = m_node->get_last_output();
+    } else {
+        output = m_node->process_sample(0.f);
+        Nodes::atomic_add_flag(m_node->m_state, Utils::NodeState::PROCESSED);
+    }
+    Nodes::atomic_dec_modulator_count(m_node->m_modulator_count, 1);
+    Nodes::try_reset_processed_state(m_node);
+
     return output;
 }
 

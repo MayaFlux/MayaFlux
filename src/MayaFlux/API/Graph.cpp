@@ -18,7 +18,7 @@ std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager()
     return get_context().get_node_graph_manager();
 }
 
-void register_audio_node(std::shared_ptr<Nodes::Node> node, unsigned int channel)
+void register_audio_node(std::shared_ptr<Nodes::Node> node, u_int32_t channel)
 {
     auto manager = get_node_graph_manager();
     if (channel >= manager->get_channel_count(Nodes::ProcessingToken::AUDIO_RATE)) {
@@ -28,7 +28,7 @@ void register_audio_node(std::shared_ptr<Nodes::Node> node, unsigned int channel
     manager->add_to_root(node, Nodes::ProcessingToken::AUDIO_RATE, channel);
 }
 
-void unregister_audio_node(std::shared_ptr<Nodes::Node> node, unsigned int channel)
+void register_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<u_int32_t> channels)
 {
     for (const auto& channel : channels) {
         register_audio_node(node, channel);
@@ -61,9 +61,15 @@ void register_all_nodes()
 {
     ContextAppliers::set_node_context_applier(
         [](std::shared_ptr<Nodes::Node> node, const CreationContext& context) {
-            if (context.domain && context.channel) {
+            if (context.domain) {
                 auto token = get_node_token(*context.domain);
-                get_node_graph_manager()->add_to_root(node, token, context.channel.value());
+                if (context.channel) {
+                    get_node_graph_manager()->add_to_root(node, token, context.channel.value());
+                } else if (context.channels) {
+                    for (const auto& channel : context.channels.value()) {
+                        get_node_graph_manager()->add_to_root(node, token, channel);
+                    }
+                }
             }
         });
 }
