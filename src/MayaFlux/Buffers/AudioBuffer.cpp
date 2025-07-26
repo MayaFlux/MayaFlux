@@ -72,4 +72,37 @@ void AudioBuffer::set_default_processor(std::shared_ptr<BufferProcessor> process
         throw;
     }
 }
+
+std::shared_ptr<AudioBuffer> AudioBuffer::clone_to(u_int32_t channel)
+{
+    auto buffer = std::make_shared<AudioBuffer>(channel, m_num_samples);
+    buffer->get_data() = m_data;
+    buffer->set_default_processor(m_default_processor);
+    buffer->set_processing_chain(get_processing_chain());
+
+    return buffer;
+}
+
+bool AudioBuffer::read_once(std::shared_ptr<AudioBuffer> buffer, bool force)
+{
+    if (buffer && buffer->get_num_samples() == m_num_samples) {
+        if (m_is_processing.load() || buffer->is_processing()) {
+            std::cerr << "Warning: Attempting to read from an audio buffer while it is being processed."
+                      << std::endl;
+
+            if (!force) {
+                std::cerr << "Skipping read due to ongoing processing." << std::endl;
+                return false;
+            }
+            std::cerr << "Copying between buffers that are processing. This can lead to data curroption" << std::endl;
+        }
+        m_data = buffer->get_data();
+        m_has_data = true;
+        return true;
+    } else {
+        std::cerr << "Error: Buffer read failed due to size mismatch or null buffer." << std::endl;
+    }
+    return false;
+}
+
 }

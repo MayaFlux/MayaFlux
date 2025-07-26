@@ -4,6 +4,9 @@
 
 namespace MayaFlux::Nodes {
 
+using TokenChannelProcessor = std::function<std::vector<double>(RootNode*, u_int32_t)>;
+using TokenSampleProcessor = std::function<double(RootNode*, u_int32_t)>;
+
 /**
  * @class NodeGraphManager
  * @brief Central manager for the computational processing node graph
@@ -193,7 +196,18 @@ public:
      * on a per-channel basis.
      */
     void register_token_channel_processor(ProcessingToken token,
-        std::function<std::vector<double>(RootNode*, unsigned int)> processor);
+        TokenChannelProcessor processor);
+
+    /**
+     * @brief Register per-sample processor for a specific token
+     * @param token Processing domain to handle (e.g., AUDIO_RATE, VISUAL_RATE)
+     * @param processor Function that processes a single sample and returns the processed value
+     *
+     * Registers a per-sample processing function that processes one sample at a time
+     * and returns the processed value. This is useful for low-level sample manipulation.
+     */
+    void register_token_sample_processor(ProcessingToken token,
+        TokenSampleProcessor processor);
 
     /**
      * @brief Process a specific channel within a token domain
@@ -207,6 +221,19 @@ public:
      * the default root node processing is performed.
      */
     std::vector<double> process_channel(ProcessingToken token, unsigned int channel, unsigned int num_samples);
+
+    /**
+     * @brief Process a single sample for a specific channel
+     * @param token Processing domain
+     * @param channel Channel index within that domain
+     * @return Processed sample value from the channel's root node
+     *
+     * Processes a single sample for the specified channel and returns the processed value.
+     * If a custom per-sample processor is registered, it is used; otherwise, the default
+     * root node processing is performed.
+     * As node graph manager feeds into hardware audio output, the value returned is normalized
+     */
+    double process_sample(ProcessingToken token, u_int32_t channel);
 
     /**
      * @brief Process all channels for a token and return channel-separated data
@@ -336,9 +363,16 @@ private:
      * processes a single root node and returns processed data. This enables
      * fine-grained processing with data extraction capabilities.
      */
-    std::unordered_map<ProcessingToken,
-        std::function<std::vector<double>(RootNode*, unsigned int)>>
-        m_token_channel_processors;
+    std::unordered_map<ProcessingToken, TokenChannelProcessor> m_token_channel_processors;
+
+    /**
+     * @brief Per-sample processors for each processing token
+     *
+     * Maps each processing domain to a per-sample processing function that
+     * processes a single sample and returns the processed value. This is useful
+     * for low-level sample manipulation and custom processing.
+     */
+    std::unordered_map<ProcessingToken, TokenSampleProcessor> m_token_sample_processors;
 
     /**
      * @brief Ensures a root node exists for the given token and channel
@@ -355,7 +389,23 @@ private:
      *
      * Assigns a generated identifier if needed and adds the node to the registry.
      */
-    void register_node_globally(std::shared_ptr<Node> node);
+    void register_global(std::shared_ptr<Node> node);
+
+    /**
+     * @brief Adds the specified channel mask to a node's global registration
+     * @param node Node to modify
+     * @param channel_id Channel mask to set
+     */
+    void set_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id);
+
+    /**
+     * @brief Unsets the specified channel mask from a node's global registration
+     * @param node Node to modify
+     * @param channel_id Channel mask to unset
+     *
+     * Removes the specified channel mask from the node's global registration.
+     */
+    void unset_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id);
 
     /**
      * @brief Unregisters a node globally
@@ -363,7 +413,16 @@ private:
      *
      * Removes the node from the global registry and cleans up any references.
      */
-    void unregister_node_globally(std::shared_ptr<Node> node);
+    void unregister_global(std::shared_ptr<Node> node);
+
+    /**
+     * @brief Normalizes a sample to the range [-1, 1] based on the number of nodes
+     * @param sample Reference to the sample value to normalize
+     * @param num_nodes Number of nodes in the processing chain
+     *
+     * Ensures that the sample value is within the valid range for audio processing.
+     */
+    void normalize_sample(double& sample, u_int32_t num_nodes);
 };
 
 }

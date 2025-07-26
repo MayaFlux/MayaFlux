@@ -179,18 +179,6 @@ public:
      */
     virtual bool is_compatible_with(std::shared_ptr<Buffer>) const { return true; }
 
-    /**
-     * @brief Gets the processing complexity estimate for this processor
-     * @param buffer Buffer that will be processed
-     * @return Relative complexity score (higher values indicate more complex processing)
-     *
-     * This method provides a hint about the computational complexity of the processor's
-     * operations, enabling intelligent scheduling and resource allocation decisions.
-     * The complexity estimate can influence backend selection, parallel processing
-     * strategies, and overall system performance optimization.
-     */
-    // virtual double get_processing_complexity(std::shared_ptr<Buffer> buffer) const { return 1.0; }
-
 protected:
     ProcessingToken m_processing_token;
 

@@ -1,5 +1,5 @@
 #include "NodeStructure.hpp"
-#include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/API/Graph.hpp"
 
 namespace MayaFlux::Nodes {
 
@@ -89,6 +89,7 @@ BinaryOpNode::BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs,
     , m_is_initialized(false)
 {
 }
+
 void BinaryOpNode::initialize()
 {
     if (m_lhs) {
@@ -166,16 +167,6 @@ void BinaryOpNode::notify_tick(double value)
             callback(*context);
         }
     }
-}
-
-bool BinaryOpNode::remove_hook(const NodeHook& callback)
-{
-    return safe_remove_callback(m_callbacks, callback);
-}
-
-bool BinaryOpNode::remove_conditional_hook(const NodeCondition& callback)
-{
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
 void BinaryOpNode::reset_processed_state()

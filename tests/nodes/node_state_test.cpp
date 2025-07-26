@@ -73,7 +73,7 @@ TEST_F(NodeProcessStateTest, RootNodeOwnershipTrumpsCounter)
 
     Nodes::atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
 
-    node->reset_processed_state();
+    node->request_reset_from_channel(0);
     EXPECT_FALSE(node->m_state.load() & Utils::NodeState::PROCESSED);
 
     MayaFlux::unregister_audio_node(node);
@@ -108,7 +108,8 @@ TEST_F(NodeProcessStateTest, RealisticProcessingCycle)
     MayaFlux::register_audio_node(carrier);
 
     const int buffer_size = 512;
-    std::vector<double> output = MayaFlux::get_audio_channel_root().process(buffer_size);
+    // MayaFlux::get_audio_channel_root().process_sample();
+    std::vector<double> output = MayaFlux::get_audio_channel_root().process_batch(buffer_size);
 
     EXPECT_EQ(output.size(), buffer_size);
 

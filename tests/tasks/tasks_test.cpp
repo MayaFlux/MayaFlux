@@ -145,7 +145,7 @@ TEST_F(TasksTest, NodeTimer)
     u_int64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    root.process(samples_10ms);
+    root.process_batch(samples_10ms);
 
     EXPECT_FALSE(node_timer.is_active());
     EXPECT_EQ(root.get_node_size(), 0);
@@ -169,7 +169,7 @@ TEST_F(TasksTest, NodeTimer)
     EXPECT_EQ(root.get_node_size(), 1);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    root.process(samples_10ms);
+    root.process_batch(samples_10ms);
 
     EXPECT_FALSE(node_timer.is_active());
     EXPECT_TRUE(cleanup_called);
@@ -193,7 +193,7 @@ TEST_F(TasksTest, NodeTimer)
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
     node_timer.cancel();
-    root.process(samples_10ms);
+    root.process_batch(samples_10ms);
 
     EXPECT_FALSE(node_timer.is_active());
     EXPECT_TRUE(cleanup_called);
@@ -244,12 +244,12 @@ TEST_F(TasksTest, Sequence)
 
     auto samples_9ms = scheduler->seconds_to_samples(0.009);
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_9ms - 1);
-    root.process(samples_9ms);
+    root.process_batch(samples_9ms);
     EXPECT_FALSE(func_called);
 
     auto samples_1ms = scheduler->seconds_to_samples(0.001);
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_1ms);
-    root.process(samples_1ms);
+    root.process_batch(samples_1ms);
 
     EXPECT_TRUE(func_called);
 }
@@ -268,11 +268,11 @@ TEST_F(TasksTest, TimeOperator)
     u_int64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms - 1);
-    root.process(samples_10ms);
+    root.process_batch(samples_10ms);
     EXPECT_EQ(root.get_node_size(), 1);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    root.process(samples_10ms);
+    root.process_batch(samples_10ms);
 
     EXPECT_EQ(root.get_node_size(), 0);
 }
@@ -720,7 +720,7 @@ TEST_F(TasksTest, TimeOperatorI)
 
     u_int64_t samples = scheduler->seconds_to_samples(0.11);
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples);
-    root.process(samples);
+    root.process_batch(samples);
 
     EXPECT_EQ(root.get_node_size(), 0);
 }

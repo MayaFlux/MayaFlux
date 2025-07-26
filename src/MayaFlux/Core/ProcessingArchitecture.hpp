@@ -112,9 +112,6 @@ public:
     /** @brief Configure channel layout for token domain */
     void setup_channels(u_int32_t num_channels, u_int32_t buffer_size);
 
-    /** @brief Fill interleaved data buffer from token channels */
-    void fill_interleaved(double* interleaved_data, u_int32_t num_frames, u_int32_t num_channels);
-
 private:
     void ensure_valid() const;
     void acquire_write_lock();
@@ -138,10 +135,12 @@ public:
         Nodes::ProcessingToken token);
 
     /** @brief Process all nodes in token domain */
-    void process(unsigned int num_samples);
+    void process(u_int32_t num_samples);
 
     /** @brief Process nodes for specific channel and return output */
-    std::vector<double> process_channel(unsigned int channel, unsigned int num_samples);
+    std::vector<double> process_channel(u_int32_t channel, u_int32_t num_samples);
+
+    double process_sample(u_int32_t channel);
 
     /** @brief Create node with automatic token assignment */
     template <typename NodeType, typename... Args>

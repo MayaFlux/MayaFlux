@@ -42,7 +42,7 @@ public:
      * - 0.5: Equal interpolation between existing and incoming values
      * - 1.0: Replace with incoming values (existing data overwritten)
      */
-    NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix = 0.5f, bool clear_before_process = false);
+    NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix = 0.5f, bool clear_before_process = true);
 
     /**
      * @brief Captures node computation output into a buffer
@@ -92,6 +92,8 @@ private:
      * ensuring thread-safe access and proper state management.
      */
     std::vector<double> get_node_data(u_int32_t num_samples);
+
+    double get_node_sample();
 };
 
 /**
@@ -126,7 +128,7 @@ public:
      * node when processed. The buffer is configured with a NodeSourceProcessor as its
      * default processor, creating a self-contained data capture system.
      */
-    NodeBuffer(u_int32_t channel_id, u_int32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process = false);
+    NodeBuffer(u_int32_t channel_id, u_int32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process = true);
 
     /**
      * @brief Sets whether to reset the buffer before processing node output

@@ -1,53 +1,50 @@
 #include "Sine.hpp"
-#include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/API/Core.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
-Sine::Sine(float frequency, float amplitude, float offset)
+Sine::Sine(float frequency, double amplitude, float offset)
     : m_phase(0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
+
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, float amplitude, float offset)
+Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, double amplitude, float offset)
     : m_phase(0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude, float offset)
+Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude, float offset)
     : m_phase(0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator, float frequency, float amplitude, float offset)
+Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator, float frequency, double amplitude, float offset)
     : m_phase(0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
@@ -131,6 +128,8 @@ double Sine::process_sample(double input)
         current_sample *= 0.5f;
     }
 
+    m_last_output = current_sample;
+
     notify_tick(current_sample);
 
     if (m_frequency_modulator) {
@@ -178,37 +177,6 @@ void Sine::notify_tick(double value)
         if (condition(*context)) {
             callback(*context);
         }
-    }
-}
-
-void Sine::on_tick(NodeHook callback)
-{
-    safe_add_callback(m_callbacks, callback);
-}
-
-void Sine::on_tick_if(NodeHook callback, NodeCondition condition)
-{
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
-}
-
-bool Sine::remove_hook(const NodeHook& callback)
-{
-    return safe_remove_callback(m_callbacks, callback);
-}
-
-bool Sine::remove_conditional_hook(const NodeCondition& callback)
-{
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
-}
-
-void Sine::reset_processed_state()
-{
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-    if (m_frequency_modulator) {
-        m_frequency_modulator->reset_processed_state();
-    }
-    if (m_amplitude_modulator) {
-        m_amplitude_modulator->reset_processed_state();
     }
 }
 

@@ -6,8 +6,7 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
     : m_mode(PolynomialMode::DIRECT)
     , m_coefficients(coefficients)
     , m_buffer_size(0)
-    , m_last_output(0.0)
-    , m_scale_factor((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 1.f))
+    , m_scale_factor(1.f)
 {
     m_direct_function = create_polynomial_function(coefficients);
 }
@@ -16,8 +15,7 @@ Polynomial::Polynomial(DirectFunction function)
     : m_mode(PolynomialMode::DIRECT)
     , m_direct_function(function)
     , m_buffer_size(0)
-    , m_last_output(0.0)
-    , m_scale_factor((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 1.f))
+    , m_scale_factor(1.f)
 {
 }
 
@@ -25,8 +23,7 @@ Polynomial::Polynomial(BufferFunction function, PolynomialMode mode, size_t buff
     : m_mode(mode)
     , m_buffer_function(function)
     , m_buffer_size(buffer_size)
-    , m_last_output(0.0)
-    , m_scale_factor((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 1.f))
+    , m_scale_factor(1.f)
 {
     m_input_buffer.resize(buffer_size, 0.0);
     m_output_buffer.resize(buffer_size, 0.0);
@@ -195,34 +192,6 @@ void Polynomial::notify_tick(double value)
         if (condition(*context)) {
             callback(*context);
         }
-    }
-}
-
-void Polynomial::on_tick(NodeHook callback)
-{
-    safe_add_callback(m_callbacks, callback);
-}
-
-void Polynomial::on_tick_if(NodeHook callback, NodeCondition condition)
-{
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
-}
-
-bool Polynomial::remove_hook(const NodeHook& callback)
-{
-    return safe_remove_callback(m_callbacks, callback);
-}
-
-bool Polynomial::remove_conditional_hook(const NodeCondition& callback)
-{
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
-}
-
-void Polynomial::reset_processed_state()
-{
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-    if (m_input_node) {
-        m_input_node->reset_processed_state();
     }
 }
 

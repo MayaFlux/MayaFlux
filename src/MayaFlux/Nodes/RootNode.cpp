@@ -7,6 +7,7 @@ RootNode::RootNode(ProcessingToken token, u_int32_t channel)
     : m_is_processing(false)
     , m_pending_count(0)
     , m_channel(channel)
+    , m_skip_state_management(false)
     , m_token(token)
 {
 }
@@ -88,52 +89,77 @@ void RootNode::unregister_node(std::shared_ptr<Node> node)
     atomic_set_flag_strong(node->m_state, static_cast<Utils::NodeState>(flag));
 }
 
-std::vector<double> RootNode::process(unsigned int num_samples)
+bool RootNode::preprocess()
 {
+    if (m_skip_state_management)
+        return true;
+
     bool expected = false;
     if (!m_is_processing.compare_exchange_strong(expected, true,
             std::memory_order_acquire, std::memory_order_relaxed)) {
-        return std::vector<double>(num_samples, 0.0);
+        return false;
     }
 
     if (m_pending_count.load(std::memory_order_relaxed) > 0) {
         process_pending_operations();
     }
 
-    std::vector<double> output(num_samples);
+    return true;
+}
+
+double RootNode::process_sample()
+{
+    if (!preprocess())
+        return 0.;
+
+    auto sample = 0.;
 
     for (auto& node : m_Nodes) {
-        node->reset_processed_state();
-    }
 
-    for (unsigned int i = 0; i < num_samples; i++) {
-        double sample = 0.f;
-
-        for (auto& node : m_Nodes) {
-
+        u_int32_t state = node->m_state.load();
+        if (!(state & Utils::NodeState::PROCESSED)) {
             auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
             if (generator && generator->should_mock_process()) {
-                generator->process_sample(0.f);
+                generator->process_sample(0.);
             } else {
-                sample += node->process_sample(0.f);
+                sample += node->process_sample(0.);
             }
-            u_int32_t state = node->m_state.load();
             atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
+        } else {
+            sample += node->get_last_output();
         }
-        output[i] = sample;
     }
 
+    postprocess();
+
+    return sample;
+}
+
+void RootNode::postprocess()
+{
+    if (m_skip_state_management)
+        return;
+
     for (auto& node : m_Nodes) {
-        node->reset_processed_state();
+        node->request_reset_from_channel(m_channel);
     }
 
     m_is_processing.store(false, std::memory_order_release);
+}
 
+std::vector<double> RootNode::process_batch(unsigned int num_samples)
+{
+    std::vector<double> output(num_samples);
+
+    for (unsigned int i = 0; i < num_samples; i++) {
+        output[i] = process_sample();
+    }
     return output;
 }
 
 void RootNode::process_pending_operations()
 {
+
     for (size_t i = 0; i < MAX_PENDING; ++i) {
         if (m_pending_ops[i].active.load(std::memory_order_acquire)) {
             auto& op = m_pending_ops[i];

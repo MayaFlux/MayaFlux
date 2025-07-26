@@ -8,6 +8,12 @@ namespace Nodes {
         class Sine;
         class Phasor;
         class Impulse;
+        class Logic;
+        class Polynomial;
+    }
+    namespace Filters {
+        class IIR;
+        class FIR;
     }
 }
 
@@ -26,10 +32,14 @@ namespace Kakshya {
 }
 }
 
-#define ALL_NODE_REGISTRATIONS                    \
-    X(sine, MayaFlux::Nodes::Generator::Sine)     \
-    X(phasor, MayaFlux::Nodes::Generator::Phasor) \
-    X(impulse, MayaFlux::Nodes::Generator::Impulse)
+#define ALL_NODE_REGISTRATIONS                            \
+    X(sine, MayaFlux::Nodes::Generator::Sine)             \
+    X(phasor, MayaFlux::Nodes::Generator::Phasor)         \
+    X(impulse, MayaFlux::Nodes::Generator::Impulse)       \
+    X(logic, MayaFlux::Nodes::Generator::Logic)           \
+    X(polynomial, MayaFlux::Nodes::Generator::Polynomial) \
+    X(iir, MayaFlux::Nodes::Filters::IIR)                 \
+    X(fir, MayaFlux::Nodes::Filters::FIR)
 
 #define ALL_BUFFER_REGISTRATION                    \
     B(audio, MayaFlux::Buffers::AudioBuffer)       \

@@ -39,7 +39,7 @@ public:
      *
      * Creates a sine oscillator with fixed frequency and amplitude.
      */
-    Sine(float frequency = 440, float amplitude = 1, float offset = 0);
+    Sine(float frequency = 440, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with frequency modulation
@@ -51,7 +51,7 @@ public:
      * Creates a sine oscillator with frequency modulation, where the actual frequency
      * is the base frequency plus the output of the modulator node.
      */
-    Sine(std::shared_ptr<Node> frequency_modulator, float frequency = 440, float amplitude = 1, float offset = 0);
+    Sine(std::shared_ptr<Node> frequency_modulator, float frequency = 440, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with amplitude modulation
@@ -63,7 +63,7 @@ public:
      * Creates a sine oscillator with amplitude modulation, where the actual amplitude
      * is the base amplitude multiplied by the output of the modulator node.
      */
-    Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude = 1, float offset = 0);
+    Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with both frequency and amplitude modulation
@@ -77,7 +77,7 @@ public:
      * enabling complex synthesis techniques like FM and AM simultaneously.
      */
     Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-        float frequency = 440, float amplitude = 1, float offset = 0);
+        float frequency = 440, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Virtual destructor
@@ -136,21 +136,6 @@ public:
     inline float get_frequency() const { return m_frequency; }
 
     /**
-     * @brief Gets the current base amplitude
-     * @return Current amplitude
-     */
-    inline float get_amplitude() const { return m_amplitude; }
-
-    /**
-     * @brief Sets the oscillator's amplitude
-     * @param amplitude New amplitude
-     */
-    inline void set_amplitude(double amplitude) override
-    {
-        m_amplitude = amplitude;
-    }
-
-    /**
      * @brief Sets all basic parameters at once
      * @param frequency New frequency in Hz
      * @param amplitude New amplitude
@@ -159,7 +144,7 @@ public:
      * This is more efficient than setting parameters individually
      * when multiple parameters need to be changed.
      */
-    inline void set_params(float frequency, float amplitude, float offset)
+    inline void set_params(float frequency, double amplitude, float offset)
     {
         m_amplitude = amplitude;
         m_offset = offset;
@@ -203,110 +188,6 @@ public:
      */
     void reset(float frequency = 440, float amplitude = 0.5f, float offset = 0);
 
-    /**
-     * @brief Registers a callback for every generated sample
-     * @param callback Function to call when a new sample is generated
-     *
-     * This method allows external components to monitor or react to
-     * every sample produced by the sine oscillator. The callback
-     * receives a GeneratorContext containing the generated value and
-     * oscillator parameters like frequency, amplitude, and phase.
-     */
-    void on_tick(NodeHook callback) override;
-
-    /**
-     * @brief Registers a conditional callback for generated samples
-     * @param callback Function to call when condition is met
-     * @param condition Predicate that determines when callback is triggered
-     *
-     * This method enables selective monitoring of the oscillator,
-     * where callbacks are only triggered when specific conditions
-     * are met. This is useful for detecting zero crossings, amplitude
-     * thresholds, or other specific points in the waveform cycle.
-     */
-    void on_tick_if(NodeHook callback, NodeCondition condition) override;
-
-    /**
-     * @brief Removes a previously registered callback
-     * @param callback The callback function to remove
-     * @return True if the callback was found and removed, false otherwise
-     *
-     * Unregisters a callback previously added with on_tick(), stopping
-     * it from receiving further notifications about generated samples.
-     */
-    bool remove_hook(const NodeHook& callback) override;
-
-    /**
-     * @brief Removes a previously registered conditional callback
-     * @param callback The condition function to remove
-     * @return True if the callback was found and removed, false otherwise
-     *
-     * Unregisters a conditional callback previously added with on_tick_if(),
-     * stopping it from receiving further notifications about generated samples.
-     */
-    bool remove_conditional_hook(const NodeCondition& callback) override;
-
-    /**
-     * @brief Removes all registered callbacks
-     *
-     * Clears all standard and conditional callbacks, effectively
-     * disconnecting all external components from this oscillator's
-     * notification system. Useful when reconfiguring the processing
-     * graph or shutting down components.
-     */
-    inline void remove_all_hooks() override
-    {
-        m_callbacks.clear();
-        m_conditional_callbacks.clear();
-    }
-
-    /**
-     * @brief Allows RootNode to process the Generator without using the processed sample
-     * @param bMock_process True to mock process, false to process normally
-     *
-     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
-     * This is ONLY used by the RootNode when processing the node graph.
-     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
-     */
-    inline void enable_mock_process(bool mock_process) override
-    {
-        if (mock_process) {
-            atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        } else {
-            atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        }
-    }
-
-    /**
-     * @brief Checks if the node should mock process
-     * @return True if the node should mock process, false otherwise
-     */
-    inline bool should_mock_process() const override
-    {
-        return m_state.load() & Utils::NodeState::MOCK_PROCESS;
-    }
-
-    /**
-     * @brief Resets the processed state of the node and any attached input nodes
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the cycle next begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    void reset_processed_state() override;
-
-    /**
-     * @brief Retrieves the most recent output value produced by the oscillator
-     * @return The last generated sine wave sample
-     *
-     * This method provides access to the oscillator's most recent output without
-     * triggering additional processing. It's useful for monitoring the oscillator's state,
-     * debugging, and for implementing feedback loops where a node needs to
-     * access the oscillator's previous output.
-     */
-    inline double get_last_output() override { return m_last_output; }
-
 protected:
     /**
      * @brief Creates a context object for callbacks
@@ -347,11 +228,6 @@ private:
     double m_phase;
 
     /**
-     * @brief Base amplitude of the oscillator
-     */
-    float m_amplitude;
-
-    /**
      * @brief Base frequency of the oscillator in Hz
      */
     float m_frequency;
@@ -379,35 +255,5 @@ private:
      * the specified frequency at the current sample rate.
      */
     void update_phase_increment(float frequency);
-
-    /**
-     * @brief Collection of standard callback functions
-     *
-     * Stores the registered callback functions that will be notified
-     * whenever the oscillator produces a new sample. These callbacks
-     * enable external components to monitor and react to the oscillator's
-     * output without interrupting the generation process.
-     */
-    std::vector<NodeHook> m_callbacks;
-
-    /**
-     * @brief Collection of conditional callback functions with their predicates
-     *
-     * Stores pairs of callback functions and their associated condition predicates.
-     * These callbacks are only invoked when their condition evaluates to true
-     * for a generated sample, enabling selective monitoring of specific
-     * waveform characteristics or sample values.
-     */
-    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
-
-    /**
-     * @brief The most recent sample value generated by this oscillator
-     *
-     * This value is updated each time process_sample() is called and can be
-     * accessed via get_last_output() without triggering additional processing.
-     * It's useful for monitoring the oscillator's state and for implementing
-     * feedback loops.
-     */
-    double m_last_output;
 };
 }

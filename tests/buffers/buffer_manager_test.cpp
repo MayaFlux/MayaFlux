@@ -84,6 +84,157 @@ TEST_F(BufferManagerTest, BufferOperations)
     EXPECT_EQ(root->get_child_buffers().size(), 0);
 }
 
+class TestCloneProcessor : public Buffers::BufferProcessor {
+public:
+    TestCloneProcessor()
+    {
+        m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
+    }
+
+    void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
+
+    bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+    {
+        return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
+    }
+};
+
+TEST_F(BufferManagerTest, CloneBufferForChannels)
+{
+    auto source_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+        source_buffer->get_data()[i] = static_cast<double>(i) * 0.1;
+    }
+
+    class TestCloneProcessor : public Buffers::BufferProcessor {
+    public:
+        TestCloneProcessor()
+        {
+            m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
+        }
+
+        void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
+
+        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        {
+            return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
+        }
+    };
+
+    auto test_processor = std::make_shared<TestCloneProcessor>();
+    source_buffer->set_default_processor(test_processor);
+
+    std::vector<uint32_t> target_channels = { 1 };
+    if (TestConfig::NUM_CHANNELS > 2) {
+        target_channels.push_back(2);
+    }
+
+    EXPECT_NO_THROW(manager->clone_buffer_for_channels(source_buffer, target_channels));
+
+    for (auto channel : target_channels) {
+        const auto& channel_buffers = manager->get_audio_buffers(default_token, channel);
+        EXPECT_EQ(channel_buffers.size(), 1) << "Channel " << channel << " should have exactly one buffer";
+
+        auto cloned_buffer = channel_buffers[0];
+        EXPECT_NE(cloned_buffer, nullptr);
+        EXPECT_EQ(cloned_buffer->get_channel_id(), channel);
+        EXPECT_EQ(cloned_buffer->get_num_samples(), source_buffer->get_num_samples());
+
+        for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+            EXPECT_DOUBLE_EQ(cloned_buffer->get_data()[i], source_buffer->get_data()[i]);
+        }
+
+        EXPECT_EQ(cloned_buffer->get_default_processor(), test_processor);
+
+        double original_value = cloned_buffer->get_data()[0];
+        source_buffer->get_data()[0] = 999.0;
+        EXPECT_DOUBLE_EQ(cloned_buffer->get_data()[0], original_value);
+    }
+
+    EXPECT_NO_THROW(manager->clone_buffer_for_channels(nullptr, target_channels));
+    EXPECT_NO_THROW(manager->clone_buffer_for_channels(source_buffer, {}));
+}
+
+TEST_F(BufferManagerTest, SupplyBufferBasicOperation)
+{
+    auto source_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
+    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+        source_buffer->get_data()[i] = static_cast<double>(i) * 0.2 + 1.0;
+    }
+
+    uint32_t target_channel = 1;
+    double mix_level = 0.8;
+
+    EXPECT_TRUE(manager->supply_buffer_to(source_buffer, default_token, target_channel, mix_level));
+
+    auto processing_chain = manager->get_processing_chain(default_token, target_channel);
+    EXPECT_NE(processing_chain, nullptr);
+
+    manager->process_channel(default_token, target_channel, TestConfig::BUFFER_SIZE);
+
+    const auto& target_data = manager->get_buffer_data(default_token, target_channel);
+    bool has_mixed_data = false;
+    for (const auto& sample : target_data) {
+        if (std::abs(sample) > 0.1) {
+            has_mixed_data = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(has_mixed_data) << "Target channel should contain mixed data from supplied buffer";
+
+    EXPECT_FALSE(manager->supply_buffer_to(nullptr, default_token, target_channel));
+    EXPECT_TRUE(manager->supply_buffer_to(source_buffer, default_token, target_channel)); // Updates in place
+    EXPECT_FALSE(manager->supply_buffer_to(source_buffer, default_token, 999));
+
+    EXPECT_TRUE(manager->remove_supplied_buffer(source_buffer, default_token, target_channel));
+    EXPECT_FALSE(manager->remove_supplied_buffer(source_buffer, default_token, target_channel));
+    EXPECT_FALSE(manager->remove_supplied_buffer(nullptr, default_token, target_channel));
+}
+
+TEST_F(BufferManagerTest, SupplyBufferMultipleSources)
+{
+    uint32_t target_channel = 1;
+
+    auto source1 = std::make_shared<Buffers::AudioBuffer>(2, TestConfig::BUFFER_SIZE);
+    auto source2 = std::make_shared<Buffers::AudioBuffer>(3, TestConfig::BUFFER_SIZE);
+    auto source3 = std::make_shared<Buffers::AudioBuffer>(4, TestConfig::BUFFER_SIZE);
+
+    std::fill(source1->get_data().begin(), source1->get_data().end(), 1.0);
+    std::fill(source2->get_data().begin(), source2->get_data().end(), 2.0);
+    std::fill(source3->get_data().begin(), source3->get_data().end(), 3.0);
+
+    EXPECT_TRUE(manager->supply_buffer_to(source1, default_token, target_channel, 0.5));
+    EXPECT_TRUE(manager->supply_buffer_to(source2, default_token, target_channel, 0.3));
+    EXPECT_TRUE(manager->supply_buffer_to(source3, default_token, target_channel, 0.7));
+
+    manager->process_channel(default_token, target_channel, TestConfig::BUFFER_SIZE);
+
+    const auto& target_data = manager->get_buffer_data(default_token, target_channel);
+    double first_mixed_value = target_data[0];
+
+    bool has_expected_mixing = first_mixed_value > 0.5;
+    EXPECT_TRUE(has_expected_mixing) << "Target should contain properly mixed data from multiple sources. Found: " << first_mixed_value;
+
+    EXPECT_TRUE(manager->remove_supplied_buffer(source2, default_token, target_channel));
+
+    std::fill(manager->get_buffer_data(default_token, target_channel).begin(),
+        manager->get_buffer_data(default_token, target_channel).end(), 0.0);
+
+    manager->process_channel(default_token, target_channel, TestConfig::BUFFER_SIZE);
+
+    const auto& updated_target_data = manager->get_buffer_data(default_token, target_channel);
+    double second_mixed_value = updated_target_data[0];
+
+    bool has_updated_mixing = (std::abs(second_mixed_value - first_mixed_value) > 0.01) && (second_mixed_value > 0.3);
+    EXPECT_TRUE(has_updated_mixing) << "Target should reflect removal of one source. "
+                                    << "Before removal: " << first_mixed_value
+                                    << ", After removal: " << second_mixed_value
+                                    << " (difference should be > 0.01 and result > 0.3)";
+
+    EXPECT_TRUE(manager->remove_supplied_buffer(source1, default_token, target_channel));
+    EXPECT_TRUE(manager->remove_supplied_buffer(source3, default_token, target_channel));
+}
+
 TEST_F(BufferManagerTest, TokenBasedProcessing)
 {
     auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);

@@ -1,62 +1,58 @@
 #include "Phasor.hpp"
-#include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/API/Core.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
-Phasor::Phasor(float frequency, float amplitude, float offset, bool bAuto_register)
+Phasor::Phasor(float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
-    , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
+    , m_threshold_crossed(false)
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, float amplitude, float offset, bool bAuto_register)
+Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
-    , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
+    , m_threshold_crossed(false)
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
-Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, float amplitude, float offset, bool bAuto_register)
+Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
+    , m_threshold_crossed(false)
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
 Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-    float frequency, float amplitude, float offset, bool bAuto_register)
+    float frequency, double amplitude, float offset, bool bAuto_register)
     : m_phase(0.0)
-    , m_amplitude(amplitude)
     , m_frequency(frequency)
     , m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
-    , m_last_output(0.0)
     , m_phase_wrapped(false)
-    , m_threshold_crossed((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, false))
+    , m_threshold_crossed(false)
 {
+    m_amplitude = amplitude;
     update_phase_increment(frequency);
 }
 
@@ -170,16 +166,6 @@ void Phasor::reset(float frequency, float amplitude, float offset, double phase)
     m_last_output = 0.0;
 }
 
-void Phasor::on_tick(NodeHook callback)
-{
-    safe_add_callback(m_callbacks, callback);
-}
-
-void Phasor::on_tick_if(NodeHook callback, NodeCondition condition)
-{
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
-}
-
 void Phasor::on_phase_wrap(NodeHook callback)
 {
     safe_add_callback(m_phase_wrap_callbacks, callback);
@@ -213,24 +199,6 @@ bool Phasor::remove_hook(const NodeHook& callback)
     bool removed_from_phase_wrap = safe_remove_callback(m_phase_wrap_callbacks, callback);
     bool removed_from_threshold = remove_threshold_callback(callback);
     return removed_from_tick || removed_from_phase_wrap || removed_from_threshold;
-}
-
-bool Phasor::remove_conditional_hook(const NodeCondition& callback)
-{
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
-}
-
-void Phasor::reset_processed_state()
-{
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-
-    if (m_frequency_modulator) {
-        m_frequency_modulator->reset_processed_state();
-    }
-
-    if (m_amplitude_modulator) {
-        m_amplitude_modulator->reset_processed_state();
-    }
 }
 
 std::unique_ptr<NodeContext> Phasor::create_context(double value)

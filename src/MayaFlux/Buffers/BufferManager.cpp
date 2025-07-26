@@ -1,6 +1,7 @@
 #include "BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
+#include "MayaFlux/Buffers/Root/MixProcessor.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
 #include "Input/InputAudioBuffer.hpp"
@@ -428,6 +429,28 @@ void BufferManager::fill_interleaved(double* interleaved_data, u_int32_t num_fra
     }
 }
 
+void BufferManager::clone_buffer_for_channels(std::shared_ptr<AudioBuffer> buffer, std::vector<u_int32_t> channels, ProcessingToken token)
+{
+    if (channels.empty()) {
+        std::cerr << "BufferManager: No channels specified for cloning" << std::endl;
+        return;
+    }
+    if (!buffer) {
+        std::cerr << "BufferManager: Invalid buffer for cloning" << std::endl;
+        return;
+    }
+
+    for (const auto channel : channels) {
+        if (channel >= m_audio_units[token].channel_count) {
+            std::cerr << "BufferManager: Channel " << channel << " out of range for cloning" << std::endl;
+            return;
+        }
+
+        auto cloned_buffer = buffer->clone_to(channel);
+        add_audio_buffer(cloned_buffer, token, channel);
+    }
+}
+
 void BufferManager::process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames)
 {
     if (m_input_buffers.empty() || m_input_buffers.size() < num_channels) {
@@ -521,6 +544,59 @@ void BufferManager::unregister_input_listener(std::shared_ptr<AudioBuffer> buffe
     if (input_buffer) {
         input_buffer->unregister_listener(buffer);
     }
+}
+
+bool BufferManager::supply_buffer_to(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel, double mix)
+{
+    if (!buffer) {
+        std::cerr << "BufferManager: Invalid buffer for supplying" << std::endl;
+        return false;
+    }
+
+    if (buffer->get_channel_id() == channel) {
+        std::cerr << "BufferManager: Buffer already has the correct channel ID" << std::endl;
+        return false;
+    }
+
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end() || channel >= it->second.channel_count) {
+        std::cerr << "BufferManager: Token/channel combination out of range for supplying" << std::endl;
+        return false;
+    }
+
+    auto root_buffer = it->second.get_buffer(channel);
+    auto processing_chain = it->second.get_chain(channel);
+
+    std::shared_ptr<MixProcessor> mix_processor = processing_chain->get_processor<MixProcessor>(root_buffer);
+
+    if (!mix_processor) {
+        mix_processor = std::make_shared<MixProcessor>();
+        processing_chain->add_processor(mix_processor, root_buffer);
+    }
+
+    return mix_processor->register_source(buffer, mix, false);
+}
+
+bool BufferManager::remove_supplied_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel)
+{
+    if (!buffer) {
+        std::cerr << "BufferManager: Invalid buffer for removal" << std::endl;
+        return false;
+    }
+
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end() || channel >= it->second.channel_count) {
+        std::cerr << "BufferManager: Token/channel combination out of range for removal" << std::endl;
+        return false;
+    }
+
+    auto root_buffer = it->second.get_buffer(channel);
+    auto processing_chain = it->second.get_chain(channel);
+
+    if (std::shared_ptr<MixProcessor> mix_processor = processing_chain->get_processor<MixProcessor>(root_buffer)) {
+        return mix_processor->remove_source(buffer);
+    }
+    return false;
 }
 
 } // namespace MayaFlux::Buffers

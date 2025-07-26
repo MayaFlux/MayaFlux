@@ -416,11 +416,6 @@ public:
     EdgeType get_edge_type() const { return m_edge_type; }
 
     /**
-     * @brief Sets the amplitude (not applicable for logic nodes)
-     */
-    inline void set_amplitude(double) override { }
-
-    /**
      * @brief Prints a visual representation of the logic function
      */
     inline void printGraph() override { }
@@ -497,53 +492,6 @@ public:
 
     void remove_hooks_of_type(LogicEventType type);
 
-    /**
-     * @brief Allows RootNode to process the Generator without using the processed sample
-     * @param bMock_process True to mock process, false to process normally
-     *
-     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
-     * This is ONLY used by the RootNode when processing the node graph.
-     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
-     */
-    inline void enable_mock_process(bool mock_process) override
-    {
-        if (mock_process) {
-            atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        } else {
-            atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        }
-    }
-
-    /**
-     * @brief Checks if the node should mock process
-     * @return True if the node should mock process, false otherwise
-     */
-    inline bool should_mock_process() const override
-    {
-        return m_state.load() & Utils::NodeState::MOCK_PROCESS;
-    }
-
-    /**
-     * @brief Resets the processed state of the node and any attached input nodes
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the cycle next begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    void reset_processed_state() override;
-
-    /**
-     * @brief Retrieves the most recent output value produced by the oscillator
-     * @return The last generated sine wave sample
-     *
-     * This method provides access to the oscillator's most recent output without
-     * triggering additional processing. It's useful for monitoring the oscillator's state,
-     * debugging, and for implementing feedback loops where a node needs to
-     * access the oscillator's previous output.
-     */
-    inline double get_last_output() override { return m_last_output; }
-
     struct LogicCallback {
         NodeHook callback;
         LogicEventType event_type;
@@ -594,7 +542,6 @@ private:
     double m_high_threshold; ///< High threshold for hysteresis
     EdgeType m_edge_type; ///< Type of edge to detect
     bool m_edge_detected; ///< Whether an edge was detected in the last processing
-    double m_last_output; ///< Most recent output value
     bool m_hysteresis_state; ///< State for hysteresis operator
     double m_temporal_time; ///< Time tracking for temporal mode
     std::vector<double> m_input_buffer; // Buffer for multi-input mode

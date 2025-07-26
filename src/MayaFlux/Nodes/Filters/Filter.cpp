@@ -1,5 +1,4 @@
 #include "Filter.hpp"
-#include <cmath>
 
 namespace MayaFlux::Nodes::Filters {
 
@@ -17,7 +16,6 @@ std::pair<int, int> shift_parser(const std::string& str)
 
 Filter::Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts)
     : m_input_node(input)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_shift_config = shift_parser(zindex_shifts);
     initialize_shift_buffers();
@@ -27,7 +25,6 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
     : m_input_node(input)
     , m_coef_a(a_coef)
     , m_coef_b(b_coef)
-    , m_last_output((m_state = Utils::NodeState::INACTIVE, m_modulator_count = 0, 0.f))
 {
     m_shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
 
@@ -233,26 +230,6 @@ void Filter::notify_tick(double value)
             callback(*context);
         }
     }
-}
-
-void Filter::on_tick(NodeHook callback)
-{
-    safe_add_callback(m_callbacks, callback);
-}
-
-void Filter::on_tick_if(NodeHook callback, NodeCondition condition)
-{
-    safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
-}
-
-bool Filter::remove_hook(const NodeHook& callback)
-{
-    return safe_remove_callback(m_callbacks, callback);
-}
-
-bool Filter::remove_conditional_hook(const NodeCondition& callback)
-{
-    return safe_remove_conditional_callback(m_conditional_callbacks, callback);
 }
 
 }

@@ -359,101 +359,6 @@ public:
     std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
-     * @brief Registers a callback to be called on each tick
-     * @param callback Function to call with the current filter context
-     *
-     * Registers a callback function that will be called each time the filter
-     * produces a new output value. The callback receives a FilterContext object
-     * containing information about the filter's current state, including the
-     * current sample value, input/output history buffers, and coefficients.
-     *
-     * This mechanism enables external components to monitor and react to
-     * the filter's activity without interrupting the processing flow.
-     */
-    void on_tick(NodeHook callback) override;
-
-    /**
-     * @brief Registers a conditional callback
-     * @param callback Function to call when condition is met
-     * @param condition Predicate that determines when callback should be triggered
-     *
-     * Registers a callback function that will be called only when the specified
-     * condition is met. The condition is evaluated each time the filter produces
-     * a new output value, and the callback is triggered only if the condition
-     * returns true.
-     *
-     * This mechanism enables selective monitoring and reaction to specific
-     * filter states or events, such as threshold crossings, resonance detection,
-     * or other algorithmic criteria.
-     */
-    void on_tick_if(NodeHook callback, NodeCondition condition) override;
-
-    /**
-     * @brief Removes a previously registered callback
-     * @param callback The callback to remove
-     * @return True if the callback was found and removed, false otherwise
-     *
-     * Unregisters a callback that was previously registered with on_tick().
-     * After removal, the callback will no longer be triggered when the filter
-     * produces new output values.
-     *
-     * This method is useful for cleaning up callbacks when they are no longer
-     * needed, preventing memory leaks and unnecessary processing.
-     */
-    bool remove_hook(const NodeHook& callback) override;
-
-    /**
-     * @brief Removes a previously registered conditional callback
-     * @param callback The callback part of the conditional callback to remove
-     * @return True if the callback was found and removed, false otherwise
-     *
-     * Unregisters a conditional callback that was previously registered with
-     * on_tick_if(). After removal, the callback will no longer be triggered
-     * even when its condition is met.
-     *
-     * This method is useful for cleaning up conditional callbacks when they
-     * are no longer needed, preventing memory leaks and unnecessary processing.
-     */
-    bool remove_conditional_hook(const NodeCondition& callback) override;
-
-    /**
-     * @brief Removes all registered callbacks
-     *
-     * Unregisters all callbacks that were previously registered with on_tick()
-     * and on_tick_if(). After calling this method, no callbacks will be triggered
-     * when the filter produces new output values.
-     *
-     * This method is useful for completely resetting the filter's callback system,
-     * such as when repurposing a filter or preparing for cleanup.
-     */
-    inline void remove_all_hooks() override
-    {
-        m_callbacks.clear();
-        m_conditional_callbacks.clear();
-    }
-
-    /**
-     * @brief Resets the processed state of the node and any attached input nodes
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the cycle next begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    virtual void reset_processed_state() override = 0;
-
-    /**
-     * @brief Retrieves the most recent output value produced by the oscillator
-     * @return The last generated sine wave sample
-     *
-     * This method provides access to the oscillator's most recent output without
-     * triggering additional processing. It's useful for monitoring the oscillator's state,
-     * debugging, and for implementing feedback loops where a node needs to
-     * access the oscillator's previous output.
-     */
-    inline double get_last_output() override { return m_last_output; }
-
-    /**
      * @brief Sets the input node for the filter
      * @param input_node Node providing input samples
      *
@@ -588,7 +493,7 @@ protected:
      * It's useful for monitoring the oscillator's state and for implementing
      * feedback loops.
      */
-    double m_last_output;
+    // double m_last_output;
 
     /**
      * @brief Input node providing samples to filter
@@ -653,23 +558,5 @@ protected:
      * without applying any filtering.
      */
     bool m_bypass_enabled = false;
-
-    /**
-     * @brief Collection of standard callback functions
-     *
-     * Stores functions that are called each time the filter produces
-     * a new output value, regardless of the value's characteristics.
-     */
-    std::vector<NodeHook> m_callbacks;
-
-    /**
-     * @brief Collection of conditional callback functions with their predicates
-     *
-     * Stores pairs of callback functions and their associated condition predicates.
-     * These callbacks are only invoked when their condition evaluates to true
-     * for a generated sample, enabling selective monitoring of specific
-     * filter states or events.
-     */
-    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
 };
 }

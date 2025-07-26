@@ -187,6 +187,14 @@ public:
     Eigen::VectorXd create_window_function(const std::string& window_type, size_t size);
 
     /**
+     * @brief Creates a window function (Hanning, Hamming, etc.) for analysis.
+     * @param window_type Name of window function
+     * @param size Window size
+     * @return Eigen vector of window coefficients
+     */
+    Eigen::VectorXd create_window_function(Utils::WindowType window_type, size_t size);
+
+    /**
      * @brief Formats output according to configured granularity.
      * @param energy_values Computed energy values
      * @param method Name of energy method

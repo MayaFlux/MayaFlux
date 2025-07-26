@@ -7,6 +7,7 @@ namespace MayaFlux {
 struct CreationContext {
     std::optional<Domain> domain;
     std::optional<uint32_t> channel;
+    std::optional<std::vector<uint32_t>> channels;
     std::map<std::string, std::any> metadata;
 
     CreationContext() = default;
@@ -21,8 +22,14 @@ struct CreationContext {
         , channel(ch)
     {
     }
+
     CreationContext(uint32_t ch)
         : channel(ch)
+    {
+    }
+
+    CreationContext(std::vector<uint32_t> ch)
+        : channels(std::move(ch))
     {
     }
 };
@@ -53,6 +60,24 @@ public:
         return *this;
     }
 
+    CreationProxy& channels(std::vector<uint32_t> ch)
+    {
+        m_context.channels = ch;
+        m_context.channel.reset();
+        return *this;
+    }
+
+    template <typename... Args>
+    CreationProxy& channels(Args... args)
+    {
+        static_assert(sizeof...(args) > 0, "channels() requires at least one argument");
+        static_assert((std::is_convertible_v<Args, uint32_t> && ...), "All arguments must be convertible to uint32_t");
+
+        m_context.channels = std::vector<uint32_t> { static_cast<uint32_t>(args)... };
+        m_context.channel.reset();
+        return *this;
+    }
+
     CreationProxy& with(const std::string& key, std::any value)
     {
         m_context.metadata[key] = std::move(value);
@@ -61,6 +86,13 @@ public:
 
     CreationProxy& operator|(Domain d) { return domain(d); }
     CreationProxy& operator[](uint32_t ch) { return channel(ch); }
+
+    CreationProxy& operator[](std::initializer_list<uint32_t> ch_list)
+    {
+        m_context.channels = std::vector<uint32_t>(ch_list);
+        m_context.channel.reset();
+        return *this;
+    }
 
 #define DECLARE_NODE_CREATION_METHOD(method_name, full_type_name)                 \
     template <typename... Args>                                                   \
@@ -186,6 +218,24 @@ public:
         return *this;
     }
 
+    CreationHandle& channels(std::vector<uint32_t> ch)
+    {
+        m_accumulated_context.channels = ch;
+        m_accumulated_context.channel.reset();
+        return *this;
+    }
+
+    template <typename... Args>
+    CreationProxy& channels(Args... args)
+    {
+        static_assert(sizeof...(args) > 0, "channels() requires at least one argument");
+        static_assert((std::is_convertible_v<Args, uint32_t> && ...), "All arguments must be convertible to uint32_t");
+
+        m_accumulated_context.channels = std::vector<uint32_t> { static_cast<uint32_t>(args)... };
+        m_accumulated_context.channel.reset();
+        return *this;
+    }
+
     CreationHandle& with(const std::string& key, std::any value)
     {
         m_accumulated_context.metadata[key] = std::move(value);
@@ -195,6 +245,13 @@ public:
 
     CreationHandle& operator|(Domain d) { return domain(d); }
     CreationHandle& operator[](uint32_t ch) { return channel(ch); }
+
+    CreationHandle& operator[](std::initializer_list<uint32_t> ch_list)
+    {
+        m_accumulated_context.channels = std::vector<uint32_t>(ch_list);
+        m_accumulated_context.channel.reset();
+        return *this;
+    }
 
 private:
     void try_apply_context() const
@@ -207,7 +264,7 @@ private:
                 m_accumulated_context = CreationContext {};
             }
         } else {
-            if (m_accumulated_context.domain && m_accumulated_context.channel) {
+            if (m_accumulated_context.domain && (m_accumulated_context.channel || m_accumulated_context.channels)) {
                 if constexpr (std::is_base_of_v<Nodes::Node, T>) {
                     if (auto& applier = ContextAppliers::get_node_context_applier()) {
                         applier(std::static_pointer_cast<Nodes::Node>(*this), m_accumulated_context);
@@ -271,6 +328,21 @@ public:
         return CreationProxy(this, CreationContext(ch));
     }
 
+    CreationProxy channels(std::vector<uint32_t> ch)
+    {
+        return CreationProxy(this, CreationContext(ch));
+    }
+
+    template <typename... Args>
+    CreationProxy channels(Args... args)
+    {
+        static_assert(sizeof...(args) > 0, "channels() requires at least one argument");
+        static_assert((std::is_convertible_v<Args, uint32_t> && ...), "All arguments must be convertible to uint32_t");
+
+        auto ch = std::vector<uint32_t> { static_cast<uint32_t>(args)... };
+        return CreationProxy(this, CreationContext(ch));
+    }
+
     CreationProxy with(const std::string& key, std::any value)
     {
         CreationContext ctx;
@@ -280,6 +352,11 @@ public:
 
     CreationProxy operator|(Domain d) { return domain(d); }
     CreationProxy operator[](uint32_t ch) { return channel(ch); }
+
+    CreationProxy operator[](std::initializer_list<uint32_t> ch_list)
+    {
+        return channels(std::vector<u_int32_t>(ch_list));
+    }
 
     template <typename T, typename... Args>
     std::shared_ptr<T> create_node_for_proxy(Args&&... args)
@@ -308,11 +385,7 @@ private:
         try {
             return std::make_shared<T>(std::forward<Args>(args)...);
         } catch (...) {
-            try {
-                return std::make_shared<T>();
-            } catch (...) {
-                return nullptr;
-            }
+            return nullptr;
         }
     }
 

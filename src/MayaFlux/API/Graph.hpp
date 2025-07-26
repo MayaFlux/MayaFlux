@@ -42,7 +42,17 @@ std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager();
  * Adds the node as a child of the root node for the specified channel.
  * Uses the default engine's node graph manager.
  */
-void register_audio_node(std::shared_ptr<Nodes::Node> node, unsigned int channel = 0);
+void register_audio_node(std::shared_ptr<Nodes::Node> node, u_int32_t channel = 0);
+
+/**
+ * @brief Adds a node to the root node of specified channels
+ * @param node Node to add
+ * @param channels Vector of channel indices
+ *
+ * Adds the node as a child of the root node for the specified channels.
+ * Uses the default engine's node graph manager.
+ */
+void register_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<u_int32_t> channels);
 
 /**
  * @brief Removes a node from the root node of a specific channel
@@ -52,7 +62,17 @@ void register_audio_node(std::shared_ptr<Nodes::Node> node, unsigned int channel
  * Removes the node from being a child of the root node for the specified channel.
  * Uses the default engine's node graph manager.
  */
-void unregister_audio_node(std::shared_ptr<Nodes::Node> node, unsigned int channel = 0);
+void unregister_audio_node(std::shared_ptr<Nodes::Node> node, u_int32_t channel = 0);
+
+/**
+ * @brief Removes a node from the root node from list of channels
+ * @param node Node to remove
+ * @param channels Channel indices
+ *
+ * Removes the node from being a child of the root node for the list of channels
+ * Uses the default engine's node graph manager.
+ */
+void unregister_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<u_int32_t> channels);
 
 /**
  * @brief Gets the root node for a specific channel
@@ -212,6 +232,65 @@ void detach_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int
  * for processing.
  */
 std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(u_int32_t channel = 0, bool add_to_output = false);
+
+/**
+ * @brief Clones a buffer to multiple channels
+ * @param buffer Buffer to clone
+ * @param channels Vector of channel indices to clone to
+ *
+ * Creates independent copies of the buffer for each specified channel.
+ * Each clone maintains the same data, processors, and processing chain,
+ * but operates independently on its assigned channel.
+ * Uses the default engine's buffer manager.
+ */
+void clone_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+    const std::vector<u_int32_t>& channels);
+
+/**
+ * @brief Supplies a buffer to a single channel with mixing
+ * @param buffer Source buffer to supply
+ * @param channel Target channel index
+ * @param mix Mix level (default: 1.0)
+ *
+ * Convenience wrapper for single-channel buffer supply operations.
+ */
+void supply_buffer_to_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
+    u_int32_t channel,
+    double mix = 1.0);
+
+/**
+ * @brief Supplies a buffer to multiple channels with mixing
+ * @param buffer Source buffer to supply
+ * @param channels Vector of channel indices to supply to
+ * @param mix Mix level for each channel (default: 1.0)
+ *
+ * Efficiently routes a single buffer's output to multiple channels using
+ * the MixProcessor system. This is ideal for sending the same signal to
+ * multiple outputs without duplicating processing.
+ */
+void supply_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+    const std::vector<u_int32_t>& channels,
+    double mix = 1.0);
+
+/**
+ * @brief Removes a supplied buffer from multiple channels
+ * @param buffer Buffer to remove from supply chains
+ * @param channels channel index to remove from
+ *
+ * Efficiently removes a buffer from channel mix processor.
+ */
+void remove_supplied_buffer_from_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
+    const u_int32_t channel);
+
+/**
+ * @brief Removes a supplied buffer from multiple channels
+ * @param buffer Buffer to remove from supply chains
+ * @param channels Vector of channel indices to remove from
+ *
+ * Efficiently removes a buffer from multiple channel mix processors.
+ */
+void remove_supplied_buffer_from_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+    const std::vector<u_int32_t>& channels);
 
 /**
  * @brief Registers all built-in buffer types with the default engine

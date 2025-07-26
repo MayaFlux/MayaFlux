@@ -195,19 +195,6 @@ public:
     virtual void printCurrent() override;
 
     /**
-     * @brief Sets the scaling factor for the output values
-     * @param amplitude New scaling value
-     *
-     * This controls the overall magnitude of the generated values.
-     * Higher values produce larger numerical outputs, while lower values
-     * produce smaller numerical outputs.
-     */
-    inline void set_amplitude(double amplitude) override
-    {
-        m_amplitude = amplitude;
-    }
-
-    /**
      * @brief Sets the variance parameter for normal distribution
      * @param spread New variance value
      *
@@ -220,123 +207,6 @@ public:
     {
         m_normal_spread = spread;
     }
-
-    /**
-     * @brief Gets the current amplitude scaling factor
-     * @return Current amplitude value
-     *
-     * Retrieves the current amplitude setting that controls the overall
-     * magnitude of the generated values. Useful for monitoring or
-     * adaptive systems that need to know the current scaling.
-     */
-    inline double get_amplitude() { return m_amplitude; }
-
-    /**
-     * @brief Registers a callback for every generated value
-     * @param callback Function to call when a new value is generated
-     *
-     * This method allows external components to monitor or react to
-     * every value produced by the stochastic generator. The callback
-     * receives a NodeContext containing the generated value and
-     * distribution parameters.
-     */
-    void on_tick(NodeHook callback) override;
-
-    /**
-     * @brief Registers a conditional callback for generated values
-     * @param callback Function to call when condition is met
-     * @param condition Predicate that determines when callback is triggered
-     *
-     * This method enables selective monitoring of the stochastic process,
-     * where callbacks are only triggered when specific statistical conditions
-     * are met. This is useful for detecting emergent patterns or specific
-     * value ranges in the generated sequence.
-     */
-    void on_tick_if(NodeHook callback, NodeCondition condition) override;
-
-    /**
-     * @brief Removes a previously registered callback
-     * @param callback The callback function to remove
-     * @return True if the callback was found and removed, false otherwise
-     *
-     * Unregisters a callback previously added with on_tick(), stopping
-     * it from receiving further notifications about generated values.
-     */
-    bool remove_hook(const NodeHook& callback) override;
-
-    /**
-     * @brief Removes a previously registered conditional callback
-     * @param callback The condition function to remove
-     * @return True if the callback was found and removed, false otherwise
-     *
-     * Unregisters a conditional callback previously added with on_tick_if(),
-     * stopping it from receiving further notifications about generated values.
-     */
-    bool remove_conditional_hook(const NodeCondition& callback) override;
-
-    /**
-     * @brief Removes all registered callbacks
-     *
-     * Clears all standard and conditional callbacks, effectively
-     * disconnecting all external components from this generator's
-     * notification system. Useful when reconfiguring the processing
-     * graph or shutting down components.
-     */
-    inline void remove_all_hooks() override
-    {
-        m_callbacks.clear();
-        m_conditional_callbacks.clear();
-    }
-
-    /**
-     * @brief Allows RootNode to process the Generator without using the processed sample
-     * @param bMock_process True to mock process, false to process normally
-     *
-     * NOTE: This has no effect on the behaviour of process_sample (or process_batch).
-     * This is ONLY used by the RootNode when processing the node graph.
-     * If the output of the Generator needs to be ignored elsewhere, simply discard the return value.
-     */
-    inline void enable_mock_process(bool mock_process) override
-    {
-        if (mock_process) {
-            atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        } else {
-            atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        }
-    }
-
-    /**
-     * @brief Checks if the node should mock process
-     * @return True if the node should mock process, false otherwise
-     */
-    inline bool should_mock_process() const override
-    {
-        return m_state.load() & Utils::NodeState::MOCK_PROCESS;
-    }
-
-    /**
-     * @brief Resets the processed state of the node and any attached input nodes
-     *
-     * This method is used by the processing system to reset the processed state
-     * of the node at the end of each processing cycle. This ensures that
-     * all nodes are marked as unprocessed before the cycle next begins, allowing
-     * the system to correctly identify which nodes need to be processed.
-     */
-    inline void reset_processed_state() override
-    {
-        atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
-    }
-
-    /**
-     * @brief Retrieves the most recent output value produced by the oscillator
-     * @return The last generated sine wave sample
-     *
-     * This method provides access to the oscillator's most recent output without
-     * triggering additional processing. It's useful for monitoring the oscillator's state,
-     * debugging, and for implementing feedback loops where a node needs to
-     * access the oscillator's previous output.
-     */
-    inline double get_last_output() override { return m_last_output; }
 
 protected:
     /**
@@ -417,46 +287,11 @@ private:
     double m_current_end;
 
     /**
-     * @brief Scaling factor for the output values
-     */
-    double m_amplitude;
-
-    /**
      * @brief Variance parameter for normal distribution
      *
      * Controls the statistical spread in normal distribution.
      * Higher values increase entropy and distribution width.
      */
     double m_normal_spread;
-
-    /**
-     * @brief Collection of standard callback functions
-     *
-     * Stores the registered callback functions that will be notified
-     * whenever the generator produces a new value. These callbacks
-     * enable external components to monitor and react to the generator's
-     * activity without interrupting the generation process.
-     */
-    std::vector<NodeHook> m_callbacks;
-
-    /**
-     * @brief Collection of conditional callback functions with their predicates
-     *
-     * Stores pairs of callback functions and their associated condition predicates.
-     * These callbacks are only invoked when their condition evaluates to true
-     * for a generated value, enabling selective monitoring of specific
-     * statistical conditions or value patterns.
-     */
-    std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
-
-    /**
-     * @brief The most recent sample value generated by this oscillator
-     *
-     * This value is updated each time process_sample() is called and can be
-     * accessed via get_last_output() without triggering additional processing.
-     * It's useful for monitoring the oscillator's state and for implementing
-     * feedback loops.
-     */
-    double m_last_output;
 };
 }
