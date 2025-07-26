@@ -51,8 +51,17 @@ bool BufferProcessingChain::add_processor_direct(std::shared_ptr<BufferProcessor
         break;
     }
 
-    m_buffer_processors[buffer].push_back(processor);
+    auto& processors = m_buffer_processors[buffer];
 
+    auto it = std::find(processors.begin(), processors.end(), processor);
+    if (it != processors.end()) {
+        if (rejection_reason) {
+            *rejection_reason = "Processor already exists in chain for this buffer";
+        }
+        return false;
+    }
+
+    processors.push_back(processor);
     processor->on_attach(buffer);
 
     return true;

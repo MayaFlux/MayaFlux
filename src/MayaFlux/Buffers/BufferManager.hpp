@@ -355,6 +355,15 @@ public:
      */
     inline ProcessingToken get_default_processing_token() const { return m_default_token; }
 
+    /**
+     * @brief Validates the number of channels and resizes buffers if necessary
+     * @param token Processing domain
+     * @param num_channels Number of channels to validate
+     * @param buffer_size New buffer size to set
+     *
+     * This method ensures that the specified number of channels exists for the given token,
+     * resizing the root audio buffers accordingly.
+     */
     inline void validate_num_channels(ProcessingToken token, u_int32_t num_channels, u_int32_t buffer_size)
     {
         ensure_channels(token, num_channels);
@@ -382,6 +391,35 @@ public:
      * @param input_channel Input channel to stop listening to
      */
     void unregister_input_listener(std::shared_ptr<AudioBuffer> buffer, u_int32_t input_channel);
+
+    /**
+     * @brief Supplies a buffer to a specific token and channel
+     * @param buffer Buffer to supply
+     * @param token Processing domain
+     * @param channel Channel index within that domain
+     * @param mix Mix level (default: 1.0)
+     * @return True if the buffer was successfully supplied, false otherwise
+     *
+     * This method allows external buffers to be supplied to the manager for processing.
+     * The buffer data is added, mixed and normalized at the end of the processing chain of channel's root
+     * but before final processing.
+     * This method is useful when one AudioBuffer needs to be supplied to multiple channels.
+     * This is the only continuous way to have same buffer data in multiple channels.
+     * Else look into ::clone_buffer_for_channels() for cloning a buffer to multiple channels.
+     */
+    bool supply_buffer_to(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel, double mix = 1.);
+
+    /**
+     * @brief Removes a supplied buffer from a specific token and channel
+     * @param buffer Buffer to remove
+     * @param token Processing domain
+     * @param channel Channel index within that domain
+     * @return True if the buffer was successfully removed, false otherwise
+     *
+     * This method removes a previously supplied buffer from the specified token and channel.
+     * It is useful for cleaning up buffers that are no longer needed.
+     */
+    bool remove_supplied_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel);
 
 private:
     /**
@@ -419,6 +457,9 @@ private:
      */
     std::unordered_map<ProcessingToken, RootAudioUnit> m_audio_units;
 
+    /**
+     * @brief Input buffers for capturing audio input data
+     */
     std::vector<std::shared_ptr<InputAudioBuffer>> m_input_buffers;
 
     /**

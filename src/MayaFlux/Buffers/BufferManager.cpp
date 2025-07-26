@@ -1,6 +1,7 @@
 #include "BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
+#include "MayaFlux/Buffers/Root/MixProcessor.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
 #include "Input/InputAudioBuffer.hpp"
@@ -543,6 +544,59 @@ void BufferManager::unregister_input_listener(std::shared_ptr<AudioBuffer> buffe
     if (input_buffer) {
         input_buffer->unregister_listener(buffer);
     }
+}
+
+bool BufferManager::supply_buffer_to(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel, double mix)
+{
+    if (!buffer) {
+        std::cerr << "BufferManager: Invalid buffer for supplying" << std::endl;
+        return false;
+    }
+
+    if (buffer->get_channel_id() == channel) {
+        std::cerr << "BufferManager: Buffer already has the correct channel ID" << std::endl;
+        return false;
+    }
+
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end() || channel >= it->second.channel_count) {
+        std::cerr << "BufferManager: Token/channel combination out of range for supplying" << std::endl;
+        return false;
+    }
+
+    auto root_buffer = it->second.get_buffer(channel);
+    auto processing_chain = it->second.get_chain(channel);
+
+    std::shared_ptr<MixProcessor> mix_processor = processing_chain->get_processor<MixProcessor>(root_buffer);
+
+    if (!mix_processor) {
+        mix_processor = std::make_shared<MixProcessor>();
+        processing_chain->add_processor(mix_processor, root_buffer);
+    }
+
+    return mix_processor->register_source(buffer, mix, false);
+}
+
+bool BufferManager::remove_supplied_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, u_int32_t channel)
+{
+    if (!buffer) {
+        std::cerr << "BufferManager: Invalid buffer for removal" << std::endl;
+        return false;
+    }
+
+    auto it = m_audio_units.find(token);
+    if (it == m_audio_units.end() || channel >= it->second.channel_count) {
+        std::cerr << "BufferManager: Token/channel combination out of range for removal" << std::endl;
+        return false;
+    }
+
+    auto root_buffer = it->second.get_buffer(channel);
+    auto processing_chain = it->second.get_chain(channel);
+
+    if (std::shared_ptr<MixProcessor> mix_processor = processing_chain->get_processor<MixProcessor>(root_buffer)) {
+        return mix_processor->remove_source(buffer);
+    }
+    return false;
 }
 
 } // namespace MayaFlux::Buffers

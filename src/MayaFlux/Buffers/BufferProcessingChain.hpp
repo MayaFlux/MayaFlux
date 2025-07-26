@@ -260,6 +260,29 @@ public:
         return m_pending_count.load(std::memory_order_relaxed) > 0;
     }
 
+    /**
+     * @brief Gets a processor of a specific type from the buffer's processing pipeline
+     * @tparam T Type of the processor to retrieve
+     * @param buffer Buffer to get the processor from
+     * @return Shared pointer to the processor if found, nullptr otherwise
+     *
+     * This method searches for a processor of the specified type in the buffer's
+     * transformation sequence. If found, it returns a shared pointer to the processor,
+     * allowing type-safe access to specialized functionality.
+     */
+    template <typename T>
+    std::shared_ptr<T> get_processor(std::shared_ptr<Buffer> buffer) const
+    {
+        auto processors = get_processors(buffer);
+
+        for (auto& processor : processors) {
+            if (auto t_processor = std::dynamic_pointer_cast<T>(processor)) {
+                return t_processor;
+            }
+        }
+        return nullptr;
+    }
+
 protected:
     bool add_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, std::string* rejection_reason = nullptr);
     void remove_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer);
