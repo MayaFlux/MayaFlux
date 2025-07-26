@@ -73,6 +73,72 @@ TEST_F(AudioBufferTest, SampleAccess)
     EXPECT_DOUBLE_EQ(standard_buffer->get_data()[10], 99.9);
 }
 
+TEST_F(AudioBufferTest, ReadOnce)
+{
+    auto source_buffer = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
+    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+        source_buffer->get_data()[i] = static_cast<double>(i) * 0.1;
+    }
+
+    EXPECT_TRUE(standard_buffer->read_once(source_buffer));
+
+    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+        EXPECT_DOUBLE_EQ(standard_buffer->get_data()[i], static_cast<double>(i) * 0.1);
+    }
+
+    EXPECT_FALSE(standard_buffer->read_once(nullptr));
+
+    auto mismatched_buffer = std::make_shared<Buffers::AudioBuffer>(2, TestConfig::BUFFER_SIZE * 2);
+    EXPECT_FALSE(standard_buffer->read_once(mismatched_buffer));
+
+    EXPECT_TRUE(standard_buffer->read_once(source_buffer, true));
+}
+
+TEST_F(AudioBufferTest, CloneTo)
+{
+    for (uint32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
+        standard_buffer->get_data()[i] = static_cast<double>(i) * 0.5;
+    }
+
+    class TestCloneProcessor : public Buffers::BufferProcessor {
+    public:
+        TestCloneProcessor()
+        {
+            m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
+        }
+
+        void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
+
+        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        {
+            return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
+        }
+    };
+
+    auto test_processor = std::make_shared<TestCloneProcessor>();
+    standard_buffer->set_default_processor(test_processor);
+
+    uint32_t target_channel = 5;
+    auto cloned_buffer = standard_buffer->clone_to(target_channel);
+
+    EXPECT_NE(cloned_buffer, nullptr);
+    EXPECT_EQ(cloned_buffer->get_channel_id(), target_channel);
+    EXPECT_EQ(cloned_buffer->get_num_samples(), standard_buffer->get_num_samples());
+    EXPECT_EQ(cloned_buffer->get_data().size(), standard_buffer->get_data().size());
+
+    for (uint32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
+        EXPECT_DOUBLE_EQ(cloned_buffer->get_data()[i], standard_buffer->get_data()[i]);
+    }
+
+    EXPECT_EQ(cloned_buffer->get_default_processor(), test_processor);
+
+    EXPECT_EQ(cloned_buffer->get_processing_chain(), standard_buffer->get_processing_chain());
+
+    standard_buffer->get_data()[0] = 999.0;
+    EXPECT_NE(cloned_buffer->get_data()[0], 999.0);
+    EXPECT_DOUBLE_EQ(cloned_buffer->get_data()[0], 0.0); // Original value at index 0
+}
+
 TEST_F(AudioBufferTest, ProcessorManagement)
 {
     class TestProcessor : public Buffers::BufferProcessor {
