@@ -2,7 +2,7 @@
 
 DSP Engine
 
-Refer to [Getting Started](<docs/Getting\ Started.md>) for setup information
+Refer to [Getting Started](docs/Getting_Started.md) for setup information
 and usage guides.
 
 ## License

@@ -147,7 +147,7 @@ fi
 EOF
 
 # Create user project file if it doesn't exist
-USER_PROJECT_FILE="$PROJECT_ROOT/user_project.hpp"
+USER_PROJECT_FILE="$PROJECT_ROOT/src/user_project.hpp"
 if [ ! -f "$USER_PROJECT_FILE" ]; then
     echo "Creating user project file..."
     cat >"$USER_PROJECT_FILE" <<'EOF'
@@ -161,7 +161,7 @@ void compose() {
 EOF
     echo "✓ Created user_project.hpp"
 else
-    echo "user_project.hpp already exists, skipping creation"
+    echo "src/user_project.hpp already exists, skipping creation"
 fi
 
 chmod +x "$PROJECT_ROOT/build_macos.sh"

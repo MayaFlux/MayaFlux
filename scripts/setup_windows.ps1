@@ -3,6 +3,10 @@ Write-Host "MayaFlux Windows Setup"
 Write-Host "====================="
 Write-Host ""
 
+# Get the project root directory
+$SCRIPT_DIR = $PSScriptRoot
+$PROJECT_ROOT = (Get-Item (Join-Path $SCRIPT_DIR "..")).FullName
+
 # Check for admin privileges
 if (-not (New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host "Warning: Not running with administrator privileges."
@@ -10,7 +14,7 @@ if (-not (New-Object Security.Principal.WindowsPrincipal([Security.Principal.Win
     Start-Sleep -Seconds 2
 }
 
-# Check for Visual Studio environment
+# Check for Visual Studio environment  
 if (-not $env:VisualStudioVersion) {
     Write-Host "Warning: Visual Studio environment not detected."
     Write-Host "Ensure you have:"
@@ -29,7 +33,7 @@ if ($env:VCPKG_ROOT) {
         exit 1
     }
 } else {
-    $vcpkgDir = Join-Path -Path $PSScriptRoot -ChildPath "vcpkg"
+    $vcpkgDir = Join-Path -Path $PROJECT_ROOT -ChildPath "vcpkg"
     if (Test-Path -Path "$vcpkgDir\vcpkg.exe") {
         Write-Host "Using project-local vcpkg"
     } else {
@@ -72,48 +76,34 @@ if ($LASTEXITCODE -ne 0) {
 $env:VCPKG_ROOT = $vcpkgDir
 $env:PATH = "$vcpkgDir;$env:PATH"
 
-# Create build directory
-if (-not (Test-Path -Path "$PSScriptRoot\build")) {
-    New-Item -Path "$PSScriptRoot\build" -ItemType Directory
+if (-not (Test-Path -Path "$PROJECT_ROOT\build")) {
+    New-Item -Path "$PROJECT_ROOT\build" -ItemType Directory
 }
 
-# Generate build script
-$buildScript = @"
-@echo off
-setlocal
-set "VCPKG_ROOT=$vcpkgDir"
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake"
-cmake --build build --config Release
-endlocal
-"@
-
-# Create user project file if it doesn't exist
-$userProjectPath = Join-Path $PROJECT_ROOT "user_project.hpp"
+$userProjectPath = Join-Path $PROJECT_ROOT "src/user_project.hpp"
 if (-not (Test-Path $userProjectPath)) {
     Write-Host "Creating user project file..."
-    @"
-#pragma once
-#define MAYASIMPLE ;
-#include "MayaFlux/MayaFlux.hpp"
-
-void compose() {
-    // Your MayaFlux code goes here!
-}
-"@ | Out-File -FilePath $userProjectPath -Encoding UTF8
-    Write-Host "✓ Created user_project.hpp"
+    
+    "#pragma once" | Out-File -FilePath $userProjectPath -Encoding UTF8
+    "#define MAYASIMPLE" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
+    '#include "MayaFlux/MayaFlux.hpp"' | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
+    "" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
+    "void compose() {" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
+    "    // Your MayaFlux code goes here!" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
+    "}" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
+    
+    Write-Host "Created src/user_project.hpp"
 } else {
-    Write-Host "user_project.hpp already exists, skipping creation"
+    Write-Host "src/user_project.hpp already exists, skipping creation"
 }
 
-Set-Content -Path "$PSScriptRoot\build.bat" -Value $buildScript
+# Create build script
+$buildPath = Join-Path $PROJECT_ROOT "build.bat"
+"@echo off" | Out-File -FilePath $buildPath -Encoding ASCII
+"setlocal" | Out-File -FilePath $buildPath -Append -Encoding ASCII
+"set VCPKG_ROOT=$vcpkgDir" | Out-File -FilePath $buildPath -Append -Encoding ASCII
+"cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%\scripts\buildsystems\vcpkg.cmake" | Out-File -FilePath $buildPath -Append -Encoding ASCII
+"cmake --build build --config Release" | Out-File -FilePath $buildPath -Append -Encoding ASCII
+"endlocal" | Out-File -FilePath $buildPath -Append -Encoding ASCII
 
 Write-Host "Setup complete!"
-Write-Host "Recommended next steps:"
-Write-Host "1. Open Developer Command Prompt for VS"
-Write-Host "2. Navigate to project directory"
-Write-Host "3. Run either:"
-Write-Host "   - build.bat"
-Write-Host "   - Or manually:"
-Write-Host "     cd build"
-Write-Host "     cmake .. -DCMAKE_TOOLCHAIN_FILE=""$vcpkgDir\scripts\buildsystems\vcpkg.cmake"""
-Write-Host "     cmake --build . --config Release"

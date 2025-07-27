@@ -86,10 +86,10 @@ Overseer will automatically detect the CMake build system and provide build/run 
 
 ## Your First MayaFlux Program
 
-After running the setup script, you'll find a `user_project.hpp` file in your project root. This is where all your MayaFlux code goes:
+After running the setup script, you'll find a `user_project.hpp` file in the src/ directry of your project root. This is where all your MayaFlux code goes:
 
 ```cpp
-// user_project.hpp - Your code space (never overwritten by updates)
+// src/user_project.hpp - Your code space (never overwritten by updates)
 #pragma once
 #define MAYASIMPLE;
 #include "MayaFlux/MayaFlux.hpp"
@@ -136,7 +136,7 @@ MayaFlux/
 
 ## Next Steps
 
-1. **Read the Digital Transformation Paradigm** [documentation](<docs/Digital\ Transformation\ Paradigm.md>) for deep architectural understanding
+1. **Read the Digital Transformation Paradigm** [documentation](Digital_Transformation_Paradigm.md) for deep architectural understanding
 
 ## Future Roadmap
 

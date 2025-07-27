@@ -6,4 +6,5 @@ compile_commands.json
 .ccls-cache/
 docs/html/*
 src/MayaFlux/version.h
+src/user_project.hpp
 res/*
