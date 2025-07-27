@@ -2,8 +2,6 @@
 
 #include "MayaFlux/MayaFlux.hpp"
 
-#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
-
 void create()
 {
     // All user code goes here

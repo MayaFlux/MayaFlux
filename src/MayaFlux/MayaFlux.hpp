@@ -13,9 +13,35 @@
 #ifdef MAYASIMPLE
 #include "MayaFlux/API/Proxy/Creator.hpp"
 
+#include "Kriya/Bridge.hpp"
+
+#include "Nodes/Filters/FIR.hpp"
+#include "Nodes/Filters/IIR.hpp"
+#include "Nodes/Generators/Impulse.hpp"
+#include "Nodes/Generators/Logic.hpp"
+#include "Nodes/Generators/Phasor.hpp"
+#include "Nodes/Generators/Sine.hpp"
+#include "Nodes/Generators/Stochastic.hpp"
+#include "Nodes/NodeGraphManager.hpp"
+
+#include "Buffers/BufferProcessingChain.hpp"
+#include "Buffers/Container/ContainerBuffer.hpp"
+#include "Buffers/Container/StreamWriteProcessor.hpp"
+#include "Buffers/Node/LogicProcessor.hpp"
+#include "Buffers/Node/NodeBuffer.hpp"
+#include "Buffers/Node/PolynomialProcessor.hpp"
+#include "Buffers/Recursive/FeedbackBuffer.hpp"
+
+#include "Kriya/Chain.hpp"
+#include "Kriya/Tasks.hpp"
+
+#include "Kakshya/Source/DynamicSoundStream.hpp"
+#include "Kakshya/Source/SoundFileContainer.hpp"
+
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;
 using namespace MayaFlux::Buffers;
+using namespace MayaFlux::Nodes;
 using namespace MayaFlux;
 
 #endif // MAYASIMPLE

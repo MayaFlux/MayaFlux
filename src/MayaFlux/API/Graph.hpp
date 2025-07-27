@@ -13,6 +13,7 @@ namespace Buffers {
     class RootAudioBuffer;
     class BufferManager;
     class BufferProcessor;
+    class BufferProcessingChain;
 }
 
 /**
@@ -85,6 +86,7 @@ void unregister_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<u_int3
 Nodes::RootNode& get_audio_channel_root(u_int32_t channel = 0);
 
 template <typename NodeType, typename... Args>
+    requires std::derived_from<NodeType, Nodes::Node>
 auto create_node(NodeType, Args&&... args) -> std::shared_ptr<NodeType>
 {
     auto node = std::make_shared<NodeType>(std::forward<Args>(args)...);
@@ -114,6 +116,62 @@ void register_all_nodes();
  * All buffer operations using the convenience functions will use this manager.
  */
 std::shared_ptr<Buffers::BufferManager> get_buffer_manager();
+
+/**
+ * @brief Adds a processor to a specific buffer
+ * @param processor Processor to add
+ * @param buffer Buffer to add the processor to
+ *
+ * Adds the processor to the specified buffer's processing chain.
+ * Uses the default engine's buffer manager.
+ */
+void add_processor_to_buffer(std::shared_ptr<Buffers::BufferProcessor> processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
+
+/**
+ * @brief creates a new buffer of the specified type and registers it
+ * @tparam BufferType Type of buffer to create (must be derived from AudioBuffer)
+ * @tparam Args Constructor argument types
+ * @param channel Channel index to create the buffer for
+ * @param buffer_size Size of the buffer in processing units
+ */
+template <typename BufferType, typename... Args>
+    requires std::derived_from<BufferType, Buffers::AudioBuffer>
+auto create_buffer(u_int32_t channel, u_int32_t buffer_size, Args&&... args) -> std::shared_ptr<BufferType>
+{
+    auto buffer = std::make_shared<BufferType>(channel, buffer_size, std::forward<Args>(args)...);
+    register_audio_buffer(buffer, channel);
+    return buffer;
+}
+
+/**
+ *  @brief Creates a new processor and adds it to a buffer
+ * @tparam ProcessorType Type of processor to create (must be derived from BufferProcessor)
+ * @tparam Args Constructor argument types
+ * @param buffer Buffer to add the processor to
+ * @param args Constructor arguments for the processor
+ * @return Shared pointer to the created processor
+ *
+ * This function creates a new processor of the specified type, initializes it with the provided arguments,
+ * and adds it to the specified buffer's processing chain.
+ */
+template <typename ProcessorType, typename... Args>
+    requires std::derived_from<ProcessorType, Buffers::BufferProcessor>
+auto create_processor(std::shared_ptr<Buffers::AudioBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>
+{
+    auto processor = std::make_shared<ProcessorType>(std::forward<Args>(args)...);
+    add_processor_to_buffer(processor, buffer);
+    return processor;
+}
+
+/**
+ * @brief Creates a new processing chain for the default engine
+ * @return Shared pointer to the created BufferProcessingChain
+ *
+ * This function creates a new processing chain that can be used to manage
+ * audio processing for buffers. The chain can be customized with various
+ * processors and is managed by the default engine's buffer manager.
+ */
+std::shared_ptr<Buffers::BufferProcessingChain> create_processing_chain();
 
 /**
  * @brief Gets the audio buffer for a specific channel

@@ -413,10 +413,10 @@ TEST_F(NodeBufferTest, Initialization)
 {
     EXPECT_EQ(node_buffer->get_channel_id(), 0);
     EXPECT_EQ(node_buffer->get_num_samples(), TestConfig::BUFFER_SIZE);
-    EXPECT_FALSE(node_buffer->get_clear_before_process());
+    EXPECT_TRUE(node_buffer->get_clear_before_process());
 
-    auto buffer2 = std::make_shared<Buffers::NodeBuffer>(1, TestConfig::BUFFER_SIZE, sine, true);
-    EXPECT_TRUE(buffer2->get_clear_before_process());
+    auto buffer2 = std::make_shared<Buffers::NodeBuffer>(1, TestConfig::BUFFER_SIZE, sine, false);
+    EXPECT_FALSE(buffer2->get_clear_before_process());
 }
 
 TEST_F(NodeBufferTest, NodeProcessing)

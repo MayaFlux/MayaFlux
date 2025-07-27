@@ -2,6 +2,7 @@
 #include "Core.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
@@ -81,6 +82,16 @@ void register_all_nodes()
 std::shared_ptr<Buffers::BufferManager> get_buffer_manager()
 {
     return get_context().get_buffer_manager();
+}
+
+void add_processor_to_buffer(std::shared_ptr<Buffers::BufferProcessor> processor, std::shared_ptr<Buffers::AudioBuffer> buffer)
+{
+    get_buffer_manager()->add_processor(processor, buffer);
+}
+
+std::shared_ptr<Buffers::BufferProcessingChain> create_processing_chain()
+{
+    return std::make_shared<Buffers::BufferProcessingChain>();
 }
 
 Buffers::RootAudioBuffer& get_root_audio_buffer(u_int32_t channel)
