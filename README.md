@@ -2,6 +2,9 @@
 
 DSP Engine
 
+Refer to [Getting Started](<docs/Getting\ Started.md>) for setup information
+and usage guides.
+
 ## License
 
 This project is licensed under the **GNU General Public License v3.0 (GPLv3)**.  

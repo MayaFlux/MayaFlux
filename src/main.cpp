@@ -2,12 +2,21 @@
 
 #include "MayaFlux/MayaFlux.hpp"
 
+// Check for user project file
+#ifdef __has_include
+#if __has_include("user_project.hpp")
+#include "user_project.hpp"
+#define HAS_USER_PROJECT
+#endif
+#endif
+
 void create()
 {
-    // All user code goes here
-
-    // For examplle - Load audio file into memory and send to RtAudio sequentially
-    auto container = vega.read("res/2.wav") | Audio;
+#ifdef HAS_USER_PROJECT
+    compose();
+#else
+    auto container = vega.read("res/audio.wav") | Audio;
+#endif
 }
 
 int main()
@@ -20,16 +29,17 @@ int main()
 #endif // MAYASIMPLE
 
     try {
-        std::cout << "Initializing MayaFlux..." << std::endl;
+        std::cout << "Initializing MayaFlux...\n";
 
         MayaFlux::Init();
 
         MayaFlux::Start();
 
-        std::cout << "\n=== Audio Processing Active ===" << std::endl;
+        std::cout << "\n=== Audio Processing Active ===\n";
 
         create();
-
+        
+        std::cout << "Press any key to terminate\n";
         std::cin.get();
         MayaFlux::End();
         std::cout << "✓ Clean shutdown" << std::endl;

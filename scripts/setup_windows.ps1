@@ -87,6 +87,24 @@ cmake --build build --config Release
 endlocal
 "@
 
+# Create user project file if it doesn't exist
+$userProjectPath = Join-Path $PROJECT_ROOT "user_project.hpp"
+if (-not (Test-Path $userProjectPath)) {
+    Write-Host "Creating user project file..."
+    @"
+#pragma once
+#define MAYASIMPLE ;
+#include "MayaFlux/MayaFlux.hpp"
+
+void compose() {
+    // Your MayaFlux code goes here!
+}
+"@ | Out-File -FilePath $userProjectPath -Encoding UTF8
+    Write-Host "✓ Created user_project.hpp"
+} else {
+    Write-Host "user_project.hpp already exists, skipping creation"
+}
+
 Set-Content -Path "$PSScriptRoot\build.bat" -Value $buildScript
 
 Write-Host "Setup complete!"

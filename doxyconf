@@ -5,9 +5,9 @@ PROJECT_NUMBER        = "0.1.0"
 OUTPUT_DIRECTORY      = docs
 
 # Input settings
-INPUT                 = src README.md
+INPUT                 = src README.md "docs/Getting Started.md"
 RECURSIVE             = YES
-USE_MDFILE_AS_MAINPAGE = README.md
+USE_MDFILE_AS_MAINPAGE = "docs/Getting Started.md"
 FILE_PATTERNS         = *.cpp *.hpp *.h *.md
 EXCLUDE_PATTERNS      = */build/* */tests/*
 
@@ -50,7 +50,7 @@ QUIET                = NO
 WARNINGS             = YES
 WARN_IF_UNDOCUMENTED = YES
 WARN_IF_DOC_ERROR    = YES
-WARN_LOGFILE         = docs/warnings.log
+WARN_LOGFILE         = docs/html/warnings.log
 
 # Preprocessing settings
 ENABLE_PREPROCESSING = YES
