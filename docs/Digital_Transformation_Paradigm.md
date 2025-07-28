@@ -747,7 +747,7 @@ data transformation as the fundamental creative act. Mathematical
 relationships, temporal coordination, and dimensional data access become
 unified aspects of a single creative expression.
 
-The next stage of this digital paradigm involves **Domains and Control**
+The next stage of this digital paradigm involves [Domains and Control](Domain_and_Control.md)
 — how these transformation primitives coordinate across different
 computational contexts and how creative control emerges from the
 interaction between precise computational timing and expressive creative

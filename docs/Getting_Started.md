@@ -142,6 +142,7 @@ MayaFlux/
 ## Next Steps
 
 1. **Read the Digital Transformation Paradigm** [documentation](Digital_Transformation_Paradigm.md) for deep architectural understanding
+2. **Explore composing with processing domains and tokens** [documentation](Domain_and_Control.md)
 
 ## Future Roadmap
 
@@ -156,4 +157,4 @@ MayaFlux is designed for expansion into a complete digital multimedia ecosystem:
 
 MayaFlux represents a fundamental shift from analog-inspired audio software toward truly digital paradigms. Instead of simulating vintage hardware, we embrace the computational possibilities that only exist in the digital realm - recursive processing, multi dimensional data handling, generating on the fly grammars and pipelines, data-driven control, cross-modal interaction, and algorithmic composition techniques that treat code as creative material.
 
-Welcome to the shape of things to come
+Explore the shape of things to come!
