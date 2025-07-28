@@ -148,13 +148,12 @@ MayaFlux/
 MayaFlux is designed for expansion into a complete digital multimedia ecosystem:
 
 - **GL/Vulkan GPU Integration**: Real-time visual processing and compute shaders
-- **Live Coding**: Lua integration via Sol2 for real-time experimentation
-- **Web Platform**: WebAssembly support via Emscripten
+- **Live Coding**: Lua integration via Sol2 and Cling integration
 - **Game Engine Plugins**: UE5 and Godot integration
 - **Cross-Language FFI**:
 
 ## Philosophy
 
-MayaFlux represents a fundamental shift from analog-inspired audio software toward truly digital paradigms. Instead of simulating vintage hardware, we embrace the computational possibilities that only exist in the digital realm - recursive processing, data-driven control, cross-modal interaction, and algorithmic composition techniques that treat code as creative material.
+MayaFlux represents a fundamental shift from analog-inspired audio software toward truly digital paradigms. Instead of simulating vintage hardware, we embrace the computational possibilities that only exist in the digital realm - recursive processing, multi dimensional data handling, generating on the fly grammars and pipelines, data-driven control, cross-modal interaction, and algorithmic composition techniques that treat code as creative material.
 
-Welcome to the future of digital signal processing!
+Welcome to the shape of things to come

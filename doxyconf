@@ -5,11 +5,12 @@ PROJECT_NUMBER        = "0.1.0"
 OUTPUT_DIRECTORY      = docs
 
 # Input settings
-INPUT                 = src README.md "docs/Getting Started.md"
+INPUT                 = src README.md CODE_OF_CONDUCT.md CONTRIBUTING.md docs/
+# INPUT                 = src README.md docs/Getting_Started.md docs/
 RECURSIVE             = YES
-USE_MDFILE_AS_MAINPAGE = "docs/Getting Started.md"
+USE_MDFILE_AS_MAINPAGE = docs/Getting_Started.md
 FILE_PATTERNS         = *.cpp *.hpp *.h *.md
-EXCLUDE_PATTERNS      = */build/* */tests/*
+EXCLUDE_PATTERNS      = */build/* */tests/* docs/html
 
 # Output settings
 GENERATE_HTML         = YES
