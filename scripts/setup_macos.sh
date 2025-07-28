@@ -1,7 +1,7 @@
 #!/bin/zsh
 
-echo "MayaFlux macOS Setup"
-echo "===================="
+echo "MayaFlux macOS System Setup"
+echo "==========================="
 echo
 
 # Get the project root directory (one level up from the script location)
@@ -97,55 +97,6 @@ if [ "$CMAKE_MAJOR" -lt 3 ] || ([ "$CMAKE_MAJOR" -eq 3 ] && [ "$CMAKE_MINOR" -lt
     echo
 fi
 
-echo
-echo "Creating build directory..."
-mkdir -p "$PROJECT_ROOT/build"
-
-echo
-echo "Generating Xcode project..."
-cd "$PROJECT_ROOT" || exit 1
-cmake -B build -S . -G Xcode \
-    -DCMAKE_INSTALL_PREFIX="$PROJECT_ROOT/install"
-
-if [ $? -ne 0 ]; then
-    echo
-    echo "Failed to generate Xcode project."
-    exit 1
-fi
-
-echo
-echo "Setup complete!"
-echo
-echo "To open the project in Xcode:"
-echo "  open $PROJECT_ROOT/build/MayaFlux.xcodeproj"
-echo
-echo "To build from command line:"
-echo "  cmake --build build --config Release"
-echo
-
-# Create a convenience script for opening in Xcode
-cat >"$PROJECT_ROOT/open_xcode.sh" <<EOF
-#!/bin/bash
-open "\$(dirname "\$0")/build/MayaFlux.xcodeproj"
-EOF
-
-chmod +x "$PROJECT_ROOT/open_xcode.sh"
-
-echo "A convenience script 'open_xcode.sh' has been created to open the project in Xcode."
-echo
-
-# Create a build script
-cat >"$PROJECT_ROOT/build_macos.sh" <<EOF
-#!/bin/bash
-cmake --build "\$(dirname "\$0")/build" --config Release
-if [ \$? -eq 0 ]; then
-  echo "Build successful!"
-  echo "Binary location: \$(dirname "\$0")/build/bin/Release/MayaFlux"
-else
-  echo "Build failed. See error messages above."
-fi
-EOF
-
 # Create user project file if it doesn't exist
 USER_PROJECT_FILE="$PROJECT_ROOT/src/user_project.hpp"
 if [ ! -f "$USER_PROJECT_FILE" ]; then
@@ -164,13 +115,14 @@ else
     echo "src/user_project.hpp already exists, skipping creation"
 fi
 
-chmod +x "$PROJECT_ROOT/build_macos.sh"
-
-echo "A convenience script 'build_macos.sh' has been created to build the project."
 echo
-
-# Add a note about macOS security
-echo "Note: If you encounter security warnings when running this script or opening the project,"
-echo "you may need to adjust your security settings or right-click the file and select 'Open'."
-echo "For more information, see: https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unidentified-developer-mh40616/mac"
+echo "System setup complete!"
+echo
+echo "Next steps:"
+echo "1. Run './setup_xcode.sh' to generate Xcode project"
+echo "2. Or manually configure your build environment"
+echo
+echo "Dependencies installed:"
+echo "  ✓ CMake, RTAudio, FFmpeg, GoogleTest"
+echo "  ✓ Eigen, OneDPL, Magic Enum"
 echo

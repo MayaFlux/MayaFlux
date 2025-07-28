@@ -28,13 +28,18 @@ MayaFlux includes automated setup scripts that handle all dependencies and build
 #### macOS
 
 ```bash
-chmod +x scripts/setup_macos.sh
+# Run this in any terminal
 ./scripts/setup_macos.sh
+
+# For XCode users
+./scripts/setup_xcode.sh
+
 ```
 
 #### Linux
 
-Linux users typically manage dependencies through their package manager. Install the standard development tools (cmake, build-essential, pkg-config) and audio/multimedia libraries (rtaudio, ffmpeg, eigen3, gtest) using your distribution's package manager.
+Linux users typically manage dependencies through their package manager. Install the standard development tools (cmake, build-essential, pkg-config)
+and audio/multimedia libraries (rtaudio, ffmpeg, eigen3, gtest, magic_enum) using your distribution's package manager.
 
 > **Note**: All setup scripts automatically handle dependency installation and build system configuration. No manual dependency management required.
 

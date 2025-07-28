@@ -38,7 +38,7 @@ int main()
         std::cout << "\n=== Audio Processing Active ===\n";
 
         create();
-        
+
         std::cout << "Press any key to terminate\n";
         std::cin.get();
         MayaFlux::End();

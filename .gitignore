@@ -1,10 +1,134 @@
-build/*
+# Build directories and artifacts
+build/
+install/
+out/
 compile_commands.json
-.clangd/*
-.clang_format
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+Makefile
+
+# Clangd and language server files
+.clangd/
 .cache/
 .ccls-cache/
-docs/html/*
+
+# Generated files
+docs/html/
 src/MayaFlux/version.h
 src/user_project.hpp
-res/*
+
+# User resources (not tracked)
+res/
+
+# Visual Studio Code
+.vscode/settings.json.user
+.vscode/launch.json.user
+.vscode/.ropeproject
+.history/
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.vcxproj.filters
+*.sln.docstates
+*.suo
+*.user
+*.userosscache
+*.sln.docstates.user
+x64/
+x86/
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+*.pdb
+*.idb
+*.ilk
+
+# Xcode
+*.xcworkspace/
+*.xcuserdata/
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+
+# CLion / IntelliJ IDEA
+.idea/
+cmake-build-*/
+*.iml
+*.ipr
+*.iws
+
+# Qt Creator
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+*.qm
+*.qrc.cpp
+
+# Code::Blocks
+*.cbp
+*.layout
+*.depend
+
+# Dev-C++
+*.dev
+*.layout
+
+# Codelite
+*.workspace
+*.project
+.codelite/
+
+# Eclipse CDT
+.metadata/
+.recommenders/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.factorypath
+
+# Platform-specific
+# Windows
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Linux
+*~
+.nfs*
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.swp
+*.swo
+*~
+
+# Package managers
+# vcpkg
+vcpkg_installed/
+packages/
+
+# Conan
+conandata.yml
+conanfile.txt.user

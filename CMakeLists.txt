@@ -73,15 +73,32 @@ enable_testing()
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 list(FILTER SOURCES EXCLUDE REGEX ".*main\\.cpp$")
 
+set(USER_PROJECT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/user_project.hpp")
+if(EXISTS ${USER_PROJECT_FILE})
+    set(USER_SOURCES ${USER_PROJECT_FILE})
+else()
+    message(STATUS "Creating user_project.hpp...")
+    file(WRITE ${USER_PROJECT_FILE}
+"#pragma once
+#define MAYASIMPLE ;
+#include \"MayaFlux/MayaFlux.hpp\"
+
+void compose() {
+    // Your MayaFlux code goes here!
+}
+")
+    set(USER_SOURCES ${USER_PROJECT_FILE})
+endif()
+
 if(WIN32)
     file(GLOB_RECURSE HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
          ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
 
     add_library(MayaFluxLib ${SOURCES} ${HEADERS})
-    add_executable(MayaFlux src/main.cpp ${HEADERS})
+    add_executable(MayaFlux src/main.cpp ${HEADERS} ${USER_SOURCES})
 else()
     add_library(MayaFluxLib ${SOURCES})
-    add_executable(MayaFlux src/main.cpp)
+    add_executable(MayaFlux src/main.cpp ${USER_SOURCES})
 endif()
 
 set_target_properties(MayaFluxLib PROPERTIES
