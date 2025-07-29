@@ -100,12 +100,12 @@ std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coord
         auto angle_it = rotation_params.find("angle_radians");
         if (angle_it != rotation_params.end()) {
             try {
-                double angle = std::any_cast<double>(angle_it->second);
+                auto angle = std::any_cast<double>(angle_it->second);
                 double cos_a = std::cos(angle);
                 double sin_a = std::sin(angle);
 
-                double x = static_cast<double>(transformed[0]);
-                double y = static_cast<double>(transformed[1]);
+                auto x = static_cast<double>(transformed[0]);
+                auto y = static_cast<double>(transformed[1]);
 
                 transformed[0] = static_cast<u_int64_t>(x * cos_a - y * sin_a);
                 transformed[1] = static_cast<u_int64_t>(x * sin_a + y * cos_a);

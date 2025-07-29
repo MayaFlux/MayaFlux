@@ -1,5 +1,6 @@
 #pragma once
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/TypeSpec.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -62,25 +63,92 @@ std::vector<To> convert_data_type(std::span<const From> source)
 }
 
 /**
- * @brief Extract a vector of type T from a DataVariant, with type conversion if needed.
- * @tparam T Desired type.
- * @param variant DataVariant to extract from.
- * @return Optional vector of type T.
+ * @brief Get typed span from DataVariant using concepts (replaces runtime std::visit)
+ * @tparam T Data type (must satisfy ProcessableData)
+ * @param variant DataVariant to extract from
+ * @return Span of type T, or empty span if type doesn't match
  */
-template <typename T>
-std::optional<std::vector<T>> extract_from_variant(const DataVariant& variant)
+template <ProcessableData T>
+constexpr std::span<const T> get_typed_span(const DataVariant& variant) noexcept
 {
+    if (std::holds_alternative<std::vector<T>>(variant)) {
+        const auto& vec = std::get<std::vector<T>>(variant);
+        return std::span<const T>(vec.data(), vec.size());
+    }
+    return {};
+}
+
+/**
+ * @brief Extract vector from variant with compile-time type checking
+ * @tparam T Desired type (must satisfy ProcessableData)
+ * @param variant DataVariant to extract from
+ * @return Optional vector of type T
+ */
+template <ProcessableData T>
+constexpr std::optional<std::vector<T>> extract_from_variant(const DataVariant& variant) noexcept
+{
+    if (std::holds_alternative<std::vector<T>>(variant)) {
+        return std::get<std::vector<T>>(variant);
+    }
+
     return std::visit([](const auto& data) -> std::optional<std::vector<T>> {
         using DataType = std::decay_t<decltype(data)>;
-        if constexpr (std::is_same_v<DataType, std::vector<T>>) {
-            return data;
-        } else if constexpr (std::is_arithmetic_v<typename DataType::value_type>) {
-            return convert_data_type<typename DataType::value_type, T>(data);
+        using ValueType = typename DataType::value_type;
+
+        if constexpr (ProcessableData<ValueType> && !std::is_same_v<ValueType, T>) {
+            return convert_data_fast<ValueType, T>(std::span<const ValueType>(data));
         } else {
             return std::nullopt;
         }
     },
         variant);
+}
+
+/**
+ * @brief Fast type conversion using concepts (replaces slow std::visit)
+ * @tparam From Source type (must satisfy ProcessableData)
+ * @tparam To Target type (must satisfy ProcessableData)
+ * @param source Source data span
+ * @return Converted vector
+ */
+template <ProcessableData From, ProcessableData To>
+    requires(
+        std::is_same_v<From, To>
+        || (ComplexData<From> && ArithmeticData<To>)
+        || (ArithmeticData<From> && ArithmeticData<To>)
+        || (ComplexData<From> && ComplexData<To>))
+std::vector<To> convert_data_fast(std::span<const From> source)
+{
+    if constexpr (std::is_same_v<From, To>) {
+        return std::vector<To>(source.begin(), source.end());
+
+    } else if constexpr (ComplexData<From> && ArithmeticData<To>) {
+        std::vector<To> result;
+        result.reserve(source.size());
+        std::ranges::transform(source, std::back_inserter(result),
+            [](const From& val) -> To {
+                return static_cast<To>(std::abs(val));
+            });
+        return result;
+
+    } else if constexpr (ArithmeticData<From> && ArithmeticData<To>) {
+        std::vector<To> result;
+        result.reserve(source.size());
+        std::ranges::transform(source, std::back_inserter(result),
+            [](const From& val) -> To {
+                return static_cast<To>(val);
+            });
+        return result;
+
+    } else if constexpr (ComplexData<From> && ComplexData<To>) {
+        std::vector<To> result;
+        result.reserve(source.size());
+        std::ranges::transform(source, std::back_inserter(result),
+            [](const From& val) -> To {
+                return static_cast<To>(val);
+            });
+        return result;
+    }
 }
 
 /**
@@ -166,7 +234,19 @@ std::span<const T> get_typed_data(const DataVariant& data)
     return {};
 }
 
-std::vector<double> convert_variant_to_double(const Kakshya::DataVariant& data);
+inline std::vector<double> convert_variant_to_double(const DataVariant& data)
+{
+    return std::visit([](const auto& vec) -> std::vector<double> {
+        using ValueType = typename std::decay_t<decltype(vec)>::value_type;
+
+        if constexpr (ProcessableData<ValueType>) {
+            return convert_data_fast<ValueType, double>(std::span<const ValueType>(vec));
+        } else {
+            throw std::runtime_error("Unsupported data type for double conversion");
+        }
+    },
+        data);
+}
 
 /**
  * @brief Set a value in a metadata map (key-value).

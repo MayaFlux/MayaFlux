@@ -9,14 +9,9 @@ u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
 {
     if (dimensions.empty())
         return 0;
-    for (const auto& d : dimensions)
-        if (d.size == 0)
-            return 0;
 
-    return std::transform_reduce(
-        dimensions.begin(), dimensions.end(),
-        u_int64_t(1),
-        std::multiplies<>(),
+    return std::transform_reduce(dimensions.begin(), dimensions.end(),
+        u_int64_t(1), std::multiplies<>(),
         [](const DataDimension& dim) { return dim.size; });
 }
 
@@ -24,11 +19,11 @@ u_int64_t calculate_frame_size(const std::vector<DataDimension>& dimensions)
 {
     if (dimensions.empty())
         return 0;
-    u_int64_t frame_size = 1;
-    for (size_t i = 1; i < dimensions.size(); ++i) {
-        frame_size *= dimensions[i].size;
-    }
-    return frame_size;
+
+    return std::transform_reduce(
+        dimensions.begin() + 1, dimensions.end(),
+        u_int64_t(1), std::multiplies<>(),
+        [](const DataDimension& dim) constexpr { return dim.size; });
 }
 
 void safe_copy_data_variant(const DataVariant& input, DataVariant& output)
@@ -78,7 +73,7 @@ void safe_copy_data_variant_to_span(const DataVariant& input, std::span<double> 
         input);
 }
 
-std::vector<double> convert_variant_to_double(const Kakshya::DataVariant& data)
+/* std::vector<double> convert_variant_to_double(const Kakshya::DataVariant& data)
 {
     return std::visit([](const auto& vec) -> std::vector<double> {
         using T = typename std::decay_t<decltype(vec)>::value_type;
@@ -116,7 +111,7 @@ std::vector<double> convert_variant_to_double(const Kakshya::DataVariant& data)
         }
     },
         data);
-}
+} */
 
 void set_metadata_value(std::unordered_map<std::string, std::any>& metadata, const std::string& key, std::any value)
 {

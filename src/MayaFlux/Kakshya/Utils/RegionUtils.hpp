@@ -1,7 +1,9 @@
 #pragma once
 
 #include "CoordUtils.hpp"
+
 #include "MayaFlux/Kakshya/OrganizedRegion.hpp"
+#include "MayaFlux/Kakshya/TypeSpec.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -31,15 +33,15 @@ std::vector<T> extract_region_data(std::span<const T>& source_data, const Region
     while (true) {
         u_int64_t linear_index = coordinates_to_linear(current, dimensions);
         result.push_back(source_data[linear_index]);
+
         bool done = true;
         for (size_t dim = 0; dim < current.size(); ++dim) {
             if (current[dim] < region.end_coordinates[dim]) {
                 current[dim]++;
                 done = false;
                 break;
-            } else {
-                current[dim] = region.start_coordinates[dim];
             }
+            current[dim] = region.start_coordinates[dim];
         }
         if (done)
             break;
@@ -47,8 +49,19 @@ std::vector<T> extract_region_data(std::span<const T>& source_data, const Region
     return result;
 }
 
-template <typename T>
-std::vector<std::vector<T>> extract_group_data(std::span<const T>& source_data, const RegionGroup& group, const std::vector<DataDimension>& dimensions)
+/**
+ * @brief Extract multiple regions efficiently using ranges
+ * @tparam T Data type (must satisfy ProcessableData)
+ * @param source_data Source data span
+ * @param group Region group to extract
+ * @param dimensions Dimension descriptors
+ * @return Vector of vectors containing extracted data
+ */
+template <ProcessableData T>
+constexpr std::vector<std::vector<T>> extract_group_data(
+    std::span<const T> source_data,
+    const RegionGroup& group,
+    std::span<const DataDimension> dimensions)
 {
     std::vector<std::vector<T>> result;
     for (const auto& region : group.regions) {
@@ -94,9 +107,8 @@ void set_or_update_region_data(std::span<T> dest_data, std::span<const T> source
                 current[dim]++;
                 done = false;
                 break;
-            } else {
-                current[dim] = region.start_coordinates[dim];
             }
+            current[dim] = region.start_coordinates[dim];
         }
         if (done)
             break;
