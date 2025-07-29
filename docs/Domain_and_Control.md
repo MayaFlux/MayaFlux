@@ -630,3 +630,5 @@ auto sync_routine = [](Vruta::TaskScheduler& scheduler) -> Vruta::ComplexRoutine
 This architecture enables computational thinking as creative expression—where the choice between automatic coordination and explicit control becomes part of the creative decision-making process.
 
 Domain composition allows creators to think in terms of unified computational environments while maintaining the flexibility to optimize for specific creative requirements.
+
+For advanced and architecture level presentation of the same topic, please refer to [Advanced Context Control](Advanced_Context_Control.md)
