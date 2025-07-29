@@ -256,8 +256,9 @@ AnalyzerInput convert_to_analyzer_input(const auto& input)
         return AnalyzerInput { input };
     } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
         return AnalyzerInput { input };
+    } else if constexpr (std::is_constructible_v<Kakshya::DataVariant, T>) {
+        return AnalyzerInput { Kakshya::DataVariant { input } };
     } else if constexpr (std::is_same_v<T, AnalyzerOutput>) {
-        // Need to extract something from AnalyzerOutput to create AnalyzerInput
         throw std::runtime_error("Cannot convert AnalyzerOutput back to AnalyzerInput");
     } else {
         throw std::runtime_error("Cannot convert input type for analyzer delegation");

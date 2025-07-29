@@ -542,4 +542,12 @@ std::vector<std::string> SortingGrammar::get_available_rules() const
     return names;
 }
 
+std::vector<std::string> UniversalSorter::get_available_methods() const
+{
+    return {
+        "default", "indices", "by_magnitude", "by_rows", "by_columns",
+        "eigenvalues", "chunked", "grammar_based"
+    };
+}
+
 } // namespace MayaFlux::Yantra

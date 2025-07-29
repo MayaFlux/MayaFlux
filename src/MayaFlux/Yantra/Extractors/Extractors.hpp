@@ -23,7 +23,14 @@ public:
      */
     inline std::vector<std::string> get_available_methods() const override
     {
-        return { "mean", "variance", "energy", "zero_crossings", "spectral_centroid" };
+        return {
+            "mean",
+            "variance",
+            "peak",
+            "energy",
+            "zero_crossings",
+            "spectral_centroid",
+        };
     }
 
 protected:

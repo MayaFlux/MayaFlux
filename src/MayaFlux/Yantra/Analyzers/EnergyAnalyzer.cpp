@@ -248,8 +248,7 @@ std::vector<double> EnergyAnalyzer::calculate_spectral_energy(const std::vector<
         const size_t start_idx = i * m_hop_size;
         const size_t end_idx = std::min(start_idx + m_window_size, data.size());
 
-        Eigen::VectorXd windowed_data(m_window_size);
-        windowed_data.setZero();
+        Eigen::VectorXd windowed_data = Eigen::VectorXd::Zero(m_window_size);
 
         const size_t actual_size = end_idx - start_idx;
         Eigen::Map<const Eigen::VectorXd> data_segment(
@@ -261,7 +260,7 @@ std::vector<double> EnergyAnalyzer::calculate_spectral_energy(const std::vector<
         Eigen::VectorXcd fft_result;
         fft.fwd(fft_result, windowed_data);
 
-        double energy = fft_result.cwiseAbs2().sum();
+        double energy = fft_result.cwiseAbs2().sum() / m_window_size;
         spectral_energy.push_back(energy);
     }
 

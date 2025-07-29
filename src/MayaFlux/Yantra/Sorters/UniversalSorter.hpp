@@ -131,7 +131,7 @@ public:
     /**
      * @brief Get available sorting methods for this sorter
      */
-    virtual std::vector<std::string> get_available_methods() const = 0;
+    virtual std::vector<std::string> get_available_methods() const;
 
     /**
      * @brief Get available methods for a specific input type

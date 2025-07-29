@@ -27,9 +27,25 @@ ExtractorOutput FeatureExtractor::extract_impl(const Kakshya::DataVariant& data)
         if (!audio_data.empty())
             energy /= audio_data.size();
         return ExtractorOutput { std::vector<double> { energy } };
+    } else if (method == "peak") {
+        std::vector<double> indices_as_double;
+        auto threshold = std::any_cast<double>(get_parameter("threshold"));
+        auto min_distance = std::any_cast<double>(get_parameter("min_distance"));
+
+        size_t last_peak_index = 0;
+        for (size_t i = 1; i < audio_data.size() - 1; ++i) {
+            if (audio_data[i] > audio_data[i - 1] && audio_data[i] > audio_data[i + 1] && audio_data[i] > threshold) {
+                if (indices_as_double.empty() || (i - last_peak_index) >= min_distance) {
+                    indices_as_double.push_back(static_cast<double>(i));
+                    last_peak_index = i;
+                }
+            }
+        }
+
+        return ExtractorOutput { indices_as_double };
     }
 
-    return ExtractorOutput { audio_data }; // Default: return input
+    return ExtractorOutput { audio_data };
 }
 
 void ExtractionGrammar::add_rule(const Rule& rule)
