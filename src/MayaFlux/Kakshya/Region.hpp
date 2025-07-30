@@ -328,39 +328,7 @@ struct Region {
             return std::nullopt;
         }
 
-        try {
-            return std::any_cast<T>(it->second);
-        } catch (const std::bad_any_cast&) {
-
-            if constexpr (std::is_same_v<T, std::string>) {
-                try {
-                    return std::string(std::any_cast<const char*>(it->second));
-                } catch (const std::bad_any_cast&) {
-                }
-            }
-
-            if constexpr (std::is_integral_v<T>) {
-                if (it->second.type() == typeid(int)) {
-                    return static_cast<T>(std::any_cast<int>(it->second));
-                }
-                if (it->second.type() == typeid(unsigned int)) {
-                    return static_cast<T>(std::any_cast<unsigned int>(it->second));
-                }
-                if (it->second.type() == typeid(long)) {
-                    return static_cast<T>(std::any_cast<long>(it->second));
-                }
-                if (it->second.type() == typeid(unsigned long)) {
-                    return static_cast<T>(std::any_cast<unsigned long>(it->second));
-                }
-                if (it->second.type() == typeid(int64_t)) {
-                    return static_cast<T>(std::any_cast<int64_t>(it->second));
-                }
-                if (it->second.type() == typeid(uint64_t)) {
-                    return static_cast<T>(std::any_cast<uint64_t>(it->second));
-                }
-            }
-        }
-        return std::nullopt;
+        return safe_any_cast<T>(it->second);
     }
 
     /**
@@ -706,11 +674,7 @@ struct RegionSegment {
     {
         auto it = processing_metadata.find(key);
         if (it != processing_metadata.end()) {
-            try {
-                return std::any_cast<T>(it->second);
-            } catch (const std::bad_any_cast&) {
-                return std::nullopt;
-            }
+            return safe_any_cast<T>(it->second);
         }
         return std::nullopt;
     }
@@ -995,39 +959,7 @@ struct RegionGroup {
             return std::nullopt;
         }
 
-        try {
-            return std::any_cast<T>(it->second);
-        } catch (const std::bad_any_cast&) {
-            if constexpr (std::is_same_v<T, std::string>) {
-                try {
-                    return std::string(std::any_cast<const char*>(it->second));
-                } catch (const std::bad_any_cast&) {
-                }
-            }
-
-            if constexpr (std::is_integral_v<T>) {
-                if (it->second.type() == typeid(int)) {
-                    return static_cast<T>(std::any_cast<int>(it->second));
-                }
-                if (it->second.type() == typeid(unsigned int)) {
-                    return static_cast<T>(std::any_cast<unsigned int>(it->second));
-                }
-                if (it->second.type() == typeid(long)) {
-                    return static_cast<T>(std::any_cast<long>(it->second));
-                }
-                if (it->second.type() == typeid(unsigned long)) {
-                    return static_cast<T>(std::any_cast<unsigned long>(it->second));
-                }
-                if (it->second.type() == typeid(int64_t)) {
-                    return static_cast<T>(std::any_cast<int64_t>(it->second));
-                }
-                if (it->second.type() == typeid(uint64_t)) {
-                    return static_cast<T>(std::any_cast<uint64_t>(it->second));
-                }
-            }
-        }
-
-        return std::nullopt;
+        return safe_any_cast<T>(it->second);
     }
 };
 

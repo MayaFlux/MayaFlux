@@ -314,7 +314,7 @@ private:
         auto param = get_parameter(name);
         if (param.has_value()) {
             try {
-                return std::any_cast<T>(param);
+                return safe_any_cast<T>(param);
             } catch (const std::bad_any_cast&) {
                 std::cerr << "Warning: Parameter '" << name << "' has incorrect type, using default" << std::endl;
             }

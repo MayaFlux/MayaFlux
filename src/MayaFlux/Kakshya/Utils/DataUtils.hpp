@@ -317,7 +317,7 @@ std::optional<T> get_metadata_value(const std::unordered_map<std::string, std::a
     auto it = metadata.find(key);
     if (it != metadata.end()) {
         try {
-            return std::any_cast<T>(it->second);
+            return safe_any_cast<T>(it->second);
         } catch (const std::bad_any_cast&) {
             return std::nullopt;
         }

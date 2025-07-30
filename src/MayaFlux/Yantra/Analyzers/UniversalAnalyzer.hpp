@@ -210,16 +210,7 @@ protected:
     {
         auto param = get_parameter("method");
         if (param.has_value()) {
-            try {
-                return std::any_cast<std::string>(param);
-            } catch (const std::bad_any_cast&) {
-                if (param.type() == typeid(const char*)) {
-                    return std::any_cast<const char*>(param);
-                } else if (param.type() == typeid(char*)) {
-                    return std::any_cast<char*>(param);
-                }
-                std::cerr << "Warning: 'method' parameter is not a string type" << std::endl;
-            }
+            return safe_any_cast<std::string>(param).value_or("default");
         }
         return "default";
     }

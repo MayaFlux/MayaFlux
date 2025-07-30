@@ -8,11 +8,11 @@ ContainerExtractor::ContainerExtractor()
     : m_contiguous_processor(std::make_shared<Kakshya::ContiguousAccessProcessor>())
     , m_region_processor(std::make_shared<Kakshya::RegionOrganizationProcessor>(m_container))
 {
-    set_parameter("channel_index", 0u);
-    set_parameter("frame_index", 0u);
+    set_parameter("channel_index", 0U);
+    set_parameter("frame_index", 0U);
     set_parameter("slice_start", std::vector<uint64_t> {});
     set_parameter("slice_end", std::vector<uint64_t> {});
-    set_parameter("subsample_factor", 1u);
+    set_parameter("subsample_factor", 1U);
     set_parameter("cache_enabled", true);
 }
 
@@ -235,7 +235,7 @@ ExtractorOutput ContainerExtractor::extract_parametric_region_data(
     Kakshya::Region region;
 
     if (extraction_type == "channel") {
-        const auto channel_index = std::any_cast<uint32_t>(get_parameter("channel_index"));
+        const auto channel_index = safe_any_cast_or_throw<uint32_t>(get_parameter("channel_index"));
 
         for (size_t i = 0; i < dimensions.size(); ++i) {
             if (dimensions[i].role == Kakshya::DataDimension::Role::CHANNEL) {
@@ -251,7 +251,7 @@ ExtractorOutput ContainerExtractor::extract_parametric_region_data(
     }
 
     else if (extraction_type == "frame") {
-        const auto frame_index = std::any_cast<uint32_t>(get_parameter("frame_index"));
+        const auto frame_index = safe_any_cast_or_throw<uint32_t>(get_parameter("frame_index"));
 
         if (dimensions.empty() || frame_index >= dimensions[0].size) {
             throw std::out_of_range("Frame index out of range");
@@ -262,8 +262,8 @@ ExtractorOutput ContainerExtractor::extract_parametric_region_data(
     }
 
     else if (extraction_type == "slice") {
-        const auto slice_start = std::any_cast<std::vector<uint64_t>>(get_parameter("slice_start"));
-        const auto slice_end = std::any_cast<std::vector<uint64_t>>(get_parameter("slice_end"));
+        const auto slice_start = safe_any_cast_or_throw<std::vector<uint64_t>>(get_parameter("slice_start"));
+        const auto slice_end = safe_any_cast_or_throw<std::vector<uint64_t>>(get_parameter("slice_end"));
 
         if (slice_start.empty() || slice_end.empty()) {
             throw std::invalid_argument("Slice coordinates cannot be empty");

@@ -400,7 +400,7 @@ private:
         auto it = m_result_cache.find(key);
         if (it != m_result_cache.end()) {
             try {
-                return std::any_cast<T>(it->second);
+                return safe_any_cast<T>(it->second);
             } catch (const std::bad_any_cast&) {
                 return std::nullopt;
             }

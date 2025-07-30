@@ -135,7 +135,7 @@ std::optional<T> get_region_attribute(const Region& region, const std::string& k
     auto it = region.attributes.find(key);
     if (it != region.attributes.end()) {
         try {
-            return std::any_cast<T>(it->second);
+            return safe_any_cast<T>(it->second);
         } catch (const std::bad_any_cast&) {
             return std::nullopt;
         }

@@ -39,11 +39,7 @@ std::string UniversalExtractor::get_extraction_method() const
 {
     auto param = get_parameter("method");
     if (param.has_value()) {
-        try {
-            return std::any_cast<std::string>(param);
-        } catch (const std::bad_any_cast&) {
-            return "default";
-        }
+        return safe_any_cast<std::string>(param).value_or("default");
     }
     return "default";
 }

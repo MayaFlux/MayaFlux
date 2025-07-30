@@ -108,7 +108,9 @@ TEST_F(RegionTest, AttributeManagement)
     EXPECT_FALSE(missing.has_value());
 
     auto wrong_type = region.get_attribute<int>("gain");
-    EXPECT_FALSE(wrong_type.has_value());
+    // Implicit conversion
+    EXPECT_TRUE(wrong_type.has_value());
+    EXPECT_EQ(wrong_type.value(), 0);
 
     region.set_label("convenience_label");
     EXPECT_EQ(region.get_label(), "convenience_label");
@@ -447,7 +449,8 @@ TEST_F(RegionSegmentTest, ProcessingMetadata)
     EXPECT_FALSE(missing.has_value());
 
     auto wrong_type = segment.get_processing_metadata<int>("gain");
-    EXPECT_FALSE(wrong_type.has_value());
+    EXPECT_TRUE(wrong_type.has_value());
+    EXPECT_EQ(wrong_type.value(), 0);
 
     segment.set_processing_metadata("gain", 1.2);
     auto new_gain = segment.get_processing_metadata<double>("gain");
@@ -578,7 +581,8 @@ TEST_F(RegionGroupTest, AttributeManagement)
     EXPECT_FALSE(missing.has_value());
 
     auto wrong_type = group.get_attribute<int>("tempo");
-    EXPECT_FALSE(wrong_type.has_value());
+    EXPECT_TRUE(wrong_type.has_value());
+    EXPECT_EQ(wrong_type.value(), 120);
 
     group.set_attribute("tempo", 140.0);
     auto new_tempo = group.get_attribute<double>("tempo");

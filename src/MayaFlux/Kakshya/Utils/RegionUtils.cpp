@@ -38,7 +38,7 @@ std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const 
                 try {
                     if (it->second.type() == value.type()) {
                         if (value.type() == typeid(std::string)) {
-                            return std::any_cast<std::string>(it->second) == std::any_cast<std::string>(value);
+                            return safe_any_cast_or_throw<std::string>(it->second) == safe_any_cast_or_throw<std::string>(value);
                         }
                     }
                 } catch (const std::bad_any_cast&) {

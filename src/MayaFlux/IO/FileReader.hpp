@@ -42,7 +42,7 @@ struct FileMetadata {
         auto it = attributes.find(key);
         if (it != attributes.end()) {
             try {
-                return std::any_cast<T>(it->second);
+                return safe_any_cast<T>(it->second);
             } catch (const std::bad_any_cast&) {
                 return std::nullopt;
             }
