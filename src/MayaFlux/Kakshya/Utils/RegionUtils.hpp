@@ -3,7 +3,6 @@
 #include "CoordUtils.hpp"
 
 #include "MayaFlux/Kakshya/OrganizedRegion.hpp"
-#include "MayaFlux/Kakshya/TypeSpec.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -273,7 +272,7 @@ void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, c
  * @return Vector of DataVariants, one per region.
  */
 std::vector<DataVariant> extract_multi_region_data(const std::vector<Region>& regions,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Calculate output region bounds from current position and shape.
@@ -291,14 +290,14 @@ Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
  * @return True if access is contiguous, false otherwise.
  */
 bool is_region_access_contiguous(const Region& region,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract all regions from container's region groups.
  * @param container Container to extract regions from.
  * @return Vector of structured region information.
  */
-std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(std::shared_ptr<SignalSourceContainer> container);
+std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract data from all regions in a group.
@@ -307,7 +306,7 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
  * @return Vector of DataVariants, one per region.
  */
 std::vector<DataVariant> extract_group_data(const RegionGroup& group,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract bounds information from region group.
@@ -326,7 +325,7 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
  * @return Vector of DataVariants, one per segment.
  */
 std::vector<DataVariant> extract_segments_data(const std::vector<RegionSegment>& segments,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract metadata from region segments.

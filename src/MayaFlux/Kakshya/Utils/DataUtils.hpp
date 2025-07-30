@@ -1,6 +1,5 @@
 #pragma once
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
-#include "MayaFlux/Kakshya/TypeSpec.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -339,7 +338,7 @@ int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDim
  * @param frame_index Index of the frame to extract.
  * @return DataVariant containing frame data.
  */
-DataVariant extract_frame_data(std::shared_ptr<SignalSourceContainer> container,
+DataVariant extract_frame_data(const std::shared_ptr<SignalSourceContainer>& container,
     u_int64_t frame_index);
 
 /**
@@ -349,7 +348,7 @@ DataVariant extract_frame_data(std::shared_ptr<SignalSourceContainer> container,
  * @param slice_end Ending coordinates for each dimension.
  * @return DataVariant containing sliced data.
  */
-DataVariant extract_slice_data(std::shared_ptr<SignalSourceContainer> container,
+DataVariant extract_slice_data(const std::shared_ptr<SignalSourceContainer>& container,
     const std::vector<u_int64_t>& slice_start,
     const std::vector<u_int64_t>& slice_end);
 
@@ -360,7 +359,7 @@ DataVariant extract_slice_data(std::shared_ptr<SignalSourceContainer> container,
  * @param start_offset Optional starting offset.
  * @return DataVariant containing subsampled data.
  */
-DataVariant extract_subsample_data(std::shared_ptr<SignalSourceContainer> container,
+DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>& container,
     u_int32_t subsample_factor,
     u_int64_t start_offset = 0);
 

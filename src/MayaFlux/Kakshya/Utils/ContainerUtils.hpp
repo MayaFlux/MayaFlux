@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/StreamContainer.hpp"
+#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -9,14 +9,14 @@ namespace MayaFlux::Kakshya {
  * @param container Container to analyze.
  * @return Map containing processing state metadata.
  */
-std::unordered_map<std::string, std::any> extract_processing_state_info(std::shared_ptr<SignalSourceContainer> container);
+std::unordered_map<std::string, std::any> extract_processing_state_info(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract processor information from container.
  * @param container Container to analyze.
  * @return Map containing processor metadata.
  */
-std::unordered_map<std::string, std::any> extract_processor_info(std::shared_ptr<SignalSourceContainer> container);
+std::unordered_map<std::string, std::any> extract_processor_info(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Perform a state transition for a ProcessingState, with optional callback.
@@ -34,7 +34,7 @@ bool transition_state(ProcessingState& current_state, ProcessingState new_state,
  * @return Recommended access pattern information.
  */
 std::unordered_map<std::string, std::any> analyze_access_pattern(const Region& region,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract data in interleaved format.
@@ -42,7 +42,7 @@ std::unordered_map<std::string, std::any> analyze_access_pattern(const Region& r
  * @param pattern Interleaving pattern (e.g., which dimensions to interleave).
  * @return DataVariant containing interleaved data.
  */
-DataVariant extract_interleaved_data(std::shared_ptr<SignalSourceContainer> container,
+DataVariant extract_interleaved_data(const std::shared_ptr<SignalSourceContainer>& container,
     const std::vector<size_t>& pattern = {});
 
 /**
@@ -98,7 +98,7 @@ std::vector<std::vector<T>> deinterleave_channels(std::span<const T> interleaved
  * @param channel_index Index of the channel to extract.
  * @return DataVariant containing channel data.
  */
-DataVariant extract_channel_data(std::shared_ptr<SignalSourceContainer> container,
+DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& container,
     u_int32_t channel_index);
 
 /**
@@ -109,7 +109,7 @@ DataVariant extract_channel_data(std::shared_ptr<SignalSourceContainer> containe
  * @throws std::runtime_error if container has no dimensions
  */
 std::pair<std::shared_ptr<SignalSourceContainer>, std::vector<DataDimension>>
-validate_container_for_analysis(std::shared_ptr<SignalSourceContainer> container);
+validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extracts numeric data from container with fallback handling
@@ -117,7 +117,7 @@ validate_container_for_analysis(std::shared_ptr<SignalSourceContainer> container
  * @return Vector of double values from container data
  * @throws std::runtime_error if no numeric data can be extracted
  */
-std::vector<double> extract_numeric_data_from_container(std::shared_ptr<SignalSourceContainer> container);
+std::vector<double> extract_numeric_data_from_container(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Validates numeric data for analysis operations

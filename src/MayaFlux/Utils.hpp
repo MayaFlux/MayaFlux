@@ -19,12 +19,6 @@ enum class distribution {
     // GENDY
 };
 
-enum coefficients {
-    INPUT,
-    OUTPUT,
-    ALL
-};
-
 enum WindowType {
     HANNING,
     HAMMING,

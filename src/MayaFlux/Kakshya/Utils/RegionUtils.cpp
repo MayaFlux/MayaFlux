@@ -21,9 +21,9 @@ void set_region_label(Region& region, const std::string& label)
 std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label)
 {
     std::vector<Region> result;
-    std::copy_if(group.regions.begin(), group.regions.end(), std::back_inserter(result),
-        [&](const Region& pt) {
-            return get_region_label(pt) == label;
+    std::ranges::copy_if(group.regions, std::back_inserter(result),
+        [&label](const Region& region) {
+            return region.get_label() == label;
         });
     return result;
 }
@@ -31,18 +31,26 @@ std::vector<Region> find_regions_with_label(const RegionGroup& group, const std:
 std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const std::string& key, const std::any& value)
 {
     std::vector<Region> result;
-    std::copy_if(group.regions.begin(), group.regions.end(), std::back_inserter(result),
-        [&](const Region& pt) {
-            auto it = pt.attributes.find(key);
-            if (it != pt.attributes.end()) {
-                try {
-                    if (it->second.type() == value.type()) {
-                        if (value.type() == typeid(std::string)) {
-                            return safe_any_cast_or_throw<std::string>(it->second) == safe_any_cast_or_throw<std::string>(value);
-                        }
-                    }
-                } catch (const std::bad_any_cast&) {
+    std::ranges::copy_if(group.regions, std::back_inserter(result),
+        [&key, &value](const Region& region) {
+            auto attr_it = region.attributes.find(key);
+            if (attr_it != region.attributes.end()) {
+                if (value.type() == typeid(std::string)) {
+                    auto region_value = get_region_attribute<std::string>(region, key);
+                    auto search_value = std::any_cast<std::string>(value);
+                    return region_value.has_value() && *region_value == search_value;
                 }
+                if (value.type() == typeid(double)) {
+                    auto region_value = get_region_attribute<double>(region, key);
+                    auto search_value = std::any_cast<double>(value);
+                    return region_value.has_value() && *region_value == search_value;
+                }
+                if (value.type() == typeid(int)) {
+                    auto region_value = get_region_attribute<int>(region, key);
+                    auto search_value = std::any_cast<int>(value);
+                    return region_value.has_value() && *region_value == search_value;
+                }
+                // Add more types as needed
             }
             return false;
         });
@@ -52,9 +60,9 @@ std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const 
 std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<u_int64_t>& coordinates)
 {
     std::vector<Region> result;
-    std::copy_if(group.regions.begin(), group.regions.end(), std::back_inserter(result),
-        [&](const Region& pt) {
-            return pt.contains(coordinates);
+    std::ranges::copy_if(group.regions, std::back_inserter(result),
+        [&coordinates](const Region& region) {
+            return region.contains(coordinates);
         });
     return result;
 }
@@ -75,7 +83,7 @@ Region scale_region(const Region& region, const std::vector<double>& factors)
     for (size_t i = 0; i < std::min(factors.size(), region.start_coordinates.size()); ++i) {
         u_int64_t center = (region.start_coordinates[i] + region.end_coordinates[i]) / 2;
         u_int64_t half_span = (region.end_coordinates[i] - region.start_coordinates[i]) / 2;
-        u_int64_t new_half_span = static_cast<u_int64_t>(half_span * factors[i]);
+        auto new_half_span = static_cast<u_int64_t>(factors[i] * static_cast<double>(half_span));
         result.start_coordinates[i] = center - new_half_span;
         result.end_coordinates[i] = center + new_half_span;
     }
@@ -88,14 +96,16 @@ Region get_bounding_region(const RegionGroup& group)
         return Region {};
     auto min_coords = group.regions.front().start_coordinates;
     auto max_coords = group.regions.front().end_coordinates;
-    for (const auto& pt : group.regions) {
-        for (size_t i = 0; i < min_coords.size(); ++i) {
-            if (i < pt.start_coordinates.size()) {
-                min_coords[i] = std::min(min_coords[i], pt.start_coordinates[i]);
-                max_coords[i] = std::max(max_coords[i], pt.end_coordinates[i]);
-            }
+
+    for (const auto& region : group.regions) {
+        for (size_t i = 0; i < min_coords.size() && i < region.start_coordinates.size(); ++i) {
+            min_coords[i] = std::min(min_coords[i], region.start_coordinates[i]);
+        }
+        for (size_t i = 0; i < max_coords.size() && i < region.end_coordinates.size(); ++i) {
+            max_coords[i] = std::max(max_coords[i], region.end_coordinates[i]);
         }
     }
+
     Region bounds(min_coords, max_coords);
     set_region_attribute(bounds, "type", std::string("bounding_box"));
     return bounds;
@@ -103,7 +113,7 @@ Region get_bounding_region(const RegionGroup& group)
 
 void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension)
 {
-    std::sort(regions.begin(), regions.end(),
+    std::ranges::sort(regions,
         [dimension](const Region& a, const Region& b) {
             if (dimension < a.start_coordinates.size() && dimension < b.start_coordinates.size())
                 return a.start_coordinates[dimension] < b.start_coordinates[dimension];
@@ -113,7 +123,7 @@ void sort_regions_by_dimension(std::vector<Region>& regions, size_t dimension)
 
 void sort_regions_by_attribute(std::vector<Region>& regions, const std::string& attr_name)
 {
-    std::sort(regions.begin(), regions.end(),
+    std::ranges::sort(regions,
         [&attr_name](const Region& a, const Region& b) {
             auto aval = get_region_attribute<std::string>(a, attr_name);
             auto bval = get_region_attribute<std::string>(b, attr_name);
@@ -128,15 +138,15 @@ void add_reference_region(std::vector<std::pair<std::string, Region>>& refs, con
 
 void remove_reference_region(std::vector<std::pair<std::string, Region>>& refs, const std::string& name)
 {
-    refs.erase(std::remove_if(refs.begin(), refs.end(),
-                   [&](const auto& pair) { return pair.first == name; }),
-        refs.end());
+    auto to_remove = std::ranges::remove_if(refs,
+        [&name](const auto& pair) { return pair.first == name; });
+    refs.erase(to_remove.begin(), to_remove.end());
 }
 
 std::optional<Region> get_reference_region(const std::vector<std::pair<std::string, Region>>& refs, const std::string& name)
 {
-    auto it = std::find_if(refs.begin(), refs.end(),
-        [&](const auto& pair) { return pair.first == name; });
+    auto it = std::ranges::find_if(refs,
+        [&name](const auto& pair) { return pair.first == name; });
     if (it != refs.end())
         return it->second;
     return std::nullopt;
@@ -146,8 +156,9 @@ std::vector<std::pair<std::string, Region>> find_references_in_region(
     const std::vector<std::pair<std::string, Region>>& refs, const Region& region)
 {
     std::vector<std::pair<std::string, Region>> result;
-    std::copy_if(refs.begin(), refs.end(), std::back_inserter(result),
-        [&](const auto& pair) { return region.contains(pair.second.start_coordinates); });
+
+    std::ranges::copy_if(refs, std::back_inserter(result),
+        [&region](const auto& pair) { return region.contains(pair.second.start_coordinates); });
     return result;
 }
 
@@ -170,7 +181,7 @@ void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, c
 }
 
 std::vector<DataVariant> extract_multi_region_data(const std::vector<Region>& regions,
-    std::shared_ptr<SignalSourceContainer> container)
+    const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         throw std::invalid_argument("Container is null");
@@ -179,9 +190,10 @@ std::vector<DataVariant> extract_multi_region_data(const std::vector<Region>& re
     std::vector<DataVariant> results;
     results.reserve(regions.size());
 
-    for (const auto& region : regions) {
-        results.push_back(container->get_region_data(region));
-    }
+    std::ranges::transform(regions, std::back_inserter(results),
+        [&container](const Region& region) {
+            return container->get_region_data(region);
+        });
 
     return results;
 }
@@ -203,11 +215,11 @@ Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
         end_pos.push_back(current_pos[i] + output_shape[i] - 1);
     }
 
-    return Region(current_pos, end_pos);
+    return { current_pos, end_pos };
 }
 
 bool is_region_access_contiguous(const Region& region,
-    std::shared_ptr<SignalSourceContainer> container)
+    const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         return false;
@@ -233,7 +245,7 @@ bool is_region_access_contiguous(const Region& region,
     return false;
 }
 
-std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(std::shared_ptr<SignalSourceContainer> container)
+std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         throw std::invalid_argument("Container is null");
@@ -261,7 +273,7 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
 }
 
 std::vector<DataVariant> extract_group_data(const RegionGroup& group,
-    std::shared_ptr<SignalSourceContainer> container)
+    const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         throw std::invalid_argument("Container is null");
@@ -307,7 +319,7 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
 // ===== SEGMENT UTILITIES =====
 
 std::vector<DataVariant> extract_segments_data(const std::vector<RegionSegment>& segments,
-    std::shared_ptr<SignalSourceContainer> container)
+    const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         throw std::invalid_argument("Container is null");
@@ -316,9 +328,10 @@ std::vector<DataVariant> extract_segments_data(const std::vector<RegionSegment>&
     std::vector<DataVariant> results;
     results.reserve(segments.size());
 
-    for (const auto& segment : segments) {
-        results.push_back(container->get_region_data(segment.source_region));
-    }
+    std::ranges::transform(segments, std::back_inserter(results),
+        [&container](const RegionSegment& segment) {
+            return container->get_region_data(segment.source_region);
+        });
 
     return results;
 }

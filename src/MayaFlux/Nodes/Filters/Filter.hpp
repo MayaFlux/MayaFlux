@@ -4,6 +4,12 @@
 
 namespace MayaFlux::Nodes::Filters {
 
+enum coefficients {
+    INPUT,
+    OUTPUT,
+    ALL
+};
+
 /**
  * @class FilterContext
  * @brief Specialized context for filter node callbacks
@@ -185,7 +191,7 @@ public:
      * Provides a flexible way to update filter coefficients, allowing
      * dynamic modification of filter characteristics during processing.
      */
-    void set_coefs(const std::vector<double>& new_coefs, Utils::coefficients type = Utils::coefficients::ALL);
+    void set_coefs(const std::vector<double>& new_coefs, coefficients type = coefficients::ALL);
 
     /**
      * @brief Updates coefficients from another node's output
@@ -199,7 +205,7 @@ public:
      * the behavior of another - perfect for generative systems where parameters
      * evolve based on the system's own output.
      */
-    void update_coefs_from_node(int lenght, std::shared_ptr<Node> source, Utils::coefficients type = Utils::coefficients::ALL);
+    void update_coefs_from_node(int lenght, std::shared_ptr<Node> source, coefficients type = coefficients::ALL);
 
     /**
      * @brief Updates coefficients from the filter's own input
@@ -211,7 +217,7 @@ public:
      * emergent behaviors and feedback systems where the signal's own properties
      * determine how it will be processed, leading to evolving, non-linear responses.
      */
-    void update_coef_from_input(int lenght, Utils::coefficients type = Utils::coefficients::ALL);
+    void update_coef_from_input(int lenght, coefficients type = coefficients::ALL);
 
     /**
      * @brief Modifies a specific coefficient
@@ -222,7 +228,7 @@ public:
      * Allows precise control over individual coefficients, useful for
      * fine-tuning filter behavior or implementing parameter automation.
      */
-    void add_coef(int index, double value, Utils::coefficients type = Utils::coefficients::ALL);
+    void add_coef(int index, double value, coefficients type = coefficients::ALL);
 
     /**
      * @brief Resets the filter's internal state
@@ -299,7 +305,7 @@ public:
      * Scales coefficients to ensure a[0] = 1.0 and/or maintain consistent
      * gain at DC or Nyquist, depending on the filter type.
      */
-    void normalize_coefficients(Utils::coefficients type = Utils::coefficients::ALL);
+    void normalize_coefficients(coefficients type = coefficients::ALL);
 
     /**
      * @brief Calculates the complex frequency response at a specific frequency
