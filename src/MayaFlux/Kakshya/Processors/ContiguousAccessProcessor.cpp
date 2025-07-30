@@ -2,6 +2,8 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 #include "format"
 
 namespace MayaFlux::Kakshya {
@@ -23,16 +25,16 @@ void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer>
 
         std::cout << std::format("ContiguousAccessProcessor attached: {} dimensions, {} total elements",
             m_dimensions.size(), m_total_elements)
-                  << std::endl;
+                  << '\n';
 
     } catch (const std::exception& e) {
-        std::cerr << "Failed to attach processor: " << e.what() << std::endl;
+        std::cerr << "Failed to attach processor: " << e.what() << '\n';
         m_prepared = false;
         throw;
     }
 }
 
-void ContiguousAccessProcessor::store_metadata(std::shared_ptr<SignalSourceContainer> container)
+void ContiguousAccessProcessor::store_metadata(const std::shared_ptr<SignalSourceContainer>& container)
 {
     m_dimensions = container->get_dimensions();
     m_memory_layout = container->get_memory_layout();
@@ -65,14 +67,14 @@ void ContiguousAccessProcessor::store_metadata(std::shared_ptr<SignalSourceConta
     }
 }
 
-void ContiguousAccessProcessor::validate_container(std::shared_ptr<SignalSourceContainer> container)
+void ContiguousAccessProcessor::validate_container(const std::shared_ptr<SignalSourceContainer>& /*container*/)
 {
     if (m_dimensions.empty()) {
         throw std::runtime_error("Container has no dimensions");
     }
 
     if (m_total_elements == 0) {
-        std::cerr << "Warning: Container has no data elements" << std::endl;
+        std::cerr << "Warning: Container has no data elements" << '\n';
     }
 
     if (m_output_shape.size() != m_dimensions.size()) {
@@ -94,7 +96,7 @@ void ContiguousAccessProcessor::validate_container(std::shared_ptr<SignalSourceC
     }
 }
 
-void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer> container)
+void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer> /*container*/)
 {
     m_source_container_weak.reset();
     m_dimensions.clear();
@@ -106,13 +108,13 @@ void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer>
 void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> container)
 {
     if (!m_prepared) {
-        std::cerr << "ContiguousAccessProcessor not prepared" << std::endl;
+        std::cerr << "ContiguousAccessProcessor not prepared" << '\n';
         return;
     }
 
     auto source_container = m_source_container_weak.lock();
     if (!source_container || source_container.get() != container.get()) {
-        std::cerr << "Container mismatch or expired" << std::endl;
+        std::cerr << "Container mismatch or expired" << '\n';
         return;
     }
 
@@ -147,7 +149,7 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
         container->update_processing_state(ProcessingState::PROCESSED);
 
     } catch (const std::exception& e) {
-        std::cerr << "Error during processing: " << e.what() << std::endl;
+        std::cerr << "Error during processing: " << e.what() << '\n';
         container->update_processing_state(ProcessingState::ERROR);
     }
 

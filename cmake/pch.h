@@ -126,7 +126,6 @@ CastResult<To> try_convert(const From& value)
 {
     CastResult<To> result;
 
-    // Early return for unsupported target types
     if constexpr (!ArithmeticData<To> && !ComplexData<To> && !StringData<To>) {
         result.error = "Unsupported target type";
         return result;
@@ -164,7 +163,6 @@ CastResult<T> safe_any_cast(const std::any& any_val)
         return result;
     }
 
-    // Direct match
     if (any_val.type() == typeid(T)) {
         try {
             result.value = std::any_cast<T>(any_val);
@@ -174,13 +172,11 @@ CastResult<T> safe_any_cast(const std::any& any_val)
         return result;
     }
 
-    // Only try conversions for supported target types
     if constexpr (!ArithmeticData<T> && !ComplexData<T> && !StringData<T>) {
         result.error = "Unsupported target type for conversion";
         return result;
     }
 
-    // Only try arithmetic conversions if target is arithmetic
     if constexpr (ArithmeticData<T>) {
         if (any_val.type() == typeid(int)) {
             return try_convert<T>(std::any_cast<int>(any_val));
@@ -213,7 +209,6 @@ CastResult<T> safe_any_cast(const std::any& any_val)
         }
     }
 
-    // Only try complex conversions if target is complex
     if constexpr (ComplexData<T>) {
         if (any_val.type() == typeid(std::complex<float>)) {
             return try_convert<T>(std::any_cast<std::complex<float>>(any_val));
@@ -230,7 +225,6 @@ CastResult<T> safe_any_cast(const std::any& any_val)
     return result;
 }
 
-// Convenience functions
 template <typename T>
 T safe_any_cast_or_throw(const std::any& any_val)
 {
@@ -254,7 +248,6 @@ struct TypeHandler {
     static constexpr const char* name = "unsupported";
 };
 
-// Core supported types
 template <>
 struct TypeHandler<float> {
     static constexpr bool is_supported = true;
@@ -283,7 +276,6 @@ struct TypeHandler<std::complex<double>> {
     using processing_type = std::complex<double>;
 };
 
-// Integer types commonly used in your system
 template <>
 struct TypeHandler<int> {
     static constexpr bool is_supported = true;

@@ -1,6 +1,8 @@
 #include "ContainerExtractor.hpp"
 
 #include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -128,14 +130,14 @@ ExtractorOutput ContainerExtractor::extract_impl(std::shared_ptr<Kakshya::Signal
 
     case ContainerExtractionMethod::REGION_DATA:
     case ContainerExtractionMethod::ALL_REGIONS:
-        result = create_typed_output(Kakshya::extract_all_regions_info(container));
+        result = create_typed_output(extract_all_regions(container));
         break;
 
     case ContainerExtractionMethod::PROCESSING_STATE:
-        result = create_typed_output(Kakshya::extract_processing_state_info(container));
+        result = create_typed_output(extract_processing_state(container));
         break;
     case ContainerExtractionMethod::PROCESSOR_INFO:
-        result = create_typed_output(Kakshya::extract_processor_info(container));
+        result = create_typed_output(extract_processing_state(container));
         break;
 
     default:
@@ -159,7 +161,7 @@ ExtractorOutput ContainerExtractor::extract_impl(const Kakshya::Region& region)
     case ContainerExtractionMethod::REGION_DATA:
         return create_typed_output(get_context_container()->get_region_data(region));
     case ContainerExtractionMethod::REGION_BOUNDS:
-        return create_typed_output(Kakshya::extract_region_bounds_info(region));
+        return create_typed_output(extract_region_bounds(region));
     case ContainerExtractionMethod::REGION_METADATA:
         return create_typed_output(region.attributes);
     default:
@@ -174,9 +176,9 @@ ExtractorOutput ContainerExtractor::extract_impl(const Kakshya::RegionGroup& gro
 
     switch (extraction_method) {
     case ContainerExtractionMethod::REGION_DATA:
-        return create_typed_output(Kakshya::extract_group_data(group, get_context_container()));
+        return create_typed_output(extract_group_data(group, get_context_container()));
     case ContainerExtractionMethod::REGION_BOUNDS:
-        return create_typed_output(Kakshya::extract_group_bounds_info(group));
+        return create_typed_output(extract_group_bounds(group));
     case ContainerExtractionMethod::REGION_METADATA:
         return extract_group_metadata(group);
     case ContainerExtractionMethod::ALL_REGIONS:
