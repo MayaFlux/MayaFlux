@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
-#include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 #include "MayaFlux/Kakshya/OrganizedRegion.hpp"
 #include "MayaFlux/Kakshya/RegionCacheManager.hpp"
 
@@ -53,7 +52,7 @@ public:
      * @brief Query if the processor is currently performing processing.
      * @return true if processing is in progress, false otherwise.
      */
-    bool is_processing() const override { return m_is_processing.load(); }
+    [[nodiscard]] bool is_processing() const override { return m_is_processing.load(); }
 
     /**
      * @brief Set the maximum cache size for regions (in elements).
@@ -87,7 +86,7 @@ public:
      * @brief Get the current processing position (N-dimensional coordinates).
      * @return Reference to the current position vector.
      */
-    inline const std::vector<u_int64_t>& get_current_position() const
+    [[nodiscard]] inline const std::vector<u_int64_t>& get_current_position() const
     {
         return m_current_position;
     }
@@ -135,7 +134,7 @@ protected:
      * @param container The container providing the data.
      */
     virtual void cache_region_if_needed(const RegionSegment& segment,
-        std::shared_ptr<SignalSourceContainer> container);
+        const std::shared_ptr<SignalSourceContainer>& container);
 
     /**
      * @brief Advance position according to memory layout and looping.

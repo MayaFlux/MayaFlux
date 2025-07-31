@@ -2,6 +2,8 @@
 
 #include "Region.hpp"
 
+#include <utility>
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -13,7 +15,7 @@ namespace MayaFlux::Kakshya {
  */
 struct OrganizedRegion {
     std::string group_name; ///< Name of the region group
-    size_t region_index; ///< Index within the group
+    size_t region_index {}; ///< Index within the group
     std::vector<RegionSegment> segments; ///< Audio segments in this region
     std::unordered_map<std::string, std::any> attributes; ///< Extensible metadata
     RegionTransition transition_type = RegionTransition::IMMEDIATE; ///< Transition to next region
@@ -32,8 +34,8 @@ struct OrganizedRegion {
 
     OrganizedRegion() = default;
 
-    OrganizedRegion(const std::string& name, size_t index)
-        : group_name(name)
+    OrganizedRegion(std::string name, size_t index)
+        : group_name(std::move(name))
         , region_index(index)
     {
     }
@@ -103,7 +105,7 @@ struct OrganizedRegion {
         auto it = attributes.find(key);
         if (it != attributes.end()) {
             try {
-                return std::any_cast<T>(it->second);
+                return safe_any_cast<T>(it->second);
             } catch (const std::bad_any_cast&) {
                 return std::nullopt;
             }

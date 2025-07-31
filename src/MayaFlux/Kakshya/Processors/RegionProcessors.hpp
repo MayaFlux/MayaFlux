@@ -40,7 +40,7 @@ public:
      * Must be implemented to define region logic for the container.
      * @param container The signal container to organize.
      */
-    virtual void organize_container_data(std::shared_ptr<SignalSourceContainer> container) override;
+    void organize_container_data(std::shared_ptr<SignalSourceContainer> container) override;
 
     /**
      * @brief Processes audio data according to the current region organization.
@@ -122,7 +122,7 @@ protected:
      * @param output_data Output data variant to fill.
      * @param output_shape Shape of the output data.
      */
-    virtual void process_organized_regions(std::shared_ptr<SignalSourceContainer> container,
+    virtual void process_organized_regions(const std::shared_ptr<SignalSourceContainer>& container,
         DataVariant& output_data,
         const std::vector<u_int64_t>& output_shape);
 
@@ -137,7 +137,7 @@ protected:
      */
     virtual void process_region_segment(const OrganizedRegion& region,
         const RegionSegment& segment,
-        std::shared_ptr<SignalSourceContainer> container,
+        const std::shared_ptr<SignalSourceContainer>& container,
         DataVariant& output_data,
         const std::vector<u_int64_t>& output_offset,
         const std::vector<u_int64_t>& output_shape);
@@ -152,7 +152,7 @@ protected:
      */
     virtual void apply_region_transition(const OrganizedRegion& current_region,
         const OrganizedRegion& next_region,
-        std::shared_ptr<SignalSourceContainer> container,
+        const std::shared_ptr<SignalSourceContainer>& container,
         DataVariant& output_data,
         const std::vector<u_int64_t>& transition_shape);
 
@@ -177,7 +177,7 @@ private:
      * @param container The signal container.
      * @param group The region group to organize.
      */
-    void organize_group(std::shared_ptr<SignalSourceContainer> container,
+    void organize_group(const std::shared_ptr<SignalSourceContainer>& container,
         const RegionGroup& group);
 
     /**
@@ -215,7 +215,7 @@ public:
      * @brief Construct a dynamic region processor for a given container.
      * @param container The signal container to process.
      */
-    DynamicRegionProcessor(std::shared_ptr<SignalSourceContainer> container);
+    DynamicRegionProcessor(const std::shared_ptr<SignalSourceContainer>& container);
 
     /**
      * @brief Sets the callback for region reorganization.
@@ -253,7 +253,7 @@ private:
      * @param container The signal container to check.
      * @return True if reorganization is needed.
      */
-    bool should_reorganize(std::shared_ptr<SignalSourceContainer> container);
+    bool should_reorganize(const std::shared_ptr<SignalSourceContainer>& container);
 
     RegionOrganizer m_reorganizer_callback; ///< Callback for reorganization
 

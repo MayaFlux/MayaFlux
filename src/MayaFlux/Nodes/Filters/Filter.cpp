@@ -44,11 +44,11 @@ void Filter::initialize_shift_buffers()
     m_output_history.resize(m_shift_config.second + 1, 0.0f);
 }
 
-void Filter::set_coefs(const std::vector<double>& new_coefs, Utils::coefficients type)
+void Filter::set_coefs(const std::vector<double>& new_coefs, coefficients type)
 {
-    if (type == Utils::coefficients::OUTPUT) {
+    if (type == coefficients::OUTPUT) {
         setACoefficients(new_coefs);
-    } else if (type == Utils::coefficients::INPUT) {
+    } else if (type == coefficients::INPUT) {
         setBCoefficients(new_coefs);
     } else {
         setACoefficients(new_coefs);
@@ -103,13 +103,13 @@ void Filter::setBCoefficients(const std::vector<double>& new_coefs)
     }
 }
 
-void Filter::update_coefs_from_node(int length, std::shared_ptr<Node> source, Utils::coefficients type)
+void Filter::update_coefs_from_node(int length, std::shared_ptr<Node> source, coefficients type)
 {
     std::vector<double> samples = source->process_batch(length);
     set_coefs(samples, type);
 }
 
-void Filter::update_coef_from_input(int length, Utils::coefficients type)
+void Filter::update_coef_from_input(int length, coefficients type)
 {
     if (m_input_node) {
         std::vector<double> samples = m_input_node->process_batch(length);
@@ -127,13 +127,13 @@ void Filter::add_coef_internal(u_int64_t index, double value, std::vector<double
     buffer.at(index) = value;
 }
 
-void Filter::add_coef(int index, double value, Utils::coefficients type)
+void Filter::add_coef(int index, double value, coefficients type)
 {
     switch (type) {
-    case Utils::coefficients::INPUT:
+    case coefficients::INPUT:
         add_coef_internal(index, value, m_coef_a);
         break;
-    case Utils::coefficients::OUTPUT:
+    case coefficients::OUTPUT:
         add_coef_internal(index, value, m_coef_b);
         break;
     default:
@@ -149,9 +149,9 @@ void Filter::reset()
     std::fill(m_output_history.begin(), m_output_history.end(), 0.0);
 }
 
-void Filter::normalize_coefficients(Utils::coefficients type)
+void Filter::normalize_coefficients(coefficients type)
 {
-    if (type == Utils::coefficients::OUTPUT || type == Utils::coefficients::ALL) {
+    if (type == coefficients::OUTPUT || type == coefficients::ALL) {
         if (!m_coef_a.empty() && m_coef_a[0] != 0.0) {
             double a0 = m_coef_a[0];
             for (auto& coef : m_coef_a) {
@@ -160,7 +160,7 @@ void Filter::normalize_coefficients(Utils::coefficients type)
         }
     }
 
-    if (type == Utils::coefficients::INPUT || type == Utils::coefficients::ALL) {
+    if (type == coefficients::INPUT || type == coefficients::ALL) {
         if (!m_coef_b.empty()) {
             double max_coef = 0.0;
             for (const auto& coef : m_coef_b) {

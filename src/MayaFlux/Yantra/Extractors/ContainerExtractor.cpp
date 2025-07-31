@@ -1,6 +1,8 @@
 #include "ContainerExtractor.hpp"
 
 #include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -8,11 +10,11 @@ ContainerExtractor::ContainerExtractor()
     : m_contiguous_processor(std::make_shared<Kakshya::ContiguousAccessProcessor>())
     , m_region_processor(std::make_shared<Kakshya::RegionOrganizationProcessor>(m_container))
 {
-    set_parameter("channel_index", 0u);
-    set_parameter("frame_index", 0u);
+    set_parameter("channel_index", 0U);
+    set_parameter("frame_index", 0U);
     set_parameter("slice_start", std::vector<uint64_t> {});
     set_parameter("slice_end", std::vector<uint64_t> {});
-    set_parameter("subsample_factor", 1u);
+    set_parameter("subsample_factor", 1U);
     set_parameter("cache_enabled", true);
 }
 
@@ -128,14 +130,14 @@ ExtractorOutput ContainerExtractor::extract_impl(std::shared_ptr<Kakshya::Signal
 
     case ContainerExtractionMethod::REGION_DATA:
     case ContainerExtractionMethod::ALL_REGIONS:
-        result = create_typed_output(Kakshya::extract_all_regions_info(container));
+        result = create_typed_output(extract_all_regions(container));
         break;
 
     case ContainerExtractionMethod::PROCESSING_STATE:
-        result = create_typed_output(Kakshya::extract_processing_state_info(container));
+        result = create_typed_output(extract_processing_state(container));
         break;
     case ContainerExtractionMethod::PROCESSOR_INFO:
-        result = create_typed_output(Kakshya::extract_processor_info(container));
+        result = create_typed_output(extract_processing_state(container));
         break;
 
     default:
@@ -159,7 +161,7 @@ ExtractorOutput ContainerExtractor::extract_impl(const Kakshya::Region& region)
     case ContainerExtractionMethod::REGION_DATA:
         return create_typed_output(get_context_container()->get_region_data(region));
     case ContainerExtractionMethod::REGION_BOUNDS:
-        return create_typed_output(Kakshya::extract_region_bounds_info(region));
+        return create_typed_output(extract_region_bounds(region));
     case ContainerExtractionMethod::REGION_METADATA:
         return create_typed_output(region.attributes);
     default:
@@ -174,9 +176,9 @@ ExtractorOutput ContainerExtractor::extract_impl(const Kakshya::RegionGroup& gro
 
     switch (extraction_method) {
     case ContainerExtractionMethod::REGION_DATA:
-        return create_typed_output(Kakshya::extract_group_data(group, get_context_container()));
+        return create_typed_output(extract_group_data(group, get_context_container()));
     case ContainerExtractionMethod::REGION_BOUNDS:
-        return create_typed_output(Kakshya::extract_group_bounds_info(group));
+        return create_typed_output(extract_group_bounds(group));
     case ContainerExtractionMethod::REGION_METADATA:
         return extract_group_metadata(group);
     case ContainerExtractionMethod::ALL_REGIONS:
@@ -235,7 +237,7 @@ ExtractorOutput ContainerExtractor::extract_parametric_region_data(
     Kakshya::Region region;
 
     if (extraction_type == "channel") {
-        const auto channel_index = std::any_cast<uint32_t>(get_parameter("channel_index"));
+        const auto channel_index = safe_any_cast_or_throw<uint32_t>(get_parameter("channel_index"));
 
         for (size_t i = 0; i < dimensions.size(); ++i) {
             if (dimensions[i].role == Kakshya::DataDimension::Role::CHANNEL) {
@@ -251,7 +253,7 @@ ExtractorOutput ContainerExtractor::extract_parametric_region_data(
     }
 
     else if (extraction_type == "frame") {
-        const auto frame_index = std::any_cast<uint32_t>(get_parameter("frame_index"));
+        const auto frame_index = safe_any_cast_or_throw<uint32_t>(get_parameter("frame_index"));
 
         if (dimensions.empty() || frame_index >= dimensions[0].size) {
             throw std::out_of_range("Frame index out of range");
@@ -262,8 +264,8 @@ ExtractorOutput ContainerExtractor::extract_parametric_region_data(
     }
 
     else if (extraction_type == "slice") {
-        const auto slice_start = std::any_cast<std::vector<uint64_t>>(get_parameter("slice_start"));
-        const auto slice_end = std::any_cast<std::vector<uint64_t>>(get_parameter("slice_end"));
+        const auto slice_start = safe_any_cast_or_throw<std::vector<uint64_t>>(get_parameter("slice_start"));
+        const auto slice_end = safe_any_cast_or_throw<std::vector<uint64_t>>(get_parameter("slice_end"));
 
         if (slice_start.empty() || slice_end.empty()) {
             throw std::invalid_argument("Slice coordinates cannot be empty");

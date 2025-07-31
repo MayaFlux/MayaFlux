@@ -99,7 +99,7 @@ public:
         }
 
         try {
-            return std::any_cast<OutputType>(current);
+            return safe_any_cast<OutputType>(current);
         } catch (const std::bad_any_cast&) {
             throw std::runtime_error("Type mismatch in operation chain result");
         }

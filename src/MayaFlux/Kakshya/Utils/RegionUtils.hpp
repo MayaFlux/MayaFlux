@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoordUtils.hpp"
+
 #include "MayaFlux/Kakshya/OrganizedRegion.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -31,15 +32,15 @@ std::vector<T> extract_region_data(std::span<const T>& source_data, const Region
     while (true) {
         u_int64_t linear_index = coordinates_to_linear(current, dimensions);
         result.push_back(source_data[linear_index]);
+
         bool done = true;
         for (size_t dim = 0; dim < current.size(); ++dim) {
             if (current[dim] < region.end_coordinates[dim]) {
                 current[dim]++;
                 done = false;
                 break;
-            } else {
-                current[dim] = region.start_coordinates[dim];
             }
+            current[dim] = region.start_coordinates[dim];
         }
         if (done)
             break;
@@ -47,8 +48,19 @@ std::vector<T> extract_region_data(std::span<const T>& source_data, const Region
     return result;
 }
 
-template <typename T>
-std::vector<std::vector<T>> extract_group_data(std::span<const T>& source_data, const RegionGroup& group, const std::vector<DataDimension>& dimensions)
+/**
+ * @brief Extract multiple regions efficiently using ranges
+ * @tparam T Data type (must satisfy ProcessableData)
+ * @param source_data Source data span
+ * @param group Region group to extract
+ * @param dimensions Dimension descriptors
+ * @return Vector of vectors containing extracted data
+ */
+template <ProcessableData T>
+constexpr std::vector<std::vector<T>> extract_group_data(
+    std::span<const T> source_data,
+    const RegionGroup& group,
+    std::span<const DataDimension> dimensions)
 {
     std::vector<std::vector<T>> result;
     for (const auto& region : group.regions) {
@@ -94,9 +106,8 @@ void set_or_update_region_data(std::span<T> dest_data, std::span<const T> source
                 current[dim]++;
                 done = false;
                 break;
-            } else {
-                current[dim] = region.start_coordinates[dim];
             }
+            current[dim] = region.start_coordinates[dim];
         }
         if (done)
             break;
@@ -123,7 +134,7 @@ std::optional<T> get_region_attribute(const Region& region, const std::string& k
     auto it = region.attributes.find(key);
     if (it != region.attributes.end()) {
         try {
-            return std::any_cast<T>(it->second);
+            return safe_any_cast<T>(it->second);
         } catch (const std::bad_any_cast&) {
             return std::nullopt;
         }
@@ -261,7 +272,7 @@ void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, c
  * @return Vector of DataVariants, one per region.
  */
 std::vector<DataVariant> extract_multi_region_data(const std::vector<Region>& regions,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Calculate output region bounds from current position and shape.
@@ -279,14 +290,14 @@ Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
  * @return True if access is contiguous, false otherwise.
  */
 bool is_region_access_contiguous(const Region& region,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract all regions from container's region groups.
  * @param container Container to extract regions from.
  * @return Vector of structured region information.
  */
-std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(std::shared_ptr<SignalSourceContainer> container);
+std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract data from all regions in a group.
@@ -295,7 +306,7 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
  * @return Vector of DataVariants, one per region.
  */
 std::vector<DataVariant> extract_group_data(const RegionGroup& group,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract bounds information from region group.
@@ -314,7 +325,7 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
  * @return Vector of DataVariants, one per segment.
  */
 std::vector<DataVariant> extract_segments_data(const std::vector<RegionSegment>& segments,
-    std::shared_ptr<SignalSourceContainer> container);
+    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract metadata from region segments.

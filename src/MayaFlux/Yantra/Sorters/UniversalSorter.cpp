@@ -413,19 +413,7 @@ bool UniversalSorter::check_flow_constraints(const SorterInput& input) const
 
 std::string UniversalSorter::get_sorting_method() const
 {
-    try {
-        return std::any_cast<std::string>(get_parameter("method"));
-    } catch (const std::bad_any_cast&) {
-        try {
-            return std::string(std::any_cast<const char*>(get_parameter("method")));
-        } catch (const std::bad_any_cast&) {
-            return "default";
-        } catch (const std::runtime_error&) {
-            return "default";
-        }
-    } catch (const std::runtime_error&) {
-        return "default";
-    }
+    return safe_any_cast<std::string>(get_parameter("method")).value_or("default");
 }
 
 std::vector<std::string> UniversalSorter::get_methods_for_type_impl(std::type_index type_info) const

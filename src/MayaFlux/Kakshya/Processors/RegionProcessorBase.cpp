@@ -1,4 +1,5 @@
 #include "RegionProcessorBase.hpp"
+#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -23,7 +24,7 @@ void RegionProcessorBase::on_attach(std::shared_ptr<SignalSourceContainer> conta
     container->mark_ready_for_processing(true);
 }
 
-void RegionProcessorBase::on_detach(std::shared_ptr<SignalSourceContainer> container)
+void RegionProcessorBase::on_detach(std::shared_ptr<SignalSourceContainer> /*container*/)
 {
     m_container_weak.reset();
     m_cache_manager.reset();
@@ -31,7 +32,7 @@ void RegionProcessorBase::on_detach(std::shared_ptr<SignalSourceContainer> conta
     m_current_position.clear();
 }
 
-void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, std::shared_ptr<SignalSourceContainer> container)
+void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!m_auto_caching || !m_cache_manager)
         return;
@@ -62,7 +63,7 @@ bool RegionProcessorBase::advance_position(std::vector<u_int64_t>& position, u_i
 
     position[0] += steps;
 
-    if (region && region->looping_enabled && !region->loop_start.empty() && !region->loop_end.empty()) {
+    if ((region != nullptr) && region->looping_enabled && !region->loop_start.empty() && !region->loop_end.empty()) {
         for (size_t dim = 0; dim < std::min(position.size(), region->loop_start.size()); ++dim) {
             if (position[dim] >= region->loop_end[dim]) {
                 position[dim] = region->loop_start[dim] + (position[dim] - region->loop_end[dim]);

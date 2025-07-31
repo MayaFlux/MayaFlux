@@ -149,6 +149,6 @@ std::vector<std::unordered_map<std::string, std::any>> create_dimension_info(con
  * @param container The container to analyze.
  * @return Map containing coordinate mapping metadata.
  */
-std::unordered_map<std::string, std::any> create_coordinate_mapping(std::shared_ptr<SignalSourceContainer> container);
+std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::shared_ptr<SignalSourceContainer>& container);
 
 }

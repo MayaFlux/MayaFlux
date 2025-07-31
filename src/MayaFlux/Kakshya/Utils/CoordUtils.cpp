@@ -85,7 +85,7 @@ std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coord
 
     if (!scale_factors.empty()) {
         for (size_t i = 0; i < coords.size() && i < scale_factors.size(); ++i) {
-            transformed[i] = static_cast<u_int64_t>(coords[i] * scale_factors[i]);
+            transformed[i] = static_cast<u_int64_t>(scale_factors[i] * static_cast<double>(coords[i]));
         }
     }
 
@@ -100,12 +100,12 @@ std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coord
         auto angle_it = rotation_params.find("angle_radians");
         if (angle_it != rotation_params.end()) {
             try {
-                double angle = std::any_cast<double>(angle_it->second);
+                auto angle = safe_any_cast_or_throw<double>(angle_it->second);
                 double cos_a = std::cos(angle);
                 double sin_a = std::sin(angle);
 
-                double x = static_cast<double>(transformed[0]);
-                double y = static_cast<double>(transformed[1]);
+                auto x = static_cast<double>(transformed[0]);
+                auto y = static_cast<double>(transformed[1]);
 
                 transformed[0] = static_cast<u_int64_t>(x * cos_a - y * sin_a);
                 transformed[1] = static_cast<u_int64_t>(x * sin_a + y * cos_a);
@@ -150,10 +150,10 @@ u_int64_t advance_position(u_int64_t current_pos, u_int64_t advance_amount, u_in
         u_int64_t offset = (current_pos < loop_start) ? 0 : (current_pos - loop_start);
         u_int64_t new_offset = (offset + advance_amount) % loop_length;
         return loop_start + new_offset;
-    } else {
-        u_int64_t new_pos = current_pos + advance_amount;
-        return (new_pos > total_size) ? total_size : new_pos;
     }
+
+    u_int64_t new_pos = current_pos + advance_amount;
+    return (new_pos > total_size) ? total_size : new_pos;
 }
 
 u_int64_t time_to_position(double time, double sample_rate)
@@ -182,7 +182,7 @@ u_int64_t calculate_frame_size_for_dimension(const std::vector<DataDimension>& d
 
 // ===== COORDINATE MAPPING =====
 
-std::unordered_map<std::string, std::any> create_coordinate_mapping(std::shared_ptr<SignalSourceContainer> container)
+std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         throw std::invalid_argument("Container is null");

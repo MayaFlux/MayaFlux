@@ -1,7 +1,6 @@
 #include "DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
-
-#include "MayaFlux/Yantra/Analyzers/AnalysisHelpers.hpp"
+#include <ranges>
 
 namespace MayaFlux::Kakshya {
 
@@ -9,14 +8,9 @@ u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
 {
     if (dimensions.empty())
         return 0;
-    for (const auto& d : dimensions)
-        if (d.size == 0)
-            return 0;
 
-    return std::transform_reduce(
-        dimensions.begin(), dimensions.end(),
-        u_int64_t(1),
-        std::multiplies<>(),
+    return std::transform_reduce(dimensions.begin(), dimensions.end(),
+        u_int64_t(1), std::multiplies<>(),
         [](const DataDimension& dim) { return dim.size; });
 }
 
@@ -24,11 +18,11 @@ u_int64_t calculate_frame_size(const std::vector<DataDimension>& dimensions)
 {
     if (dimensions.empty())
         return 0;
-    u_int64_t frame_size = 1;
-    for (size_t i = 1; i < dimensions.size(); ++i) {
-        frame_size *= dimensions[i].size;
-    }
-    return frame_size;
+
+    return std::transform_reduce(
+        dimensions.begin() + 1, dimensions.end(),
+        u_int64_t(1), std::multiplies<>(),
+        [](const DataDimension& dim) constexpr { return dim.size; });
 }
 
 void safe_copy_data_variant(const DataVariant& input, DataVariant& output)
@@ -58,64 +52,33 @@ void safe_copy_data_variant_to_span(const DataVariant& input, std::span<double> 
     std::visit([&output](const auto& input_vec) {
         using InputValueType = typename std::decay_t<decltype(input_vec)>::value_type;
 
-        if constexpr (std::is_same_v<InputValueType, std::complex<float>> || std::is_same_v<InputValueType, std::complex<double>>) {
+        if constexpr (ComplexData<InputValueType>) {
             throw std::runtime_error("Complex type conversion to span not supported");
         } else {
-            size_t copy_size = std::min(input_vec.size(), output.size());
-            for (size_t i = 0; i < copy_size; ++i) {
-                output[i] = static_cast<double>(input_vec[i]);
+            const auto copy_size = std::min(input_vec.size(), output.size());
+
+            if constexpr (std::is_same_v<InputValueType, double>) {
+                std::ranges::copy_n(input_vec.begin(), copy_size, output.begin());
+            } else {
+                for (size_t i = 0; i < copy_size; ++i) {
+                    output[i] = static_cast<double>(input_vec[i]);
+                }
             }
 
             if (copy_size < output.size()) {
-                std::fill(output.begin() + copy_size, output.end(), 0.0);
+                std::ranges::fill(output.subspan(copy_size), 0.0);
             }
 
-            if (!std::is_same_v<InputValueType, double> && copy_size > 0) {
-                std::cerr << "Warning: Precision loss may occur during type conversion to span\n";
+            if constexpr (!std::is_same_v<InputValueType, double> && !std::is_same_v<InputValueType, float>) {
+                static bool warning_shown = false;
+                if (!warning_shown && copy_size > 0) {
+                    std::cerr << "Warning: Precision loss may occur during type conversion to span\n";
+                    warning_shown = true;
+                }
             }
         }
     },
         input);
-}
-
-std::vector<double> convert_variant_to_double(const Kakshya::DataVariant& data)
-{
-    return std::visit([](const auto& vec) -> std::vector<double> {
-        using T = typename std::decay_t<decltype(vec)>::value_type;
-
-        if constexpr (std::is_same_v<T, double>) {
-            return vec;
-        } else if constexpr (std::is_same_v<T, float>) {
-            return { vec.begin(), vec.end() };
-        } else if constexpr (std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>) {
-            std::vector<double> result;
-            result.reserve(vec.size());
-            for (const auto& val : vec) {
-                result.push_back(std::abs(val));
-            }
-            return result;
-        } else if constexpr (std::is_same_v<T, u_int8_t> || std::is_same_v<T, u_int16_t> || std::is_same_v<T, u_int32_t>) {
-            constexpr double norm = [] {
-                if constexpr (std::is_same_v<T, u_int8_t>)
-                    return 255.0;
-                if constexpr (std::is_same_v<T, u_int16_t>)
-                    return 65535.0;
-                if constexpr (std::is_same_v<T, u_int32_t>)
-                    return 4294967295.0;
-            }();
-
-            std::vector<double> result;
-            result.reserve(vec.size());
-            for (auto val : vec) {
-                result.push_back(static_cast<double>(val) / norm);
-            }
-            return result;
-        } else {
-            static_assert(!std::is_same_v<T, T>,
-                "Unsupported data type in variant");
-        }
-    },
-        data);
 }
 
 void set_metadata_value(std::unordered_map<std::string, std::any>& metadata, const std::string& key, std::any value)
@@ -125,15 +88,13 @@ void set_metadata_value(std::unordered_map<std::string, std::any>& metadata, con
 
 int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDimension::Role role)
 {
-    for (size_t i = 0; i < dimensions.size(); ++i) {
-        if (dimensions[i].role == role) {
-            return static_cast<int>(i);
-        }
-    }
-    return -1;
+    auto it = std::ranges::find_if(dimensions,
+        [role](const DataDimension& dim) { return dim.role == role; });
+
+    return (it != dimensions.end()) ? static_cast<int>(std::distance(dimensions.begin(), it)) : -1;
 }
 
-DataVariant extract_frame_data(std::shared_ptr<SignalSourceContainer> container,
+DataVariant extract_frame_data(const std::shared_ptr<SignalSourceContainer>& container,
     u_int64_t frame_index)
 {
     if (!container) {
@@ -176,7 +137,7 @@ DataVariant extract_frame_data(std::shared_ptr<SignalSourceContainer> container,
     return container->get_region_data(frame_region);
 }
 
-DataVariant extract_slice_data(std::shared_ptr<SignalSourceContainer> container,
+DataVariant extract_slice_data(const std::shared_ptr<SignalSourceContainer>& container,
     const std::vector<u_int64_t>& slice_start,
     const std::vector<u_int64_t>& slice_end)
 {
@@ -194,7 +155,7 @@ DataVariant extract_slice_data(std::shared_ptr<SignalSourceContainer> container,
 
 // ===== SUBSAMPLE AND INTERLEAVING =====
 
-DataVariant extract_subsample_data(std::shared_ptr<SignalSourceContainer> container,
+DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>& container,
     u_int32_t subsample_factor,
     u_int64_t start_offset)
 {
@@ -218,9 +179,14 @@ DataVariant extract_subsample_data(std::shared_ptr<SignalSourceContainer> contai
         using T = typename std::decay_t<decltype(data)>::value_type;
         std::vector<T> subsampled;
 
-        for (size_t i = start_offset; i < data.size(); i += subsample_factor) {
-            subsampled.push_back(data[i]);
-        }
+        // UPDATED: Use ranges for subsample extraction
+        auto indices = std::ranges::views::iota(start_offset, data.size())
+            | std::ranges::views::filter([subsample_factor, start_offset](size_t i) {
+                  return (i - start_offset) % subsample_factor == 0;
+              });
+
+        std::ranges::transform(indices, std::back_inserter(subsampled),
+            [&data](size_t i) { return data[i]; });
 
         return DataVariant { subsampled };
     },
@@ -285,9 +251,11 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
     // Fallback based on dimension count
     if (dimensions.size() == 1) {
         return DataModality::AUDIO_1D;
-    } else if (dimensions.size() == 2) {
+    }
+    if (dimensions.size() == 2) {
         return DataModality::SPECTRAL_2D;
-    } else if (dimensions.size() == 3) {
+    }
+    if (dimensions.size() == 3) {
         return DataModality::VOLUMETRIC_3D;
     }
 

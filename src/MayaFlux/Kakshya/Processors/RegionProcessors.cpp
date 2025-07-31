@@ -1,4 +1,6 @@
 #include "RegionProcessors.hpp"
+#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -13,19 +15,17 @@ void RegionOrganizationProcessor::organize_container_data(std::shared_ptr<Signal
 
     auto region_groups = container->get_all_region_groups();
 
-    for (const auto& [group_name, group] : region_groups) {
-        organize_group(container, group);
-    }
+    std::ranges::for_each(region_groups, [this, &container](const auto& group_pair) {
+        organize_group(container, group_pair.second);
+    });
 
-    // Sort regions by first dimension (typically time)
-    std::sort(m_organized_regions.begin(), m_organized_regions.end(),
-        [](const OrganizedRegion& a, const OrganizedRegion& b) {
-            if (a.segments.empty() || b.segments.empty())
-                return false;
-            if (a.segments[0].source_region.start_coordinates.empty() || b.segments[0].source_region.start_coordinates.empty())
-                return false;
-            return a.segments[0].source_region.start_coordinates[0] < b.segments[0].source_region.start_coordinates[0];
-        });
+    std::ranges::sort(m_organized_regions, [](const OrganizedRegion& a, const OrganizedRegion& b) {
+        if (a.segments.empty() || b.segments.empty())
+            return false;
+        if (a.segments[0].source_region.start_coordinates.empty() || b.segments[0].source_region.start_coordinates.empty())
+            return false;
+        return a.segments[0].source_region.start_coordinates[0] < b.segments[0].source_region.start_coordinates[0];
+    });
 }
 
 void RegionOrganizationProcessor::process(std::shared_ptr<SignalSourceContainer> container)
@@ -78,10 +78,9 @@ void RegionOrganizationProcessor::add_segment_to_region(const std::string& group
     const std::vector<u_int64_t>& end_coords,
     const std::unordered_map<std::string, std::any>& attributes)
 {
-    auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
-        [&](const OrganizedRegion& region) {
-            return region.group_name == group_name && region.region_index == region_index;
-        });
+    auto region_it = std::ranges::find_if(m_organized_regions, [&](const OrganizedRegion& region) {
+        return region.group_name == group_name && region.region_index == region_index;
+    });
 
     if (region_it != m_organized_regions.end()) {
         Region region(start_coords, end_coords, attributes);
@@ -100,10 +99,9 @@ void RegionOrganizationProcessor::set_region_transition(const std::string& group
     RegionTransition type,
     double duration_ms)
 {
-    auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
-        [&](OrganizedRegion& region) {
-            return region.group_name == group_name && region.region_index == region_index;
-        });
+    auto region_it = std::ranges::find_if(m_organized_regions, [&](OrganizedRegion& region) {
+        return region.group_name == group_name && region.region_index == region_index;
+    });
 
     if (region_it != m_organized_regions.end()) {
         region_it->transition_type = type;
@@ -115,10 +113,9 @@ void RegionOrganizationProcessor::set_selection_pattern(const std::string& group
     size_t region_index,
     RegionSelectionPattern pattern)
 {
-    auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
-        [&](OrganizedRegion& region) {
-            return region.group_name == group_name && region.region_index == region_index;
-        });
+    auto region_it = std::ranges::find_if(m_organized_regions, [&](OrganizedRegion& region) {
+        return region.group_name == group_name && region.region_index == region_index;
+    });
 
     if (region_it != m_organized_regions.end()) {
         region_it->selection_pattern = pattern;
@@ -131,10 +128,9 @@ void RegionOrganizationProcessor::set_region_looping(const std::string& group_na
     const std::vector<u_int64_t>& loop_start,
     const std::vector<u_int64_t>& loop_end)
 {
-    auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
-        [&](OrganizedRegion& region) {
-            return region.group_name == group_name && region.region_index == region_index;
-        });
+    auto region_it = std::ranges::find_if(m_organized_regions, [&](OrganizedRegion& region) {
+        return region.group_name == group_name && region.region_index == region_index;
+    });
 
     if (region_it != m_organized_regions.end()) {
         region_it->looping_enabled = enabled;
@@ -147,10 +143,9 @@ void RegionOrganizationProcessor::set_region_looping(const std::string& group_na
 
 void RegionOrganizationProcessor::jump_to_region(const std::string& group_name, size_t region_index)
 {
-    auto region_it = std::find_if(m_organized_regions.begin(), m_organized_regions.end(),
-        [&](const OrganizedRegion& region) {
-            return region.group_name == group_name && region.region_index == region_index;
-        });
+    auto region_it = std::ranges::find_if(m_organized_regions, [&](const OrganizedRegion& region) {
+        return region.group_name == group_name && region.region_index == region_index;
+    });
 
     if (region_it != m_organized_regions.end()) {
         m_current_region_index = std::distance(m_organized_regions.begin(), region_it);
@@ -170,7 +165,7 @@ void RegionOrganizationProcessor::jump_to_position(const std::vector<u_int64_t>&
     }
 }
 
-void RegionOrganizationProcessor::process_organized_regions(std::shared_ptr<SignalSourceContainer> container,
+void RegionOrganizationProcessor::process_organized_regions(const std::shared_ptr<SignalSourceContainer>& container,
     DataVariant& output_data,
     const std::vector<u_int64_t>& output_shape)
 {
@@ -213,20 +208,19 @@ void RegionOrganizationProcessor::process_organized_regions(std::shared_ptr<Sign
         }
 
         if (should_transition && current_region.transition_type != RegionTransition::IMMEDIATE) {
-            std::vector<u_int64_t> transition_shape = output_shape;
+            const std::vector<u_int64_t>& transition_shape = output_shape;
             apply_region_transition(current_region, next_region, container, output_data, transition_shape);
         }
     }
 }
 
-void RegionOrganizationProcessor::process_region_segment(const OrganizedRegion& region,
+void RegionOrganizationProcessor::process_region_segment(const OrganizedRegion&,
     const RegionSegment& segment,
-    std::shared_ptr<SignalSourceContainer> container,
+    const std::shared_ptr<SignalSourceContainer>& container,
     DataVariant& output_data,
-    const std::vector<u_int64_t>& output_offset,
-    const std::vector<u_int64_t>& output_shape)
+    const std::vector<u_int64_t>& /*output_offset*/,
+    const std::vector<u_int64_t>& /*output_shape*/)
 {
-    // Check if segment data is cached first
     if (m_cache_manager) {
         auto cached_data = m_cache_manager->get_cached_segment(segment);
         if (cached_data) {
@@ -242,9 +236,9 @@ void RegionOrganizationProcessor::process_region_segment(const OrganizedRegion& 
 
 void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion& current_region,
     const OrganizedRegion& next_region,
-    std::shared_ptr<SignalSourceContainer> container,
+    const std::shared_ptr<SignalSourceContainer>& container,
     DataVariant& output_data,
-    const std::vector<u_int64_t>& transition_shape)
+    const std::vector<u_int64_t>& /*transition_shape*/)
 {
     switch (current_region.transition_type) {
     case RegionTransition::CROSSFADE: {
@@ -262,7 +256,7 @@ void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion&
                         if constexpr (!std::is_same_v<typename CurrentType::value_type, std::complex<float>> && !std::is_same_v<typename CurrentType::value_type, std::complex<double>>) {
                             size_t min_size = std::min(current_vec.size(), next_vec.size());
                             for (size_t i = 0; i < min_size; ++i) {
-                                double fade_factor = static_cast<double>(i) / min_size;
+                                double fade_factor = static_cast<double>(i) / static_cast<double>(min_size);
                                 current_vec[i] = current_vec[i] * (1.0 - fade_factor) + next_vec[i] * fade_factor;
                             }
                         }
@@ -338,18 +332,14 @@ std::optional<size_t> RegionOrganizationProcessor::find_region_for_position(
     const std::vector<u_int64_t>& position,
     const std::vector<OrganizedRegion>& regions) const
 {
-    for (size_t i = 0; i < regions.size(); ++i) {
-        const auto& region = regions[i];
-        if (region.contains_position(position)) {
-            return i;
-        }
-    }
-    return std::nullopt;
+    auto it = std::ranges::find_if(regions, [&position](const OrganizedRegion& region) {
+        return region.contains_position(position);
+    });
+
+    return (it != regions.end()) ? std::optional<size_t>(std::distance(regions.begin(), it)) : std::nullopt;
 }
 
-// Remove the custom utility methods and use existing KakshyaUtils instead
-
-void RegionOrganizationProcessor::organize_group(std::shared_ptr<SignalSourceContainer> container,
+void RegionOrganizationProcessor::organize_group(const std::shared_ptr<SignalSourceContainer>& container,
     const RegionGroup& group)
 {
     for (size_t i = 0; i < group.regions.size(); ++i) {
@@ -388,7 +378,7 @@ void RegionOrganizationProcessor::refresh_organized_data()
 // DynamicRegionProcessor Implementation
 // =============================================================================
 
-DynamicRegionProcessor::DynamicRegionProcessor(std::shared_ptr<SignalSourceContainer> container)
+DynamicRegionProcessor::DynamicRegionProcessor(const std::shared_ptr<SignalSourceContainer>& container)
     : RegionOrganizationProcessor(container)
 {
 }
@@ -408,7 +398,7 @@ void DynamicRegionProcessor::process(std::shared_ptr<SignalSourceContainer> cont
     RegionOrganizationProcessor::process(container);
 }
 
-bool DynamicRegionProcessor::should_reorganize(std::shared_ptr<SignalSourceContainer> container)
+bool DynamicRegionProcessor::should_reorganize(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (m_needs_reorganization.load()) {
         return true;

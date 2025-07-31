@@ -35,26 +35,33 @@ FeedbackProcessor::FeedbackProcessor(float feedback)
 
 void FeedbackProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
+    auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
+    if (!audio_buffer)
+        return;
+
     std::vector<double>* previous_data = nullptr;
-    std::vector<double> current_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
+    std::vector<double> current_data = audio_buffer->get_data();
+    const size_t num_samples = current_data.size();
 
     if (auto feedback_buffer = std::dynamic_pointer_cast<FeedbackBuffer>(buffer)) {
         previous_data = &feedback_buffer->get_previous_buffer();
         m_using_internal_buffer = false;
     } else {
-        if (m_previous_buffer.size() != current_data.size()) {
-            m_previous_buffer.resize(current_data.size(), 0.0);
+        if (m_previous_buffer.size() != num_samples) {
+            m_previous_buffer.resize(num_samples, 0.0);
             m_using_internal_buffer = true;
-            return;
         }
         previous_data = &m_previous_buffer;
     }
 
-    for (size_t i = 0; i < std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples(); i++) {
-        std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_sample(i) += (m_feedback_amount * (*previous_data)[i]);
-    }
+    auto& buffer_data = audio_buffer->get_data();
 
-    *previous_data = current_data;
+    std::ranges::transform(buffer_data, *previous_data, buffer_data.begin(),
+        [&feedback = m_feedback_amount](double current, double previous) {
+            return current + (feedback * previous);
+        });
+
+    *previous_data = std::move(current_data);
 }
 
 void FeedbackProcessor::on_attach(std::shared_ptr<Buffer> buffer)

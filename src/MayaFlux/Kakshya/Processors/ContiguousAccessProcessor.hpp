@@ -1,7 +1,9 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
-#include "MayaFlux/Kakshya/KakshyaUtils.hpp"
+
+#include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
+#include "MayaFlux/Kakshya/Region.hpp"
 
 /**
  * @class ContiguousAccessProcessor
@@ -82,7 +84,7 @@ public:
      * @brief Set the current read position (N-dimensional coordinates).
      * @param new_position New position vector.
      */
-    inline void set_current_position(const std::vector<u_int64_t> new_position)
+    inline void set_current_position(const std::vector<u_int64_t>& new_position)
     {
         m_current_position = new_position;
     }
@@ -99,7 +101,7 @@ private:
     // Dimension information
     std::vector<DataDimension> m_dimensions;
     std::vector<u_int32_t> m_active_dimensions;
-    MemoryLayout m_memory_layout;
+    MemoryLayout m_memory_layout { MemoryLayout::ROW_MAJOR };
 
     // Position tracking
     std::vector<u_int64_t> m_current_position;
@@ -119,14 +121,14 @@ private:
      * @brief Store dimension and layout metadata from the container.
      * @param container The SignalSourceContainer to query.
      */
-    void store_metadata(std::shared_ptr<SignalSourceContainer> container);
+    void store_metadata(const std::shared_ptr<SignalSourceContainer>& container);
 
     /**
      * @brief Validate the container's structure and output configuration.
      * Throws if configuration is invalid.
      * @param container The SignalSourceContainer to validate.
      */
-    void validate_container(std::shared_ptr<SignalSourceContainer> container);
+    void validate_container(const std::shared_ptr<SignalSourceContainer>& container);
 
     /**
      * @brief Advance the read position by the output shape.
