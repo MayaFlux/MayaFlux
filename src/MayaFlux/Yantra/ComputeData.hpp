@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Eigen/Core"
+
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 namespace MayaFlux::Yantra {
@@ -28,8 +30,14 @@ concept ComputeData =
     std::same_as<T, Kakshya::Region> ||
     std::same_as<T, Kakshya::RegionGroup> ||
     std::same_as<T, std::vector<Kakshya::RegionSegment>> ||
+    std::is_base_of_v<Eigen::MatrixBase<T>, T> ||
     std::constructible_from<Kakshya::DataVariant, T>;
 // clang-format on
+
+/*
+    std::is_same_v<std::remove_cvref_t<T>, Eigen::Vector3f> ||
+    std::is_same_v<std::remove_cvref_t<T>, Eigen::Vector4f> ||
+    */
 
 /**
  * @struct IO

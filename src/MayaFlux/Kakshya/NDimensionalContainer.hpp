@@ -1,3 +1,5 @@
+#include <utility>
+
 #pragma once
 
 namespace MayaFlux::Kakshya {
@@ -18,7 +20,7 @@ struct RegionGroup;
  * This abstraction enables flexible, efficient access patterns for
  * digital-first, data-driven workflows, unconstrained by analog conventions.
  */
-enum class MemoryLayout {
+enum class MemoryLayout : u_int8_t {
     ROW_MAJOR, ///< C/C++ style (last dimension varies fastest)
     COLUMN_MAJOR ///< Fortran/MATLAB style (first dimension varies fastest)
 };
@@ -41,7 +43,7 @@ struct DataDimension {
      * Used to indicate the intended interpretation of the dimension,
      * enabling generic algorithms to adapt to data structure.
      */
-    enum class Role {
+    enum class Role : u_int8_t {
         TIME, ///< Temporal progression (samples, frames, steps)
         CHANNEL, ///< Parallel streams (audio channels, color channels)
         SPATIAL_X, ///< Spatial X axis (images, tensors)
@@ -52,8 +54,8 @@ struct DataDimension {
     };
 
     std::string name; ///< Human-readable identifier for the dimension
-    u_int64_t size; ///< Number of elements in this dimension
-    u_int64_t stride; ///< Memory stride (elements between consecutive indices)
+    u_int64_t size {}; ///< Number of elements in this dimension
+    u_int64_t stride {}; ///< Memory stride (elements between consecutive indices)
     Role role = Role::CUSTOM; ///< Semantic hint for common operations
 
     DataDimension() = default;
@@ -81,7 +83,7 @@ struct DataDimension {
      */
     static DataDimension time(u_int64_t samples, std::string name = "time")
     {
-        return DataDimension(name, samples, 1, Role::TIME);
+        return { std::move(name), samples, 1, Role::TIME };
     }
 
     /**
@@ -92,7 +94,7 @@ struct DataDimension {
      */
     static DataDimension channel(u_int64_t count, u_int64_t stride = 1)
     {
-        return DataDimension("channel", count, stride, Role::CHANNEL);
+        return { "channel", count, stride, Role::CHANNEL };
     }
 
     /**
@@ -111,12 +113,11 @@ struct DataDimension {
             case 'y':
                 return Role::SPATIAL_Y;
             case 'z':
-                return Role::SPATIAL_Z;
             default:
                 return Role::SPATIAL_Z;
             }
         }();
-        return DataDimension(std::string("spatial_") + axis, size, stride, r);
+        return { std::string("spatial_") + axis, size, stride, r };
     }
 };
 
@@ -167,7 +168,7 @@ using DataVariant = std::variant<
 /**
  * @brief Data modality types for cross-modal analysis
  */
-enum class DataModality {
+enum class DataModality : u_int8_t {
     AUDIO_1D, // 1D audio signal
     AUDIO_MULTICHANNEL, // Multi-channel audio
     IMAGE_2D, // 2D image (grayscale or single channel)
@@ -210,19 +211,19 @@ public:
      * @brief Get the dimensions describing the structure of the data.
      * @return Vector of DataDimension objects (one per axis)
      */
-    virtual std::vector<DataDimension> get_dimensions() const = 0;
+    [[nodiscard]] virtual std::vector<DataDimension> get_dimensions() const = 0;
 
     /**
      * @brief Get the total number of elements in the container.
      * @return Product of all dimension sizes
      */
-    virtual u_int64_t get_total_elements() const = 0;
+    [[nodiscard]] virtual u_int64_t get_total_elements() const = 0;
 
     /**
      * @brief Get the memory layout used by this container.
      * @return Current memory layout (row-major or column-major)
      */
-    virtual MemoryLayout get_memory_layout() const = 0;
+    [[nodiscard]] virtual MemoryLayout get_memory_layout() const = 0;
 
     /**
      * @brief Set the memory layout for this container.
@@ -236,20 +237,20 @@ public:
      * For audio: channels per sample. For images: pixels per frame.
      * @return Number of elements per frame
      */
-    virtual u_int64_t get_frame_size() const = 0;
+    [[nodiscard]] virtual u_int64_t get_frame_size() const = 0;
 
     /**
      * @brief Get the number of frames in the primary (temporal) dimension.
      * @return Number of frames
      */
-    virtual u_int64_t get_num_frames() const = 0;
+    [[nodiscard]] virtual u_int64_t get_num_frames() const = 0;
 
     /**
      * @brief Get data for a specific region.
      * @param region The region to extract data from
      * @return DataVariant containing the region's data
      */
-    virtual DataVariant get_region_data(const Region& region) const = 0;
+    [[nodiscard]] virtual DataVariant get_region_data(const Region& region) const = 0;
 
     /**
      * @brief Set data for a specific region.
@@ -263,7 +264,7 @@ public:
      * @param frame_index Index of the frame (in the temporal dimension)
      * @return Span of data representing one complete frame
      */
-    virtual std::span<const double> get_frame(u_int64_t frame_index) const = 0;
+    [[nodiscard]] virtual std::span<const double> get_frame(u_int64_t frame_index) const = 0;
 
     /**
      * @brief Get multiple frames efficiently.
@@ -278,7 +279,7 @@ public:
      * @param coordinates N-dimensional coordinates
      * @return Value at the specified location
      */
-    virtual double get_value_at(const std::vector<u_int64_t>& coordinates) const = 0;
+    [[nodiscard]] virtual double get_value_at(const std::vector<u_int64_t>& coordinates) const = 0;
 
     /**
      * @brief Set a single value at the specified coordinates.
@@ -298,13 +299,13 @@ public:
      * @param name Name of the region group
      * @return Reference to the RegionGroup
      */
-    virtual const RegionGroup& get_region_group(const std::string& name) const = 0;
+    [[nodiscard]] virtual const RegionGroup& get_region_group(const std::string& name) const = 0;
 
     /**
      * @brief Get all region groups in the container.
      * @return Map of region group names to RegionGroup objects
      */
-    virtual std::unordered_map<std::string, RegionGroup> get_all_region_groups() const = 0;
+    [[nodiscard]] virtual std::unordered_map<std::string, RegionGroup> get_all_region_groups() const = 0;
 
     /**
      * @brief Remove a region group by name.
@@ -317,7 +318,7 @@ public:
      * @param region Region to check
      * @return true if region is loaded, false otherwise
      */
-    virtual bool is_region_loaded(const Region& region) const = 0;
+    [[nodiscard]] virtual bool is_region_loaded(const Region& region) const = 0;
 
     /**
      * @brief Load a region into memory.
@@ -336,14 +337,14 @@ public:
      * @param coordinates N-dimensional coordinates
      * @return Linear index into the underlying data storage
      */
-    virtual u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const = 0;
+    [[nodiscard]] virtual u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const = 0;
 
     /**
      * @brief Convert linear index to coordinates based on current memory layout.
      * @param linear_index Linear index into the underlying data storage
      * @return N-dimensional coordinates
      */
-    virtual std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t linear_index) const = 0;
+    [[nodiscard]] virtual std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t linear_index) const = 0;
 
     /**
      * @brief Clear all data in the container.
@@ -370,13 +371,13 @@ public:
      * @brief Get a raw pointer to the underlying data storage.
      * @return Pointer to raw data (type depends on DataVariant)
      */
-    virtual const void* get_raw_data() const = 0;
+    [[nodiscard]] virtual const void* get_raw_data() const = 0;
 
     /**
      * @brief Check if the container currently holds any data.
      * @return true if data is present, false otherwise
      */
-    virtual bool has_data() const = 0;
+    [[nodiscard]] virtual bool has_data() const = 0;
 };
 
 } // namespace MayaFlux::Kakshya
