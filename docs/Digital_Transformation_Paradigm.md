@@ -90,7 +90,7 @@ or `Custom` (user defined).
 ### Definitions
 
 Nodes can be defined using the fluent mechanism, API level convenience
-wrappers or via directly creating a modern c++ shared pointers
+wrappers or via directly creating a modern c++ shared pointers.
 
 ```cpp
 // Fluent
@@ -100,7 +100,7 @@ auto pulse = vega.impulse(2.0) | Audio;
 
 // API Wrappers
 auto envelope = MayaFlux::ceate_node<Shape>(0.0f, 1.0f, 2.5f);
-MayaFlux::register_audio_node(random_walk, {0, 1});
+MayaFlux::register_audio_node(envelope, {0, 1});
 
 auto random_walk = MayaFlux::create_node<Stochastic>(PERLIN, 0.1f);
 MayaFlux::register_audio_node(random_walk, 1);
@@ -116,8 +116,7 @@ custom_filter->set_input(random_walk);
 get_node_graph_manager()->add_node_to_root(ProcessingToken::AUDIO_RATE, 0);
 ```
 
-Each path serves different creative moments—fluid thinking, structured
-creation, or precise manipulation.
+Each path serves different creative moments—fluid thinking, structured creation, or precise manipulation.
 
 ### Flow logic
 

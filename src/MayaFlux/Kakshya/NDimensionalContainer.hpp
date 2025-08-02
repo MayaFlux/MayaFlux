@@ -98,6 +98,17 @@ struct DataDimension {
     }
 
     /**
+     * @brief Convenience constructor for a frequency dimension.
+     * @param bins Number of frequency bins
+     * @param name Optional name (default: "frequency")
+     * @return DataDimension representing frequency
+     */
+    static DataDimension frequency(u_int64_t bins, std::string name = "frequency")
+    {
+        return { std::move(name), bins, 1, Role::FREQUENCY };
+    }
+
+    /**
      * @brief Convenience constructor for a spatial dimension.
      * @param size Number of elements along this axis
      * @param axis Axis character ('x', 'y', or 'z')

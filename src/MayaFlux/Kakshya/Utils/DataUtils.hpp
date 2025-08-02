@@ -1,6 +1,10 @@
 #pragma once
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
+#include "MayaFlux/Utils.hpp"
+
+#include <typeindex>
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -16,6 +20,11 @@ u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
  * @return Frame size (product of all but the first dimension).
  */
 u_int64_t calculate_frame_size(const std::vector<DataDimension>& dimensions);
+
+/**
+ * @brief Get type index from DataVariant
+ */
+std::type_index get_variant_type_index(const DataVariant& data);
 
 /**
  * @brief Extract a single frame of data from a vector.
@@ -150,11 +159,43 @@ constexpr std::optional<std::vector<T>> extract_typed_data_fast(const DataVarian
         variant);
 }
 
+template <ProcessableData From, ProcessableData To>
+    requires(ComplexData<From> && ArithmeticData<To>)
+std::vector<To> convert_complex_fast(std::span<const From> source,
+    Utils::ComplexConversionStrategy strategy)
+{
+    std::vector<To> result;
+    result.reserve(source.size());
+
+    switch (strategy) {
+    case Utils::ComplexConversionStrategy::MAGNITUDE:
+        std::ranges::transform(source, std::back_inserter(result),
+            [](const From& val) { return static_cast<To>(std::abs(val)); });
+        break;
+    case Utils::ComplexConversionStrategy::REAL_PART:
+        std::ranges::transform(source, std::back_inserter(result),
+            [](const From& val) { return static_cast<To>(val.real()); });
+        break;
+    case Utils::ComplexConversionStrategy::IMAG_PART:
+        std::ranges::transform(source, std::back_inserter(result),
+            [](const From& val) { return static_cast<To>(val.imag()); });
+        break;
+    case Utils::ComplexConversionStrategy::SQUARED_MAGNITUDE:
+        std::ranges::transform(source, std::back_inserter(result),
+            [](const From& val) { return static_cast<To>(std::norm(val)); });
+        break;
+    default:
+        throw std::runtime_error("Unsupported conversion strategy");
+    }
+    return result;
+}
+
 /**
  * @brief Fast type conversion using concepts (replaces slow std::visit)
  * @tparam From Source type (must satisfy ProcessableData)
  * @tparam To Target type (must satisfy ProcessableData)
  * @param source Source data span
+ * @param strategy Strategy for complex number conversion (if applicable)
  * @return Converted vector
  */
 template <ProcessableData From, ProcessableData To>
@@ -163,37 +204,24 @@ template <ProcessableData From, ProcessableData To>
         || (ComplexData<From> && ArithmeticData<To>)
         || (ArithmeticData<From> && ArithmeticData<To>)
         || (ComplexData<From> && ComplexData<To>))
-std::vector<To> convert_data_fast(std::span<const From> source)
+std::vector<To> convert_data_fast(std::span<const From> source,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    if constexpr (std::is_same_v<From, To>) {
+    if constexpr (ComplexData<From> && ArithmeticData<To>) {
+        return convert_complex_fast<From, To>(source, strategy);
+    } else if constexpr (std::is_same_v<From, To>) {
         return std::vector<To>(source.begin(), source.end());
-
-    } else if constexpr (ComplexData<From> && ArithmeticData<To>) {
-        std::vector<To> result;
-        result.reserve(source.size());
-
-        std::ranges::transform(source, std::back_inserter(result),
-            [](const From& val) -> To {
-                return static_cast<To>(std::abs(val));
-            });
-        return result;
-
     } else if constexpr (ArithmeticData<From> && ArithmeticData<To>) {
         std::vector<To> result;
         result.reserve(source.size());
         std::ranges::transform(source, std::back_inserter(result),
-            [](const From& val) -> To {
-                return static_cast<To>(val);
-            });
+            [](const From& val) -> To { return static_cast<To>(val); });
         return result;
-
     } else if constexpr (ComplexData<From> && ComplexData<To>) {
         std::vector<To> result;
         result.reserve(source.size());
         std::ranges::transform(source, std::back_inserter(result),
-            [](const From& val) -> To {
-                return static_cast<To>(val);
-            });
+            [](const From& val) -> To { return static_cast<To>(val); });
         return result;
     }
 }
@@ -281,13 +309,14 @@ std::span<const T> get_typed_data(const DataVariant& data)
     return {};
 }
 
-inline std::vector<double> convert_variant_to_double(const DataVariant& data)
+inline std::vector<double> convert_variant_to_double(const DataVariant& data,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    return std::visit([](const auto& vec) -> std::vector<double> {
+    return std::visit([strategy](const auto& vec) -> std::vector<double> {
         using ValueType = typename std::decay_t<decltype(vec)>::value_type;
 
         if constexpr (ProcessableData<ValueType>) {
-            return convert_data_fast<ValueType, double>(std::span<const ValueType>(vec));
+            return convert_data_fast<ValueType, double>(std::span<const ValueType>(vec), strategy);
         } else {
             throw std::runtime_error("Unsupported data type for double conversion");
         }
@@ -372,4 +401,15 @@ DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>&
  * Uses dimension roles and count to determine appropriate processing approach.
  */
 DataModality detect_data_modality(const std::vector<DataDimension>& dimensions);
+
+/**
+ * @brief Detect data dimensions from a DataVariant
+ * @param data DataVariant to analyze
+ * @return Vector of DataDimension descriptors
+ *
+ * This function analyzes the structure of the provided DataVariant and extracts
+ * dimension information, including size, stride, and semantic roles.
+ */
+std::vector<Kakshya::DataDimension> detect_data_dimensions(const DataVariant& data);
+
 }
