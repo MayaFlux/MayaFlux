@@ -161,8 +161,6 @@ DataVariant extract_slice_data(const std::shared_ptr<SignalSourceContainer>& con
     return container->get_region_data(slice_region);
 }
 
-// ===== SUBSAMPLE AND INTERLEAVING =====
-
 DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>& container,
     u_int32_t subsample_factor,
     u_int64_t start_offset)
@@ -187,7 +185,6 @@ DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>&
         using T = typename std::decay_t<decltype(data)>::value_type;
         std::vector<T> subsampled;
 
-        // UPDATED: Use ranges for subsample extraction
         auto indices = std::ranges::views::iota(start_offset, data.size())
             | std::ranges::views::filter([subsample_factor, start_offset](size_t i) {
                   return (i - start_offset) % subsample_factor == 0;
@@ -200,8 +197,6 @@ DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>&
     },
         full_data);
 }
-
-// Add this implementation to DataUtils.cpp
 
 DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
 {
@@ -292,7 +287,6 @@ std::vector<Kakshya::DataDimension> detect_data_dimensions(const Kakshya::DataVa
                 dims.emplace_back(Kakshya::DataDimension::spatial(0, 'x'));
                 dims.emplace_back(Kakshya::DataDimension::spatial(0, 'y'));
             } else {
-
                 auto sqrt_size = static_cast<u_int64_t>(std::sqrt(total_size));
                 if (sqrt_size * sqrt_size == total_size) {
                     // Perfect square

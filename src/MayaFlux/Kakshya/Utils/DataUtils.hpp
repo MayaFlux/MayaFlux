@@ -27,19 +27,24 @@ u_int64_t calculate_frame_size(const std::vector<DataDimension>& dimensions);
 std::type_index get_variant_type_index(const DataVariant& data);
 
 /**
- * @brief Extract a single frame of data from a vector.
+ * @brief Extract a single frame of data from a span.
  * @tparam T Data type.
- * @param data Source data vector.
+ * @param data Source data span.
  * @param frame_index Index of the frame to extract.
  * @param frame_size Number of elements per frame.
- * @return Vector containing the frame data.
+ * @return Span containing the frame data.
  */
 template <typename T>
-std::vector<T> extract_frame(const std::vector<T>& data, u_int64_t frame_index, u_int64_t frame_size)
+constexpr std::span<T> extract_frame(std::span<T> data, u_int64_t frame_index, u_int64_t frame_size) noexcept
 {
     u_int64_t start = frame_index * frame_size;
     u_int64_t end = std::min(start + frame_size, data.size());
-    return std::vector<T>(data.begin() + start, data.begin() + end);
+
+    if (start >= data.size()) {
+        return {};
+    }
+
+    return data.subspan(start, end - start);
 }
 
 /**
@@ -47,27 +52,28 @@ std::vector<T> extract_frame(const std::vector<T>& data, u_int64_t frame_index, 
  * @tparam From Source type.
  * @tparam To Destination type.
  * @param source Source data span.
- * @return Vector of converted data.
+ * @param dest Destination data span.
+ * @return Span of converted data.
  */
 template <typename From, typename To>
-std::vector<To> convert_data_type(std::span<const From> source)
+std::span<To> convert_data_type(std::span<const From> source, std::span<To> dest)
 {
-    std::vector<To> result;
-    result.reserve(source.size());
+    size_t convert_count = std::min(source.size(), dest.size());
 
-    for (const auto& value : source) {
+    for (size_t i = 0; i < convert_count; ++i) {
+        const auto& value = source[i];
         if constexpr (std::is_same_v<From, std::complex<float>> || std::is_same_v<From, std::complex<double>>) {
             if constexpr (std::is_same_v<To, std::complex<float>> || std::is_same_v<To, std::complex<double>>) {
-                result.push_back(static_cast<To>(value));
+                dest[i] = static_cast<To>(value);
             } else {
-                result.push_back(static_cast<To>(std::abs(value)));
+                dest[i] = static_cast<To>(std::abs(value));
             }
         } else {
-            result.push_back(static_cast<To>(value));
+            dest[i] = static_cast<To>(value);
         }
     }
 
-    return result;
+    return dest.subspan(0, convert_count);
 }
 
 /**
@@ -75,6 +81,19 @@ std::vector<To> convert_data_type(std::span<const From> source)
  * @tparam T Data type (must satisfy ProcessableData)
  * @param variant DataVariant to extract from
  * @return Span of type T, or empty span if type doesn't match
+ */
+template <ProcessableData T>
+constexpr std::span<T> get_typed_span(DataVariant& variant) noexcept
+{
+    if (std::holds_alternative<std::vector<T>>(variant)) {
+        auto& vec = std::get<std::vector<T>>(variant);
+        return std::span<T>(vec.data(), vec.size());
+    }
+    return {};
+}
+
+/**
+ * @brief Get const typed span from DataVariant using concepts
  */
 template <ProcessableData T>
 constexpr std::span<const T> get_typed_span(const DataVariant& variant) noexcept
@@ -96,6 +115,15 @@ constexpr std::span<const T> get_typed_span(const DataVariant& variant) noexcept
  * Benchmark shows 3-5x faster than std::visit for known types
  */
 template <ProcessableData T>
+constexpr std::span<T> get_typed_span_fast(DataVariant& variant) noexcept
+{
+    if constexpr (TypeHandler<T>::is_supported) {
+        return get_typed_span<T>(variant);
+    }
+    return {};
+}
+
+template <ProcessableData T>
 constexpr std::span<const T> get_typed_span_fast(const DataVariant& variant) noexcept
 {
     if constexpr (TypeHandler<T>::is_supported) {
@@ -105,27 +133,36 @@ constexpr std::span<const T> get_typed_span_fast(const DataVariant& variant) noe
 }
 
 /**
- * @brief Extract vector from variant with compile-time type checking
+ * @brief Extract data from variant with compile-time type checking
  * @tparam T Desired type (must satisfy ProcessableData)
- * @param variant DataVariant to extract from
- * @return Optional vector of type T
+ * @param variant DataVariant to extract from (may be modified for conversion)
+ * @return Span of type T (either direct or after in-place conversion)
  */
 template <ProcessableData T>
-constexpr std::optional<std::vector<T>> extract_from_variant(const DataVariant& variant) noexcept
+std::span<T> extract_from_variant(DataVariant& variant) noexcept
 {
     if (std::holds_alternative<std::vector<T>>(variant)) {
-        return std::get<std::vector<T>>(variant);
+        auto& vec = std::get<std::vector<T>>(variant);
+        return std::span<T>(vec.data(), vec.size());
     }
 
-    return std::visit([](const auto& data) -> std::optional<std::vector<T>> {
+    return std::visit([&variant](auto& data) -> std::span<T> {
         using DataType = std::decay_t<decltype(data)>;
         using ValueType = typename DataType::value_type;
 
         if constexpr (ProcessableData<ValueType> && !std::is_same_v<ValueType, T>) {
-            return convert_data_fast<ValueType, T>(std::span<const ValueType>(data));
-        } else {
-            return std::nullopt;
+            if constexpr (std::is_constructible_v<T, ValueType>
+                || (ComplexData<ValueType> && ArithmeticData<T>)
+                || (ArithmeticData<ValueType> && ArithmeticData<T>)
+                || (ComplexData<ValueType> && ComplexData<T>)) {
+
+                auto converted = convert_data_fast<ValueType, T>(std::span<ValueType>(data));
+                variant = DataVariant { std::move(converted) };
+                auto& new_vec = std::get<std::vector<T>>(variant);
+                return std::span<T>(new_vec.data(), new_vec.size());
+            }
         }
+        return {};
     },
         variant);
 }
@@ -133,61 +170,65 @@ constexpr std::optional<std::vector<T>> extract_from_variant(const DataVariant& 
 /**
  * @brief Concept-based data extraction with type conversion (replaces std::visit)
  * @tparam T Target type (must satisfy ProcessableData)
- * @param variant Source DataVariant
- * @return Optional vector of converted data
+ * @param variant Source DataVariant (may be modified for conversion)
+ * @return Span of converted data
  *
  * Performance advantage: Eliminates runtime type dispatch for supported types
  * Uses constexpr branching for compile-time optimization
  */
 template <ProcessableData T>
-constexpr std::optional<std::vector<T>> extract_typed_data_fast(const DataVariant& variant) noexcept
+std::span<T> extract_typed_data_fast(DataVariant& variant) noexcept
 {
     if (std::holds_alternative<std::vector<T>>(variant)) {
-        return std::get<std::vector<T>>(variant);
+        auto& vec = std::get<std::vector<T>>(variant);
+        return std::span<T>(vec.data(), vec.size());
     }
 
-    return std::visit([](const auto& src_vec) -> std::optional<std::vector<T>> {
+    return std::visit([&variant](auto& src_vec) -> std::span<T> {
         using SrcType = typename std::decay_t<decltype(src_vec)>::value_type;
 
         if constexpr (ProcessableData<SrcType> && !std::is_same_v<SrcType, T>) {
             if constexpr (std::is_constructible_v<T, SrcType> || (ComplexData<SrcType> && ArithmeticData<T>) || (ArithmeticData<SrcType> && ArithmeticData<T>) || (ComplexData<SrcType> && ComplexData<T>)) {
-                return convert_data_fast<SrcType, T>(std::span<const SrcType>(src_vec));
+                auto converted = convert_data_fast<SrcType, T>(std::span<SrcType>(src_vec));
+                variant = DataVariant { std::move(converted) };
+                auto& new_vec = std::get<std::vector<T>>(variant);
+                return std::span<T>(new_vec.data(), new_vec.size());
             }
         }
-        return std::nullopt;
+        return {};
     },
         variant);
 }
 
 template <ProcessableData From, ProcessableData To>
     requires(ComplexData<From> && ArithmeticData<To>)
-std::vector<To> convert_complex_fast(std::span<const From> source,
+size_t convert_complex_fast(std::span<From> source,
+    std::span<To> destination,
     Utils::ComplexConversionStrategy strategy)
 {
-    std::vector<To> result;
-    result.reserve(source.size());
+    size_t convert_count = std::min(source.size(), destination.size());
 
     switch (strategy) {
     case Utils::ComplexConversionStrategy::MAGNITUDE:
-        std::ranges::transform(source, std::back_inserter(result),
+        std::ranges::transform(source.subspan(0, convert_count), destination.begin(),
             [](const From& val) { return static_cast<To>(std::abs(val)); });
         break;
     case Utils::ComplexConversionStrategy::REAL_PART:
-        std::ranges::transform(source, std::back_inserter(result),
+        std::ranges::transform(source.subspan(0, convert_count), destination.begin(),
             [](const From& val) { return static_cast<To>(val.real()); });
         break;
     case Utils::ComplexConversionStrategy::IMAG_PART:
-        std::ranges::transform(source, std::back_inserter(result),
+        std::ranges::transform(source.subspan(0, convert_count), destination.begin(),
             [](const From& val) { return static_cast<To>(val.imag()); });
         break;
     case Utils::ComplexConversionStrategy::SQUARED_MAGNITUDE:
-        std::ranges::transform(source, std::back_inserter(result),
+        std::ranges::transform(source.subspan(0, convert_count), destination.begin(),
             [](const From& val) { return static_cast<To>(std::norm(val)); });
         break;
     default:
         throw std::runtime_error("Unsupported conversion strategy");
     }
-    return result;
+    return convert_count;
 }
 
 /**
@@ -195,8 +236,9 @@ std::vector<To> convert_complex_fast(std::span<const From> source,
  * @tparam From Source type (must satisfy ProcessableData)
  * @tparam To Target type (must satisfy ProcessableData)
  * @param source Source data span
+ * @param destination Destination span
  * @param strategy Strategy for complex number conversion (if applicable)
- * @return Converted vector
+ * @return Number of elements converted
  */
 template <ProcessableData From, ProcessableData To>
     requires(
@@ -204,26 +246,44 @@ template <ProcessableData From, ProcessableData To>
         || (ComplexData<From> && ArithmeticData<To>)
         || (ArithmeticData<From> && ArithmeticData<To>)
         || (ComplexData<From> && ComplexData<To>))
-std::vector<To> convert_data_fast(std::span<const From> source,
+size_t convert_data_fast(std::span<From> source,
+    std::span<To> destination,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
     if constexpr (ComplexData<From> && ArithmeticData<To>) {
-        return convert_complex_fast<From, To>(source, strategy);
+        return convert_complex_fast<From, To>(source, destination, strategy);
     } else if constexpr (std::is_same_v<From, To>) {
-        return std::vector<To>(source.begin(), source.end());
+        size_t copy_count = std::min(source.size(), destination.size());
+        std::copy_n(source.begin(), copy_count, destination.begin());
+        return copy_count;
     } else if constexpr (ArithmeticData<From> && ArithmeticData<To>) {
-        std::vector<To> result;
-        result.reserve(source.size());
-        std::ranges::transform(source, std::back_inserter(result),
+        size_t convert_count = std::min(source.size(), destination.size());
+        std::ranges::transform(source.subspan(0, convert_count), destination.begin(),
             [](const From& val) -> To { return static_cast<To>(val); });
-        return result;
+        return convert_count;
     } else if constexpr (ComplexData<From> && ComplexData<To>) {
-        std::vector<To> result;
-        result.reserve(source.size());
-        std::ranges::transform(source, std::back_inserter(result),
+        size_t convert_count = std::min(source.size(), destination.size());
+        std::ranges::transform(source.subspan(0, convert_count), destination.begin(),
             [](const From& val) -> To { return static_cast<To>(val); });
-        return result;
+        return convert_count;
     }
+}
+
+/**
+ * @brief Helper overload that creates a vector for backward compatibility
+ */
+template <ProcessableData From, ProcessableData To>
+    requires(
+        std::is_same_v<From, To>
+        || (ComplexData<From> && ArithmeticData<To>)
+        || (ArithmeticData<From> && ArithmeticData<To>)
+        || (ComplexData<From> && ComplexData<To>))
+std::vector<To> convert_data_fast(std::span<From> source,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+{
+    std::vector<To> result(source.size());
+    convert_data_fast(source, std::span<To>(result), strategy);
+    return result;
 }
 
 /**
@@ -300,6 +360,16 @@ void safe_copy_data_variant_to_span(const DataVariant& input, std::span<double> 
  * @return Span of type T, or empty span if type does not match.
  */
 template <typename T>
+std::span<T> get_typed_data(DataVariant& data)
+{
+    if (std::holds_alternative<std::vector<T>>(data)) {
+        auto& vec = std::get<std::vector<T>>(data);
+        return std::span<T>(vec.data(), vec.size());
+    }
+    return {};
+}
+
+template <typename T>
 std::span<const T> get_typed_data(const DataVariant& data)
 {
     if (std::holds_alternative<std::vector<T>>(data)) {
@@ -309,14 +379,27 @@ std::span<const T> get_typed_data(const DataVariant& data)
     return {};
 }
 
-inline std::vector<double> convert_variant_to_double(const DataVariant& data,
+/**
+ * @brief Convert variant to double span
+ * @param data Source DataVariant (may be modified for conversion)
+ * @param strategy Conversion strategy for complex numbers
+ * @return Span of double data
+ */
+inline std::span<double> convert_variant_to_double(DataVariant& data,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    return std::visit([strategy](const auto& vec) -> std::vector<double> {
+    return std::visit([&data, strategy](auto& vec) -> std::span<double> {
         using ValueType = typename std::decay_t<decltype(vec)>::value_type;
 
         if constexpr (ProcessableData<ValueType>) {
-            return convert_data_fast<ValueType, double>(std::span<const ValueType>(vec), strategy);
+            if constexpr (std::is_same_v<ValueType, double>) {
+                return std::span<double>(vec.data(), vec.size());
+            } else {
+                auto converted = convert_data_fast<ValueType, double>(std::span<ValueType>(vec), strategy);
+                data = DataVariant { std::move(converted) };
+                auto& new_vec = std::get<std::vector<double>>(data);
+                return { new_vec.data(), new_vec.size() };
+            }
         } else {
             throw std::runtime_error("Unsupported data type for double conversion");
         }

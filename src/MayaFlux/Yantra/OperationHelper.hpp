@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Data/DataSpec.hpp"
+#include "ComputeData.hpp"
 
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Utils.hpp"
 
 #include <typeindex>
@@ -61,6 +62,38 @@ public:
      */
     static inline Utils::ComplexConversionStrategy get_complex_conversion_strategy() { return s_complex_strategy; }
 
+    template <typename U>
+    static std::span<double> extract_numerical_data(
+        IO<U>& compute_data,
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
+    {
+        try {
+            if (auto variant = to_data_variant(compute_data.data, container)) {
+                auto data_tuple = extract_structured_double(variant);
+                compute_data.update_structure(
+                    std::move(std::get<1>(data_tuple).dimensions),
+                    std::get<1>(data_tuple).modality);
+                return data_tuple.second;
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::string("Error extracting numerical data: ") + e.what());
+        }
+    }
+
+    template <ComputeData T>
+    static std::span<double> extract_numerical_data(
+        const T& compute_data,
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
+    {
+        try {
+            if (auto variant = to_data_variant(compute_data.data, container)) {
+                return Kakshya::convert_variant_to_double(variant, s_complex_strategy);
+            }
+        } catch (const std::exception& e) {
+            throw std::runtime_error(std::string("Error extracting numerical data: ") + e.what());
+        }
+    }
+
     /**
      * @brief Convert any ComputeData type to DataVariant
      * @tparam T ComputeData type
@@ -68,7 +101,7 @@ public:
      * @return DataVariant representation
      */
     template <ComputeData T>
-    static Kakshya::DataVariant to_data_variant(const T& compute_data)
+    static Kakshya::DataVariant to_data_variant(const T& compute_data, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
     {
         if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
             return compute_data;
@@ -80,24 +113,23 @@ public:
             return compute_data->get_processed_data();
 
         } else if constexpr (std::is_same_v<T, Kakshya::Region>) {
-            // Regions need container context - this should be called with container
-            throw std::runtime_error("Region conversion requires container context. Use extract_with_container()");
+            if (!container) {
+                throw std::runtime_error("Region conversion requires container context. Use extract_with_container()");
+            }
+            return extract_region_with_container(compute_data, container);
 
         } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
-            // Extract data from first region as default, or throw if empty
-            if (compute_data.regions.empty()) {
-                throw std::runtime_error("Empty RegionGroup cannot be converted to DataVariant");
+            if (compute_data.regions.empty() || !container) {
+                throw std::runtime_error("Empty RegionGroup cannot be converted to DataVariant. RegionGroup conversion requires container context. Use extract_with_container()");
             }
-            throw std::runtime_error("RegionGroup conversion requires container context. Use extract_with_container()");
+            return extract_region_group_with_container(compute_data, container);
 
         } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
-            // Extract data from segments - they should contain data
             return extract_from_segments(compute_data);
         } else if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
 
             return create_data_variant_from_eigen(compute_data);
         } else {
-            // For any other type that can construct DataVariant
             return Kakshya::DataVariant { compute_data };
         }
     }
@@ -127,8 +159,8 @@ public:
      * @param data_variant DataVariant to process
      * @return Tuple of (double_vector, structure_info)
      */
-    static std::tuple<std::vector<double>, DataStructureInfo>
-    extract_structured_double(const Kakshya::DataVariant& data_variant);
+    static std::tuple<std::span<double>, DataStructureInfo>
+    extract_structured_double(Kakshya::DataVariant& data_variant);
 
     /**
      * @brief Combined extraction for any ComputeData type
@@ -137,7 +169,7 @@ public:
      * @return Tuple of (double_vector, structure_info)
      */
     template <ComputeData T>
-    static std::tuple<std::vector<double>, DataStructureInfo>
+    static std::tuple<std::span<double>, DataStructureInfo>
     extract_with_structure(const T& compute_data)
     {
 

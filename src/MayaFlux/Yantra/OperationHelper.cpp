@@ -3,19 +3,19 @@
 
 namespace MayaFlux::Yantra {
 
-std::tuple<std::vector<double>, DataStructureInfo>
-OperationHelper::extract_structured_double(const Kakshya::DataVariant& data_variant)
+std::tuple<std::span<double>, DataStructureInfo>
+OperationHelper::extract_structured_double(Kakshya::DataVariant& data_variant)
 {
 
     std::vector<Kakshya::DataDimension> dimensions = Kakshya::detect_data_dimensions(data_variant);
     Kakshya::DataModality modality = Kakshya::detect_data_modality(dimensions);
 
-    std::vector<double> double_data = Kakshya::convert_variant_to_double(data_variant, s_complex_strategy);
+    std::span<double> double_data = Kakshya::convert_variant_to_double(data_variant, s_complex_strategy);
 
     std::type_index original_type = Kakshya::get_variant_type_index(data_variant);
     DataStructureInfo structure_info(modality, std::move(dimensions), original_type);
 
-    return std::make_tuple(std::move(double_data), std::move(structure_info));
+    return std::make_tuple(double_data, std::move(structure_info));
 }
 
 Kakshya::DataVariant OperationHelper::extract_region_group_with_container(

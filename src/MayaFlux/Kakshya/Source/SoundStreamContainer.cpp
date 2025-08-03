@@ -92,7 +92,8 @@ void SoundStreamContainer::set_region_data(const Region& region, const DataVaria
         if constexpr (std::is_same_v<DestT, SrcT>) {
             set_or_update_region_data(std::span<DestT>(dest_vec), std::span<const SrcT>(src_data), region, m_dimensions);
         } else {
-            auto converted = convert_data_type<SrcT, DestT>(src_data);
+            std::span<DestT> converted;
+            convert_data_type<SrcT, DestT>(src_data, converted);
             set_or_update_region_data(std::span<DestT>(dest_vec), std::span<const DestT>(converted), region, m_dimensions);
         }
     },
