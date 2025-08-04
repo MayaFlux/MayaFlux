@@ -228,6 +228,24 @@ public:
         return reconstruct_from_double<T>(double_data, default_info);
     }
 
+    // Add to OperationHelper.hpp
+    template <ComputeData OutputType>
+    static OutputType convert_result_to_output_type(const std::vector<double>& result_data)
+    {
+        if constexpr (std::is_same_v<OutputType, std::vector<double>>) {
+            return result_data;
+        } else if constexpr (std::is_same_v<OutputType, Eigen::VectorXd>) {
+            return create_eigen_vector_from_double(result_data);
+        } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
+            return create_eigen_vector_from_double(result_data); // Column vector
+        } else if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
+            return Kakshya::DataVariant { result_data };
+        } else {
+            // Fallback - let structure inference handle complex types
+            return OutputType {};
+        }
+    }
+
 private:
     static inline Utils::ComplexConversionStrategy s_complex_strategy = Utils::ComplexConversionStrategy::MAGNITUDE;
 
