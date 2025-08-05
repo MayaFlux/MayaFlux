@@ -1,6 +1,8 @@
 #include "DataUtils.hpp"
+
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
-#include <ranges>
+
+#include "ranges"
 
 namespace MayaFlux::Kakshya {
 
@@ -35,58 +37,21 @@ std::type_index get_variant_type_index(const DataVariant& data)
 
 void safe_copy_data_variant(const DataVariant& input, DataVariant& output)
 {
-    std::visit([&](const auto& cached_vec, auto& output_vec) {
-        using InputVec = std::decay_t<decltype(cached_vec)>;
-        using OutputVec = std::decay_t<decltype(output_vec)>;
-        if constexpr (std::is_same_v<InputVec, OutputVec>) {
-            output_vec.resize(cached_vec.size());
-            std::copy(cached_vec.begin(), cached_vec.end(), output_vec.begin());
+    std::visit([&](const auto& input_vec, auto& output_vec) {
+        using InputType = typename std::decay_t<decltype(input_vec)>::value_type;
+        using OutputType = typename std::decay_t<decltype(output_vec)>::value_type;
+
+        if constexpr (ProcessableData<InputType> && ProcessableData<OutputType>) {
+            std::vector<OutputType> temp_storage;
+            auto input_span = extract_from_variant<OutputType>(input, temp_storage);
+
+            output_vec.resize(input_span.size());
+            std::copy(input_span.begin(), input_span.end(), output_vec.begin());
         } else {
-            if constexpr (
-                std::is_same_v<typename InputVec::value_type, std::complex<float>> || std::is_same_v<typename InputVec::value_type, std::complex<double>> || std::is_same_v<typename OutputVec::value_type, std::complex<float>> || std::is_same_v<typename OutputVec::value_type, std::complex<double>>) {
-                throw std::runtime_error("Complex type conversion not supported");
-            } else {
-                output_vec.resize(cached_vec.size());
-                std::copy(cached_vec.begin(), cached_vec.end(), output_vec.begin());
-                std::cerr << "Warning: Precision loss may occur during type conversion\n";
-            }
+            throw std::runtime_error("Unsupported type conversion");
         }
     },
         input, output);
-}
-
-void safe_copy_data_variant_to_span(const DataVariant& input, std::span<double> output)
-{
-    std::visit([&output](const auto& input_vec) {
-        using InputValueType = typename std::decay_t<decltype(input_vec)>::value_type;
-
-        if constexpr (ComplexData<InputValueType>) {
-            throw std::runtime_error("Complex type conversion to span not supported");
-        } else {
-            const auto copy_size = std::min(input_vec.size(), output.size());
-
-            if constexpr (std::is_same_v<InputValueType, double>) {
-                std::ranges::copy_n(input_vec.begin(), copy_size, output.begin());
-            } else {
-                for (size_t i = 0; i < copy_size; ++i) {
-                    output[i] = static_cast<double>(input_vec[i]);
-                }
-            }
-
-            if (copy_size < output.size()) {
-                std::ranges::fill(output.subspan(copy_size), 0.0);
-            }
-
-            if constexpr (!std::is_same_v<InputValueType, double> && !std::is_same_v<InputValueType, float>) {
-                static bool warning_shown = false;
-                if (!warning_shown && copy_size > 0) {
-                    std::cerr << "Warning: Precision loss may occur during type conversion to span\n";
-                    warning_shown = true;
-                }
-            }
-        }
-    },
-        input);
 }
 
 void set_metadata_value(std::unordered_map<std::string, std::any>& metadata, const std::string& key, std::any value)
@@ -114,7 +79,6 @@ DataVariant extract_frame_data(const std::shared_ptr<SignalSourceContainer>& con
         throw std::invalid_argument("Container has no dimensions");
     }
 
-    // Find time/frame dimension (typically first dimension)
     size_t frame_dim_index = 0;
     for (size_t i = 0; i < dimensions.size(); ++i) {
         if (dimensions[i].role == DataDimension::Role::TIME) {
@@ -127,7 +91,6 @@ DataVariant extract_frame_data(const std::shared_ptr<SignalSourceContainer>& con
         throw std::out_of_range("Frame index out of range");
     }
 
-    // Create region for single frame
     std::vector<u_int64_t> start_coords(dimensions.size(), 0);
     std::vector<u_int64_t> end_coords;
     end_coords.reserve(dimensions.size());

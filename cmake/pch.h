@@ -28,6 +28,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdint>
+#include <cstring>
 
 #include "config.h"
 

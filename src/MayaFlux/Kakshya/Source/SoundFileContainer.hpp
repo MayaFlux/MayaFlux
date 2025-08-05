@@ -59,15 +59,6 @@ public:
     void set_raw_data(const DataVariant& data);
 
     /**
-     * @brief Get the audio data as a specific type
-     * @return Span of double data for direct access
-     */
-    inline std::span<const double> get_data_as_double() const
-    {
-        return get_typed_data<double>(m_data);
-    }
-
-    /**
      * @brief Enable debug output for this container
      * @param enable Whether to enable debug output
      */

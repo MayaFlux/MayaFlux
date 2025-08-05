@@ -253,8 +253,6 @@ protected:
     std::vector<std::shared_ptr<OpUnit<T>>> dependencies; ///< Operation dependencies
 };
 
-// === Type Aliases for Common Use Cases ===
-
 using DataIO = IO<Kakshya::DataVariant>; ///< IO for universal data variant
 using ContainerIO = IO<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
 using RegionIO = IO<Kakshya::Region>; ///< IO for single regions
