@@ -92,4 +92,40 @@ std::vector<double> compute_rms_energy(
     const u_int32_t num_windows,
     const u_int32_t hop_size,
     const u_int32_t window_size);
+
+/**
+ * @brief Compute spectral energy using FFT-based analysis
+ *
+ * This function computes the spectral energy for a given data span using FFT.
+ * It calculates the magnitude spectrum and sums the energy across frequency bins.
+ *
+ * @param data Input data span
+ * @param num_windows Number of windows to process
+ * @param hop_size Hop size for windowing
+ * @param window_size Size of each window
+ * @return Vector of spectral energy values
+ */
+std::vector<double> compute_spectral_energy(
+    std::span<const double> data,
+    const size_t num_windows,
+    const u_int32_t hop_size,
+    const u_int32_t window_size);
+
+/**
+ * @brief Compute harmonic energy using low-frequency FFT analysis
+ *
+ * This function computes the harmonic energy for a given data span.
+ * It focuses on the lower portion of the frequency spectrum (harmonics).
+ *
+ * @param data Input data span
+ * @param num_windows Number of windows to process
+ * @param hop_size Hop size for windowing
+ * @param window_size Size of each window
+ * @return Vector of harmonic energy values
+ */
+std::vector<double> compute_harmonic_energy(
+    std::span<const double> data,
+    const size_t num_windows,
+    const u_int32_t hop_size,
+    const u_int32_t window_size);
 }

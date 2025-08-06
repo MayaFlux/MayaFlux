@@ -8,6 +8,8 @@
 #include "execution"
 #endif
 
+#include "unsupported/Eigen/FFT"
+
 namespace MayaFlux::Yantra {
 
 std::vector<double> compute_dynamic_range_energy(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
@@ -132,6 +134,88 @@ std::vector<double> compute_rms_energy(std::span<const double> data, const u_int
         });
 
     return rms_values;
+}
+
+std::vector<double> compute_spectral_energy(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+{
+    std::vector<double> spectral_energy(num_windows);
+
+    std::vector<size_t> indices(num_windows);
+    std::iota(indices.begin(), indices.end(), 0);
+
+    Eigen::VectorXd hanning_window(window_size);
+    for (u_int32_t i = 0; i < window_size; ++i) {
+        hanning_window(i) = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (window_size - 1)));
+    }
+
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
+        [&](size_t i) {
+            const size_t start_idx = i * hop_size;
+            const size_t end_idx = std::min(start_idx + window_size, data.size());
+            auto window = data.subspan(start_idx, end_idx - start_idx);
+
+            Eigen::VectorXd windowed_data = Eigen::VectorXd::Zero(window_size);
+            const size_t actual_size = window.size();
+
+            for (size_t j = 0; j < actual_size; ++j) {
+                windowed_data(j) = window[j] * hanning_window(j);
+            }
+
+            Eigen::FFT<double> fft;
+            Eigen::VectorXcd fft_result;
+            fft.fwd(fft_result, windowed_data);
+
+            double energy = 0.0;
+            for (int j = 0; j < fft_result.size(); ++j) {
+                energy += std::norm(fft_result(j));
+            }
+
+            spectral_energy[i] = energy / static_cast<double>(window_size);
+        });
+
+    return spectral_energy;
+}
+
+std::vector<double> compute_harmonic_energy(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+{
+    std::vector<double> harmonic_energy(num_windows);
+
+    std::vector<size_t> indices(num_windows);
+    std::iota(indices.begin(), indices.end(), 0);
+
+    Eigen::VectorXd hanning_window(window_size);
+    for (u_int32_t i = 0; i < window_size; ++i) {
+        hanning_window(i) = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (window_size - 1)));
+    }
+
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
+        [&](size_t i) {
+            const size_t start_idx = i * hop_size;
+            const size_t end_idx = std::min(start_idx + window_size, data.size());
+            auto window = data.subspan(start_idx, end_idx - start_idx);
+
+            Eigen::VectorXd windowed_data = Eigen::VectorXd::Zero(window_size);
+            const size_t actual_size = window.size();
+
+            for (size_t j = 0; j < actual_size; ++j) {
+                windowed_data(j) = window[j] * hanning_window(j);
+            }
+
+            Eigen::FFT<double> fft;
+            Eigen::VectorXcd fft_result;
+            fft.fwd(fft_result, windowed_data);
+
+            const int harmonic_bins = std::max(1, static_cast<int>(fft_result.size() / 8));
+            double energy = 0.0;
+
+            for (int j = 1; j < harmonic_bins; ++j) {
+                energy += std::norm(fft_result(j));
+            }
+
+            harmonic_energy[i] = energy / static_cast<double>(harmonic_bins);
+        });
+
+    return harmonic_energy;
 }
 
 }
