@@ -169,31 +169,50 @@ public:
     }
 
     /**
-     * @brief Convenience method for direct data analysis (no IO wrapper)
+     * @brief User-facing analysis method - returns analysis results directly
      * @param data Raw input data
-     * @return Raw output data (extracted from IO wrapper)
+     * @return Analysis results as std::any
      */
-    OutputType analyze_data(const InputType& data)
+    std::any analyze_data(const InputType& data)
     {
         input_type input_io(data);
-        auto result = this->apply_operation(input_io);
-        return result.data;
+        m_current_output = this->apply_operation(input_io);
+        return m_current_analysis;
     }
 
     /**
      * @brief Batch analysis for multiple inputs
      * @param inputs Vector of input data
-     * @return Vector of corresponding outputs
+     * @return Vector of analysis results as std::any
      */
-    std::vector<OutputType> analyze_batch(const std::vector<InputType>& inputs)
+    std::vector<std::any> analyze_batch(const std::vector<InputType>& inputs)
     {
-        std::vector<OutputType> results;
-        results.reserve(inputs.size());
+        std::vector<std::any> analyses;
+        analyses.reserve(inputs.size());
 
-        std::transform(inputs.begin(), inputs.end(), std::back_inserter(results),
-            [this](const InputType& input) { return analyze_data(input); });
+        for (const auto& input : inputs) {
+            analyses.push_back(analyze_data(input));
+        }
 
-        return results;
+        return analyses;
+    }
+
+    /**
+     * @brief Access cached analysis from last operation
+     * @return Current analysis result as std::any
+     */
+    std::any get_current_analysis() const
+    {
+        return m_current_analysis;
+    }
+
+    /**
+     * @brief Check if analysis has been performed
+     * @return True if analysis result is available
+     */
+    bool has_current_analysis() const
+    {
+        return m_current_analysis.has_value();
     }
 
 protected:
@@ -330,6 +349,16 @@ protected:
         }
         return default_value;
     }
+
+    mutable std::any m_current_analysis;
+
+    template <typename AnalysisResultType>
+    void store_current_analysis(AnalysisResultType&& result) const
+    {
+        m_current_analysis = std::forward<AnalysisResultType>(result);
+    }
+
+    output_type m_current_output;
 
 private:
     AnalysisGranularity m_granularity = AnalysisGranularity::RAW_VALUES;

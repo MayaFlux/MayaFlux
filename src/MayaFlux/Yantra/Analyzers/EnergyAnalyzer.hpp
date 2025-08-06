@@ -5,15 +5,8 @@
 
 #include "UniversalAnalyzer.hpp"
 #include <Eigen/Dense>
-#include <algorithm>
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include "oneapi/dpl/algorithm"
-#include "oneapi/dpl/execution"
-#include "oneapi/dpl/numeric"
-#else
-#include "execution"
-#endif
+#include "AnalysisHelper.hpp"
 
 /**
  * @file EnergyAnalyzer.hpp
@@ -63,6 +56,27 @@ enum class EnergyLevel : uint8_t {
 };
 
 /**
+ * @struct EnergyAnalysisResult
+ * @brief Analysis result structure for energy analysis
+ */
+struct EnergyAnalysisResult {
+    std::vector<double> energy_values;
+    EnergyMethod method_used;
+    uint32_t window_size;
+    uint32_t hop_size;
+
+    double mean_energy;
+    double max_energy;
+    double min_energy;
+    double energy_variance;
+
+    std::vector<EnergyLevel> energy_classifications;
+    std::map<EnergyLevel, int> level_distribution;
+
+    std::vector<std::pair<size_t, size_t>> window_positions;
+};
+
+/**
  * @class EnergyAnalyzer
  * @brief High-performance energy analyzer with zero-copy processing
  *
@@ -75,11 +89,12 @@ enum class EnergyLevel : uint8_t {
  * // DataVariant -> VectorXd analyzer
  * auto energy_analyzer = std::make_shared<EnergyAnalyzer<Kakshya::DataVariant, Eigen::VectorXd>>();
  *
- * // Region -> RegionGroup analyzer
- * auto region_energy = std::make_shared<EnergyAnalyzer<Kakshya::Region, Kakshya::RegionGroup>>();
+ * // User-facing analysis
+ * auto analysis = energy_analyzer->analyze_data(audio_data);
+ * auto energy_result = safe_any_cast<EnergyAnalysisResult>(analysis);
  *
- * // Zero-copy analysis
- * auto result = energy_analyzer->analyze_data(audio_data);
+ * // Pipeline usage
+ * auto pipeline_output = energy_analyzer->apply_operation(IO{audio_data});
  * ```
  */
 template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = Eigen::VectorXd>
@@ -97,14 +112,28 @@ public:
     explicit EnergyAnalyzer(uint32_t window_size = 512, uint32_t hop_size = 256)
         : m_window_size(window_size)
         , m_hop_size(hop_size)
-        , m_method(EnergyMethod::RMS)
-        , m_classification_enabled(false)
-        , m_silent_threshold(0.01)
-        , m_quiet_threshold(0.1)
-        , m_moderate_threshold(0.5)
-        , m_loud_threshold(0.8)
     {
         validate_window_parameters();
+    }
+
+    /**
+     * @brief Type-safe energy analysis method
+     * @param data Input data
+     * @return EnergyAnalysisResult directly
+     */
+    EnergyAnalysisResult analyze_energy(const InputType& data)
+    {
+        auto result = this->analyze_data(data);
+        return safe_any_cast_or_throw<EnergyAnalysisResult>(result);
+    }
+
+    /**
+     * @brief Get last energy analysis result (type-safe)
+     * @return EnergyAnalysisResult from last operation
+     */
+    [[nodiscard]] EnergyAnalysisResult get_energy_analysis() const
+    {
+        return safe_any_cast_or_throw<EnergyAnalysisResult>(this->get_current_analysis());
     }
 
     /**
@@ -142,21 +171,13 @@ public:
 
     /**
      * @brief Set energy computation method
-     * @param method Energy computation method
      */
-    void set_energy_method(EnergyMethod method)
-    {
-        m_method = method;
-    }
+    void set_energy_method(EnergyMethod method) { m_method = method; }
 
     /**
      * @brief Get current energy computation method
-     * @return Current energy method
      */
-    [[nodiscard]] EnergyMethod get_energy_method() const
-    {
-        return m_method;
-    }
+    [[nodiscard]] EnergyMethod get_energy_method() const { return m_method; }
 
     /**
      * @brief Set window parameters for analysis
@@ -182,7 +203,6 @@ public:
         if (silent >= quiet || quiet >= moderate || moderate >= loud) {
             throw std::invalid_argument("Energy thresholds must be in ascending order");
         }
-
         m_silent_threshold = silent;
         m_quiet_threshold = quiet;
         m_moderate_threshold = moderate;
@@ -193,10 +213,7 @@ public:
      * @brief Enable or disable energy level classification
      * @param enabled True to enable classification
      */
-    void enable_classification(bool enabled)
-    {
-        m_classification_enabled = enabled;
-    }
+    void enable_classification(bool enabled) { m_classification_enabled = enabled; }
 
     /**
      * @brief Classify energy value into qualitative level
@@ -259,14 +276,14 @@ protected:
     }
 
     /**
-     * @brief Zero-copy energy analysis implementation using OperationHelper
+     * @brief Core analysis implementation - creates analysis result AND pipeline output
      * @param input Input data wrapped in IO container
-     * @return Analysis results wrapped in IO container
+     * @return Pipeline output (data flow for chaining operations)
      */
     output_type analyze_implementation(const input_type& input) override
     {
-        auto input_mutable = const_cast<input_type&>(input);
-        auto [data_span, structure_info] = OperationHelper::extract_structured_double(input_mutable);
+        auto input_data = const_cast<InputType&>(input.data);
+        auto [data_span, structure_info] = OperationHelper::extract_structured_double(input_data);
 
         if (data_span.size() < m_window_size) {
             throw std::runtime_error("Input data size (" + std::to_string(data_span.size()) + ") is smaller than window size (" + std::to_string(m_window_size) + ")");
@@ -274,27 +291,16 @@ protected:
 
         std::vector<double> energy_values = compute_energy_values(data_span, m_method);
 
-        OutputType result_data = OperationHelper::convert_result_to_output_type<OutputType>(energy_values);
+        EnergyAnalysisResult analysis_result = create_analysis_result(
+            energy_values, data_span, structure_info);
 
-        output_type output;
-        if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
-            auto [out_dims, out_modality] = Yantra::infer_from_data_variant(result_data);
-            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-        } else {
-            auto [out_dims, out_modality] = Yantra::infer_structure(result_data);
-            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-        }
+        this->store_current_analysis(analysis_result);
 
-        add_energy_metadata(output, energy_values);
-        add_input_traceability(output, input, structure_info);
-
-        return output;
+        return create_pipeline_output(input, energy_values);
     }
 
     /**
      * @brief Handle analysis-specific parameters
-     * @param name Parameter name
-     * @param value Parameter value
      */
     void set_analysis_parameter(const std::string& name, std::any value) override
     {
@@ -331,8 +337,6 @@ protected:
 
     /**
      * @brief Get analysis-specific parameter
-     * @param name Parameter name
-     * @return Parameter value
      */
     [[nodiscard]] std::any get_analysis_parameter(const std::string& name) const override
     {
@@ -349,19 +353,16 @@ protected:
     }
 
 private:
-    uint32_t m_window_size;
-    uint32_t m_hop_size;
-    EnergyMethod m_method;
-    bool m_classification_enabled;
+    uint32_t m_window_size { 512 };
+    uint32_t m_hop_size { 256 };
+    EnergyMethod m_method { EnergyMethod::RMS };
+    bool m_classification_enabled { false };
 
-    double m_silent_threshold;
-    double m_quiet_threshold;
-    double m_moderate_threshold;
-    double m_loud_threshold;
+    double m_silent_threshold { 0.01 };
+    double m_quiet_threshold = { 0.1 };
+    double m_moderate_threshold { 0.5 };
+    double m_loud_threshold { 0.8 };
 
-    /**
-     * @brief Validate window parameters
-     */
     void validate_window_parameters() const
     {
         if (m_window_size == 0) {
@@ -376,202 +377,113 @@ private:
     }
 
     /**
-     * @brief Compute energy values using span (zero-copy processing)
-     * @param data Input signal data as span
-     * @param method Energy computation method
-     * @return Vector of energy values
+     * @brief Create comprehensive analysis result from energy computation
      */
-    [[nodiscard]] std::vector<double> compute_energy_values(std::span<const double> data, EnergyMethod method) const
+    [[nodiscard]] EnergyAnalysisResult create_analysis_result(
+        const std::vector<double>& energy_values,
+        std::span<const double> original_data,
+        const DataStructureInfo& /*structure_info*/) const
     {
-        switch (method) {
-        case EnergyMethod::RMS:
-            return compute_rms_energy(data);
-        case EnergyMethod::PEAK:
-            return compute_peak_energy(data);
-        case EnergyMethod::SPECTRAL:
-            return compute_spectral_energy(data);
-        case EnergyMethod::ZERO_CROSSING:
-            return compute_zero_crossing_energy(data);
-        case EnergyMethod::HARMONIC:
-            return compute_harmonic_energy(data);
-        case EnergyMethod::POWER:
-            return compute_power_energy(data);
-        case EnergyMethod::DYNAMIC_RANGE:
-            return compute_dynamic_range_energy(data);
-        default:
-            throw std::runtime_error("Unknown energy method");
+        EnergyAnalysisResult result;
+        result.energy_values = energy_values;
+        result.method_used = m_method;
+        result.window_size = m_window_size;
+        result.hop_size = m_hop_size;
+
+        if (!energy_values.empty()) {
+            auto [min_it, max_it] = std::ranges::minmax_element(energy_values);
+            result.min_energy = *min_it;
+            result.max_energy = *max_it;
+            result.mean_energy = std::accumulate(energy_values.begin(), energy_values.end(), 0.0) / static_cast<double>(energy_values.size());
+
+            double variance = 0.0;
+            for (double val : energy_values) {
+                variance += (val - result.mean_energy) * (val - result.mean_energy);
+            }
+            result.energy_variance = variance / static_cast<double>(energy_values.size());
+        }
+
+        result.window_positions.reserve(energy_values.size());
+        for (size_t i = 0; i < energy_values.size(); ++i) {
+            size_t start_idx = i * m_hop_size;
+            size_t end_idx = std::min(start_idx + m_window_size, original_data.size());
+            result.window_positions.emplace_back(start_idx, end_idx);
+        }
+
+        if (m_classification_enabled) {
+            result.energy_classifications.reserve(energy_values.size());
+            std::map<EnergyLevel, int> level_counts;
+
+            for (double energy : energy_values) {
+                EnergyLevel level = classify_energy_level(energy);
+                result.energy_classifications.push_back(level);
+                level_counts[level]++;
+            }
+            result.level_distribution = std::move(level_counts);
+        }
+
+        return result;
+    }
+
+    /**
+     * @brief Create pipeline output from input and energy values
+     */
+    output_type create_pipeline_output(const input_type& input, const std::vector<double>& energy_values) const
+    {
+        if constexpr (std::is_same_v<InputType, OutputType>) {
+            output_type output = input;
+            output.metadata["analyzed"] = true;
+            output.metadata["analyzer"] = "EnergyAnalyzer";
+            output.metadata["energy_method"] = method_to_string(m_method);
+            output.metadata["num_energy_windows"] = energy_values.size();
+            if (!energy_values.empty()) {
+                output.metadata["mean_energy"] = std::accumulate(energy_values.begin(), energy_values.end(), 0.0) / static_cast<double>(energy_values.size());
+            }
+            return output;
+        } else {
+            OutputType result_data = OperationHelper::convert_result_to_output_type<OutputType>(energy_values);
+
+            output_type output;
+            if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
+                auto [out_dims, out_modality] = Yantra::infer_from_data_variant(result_data);
+                output = output_type(std::move(result_data), std::move(out_dims), out_modality);
+            } else {
+                auto [out_dims, out_modality] = Yantra::infer_structure(result_data);
+                output = output_type(std::move(result_data), std::move(out_dims), out_modality);
+            }
+
+            output.metadata["source_analyzer"] = "EnergyAnalyzer";
+            output.metadata["energy_method"] = method_to_string(m_method);
+            output.metadata["window_size"] = m_window_size;
+            output.metadata["hop_size"] = m_hop_size;
+
+            return output;
         }
     }
 
     /**
-     * @brief Compute RMS energy over sliding windows (span-based)
+     * @brief Compute energy values using span (zero-copy processing)
      */
-    [[nodiscard]] std::vector<double> compute_rms_energy(std::span<const double> data) const
+    [[nodiscard]] std::vector<double> compute_energy_values(std::span<const double> data, EnergyMethod method) const
     {
         const size_t num_windows = calculate_num_windows(data.size());
-        std::vector<double> rms_values(num_windows);
 
-        std::vector<size_t> indices(num_windows);
-        std::iota(indices.begin(), indices.end(), 0);
+        switch (method) {
+        case EnergyMethod::PEAK:
+            return compute_peak_energy(data, num_windows, m_hop_size, m_window_size);
+        case EnergyMethod::ZERO_CROSSING:
+            return compute_zero_crossing_energy(data, num_windows, m_hop_size, m_window_size);
+        case EnergyMethod::POWER:
+            return compute_power_energy(data, num_windows, m_hop_size, m_window_size);
+        case EnergyMethod::DYNAMIC_RANGE:
+            return compute_dynamic_range_energy(data, num_windows, m_hop_size, m_window_size);
 
-        std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
-            [&](size_t i) {
-                const size_t start_idx = i * m_hop_size;
-                const size_t end_idx = std::min(start_idx + m_window_size, data.size());
-
-                auto window = data.subspan(start_idx, end_idx - start_idx);
-
-                double sum_squares = 0.0;
-                for (double sample : window) {
-                    sum_squares += sample * sample;
-                }
-
-                rms_values[i] = std::sqrt(sum_squares / (double)window.size());
-            });
-
-        return rms_values;
-    }
-
-    /**
-     * @brief Compute peak energy over sliding windows (span-based)
-     */
-    [[nodiscard]] std::vector<double> compute_peak_energy(std::span<const double> data) const
-    {
-        const size_t num_windows = calculate_num_windows(data.size());
-        std::vector<double> peak_values(num_windows);
-
-        std::vector<size_t> indices(num_windows);
-        std::iota(indices.begin(), indices.end(), 0);
-
-        std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
-            [&](size_t i) {
-                const size_t start_idx = i * m_hop_size;
-                const size_t end_idx = std::min(start_idx + m_window_size, data.size());
-
-                auto window = data.subspan(start_idx, end_idx - start_idx);
-
-                double max_val = 0.0;
-                for (double sample : window) {
-                    max_val = std::max(max_val, std::abs(sample));
-                }
-
-                peak_values[i] = max_val;
-            });
-
-        return peak_values;
-    }
-
-    /**
-     * @brief Compute zero-crossing rate (span-based)
-     */
-    [[nodiscard]] std::vector<double> compute_zero_crossing_energy(std::span<const double> data) const
-    {
-        const size_t num_windows = calculate_num_windows(data.size());
-        std::vector<double> zcr_values(num_windows);
-
-        std::vector<size_t> indices(num_windows);
-        std::iota(indices.begin(), indices.end(), 0);
-
-        std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
-            [&](size_t i) {
-                const size_t start_idx = i * m_hop_size;
-                const size_t end_idx = std::min(start_idx + m_window_size, data.size());
-
-                auto window = data.subspan(start_idx, end_idx - start_idx);
-
-                int zero_crossings = 0;
-                for (size_t j = 1; j < window.size(); ++j) {
-                    if ((window[j] >= 0.0) != (window[j - 1] >= 0.0)) {
-                        zero_crossings++;
-                    }
-                }
-
-                zcr_values[i] = static_cast<double>(zero_crossings) / (double)(window.size() - 1);
-            });
-
-        return zcr_values;
-    }
-
-    /**
-     * @brief Compute power energy (span-based)
-     */
-    [[nodiscard]] std::vector<double> compute_power_energy(std::span<const double> data) const
-    {
-        const size_t num_windows = calculate_num_windows(data.size());
-        std::vector<double> power_values(num_windows);
-
-        std::vector<size_t> indices(num_windows);
-        std::iota(indices.begin(), indices.end(), 0);
-
-        std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
-            [&](size_t i) {
-                const size_t start_idx = i * m_hop_size;
-                const size_t end_idx = std::min(start_idx + m_window_size, data.size());
-
-                auto window = data.subspan(start_idx, end_idx - start_idx);
-
-                double sum_squares = 0.0;
-                for (double sample : window) {
-                    sum_squares += sample * sample;
-                }
-
-                power_values[i] = sum_squares;
-            });
-
-        return power_values;
-    }
-
-    /**
-     * @brief Compute dynamic range energy (span-based)
-     */
-    [[nodiscard]] std::vector<double> compute_dynamic_range_energy(std::span<const double> data) const
-    {
-        const size_t num_windows = calculate_num_windows(data.size());
-        std::vector<double> dr_values(num_windows);
-
-        std::vector<size_t> indices(num_windows);
-        std::iota(indices.begin(), indices.end(), 0);
-
-        std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
-            [&](size_t i) {
-                const size_t start_idx = i * m_hop_size;
-                const size_t end_idx = std::min(start_idx + m_window_size, data.size());
-
-                auto window = data.subspan(start_idx, end_idx - start_idx);
-
-                double min_val = std::numeric_limits<double>::max();
-                double max_val = std::numeric_limits<double>::lowest();
-
-                for (double sample : window) {
-                    double abs_sample = std::abs(sample);
-                    min_val = std::min(min_val, abs_sample);
-                    max_val = std::max(max_val, abs_sample);
-                }
-
-                if (min_val < 1e-10)
-                    min_val = 1e-10;
-                dr_values[i] = 20.0 * std::log10(max_val / min_val);
-            });
-
-        return dr_values;
-    }
-
-    /**
-     * @brief Compute spectral energy (placeholder - would use FFT)
-     */
-    [[nodiscard]] std::vector<double> compute_spectral_energy(std::span<const double> data) const
-    {
-        // Placeholder - return RMS as approximation
-        return compute_rms_energy(data);
-    }
-
-    /**
-     * @brief Compute harmonic energy (placeholder)
-     */
-    [[nodiscard]] std::vector<double> compute_harmonic_energy(std::span<const double> data) const
-    {
-        // Placeholder - return RMS as approximation
-        return compute_rms_energy(data);
+        case EnergyMethod::SPECTRAL:
+        case EnergyMethod::HARMONIC:
+        case EnergyMethod::RMS:
+        default:
+            return compute_rms_energy(data, num_windows, m_hop_size, m_window_size);
+        }
     }
 
     /**
@@ -583,101 +495,22 @@ private:
             return 0;
         return (data_size - m_window_size) / m_hop_size + 1;
     }
-
-    /**
-     * @brief Convert energy values to output type (simplified)
-     */
-    /* OutputType convert_to_output_type(const std::vector<double>& energy_values) const
-    {
-        if constexpr (std::is_same_v<OutputType, std::vector<double>>) {
-            return energy_values;
-        } else if constexpr (std::is_same_v<OutputType, Eigen::VectorXd>) {
-            return OperationHelper::create_eigen_vector_from_double(energy_values);
-        } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
-            return OperationHelper::create_eigen_vector_from_double(energy_values);
-        } else if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
-            return Kakshya::DataVariant { energy_values };
-        } else {
-            return OutputType {}; // Will be handled by infer_structure
-        }
-    } */
-
-    /**
-     * @brief Add comprehensive energy metadata
-     */
-    void add_energy_metadata(output_type& output, const std::vector<double>& energy_values) const
-    {
-        output.metadata["energy_method"] = method_to_string(m_method);
-        output.metadata["window_size"] = m_window_size;
-        output.metadata["hop_size"] = m_hop_size;
-        output.metadata["num_windows"] = energy_values.size();
-
-        if (!energy_values.empty()) {
-            auto [min_it, max_it] = std::ranges::minmax_element(energy_values);
-            output.metadata["min_energy"] = *min_it;
-            output.metadata["max_energy"] = *max_it;
-
-            double mean_energy = std::accumulate(energy_values.begin(), energy_values.end(), 0.0) / (double)energy_values.size();
-            output.metadata["mean_energy"] = mean_energy;
-
-            double variance = 0.0;
-            for (double val : energy_values) {
-                variance += (val - mean_energy) * (val - mean_energy);
-            }
-            variance /= (double)energy_values.size();
-            output.metadata["energy_variance"] = variance;
-            output.metadata["energy_std_dev"] = std::sqrt(variance);
-        }
-
-        if (m_classification_enabled) {
-            output.metadata["classification_enabled"] = true;
-            output.metadata["silent_threshold"] = m_silent_threshold;
-            output.metadata["quiet_threshold"] = m_quiet_threshold;
-            output.metadata["moderate_threshold"] = m_moderate_threshold;
-            output.metadata["loud_threshold"] = m_loud_threshold;
-
-            if (!energy_values.empty()) {
-                std::map<std::string, int> level_counts;
-                for (double energy : energy_values) {
-                    EnergyLevel level = classify_energy_level(energy);
-                    level_counts[energy_level_to_string(level)]++;
-                }
-                output.metadata["energy_level_distribution"] = level_counts;
-            }
-        }
-
-        output.metadata["analysis_timestamp"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-                                                    .count();
-    }
-
-    /**
-     * @brief Add input traceability metadata
-     */
-    void add_input_traceability(output_type& output, const input_type& input,
-        const DataStructureInfo& structure_info) const
-    {
-        output.metadata["input_modality"] = static_cast<int>(input.modality);
-        output.metadata["input_dimensions"] = input.dimensions.size();
-        output.metadata["input_total_elements"] = input.get_total_elements();
-        output.metadata["original_data_type"] = structure_info.original_type.name();
-    }
 };
 
-/// Energy analyzer for DataVariant input producing VectorXd output
+/// Standard energy analyzer: DataVariant -> VectorXd
 using StandardEnergyAnalyzer = EnergyAnalyzer<Kakshya::DataVariant, Eigen::VectorXd>;
 
-/// Energy analyzer for signal containers
+/// Container energy analyzer: SignalContainer -> VectorXd
 using ContainerEnergyAnalyzer = EnergyAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::VectorXd>;
 
-/// Energy analyzer for regions
+/// Region energy analyzer: Region -> VectorXd
 using RegionEnergyAnalyzer = EnergyAnalyzer<Kakshya::Region, Eigen::VectorXd>;
 
-/// Energy analyzer producing raw double vectors
+/// Raw energy analyzer: produces double vectors
 template <ComputeData InputType = Kakshya::DataVariant>
 using RawEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<double>>;
 
-/// Energy analyzer producing DataVariant output
+/// Variant energy analyzer: produces DataVariant output
 template <ComputeData InputType = Kakshya::DataVariant>
 using VariantEnergyAnalyzer = EnergyAnalyzer<InputType, Kakshya::DataVariant>;
 
