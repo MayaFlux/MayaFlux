@@ -228,7 +228,7 @@ protected:
     /**
      * @brief Optional chain-aware implementation - default delegates to operation_function
      */
-    virtual output_type apply_operation_chained(const input_type& input)
+    virtual output_type apply_operation_chained(const input_type& input, const ExecutionContext /*context*/)
     {
         return operation_function(input);
     }

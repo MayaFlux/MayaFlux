@@ -227,6 +227,30 @@ CastResult<T> safe_any_cast(const std::any& any_val)
 }
 
 template <typename T>
+    requires(!ArithmeticData<T> && !ComplexData<T> && !StringData<T>)
+CastResult<T> safe_any_cast(const std::any& any_val)
+{
+    CastResult<T> result;
+
+    if (!any_val.has_value()) {
+        result.error = "Empty any";
+        return result;
+    }
+
+    if (any_val.type() == typeid(T)) {
+        try {
+            result.value = std::any_cast<T>(any_val);
+        } catch (const std::bad_any_cast& e) {
+            result.error = "Failed to cast to " + std::string(typeid(T).name()) + ": " + e.what();
+        }
+    } else {
+        result.error = "Type mismatch: expected " + std::string(typeid(T).name()) + ", got " + std::string(any_val.type().name());
+    }
+
+    return result;
+}
+
+template <typename T>
 T safe_any_cast_or_throw(const std::any& any_val)
 {
     auto result = safe_any_cast<T>(any_val);

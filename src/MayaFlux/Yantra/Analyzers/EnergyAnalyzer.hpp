@@ -283,7 +283,8 @@ protected:
     output_type analyze_implementation(const input_type& input) override
     {
         auto input_data = const_cast<InputType&>(input.data);
-        auto [data_span, structure_info] = OperationHelper::extract_structured_double(input_data);
+        auto data_variant = OperationHelper::to_data_variant(input_data);
+        auto [data_span, structure_info] = OperationHelper::extract_structured_double(data_variant);
 
         if (data_span.size() < m_window_size) {
             throw std::runtime_error("Input data size (" + std::to_string(data_span.size()) + ") is smaller than window size (" + std::to_string(m_window_size) + ")");
@@ -305,9 +306,12 @@ protected:
     void set_analysis_parameter(const std::string& name, std::any value) override
     {
         if (name == "method") {
-            if (auto* method_str = std::any_cast<std::string>(&value)) {
-                m_method = string_to_method(*method_str);
+            try {
+                auto method_str = safe_any_cast_or_throw<std::string>(value);
+                m_method = string_to_method(method_str);
                 return;
+            } catch (const std::runtime_error&) {
+                throw std::invalid_argument("Invalid method parameter - expected string or EnergyMethod enum");
             }
             if (auto* method_enum = std::any_cast<EnergyMethod>(&value)) {
                 m_method = *method_enum;
@@ -477,9 +481,10 @@ private:
             return compute_power_energy(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::DYNAMIC_RANGE:
             return compute_dynamic_range_energy(data, num_windows, m_hop_size, m_window_size);
-
         case EnergyMethod::SPECTRAL:
+            return compute_spectral_energy(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::HARMONIC:
+            return compute_harmonic_energy(data, num_windows, m_hop_size, m_window_size);
         case EnergyMethod::RMS:
         default:
             return compute_rms_energy(data, num_windows, m_hop_size, m_window_size);

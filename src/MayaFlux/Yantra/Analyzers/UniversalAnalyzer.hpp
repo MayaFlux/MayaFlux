@@ -215,6 +215,27 @@ public:
         return m_current_analysis.has_value();
     }
 
+    /**
+     * @brief Helper to get typed parameter with default value
+     * @tparam T Parameter type
+     * @param name Parameter name
+     * @param default_value Default value if parameter not found
+     * @return Parameter value or default
+     */
+    template <typename T>
+    T get_parameter_or_default(const std::string& name, const T& default_value) const
+    {
+        auto param = get_analysis_parameter(name);
+        if (param.has_value()) {
+            try {
+                return std::any_cast<T>(param);
+            } catch (const std::bad_any_cast&) {
+                return default_value;
+            }
+        }
+        return default_value;
+    }
+
 protected:
     /**
      * @brief Core analysis implementation - must be overridden by derived classes
@@ -327,27 +348,6 @@ protected:
         auto summary = add_attribution_metadata(raw_output);
         summary.metadata["is_summary"] = true;
         return summary;
-    }
-
-    /**
-     * @brief Helper to get typed parameter with default value
-     * @tparam T Parameter type
-     * @param name Parameter name
-     * @param default_value Default value if parameter not found
-     * @return Parameter value or default
-     */
-    template <typename T>
-    T get_parameter_or_default(const std::string& name, const T& default_value) const
-    {
-        auto param = get_analysis_parameter(name);
-        if (param.has_value()) {
-            try {
-                return std::any_cast<T>(param);
-            } catch (const std::bad_any_cast&) {
-                return default_value;
-            }
-        }
-        return default_value;
     }
 
     mutable std::any m_current_analysis;
