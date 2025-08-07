@@ -41,6 +41,7 @@
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;
 using namespace MayaFlux::Buffers;
+using namespace MayaFlux::Nodes::Generator;
 using namespace MayaFlux::Nodes;
 using namespace MayaFlux;
 

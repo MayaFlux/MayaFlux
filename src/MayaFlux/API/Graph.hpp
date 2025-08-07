@@ -87,7 +87,7 @@ Nodes::RootNode& get_audio_channel_root(u_int32_t channel = 0);
 
 template <typename NodeType, typename... Args>
     requires std::derived_from<NodeType, Nodes::Node>
-auto create_node(NodeType, Args&&... args) -> std::shared_ptr<NodeType>
+auto create_node(Args&&... args) -> std::shared_ptr<NodeType>
 {
     auto node = std::make_shared<NodeType>(std::forward<Args>(args)...);
     register_audio_node(node);

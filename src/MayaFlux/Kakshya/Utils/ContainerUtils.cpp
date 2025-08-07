@@ -122,6 +122,14 @@ DataVariant extract_interleaved_data(const std::shared_ptr<SignalSourceContainer
             });
 
         if (channel_it != dimensions.end()) {
+#ifdef MAYAFLUX_PLATFORM_MACOS
+            interleave_pattern.clear();
+            interleave_pattern.reserve(channel_it->size);
+            // std::ranges::copy(channel_indices, std::back_inserter(interleave_pattern));
+            for (size_t i = 0; i < channel_it->size; ++i) {
+                interleave_pattern.push_back(i);
+            }
+#endif // MAYAFLUX_PLATFORM_MACOS
             auto channel_indices = std::ranges::views::iota(size_t { 0 }, channel_it->size);
             interleave_pattern.assign(channel_indices.begin(), channel_indices.end());
         }

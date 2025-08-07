@@ -7,7 +7,7 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/MayaFlux.git
+git clone https://github.com/MayaFlux/MayaFlux.git
 cd MayaFlux
 ```
 
