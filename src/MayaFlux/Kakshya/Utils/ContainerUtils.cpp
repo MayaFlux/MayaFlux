@@ -5,8 +5,6 @@
 
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
-#include "ranges"
-
 namespace MayaFlux::Kakshya {
 
 std::unordered_map<std::string, std::any> extract_processing_state_info(const std::shared_ptr<SignalSourceContainer>& container)

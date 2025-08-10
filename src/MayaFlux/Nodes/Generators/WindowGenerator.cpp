@@ -1,4 +1,4 @@
-#include "Generator.hpp"
+#include "WindowGenerator.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
@@ -62,5 +62,18 @@ std::vector<double> ExponentialRamp(size_t length, double start, double end)
         ramp[i] = ramp[i - 1] * growth;
     }
     return ramp;
+}
+
+std::vector<double> generate_window(uint32_t size, WindowType window_type)
+{
+    switch (window_type) {
+    case WindowType::HAMMING:
+        return HammingWindow(size);
+    case WindowType::BLACKMAN:
+        return BlackmanWindow(size);
+    case WindowType::HANNING:
+    default:
+        return HannWindow(size);
+    }
 }
 }

@@ -2,8 +2,6 @@
 
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 
-#include "ranges"
-
 namespace MayaFlux::Kakshya {
 
 u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)

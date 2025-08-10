@@ -19,13 +19,6 @@ enum class distribution {
     // GENDY
 };
 
-enum WindowType {
-    HANNING,
-    HAMMING,
-    BLACKMAN,
-    RECTANGULAR,
-};
-
 enum ActionType {
     NODE,
     TIME,
