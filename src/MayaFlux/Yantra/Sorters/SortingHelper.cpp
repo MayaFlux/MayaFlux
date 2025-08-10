@@ -122,20 +122,14 @@ void sort_eigen_matrix_by_rows(Eigen::MatrixXd& matrix,
     SortingDirection direction,
     SortingAlgorithm algorithm)
 {
-    std::vector<int> row_indices(matrix.rows());
-    std::iota(row_indices.begin(), row_indices.end(), 0);
+    for (int row = 0; row < matrix.rows(); ++row) {
+        auto matrix_row = matrix.row(row);
+        std::vector<double> row_data(matrix_row.data(), matrix_row.data() + matrix_row.size());
+        auto comp = create_standard_comparator<double>(direction);
 
-    auto comp = [&matrix, direction](int i, int j) -> bool {
-        return direction == SortingDirection::ASCENDING ? matrix(i, 0) < matrix(j, 0) : matrix(i, 0) > matrix(j, 0);
-    };
-
-    execute_sorting_algorithm(row_indices.begin(), row_indices.end(), comp, algorithm);
-
-    Eigen::MatrixXd sorted_matrix = matrix;
-    for (int i = 0; i < matrix.rows(); ++i) {
-        sorted_matrix.row(i) = matrix.row(row_indices[i]);
+        execute_sorting_algorithm(row_data.begin(), row_data.end(), comp, algorithm);
+        matrix.row(row) = Eigen::Map<Eigen::VectorXd>(row_data.data(), row_data.size());
     }
-    matrix = sorted_matrix;
 }
 
 void sort_eigen_matrix_by_columns(Eigen::MatrixXd& matrix,
