@@ -1,7 +1,5 @@
 #include "AnalysisHelper.hpp"
 
-#include <algorithm>
-
 #ifdef MAYAFLUX_PLATFORM_MACOS
 #include "oneapi/dpl/algorithm"
 #include "oneapi/dpl/execution"
