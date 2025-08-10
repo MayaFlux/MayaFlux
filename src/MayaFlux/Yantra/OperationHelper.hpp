@@ -187,7 +187,7 @@ public:
     static std::vector<double> extract_as_double(const T& compute_data)
     {
         auto [double_data, structure_info] = extract_with_structure(compute_data);
-        return double_data;
+        return std::vector<double>(double_data.begin(), double_data.end());
     }
 
     /**
