@@ -201,7 +201,6 @@ public:
     static T reconstruct_from_double(const std::vector<double>& double_data,
         const DataStructureInfo& structure_info)
     {
-
         if constexpr (std::is_same_v<T, std::vector<double>>) {
             return double_data;
         } else if constexpr (std::is_same_v<T, Eigen::VectorXd>) {
@@ -215,20 +214,6 @@ public:
         }
     }
 
-    /**
-     * @brief Simple reconstruction without structure info (assumes vector output)
-     * @tparam T Target ComputeData type
-     * @param double_data Processed double vector
-     * @return Reconstructed data of type T
-     */
-    template <ComputeData T>
-    static T reconstruct_from_double_simple(const std::vector<double>& double_data)
-    {
-        DataStructureInfo default_info; // Empty structure info
-        return reconstruct_from_double<T>(double_data, default_info);
-    }
-
-    // Add to OperationHelper.hpp
     template <ComputeData OutputType>
     static OutputType convert_result_to_output_type(const std::vector<double>& result_data)
     {
@@ -236,14 +221,35 @@ public:
             return result_data;
         } else if constexpr (std::is_same_v<OutputType, Eigen::VectorXd>) {
             return create_eigen_vector_from_double(result_data);
-        } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
-            return create_eigen_vector_from_double(result_data); // Column vector
+            // } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
+            //     return create_eigen_matrix_from_double(result_data); // Column vector
         } else if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
             return Kakshya::DataVariant { result_data };
         } else {
-            // Fallback - let structure inference handle complex types
             return OutputType {};
         }
+    }
+
+    /**
+     * @brief Helper to setup working data for out-of-place operations
+     * @tparam DataType ComputeData type
+     * @param input Input data
+     * @param working_buffer Buffer for out-of-place operations (will be resized if needed)
+     * @return Tuple of [target_data_reference, structure_info]
+     */
+    template <ComputeData DataType>
+    static auto setup_operation_buffer(DataType& input, std::vector<double>& working_buffer)
+    {
+        auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
+
+        if (working_buffer.size() < data_span.size()) {
+            working_buffer.resize(data_span.size());
+        }
+
+        std::ranges::copy(data_span, working_buffer.begin());
+
+        std::span<double> working_span(working_buffer.data(), data_span.size());
+        return std::make_tuple(std::ref(working_span), structure_info);
     }
 
 private:

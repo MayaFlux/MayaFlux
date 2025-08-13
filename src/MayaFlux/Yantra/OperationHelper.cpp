@@ -6,7 +6,6 @@ namespace MayaFlux::Yantra {
 std::tuple<std::span<double>, DataStructureInfo>
 OperationHelper::extract_structured_double(Kakshya::DataVariant& data_variant)
 {
-
     std::vector<Kakshya::DataDimension> dimensions = Kakshya::detect_data_dimensions(data_variant);
     Kakshya::DataModality modality = Kakshya::detect_data_modality(dimensions);
 
@@ -22,7 +21,6 @@ Kakshya::DataVariant OperationHelper::extract_region_group_with_container(
     const Kakshya::RegionGroup& group,
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
 {
-
     if (!container) {
         throw std::invalid_argument("Null container provided for region group extraction");
     }
@@ -37,7 +35,6 @@ Kakshya::DataVariant OperationHelper::extract_region_with_container(
     const Kakshya::Region& region,
     const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
 {
-
     if (!container) {
         throw std::invalid_argument("Null container provided for region extraction");
     }
@@ -82,11 +79,9 @@ Eigen::MatrixXd OperationHelper::create_eigen_matrix_from_double(const std::vect
     const std::vector<Kakshya::DataDimension>& dimensions)
 {
     if (dimensions.size() < 2) {
-        // Treat as column vector
         return create_eigen_vector_from_double(double_data);
     }
 
-    // Use first two dimensions for matrix shape
     int rows = static_cast<int>(dimensions[0].size);
     int cols = static_cast<int>(dimensions[1].size);
 
@@ -108,7 +103,6 @@ Eigen::MatrixXd OperationHelper::create_eigen_matrix_from_double(const std::vect
 Kakshya::DataVariant OperationHelper::reconstruct_data_variant_from_double(const std::vector<double>& double_data,
     const DataStructureInfo& structure_info)
 {
-
     if (structure_info.original_type == std::type_index(typeid(std::vector<double>))) {
         return Kakshya::DataVariant { double_data };
     }

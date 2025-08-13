@@ -319,7 +319,7 @@ protected:
      */
     output_type operation_function(const input_type& input) override
     {
-        auto raw_result = transform_implementation(input);
+        auto raw_result = transform_implementation(const_cast<input_type&>(input));
         return apply_scope_and_quality_processing(raw_result);
     }
 
@@ -328,7 +328,7 @@ protected:
      * @param input Input data with metadata
      * @return Raw transformation output before scope/quality processing
      */
-    virtual output_type transform_implementation(const input_type& input) = 0;
+    virtual output_type transform_implementation(input_type& input) = 0;
 
     /**
      * @brief Get transformer-specific name (derived classes override this)
