@@ -202,6 +202,84 @@ DataType transform_cross_correlate(DataType& input, const std::vector<double>& t
 }
 
 /**
+ * @brief Auto-correlation using FFT (IN-PLACE)
+ * @tparam DataType ComputeData type
+ * @param input Input data - will be modified
+ * @param normalize Whether to normalize the result
+ * @return Auto-correlated data
+ */
+template <ComputeData DataType>
+DataType transform_auto_correlate_fft(DataType& input, bool normalize = true)
+{
+    auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
+
+    // For auto-correlation using FFT:
+    // R(k) = IFFT(FFT(x) * conj(FFT(x)))
+
+    auto correlation_op = [](const Eigen::VectorXcd& input_fft,
+                              const Eigen::VectorXcd& /* unused */,
+                              Eigen::VectorXcd& result_fft) {
+        std::ranges::transform(input_fft, input_fft, result_fft.begin(),
+            [](const std::complex<double>& a, const std::complex<double>& b) {
+                return a * std::conj(b);
+            });
+    };
+
+    std::vector<double> signal_copy(target_data.begin(), target_data.end());
+    auto result = fft_convolve_helper(target_data, signal_copy, correlation_op);
+
+    if (normalize && !result.empty()) {
+        double max_val = *std::max_element(result.begin(), result.end());
+        if (max_val > 0.0) {
+            std::ranges::transform(result, result.begin(),
+                [max_val](double val) { return val / max_val; });
+        }
+    }
+
+    std::copy(result.begin(), result.end(), target_data.begin());
+    return OperationHelper::reconstruct_from_double<DataType>(
+        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+}
+
+/**
+ * @brief Auto-correlation using FFT (OUT-OF-PLACE)
+ * @tparam DataType ComputeData type
+ * @param input Input data - will NOT be modified
+ * @param working_buffer Buffer for operations (will be resized if needed)
+ * @param normalize Whether to normalize the result
+ * @return Auto-correlated data
+ */
+template <ComputeData DataType>
+DataType transform_auto_correlate_fft(DataType& input, std::vector<double>& working_buffer, bool normalize = true)
+{
+    auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
+
+    auto correlation_op = [](const Eigen::VectorXcd& input_fft,
+                              const Eigen::VectorXcd&,
+                              Eigen::VectorXcd& result_fft) {
+        std::ranges::transform(input_fft, input_fft, result_fft.begin(),
+            [](const std::complex<double>& a, const std::complex<double>& b) {
+                return a * std::conj(b);
+            });
+    };
+
+    std::vector<double> signal_copy(target_data.begin(), target_data.end());
+    auto result = fft_convolve_helper(target_data, signal_copy, correlation_op);
+
+    if (normalize && !result.empty()) {
+        double max_val = *std::max_element(result.begin(), result.end());
+        if (max_val > 0.0) {
+            std::ranges::transform(result, result.begin(),
+                [max_val](double val) { return val / max_val; });
+        }
+    }
+
+    working_buffer = std::move(result);
+
+    return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
+}
+
+/**
  * @brief Cross-correlation using FFT (convolution with time-reversed impulse) (OUT-OF-PLACE)
  * @tparam DataType ComputeData type
  * @param input Input data - will NOT be modified

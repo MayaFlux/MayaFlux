@@ -134,55 +134,49 @@ DataType transform_time_stretch(DataType& input, double stretch_factor, std::vec
 }
 
 /**
- * @brief Delay transformation (temporal offset) using C++20 ranges (IN-PLACE)
+ * @brief Delay transformation that extends buffer size (IN-PLACE)
  * @tparam DataType ComputeData type
- * @param input Input data - WILL BE MODIFIED
- * @param delay_samples Number of samples to delay
+ * @param input Input data - WILL BE MODIFIED/EXTENDED
+ * @param delay_samples Number of samples to delay (extends output size)
  * @param fill_value Value to use for padding
- * @return Delayed data
+ * @return Delayed data with extended size
  */
 template <ComputeData DataType>
 DataType transform_delay(DataType& input, uint32_t delay_samples, double fill_value = 0.0)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
-    if (delay_samples >= target_data.size()) {
-        std::ranges::fill(target_data, fill_value);
-    } else {
-        std::ranges::copy_backward(
-            target_data | std::views::take(target_data.size() - delay_samples),
-            target_data.end());
+    std::vector<double> extended_data(target_data.size() + delay_samples);
 
-        std::ranges::fill(target_data | std::views::take(delay_samples), fill_value);
-    }
+    std::ranges::fill_n(extended_data.begin(), delay_samples, fill_value);
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    std::ranges::copy(target_data, extended_data.begin() + delay_samples);
+
+    return OperationHelper::reconstruct_from_double<DataType>(extended_data, structure_info);
 }
 
 /**
- * @brief Delay transformation (temporal offset) using C++20 ranges (OUT-OF-PLACE)
+ * @brief Delay transformation that extends buffer size (OUT-OF-PLACE) - CORRECTED
  * @tparam DataType ComputeData type
  * @param input Input data - will NOT be modified
- * @param delay_samples Number of samples to delay
+ * @param delay_samples Number of samples to delay (extends output size)
  * @param fill_value Value to use for padding
  * @param working_buffer Buffer for operations (will be resized if needed)
- * @return Delayed data
+ * @return Delayed data with extended size
  */
 template <ComputeData DataType>
 DataType transform_delay(DataType& input, uint32_t delay_samples, double fill_value, std::vector<double>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
-    if (delay_samples >= target_data.size()) {
-        std::ranges::fill(target_data, fill_value);
-    } else {
-        std::ranges::copy_backward(
-            target_data | std::views::take(target_data.size() - delay_samples),
-            target_data.end());
+    std::vector<double> original_data(target_data.begin(), target_data.end());
 
-        std::ranges::fill(target_data | std::views::take(delay_samples), fill_value);
-    }
+    size_t new_size = original_data.size() + delay_samples;
+    working_buffer.resize(new_size);
+
+    std::ranges::fill_n(working_buffer.begin(), delay_samples, fill_value);
+
+    std::ranges::copy(original_data, working_buffer.begin() + delay_samples);
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
@@ -210,7 +204,10 @@ DataType transform_fade(DataType& input, double fade_in_duration_ratio = 0.0, do
 
         std::ranges::transform(fade_in_view, indices, fade_in_view.begin(),
             [fade_in_samples](double sample, size_t i) {
-                double fade_factor = static_cast<double>(i) / static_cast<double>(fade_in_samples);
+                if (fade_in_samples == 1) {
+                    return 0.0;
+                }
+                double fade_factor = static_cast<double>(i) / static_cast<double>(fade_in_samples - 1);
                 return sample * fade_factor;
             });
     }
@@ -221,7 +218,10 @@ DataType transform_fade(DataType& input, double fade_in_duration_ratio = 0.0, do
 
         std::ranges::transform(fade_out_view, indices, fade_out_view.begin(),
             [fade_out_samples](double sample, size_t i) {
-                double fade_factor = 1.0 - (static_cast<double>(i) / static_cast<double>(fade_out_samples));
+                if (fade_out_samples == 1) {
+                    return 0.0;
+                }
+                double fade_factor = 1.0 - (static_cast<double>(i) / static_cast<double>(fade_out_samples - 1));
                 return sample * fade_factor;
             });
     }
@@ -254,7 +254,10 @@ DataType transform_fade(DataType& input, double fade_in_duration_ratio, double f
 
         std::ranges::transform(fade_in_view, indices, fade_in_view.begin(),
             [fade_in_samples](double sample, size_t i) {
-                double fade_factor = static_cast<double>(i) / static_cast<double>(fade_in_samples);
+                if (fade_in_samples == 1) {
+                    return 0.0;
+                }
+                double fade_factor = static_cast<double>(i) / static_cast<double>(fade_in_samples - 1);
                 return sample * fade_factor;
             });
     }
@@ -265,7 +268,10 @@ DataType transform_fade(DataType& input, double fade_in_duration_ratio, double f
 
         std::ranges::transform(fade_out_view, indices, fade_out_view.begin(),
             [fade_out_samples](double sample, size_t i) {
-                double fade_factor = 1.0 - (static_cast<double>(i) / static_cast<double>(fade_out_samples));
+                if (fade_out_samples == 1) {
+                    return 0.0;
+                }
+                double fade_factor = 1.0 - (static_cast<double>(i) / static_cast<double>(fade_out_samples - 1));
                 return sample * fade_factor;
             });
     }

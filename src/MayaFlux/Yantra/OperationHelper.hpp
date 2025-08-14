@@ -242,14 +242,14 @@ public:
     {
         auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
 
-        if (working_buffer.size() < data_span.size()) {
+        if (working_buffer.size() != data_span.size()) {
             working_buffer.resize(data_span.size());
         }
 
         std::ranges::copy(data_span, working_buffer.begin());
 
         std::span<double> working_span(working_buffer.data(), data_span.size());
-        return std::make_tuple(std::ref(working_span), structure_info);
+        return std::make_tuple(working_span, structure_info);
     }
 
 private:

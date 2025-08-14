@@ -61,6 +61,44 @@ DataType transform_linear(DataType& input, double a, double b, std::vector<doubl
 }
 
 /**
+ * @brief Power transformation y = x^exponent (IN-PLACE)
+ * @tparam DataType ComputeData type
+ * @param input Input data - WILL BE MODIFIED
+ * @param exponent Power exponent
+ * @return Transformed data
+ */
+template <ComputeData DataType>
+DataType transform_power(DataType& input, double exponent)
+{
+    auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
+
+    std::ranges::transform(target_data, target_data.begin(),
+        [exponent](double x) { return std::pow(x, exponent); });
+
+    return OperationHelper::reconstruct_from_double<DataType>(
+        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+}
+
+/**
+ * @brief Power transformation y = x^exponent (OUT-OF-PLACE)
+ * @tparam DataType ComputeData type
+ * @param input Input data - will NOT be modified
+ * @param exponent Power exponent
+ * @param working_buffer Buffer for operations (will be resized if needed)
+ * @return Transformed data
+ */
+template <ComputeData DataType>
+DataType transform_power(DataType& input, double exponent, std::vector<double>& working_buffer)
+{
+    auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
+
+    std::ranges::transform(target_data, target_data.begin(),
+        [exponent](double x) { return std::pow(x, exponent); });
+
+    return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
+}
+
+/**
  * @brief Polynomial transformation using existing Generator::Polynomial (IN-PLACE)
  * @tparam DataType ComputeData type
  * @param input Input data - WILL BE MODIFIED
@@ -103,8 +141,7 @@ DataType transform_polynomial(DataType& input, const std::vector<double>& coeffi
             return polynomial_gen->process_sample(x);
         });
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 /**
@@ -274,8 +311,7 @@ DataType transform_trigonometric(DataType& input,
             return amplitude * trig_func(frequency * x + phase);
         });
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 /**
@@ -323,8 +359,7 @@ DataType transform_quantize(DataType& input, uint8_t bits, std::vector<double>& 
             return std::round(clamped * levels) / levels;
         });
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 /**
@@ -364,8 +399,7 @@ DataType transform_clamp(DataType& input, double min_val, double max_val, std::v
     std::ranges::transform(target_data, target_data.begin(),
         [min_val, max_val](double x) { return std::clamp(x, min_val, max_val); });
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 /**
@@ -407,8 +441,7 @@ DataType transform_wrap(DataType& input, double wrap_range, std::vector<double>&
             return x - wrap_range * std::floor(x / wrap_range);
         });
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 /**
@@ -474,8 +507,7 @@ DataType transform_normalize(DataType& input, const std::pair<double, double>& t
             return ((x - current_min) / current_range) * target_span + target_min;
         });
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 inline void interpolate(std::span<double> input, std::vector<double>& output, u_int32_t target_size)
