@@ -42,7 +42,9 @@ enum class ExtractionMethod : u_int8_t {
     OUTLIER_DATA, ///< Extract data from statistical outlier regions
     HIGH_SPECTRAL_DATA, ///< Extract data from high spectral energy regions
     ABOVE_MEAN_DATA, ///< Extract data above statistical mean
-    OVERLAPPING_WINDOWS ///< Extract overlapping windowed data
+    OVERLAPPING_WINDOWS, ///< Extract overlapping windowed data
+    ZERO_CROSSING_DATA, ///< Extract actual data at zero crossing points
+    SILENCE_DATA ///< Extract actual silent regions
 };
 
 /**
@@ -245,6 +247,19 @@ protected:
                 for (const auto& window : windowed_data) {
                     extracted_data.insert(extracted_data.end(), window.begin(), window.end());
                 }
+                break;
+            }
+            case ExtractionMethod::ZERO_CROSSING_DATA: {
+                double threshold = this->template get_parameter_or_default<double>("threshold", 0.0);
+                double min_distance = this->template get_parameter_or_default<double>("min_distance", 1.0);
+                u_int32_t region_size = this->template get_parameter_or_default<u_int32_t>("region_size", 1);
+                extracted_data = extract_zero_crossing_data(data_span, threshold, min_distance, region_size);
+                break;
+            }
+            case ExtractionMethod::SILENCE_DATA: {
+                double silence_threshold = this->template get_parameter_or_default<double>("silence_threshold", 0.01);
+                u_int32_t min_duration = this->template get_parameter_or_default<u_int32_t>("min_duration", 1024);
+                extracted_data = extract_silence_data(data_span, silence_threshold, min_duration, m_window_size, m_hop_size);
                 break;
             }
             default:

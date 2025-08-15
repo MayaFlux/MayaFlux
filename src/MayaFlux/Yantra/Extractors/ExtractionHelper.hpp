@@ -199,4 +199,34 @@ std::vector<std::string> get_available_extraction_methods();
  */
 bool validate_extraction_parameters(uint32_t window_size, uint32_t hop_size, size_t data_size);
 
+/**
+ * @brief Extract data at zero crossing points using existing EnergyAnalyzer
+ * @param data Input data span
+ * @param threshold Zero crossing threshold (default: 0.0)
+ * @param min_distance Minimum distance between crossings
+ * @param region_size Size of region around each crossing to extract
+ * @return Vector containing actual data from zero crossing regions
+ */
+std::vector<double> extract_zero_crossing_data(
+    std::span<const double> data,
+    double threshold = 0.0,
+    double min_distance = 1.0,
+    uint32_t region_size = 1);
+
+/**
+ * @brief Extract data from silent regions using existing EnergyAnalyzer
+ * @param data Input data span
+ * @param silence_threshold Energy threshold below which regions are considered silent
+ * @param min_duration Minimum duration for silence regions
+ * @param window_size Analysis window size
+ * @param hop_size Hop size between windows
+ * @return Vector containing actual data from silent regions
+ */
+std::vector<double> extract_silence_data(
+    std::span<const double> data,
+    double silence_threshold = 0.01,
+    uint32_t min_duration = 1024,
+    uint32_t window_size = 512,
+    uint32_t hop_size = 256);
+
 } // namespace MayaFlux::Yantra

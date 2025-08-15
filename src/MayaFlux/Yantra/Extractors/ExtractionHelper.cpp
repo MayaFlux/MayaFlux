@@ -309,7 +309,7 @@ std::vector<std::vector<double>> extract_overlapping_windows(
         throw std::invalid_argument("Overlap must be between 0.0 and 1.0");
     }
 
-    const auto hop_size = std::max(1u, static_cast<uint32_t>(window_size * (1.0 - overlap)));
+    const auto hop_size = std::max(1U, static_cast<uint32_t>(window_size * (1.0 - overlap)));
 
     std::vector<std::vector<double>> windows;
 
@@ -405,6 +405,102 @@ bool validate_extraction_parameters(uint32_t window_size, uint32_t hop_size, siz
     }
 
     return true;
+}
+
+std::vector<double> extract_zero_crossing_data(
+    std::span<const double> data,
+    double threshold,
+    double min_distance,
+    uint32_t region_size)
+{
+    if (data.empty() || region_size == 0)
+        return {};
+
+    try {
+        auto analyzer = std::make_shared<EnergyAnalyzer<Kakshya::DataVariant, Eigen::VectorXd>>(
+            region_size * 2, static_cast<uint32_t>(min_distance));
+        analyzer->set_parameter("method", "zero_crossing");
+
+        auto result = analyzer->analyze_energy(Kakshya::DataVariant { std::vector<double>(data.begin(), data.end()) });
+
+        auto indices = std::views::iota(size_t { 0 }, result.energy_values.size())
+            | std::views::filter([&result, threshold](size_t idx) {
+                  return result.energy_values[idx] > threshold;
+              });
+
+        std::vector<double> extracted_data;
+        for (auto idx : indices) {
+            if (idx >= result.window_positions.size())
+                continue;
+
+            auto [start_idx, end_idx] = result.window_positions[idx];
+            auto region_start = start_idx > region_size / 2 ? start_idx - region_size / 2 : size_t { 0 };
+            auto region_end = std::min(start_idx + region_size / 2, data.size());
+
+            if (region_start < region_end) {
+                auto region = data.subspan(region_start, region_end - region_start);
+                std::ranges::copy(region, std::back_inserter(extracted_data));
+            }
+        }
+
+        return extracted_data;
+    } catch (const std::exception&) {
+        return {};
+    }
+}
+
+std::vector<double> extract_silence_data(
+    std::span<const double> data,
+    double silence_threshold,
+    uint32_t min_duration,
+    uint32_t window_size,
+    uint32_t hop_size)
+{
+    if (data.empty())
+        return {};
+
+    auto [effective_window, effective_hop] = std::pair {
+        std::min(window_size, static_cast<uint32_t>(data.size())),
+        std::max(1U, std::min(hop_size, window_size / 2))
+    };
+
+    try {
+        auto analyzer = std::make_shared<EnergyAnalyzer<Kakshya::DataVariant, Eigen::VectorXd>>(
+            effective_window, effective_hop);
+        analyzer->set_parameter("method", "rms");
+        analyzer->set_energy_thresholds(0.0, silence_threshold, silence_threshold * 2.0, silence_threshold * 5.0);
+        analyzer->enable_classification(true);
+
+        auto result = analyzer->analyze_energy(Kakshya::DataVariant { std::vector<double>(data.begin(), data.end()) });
+
+        auto silent_indices = std::views::iota(size_t { 0 }, result.energy_classifications.size())
+            | std::views::filter([&result](size_t idx) {
+                  return result.energy_classifications[idx] == EnergyLevel::SILENT;
+              });
+
+        std::vector<std::pair<size_t, size_t>> regions;
+        for (auto idx : silent_indices) {
+            auto [start_idx, end_idx] = result.window_positions[idx];
+            if (end_idx - start_idx >= min_duration) {
+                regions.emplace_back(start_idx, end_idx);
+            }
+        }
+
+        auto merged_regions = merge_overlapping_windows(regions);
+
+        std::vector<double> extracted_data;
+        for (const auto& [start_idx, end_idx] : merged_regions) {
+            if (start_idx < data.size() && end_idx <= data.size() && start_idx < end_idx) {
+                auto region = data.subspan(start_idx, end_idx - start_idx);
+                std::ranges::copy(region, std::back_inserter(extracted_data));
+            }
+        }
+
+        return extracted_data;
+
+    } catch (const std::exception&) {
+        return {};
+    }
 }
 
 }
