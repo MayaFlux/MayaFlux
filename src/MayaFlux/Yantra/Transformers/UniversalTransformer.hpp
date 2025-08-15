@@ -602,7 +602,7 @@ protected:
      * Derived transformers can override to add specific requirements
      * (e.g., minimum size for spectral operations, specific data structure requirements).
      */
-    virtual bool validate_input(const input_type& input) const
+    bool validate_input(const input_type& input) const override
     {
         try {
             auto size = get_input_data_size(input.data);
