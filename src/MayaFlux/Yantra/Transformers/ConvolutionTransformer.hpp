@@ -33,23 +33,46 @@ public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;
 
+    /**
+     * @brief Constructs a ConvolutionTransformer with specified operation
+     * @param op The convolution operation to perform (default: DIRECT_CONVOLUTION)
+     */
     explicit ConvolutionTransformer(ConvolutionOperation op = ConvolutionOperation::DIRECT_CONVOLUTION)
         : m_operation(op)
     {
         set_default_parameters();
     }
 
+    /**
+     * @brief Gets the transformation type
+     * @return TransformationType::CONVOLUTION
+     */
     [[nodiscard]] TransformationType get_transformation_type() const override
     {
         return TransformationType::CONVOLUTION;
     }
 
+    /**
+     * @brief Gets the transformer name including the operation type
+     * @return String representation of the transformer name
+     */
     [[nodiscard]] std::string get_transformer_name() const override
     {
         return std::string("ConvolutionTransformer_").append(Utils::enum_to_string(m_operation));
     }
 
 protected:
+    /**
+     * @brief Core transformation implementation for convolution operations
+     * @param input Input data to transform using convolution methods
+     * @return Transformed output data
+     *
+     * Performs the convolution operation specified by m_operation on the input data.
+     * Operations include direct convolution, cross-correlation, matched filtering,
+     * deconvolution, and auto-correlation. These operations are fundamental for
+     * signal processing tasks such as filtering, pattern matching, and system
+     * identification. Supports both in-place and out-of-place transformations.
+     */
     output_type transform_implementation(input_type& input) override
     {
         auto& input_data = input.data;
@@ -61,7 +84,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_convolve(input_data, impulse_response));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_convolve(input_data, impulse_response, m_working_buffer));
         }
 
@@ -72,7 +94,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_cross_correlate(input_data, template_signal, normalize));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_cross_correlate(input_data, template_signal, normalize, m_working_buffer));
         }
 
@@ -82,7 +103,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_matched_filter(input_data, reference_signal));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_matched_filter(input_data, reference_signal, m_working_buffer));
         }
 
@@ -93,7 +113,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_deconvolve(input_data, impulse_response, regularization));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_deconvolve(input_data, impulse_response, regularization, m_working_buffer));
         }
 
@@ -103,7 +122,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_auto_correlate_fft(input_data, normalize));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_auto_correlate_fft(input_data, m_working_buffer, normalize));
         }
 
@@ -112,6 +130,21 @@ protected:
         }
     }
 
+    /**
+     * @brief Sets transformation parameters
+     * @param name Parameter name
+     * @param value Parameter value
+     *
+     * Handles setting of convolution operation type and delegates other parameters to base class.
+     * Supports both enum and string values for the "operation" parameter.
+     *
+     * Common parameters include:
+     * - "impulse_response": Impulse response for convolution/deconvolution operations
+     * - "template_signal": Template signal for cross-correlation
+     * - "reference_signal": Reference signal for matched filtering
+     * - "normalize": Whether to normalize correlation results
+     * - "regularization": Regularization parameter for deconvolution stability
+     */
     void set_transformation_parameter(const std::string& name, std::any value) override
     {
         if (name == "operation") {
@@ -131,9 +164,16 @@ protected:
     }
 
 private:
-    ConvolutionOperation m_operation;
-    mutable std::vector<double> m_working_buffer;
+    ConvolutionOperation m_operation; ///< Current convolution operation
+    mutable std::vector<double> m_working_buffer; ///< Buffer for out-of-place convolution operations
 
+    /**
+     * @brief Sets default parameter values for all convolution operations
+     *
+     * Initializes all possible parameters with sensible defaults to ensure
+     * the transformer works correctly regardless of the selected operation.
+     * Default values are chosen for typical signal processing scenarios.
+     */
     void set_default_parameters()
     {
         this->set_parameter("impulse_response", std::vector<double> { 1.0 });
@@ -143,6 +183,13 @@ private:
         this->set_parameter("regularization", 1e-6);
     }
 
+    /**
+     * @brief Gets a parameter value with fallback to default
+     * @tparam T Parameter type
+     * @param name Parameter name
+     * @param default_value Default value if parameter not found or wrong type
+     * @return Parameter value or default
+     */
     template <typename T>
     T get_parameter_or(const std::string& name, const T& default_value) const
     {
@@ -154,6 +201,15 @@ private:
         return result.value_or(default_value);
     }
 
+    /**
+     * @brief Creates output with proper type conversion
+     * @param data Input data to convert
+     * @return Output with converted data type
+     *
+     * Handles type conversion between InputType and OutputType when necessary,
+     * or direct assignment when types match. Ensures convolution processing results
+     * maintain the correct output type and signal characteristics.
+     */
     output_type create_output(const InputType& data)
     {
         output_type result;

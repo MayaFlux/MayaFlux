@@ -38,23 +38,43 @@ public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;
 
+    /**
+     * @brief Constructs a MathematicalTransformer with specified operation
+     * @param op The mathematical operation to perform (default: GAIN)
+     */
     explicit MathematicalTransformer(MathematicalOperation op = MathematicalOperation::GAIN)
         : m_operation(op)
     {
         set_default_parameters();
     }
 
+    /**
+     * @brief Gets the transformation type
+     * @return TransformationType::MATHEMATICAL
+     */
     [[nodiscard]] TransformationType get_transformation_type() const override
     {
         return TransformationType::MATHEMATICAL;
     }
 
+    /**
+     * @brief Gets the transformer name including the operation type
+     * @return String representation of the transformer name
+     */
     [[nodiscard]] std::string get_transformer_name() const override
     {
         return std::string("MathematicalTransformer_").append(Utils::enum_to_string(m_operation));
     }
 
 protected:
+    /**
+     * @brief Core transformation implementation
+     * @param input Input data to transform
+     * @return Transformed output data
+     *
+     * Performs the mathematical operation specified by m_operation on the input data.
+     * Supports both in-place and out-of-place transformations based on transformer settings.
+     */
     output_type transform_implementation(input_type& input) override
     {
         auto& input_data = input.data;
@@ -65,7 +85,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_linear(input_data, gain_factor, 0.0));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_linear(input_data, gain_factor, 0.0, m_working_buffer));
         }
 
@@ -74,7 +93,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_linear(input_data, 1.0, offset_value));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_linear(input_data, 1.0, offset_value, m_working_buffer));
         }
 
@@ -84,7 +102,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_power(input_data, exponent));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_power(input_data, exponent, m_working_buffer));
         }
 
@@ -97,7 +114,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_logarithmic(input_data, scale, input_scale, offset, base));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_logarithmic(input_data, scale, input_scale, offset, m_working_buffer, base));
         }
 
@@ -109,7 +125,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_exponential(input_data, scale, rate, base));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_exponential(input_data, scale, rate, m_working_buffer, base));
         }
 
@@ -123,24 +138,20 @@ protected:
                 if (this->is_in_place()) {
                     return create_output(transform_trigonometric(input_data, [](double x) { return std::sin(x); }, frequency, amplitude, phase));
                 }
-                // thread_local std::vector<double> m_working_buffer;
                 return create_output(transform_trigonometric(input_data, [](double x) { return std::sin(x); }, frequency, amplitude, phase, m_working_buffer));
             }
             if (trig_function == "cos") {
                 if (this->is_in_place()) {
                     return create_output(transform_trigonometric(input_data, [](double x) { return std::cos(x); }, frequency, amplitude, phase));
                 }
-                // thread_local std::vector<double> m_working_buffer;
                 return create_output(transform_trigonometric(input_data, [](double x) { return std::cos(x); }, frequency, amplitude, phase, m_working_buffer));
             }
             if (trig_function == "tan") {
                 if (this->is_in_place()) {
                     return create_output(transform_trigonometric(input_data, [](double x) { return std::tan(x); }, frequency, amplitude, phase));
                 }
-                // thread_local std::vector<double> m_working_buffer;
                 return create_output(transform_trigonometric(input_data, [](double x) { return std::tan(x); }, frequency, amplitude, phase, m_working_buffer));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(input_data);
         }
 
@@ -149,7 +160,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_quantize(input_data, bits));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_quantize(input_data, bits, m_working_buffer));
         }
 
@@ -159,7 +169,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_normalize(input_data, target_range));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_normalize(input_data, target_range, m_working_buffer));
         }
 
@@ -168,7 +177,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_polynomial(input_data, coefficients));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_polynomial(input_data, coefficients, m_working_buffer));
         }
 
@@ -177,6 +185,14 @@ protected:
         }
     }
 
+    /**
+     * @brief Sets transformation parameters
+     * @param name Parameter name
+     * @param value Parameter value
+     *
+     * Handles setting of operation type and delegates other parameters to base class.
+     * Supports both enum and string values for the "operation" parameter.
+     */
     void set_transformation_parameter(const std::string& name, std::any value) override
     {
         if (name == "operation") {
@@ -196,9 +212,15 @@ protected:
     }
 
 private:
-    MathematicalOperation m_operation;
-    mutable std::vector<double> m_working_buffer;
+    MathematicalOperation m_operation; ///< Current mathematical operation
+    mutable std::vector<double> m_working_buffer; ///< Buffer for out-of-place operations
 
+    /**
+     * @brief Sets default parameter values for all mathematical operations
+     *
+     * Initializes all possible parameters with sensible defaults to ensure
+     * the transformer works correctly regardless of the selected operation.
+     */
     void set_default_parameters()
     {
         this->set_parameter("gain_factor", 1.0);
@@ -218,6 +240,13 @@ private:
         this->set_parameter("rate", 1.0);
     }
 
+    /**
+     * @brief Gets a parameter value with fallback to default
+     * @tparam T Parameter type
+     * @param name Parameter name
+     * @param default_value Default value if parameter not found or wrong type
+     * @return Parameter value or default
+     */
     template <typename T>
     T get_parameter_or(const std::string& name, const T& default_value) const
     {
@@ -229,6 +258,14 @@ private:
         return result.value_or(default_value);
     }
 
+    /**
+     * @brief Creates output with proper type conversion
+     * @param data Input data to convert
+     * @return Output with converted data type
+     *
+     * Handles type conversion between InputType and OutputType when necessary,
+     * or direct assignment when types match.
+     */
     output_type create_output(const InputType& data)
     {
         output_type result;

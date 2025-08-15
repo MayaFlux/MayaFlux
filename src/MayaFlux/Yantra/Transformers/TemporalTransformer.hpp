@@ -35,23 +35,45 @@ public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;
 
+    /**
+     * @brief Constructs a TemporalTransformer with specified operation
+     * @param op The temporal operation to perform (default: TIME_REVERSE)
+     */
     explicit TemporalTransformer(TemporalOperation op = TemporalOperation::TIME_REVERSE)
         : m_operation(op)
     {
         set_default_parameters();
     }
 
+    /**
+     * @brief Gets the transformation type
+     * @return TransformationType::TEMPORAL
+     */
     [[nodiscard]] TransformationType get_transformation_type() const override
     {
         return TransformationType::TEMPORAL;
     }
 
+    /**
+     * @brief Gets the transformer name including the operation type
+     * @return String representation of the transformer name
+     */
     [[nodiscard]] std::string get_transformer_name() const override
     {
         return std::string("TemporalTransformer_").append(Utils::enum_to_string(m_operation));
     }
 
 protected:
+    /**
+     * @brief Core transformation implementation for temporal operations
+     * @param input Input data to transform in the time domain
+     * @return Transformed output data
+     *
+     * Performs the temporal operation specified by m_operation on the input data.
+     * Operations modify the temporal characteristics of the data including timing,
+     * duration, ordering, and envelope shaping. Supports both in-place and
+     * out-of-place transformations based on transformer settings.
+     */
     output_type transform_implementation(input_type& input) override
     {
         auto& input_data = input.data;
@@ -62,7 +84,6 @@ protected:
                 return create_output(transform_time_reverse(input_data));
             }
 
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_time_reverse(input_data, m_working_buffer));
         }
 
@@ -72,7 +93,6 @@ protected:
                 return create_output(transform_time_stretch(input_data, stretch_factor));
             }
 
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_time_stretch(input_data, stretch_factor, m_working_buffer));
         }
 
@@ -83,7 +103,6 @@ protected:
                 return create_output(transform_delay(input_data, delay_samples, fill_value));
             }
 
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_delay(input_data, delay_samples, fill_value, m_working_buffer));
         }
 
@@ -94,7 +113,6 @@ protected:
                 return create_output(transform_fade(input_data, fade_in_ratio, fade_out_ratio));
             }
 
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_fade(input_data, fade_in_ratio, fade_out_ratio, m_working_buffer));
         }
 
@@ -105,7 +123,6 @@ protected:
                 return create_output(transform_slice(input_data, start_ratio, end_ratio));
             }
 
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_slice(input_data, start_ratio, end_ratio, m_working_buffer));
         }
 
@@ -118,14 +135,12 @@ protected:
                         return create_output(interpolate_cubic(input_data, target_size));
                     }
 
-                    // thread_local std::vector<double> m_working_buffer;
                     return create_output(interpolate_cubic(input_data, target_size, m_working_buffer));
                 }
 
                 if (this->is_in_place()) {
                     return create_output(interpolate_linear(input_data, target_size));
                 }
-                // thread_local std::vector<double> m_working_buffer;
                 return create_output(interpolate_linear(input_data, target_size, m_working_buffer));
             }
             return create_output(input_data);
@@ -136,6 +151,23 @@ protected:
         }
     }
 
+    /**
+     * @brief Sets transformation parameters
+     * @param name Parameter name
+     * @param value Parameter value
+     *
+     * Handles setting of temporal operation type and delegates other parameters to base class.
+     * Supports both enum and string values for the "operation" parameter.
+     *
+     * Common parameters include:
+     * - "stretch_factor": Time stretching factor (1.0 = no change, >1.0 = slower, <1.0 = faster)
+     * - "delay_samples": Number of samples to delay
+     * - "fill_value": Value to fill delayed regions with
+     * - "fade_in_ratio", "fade_out_ratio": Fade envelope ratios (0.0-1.0)
+     * - "start_ratio", "end_ratio": Slice boundaries as ratios of total length
+     * - "target_size": Target size for interpolation
+     * - "use_cubic": Whether to use cubic interpolation (vs linear)
+     */
     void set_transformation_parameter(const std::string& name, std::any value) override
     {
         if (name == "operation") {
@@ -155,9 +187,16 @@ protected:
     }
 
 private:
-    TemporalOperation m_operation;
-    mutable std::vector<double> m_working_buffer;
+    TemporalOperation m_operation; ///< Current temporal operation
+    mutable std::vector<double> m_working_buffer; ///< Buffer for out-of-place temporal operations
 
+    /**
+     * @brief Sets default parameter values for all temporal operations
+     *
+     * Initializes all possible parameters with sensible defaults to ensure
+     * the transformer works correctly regardless of the selected operation.
+     * Default values are chosen for typical temporal processing scenarios.
+     */
     void set_default_parameters()
     {
         this->set_parameter("stretch_factor", 1.0);
@@ -171,6 +210,13 @@ private:
         this->set_parameter("use_cubic", false);
     }
 
+    /**
+     * @brief Gets a parameter value with fallback to default
+     * @tparam T Parameter type
+     * @param name Parameter name
+     * @param default_value Default value if parameter not found or wrong type
+     * @return Parameter value or default
+     */
     template <typename T>
     T get_parameter_or(const std::string& name, const T& default_value) const
     {
@@ -182,6 +228,15 @@ private:
         return result.value_or(default_value);
     }
 
+    /**
+     * @brief Creates output with proper type conversion
+     * @param data Input data to convert
+     * @return Output with converted data type
+     *
+     * Handles type conversion between InputType and OutputType when necessary,
+     * or direct assignment when types match. Ensures temporal processing results
+     * maintain the correct output type and temporal characteristics.
+     */
     output_type create_output(const InputType& data)
     {
         output_type result;

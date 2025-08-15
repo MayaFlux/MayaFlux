@@ -15,7 +15,6 @@ enum class SpectralOperation : uint8_t {
     SPECTRAL_FILTER, ///< Filter frequency bands
     HARMONIC_ENHANCE, ///< Enhance harmonics
     SPECTRAL_GATE, ///< Spectral gating
-    PHASE_VOCODER ///< Phase vocoder processing
 };
 
 /**
@@ -34,23 +33,44 @@ public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;
 
+    /**
+     * @brief Constructs a SpectralTransformer with specified operation
+     * @param op The spectral operation to perform (default: FREQUENCY_SHIFT)
+     */
     explicit SpectralTransformer(SpectralOperation op = SpectralOperation::FREQUENCY_SHIFT)
         : m_operation(op)
     {
         set_default_parameters();
     }
 
+    /**
+     * @brief Gets the transformation type
+     * @return TransformationType::SPECTRAL
+     */
     [[nodiscard]] TransformationType get_transformation_type() const override
     {
         return TransformationType::SPECTRAL;
     }
 
+    /**
+     * @brief Gets the transformer name including the operation type
+     * @return String representation of the transformer name
+     */
     [[nodiscard]] std::string get_transformer_name() const override
     {
         return std::string("SpectralTransformer_").append(Utils::enum_to_string(m_operation));
     }
 
 protected:
+    /**
+     * @brief Core transformation implementation for spectral operations
+     * @param input Input data to transform in the frequency domain
+     * @return Transformed output data
+     *
+     * Performs the spectral operation specified by m_operation on the input data.
+     * Operations are performed using FFT/IFFT transforms with windowing for overlap-add processing.
+     * Supports both in-place and out-of-place transformations.
+     */
     output_type transform_implementation(input_type& input) override
     {
         auto& input_data = input.data;
@@ -68,7 +88,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_spectral_filter(input_data, low_freq, high_freq, sample_rate, window_size, hop_size));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_spectral_filter(input_data, low_freq, high_freq, sample_rate, window_size, hop_size, m_working_buffer));
         }
 
@@ -82,7 +101,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_pitch_shift(input_data, semitones, window_size, hop_size));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_pitch_shift(input_data, semitones, window_size, hop_size, m_working_buffer));
         }
 
@@ -96,7 +114,6 @@ protected:
             if (this->is_in_place()) {
                 return create_output(transform_spectral_filter(input_data, low_freq, high_freq, sample_rate, window_size, hop_size));
             }
-            // thread_local std::vector<double> m_working_buffer;
             return create_output(transform_spectral_filter(input_data, low_freq, high_freq, sample_rate, window_size, hop_size, m_working_buffer));
         }
 
@@ -105,7 +122,6 @@ protected:
             auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
             auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
 
-            // Use custom spectral processing for harmonic enhancement
             if (this->is_in_place()) {
                 auto [data_span, structure_info] = OperationHelper::extract_structured_double(input_data);
 
@@ -124,7 +140,6 @@ protected:
                     std::vector<double>(data_span.begin(), data_span.end()), structure_info));
             }
 
-            // thread_local std::vector<double> m_working_buffer;
             auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input_data, m_working_buffer);
             auto processor = [enhancement_factor](Eigen::VectorXcd& spectrum, size_t) {
                 for (int i = 1; i < spectrum.size() / 2; ++i) {
@@ -147,7 +162,6 @@ protected:
 
             double linear_threshold = std::pow(10.0, threshold / 20.0);
 
-            // Use custom spectral processing for spectral gating
             if (this->is_in_place()) {
                 auto [data_span, structure_info] = OperationHelper::extract_structured_double(input_data);
 
@@ -164,7 +178,6 @@ protected:
                     std::vector<double>(data_span.begin(), data_span.end()), structure_info));
             }
 
-            // thread_local std::vector<double> m_working_buffer;
             auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input_data, m_working_buffer);
             auto processor = [linear_threshold](Eigen::VectorXcd& spectrum, size_t) {
                 std::ranges::transform(spectrum, spectrum.begin(), [linear_threshold](const std::complex<double>& bin) {
@@ -178,24 +191,27 @@ protected:
             return create_output(OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
         }
 
-        case SpectralOperation::PHASE_VOCODER: {
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
-
-            double semitones = 0.0;
-
-            if (this->is_in_place()) {
-                return create_output(transform_pitch_shift(input_data, semitones, window_size, hop_size));
-            }
-            // thread_local std::vector<double> m_working_buffer;
-            return create_output(transform_pitch_shift(input_data, semitones, window_size, hop_size, m_working_buffer));
-        }
-
         default:
             return create_output(input_data);
         }
     }
 
+    /**
+     * @brief Sets transformation parameters
+     * @param name Parameter name
+     * @param value Parameter value
+     *
+     * Handles setting of spectral operation type and delegates other parameters to base class.
+     * Supports both enum and string values for the "operation" parameter.
+     *
+     * Common parameters include:
+     * - "shift_hz": Frequency shift in Hz
+     * - "pitch_ratio": Pitch scaling factor (1.0 = no change)
+     * - "low_freq", "high_freq": Filter frequency bounds
+     * - "enhancement_factor": Harmonic enhancement strength
+     * - "threshold": Spectral gate threshold in dB
+     * - "window_size", "hop_size": FFT processing parameters
+     */
     void set_transformation_parameter(const std::string& name, std::any value) override
     {
         if (name == "operation") {
@@ -215,9 +231,16 @@ protected:
     }
 
 private:
-    SpectralOperation m_operation;
-    mutable std::vector<double> m_working_buffer; ///< Add working buffer member
+    SpectralOperation m_operation; ///< Current spectral operation
+    mutable std::vector<double> m_working_buffer; ///< Buffer for out-of-place spectral operations
 
+    /**
+     * @brief Sets default parameter values for all spectral operations
+     *
+     * Initializes all possible parameters with sensible defaults to ensure
+     * the transformer works correctly regardless of the selected operation.
+     * Default values are chosen for typical audio processing scenarios.
+     */
     void set_default_parameters()
     {
         this->set_parameter("shift_hz", 0.0);
@@ -231,6 +254,13 @@ private:
         this->set_parameter("hop_size", uint32_t { 512 });
     }
 
+    /**
+     * @brief Gets a parameter value with fallback to default
+     * @tparam T Parameter type
+     * @param name Parameter name
+     * @param default_value Default value if parameter not found or wrong type
+     * @return Parameter value or default
+     */
     template <typename T>
     T get_parameter_or(const std::string& name, const T& default_value) const
     {
@@ -242,6 +272,15 @@ private:
         return result.value_or(default_value);
     }
 
+    /**
+     * @brief Creates output with proper type conversion
+     * @param data Input data to convert
+     * @return Output with converted data type
+     *
+     * Handles type conversion between InputType and OutputType when necessary,
+     * or direct assignment when types match. Ensures spectral processing results
+     * are properly converted back to the expected output type.
+     */
     output_type create_output(const InputType& data)
     {
         output_type result;
