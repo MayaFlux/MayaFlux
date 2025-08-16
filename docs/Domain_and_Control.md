@@ -384,7 +384,7 @@ MayaFlux::schedule_metro(2.0, []() {
     modulate_filter_cutoff();
 }, "main_clock");  // Auto-registered to default SAMPLE_ACCURATE token
 
-MayaFlux::schedule_pattern([](uint64_t beat) {
+MayaFlux::schedule_pattern([](u_int64_t beat) {
     return beat % 8 == 0;  // Every 8th beat
 }, []() {
     change_distribution();
@@ -445,7 +445,7 @@ However, unlike `Nodes` and `Buffers` they have no `process` callback, their pro
  auto capture_op = CaptureBuilder(audio_buffer)
      .for_cycles(10)
      .with_window(512, 0.5f)
-     .on_data_ready([](const auto& data, uint32_t cycle) {
+     .on_data_ready([](const auto& data, u_int32_t cycle) {
          process_windowed_data(data, cycle);
      })
      .with_tag("spectral_analysis");

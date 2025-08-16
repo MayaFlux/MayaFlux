@@ -403,7 +403,7 @@ MayaFlux::schedule_metro(2.0, []() {
     modulate_filter_cutoff();
 }, "main_clock");
 
-MayaFlux::schedule_pattern([](uint64_t beat) {
+MayaFlux::schedule_pattern([](u_int64_t beat) {
     return x % 8 == 0;  // Every 8th beat
 }, []() {
     change_distribution();
@@ -535,8 +535,8 @@ auto sync_routine = coordinator.sync_pipelines({
 // Manage transient data lifecycle
 auto data_routine = coordinator.manage_transient_data(
     buffer,
-    [](uint32_t cycle) { process_data(cycle); },
-    [](uint32_t cycle) { cleanup_data(cycle); }
+    [](u_int32_t cycle) { process_data(cycle); },
+    [](u_int32_t cycle) { cleanup_data(cycle); }
 );
 ```
 
@@ -575,7 +575,7 @@ constraints:
 ```cpp
 // DataVariant: Unified type storage for different precision needs
 DataVariant audio_data = std::vector<double>{...};        // High precision
-DataVariant image_data = std::vector<uint8_t>{...};       // 8-bit image
+DataVariant image_data = std::vector<u_int8_t>{...};       // 8-bit image
 DataVariant spectral_data = std::vector<std::complex<float>>{...}; // Complex FFT
 
 // DataDimensions: Structural descriptors

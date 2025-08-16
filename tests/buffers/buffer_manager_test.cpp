@@ -102,7 +102,7 @@ public:
 TEST_F(BufferManagerTest, CloneBufferForChannels)
 {
     auto source_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+    for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
         source_buffer->get_data()[i] = static_cast<double>(i) * 0.1;
     }
 
@@ -124,7 +124,7 @@ TEST_F(BufferManagerTest, CloneBufferForChannels)
     auto test_processor = std::make_shared<TestCloneProcessor>();
     source_buffer->set_default_processor(test_processor);
 
-    std::vector<uint32_t> target_channels = { 1 };
+    std::vector<u_int32_t> target_channels = { 1 };
     if (TestConfig::NUM_CHANNELS > 2) {
         target_channels.push_back(2);
     }
@@ -140,7 +140,7 @@ TEST_F(BufferManagerTest, CloneBufferForChannels)
         EXPECT_EQ(cloned_buffer->get_channel_id(), channel);
         EXPECT_EQ(cloned_buffer->get_num_samples(), source_buffer->get_num_samples());
 
-        for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+        for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
             EXPECT_DOUBLE_EQ(cloned_buffer->get_data()[i], source_buffer->get_data()[i]);
         }
 
@@ -158,11 +158,11 @@ TEST_F(BufferManagerTest, CloneBufferForChannels)
 TEST_F(BufferManagerTest, SupplyBufferBasicOperation)
 {
     auto source_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+    for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
         source_buffer->get_data()[i] = static_cast<double>(i) * 0.2 + 1.0;
     }
 
-    uint32_t target_channel = 1;
+    u_int32_t target_channel = 1;
     double mix_level = 0.8;
 
     EXPECT_TRUE(manager->supply_buffer_to(source_buffer, default_token, target_channel, mix_level));
@@ -193,7 +193,7 @@ TEST_F(BufferManagerTest, SupplyBufferBasicOperation)
 
 TEST_F(BufferManagerTest, SupplyBufferMultipleSources)
 {
-    uint32_t target_channel = 1;
+    u_int32_t target_channel = 1;
 
     auto source1 = std::make_shared<Buffers::AudioBuffer>(2, TestConfig::BUFFER_SIZE);
     auto source2 = std::make_shared<Buffers::AudioBuffer>(3, TestConfig::BUFFER_SIZE);

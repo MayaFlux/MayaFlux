@@ -6,8 +6,8 @@ namespace MayaFlux {
 
 struct CreationContext {
     std::optional<Domain> domain;
-    std::optional<uint32_t> channel;
-    std::optional<std::vector<uint32_t>> channels;
+    std::optional<u_int32_t> channel;
+    std::optional<std::vector<u_int32_t>> channels;
     std::map<std::string, std::any> metadata;
 
     CreationContext() = default;
@@ -17,18 +17,18 @@ struct CreationContext {
     {
     }
 
-    CreationContext(Domain d, uint32_t ch)
+    CreationContext(Domain d, u_int32_t ch)
         : domain(d)
         , channel(ch)
     {
     }
 
-    CreationContext(uint32_t ch)
+    CreationContext(u_int32_t ch)
         : channel(ch)
     {
     }
 
-    CreationContext(std::vector<uint32_t> ch)
+    CreationContext(std::vector<u_int32_t> ch)
         : channels(std::move(ch))
     {
     }
@@ -54,13 +54,13 @@ public:
         return *this;
     }
 
-    CreationProxy& channel(uint32_t ch)
+    CreationProxy& channel(u_int32_t ch)
     {
         m_context.channel = ch;
         return *this;
     }
 
-    CreationProxy& channels(std::vector<uint32_t> ch)
+    CreationProxy& channels(std::vector<u_int32_t> ch)
     {
         m_context.channels = ch;
         m_context.channel.reset();
@@ -71,9 +71,9 @@ public:
     CreationProxy& channels(Args... args)
     {
         static_assert(sizeof...(args) > 0, "channels() requires at least one argument");
-        static_assert((std::is_convertible_v<Args, uint32_t> && ...), "All arguments must be convertible to uint32_t");
+        static_assert((std::is_convertible_v<Args, u_int32_t> && ...), "All arguments must be convertible to u_int32_t");
 
-        m_context.channels = std::vector<uint32_t> { static_cast<uint32_t>(args)... };
+        m_context.channels = std::vector<u_int32_t> { static_cast<u_int32_t>(args)... };
         m_context.channel.reset();
         return *this;
     }
@@ -85,11 +85,11 @@ public:
     }
 
     CreationProxy& operator|(Domain d) { return domain(d); }
-    CreationProxy& operator[](uint32_t ch) { return channel(ch); }
+    CreationProxy& operator[](u_int32_t ch) { return channel(ch); }
 
-    CreationProxy& operator[](std::initializer_list<uint32_t> ch_list)
+    CreationProxy& operator[](std::initializer_list<u_int32_t> ch_list)
     {
-        m_context.channels = std::vector<uint32_t>(ch_list);
+        m_context.channels = std::vector<u_int32_t>(ch_list);
         m_context.channel.reset();
         return *this;
     }
@@ -211,14 +211,14 @@ public:
         return *this;
     }
 
-    CreationHandle& channel(uint32_t ch)
+    CreationHandle& channel(u_int32_t ch)
     {
         m_accumulated_context.channel = ch;
         try_apply_context();
         return *this;
     }
 
-    CreationHandle& channels(std::vector<uint32_t> ch)
+    CreationHandle& channels(std::vector<u_int32_t> ch)
     {
         m_accumulated_context.channels = ch;
         m_accumulated_context.channel.reset();
@@ -229,9 +229,9 @@ public:
     CreationProxy& channels(Args... args)
     {
         static_assert(sizeof...(args) > 0, "channels() requires at least one argument");
-        static_assert((std::is_convertible_v<Args, uint32_t> && ...), "All arguments must be convertible to uint32_t");
+        static_assert((std::is_convertible_v<Args, u_int32_t> && ...), "All arguments must be convertible to u_int32_t");
 
-        m_accumulated_context.channels = std::vector<uint32_t> { static_cast<uint32_t>(args)... };
+        m_accumulated_context.channels = std::vector<u_int32_t> { static_cast<u_int32_t>(args)... };
         m_accumulated_context.channel.reset();
         return *this;
     }
@@ -244,11 +244,11 @@ public:
     }
 
     CreationHandle& operator|(Domain d) { return domain(d); }
-    CreationHandle& operator[](uint32_t ch) { return channel(ch); }
+    CreationHandle& operator[](u_int32_t ch) { return channel(ch); }
 
-    CreationHandle& operator[](std::initializer_list<uint32_t> ch_list)
+    CreationHandle& operator[](std::initializer_list<u_int32_t> ch_list)
     {
-        m_accumulated_context.channels = std::vector<uint32_t>(ch_list);
+        m_accumulated_context.channels = std::vector<u_int32_t>(ch_list);
         m_accumulated_context.channel.reset();
         return *this;
     }
@@ -323,12 +323,12 @@ public:
         return CreationProxy(this, CreationContext(d));
     }
 
-    CreationProxy channel(uint32_t ch)
+    CreationProxy channel(u_int32_t ch)
     {
         return CreationProxy(this, CreationContext(ch));
     }
 
-    CreationProxy channels(std::vector<uint32_t> ch)
+    CreationProxy channels(std::vector<u_int32_t> ch)
     {
         return CreationProxy(this, CreationContext(ch));
     }
@@ -337,9 +337,9 @@ public:
     CreationProxy channels(Args... args)
     {
         static_assert(sizeof...(args) > 0, "channels() requires at least one argument");
-        static_assert((std::is_convertible_v<Args, uint32_t> && ...), "All arguments must be convertible to uint32_t");
+        static_assert((std::is_convertible_v<Args, u_int32_t> && ...), "All arguments must be convertible to u_int32_t");
 
-        auto ch = std::vector<uint32_t> { static_cast<uint32_t>(args)... };
+        auto ch = std::vector<u_int32_t> { static_cast<u_int32_t>(args)... };
         return CreationProxy(this, CreationContext(ch));
     }
 
@@ -351,9 +351,9 @@ public:
     }
 
     CreationProxy operator|(Domain d) { return domain(d); }
-    CreationProxy operator[](uint32_t ch) { return channel(ch); }
+    CreationProxy operator[](u_int32_t ch) { return channel(ch); }
 
-    CreationProxy operator[](std::initializer_list<uint32_t> ch_list)
+    CreationProxy operator[](std::initializer_list<u_int32_t> ch_list)
     {
         return channels(std::vector<u_int32_t>(ch_list));
     }

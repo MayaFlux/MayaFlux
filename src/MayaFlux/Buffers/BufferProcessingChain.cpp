@@ -20,7 +20,7 @@ bool BufferProcessingChain::add_processor_direct(std::shared_ptr<BufferProcessor
     case TokenEnforcementStrategy::STRICT:
         if (processor_token != m_token_filter_mask) {
             if (rejection_reason) {
-                *rejection_reason = "Processor token (" + std::to_string(static_cast<uint32_t>(processor_token)) + ") does not exactly match chain's preferred token (" + std::to_string(static_cast<uint32_t>(m_token_filter_mask)) + ") in STRICT mode";
+                *rejection_reason = "Processor token (" + std::to_string(static_cast<u_int32_t>(processor_token)) + ") does not exactly match chain's preferred token (" + std::to_string(static_cast<u_int32_t>(m_token_filter_mask)) + ") in STRICT mode";
             }
             return false;
         }
@@ -29,7 +29,7 @@ bool BufferProcessingChain::add_processor_direct(std::shared_ptr<BufferProcessor
     case TokenEnforcementStrategy::FILTERED:
         if (!are_tokens_compatible(m_token_filter_mask, processor_token)) {
             if (rejection_reason) {
-                *rejection_reason = "Processor token (" + std::to_string(static_cast<uint32_t>(processor_token)) + ") is not compatible with chain's preferred token (" + std::to_string(static_cast<uint32_t>(m_token_filter_mask)) + ") in FILTERED mode";
+                *rejection_reason = "Processor token (" + std::to_string(static_cast<u_int32_t>(processor_token)) + ") is not compatible with chain's preferred token (" + std::to_string(static_cast<u_int32_t>(m_token_filter_mask)) + ") in FILTERED mode";
             }
             return false;
         }
@@ -281,7 +281,7 @@ bool BufferProcessingChain::validate_all_processors(std::vector<std::string>* in
                 all_compatible = false;
                 if (incompatibility_reasons) {
                     incompatibility_reasons->push_back(
-                        "Processor with token " + std::to_string(static_cast<uint32_t>(processor_token)) + " incompatible with chain preferred token " + std::to_string(static_cast<uint32_t>(m_token_filter_mask)));
+                        "Processor with token " + std::to_string(static_cast<u_int32_t>(processor_token)) + " incompatible with chain preferred token " + std::to_string(static_cast<u_int32_t>(m_token_filter_mask)));
                 }
             }
         }

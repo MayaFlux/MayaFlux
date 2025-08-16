@@ -115,19 +115,19 @@ Kakshya::DataVariant OperationHelper::reconstruct_data_variant_from_double(const
         return Kakshya::DataVariant { float_data };
     }
 
-    if (structure_info.original_type == std::type_index(typeid(std::vector<uint16_t>))) {
-        std::vector<uint16_t> uint16_data;
-        uint16_data.reserve(double_data.size());
-        std::ranges::transform(double_data, std::back_inserter(uint16_data),
-            [](double val) { return static_cast<uint16_t>(std::clamp(val, 0.0, 65535.0)); });
-        return Kakshya::DataVariant { uint16_data };
+    if (structure_info.original_type == std::type_index(typeid(std::vector<u_int16_t>))) {
+        std::vector<u_int16_t> u_int16_data;
+        u_int16_data.reserve(double_data.size());
+        std::ranges::transform(double_data, std::back_inserter(u_int16_data),
+            [](double val) { return static_cast<u_int16_t>(std::clamp(val, 0.0, 65535.0)); });
+        return Kakshya::DataVariant { u_int16_data };
     }
-    if (structure_info.original_type == std::type_index(typeid(std::vector<uint8_t>))) {
-        std::vector<uint8_t> uint8_data;
-        uint8_data.reserve(double_data.size());
-        std::ranges::transform(double_data, std::back_inserter(uint8_data),
-            [](double val) { return static_cast<uint8_t>(std::clamp(val, 0.0, 255.0)); });
-        return Kakshya::DataVariant { uint8_data };
+    if (structure_info.original_type == std::type_index(typeid(std::vector<u_int8_t>))) {
+        std::vector<u_int8_t> u_int8_data;
+        u_int8_data.reserve(double_data.size());
+        std::ranges::transform(double_data, std::back_inserter(u_int8_data),
+            [](double val) { return static_cast<u_int8_t>(std::clamp(val, 0.0, 255.0)); });
+        return Kakshya::DataVariant { u_int8_data };
     }
 
     return Kakshya::DataVariant { double_data };

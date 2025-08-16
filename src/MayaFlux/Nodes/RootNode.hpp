@@ -169,7 +169,7 @@ private:
      * allowing the system to quickly determine if there are operations
      * waiting to be processed without scanning the entire array.
      */
-    std::atomic<uint32_t> m_pending_count;
+    std::atomic<u_int32_t> m_pending_count;
 
     /**
      * @brief Processes any pending node registration/unregistration operations
@@ -189,7 +189,7 @@ private:
      * allowing multiple channels to coexist with their own independent
      * node collections and processing logic.
      */
-    uint32_t m_channel;
+    u_int32_t m_channel;
 
     /**
      * @brief Flag indicating whether to skip preprocessing and post processing

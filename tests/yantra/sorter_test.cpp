@@ -227,7 +227,7 @@ TEST_F(ModernSorterTest, HelperFunctionExtract)
 TEST_F(ModernSorterTest, DataVariantSortable)
 {
     Kakshya::DataVariant sortable_data { test_data };
-    Kakshya::DataVariant unsortable_data { std::vector<uint8_t> { 1, 2, 3 } };
+    Kakshya::DataVariant unsortable_data { std::vector<u_int8_t> { 1, 2, 3 } };
 
     EXPECT_TRUE(is_data_variant_sortable(sortable_data));
     EXPECT_TRUE(is_data_variant_sortable(unsortable_data));

@@ -48,8 +48,8 @@ DataType transform_regions(DataType& input,
         auto transformed_region = transform_func(region_data);
         auto transformed_doubles = OperationHelper::extract_as_double(transformed_region);
 
-        auto start_sample = static_cast<uint64_t>(region.start_coordinates[0]);
-        auto end_sample = static_cast<uint64_t>(region.end_coordinates[0]);
+        auto start_sample = static_cast<u_int64_t>(region.start_coordinates[0]);
+        auto end_sample = static_cast<u_int64_t>(region.end_coordinates[0]);
 
         if (start_sample < target_data.size() && end_sample <= target_data.size()) {
             auto target_span = target_data.subspan(start_sample, end_sample - start_sample);
@@ -94,8 +94,8 @@ DataType transform_regions(DataType& input,
         auto transformed_region = transform_func(region_data);
         auto transformed_doubles = OperationHelper::extract_as_double(transformed_region);
 
-        auto start_sample = static_cast<uint64_t>(region.start_coordinates[0]);
-        auto end_sample = static_cast<uint64_t>(region.end_coordinates[0]);
+        auto start_sample = static_cast<u_int64_t>(region.start_coordinates[0]);
+        auto end_sample = static_cast<u_int64_t>(region.end_coordinates[0]);
 
         if (start_sample < target_data.size() && end_sample <= target_data.size()) {
             auto target_span = target_data.subspan(start_sample, end_sample - start_sample);
@@ -125,8 +125,8 @@ template <ComputeData DataType, typename TransformFunc>
 DataType transform_by_energy(DataType& input,
     double energy_threshold,
     TransformFunc transform_func,
-    uint32_t window_size = 1024,
-    uint32_t hop_size = 512)
+    u_int32_t window_size = 1024,
+    u_int32_t hop_size = 512)
 {
     auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -165,8 +165,8 @@ template <ComputeData DataType, typename TransformFunc>
 DataType transform_by_energy(DataType& input,
     double energy_threshold,
     TransformFunc transform_func,
-    uint32_t window_size,
-    uint32_t hop_size,
+    u_int32_t window_size,
+    u_int32_t hop_size,
     std::vector<double>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -264,19 +264,19 @@ DataType transform_outliers(DataType& input,
 template <ComputeData DataType>
 DataType transform_crossfade_regions(DataType& input,
     const std::vector<std::pair<Kakshya::Region, Kakshya::Region>>& fade_regions,
-    uint32_t fade_duration)
+    u_int32_t fade_duration)
 {
     auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
 
     std::ranges::for_each(fade_regions, [&](const auto& fade_pair) {
         const auto& [region_a, region_b] = fade_pair;
 
-        auto start_a = static_cast<uint64_t>(region_a.start_coordinates[0]);
-        auto end_a = static_cast<uint64_t>(region_a.end_coordinates[0]);
-        auto start_b = static_cast<uint64_t>(region_b.start_coordinates[0]);
+        auto start_a = static_cast<u_int64_t>(region_a.start_coordinates[0]);
+        auto end_a = static_cast<u_int64_t>(region_a.end_coordinates[0]);
+        auto start_b = static_cast<u_int64_t>(region_b.start_coordinates[0]);
 
-        uint64_t fade_start = (end_a > fade_duration) ? end_a - fade_duration : 0;
-        uint64_t fade_end = std::min(start_b + fade_duration, static_cast<uint64_t>(data_span.size()));
+        u_int64_t fade_start = (end_a > fade_duration) ? end_a - fade_duration : 0;
+        u_int64_t fade_end = std::min(start_b + fade_duration, static_cast<u_int64_t>(data_span.size()));
 
         if (fade_start < fade_end && fade_start < data_span.size()) {
             auto fade_span = data_span.subspan(fade_start, fade_end - fade_start);
@@ -306,7 +306,7 @@ DataType transform_crossfade_regions(DataType& input,
 template <ComputeData DataType>
 DataType transform_crossfade_regions(DataType& input,
     const std::vector<std::pair<Kakshya::Region, Kakshya::Region>>& fade_regions,
-    uint32_t fade_duration,
+    u_int32_t fade_duration,
     std::vector<double>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -314,12 +314,12 @@ DataType transform_crossfade_regions(DataType& input,
     std::ranges::for_each(fade_regions, [&](const auto& fade_pair) {
         const auto& [region_a, region_b] = fade_pair;
 
-        auto start_a = static_cast<uint64_t>(region_a.start_coordinates[0]);
-        auto end_a = static_cast<uint64_t>(region_a.end_coordinates[0]);
-        auto start_b = static_cast<uint64_t>(region_b.start_coordinates[0]);
+        auto start_a = static_cast<u_int64_t>(region_a.start_coordinates[0]);
+        auto end_a = static_cast<u_int64_t>(region_a.end_coordinates[0]);
+        auto start_b = static_cast<u_int64_t>(region_b.start_coordinates[0]);
 
-        uint64_t fade_start = (end_a > fade_duration) ? end_a - fade_duration : 0;
-        uint64_t fade_end = std::min(start_b + fade_duration, static_cast<uint64_t>(target_data.size()));
+        u_int64_t fade_start = (end_a > fade_duration) ? end_a - fade_duration : 0;
+        u_int64_t fade_end = std::min(start_b + fade_duration, static_cast<u_int64_t>(target_data.size()));
 
         if (fade_start < fade_end && fade_start < target_data.size()) {
             auto fade_span = target_data.subspan(fade_start, fade_end - fade_start);
@@ -395,7 +395,7 @@ DataType transform_matrix(DataType& input, const Eigen::MatrixXd& transformation
 template <ComputeData DataType>
 DataType transform_matrix_multichannel(DataType& input,
     const Eigen::MatrixXd& transformation_matrix,
-    uint32_t num_channels)
+    u_int32_t num_channels)
 {
     auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -438,7 +438,7 @@ DataType transform_matrix_multichannel(DataType& input,
 template <ComputeData DataType>
 DataType transform_matrix_multichannel(DataType& input,
     const Eigen::MatrixXd& transformation_matrix,
-    uint32_t num_channels,
+    u_int32_t num_channels,
     std::vector<double>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -479,7 +479,7 @@ DataType transform_matrix_multichannel(DataType& input,
  */
 template <ComputeData DataType>
 DataType transform_channel_operation(DataType& input,
-    uint32_t num_channels,
+    u_int32_t num_channels,
     bool interleave)
 {
     auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
@@ -529,7 +529,7 @@ DataType transform_channel_operation(DataType& input,
  */
 template <ComputeData DataType>
 DataType transform_channel_operation(DataType& input,
-    uint32_t num_channels,
+    u_int32_t num_channels,
     bool interleave,
     std::vector<double>& working_buffer)
 {
@@ -571,15 +571,15 @@ DataType transform_channel_operation(DataType& input,
 template <ComputeData DataType>
 std::vector<Kakshya::Region> detect_regions_by_energy(const DataType& input,
     double energy_threshold,
-    uint32_t min_region_size = 512,
-    uint32_t window_size = 1024,
-    uint32_t hop_size = 512);
+    u_int32_t min_region_size = 512,
+    u_int32_t window_size = 1024,
+    u_int32_t hop_size = 512);
 
 template <ComputeData DataType>
 std::vector<double> extract_region_data(DataType& input,
     const std::vector<Kakshya::Region>& regions);
 
-Eigen::MatrixXd create_rotation_matrix(double angle, uint32_t axis = 2, uint32_t dimensions = 2);
+Eigen::MatrixXd create_rotation_matrix(double angle, u_int32_t axis = 2, u_int32_t dimensions = 2);
 Eigen::MatrixXd create_scaling_matrix(const std::vector<double>& scale_factors);
 
 } // namespace MayaFlux::Yantra

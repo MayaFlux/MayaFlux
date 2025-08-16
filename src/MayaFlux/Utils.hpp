@@ -42,7 +42,7 @@ enum NodeState : u_int32_t {
  * @enum ComplexConversionStrategy
  * @brief Strategy for converting complex numbers to real values
  */
-enum class ComplexConversionStrategy : uint8_t {
+enum class ComplexConversionStrategy : u_int8_t {
     MAGNITUDE, ///< |z| = sqrt(real² + imag²)
     REAL_PART, ///< z.real()
     IMAG_PART, ///< z.imag()

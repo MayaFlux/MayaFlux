@@ -356,7 +356,7 @@ TEST_F(TasksTest, PatternTask)
     int pattern_count = 0;
     std::vector<int> received_values;
 
-    auto pattern_func = [](uint64_t index) -> std::any {
+    auto pattern_func = [](u_int64_t index) -> std::any {
         return static_cast<int>(index * 10);
     };
 

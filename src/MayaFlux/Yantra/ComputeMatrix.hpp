@@ -4,9 +4,13 @@
 #include "OperationSpec/OperationChain.hpp"
 #include "OperationSpec/OperationPool.hpp"
 
-#include <execution>
-#include <future>
-#include <memory>
+#ifdef MAYAFLUX_PLATFORM_MACOS
+#include "oneapi/dpl/algorithm"
+#include "oneapi/dpl/execution"
+#include "oneapi/dpl/numeric"
+#else
+#include "execution"
+#endif
 
 namespace MayaFlux::Yantra {
 

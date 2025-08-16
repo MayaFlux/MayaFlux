@@ -66,8 +66,8 @@ public:
     void add_segment_to_region(
         const std::string& group_name,
         size_t region_index,
-        const std::vector<uint64_t>& start_coords,
-        const std::vector<uint64_t>& end_coords,
+        const std::vector<u_int64_t>& start_coords,
+        const std::vector<u_int64_t>& end_coords,
         const std::unordered_map<std::string, std::any>& attributes);
 
     /**

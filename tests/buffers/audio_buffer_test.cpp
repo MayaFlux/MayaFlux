@@ -61,11 +61,11 @@ TEST_F(AudioBufferTest, BufferOperations)
 
 TEST_F(AudioBufferTest, SampleAccess)
 {
-    for (uint32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
+    for (u_int32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
         standard_buffer->get_data()[i] = static_cast<double>(i);
     }
 
-    for (uint32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
+    for (u_int32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
         EXPECT_DOUBLE_EQ(standard_buffer->get_sample(i), static_cast<double>(i));
     }
 
@@ -76,13 +76,13 @@ TEST_F(AudioBufferTest, SampleAccess)
 TEST_F(AudioBufferTest, ReadOnce)
 {
     auto source_buffer = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
-    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+    for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
         source_buffer->get_data()[i] = static_cast<double>(i) * 0.1;
     }
 
     EXPECT_TRUE(standard_buffer->read_once(source_buffer));
 
-    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+    for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
         EXPECT_DOUBLE_EQ(standard_buffer->get_data()[i], static_cast<double>(i) * 0.1);
     }
 
@@ -96,7 +96,7 @@ TEST_F(AudioBufferTest, ReadOnce)
 
 TEST_F(AudioBufferTest, CloneTo)
 {
-    for (uint32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
+    for (u_int32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
         standard_buffer->get_data()[i] = static_cast<double>(i) * 0.5;
     }
 
@@ -118,7 +118,7 @@ TEST_F(AudioBufferTest, CloneTo)
     auto test_processor = std::make_shared<TestCloneProcessor>();
     standard_buffer->set_default_processor(test_processor);
 
-    uint32_t target_channel = 5;
+    u_int32_t target_channel = 5;
     auto cloned_buffer = standard_buffer->clone_to(target_channel);
 
     EXPECT_NE(cloned_buffer, nullptr);
@@ -126,7 +126,7 @@ TEST_F(AudioBufferTest, CloneTo)
     EXPECT_EQ(cloned_buffer->get_num_samples(), standard_buffer->get_num_samples());
     EXPECT_EQ(cloned_buffer->get_data().size(), standard_buffer->get_data().size());
 
-    for (uint32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
+    for (u_int32_t i = 0; i < standard_buffer->get_num_samples(); i++) {
         EXPECT_DOUBLE_EQ(cloned_buffer->get_data()[i], standard_buffer->get_data()[i]);
     }
 

@@ -9,7 +9,7 @@ namespace MayaFlux::Yantra {
  * @enum ConvolutionOperation
  * @brief Specific convolution operations supported
  */
-enum class ConvolutionOperation : uint8_t {
+enum class ConvolutionOperation : u_int8_t {
     DIRECT_CONVOLUTION, ///< Standard convolution
     CROSS_CORRELATION, ///< Cross-correlation
     MATCHED_FILTER, ///< Matched filtering

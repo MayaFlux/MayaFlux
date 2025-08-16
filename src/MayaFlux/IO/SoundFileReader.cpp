@@ -439,7 +439,7 @@ Kakshya::DataVariant SoundFileReader::decode_frames(u_int64_t num_frames, u_int6
     int channels = m_codec_context->ch_layout.nb_channels;
     output_data.reserve(num_frames * channels);
 
-    uint8_t** resample_buffer = nullptr;
+    u_int8_t** resample_buffer = nullptr;
     int resample_linesize;
     int max_resample_samples = av_rescale_rnd(num_frames,
         m_target_sample_rate > 0 ? m_target_sample_rate : m_codec_context->sample_rate,
@@ -655,7 +655,7 @@ bool SoundFileReader::seek(const std::vector<u_int64_t>& position)
     avcodec_flush_buffers(m_codec_context);
 
     if (m_swr_context) {
-        uint8_t** dummy = nullptr;
+        u_int8_t** dummy = nullptr;
         av_samples_alloc_array_and_samples(&dummy, nullptr,
             m_codec_context->ch_layout.nb_channels, 2048, AV_SAMPLE_FMT_DBL, 0);
 

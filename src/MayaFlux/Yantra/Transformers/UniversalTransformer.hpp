@@ -77,7 +77,7 @@ namespace MayaFlux::Yantra {
  * @enum TransformationType
  * @brief Categories of transformation operations for discovery and organization
  */
-enum class TransformationType : uint8_t {
+enum class TransformationType : u_int8_t {
     TEMPORAL, ///< Time-based transformations (time-stretch, reverse, delay)
     SPECTRAL, ///< Frequency domain transformations (pitch-shift, spectral filtering)
     MATHEMATICAL, ///< Mathematical transformations (polynomial mapping, matrix operations)
@@ -95,7 +95,7 @@ enum class TransformationType : uint8_t {
  * @enum TransformationStrategy
  * @brief Transformation execution strategies
  */
-enum class TransformationStrategy : uint8_t {
+enum class TransformationStrategy : u_int8_t {
     IN_PLACE, ///< Transform data in-place (modifies input)
     BUFFERED, ///< Create transformed copy (preserves input)
     STREAMING, ///< Stream-based transformation for large data
@@ -110,7 +110,7 @@ enum class TransformationStrategy : uint8_t {
  * @enum TransformationQuality
  * @brief Quality vs performance trade-off control
  */
-enum class TransformationQuality : uint8_t {
+enum class TransformationQuality : u_int8_t {
     DRAFT, ///< Fast, low-quality transformation for previews
     STANDARD, ///< Balanced quality/performance for real-time use
     HIGH_QUALITY, ///< High-quality transformation, may be slower
@@ -122,7 +122,7 @@ enum class TransformationQuality : uint8_t {
  * @enum TransformationScope
  * @brief Scope control for transformation operations
  */
-enum class TransformationScope : uint8_t {
+enum class TransformationScope : u_int8_t {
     FULL_DATA, ///< Transform entire data set
     TARGETED_REGIONS, ///< Transform only specific regions
     SELECTIVE_BANDS, ///< Transform specific frequency/spatial bands

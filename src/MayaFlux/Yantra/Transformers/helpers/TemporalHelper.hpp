@@ -28,8 +28,8 @@ namespace MayaFlux::Yantra {
 template <typename TransformFunc>
     requires std::invocable<TransformFunc, std::span<const double>>
 std::vector<double> process_overlap_add(const std::span<const double>& data,
-    uint32_t window_size,
-    uint32_t hop_size,
+    u_int32_t window_size,
+    u_int32_t hop_size,
     TransformFunc transform_func)
 {
     const size_t num_windows = (data.size() - window_size) / hop_size + 1;
@@ -142,7 +142,7 @@ DataType transform_time_stretch(DataType& input, double stretch_factor, std::vec
  * @return Delayed data with extended size
  */
 template <ComputeData DataType>
-DataType transform_delay(DataType& input, uint32_t delay_samples, double fill_value = 0.0)
+DataType transform_delay(DataType& input, u_int32_t delay_samples, double fill_value = 0.0)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -165,7 +165,7 @@ DataType transform_delay(DataType& input, uint32_t delay_samples, double fill_va
  * @return Delayed data with extended size
  */
 template <ComputeData DataType>
-DataType transform_delay(DataType& input, uint32_t delay_samples, double fill_value, std::vector<double>& working_buffer)
+DataType transform_delay(DataType& input, u_int32_t delay_samples, double fill_value, std::vector<double>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 

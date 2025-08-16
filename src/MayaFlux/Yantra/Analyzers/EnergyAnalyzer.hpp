@@ -33,7 +33,7 @@ namespace MayaFlux::Yantra {
  * @enum EnergyMethod
  * @brief Supported energy computation methods
  */
-enum class EnergyMethod : uint8_t {
+enum class EnergyMethod : u_int8_t {
     RMS, ///< Root Mean Square energy
     PEAK, ///< Peak amplitude
     SPECTRAL, ///< Spectral energy (FFT-based)
@@ -47,7 +47,7 @@ enum class EnergyMethod : uint8_t {
  * @enum EnergyLevel
  * @brief Qualitative classification of energy values
  */
-enum class EnergyLevel : uint8_t {
+enum class EnergyLevel : u_int8_t {
     SILENT,
     QUIET,
     MODERATE,
@@ -62,8 +62,8 @@ enum class EnergyLevel : uint8_t {
 struct EnergyAnalysisResult {
     std::vector<double> energy_values;
     EnergyMethod method_used;
-    uint32_t window_size;
-    uint32_t hop_size;
+    u_int32_t window_size;
+    u_int32_t hop_size;
 
     double mean_energy;
     double max_energy;
@@ -109,7 +109,7 @@ public:
      * @param window_size Size of analysis window in samples (default: 512)
      * @param hop_size Step size between windows in samples (default: 256)
      */
-    explicit EnergyAnalyzer(uint32_t window_size = 512, uint32_t hop_size = 256)
+    explicit EnergyAnalyzer(u_int32_t window_size = 512, u_int32_t hop_size = 256)
         : m_window_size(window_size)
         , m_hop_size(hop_size)
     {
@@ -184,7 +184,7 @@ public:
      * @param window_size Window size in samples
      * @param hop_size Hop size in samples
      */
-    void set_window_parameters(uint32_t window_size, uint32_t hop_size)
+    void set_window_parameters(u_int32_t window_size, u_int32_t hop_size)
     {
         m_window_size = window_size;
         m_hop_size = hop_size;
@@ -318,13 +318,13 @@ protected:
                 return;
             }
         } else if (name == "window_size") {
-            if (auto* size = std::any_cast<uint32_t>(&value)) {
+            if (auto* size = std::any_cast<u_int32_t>(&value)) {
                 m_window_size = *size;
                 validate_window_parameters();
                 return;
             }
         } else if (name == "hop_size") {
-            if (auto* size = std::any_cast<uint32_t>(&value)) {
+            if (auto* size = std::any_cast<u_int32_t>(&value)) {
                 m_hop_size = *size;
                 validate_window_parameters();
                 return;
@@ -357,8 +357,8 @@ protected:
     }
 
 private:
-    uint32_t m_window_size { 512 };
-    uint32_t m_hop_size { 256 };
+    u_int32_t m_window_size { 512 };
+    u_int32_t m_hop_size { 256 };
     EnergyMethod m_method { EnergyMethod::RMS };
     bool m_classification_enabled { false };
 

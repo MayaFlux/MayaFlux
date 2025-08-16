@@ -221,7 +221,7 @@ template <>
 struct hash<std::pair<MayaFlux::Buffers::ProcessingToken, MayaFlux::Buffers::ProcessingToken>> {
     size_t operator()(const std::pair<MayaFlux::Buffers::ProcessingToken, MayaFlux::Buffers::ProcessingToken>& pair) const
     {
-        return hash<uint32_t>()(static_cast<uint32_t>(pair.first)) ^ (hash<uint32_t>()(static_cast<uint32_t>(pair.second)) << 1);
+        return hash<u_int32_t>()(static_cast<u_int32_t>(pair.first)) ^ (hash<u_int32_t>()(static_cast<u_int32_t>(pair.second)) << 1);
     }
 };
 }

@@ -240,9 +240,9 @@ std::vector<Kakshya::DataDimension> detect_data_dimensions(const Kakshya::DataVa
             dims.emplace_back(Kakshya::DataDimension::frequency(vec.size()));
 
         } else if constexpr (IntegerData<ValueType>) {
-            // uint8_t, uint16_t, uint32_t -> flattened 2D (images typically)
+            // u_int8_t, u_int16_t, u_int32_t -> flattened 2D (images typically)
             // Need to guess reasonable 2D dimensions from 1D size
-            uint64_t total_size = vec.size();
+            u_int64_t total_size = vec.size();
 
             if (total_size == 0) {
                 dims.emplace_back(Kakshya::DataDimension::spatial(0, 'x'));
@@ -254,8 +254,8 @@ std::vector<Kakshya::DataDimension> detect_data_dimensions(const Kakshya::DataVa
                     dims.emplace_back(Kakshya::DataDimension::spatial(sqrt_size, 'x'));
                     dims.emplace_back(Kakshya::DataDimension::spatial(sqrt_size, 'y'));
                 } else {
-                    uint64_t width = sqrt_size;
-                    uint64_t height = total_size / width;
+                    u_int64_t width = sqrt_size;
+                    u_int64_t height = total_size / width;
                     while (width * height != total_size && width > 1) {
                         width--;
                         height = total_size / width;

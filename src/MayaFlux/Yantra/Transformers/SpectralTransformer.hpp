@@ -9,7 +9,7 @@ namespace MayaFlux::Yantra {
  * @enum SpectralOperation
  * @brief Specific spectral operations supported
  */
-enum class SpectralOperation : uint8_t {
+enum class SpectralOperation : u_int8_t {
     FREQUENCY_SHIFT, ///< Shift entire spectrum
     PITCH_SHIFT, ///< Pitch-preserving shift
     SPECTRAL_FILTER, ///< Filter frequency bands
@@ -78,8 +78,8 @@ protected:
         switch (m_operation) {
         case SpectralOperation::FREQUENCY_SHIFT: {
             auto shift_hz = get_parameter_or<double>("shift_hz", 0.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            auto window_size = get_parameter_or<u_int32_t>("window_size", 1024);
+            auto hop_size = get_parameter_or<u_int32_t>("hop_size", 512);
             auto sample_rate = get_parameter_or<double>("sample_rate", 48000.0);
 
             auto low_freq = std::max(0.0, shift_hz);
@@ -93,8 +93,8 @@ protected:
 
         case SpectralOperation::PITCH_SHIFT: {
             auto pitch_ratio = get_parameter_or<double>("pitch_ratio", 1.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            auto window_size = get_parameter_or<u_int32_t>("window_size", 1024);
+            auto hop_size = get_parameter_or<u_int32_t>("hop_size", 512);
 
             double semitones = 12.0 * std::log2(pitch_ratio);
 
@@ -107,8 +107,8 @@ protected:
         case SpectralOperation::SPECTRAL_FILTER: {
             auto low_freq = get_parameter_or<double>("low_freq", 20.0);
             auto high_freq = get_parameter_or<double>("high_freq", 20000.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            auto window_size = get_parameter_or<u_int32_t>("window_size", 1024);
+            auto hop_size = get_parameter_or<u_int32_t>("hop_size", 512);
             auto sample_rate = get_parameter_or<double>("sample_rate", 48000.0);
 
             if (this->is_in_place()) {
@@ -119,8 +119,8 @@ protected:
 
         case SpectralOperation::HARMONIC_ENHANCE: {
             auto enhancement_factor = get_parameter_or<double>("enhancement_factor", 2.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            auto window_size = get_parameter_or<u_int32_t>("window_size", 1024);
+            auto hop_size = get_parameter_or<u_int32_t>("hop_size", 512);
 
             if (this->is_in_place()) {
                 auto [data_span, structure_info] = OperationHelper::extract_structured_double(input_data);
@@ -157,8 +157,8 @@ protected:
 
         case SpectralOperation::SPECTRAL_GATE: {
             auto threshold = get_parameter_or<double>("threshold", -40.0);
-            auto window_size = get_parameter_or<uint32_t>("window_size", 1024);
-            auto hop_size = get_parameter_or<uint32_t>("hop_size", 512);
+            auto window_size = get_parameter_or<u_int32_t>("window_size", 1024);
+            auto hop_size = get_parameter_or<u_int32_t>("hop_size", 512);
 
             double linear_threshold = std::pow(10.0, threshold / 20.0);
 
@@ -250,8 +250,8 @@ private:
         this->set_parameter("enhancement_factor", 2.0);
         this->set_parameter("threshold", -40.0);
         this->set_parameter("time_stretch", 1.0);
-        this->set_parameter("window_size", uint32_t { 1024 });
-        this->set_parameter("hop_size", uint32_t { 512 });
+        this->set_parameter("window_size", u_int32_t { 1024 });
+        this->set_parameter("hop_size", u_int32_t { 512 });
     }
 
     /**

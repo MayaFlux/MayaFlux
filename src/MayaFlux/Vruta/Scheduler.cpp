@@ -108,7 +108,7 @@ void TaskScheduler::process_token(ProcessingToken token, u_int64_t processing_un
         process_default(token, processing_units);
     }
 
-    static uint64_t cleanup_counter = 0;
+    static u_int64_t cleanup_counter = 0;
     if (++cleanup_counter % (m_cleanup_threshold * 2) == 0) {
         cleanup_completed_tasks();
     }
@@ -120,7 +120,7 @@ void TaskScheduler::process_all_tokens()
         process_token(token.first, 0);
     }
 
-    static uint64_t cleanup_counter = 0;
+    static u_int64_t cleanup_counter = 0;
     if (++cleanup_counter % m_cleanup_threshold == 0) {
         cleanup_completed_tasks();
     }
@@ -270,7 +270,7 @@ void TaskScheduler::process_default(ProcessingToken token, u_int64_t processing_
     auto& clock = *clock_it->second;
 
     for (u_int64_t i = 0; i < processing_units; i++) {
-        uint64_t current_context = clock.current_position();
+        u_int64_t current_context = clock.current_position();
 
         for (auto& routine : tasks) {
             if (routine && routine->is_active()) {

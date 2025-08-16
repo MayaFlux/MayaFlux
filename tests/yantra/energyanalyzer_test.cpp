@@ -263,8 +263,8 @@ TEST_F(EnergyAnalyzerTest, ZeroCrossingCorrectness)
     // In a window of 256 samples, we expect roughly 4 crossings
     // ZCR = crossings / (window_size - 1) ≈ 4/255 ≈ 0.016
 
-    double expected_zcr = (2.0 * cycles * analyzer->get_parameter_or_default<uint32_t>("window_size", 256))
-        / (1024.0 * (analyzer->get_parameter_or_default<uint32_t>("window_size", 256) - 1));
+    double expected_zcr = (2.0 * cycles * analyzer->get_parameter_or_default<u_int32_t>("window_size", 256))
+        / (1024.0 * (analyzer->get_parameter_or_default<u_int32_t>("window_size", 256) - 1));
 
     for (double zcr_value : analysis_result.energy_values) {
         EXPECT_GT(zcr_value, 0.01);
@@ -282,7 +282,7 @@ TEST_F(EnergyAnalyzerTest, PowerEnergyCorrectness)
     auto analysis_result = analyzer->analyze_energy(container);
 
     // Power = sum of squares = window_size * (0.6)^2 = 256 * 0.36 = 92.16
-    double expected_power = analyzer->get_parameter_or_default<uint32_t>("window_size", 256) * 0.6 * 0.6;
+    double expected_power = analyzer->get_parameter_or_default<u_int32_t>("window_size", 256) * 0.6 * 0.6;
     double tolerance = 1.0;
 
     for (double power_value : analysis_result.energy_values) {

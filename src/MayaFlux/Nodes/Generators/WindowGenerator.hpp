@@ -95,6 +95,6 @@ std::vector<double> ExponentialRamp(size_t length, double start = 0.001, double 
  * @param window_type Type of window function
  * @return Window coefficients
  */
-std::vector<double> generate_window(uint32_t size, WindowType window_type);
+std::vector<double> generate_window(u_int32_t size, WindowType window_type);
 
 }

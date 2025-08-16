@@ -122,9 +122,9 @@ struct IO {
      * @brief Get total number of elements across all dimensions
      * @return Product of all dimension sizes
      */
-    [[nodiscard]] uint64_t get_total_elements() const
+    [[nodiscard]] u_int64_t get_total_elements() const
     {
-        uint64_t total = 1;
+        u_int64_t total = 1;
         for (const auto& dim : dimensions) {
             total *= dim.size;
         }
