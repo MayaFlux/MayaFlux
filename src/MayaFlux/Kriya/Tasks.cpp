@@ -41,7 +41,7 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
         step_duration = 1;
     }
 
-    uint64_t total_samples = duration_seconds * sample_rate;
+    u_int64_t total_samples = duration_seconds * sample_rate;
     float per_sample_step = (end_value - start_value) / total_samples;
     float sample_step = per_sample_step * step_duration;
 
@@ -59,7 +59,7 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
 
         *current_value = start_value;
 
-        uint64_t samples_elapsed = 0;
+        u_int64_t samples_elapsed = 0;
 
         co_await SampleDelay { 1 };
 

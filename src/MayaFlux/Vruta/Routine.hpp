@@ -52,7 +52,7 @@ public:
 
     /**
      * @brief Gets the sample position when this routine should next execute
-     * @return Sample position for next execution, or UINT64_MAX if inactive
+     * @return Sample position for next execution, or u_int64_MAX if inactive
      *
      * This method is crucial for sample-accurate scheduling. It returns
      * the exact sample position when the coroutine should be resumed next.

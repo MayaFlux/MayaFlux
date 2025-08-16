@@ -1,6 +1,7 @@
 #include "SoundStreamContainer.hpp"
 
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
+
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -84,16 +85,22 @@ DataVariant SoundStreamContainer::get_region_data(const Region& region) const
 void SoundStreamContainer::set_region_data(const Region& region, const DataVariant& data)
 {
     std::unique_lock lock(m_data_mutex);
-
     std::visit([&](auto& dest_vec, const auto& src_data) {
         using DestT = typename std::decay_t<decltype(dest_vec)>::value_type;
         using SrcT = typename std::decay_t<decltype(src_data)>::value_type;
 
         if constexpr (std::is_same_v<DestT, SrcT>) {
-            set_or_update_region_data(std::span<DestT>(dest_vec), std::span<const SrcT>(src_data), region, m_dimensions);
+            set_or_update_region_data(std::span<DestT>(dest_vec),
+                std::span<const SrcT>(src_data),
+                region, m_dimensions);
         } else {
-            auto converted = convert_data_type<SrcT, DestT>(src_data);
-            set_or_update_region_data(std::span<DestT>(dest_vec), std::span<const DestT>(converted), region, m_dimensions);
+            std::vector<DestT> converted;
+            auto source_span = std::span<const SrcT>(src_data.data(), src_data.size());
+            auto dest_span = extract_data<SrcT, DestT>(source_span, converted);
+
+            set_or_update_region_data(std::span<DestT>(dest_vec),
+                std::span<const DestT>(dest_span.data(), dest_span.size()),
+                region, m_dimensions);
         }
     },
         m_data, data);
@@ -103,7 +110,8 @@ std::span<const double> SoundStreamContainer::get_frame(u_int64_t frame_index) c
 {
     std::shared_lock lock(m_data_mutex);
 
-    auto data_span = get_typed_data<double>(m_data);
+    std::vector<double> data;
+    auto data_span = extract_from_variant(m_data, m_cached_ext_buffer);
 
     if (data_span.empty() || frame_index >= m_num_frames) {
         return {};
@@ -117,7 +125,7 @@ void SoundStreamContainer::get_frames(std::span<double> output, u_int64_t start_
 {
     std::shared_lock lock(m_data_mutex);
 
-    auto data_span = get_typed_data<double>(m_data);
+    auto data_span = extract_from_variant(m_data, m_cached_ext_buffer);
     if (data_span.empty())
         return;
 
@@ -347,8 +355,9 @@ u_int64_t SoundStreamContainer::peek_sequential(std::span<double> output, u_int6
 {
     std::shared_lock lock(m_data_mutex);
 
-    auto data_span = get_typed_data<double>(m_data);
-    if (data_span.empty())
+    std::vector<double> copy_vector;
+    extract_from_variant(m_data, copy_vector);
+    if (copy_vector.empty())
         return 0;
 
     u_int64_t start_pos = m_read_position.load() + offset;
@@ -362,15 +371,15 @@ u_int64_t SoundStreamContainer::peek_sequential(std::span<double> output, u_int6
 
         for (u_int64_t i = 0; i < elements_to_read; ++i) {
             u_int64_t pos = (start_pos * m_num_channels + i - loop_start) % loop_length + loop_start;
-            output[i] = data_span[pos];
+            output[i] = copy_vector[pos];
             elements_read++;
         }
     } else {
         u_int64_t linear_start = start_pos * m_num_channels;
-        u_int64_t available = data_span.size() - linear_start;
+        u_int64_t available = copy_vector.size() - linear_start;
         elements_read = std::min<u_int64_t>(elements_to_read, available);
 
-        std::copy_n(data_span.begin() + linear_start, elements_read, output.begin());
+        std::copy_n(copy_vector.begin() + linear_start, elements_read, output.begin());
     }
 
     return elements_read;
@@ -549,4 +558,21 @@ void SoundStreamContainer::reorganize_data_layout(MemoryLayout new_layout)
     expand_storage(required_frames);
 } */
 
+std::span<const double> SoundStreamContainer::get_data_as_double() const
+{
+    if (!m_double_extraction_dirty.load(std::memory_order_acquire)) {
+        return { m_cached_ext_buffer };
+    }
+
+    if (!m_double_extraction_dirty.load(std::memory_order_acquire)) {
+        return { m_cached_ext_buffer };
+    }
+
+    {
+        std::shared_lock data_lock(m_data_mutex);
+        m_cached_ext_buffer.clear();
+        m_double_extraction_dirty.store(false, std::memory_order_release);
+        return extract_from_variant<double>(m_data, m_cached_ext_buffer);
+    }
+}
 }

@@ -48,6 +48,8 @@ std::vector<T> extract_region_data(std::span<const T>& source_data, const Region
     return result;
 }
 
+std::span<double> extract_region_span(std::span<double> data, const Region& region, const std::vector<DataDimension>& dimensions);
+
 /**
  * @brief Extract multiple regions efficiently using ranges
  * @tparam T Data type (must satisfy ProcessableData)

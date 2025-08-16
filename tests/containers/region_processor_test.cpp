@@ -77,8 +77,8 @@ TEST_F(RegionProcessorTest, AddSegmentToRegion)
 {
     processor->organize_container_data(container);
 
-    std::vector<uint64_t> start_coords = { 100 };
-    std::vector<uint64_t> end_coords = { 200 };
+    std::vector<u_int64_t> start_coords = { 100 };
+    std::vector<u_int64_t> end_coords = { 200 };
     std::unordered_map<std::string, std::any> attributes;
     attributes["gain"] = 0.5;
 

@@ -6,7 +6,7 @@
 
 namespace MayaFlux::Kriya {
 
-BufferPipeline& BufferPipeline::branch_if(std::function<bool(uint32_t)> condition,
+BufferPipeline& BufferPipeline::branch_if(std::function<bool(u_int32_t)> condition,
     std::function<void(BufferPipeline&)> branch_builder)
 {
     m_branches.emplace_back(condition, BufferPipeline {});
@@ -25,8 +25,8 @@ BufferPipeline& BufferPipeline::parallel(std::initializer_list<BufferOperation> 
 }
 
 BufferPipeline& BufferPipeline::with_lifecycle(
-    std::function<void(uint32_t)> on_cycle_start,
-    std::function<void(uint32_t)> on_cycle_end)
+    std::function<void(u_int32_t)> on_cycle_start,
+    std::function<void(u_int32_t)> on_cycle_end)
 {
     m_cycle_start_callback = on_cycle_start;
     m_cycle_end_callback = on_cycle_end;
@@ -38,7 +38,7 @@ void BufferPipeline::execute_continuous()
     execute_internal(0);
 }
 
-void BufferPipeline::mark_data_consumed(uint32_t operation_index)
+void BufferPipeline::mark_data_consumed(u_int32_t operation_index)
 {
     if (operation_index < m_data_states.size()) {
         m_data_states[operation_index] = DataState::CONSUMED;
@@ -56,14 +56,14 @@ CycleCoordinator::CycleCoordinator(Vruta::TaskScheduler& scheduler)
 {
 }
 
-void BufferPipeline::execute_internal(uint32_t max_cycles)
+void BufferPipeline::execute_internal(u_int32_t max_cycles)
 {
     if (m_operations.empty())
         return;
 
     m_data_states.resize(m_operations.size(), DataState::EMPTY);
 
-    uint32_t cycles_executed = 0;
+    u_int32_t cycles_executed = 0;
     while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || cycles_executed < max_cycles)) {
 
         if (m_cycle_start_callback) {
@@ -97,7 +97,7 @@ void BufferPipeline::execute_internal(uint32_t max_cycles)
     }
 }
 
-void BufferPipeline::process_operation(BufferOperation& op, uint32_t cycle)
+void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
 {
     try {
         switch (op.get_type()) {
@@ -218,7 +218,7 @@ void BufferPipeline::process_operation(BufferOperation& op, uint32_t cycle)
     }
 }
 
-void BufferPipeline::process_branches(uint32_t cycle)
+void BufferPipeline::process_branches(u_int32_t cycle)
 {
     for (auto& branch : m_branches) {
         if (branch.first(cycle)) {
@@ -307,19 +307,19 @@ void BufferPipeline::write_to_container(std::shared_ptr<Kakshya::DynamicSoundStr
 }
 
 Kakshya::DataVariant BufferPipeline::read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container,
-    uint64_t start_frame,
-    uint32_t length)
+    u_int64_t start_frame,
+    u_int32_t length)
 {
     try {
-        uint32_t read_length = length;
+        u_int32_t read_length = length;
         if (read_length == 0) {
-            read_length = static_cast<uint32_t>(container->get_total_elements() / container->get_num_channels());
+            read_length = static_cast<u_int32_t>(container->get_total_elements() / container->get_num_channels());
         }
 
         std::vector<double> output_data(read_length * container->get_num_channels());
         std::span<double> output_span(output_data.data(), output_data.size());
 
-        uint64_t frames_read = container->read_frames(output_span, read_length);
+        u_int64_t frames_read = container->read_frames(output_span, read_length);
 
         if (frames_read < output_data.size()) {
             output_data.resize(frames_read);
@@ -335,11 +335,11 @@ Kakshya::DataVariant BufferPipeline::read_from_container(std::shared_ptr<Kakshya
 
 Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
     std::vector<std::reference_wrapper<BufferPipeline>> pipelines,
-    uint32_t sync_every_n_cycles)
+    u_int32_t sync_every_n_cycles)
 {
 
     auto& promise = co_await GetPromise {};
-    uint32_t cycle = 0;
+    u_int32_t cycle = 0;
 
     while (true) {
         if (promise.should_terminate) {
@@ -366,12 +366,12 @@ Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
 
 Vruta::SoundRoutine CycleCoordinator::manage_transient_data(
     std::shared_ptr<Buffers::AudioBuffer> buffer,
-    std::function<void(uint32_t)> on_data_ready,
-    std::function<void(uint32_t)> on_data_expired)
+    std::function<void(u_int32_t)> on_data_ready,
+    std::function<void(u_int32_t)> on_data_expired)
 {
 
     auto& promise = co_await GetPromise {};
-    uint32_t cycle = 0;
+    u_int32_t cycle = 0;
 
     while (true) {
         if (promise.should_terminate) {

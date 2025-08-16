@@ -5,8 +5,6 @@
 
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
-#include "ranges"
-
 namespace MayaFlux::Kakshya {
 
 std::unordered_map<std::string, std::any> extract_processing_state_info(const std::shared_ptr<SignalSourceContainer>& container)
@@ -237,15 +235,14 @@ validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& co
     return std::make_pair(container, std::move(dimensions));
 }
 
-std::vector<double> extract_numeric_data_from_container(const std::shared_ptr<SignalSourceContainer>& container)
+std::span<double> extract_numeric_data_from_container(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container || !container->has_data()) {
         throw std::invalid_argument("Container is null or has no data");
     }
 
-    const Kakshya::DataVariant& container_data = container->get_processed_data();
+    Kakshya::DataVariant& container_data = container->get_processed_data();
 
-    // Use existing convert_variant_to_double function from DataUtils
     try {
         return convert_variant_to_double(container_data);
     } catch (const std::exception& e) {

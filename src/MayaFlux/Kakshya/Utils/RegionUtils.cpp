@@ -2,6 +2,25 @@
 
 namespace MayaFlux::Kakshya {
 
+std::span<double> extract_region_span(std::span<double> data, const Region& region, const std::vector<DataDimension>& dimensions)
+{
+    if (region.start_coordinates.empty() || dimensions.empty()) {
+        return {};
+    }
+
+    u_int64_t start_index = coordinates_to_linear(region.start_coordinates, dimensions);
+    u_int64_t end_index = coordinates_to_linear(region.end_coordinates, dimensions);
+
+    if (start_index >= data.size()) {
+        return {};
+    }
+
+    u_int64_t actual_end = std::min(end_index + 1, static_cast<u_int64_t>(data.size()));
+    u_int64_t length = actual_end - start_index;
+
+    return data.subspan(start_index, length);
+}
+
 void set_region_attribute(Region& region, const std::string& key, std::any value)
 {
     region.attributes[key] = std::move(value);

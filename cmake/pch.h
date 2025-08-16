@@ -14,6 +14,7 @@
 #include "numbers"
 #include "numeric"
 #include "optional"
+#include "ranges"
 #include "shared_mutex"
 #include "span"
 #include "string"
@@ -28,6 +29,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdint>
+#include <cstring>
 
 #include "config.h"
 
@@ -222,6 +224,30 @@ CastResult<T> safe_any_cast(const std::any& any_val)
     }
 
     result.error = "No safe conversion found";
+    return result;
+}
+
+template <typename T>
+    requires(!ArithmeticData<T> && !ComplexData<T> && !StringData<T>)
+CastResult<T> safe_any_cast(const std::any& any_val)
+{
+    CastResult<T> result;
+
+    if (!any_val.has_value()) {
+        result.error = "Empty any";
+        return result;
+    }
+
+    if (any_val.type() == typeid(T)) {
+        try {
+            result.value = std::any_cast<T>(any_val);
+        } catch (const std::bad_any_cast& e) {
+            result.error = "Failed to cast to " + std::string(typeid(T).name()) + ": " + e.what();
+        }
+    } else {
+        result.error = "Type mismatch: expected " + std::string(typeid(T).name()) + ", got " + std::string(any_val.type().name());
+    }
+
     return result;
 }
 

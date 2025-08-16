@@ -173,6 +173,12 @@ public:
         return m_processing_token_channel.load() == channel;
     }
 
+    /**
+     * @brief Get the audio data as a specific type
+     * @return Span of double data for direct access
+     */
+    std::span<const double> get_data_as_double() const;
+
 protected:
     // ===== Core Data =====
     DataVariant m_data; // Raw audio data
@@ -224,6 +230,11 @@ protected:
     void setup_dimensions();
     void notify_state_change(ProcessingState new_state);
     void reorganize_data_layout(MemoryLayout new_layout);
+
+    mutable std::vector<double> m_cached_ext_buffer;
+
+    mutable std::atomic<bool> m_double_extraction_dirty { true };
+    mutable std::mutex m_extraction_mutex; // Only for cache updates, not reads
 };
 
 } // namespace MayaFlux::Kakshya

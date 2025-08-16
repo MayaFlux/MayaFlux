@@ -1,288 +1,232 @@
 #pragma once
 
-#include "MayaFlux/Yantra/Analyzers/AnalysisHelpers.hpp"
+#include "MayaFlux/Utils.hpp"
+#include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
+#include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
+#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
+
+/**
+ * @file ExtractionHelper.hpp
+ * @brief Central helper for extraction operations - uses analyzers to find data
+ *
+ * ExtractionHelper uses analyzers to identify regions/features of interest,
+ * then extracts and returns the actual DATA from those regions.
+ *
+ * Key concept: Analyzers find WHERE, extractors return WHAT.
+ * - Analyzer: "High energy at samples 1000-1500, 3000-3500"
+ * - Extractor: Returns the actual audio data from samples 1000-1500, 3000-3500
+ */
 
 namespace MayaFlux::Yantra {
 
 /**
- * @brief Forward declaration for extractor node and universal extractor types.
+ * @brief Extract numeric vector from any ComputeData type
+ * @tparam InputType Source ComputeData type
+ * @param input_data Input data
+ * @param strategy Complex conversion strategy (default: MAGNITUDE)
+ * @return Extracted numeric vector
  */
-class ExtractorNode;
-class UniversalExtractor;
-
-/**
- * @brief Base extraction input variant - compatible with AnalyzerInput.
- *
- * Represents all supported input types for extractors and analyzers, including raw data,
- * signal containers, regions, region groups, region segments, and analyzer outputs.
- */
-using BaseExtractorInput = std::variant<
-    Kakshya::DataVariant, ///< Raw multi-type data (e.g., audio, numeric, etc.)
-    std::shared_ptr<Kakshya::SignalSourceContainer>, ///< N-dimensional signal container
-    Kakshya::Region, ///< Single region of interest
-    Kakshya::RegionGroup, ///< Group of regions
-    std::vector<Kakshya::RegionSegment>, ///< List of attributed segments
-    AnalyzerOutput ///< Output from an analyzer, for chaining or feedback
-    >;
-
-/**
- * @struct ExtractorInput
- * @brief Complete extraction input with recursive support via type erasure.
- *
- * Encapsulates the input to an extractor, supporting both the main input (variant)
- * and a list of recursive inputs (ExtractorNode). This enables recursive and feedback
- * extraction patterns, as well as seamless integration with analyzers.
- */
-struct ExtractorInput {
-    BaseExtractorInput base_input; ///< Main input value (variant)
-    std::vector<std::shared_ptr<ExtractorNode>> recursive_inputs; ///< Recursive/self-referential inputs
-
-    // --- Constructors for seamless usage ---
-
-    /**
-     * @brief Construct from a base input variant.
-     * @param input The base input variant.
-     */
-    ExtractorInput(const BaseExtractorInput& input)
-        : base_input(input)
-    {
-    }
-
-    /**
-     * @brief Construct from a Kakshya::DataVariant.
-     * @param data Raw data variant.
-     */
-    ExtractorInput(Kakshya::DataVariant data)
-        : base_input(data)
-    {
-    }
-
-    /**
-     * @brief Construct from a SignalSourceContainer.
-     * @param container Shared pointer to signal container.
-     */
-    ExtractorInput(std::shared_ptr<Kakshya::SignalSourceContainer> container)
-        : base_input(container)
-    {
-    }
-
-    /**
-     * @brief Construct from a Region.
-     * @param region Region of interest.
-     */
-    ExtractorInput(const Kakshya::Region& region)
-        : base_input(region)
-    {
-    }
-
-    /**
-     * @brief Construct from a RegionGroup.
-     * @param group Group of regions.
-     */
-    ExtractorInput(const Kakshya::RegionGroup& group)
-        : base_input(group)
-    {
-    }
-
-    /**
-     * @brief Construct from a list of RegionSegments.
-     * @param segments List of region segments.
-     */
-    ExtractorInput(const std::vector<Kakshya::RegionSegment>& segments)
-        : base_input(segments)
-    {
-    }
-
-    /**
-     * @brief Construct from an AnalyzerOutput.
-     * @param output Output from an analyzer.
-     */
-    ExtractorInput(const AnalyzerOutput& output)
-        : base_input(output)
-    {
-    }
-
-    /**
-     * @brief Add a recursive input node for advanced extraction patterns.
-     * @param node Shared pointer to an ExtractorNode.
-     */
-    void add_recursive_input(std::shared_ptr<ExtractorNode> node)
-    {
-        recursive_inputs.push_back(node);
-    }
-
-    /**
-     * @brief Check if any recursive inputs are present.
-     * @return True if recursive inputs exist, false otherwise.
-     */
-    bool has_recursive_inputs() const { return !recursive_inputs.empty(); }
-};
-
-/**
- * @brief Base extraction output variant.
- *
- * Represents all supported output types for extractors, including numeric sequences,
- * complex/spectral data, raw data, region groups, region segments, and multi-modal results.
- */
-using BaseExtractorOutput = std::variant<
-    std::vector<double>, ///< Simple numeric sequences (e.g., features)
-    std::vector<float>, ///< Lower precision numeric sequences
-    std::vector<std::complex<double>>, ///< Complex/spectral data
-    Kakshya::DataVariant, ///< Raw data output (e.g., for chaining)
-    Kakshya::RegionGroup, ///< Extracted regions
-    std::vector<Kakshya::RegionSegment>, ///< Attributed segments
-    std::unordered_map<std::string, std::any> ///< Multi-modal results (flexible, for advanced use)
-    >;
-
-/**
- * @struct ExtractorOutput
- * @brief Complete extraction output with recursive support.
- *
- * Encapsulates the output from an extractor, supporting both the main output (variant)
- * and a list of recursive outputs (ExtractorNode). This enables recursive/lazy extraction,
- * feedback, and multi-stage pipelines.
- */
-struct ExtractorOutput {
-    BaseExtractorOutput base_output; ///< Main output value (variant)
-    std::vector<std::shared_ptr<ExtractorNode>> recursive_outputs; ///< Recursive/lazy outputs
-
-    ExtractorOutput() = default;
-
-    /**
-     * @brief Construct from a base output variant.
-     * @param output The base output variant.
-     */
-    ExtractorOutput(const BaseExtractorOutput& output)
-        : base_output(output)
-    {
-    }
-
-    /**
-     * @brief Construct from a vector of doubles.
-     * @param data Numeric feature vector.
-     */
-    ExtractorOutput(std::vector<double> data)
-        : base_output(data)
-    {
-    }
-
-    /**
-     * @brief Construct from a vector of floats.
-     * @param data Numeric feature vector (float).
-     */
-    ExtractorOutput(std::vector<float> data)
-        : base_output(data)
-    {
-    }
-
-    /**
-     * @brief Construct from a vector of complex doubles.
-     * @param data Complex/spectral feature vector.
-     */
-    ExtractorOutput(std::vector<std::complex<double>> data)
-        : base_output(data)
-    {
-    }
-
-    /**
-     * @brief Construct from a Kakshya::DataVariant.
-     * @param data Raw data output.
-     */
-    ExtractorOutput(Kakshya::DataVariant data)
-        : base_output(data)
-    {
-    }
-
-    /**
-     * @brief Construct from a RegionGroup.
-     * @param group Extracted region group.
-     */
-    ExtractorOutput(Kakshya::RegionGroup group)
-        : base_output(group)
-    {
-    }
-
-    /**
-     * @brief Construct from a vector of RegionSegments.
-     * @param segments Attributed region segments.
-     */
-    ExtractorOutput(std::vector<Kakshya::RegionSegment> segments)
-        : base_output(segments)
-    {
-    }
-
-    /**
-     * @brief Construct from a multi-modal result map.
-     * @param multi_modal Map of named results (string to any).
-     */
-    ExtractorOutput(std::unordered_map<std::string, std::any> multi_modal)
-        : base_output(multi_modal)
-    {
-    }
-
-    /**
-     * @brief Add a recursive output node for advanced extraction patterns.
-     * @param node Shared pointer to an ExtractorNode.
-     */
-    void add_recursive_output(std::shared_ptr<ExtractorNode> node)
-    {
-        recursive_outputs.push_back(node);
-    }
-
-    /**
-     * @brief Check if any recursive outputs are present.
-     * @return True if recursive outputs exist, false otherwise.
-     */
-    bool has_recursive_outputs() const { return !recursive_outputs.empty(); }
-};
-
-/**
- * @class ExtractorNode
- * @brief Type-erased node that can hold any extraction result.
- *
- * Abstract base class for nodes in the extraction tree. Each node can contain either a concrete
- * result or a reference to another extractor, enabling recursive, lazy, and composable extraction.
- * Used for advanced extraction patterns, feedback, and lazy evaluation.
- */
-class ExtractorNode {
-public:
-    /**
-     * @brief Virtual destructor for safe polymorphic use.
-     */
-    virtual ~ExtractorNode() = default;
-
-    /**
-     * @brief Extract the result from this node.
-     * @return ExtractorOutput containing the result.
-     */
-    virtual ExtractorOutput extract() = 0;
-
-    /**
-     * @brief Get the type name of the result held by this node.
-     * @return Type name as a string.
-     */
-    virtual std::string get_type_name() const = 0;
-
-    /**
-     * @brief Check if this node represents a lazy (deferred) computation.
-     * @return True if lazy, false otherwise.
-     */
-    virtual bool is_lazy() const { return false; }
-
-    /**
-     * @brief Attempt to get the result as a specific type.
-     * @tparam T Desired type.
-     * @return Optional containing the result if type matches, std::nullopt otherwise.
-     */
-    template <typename T>
-    std::optional<T> get_as() const
-    {
-        auto output = const_cast<ExtractorNode*>(this)->extract();
-        if (auto* typed_result = std::get_if<T>(&output.base_output)) {
-            return *typed_result;
-        }
-        return std::nullopt;
-    }
-};
-
+template <ComputeData InputType>
+std::vector<double> extract_numeric_data(const InputType& input_data,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+{
+    OperationHelper::set_complex_conversion_strategy(strategy);
+    return OperationHelper::extract_as_double(input_data);
 }
+
+/**
+ * @brief Extract Eigen vector from ComputeData
+ * @tparam InputType Source ComputeData type
+ * @param input_data Input data
+ * @param strategy Complex conversion strategy (default: MAGNITUDE)
+ * @return Extracted Eigen vector
+ */
+template <ComputeData InputType>
+Eigen::VectorXd extract_vector_data(const InputType& input_data,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+{
+    auto double_data = extract_numeric_data(input_data, strategy);
+    return OperationHelper::convert_result_to_output_type<Eigen::VectorXd>(double_data);
+}
+
+/**
+ * @brief Direct conversion between ComputeData types
+ * @tparam InputType Source ComputeData type
+ * @tparam OutputType Target ComputeData type
+ * @param input_data Input data
+ * @return Converted data
+ */
+template <ComputeData InputType, ComputeData OutputType>
+OutputType extract_direct_conversion(const InputType& input_data)
+{
+    if constexpr (std::is_same_v<OutputType, std::vector<double>>) {
+        return extract_numeric_data(input_data);
+    } else if constexpr (std::is_same_v<OutputType, Eigen::VectorXd>) {
+        return extract_vector_data(input_data);
+    } else {
+        auto [double_data, structure_info] = OperationHelper::extract_with_structure(input_data);
+        std::vector<double> data_vec(double_data.begin(), double_data.end());
+        return OperationHelper::reconstruct_from_double<OutputType>(data_vec, structure_info);
+    }
+}
+
+/**
+ * @brief Extract data from high-energy regions using EnergyAnalyzer
+ * @param data Input data span
+ * @param energy_threshold Minimum energy threshold for region selection
+ * @param window_size Analysis window size
+ * @param hop_size Hop size between windows
+ * @return Vector containing actual data from high-energy regions
+ */
+std::vector<double> extract_high_energy_data(
+    std::span<const double> data,
+    double energy_threshold = 0.1,
+    u_int32_t window_size = 512,
+    u_int32_t hop_size = 256);
+
+/**
+ * @brief Extract data from peak regions using peak detection
+ * @param data Input data span
+ * @param threshold Peak detection threshold
+ * @param min_distance Minimum distance between peaks
+ * @param region_size Size of region around each peak to extract
+ * @return Vector containing actual data from peak regions
+ */
+std::vector<double> extract_peak_data(
+    std::span<const double> data,
+    double threshold = 0.1,
+    double min_distance = 10.0,
+    u_int32_t region_size = 256);
+
+/**
+ * @brief Extract data from statistical outlier regions
+ * @param data Input data span
+ * @param std_dev_threshold Number of standard deviations for outlier detection
+ * @param window_size Analysis window size
+ * @param hop_size Hop size between windows
+ * @return Vector containing actual data from outlier regions
+ */
+std::vector<double> extract_outlier_data(
+    std::span<const double> data,
+    double std_dev_threshold = 2.0,
+    u_int32_t window_size = 512,
+    u_int32_t hop_size = 256);
+
+/**
+ * @brief Extract data from regions with high spectral energy
+ * @param data Input data span
+ * @param spectral_threshold Minimum spectral energy threshold
+ * @param window_size Analysis window size
+ * @param hop_size Hop size between windows
+ * @return Vector containing actual data from high spectral energy regions
+ */
+std::vector<double> extract_high_spectral_data(
+    std::span<const double> data,
+    double spectral_threshold = 0.1,
+    u_int32_t window_size = 512,
+    u_int32_t hop_size = 256);
+
+/**
+ * @brief Extract data from regions with values above statistical mean
+ * @param data Input data span
+ * @param mean_multiplier Multiplier for mean threshold (e.g., 1.5 = 1.5x mean)
+ * @param window_size Analysis window size
+ * @param hop_size Hop size between windows
+ * @return Vector containing actual data from above-mean regions
+ */
+std::vector<double> extract_above_mean_data(
+    std::span<const double> data,
+    double mean_multiplier = 1.5,
+    u_int32_t window_size = 512,
+    u_int32_t hop_size = 256);
+
+/**
+ * @brief Extract overlapping windows of actual data
+ * @param data Input data span
+ * @param window_size Size of each window
+ * @param overlap Overlap ratio (0.0 to 1.0)
+ * @return Vector of data segments (each segment contains actual data values)
+ */
+std::vector<std::vector<double>> extract_overlapping_windows(
+    std::span<const double> data,
+    u_int32_t window_size = 512,
+    double overlap = 0.5);
+
+/**
+ * @brief Extract specific data windows by indices
+ * @param data Input data span
+ * @param window_indices Vector of starting indices for windows
+ * @param window_size Size of each window
+ * @return Vector of data segments from specified windows
+ */
+std::vector<std::vector<double>> extract_windowed_data_by_indices(
+    std::span<const double> data,
+    const std::vector<size_t>& window_indices,
+    u_int32_t window_size = 512);
+
+/**
+ * @brief Extract actual data from specified regions
+ * @param data Input data span
+ * @param regions Vector of regions to extract data from
+ * @return Vector containing concatenated data from all regions
+ */
+std::vector<double> extract_data_from_regions(
+    std::span<const double> data,
+    const std::vector<Kakshya::Region>& regions);
+
+/**
+ * @brief Extract data from a RegionGroup
+ * @param data Input data span
+ * @param region_group RegionGroup containing regions to extract
+ * @return Vector containing concatenated data from all regions in group
+ */
+std::vector<double> extract_data_from_region_group(
+    std::span<const double> data,
+    const Kakshya::RegionGroup& region_group);
+
+/**
+ * @brief Get available extraction methods
+ * @return Vector of method names
+ */
+std::vector<std::string> get_available_extraction_methods();
+
+/**
+ * @brief Validate extraction parameters
+ * @param window_size Window size to validate
+ * @param hop_size Hop size to validate
+ * @param data_size Size of data to process
+ * @return True if parameters are valid
+ */
+bool validate_extraction_parameters(u_int32_t window_size, u_int32_t hop_size, size_t data_size);
+
+/**
+ * @brief Extract data at zero crossing points using existing EnergyAnalyzer
+ * @param data Input data span
+ * @param threshold Zero crossing threshold (default: 0.0)
+ * @param min_distance Minimum distance between crossings
+ * @param region_size Size of region around each crossing to extract
+ * @return Vector containing actual data from zero crossing regions
+ */
+std::vector<double> extract_zero_crossing_data(
+    std::span<const double> data,
+    double threshold = 0.0,
+    double min_distance = 1.0,
+    u_int32_t region_size = 1);
+
+/**
+ * @brief Extract data from silent regions using existing EnergyAnalyzer
+ * @param data Input data span
+ * @param silence_threshold Energy threshold below which regions are considered silent
+ * @param min_duration Minimum duration for silence regions
+ * @param window_size Analysis window size
+ * @param hop_size Hop size between windows
+ * @return Vector containing actual data from silent regions
+ */
+std::vector<double> extract_silence_data(
+    std::span<const double> data,
+    double silence_threshold = 0.01,
+    u_int32_t min_duration = 1024,
+    u_int32_t window_size = 512,
+    u_int32_t hop_size = 256);
+
+} // namespace MayaFlux::Yantra

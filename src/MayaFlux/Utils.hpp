@@ -19,13 +19,6 @@ enum class distribution {
     // GENDY
 };
 
-enum WindowType {
-    HANNING,
-    HAMMING,
-    BLACKMAN,
-    RECTANGULAR,
-};
-
 enum ActionType {
     NODE,
     TIME,
@@ -43,6 +36,17 @@ enum NodeState : u_int32_t {
     ENGINE_PROCESSED = ACTIVE | PROCESSED, ///< Engine has processed this node
     EXTERMAL_PROCESSED = INACTIVE | PROCESSED, ///< External source has processed this node
     ENGINE_MOCK_PROCESSED = ACTIVE | MOCK_PROCESS | PROCESSED, ///< Engine has mock processed this node
+};
+
+/**
+ * @enum ComplexConversionStrategy
+ * @brief Strategy for converting complex numbers to real values
+ */
+enum class ComplexConversionStrategy : u_int8_t {
+    MAGNITUDE, ///< |z| = sqrt(real² + imag²)
+    REAL_PART, ///< z.real()
+    IMAG_PART, ///< z.imag()
+    SQUARED_MAGNITUDE ///< |z|² = real² + imag²
 };
 
 std::any safe_get_parameter(const std::string& parameter_name, const std::map<std::string, std::any> parameters);

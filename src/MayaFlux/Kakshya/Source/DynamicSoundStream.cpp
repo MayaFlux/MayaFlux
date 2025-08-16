@@ -111,7 +111,8 @@ void DynamicSoundStream::expand_to(u_int64_t target_frames)
 
 DataVariant DynamicSoundStream::create_expanded_data(u_int64_t new_frame_count)
 {
-    auto current_data = get_typed_data<double>(m_data);
+    std::vector<double> current_data {};
+    extract_from_variant(m_data, current_data);
 
     std::vector<double> expanded(new_frame_count * get_num_channels(), 0.0);
 

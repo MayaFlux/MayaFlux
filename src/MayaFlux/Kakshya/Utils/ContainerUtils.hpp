@@ -117,7 +117,7 @@ validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& co
  * @return Vector of double values from container data
  * @throws std::runtime_error if no numeric data can be extracted
  */
-std::vector<double> extract_numeric_data_from_container(const std::shared_ptr<SignalSourceContainer>& container);
+std::span<double> extract_numeric_data_from_container(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Validates numeric data for analysis operations

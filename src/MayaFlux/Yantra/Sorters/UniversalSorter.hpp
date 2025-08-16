@@ -1,309 +1,482 @@
 #pragma once
 
-#include "MayaFlux/Yantra/Analyzers/UniversalAnalyzer.hpp"
-#include "MayaFlux/Yantra/YantraUtils.hpp"
+#include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
  * @file UniversalSorter.hpp
  * @brief Modern, digital-first universal sorting framework for Maya Flux
  *
- * This header defines the core sorting abstractions for the Maya Flux ecosystem,
- * enabling robust, type-safe, and extensible sorting pipelines for multi-dimensional
- * data. Unlike traditional sorting which operates on simple containers, this system
- * embraces the digital paradigm completely with analyzer delegation and YantraUtils integration.
+ * The UniversalSorter system provides a clean, extensible foundation for data sorting
+ * in the Maya Flux ecosystem. Unlike traditional sorting which operates on simple containers,
+ * this embraces the digital paradigm: data-driven workflows, composability, and type safety.
  *
- * Key Digital-First Principles:
- * - **Data is everything:** Sort any data type - audio, video, metadata, analysis results
- * - **Analyzer delegation:** Delegate complex sort key extraction to specialized analyzers
- * - **Multi-dimensional sorting:** N-dimensional sort keys, not just single values
- * - **Grammar-based sorting:** Define sort rules like parsing grammars
- * - **Lazy evaluation:** Future integration with Vruta/Kriya coroutine systems
- * - **Algorithmic sorting:** Complex mathematical operations, not simple comparisons
- * - **Temporal awareness:** Sort based on time-series patterns, predictions
- * - **Cross-modal sorting:** Sort audio by visual features, video by audio, etc.
+ * ## Core Philosophy
+ * A sorter **organizes ComputeData** through digital-first approaches:
+ * 1. **Algorithmic sorting:** Advanced mathematical operations, not simple comparisons
+ * 2. **Multi-dimensional sorting:** N-dimensional sort keys, not just single values
+ * 3. **Temporal sorting:** Sort based on time-series patterns, predictions
+ * 4. **Cross-modal sorting:** Sort audio by visual features, video by audio, etc.
+ * 5. **Computational sorting:** Leverage digital capabilities beyond analog metaphors
+ *
+ * ## Key Features
+ * - **Universal input/output:** Template-based I/O types defined at instantiation
+ * - **Type-safe sorting:** C++20 concepts and compile-time guarantees
+ * - **Sorting strategies:** Algorithmic, pattern-based, predictive
+ * - **Composable operations:** Integrates with ComputeMatrix execution modes
+ * - **Digital-first design:** Embraces computational possibilities beyond analog metaphors
+ *
+ * ## Usage Examples
+ * ```cpp
+ * // Sort DataVariant containing vectors
+ * auto sorter = std::make_shared<MySorter<Kakshya::DataVariant>>();
+ *
+ * // Sort regions by custom criteria
+ * auto region_sorter = std::make_shared<MySorter<
+ *     std::vector<Kakshya::Region>,
+ *     std::vector<Kakshya::Region>>>();
+ *
+ * // Sort with mathematical transformation
+ * auto matrix_sorter = std::make_shared<MySorter<
+ *     Eigen::MatrixXd,
+ *     Eigen::MatrixXd>>();
+ * ```
  */
 
 namespace MayaFlux::Yantra {
 
 /**
- * @class SortingGrammar
- * @brief Grammar-based sorting rules for complex sorting logic
+ * @enum SortingType
+ * @brief Categories of sorting operations for discovery and organization
  */
-class SortingGrammar {
-public:
-    enum class SortingContext {
-        TEMPORAL,
-        SPECTRAL,
-        SPATIAL,
-        SEMANTIC,
-        STATISTICAL,
-        CROSS_MODAL
-    };
+enum class SortingType : u_int8_t {
+    STANDARD, ///< Traditional comparison-based sorting
+    ALGORITHMIC, ///< Mathematical/computational sorting algorithms
+    PATTERN_BASED, ///< Sort based on pattern recognition
+    TEMPORAL, ///< Time-series aware sorting
+    SPATIAL, ///< Multi-dimensional spatial sorting
+    PREDICTIVE, ///< ML/AI-based predictive sorting
+    CROSS_MODAL, ///< Sort one modality by features of another
+    RECURSIVE, ///< Recursive/hierarchical sorting
+    CUSTOM ///< User-defined sorting types
+};
 
-    struct Rule {
-        std::string name;
-        std::function<bool(const SorterInput&)> matcher; ///< Check if rule applies
-        std::function<SorterOutput(const SorterInput&)> sorter; ///< Apply sorting
-        std::vector<std::string> dependencies; ///< Required previous sorts
-        SortingContext context;
-        int priority = 0;
-        SortingAlgorithm algorithm = SortingAlgorithm::STANDARD;
-    };
+/**
+ * @enum SortingStrategy
+ * @brief Sorting execution strategies
+ */
+enum class SortingStrategy : u_int8_t {
+    IN_PLACE, ///< Sort data in-place (modifies input)
+    COPY_SORT, ///< Create sorted copy (preserves input)
+    INDEX_ONLY, ///< Generate sort indices only
+    PARTIAL_SORT, ///< Sort only top-K elements
+    LAZY_SORT, ///< Lazy evaluation sorting (future: coroutines)
+    CHUNKED_SORT, ///< Sort in chunks for large datasets
+    PARALLEL_SORT ///< Parallel/concurrent sorting
+};
 
-    void add_rule(const Rule& rule);
-    std::optional<SorterOutput> sort_by_rule(const std::string& rule_name, const SorterInput& input) const;
-    std::vector<SorterOutput> sort_all_matching(const SorterInput& input) const;
-    std::vector<std::string> get_available_rules() const;
+/**
+ * @enum SortingDirection
+ * @brief Basic sort direction for simple comparisons
+ */
+enum class SortingDirection : u_int8_t {
+    ASCENDING, ///< Smallest to largest
+    DESCENDING, ///< Largest to smallest
+    CUSTOM, ///< Use custom comparator function
+    BIDIRECTIONAL ///< Sort with both directions (for special algorithms)
+};
 
-private:
-    std::vector<Rule> m_rules;
+/**
+ * @enum SortingGranularity
+ * @brief Output granularity control for sorting results
+ */
+enum class SortingGranularity : u_int8_t {
+    RAW_DATA, ///< Direct sorted data
+    ATTRIBUTED_INDICES, ///< Sort indices with metadata
+    ORGANIZED_GROUPS, ///< Hierarchically organized sorted data
+    DETAILED_ANALYSIS ///< Sorting analysis with statistics
+};
+
+/**
+ * @struct SortKey
+ * @brief Multi-dimensional sort key specification for complex sorting
+ */
+struct SortKey {
+    std::string name;
+    std::function<double(const std::any&)> extractor; ///< Extract sort value from data
+    SortingDirection direction = SortingDirection::ASCENDING;
+    double weight = 1.0; ///< Weight for multi-key sorting
+    bool normalize = false; ///< Normalize values before sorting
+
+    SortKey(std::string n, std::function<double(const std::any&)> e)
+        : name(std::move(n))
+        , extractor(std::move(e))
+    {
+    }
 };
 
 /**
  * @class UniversalSorter
- * @brief Modern, concept-based universal sorter for Maya Flux with analyzer delegation
+ * @brief Template-flexible sorter base with instance-defined I/O types
  *
- * Provides a unified, extensible interface for all sorting operations in the Maya Flux
- * ecosystem. Supports type-safe dispatch, parameterization, analyzer delegation, and
- * output granularity control using YantraUtils for maximum code reuse.
+ * The UniversalSorter provides a clean, concept-based foundation for all sorting
+ * operations. I/O types are defined at instantiation time, providing maximum flexibility
+ * while maintaining type safety through C++20 concepts.
  *
- * Key Responsibilities:
- * - Dispatches to type-specific implementations via std::variant visitation
- * - Delegates complex sort operations to analyzers when beneficial
- * - Uses YantraUtils for all common sorting operations (eliminates code duplication)
- * - Supports runtime method discovery and introspection
- * - Enables dynamic configuration via parameter maps
- * - Integrates with ComputeMatrix and processing chains for composable workflows
- * - Optional flow enforcement for pipeline ordering
- *
- * Derived sorters implement type-specific sort_impl overloads for supported input types.
+ * Unlike traditional sorters that only handle simple containers, this embraces the
+ * digital paradigm with analyzer delegation, cross-modal sorting, and computational
+ * approaches that go beyond analog metaphors.
  */
-class UniversalSorter : public ComputeOperation<SorterInput, SorterOutput> {
+template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+class UniversalSorter : public ComputeOperation<InputType, OutputType> {
 public:
+    using input_type = IO<InputType>;
+    using output_type = IO<OutputType>;
+    using base_type = ComputeOperation<InputType, OutputType>;
+
     virtual ~UniversalSorter() = default;
 
     /**
-     * @brief Main sorting method - dispatches to type-specific implementations or analyzer
+     * @brief Gets the sorting type category for this sorter
+     * @return SortingType enum value
      */
-    SorterOutput apply_operation(SorterInput input) override;
+    [[nodiscard]] virtual SortingType get_sorting_type() const = 0;
 
     /**
-     * @brief Type-safe sorting with explicit input/output types
+     * @brief Gets human-readable name for this sorter
+     * @return String identifier for the sorter
      */
-    template <SorterInputType InputT, SorterOutputType OutputT>
-    OutputT sort_typed(InputT input, const std::string& method = "default")
+    [[nodiscard]] std::string get_name() const override
     {
-        auto old_method = get_sorting_method();
-        set_parameter("method", method);
-
-        SorterOutput result = apply_operation(SorterInput { input });
-
-        set_parameter("method", old_method);
-
-        if (std::holds_alternative<OutputT>(result)) {
-            return std::get<OutputT>(result);
-        }
-
-        throw std::runtime_error("Type mismatch in sort_typed result");
+        return get_sorter_name();
     }
 
     /**
-     * @brief Sort with specific algorithm
+     * @brief Type-safe parameter management with sorting-specific defaults
      */
-    virtual SorterOutput sort_with_algorithm(SorterInput input, SortingAlgorithm algorithm);
+    void set_parameter(const std::string& name, std::any value) override
+    {
+        if (name == "strategy") {
+            auto strategy_result = safe_any_cast<SortingStrategy>(value);
+            if (strategy_result) {
+                m_strategy = *strategy_result.value;
+                return;
+            }
+            auto str_result = safe_any_cast<std::string>(value);
+            if (str_result) {
+                auto strategy_enum = Utils::string_to_enum_case_insensitive<SortingStrategy>(*str_result.value);
+                if (strategy_enum) {
+                    m_strategy = *strategy_enum;
+                    return;
+                }
+            }
+        }
+        if (name == "direction") {
+            auto direction_result = safe_any_cast<SortingDirection>(value);
+            if (direction_result) {
+                m_direction = *direction_result.value;
+                return;
+            }
+            auto str_result = safe_any_cast<std::string>(value);
+            if (str_result) {
+                auto direction_enum = Utils::string_to_enum_case_insensitive<SortingDirection>(*str_result.value);
+                if (direction_enum) {
+                    m_direction = *direction_enum;
+                    return;
+                }
+            }
+        }
+        if (name == "granularity") {
+            auto granularity_result = safe_any_cast<SortingGranularity>(value);
+            if (granularity_result) {
+                m_granularity = *granularity_result.value;
+                return;
+            }
+            auto str_result = safe_any_cast<std::string>(value);
+            if (str_result) {
+                auto granularity_enum = Utils::string_to_enum_case_insensitive<SortingGranularity>(*str_result.value);
+                if (granularity_enum) {
+                    m_granularity = *granularity_enum;
+                    return;
+                }
+            }
+        }
+        set_sorting_parameter(name, std::move(value));
+    }
+
+    [[nodiscard]] std::any get_parameter(const std::string& name) const override
+    {
+        if (name == "strategy") {
+            return m_strategy;
+        }
+        if (name == "direction") {
+            return m_direction;
+        }
+        if (name == "granularity") {
+            return m_granularity;
+        }
+        return get_sorting_parameter(name);
+    }
+
+    [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
+    {
+        auto params = get_all_sorting_parameters();
+        params["strategy"] = m_strategy;
+        params["direction"] = m_direction;
+        params["granularity"] = m_granularity;
+        return params;
+    }
 
     /**
-     * @brief Multi-key sorting with weights
+     * @brief Type-safe parameter access with defaults
+     * @tparam T Parameter type
+     * @param name Parameter name
+     * @param default_value Default if not found/wrong type
+     * @return Parameter value or default
      */
-    virtual SorterOutput sort_multi_key(SorterInput input, const std::vector<SortKey>& keys);
+    template <typename T>
+    T get_parameter_or_default(const std::string& name, const T& default_value) const
+    {
+        auto param = get_sorting_parameter(name);
+        return safe_any_cast_or_default<T>(param, default_value);
+    }
 
     /**
-     * @brief Chunked sorting for large datasets (alternative to coroutines)
-     * @note Future: Will integrate with Vruta/Kriya coroutine systems for true lazy evaluation
+     * @brief Configure sorting strategy
      */
-    virtual std::vector<SorterOutput> sort_chunked(SorterInput input, size_t chunk_size = 1024);
+    void set_strategy(SortingStrategy strategy) { m_strategy = strategy; }
+    SortingStrategy get_strategy() const { return m_strategy; }
 
     /**
-     * @brief Grammar-based sorting
+     * @brief Configure sorting direction
      */
-    virtual SorterOutput sort_by_grammar(SorterInput input, const std::string& rule_name);
+    void set_direction(SortingDirection direction) { m_direction = direction; }
+    SortingDirection get_direction() const { return m_direction; }
 
     /**
-     * @brief Get available sorting methods for this sorter
-     */
-    virtual std::vector<std::string> get_available_methods() const;
-
-    /**
-     * @brief Get available methods for a specific input type
-     */
-    std::vector<std::string> get_methods_for_type(std::type_index type_info) const;
-
-    // ===== Analyzer Delegation Interface =====
-
-    /**
-     * @brief Set the analyzer to use for delegation
-     * @param analyzer Shared pointer to a UniversalAnalyzer
-     */
-    inline void set_analyzer(std::shared_ptr<UniversalAnalyzer> analyzer) { m_analyzer = analyzer; }
-
-    /**
-     * @brief Enable or disable analyzer delegation
-     * @param use True to enable, false to disable
-     */
-    inline void set_use_analyzer(bool use) { m_use_analyzer = use; }
-
-    /**
-     * @brief Check if analyzer delegation is enabled and analyzer is set
-     * @return True if using analyzer, false otherwise
-     */
-    inline bool uses_analyzer() const { return m_use_analyzer && m_analyzer != nullptr; }
-
-    /**
-     * @brief Get the configured analyzer
-     * @return Shared pointer to analyzer (may be nullptr)
-     */
-    std::shared_ptr<UniversalAnalyzer> get_analyzer() const { return m_analyzer; }
-
-    // ===== Configuration Interface =====
-
-    /**
-     * @brief Set sorting granularity
+     * @brief Configure output granularity
      */
     void set_granularity(SortingGranularity granularity) { m_granularity = granularity; }
     SortingGranularity get_granularity() const { return m_granularity; }
 
     /**
-     * @brief Set default sorting algorithm
+     * @brief Add multi-key sorting capability
+     * @param keys Vector of sort keys for complex sorting
      */
-    void set_algorithm(SortingAlgorithm algorithm) { m_algorithm = algorithm; }
-    SortingAlgorithm get_algorithm() const { return m_algorithm; }
+    void set_sort_keys(const std::vector<SortKey>& keys) { m_sort_keys = keys; }
+    const std::vector<SortKey>& get_sort_keys() const { return m_sort_keys; }
 
     /**
-     * @brief Set sort direction
+     * @brief Configure custom comparator for CUSTOM direction
+     * @param comparator Custom comparison function
      */
-    void set_direction(SortDirection direction) { m_direction = direction; }
-    SortDirection get_direction() const { return m_direction; }
-
-    /**
-     * @brief Enable/disable flow enforcement
-     */
-    void set_flow_enforcement(bool enabled) { m_flow_enforcement = enabled; }
-    bool get_flow_enforcement() const { return m_flow_enforcement; }
-
-    /**
-     * @brief Add grammar rules for complex sorting
-     */
-    void add_grammar_rule(const SortingGrammar::Rule& rule) { m_grammar.add_rule(rule); }
-
-    /**
-     * @brief Parameter management
-     */
-    void set_parameter(const std::string& name, std::any value) override;
-    std::any get_parameter(const std::string& name) const override;
-    std::map<std::string, std::any> get_all_parameters() const override;
+    template <typename T>
+    void set_custom_comparator(std::function<bool(const T&, const T&)> comparator)
+    {
+        m_custom_comparator = [comparator](const std::any& a, const std::any& b) -> bool {
+            auto val_a_result = safe_any_cast<T>(a);
+            auto val_b_result = safe_any_cast<T>(b);
+            if (val_a_result && val_b_result) {
+                return comparator(*val_a_result, *val_b_result);
+            }
+            return false;
+        };
+    }
 
 protected:
     /**
-     * @brief Type-specific sorting implementations (to be overridden by derived classes)
-     * Most of these now delegate to YantraUtils or analyzers for maximum code reuse
+     * @brief Core operation implementation - called by ComputeOperation interface
+     * @param input Input data with metadata
+     * @return Output data with metadata
      */
-    virtual SorterOutput sort_impl(const Kakshya::DataVariant& data);
-    virtual SorterOutput sort_impl(std::shared_ptr<Kakshya::SignalSourceContainer> container);
-    virtual SorterOutput sort_impl(const Kakshya::Region& region);
-    virtual SorterOutput sort_impl(const Kakshya::RegionGroup& group);
-    virtual SorterOutput sort_impl(const std::vector<Kakshya::RegionSegment>& segments);
-    virtual SorterOutput sort_impl(const AnalyzerOutput& output);
-    virtual SorterOutput sort_impl(const Eigen::MatrixXd& matrix);
-    virtual SorterOutput sort_impl(const Eigen::VectorXd& vector);
-    virtual SorterOutput sort_impl(const std::vector<std::any>& data);
-
-    /**
-     * @brief Get available methods for specific type (to be overridden)
-     */
-    virtual std::vector<std::string> get_methods_for_type_impl(std::type_index type_info) const;
-
-    /**
-     * @brief Format output based on granularity setting
-     */
-    SorterOutput format_output_based_on_granularity(const SorterOutput& raw_output) const;
-
-    /**
-     * @brief Check flow enforcement constraints
-     */
-    virtual bool check_flow_constraints(const SorterInput& input) const;
-
-    /**
-     * @brief Get current sorting method from parameters
-     */
-    std::string get_sorting_method() const;
-
-    // ===== Analyzer Delegation Methods =====
-
-    /**
-     * @brief Determine if sorting should be delegated to an analyzer
-     * @return True if analyzer should be used, false otherwise
-     */
-    bool should_use_analyzer() const;
-
-    /**
-     * @brief Delegate sorting to the configured analyzer
-     * @tparam T Input type.
-     * @param input Input value
-     * @return SorterOutput from analyzer
-     * @throws std::runtime_error if no analyzer is set
-     */
-    inline SorterOutput sort_via_analyzer(const auto& input)
+    output_type operation_function(const input_type& input) override
     {
-        if (!m_analyzer) {
-            throw std::runtime_error("No analyzer available for delegation");
-        }
-
-        AnalyzerInput analyzer_input = convert_to_analyzer_input(input);
-
-        AnalyzerOutput analyzer_output = m_analyzer->apply_operation(analyzer_input);
-
-        return convert_from_analyzer_output(analyzer_output);
+        auto raw_result = sort_implementation(input);
+        return apply_granularity_formatting(raw_result);
     }
 
     /**
-     * @brief Convert AnalyzerOutput to SorterOutput
-     * @param output AnalyzerOutput value
-     * @return SorterOutput for further sorting
+     * @brief Pure virtual sorting implementation - derived classes implement this
+     * @param input Input data with metadata
+     * @return Raw sorting output before granularity processing
      */
-    SorterOutput convert_from_analyzer_output(const AnalyzerOutput& output);
+    virtual output_type sort_implementation(const input_type& input) = 0;
 
     /**
-     * @brief Determine if a sorting method requires analyzer delegation
-     * @param method Sorting method name
-     * @return True if method should use analyzer
+     * @brief Get sorter-specific name (derived classes override this)
+     * @return Sorter name string
      */
-    bool requires_analyzer_delegation(const std::string& method) const;
+    [[nodiscard]] virtual std::string get_sorter_name() const { return "UniversalSorter"; }
+
+    /**
+     * @brief Sorting-specific parameter handling (override for custom parameters)
+     */
+    virtual void set_sorting_parameter(const std::string& name, std::any value)
+    {
+        m_parameters[name] = std::move(value);
+    }
+
+    [[nodiscard]] virtual std::any get_sorting_parameter(const std::string& name) const
+    {
+        auto it = m_parameters.find(name);
+        return (it != m_parameters.end()) ? it->second : std::any {};
+    }
+
+    [[nodiscard]] virtual std::map<std::string, std::any> get_all_sorting_parameters() const
+    {
+        return m_parameters;
+    }
+
+    /**
+     * @brief Input validation (override for custom validation logic)
+     */
+    virtual bool validate_sorting_input(const input_type& /*input*/) const
+    {
+        // Default: accept any input that satisfies ComputeData concept
+        return true;
+    }
+
+    /**
+     * @brief Apply granularity-based output formatting
+     * @param raw_output Raw sorting results
+     * @return Formatted output based on granularity setting
+     */
+    virtual output_type apply_granularity_formatting(const output_type& raw_output)
+    {
+        switch (m_granularity) {
+        case SortingGranularity::RAW_DATA:
+            return raw_output;
+
+        case SortingGranularity::ATTRIBUTED_INDICES:
+            return add_sorting_metadata(raw_output);
+
+        case SortingGranularity::ORGANIZED_GROUPS:
+            return organize_into_groups(raw_output);
+
+        case SortingGranularity::DETAILED_ANALYSIS:
+            return create_sorting_analysis(raw_output);
+
+        default:
+            return raw_output;
+        }
+    }
+
+    /**
+     * @brief Add sorting metadata to results (override for custom attribution)
+     */
+    virtual output_type add_sorting_metadata(const output_type& raw_output)
+    {
+        output_type attributed = raw_output;
+        attributed.metadata["sorting_type"] = static_cast<int>(get_sorting_type());
+        attributed.metadata["sorter_name"] = get_sorter_name();
+        attributed.metadata["strategy"] = static_cast<int>(m_strategy);
+        attributed.metadata["direction"] = static_cast<int>(m_direction);
+        attributed.metadata["granularity"] = static_cast<int>(m_granularity);
+        return attributed;
+    }
+
+    /**
+     * @brief Organize results into hierarchical groups (override for custom grouping)
+     */
+    virtual output_type organize_into_groups(const output_type& raw_output)
+    {
+        // Default implementation: just add grouping metadata
+        return add_sorting_metadata(raw_output);
+    }
+
+    /**
+     * @brief Create detailed sorting analysis (override for custom analysis)
+     */
+    virtual output_type create_sorting_analysis(const output_type& raw_output)
+    {
+        // Default implementation: add analysis metadata
+        auto analysis = add_sorting_metadata(raw_output);
+        analysis.metadata["is_analysis"] = true;
+        analysis.metadata["sort_keys_count"] = m_sort_keys.size();
+        return analysis;
+    }
+
+    /**
+     * @brief Helper to check if custom comparator is available
+     */
+    bool has_custom_comparator() const { return m_custom_comparator != nullptr; }
+
+    /**
+     * @brief Apply custom comparator if available
+     */
+    bool apply_custom_comparator(const std::any& a, const std::any& b) const
+    {
+        if (m_custom_comparator) {
+            return m_custom_comparator(a, b);
+        }
+        return false;
+    }
+
+    /**
+     * @brief Apply multi-key sorting if keys are configured
+     */
+    virtual bool should_use_multi_key_sorting() const
+    {
+        return !m_sort_keys.empty();
+    }
+
+    /**
+     * @brief Current sorting operation storage for complex operations
+     */
+    mutable std::any m_current_sorting;
+
+    template <typename SortingResultType>
+    void store_current_sorting(SortingResultType&& result) const
+    {
+        m_current_sorting = std::forward<SortingResultType>(result);
+    }
+
+    output_type m_current_output;
 
 private:
-    // Core configuration
-    SortingGranularity m_granularity = SortingGranularity::SORTED_VALUES;
-    SortingAlgorithm m_algorithm = SortingAlgorithm::STANDARD;
-    SortDirection m_direction = SortDirection::ASCENDING;
-    bool m_flow_enforcement = false; ///< Optional flow enforcement
-    SortingGrammar m_grammar; ///< Grammar-based sorting rules
+    SortingStrategy m_strategy = SortingStrategy::COPY_SORT;
+    SortingDirection m_direction = SortingDirection::ASCENDING;
+    SortingGranularity m_granularity = SortingGranularity::RAW_DATA;
     std::map<std::string, std::any> m_parameters;
 
-    // Analyzer delegation
-    std::shared_ptr<UniversalAnalyzer> m_analyzer; ///< For complex sort key extraction
-    bool m_use_analyzer = false; ///< Whether to delegate sorting to analyzer
-
-    /**
-     * @brief Visitor for type-safe dispatch
-     */
-    struct SorterVisitor {
-        UniversalSorter* sorter;
-
-        template <typename T>
-        SorterOutput operator()(const T& data)
-        {
-            return sorter->sort_impl(data);
-        }
-    };
+    std::vector<SortKey> m_sort_keys;
+    std::function<bool(const std::any&, const std::any&)> m_custom_comparator;
 };
+
+/// Sorter that takes DataVariant and produces DataVariant
+template <ComputeData OutputType = Kakshya::DataVariant>
+using DataSorter = UniversalSorter<Kakshya::DataVariant, OutputType>;
+
+/// Sorter for signal container processing
+template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
+using ContainerSorter = UniversalSorter<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
+
+/// Sorter for region-based sorting
+template <ComputeData OutputType = Kakshya::Region>
+using RegionSorter = UniversalSorter<Kakshya::Region, OutputType>;
+
+/// Sorter for region group processing
+template <ComputeData OutputType = Kakshya::RegionGroup>
+using RegionGroupSorter = UniversalSorter<Kakshya::RegionGroup, OutputType>;
+
+/// Sorter for segment processing
+template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
+using SegmentSorter = UniversalSorter<std::vector<Kakshya::RegionSegment>, OutputType>;
+
+/// Sorter that produces Eigen matrices
+template <ComputeData InputType = Kakshya::DataVariant>
+using MatrixSorter = UniversalSorter<InputType, Eigen::MatrixXd>;
+
+/// Sorter that produces Eigen vectors
+template <ComputeData InputType = Kakshya::DataVariant>
+using VectorSorter = UniversalSorter<InputType, Eigen::VectorXd>;
+
+/// Sorter for vector containers
+template <typename T, ComputeData OutputType = std::vector<T>>
+using VectorContainerSorter = UniversalSorter<std::vector<T>, OutputType>;
+
+/// Sorter for indices generation
+template <ComputeData InputType = Kakshya::DataVariant>
+using IndexSorter = UniversalSorter<InputType, std::vector<size_t>>;
 
 } // namespace MayaFlux::Yantra

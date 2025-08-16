@@ -138,7 +138,7 @@ namespace Kriya {
      * std::vector<int> fibonacci = {0, 1, 1, 2, 3, 5, 8, 13, 21};
      * auto generator = Kriya::pattern(*scheduler,
      *     // Pattern function - apply algorithmic rules
-     *     [&fibonacci](uint64_t step) -> std::any {
+     *     [&fibonacci](u_int64_t step) -> std::any {
      *         return fibonacci[step % fibonacci.size()];
      *     },
      *     // Callback - apply the generated value

@@ -90,7 +90,7 @@ or `Custom` (user defined).
 ### Definitions
 
 Nodes can be defined using the fluent mechanism, API level convenience
-wrappers or via directly creating a modern c++ shared pointers
+wrappers or via directly creating a modern c++ shared pointers.
 
 ```cpp
 // Fluent
@@ -100,7 +100,7 @@ auto pulse = vega.impulse(2.0) | Audio;
 
 // API Wrappers
 auto envelope = MayaFlux::ceate_node<Shape>(0.0f, 1.0f, 2.5f);
-MayaFlux::register_audio_node(random_walk, {0, 1});
+MayaFlux::register_audio_node(envelope, {0, 1});
 
 auto random_walk = MayaFlux::create_node<Stochastic>(PERLIN, 0.1f);
 MayaFlux::register_audio_node(random_walk, 1);
@@ -116,8 +116,7 @@ custom_filter->set_input(random_walk);
 get_node_graph_manager()->add_node_to_root(ProcessingToken::AUDIO_RATE, 0);
 ```
 
-Each path serves different creative moments—fluid thinking, structured
-creation, or precise manipulation.
+Each path serves different creative moments—fluid thinking, structured creation, or precise manipulation.
 
 ### Flow logic
 
@@ -404,7 +403,7 @@ MayaFlux::schedule_metro(2.0, []() {
     modulate_filter_cutoff();
 }, "main_clock");
 
-MayaFlux::schedule_pattern([](uint64_t beat) {
+MayaFlux::schedule_pattern([](u_int64_t beat) {
     return x % 8 == 0;  // Every 8th beat
 }, []() {
     change_distribution();
@@ -536,8 +535,8 @@ auto sync_routine = coordinator.sync_pipelines({
 // Manage transient data lifecycle
 auto data_routine = coordinator.manage_transient_data(
     buffer,
-    [](uint32_t cycle) { process_data(cycle); },
-    [](uint32_t cycle) { cleanup_data(cycle); }
+    [](u_int32_t cycle) { process_data(cycle); },
+    [](u_int32_t cycle) { cleanup_data(cycle); }
 );
 ```
 
@@ -576,7 +575,7 @@ constraints:
 ```cpp
 // DataVariant: Unified type storage for different precision needs
 DataVariant audio_data = std::vector<double>{...};        // High precision
-DataVariant image_data = std::vector<uint8_t>{...};       // 8-bit image
+DataVariant image_data = std::vector<u_int8_t>{...};       // 8-bit image
 DataVariant spectral_data = std::vector<std::complex<float>>{...}; // Complex FFT
 
 // DataDimensions: Structural descriptors

@@ -32,14 +32,14 @@ namespace MayaFlux::Kriya {
  * // Capture audio with windowed analysis
  * auto capture_op = BufferOperation::capture_from(input_buffer)
  *     .with_window(512, 0.5f)
- *     .on_data_ready([](const auto& data, uint32_t cycle) {
+ *     .on_data_ready([](const auto& data, u_int32_t cycle) {
  *         analyze_spectrum(data);
  *     });
  *
  * // Transform and route to output
  * auto pipeline = BufferPipeline()
  *     >> capture_op
- *     >> BufferOperation::transform([](const auto& data, uint32_t cycle) {
+ *     >> BufferOperation::transform([](const auto& data, u_int32_t cycle) {
  *         return apply_reverb(data);
  *     })
  *     >> BufferOperation::route_to_container(output_stream);
@@ -88,9 +88,9 @@ public:
      */
     static BufferOperation capture_input(
         std::shared_ptr<Buffers::BufferManager> buffer_manager,
-        uint32_t input_channel,
+        u_int32_t input_channel,
         BufferCapture::CaptureMode mode = BufferCapture::CaptureMode::ACCUMULATE,
-        uint32_t cycle_count = 0)
+        u_int32_t cycle_count = 0)
     {
         // auto input_buffer = MayaFlux::create_input_listener_buffer(input_channel, true);
         auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
@@ -114,7 +114,7 @@ public:
      */
     static CaptureBuilder capture_input_from(
         std::shared_ptr<Buffers::BufferManager> buffer_manager,
-        uint32_t input_channel)
+        u_int32_t input_channel)
     {
         auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
         buffer_manager->register_input_listener(input_buffer, input_channel);
@@ -127,7 +127,7 @@ public:
      * @param transformer Function that transforms DataVariant with cycle information
      * @return BufferOperation configured for data transformation
      */
-    static BufferOperation transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, uint32_t)> transformer)
+    static BufferOperation transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> transformer)
     {
         BufferOperation op(OpType::TRANSFORM);
         op.m_transformer = transformer;
@@ -168,8 +168,8 @@ public:
      */
     static BufferOperation load_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> source,
         std::shared_ptr<Buffers::AudioBuffer> target,
-        uint64_t start_frame = 0,
-        uint32_t length = 0)
+        u_int64_t start_frame = 0,
+        u_int32_t length = 0)
     {
         BufferOperation op(OpType::LOAD);
         op.m_source_container = source;
@@ -184,7 +184,7 @@ public:
      * @param condition Function that returns true when condition is met
      * @return BufferOperation configured for conditional execution
      */
-    static BufferOperation when(std::function<bool(uint32_t)> condition)
+    static BufferOperation when(std::function<bool(u_int32_t)> condition)
     {
         BufferOperation op(OpType::CONDITION);
         op.m_condition = condition;
@@ -196,7 +196,7 @@ public:
      * @param handler Function to handle data with cycle information
      * @return BufferOperation configured for external dispatch
      */
-    static BufferOperation dispatch_to(std::function<void(const Kakshya::DataVariant&, uint32_t)> handler)
+    static BufferOperation dispatch_to(std::function<void(const Kakshya::DataVariant&, u_int32_t)> handler)
     {
         BufferOperation op(OpType::DISPATCH);
         op.m_dispatch_handler = handler;
@@ -211,7 +211,7 @@ public:
      * @return BufferOperation configured for buffer fusion
      */
     static BufferOperation fuse_data(std::vector<std::shared_ptr<Buffers::AudioBuffer>> sources,
-        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> fusion_func,
+        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
         std::shared_ptr<Buffers::AudioBuffer> target)
     {
         BufferOperation op(OpType::FUSE);
@@ -229,7 +229,7 @@ public:
      * @return BufferOperation configured for container fusion
      */
     static BufferOperation fuse_containers(std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> sources,
-        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> fusion_func,
+        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
         std::shared_ptr<Kakshya::DynamicSoundStream> target)
     {
         BufferOperation op(OpType::FUSE);
@@ -254,7 +254,7 @@ public:
      * @param priority Priority value (0=highest, 255=lowest, default=128)
      * @return Reference to this operation for chaining
      */
-    BufferOperation& with_priority(uint8_t priority)
+    BufferOperation& with_priority(u_int8_t priority)
     {
         m_priority = priority;
         return *this;
@@ -276,7 +276,7 @@ public:
      * @param n Execute every n cycles (default: 1)
      * @return Reference to this operation for chaining
      */
-    BufferOperation& every_n_cycles(uint32_t n)
+    BufferOperation& every_n_cycles(u_int32_t n)
     {
         m_cycle_interval = n;
         return *this;
@@ -295,7 +295,7 @@ public:
 
     // Accessors
     OpType get_type() const { return m_type; }
-    uint8_t get_priority() const { return m_priority; }
+    u_int8_t get_priority() const { return m_priority; }
     Buffers::ProcessingToken get_token() const { return m_token; }
     const std::string& get_tag() const { return m_tag; }
 
@@ -316,25 +316,25 @@ private:
     OpType m_type;
     BufferCapture m_capture;
 
-    std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, uint32_t)> m_transformer;
+    std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> m_transformer;
 
     std::shared_ptr<Buffers::AudioBuffer> m_target_buffer;
     std::shared_ptr<Kakshya::DynamicSoundStream> m_target_container;
 
     std::shared_ptr<Kakshya::DynamicSoundStream> m_source_container;
-    uint64_t m_start_frame = 0;
-    uint32_t m_load_length = 0;
+    u_int64_t m_start_frame = 0;
+    u_int32_t m_load_length = 0;
 
-    std::function<bool(uint32_t)> m_condition;
-    std::function<void(const Kakshya::DataVariant&, uint32_t)> m_dispatch_handler;
+    std::function<bool(u_int32_t)> m_condition;
+    std::function<void(const Kakshya::DataVariant&, u_int32_t)> m_dispatch_handler;
 
     std::vector<std::shared_ptr<Buffers::AudioBuffer>> m_source_buffers;
     std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> m_source_containers;
-    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> m_fusion_function;
+    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> m_fusion_function;
 
-    uint8_t m_priority = 128;
+    u_int8_t m_priority = 128;
     Buffers::ProcessingToken m_token = Buffers::ProcessingToken::AUDIO_BACKEND;
-    uint32_t m_cycle_interval = 1;
+    u_int32_t m_cycle_interval = 1;
     std::string m_tag;
 
     friend class BufferPipeline;
@@ -354,7 +354,7 @@ private:
  * auto pipeline = BufferPipeline(*scheduler)
  *     >> BufferOperation::capture_from(mic_buffer)
  *         .with_window(1024, 0.75f)
- *         .on_data_ready([](const auto& data, uint32_t cycle) {
+ *         .on_data_ready([](const auto& data, u_int32_t cycle) {
  *             auto spectrum = fft_transform(data);
  *             detect_pitch(spectrum);
  *         })
@@ -366,9 +366,9 @@ private:
  *
  * **Conditional Branching:**
  * ```cpp
- * pipeline.branch_if([](uint32_t cycle) { return cycle % 10 == 0; },
+ * pipeline.branch_if([](u_int32_t cycle) { return cycle % 10 == 0; },
  *     [](BufferPipeline& branch) {
- *         branch >> BufferOperation::dispatch_to([](const auto& data, uint32_t cycle) {
+ *         branch >> BufferOperation::dispatch_to([](const auto& data, u_int32_t cycle) {
  *             save_snapshot(data, cycle);
  *         });
  *     });
@@ -403,7 +403,7 @@ public:
      * @param branch_builder Function that configures the branch pipeline
      * @return Reference to this pipeline for continued chaining
      */
-    BufferPipeline& branch_if(std::function<bool(uint32_t)> condition,
+    BufferPipeline& branch_if(std::function<bool(u_int32_t)> condition,
         std::function<void(BufferPipeline&)> branch_builder);
 
     /**
@@ -420,19 +420,19 @@ public:
      * @return Reference to this pipeline for continued chaining
      */
     BufferPipeline& with_lifecycle(
-        std::function<void(uint32_t)> on_cycle_start,
-        std::function<void(uint32_t)> on_cycle_end);
+        std::function<void(u_int32_t)> on_cycle_start,
+        std::function<void(u_int32_t)> on_cycle_end);
 
     // Execution control
     inline void execute_once() { execute_internal(1); }
-    inline void execute_for_cycles(uint32_t cycles) { execute_internal(cycles); }
+    inline void execute_for_cycles(u_int32_t cycles) { execute_internal(cycles); }
     void execute_continuous();
     inline void stop_continuous() { m_continuous_execution = false; }
 
     // State management
-    void mark_data_consumed(uint32_t operation_index);
+    void mark_data_consumed(u_int32_t operation_index);
     bool has_pending_data() const;
-    uint32_t get_current_cycle() const { return m_current_cycle; }
+    u_int32_t get_current_cycle() const { return m_current_cycle; }
 
 private:
     enum class DataState {
@@ -443,24 +443,24 @@ private:
     };
 
     std::vector<BufferOperation> m_operations;
-    std::vector<std::pair<std::function<bool(uint32_t)>, BufferPipeline>> m_branches;
+    std::vector<std::pair<std::function<bool(u_int32_t)>, BufferPipeline>> m_branches;
     std::vector<DataState> m_data_states;
 
     Vruta::TaskScheduler* m_scheduler = nullptr;
-    uint32_t m_current_cycle = 0;
+    u_int32_t m_current_cycle = 0;
     bool m_continuous_execution = false;
 
-    std::function<void(uint32_t)> m_cycle_start_callback;
-    std::function<void(uint32_t)> m_cycle_end_callback;
+    std::function<void(u_int32_t)> m_cycle_start_callback;
+    std::function<void(u_int32_t)> m_cycle_end_callback;
 
-    void execute_internal(uint32_t max_cycles);
-    void process_operation(BufferOperation& op, uint32_t cycle);
-    void process_branches(uint32_t cycle);
+    void execute_internal(u_int32_t max_cycles);
+    void process_operation(BufferOperation& op, u_int32_t cycle);
+    void process_branches(u_int32_t cycle);
     void cleanup_expired_data();
     Kakshya::DataVariant extract_buffer_data(std::shared_ptr<Buffers::AudioBuffer> buffer);
     void write_to_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, const Kakshya::DataVariant& data);
     void write_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, const Kakshya::DataVariant& data);
-    Kakshya::DataVariant read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, uint64_t start, uint32_t length);
+    Kakshya::DataVariant read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, u_int64_t start, u_int32_t length);
 
     std::unordered_map<BufferOperation*, Kakshya::DataVariant> m_operation_data;
 };
@@ -488,8 +488,8 @@ private:
  * // Manage transient capture data
  * auto data_routine = coordinator.manage_transient_data(
  *     capture_buffer,
- *     [](uint32_t cycle) { std::cout << "Data ready: " << cycle << std::endl; },
- *     [](uint32_t cycle) { cleanup_expired_data(cycle); }
+ *     [](u_int32_t cycle) { std::cout << "Data ready: " << cycle << std::endl; },
+ *     [](u_int32_t cycle) { cleanup_expired_data(cycle); }
  * );
  *
  * scheduler->add_task(sync_routine);
@@ -516,7 +516,7 @@ public:
      */
     Vruta::SoundRoutine sync_pipelines(
         std::vector<std::reference_wrapper<BufferPipeline>> pipelines,
-        uint32_t sync_every_n_cycles = 1);
+        u_int32_t sync_every_n_cycles = 1);
 
     /**
      * @brief Create a transient data management routine.
@@ -527,8 +527,8 @@ public:
      */
     Vruta::SoundRoutine manage_transient_data(
         std::shared_ptr<Buffers::AudioBuffer> buffer,
-        std::function<void(uint32_t)> on_data_ready,
-        std::function<void(uint32_t)> on_data_expired);
+        std::function<void(u_int32_t)> on_data_ready,
+        std::function<void(u_int32_t)> on_data_expired);
 
 private:
     Vruta::TaskScheduler& m_scheduler;

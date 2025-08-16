@@ -1,6 +1,7 @@
 #include "ContainerBuffer.hpp"
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
-// #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
+
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
 namespace MayaFlux::Buffers {
@@ -117,7 +118,13 @@ void ContainerToBufferAdapter::extract_channel_data(std::span<double> output,
         return;
     }
 
-    auto data_span = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(m_container)->get_data_as_double();
+    auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(m_container);
+    if (!sound_container) {
+        std::fill(output.begin(), output.end(), 0.0);
+        return;
+    }
+
+    auto data_span = sound_container->get_data_as_double();
     if (data_span.empty()) {
         std::fill(output.begin(), output.end(), 0.0);
         return;
@@ -135,6 +142,7 @@ void ContainerToBufferAdapter::extract_channel_data(std::span<double> output,
 
     u_int64_t pos = start_frame;
     size_t filled = 0;
+
     while (filled < num_frames) {
         u_int64_t region_end = looping ? loop_end : available_frames;
         u_int64_t frames_left = (pos < region_end) ? (region_end - pos) : 0;
@@ -150,12 +158,29 @@ void ContainerToBufferAdapter::extract_channel_data(std::span<double> output,
             }
         }
 
-        Kakshya::Region region = Kakshya::Region::audio_span(
-            pos, pos + to_copy - 1,
-            m_source_channel, m_source_channel);
+        if (m_dim_info.has_channels) {
+            u_int64_t stride = m_dim_info.num_channels;
+            u_int64_t start_sample = pos * stride + m_source_channel;
 
-        auto region_data = m_container->get_region_data(region);
-        Kakshya::safe_copy_data_variant_to_span(region_data, output.subspan(filled, to_copy));
+            for (u_int64_t i = 0; i < to_copy; ++i) {
+                u_int64_t sample_index = start_sample + (i * stride);
+                if (sample_index < data_span.size()) {
+                    output[filled + i] = data_span[sample_index];
+                } else {
+                    output[filled + i] = 0.0;
+                }
+            }
+        } else {
+            u_int64_t start_sample = pos;
+            u_int64_t end_sample = std::min(start_sample + to_copy, static_cast<u_int64_t>(data_span.size()));
+            u_int64_t actual_copy = end_sample - start_sample;
+
+            std::copy_n(data_span.begin() + start_sample, actual_copy, output.begin() + filled);
+
+            if (actual_copy < to_copy) {
+                std::fill_n(output.begin() + filled + actual_copy, to_copy - actual_copy, 0.0);
+            }
+        }
 
         filled += to_copy;
         pos += to_copy;

@@ -40,7 +40,8 @@ void SoundFileContainer::set_raw_data(const DataVariant& data)
             setup_dimensions();
         }
     } else {
-        auto vec = get_typed_data<double>(data);
+        std::vector<double> vec;
+        extract_from_variant(m_data, vec);
 
         if (vec.empty() && m_num_channels > 0) {
             m_data = data;
@@ -48,6 +49,8 @@ void SoundFileContainer::set_raw_data(const DataVariant& data)
             setup_dimensions();
         }
     }
+
+    m_double_extraction_dirty.store(true, std::memory_order_release);
 }
 double SoundFileContainer::get_duration_seconds() const
 {

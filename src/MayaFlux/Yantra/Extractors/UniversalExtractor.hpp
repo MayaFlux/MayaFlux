@@ -1,552 +1,361 @@
 #pragma once
 
-#include "ExtractionHelper.hpp"
-
-#include "MayaFlux/Yantra/YantraUtils.hpp"
-
-#include "MayaFlux/Yantra/Analyzers/UniversalAnalyzer.hpp"
+#include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
  * @file UniversalExtractor.hpp
- * @brief Robust, extensible digital-first extraction framework for Maya Flux
+ * @brief Modern, digital-first universal extractor framework for Maya Flux
  *
- * The UniversalExtractor system provides a modern, highly extensible foundation for feature extraction
- * in the Maya Flux ecosystem. It is designed for digital, data-driven workflows, supporting recursion,
- * analyzer integration, lazy evaluation, and grammar-based extraction. The framework is type-safe,
- * composable, and future-proof, enabling advanced extraction pipelines for multi-dimensional data.
+ * The UniversalExtractor system provides a clean, extensible foundation for data extraction
+ * in the Maya Flux ecosystem. Unlike traditional feature extractors, this focuses on
+ * digital-first paradigms: data-driven workflows, composability, and type safety.
+ *
+ * ## Core Philosophy
+ * An extractor **gives the user a specified ComputeData** through two main pathways:
+ * 1. **Direct extraction:** Using convert_data/extract from DataUtils
+ * 2. **Copy extraction:** Copy data via extract in DataUtils
+ *
+ * Concrete extractors can optionally integrate with analyzers when they need to extract
+ * regions/features identified by analysis.
  *
  * ## Key Features
- * - **Universal input/output:** Accepts and produces a wide range of data types via variants and concepts.
- * - **Analyzer integration:** Can delegate extraction to analyzers for advanced feature computation.
- * - **Recursion and feedback:** Supports recursive extraction and feedback via ExtractorNode trees.
- * - **Lazy evaluation:** Enables deferred computation for large or expensive extractions.
- * - **Grammar-based extraction:** Ready for rule-based, pattern-driven extraction workflows.
- * - **Type safety:** Uses C++20 concepts and std::variant for strict compile-time guarantees.
- * - **Parameterization:** Fully configurable at runtime via parameter maps.
- * - **Composable:** Designed for chaining, nesting, and integration with other Maya Flux components.
+ * - **Universal input/output:** Template-based I/O types defined at instantiation
+ * - **Type-safe extraction:** C++20 concepts and compile-time guarantees
+ * - **Extraction strategies:** Direct, region-based, feature-guided, recursive
+ * - **Composable operations:** Integrates with ComputeMatrix execution modes
+ * - **Digital-first design:** Embraces computational possibilities beyond analog metaphors
  *
- * ## Usage Overview
- * - Derive from UniversalExtractor to implement custom extraction logic.
- * - Override extract_impl methods for supported input types.
- * - Use set_analyzer() and set_use_analyzer() to enable analyzer delegation.
- * - Use ExtractorNode for recursive/lazy extraction patterns.
- * - Configure extraction via set_parameter() and get_parameter().
+ * ## Usage Examples
+ * ```cpp
+ * // Extract specific data type from DataVariant
+ * auto extractor = std::make_shared<MyExtractor<Kakshya::DataVariant, std::vector<double>>>();
+ *
+ * // Extract matrix from container
+ * auto matrix_extractor = std::make_shared<MyExtractor<
+ *     std::shared_ptr<Kakshya::SignalSourceContainer>,
+ *     Eigen::MatrixXd>>();
+ * ```
  */
 
 namespace MayaFlux::Yantra {
 
 /**
- * @class ConcreteExtractorNode
- * @brief Node that holds a concrete extraction result.
- *
- * Used for storing and retrieving a specific extraction result in the extraction tree.
- * Enables type-safe, value-based extraction nodes.
- *
- * @tparam T Type of the extraction result.
+ * @enum ExtractionType
+ * @brief Categories of extraction operations for discovery and organization
  */
-template <typename T>
-class ConcreteExtractorNode : public ExtractorNode {
-public:
-    /**
-     * @brief Construct a ConcreteExtractorNode with a result.
-     * @param result The extraction result to store.
-     */
-    ConcreteExtractorNode(T result)
-        : m_result(std::move(result))
-    {
-    }
-
-    /**
-     * @brief Extract the stored result.
-     * @return ExtractorOutput containing the stored result.
-     */
-    inline ExtractorOutput extract() override
-    {
-        return ExtractorOutput { m_result };
-    }
-
-    /**
-     * @brief Get the type name of the stored result.
-     * @return Demangled type name as a string.
-     */
-    inline std::string get_type_name() const override
-    {
-        return typeid(T).name();
-    }
-
-    /**
-     * @brief Access the stored result.
-     * @return Const reference to the result.
-     */
-    const T& get_result() const { return m_result; }
-
-private:
-    T m_result; ///< Stored extraction result.
+enum class ExtractionType : u_int8_t {
+    DIRECT, ///< Direct data type conversion/extraction
+    REGION_BASED, ///< Extract from spatial/temporal regions
+    FEATURE_GUIDED, ///< Extract based on feature analysis
+    PATTERN_BASED, ///< Extract based on pattern recognition
+    TRANSFORM, ///< Mathematical transformation during extraction
+    RECURSIVE, ///< Recursive/nested extraction
+    CUSTOM ///< User-defined extraction types
 };
 
 /**
- * @class LazyExtractorNode
- * @brief Node that holds a function for lazy evaluation.
- *
- * Supports deferred computation of extraction results, caching the result after first evaluation.
+ * @enum ExtractionScope
+ * @brief Scope control for extraction operations
  */
-class LazyExtractorNode : public ExtractorNode {
-public:
-    /**
-     * @brief Construct a LazyExtractorNode with an extraction function.
-     * @param extractor_func Function that computes the extraction result.
-     */
-    LazyExtractorNode(std::function<ExtractorOutput()> extractor_func)
-        : m_extractor_func(std::move(extractor_func))
-    {
-    }
-
-    /**
-     * @brief Extract the result, computing it if necessary.
-     * @return Cached or newly computed ExtractorOutput.
-     */
-    inline ExtractorOutput extract() override
-    {
-        if (!m_cached_result.has_value()) {
-            m_cached_result = m_extractor_func();
-        }
-        return *m_cached_result;
-    }
-
-    /**
-     * @brief Get the type name of this node.
-     * @return "LazyExtractorNode"
-     */
-    inline std::string get_type_name() const override
-    {
-        return "LazyExtractorNode";
-    }
-
-    /**
-     * @brief Indicates that this node is lazy.
-     * @return true
-     */
-    inline bool is_lazy() const override { return true; }
-
-private:
-    std::function<ExtractorOutput()> m_extractor_func; ///< Function for deferred extraction.
-    std::optional<ExtractorOutput> m_cached_result; ///< Cached result after evaluation.
-};
-
-/**
- * @class RecursiveExtractorNode
- * @brief Node that can extract from other nodes recursively.
- *
- * Enables recursive extraction patterns, where the result depends on another node's output.
- */
-class RecursiveExtractorNode : public ExtractorNode {
-public:
-    /**
-     * @brief Construct a RecursiveExtractorNode.
-     * @param extractor_func Function to perform extraction given input.
-     * @param input_node Node providing input for the extraction.
-     */
-    RecursiveExtractorNode(std::function<ExtractorOutput(ExtractorInput)> extractor_func,
-        std::shared_ptr<ExtractorNode> input_node)
-        : m_extraction_func(std::move(extractor_func))
-        , m_input_node(input_node)
-    {
-    }
-
-    /**
-     * @brief Extract the result recursively from the input node.
-     * @return ExtractorOutput from recursive extraction.
-     */
-    ExtractorOutput extract() override;
-
-    /**
-     * @brief Get the type name of this node.
-     * @return "RecursiveExtractorNode"
-     */
-    inline std::string get_type_name() const override
-    {
-        return "RecursiveExtractorNode";
-    }
-
-private:
-    std::function<ExtractorOutput(ExtractorInput)> m_extraction_func; ///< Extraction function.
-    std::shared_ptr<ExtractorNode> m_input_node; ///< Input node for recursion.
-};
-
-/**
- * @enum ExtractionStrategy
- * @brief Strategies for extraction execution.
- */
-enum class ExtractionStrategy {
-    IMMEDIATE, ///< Extract now (traditional, eager evaluation)
-    LAZY, ///< Extract when accessed (deferred/lazy evaluation)
-    RECURSIVE, ///< Extract based on previously extracted data (recursive)
-    ANALYZER_DELEGATE ///< Delegate extraction to an analyzer
-};
-
-/**
- * @concept ExtractorInputType
- * @brief Concept for valid extractor input types.
- */
-template <typename T>
-concept ExtractorInputType = requires {
-    std::holds_alternative<T>(std::declval<BaseExtractorInput>());
-};
-
-/**
- * @concept ExtractorOutputType
- * @brief Concept for valid extractor output types.
- */
-template <typename T>
-concept ExtractorOutputType = requires {
-    std::holds_alternative<T>(std::declval<BaseExtractorOutput>());
+enum class ExtractionScope : u_int8_t {
+    FULL_DATA, ///< Extract all available data
+    TARGETED_REGIONS, ///< Extract only specific regions
+    FILTERED_CONTENT, ///< Extract content meeting criteria
+    SAMPLED_DATA ///< Extract sampled/downsampled data
 };
 
 /**
  * @class UniversalExtractor
- * @brief Modern, extensible extractor supporting analyzers, recursion, and advanced workflows.
+ * @brief Template-flexible extractor base with instance-defined I/O types
  *
- * UniversalExtractor is the core base class for all feature extractors in Maya Flux.
- * It provides a unified interface for extraction, analyzer delegation, recursion, lazy evaluation,
- * and parameterization. Derived classes implement extraction logic for specific input types.
+ * The UniversalExtractor provides a clean, concept-based foundation for all extraction
+ * operations. I/O types are defined at instantiation time, providing maximum flexibility
+ * while maintaining type safety through C++20 concepts.
  *
- * ## Responsibilities
- * - Dispatch extraction based on input type.
- * - Integrate with analyzers for advanced feature computation.
- * - Support recursive and lazy extraction via ExtractorNode.
- * - Provide runtime configuration and method selection.
- * - Enable chaining and composition in extraction pipelines.
+ * Key Features:
+ * - Instance-defined I/O types via template parameters
+ * - Concept-constrained data types for compile-time safety
+ * - Extraction type categorization for discovery
+ * - Scope control for targeted extraction
+ * - Parameter management with type safety
+ * - Integration with ComputeMatrix execution modes
  */
-class UniversalExtractor : public ComputeOperation<ExtractorInput, ExtractorOutput>, std::enable_shared_from_this<UniversalExtractor> {
+template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+class UniversalExtractor : public ComputeOperation<InputType, OutputType> {
 public:
-    /**
-     * @brief Virtual destructor for safe polymorphic use.
-     */
+    using input_type = IO<InputType>;
+    using output_type = IO<OutputType>;
+    using base_type = ComputeOperation<InputType, OutputType>;
+
     virtual ~UniversalExtractor() = default;
 
     /**
-     * @brief Main extraction method using ExtractorInput.
-     *        Dispatches to appropriate extract_impl overload or analyzer if enabled.
-     * @param input Extraction input (variant type).
-     * @return ExtractorOutput containing the result.
+     * @brief Gets the extraction type category for this extractor
+     * @return ExtractionType enum value
      */
-    ExtractorOutput apply_operation(ExtractorInput input) override;
+    [[nodiscard]] virtual ExtractionType get_extraction_type() const = 0;
 
     /**
-     * @brief Type-safe extraction with specific input/output types.
-     *        Sets extraction method and returns result of requested type.
-     * @tparam InputT Input type (must satisfy ExtractorInputType).
-     * @tparam OutputT Output type (must satisfy ExtractorOutputType).
-     * @param input Input value.
-     * @param method Extraction method name (optional).
-     * @return Extracted result of type OutputT.
-     * @throws std::runtime_error if result type does not match OutputT.
+     * @brief Gets human-readable name for this extractor
+     * @return String identifier for the extractor
      */
-    template <ExtractorInputType InputT, ExtractorOutputType OutputT>
-    OutputT extract_typed(const InputT& input, const std::string& method = "default")
+    [[nodiscard]] std::string get_name() const override
     {
-        set_extraction_method(method);
+        return get_extractor_name();
+    }
 
-        ExtractorInput extractor_input { input };
-        auto result = apply_operation(extractor_input);
+    /**
+     * @brief Type-safe parameter management with extraction-specific defaults
+     */
+    void set_parameter(const std::string& name, std::any value) override
+    {
+        if (name == "scope") {
+            if (auto* scope = std::any_cast<ExtractionScope>(&value)) {
+                m_scope = *scope;
+                return;
+            }
+        }
+        set_extraction_parameter(name, std::move(value));
+    }
 
-        if (auto* typed_result = std::get_if<OutputT>(&result.base_output)) {
-            return *typed_result;
+    [[nodiscard]] std::any get_parameter(const std::string& name) const override
+    {
+        if (name == "scope") {
+            return m_scope;
+        }
+        return get_extraction_parameter(name);
+    }
+
+    [[nodiscard]] std::map<std::string, std::any> get_all_parameters() const override
+    {
+        auto params = get_all_extraction_parameters();
+        params["scope"] = m_scope;
+        return params;
+    }
+
+    /**
+     * @brief Type-safe extraction method
+     * @param data Input data
+     * @return Extracted data directly (no IO wrapper)
+     */
+    OutputType extract_data(const InputType& data)
+    {
+        input_type wrapped_input(data);
+        auto result = operation_function(wrapped_input);
+        return result.data;
+    }
+
+    /**
+     * @brief Extract with specific scope
+     * @param data Input data
+     * @param scope Extraction scope to use
+     * @return Extracted output data
+     */
+    OutputType extract_with_scope(const InputType& data, ExtractionScope scope)
+    {
+        auto original_scope = m_scope;
+        m_scope = scope;
+        auto result = extract_data(data);
+        m_scope = original_scope;
+        return result;
+    }
+
+    /**
+     * @brief Batch extraction for multiple inputs
+     * @param inputs Vector of input data
+     * @return Vector of extracted results
+     */
+    std::vector<OutputType> extract_batch(const std::vector<InputType>& inputs)
+    {
+        std::vector<OutputType> results;
+        results.reserve(inputs.size());
+
+        for (const auto& input : inputs) {
+            results.push_back(extract_data(input));
         }
 
-        throw std::runtime_error("Extraction result type mismatch");
+        return results;
     }
 
     /**
-     * @brief Perform extraction using a specified strategy.
-     * @param input Extraction input.
-     * @param strategy Extraction strategy (immediate, lazy, recursive, analyzer).
-     * @return ExtractorOutput containing the result.
+     * @brief Get available extraction methods for this extractor
+     * @return Vector of method names
      */
-    ExtractorOutput extract_with_strategy(ExtractorInput input, ExtractionStrategy strategy);
+    [[nodiscard]] virtual std::vector<std::string> get_available_methods() const = 0;
 
     /**
-     * @brief Set the analyzer to use for delegation.
-     * @param analyzer Shared pointer to a UniversalAnalyzer.
-     */
-    inline void set_analyzer(std::shared_ptr<UniversalAnalyzer> analyzer) { m_analyzer = analyzer; }
-
-    /**
-     * @brief Enable or disable analyzer delegation.
-     * @param use True to enable, false to disable.
-     */
-    inline void set_use_analyzer(bool use) { m_use_analyzer = use; }
-
-    /**
-     * @brief Check if analyzer delegation is enabled and analyzer is set.
-     * @return True if using analyzer, false otherwise.
-     */
-    inline bool uses_analyzer() const { return m_use_analyzer && m_analyzer != nullptr; }
-
-    /**
-     * @brief Get the list of available extraction methods for this extractor.
-     * @return Vector of method names.
-     */
-    virtual std::vector<std::string> get_available_methods() const = 0;
-
-    /**
-     * @brief Get supported extraction methods for a specific input type.
-     * @tparam T Input type.
-     * @return Vector of method names.
-     */
-    template <ExtractorInputType T>
-    std::vector<std::string> get_methods_for_type() const
-    {
-        return get_methods_for_type_impl(std::type_index(typeid(T)));
-    }
-
-    /**
-     * @brief Set the extraction method to use.
-     * @param method Method name.
-     */
-    inline void set_extraction_method(const std::string& method) { set_parameter("method", method); }
-
-    /**
-     * @brief Get the currently configured extraction method.
-     * @return Method name as a string.
-     */
-    std::string get_extraction_method() const;
-
-    /**
-     * @brief Create a concrete extractor node for a result.
-     * @tparam T Result type.
-     * @param result Extraction result.
-     * @return Shared pointer to ConcreteExtractorNode.
+     * @brief Helper to get typed parameter with default value
+     * @tparam T Parameter type
+     * @param name Parameter name
+     * @param default_value Default value if parameter not found
+     * @return Parameter value or default
      */
     template <typename T>
-    std::shared_ptr<ExtractorNode> create_node(T result)
+    T get_parameter_or_default(const std::string& name, const T& default_value) const
     {
-        return std::make_shared<ConcreteExtractorNode<T>>(std::move(result));
-    }
-
-    /**
-     * @brief Create a lazy extractor node for deferred evaluation.
-     * @param func Function to compute the extraction result.
-     * @return Shared pointer to LazyExtractorNode.
-     */
-    inline std::shared_ptr<ExtractorNode> create_lazy_node(std::function<ExtractorOutput()> func)
-    {
-        return std::make_shared<LazyExtractorNode>(std::move(func));
-    }
-
-    /**
-     * @brief Create a recursive extractor node.
-     * @param input_node Input node to extract from recursively.
-     * @return Shared pointer to RecursiveExtractorNode.
-     */
-    inline std::shared_ptr<ExtractorNode> create_recursive_node(std::shared_ptr<ExtractorNode> input_node)
-    {
-        auto extraction_func = [this](ExtractorInput input) -> ExtractorOutput {
-            return this->apply_operation(input);
-        };
-
-        return std::make_shared<RecursiveExtractorNode>(extraction_func, input_node);
+        auto param = get_extraction_parameter(name);
+        if (param.has_value()) {
+            try {
+                return std::any_cast<T>(param);
+            } catch (const std::bad_any_cast&) {
+                return default_value;
+            }
+        }
+        return default_value;
     }
 
 protected:
-    // ===== Virtual Implementation Methods =====
-
     /**
-     * @brief Extract features from a Kakshya::DataVariant input.
-     * @param data Input data variant.
-     * @return ExtractorOutput containing the result.
-     * @throws std::runtime_error if not implemented in derived class.
+     * @brief Core operation implementation - called by ComputeOperation interface
+     * @param input Input data with metadata
+     * @return Output data with metadata
      */
-    virtual ExtractorOutput extract_impl(const Kakshya::DataVariant&)
+    output_type operation_function(const input_type& input) override
     {
-        std::cerr << "[UniversalExtractor] Warning: DataVariant extraction not implemented" << std::endl;
-        return ExtractorOutput {};
+        auto raw_result = extract_implementation(input);
+        return apply_scope_filtering(raw_result);
     }
 
     /**
-     * @brief Extract features from a SignalSourceContainer.
-     * @param container Shared pointer to signal container.
-     * @return ExtractorOutput containing the result.
-     * @throws std::runtime_error if not implemented in derived class.
+     * @brief Pure virtual extraction implementation - derived classes implement this
+     * @param input Input data with metadata
+     * @return Raw extraction output before scope processing
      */
-    virtual ExtractorOutput extract_impl(std::shared_ptr<Kakshya::SignalSourceContainer>)
+    virtual output_type extract_implementation(const input_type& input) = 0;
+
+    /**
+     * @brief Get extractor-specific name (derived classes override this)
+     * @return Extractor name string
+     */
+    [[nodiscard]] virtual std::string get_extractor_name() const { return "UniversalExtractor"; }
+
+    /**
+     * @brief Extraction-specific parameter handling (override for custom parameters)
+     */
+    virtual void set_extraction_parameter(const std::string& name, std::any value)
     {
-        std::cerr << "[UniversalExtractor] Warning: Container extraction not implemented" << std::endl;
-        return ExtractorOutput {};
+        m_parameters[name] = std::move(value);
     }
 
-    /**
-     * @brief Extract features from a Region.
-     * @param region Region of interest.
-     * @return ExtractorOutput containing the result.
-     * @throws std::runtime_error if not implemented in derived class.
-     */
-    virtual ExtractorOutput extract_impl(const Kakshya::Region&)
+    [[nodiscard]] virtual std::any get_extraction_parameter(const std::string& name) const
     {
-        std::cerr << "[UniversalExtractor] Warning: Region extraction not implemented" << std::endl;
-        return ExtractorOutput {};
+        auto it = m_parameters.find(name);
+        return (it != m_parameters.end()) ? it->second : std::any {};
     }
 
-    /**
-     * @brief Extract features from a RegionGroup.
-     * @param group Group of regions.
-     * @return ExtractorOutput containing the result.
-     * @throws std::runtime_error if not implemented in derived class.
-     */
-    virtual ExtractorOutput extract_impl(const Kakshya::RegionGroup&)
-    {
-        std::cerr << "[UniversalExtractor] Warning: RegionGroup extraction not implemented" << std::endl;
-        return ExtractorOutput {};
-    }
-
-    /**
-     * @brief Extract features from a list of RegionSegments.
-     * @param segments List of region segments.
-     * @return ExtractorOutput containing the result.
-     * @throws std::runtime_error if not implemented in derived class.
-     */
-    virtual ExtractorOutput extract_impl(const std::vector<Kakshya::RegionSegment>&)
-    {
-        std::cerr << "[UniversalExtractor] Warning: RegionSegment extraction not implemented" << std::endl;
-        return ExtractorOutput {};
-    }
-
-    /**
-     * @brief Extract features from an AnalyzerOutput.
-     * @param analyzer_output Output from an analyzer.
-     * @return ExtractorOutput containing the result.
-     * @throws std::runtime_error if not implemented in derived class.
-     */
-    virtual ExtractorOutput extract_impl(const AnalyzerOutput&)
-    {
-        std::cerr << "[UniversalExtractor] Warning: AnalyzerOutput extraction not implemented" << std::endl;
-        return ExtractorOutput {};
-    }
-
-    /**
-     * @brief Get supported extraction methods for a given type.
-     * @param type_info Type index of the input.
-     * @return Vector of method names.
-     */
-    virtual std::vector<std::string> get_methods_for_type_impl(std::type_index type_info) const = 0;
-
-    /**
-     * @brief Create a lazy extraction result for deferred evaluation.
-     * @param input Extraction input.
-     * @return ExtractorOutput containing a lazy node.
-     */
-    virtual ExtractorOutput create_lazy_extraction(ExtractorInput input);
-
-    /**
-     * @brief Perform recursive extraction using input's recursive nodes.
-     * @param input Extraction input.
-     * @return ExtractorOutput with recursive results.
-     */
-    virtual ExtractorOutput extract_recursive(ExtractorInput input);
-
-    /**
-     * @brief Perform extraction with recursive inputs, combining results.
-     * @param input Extraction input with recursive nodes.
-     * @return Combined ExtractorOutput.
-     */
-    virtual ExtractorOutput extract_with_recursive_inputs(ExtractorInput input);
-
-    /**
-     * @brief Combine base and recursive extraction results.
-     * @param base_result Result from base extraction.
-     * @param recursive_results Results from recursive nodes.
-     * @return Combined ExtractorOutput (default: base_result).
-     */
-    inline virtual ExtractorOutput combine_results(const ExtractorOutput& base_result,
-        const std::vector<ExtractorOutput>&)
-    {
-        // Default: just return base result
-        // Derived classes can override for specific combination logic
-        return base_result;
-    }
-
-    /**
-     * @brief Determine if extraction should be delegated to an analyzer.
-     * @return True if analyzer should be used, false otherwise.
-     */
-    inline bool should_use_analyzer() const
-    {
-        return m_use_analyzer && m_analyzer != nullptr;
-    }
-
-    /**
-     * @brief Delegate extraction to the configured analyzer.
-     * @tparam T Input type.
-     * @param input Input value.
-     * @return ExtractorOutput from analyzer.
-     * @throws std::runtime_error if no analyzer is set.
-     */
-    ExtractorOutput extract_via_analyzer(const auto& input)
-    {
-        if (!m_analyzer) {
-            throw std::runtime_error("No analyzer available for delegation");
-        }
-
-        AnalyzerInput analyzer_input = convert_to_analyzer_input(input);
-        auto analyzer_result = m_analyzer->apply_operation(analyzer_input);
-
-        return convert_from_analyzer_output(analyzer_result);
-    }
-
-    /**
-     * @brief Perform extraction using analyzer strategy.
-     * @param input Extraction input.
-     * @return ExtractorOutput from analyzer.
-     */
-    virtual ExtractorOutput extract_via_analyzer_strategy(ExtractorInput input);
-
-    /**
-     * @brief Convert an AnalyzerOutput to an ExtractorOutput.
-     * @param output AnalyzerOutput value.
-     * @return ExtractorOutput for further extraction.
-     */
-    ExtractorOutput convert_from_analyzer_output(const AnalyzerOutput& output);
-
-    mutable std::shared_ptr<Kakshya::SignalSourceContainer> m_container;
-
-public:
-    /**
-     * @brief Set a named parameter for extraction configuration.
-     * @param name Parameter name.
-     * @param value Parameter value (std::any).
-     */
-    inline void set_parameter(const std::string& name, std::any value) override
-    {
-        m_parameters[name] = value;
-    }
-
-    /**
-     * @brief Get the value of a named parameter.
-     * @param name Parameter name.
-     * @return Parameter value (std::any).
-     */
-    inline std::any get_parameter(const std::string& name) const override
-    {
-        return Utils::safe_get_parameter(name, m_parameters);
-    }
-
-    /**
-     * @brief Get all configured parameters.
-     * @return Map of parameter names to values.
-     */
-    inline std::map<std::string, std::any> get_all_parameters() const override
+    [[nodiscard]] virtual std::map<std::string, std::any> get_all_extraction_parameters() const
     {
         return m_parameters;
     }
 
-    inline std::shared_ptr<Kakshya::SignalSourceContainer> get_context_container() { return m_container; }
+    /**
+     * @brief Input validation (override for custom validation logic)
+     */
+    virtual bool validate_extraction_input(const input_type& /*input*/) const
+    {
+        // Default: accept any input that satisfies ComputeData concept
+        return true;
+    }
 
-    inline void set_context_container(std::shared_ptr<Kakshya::SignalSourceContainer> container) { m_container = container; }
+    /**
+     * @brief Apply scope filtering to results
+     * @param raw_output Raw extraction results
+     * @return Filtered output based on scope setting
+     */
+    virtual output_type apply_scope_filtering(const output_type& raw_output)
+    {
+        switch (m_scope) {
+        case ExtractionScope::FULL_DATA:
+            return raw_output;
+
+        case ExtractionScope::TARGETED_REGIONS:
+            return filter_to_target_regions(raw_output);
+
+        case ExtractionScope::FILTERED_CONTENT:
+            return apply_content_filtering(raw_output);
+
+        case ExtractionScope::SAMPLED_DATA:
+            return apply_data_sampling(raw_output);
+
+        default:
+            return raw_output;
+        }
+    }
+
+    /**
+     * @brief Filter results to target regions (override for custom filtering)
+     * @param raw_output Raw extraction output
+     * @return Filtered output
+     */
+    virtual output_type filter_to_target_regions(const output_type& raw_output)
+    {
+        // Default: return as-is with metadata
+        auto result = raw_output;
+        result.template set_metadata<bool>("region_filtered", true);
+        return result;
+    }
+
+    /**
+     * @brief Apply content-based filtering (override for custom filtering)
+     * @param raw_output Raw extraction output
+     * @return Content-filtered output
+     */
+    virtual output_type apply_content_filtering(const output_type& raw_output)
+    {
+        // Default: return as-is with metadata
+        auto result = raw_output;
+        result.template set_metadata<bool>("content_filtered", true);
+        return result;
+    }
+
+    /**
+     * @brief Apply data sampling (override for custom sampling)
+     * @param raw_output Raw extraction output
+     * @return Sampled output
+     */
+    virtual output_type apply_data_sampling(const output_type& raw_output)
+    {
+        // Default: return as-is with metadata
+        auto result = raw_output;
+        result.template set_metadata<bool>("sampled", true);
+        return result;
+    }
 
 private:
-    std::map<std::string, std::any> m_parameters; ///< Extraction parameters.
-    std::shared_ptr<UniversalAnalyzer> m_analyzer; ///< Optional analyzer for delegation.
-    bool m_use_analyzer = false; ///< Whether to delegate extraction to analyzer.
+    ExtractionScope m_scope = ExtractionScope::FULL_DATA;
+    std::map<std::string, std::any> m_parameters;
 };
 
-}
+/// Extractor that takes DataVariant and produces any ComputeData type
+template <ComputeData OutputType = Kakshya::DataVariant>
+using DataExtractor = UniversalExtractor<Kakshya::DataVariant, OutputType>;
+
+/// Extractor for signal container processing
+template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
+using ContainerExtractor = UniversalExtractor<std::shared_ptr<Kakshya::SignalSourceContainer>, OutputType>;
+
+/// Extractor for region-based extraction
+template <ComputeData OutputType = Kakshya::Region>
+using RegionExtractor = UniversalExtractor<Kakshya::Region, OutputType>;
+
+/// Extractor for region group processing
+template <ComputeData OutputType = Kakshya::RegionGroup>
+using RegionGroupExtractor = UniversalExtractor<Kakshya::RegionGroup, OutputType>;
+
+/// Extractor for segment processing
+template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
+using SegmentExtractor = UniversalExtractor<std::vector<Kakshya::RegionSegment>, OutputType>;
+
+/// Extractor that produces Eigen matrices
+template <ComputeData InputType = Kakshya::DataVariant>
+using MatrixExtractor = UniversalExtractor<InputType, Eigen::MatrixXd>;
+
+/// Extractor that produces Eigen vectors
+template <ComputeData InputType = Kakshya::DataVariant>
+using VectorExtractor = UniversalExtractor<InputType, Eigen::VectorXd>;
+
+/// Extractor that produces numeric vectors
+template <ComputeData InputType = Kakshya::DataVariant>
+using NumericExtractor = UniversalExtractor<InputType, std::vector<double>>;
+
+} // namespace MayaFlux::Yantra
