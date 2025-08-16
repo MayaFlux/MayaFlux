@@ -1,460 +1,568 @@
 #pragma once
 
-#include <utility>
-
 #include "ComputeOperation.hpp"
+#include "OperationSpec/OperationChain.hpp"
+#include "OperationSpec/OperationPool.hpp"
+
+#include <execution>
+#include <future>
+#include <memory>
 
 namespace MayaFlux::Yantra {
 
 /**
- * @struct TypeKey
- * @brief Type-based operation identification
+ * @enum ExecutionPolicy
+ * @brief Policy for execution strategy selection
  */
-struct TypeKey {
-    OperationType category;
-    std::type_index operation_type;
-
-    bool operator==(const TypeKey& other) const
-    {
-        return category == other.category && operation_type == other.operation_type;
-    }
-};
-
-struct TypeKeyHash {
-    std::size_t operator()(const TypeKey& key) const
-    {
-        return std::hash<int> {}(static_cast<int>(key.category)) ^ (std::hash<std::type_index> {}(key.operation_type) << 1);
-    }
+enum class ExecutionPolicy {
+    CONSERVATIVE, // Prefer safety and predictability
+    BALANCED, // Balance between performance and safety
+    AGGRESSIVE // Maximize performance
 };
 
 /**
  * @class ComputeMatrix
- * @brief Central orchestrator for computational operations
+ * @brief Local execution orchestrator for computational operations
  *
- * Coordinates operation execution in all paradigms through the unified
- * ComputeOperation interface - no more wrappers!
+ * ComputeMatrix provides a self-contained execution environment for operations.
+ * It maintains its own operation instances and execution strategies without
+ * relying on any global registries. Each matrix instance is independent.
+ *
+ * Key Design Principles:
+ * - Instance-local operation management
+ * - Focus on execution patterns and strategies
+ * - Clean separation from registration concerns
+ *
+ * Core Responsibilities:
+ * - Execute operations with various strategies (sync, async, parallel, chain)
+ * - Manage instance-local named operations
+ * - Provide fluent interface through FluentExecutor
+ * - Configure execution contexts for optimization
  */
 class ComputeMatrix : public std::enable_shared_from_this<ComputeMatrix> {
 public:
-    using Factory = std::function<std::any()>;
-
-    // === REGISTRATION INTERFACE ===
-
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    void register_analyzer(std::function<std::shared_ptr<OpClass>()> factory = nullptr)
+    /**
+     * @brief Create a new ComputeMatrix instance
+     */
+    static std::shared_ptr<ComputeMatrix> create()
     {
-        register_operation<OpClass, InputType, OutputType>(OperationType::ANALYZER, factory);
+        return std::make_shared<ComputeMatrix>();
     }
 
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    void register_sorter(std::function<std::shared_ptr<OpClass>()> factory = nullptr)
-    {
-        register_operation<OpClass, InputType, OutputType>(OperationType::SORTER, factory);
-    }
-
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    void register_extractor(std::function<std::shared_ptr<OpClass>()> factory = nullptr)
-    {
-        register_operation<OpClass, InputType, OutputType>(OperationType::EXTRACTOR, factory);
-    }
-
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    void register_transformer(std::function<std::shared_ptr<OpClass>()> factory = nullptr)
-    {
-        register_operation<OpClass, InputType, OutputType>(OperationType::TRANSFORMER, factory);
-    }
-
-    // === OPERATION POOL INTERFACE ===
+    // === LOCAL OPERATION MANAGEMENT ===
 
     /**
-     * @brief Add an operation instance to the pool with a name
+     * @brief Add a pre-configured operation instance to this matrix
+     * @tparam OpClass Operation class type
+     * @param name Unique name within this matrix
+     * @param operation Shared pointer to the operation
+     * @return true if added successfully
      */
     template <typename OpClass>
-    void add_operation(const std::string& name, std::shared_ptr<OpClass> op)
+    bool add_operation(const std::string& name, std::shared_ptr<OpClass> operation)
     {
-        m_operation_pool[name] = std::static_pointer_cast<void>(op);
-        m_operation_types[name] = std::type_index(typeid(OpClass));
+        if (!operation)
+            return false;
+        return m_operations.add(name, operation);
     }
 
     /**
-     * @brief Get an operation instance from the pool
+     * @brief Create and add an operation to this matrix
+     * @tparam OpClass Operation class type
+     * @tparam Args Constructor argument types
+     * @param name Unique name within this matrix
+     * @param args Constructor arguments
+     * @return Shared pointer to the created operation
+     */
+    template <typename OpClass, typename... Args>
+    std::shared_ptr<OpClass> create_operation(const std::string& name, Args&&... args)
+    {
+        auto operation = std::make_shared<OpClass>(std::forward<Args>(args)...);
+        if (m_operations.add(name, operation)) {
+            return operation;
+        }
+        return nullptr;
+    }
+
+    /**
+     * @brief Get a named operation from this matrix
+     * @tparam OpClass Expected operation type
+     * @param name Operation name
+     * @return Shared pointer to operation or nullptr
      */
     template <typename OpClass>
     std::shared_ptr<OpClass> get_operation(const std::string& name)
     {
-        auto it = m_operation_pool.find(name);
-        if (it == m_operation_pool.end()) {
-            return nullptr;
-        }
-
-        // Verify type safety
-        auto type_it = m_operation_types.find(name);
-        if (type_it != m_operation_types.end() && type_it->second != std::type_index(typeid(OpClass))) {
-            return nullptr; // Type mismatch
-        }
-
-        return std::static_pointer_cast<OpClass>(it->second);
+        return m_operations.get<OpClass>(name);
     }
 
     /**
-     * @brief Remove operation from pool
+     * @brief Remove a named operation from this matrix
+     * @param name Operation name to remove
+     * @return true if removed successfully
      */
-    void remove_operation(const std::string& name)
+    bool remove_operation(const std::string& name)
     {
-        m_operation_pool.erase(name);
-        m_operation_types.erase(name);
+        return m_operations.remove(name);
     }
 
     /**
-     * @brief List all operation names in pool
+     * @brief List all operation names in this matrix
+     * @return Vector of operation names
      */
     std::vector<std::string> list_operations() const
     {
-        std::vector<std::string> names;
-        names.reserve(m_operation_pool.size());
-        for (const auto& [name, _] : m_operation_pool) {
-            names.push_back(name);
-        }
-        return names;
+        return m_operations.list_names();
+    }
+
+    /**
+     * @brief Clear all operations from this matrix
+     */
+    void clear_operations()
+    {
+        m_operations.clear();
     }
 
     // === EXECUTION INTERFACE ===
 
     /**
-     * @brief Synchronous execution
+     * @brief Execute an operation by creating a new instance
+     * @tparam OpClass Operation class to instantiate and execute
+     * @tparam InputType Input data type
+     * @tparam OutputType Output data type
+     * @param input Input data
+     * @param args Constructor arguments for the operation
+     * @return Optional containing result or nullopt on failure
      */
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::optional<IO<OutputType>> execute(const InputType& input)
+    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
+    std::optional<IO<OutputType>> execute(const InputType& input, Args&&... args)
     {
-        auto op = create<OpClass>();
-        return execute_internal(op, input);
+        auto operation = std::make_shared<OpClass>(std::forward<Args>(args)...);
+        return execute_operation<OpClass, InputType, OutputType>(operation, input);
     }
 
     /**
-     * @brief Synchronous execution with named operation
+     * @brief Execute a named operation from the pool
+     * @tparam OpClass Operation class type
+     * @tparam InputType Input data type
+     * @tparam OutputType Output data type
+     * @param name Name of the operation
+     * @param input Input data
+     * @return Optional containing result or nullopt on failure
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::optional<IO<OutputType>> execute(const std::string& name, const InputType& input)
+    std::optional<IO<OutputType>> execute_named(const std::string& name, const InputType& input)
     {
-        auto op = get_operation<OpClass>(name);
-        return execute_internal(op, input);
+        auto operation = m_operations.get<OpClass>(name);
+        if (!operation)
+            return std::nullopt;
+        return execute_operation<OpClass, InputType, OutputType>(operation, input);
     }
 
     /**
-     * @brief Asynchronous execution
+     * @brief Execute with provided operation instance
+     * @tparam OpClass Operation class type
+     * @tparam InputType Input data type
+     * @tparam OutputType Output data type
+     * @param operation Operation instance to execute
+     * @param input Input data
+     * @return Optional containing result or nullopt on failure
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::future<std::optional<IO<OutputType>>> execute_async(const InputType& input)
+    std::optional<IO<OutputType>> execute_with(std::shared_ptr<OpClass> operation, const InputType& input)
     {
-        auto op = create<OpClass>();
-        return execute_async_internal<OpClass, InputType, OutputType>(op, input);
+        return execute_operation<OpClass, InputType, OutputType>(operation, input);
+    }
+
+    // === ASYNC EXECUTION ===
+
+    /**
+     * @brief Execute operation asynchronously
+     * @tparam OpClass Operation class type
+     * @tparam InputType Input data type
+     * @tparam OutputType Output data type
+     * @param input Input data
+     * @param args Constructor arguments
+     * @return Future containing the result
+     */
+    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
+    std::future<std::optional<IO<OutputType>>> execute_async(const InputType& input, Args&&... args)
+    {
+        return std::async(std::launch::async, [this, input, args...]() {
+            return execute<OpClass, InputType, OutputType>(input, args...);
+        });
     }
 
     /**
-     * @brief Asynchronous execution with named operation
+     * @brief Execute named operation asynchronously
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::future<std::optional<IO<OutputType>>> execute_async(const std::string& name, const InputType& input)
+    std::future<std::optional<IO<OutputType>>> execute_named_async(const std::string& name, const InputType& input)
     {
-        auto op = get_operation<OpClass>(name);
-        return execute_async_internal<OpClass, InputType, OutputType>(op, input);
+        return std::async(std::launch::async, [this, name, input]() {
+            return execute_named<OpClass, InputType, OutputType>(name, input);
+        });
     }
 
+    // === PARALLEL EXECUTION ===
+
     /**
-     * @brief Parallel execution with operation types - each can have different output
+     * @brief Execute multiple operations in parallel
+     * @tparam InputType Input data type
+     * @tparam OpClasses Operation classes to execute
+     * @param input Input data
+     * @return Tuple of results from each operation
      */
     template <ComputeData InputType, typename... OpClasses>
     auto execute_parallel(const InputType& input)
     {
-        return execute_parallel_internal<InputType, OpClasses...>(input);
+        return std::make_tuple(
+            execute_async<OpClasses, InputType>(input).get()...);
     }
 
     /**
-     * @brief Parallel execution with named operations - same output type
+     * @brief Execute multiple named operations in parallel
+     * @tparam OpClass Base operation class
+     * @tparam InputType Input data type
+     * @tparam OutputType Output data type
+     * @param names Vector of operation names
+     * @param input Input data
+     * @return Vector of results
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::vector<IO<OutputType>> execute_parallel(const std::vector<std::string>& names, const InputType& input)
-    {
-        std::vector<std::shared_ptr<OpClass>> ops;
-        for (const auto& name : names) {
-            auto op = get_operation<OpClass>(name);
-            if (op)
-                ops.push_back(op);
-        }
-        return execute_parallel_internal<OpClass, InputType, OutputType>(ops, input);
-    }
-
-    /**
-     * @brief Chain execution - type-safe sequential operations
-     */
-    template <typename FirstOp, typename SecondOp, ComputeData InputType, ComputeData IntermediateType, ComputeData OutputType>
-    std::optional<IO<OutputType>> execute_chain(const InputType& input)
-    {
-        auto first_op = create<FirstOp>();
-        auto second_op = create<SecondOp>();
-        return execute_chain_internal<FirstOp, SecondOp, InputType, IntermediateType, OutputType>(first_op, second_op, input);
-    }
-
-    /**
-     * @brief Chain execution with named operations
-     */
-    template <typename FirstOp, typename SecondOp, ComputeData InputType, ComputeData IntermediateType, ComputeData OutputType>
-    std::optional<IO<OutputType>> execute_chain(const std::string& first_name, const std::string& second_name, const InputType& input)
-    {
-        auto first_op = get_operation<FirstOp>(first_name);
-        auto second_op = get_operation<SecondOp>(second_name);
-        return execute_chain_internal<FirstOp, SecondOp, InputType, IntermediateType, OutputType>(first_op, second_op, input);
-    }
-
-    /**
-     * @brief Chain execution with mixed (first from factory, second named)
-     */
-    template <typename FirstOp, typename SecondOp, ComputeData InputType, ComputeData IntermediateType, ComputeData OutputType>
-    std::optional<IO<OutputType>> execute_chain_mixed(const std::string& second_name, const InputType& input)
-    {
-        auto first_op = create<FirstOp>();
-        auto second_op = get_operation<SecondOp>(second_name);
-        return execute_chain_internal<FirstOp, SecondOp, InputType, IntermediateType, OutputType>(first_op, second_op, input);
-    }
-
-    // === FLUENT INTERFACE ===
-
-    template <ComputeData StartType>
-    auto with(const StartType& input)
-    {
-        return FluentChain<StartType> { shared_from_this(), input };
-    }
-
-    // === DISCOVERY INTERFACE ===
-
-    template <typename OpClass>
-    bool available() const
-    {
-        TypeKey key { get_category<OpClass>(), std::type_index(typeid(OpClass)) };
-        return m_factories.contains(key);
-    }
-
-    template <ComputeData InputType, ComputeData OutputType = InputType>
-    std::vector<std::type_index> discover(OperationType category) const
-    {
-        std::vector<std::type_index> result;
-        std::type_index input_idx(typeid(InputType));
-        std::type_index output_idx(typeid(OutputType));
-
-        for (const auto& [key, type_info] : m_type_info) {
-            if (key.category == category && type_info.first == input_idx && type_info.second == output_idx) {
-                result.push_back(key.operation_type);
-            }
-        }
-        return result;
-    }
-
-    static std::shared_ptr<ComputeMatrix> instance()
-    {
-        static std::shared_ptr<ComputeMatrix> inst(new ComputeMatrix());
-        return inst;
-    }
-
-private:
-    std::unordered_map<TypeKey, Factory, TypeKeyHash> m_factories;
-    std::unordered_map<TypeKey, std::pair<std::type_index, std::type_index>, TypeKeyHash> m_type_info;
-
-    std::unordered_map<std::string, std::shared_ptr<void>> m_operation_pool;
-    std::unordered_map<std::string, std::type_index> m_operation_types;
-
-    template <typename OpClass>
-    std::shared_ptr<OpClass> create()
-    {
-        TypeKey key { get_category<OpClass>(), std::type_index(typeid(OpClass)) };
-        auto it = m_factories.find(key);
-        if (it == m_factories.end())
-            return nullptr;
-        return std::any_cast<std::shared_ptr<OpClass>>(it->second());
-    }
-
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType>
-    void register_operation(OperationType category, std::function<std::shared_ptr<OpClass>()> factory)
-    {
-        if (!factory)
-            factory = []() { return std::make_shared<OpClass>(); };
-
-        TypeKey key { .category = category, .operation_type = std::type_index(typeid(OpClass)) };
-        m_factories[key] = [factory]() -> std::any {
-            return std::any(factory());
-        };
-        m_type_info[key] = { std::type_index(typeid(InputType)), std::type_index(typeid(OutputType)) };
-    }
-
-    template <typename OpClass>
-    OperationType get_category() const
-    {
-        for (const auto& [key, _] : m_factories) {
-            if (key.operation_type == std::type_index(typeid(OpClass))) {
-                return key.category;
-            }
-        }
-        return OperationType::ANALYZER;
-    }
-
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::optional<IO<OutputType>> execute_internal(std::shared_ptr<OpClass> op, const InputType& input)
-    {
-        if (!op)
-            return std::nullopt;
-
-        try {
-            IO<InputType> input_wrapper(input);
-            ExecutionContext ctx { .mode = ExecutionMode::SYNC };
-            return op->apply_operation_internal(input_wrapper, ctx);
-        } catch (const std::exception&) {
-            return std::nullopt;
-        }
-    }
-
-    /**
-     * @brief Internal parallel execution - variadic template version
-     */
-    template <ComputeData InputType, typename... OpClasses>
-    auto execute_parallel_internal(const InputType& input)
-    {
-        auto run_op = [input](auto op_ptr) {
-            if (!op_ptr)
-                return decltype(op_ptr->apply_operation(IO<InputType> { input })) {};
-
-            IO<InputType> input_wrapper(input);
-            ExecutionContext ctx { .mode = ExecutionMode::PARALLEL };
-            return op_ptr->apply_operation_internal(input_wrapper, ctx);
-        };
-
-        auto futures = std::make_tuple(
-            std::async(std::launch::async, run_op, create<OpClasses>())...);
-
-        return std::make_tuple(std::get<OpClasses>(futures).get()...);
-    }
-
-    /**
-     * @brief Internal parallel execution - same operation type version
-     */
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType>
-    std::vector<IO<OutputType>> execute_parallel_internal(
-        const std::vector<std::shared_ptr<OpClass>>& ops,
+    std::vector<std::optional<IO<OutputType>>> execute_parallel_named(
+        const std::vector<std::string>& names,
         const InputType& input)
     {
-        std::vector<std::future<IO<OutputType>>> futures;
 
-        std::transform(ops.begin(), ops.end(), std::back_inserter(futures),
-            [input](auto& op) {
-                return std::async(std::launch::async, [op, input]() -> IO<OutputType> {
-                    if (!op)
-                        return IO<OutputType> {};
+        std::vector<std::future<std::optional<IO<OutputType>>>> futures;
+        futures.reserve(names.size());
 
-                    IO<InputType> input_wrapper(input);
-                    ExecutionContext ctx { .mode = ExecutionMode::PARALLEL };
-                    return op->apply_operation_internal(input_wrapper, ctx);
-                });
-            });
+        for (const auto& name : names) {
+            futures.push_back(execute_named_async<OpClass, InputType, OutputType>(name, input));
+        }
 
-        std::vector<IO<OutputType>> results;
-        std::transform(futures.begin(), futures.end(), std::back_inserter(results),
-            [](auto& future) {
-                try {
-                    return future.get();
-                } catch (const std::exception&) {
-                    return IO<OutputType> {};
-                }
-            });
+        std::vector<std::optional<IO<OutputType>>> results;
+        results.reserve(futures.size());
+
+        for (auto& future : futures) {
+            results.push_back(future.get());
+        }
+
+        return results;
+    }
+
+    // === CHAIN EXECUTION ===
+
+    /**
+     * @brief Execute operations in sequence (type-safe chain)
+     * @tparam FirstOp First operation type
+     * @tparam SecondOp Second operation type
+     * @tparam InputType Initial input type
+     * @tparam IntermediateType Type between operations
+     * @tparam OutputType Final output type
+     * @param input Initial input
+     * @return Optional containing final result
+     */
+    template <typename FirstOp, typename SecondOp,
+        ComputeData InputType,
+        ComputeData IntermediateType,
+        ComputeData OutputType>
+    std::optional<IO<OutputType>> execute_chain(const InputType& input)
+    {
+        auto first_result = execute<FirstOp, InputType, IntermediateType>(input);
+        if (!first_result)
+            return std::nullopt;
+
+        return execute<SecondOp, IntermediateType, OutputType>(first_result->data);
+    }
+
+    /**
+     * @brief Execute named operations in sequence
+     */
+    template <typename FirstOp, typename SecondOp,
+        ComputeData InputType,
+        ComputeData IntermediateType,
+        ComputeData OutputType>
+    std::optional<IO<OutputType>> execute_chain_named(
+        const std::string& first_name,
+        const std::string& second_name,
+        const InputType& input)
+    {
+
+        auto first_result = execute_named<FirstOp, InputType, IntermediateType>(first_name, input);
+        if (!first_result)
+            return std::nullopt;
+
+        return execute_named<SecondOp, IntermediateType, OutputType>(second_name, first_result->data);
+    }
+
+    // === BATCH EXECUTION ===
+
+    /**
+     * @brief Execute operation on multiple inputs
+     * @tparam OpClass Operation class
+     * @tparam InputType Input data type
+     * @tparam OutputType Output data type
+     * @param inputs Vector of inputs
+     * @param args Constructor arguments for operation
+     * @return Vector of results
+     */
+    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
+    std::vector<std::optional<IO<OutputType>>> execute_batch(
+        const std::vector<InputType>& inputs,
+        Args&&... args)
+    {
+
+        auto operation = std::make_shared<OpClass>(std::forward<Args>(args)...);
+
+        std::vector<std::optional<IO<OutputType>>> results;
+        results.reserve(inputs.size());
+
+        for (const auto& input : inputs) {
+            results.push_back(execute_operation<OpClass, InputType, OutputType>(operation, input));
+        }
 
         return results;
     }
 
     /**
-     * @brief Asynchronous execution
+     * @brief Execute operation on multiple inputs in parallel
      */
-    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::future<std::optional<IO<OutputType>>> execute_async_internal(std::shared_ptr<OpClass> op, const InputType& input)
+    template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
+    std::vector<std::optional<IO<OutputType>>> execute_batch_parallel(
+        const std::vector<InputType>& inputs,
+        Args&&... args)
     {
-        return std::async(std::launch::async, [this, input, op]() -> std::optional<IO<OutputType>> {
-            if (!op)
-                return std::nullopt;
 
-            try {
-                IO<InputType> input_wrapper(input);
-                ExecutionContext ctx { .mode = ExecutionMode::ASYNC };
-                return op->apply_operation_internal(input_wrapper, ctx);
-            } catch (const std::exception&) {
-                return std::nullopt;
-            }
-        });
+        auto operation = std::make_shared<OpClass>(std::forward<Args>(args)...);
+
+        std::vector<std::optional<IO<OutputType>>> results(inputs.size());
+
+        std::transform(std::execution::par_unseq,
+            inputs.begin(), inputs.end(),
+            results.begin(),
+            [this, operation](const InputType& input) {
+                return execute_operation<OpClass, InputType, OutputType>(operation, input);
+            });
+
+        return results;
+    }
+
+    // === FLUENT INTERFACE ===
+
+    /**
+     * @brief Create a fluent executor for chaining operations
+     * @tparam StartType Initial data type
+     * @param input Initial input data
+     * @return FluentExecutor for this matrix
+     */
+    template <ComputeData StartType>
+    FluentExecutor<ComputeMatrix, StartType> with(const StartType& input)
+    {
+        return FluentExecutor<ComputeMatrix, StartType>(shared_from_this(), input);
     }
 
     /**
-     * @brief Internal chain execution implementation
+     * @brief Create a fluent executor with move semantics
      */
-    template <typename FirstOp, typename SecondOp, ComputeData InputType, ComputeData IntermediateType, ComputeData OutputType>
-    std::optional<IO<OutputType>> execute_chain_internal(
-        std::shared_ptr<FirstOp> first_op,
-        std::shared_ptr<SecondOp> second_op,
+    template <ComputeData StartType>
+    FluentExecutor<ComputeMatrix, StartType> with(StartType&& input)
+    {
+        return FluentExecutor<ComputeMatrix, StartType>(shared_from_this(), std::forward<StartType>(input));
+    }
+
+    // === CONFIGURATION ===
+
+    /**
+     * @brief Set execution policy for this matrix
+     * @param policy Execution policy to use
+     */
+    void set_execution_policy(ExecutionPolicy policy)
+    {
+        m_execution_policy = policy;
+    }
+
+    /**
+     * @brief Get current execution policy
+     */
+    ExecutionPolicy get_execution_policy() const
+    {
+        return m_execution_policy;
+    }
+
+    /**
+     * @brief Enable/disable execution profiling
+     */
+    void set_profiling(bool enabled)
+    {
+        m_profiling_enabled = enabled;
+    }
+
+    /**
+     * @brief Get execution statistics
+     */
+    std::unordered_map<std::string, std::any> get_statistics() const
+    {
+        auto stats = m_operations.get_statistics();
+        stats["total_executions"] = m_total_executions.load();
+        stats["failed_executions"] = m_failed_executions.load();
+        if (m_profiling_enabled) {
+            stats["average_execution_time_ms"] = m_average_execution_time.load();
+        }
+        return stats;
+    }
+
+    // === EXECUTION CONTEXT CUSTOMIZATION ===
+
+    /**
+     * @brief Set custom context configurator
+     * @param configurator Function to configure execution contexts
+     */
+    void set_context_configurator(
+        std::function<void(ExecutionContext&, const std::type_index&)> configurator)
+    {
+        m_context_configurator = std::move(configurator);
+    }
+
+    /**
+     * @brief Set default execution timeout
+     * @param timeout Timeout duration
+     */
+    void set_default_timeout(std::chrono::milliseconds timeout)
+    {
+        m_default_timeout = timeout;
+    }
+
+    ComputeMatrix() = default;
+
+private:
+    /**
+     * @brief Core execution implementation
+     */
+    template <typename OpClass, ComputeData InputType, ComputeData OutputType>
+    std::optional<IO<OutputType>> execute_operation(
+        std::shared_ptr<OpClass> operation,
         const InputType& input)
     {
-        if (!first_op || !second_op)
+
+        if (!operation)
             return std::nullopt;
+
+        m_total_executions++;
 
         try {
             IO<InputType> input_wrapper(input);
-            ExecutionContext chain_ctx { .mode = ExecutionMode::CHAINED };
 
-            // Execute first operation
-            auto intermediate = first_op->apply_operation_internal(input_wrapper, chain_ctx);
-            if (!intermediate)
-                return std::nullopt;
+            ExecutionContext ctx;
+            configure_execution_context(ctx, std::type_index(typeid(OpClass)));
 
-            // Execute second operation with intermediate result
-            IO<IntermediateType> intermediate_wrapper(intermediate->data);
-            intermediate_wrapper.metadata = intermediate->metadata; // Thread metadata
+            auto start = std::chrono::steady_clock::now();
 
-            return second_op->apply_operation_internal(intermediate_wrapper, chain_ctx);
-        } catch (const std::exception&) {
+            auto result = operation->apply_operation_internal(input_wrapper, ctx);
+
+            if (m_profiling_enabled) {
+                auto end = std::chrono::steady_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                update_execution_time(duration.count());
+            }
+
+            return result;
+
+        } catch (const std::exception& e) {
+            m_failed_executions++;
+            handle_execution_error(e, std::type_index(typeid(OpClass)));
             return std::nullopt;
         }
     }
 
-    template <ComputeData DataType>
-    class FluentChain {
-    public:
-        FluentChain(std::shared_ptr<ComputeMatrix> matrix, const DataType& input)
-            : m_matrix(std::move(matrix))
-            , m_input(input)
-        {
+    /**
+     * @brief Configure execution context based on operation type and policy
+     */
+    void configure_execution_context(ExecutionContext& ctx, const std::type_index& op_type)
+    {
+        // Set default mode based on policy
+        switch (m_execution_policy) {
+        case ExecutionPolicy::CONSERVATIVE:
+        case ExecutionPolicy::BALANCED:
+            ctx.mode = ExecutionMode::SYNC;
+            break;
+        case ExecutionPolicy::AGGRESSIVE:
+            ctx.mode = ExecutionMode::PARALLEL;
+            break;
         }
 
-        template <typename OpClass, ComputeData OutputType = DataType>
-        auto then()
-        {
-            auto result = m_matrix->execute<OpClass, DataType, OutputType>(m_input);
-            if (result) {
-                return FluentChain<OutputType> { m_matrix, result->data };
-            }
-            throw std::runtime_error("Operation failed in chain");
+        // Set timeout
+        ctx.timeout = m_default_timeout;
+
+        // Apply custom configuration if set
+        if (m_context_configurator) {
+            m_context_configurator(ctx, op_type);
         }
 
-        template <typename OpClass, ComputeData OutputType = DataType>
-        auto then(const std::string& name)
-        {
-            auto result = m_matrix->execute<OpClass, DataType, OutputType>(name, m_input);
-            if (result) {
-                return FluentChain<OutputType> { m_matrix, result->data };
-            }
-            throw std::runtime_error("Named operation failed in chain");
+        // Future: Add thread pool assignment, GPU context, etc.
+    }
+
+    /**
+     * @brief Handle execution errors
+     */
+    void handle_execution_error(const std::exception& e, const std::type_index& op_type)
+    {
+        m_last_error = e.what();
+        m_last_error_type = op_type;
+
+        if (m_error_callback) {
+            m_error_callback(e, op_type);
         }
+    }
 
-        const DataType& get() const { return m_input; }
+    /**
+     * @brief Update execution time statistics
+     */
+    void update_execution_time(double ms)
+    {
+        double current_avg = m_average_execution_time.load();
+        double total_execs = m_total_executions.load();
+        double new_avg = (current_avg * (total_execs - 1) + ms) / total_execs;
+        m_average_execution_time.store(new_avg);
+    }
 
-    private:
-        std::shared_ptr<ComputeMatrix> m_matrix;
-        DataType m_input;
-    };
+    // Instance-local operation pool
+    OperationPool m_operations;
 
-    friend class std::shared_ptr<ComputeMatrix>;
+    // Execution configuration
+    ExecutionPolicy m_execution_policy = ExecutionPolicy::BALANCED;
+    std::chrono::milliseconds m_default_timeout { 0 };
+    std::function<void(ExecutionContext&, const std::type_index&)> m_context_configurator;
+
+    // Statistics and monitoring
+    std::atomic<size_t> m_total_executions { 0 };
+    std::atomic<size_t> m_failed_executions { 0 };
+    std::atomic<double> m_average_execution_time { 0.0 };
+    bool m_profiling_enabled = false;
+
+    // Error handling
+    std::string m_last_error;
+    std::type_index m_last_error_type { typeid(void) };
+    std::function<void(const std::exception&, const std::type_index&)> m_error_callback;
+
+public:
+    /**
+     * @brief Set error callback
+     */
+    void set_error_callback(
+        std::function<void(const std::exception&, const std::type_index&)> callback)
+    {
+        m_error_callback = std::move(callback);
+    }
+
+    /**
+     * @brief Get last error message
+     */
+    std::string get_last_error() const
+    {
+        return m_last_error;
+    }
 };
 
 } // namespace MayaFlux::Yantra
