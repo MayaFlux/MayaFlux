@@ -14,7 +14,7 @@ namespace MayaFlux::Yantra {
  * @enum ExecutionPolicy
  * @brief Policy for execution strategy selection
  */
-enum class ExecutionPolicy {
+enum class ExecutionPolicy : u_int8_t {
     CONSERVATIVE, // Prefer safety and predictability
     BALANCED, // Balance between performance and safety
     AGGRESSIVE // Maximize performance
@@ -48,8 +48,6 @@ public:
     {
         return std::make_shared<ComputeMatrix>();
     }
-
-    // === LOCAL OPERATION MANAGEMENT ===
 
     /**
      * @brief Add a pre-configured operation instance to this matrix
@@ -123,8 +121,6 @@ public:
         m_operations.clear();
     }
 
-    // === EXECUTION INTERFACE ===
-
     /**
      * @brief Execute an operation by creating a new instance
      * @tparam OpClass Operation class to instantiate and execute
@@ -174,8 +170,6 @@ public:
         return execute_operation<OpClass, InputType, OutputType>(operation, input);
     }
 
-    // === ASYNC EXECUTION ===
-
     /**
      * @brief Execute operation asynchronously
      * @tparam OpClass Operation class type
@@ -203,8 +197,6 @@ public:
             return execute_named<OpClass, InputType, OutputType>(name, input);
         });
     }
-
-    // === PARALLEL EXECUTION ===
 
     /**
      * @brief Execute multiple operations in parallel
@@ -252,8 +244,6 @@ public:
         return results;
     }
 
-    // === CHAIN EXECUTION ===
-
     /**
      * @brief Execute operations in sequence (type-safe chain)
      * @tparam FirstOp First operation type
@@ -296,8 +286,6 @@ public:
 
         return execute_named<SecondOp, IntermediateType, OutputType>(second_name, first_result->data);
     }
-
-    // === BATCH EXECUTION ===
 
     /**
      * @brief Execute operation on multiple inputs
@@ -349,8 +337,6 @@ public:
         return results;
     }
 
-    // === FLUENT INTERFACE ===
-
     /**
      * @brief Create a fluent executor for chaining operations
      * @tparam StartType Initial data type
@@ -371,8 +357,6 @@ public:
     {
         return FluentExecutor<ComputeMatrix, StartType>(shared_from_this(), std::forward<StartType>(input));
     }
-
-    // === CONFIGURATION ===
 
     /**
      * @brief Set execution policy for this matrix
@@ -412,8 +396,6 @@ public:
         }
         return stats;
     }
-
-    // === EXECUTION CONTEXT CUSTOMIZATION ===
 
     /**
      * @brief Set custom context configurator
@@ -481,7 +463,6 @@ private:
      */
     void configure_execution_context(ExecutionContext& ctx, const std::type_index& op_type)
     {
-        // Set default mode based on policy
         switch (m_execution_policy) {
         case ExecutionPolicy::CONSERVATIVE:
         case ExecutionPolicy::BALANCED:
@@ -492,15 +473,13 @@ private:
             break;
         }
 
-        // Set timeout
         ctx.timeout = m_default_timeout;
 
-        // Apply custom configuration if set
         if (m_context_configurator) {
             m_context_configurator(ctx, op_type);
         }
 
-        // Future: Add thread pool assignment, GPU context, etc.
+        // TODO: Add thread pool assignment, GPU context, etc.
     }
 
     /**
@@ -527,21 +506,17 @@ private:
         m_average_execution_time.store(new_avg);
     }
 
-    // Instance-local operation pool
     OperationPool m_operations;
 
-    // Execution configuration
     ExecutionPolicy m_execution_policy = ExecutionPolicy::BALANCED;
     std::chrono::milliseconds m_default_timeout { 0 };
     std::function<void(ExecutionContext&, const std::type_index&)> m_context_configurator;
 
-    // Statistics and monitoring
     std::atomic<size_t> m_total_executions { 0 };
     std::atomic<size_t> m_failed_executions { 0 };
     std::atomic<double> m_average_execution_time { 0.0 };
     bool m_profiling_enabled = false;
 
-    // Error handling
     std::string m_last_error;
     std::type_index m_last_error_type { typeid(void) };
     std::function<void(const std::exception&, const std::type_index&)> m_error_callback;
