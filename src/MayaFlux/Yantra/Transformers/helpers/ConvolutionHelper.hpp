@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
-#include "MayaFlux/Yantra/OperationHelper.hpp"
+#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 #include <unsupported/Eigen/FFT>
 
 namespace MayaFlux::Yantra {

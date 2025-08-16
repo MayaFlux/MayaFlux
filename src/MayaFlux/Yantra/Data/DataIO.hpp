@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Data/StructureIntrospection.hpp"
+#include "StructureIntrospection.hpp"
 
 namespace MayaFlux::Yantra {
 

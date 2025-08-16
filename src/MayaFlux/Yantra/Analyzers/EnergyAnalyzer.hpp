@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/EnumUtils.hpp"
-#include "MayaFlux/Yantra/OperationHelper.hpp"
+#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "UniversalAnalyzer.hpp"
 #include <Eigen/Dense>

@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Nodes/Generators/WindowGenerator.hpp"
 
-#include "MayaFlux/Yantra/OperationHelper.hpp"
+#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include <unsupported/Eigen/FFT>
 

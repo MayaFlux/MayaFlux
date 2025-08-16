@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "GrammarHelper.hpp"
+#include "OperationSpec/GrammarHelper.hpp"
 
 namespace MayaFlux::Yantra {
 

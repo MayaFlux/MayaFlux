@@ -3,7 +3,7 @@
 #include "MayaFlux/Kakshya/Region.hpp"
 #include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
 #include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
-#include "MayaFlux/Yantra/OperationHelper.hpp"
+#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 #include <Eigen/Dense>
 
 /**

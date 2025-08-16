@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Nodes/Generators/Polynomial.hpp"
-#include "MayaFlux/Yantra/OperationHelper.hpp"
+#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 /**
  * @file MathematicalTransforms.hpp

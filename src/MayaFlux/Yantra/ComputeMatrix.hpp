@@ -7,17 +7,6 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @enum OperationType
- * @brief Operation categories for organization and discovery
- */
-enum class OperationType : u_int8_t {
-    ANALYZER,
-    SORTER,
-    EXTRACTOR,
-    TRANSFORMER
-};
-
-/**
  * @struct TypeKey
  * @brief Type-based operation identification
  */
