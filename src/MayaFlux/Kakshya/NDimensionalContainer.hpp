@@ -1,6 +1,6 @@
-#include <utility>
-
 #pragma once
+
+#include "NDData.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -11,128 +11,6 @@ struct Region;
 struct RegionGroup;
 
 /**
- * @brief Memory layout for multi-dimensional data.
- *
- * Specifies how multi-dimensional data is mapped to linear memory.
- * - ROW_MAJOR: Last dimension varies fastest (C/C++ style).
- * - COLUMN_MAJOR: First dimension varies fastest (Fortran/MATLAB style).
- *
- * This abstraction enables flexible, efficient access patterns for
- * digital-first, data-driven workflows, unconstrained by analog conventions.
- */
-enum class MemoryLayout : u_int8_t {
-    ROW_MAJOR, ///< C/C++ style (last dimension varies fastest)
-    COLUMN_MAJOR ///< Fortran/MATLAB style (first dimension varies fastest)
-};
-
-/**
- * @brief Minimal dimension descriptor focusing on structure only.
- *
- * DataDimension describes a single axis of an N-dimensional dataset,
- * providing semantic hints (such as TIME, CHANNEL, SPATIAL_X, etc.)
- * and structural information (name, size, stride).
- *
- * This abstraction enables containers to describe arbitrary data
- * organizations, supporting digital-first, data-driven processing
- * without imposing analog metaphors (e.g., "track", "tape", etc.).
- */
-struct DataDimension {
-    /**
-     * @brief Semantic role of the dimension.
-     *
-     * Used to indicate the intended interpretation of the dimension,
-     * enabling generic algorithms to adapt to data structure.
-     */
-    enum class Role : u_int8_t {
-        TIME, ///< Temporal progression (samples, frames, steps)
-        CHANNEL, ///< Parallel streams (audio channels, color channels)
-        SPATIAL_X, ///< Spatial X axis (images, tensors)
-        SPATIAL_Y, ///< Spatial Y axis
-        SPATIAL_Z, ///< Spatial Z axis
-        FREQUENCY, ///< Spectral/frequency axis
-        CUSTOM ///< User-defined or application-specific
-    };
-
-    std::string name; ///< Human-readable identifier for the dimension
-    u_int64_t size {}; ///< Number of elements in this dimension
-    u_int64_t stride {}; ///< Memory stride (elements between consecutive indices)
-    Role role = Role::CUSTOM; ///< Semantic hint for common operations
-
-    DataDimension() = default;
-
-    /**
-     * @brief Construct a dimension descriptor.
-     * @param n Name of the dimension
-     * @param s Size (number of elements)
-     * @param st Stride (default: 1)
-     * @param r Semantic role (default: CUSTOM)
-     */
-    DataDimension(std::string n, u_int64_t s, u_int64_t st = 1, Role r = Role::CUSTOM)
-        : name(std::move(n))
-        , size(s)
-        , stride(st)
-        , role(r)
-    {
-    }
-
-    /**
-     * @brief Convenience constructor for a temporal (time) dimension.
-     * @param samples Number of samples/frames
-     * @param name Optional name (default: "time")
-     * @return DataDimension representing time
-     */
-    static DataDimension time(u_int64_t samples, std::string name = "time")
-    {
-        return { std::move(name), samples, 1, Role::TIME };
-    }
-
-    /**
-     * @brief Convenience constructor for a channel dimension.
-     * @param count Number of channels
-     * @param stride Memory stride (default: 1)
-     * @return DataDimension representing channels
-     */
-    static DataDimension channel(u_int64_t count, u_int64_t stride = 1)
-    {
-        return { "channel", count, stride, Role::CHANNEL };
-    }
-
-    /**
-     * @brief Convenience constructor for a frequency dimension.
-     * @param bins Number of frequency bins
-     * @param name Optional name (default: "frequency")
-     * @return DataDimension representing frequency
-     */
-    static DataDimension frequency(u_int64_t bins, std::string name = "frequency")
-    {
-        return { std::move(name), bins, 1, Role::FREQUENCY };
-    }
-
-    /**
-     * @brief Convenience constructor for a spatial dimension.
-     * @param size Number of elements along this axis
-     * @param axis Axis character ('x', 'y', or 'z')
-     * @param stride Memory stride (default: 1)
-     * @return DataDimension representing a spatial axis
-     */
-    static DataDimension spatial(u_int64_t size, char axis, u_int64_t stride = 1)
-    {
-        Role r = [axis]() {
-            switch (axis) {
-            case 'x':
-                return Role::SPATIAL_X;
-            case 'y':
-                return Role::SPATIAL_Y;
-            case 'z':
-            default:
-                return Role::SPATIAL_Z;
-            }
-        }();
-        return { std::string("spatial_") + axis, size, stride, r };
-    }
-};
-
-/**
  * @brief Container conventions for consistent dimension ordering.
  *
  * Provides standard indices and layout conventions for common data types,
@@ -141,7 +19,6 @@ struct DataDimension {
  * processing of multi-dimensional data.
  */
 struct ContainerConvention {
-    // Standard dimension indices for common data types
     static constexpr size_t TIME_DIM = 0;
     static constexpr size_t CHANNEL_DIM = 1;
 
@@ -156,41 +33,49 @@ struct ContainerConvention {
     static constexpr size_t TIME_WINDOW_DIM = 0;
 
     static constexpr MemoryLayout DEFAULT_LAYOUT = MemoryLayout::ROW_MAJOR;
-};
 
-/**
- * @brief Multi-type data storage for different precision needs.
- *
- * DataVariant enables containers to store and expose data in the most
- * appropriate format for the application, supporting high-precision,
- * standard-precision, integer, and complex types. This abstraction
- * is essential for digital-first, data-driven processing pipelines.
- */
-using DataVariant = std::variant<
-    std::vector<double>, ///< High precision floating point
-    std::vector<float>, ///< Standard precision floating point
-    std::vector<u_int8_t>, ///< 8-bit data (images, compressed audio)
-    std::vector<u_int16_t>, ///< 16-bit data (CD audio, images)
-    std::vector<u_int32_t>, ///< 32-bit data (high precision int)
-    std::vector<std::complex<float>>, ///< Complex data (spectral)
-    std::vector<std::complex<double>> ///< High precision complex
-    >;
+    DataModality modality;
+    MemoryLayout memory_layout = MemoryLayout::ROW_MAJOR;
 
-/**
- * @brief Data modality types for cross-modal analysis
- */
-enum class DataModality : u_int8_t {
-    AUDIO_1D, // 1D audio signal
-    AUDIO_MULTICHANNEL, // Multi-channel audio
-    IMAGE_2D, // 2D image (grayscale or single channel)
-    IMAGE_COLOR, // 2D RGB/RGBA image
-    VIDEO_GRAYSCALE, // 3D video (time + 2D grayscale)
-    VIDEO_COLOR, // 4D video (time + 2D + color)
-    TEXTURE_2D, // 2D texture data
-    TENSOR_ND, // N-dimensional tensor
-    SPECTRAL_2D, // 2D spectral data (time + frequency)
-    VOLUMETRIC_3D, // 3D volumetric data
-    UNKNOWN
+    enum class OrganizationStrategy : uint8_t {
+        INTERLEAVED, // Single DataVariant with interleaved data
+        PLANAR, // Separate DataVariant per logical unit (channel, frame, etc.)
+        HYBRID, // Mixed approach based on access patterns
+        USER_DEFINED // Custom organization
+    };
+
+    OrganizationStrategy organization = OrganizationStrategy::PLANAR;
+
+    ContainerConvention(DataModality mod,
+        OrganizationStrategy org = OrganizationStrategy::PLANAR,
+        MemoryLayout layout = MemoryLayout::ROW_MAJOR);
+
+    [[nodiscard]] std::vector<DataDimension::Role> get_expected_dimension_roles() const;
+
+    static ContainerConvention audio_planar();
+
+    static ContainerConvention audio_interleaved();
+
+    static ContainerConvention image_planar();
+
+    static ContainerConvention image_interleaved();
+
+    [[nodiscard]] size_t get_expected_variant_count(const std::vector<DataDimension>& dimensions) const;
+
+    [[nodiscard]] bool validate_dimensions(const std::vector<DataDimension>& dimensions) const;
+
+    [[nodiscard]] size_t get_dimension_index_for_role(const std::vector<DataDimension>& dimensions,
+        DataDimension::Role role) const;
+
+    [[nodiscard]] static u_int64_t get_samples_count(const std::vector<DataDimension>& dimensions);
+
+    [[nodiscard]] static u_int64_t get_channel_count(const std::vector<DataDimension>& dimensions);
+
+    [[nodiscard]] static u_int64_t get_height(const std::vector<DataDimension>& dimensions);
+
+    [[nodiscard]] static u_int64_t get_width(const std::vector<DataDimension>& dimensions);
+
+    [[nodiscard]] static size_t get_frame_count(const std::vector<DataDimension>& dimensions);
 };
 
 /**
