@@ -1,6 +1,8 @@
 #pragma once
 
-#include "NDimensionalContainer.hpp"
+#include <algorithm>
+
+#include "NDData.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -8,7 +10,7 @@ namespace MayaFlux::Kakshya {
  * @enum RegionSelectionPattern
  * @brief Describes how regions are selected for processing or playback.
  */
-enum class RegionSelectionPattern {
+enum class RegionSelectionPattern : u_int8_t {
     ALL, ///< Process all regions
     SEQUENTIAL, ///< Process regions in order
     RANDOM, ///< Random selection
@@ -23,7 +25,7 @@ enum class RegionSelectionPattern {
  * @enum RegionTransition
  * @brief Describes how transitions between regions are handled.
  */
-enum class RegionTransition {
+enum class RegionTransition : u_int8_t {
     IMMEDIATE, ///< No transition, jump directly
     CROSSFADE, ///< Crossfade between regions
     OVERLAP, ///< Overlap regions during transition
@@ -35,7 +37,7 @@ enum class RegionTransition {
  * @enum RegionState
  * @brief Processing state for regions.
  */
-enum class RegionState {
+enum class RegionState : u_int8_t {
     IDLE, ///< Not being processed
     LOADING, ///< Data being loaded
     READY, ///< Ready for processing
@@ -395,7 +397,7 @@ struct Region {
         for (size_t i = 0; i < std::min(factors.size(), start_coordinates.size()); i++) {
             u_int64_t center = (start_coordinates[i] + end_coordinates[i]) / 2;
             u_int64_t half_span = get_span(i) / 2;
-            u_int64_t new_half_span = static_cast<u_int64_t>(half_span * factors[i]);
+            auto new_half_span = static_cast<u_int64_t>((double)half_span * factors[i]);
 
             result.start_coordinates[i] = center - new_half_span;
             result.end_coordinates[i] = center + new_half_span;
@@ -613,7 +615,7 @@ struct RegionSegment {
      */
     void reset_position()
     {
-        std::fill(current_position.begin(), current_position.end(), 0);
+        std::ranges::fill(current_position, 0);
     }
 
     /**
@@ -809,7 +811,7 @@ struct RegionGroup {
      */
     void sort_by_dimension(size_t dimension_index)
     {
-        std::sort(regions.begin(), regions.end(),
+        std::ranges::sort(regions,
             [dimension_index](const Region& a, const Region& b) {
                 if (dimension_index < a.start_coordinates.size() && dimension_index < b.start_coordinates.size()) {
                     return a.start_coordinates[dimension_index] < b.start_coordinates[dimension_index];
@@ -824,7 +826,7 @@ struct RegionGroup {
      */
     void sort_by_attribute(const std::string& attr_name)
     {
-        std::sort(regions.begin(), regions.end(),
+        std::ranges::sort(regions,
             [&attr_name](const Region& a, const Region& b) {
                 auto a_val = a.get_attribute<double>(attr_name);
                 auto b_val = b.get_attribute<double>(attr_name);

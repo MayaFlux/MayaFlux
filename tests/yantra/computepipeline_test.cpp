@@ -19,7 +19,7 @@ public:
     {
         std::vector<double> signal(size);
         for (size_t i = 0; i < size; ++i) {
-            signal[i] = amplitude * std::sin(2.0 * M_PI * i / 32.0);
+            signal[i] = amplitude * std::sin(2.0 * M_PI * (double)i / 32.0);
         }
         return signal;
     }
@@ -53,6 +53,7 @@ public:
     {
         return ExecutionContext {
             .mode = ExecutionMode::SYNC,
+            .dependencies = {},
             .execution_metadata = {
                 { "computation_context", context } }
         };

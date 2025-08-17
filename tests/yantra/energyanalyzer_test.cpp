@@ -201,7 +201,7 @@ TEST_F(EnergyAnalyzerTest, RMSEnergyCorrectness)
     double frequency = 10.0;
 
     for (size_t i = 0; i < sine_data.size(); ++i) {
-        sine_data[i] = amplitude * std::sin(2.0 * M_PI * frequency * i / sine_data.size());
+        sine_data[i] = amplitude * std::sin(2.0 * M_PI * frequency * static_cast<double>(i) / static_cast<double>(sine_data.size()));
     }
 
     container->set_test_data(sine_data);
@@ -249,7 +249,7 @@ TEST_F(EnergyAnalyzerTest, ZeroCrossingCorrectness)
     int cycles = 8;
 
     for (size_t i = 0; i < square_wave.size(); ++i) {
-        double t = static_cast<double>(i) / square_wave.size();
+        double t = static_cast<double>(i) / (double)square_wave.size();
         square_wave[i] = (std::sin(2.0 * M_PI * cycles * t) > 0) ? 1.0 : -1.0;
     }
 
@@ -265,6 +265,8 @@ TEST_F(EnergyAnalyzerTest, ZeroCrossingCorrectness)
 
     double expected_zcr = (2.0 * cycles * analyzer->get_parameter_or_default<u_int32_t>("window_size", 256))
         / (1024.0 * (analyzer->get_parameter_or_default<u_int32_t>("window_size", 256) - 1));
+
+    EXPECT_NE(expected_zcr, 0.0);
 
     for (double zcr_value : analysis_result.energy_values) {
         EXPECT_GT(zcr_value, 0.01);
@@ -297,7 +299,7 @@ TEST_F(EnergyAnalyzerTest, DynamicRangeCorrectness)
     double max_val = 0.5;
 
     for (size_t i = 0; i < dynamic_signal.size(); ++i) {
-        double t = static_cast<double>(i) / dynamic_signal.size();
+        double t = static_cast<double>(i) / (double)dynamic_signal.size();
         dynamic_signal[i] = min_val + (max_val - min_val) * std::abs(std::sin(2.0 * M_PI * t));
     }
 
@@ -344,14 +346,15 @@ TEST_F(EnergyAnalyzerTest, EnergyClassificationCorrectness)
     // Fourth quarter: loud (0.3 - between 0.1 and 0.5)
 
     for (size_t i = 0; i < varied_signal.size(); ++i) {
-        if (i < 256)
+        if (i < 256) {
             varied_signal[i] = 0.005;
-        else if (i < 512)
+        } else if (i < 512) {
             varied_signal[i] = 0.03;
-        else if (i < 768)
+        } else if (i < 768) {
             varied_signal[i] = 0.07;
-        else
+        } else {
             varied_signal[i] = 0.3;
+        }
     }
 
     container->set_test_data(varied_signal);

@@ -20,7 +20,7 @@ public:
     {
         std::vector<double> signal(size);
         for (size_t i = 0; i < size; ++i) {
-            signal[i] = 0.5 * std::sin(2.0 * M_PI * i / 32.0);
+            signal[i] = 0.5 * std::sin(2.0 * M_PI * (double)i / 32.0);
         }
         return signal;
     }
@@ -29,6 +29,7 @@ public:
     {
         return ExecutionContext {
             .mode = ExecutionMode::SYNC,
+            .dependencies = {},
             .execution_metadata = {
                 { "computation_context", comp_context } }
         };
@@ -67,6 +68,7 @@ TEST_F(UniversalMatcherTest, ParameterMatcherWorks)
     auto matcher = UniversalMatcher::create_parameter_matcher("test_param", std::any(42.0));
 
     ExecutionContext ctx_with_param {
+        .dependencies = {},
         .execution_metadata = { { "test_param", 42.0 } }
     };
     EXPECT_TRUE(matcher(test_input, ctx_with_param)) << "Should match parameter";
@@ -75,6 +77,7 @@ TEST_F(UniversalMatcherTest, ParameterMatcherWorks)
     EXPECT_FALSE(matcher(test_input, ctx_without_param)) << "Should not match without parameter";
 
     ExecutionContext ctx_wrong_type {
+        .dependencies = {},
         .execution_metadata = { { "test_param", std::string("wrong") } }
     };
     EXPECT_FALSE(matcher(test_input, ctx_wrong_type)) << "Should not match wrong parameter type";
@@ -138,9 +141,10 @@ TEST_F(GrammarHelpersTest, CreateConfiguredOperationWorks)
 
     try {
         auto gain_param = math_transformer->get_parameter("gain_factor");
-        auto gain_value = std::any_cast<double>(gain_param);
+        auto gain_value = safe_any_cast_or_throw<double>(gain_param);
         EXPECT_EQ(gain_value, 2.0) << "Should have correct gain value";
     } catch (const std::bad_any_cast&) {
+        std::cerr << "Cannot convert value to double\n";
     }
 }
 
@@ -149,6 +153,7 @@ TEST_F(GrammarHelpersTest, ApplyContextParametersWorks)
     auto operation = std::make_shared<MathematicalTransformer<>>();
 
     ExecutionContext ctx {
+        .dependencies = {},
         .execution_metadata = {
             { "gain_factor", 3.0 },
             { "strategy", TransformationStrategy::IN_PLACE } }
@@ -393,6 +398,7 @@ TEST_F(GrammarEdgeCaseTest, InvalidContextMetadata)
     IO<DataVariant> test_input { DataVariant(std::vector<double> { 1.0, 2.0, 3.0 }) };
 
     ExecutionContext invalid_ctx {
+        .dependencies = {},
         .execution_metadata = { { "some_other_param", 42 } }
     };
 

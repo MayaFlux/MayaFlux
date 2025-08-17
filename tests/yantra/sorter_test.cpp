@@ -187,9 +187,7 @@ TEST_F(ModernSorterTest, IndexOnlySorting)
     index_sorter->set_strategy(SortingStrategy::INDEX_ONLY);
     index_sorter->set_direction(SortingDirection::ASCENDING);
 
-    auto result = index_sorter->apply_operation(input);
-
-    EXPECT_NO_THROW(result);
+    EXPECT_NO_THROW(index_sorter->apply_operation(input));
 }
 
 TEST_F(ModernSorterTest, FloatDataSorting)
@@ -240,6 +238,8 @@ TEST_F(ModernSorterTest, GenerateIndices)
     EXPECT_EQ(indices.size(), test_data.size());
 
     std::vector<double> sorted_by_indices;
+    sorted_by_indices.reserve(indices.size());
+
     for (size_t idx : indices) {
         sorted_by_indices.push_back(test_data[idx]);
     }

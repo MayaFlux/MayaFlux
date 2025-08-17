@@ -1,3 +1,5 @@
+#include <cstddef>
+
 #include "../test_config.h"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
@@ -97,9 +99,9 @@ TEST_F(AudioSubsystemTest, InitializationWithProcessingHandle)
     audio_subsystem = std::make_shared<Core::AudioSubsystem>(stream_info);
 
     Core::SubsystemTokens tokens = {
-        Buffers::ProcessingToken::AUDIO_BACKEND,
-        Nodes::ProcessingToken::AUDIO_RATE,
-        Vruta::ProcessingToken::SAMPLE_ACCURATE
+        .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+        .Node = Nodes::ProcessingToken::AUDIO_RATE,
+        .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
     Core::SubsystemProcessingHandle handle(
@@ -119,9 +121,9 @@ TEST_F(AudioSubsystemTest, CallbackRegistration)
     audio_subsystem = std::make_shared<Core::AudioSubsystem>(stream_info);
 
     Core::SubsystemTokens tokens = {
-        Buffers::ProcessingToken::AUDIO_BACKEND,
-        Nodes::ProcessingToken::AUDIO_RATE,
-        Vruta::ProcessingToken::SAMPLE_ACCURATE
+        .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+        .Node = Nodes::ProcessingToken::AUDIO_RATE,
+        .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
     Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
@@ -137,9 +139,9 @@ TEST_F(AudioSubsystemTest, LifecycleStateTransitions)
     audio_subsystem = std::make_shared<Core::AudioSubsystem>(stream_info);
 
     Core::SubsystemTokens tokens = {
-        Buffers::ProcessingToken::AUDIO_BACKEND,
-        Nodes::ProcessingToken::AUDIO_RATE,
-        Vruta::ProcessingToken::SAMPLE_ACCURATE
+        .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+        .Node = Nodes::ProcessingToken::AUDIO_RATE,
+        .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
     Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
@@ -181,9 +183,9 @@ TEST_F(AudioSubsystemTest, OutputProcessing)
     audio_subsystem = std::make_shared<Core::AudioSubsystem>(stream_info);
 
     Core::SubsystemTokens tokens = {
-        Buffers::ProcessingToken::AUDIO_BACKEND,
-        Nodes::ProcessingToken::AUDIO_RATE,
-        Vruta::ProcessingToken::SAMPLE_ACCURATE
+        .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+        .Node = Nodes::ProcessingToken::AUDIO_RATE,
+        .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
     Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
@@ -191,7 +193,7 @@ TEST_F(AudioSubsystemTest, OutputProcessing)
     audio_subsystem->initialize(handle);
     audio_subsystem->register_callbacks();
 
-    std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
+    std::vector<double> output_buffer(static_cast<size_t>(TestConfig::BUFFER_SIZE) * TestConfig::NUM_CHANNELS, 0.0);
 
     EXPECT_NO_THROW({
         int result = audio_subsystem->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
@@ -209,9 +211,9 @@ TEST_F(AudioSubsystemTest, InputProcessing)
     audio_subsystem = std::make_shared<Core::AudioSubsystem>(stream_info);
 
     Core::SubsystemTokens tokens = {
-        Buffers::ProcessingToken::AUDIO_BACKEND,
-        Nodes::ProcessingToken::AUDIO_RATE,
-        Vruta::ProcessingToken::SAMPLE_ACCURATE
+        .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+        .Node = Nodes::ProcessingToken::AUDIO_RATE,
+        .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
     Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
@@ -235,9 +237,9 @@ TEST_F(AudioSubsystemTest, FullDuplexProcessing)
     audio_subsystem = std::make_shared<Core::AudioSubsystem>(stream_info);
 
     Core::SubsystemTokens tokens = {
-        Buffers::ProcessingToken::AUDIO_BACKEND,
-        Nodes::ProcessingToken::AUDIO_RATE,
-        Vruta::ProcessingToken::SAMPLE_ACCURATE
+        .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+        .Node = Nodes::ProcessingToken::AUDIO_RATE,
+        .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
     Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
@@ -245,8 +247,8 @@ TEST_F(AudioSubsystemTest, FullDuplexProcessing)
     audio_subsystem->initialize(handle);
     audio_subsystem->register_callbacks();
 
-    std::vector<double> input_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS);
-    std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
+    std::vector<double> input_buffer(static_cast<size_t>(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS));
+    std::vector<double> output_buffer(static_cast<size_t>(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS), 0.0);
 
     for (size_t frame = 0; frame < TestConfig::BUFFER_SIZE; ++frame) {
         double t = static_cast<double>(frame) / TestConfig::SAMPLE_RATE;
@@ -284,9 +286,9 @@ TEST_F(AudioSubsystemTest, ProcessingWithNullBuffers)
     audio_subsystem = std::make_shared<Core::AudioSubsystem>(stream_info);
 
     Core::SubsystemTokens tokens = {
-        Buffers::ProcessingToken::AUDIO_BACKEND,
-        Nodes::ProcessingToken::AUDIO_RATE,
-        Vruta::ProcessingToken::SAMPLE_ACCURATE
+        .Buffer = Buffers::ProcessingToken::AUDIO_BACKEND,
+        .Node = Nodes::ProcessingToken::AUDIO_RATE,
+        .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
     Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
@@ -296,12 +298,12 @@ TEST_F(AudioSubsystemTest, ProcessingWithNullBuffers)
 
     // Test with null buffers - should handle gracefully
     EXPECT_NO_THROW({
-        int result = audio_subsystem->process_output(nullptr, TestConfig::BUFFER_SIZE);
+        audio_subsystem->process_output(nullptr, TestConfig::BUFFER_SIZE);
         // Result depends on implementation - focus on not crashing
     });
 
     EXPECT_NO_THROW({
-        int result = audio_subsystem->process_input(nullptr, TestConfig::BUFFER_SIZE);
+        audio_subsystem->process_input(nullptr, TestConfig::BUFFER_SIZE);
         // Result depends on implementation - focus on not crashing
     });
 }
@@ -320,7 +322,7 @@ TEST_F(AudioSubsystemTest, BackendAccessAndProperties)
     auto* device_manager = audio_subsystem->get_device_manager();
     EXPECT_NE(device_manager, nullptr);
 
-    auto* stream_manager = audio_subsystem->get_stream_manager();
+    audio_subsystem->get_stream_manager();
 
     const auto& subsystem_stream_info = audio_subsystem->get_stream_info();
     EXPECT_EQ(subsystem_stream_info.sample_rate, TestConfig::SAMPLE_RATE);
@@ -361,7 +363,7 @@ TEST_F(AudioSubsystemTest, EngineIntegration)
 
     EXPECT_NO_THROW(engine->Start());
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.3f);
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.3F);
     auto node_graph = engine->get_node_graph_manager();
 
     EXPECT_NO_THROW({

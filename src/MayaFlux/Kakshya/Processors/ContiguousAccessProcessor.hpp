@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 
-#include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
 #include "MayaFlux/Kakshya/Region.hpp"
 
 /**
@@ -32,7 +31,7 @@ namespace MayaFlux::Kakshya {
 class ContiguousAccessProcessor : public DataProcessor {
 public:
     ContiguousAccessProcessor() = default;
-    ~ContiguousAccessProcessor() = default;
+    ~ContiguousAccessProcessor() override = default;
 
     /**
      * @brief Attach the processor to a signal source container.

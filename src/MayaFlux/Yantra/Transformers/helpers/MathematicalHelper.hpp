@@ -516,7 +516,7 @@ inline void interpolate(std::span<double> input, std::vector<double>& output, u_
 
     std::ranges::transform(indices, output.begin(),
         [&input, target_size](size_t i) {
-            double pos = static_cast<double>(i) * (input.size() - 1) / (target_size - 1);
+            double pos = static_cast<double>(i) * double(input.size() - 1) / (target_size - 1);
             auto idx = static_cast<size_t>(pos);
             double frac = pos - (double)idx;
 
@@ -546,26 +546,10 @@ DataType interpolate_linear(DataType& input, size_t target_size)
 
     std::vector<double> interpolated(target_size);
 
-    auto indices = std::views::iota(size_t { 0 }, target_size);
-
-    // std::ranges::transform(indices, interpolated.begin(),
-    //     [&data_span, target_size](size_t i) {
-    //         double pos = static_cast<double>(i) * (data_span.size() - 1) / (target_size - 1);
-    //         auto idx = static_cast<size_t>(pos);
-    //         double frac = pos - (double)idx;
-
-    //         if (idx + 1 < data_span.size()) {
-    //             return data_span[idx] * (1.0 - frac) + data_span[idx + 1] * frac;
-    //         }
-
-    //         return data_span[idx];
-    //     });
-
     interpolate(data_span, std::ref(interpolated), target_size);
 
-    std::ranges::copy(interpolated, data_span.begin());
-
-    return OperationHelper::reconstruct_from_double<DataType>(interpolated, structure_info);
+    input = OperationHelper::reconstruct_from_double<DataType>(interpolated, structure_info);
+    return input;
 }
 
 /**
@@ -586,19 +570,8 @@ DataType interpolate_linear(DataType& input, size_t target_size, std::vector<dou
     }
 
     working_buffer.resize(target_size);
-    auto indices = std::views::iota(size_t { 0 }, target_size);
 
-    std::ranges::transform(indices, working_buffer.begin(),
-        [&target_data, target_size](size_t i) {
-            double pos = static_cast<double>(i) * (target_data.size() - 1) / (target_size - 1);
-            auto idx = static_cast<size_t>(pos);
-            double frac = pos - (double)idx;
-
-            if (idx + 1 < target_data.size()) {
-                return target_data[idx] * (1.0 - frac) + target_data[idx + 1] * frac;
-            }
-            return target_data[idx];
-        });
+    interpolate(target_data, working_buffer, target_size);
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
@@ -646,9 +619,8 @@ DataType interpolate_cubic(DataType& input, size_t target_size)
             return ((a * frac + b) * frac + c) * frac + d;
         });
 
-    std::ranges::copy(interpolated, data_span.begin());
-
-    return OperationHelper::reconstruct_from_double<DataType>(interpolated, structure_info);
+    input = OperationHelper::reconstruct_from_double<DataType>(interpolated, structure_info);
+    return input;
 }
 
 /**

@@ -53,23 +53,23 @@ std::vector<double> process_spectral_windows(
         auto window_data = data.subspan(start_idx,
             std::min(static_cast<size_t>(window_size), data.size() - start_idx));
 
-        Eigen::VectorXd windowed = Eigen::VectorXd::Zero(window_size);
+        Eigen::VectorXd windowed = Eigen::VectorXd::Zero(static_cast<Eigen::Index>(window_size));
         const size_t actual_size = std::min(window_data.size(), hann_window.size());
 
         for (size_t j = 0; j < actual_size; ++j) {
-            windowed(j) = window_data[j] * hann_window[j];
+            windowed(static_cast<Eigen::Index>(j)) = window_data[j] * hann_window[j];
         }
 
         Eigen::VectorXcd spectrum;
         fft.fwd(spectrum, windowed);
 
-        processor(spectrum, win);
+        std::forward<ProcessorFunc>(processor)(spectrum, win);
 
         Eigen::VectorXd result;
         fft.inv(result, spectrum);
 
-        for (size_t i = 0; i < result.size() && start_idx + i < output.size(); ++i) {
-            output[start_idx + i] += result[i];
+        for (size_t i = 0; i < static_cast<size_t>(result.size()) && start_idx + i < output.size(); ++i) {
+            output[start_idx + i] += result[static_cast<Eigen::Index>(i)];
         }
     });
 

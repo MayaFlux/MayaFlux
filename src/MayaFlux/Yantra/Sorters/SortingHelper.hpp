@@ -323,7 +323,7 @@ std::vector<Container> sort_chunked(const Container& container,
     SortingAlgorithm algorithm)
 {
     std::vector<Container> chunks;
-    using ValueType = typename Container::value_type;
+    // using ValueType = typename Container::value_type;
 
     for (size_t i = 0; i < container.size(); i += chunk_size) {
         size_t end = std::min(i + chunk_size, container.size());

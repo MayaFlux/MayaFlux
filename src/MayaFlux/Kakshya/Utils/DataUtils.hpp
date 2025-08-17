@@ -278,7 +278,7 @@ void safe_copy_typed_variant(const DataVariant& input, DataVariant& output)
 inline std::span<double> convert_variant_to_double(DataVariant& data,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    return convert_variant<double>(data);
+    return convert_variant<double>(data, strategy);
 }
 
 /**

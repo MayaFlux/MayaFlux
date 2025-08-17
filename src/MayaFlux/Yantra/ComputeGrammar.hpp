@@ -89,7 +89,7 @@ public:
     struct Rule {
         std::string name; ///< Unique identifier for this rule
         std::string description; ///< Human-readable description of what the rule does
-        ComputationContext context; ///< Computational context this rule operates in
+        ComputationContext context {}; ///< Computational context this rule operates in
         int priority = 0; ///< Execution priority (higher values evaluated first)
 
         UniversalMatcher::MatcherFunc matcher; ///< Function that determines if rule applies
@@ -262,7 +262,6 @@ public:
         int priority = 50,
         OpArgs&&... op_args)
     {
-
         Rule rule;
         rule.name = rule_name;
         rule.context = context;
@@ -270,8 +269,14 @@ public:
         rule.matcher = std::move(matcher);
         rule.target_operation_type = std::type_index(typeid(ConcreteOpType));
 
-        rule.executor = [op_parameters, op_args...](const std::any& input, const ExecutionContext& ctx) -> std::any {
-            auto operation = create_configured_operation<ConcreteOpType>(op_parameters, op_args...);
+        // Capture op_args by perfect forwarding into a tuple
+        auto captured_args = std::make_tuple(std::forward<OpArgs>(op_args)...);
+
+        rule.executor = [op_parameters, captured_args = std::move(captured_args)](const std::any& input, const ExecutionContext& ctx) -> std::any {
+            auto operation = std::apply([&op_parameters](auto&&... args) {
+                return create_configured_operation<ConcreteOpType>(op_parameters, std::forward<decltype(args)>(args)...);
+            },
+                captured_args);
 
             apply_context_parameters(operation, ctx);
 

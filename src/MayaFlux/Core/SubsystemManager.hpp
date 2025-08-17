@@ -148,7 +148,7 @@ public:
     template <typename Func>
     void execute_with_combined_tokens(
         SubsystemTokens primary_tokens,
-        SubsystemTokens secondary_tokens,
+        SubsystemTokens /*secondary_tokens*/,
         Func operation)
     {
         SubsystemTokens combined_tokens {

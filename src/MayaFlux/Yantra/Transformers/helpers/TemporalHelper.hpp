@@ -35,9 +35,7 @@ std::vector<double> process_overlap_add(const std::span<const double>& data,
     const size_t num_windows = (data.size() - window_size) / hop_size + 1;
     std::vector<double> output(data.size(), 0.0);
 
-    auto window_indices = std::views::iota(size_t { 0 }, num_windows);
-
-    std::ranges::for_each(window_indices, [&](size_t win) {
+    std::ranges::for_each(std::views::iota(size_t { 0 }, num_windows), [&](size_t win) {
         size_t start_idx = win * hop_size;
         auto window_data = data.subspan(start_idx,
             std::min(static_cast<size_t>(window_size), data.size() - start_idx));

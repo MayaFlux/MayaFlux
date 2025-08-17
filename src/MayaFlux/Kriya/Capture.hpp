@@ -1,5 +1,5 @@
 #pragma once
-#include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
+#include "MayaFlux/Kakshya/NDData.hpp"
 
 namespace MayaFlux {
 
@@ -56,7 +56,7 @@ namespace Kriya {
          * @enum CaptureMode
          * @brief Defines the data capture and retention strategy.
          */
-        enum class CaptureMode {
+        enum class CaptureMode : u_int8_t {
             TRANSIENT, ///< Single cycle capture (default) - data expires after 1 cycle
             ACCUMULATE, ///< Accumulate over multiple cycles in container
             TRIGGERED, ///< Capture only when condition met
@@ -94,7 +94,7 @@ namespace Kriya {
          * @param overlap_ratio Overlap between windows (0.0-1.0, default: 0.0)
          * @return Reference to this BufferCapture for chaining
          */
-        BufferCapture& with_window(u_int32_t window_size, float overlap_ratio = 0.0f);
+        BufferCapture& with_window(u_int32_t window_size, float overlap_ratio = 0.0F);
 
         /**
          * @brief Enable circular buffer mode with fixed size.
@@ -236,7 +236,7 @@ namespace Kriya {
          * @param overlap_ratio Overlap between windows (0.0-1.0)
          * @return Reference to this builder for chaining
          */
-        CaptureBuilder& with_window(u_int32_t window_size, float overlap_ratio = 0.0f);
+        CaptureBuilder& with_window(u_int32_t window_size, float overlap_ratio = 0.0F);
 
         /**
          * @brief Set data ready callback.

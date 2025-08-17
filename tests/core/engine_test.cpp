@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cstddef>
+
 #include "../test_config.h"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
@@ -246,7 +249,7 @@ TEST_F(EngineTest, NodeGraphIntegration)
 {
     EXPECT_NO_THROW(engine->Start());
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
 
     auto node_graph = engine->get_node_graph_manager();
     ASSERT_NE(node_graph, nullptr);
@@ -422,7 +425,7 @@ TEST_F(EngineTest, InputBufferSystemIntegration)
     EXPECT_TRUE(stream_info.input.enabled);
     EXPECT_EQ(stream_info.input.channels, 1);
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.3f);
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.3F);
     auto node_graph = test_engine->get_node_graph_manager();
     ASSERT_NE(node_graph, nullptr);
 
@@ -454,8 +457,8 @@ TEST_F(EngineTest, FullDuplexDigitalProcessingChain)
     auto audio_subsystem = subsystem_manager->get_audio_subsystem();
     ASSERT_NE(audio_subsystem, nullptr);
 
-    std::vector<double> input_data(256 * 2, 0.0);
-    std::vector<double> output_data(256 * 2, 0.0);
+    std::vector<double> input_data(static_cast<size_t>(256 * 2), 0.0);
+    std::vector<double> output_data(static_cast<size_t>(256 * 2), 0.0);
 
     for (size_t frame = 0; frame < 256; ++frame) {
         double t = static_cast<double>(frame) / 48000.0;
@@ -468,7 +471,7 @@ TEST_F(EngineTest, FullDuplexDigitalProcessingChain)
         output_data.data(),
         256));
 
-    bool has_output = std::any_of(output_data.begin(), output_data.end(),
+    std::ranges::any_of(output_data,
         [](double sample) { return std::abs(sample) > 1e-6; });
 
     // Note: In CI/test environments, actual audio processing may not occur due to
