@@ -51,17 +51,17 @@ using DataVariant = std::variant<
  * @brief Data modality types for cross-modal analysis
  */
 enum class DataModality : u_int8_t {
-    AUDIO_1D, // 1D audio signal
-    AUDIO_MULTICHANNEL, // Multi-channel audio
-    IMAGE_2D, // 2D image (grayscale or single channel)
-    IMAGE_COLOR, // 2D RGB/RGBA image
-    VIDEO_GRAYSCALE, // 3D video (time + 2D grayscale)
-    VIDEO_COLOR, // 4D video (time + 2D + color)
-    TEXTURE_2D, // 2D texture data
-    TENSOR_ND, // N-dimensional tensor
-    SPECTRAL_2D, // 2D spectral data (time + frequency)
-    VOLUMETRIC_3D, // 3D volumetric data
-    UNKNOWN
+    AUDIO_1D, ///< 1D audio signal
+    AUDIO_MULTICHANNEL, ///< Multi-channel audio
+    IMAGE_2D, ///< 2D image (grayscale or single channel)
+    IMAGE_COLOR, ///< 2D RGB/RGBA image
+    VIDEO_GRAYSCALE, ///< 3D video (time + 2D grayscale)
+    VIDEO_COLOR, ///< 4D video (time + 2D + color)
+    TEXTURE_2D, ///< 2D texture data
+    TENSOR_ND, ///< N-dimensional tensor
+    SPECTRAL_2D, ///< 2D spectral data (time + frequency)
+    VOLUMETRIC_3D, ///< 3D volumetric data
+    UNKNOWN ///< Unknown or undefined modality
 };
 
 /**
@@ -141,44 +141,96 @@ struct DataDimension {
      */
     static DataDimension spatial(u_int64_t size, char axis, u_int64_t stride = 1);
 
+    /**
+     * @brief Data container combining variants and dimensions.
+     */
     using DataModule = std::pair<std::vector<DataVariant>, std::vector<DataDimension>>;
 
+    /**
+     * @brief Create data module for a specific modality.
+     * @tparam T Data type for storage
+     * @param modality Target data modality
+     * @param shape Dimensional sizes
+     * @param default_value Initial value for elements
+     * @param layout Memory layout strategy
+     * @param strategy Organization strategy
+     * @return DataModule with appropriate structure
+     */
     template <typename T>
     DataModule create_for_modality(
         DataModality modality,
         const std::vector<u_int64_t>& shape,
         T default_value = T {},
-        MemoryLayout layout = MemoryLayout::ROW_MAJOR)
+        MemoryLayout layout = MemoryLayout::ROW_MAJOR,
+        OrganizationStrategy strategy = OrganizationStrategy::PLANAR)
     {
         auto dims = create_dimensions(modality, shape, layout);
-        auto variants = create_variants(modality, shape, default_value);
+        auto variants = create_variants(modality, shape, default_value, strategy);
 
         return { std::move(variants), std::move(dims) };
     }
 
+    /**
+     * @brief Create dimension descriptors for a data modality.
+     * @param modality Target data modality
+     * @param shape Dimensional sizes
+     * @param layout Memory layout strategy
+     * @return Vector of DataDimension objects
+     */
     static std::vector<DataDimension> create_dimensions(
         DataModality modality,
         const std::vector<u_int64_t>& shape,
         MemoryLayout layout = MemoryLayout::ROW_MAJOR);
 
+    /**
+     * @brief Create 1D audio data module.
+     * @tparam T Data type for storage
+     * @param samples Number of audio samples
+     * @param default_value Initial value for elements
+     * @return DataModule for 1D audio
+     */
     template <typename T>
     DataModule create_audio_1d(u_int64_t samples, T default_value = T {})
     {
         return create_for_modality(DataModality::AUDIO_1D, { samples }, default_value);
     }
 
+    /**
+     * @brief Create multi-channel audio data module.
+     * @tparam T Data type for storage
+     * @param samples Number of audio samples
+     * @param channels Number of audio channels
+     * @param default_value Initial value for elements
+     * @return DataModule for multi-channel audio
+     */
     template <typename T>
     DataModule create_audio_multichannel(u_int64_t samples, u_int64_t channels, T default_value = T {})
     {
         return create_for_modality(DataModality::AUDIO_MULTICHANNEL, { samples, channels }, default_value);
     }
 
+    /**
+     * @brief Create 2D image data module.
+     * @tparam T Data type for storage
+     * @param height Image height in pixels
+     * @param width Image width in pixels
+     * @param default_value Initial value for elements
+     * @return DataModule for 2D image
+     */
     template <typename T>
     DataModule create_image_2d(u_int64_t height, u_int64_t width, T default_value = T {})
     {
         return create_for_modality(DataModality::IMAGE_2D, { height, width }, default_value);
     }
 
+    /**
+     * @brief Create 2D spectral data module.
+     * @tparam T Data type for storage
+     * @param time_windows Number of time windows
+     * @param frequency_bins Number of frequency bins
+     * @param default_value Initial value for elements
+     * @return DataModule for spectral data
+     */
     template <typename T>
     DataModule create_spectral_2d(u_int64_t time_windows, u_int64_t frequency_bins, T default_value = T {})
     {
@@ -186,13 +238,25 @@ struct DataDimension {
     }
 
     /**
-     * @brief Calculate strides based on shape and memory layout.
+     * @brief Calculate memory strides based on shape and layout.
+     * @param shape Dimensional sizes
+     * @param layout Memory layout strategy
+     * @return Vector of stride values for each dimension
      */
-    static std::vector<uint64_t> calculate_strides(
-        const std::vector<uint64_t>& shape,
+    static std::vector<u_int64_t> calculate_strides(
+        const std::vector<u_int64_t>& shape,
         MemoryLayout layout);
 
 private:
+    /**
+     * @brief Create data variants for a specific modality.
+     * @tparam T Data type for storage
+     * @param modality Target data modality
+     * @param shape Dimensional sizes
+     * @param default_value Initial value for elements
+     * @param org Organization strategy
+     * @return Vector of DataVariant objects
+     */
     template <typename T>
     static std::vector<DataVariant> create_variants(
         DataModality modality,
@@ -283,4 +347,5 @@ private:
         return variants;
     }
 };
-}
+
+} // namespace MayaFlux::Kakshya

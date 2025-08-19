@@ -38,35 +38,102 @@ struct ContainerConvention {
     MemoryLayout memory_layout = MemoryLayout::ROW_MAJOR;
     OrganizationStrategy organization = OrganizationStrategy::PLANAR;
 
+    /**
+     * @brief Construct a container convention with specified parameters.
+     * @param mod Data modality type
+     * @param org Organization strategy (default: PLANAR)
+     * @param layout Memory layout (default: ROW_MAJOR)
+     */
     ContainerConvention(DataModality mod,
         OrganizationStrategy org = OrganizationStrategy::PLANAR,
         MemoryLayout layout = MemoryLayout::ROW_MAJOR);
 
+    /**
+     * @brief Get the expected dimension roles for this convention's modality.
+     * @return Vector of dimension roles in order
+     */
     [[nodiscard]] std::vector<DataDimension::Role> get_expected_dimension_roles() const;
 
+    /**
+     * @brief Create convention for planar audio data.
+     * @return ContainerConvention configured for planar audio
+     */
     static ContainerConvention audio_planar();
 
+    /**
+     * @brief Create convention for interleaved audio data.
+     * @return ContainerConvention configured for interleaved audio
+     */
     static ContainerConvention audio_interleaved();
 
+    /**
+     * @brief Create convention for planar image data.
+     * @return ContainerConvention configured for planar images
+     */
     static ContainerConvention image_planar();
 
+    /**
+     * @brief Create convention for interleaved image data.
+     * @return ContainerConvention configured for interleaved images
+     */
     static ContainerConvention image_interleaved();
 
+    /**
+     * @brief Calculate expected number of data variants for given dimensions.
+     * @param dimensions Vector of dimension descriptors
+     * @return Expected number of DataVariant objects needed
+     */
     [[nodiscard]] size_t get_expected_variant_count(const std::vector<DataDimension>& dimensions) const;
 
+    /**
+     * @brief Validate that dimensions match this convention's expectations.
+     * @param dimensions Vector of dimension descriptors to validate
+     * @return true if dimensions are valid for this convention
+     */
     [[nodiscard]] bool validate_dimensions(const std::vector<DataDimension>& dimensions) const;
 
+    /**
+     * @brief Find the index of a dimension with the specified role.
+     * @param dimensions Vector of dimension descriptors to search
+     * @param role Dimension role to find
+     * @return Index of the dimension with the specified role
+     */
     [[nodiscard]] size_t get_dimension_index_for_role(const std::vector<DataDimension>& dimensions,
         DataDimension::Role role) const;
 
+    /**
+     * @brief Extract sample count from dimensions.
+     * @param dimensions Vector of dimension descriptors
+     * @return Number of samples in the temporal dimension
+     */
     [[nodiscard]] static u_int64_t get_samples_count(const std::vector<DataDimension>& dimensions);
 
+    /**
+     * @brief Extract channel count from dimensions.
+     * @param dimensions Vector of dimension descriptors
+     * @return Number of channels
+     */
     [[nodiscard]] static u_int64_t get_channel_count(const std::vector<DataDimension>& dimensions);
 
+    /**
+     * @brief Extract height from image/video dimensions.
+     * @param dimensions Vector of dimension descriptors
+     * @return Height in pixels
+     */
     [[nodiscard]] static u_int64_t get_height(const std::vector<DataDimension>& dimensions);
 
+    /**
+     * @brief Extract width from image/video dimensions.
+     * @param dimensions Vector of dimension descriptors
+     * @return Width in pixels
+     */
     [[nodiscard]] static u_int64_t get_width(const std::vector<DataDimension>& dimensions);
 
+    /**
+     * @brief Extract frame count from video dimensions.
+     * @param dimensions Vector of dimension descriptors
+     * @return Number of frames
+     */
     [[nodiscard]] static size_t get_frame_count(const std::vector<DataDimension>& dimensions);
 };
 

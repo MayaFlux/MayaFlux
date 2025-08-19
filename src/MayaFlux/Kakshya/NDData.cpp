@@ -130,18 +130,26 @@ std::vector<u_int64_t> DataDimension::calculate_strides(
     const std::vector<u_int64_t>& shape,
     MemoryLayout layout)
 {
+    if (shape.empty())
+        return {};
+
     std::vector<u_int64_t> strides(shape.size());
 
     if (layout == MemoryLayout::ROW_MAJOR) {
-        strides.back() = 1;
-        for (size_t i = shape.size() - 2; i >= 0; --i) {
-            strides[i] = strides[i + 1] * shape[i + 1];
-        }
+        auto reversed_shape = shape | std::views::reverse;
+        std::exclusive_scan(
+            reversed_shape.begin(),
+            reversed_shape.end(),
+            strides.rbegin(),
+            1U,
+            std::multiplies<u_int64_t> {});
     } else {
-        strides[0] = 1;
-        for (size_t i = 1; i < shape.size(); ++i) {
-            strides[i] = strides[i - 1] * shape[i - 1];
-        }
+        std::exclusive_scan(
+            shape.begin(),
+            shape.end(),
+            strides.begin(),
+            1U,
+            std::multiplies<u_int64_t> {});
     }
 
     return strides;
