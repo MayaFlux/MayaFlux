@@ -36,14 +36,6 @@ struct ContainerConvention {
 
     DataModality modality;
     MemoryLayout memory_layout = MemoryLayout::ROW_MAJOR;
-
-    enum class OrganizationStrategy : uint8_t {
-        INTERLEAVED, // Single DataVariant with interleaved data
-        PLANAR, // Separate DataVariant per logical unit (channel, frame, etc.)
-        HYBRID, // Mixed approach based on access patterns
-        USER_DEFINED // Custom organization
-    };
-
     OrganizationStrategy organization = OrganizationStrategy::PLANAR;
 
     ContainerConvention(DataModality mod,

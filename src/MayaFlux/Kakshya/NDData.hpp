@@ -18,6 +18,18 @@ enum class MemoryLayout : u_int8_t {
 };
 
 /**
+ * @brief Data organization strategy for multi-channel/multi-frame data.
+ *
+ * Determines how logical units (channels, frames) are stored in memory.
+ */
+enum class OrganizationStrategy : u_int8_t {
+    INTERLEAVED, ///< Single DataVariant with interleaved data (LRLRLR for stereo)
+    PLANAR, ///< Separate DataVariant per logical unit (LLL...RRR for stereo)
+    HYBRID, ///< Mixed approach based on access patterns
+    USER_DEFINED ///< Custom organization
+};
+
+/**
  * @brief Multi-type data storage for different precision needs.
  *
  * DataVariant enables containers to store and expose data in the most
@@ -132,15 +144,22 @@ struct DataDimension {
     using DataModule = std::pair<std::vector<DataVariant>, std::vector<DataDimension>>;
 
     template <typename T>
-    DataModule create_for_modality(DataModality modality, const std::vector<u_int64_t>& shape, T default_value = T {})
+    DataModule create_for_modality(
+        DataModality modality,
+        const std::vector<u_int64_t>& shape,
+        T default_value = T {},
+        MemoryLayout layout = MemoryLayout::ROW_MAJOR)
     {
-        auto dims = create_dimensions_for_modality(modality, shape);
-        auto variants = create_variants_for_modality(modality, shape, default_value);
+        auto dims = create_dimensions(modality, shape, layout);
+        auto variants = create_variants(modality, shape, default_value);
 
         return { std::move(variants), std::move(dims) };
     }
 
-    static std::vector<DataDimension> create_dimensions_for_modality(DataModality modality, const std::vector<u_int64_t>& shape);
+    static std::vector<DataDimension> create_dimensions(
+        DataModality modality,
+        const std::vector<u_int64_t>& shape,
+        MemoryLayout layout = MemoryLayout::ROW_MAJOR);
 
     template <typename T>
     DataModule create_audio_1d(u_int64_t samples, T default_value = T {})
@@ -166,69 +185,78 @@ struct DataDimension {
         return create_for_modality(DataModality::SPECTRAL_2D, { time_windows, frequency_bins }, default_value);
     }
 
+    /**
+     * @brief Calculate strides based on shape and memory layout.
+     */
+    static std::vector<uint64_t> calculate_strides(
+        const std::vector<uint64_t>& shape,
+        MemoryLayout layout);
+
 private:
     template <typename T>
-    static std::vector<DataVariant> create_variants_for_modality(
+    static std::vector<DataVariant> create_variants(
         DataModality modality,
         const std::vector<u_int64_t>& shape,
-        T default_value)
+        T default_value,
+        OrganizationStrategy org = OrganizationStrategy::PLANAR)
     {
+        std::vector<DataVariant> variants;
+
+        if (org == OrganizationStrategy::INTERLEAVED) {
+            u_int64_t total = std::accumulate(shape.begin(), shape.end(), u_int64_t(1), std::multiplies<>());
+            variants.emplace_back(std::vector<T>(total, default_value));
+            return variants;
+        }
+
         switch (modality) {
         case DataModality::AUDIO_1D:
-            return { DataVariant { std::vector<T>(shape[0], default_value) } };
+            variants.emplace_back(std::vector<T>(shape[0], default_value));
+            break;
 
         case DataModality::AUDIO_MULTICHANNEL: {
-            std::vector<DataVariant> variants;
             u_int64_t samples = shape[0];
             u_int64_t channels = shape[1];
-
             variants.reserve(channels);
             for (u_int64_t ch = 0; ch < channels; ++ch) {
-                variants.emplace_back(DataVariant { std::vector<T>(samples, default_value) });
+                variants.emplace_back(std::vector<T>(samples, default_value));
             }
-            return variants;
-
-            // Alternative: Single interleaved variant
-            // return {DataVariant{std::vector<T>(samples * channels, default_value)}};
+            break;
         }
 
         case DataModality::IMAGE_2D:
-            return { DataVariant { std::vector<T>(shape[0] * shape[1], default_value) } };
+            variants.emplace_back(std::vector<T>(shape[0] * shape[1], default_value));
+            break;
 
         case DataModality::IMAGE_COLOR: {
             u_int64_t height = shape[0];
             u_int64_t width = shape[1];
             u_int64_t channels = shape[2];
-
-            std::vector<DataVariant> variants;
+            u_int64_t pixels = height * width;
             variants.reserve(channels);
             for (u_int64_t ch = 0; ch < channels; ++ch) {
-                variants.emplace_back(DataVariant { std::vector<T>(height * width, default_value) });
+                variants.emplace_back(std::vector<T>(pixels, default_value));
             }
-            return variants;
-
-            // Alternative: Single interleaved variant
-            // return {DataVariant{std::vector<T>(height * width * channels, default_value)}};
+            break;
         }
 
         case DataModality::SPECTRAL_2D:
-            return { DataVariant { std::vector<T>(shape[0] * shape[1], default_value) } };
+            variants.emplace_back(std::vector<T>(shape[0] * shape[1], default_value));
+            break;
+
+        case DataModality::VOLUMETRIC_3D:
+            variants.emplace_back(std::vector<T>(shape[0] * shape[1] * shape[2], default_value));
+            break;
 
         case DataModality::VIDEO_GRAYSCALE: {
             u_int64_t frames = shape[0];
             u_int64_t height = shape[1];
             u_int64_t width = shape[2];
-
-            std::vector<DataVariant> variants;
+            u_int64_t frame_size = height * width;
             variants.reserve(frames);
-
             for (u_int64_t f = 0; f < frames; ++f) {
-                variants.emplace_back(DataVariant { std::vector<T>(height * width, default_value) });
+                variants.emplace_back(std::vector<T>(frame_size, default_value));
             }
-            return variants;
-
-            // Alternative: Single sequential variant
-            // return {DataVariant{std::vector<T>(frames * height * width, default_value)}};
+            break;
         }
 
         case DataModality::VIDEO_COLOR: {
@@ -236,21 +264,23 @@ private:
             u_int64_t height = shape[1];
             u_int64_t width = shape[2];
             u_int64_t channels = shape[3];
-
-            std::vector<DataVariant> variants;
+            u_int64_t frame_size = height * width;
+            variants.reserve(frames * channels);
             for (u_int64_t f = 0; f < frames; ++f) {
                 for (u_int64_t ch = 0; ch < channels; ++ch) {
-                    variants.emplace_back(DataVariant { std::vector<T>(height * width, default_value) });
+                    variants.emplace_back(std::vector<T>(frame_size, default_value));
                 }
             }
-            return variants;
-
-            // Many other organizations possible...
+            break;
         }
 
         default:
-            return { DataVariant { std::vector<T>(1, default_value) } };
+            u_int64_t total = std::accumulate(shape.begin(), shape.end(), u_int64_t(1), std::multiplies<>());
+            variants.emplace_back(std::vector<T>(total, default_value));
+            break;
         }
+
+        return variants;
     }
 };
 }

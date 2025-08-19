@@ -41,86 +41,110 @@ DataDimension DataDimension::spatial(u_int64_t size, char axis, u_int64_t stride
     return { std::string("spatial_") + axis, size, stride, r };
 }
 
-std::vector<DataDimension> DataDimension::create_dimensions_for_modality(DataModality modality, const std::vector<u_int64_t>& shape)
+std::vector<DataDimension> DataDimension::create_dimensions(
+    DataModality modality,
+    const std::vector<u_int64_t>& shape,
+    MemoryLayout layout)
 {
+    std::vector<DataDimension> dims;
+    auto strides = calculate_strides(shape, layout);
+
     switch (modality) {
     case DataModality::AUDIO_1D:
         if (shape.size() != 1) {
             throw std::invalid_argument("AUDIO_1D requires 1D shape");
         }
-        return { DataDimension::time(shape[0]) };
+        dims.push_back(DataDimension::time(shape[0]));
+        break;
 
     case DataModality::AUDIO_MULTICHANNEL:
         if (shape.size() != 2) {
             throw std::invalid_argument("AUDIO_MULTICHANNEL requires 2D shape [samples, channels]");
         }
-        return {
-            DataDimension::time(shape[0]),
-            DataDimension::channel(shape[1])
-        };
+        dims.push_back(DataDimension::time(shape[0]));
+        dims.push_back(DataDimension::channel(shape[1], strides[1]));
+        break;
 
     case DataModality::IMAGE_2D:
         if (shape.size() != 2) {
             throw std::invalid_argument("IMAGE_2D requires 2D shape [height, width]");
         }
-        return {
-            DataDimension::spatial(shape[0], 'y'), // height
-            DataDimension::spatial(shape[1], 'x') // width
-        };
+        dims.push_back(DataDimension::spatial(shape[0], 'y', strides[0]));
+        dims.push_back(DataDimension::spatial(shape[1], 'x', strides[1]));
+        break;
 
     case DataModality::IMAGE_COLOR:
         if (shape.size() != 3) {
             throw std::invalid_argument("IMAGE_COLOR requires 3D shape [height, width, channels]");
         }
-        return {
-            DataDimension::spatial(shape[0], 'y'),
-            DataDimension::spatial(shape[1], 'x'),
-            DataDimension::channel(shape[2])
-        };
+        dims.push_back(DataDimension::spatial(shape[0], 'y', strides[0]));
+        dims.push_back(DataDimension::spatial(shape[1], 'x', strides[1]));
+        dims.push_back(DataDimension::channel(shape[2], strides[2]));
+        break;
 
     case DataModality::SPECTRAL_2D:
         if (shape.size() != 2) {
             throw std::invalid_argument("SPECTRAL_2D requires 2D shape [time_windows, frequency_bins]");
         }
-        return {
-            DataDimension::time(shape[0], "time_windows"),
-            DataDimension::frequency(shape[1])
-        };
+        dims.push_back(DataDimension::time(shape[0], "time_windows"));
+        dims.push_back(DataDimension::frequency(shape[1]));
+        dims[1].stride = strides[1];
+        break;
 
     case DataModality::VOLUMETRIC_3D:
         if (shape.size() != 3) {
             throw std::invalid_argument("VOLUMETRIC_3D requires 3D shape [x, y, z]");
         }
-        return {
-            DataDimension::spatial(shape[0], 'x'),
-            DataDimension::spatial(shape[1], 'y'),
-            DataDimension::spatial(shape[2], 'z')
-        };
+        dims.push_back(DataDimension::spatial(shape[0], 'x', strides[0]));
+        dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
+        dims.push_back(DataDimension::spatial(shape[2], 'z', strides[2]));
+        break;
 
     case DataModality::VIDEO_GRAYSCALE:
         if (shape.size() != 3) {
             throw std::invalid_argument("VIDEO_GRAYSCALE requires 3D shape [frames, height, width]");
         }
-        return {
-            DataDimension::time(shape[0], "frames"),
-            DataDimension::spatial(shape[1], 'y'),
-            DataDimension::spatial(shape[2], 'x')
-        };
+        dims.push_back(DataDimension::time(shape[0], "frames"));
+        dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
+        dims.push_back(DataDimension::spatial(shape[2], 'x', strides[2]));
+        break;
 
     case DataModality::VIDEO_COLOR:
         if (shape.size() != 4) {
             throw std::invalid_argument("VIDEO_COLOR requires 4D shape [frames, height, width, channels]");
         }
-        return {
-            DataDimension::time(shape[0], "frames"),
-            DataDimension::spatial(shape[1], 'y'),
-            DataDimension::spatial(shape[2], 'x'),
-            DataDimension::channel(shape[3])
-        };
+        dims.push_back(DataDimension::time(shape[0], "frames"));
+        dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
+        dims.push_back(DataDimension::spatial(shape[2], 'x', strides[2]));
+        dims.push_back(DataDimension::channel(shape[3], strides[3]));
+        break;
 
     default:
         throw std::invalid_argument("Unsupported modality for dimension creation");
     }
+
+    return dims;
+}
+
+std::vector<u_int64_t> DataDimension::calculate_strides(
+    const std::vector<u_int64_t>& shape,
+    MemoryLayout layout)
+{
+    std::vector<u_int64_t> strides(shape.size());
+
+    if (layout == MemoryLayout::ROW_MAJOR) {
+        strides.back() = 1;
+        for (size_t i = shape.size() - 2; i >= 0; --i) {
+            strides[i] = strides[i + 1] * shape[i + 1];
+        }
+    } else {
+        strides[0] = 1;
+        for (size_t i = 1; i < shape.size(); ++i) {
+            strides[i] = strides[i - 1] * shape[i - 1];
+        }
+    }
+
+    return strides;
 }
 
 }
