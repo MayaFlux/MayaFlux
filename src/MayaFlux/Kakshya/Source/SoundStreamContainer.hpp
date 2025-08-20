@@ -39,108 +39,112 @@ public:
 
     ~SoundStreamContainer() = default;
 
-    virtual std::vector<DataDimension> get_dimensions() const override;
-    virtual u_int64_t get_total_elements() const override;
-    virtual MemoryLayout get_memory_layout() const override { return m_memory_layout; }
-    virtual void set_memory_layout(MemoryLayout layout) override;
+    std::vector<DataDimension> get_dimensions() const override;
+    u_int64_t get_total_elements() const override;
+    MemoryLayout get_memory_layout() const override { return m_memory_layout; }
+    void set_memory_layout(MemoryLayout layout) override;
 
-    virtual u_int64_t get_frame_size() const override;
-    virtual u_int64_t get_num_frames() const override;
+    u_int64_t get_frame_size() const override;
+    u_int64_t get_num_frames() const override;
 
-    virtual DataVariant get_region_data(const Region& region) const override;
-    virtual void set_region_data(const Region& region, const DataVariant& data) override;
+    DataVariant get_region_data(const Region& region) const override;
+    void set_region_data(const Region& region, const DataVariant& data) override;
 
-    virtual std::span<const double> get_frame(u_int64_t frame_index) const override;
-    virtual void get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const override;
+    std::span<const double> get_frame(u_int64_t frame_index) const override;
+    void get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const override;
 
-    virtual double get_value_at(const std::vector<u_int64_t>& coordinates) const override;
-    virtual void set_value_at(const std::vector<u_int64_t>& coordinates, double value) override;
+    double get_value_at(const std::vector<u_int64_t>& coordinates) const override;
+    void set_value_at(const std::vector<u_int64_t>& coordinates, double value) override;
 
-    virtual u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const override;
-    virtual std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t linear_index) const override;
+    u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const override;
+    std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t linear_index) const override;
 
-    virtual void clear() override;
-    virtual void lock() override { m_data_mutex.lock(); }
-    virtual void unlock() override { m_data_mutex.unlock(); }
-    virtual bool try_lock() override { return m_data_mutex.try_lock(); }
+    void clear() override;
+    void lock() override { m_data_mutex.lock(); }
+    void unlock() override { m_data_mutex.unlock(); }
+    bool try_lock() override { return m_data_mutex.try_lock(); }
 
-    virtual const void* get_raw_data() const override;
-    virtual bool has_data() const override;
+    const void* get_raw_data() const override;
+    bool has_data() const override;
 
-    virtual void add_region_group(const RegionGroup& group) override;
-    virtual const RegionGroup& get_region_group(const std::string& name) const override;
-    virtual std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
-    virtual void remove_region_group(const std::string& name) override;
+    inline const ContainerDataStructure& get_structure() const override { return m_structure; }
 
-    virtual bool is_region_loaded(const Region& region) const override;
-    virtual void load_region(const Region& region) override;
-    virtual void unload_region(const Region& region) override;
+    inline void set_structure(ContainerDataStructure structure) override { m_structure = structure; }
 
-    virtual void set_read_position(u_int64_t position) override;
-    virtual u_int64_t get_read_position() const override;
-    virtual void advance_read_position(u_int64_t frames) override;
-    virtual bool is_at_end() const override;
-    virtual void reset_read_position() override;
+    void add_region_group(const RegionGroup& group) override;
+    const RegionGroup& get_region_group(const std::string& name) const override;
+    std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
+    void remove_region_group(const std::string& name) override;
 
-    virtual u_int64_t get_temporal_rate() const override { return m_sample_rate; }
-    virtual u_int64_t time_to_position(double time) const override;
-    virtual double position_to_time(u_int64_t position) const override;
+    bool is_region_loaded(const Region& region) const override;
+    void load_region(const Region& region) override;
+    void unload_region(const Region& region) override;
 
-    virtual void set_looping(bool enable) override;
-    virtual bool is_looping() const override { return m_looping_enabled; }
-    virtual void set_loop_region(const Region& region) override;
-    virtual Region get_loop_region() const override;
+    void set_read_position(u_int64_t position) override;
+    u_int64_t get_read_position() const override;
+    void advance_read_position(u_int64_t frames) override;
+    bool is_at_end() const override;
+    void reset_read_position() override;
 
-    virtual bool is_ready() const override;
-    virtual u_int64_t get_remaining_frames() const override;
-    virtual u_int64_t read_sequential(std::span<double> output, u_int64_t count) override;
-    virtual u_int64_t peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset = 0) const override;
+    u_int64_t get_temporal_rate() const override { return m_sample_rate; }
+    u_int64_t time_to_position(double time) const override;
+    double position_to_time(u_int64_t position) const override;
 
-    virtual ProcessingState get_processing_state() const override { return m_processing_state.load(); }
-    virtual void update_processing_state(ProcessingState new_state) override;
+    void set_looping(bool enable) override;
+    bool is_looping() const override { return m_looping_enabled; }
+    void set_loop_region(const Region& region) override;
+    Region get_loop_region() const override;
 
-    virtual void register_state_change_callback(
+    bool is_ready() const override;
+    u_int64_t get_remaining_frames() const override;
+    u_int64_t read_sequential(std::span<double> output, u_int64_t count) override;
+    u_int64_t peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset = 0) const override;
+
+    ProcessingState get_processing_state() const override { return m_processing_state.load(); }
+    void update_processing_state(ProcessingState new_state) override;
+
+    void register_state_change_callback(
         std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> callback) override
     {
         std::lock_guard<std::mutex> lock(m_state_mutex);
         m_state_callback = callback;
     }
 
-    virtual void unregister_state_change_callback() override
+    void unregister_state_change_callback() override
     {
         std::lock_guard<std::mutex> lock(m_state_mutex);
         m_state_callback = nullptr;
     }
 
-    virtual bool is_ready_for_processing() const override;
-    virtual void mark_ready_for_processing(bool ready) override;
+    bool is_ready_for_processing() const override;
+    void mark_ready_for_processing(bool ready) override;
 
-    virtual void create_default_processor() override;
-    virtual void process_default() override;
+    void create_default_processor() override;
+    void process_default() override;
 
-    virtual void set_default_processor(std::shared_ptr<DataProcessor> processor) override;
-    virtual std::shared_ptr<DataProcessor> get_default_processor() const override;
+    void set_default_processor(std::shared_ptr<DataProcessor> processor) override;
+    std::shared_ptr<DataProcessor> get_default_processor() const override;
 
-    virtual std::shared_ptr<DataProcessingChain> get_processing_chain() override { return m_processing_chain; }
-    virtual void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) override { m_processing_chain = chain; }
+    std::shared_ptr<DataProcessingChain> get_processing_chain() override { return m_processing_chain; }
+    void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) override { m_processing_chain = chain; }
 
-    virtual u_int32_t register_dimension_reader(u_int32_t dimension_index) override;
-    virtual void unregister_dimension_reader(u_int32_t dimension_index) override;
-    virtual bool has_active_readers() const override;
-    virtual void mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id) override;
-    virtual bool all_dimensions_consumed() const override;
+    u_int32_t register_dimension_reader(u_int32_t dimension_index) override;
+    void unregister_dimension_reader(u_int32_t dimension_index) override;
+    bool has_active_readers() const override;
+    void mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id) override;
+    bool all_dimensions_consumed() const override;
 
     virtual void clear_all_consumption();
 
-    virtual DataVariant&
+    DataVariant&
     get_processed_data() override
     {
         return m_processed_data;
     }
-    virtual const DataVariant& get_processed_data() const override { return m_processed_data; }
+    const DataVariant& get_processed_data() const override { return m_processed_data; }
 
-    virtual void mark_buffers_for_processing(bool) override { /* Delegate to buffer integration */ }
-    virtual void mark_buffers_for_removal() override { /* Delegate to buffer integration */ }
+    void mark_buffers_for_processing(bool) override { /* Delegate to buffer integration */ }
+    void mark_buffers_for_removal() override { /* Delegate to buffer integration */ }
 
     // void ensure_capacity(u_int64_t required_frames);
     // u_int64_t get_capacity() const;
@@ -235,6 +239,8 @@ protected:
 
     mutable std::atomic<bool> m_double_extraction_dirty { true };
     mutable std::mutex m_extraction_mutex; // Only for cache updates, not reads
+
+    ContainerDataStructure m_structure;
 };
 
 } // namespace MayaFlux::Kakshya

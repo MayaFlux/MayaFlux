@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Kakshya {
 
-ContainerConvention::ContainerConvention(DataModality mod,
+ContainerDataStructure::ContainerDataStructure(DataModality mod,
     OrganizationStrategy org,
     MemoryLayout layout)
     : modality(mod)
@@ -11,7 +11,7 @@ ContainerConvention::ContainerConvention(DataModality mod,
 {
 }
 
-std::vector<DataDimension::Role> ContainerConvention::get_expected_dimension_roles() const
+std::vector<DataDimension::Role> ContainerDataStructure::get_expected_dimension_roles() const
 {
     switch (modality) {
     case DataModality::AUDIO_1D:
@@ -45,27 +45,27 @@ std::vector<DataDimension::Role> ContainerConvention::get_expected_dimension_rol
     }
 }
 
-ContainerConvention ContainerConvention::audio_planar()
+ContainerDataStructure ContainerDataStructure::audio_planar()
 {
     return { DataModality::AUDIO_MULTICHANNEL, OrganizationStrategy::PLANAR };
 }
 
-ContainerConvention ContainerConvention::audio_interleaved()
+ContainerDataStructure ContainerDataStructure::audio_interleaved()
 {
     return { DataModality::AUDIO_MULTICHANNEL, OrganizationStrategy::INTERLEAVED };
 }
 
-ContainerConvention ContainerConvention::image_planar()
+ContainerDataStructure ContainerDataStructure::image_planar()
 {
     return { DataModality::IMAGE_COLOR, OrganizationStrategy::PLANAR };
 }
 
-ContainerConvention ContainerConvention::image_interleaved()
+ContainerDataStructure ContainerDataStructure::image_interleaved()
 {
     return { DataModality::IMAGE_COLOR, OrganizationStrategy::INTERLEAVED };
 }
 
-size_t ContainerConvention::get_expected_variant_count(const std::vector<DataDimension>& dimensions) const
+size_t ContainerDataStructure::get_expected_variant_count(const std::vector<DataDimension>& dimensions) const
 {
     if (organization == OrganizationStrategy::INTERLEAVED) {
         return 1;
@@ -84,7 +84,7 @@ size_t ContainerConvention::get_expected_variant_count(const std::vector<DataDim
     }
 }
 
-bool ContainerConvention::validate_dimensions(const std::vector<DataDimension>& dimensions) const
+bool ContainerDataStructure::validate_dimensions(const std::vector<DataDimension>& dimensions) const
 {
     auto expected_roles = get_expected_dimension_roles();
 
@@ -105,7 +105,7 @@ bool ContainerConvention::validate_dimensions(const std::vector<DataDimension>& 
     return true;
 }
 
-size_t ContainerConvention::get_dimension_index_for_role(const std::vector<DataDimension>& dimensions,
+size_t ContainerDataStructure::get_dimension_index_for_role(const std::vector<DataDimension>& dimensions,
     DataDimension::Role role) const
 {
     auto expected_roles = get_expected_dimension_roles();
@@ -124,7 +124,7 @@ size_t ContainerConvention::get_dimension_index_for_role(const std::vector<DataD
     return SIZE_MAX;
 }
 
-size_t ContainerConvention::get_channel_count(const std::vector<DataDimension>& dimensions)
+size_t ContainerDataStructure::get_channel_count(const std::vector<DataDimension>& dimensions)
 {
     for (const auto& dim : dimensions) {
         if (dim.role == DataDimension::Role::CHANNEL) {
@@ -134,7 +134,7 @@ size_t ContainerConvention::get_channel_count(const std::vector<DataDimension>& 
     return 1;
 }
 
-size_t ContainerConvention::get_frame_count(const std::vector<DataDimension>& dimensions)
+size_t ContainerDataStructure::get_frame_count(const std::vector<DataDimension>& dimensions)
 {
     for (const auto& dim : dimensions) {
         if (dim.role == DataDimension::Role::TIME) {
@@ -144,7 +144,7 @@ size_t ContainerConvention::get_frame_count(const std::vector<DataDimension>& di
     return 1;
 }
 
-u_int64_t ContainerConvention::get_samples_count(const std::vector<DataDimension>& dimensions)
+u_int64_t ContainerDataStructure::get_samples_count(const std::vector<DataDimension>& dimensions)
 {
     for (const auto& dim : dimensions) {
         if (dim.role == DataDimension::Role::TIME) {
@@ -154,7 +154,7 @@ u_int64_t ContainerConvention::get_samples_count(const std::vector<DataDimension
     return 0;
 }
 
-u_int64_t ContainerConvention::get_height(const std::vector<DataDimension>& dimensions)
+u_int64_t ContainerDataStructure::get_height(const std::vector<DataDimension>& dimensions)
 {
     for (const auto& dim : dimensions) {
         if (dim.role == DataDimension::Role::SPATIAL_Y) {
@@ -164,7 +164,7 @@ u_int64_t ContainerConvention::get_height(const std::vector<DataDimension>& dime
     return 0;
 }
 
-u_int64_t ContainerConvention::get_width(const std::vector<DataDimension>& dimensions)
+u_int64_t ContainerDataStructure::get_width(const std::vector<DataDimension>& dimensions)
 {
     for (const auto& dim : dimensions) {
         if (dim.role == DataDimension::Role::SPATIAL_X) {
