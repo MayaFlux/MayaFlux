@@ -37,7 +37,7 @@ public:
         u_int64_t initial_capacity = 0,
         bool circular_mode = false);
 
-    ~SoundStreamContainer() = default;
+    ~SoundStreamContainer() override = default;
 
     std::vector<DataDimension> get_dimensions() const override;
     u_int64_t get_total_elements() const override;
@@ -184,22 +184,18 @@ public:
     std::span<const double> get_data_as_double() const;
 
 protected:
-    // ===== Core Data =====
-    DataVariant m_data; // Raw audio data
-    DataVariant m_processed_data; // Processed data output
+    DataVariant m_data;
+    DataVariant m_processed_data;
 
     std::atomic<int> m_processing_token_channel { -1 };
 
-    // ===== Dimensions =====
     std::vector<DataDimension> m_dimensions;
     MemoryLayout m_memory_layout = MemoryLayout::ROW_MAJOR;
 
-    // ===== Audio Properties =====
     u_int32_t m_sample_rate = 48000;
     u_int32_t m_num_channels = 0;
     u_int64_t m_num_frames = 0;
 
-    // ===== Stream State =====
     std::atomic<u_int64_t> m_read_position { 0 };
     bool m_looping_enabled = false;
     Region m_loop_region;
@@ -207,30 +203,24 @@ protected:
     bool m_circular_mode = false;
     u_int64_t m_circular_write_position = 0;
 
-    // ===== Processing State =====
     std::atomic<ProcessingState> m_processing_state { ProcessingState::IDLE };
     std::shared_ptr<DataProcessor> m_default_processor;
     std::shared_ptr<DataProcessingChain> m_processing_chain;
 
-    // ===== Region Management =====
     std::unordered_map<std::string, RegionGroup> m_region_groups;
 
-    // ===== Reader Tracking =====
     std::unordered_map<u_int32_t, int> m_active_readers;
     std::unordered_set<u_int32_t> m_consumed_dimensions;
 
     std::unordered_map<u_int32_t, std::unordered_set<u_int32_t>> m_reader_consumed_dimensions;
     std::unordered_map<u_int32_t, u_int32_t> m_dimension_to_next_reader_id;
 
-    // ===== Callbacks =====
     std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_callback;
 
-    // ===== Thread Safety =====
     mutable std::shared_mutex m_data_mutex;
     mutable std::mutex m_state_mutex;
     mutable std::mutex m_reader_mutex;
 
-    // ===== Helper Methods =====
     void setup_dimensions();
     void notify_state_change(ProcessingState new_state);
     void reorganize_data_layout(MemoryLayout new_layout);
@@ -238,7 +228,7 @@ protected:
     mutable std::vector<double> m_cached_ext_buffer;
 
     mutable std::atomic<bool> m_double_extraction_dirty { true };
-    mutable std::mutex m_extraction_mutex; // Only for cache updates, not reads
+    mutable std::mutex m_extraction_mutex;
 
     ContainerDataStructure m_structure;
 };

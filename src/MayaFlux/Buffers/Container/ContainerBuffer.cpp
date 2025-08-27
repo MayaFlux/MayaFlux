@@ -1,6 +1,5 @@
 #include "ContainerBuffer.hpp"
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
-#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 

@@ -74,13 +74,39 @@ size_t ContainerDataStructure::get_expected_variant_count(const std::vector<Data
     switch (modality) {
     case DataModality::AUDIO_MULTICHANNEL:
     case DataModality::IMAGE_COLOR:
-        return get_channel_count(dimensions);
-
     case DataModality::VIDEO_COLOR:
-        return get_frame_count(dimensions) * get_channel_count(dimensions);
+        return get_channel_count(dimensions);
+        // return get_frame_count(dimensions) * get_channel_count(dimensions);
 
     default:
         return 1;
+    }
+}
+
+u_int64_t ContainerDataStructure::get_variant_size(const std::vector<DataDimension>& dimensions,
+    DataModality modality, OrganizationStrategy organization, size_t /*variant_index*/)
+{
+    switch (organization) {
+    case OrganizationStrategy::INTERLEAVED:
+        return get_total_elements(dimensions);
+
+    case OrganizationStrategy::PLANAR:
+        switch (modality) {
+        case DataModality::AUDIO_MULTICHANNEL:
+            return get_samples_count_per_channel(dimensions);
+
+        case DataModality::IMAGE_COLOR:
+            return get_pixels_count(dimensions);
+
+        case DataModality::VIDEO_COLOR:
+            return get_frame_count(dimensions) * get_pixels_count(dimensions);
+
+        default:
+            return get_total_elements(dimensions);
+        }
+
+    default:
+        return get_total_elements(dimensions);
     }
 }
 
@@ -103,6 +129,15 @@ bool ContainerDataStructure::validate_dimensions(const std::vector<DataDimension
     }
 
     return true;
+}
+
+u_int64_t ContainerDataStructure::get_total_elements(const std::vector<DataDimension>& dimensions)
+{
+    u_int64_t total = 1;
+    for (const auto& dim : dimensions) {
+        total *= dim.size;
+    }
+    return total;
 }
 
 size_t ContainerDataStructure::get_dimension_index_for_role(const std::vector<DataDimension>& dimensions,
@@ -146,12 +181,39 @@ size_t ContainerDataStructure::get_frame_count(const std::vector<DataDimension>&
 
 u_int64_t ContainerDataStructure::get_samples_count(const std::vector<DataDimension>& dimensions)
 {
+    u_int64_t time_size = 0;
+    u_int64_t channel_size = 1;
+
+    for (const auto& dim : dimensions) {
+        if (dim.role == DataDimension::Role::TIME) {
+            time_size = dim.size;
+        } else if (dim.role == DataDimension::Role::CHANNEL) {
+            channel_size = dim.size;
+        }
+    }
+
+    return time_size * channel_size;
+}
+
+u_int64_t ContainerDataStructure::get_samples_count_per_channel(const std::vector<DataDimension>& dimensions)
+{
     for (const auto& dim : dimensions) {
         if (dim.role == DataDimension::Role::TIME) {
             return dim.size;
         }
     }
     return 0;
+}
+
+u_int64_t ContainerDataStructure::get_pixels_count(const std::vector<DataDimension>& dimensions)
+{
+    u_int64_t pixels = 1;
+    for (const auto& dim : dimensions) {
+        if (dim.role == DataDimension::Role::SPATIAL_X || dim.role == DataDimension::Role::SPATIAL_Y || dim.role == DataDimension::Role::SPATIAL_Z) {
+            pixels *= dim.size;
+        }
+    }
+    return pixels;
 }
 
 u_int64_t ContainerDataStructure::get_height(const std::vector<DataDimension>& dimensions)

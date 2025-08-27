@@ -89,6 +89,18 @@ struct ContainerDataStructure {
     [[nodiscard]] size_t get_expected_variant_count(const std::vector<DataDimension>& dimensions) const;
 
     /**
+     * @brief Calculate size of a specific variant in the organization.
+     * @param dimensions Vector of dimension descriptors
+     * @param modality Data modality type
+     * @param organization Organization strategy
+     * @param variant_index Index of the variant (0-based)
+     * @return Number of elements in the specified variant
+     */
+    [[nodiscard]] static u_int64_t get_variant_size(const std::vector<DataDimension>& dimensions,
+        DataModality modality, OrganizationStrategy organization, size_t variant_index = 0);
+    [[nodiscard]] u_int64_t get_variant_size() const { return get_variant_size(dimensions, modality, organization); }
+
+    /**
      * @brief Validate that dimensions match this structure's expectations.
      * @param dimensions Vector of dimension descriptors to validate
      * @return true if dimensions are valid for this structure
@@ -105,11 +117,28 @@ struct ContainerDataStructure {
         DataDimension::Role role) const;
 
     /**
+     * @brief Get total elements across all dimensions.
+     * @param dimensions Vector of dimension descriptors
+     * @return Total number of elements
+     */
+    [[nodiscard]] static u_int64_t get_total_elements(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_total_elements() const { return get_total_elements(dimensions); }
+
+    /**
      * @brief Extract sample count from dimensions.
      * @param dimensions Vector of dimension descriptors
      * @return Number of samples in the temporal dimension
      */
     [[nodiscard]] static u_int64_t get_samples_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_samples_count() const { return get_samples_count(dimensions); }
+
+    /**
+     * @brief Get samples per channel (time dimension only).
+     * @param dimensions Vector of dimension descriptors
+     * @return Number of samples per channel
+     */
+    [[nodiscard]] static u_int64_t get_samples_count_per_channel(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_samples_count_per_channel() const { return get_samples_count_per_channel(dimensions); }
 
     /**
      * @brief Extract channel count from dimensions.
@@ -117,6 +146,15 @@ struct ContainerDataStructure {
      * @return Number of channels
      */
     [[nodiscard]] static u_int64_t get_channel_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_channel_count() const { return get_channel_count(dimensions); }
+
+    /**
+     * @brief Get pixel count (spatial dimensions only).
+     * @param dimensions Vector of dimension descriptors
+     * @return Number of pixels
+     */
+    [[nodiscard]] static u_int64_t get_pixels_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_pixels_count() const { return get_pixels_count(dimensions); }
 
     /**
      * @brief Extract height from image/video dimensions.
@@ -124,6 +162,7 @@ struct ContainerDataStructure {
      * @return Height in pixels
      */
     [[nodiscard]] static u_int64_t get_height(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_height() const { return get_height(dimensions); }
 
     /**
      * @brief Extract width from image/video dimensions.
@@ -131,6 +170,7 @@ struct ContainerDataStructure {
      * @return Width in pixels
      */
     [[nodiscard]] static u_int64_t get_width(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_width() const { return get_width(dimensions); }
 
     /**
      * @brief Extract frame count from video dimensions.
@@ -138,6 +178,7 @@ struct ContainerDataStructure {
      * @return Number of frames
      */
     [[nodiscard]] static size_t get_frame_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] size_t get_frame_count() const { return get_frame_count(dimensions); }
 };
 
 /**
