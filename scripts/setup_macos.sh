@@ -74,7 +74,7 @@ fi
 # Verify package installation
 echo "Verifying package installation..."
 MISSING_PACKAGES=""
-for pkg in cmake rtaudio ffmpeg googletest pkg-config eigen onedpl magic_enum; do
+for pkg in cmake llvm rtaudio glfw ffmpeg googletest pkg-config eigen onedpl magic_enum; do
     if ! brew list --formula | grep -q "^${pkg}$"; then
         MISSING_PACKAGES="$MISSING_PACKAGES $pkg"
     fi
@@ -123,6 +123,6 @@ echo "1. Run './setup_xcode.sh' to generate Xcode project"
 echo "2. Or manually configure your build environment"
 echo
 echo "Dependencies installed:"
-echo "  ✓ CMake, RTAudio, FFmpeg, GoogleTest"
+echo "  ✓ CMake, LLVM, GLFW, RTAudio, FFmpeg, GoogleTest"
 echo "  ✓ Eigen, OneDPL, Magic Enum"
 echo

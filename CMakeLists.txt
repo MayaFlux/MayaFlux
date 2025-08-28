@@ -33,6 +33,12 @@ if(WIN32)
     endif()
 endif()
 
+if(APPLE)
+    set(CMAKE_C_COMPILER "/opt/homebrew/opt/llvm/bin/clang" CACHE STRING "Homebrew Clang C compiler" FORCE)
+    set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++" CACHE STRING "Homebrew Clang C++ compiler" FORCE)
+    # set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk" CACHE STRING "" FORCE)
+endif()
+
 project(MayaFlux VERSION 0.1.0)
 
 if(WIN32)
