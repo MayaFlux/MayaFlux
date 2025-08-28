@@ -1,5 +1,6 @@
 #include "test_config.h"
 
+#include "MayaFlux/Kakshya/Region.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 using namespace MayaFlux::Kakshya;

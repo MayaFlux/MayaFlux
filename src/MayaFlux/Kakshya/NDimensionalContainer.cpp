@@ -159,7 +159,7 @@ size_t ContainerDataStructure::get_dimension_index_for_role(const std::vector<Da
     return SIZE_MAX;
 }
 
-size_t ContainerDataStructure::get_channel_count(const std::vector<DataDimension>& dimensions)
+u_int64_t ContainerDataStructure::get_channel_count(const std::vector<DataDimension>& dimensions)
 {
     for (const auto& dim : dimensions) {
         if (dim.role == DataDimension::Role::CHANNEL) {

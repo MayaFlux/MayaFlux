@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/Region.hpp"
+
 #include "DataSpec.hpp"
 
 namespace MayaFlux::Yantra {

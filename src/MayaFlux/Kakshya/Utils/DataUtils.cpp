@@ -1,5 +1,6 @@
 #include "DataUtils.hpp"
 
+#include "MayaFlux/Kakshya/Region.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 
 namespace MayaFlux::Kakshya {
