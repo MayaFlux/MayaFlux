@@ -1,4 +1,5 @@
 #include "CoordUtils.hpp"
+#include "MayaFlux/Kakshya/Region.hpp"
 
 namespace MayaFlux::Kakshya {
 

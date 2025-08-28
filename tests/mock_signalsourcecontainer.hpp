@@ -1,5 +1,6 @@
 #include "test_config.h"
 
+#include "MayaFlux/Kakshya/Region.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 using namespace MayaFlux::Kakshya;
@@ -9,11 +10,11 @@ class MockSignalSourceContainer : public SignalSourceContainer {
 public:
     MockSignalSourceContainer()
         : SignalSourceContainer()
+        , m_frame_size(1024)
         , m_processing_state(ProcessingState::IDLE)
         , m_ready_for_processing(false)
     {
-        m_processed_data = std::vector<double>(1024, 0.0f);
-        m_frame_size = 1024;
+        m_processed_data = std::vector<double>(1024, 0.0F);
 
         DataDimension time_dim("time", m_frame_size);
         time_dim.role = DataDimension::Role::TIME;
@@ -24,7 +25,7 @@ public:
         m_dimensions = { time_dim, chan_dim };
     }
 
-    void add_dimension(DataDimension dim)
+    void add_dimension(const DataDimension& dim)
     {
         bool dim_found = false;
         for (auto& dimen : m_dimensions) {
@@ -84,7 +85,7 @@ public:
 
     DataVariant get_region_data(const Region&) const override
     {
-        return DataVariant(m_processed_data);
+        return { m_processed_data };
     }
 
     void set_region_data(const Region&, const DataVariant&) override
@@ -95,10 +96,10 @@ public:
     std::span<const double> get_frame(u_int64_t) const override
     {
         static std::vector<double> empty;
-        return std::span<const double>(empty);
+        return {};
     }
 
-    virtual u_int64_t get_frame_size() const override
+    u_int64_t get_frame_size() const override
     {
         return m_frame_size;
     }
@@ -316,6 +317,17 @@ public:
         return self->m_processed_variant;
     }
 
+    const ContainerDataStructure& get_structure() const override
+    {
+        return m_data_structure;
+    }
+
+    void set_structure(ContainerDataStructure structure) override
+    {
+        m_data_structure = structure;
+        m_ready_for_processing = false; // Reset processing state on structure change
+    }
+
 private:
     std::vector<double> m_processed_data;
     DataVariant m_processed_variant;
@@ -328,5 +340,6 @@ private:
     std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_change_callback;
     std::shared_ptr<DataProcessor> m_default_processor;
     std::shared_ptr<DataProcessingChain> m_processing_chain;
+    ContainerDataStructure m_data_structure;
 };
 }

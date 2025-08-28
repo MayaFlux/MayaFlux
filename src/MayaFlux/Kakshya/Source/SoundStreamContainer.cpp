@@ -12,11 +12,6 @@ SoundStreamContainer::SoundStreamContainer(u_int32_t sample_rate, u_int32_t num_
     , m_num_channels(num_channels)
     , m_circular_mode(circular_mode)
 {
-    // if (initial_capacity > 0) {
-    //     ensure_capacity(initial_capacity);
-    // } else {
-    //     ensure_capacity(512);
-    // }
 
     setup_dimensions();
 
@@ -27,16 +22,25 @@ SoundStreamContainer::SoundStreamContainer(u_int32_t sample_rate, u_int32_t num_
 
 void SoundStreamContainer::setup_dimensions()
 {
-    m_dimensions.clear();
-
-    if (m_num_frames > 0) {
-        m_dimensions.push_back(DataDimension::time(m_num_frames, "frames"));
-    }
+    DataModality modality = DataModality::AUDIO_1D;
+    std::vector<u_int64_t> shape { m_num_frames };
 
     if (m_num_channels > 1) {
-        u_int64_t stride = (m_memory_layout == MemoryLayout::ROW_MAJOR) ? 1 : m_num_frames;
-        m_dimensions.push_back(DataDimension::channel(m_num_channels, stride));
+        modality = DataModality::AUDIO_MULTICHANNEL;
+        shape.push_back(m_num_channels);
     }
+
+    // OrganizationStrategy org = is_interleaved ? OrganizationStrategy::INTERLEAVED : OrganizationStrategy::PLANAR;
+    OrganizationStrategy org = OrganizationStrategy::PLANAR;
+
+    m_dimensions = DataDimension::create_dimensions(modality, shape, m_memory_layout);
+
+    m_structure = ContainerDataStructure(modality, org, m_memory_layout);
+
+    m_structure.dimensions = m_dimensions;
+
+    m_structure.time_dims = m_num_frames;
+    m_structure.channel_dims = m_num_channels;
 }
 
 std::vector<DataDimension> SoundStreamContainer::get_dimensions() const

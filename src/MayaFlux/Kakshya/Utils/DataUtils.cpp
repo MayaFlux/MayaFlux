@@ -1,5 +1,6 @@
 #include "DataUtils.hpp"
 
+#include "MayaFlux/Kakshya/Region.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -167,7 +168,6 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
 
     size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0;
 
-    // Count dimensions by role
     for (const auto& dim : dimensions) {
         switch (dim.role) {
         case DataDimension::Role::TIME:
@@ -189,17 +189,14 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         }
     }
 
-    // Audio modalities
     if (time_dims == 1 && spatial_dims == 0 && channel_dims <= 1) {
         return (channel_dims == 0) ? DataModality::AUDIO_1D : DataModality::AUDIO_MULTICHANNEL;
     }
 
-    // Spectral data (time + frequency)
     if (time_dims == 1 && frequency_dims == 1) {
         return DataModality::SPECTRAL_2D;
     }
 
-    // Spatial modalities
     if (spatial_dims == 2 && time_dims == 0) {
         return DataModality::IMAGE_2D;
     }
@@ -212,7 +209,6 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
         return DataModality::VOLUMETRIC_3D;
     }
 
-    // Fallback based on dimension count
     if (dimensions.size() == 1) {
         return DataModality::AUDIO_1D;
     }

@@ -157,7 +157,7 @@ struct DataDimension {
      * @return DataModule with appropriate structure
      */
     template <typename T>
-    DataModule create_for_modality(
+    static DataModule create_for_modality(
         DataModality modality,
         const std::vector<u_int64_t>& shape,
         T default_value = T {},
@@ -190,7 +190,7 @@ struct DataDimension {
      * @return DataModule for 1D audio
      */
     template <typename T>
-    DataModule create_audio_1d(u_int64_t samples, T default_value = T {})
+    static DataModule create_audio_1d(u_int64_t samples, T default_value = T {})
     {
         return create_for_modality(DataModality::AUDIO_1D, { samples }, default_value);
     }
@@ -204,7 +204,7 @@ struct DataDimension {
      * @return DataModule for multi-channel audio
      */
     template <typename T>
-    DataModule create_audio_multichannel(u_int64_t samples, u_int64_t channels, T default_value = T {})
+    static DataModule create_audio_multichannel(u_int64_t samples, u_int64_t channels, T default_value = T {})
     {
         return create_for_modality(DataModality::AUDIO_MULTICHANNEL, { samples, channels }, default_value);
     }
@@ -218,7 +218,7 @@ struct DataDimension {
      * @return DataModule for 2D image
      */
     template <typename T>
-    DataModule create_image_2d(u_int64_t height, u_int64_t width, T default_value = T {})
+    static DataModule create_image_2d(u_int64_t height, u_int64_t width, T default_value = T {})
     {
         return create_for_modality(DataModality::IMAGE_2D, { height, width }, default_value);
     }
@@ -232,7 +232,7 @@ struct DataDimension {
      * @return DataModule for spectral data
      */
     template <typename T>
-    DataModule create_spectral_2d(u_int64_t time_windows, u_int64_t frequency_bins, T default_value = T {})
+    static DataModule create_spectral_2d(u_int64_t time_windows, u_int64_t frequency_bins, T default_value = T {})
     {
         return create_for_modality(DataModality::SPECTRAL_2D, { time_windows, frequency_bins }, default_value);
     }

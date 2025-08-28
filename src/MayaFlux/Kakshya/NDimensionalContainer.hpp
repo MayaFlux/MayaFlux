@@ -11,72 +11,75 @@ struct Region;
 struct RegionGroup;
 
 /**
- * @brief Container conventions for consistent dimension ordering.
+ * @brief Container structure for consistent dimension ordering.
  *
- * Provides standard indices and layout conventions for common data types,
- * supporting digital-first, data-driven workflows. These conventions are
+ * Provides standard indices and layout structures for common data types,
+ * supporting digital-first, data-driven workflows. These structures are
  * not tied to analog metaphors, but instead facilitate generic, flexible
  * processing of multi-dimensional data.
  */
-struct ContainerConvention {
-    static constexpr size_t TIME_DIM = 0;
-    static constexpr size_t CHANNEL_DIM = 1;
+struct ContainerDataStructure {
 
-    // Image/Video conventions
-    static constexpr size_t FRAME_DIM = 0;
-    static constexpr size_t HEIGHT_DIM = 1;
-    static constexpr size_t WIDTH_DIM = 2;
-    static constexpr size_t COLOR_DIM = 3;
+    // Image/Video structures
+    // static constexpr size_t FRAME_DIM = 0;
+    // static constexpr size_t COLOR_DIM = 3;
 
-    // Spectral conventions
-    static constexpr size_t FREQUENCY_DIM = 1;
-    static constexpr size_t TIME_WINDOW_DIM = 0;
+    // Spectral structures
+    // static constexpr size_t TIME_WINDOW_DIM = 0;
 
-    static constexpr MemoryLayout DEFAULT_LAYOUT = MemoryLayout::ROW_MAJOR;
+    std::vector<DataDimension> dimensions;
 
-    DataModality modality;
+    std::optional<size_t> time_dims;
+    std::optional<size_t> channel_dims;
+    std::optional<size_t> height_dims;
+    std::optional<size_t> width_dims;
+    std::optional<size_t> frequency_dims;
+
+    DataModality modality {};
     MemoryLayout memory_layout = MemoryLayout::ROW_MAJOR;
     OrganizationStrategy organization = OrganizationStrategy::PLANAR;
 
     /**
-     * @brief Construct a container convention with specified parameters.
+     * @brief Construct a container structure with specified parameters.
      * @param mod Data modality type
      * @param org Organization strategy (default: PLANAR)
      * @param layout Memory layout (default: ROW_MAJOR)
      */
-    ContainerConvention(DataModality mod,
+    ContainerDataStructure(DataModality mod,
         OrganizationStrategy org = OrganizationStrategy::PLANAR,
         MemoryLayout layout = MemoryLayout::ROW_MAJOR);
 
+    ContainerDataStructure() = default;
+
     /**
-     * @brief Get the expected dimension roles for this convention's modality.
+     * @brief Get the expected dimension roles for this structure's modality.
      * @return Vector of dimension roles in order
      */
     [[nodiscard]] std::vector<DataDimension::Role> get_expected_dimension_roles() const;
 
     /**
-     * @brief Create convention for planar audio data.
-     * @return ContainerConvention configured for planar audio
+     * @brief Create structure for planar audio data.
+     * @return Containerstructure configured for planar audio
      */
-    static ContainerConvention audio_planar();
+    static ContainerDataStructure audio_planar();
 
     /**
-     * @brief Create convention for interleaved audio data.
-     * @return ContainerConvention configured for interleaved audio
+     * @brief Create structure for interleaved audio data.
+     * @return Containerstructure configured for interleaved audio
      */
-    static ContainerConvention audio_interleaved();
+    static ContainerDataStructure audio_interleaved();
 
     /**
-     * @brief Create convention for planar image data.
-     * @return ContainerConvention configured for planar images
+     * @brief Create structure for planar image data.
+     * @return Containerstructure configured for planar images
      */
-    static ContainerConvention image_planar();
+    static ContainerDataStructure image_planar();
 
     /**
-     * @brief Create convention for interleaved image data.
-     * @return ContainerConvention configured for interleaved images
+     * @brief Create structure for interleaved image data.
+     * @return Containerstructure configured for interleaved images
      */
-    static ContainerConvention image_interleaved();
+    static ContainerDataStructure image_interleaved();
 
     /**
      * @brief Calculate expected number of data variants for given dimensions.
@@ -86,9 +89,21 @@ struct ContainerConvention {
     [[nodiscard]] size_t get_expected_variant_count(const std::vector<DataDimension>& dimensions) const;
 
     /**
-     * @brief Validate that dimensions match this convention's expectations.
+     * @brief Calculate size of a specific variant in the organization.
+     * @param dimensions Vector of dimension descriptors
+     * @param modality Data modality type
+     * @param organization Organization strategy
+     * @param variant_index Index of the variant (0-based)
+     * @return Number of elements in the specified variant
+     */
+    [[nodiscard]] static u_int64_t get_variant_size(const std::vector<DataDimension>& dimensions,
+        DataModality modality, OrganizationStrategy organization, size_t variant_index = 0);
+    [[nodiscard]] u_int64_t get_variant_size() const { return get_variant_size(dimensions, modality, organization); }
+
+    /**
+     * @brief Validate that dimensions match this structure's expectations.
      * @param dimensions Vector of dimension descriptors to validate
-     * @return true if dimensions are valid for this convention
+     * @return true if dimensions are valid for this structure
      */
     [[nodiscard]] bool validate_dimensions(const std::vector<DataDimension>& dimensions) const;
 
@@ -102,11 +117,28 @@ struct ContainerConvention {
         DataDimension::Role role) const;
 
     /**
+     * @brief Get total elements across all dimensions.
+     * @param dimensions Vector of dimension descriptors
+     * @return Total number of elements
+     */
+    [[nodiscard]] static u_int64_t get_total_elements(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_total_elements() const { return get_total_elements(dimensions); }
+
+    /**
      * @brief Extract sample count from dimensions.
      * @param dimensions Vector of dimension descriptors
      * @return Number of samples in the temporal dimension
      */
     [[nodiscard]] static u_int64_t get_samples_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_samples_count() const { return get_samples_count(dimensions); }
+
+    /**
+     * @brief Get samples per channel (time dimension only).
+     * @param dimensions Vector of dimension descriptors
+     * @return Number of samples per channel
+     */
+    [[nodiscard]] static u_int64_t get_samples_count_per_channel(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_samples_count_per_channel() const { return get_samples_count_per_channel(dimensions); }
 
     /**
      * @brief Extract channel count from dimensions.
@@ -114,6 +146,15 @@ struct ContainerConvention {
      * @return Number of channels
      */
     [[nodiscard]] static u_int64_t get_channel_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_channel_count() const { return get_channel_count(dimensions); }
+
+    /**
+     * @brief Get pixel count (spatial dimensions only).
+     * @param dimensions Vector of dimension descriptors
+     * @return Number of pixels
+     */
+    [[nodiscard]] static u_int64_t get_pixels_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_pixels_count() const { return get_pixels_count(dimensions); }
 
     /**
      * @brief Extract height from image/video dimensions.
@@ -121,6 +162,7 @@ struct ContainerConvention {
      * @return Height in pixels
      */
     [[nodiscard]] static u_int64_t get_height(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_height() const { return get_height(dimensions); }
 
     /**
      * @brief Extract width from image/video dimensions.
@@ -128,6 +170,7 @@ struct ContainerConvention {
      * @return Width in pixels
      */
     [[nodiscard]] static u_int64_t get_width(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] u_int64_t get_width() const { return get_width(dimensions); }
 
     /**
      * @brief Extract frame count from video dimensions.
@@ -135,6 +178,7 @@ struct ContainerConvention {
      * @return Number of frames
      */
     [[nodiscard]] static size_t get_frame_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] size_t get_frame_count() const { return get_frame_count(dimensions); }
 };
 
 /**
@@ -333,6 +377,19 @@ public:
      * @return true if data is present, false otherwise
      */
     [[nodiscard]] virtual bool has_data() const = 0;
+
+    /**
+     * @brief Get the data structure defining this container's layout.
+     * @return Reference to the ContainerDataStructure
+     */
+    [[nodiscard]] virtual const ContainerDataStructure& get_structure() const = 0;
+
+    /**
+     * @brief Set the data structure for this container.
+     * @param structure New ContainerDataStructure to apply
+     * @note This may trigger reorganization of existing data to match the new structure.
+     */
+    virtual void set_structure(ContainerDataStructure structure) = 0;
 };
 
 } // namespace MayaFlux::Kakshya

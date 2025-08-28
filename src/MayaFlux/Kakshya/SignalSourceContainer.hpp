@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/Region.hpp"
 #include "NDimensionalContainer.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -28,7 +27,7 @@ class DataProcessingChain;
  * activities with the container's lifecycle, enabling efficient resource
  * management and processing optimization.
  */
-enum class ProcessingState {
+enum class ProcessingState : u_int8_t {
     /**
      * Container is inactive with no data or not ready for processing.
      * Typically the initial state or when a container is reset.
@@ -99,7 +98,7 @@ enum class ProcessingState {
  */
 class SignalSourceContainer : public NDDataContainer, public std::enable_shared_from_this<SignalSourceContainer> {
 public:
-    virtual ~SignalSourceContainer() = default;
+    ~SignalSourceContainer() override = default;
 
     /**
      * @brief Get the current processing state of the container.
