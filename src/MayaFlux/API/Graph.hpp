@@ -128,6 +128,30 @@ std::shared_ptr<Buffers::BufferManager> get_buffer_manager();
 void add_processor_to_buffer(std::shared_ptr<Buffers::BufferProcessor> processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
 
 /**
+ * @brief Registers an AudioBuffer with the default engine's buffer manager
+ * @param buffer AudioBuffer to register
+ * @param channel Channel index to associate with the buffer (default: 0)
+ *
+ * Adds the buffer to the default engine's buffer management system, enabling
+ * it to participate in the audio processing pipeline. The buffer will be
+ * processed during each audio cycle according to its configuration.
+ * Multiple buffers can be registered to the same channel for layered processing.
+ */
+void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
+
+/**
+ * @brief Unregisters an AudioBuffer from the default engine's buffer manager
+ * @param buffer AudioBuffer to unregister
+ * @param channel Channel index the buffer was associated with (default: 0)
+ *
+ * Removes the buffer from the default engine's buffer management system.
+ * The buffer will no longer participate in audio processing cycles.
+ * This is essential for clean shutdown and preventing processing of
+ * destroyed or invalid buffers.
+ */
+void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
+
+/**
  * @brief creates a new buffer of the specified type and registers it
  * @tparam BufferType Type of buffer to create (must be derived from AudioBuffer)
  * @tparam Args Constructor argument types
@@ -191,7 +215,7 @@ Buffers::RootAudioBuffer& get_root_audio_buffer(u_int32_t channel);
  *
  * Uses the default engine's buffer manager and node graph manager.
  */
-void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index = 0, float mix = 0.5f, bool clear_before = false);
+void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index = 0, float mix = 0.5F, bool clear_before = false);
 
 /**
  * @brief Connects a node to a specific buffer
@@ -202,7 +226,7 @@ void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channe
  *
  * Uses the default engine's node graph manager.
  */
-void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<Buffers::AudioBuffer> buffer, float mix = 0.5f, bool clear_before = true);
+void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<Buffers::AudioBuffer> buffer, float mix = 0.5F, bool clear_before = true);
 
 //-------------------------------------------------------------------------
 // Audio Processing
@@ -236,30 +260,6 @@ std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channel(
  * for each of the specified channel buffers.
  */
 std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
-
-/**
- * @brief Registers an AudioBuffer with the default engine's buffer manager
- * @param buffer AudioBuffer to register
- * @param channel Channel index to associate with the buffer (default: 0)
- *
- * Adds the buffer to the default engine's buffer management system, enabling
- * it to participate in the audio processing pipeline. The buffer will be
- * processed during each audio cycle according to its configuration.
- * Multiple buffers can be registered to the same channel for layered processing.
- */
-void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
-
-/**
- * @brief Unregisters an AudioBuffer from the default engine's buffer manager
- * @param buffer AudioBuffer to unregister
- * @param channel Channel index the buffer was associated with (default: 0)
- *
- * Removes the buffer from the default engine's buffer management system.
- * The buffer will no longer participate in audio processing cycles.
- * This is essential for clean shutdown and preventing processing of
- * destroyed or invalid buffers.
- */
-void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
 
 /**
  * @brief Reads audio data from the default input source into a buffer

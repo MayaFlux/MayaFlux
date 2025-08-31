@@ -1,4 +1,5 @@
 #include "RootNode.hpp"
+
 #include "MayaFlux/Nodes/Generators/Generator.hpp"
 
 namespace MayaFlux::Nodes {
@@ -15,7 +16,7 @@ RootNode::RootNode(ProcessingToken token, u_int32_t channel)
 void RootNode::register_node(std::shared_ptr<Node> node)
 {
     if (m_is_processing.load(std::memory_order_acquire)) {
-        if (m_Nodes.end() != std::find(m_Nodes.begin(), m_Nodes.end(), node)) {
+        if (m_Nodes.end() != std::ranges::find(m_Nodes, node)) {
             u_int32_t state = node->m_state.load();
             if (state & Utils::NodeState::INACTIVE) {
                 atomic_remove_flag(node->m_state, Utils::NodeState::INACTIVE);
@@ -24,13 +25,13 @@ void RootNode::register_node(std::shared_ptr<Node> node)
             return;
         }
 
-        for (size_t i = 0; i < MAX_PENDING; ++i) {
+        for (auto& m_pending_op : m_pending_ops) {
             bool expected = false;
-            if (m_pending_ops[i].active.compare_exchange_strong(
+            if (m_pending_op.active.compare_exchange_strong(
                     expected, true,
                     std::memory_order_acquire,
                     std::memory_order_relaxed)) {
-                m_pending_ops[i].node = node;
+                m_pending_op.node = node;
                 atomic_remove_flag(node->m_state, Utils::NodeState::ACTIVE);
                 atomic_add_flag(node->m_state, Utils::NodeState::INACTIVE);
                 m_pending_count.fetch_add(1, std::memory_order_relaxed);
@@ -39,7 +40,7 @@ void RootNode::register_node(std::shared_ptr<Node> node)
         }
 
         while (m_is_processing.load(std::memory_order_acquire)) {
-            std::this_thread::yield();
+            m_is_processing.wait(true, std::memory_order_acquire);
         }
     }
 
@@ -54,21 +55,21 @@ void RootNode::unregister_node(std::shared_ptr<Node> node)
     atomic_add_flag(node->m_state, Utils::NodeState::PENDING_REMOVAL);
 
     if (m_is_processing.load(std::memory_order_acquire)) {
-        for (size_t i = 0; i < MAX_PENDING; ++i) {
+        for (auto& m_pending_op : m_pending_ops) {
             bool expected = false;
-            if (m_pending_ops[i].active.compare_exchange_strong(
+            if (m_pending_op.active.compare_exchange_strong(
                     expected, true,
                     std::memory_order_acquire,
                     std::memory_order_relaxed)) {
 
-                m_pending_ops[i].node = node;
+                m_pending_op.node = node;
                 m_pending_count.fetch_add(1, std::memory_order_relaxed);
                 return;
             }
         }
 
         while (m_is_processing.load(std::memory_order_acquire)) {
-            std::this_thread::yield();
+            m_is_processing.wait(true, std::memory_order_acquire);
         }
     }
 
@@ -145,6 +146,7 @@ void RootNode::postprocess()
     }
 
     m_is_processing.store(false, std::memory_order_release);
+    m_is_processing.notify_all();
 }
 
 std::vector<double> RootNode::process_batch(unsigned int num_samples)
@@ -160,9 +162,9 @@ std::vector<double> RootNode::process_batch(unsigned int num_samples)
 void RootNode::process_pending_operations()
 {
 
-    for (size_t i = 0; i < MAX_PENDING; ++i) {
-        if (m_pending_ops[i].active.load(std::memory_order_acquire)) {
-            auto& op = m_pending_ops[i];
+    for (auto& m_pending_op : m_pending_ops) {
+        if (m_pending_op.active.load(std::memory_order_acquire)) {
+            auto& op = m_pending_op;
             u_int32_t state = op.node->m_state.load();
 
             if (!(state & Utils::NodeState::ACTIVE)) {

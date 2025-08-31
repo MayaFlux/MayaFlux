@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 
-#define MAX_PENDING 256
+#define MAX_PENDING 2048
 
 namespace MayaFlux::Nodes {
 
