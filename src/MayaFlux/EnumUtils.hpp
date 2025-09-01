@@ -11,7 +11,7 @@ inline std::string to_lowercase(std::string_view str)
 {
     std::string result;
     result.reserve(str.size());
-    std::transform(str.begin(), str.end(), std::back_inserter(result),
+    std::ranges::transform(str, std::back_inserter(result),
         [](char c) { return std::tolower(c); });
     return result;
 }
@@ -23,7 +23,7 @@ inline std::string to_uppercase(std::string_view str)
 {
     std::string result;
     result.reserve(str.size());
-    std::transform(str.begin(), str.end(), std::back_inserter(result),
+    std::ranges::transform(str, std::back_inserter(result),
         [](char c) { return std::toupper(c); });
     return result;
 }

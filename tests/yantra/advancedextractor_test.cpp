@@ -1,7 +1,8 @@
 #include "../test_config.h"
+
 #include "MayaFlux/Yantra/Extractors/ExtractionHelper.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
-#include <algorithm>
+
 #include <random>
 
 using namespace MayaFlux::Yantra;

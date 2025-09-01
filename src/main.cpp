@@ -2,7 +2,6 @@
 
 #include "MayaFlux/MayaFlux.hpp"
 
-// Check for user project file
 #ifdef __has_include
 #if __has_include("user_project.hpp")
 #include "user_project.hpp"
