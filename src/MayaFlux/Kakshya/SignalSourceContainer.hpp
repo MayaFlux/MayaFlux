@@ -239,6 +239,9 @@ public:
      */
     virtual const DataVariant& get_processed_data() const = 0;
 
+    virtual std::span<DataVariant> get_all_processed_data() = 0;
+    virtual std::span<const DataVariant> get_all_processed_data() const = 0;
+
     // ===== Buffer Integration =====
 
     /**

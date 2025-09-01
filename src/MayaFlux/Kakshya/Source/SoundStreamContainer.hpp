@@ -42,7 +42,7 @@ public:
 
     std::vector<DataDimension> get_dimensions() const override;
     u_int64_t get_total_elements() const override;
-    MemoryLayout get_memory_layout() const override { return m_memory_layout; }
+    MemoryLayout get_memory_layout() const override { return m_structure.memory_layout; }
     void set_memory_layout(MemoryLayout layout) override;
 
     u_int64_t get_frame_size() const override;
@@ -144,6 +144,16 @@ public:
     }
     const DataVariant& get_processed_data() const override { return m_processed_data; }
 
+    inline std::span<DataVariant> get_all_processed_data() override
+    {
+        return { m_processed_data_all };
+    }
+
+    inline std::span<const DataVariant> get_all_processed_data() const override
+    {
+        return { m_processed_data_all };
+    }
+
     void mark_buffers_for_processing(bool) override { /* Delegate to buffer integration */ }
     void mark_buffers_for_removal() override { /* Delegate to buffer integration */ }
 
@@ -157,7 +167,11 @@ public:
     // void set_all_raw_data(const DataVariant& data);
 
     virtual u_int32_t get_sample_rate() const { return m_sample_rate; }
-    virtual u_int32_t get_num_channels() const { return m_num_channels; }
+
+    inline virtual u_int32_t get_num_channels() const
+    {
+        return static_cast<u_int32_t>(m_structure.get_channel_count());
+    }
     // double get_duration_seconds() const;
 
     // inline std::span<const double> get_data_as_double() const
@@ -185,13 +199,16 @@ public:
     std::span<const double> get_data_as_double() const;
 
 protected:
+    void setup_dimensions();
+    void notify_state_change(ProcessingState new_state);
+    void reorganize_data_layout(MemoryLayout new_layout);
+
     DataVariant m_data;
     DataVariant m_processed_data;
 
-    std::atomic<int> m_processing_token_channel { -1 };
+    std::vector<DataVariant> m_processed_data_all;
 
-    std::vector<DataDimension> m_dimensions;
-    MemoryLayout m_memory_layout = MemoryLayout::ROW_MAJOR;
+    std::atomic<int> m_processing_token_channel { -1 };
 
     u_int32_t m_sample_rate = 48000;
     u_int32_t m_num_channels = 0;
@@ -221,10 +238,6 @@ protected:
     mutable std::shared_mutex m_data_mutex;
     mutable std::mutex m_state_mutex;
     mutable std::mutex m_reader_mutex;
-
-    void setup_dimensions();
-    void notify_state_change(ProcessingState new_state);
-    void reorganize_data_layout(MemoryLayout new_layout);
 
     mutable std::vector<double> m_cached_ext_buffer;
 

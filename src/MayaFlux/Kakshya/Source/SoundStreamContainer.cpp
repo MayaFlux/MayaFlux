@@ -10,9 +10,9 @@ SoundStreamContainer::SoundStreamContainer(u_int32_t sample_rate, u_int32_t num_
     u_int64_t initial_capacity, bool circular_mode)
     : m_sample_rate(sample_rate)
     , m_num_channels(num_channels)
+    , m_num_frames(initial_capacity)
     , m_circular_mode(circular_mode)
 {
-
     setup_dimensions();
 
     if (m_data.index() == 0) {
@@ -22,22 +22,23 @@ SoundStreamContainer::SoundStreamContainer(u_int32_t sample_rate, u_int32_t num_
 
 void SoundStreamContainer::setup_dimensions()
 {
-    DataModality modality = DataModality::AUDIO_1D;
-    std::vector<u_int64_t> shape { m_num_frames };
 
-    if (m_num_channels > 1) {
-        modality = DataModality::AUDIO_MULTICHANNEL;
-        shape.push_back(m_num_channels);
+    DataModality modality = (m_num_channels > 1)
+        ? DataModality::AUDIO_MULTICHANNEL
+        : DataModality::AUDIO_1D;
+
+    std::vector<u_int64_t> shape;
+    if (modality == DataModality::AUDIO_1D) {
+        shape = { m_num_frames };
+    } else {
+        shape = { m_num_frames, m_num_channels };
     }
 
-    // OrganizationStrategy org = is_interleaved ? OrganizationStrategy::INTERLEAVED : OrganizationStrategy::PLANAR;
+    auto layout = m_structure.memory_layout;
     OrganizationStrategy org = OrganizationStrategy::PLANAR;
 
-    m_dimensions = DataDimension::create_dimensions(modality, shape, m_memory_layout);
-
-    m_structure = ContainerDataStructure(modality, org, m_memory_layout);
-
-    m_structure.dimensions = m_dimensions;
+    m_structure = ContainerDataStructure(modality, org, layout);
+    m_structure.dimensions = DataDimension::create_dimensions(modality, shape, layout);
 
     m_structure.time_dims = m_num_frames;
     m_structure.channel_dims = m_num_channels;
@@ -45,32 +46,33 @@ void SoundStreamContainer::setup_dimensions()
 
 std::vector<DataDimension> SoundStreamContainer::get_dimensions() const
 {
-    std::shared_lock lock(m_data_mutex);
-    return m_dimensions;
+    return m_structure.dimensions;
 }
 
 u_int64_t SoundStreamContainer::get_total_elements() const
 {
-    return calculate_total_elements(m_dimensions);
+    return m_structure.get_total_elements();
 }
 
 void SoundStreamContainer::set_memory_layout(MemoryLayout layout)
 {
-    if (layout != m_memory_layout) {
+    if (layout != m_structure.memory_layout) {
         std::unique_lock lock(m_data_mutex);
         reorganize_data_layout(layout);
-        m_memory_layout = layout;
+        m_structure.memory_layout = layout;
         setup_dimensions();
     }
 }
 
 u_int64_t SoundStreamContainer::get_frame_size() const
 {
+    // return m_structure.get_channel_count();
     return m_num_channels;
 }
 
 u_int64_t SoundStreamContainer::get_num_frames() const
 {
+    // return m_structure.get_samples_count_per_channel();
     return m_num_frames;
 }
 
@@ -80,7 +82,7 @@ DataVariant SoundStreamContainer::get_region_data(const Region& region) const
 
     return std::visit([&](const auto& vec) -> DataVariant {
         using T = typename std::decay_t<decltype(vec)>::value_type;
-        auto extracted = extract_region(vec, region, m_dimensions);
+        auto extracted = extract_region(vec, region, m_structure.dimensions);
         return DataVariant(std::move(extracted));
     },
         m_data);
@@ -96,7 +98,7 @@ void SoundStreamContainer::set_region_data(const Region& region, const DataVaria
         if constexpr (std::is_same_v<DestT, SrcT>) {
             set_or_update_region_data(std::span<DestT>(dest_vec),
                 std::span<const SrcT>(src_data),
-                region, m_dimensions);
+                region, m_structure.dimensions);
         } else {
             std::vector<DestT> converted;
             auto source_span = std::span<const SrcT>(src_data.data(), src_data.size());
@@ -104,7 +106,7 @@ void SoundStreamContainer::set_region_data(const Region& region, const DataVaria
 
             set_or_update_region_data(std::span<DestT>(dest_vec),
                 std::span<const DestT>(dest_span.data(), dest_span.size()),
-                region, m_dimensions);
+                region, m_structure.dimensions);
         }
     },
         m_data, data);
@@ -116,6 +118,8 @@ std::span<const double> SoundStreamContainer::get_frame(u_int64_t frame_index) c
 
     std::vector<double> data;
     auto data_span = extract_from_variant(m_data, m_cached_ext_buffer);
+    // u_int64_t total_frames = m_structure.get_samples_count_per_channel();
+    // u_int64_t channels = m_structure.get_channel_count();
 
     if (data_span.empty() || frame_index >= m_num_frames) {
         return {};
@@ -132,6 +136,9 @@ void SoundStreamContainer::get_frames(std::span<double> output, u_int64_t start_
     auto data_span = extract_from_variant(m_data, m_cached_ext_buffer);
     if (data_span.empty())
         return;
+
+    // u_int64_t total_frames = m_structure.get_samples_count_per_channel();
+    // u_int64_t channels = m_structure.get_channel_count();
 
     if (start_frame >= m_num_frames)
         return;
@@ -150,7 +157,7 @@ double SoundStreamContainer::get_value_at(const std::vector<u_int64_t>& coordina
 {
     std::shared_lock lock(m_data_mutex);
 
-    if (!has_data() || coordinates.size() != m_dimensions.size()) {
+    if (!has_data() || coordinates.size() != m_structure.dimensions.size()) {
         return 0.0;
     }
 
@@ -177,12 +184,12 @@ void SoundStreamContainer::set_value_at(const std::vector<u_int64_t>& coordinate
 
 u_int64_t SoundStreamContainer::coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const
 {
-    return coordinates_to_linear(coordinates, m_dimensions);
+    return coordinates_to_linear(coordinates, m_structure.dimensions);
 }
 
 std::vector<u_int64_t> SoundStreamContainer::linear_index_to_coordinates(u_int64_t linear_index) const
 {
-    return linear_to_coordinates(linear_index, m_dimensions);
+    return linear_to_coordinates(linear_index, m_structure.dimensions);
 }
 
 void SoundStreamContainer::clear()
@@ -193,7 +200,6 @@ void SoundStreamContainer::clear()
     std::visit([](auto& vec) { vec.clear(); }, m_processed_data);
 
     m_num_frames = 0;
-    m_num_channels = 0;
     m_read_position = 0;
     m_circular_write_position = 0;
 
@@ -249,7 +255,7 @@ void SoundStreamContainer::remove_region_group(const std::string& name)
     m_region_groups.erase(name);
 }
 
-bool SoundStreamContainer::is_region_loaded(const Region& region) const
+bool SoundStreamContainer::is_region_loaded(const Region& /*region*/) const
 {
     return true;
 }
@@ -532,18 +538,18 @@ void SoundStreamContainer::clear_all_consumption()
 
 void SoundStreamContainer::reorganize_data_layout(MemoryLayout new_layout)
 {
-    if (new_layout == m_memory_layout || m_num_channels <= 1) {
+    if (new_layout == m_structure.memory_layout || m_num_channels <= 1) {
         return;
     }
 
     std::visit([&](auto& vec) {
         using T = typename std::decay_t<decltype(vec)>::value_type;
 
-        if (new_layout == MemoryLayout::COLUMN_MAJOR && m_memory_layout == MemoryLayout::ROW_MAJOR) {
+        if (new_layout == MemoryLayout::COLUMN_MAJOR && m_structure.memory_layout == MemoryLayout::ROW_MAJOR) {
             auto deinterleaved = deinterleave_channels<T>(
                 std::span<const T>(vec.data(), vec.size()), m_num_channels);
             vec = interleave_channels(deinterleaved);
-        } else if (new_layout == MemoryLayout::ROW_MAJOR && m_memory_layout == MemoryLayout::COLUMN_MAJOR) {
+        } else if (new_layout == MemoryLayout::ROW_MAJOR && m_structure.memory_layout == MemoryLayout::COLUMN_MAJOR) {
             auto channels = deinterleave_channels<T>(
                 std::span<const T>(vec.data(), vec.size()), m_num_channels);
             vec = interleave_channels(channels);
@@ -551,16 +557,6 @@ void SoundStreamContainer::reorganize_data_layout(MemoryLayout new_layout)
     },
         m_data);
 }
-
-/* void SoundStreamContainer::ensure_capacity(u_int64_t required_frames)
-{
-    if (required_frames <= m_capacity_frames) {
-        return;
-    }
-
-    std::unique_lock lock(m_data_mutex);
-    expand_storage(required_frames);
-} */
 
 std::span<const double> SoundStreamContainer::get_data_as_double() const
 {

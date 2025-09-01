@@ -182,7 +182,7 @@ TEST_F(SoundFileContainerTest, ClearAndReset)
 {
     container->clear();
     EXPECT_EQ(container->get_num_frames(), 0);
-    EXPECT_EQ(container->get_num_channels(), 0);
+    EXPECT_EQ(container->get_num_channels(), 2);
     EXPECT_FALSE(container->has_data());
     EXPECT_EQ(container->get_total_elements(), 0);
 }

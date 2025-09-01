@@ -37,6 +37,11 @@ u_int64_t DynamicSoundStream::write_frames(std::span<const double> data, u_int64
         if (num_frames > available_frames) {
             num_frames = available_frames;
         }
+
+        if (required_end_frame > m_num_frames) {
+            m_num_frames = required_end_frame;
+            setup_dimensions();
+        }
     }
 
     Region write_region;

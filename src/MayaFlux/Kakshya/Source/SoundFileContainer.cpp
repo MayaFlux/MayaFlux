@@ -21,6 +21,7 @@ void SoundFileContainer::setup(u_int64_t num_frames, u_int32_t sample_rate, u_in
     m_num_frames = num_frames;
     m_sample_rate = sample_rate;
     m_num_channels = num_channels;
+    m_num_frames = num_frames;
 
     setup_dimensions();
     update_processing_state(ProcessingState::IDLE);
@@ -43,7 +44,7 @@ void SoundFileContainer::set_raw_data(const DataVariant& data)
         std::vector<double> vec;
         extract_from_variant(m_data, vec);
 
-        if (vec.empty() && m_num_channels > 0) {
+        if (!vec.empty() && m_num_channels > 0) {
             m_data = data;
             m_num_frames = vec.size() / m_num_channels;
             setup_dimensions();
@@ -52,8 +53,10 @@ void SoundFileContainer::set_raw_data(const DataVariant& data)
 
     m_double_extraction_dirty.store(true, std::memory_order_release);
 }
+
 double SoundFileContainer::get_duration_seconds() const
 {
     return position_to_time(m_num_frames);
 }
+
 } // namespace MayaFlux::Kakshya

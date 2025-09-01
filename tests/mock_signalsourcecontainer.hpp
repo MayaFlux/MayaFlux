@@ -328,6 +328,16 @@ public:
         m_ready_for_processing = false; // Reset processing state on structure change
     }
 
+    inline std::span<DataVariant> get_all_processed_data() override
+    {
+        return { m_processed_data_all };
+    }
+
+    inline std::span<const DataVariant> get_all_processed_data() const override
+    {
+        return { m_processed_data_all };
+    }
+
 private:
     std::vector<double> m_processed_data;
     DataVariant m_processed_variant;
@@ -341,5 +351,7 @@ private:
     std::shared_ptr<DataProcessor> m_default_processor;
     std::shared_ptr<DataProcessingChain> m_processing_chain;
     ContainerDataStructure m_data_structure;
+
+    std::vector<DataVariant> m_processed_data_all;
 };
 }
