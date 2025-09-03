@@ -1,8 +1,5 @@
 #include "DataUtils.hpp"
 
-#include "MayaFlux/Kakshya/Region.hpp"
-#include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
-
 namespace MayaFlux::Kakshya {
 
 u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
@@ -64,100 +61,6 @@ int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDim
         [role](const DataDimension& dim) { return dim.role == role; });
 
     return (it != dimensions.end()) ? static_cast<int>(std::distance(dimensions.begin(), it)) : -1;
-}
-
-DataVariant extract_frame_data(const std::shared_ptr<SignalSourceContainer>& container,
-    u_int64_t frame_index)
-{
-    if (!container) {
-        throw std::invalid_argument("Container is null");
-    }
-
-    const auto dimensions = container->get_dimensions();
-    if (dimensions.empty()) {
-        throw std::invalid_argument("Container has no dimensions");
-    }
-
-    size_t frame_dim_index = 0;
-    for (size_t i = 0; i < dimensions.size(); ++i) {
-        if (dimensions[i].role == DataDimension::Role::TIME) {
-            frame_dim_index = i;
-            break;
-        }
-    }
-
-    if (frame_index >= dimensions[frame_dim_index].size) {
-        throw std::out_of_range("Frame index out of range");
-    }
-
-    std::vector<u_int64_t> start_coords(dimensions.size(), 0);
-    std::vector<u_int64_t> end_coords;
-    end_coords.reserve(dimensions.size());
-
-    for (size_t i = 0; i < dimensions.size(); ++i) {
-        if (i == frame_dim_index) {
-            start_coords[i] = frame_index;
-            end_coords.push_back(frame_index);
-        } else {
-            end_coords.push_back(dimensions[i].size - 1);
-        }
-    }
-
-    Region frame_region(start_coords, end_coords);
-    return container->get_region_data(frame_region);
-}
-
-DataVariant extract_slice_data(const std::shared_ptr<SignalSourceContainer>& container,
-    const std::vector<u_int64_t>& slice_start,
-    const std::vector<u_int64_t>& slice_end)
-{
-    if (!container) {
-        throw std::invalid_argument("Container is null");
-    }
-
-    if (!validate_slice_bounds(slice_start, slice_end, container->get_dimensions())) {
-        throw std::invalid_argument("Invalid slice bounds");
-    }
-
-    Region slice_region(slice_start, slice_end);
-    return container->get_region_data(slice_region);
-}
-
-DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>& container,
-    u_int32_t subsample_factor,
-    u_int64_t start_offset)
-{
-    if (!container) {
-        throw std::invalid_argument("Container is null");
-    }
-
-    if (subsample_factor == 0) {
-        throw std::invalid_argument("Subsample factor cannot be zero");
-    }
-
-    const auto dimensions = container->get_dimensions();
-    if (dimensions.empty()) {
-        throw std::invalid_argument("Container has no dimensions");
-    }
-
-    // Get full data first
-    DataVariant full_data = container->get_processed_data();
-
-    return std::visit([subsample_factor, start_offset](const auto& data) -> DataVariant {
-        using T = typename std::decay_t<decltype(data)>::value_type;
-        std::vector<T> subsampled;
-
-        auto indices = std::ranges::views::iota(start_offset, data.size())
-            | std::ranges::views::filter([subsample_factor, start_offset](size_t i) {
-                  return (i - start_offset) % subsample_factor == 0;
-              });
-
-        std::ranges::transform(indices, std::back_inserter(subsampled),
-            [&data](size_t i) { return data[i]; });
-
-        return DataVariant { subsampled };
-    },
-        full_data);
 }
 
 DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
@@ -246,7 +149,6 @@ std::vector<Kakshya::DataDimension> detect_data_dimensions(const Kakshya::DataVa
             } else {
                 auto sqrt_size = static_cast<u_int64_t>(std::sqrt(total_size));
                 if (sqrt_size * sqrt_size == total_size) {
-                    // Perfect square
                     dims.emplace_back(Kakshya::DataDimension::spatial(sqrt_size, 'x'));
                     dims.emplace_back(Kakshya::DataDimension::spatial(sqrt_size, 'y'));
                 } else {
@@ -256,7 +158,7 @@ std::vector<Kakshya::DataDimension> detect_data_dimensions(const Kakshya::DataVa
                         width--;
                         height = total_size / width;
                     }
-                    dims.emplace_back(Kakshya::DataDimension::spatial(height, 'y')); // height first
+                    dims.emplace_back(Kakshya::DataDimension::spatial(height, 'y'));
                     dims.emplace_back(Kakshya::DataDimension::spatial(width, 'x'));
                 }
             }

@@ -111,7 +111,7 @@ std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coord
                 transformed[0] = static_cast<u_int64_t>(x * cos_a - y * sin_a);
                 transformed[1] = static_cast<u_int64_t>(x * sin_a + y * cos_a);
             } catch (const std::bad_any_cast&) {
-                // Ignore invalid rotation parameters
+                // TODO: DO better than ignore invalid
             }
         }
     }
@@ -181,8 +181,6 @@ u_int64_t calculate_frame_size_for_dimension(const std::vector<DataDimension>& d
     return frame_size;
 }
 
-// ===== COORDINATE MAPPING =====
-
 std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
@@ -203,7 +201,6 @@ std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::s
         dim_map["stride"] = dimensions[i].stride;
         dim_map["role"] = static_cast<int>(dimensions[i].role);
 
-        // Calculate offset for this dimension
         u_int64_t offset = (i == 0) ? 0ULL : std::accumulate(dimensions.begin(), dimensions.begin() + i, 1ULL, [](u_int64_t acc, const auto& d) { return acc * d.size; });
         dim_map["offset"] = offset;
 
@@ -219,8 +216,6 @@ std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::s
 
     return mapping_info;
 }
-
-// ===== DIMENSION ANALYSIS =====
 
 std::vector<int> extract_dimension_roles(const std::vector<DataDimension>& dimensions)
 {
@@ -261,6 +256,24 @@ std::vector<std::unordered_map<std::string, std::any>> create_dimension_info(con
     }
 
     return dim_info;
+}
+
+std::pair<size_t, u_int64_t> coordinates_to_planar_indices(
+    const std::vector<u_int64_t>& coords,
+    const std::vector<DataDimension>& dimensions)
+{
+    size_t channel_dim_idx = 0;
+    size_t time_dim_idx = 0;
+
+    for (size_t i = 0; i < dimensions.size(); ++i) {
+        if (dimensions[i].role == DataDimension::Role::CHANNEL) {
+            channel_dim_idx = i;
+        } else if (dimensions[i].role == DataDimension::Role::TIME) {
+            time_dim_idx = i;
+        }
+    }
+
+    return { coords[channel_dim_idx], coords[time_dim_idx] };
 }
 
 }

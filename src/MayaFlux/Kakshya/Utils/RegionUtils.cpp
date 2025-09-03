@@ -1,32 +1,15 @@
 #include "RegionUtils.hpp"
 
+#include <algorithm>
+
 namespace MayaFlux::Kakshya {
-
-std::span<double> extract_region_span(std::span<double> data, const Region& region, const std::vector<DataDimension>& dimensions)
-{
-    if (region.start_coordinates.empty() || dimensions.empty()) {
-        return {};
-    }
-
-    u_int64_t start_index = coordinates_to_linear(region.start_coordinates, dimensions);
-    u_int64_t end_index = coordinates_to_linear(region.end_coordinates, dimensions);
-
-    if (start_index >= data.size()) {
-        return {};
-    }
-
-    u_int64_t actual_end = std::min(end_index + 1, static_cast<u_int64_t>(data.size()));
-    u_int64_t length = actual_end - start_index;
-
-    return data.subspan(start_index, length);
-}
 
 void set_region_attribute(Region& region, const std::string& key, std::any value)
 {
     region.attributes[key] = std::move(value);
 }
 
-std::string get_region_label(const Region& region)
+/* std::string get_region_label(const Region& region)
 {
     auto label = get_region_attribute<std::string>(region, "label");
     return label.value_or("");
@@ -35,7 +18,7 @@ std::string get_region_label(const Region& region)
 void set_region_label(Region& region, const std::string& label)
 {
     set_region_attribute(region, "label", label);
-}
+} */
 
 std::vector<Region> find_regions_with_label(const RegionGroup& group, const std::string& label)
 {
@@ -69,7 +52,7 @@ std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const 
                     auto search_value = std::any_cast<int>(value);
                     return region_value.has_value() && *region_value == search_value;
                 }
-                // Add more types as needed
+                // TODO: Add more types as needed
             }
             return false;
         });
@@ -199,24 +182,6 @@ void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, c
     groups.erase(name);
 }
 
-std::vector<DataVariant> extract_multi_region_data(const std::vector<Region>& regions,
-    const std::shared_ptr<SignalSourceContainer>& container)
-{
-    if (!container) {
-        throw std::invalid_argument("Container is null");
-    }
-
-    std::vector<DataVariant> results;
-    results.reserve(regions.size());
-
-    std::ranges::transform(regions, std::back_inserter(results),
-        [&container](const Region& region) {
-            return container->get_region_data(region);
-        });
-
-    return results;
-}
-
 Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
     const std::vector<u_int64_t>& output_shape)
 {
@@ -291,16 +256,6 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
     return regions_info;
 }
 
-std::vector<DataVariant> extract_group_data(const RegionGroup& group,
-    const std::shared_ptr<SignalSourceContainer>& container)
-{
-    if (!container) {
-        throw std::invalid_argument("Container is null");
-    }
-
-    return extract_multi_region_data(group.regions, container);
-}
-
 std::unordered_map<std::string, std::any> extract_group_bounds_info(const RegionGroup& group)
 {
     std::unordered_map<std::string, std::any> bounds_info;
@@ -309,7 +264,6 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
         return bounds_info;
     }
 
-    // Find bounding box of all regions
     const auto& first_region = group.regions[0];
     std::vector<u_int64_t> min_coords = first_region.start_coordinates;
     std::vector<u_int64_t> max_coords = first_region.end_coordinates;
@@ -334,8 +288,6 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
 
     return bounds_info;
 }
-
-// ===== SEGMENT UTILITIES =====
 
 std::vector<DataVariant> extract_segments_data(const std::vector<RegionSegment>& segments,
     const std::shared_ptr<SignalSourceContainer>& container)
@@ -417,4 +369,28 @@ std::optional<size_t> find_region_for_position(const std::vector<u_int64_t>& pos
     return std::nullopt;
 }
 
+Region remove_channel_dimension(const Region& region, const std::vector<DataDimension>& dimensions)
+{
+    Region result = region;
+
+    for (long i = 0; i < dimensions.size(); ++i) {
+        if (dimensions[i].role == DataDimension::Role::CHANNEL) {
+            result.start_coordinates.erase(result.start_coordinates.begin() + i);
+            result.end_coordinates.erase(result.end_coordinates.begin() + i);
+            break;
+        }
+    }
+
+    return result;
+}
+
+std::vector<DataDimension> get_non_channel_dimensions(const std::vector<DataDimension>& dimensions)
+{
+    std::vector<DataDimension> result;
+    std::ranges::copy_if(dimensions, std::back_inserter(result),
+        [](const DataDimension& dim) {
+            return dim.role != DataDimension::Role::CHANNEL;
+        });
+    return result;
+}
 }

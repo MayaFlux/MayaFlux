@@ -35,7 +35,7 @@ std::type_index get_variant_type_index(const DataVariant& data);
  * @param frame_size Number of elements per frame.
  * @return Span containing the frame data.
  */
-template <typename T>
+template <ProcessableData T>
 constexpr std::span<T> extract_frame(std::span<T> data, u_int64_t frame_index, u_int64_t frame_size) noexcept
 {
     u_int64_t start = frame_index * frame_size;
@@ -46,6 +46,34 @@ constexpr std::span<T> extract_frame(std::span<T> data, u_int64_t frame_index, u
     }
 
     return data.subspan(start, end - start);
+}
+
+/**
+ * @brief Extract a single frame from planar data (returns interleaved).
+ * @tparam T Data type.
+ * @param channel_spans Vector of spans, one per channel.
+ * @param frame_index Index of the frame to extract.
+ * @param output_buffer Buffer to store interleaved frame data.
+ * @return Span containing the interleaved frame data.
+ */
+template <ProcessableData T>
+std::span<T> extract_frame(
+    const std::vector<std::span<T>>& channel_spans,
+    u_int64_t frame_index,
+    std::vector<T>& output_buffer) noexcept
+{
+    output_buffer.clear();
+    output_buffer.reserve(channel_spans.size());
+
+    for (const auto& channel_span : channel_spans) {
+        if (frame_index < channel_span.size()) {
+            output_buffer.push_back(channel_span[frame_index]);
+        } else {
+            output_buffer.push_back(T { 0 });
+        }
+    }
+
+    return std::span<T>(output_buffer.data(), output_buffer.size());
 }
 
 template <ProcessableData From, ProcessableData To>
@@ -120,7 +148,7 @@ std::span<To> convert_data(std::span<From> source,
     }
 
     else {
-        // some assert. dont know yet
+        // TODO: some assert. dont know yet
         return {};
     }
 }
@@ -317,37 +345,6 @@ std::optional<T> get_metadata_value(const std::unordered_map<std::string, std::a
  * @return Index of the dimension, or -1 if not found.
  */
 int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDimension::Role role);
-
-/**
- * @brief Extract a specific frame from container.
- * @param container The container to extract from.
- * @param frame_index Index of the frame to extract.
- * @return DataVariant containing frame data.
- */
-DataVariant extract_frame_data(const std::shared_ptr<SignalSourceContainer>& container,
-    u_int64_t frame_index);
-
-/**
- * @brief Extract a slice of data with arbitrary coordinates.
- * @param container The container to extract from.
- * @param slice_start Starting coordinates for each dimension.
- * @param slice_end Ending coordinates for each dimension.
- * @return DataVariant containing sliced data.
- */
-DataVariant extract_slice_data(const std::shared_ptr<SignalSourceContainer>& container,
-    const std::vector<u_int64_t>& slice_start,
-    const std::vector<u_int64_t>& slice_end);
-
-/**
- * @brief Extract subsampled data from container.
- * @param container The container to extract from.
- * @param subsample_factor Factor to subsample by.
- * @param start_offset Optional starting offset.
- * @return DataVariant containing subsampled data.
- */
-DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>& container,
-    u_int32_t subsample_factor,
-    u_int64_t start_offset = 0);
 
 /**
  * @brief Detects data modality from dimension information

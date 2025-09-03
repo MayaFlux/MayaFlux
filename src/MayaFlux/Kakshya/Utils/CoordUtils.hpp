@@ -5,18 +5,22 @@
 namespace MayaFlux::Kakshya {
 
 /**
- * @brief Convert N-dimensional coordinates to a linear index for a given memory layout.
+ * @brief Convert N-dimensional coordinates to a linear index for interleaved data.
  * @param coords N-dimensional coordinates.
  * @param dimensions Dimension descriptors (size/stride/role).
  * @return Linear index into the underlying data storage.
+ * @note Only works with interleaved organization strategy. For planar data,
+ *       use coordinates_to_planar_indices() instead.
  */
 u_int64_t coordinates_to_linear(const std::vector<u_int64_t>& coords, const std::vector<DataDimension>& dimensions);
 
 /**
- * @brief Convert a linear index to N-dimensional coordinates for a given memory layout.
+ * @brief Convert a linear index to N-dimensional coordinates for interleaved data.
  * @param index Linear index into the underlying data storage.
  * @param dimensions Dimension descriptors (size/stride/role).
  * @return N-dimensional coordinates.
+ * @note Only works with interleaved organization strategy. For planar data,
+ *       coordinates map directly to {channel_vector_index, frame_index}.
  */
 std::vector<u_int64_t> linear_to_coordinates(u_int64_t index, const std::vector<DataDimension>& dimensions);
 
@@ -151,4 +155,14 @@ std::vector<std::unordered_map<std::string, std::any>> create_dimension_info(con
  */
 std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::shared_ptr<SignalSourceContainer>& container);
 
+/**
+ * @brief Convert coordinates to planar indices (channel vector + frame index).
+ * @param coords N-dimensional coordinates.
+ * @param dimensions Dimension descriptors.
+ * @return Pair of {channel_index, frame_index} for planar access.
+ * @note Only works with planar organization strategy.
+ */
+std::pair<size_t, u_int64_t> coordinates_to_planar_indices(
+    const std::vector<u_int64_t>& coords,
+    const std::vector<DataDimension>& dimensions);
 }
