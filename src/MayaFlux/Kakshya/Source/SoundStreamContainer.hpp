@@ -48,8 +48,8 @@ public:
     u_int64_t get_frame_size() const override;
     u_int64_t get_num_frames() const override;
 
-    DataVariant get_region_data(const Region& region) const override;
-    void set_region_data(const Region& region, const DataVariant& data) override;
+    std::vector<DataVariant> get_region_data(const Region& region) const override;
+    void set_region_data(const Region& region, const std::vector<DataVariant>& data) override;
 
     std::span<const double> get_frame(u_int64_t frame_index) const override;
     void get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const override;
@@ -68,6 +68,7 @@ public:
     const void* get_raw_data() const override;
     bool has_data() const override;
 
+    inline ContainerDataStructure& get_structure() override { return m_structure; }
     inline const ContainerDataStructure& get_structure() const override { return m_structure; }
 
     inline void set_structure(ContainerDataStructure structure) override { m_structure = structure; }
@@ -81,9 +82,10 @@ public:
     void load_region(const Region& region) override;
     void unload_region(const Region& region) override;
 
-    void set_read_position(u_int64_t position) override;
-    u_int64_t get_read_position() const override;
-    void advance_read_position(u_int64_t frames) override;
+    void set_read_position(const std::vector<u_int64_t>& position) override;
+    void update_read_position_for_channel(size_t channel, u_int64_t frame) override;
+    const std::vector<u_int64_t>& get_read_position() const override;
+    void advance_read_position(const std::vector<u_int64_t>& frames) override;
     bool is_at_end() const override;
     void reset_read_position() override;
 
@@ -97,7 +99,7 @@ public:
     Region get_loop_region() const override;
 
     bool is_ready() const override;
-    u_int64_t get_remaining_frames() const override;
+    std::vector<u_int64_t> get_remaining_frames() const override;
     u_int64_t read_sequential(std::span<double> output, u_int64_t count) override;
     u_int64_t peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset = 0) const override;
 
@@ -137,21 +139,14 @@ public:
 
     virtual void clear_all_consumption();
 
-    DataVariant&
-    get_processed_data() override
+    inline std::vector<DataVariant>& get_processed_data() override
     {
         return m_processed_data;
     }
-    const DataVariant& get_processed_data() const override { return m_processed_data; }
 
-    inline std::span<DataVariant> get_all_processed_data() override
+    inline const std::vector<DataVariant>& get_processed_data() const override
     {
-        return { m_processed_data_all };
-    }
-
-    inline std::span<const DataVariant> get_all_processed_data() const override
-    {
-        return { m_processed_data_all };
+        return m_processed_data;
     }
 
     void mark_buffers_for_processing(bool) override { /* Delegate to buffer integration */ }
@@ -174,11 +169,6 @@ public:
     }
     // double get_duration_seconds() const;
 
-    // inline std::span<const double> get_data_as_double() const
-    // {
-    //     return get_typed_data<double>(m_data);
-    // }
-
     inline void reset_processing_token() override { m_processing_token_channel.store(-1); }
 
     inline bool try_acquire_processing_token(int channel) override
@@ -198,28 +188,28 @@ public:
      */
     std::span<const double> get_data_as_double() const;
 
+    inline const std::vector<DataVariant>& get_data() override { return m_data; }
+
 protected:
     void setup_dimensions();
     void notify_state_change(ProcessingState new_state);
     void reorganize_data_layout(MemoryLayout new_layout);
 
-    DataVariant m_data;
-    DataVariant m_processed_data;
-
-    std::vector<DataVariant> m_processed_data_all;
+    std::vector<DataVariant> m_data;
+    std::vector<DataVariant> m_processed_data;
 
     std::atomic<int> m_processing_token_channel { -1 };
 
     u_int32_t m_sample_rate = 48000;
-    u_int32_t m_num_channels = 0;
-    u_int64_t m_num_frames = 0;
+    u_int32_t m_num_channels {};
+    u_int64_t m_num_frames {};
 
-    std::atomic<u_int64_t> m_read_position { 0 };
+    std::vector<std::atomic<u_int64_t>> m_read_position;
     bool m_looping_enabled = false;
     Region m_loop_region;
 
-    bool m_circular_mode = false;
-    u_int64_t m_circular_write_position = 0;
+    bool m_circular_mode {};
+    u_int64_t m_circular_write_position {};
 
     std::atomic<ProcessingState> m_processing_state { ProcessingState::IDLE };
     std::shared_ptr<DataProcessor> m_default_processor;
@@ -245,6 +235,16 @@ protected:
     mutable std::mutex m_extraction_mutex;
 
     ContainerDataStructure m_structure;
+
+private:
+    mutable std::optional<std::vector<std::span<double>>> m_span_cache;
+    mutable std::atomic<bool> m_span_cache_dirty { true };
+
+    /** @brief Get the cached spans for each channel, recomputing if dirty */
+    const std::vector<std::span<double>>& get_span_cache() const;
+
+    /** @brief Invalidate the span cache when data or layout changes */
+    void invalidate_span_cache();
 };
 
 } // namespace MayaFlux::Kakshya

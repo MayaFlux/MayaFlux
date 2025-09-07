@@ -15,9 +15,14 @@ SoundStreamContainer::SoundStreamContainer(u_int32_t sample_rate, u_int32_t num_
 {
     setup_dimensions();
 
-    if (m_data.index() == 0) {
-        m_data = std::vector<double>();
+    m_read_position = std::vector<std::atomic<u_int64_t>>(m_num_channels);
+    for (auto& pos : m_read_position) {
+        pos.store(0);
     }
+
+    m_data = std::views::iota(0U, num_channels)
+        | std::views::transform([](auto) { return DataVariant(std::vector<double> {}); })
+        | std::ranges::to<std::vector>();
 }
 
 void SoundStreamContainer::setup_dimensions()
@@ -35,7 +40,7 @@ void SoundStreamContainer::setup_dimensions()
     }
 
     auto layout = m_structure.memory_layout;
-    OrganizationStrategy org = OrganizationStrategy::PLANAR;
+    OrganizationStrategy org = m_structure.organization;
 
     m_structure = ContainerDataStructure(modality, org, layout);
     m_structure.dimensions = DataDimension::create_dimensions(modality, shape, layout);
@@ -76,110 +81,176 @@ u_int64_t SoundStreamContainer::get_num_frames() const
     return m_num_frames;
 }
 
-DataVariant SoundStreamContainer::get_region_data(const Region& region) const
+std::vector<DataVariant> SoundStreamContainer::get_region_data(const Region& region) const
 {
-    std::shared_lock lock(m_data_mutex);
+    const auto& spans = get_span_cache();
 
-    return std::visit([&](const auto& vec) -> DataVariant {
-        using T = typename std::decay_t<decltype(vec)>::value_type;
-        auto extracted = extract_region(vec, region, m_structure.dimensions);
-        return DataVariant(std::move(extracted));
-    },
-        m_data);
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+        if (spans.empty())
+            return {};
+
+        std::span<const double> const_span(spans[0].data(), spans[0].size());
+        auto extracted = extract_region_data<double>(const_span, region, m_structure.dimensions);
+        return { DataVariant(std::move(extracted)) };
+    }
+
+    auto const_spans = spans | std::views::transform([](const auto& span) {
+        return std::span<const double>(span.data(), span.size());
+    });
+
+    auto extracted_channels = extract_region_data<double>(
+        std::vector<std::span<const double>>(const_spans.begin(), const_spans.end()),
+        region, m_structure.dimensions);
+
+    return extracted_channels
+        | std::views::transform([](auto&& channel) {
+              return DataVariant(std::forward<decltype(channel)>(channel));
+          })
+        | std::ranges::to<std::vector>();
 }
 
-void SoundStreamContainer::set_region_data(const Region& region, const DataVariant& data)
+void SoundStreamContainer::set_region_data(const Region& region, const std::vector<DataVariant>& data)
 {
-    std::unique_lock lock(m_data_mutex);
-    std::visit([&](auto& dest_vec, const auto& src_data) {
-        using DestT = typename std::decay_t<decltype(dest_vec)>::value_type;
-        using SrcT = typename std::decay_t<decltype(src_data)>::value_type;
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+        if (m_data.empty() || data.empty())
+            return;
 
-        if constexpr (std::is_same_v<DestT, SrcT>) {
-            set_or_update_region_data(std::span<DestT>(dest_vec),
-                std::span<const SrcT>(src_data),
-                region, m_structure.dimensions);
-        } else {
-            std::vector<DestT> converted;
-            auto source_span = std::span<const SrcT>(src_data.data(), src_data.size());
-            auto dest_span = extract_data<SrcT, DestT>(source_span, converted);
+        std::unique_lock lock(m_data_mutex);
 
-            set_or_update_region_data(std::span<DestT>(dest_vec),
-                std::span<const DestT>(dest_span.data(), dest_span.size()),
-                region, m_structure.dimensions);
+        auto dest_span = convert_variant<double>(m_data[0]);
+        auto src_span = convert_variant<double>(data[0]);
+
+        set_or_update_region_data<double>(
+            dest_span, src_span, region, m_structure.dimensions);
+
+    } else {
+        size_t channels_to_update = std::min(m_data.size(), data.size());
+
+        std::unique_lock lock(m_data_mutex);
+        for (size_t i = 0; i < channels_to_update; ++i) {
+            auto dest_span = convert_variant<double>(m_data[i]);
+            auto src_span = convert_variant<double>(data[i]);
+
+            set_or_update_region_data<double>(
+                dest_span, src_span, region, m_structure.dimensions);
         }
-    },
-        m_data, data);
+    }
+
+    invalidate_span_cache();
+    m_double_extraction_dirty.store(true, std::memory_order_release);
 }
 
 std::span<const double> SoundStreamContainer::get_frame(u_int64_t frame_index) const
 {
-    std::shared_lock lock(m_data_mutex);
-
-    std::vector<double> data;
-    auto data_span = extract_from_variant(m_data, m_cached_ext_buffer);
-    // u_int64_t total_frames = m_structure.get_samples_count_per_channel();
-    // u_int64_t channels = m_structure.get_channel_count();
-
-    if (data_span.empty() || frame_index >= m_num_frames) {
+    if (frame_index >= m_num_frames) {
         return {};
     }
 
-    u_int64_t offset = frame_index * m_num_channels;
-    return data_span.subspan(offset, m_num_channels);
+    const auto& spans = get_span_cache();
+
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+        if (spans.empty())
+            return {};
+
+        auto frame_span = extract_frame<double>(spans[0], frame_index, m_num_channels);
+        return { frame_span.data(), frame_span.size() };
+    }
+
+    static thread_local std::vector<double> frame_buffer;
+    auto frame_span = extract_frame<double>(spans, frame_index, frame_buffer);
+    return { frame_span.data(), frame_span.size() };
 }
 
 void SoundStreamContainer::get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const
 {
-    std::shared_lock lock(m_data_mutex);
-
-    auto data_span = extract_from_variant(m_data, m_cached_ext_buffer);
-    if (data_span.empty())
+    if (start_frame >= m_num_frames || output.empty()) {
+        std::ranges::fill(output, 0.0);
         return;
+    }
 
-    // u_int64_t total_frames = m_structure.get_samples_count_per_channel();
-    // u_int64_t channels = m_structure.get_channel_count();
+    u_int64_t frames_to_copy = std::min(num_frames, m_num_frames - start_frame);
+    u_int64_t elements_to_copy = std::min(
+        frames_to_copy * m_num_channels,
+        static_cast<u_int64_t>(output.size()));
 
-    if (start_frame >= m_num_frames)
-        return;
-
-    u_int64_t frames_to_copy = std::min<u_int64_t>(num_frames, m_num_frames - start_frame);
-    u_int64_t elements_to_copy = frames_to_copy * m_num_channels;
+    auto interleaved_data = get_data_as_double();
     u_int64_t offset = start_frame * m_num_channels;
 
-    std::copy_n(
-        data_span.begin() + offset,
-        std::min<u_int64_t>(elements_to_copy, static_cast<u_int64_t>(output.size())),
-        output.begin());
+    if (offset < interleaved_data.size()) {
+        u_int64_t available = std::min(elements_to_copy, interleaved_data.size() - offset);
+        std::copy_n(interleaved_data.begin() + offset, available, output.begin());
+
+        if (available < output.size()) {
+            std::fill(output.begin() + available, output.end(), 0.0);
+        }
+    } else {
+        std::ranges::fill(output, 0.0);
+    }
 }
 
 double SoundStreamContainer::get_value_at(const std::vector<u_int64_t>& coordinates) const
 {
-    std::shared_lock lock(m_data_mutex);
-
-    if (!has_data() || coordinates.size() != m_structure.dimensions.size()) {
+    if (!has_data() || coordinates.size() != 2) {
         return 0.0;
     }
 
-    u_int64_t linear_index = coordinates_to_linear_index(coordinates);
+    u_int64_t frame = coordinates[0];
+    u_int64_t channel = coordinates[1];
 
-    auto result = extract_from_variant_at<double>(m_data, linear_index);
-    return result.value_or(0.0);
+    if (frame >= m_num_frames || channel >= m_num_channels) {
+        return 0.0;
+    }
+
+    const auto& spans = get_span_cache();
+
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+        if (spans.empty())
+            return 0.0;
+
+        u_int64_t linear_index = frame * m_num_channels + channel;
+        return (linear_index < spans[0].size()) ? spans[0][linear_index] : 0.0;
+    }
+
+    if (channel >= spans.size())
+        return 0.0;
+
+    return (frame < spans[channel].size()) ? spans[channel][frame] : 0.0;
 }
 
 void SoundStreamContainer::set_value_at(const std::vector<u_int64_t>& coordinates, double value)
 {
-    std::unique_lock lock(m_data_mutex);
+    if (coordinates.size() != 2)
+        return;
 
-    u_int64_t linear_index = coordinates_to_linear_index(coordinates);
+    u_int64_t frame = coordinates[0];
+    u_int64_t channel = coordinates[1];
 
-    std::visit([linear_index, value](auto& vec) {
-        using T = typename std::decay_t<decltype(vec)>::value_type;
-        if (linear_index < vec.size()) {
-            vec[linear_index] = static_cast<T>(value);
+    if (frame >= m_num_frames || channel >= m_num_channels) {
+        return;
+    }
+
+    const auto& spans = get_span_cache();
+
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+        if (spans.empty())
+            return;
+
+        u_int64_t linear_index = frame * m_num_channels + channel;
+        if (linear_index < spans[0].size()) {
+            const_cast<std::span<double>&>(spans[0])[linear_index] = value;
         }
-    },
-        m_data);
+
+    } else {
+        if (channel >= spans.size())
+            return;
+
+        if (frame < spans[channel].size()) {
+            const_cast<std::span<double>&>(spans[channel])[frame] = value;
+        }
+    }
+
+    invalidate_span_cache();
+    m_double_extraction_dirty.store(true, std::memory_order_release);
 }
 
 u_int64_t SoundStreamContainer::coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const
@@ -196,12 +267,21 @@ void SoundStreamContainer::clear()
 {
     std::unique_lock lock(m_data_mutex);
 
-    std::visit([](auto& vec) { vec.clear(); }, m_data);
-    std::visit([](auto& vec) { vec.clear(); }, m_processed_data);
+    std::ranges::for_each(m_data, [](auto& vec) {
+        std::visit([](auto& v) { v.clear(); }, vec);
+    });
+
+    std::ranges::for_each(m_processed_data, [](auto& vec) {
+        std::visit([](auto& v) { v.clear(); }, vec);
+    });
 
     m_num_frames = 0;
-    m_read_position = 0;
     m_circular_write_position = 0;
+
+    m_read_position = std::vector<std::atomic<u_int64_t>>(m_num_channels);
+    for (auto& pos : m_read_position) {
+        pos.store(0);
+    }
 
     setup_dimensions();
     update_processing_state(ProcessingState::IDLE);
@@ -209,24 +289,17 @@ void SoundStreamContainer::clear()
 
 const void* SoundStreamContainer::get_raw_data() const
 {
-    std::shared_lock lock(m_data_mutex);
-    return std::visit([](const auto& vec) -> const void* {
-        if (vec.empty()) {
-            return nullptr;
-        }
-        return vec.data();
-    },
-        m_data);
+    auto span = get_data_as_double();
+    return span.empty() ? nullptr : span.data();
 }
 
 bool SoundStreamContainer::has_data() const
 {
-    // return std::visit([](const auto& vec) {
-    //     return !vec.empty();
-    // },
-    //     m_data);
+    std::shared_lock lock(m_data_mutex);
 
-    return get_total_elements() > 0;
+    return std::ranges::any_of(m_data, [](const auto& variant) {
+        return std::visit([](const auto& vec) { return !vec.empty(); }, variant);
+    });
 }
 
 void SoundStreamContainer::add_region_group(const RegionGroup& group)
@@ -237,8 +310,9 @@ void SoundStreamContainer::add_region_group(const RegionGroup& group)
 
 const RegionGroup& SoundStreamContainer::get_region_group(const std::string& name) const
 {
-    std::shared_lock lock(m_data_mutex);
     static const RegionGroup empty_group;
+
+    std::shared_lock lock(m_data_mutex);
     auto it = m_region_groups.find(name);
     return it != m_region_groups.end() ? it->second : empty_group;
 }
@@ -270,37 +344,86 @@ void SoundStreamContainer::unload_region(const Region& region)
     // No-op for in-memory container
 }
 
-void SoundStreamContainer::set_read_position(u_int64_t position)
+void SoundStreamContainer::set_read_position(const std::vector<u_int64_t>& position)
 {
-    m_read_position = wrap_position_with_loop(position, m_loop_region, 0, m_looping_enabled);
+    if (m_read_position.size() != position.size()) {
+        m_read_position = std::vector<std::atomic<u_int64_t>>(position.size());
+    }
+
+    auto wrapped_pos = wrap_position_with_loop(position, m_loop_region, m_looping_enabled);
+
+    for (size_t i = 0; i < wrapped_pos.size(); ++i) {
+        m_read_position[i].store(wrapped_pos[i]);
+    }
 }
 
-u_int64_t SoundStreamContainer::get_read_position() const
+void SoundStreamContainer::update_read_position_for_channel(size_t channel, u_int64_t frame)
 {
-    return m_read_position.load();
+    if (channel < m_read_position.size()) {
+        m_read_position[channel].store(frame);
+    }
 }
 
-void SoundStreamContainer::advance_read_position(u_int64_t frames)
+const std::vector<u_int64_t>& SoundStreamContainer::get_read_position() const
 {
-    u_int64_t current = m_read_position.load();
-    u_int64_t loop_start = m_loop_region.start_coordinates.empty() ? 0 : m_loop_region.start_coordinates[0];
-    u_int64_t loop_end = m_loop_region.end_coordinates.empty() ? m_num_frames : m_loop_region.end_coordinates[0];
+    static thread_local std::vector<u_int64_t> pos_cache;
+    pos_cache.resize(m_read_position.size());
 
-    u_int64_t new_pos = advance_position(current, frames, m_num_frames, loop_start, loop_end, m_looping_enabled);
-    m_read_position = new_pos;
+    for (size_t i = 0; i < m_read_position.size(); ++i) {
+        pos_cache[i] = m_read_position[i].load();
+    }
+
+    return pos_cache;
+}
+
+void SoundStreamContainer::advance_read_position(const std::vector<u_int64_t>& frames)
+{
+    if (frames.empty())
+        return;
+
+    std::vector<u_int64_t> current_pos(m_read_position.size());
+    for (size_t i = 0; i < m_read_position.size(); ++i) {
+        current_pos[i] = m_read_position[i].load();
+    }
+
+    auto new_pos = advance_position(current_pos, frames, m_structure, m_looping_enabled, m_loop_region);
+
+    for (size_t i = 0; i < new_pos.size() && i < m_read_position.size(); ++i) {
+        m_read_position[i].store(new_pos[i]);
+    }
 }
 
 bool SoundStreamContainer::is_at_end() const
 {
-    return !m_looping_enabled && m_read_position >= m_num_frames;
+    if (m_looping_enabled) {
+        return false;
+    }
+
+    if (m_read_position.empty()) {
+        return true;
+    }
+
+    u_int64_t current_frame = m_read_position[0].load();
+    return current_frame >= m_num_frames;
 }
 
 void SoundStreamContainer::reset_read_position()
 {
-    u_int64_t start_pos = (m_looping_enabled && !m_loop_region.start_coordinates.empty())
-        ? m_loop_region.start_coordinates[0]
-        : 0;
-    m_read_position = start_pos;
+    std::vector<u_int64_t> start_pos;
+
+    if (m_looping_enabled && !m_loop_region.start_coordinates.empty()) {
+        start_pos = m_loop_region.start_coordinates;
+    } else {
+        start_pos = std::vector<u_int64_t>(m_num_channels, 0);
+    }
+
+    if (m_read_position.size() != start_pos.size()) {
+        m_read_position = std::vector<std::atomic<u_int64_t>>(start_pos.size());
+    }
+
+    for (size_t i = 0; i < start_pos.size(); ++i) {
+        m_read_position[i].store(start_pos[i]);
+    }
 }
 
 u_int64_t SoundStreamContainer::time_to_position(double time) const
@@ -326,9 +449,21 @@ void SoundStreamContainer::set_loop_region(const Region& region)
     m_loop_region = region;
 
     if (m_looping_enabled && !region.start_coordinates.empty()) {
-        u_int64_t current = m_read_position.load();
-        if (current < region.start_coordinates[0] || current > region.end_coordinates[0]) {
-            m_read_position = region.start_coordinates[0];
+        std::vector<u_int64_t> current_pos(m_read_position.size());
+        for (size_t i = 0; i < m_read_position.size(); ++i) {
+            current_pos[i] = m_read_position[i].load();
+        }
+
+        bool outside_loop = false;
+        for (size_t i = 0; i < current_pos.size() && i < region.start_coordinates.size() && i < region.end_coordinates.size(); ++i) {
+            if (current_pos[i] < region.start_coordinates[i] || current_pos[i] > region.end_coordinates[i]) {
+                outside_loop = true;
+                break;
+            }
+        }
+
+        if (outside_loop) {
+            set_read_position(region.start_coordinates);
         }
     }
 }
@@ -344,55 +479,86 @@ bool SoundStreamContainer::is_ready() const
     return has_data() && (state == ProcessingState::READY || state == ProcessingState::PROCESSED);
 }
 
-u_int64_t SoundStreamContainer::get_remaining_frames() const
+std::vector<u_int64_t> SoundStreamContainer::get_remaining_frames() const
 {
-    if (m_looping_enabled) {
-        return std::numeric_limits<u_int64_t>::max();
+    std::vector<u_int64_t> frames(m_num_channels);
+    if (m_looping_enabled || m_read_position.empty()) {
+
+        for (auto& frame : frames) {
+            frame = std::numeric_limits<u_int64_t>::max();
+        }
+        return frames;
     }
 
-    u_int64_t current = m_read_position.load();
-    return (current < m_num_frames) ? (m_num_frames - current) : 0;
+    for (size_t i = 0; i < frames.size(); i++) {
+        u_int64_t current_frame = m_read_position[i].load();
+        frames[i] = (current_frame < m_num_frames) ? (m_num_frames - current_frame) : 0;
+    }
+    return frames;
 }
 
 u_int64_t SoundStreamContainer::read_sequential(std::span<double> output, u_int64_t count)
 {
     u_int64_t frames_read = peek_sequential(output, count, 0);
-    advance_read_position(frames_read / m_num_channels);
+
+    u_int64_t frames_to_advance = frames_read / m_num_channels;
+    std::vector<u_int64_t> advance_amount = { frames_to_advance };
+
+    advance_read_position(advance_amount);
     return frames_read;
 }
 
 u_int64_t SoundStreamContainer::peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset) const
 {
-    std::shared_lock lock(m_data_mutex);
-
-    std::vector<double> copy_vector;
-    extract_from_variant(m_data, copy_vector);
-    if (copy_vector.empty())
+    auto interleaved_span = get_data_as_double();
+    if (interleaved_span.empty() || output.empty())
         return 0;
 
-    u_int64_t start_pos = m_read_position.load() + offset;
+    u_int64_t start_frame = m_read_position.empty() ? 0 : m_read_position[0].load();
+    start_frame += offset;
     u_int64_t elements_to_read = std::min<u_int64_t>(count, static_cast<u_int64_t>(output.size()));
-    u_int64_t elements_read = 0;
 
-    if (m_looping_enabled && !m_loop_region.start_coordinates.empty()) {
-        u_int64_t loop_start = m_loop_region.start_coordinates[0] * m_num_channels;
-        u_int64_t loop_end = (m_loop_region.end_coordinates[0] + 1) * m_num_channels;
-        u_int64_t loop_length = loop_end - loop_start;
-
-        for (u_int64_t i = 0; i < elements_to_read; ++i) {
-            u_int64_t pos = (start_pos * m_num_channels + i - loop_start) % loop_length + loop_start;
-            output[i] = copy_vector[pos];
-            elements_read++;
+    if (!m_looping_enabled) {
+        u_int64_t linear_start = start_frame * m_num_channels;
+        if (linear_start >= interleaved_span.size()) {
+            std::ranges::fill(output, 0.0);
+            return 0;
         }
-    } else {
-        u_int64_t linear_start = start_pos * m_num_channels;
-        u_int64_t available = copy_vector.size() - linear_start;
-        elements_read = std::min<u_int64_t>(elements_to_read, available);
+        auto view = interleaved_span
+            | std::views::drop(linear_start)
+            | std::views::take(elements_to_read);
 
-        std::copy_n(copy_vector.begin() + linear_start, elements_read, output.begin());
+        auto copied = std::ranges::copy(view, output.begin());
+        std::ranges::fill(output.subspan(copied.out - output.begin()), 0.0);
+        return static_cast<u_int64_t>(copied.out - output.begin());
     }
 
-    return elements_read;
+    if (m_loop_region.start_coordinates.empty()) {
+        std::ranges::fill(output, 0.0);
+        return 0;
+    }
+
+    u_int64_t loop_start_frame = m_loop_region.start_coordinates[0];
+    u_int64_t loop_end_frame = m_loop_region.end_coordinates[0];
+    u_int64_t loop_length_frames = loop_end_frame - loop_start_frame + 1;
+
+    std::ranges::for_each(
+        std::views::iota(0UZ, elements_to_read),
+        [&](u_int64_t i) {
+            u_int64_t element_pos = start_frame * m_num_channels + i;
+            u_int64_t frame_pos = element_pos / m_num_channels;
+            u_int64_t channel_offset = element_pos % m_num_channels;
+
+            u_int64_t wrapped_frame = ((frame_pos - loop_start_frame) % loop_length_frames) + loop_start_frame;
+            u_int64_t wrapped_element = wrapped_frame * m_num_channels + channel_offset;
+
+            output[i] = (wrapped_element < interleaved_span.size()) ? interleaved_span[wrapped_element] : 0.0;
+        });
+
+    if (elements_to_read < output.size()) {
+        std::ranges::fill(output.subspan(elements_to_read), 0.0);
+    }
+    return elements_to_read;
 }
 
 void SoundStreamContainer::update_processing_state(ProcessingState new_state)
@@ -482,7 +648,8 @@ void SoundStreamContainer::unregister_dimension_reader(u_int32_t dimension_index
 {
     std::lock_guard<std::mutex> lock(m_reader_mutex);
     if (auto it = m_active_readers.find(dimension_index); it != m_active_readers.end()) {
-        if (--it->second <= 0) {
+        auto& [dim, count] = *it;
+        if (--count <= 0) {
             m_active_readers.erase(it);
             m_dimension_to_next_reader_id.erase(dimension_index);
         }
@@ -497,7 +664,7 @@ bool SoundStreamContainer::has_active_readers() const
 
 void SoundStreamContainer::mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id)
 {
-    if (m_reader_consumed_dimensions.find(reader_id) != m_reader_consumed_dimensions.end()) {
+    if (m_reader_consumed_dimensions.contains(reader_id)) {
         m_reader_consumed_dimensions[reader_id].insert(dimension_index);
     } else {
         std::cerr << "WARNING: Attempted to mark dimension " << dimension_index
@@ -512,50 +679,70 @@ bool SoundStreamContainer::all_dimensions_consumed() const
 {
     std::lock_guard<std::mutex> lock(m_reader_mutex);
 
-    for (const auto& [dim, expected_reader_count] : m_active_readers) {
-        u_int32_t actual_consumed_count = 0;
+    return std::ranges::all_of(m_active_readers, [this](const auto& dim_reader_pair) {
+        const auto& [dim, expected_count] = dim_reader_pair;
 
-        for (const auto& [reader_id, consumed_dims] : m_reader_consumed_dimensions) {
-            if (consumed_dims.find(dim) != consumed_dims.end()) {
-                actual_consumed_count++;
-            }
-        }
+        auto actual_count = std::ranges::count_if(m_reader_consumed_dimensions,
+            [dim](const auto& reader_dims_pair) {
+                return reader_dims_pair.second.contains(dim);
+            });
 
-        if (actual_consumed_count < expected_reader_count) {
-            return false;
-        }
-    }
-    return true;
+        return actual_count >= expected_count;
+    });
 }
 
 void SoundStreamContainer::clear_all_consumption()
 {
     std::lock_guard<std::mutex> lock(m_reader_mutex);
-    for (auto& [reader_id, consumed_dims] : m_reader_consumed_dimensions) {
-        consumed_dims.clear();
-    }
+
+    std::ranges::for_each(m_reader_consumed_dimensions,
+        [](auto& reader_dims_pair) {
+            reader_dims_pair.second.clear();
+        });
 }
 
 void SoundStreamContainer::reorganize_data_layout(MemoryLayout new_layout)
 {
-    if (new_layout == m_structure.memory_layout || m_num_channels <= 1) {
+    if (new_layout == m_structure.memory_layout) {
         return;
     }
 
-    std::visit([&](auto& vec) {
-        using T = typename std::decay_t<decltype(vec)>::value_type;
+    if (m_structure.organization == OrganizationStrategy::PLANAR) {
+        m_structure.memory_layout = new_layout;
+        setup_dimensions();
+        return;
+    }
 
-        if (new_layout == MemoryLayout::COLUMN_MAJOR && m_structure.memory_layout == MemoryLayout::ROW_MAJOR) {
-            auto deinterleaved = deinterleave_channels<T>(
-                std::span<const T>(vec.data(), vec.size()), m_num_channels);
-            vec = interleave_channels(deinterleaved);
-        } else if (new_layout == MemoryLayout::ROW_MAJOR && m_structure.memory_layout == MemoryLayout::COLUMN_MAJOR) {
-            auto channels = deinterleave_channels<T>(
-                std::span<const T>(vec.data(), vec.size()), m_num_channels);
-            vec = interleave_channels(channels);
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED && (m_data.empty() || m_num_channels <= 1)) {
+        m_structure.memory_layout = new_layout;
+        setup_dimensions();
+        return;
+    }
+
+    auto current_span = convert_variant<double>(m_data[0]);
+    std::vector<double> current_data(current_span.begin(), current_span.end());
+
+    auto channels = deinterleave_channels<double>(
+        std::span<const double>(current_data.data(), current_data.size()),
+        m_num_channels);
+
+    std::vector<double> reorganized_data;
+    if (new_layout == MemoryLayout::ROW_MAJOR) {
+        reorganized_data = interleave_channels(channels);
+    } else {
+        reorganized_data.reserve(current_data.size());
+        for (const auto& channel : channels) {
+            reorganized_data.insert(reorganized_data.end(), channel.begin(), channel.end());
         }
-    },
-        m_data);
+    }
+
+    m_data[0] = DataVariant(std::move(reorganized_data));
+
+    invalidate_span_cache();
+    m_double_extraction_dirty.store(true, std::memory_order_release);
+
+    m_structure.memory_layout = new_layout;
+    setup_dimensions();
 }
 
 std::span<const double> SoundStreamContainer::get_data_as_double() const
@@ -564,15 +751,56 @@ std::span<const double> SoundStreamContainer::get_data_as_double() const
         return { m_cached_ext_buffer };
     }
 
-    if (!m_double_extraction_dirty.load(std::memory_order_acquire)) {
-        return { m_cached_ext_buffer };
+    if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+        if (m_data.empty())
+            return {};
+
+        std::shared_lock data_lock(m_data_mutex);
+        auto span = convert_variant<double>(m_data[0]);
+        return { span.data(), span.size() };
     }
 
-    {
-        std::shared_lock data_lock(m_data_mutex);
-        m_cached_ext_buffer.clear();
-        m_double_extraction_dirty.store(false, std::memory_order_release);
-        return extract_from_variant<double>(m_data, m_cached_ext_buffer);
-    }
+    const auto& spans = get_span_cache();
+
+    auto channels = spans
+        | std::views::transform([](const auto& span) {
+              return std::vector<double>(span.begin(), span.end());
+          })
+        | std::ranges::to<std::vector>();
+
+    m_cached_ext_buffer = interleave_channels(channels);
+    m_double_extraction_dirty.store(false, std::memory_order_release);
+
+    return { m_cached_ext_buffer };
 }
+
+const std::vector<std::span<double>>& SoundStreamContainer::get_span_cache() const
+{
+    if (!m_span_cache_dirty.load(std::memory_order_acquire) && m_span_cache.has_value()) {
+        return *m_span_cache;
+    }
+
+    std::unique_lock data_lock(m_data_mutex);
+
+    if (!m_span_cache_dirty.load(std::memory_order_acquire) && m_span_cache.has_value()) {
+        return *m_span_cache;
+    }
+
+    auto spans = m_data
+        | std::views::transform([](auto& variant) {
+              return convert_variant<double>(const_cast<DataVariant&>(variant));
+          })
+        | std::ranges::to<std::vector>();
+
+    m_span_cache = std::move(spans);
+    m_span_cache_dirty.store(false, std::memory_order_release);
+
+    return *m_span_cache;
+}
+
+void SoundStreamContainer::invalidate_span_cache()
+{
+    m_span_cache_dirty.store(true, std::memory_order_release);
+}
+
 }

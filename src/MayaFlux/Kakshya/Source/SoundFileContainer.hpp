@@ -56,7 +56,7 @@ public:
      * @brief Set raw data from external source (e.g., file loading)
      * @param data The audio data as DataVariant
      */
-    void set_raw_data(const DataVariant& data);
+    void set_raw_data(const std::vector<DataVariant>& data);
 
     /**
      * @brief Enable debug output for this container

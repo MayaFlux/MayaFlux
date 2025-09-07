@@ -1,10 +1,9 @@
 #include "ContiguousAccessProcessor.hpp"
-#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
+
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
-#include "format"
 
 namespace MayaFlux::Kakshya {
 
@@ -18,13 +17,14 @@ void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer>
 
     try {
         store_metadata(container);
-        validate_container(container);
+        validate();
 
         m_prepared = true;
         container->mark_ready_for_processing(true);
 
-        std::cout << std::format("ContiguousAccessProcessor attached: {} dimensions, {} total elements",
-            m_dimensions.size(), m_total_elements)
+        std::cout << std::format("ContiguousAccessProcessor attached: {} layout, {} total elements, {} channels",
+            m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar",
+            m_total_elements, m_structure.get_channel_count())
                   << '\n';
 
     } catch (const std::exception& e) {
@@ -36,70 +36,76 @@ void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer>
 
 void ContiguousAccessProcessor::store_metadata(const std::shared_ptr<SignalSourceContainer>& container)
 {
-    m_dimensions = container->get_dimensions();
-    m_memory_layout = container->get_memory_layout();
+    m_structure = container->get_structure();
     m_total_elements = container->get_total_elements();
 
-    m_current_position.assign(m_dimensions.size(), 0);
-
-    if (m_output_shape.empty() && !m_dimensions.empty()) {
-        m_output_shape.resize(m_dimensions.size(), 1);
-
-        for (size_t i = 0; i < m_dimensions.size(); ++i) {
-            if (m_dimensions[i].role == DataDimension::Role::CHANNEL) {
-                m_output_shape[i] = m_dimensions[i].size;
-            }
-        }
+    if (m_current_position.empty()) {
+        u_int64_t num_channels = m_structure.get_channel_count();
+        m_current_position.assign(num_channels, 0);
     }
 
-    if (m_active_dimensions.empty()) {
-        m_active_dimensions.resize(m_dimensions.size());
-        std::iota(m_active_dimensions.begin(), m_active_dimensions.end(), 0);
+    if (m_output_shape.empty()) {
+        u_int64_t num_frames = m_structure.get_samples_count_per_channel();
+        u_int64_t num_channels = m_structure.get_channel_count();
+
+        m_output_shape = {
+            std::min(1024UL, num_frames),
+            num_channels
+        };
     }
 
     if (auto stream = std::dynamic_pointer_cast<StreamContainer>(container)) {
         m_looping_enabled = stream->is_looping();
         m_loop_region = stream->get_loop_region();
 
-        if (!m_dimensions.empty()) {
-            m_current_position[0] = stream->get_read_position();
+        auto stream_positions = stream->get_read_position();
+        if (!stream_positions.empty()) {
+            m_current_position = stream_positions;
         }
     }
 }
 
-void ContiguousAccessProcessor::validate_container(const std::shared_ptr<SignalSourceContainer>& /*container*/)
+void ContiguousAccessProcessor::validate()
 {
-    if (m_dimensions.empty()) {
-        throw std::runtime_error("Container has no dimensions");
-    }
-
     if (m_total_elements == 0) {
         std::cerr << "Warning: Container has no data elements" << '\n';
     }
 
-    if (m_output_shape.size() != m_dimensions.size()) {
-        throw std::runtime_error(std::format(
-            "Output shape dimensionality ({}) doesn't match container dimensions ({})",
-            m_output_shape.size(), m_dimensions.size()));
+    if (m_output_shape.size() != 2) {
+        throw std::runtime_error("Audio output shape must be [frames, channels]");
     }
 
-    for (size_t i = 0; i < m_dimensions.size(); ++i) {
-        if (m_output_shape[i] == 0) {
-            throw std::runtime_error(std::format(
-                "Output shape[{}] is zero, which is invalid", i));
-        }
-        if (m_output_shape[i] > m_dimensions[i].size) {
-            throw std::runtime_error(std::format(
-                "Output shape[{}] = {} exceeds dimension size {}",
-                i, m_output_shape[i], m_dimensions[i].size));
-        }
+    u_int64_t frames_requested = m_output_shape[0];
+    u_int64_t channels_requested = m_output_shape[1];
+    u_int64_t available_channels = m_structure.get_channel_count();
+
+    if (frames_requested == 0 || channels_requested == 0) {
+        throw std::runtime_error("Frame and channel counts cannot be zero");
     }
+
+    if (channels_requested > available_channels) {
+        throw std::runtime_error(std::format(
+            "Requested {} channels exceeds available {} channels",
+            channels_requested, available_channels));
+    }
+
+    if (m_current_position.size() != available_channels) {
+        std::cerr << std::format(
+            "Warning: Position vector size {} doesn't match channel count {}, adjusting",
+            m_current_position.size(), available_channels)
+                  << '\n';
+        m_current_position.resize(available_channels, 0);
+    }
+
+    std::cout << std::format("Audio processor: {} layout, processing {}×{} blocks, {} channel positions",
+        m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar",
+        frames_requested, channels_requested, m_current_position.size())
+              << '\n';
 }
 
 void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer> /*container*/)
 {
     m_source_container_weak.reset();
-    m_dimensions.clear();
     m_current_position.clear();
     m_prepared = false;
     m_total_elements = 0;
@@ -122,64 +128,50 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
     m_last_process_time = std::chrono::steady_clock::now();
 
     try {
-        Region output_region = calculate_output_region(m_current_position, m_output_shape);
+        u_int64_t min_frame = *std::ranges::min_element(m_current_position);
+        std::vector<u_int64_t> region_coords = { min_frame, 0 };
 
-        DataVariant& processed_data = container->get_processed_data();
-        DataVariant region_data = container->get_region_data(output_region);
-        safe_copy_data_variant(region_data, processed_data);
+        Region output_region = calculate_output_region(region_coords, m_output_shape);
+
+        auto region_data = container->get_region_data(output_region);
+        auto& processed_data_vector = container->get_processed_data();
+
+        if (m_structure.organization == OrganizationStrategy::INTERLEAVED) {
+            processed_data_vector.resize(1);
+            if (!region_data.empty()) {
+                safe_copy_data_variant(region_data[0], processed_data_vector[0]);
+            }
+        } else {
+            u_int64_t channels_to_process = std::min(m_output_shape[1], static_cast<u_int64_t>(region_data.size()));
+            processed_data_vector.resize(channels_to_process);
+
+            for (size_t ch = 0; ch < channels_to_process; ++ch) {
+                safe_copy_data_variant(region_data[ch], processed_data_vector[ch]);
+            }
+        }
 
         if (m_auto_advance) {
-            advance_read_position(m_current_position, m_output_shape);
+            u_int64_t frames_to_advance = m_output_shape[0];
 
-            if (m_looping_enabled && !m_loop_region.start_coordinates.empty()) {
-                {
-                    for (size_t i = 0; i < m_current_position.size(); ++i) {
-                        m_current_position[i] = wrap_position_with_loop(m_current_position[i], m_loop_region, i, m_looping_enabled);
-                    }
-                }
-            }
+            m_current_position = advance_position(
+                m_current_position,
+                frames_to_advance,
+                m_structure,
+                m_looping_enabled,
+                m_loop_region);
 
             if (auto stream = std::dynamic_pointer_cast<StreamContainer>(container)) {
-                if (!m_dimensions.empty()) {
-                    stream->set_read_position(m_current_position[0]);
-                }
+                stream->set_read_position(m_current_position);
             }
         }
 
         container->update_processing_state(ProcessingState::PROCESSED);
-
     } catch (const std::exception& e) {
         std::cerr << "Error during processing: " << e.what() << '\n';
         container->update_processing_state(ProcessingState::ERROR);
     }
 
     m_is_processing = false;
-}
-
-void ContiguousAccessProcessor::advance_read_position(std::vector<u_int64_t>& position, const std::vector<u_int64_t>& shape)
-{
-    assert(position.size() == shape.size() && "advance_read_position: position and shape size mismatch");
-
-    if (!position.empty()) {
-        u_int64_t loop_start = 0;
-        u_int64_t loop_end = m_dimensions[0].size;
-
-        if (!m_loop_region.start_coordinates.empty()) {
-            loop_start = m_loop_region.start_coordinates[0];
-        }
-        if (!m_loop_region.end_coordinates.empty()) {
-            loop_end = m_loop_region.end_coordinates[0];
-        }
-
-        position[0] = advance_position(
-            position[0],
-            shape[0],
-            m_dimensions[0].size,
-            loop_start,
-            loop_end,
-            m_looping_enabled);
-    }
-    m_current_position = position;
 }
 
 } // namespace MayaFlux::Kakshya

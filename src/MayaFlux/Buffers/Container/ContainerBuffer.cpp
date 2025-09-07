@@ -1,4 +1,5 @@
 #include "ContainerBuffer.hpp"
+
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
@@ -9,34 +10,13 @@ ContainerToBufferAdapter::ContainerToBufferAdapter(std::shared_ptr<Kakshya::Stre
     : m_container(container)
 {
     if (container) {
-        analyze_container_dimensions();
+        auto structure = container->get_structure();
+        m_num_channels = structure.get_channel_count();
 
         container->register_state_change_callback(
-            [this](std::shared_ptr<Kakshya::SignalSourceContainer> c, Kakshya::ProcessingState s) {
+            [this](auto c, auto s) {
                 this->on_container_state_change(c, s);
             });
-    }
-}
-
-void ContainerToBufferAdapter::analyze_container_dimensions()
-{
-    if (!m_container)
-        return;
-
-    auto dimensions = m_container->get_dimensions();
-
-    for (size_t i = 0; i < dimensions.size(); ++i) {
-        if (dimensions[i].role == Kakshya::DataDimension::Role::TIME) {
-            m_dim_info.time_dim = i;
-        } else if (dimensions[i].role == Kakshya::DataDimension::Role::CHANNEL) {
-            m_dim_info.channel_dim = i;
-            m_dim_info.has_channels = true;
-            m_dim_info.num_channels = dimensions[i].size;
-        }
-    }
-
-    if (dimensions.empty() || dimensions[m_dim_info.time_dim].role != Kakshya::DataDimension::Role::TIME) {
-        throw std::runtime_error("Container missing time dimension for audio processing");
     }
 }
 
@@ -56,11 +36,6 @@ void ContainerToBufferAdapter::processing_function(std::shared_ptr<Buffer> buffe
             return;
         }
 
-        // if (state != Kakshya::ProcessingState::PROCESSED && state != Kakshya::ProcessingState::READY) {
-        //     std::cout << "EARLY RETURN: State not READY or PROCESSED (state=" << (int)state << ")" << std::endl;
-        //     return;
-        // }
-
         if (state != Kakshya::ProcessingState::PROCESSED) {
             if (state == Kakshya::ProcessingState::READY) {
                 if (m_container->try_acquire_processing_token(m_source_channel)) {
@@ -69,120 +44,94 @@ void ContainerToBufferAdapter::processing_function(std::shared_ptr<Buffer> buffe
             }
         }
 
-        auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
-        u_int32_t buffer_size = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples();
-        u_int64_t current_pos = m_container->get_read_position();
+        auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
+        auto& buffer_data = audio_buffer->get_data();
+        u_int32_t buffer_size = audio_buffer->get_num_samples();
+
+        auto read_positions = m_container->get_read_position();
+        u_int64_t current_pos = (m_source_channel < read_positions.size())
+            ? read_positions[m_source_channel]
+            : 0;
 
         if (buffer_data.size() != buffer_size) {
             buffer_data.resize(buffer_size);
         }
 
-        extract_channel_data(buffer_data, current_pos, buffer_size);
+        extract_channel_data(buffer_data);
+
+        if (m_auto_advance) {
+            m_container->update_read_position_for_channel(m_source_channel, current_pos + buffer_size);
+        }
 
         if (m_update_flags) {
             buffer->mark_for_processing(true);
         }
 
-        m_container->mark_dimension_consumed(m_dim_info.time_dim, m_time_reader_id);
-        if (m_dim_info.has_channels) {
-            m_container->mark_dimension_consumed(m_dim_info.channel_dim, m_channel_reader_id);
-        }
+        m_container->mark_dimension_consumed(m_source_channel, m_reader_id);
 
         if (m_container->all_dimensions_consumed()) {
             m_container->update_processing_state(Kakshya::ProcessingState::READY);
             std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(m_container)->clear_all_consumption();
             m_container->reset_processing_token();
-            if (m_auto_advance) {
-                m_container->advance_read_position(buffer_size);
-            }
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "Error in ContainerToBufferAdapter::process: " << e.what() << std::endl;
+        std::cerr << "Error in ContainerToBufferAdapter::process: " << e.what() << '\n';
     }
 }
 
-void ContainerToBufferAdapter::extract_channel_data(std::span<double> output,
-    u_int64_t start_frame,
-    u_int64_t num_frames)
+void ContainerToBufferAdapter::extract_channel_data(std::span<double> output)
 {
     if (!m_container) {
-        std::fill(output.begin(), output.end(), 0.0);
-        return;
-    }
-
-    auto dimensions = m_container->get_dimensions();
-    if (m_dim_info.has_channels && m_source_channel >= m_dim_info.num_channels) {
-        std::fill(output.begin(), output.end(), 0.0);
+        std::ranges::fill(output, 0.0);
         return;
     }
 
     auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundStreamContainer>(m_container);
     if (!sound_container) {
-        std::fill(output.begin(), output.end(), 0.0);
+        std::ranges::fill(output, 0.0);
         return;
     }
 
-    auto data_span = sound_container->get_data_as_double();
-    if (data_span.empty()) {
-        std::fill(output.begin(), output.end(), 0.0);
+    auto& processed_data = sound_container->get_processed_data();
+    if (processed_data.empty()) {
+        std::ranges::fill(output, 0.0);
         return;
     }
 
-    u_int64_t available_frames = dimensions[m_dim_info.time_dim].size;
-    u_int64_t loop_start = 0, loop_end = available_frames;
+    auto structure = sound_container->get_structure();
 
-    bool looping = m_container->is_looping();
-    if (looping) {
-        auto region = m_container->get_loop_region();
-        loop_start = region.start_coordinates[0];
-        loop_end = region.end_coordinates[0];
-    }
+    if (structure.organization == Kakshya::OrganizationStrategy::INTERLEAVED) {
+        thread_local std::vector<double> temp_storage;
+        auto data_span = Kakshya::extract_from_variant<double>(processed_data[0], temp_storage);
 
-    u_int64_t pos = start_frame;
-    size_t filled = 0;
+        auto num_channels = structure.get_channel_count();
+        auto samples_to_copy = std::min(output.size(), data_span.size() / num_channels);
 
-    while (filled < num_frames) {
-        u_int64_t region_end = looping ? loop_end : available_frames;
-        u_int64_t frames_left = (pos < region_end) ? (region_end - pos) : 0;
-        u_int64_t to_copy = std::min<u_int64_t>(num_frames - filled, frames_left);
-
-        if (to_copy == 0) {
-            if (looping) {
-                pos = loop_start;
-                continue;
-            } else {
-                std::fill(output.begin() + filled, output.end(), 0.0);
-                break;
-            }
+        for (auto i : std::views::iota(0UZ, samples_to_copy)) {
+            auto interleaved_idx = i * num_channels + m_source_channel;
+            output[i] = (interleaved_idx < data_span.size()) ? data_span[interleaved_idx] : 0.0;
         }
 
-        if (m_dim_info.has_channels) {
-            u_int64_t stride = m_dim_info.num_channels;
-            u_int64_t start_sample = pos * stride + m_source_channel;
-
-            for (u_int64_t i = 0; i < to_copy; ++i) {
-                u_int64_t sample_index = start_sample + (i * stride);
-                if (sample_index < data_span.size()) {
-                    output[filled + i] = data_span[sample_index];
-                } else {
-                    output[filled + i] = 0.0;
-                }
-            }
-        } else {
-            u_int64_t start_sample = pos;
-            u_int64_t end_sample = std::min(start_sample + to_copy, static_cast<u_int64_t>(data_span.size()));
-            u_int64_t actual_copy = end_sample - start_sample;
-
-            std::copy_n(data_span.begin() + start_sample, actual_copy, output.begin() + filled);
-
-            if (actual_copy < to_copy) {
-                std::fill_n(output.begin() + filled + actual_copy, to_copy - actual_copy, 0.0);
-            }
+        if (samples_to_copy < output.size()) {
+            std::ranges::fill(output | std::views::drop(samples_to_copy), 0.0);
         }
 
-        filled += to_copy;
-        pos += to_copy;
+    } else {
+        if (m_source_channel >= processed_data.size()) {
+            std::ranges::fill(output, 0.0);
+            return;
+        }
+
+        thread_local std::vector<double> temp_storage;
+        auto channel_data_span = Kakshya::extract_from_variant<double>(processed_data[m_source_channel], temp_storage);
+
+        auto samples_to_copy = std::min(output.size(), channel_data_span.size());
+        std::ranges::copy_n(channel_data_span.begin(), samples_to_copy, output.begin());
+
+        if (samples_to_copy < output.size()) {
+            std::ranges::fill(output | std::views::drop(samples_to_copy), 0.0);
+        }
     }
 }
 
@@ -192,10 +141,7 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<Buffer> buffer)
         return;
     }
 
-    m_time_reader_id = m_container->register_dimension_reader(m_dim_info.time_dim);
-    if (m_dim_info.has_channels) {
-        m_channel_reader_id = m_container->register_dimension_reader(m_dim_info.channel_dim);
-    }
+    m_reader_id = m_container->register_dimension_reader(m_source_channel);
 
     if (!m_container->is_ready_for_processing()) {
         throw std::runtime_error("Container not ready for processing");
@@ -204,16 +150,15 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<Buffer> buffer)
     try {
         auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
         u_int32_t num_samples = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples();
-        u_int64_t position = m_container->get_read_position();
 
-        extract_channel_data(buffer_data, position, num_samples);
+        extract_channel_data(buffer_data);
 
         if (m_update_flags) {
             buffer->mark_for_processing(true);
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "Error pre-filling buffer: " << e.what() << std::endl;
+        std::cerr << "Error pre-filling buffer: " << e.what() << '\n';
     }
 }
 
@@ -221,16 +166,13 @@ void ContainerToBufferAdapter::on_detach(std::shared_ptr<Buffer> buffer)
 {
     if (m_container) {
         m_container->unregister_state_change_callback();
-        m_container->unregister_dimension_reader(m_dim_info.time_dim);
-        if (m_dim_info.has_channels) {
-            m_container->unregister_dimension_reader(m_dim_info.channel_dim);
-        }
+        m_container->unregister_dimension_reader(m_source_channel);
     }
 }
 
 void ContainerToBufferAdapter::set_source_channel(u_int32_t channel_index)
 {
-    if (m_dim_info.has_channels && channel_index >= m_dim_info.num_channels) {
+    if (channel_index >= m_num_channels) {
         throw std::out_of_range("Channel index exceeds container channel count");
     }
     m_source_channel = channel_index;
@@ -245,7 +187,9 @@ void ContainerToBufferAdapter::set_container(std::shared_ptr<Kakshya::StreamCont
     m_container = container;
 
     if (container) {
-        analyze_container_dimensions();
+        auto structure = container->get_structure();
+        m_num_channels = structure.get_channel_count();
+
         container->register_state_change_callback(
             [this](std::shared_ptr<Kakshya::SignalSourceContainer> c, Kakshya::ProcessingState s) {
                 this->on_container_state_change(c, s);
@@ -262,7 +206,7 @@ void ContainerToBufferAdapter::on_container_state_change(
         break;
 
     case Kakshya::ProcessingState::ERROR:
-        std::cerr << "Container entered error state" << std::endl;
+        std::cerr << "Container entered error state" << '\n';
         break;
 
     default:
@@ -281,7 +225,6 @@ ContainerBuffer::ContainerBuffer(u_int32_t channel_id, u_int32_t num_samples,
         throw std::invalid_argument("ContainerBuffer: container must not be null");
     }
 
-    // Create adapter but don't attach yet (need shared_from_this)
     m_pending_adapter = std::make_shared<ContainerToBufferAdapter>(m_container);
     std::dynamic_pointer_cast<ContainerToBufferAdapter>(m_pending_adapter)->set_source_channel(m_source_channel);
 

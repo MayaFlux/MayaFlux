@@ -149,12 +149,12 @@ public:
     virtual bool is_ready() const = 0;
 
     /**
-     * @brief Get the number of remaining frames from the current position.
+     * @brief Get the number of remaining frames from the current position, per channel.
      * @return Number of frames until end (accounting for looping)
      *
      * Enables efficient buffer management and lookahead in streaming scenarios.
      */
-    virtual u_int64_t get_remaining_frames() const = 0;
+    virtual std::vector<u_int64_t> get_remaining_frames() const = 0;
 
     /**
      * @brief Read data sequentially from the current position.

@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 
+#include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
+
 #include "MayaFlux/Kakshya/Region.hpp"
 
 /**
@@ -67,13 +69,6 @@ public:
     void set_output_size(const std::vector<u_int64_t>& shape) { m_output_shape = shape; }
 
     /**
-     * @brief Set which dimensions to process (by index).
-     * Allows for partial or selective processing of multi-dimensional data.
-     * @param dims Indices of active dimensions.
-     */
-    void set_active_dimensions(const std::vector<u_int32_t>& dims) { m_active_dimensions = dims; }
-
-    /**
      * @brief Enable or disable automatic advancement of the read position after each process call.
      * @param enable true to auto-advance, false for manual control.
      */
@@ -91,30 +86,26 @@ public:
 private:
     // Processing state
     std::atomic<bool> m_is_processing { false };
-    bool m_prepared = false;
-    bool m_auto_advance = true;
+    bool m_prepared {};
+    bool m_auto_advance { true };
 
     // Container reference
     std::weak_ptr<SignalSourceContainer> m_source_container_weak;
 
     // Dimension information
-    std::vector<DataDimension> m_dimensions;
-    std::vector<u_int32_t> m_active_dimensions;
-    MemoryLayout m_memory_layout { MemoryLayout::ROW_MAJOR };
+    ContainerDataStructure m_structure;
 
     // Position tracking
     std::vector<u_int64_t> m_current_position;
     std::vector<u_int64_t> m_output_shape;
 
     // Loop configuration
-    bool m_looping_enabled = false;
+    bool m_looping_enabled {};
     Region m_loop_region;
 
     // Metadata
-    u_int64_t m_total_elements = 0;
+    u_int64_t m_total_elements {};
     std::chrono::steady_clock::time_point m_last_process_time;
-
-    // ===== Helper methods =====
 
     /**
      * @brief Store dimension and layout metadata from the container.
@@ -125,17 +116,8 @@ private:
     /**
      * @brief Validate the container's structure and output configuration.
      * Throws if configuration is invalid.
-     * @param container The SignalSourceContainer to validate.
      */
-    void validate_container(const std::shared_ptr<SignalSourceContainer>& container);
-
-    /**
-     * @brief Advance the read position by the output shape.
-     * Handles looping if enabled.
-     * @param position Current position vector (modified in place).
-     * @param shape Output shape vector.
-     */
-    void advance_read_position(std::vector<u_int64_t>& position, const std::vector<u_int64_t>& shape);
+    void validate();
 };
 
 } // namespace MayaFlux::Kakshya

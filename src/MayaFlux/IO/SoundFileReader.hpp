@@ -122,14 +122,14 @@ public:
      * @brief Read the entire audio file into memory.
      * @return DataVariant containing audio data as std::vector<double>.
      */
-    Kakshya::DataVariant read_all() override;
+    std::vector<Kakshya::DataVariant> read_all() override;
 
     /**
      * @brief Read a specific region from the file.
      * @param region Region to read.
      * @return DataVariant containing region data.
      */
-    Kakshya::DataVariant read_region(const FileRegion& region) override;
+    std::vector<Kakshya::DataVariant> read_region(const FileRegion& region) override;
 
     /**
      * @brief Create a SignalSourceContainer for this file.
@@ -211,7 +211,7 @@ public:
      * @param offset Frame offset from beginning.
      * @return DataVariant containing std::vector<double>.
      */
-    Kakshya::DataVariant read_frames(u_int64_t num_frames, u_int64_t offset = 0);
+    std::vector<Kakshya::DataVariant> read_frames(u_int64_t num_frames, u_int64_t offset = 0);
 
     /**
      * @brief Set audio-specific read options.
@@ -369,7 +369,7 @@ private:
      * @param offset Frame offset from beginning.
      * @return DataVariant containing decoded data.
      */
-    Kakshya::DataVariant decode_frames(u_int64_t num_frames, u_int64_t offset);
+    std::vector<Kakshya::DataVariant> decode_frames(u_int64_t num_frames, u_int64_t offset);
 
     /**
      * @brief Convert interleaved audio data to deinterleaved (planar) format.
@@ -377,7 +377,7 @@ private:
      * @param channels Number of channels.
      * @return Deinterleaved data as std::vector<double>.
      */
-    std::vector<double> deinterleave_data(const std::vector<double>& interleaved, u_int32_t channels);
+    std::vector<std::vector<double>> deinterleave_data(const std::vector<double>& interleaved, u_int32_t channels);
 
     /**
      * @brief Set the last error message.
