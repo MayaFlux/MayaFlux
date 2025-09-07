@@ -83,6 +83,10 @@ void ContiguousAccessProcessor::validate()
         throw std::runtime_error("Frame and channel counts cannot be zero");
     }
 
+    if (frames_requested > m_structure.get_samples_count_per_channel()) {
+        throw std::runtime_error("Requested frame count exceeds available samples per channel");
+    }
+
     if (channels_requested > available_channels) {
         throw std::runtime_error(std::format(
             "Requested {} channels exceeds available {} channels",
@@ -172,6 +176,15 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
     }
 
     m_is_processing = false;
+}
+
+void ContiguousAccessProcessor::set_output_size(const std::vector<u_int64_t>& shape)
+{
+    m_output_shape = shape;
+    if (auto container = m_source_container_weak.lock()) {
+        store_metadata(container);
+        validate();
+    }
 }
 
 } // namespace MayaFlux::Kakshya

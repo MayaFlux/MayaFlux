@@ -502,7 +502,7 @@ u_int64_t SoundStreamContainer::read_sequential(std::span<double> output, u_int6
     u_int64_t frames_read = peek_sequential(output, count, 0);
 
     u_int64_t frames_to_advance = frames_read / m_num_channels;
-    std::vector<u_int64_t> advance_amount = { frames_to_advance };
+    std::vector<u_int64_t> advance_amount(m_num_channels, frames_to_advance);
 
     advance_read_position(advance_amount);
     return frames_read;

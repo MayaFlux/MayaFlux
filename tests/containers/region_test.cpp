@@ -198,7 +198,7 @@ TEST_F(RegionTest, Transformations)
     EXPECT_EQ(scaled.end_coordinates[0], center + new_half_span); // 200
 
     auto scaled_down = time_span.scale({ 0.5 });
-    u_int64_t new_half_span_down = static_cast<u_int64_t>(half_span * 0.5); // 25
+    auto new_half_span_down = static_cast<u_int64_t>(half_span * 0.5); // 25
     EXPECT_EQ(scaled_down.start_coordinates[0], center - new_half_span_down); // 75
     EXPECT_EQ(scaled_down.end_coordinates[0], center + new_half_span_down); // 125
 
@@ -351,7 +351,7 @@ TEST_F(RegionSegmentTest, CacheManagement)
     EXPECT_EQ(segment.get_cache_age_seconds(), -1.0);
 
     DataVariant test_data = std::vector<double> { 1.0, 2.0, 3.0 };
-    segment.mark_cached(test_data);
+    segment.mark_cached({ test_data });
 
     EXPECT_TRUE(segment.is_cached);
     EXPECT_EQ(segment.state, RegionState::READY);
@@ -377,13 +377,13 @@ TEST_F(RegionSegmentTest, CacheManagement)
 
 TEST_F(RegionSegmentTest, PositionManagement)
 {
-    EXPECT_TRUE(std::all_of(segment.current_position.begin(), segment.current_position.end(),
+    EXPECT_TRUE(std::ranges::all_of(segment.current_position,
         [](u_int64_t pos) { return pos == 0; }));
 
     segment.current_position[0] = 50;
     segment.current_position[1] = 1;
     segment.reset_position();
-    EXPECT_TRUE(std::all_of(segment.current_position.begin(), segment.current_position.end(),
+    EXPECT_TRUE(std::ranges::all_of(segment.current_position,
         [](u_int64_t pos) { return pos == 0; }));
 
     EXPECT_TRUE(segment.advance_position(10, 0)); // advance 10 steps in dimension 0
@@ -792,7 +792,7 @@ protected:
         test_data = std::vector<double> { 1.0, 2.0, 3.0, 4.0, 5.0 };
         region = Region::time_span(100, 200, "cached_region");
 
-        cache.data = test_data;
+        cache.data = { test_data };
         cache.source_region = region;
         cache.load_time = std::chrono::steady_clock::now();
         cache.access_count = 0;
@@ -824,7 +824,7 @@ TEST_F(RegionCacheTest, BasicOperations)
     EXPECT_GT(age.count(), 0.01);
     EXPECT_LT(age.count(), 1.0);
 
-    auto cached_data = std::get<std::vector<double>>(cache.data);
+    auto cached_data = std::get<std::vector<double>>(cache.data[0]);
     EXPECT_EQ(cached_data.size(), 5);
     EXPECT_DOUBLE_EQ(cached_data[0], 1.0);
     EXPECT_DOUBLE_EQ(cached_data[4], 5.0);
@@ -834,29 +834,28 @@ TEST_F(RegionCacheTest, DataVariantHandling)
 {
 
     RegionCache float_cache;
-    float_cache.data = std::vector<float> { 1.0f, 2.0f, 3.0f };
+    float_cache.data = { std::vector<float> { 1.0F, 2.0F, 3.0F } };
     float_cache.source_region = region;
 
-    auto float_data = std::get<std::vector<float>>(float_cache.data);
+    auto float_data = std::get<std::vector<float>>(float_cache.data[0]);
     EXPECT_EQ(float_data.size(), 3);
     EXPECT_FLOAT_EQ(float_data[1], 2.0f);
 
     RegionCache complex_cache;
-    complex_cache.data = std::vector<std::complex<double>> {
-        { 1.0, 0.0 }, { 0.0, 1.0 }, { -1.0, 0.0 }
-    };
+    complex_cache.data = { std::vector<std::complex<double>> {
+        { 1.0, 0.0 }, { 0.0, 1.0 }, { -1.0, 0.0 } } };
     complex_cache.source_region = region;
 
-    auto complex_data = std::get<std::vector<std::complex<double>>>(complex_cache.data);
+    auto complex_data = std::get<std::vector<std::complex<double>>>(complex_cache.data[0]);
     EXPECT_EQ(complex_data.size(), 3);
     EXPECT_DOUBLE_EQ(complex_data[0].real(), 1.0);
     EXPECT_DOUBLE_EQ(complex_data[1].imag(), 1.0);
 
     RegionCache int_cache;
-    int_cache.data = std::vector<u_int16_t> { 100, 200, 300 };
+    int_cache.data = { std::vector<u_int16_t> { 100, 200, 300 } };
     int_cache.source_region = region;
 
-    auto int_data = std::get<std::vector<u_int16_t>>(int_cache.data);
+    auto int_data = std::get<std::vector<u_int16_t>>(int_cache.data[0]);
     EXPECT_EQ(int_data.size(), 3);
     EXPECT_EQ(int_data[2], 300);
 }

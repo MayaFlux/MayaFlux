@@ -81,7 +81,15 @@ std::vector<T> extract_region_data(const std::span<const T>& source_data, const 
         result.push_back(source_data[linear_index]);
 
         bool done = true;
-        for (size_t dim = 0; dim < current.size(); ++dim) {
+        /* for (size_t dim = 0; dim < current.size(); ++dim) {
+            if (current[dim] < region.end_coordinates[dim]) {
+                current[dim]++;
+                done = false;
+                break;
+            }
+            current[dim] = region.start_coordinates[dim];
+        } */
+        for (int dim = current.size() - 1; dim >= 0; --dim) {
             if (current[dim] < region.end_coordinates[dim]) {
                 current[dim]++;
                 done = false;

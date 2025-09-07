@@ -66,7 +66,7 @@ public:
      * @brief Set the output buffer size (shape) for each processing call.
      * @param shape Vector specifying the size in each dimension.
      */
-    void set_output_size(const std::vector<u_int64_t>& shape) { m_output_shape = shape; }
+    void set_output_size(const std::vector<u_int64_t>& shape);
 
     /**
      * @brief Enable or disable automatic advancement of the read position after each process call.
