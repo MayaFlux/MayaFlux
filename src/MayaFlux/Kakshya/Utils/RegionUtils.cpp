@@ -202,6 +202,28 @@ Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
     return { current_pos, end_pos };
 }
 
+Region calculate_output_region(u_int64_t current_frame,
+    u_int64_t frames_to_process,
+    const std::shared_ptr<SignalSourceContainer>& container)
+{
+    const auto& structure = container->get_structure();
+    u_int64_t total_frames = structure.get_samples_count_per_channel();
+    u_int64_t num_channels = structure.get_channel_count();
+
+    if (current_frame >= total_frames) {
+        throw std::out_of_range("Current frame exceeds container bounds");
+    }
+
+    u_int64_t available_frames = total_frames - current_frame;
+    u_int64_t actual_frames = std::min(frames_to_process, available_frames);
+
+    Region output_shape;
+    output_shape.start_coordinates = { current_frame, 0 };
+    output_shape.end_coordinates = { current_frame + actual_frames - 1, num_channels - 1 };
+
+    return output_shape;
+}
+
 bool is_region_access_contiguous(const Region& region,
     const std::shared_ptr<SignalSourceContainer>& container)
 {
@@ -289,14 +311,14 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
     return bounds_info;
 }
 
-std::vector<DataVariant> extract_segments_data(const std::vector<RegionSegment>& segments,
+std::vector<std::vector<DataVariant>> extract_segments_data(const std::vector<RegionSegment>& segments,
     const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         throw std::invalid_argument("Container is null");
     }
 
-    std::vector<DataVariant> results;
+    std::vector<std::vector<DataVariant>> results;
     results.reserve(segments.size());
 
     std::ranges::transform(segments, std::back_inserter(results),

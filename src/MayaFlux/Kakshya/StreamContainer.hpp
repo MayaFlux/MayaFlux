@@ -36,20 +36,29 @@ public:
     // ===== Stream Position Management =====
 
     /**
-     * @brief Set the current read position in the primary temporal dimension.
+     * @brief Set the current read position in the primary temporal dimension per channel.
      * @param position Position in the first (temporal) dimension (e.g., frame/sample index)
      *
      * Enables random access and programmatic navigation within the stream.
      */
-    virtual void set_read_position(u_int64_t position) = 0;
+    virtual void set_read_position(const std::vector<u_int64_t>& position) = 0;
+
+    /**
+     * @brief Update the read position for a specific channel.
+     * @param channel Channel index to update
+     * @param frame New position in the temporal dimension for the specified channel
+     *
+     * Allows fine-grained control over individual channels in multi-channel streams.
+     */
+    virtual void update_read_position_for_channel(size_t channel, u_int64_t frame) = 0;
 
     /**
      * @brief Get the current read position.
-     * @return Current position in the temporal dimension
+     * @return Current position in the temporal dimension per channel
      *
      * Allows external components to query or synchronize playback/processing state.
      */
-    virtual u_int64_t get_read_position() const = 0;
+    virtual const std::vector<u_int64_t>& get_read_position() const = 0;
 
     /**
      * @brief Advance the read position by a specified amount.
@@ -58,7 +67,7 @@ public:
      *
      * Supports efficient sequential access and playback scenarios.
      */
-    virtual void advance_read_position(u_int64_t frames) = 0;
+    virtual void advance_read_position(const std::vector<u_int64_t>& frames) = 0;
 
     /**
      * @brief Check if read position has reached the end of the stream.

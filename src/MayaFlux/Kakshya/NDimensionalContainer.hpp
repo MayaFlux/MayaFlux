@@ -247,16 +247,16 @@ public:
     /**
      * @brief Get data for a specific region.
      * @param region The region to extract data from
-     * @return DataVariant containing the region's data
+     * @return std::vector<DataVariant> containing the region's data
      */
-    [[nodiscard]] virtual DataVariant get_region_data(const Region& region) const = 0;
+    [[nodiscard]] virtual std::vector<DataVariant> get_region_data(const Region& region) const = 0;
 
     /**
      * @brief Set data for a specific region.
      * @param region The region to write data to
      * @param data The data to write
      */
-    virtual void set_region_data(const Region& region, const DataVariant& data) = 0;
+    virtual void set_region_data(const Region& region, const std::vector<DataVariant>& data) = 0;
 
     /**
      * @brief Get a single frame of data efficiently.
@@ -382,6 +382,7 @@ public:
      * @brief Get the data structure defining this container's layout.
      * @return Reference to the ContainerDataStructure
      */
+    [[nodiscard]] virtual ContainerDataStructure& get_structure() = 0;
     [[nodiscard]] virtual const ContainerDataStructure& get_structure() const = 0;
 
     /**

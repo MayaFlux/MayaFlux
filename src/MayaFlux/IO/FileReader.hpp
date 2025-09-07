@@ -126,7 +126,7 @@ public:
      * @param filepath Path to the file.
      * @return true if the file format is supported.
      */
-    virtual bool can_read(const std::string& filepath) const = 0;
+    [[nodiscard]] virtual bool can_read(const std::string& filepath) const = 0;
 
     /**
      * @brief Open a file for reading.
@@ -145,13 +145,13 @@ public:
      * @brief Check if a file is currently open.
      * @return true if a file is open.
      */
-    virtual bool is_open() const = 0;
+    [[nodiscard]] virtual bool is_open() const = 0;
 
     /**
      * @brief Get metadata from the open file.
      * @return File metadata or nullopt if no file is open.
      */
-    virtual std::optional<FileMetadata> get_metadata() const = 0;
+    [[nodiscard]] virtual std::optional<FileMetadata> get_metadata() const = 0;
 
     /**
      * @brief Get semantic regions from the file.
@@ -163,20 +163,20 @@ public:
      * - Images: layers, selections, annotations
      * - Data: chunks, blocks, datasets
      */
-    virtual std::vector<FileRegion> get_regions() const = 0;
+    [[nodiscard]] virtual std::vector<FileRegion> get_regions() const = 0;
 
     /**
      * @brief Read all data from the file into memory.
-     * @return DataVariant containing the file data.
+     * @return DataVariant vector containing the file data.
      */
-    virtual Kakshya::DataVariant read_all() = 0;
+    virtual std::vector<Kakshya::DataVariant> read_all() = 0;
 
     /**
      * @brief Read a specific region of data.
      * @param region Region descriptor.
-     * @return DataVariant containing the requested data.
+     * @return DataVariant vector containing the requested data.
      */
-    virtual Kakshya::DataVariant read_region(const FileRegion& region) = 0;
+    virtual std::vector<Kakshya::DataVariant> read_region(const FileRegion& region) = 0;
 
     /**
      * @brief Create and initialize a container from the file.
@@ -201,7 +201,7 @@ public:
      * @brief Get current read position in primary dimension.
      * @return Current position (interpretation is format-specific).
      */
-    virtual std::vector<u_int64_t> get_read_position() const = 0;
+    [[nodiscard]] virtual std::vector<u_int64_t> get_read_position() const = 0;
 
     /**
      * @brief Seek to a specific position in the file.
@@ -214,49 +214,49 @@ public:
      * @brief Get supported file extensions for this reader.
      * @return Vector of supported extensions (without dots).
      */
-    virtual std::vector<std::string> get_supported_extensions() const = 0;
+    [[nodiscard]] virtual std::vector<std::string> get_supported_extensions() const = 0;
 
     /**
      * @brief Get the data type this reader produces.
      * @return Type info for the data variant content.
      */
-    virtual std::type_index get_data_type() const = 0;
+    [[nodiscard]] virtual std::type_index get_data_type() const = 0;
 
     /**
      * @brief Get the container type this reader creates.
      * @return Type info for the container type.
      */
-    virtual std::type_index get_container_type() const = 0;
+    [[nodiscard]] virtual std::type_index get_container_type() const = 0;
 
     /**
      * @brief Get the last error message.
      * @return Error string or empty if no error.
      */
-    virtual std::string get_last_error() const = 0;
+    [[nodiscard]] virtual std::string get_last_error() const = 0;
 
     /**
      * @brief Check if streaming is supported for the current file.
      * @return true if file can be streamed.
      */
-    virtual bool supports_streaming() const = 0;
+    [[nodiscard]] virtual bool supports_streaming() const = 0;
 
     /**
      * @brief Get the preferred chunk size for streaming.
      * @return Chunk size in primary dimension units.
      */
-    virtual u_int64_t get_preferred_chunk_size() const = 0;
+    [[nodiscard]] virtual u_int64_t get_preferred_chunk_size() const = 0;
 
     /**
      * @brief Get the dimensionality of the file data.
      * @return Number of dimensions.
      */
-    virtual size_t get_num_dimensions() const = 0;
+    [[nodiscard]] virtual size_t get_num_dimensions() const = 0;
 
     /**
      * @brief Get size of each dimension in the file data.
      * @return Vector of dimension sizes.
      */
-    virtual std::vector<u_int64_t> get_dimension_sizes() const = 0;
+    [[nodiscard]] virtual std::vector<u_int64_t> get_dimension_sizes() const = 0;
 
 protected:
     /**
@@ -296,7 +296,7 @@ public:
      * @param extensions Supported file extensions (without dots).
      * @param factory Factory function to create reader.
      */
-    void register_reader(const std::vector<std::string>& extensions, FileReaderFactory factory)
+    void register_reader(const std::vector<std::string>& extensions, const FileReaderFactory& factory)
     {
         for (const auto& ext : extensions) {
             m_factories[ext] = factory;

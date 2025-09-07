@@ -83,7 +83,7 @@ struct Region {
      * @param coordinates The N-dimensional coordinates.
      * @param attributes Optional metadata.
      */
-    Region(std::vector<u_int64_t> coordinates,
+    Region(const std::vector<u_int64_t>& coordinates,
         std::unordered_map<std::string, std::any> attributes = {})
         : start_coordinates(coordinates)
         , end_coordinates(coordinates)
@@ -115,7 +115,7 @@ struct Region {
      */
     static Region time_point(u_int64_t frame,
         const std::string& label = "",
-        std::any extra_data = {})
+        const std::any& extra_data = {})
     {
         std::unordered_map<std::string, std::any> attrs;
         if (!label.empty())
@@ -137,7 +137,7 @@ struct Region {
     static Region time_span(u_int64_t start_frame,
         u_int64_t end_frame,
         const std::string& label = "",
-        std::any extra_data = {})
+        const std::any& extra_data = {})
     {
         std::unordered_map<std::string, std::any> attrs;
         if (!label.empty())
@@ -443,7 +443,7 @@ struct Region {
  * @brief Stores cached data for a region, with metadata for cache management.
  */
 struct RegionCache {
-    DataVariant data; ///< Cached data
+    std::vector<DataVariant> data; ///< Cached data
     Region source_region; ///< Region this cache corresponds to
     std::chrono::steady_clock::time_point load_time; ///< When cache was loaded
     size_t access_count = 0; ///< Number of times accessed
@@ -588,7 +588,7 @@ struct RegionSegment {
      * @brief Mark this segment as cached and store the data.
      * @param data The cached data.
      */
-    void mark_cached(const DataVariant& data)
+    void mark_cached(const std::vector<DataVariant>& data)
     {
         cache.data = data;
         cache.source_region = source_region;
@@ -603,7 +603,7 @@ struct RegionSegment {
      */
     void clear_cache()
     {
-        cache.data = DataVariant {};
+        cache.data.clear();
         is_cached = false;
         if (state == RegionState::READY) {
             state = RegionState::IDLE;

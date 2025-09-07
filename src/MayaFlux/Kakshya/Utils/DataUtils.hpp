@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/NDData.hpp"
 
 #include "MayaFlux/Utils.hpp"
 
@@ -176,6 +176,27 @@ std::span<T> convert_variant(DataVariant& variant,
             return std::span<T>(new_vec.data(), new_vec.size());
         }
         return {};
+    },
+        variant);
+}
+
+/**
+ * @brief Get const span from DataVariant without conversion (zero-copy for matching types)
+ * @tparam T Data type (must match DataVariant contents)
+ * @param variant DataVariant to extract from
+ * @return Const span of type T
+ * @throws std::runtime_error if type doesn't match
+ */
+template <ProcessableData T>
+std::span<const T> convert_variant(const DataVariant& variant)
+{
+    return std::visit([](const auto& vec) -> std::span<const T> {
+        using VecType = typename std::decay_t<decltype(vec)>::value_type;
+        if constexpr (std::is_same_v<VecType, T>) {
+            return std::span<const T>(vec.data(), vec.size());
+        } else {
+            throw std::runtime_error("Type mismatch - conversion needed");
+        }
     },
         variant);
 }

@@ -226,21 +226,25 @@ public:
 
     /**
      * @brief Get a mutable reference to the processed data buffer.
-     * @return Reference to the processed DataVariant
+     * @return Reference to the processed DataVariant vector
      *
      * The structure and type of this data is implementation-specific and may
      * depend on the processing chain or data source.
      */
-    virtual DataVariant& get_processed_data() = 0;
+    virtual std::vector<DataVariant>& get_processed_data() = 0;
 
     /**
      * @brief Get a const reference to the processed data buffer.
      * @return Const reference to the processed DataVariant
      */
-    virtual const DataVariant& get_processed_data() const = 0;
+    virtual const std::vector<DataVariant>& get_processed_data() const = 0;
 
-    virtual std::span<DataVariant> get_all_processed_data() = 0;
-    virtual std::span<const DataVariant> get_all_processed_data() const = 0;
+    /** @brief Get a reference to the raw data stored in the container.
+     * @return Const reference to the vector of DataVariant representing raw data
+     *
+     * This provides access to the unprocessed, original data source managed by the container.
+     */
+    virtual const std::vector<DataVariant>& get_data() = 0;
 
     // ===== Buffer Integration =====
 

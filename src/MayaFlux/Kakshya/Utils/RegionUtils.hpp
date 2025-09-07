@@ -63,7 +63,7 @@ std::vector<T> flatten_channels(const std::vector<std::vector<T>>& channel_data)
  * @throws std::out_of_range if region is out of bounds.
  */
 template <typename T>
-std::vector<T> extract_region_data(std::span<const T>& source_data, const Region& region, const std::vector<DataDimension>& dimensions)
+std::vector<T> extract_region_data(const std::span<const T>& source_data, const Region& region, const std::vector<DataDimension>& dimensions)
 {
     for (size_t i = 0; i < region.start_coordinates.size(); ++i) {
         if (region.end_coordinates[i] >= dimensions[i].size) {
@@ -493,6 +493,17 @@ Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
     const std::vector<u_int64_t>& output_shape);
 
 /**
+ *@brief Calculate output region for frame-based processing.
+ * @param current_frame Current frame index.
+ * @param frames_to_process Number of frames to process.
+ * @param container Container providing layout information.
+ * @return Region representing the output bounds for the specified frames.
+ */
+Region calculate_output_region(u_int64_t current_frame,
+    u_int64_t frames_to_process,
+    const std::shared_ptr<SignalSourceContainer>& container);
+
+/**
  * @brief Check if region access will be contiguous in memory.
  * @param region Region to check.
  * @param container Container providing layout information.
@@ -521,7 +532,7 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
  * @param container Container providing the data.
  * @return Vector of DataVariants, one per segment.
  */
-std::vector<DataVariant> extract_segments_data(const std::vector<RegionSegment>& segments,
+std::vector<std::vector<DataVariant>> extract_segments_data(const std::vector<RegionSegment>& segments,
     const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
