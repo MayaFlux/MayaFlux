@@ -10,14 +10,12 @@ void RegionProcessorBase::on_attach(std::shared_ptr<SignalSourceContainer> conta
     }
 
     m_container_weak = container;
-
-    m_dimensions = container->get_dimensions();
-    m_memory_layout = container->get_memory_layout();
+    m_structure = container->get_structure();
 
     m_cache_manager = std::make_unique<RegionCacheManager>(m_max_cache_size);
     m_cache_manager->initialize();
 
-    m_current_position.resize(m_dimensions.size(), 0);
+    m_current_position.resize(m_structure.get_frame_size());
 
     organize_container_data(container);
 
@@ -58,10 +56,12 @@ void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, c
 
 bool RegionProcessorBase::advance_position(std::vector<u_int64_t>& position, u_int64_t steps, const OrganizedRegion* region)
 {
-    if (position.empty() || m_dimensions.empty())
+    if (position.empty())
         return false;
 
-    position[0] += steps;
+    for (auto& pos : position) {
+        pos += steps;
+    }
 
     if ((region != nullptr) && region->looping_enabled && !region->loop_start.empty() && !region->loop_end.empty()) {
         for (size_t dim = 0; dim < std::min(position.size(), region->loop_start.size()); ++dim) {
@@ -71,31 +71,31 @@ bool RegionProcessorBase::advance_position(std::vector<u_int64_t>& position, u_i
         }
     }
 
-    for (size_t dim = 0; dim < position.size() - 1; ++dim) {
-        if (position[dim] >= m_dimensions[dim].size) {
-            position[dim] = 0;
-            position[dim + 1]++;
-        } else {
-            break;
+    auto frame_count = m_structure.get_frame_count();
+    for (auto& pos : position) {
+        if (pos >= frame_count) {
+            pos = frame_count - 1;
+            return false;
         }
     }
 
-    return position.back() < m_dimensions.back().size;
+    return true;
 }
 
-void RegionProcessorBase::ensure_output_dimensioning(DataVariant& output_data, const std::vector<u_int64_t>& required_shape)
+void RegionProcessorBase::ensure_output_dimensioning(std::vector<DataVariant>& output_data, const std::vector<u_int64_t>& required_shape)
 {
-    u_int64_t required_elements = 1;
-    for (auto dim : required_shape) {
-        required_elements *= dim;
+    if (output_data.size() < required_shape[1]) {
+        output_data.resize(required_shape[1], DataVariant {});
     }
 
-    std::visit([required_elements](auto& data) {
-        if (data.size() < required_elements) {
-            data.resize(required_elements);
-        }
-    },
-        output_data);
+    for (auto& data : output_data) {
+        std::visit([required_shape](auto& dt) {
+            if (dt.size() < required_shape[0]) {
+                dt.resize(required_shape[0]);
+            }
+        },
+            data);
+    }
 }
 
 }

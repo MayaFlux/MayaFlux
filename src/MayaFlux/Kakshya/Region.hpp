@@ -626,23 +626,33 @@ struct RegionSegment {
      */
     bool advance_position(u_int64_t steps = 1, u_int32_t dimension = 0)
     {
-        if (dimension >= current_position.size())
+
+        if (current_position.empty() || segment_size.empty() || dimension >= current_position.size()) {
             return false;
+        }
 
         current_position[dimension] += steps;
 
-        // Handle overflow into next dimensions
-        for (size_t dim = dimension; dim < current_position.size() - 1; ++dim) {
+        // return current_position[dimension] < segment_size[dimension];
+
+        for (size_t dim = dimension; dim < current_position.size(); ++dim) {
             if (current_position[dim] >= segment_size[dim]) {
-                current_position[dim] = 0;
-                current_position[dim + 1]++;
+                if (dim == current_position.size() - 1) {
+                    return false;
+                }
+
+                u_int64_t overflow = current_position[dim] / segment_size[dim];
+                current_position[dim] = current_position[dim] % segment_size[dim];
+
+                if (dim + 1 < current_position.size()) {
+                    current_position[dim + 1] += overflow;
+                }
             } else {
                 break;
             }
         }
 
-        // Check if we've reached the end
-        return current_position.back() < segment_size.back();
+        return !is_at_end();
     }
 
     /**
@@ -650,8 +660,9 @@ struct RegionSegment {
      */
     bool is_at_end() const
     {
-        if (current_position.empty())
+        if (current_position.empty() || segment_size.empty())
             return true;
+
         return current_position.back() >= segment_size.back();
     }
 

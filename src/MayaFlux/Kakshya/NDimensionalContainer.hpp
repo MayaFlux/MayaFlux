@@ -179,6 +179,14 @@ struct ContainerDataStructure {
      */
     [[nodiscard]] static size_t get_frame_count(const std::vector<DataDimension>& dimensions);
     [[nodiscard]] size_t get_frame_count() const { return get_frame_count(dimensions); }
+
+    /**
+     * @brief Extract the size of non time dimensions (channel, spatial, frequency)
+     * @param dimensions Vector of dimension descriptors
+     * @return cumulative size of non time dimensions
+     */
+    [[nodiscard]] static size_t get_frame_size(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] size_t get_frame_size() const { return get_frame_size(dimensions); }
 };
 
 /**

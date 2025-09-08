@@ -2,6 +2,7 @@
 
 #include "Region.hpp"
 
+#include <algorithm>
 #include <utility>
 
 namespace MayaFlux::Kakshya {
@@ -57,7 +58,7 @@ struct OrganizedRegion {
      */
     bool contains_position(const std::vector<u_int64_t>& position) const
     {
-        return std::any_of(segments.begin(), segments.end(),
+        return std::ranges::any_of(segments,
             [&position](const RegionSegment& segment) {
                 return segment.contains_position(position);
             });

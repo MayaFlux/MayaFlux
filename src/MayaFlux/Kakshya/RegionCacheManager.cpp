@@ -1,5 +1,7 @@
 #include "RegionCacheManager.hpp"
 
+#include <algorithm>
+
 namespace MayaFlux::Kakshya {
 
 std::size_t RegionHash::operator()(const Region& region) const
@@ -63,10 +65,10 @@ std::optional<RegionCache> RegionCacheManager::get_cached_region(const Region& r
         }
         return std::nullopt;
     } catch (const std::exception& e) {
-        std::cerr << "Exception in get_cached_region: " << e.what() << std::endl;
+        std::cerr << "Exception in get_cached_region: " << e.what() << '\n';
         return std::nullopt;
     } catch (...) {
-        std::cerr << "Unknown exception in get_cached_region" << std::endl;
+        std::cerr << "Unknown exception in get_cached_region" << '\n';
         return std::nullopt;
     }
 }
@@ -80,16 +82,16 @@ std::optional<RegionCache> RegionCacheManager::get_cached_segment(const RegionSe
         std::unique_lock<std::recursive_mutex> lock(m_mutex, std::try_to_lock);
 
         if (!lock.owns_lock()) {
-            std::cerr << "Warning: Could not acquire mutex lock in get_cached_segment, potential deadlock avoided" << std::endl;
+            std::cerr << "Warning: Could not acquire mutex lock in get_cached_segment, potential deadlock avoided" << '\n';
             return std::nullopt;
         }
 
         return get_cached_region_internal(segment.source_region);
     } catch (const std::exception& e) {
-        std::cerr << "Exception in get_cached_segment: " << e.what() << std::endl;
+        std::cerr << "Exception in get_cached_segment: " << e.what() << '\n';
         return std::nullopt;
     } catch (...) {
-        std::cerr << "Unknown exception in get_cached_segment" << std::endl;
+        std::cerr << "Unknown exception in get_cached_segment" << '\n';
         return std::nullopt;
     }
 }
@@ -138,7 +140,7 @@ void RegionCacheManager::evict_lru_if_needed()
 
 void RegionCacheManager::update_lru(const Region& region)
 {
-    auto it = std::find(m_lru_list.begin(), m_lru_list.end(), region);
+    auto it = std::ranges::find(m_lru_list, region);
     if (it != m_lru_list.end()) {
         m_lru_list.erase(it);
     }

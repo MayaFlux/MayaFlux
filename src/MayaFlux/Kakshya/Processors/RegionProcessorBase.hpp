@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
+#include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
 #include "MayaFlux/Kakshya/OrganizedRegion.hpp"
 #include "MayaFlux/Kakshya/RegionCacheManager.hpp"
 
@@ -73,16 +74,6 @@ public:
     }
 
     /**
-     * @brief Set semantic roles for each dimension (e.g., TIME, CHANNEL).
-     * Enables semantic-aware region processing and navigation.
-     * @param roles Vector of DataDimension::Role values.
-     */
-    inline void set_dimension_roles(const std::vector<DataDimension::Role>& roles)
-    {
-        m_dimension_roles = roles;
-    }
-
-    /**
      * @brief Get the current processing position (N-dimensional coordinates).
      * @return Reference to the current position vector.
      */
@@ -112,13 +103,10 @@ protected:
 
     // Caching
     std::unique_ptr<RegionCacheManager> m_cache_manager;
-    size_t m_max_cache_size = 1024 * 1024; // 1MB default
+    size_t m_max_cache_size { static_cast<size_t>(1024 * 1024) }; // 1MB default
     bool m_auto_caching = true;
 
-    // Dimension metadata
-    std::vector<DataDimension> m_dimensions;
-    std::vector<DataDimension::Role> m_dimension_roles;
-    MemoryLayout m_memory_layout = MemoryLayout::ROW_MAJOR;
+    ContainerDataStructure m_structure;
 
     /**
      * @brief Organize container data into structured regions.
@@ -151,10 +139,10 @@ protected:
     /**
      * @brief Ensure output data is properly dimensioned for region extraction.
      * Resizes or allocates the output DataVariant as needed.
-     * @param output_data Output data variant to check/resize.
-     * @param required_shape Required shape for the output.
+     * @param output_data Output data variant vector to check/resize.
+     * @param required_shape Required shape for the output [num_frames, frame_size].
      */
-    virtual void ensure_output_dimensioning(DataVariant& output_data,
+    virtual void ensure_output_dimensioning(std::vector<DataVariant>& output_data,
         const std::vector<u_int64_t>& required_shape);
 };
 

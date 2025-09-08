@@ -6,6 +6,8 @@
 
 namespace MayaFlux::Kakshya {
 
+static bool is_segment_complete(const OrganizedRegion& region, size_t segment_index);
+
 /**
  * @class RegionOrganizationProcessor
  * @brief Data-driven processor for organizing and processing non-linear audio regions.
