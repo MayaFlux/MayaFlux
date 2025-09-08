@@ -11,7 +11,8 @@ public:
     MockSignalSourceContainer()
         : SignalSourceContainer()
     {
-        m_processed_data = std::vector<double>(1024, 0.0F);
+        m_processed_data.resize(1);
+        m_processed_data[0] = std::vector<double>(1024, 0.0);
         setup_structure();
     }
 
@@ -53,7 +54,20 @@ public:
 
     void set_test_data(const std::vector<double>& data)
     {
-        m_processed_data = data;
+        if (m_data_structure.organization == OrganizationStrategy::INTERLEAVED) {
+            m_processed_data.resize(1);
+            m_processed_data[0] = data;
+        } else {
+            m_processed_data.resize(m_num_channels);
+            for (u_int32_t ch = 0; ch < m_num_channels; ++ch) {
+                std::vector<double> channel_data;
+                channel_data.reserve(data.size() / m_num_channels);
+                for (size_t i = ch; i < data.size(); i += m_num_channels) {
+                    channel_data.push_back(data[i]);
+                }
+                m_processed_data[ch] = std::move(channel_data);
+            }
+        }
     }
 
     std::vector<DataDimension> get_dimensions() const override
@@ -88,14 +102,27 @@ public:
         return m_num_channels;
     }
 
-    DataVariant get_region_data(const Region&) const override
+    std::vector<DataVariant> get_region_data(const Region&) const override
     {
-        return { m_processed_data };
+        if (m_data_structure.organization == OrganizationStrategy::INTERLEAVED) {
+            return { m_processed_data[0] };
+        }
+
+        std::vector<DataVariant> result;
+
+        result.reserve(m_processed_data.size());
+
+        for (const auto& channel_data : m_processed_data) {
+            result.push_back(channel_data);
+        }
+        return result;
     }
 
-    void set_region_data(const Region&, const DataVariant&) override
+    void set_region_data(const Region&, const std::vector<DataVariant>& data) override
     {
-        // No-op for mock
+        if (!data.empty()) {
+            m_processed_data = data;
+        }
     }
 
     std::span<const double> get_frame(u_int64_t) const override
@@ -304,23 +331,20 @@ public:
         m_processing_state = new_state;
     }
 
-    DataVariant& get_processed_data() override
+    std::vector<DataVariant>& get_processed_data() override
     {
-        m_processed_variant = DataVariant(m_processed_data);
         return m_processed_variant;
     }
 
-    DataVariant& get_processed_data() const override
+    const std::vector<DataVariant>& get_processed_data() const override
     {
-        auto* self = const_cast<MockSignalSourceContainer*>(this);
-        self->m_processed_variant = DataVariant(self->m_processed_data);
-        return self->m_processed_variant;
+        // m_processed_variant[0] = DataVariant(m_processed_data);
+        return m_processed_variant;
     }
 
-    const ContainerDataStructure& get_structure() const override
-    {
-        return m_data_structure;
-    }
+    inline const ContainerDataStructure& get_structure() const override { return m_data_structure; }
+
+    inline ContainerDataStructure& get_structure() override { return m_data_structure; }
 
     void set_structure(ContainerDataStructure structure) override
     {
@@ -328,29 +352,20 @@ public:
         m_ready_for_processing = false;
     }
 
-    inline std::span<DataVariant> get_all_processed_data() override
-    {
-        return { m_processed_data_all };
-    }
-
-    inline std::span<const DataVariant> get_all_processed_data() const override
-    {
-        return { m_processed_data_all };
-    }
+    const std::vector<DataVariant>& get_data() override { return m_processed_data; }
 
 private:
     u_int32_t m_num_channels { 1 };
     u_int64_t m_num_frames { 1024 };
 
-    std::vector<double> m_processed_data;
-    std::vector<DataVariant> m_processed_data_all;
-    DataVariant m_processed_variant;
+    std::vector<DataVariant> m_processed_data;
+    std::vector<DataVariant> m_processed_variant;
 
     ContainerDataStructure m_data_structure;
 
     std::unordered_map<std::string, RegionGroup> m_region_groups;
     ProcessingState m_processing_state { ProcessingState::IDLE };
-    bool m_ready_for_processing { false };
+    bool m_ready_for_processing {};
 
     std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_change_callback;
     std::shared_ptr<DataProcessor> m_default_processor;

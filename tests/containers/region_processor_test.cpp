@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "../mock_signalsourcecontainer.hpp"
 
 #include "MayaFlux/Kakshya/Processors/RegionProcessors.hpp"
@@ -135,10 +137,10 @@ TEST_F(RegionProcessorTest, JumpToRegion)
 {
     processor->organize_container_data(container);
 
-    processor->jump_to_region("perc", 1); // Jump to snare
+    processor->jump_to_region("perc", 1);
     processor->process(container);
 
-    processor->jump_to_region("line", 0); // Jump to line_a
+    processor->jump_to_region("line", 0);
     processor->process(container);
 
     std::vector<u_int64_t> position = { 300 };
@@ -152,11 +154,10 @@ TEST_F(DynamicRegionProcessorTest, ReorganizationCallback)
 {
     processor->organize_container_data(container);
 
-    // Set a reorganization callback that reverses the order of regions
     bool callback_called = false;
     processor->set_reorganization_callback(
-        [&callback_called](std::vector<OrganizedRegion>& regions, std::shared_ptr<SignalSourceContainer>) {
-            std::reverse(regions.begin(), regions.end());
+        [&callback_called](std::vector<OrganizedRegion>& regions, const std::shared_ptr<SignalSourceContainer>&) {
+            std::ranges::reverse(regions);
             callback_called = true;
         });
 
@@ -172,10 +173,9 @@ TEST_F(DynamicRegionProcessorTest, AutoReorganization)
 {
     processor->organize_container_data(container);
 
-    // Set up auto-reorganization based on a counter
     int counter = 0;
     processor->set_auto_reorganization(
-        [&counter](const std::vector<OrganizedRegion>&, std::shared_ptr<SignalSourceContainer>) {
+        [&counter](const std::vector<OrganizedRegion>&, const std::shared_ptr<SignalSourceContainer>&) {
             counter++;
             return (counter % 2 == 0);
         });
@@ -199,8 +199,8 @@ TEST_F(DynamicRegionProcessorTest, PriorityBasedReorganization)
     processor->organize_container_data(container);
 
     processor->set_reorganization_callback(
-        [](std::vector<OrganizedRegion>& regions, std::shared_ptr<SignalSourceContainer>) {
-            std::sort(regions.begin(), regions.end(),
+        [](std::vector<OrganizedRegion>& regions, const std::shared_ptr<SignalSourceContainer>&) {
+            std::ranges::sort(regions,
                 [](const OrganizedRegion& a, const OrganizedRegion& b) {
                     auto a_priority_it = a.attributes.find("priority");
                     auto b_priority_it = b.attributes.find("priority");
@@ -240,7 +240,7 @@ TEST_F(DynamicRegionProcessorTest, ConditionalReorganization)
     bool condition_met = false;
 
     processor->set_reorganization_callback(
-        [&condition_met](std::vector<OrganizedRegion>& regions, std::shared_ptr<SignalSourceContainer>) {
+        [&condition_met](std::vector<OrganizedRegion>& regions, const std::shared_ptr<SignalSourceContainer>&) {
             if (condition_met) {
                 std::random_device rd;
                 std::mt19937 g(rd());
@@ -249,7 +249,7 @@ TEST_F(DynamicRegionProcessorTest, ConditionalReorganization)
         });
 
     processor->set_auto_reorganization(
-        [&condition_met](const std::vector<OrganizedRegion>&, std::shared_ptr<SignalSourceContainer>) {
+        [&condition_met](const std::vector<OrganizedRegion>&, const std::shared_ptr<SignalSourceContainer>&) {
             return condition_met;
         });
 
@@ -265,12 +265,12 @@ TEST_F(DynamicRegionProcessorTest, DataDrivenReorganization)
 {
     processor->organize_container_data(container);
 
-    std::vector<float> spectral_energy = { 0.2f, 0.8f, 0.5f };
+    std::vector<float> spectral_energy = { 0.2F, 0.8F, 0.5F };
 
     processor->set_reorganization_callback(
-        [&spectral_energy](std::vector<OrganizedRegion>& regions, std::shared_ptr<SignalSourceContainer>) {
+        [&spectral_energy](std::vector<OrganizedRegion>& regions, const std::shared_ptr<SignalSourceContainer>&) {
             if (regions.size() <= spectral_energy.size()) {
-                std::sort(regions.begin(), regions.end(),
+                std::ranges::sort(regions,
                     [&spectral_energy](const OrganizedRegion& a, const OrganizedRegion& b) {
                         size_t a_idx = a.region_index;
                         size_t b_idx = b.region_index;
@@ -298,7 +298,7 @@ TEST_F(DynamicRegionProcessorTest, TimeBasedReorganization)
     int reorganization_count = 0;
 
     processor->set_auto_reorganization(
-        [&start_time, &reorganization_count](const std::vector<OrganizedRegion>&, std::shared_ptr<SignalSourceContainer>) {
+        [&start_time, &reorganization_count](const std::vector<OrganizedRegion>&, const std::shared_ptr<SignalSourceContainer>&) {
             auto current_time = std::chrono::steady_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                 current_time - start_time)
@@ -353,13 +353,13 @@ TEST_F(RegionProcessorTest, SpectralRegionProcessing)
     std::vector<double> spectral_data(1024);
     for (size_t i = 0; i < spectral_data.size(); i++) {
         if (i > 100 && i < 150) {
-            spectral_data[i] = 0.8f;
+            spectral_data[i] = 0.8F;
         } else if (i > 300 && i < 350) {
-            spectral_data[i] = 0.6f;
+            spectral_data[i] = 0.6F;
         } else if (i > 700 && i < 750) {
-            spectral_data[i] = 0.4f;
+            spectral_data[i] = 0.4F;
         } else {
-            spectral_data[i] = 0.1f;
+            spectral_data[i] = 0.1F;
         }
     }
     container->set_test_data(spectral_data);
