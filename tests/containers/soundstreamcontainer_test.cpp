@@ -21,6 +21,7 @@ protected:
     void SetUp() override
     {
         container = std::make_shared<DynamicSoundStream>(48000, 2);
+        container->get_structure().organization = OrganizationStrategy::INTERLEAVED;
     }
 };
 
@@ -44,7 +45,7 @@ TEST_F(DynamicSoundStreamTest, CustomConstructorSetsCorrectValues)
 TEST_F(DynamicSoundStreamTest, WriteFramesWithAutoResize)
 {
     std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
-    std::span<const double> data_span(test_data);
+    auto data_span = { std::span<const double>(test_data) };
 
     u_int64_t frames_written = container->write_frames(data_span, 0);
 
@@ -56,9 +57,11 @@ TEST_F(DynamicSoundStreamTest, WriteFramesAtNonZeroStartFrame)
 {
     std::vector<double> first_data = { 0.1, 0.2, 0.3, 0.4 };
     std::vector<double> second_data = { 0.5, 0.6, 0.7, 0.8 };
+    auto first_span = { std::span<const double>(first_data) };
+    auto second_span = { std::span<const double>(second_data) };
 
-    container->write_frames(std::span<const double>(first_data), 0);
-    u_int64_t frames_written = container->write_frames(std::span<const double>(second_data), 3);
+    container->write_frames(first_span, 0);
+    u_int64_t frames_written = container->write_frames(second_span, 3);
 
     EXPECT_EQ(frames_written, 2);
     EXPECT_GE(container->get_num_frames(), 5);
@@ -70,26 +73,28 @@ TEST_F(DynamicSoundStreamTest, WriteFramesWithAutoResizeDisabled)
     container->ensure_capacity(2);
 
     std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
+    auto data_span = { std::span<const double>(test_data) };
 
-    EXPECT_NO_THROW(container->write_frames(std::span<const double>(test_data), 0));
+    EXPECT_NO_THROW(container->write_frames(data_span, 0));
 }
 
 TEST_F(DynamicSoundStreamTest, UnderstandDataLayout)
 {
     std::vector<double> write_data = { 1.0, 2.0, 3.0, 4.0 }; // Frame0: [1,2], Frame1: [3,4]
+    auto data_span = { std::span<const double>(write_data) };
 
-    container->write_frames(std::span<const double>(write_data), 0);
+    container->write_frames(data_span, 0);
 
     std::vector<double> read_buffer(4, 0.0);
-    container->set_read_position(0);
-    u_int64_t samples_read = container->read_frames(std::span<double>(read_buffer), 4);
+    container->set_read_position({ 0, 0 });
+    u_int64_t samples_read = container->peek_sequential(std::span<double>(read_buffer), 4, 0);
 
-    std::cout << "=== Data Layout Test ===" << std::endl;
-    std::cout << "Container channels: " << container->get_num_channels() << std::endl;
-    std::cout << "Container frames: " << container->get_num_frames() << std::endl;
-    std::cout << "Written as [1.0, 2.0, 3.0, 4.0] (Frame0=[1,2], Frame1=[3,4])" << std::endl;
+    std::cout << "=== Data Layout Test ===" << '\n';
+    std::cout << "Container channels: " << container->get_num_channels() << '\n';
+    std::cout << "Container frames: " << container->get_num_frames() << '\n';
+    std::cout << "Written as [1.0, 2.0, 3.0, 4.0] (Frame0=[1,2], Frame1=[3,4])" << '\n';
     std::cout << "Read as    [" << read_buffer[0] << ", " << read_buffer[1]
-              << ", " << read_buffer[2] << ", " << read_buffer[3] << "]" << std::endl;
+              << ", " << read_buffer[2] << ", " << read_buffer[3] << "]" << '\n';
 
     if (container->get_num_frames() >= 2) {
         auto frame0 = container->get_frame(0);
@@ -99,13 +104,13 @@ TEST_F(DynamicSoundStreamTest, UnderstandDataLayout)
         for (size_t i = 0; i < frame0.size(); ++i) {
             std::cout << frame0[i] << (i + 1 < frame0.size() ? ", " : "");
         }
-        std::cout << "]" << std::endl;
+        std::cout << "]" << '\n';
 
         std::cout << "Frame 1 via get_frame: [";
         for (size_t i = 0; i < frame1.size(); ++i) {
             std::cout << frame1[i] << (i + 1 < frame1.size() ? ", " : "");
         }
-        std::cout << "]" << std::endl;
+        std::cout << "]" << '\n';
     }
 
     EXPECT_GT(samples_read, 0);
@@ -114,16 +119,28 @@ TEST_F(DynamicSoundStreamTest, UnderstandDataLayout)
 TEST_F(DynamicSoundStreamTest, ReadFramesAfterWrite)
 {
     std::vector<double> write_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
-    container->write_frames(std::span<const double>(write_data), 0);
+    auto data_span = { std::span<const double>(write_data) };
+    container->write_frames(data_span, 0);
 
     std::vector<double> read_buffer(6, 0.0);
-    container->set_read_position(0);
-    u_int64_t frames_read = container->read_frames(std::span<double>(read_buffer), 6);
+    container->set_read_position({ 0, 0 });
+    u_int64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 6);
 
     EXPECT_GT(frames_read, 0) << "Should be able to read some data";
     EXPECT_LE(frames_read, 6) << "Should not read more than requested";
 
-    // TODO: Fix the layout issue and add proper data verification
+    bool found_some_values = false;
+    for (double written_val : write_data) {
+        for (size_t i = 0; i < frames_read; ++i) {
+            if (std::abs(read_buffer[i] - written_val) < 1e-10) {
+                found_some_values = true;
+                break;
+            }
+        }
+        if (found_some_values)
+            break;
+    }
+    EXPECT_TRUE(found_some_values) << "Should find some written values in read data";
 }
 
 TEST_F(DynamicSoundStreamTest, EnsureCapacityExpandsContainer)
@@ -154,13 +171,23 @@ TEST_F(DynamicSoundStreamTest, CircularBufferWriteAndLoop)
     container->enable_circular_buffer(4);
 
     std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
-    container->write_frames(std::span<const double>(test_data), 0);
+    auto data_span = { std::span<const double>(test_data) };
+    container->write_frames(data_span, 0);
 
     std::vector<double> read_buffer(16);
-    container->set_read_position(0);
-    u_int64_t frames_read = container->read_frames(std::span<double>(read_buffer), 16);
+    container->set_read_position({ 0, 0 });
+    u_int64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 16);
 
     EXPECT_GT(frames_read, 0);
+
+    bool has_looped_data = false;
+
+    for (size_t i = 8; i < frames_read && i < read_buffer.size(); ++i) {
+        if (std::abs(read_buffer[i] - read_buffer[i % 8]) < 1e-10) {
+            has_looped_data = true;
+            break;
+        }
+    }
 }
 
 TEST_F(DynamicSoundStreamTest, AutoResizeToggle)
@@ -172,6 +199,32 @@ TEST_F(DynamicSoundStreamTest, AutoResizeToggle)
 
     container->set_auto_resize(true);
     EXPECT_TRUE(container->get_auto_resize());
+}
+
+TEST_F(DynamicSoundStreamTest, PlanarOrganizationTest)
+{
+    container->get_structure().organization = OrganizationStrategy::PLANAR;
+
+    std::vector<double> left_channel = { 0.1, 0.3, 0.5, 0.7 };
+    std::vector<double> right_channel = { 0.2, 0.4, 0.6, 0.8 };
+
+    auto lspan = std::span<const double>(left_channel);
+    auto rspan = std::span<const double>(right_channel);
+
+    std::vector<std::span<const double>> planar_data = { lspan, rspan };
+
+    u_int64_t frames_written = container->write_frames(planar_data, 0);
+    EXPECT_EQ(frames_written, 4);
+
+    auto frame0 = container->get_frame(0);
+    ASSERT_EQ(frame0.size(), 2);
+    EXPECT_DOUBLE_EQ(frame0[0], 0.1);
+    EXPECT_DOUBLE_EQ(frame0[1], 0.2);
+
+    auto frame1 = container->get_frame(1);
+    ASSERT_EQ(frame1.size(), 2);
+    EXPECT_DOUBLE_EQ(frame1[0], 0.3);
+    EXPECT_DOUBLE_EQ(frame1[1], 0.4);
 }
 
 // ============================================================================
@@ -231,18 +284,18 @@ TEST_F(StreamWriteProcessorTest, ProcessWritesCorrectData)
 
     EXPECT_GT(container->get_num_frames(), initial_frames) << "Container should have more frames after writing";
 
-    // TODO:: Need multi memory layout data handle
     std::vector<double> read_data(4, 0.0);
-    container->set_read_position(initial_frames);
-    u_int64_t frames_read = container->read_frames(std::span<double>(read_data), 4);
+    auto read_positions = container->get_read_position();
+    container->set_read_position(std::vector<u_int64_t>(container->get_num_channels(), initial_frames));
+    u_int64_t frames_read = container->read_sequential(std::span<double>(read_data), 4);
 
     EXPECT_GT(frames_read, 0) << "Should be able to read back some data";
 
     auto& original_data = buffer->get_data();
     bool found_some_values = false;
     for (double original_val : original_data) {
-        for (double read_val : read_data) {
-            if (std::abs(read_val - original_val) < 1e-10) {
+        for (size_t i = 0; i < frames_read; ++i) {
+            if (std::abs(read_data[i] - original_val) < 1e-10) {
                 found_some_values = true;
                 break;
             }
@@ -278,19 +331,23 @@ protected:
     {
         source_container = std::make_shared<DynamicSoundStream>(48000, 2);
         sink_container = std::make_shared<DynamicSoundStream>(48000, 2);
+        source_container->get_structure().organization = OrganizationStrategy::INTERLEAVED;
+        sink_container->get_structure().organization = OrganizationStrategy::INTERLEAVED;
+
         buffer = std::make_shared<AudioBuffer>(0, 4);
         write_processor = std::make_shared<StreamWriteProcessor>(sink_container);
 
         std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
-        source_container->write_frames(std::span<const double>(test_data), 0);
-        source_container->set_read_position(0);
+        auto data_span = { std::span<const double>(test_data) };
+        source_container->write_frames(data_span, 0);
+        source_container->set_read_position({ 0, 0 });
     }
 };
 
 TEST_F(DynamicSoundStreamBufferInteropTest, ReadFromDynamicSoundStreamWriteToBuffer)
 {
     std::vector<double> temp_buffer(4, 0.0);
-    u_int64_t frames_read = source_container->read_frames(std::span<double>(temp_buffer), 4);
+    u_int64_t frames_read = source_container->read_sequential(std::span<double>(temp_buffer), 4);
 
     EXPECT_EQ(frames_read, 4);
 
@@ -302,25 +359,12 @@ TEST_F(DynamicSoundStreamBufferInteropTest, ReadFromDynamicSoundStreamWriteToBuf
     std::cout << "Source container data: ";
     for (double val : temp_buffer)
         std::cout << val << " ";
-    std::cout << std::endl;
-
-    std::vector<double> expected_values = { 0.1, 0.2, 0.5, 0.6 }; // Currently we only read deinterleaved data
-
-    for (double expected : expected_values) {
-        bool found = false;
-        for (double actual : temp_buffer) {
-            if (std::abs(actual - expected) < 1e-9) {
-                found = true;
-                break;
-            }
-        }
-        EXPECT_TRUE(found) << "Expected value " << expected << " not found in read data";
-    }
+    std::cout << '\n';
 
     EXPECT_NEAR(temp_buffer[0], 0.1, 1e-9) << "First value should be 0.1";
-    EXPECT_NEAR(temp_buffer[1], 0.5, 1e-9) << "Second value should be 0.5 (from frame 2, channel 0)";
-    EXPECT_NEAR(temp_buffer[2], 0.2, 1e-9) << "Third value should be 0.2 (from frame 0, channel 1)";
-    EXPECT_NEAR(temp_buffer[3], 0.6, 1e-9) << "Fourth value should be 0.6 (from frame 2, channel 1)";
+    EXPECT_NEAR(temp_buffer[1], 0.2, 1e-9) << "Second value should be 0.2";
+    EXPECT_NEAR(temp_buffer[2], 0.3, 1e-9) << "Third value should be 0.3";
+    EXPECT_NEAR(temp_buffer[3], 0.4, 1e-9) << "Fourth value should be 0.4";
 }
 
 TEST_F(DynamicSoundStreamBufferInteropTest, WriteFromBufferToDynamicSoundStream)
@@ -333,21 +377,21 @@ TEST_F(DynamicSoundStreamBufferInteropTest, WriteFromBufferToDynamicSoundStream)
 
     write_processor->processing_function(buffer);
 
-    std::vector<double> verify_buffer(4, 0.0);
-    sink_container->set_read_position(0);
-    u_int64_t frames_read = sink_container->read_frames(std::span<double>(verify_buffer), 4);
+    std::vector<double> verify_buffer(8, 0.0);
+    sink_container->set_read_position({ 0, 0 });
+    u_int64_t frames_read = sink_container->read_sequential(std::span<double>(verify_buffer), 8);
 
     EXPECT_GT(frames_read, 0);
 
     std::cout << "Written to buffer: ";
     for (double val : buffer_data)
         std::cout << val << " ";
-    std::cout << std::endl;
+    std::cout << '\n';
 
     std::cout << "Read from container: ";
     for (double val : verify_buffer)
         std::cout << val << " ";
-    std::cout << std::endl;
+    std::cout << '\n';
 
     std::vector<double> written_values = { 1.1, 1.2, 1.3, 1.4 };
 
@@ -366,7 +410,7 @@ TEST_F(DynamicSoundStreamBufferInteropTest, WriteFromBufferToDynamicSoundStream)
 TEST_F(DynamicSoundStreamBufferInteropTest, FullPipelineSourceToSink)
 {
     std::vector<double> temp_buffer(4, 0.0);
-    u_int64_t frames_read = source_container->read_frames(std::span<double>(temp_buffer), 4);
+    u_int64_t frames_read = source_container->read_sequential(std::span<double>(temp_buffer), 4);
 
     auto& buffer_data = buffer->get_data();
     for (size_t i = 0; i < std::min<size_t>(frames_read, buffer_data.size()); ++i) {
@@ -378,12 +422,23 @@ TEST_F(DynamicSoundStreamBufferInteropTest, FullPipelineSourceToSink)
     EXPECT_GT(sink_container->get_num_frames(), 0) << "Sink container should have data";
 
     std::vector<double> final_buffer(4, 0.0);
-    sink_container->set_read_position(0);
-    u_int64_t final_frames = sink_container->read_frames(std::span<double>(final_buffer), 4);
+    sink_container->set_read_position({ 0, 0 });
+    u_int64_t final_frames = sink_container->read_sequential(std::span<double>(final_buffer), 4);
 
     EXPECT_GT(final_frames, 0) << "Should be able to read data from sink";
 
-    // TODO: Add exact data verification once layout issue is resolved
+    bool found_match = false;
+    for (double i : temp_buffer) {
+        for (size_t j = 0; j < final_frames; ++j) {
+            if (std::abs(i - final_buffer[j]) < 1e-10) {
+                found_match = true;
+                break;
+            }
+        }
+        if (found_match)
+            break;
+    }
+    EXPECT_TRUE(found_match) << "Should find matching data through the pipeline";
 }
 
 TEST_F(DynamicSoundStreamBufferInteropTest, CircularBufferInterop)
@@ -416,14 +471,17 @@ protected:
     void SetUp() override
     {
         container = std::make_shared<DynamicSoundStream>(48000, 2);
+        // Set to interleaved as default is planar
+        container->get_structure().organization = OrganizationStrategy::INTERLEAVED;
         processor = std::make_shared<ContiguousAccessProcessor>();
 
         std::vector<double> test_data = {
             0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8,
             0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6
         };
-        container->write_frames(std::span<const double>(test_data), 0);
-        container->set_read_position(0);
+        auto data_span = { std::span<const double>(test_data) };
+        container->write_frames(data_span, 0);
+        container->set_read_position({ 0, 0 });
     }
 };
 
@@ -441,10 +499,14 @@ TEST_F(DynamicSoundStreamProcessorIntegrationTest, ProcessorProcessesDynamicSoun
     EXPECT_NO_THROW(processor->process(container));
 
     const auto& processed = container->get_processed_data();
-    EXPECT_TRUE(std::holds_alternative<std::vector<double>>(processed));
+    EXPECT_FALSE(processed.empty());
 
-    auto vec = std::get<std::vector<double>>(processed);
-    EXPECT_EQ(vec.size(), 8);
+    // Check that processed data has the expected structure
+    if (!processed.empty()) {
+        EXPECT_TRUE(std::holds_alternative<std::vector<double>>(processed[0]));
+        auto vec = std::get<std::vector<double>>(processed[0]);
+        EXPECT_EQ(vec.size(), 8); // 4 frames * 2 channels
+    }
 }
 
 TEST_F(DynamicSoundStreamProcessorIntegrationTest, AutoAdvanceWithDynamicSoundStream)
@@ -453,11 +515,11 @@ TEST_F(DynamicSoundStreamProcessorIntegrationTest, AutoAdvanceWithDynamicSoundSt
     processor->set_auto_advance(true);
     processor->on_attach(container);
 
-    u_int64_t initial_position = container->get_read_position();
+    auto initial_positions = container->get_read_position();
     processor->process(container);
-    u_int64_t final_position = container->get_read_position();
+    auto final_positions = container->get_read_position();
 
-    EXPECT_GT(final_position, initial_position);
+    EXPECT_GT(final_positions[0], initial_positions[0]);
 }
 
 TEST_F(DynamicSoundStreamProcessorIntegrationTest, LoopingRegionWithDynamicSoundStream)
@@ -484,28 +546,32 @@ protected:
     void SetUp() override
     {
         container = std::make_shared<DynamicSoundStream>(48000, 2);
+        // Set to interleaved as default is planar
+        container->get_structure().organization = OrganizationStrategy::INTERLEAVED;
     }
 };
 
 TEST_F(DynamicSoundStreamEdgeCasesTest, WriteEmptyData)
 {
     std::vector<double> empty_data;
-    u_int64_t frames_written = container->write_frames(std::span<const double>(empty_data), 0);
+    auto data_span = { std::span<const double>(empty_data) };
+    u_int64_t frames_written = container->write_frames(data_span, 0);
     EXPECT_EQ(frames_written, 0);
 }
 
 TEST_F(DynamicSoundStreamEdgeCasesTest, ReadFromEmptyContainer)
 {
     std::vector<double> read_buffer(4);
-    u_int64_t frames_read = container->read_frames(std::span<double>(read_buffer), 4);
+    u_int64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 4);
     EXPECT_EQ(frames_read, 0);
 }
 
 TEST_F(DynamicSoundStreamEdgeCasesTest, WriteWithMismatchedChannelData)
 {
     std::vector<double> odd_data = { 0.1, 0.2, 0.3 };
+    auto data_span = { std::span<const double>(odd_data) };
 
-    EXPECT_NO_THROW(container->write_frames(std::span<const double>(odd_data), 0));
+    EXPECT_NO_THROW(container->write_frames(data_span, 0));
 }
 
 TEST_F(DynamicSoundStreamEdgeCasesTest, EnsureCapacityWithZero)
@@ -522,9 +588,29 @@ TEST_F(DynamicSoundStreamEdgeCasesTest, WriteAtLargeStartFrame)
 {
     container->set_auto_resize(true);
     std::vector<double> test_data = { 0.1, 0.2 };
+    auto data_span = { std::span<const double>(test_data) };
 
-    EXPECT_NO_THROW(container->write_frames(std::span<const double>(test_data), 1000000));
+    EXPECT_NO_THROW(container->write_frames(data_span, 1000000));
     EXPECT_GE(container->get_num_frames(), 1000001);
+}
+
+TEST_F(DynamicSoundStreamEdgeCasesTest, ReadPositionVectorHandling)
+{
+    std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
+    auto data_span = { std::span<const double>(test_data) };
+    container->write_frames(data_span, 0);
+
+    container->set_read_position({ 1, 2 });
+
+    auto positions = container->get_read_position();
+    EXPECT_EQ(positions.size(), 2);
+    EXPECT_EQ(positions[0], 1);
+    EXPECT_EQ(positions[1], 2);
+
+    container->advance_read_position({ 1, 1 });
+    auto new_positions = container->get_read_position();
+    EXPECT_EQ(new_positions[0], 2);
+    EXPECT_EQ(new_positions[1], 3);
 }
 
 } // namespace MayaFlux::Test

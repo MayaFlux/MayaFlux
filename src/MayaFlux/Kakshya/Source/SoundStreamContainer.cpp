@@ -27,7 +27,6 @@ SoundStreamContainer::SoundStreamContainer(u_int32_t sample_rate, u_int32_t num_
 
 void SoundStreamContainer::setup_dimensions()
 {
-
     DataModality modality = (m_num_channels > 1)
         ? DataModality::AUDIO_MULTICHANNEL
         : DataModality::AUDIO_1D;

@@ -195,6 +195,12 @@ protected:
     void notify_state_change(ProcessingState new_state);
     void reorganize_data_layout(MemoryLayout new_layout);
 
+    /** @brief Get the cached spans for each channel, recomputing if dirty */
+    const std::vector<std::span<double>>& get_span_cache() const;
+
+    /** @brief Invalidate the span cache when data or layout changes */
+    void invalidate_span_cache();
+
     std::vector<DataVariant> m_data;
     std::vector<DataVariant> m_processed_data;
 
@@ -239,12 +245,6 @@ protected:
 private:
     mutable std::optional<std::vector<std::span<double>>> m_span_cache;
     mutable std::atomic<bool> m_span_cache_dirty { true };
-
-    /** @brief Get the cached spans for each channel, recomputing if dirty */
-    const std::vector<std::span<double>>& get_span_cache() const;
-
-    /** @brief Invalidate the span cache when data or layout changes */
-    void invalidate_span_cache();
 };
 
 } // namespace MayaFlux::Kakshya

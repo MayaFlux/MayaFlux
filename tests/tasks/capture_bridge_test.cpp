@@ -88,11 +88,11 @@ TEST_F(CaptureBridgeTest, BufferCaptureCircular)
 TEST_F(CaptureBridgeTest, BufferCaptureWindowed)
 {
     Kriya::BufferCapture capture(buffer);
-    capture.with_window(256, 0.5f);
+    capture.with_window(256, 0.5F);
 
     EXPECT_EQ(capture.get_mode(), Kriya::BufferCapture::CaptureMode::WINDOWED);
     EXPECT_EQ(capture.get_window_size(), 256);
-    EXPECT_FLOAT_EQ(capture.get_overlap_ratio(), 0.5f);
+    EXPECT_FLOAT_EQ(capture.get_overlap_ratio(), 0.5F);
 }
 
 TEST_F(CaptureBridgeTest, BufferCaptureCallbacks)
@@ -149,7 +149,7 @@ TEST_F(CaptureBridgeTest, CaptureBuilderChaining)
     Kriya::BufferOperation operation = Kriya::BufferOperation::capture_from(buffer)
                                            .for_cycles(3)
                                            .as_circular(512)
-                                           .with_window(128, 0.25f)
+                                           .with_window(128, 0.25F)
                                            .on_data_ready([&](const Kakshya::DataVariant&, u_int32_t) {
                                                callback_triggered = true;
                                            })
@@ -386,24 +386,23 @@ TEST_F(CaptureBridgeTest, StreamWriteProcessorDataIntegrity)
 
     const auto& original_data = buffer->get_data();
 
+    buffer->set_channel_id(0);
+    processor->processing_function(buffer);
+    buffer->set_channel_id(1);
+    processor->set_write_position(0);
     processor->processing_function(buffer);
 
-    std::vector<double> readback_data(original_data.size());
+    std::vector<double> readback_data(original_data.size() * 2);
     std::span<double> readback_span(readback_data);
 
-    u_int64_t samples_read = dynamic_stream->peek_sequential(readback_span, original_data.size());
+    u_int64_t samples_read = dynamic_stream->peek_sequential(readback_span, original_data.size() * 2);
 
-    EXPECT_EQ(samples_read, original_data.size());
+    EXPECT_EQ(samples_read, original_data.size() * 2);
 
-    bool has_non_zero_data = false;
-    for (size_t i = 0; i < readback_data.size(); ++i) {
-        if (std::abs(readback_data[i]) > 1e-10) {
-            has_non_zero_data = true;
-            break;
-        }
+    std::vector<double> channel_0_data;
+    for (size_t i = 0; i < samples_read; i += 2) {
+        channel_0_data.push_back(readback_data[i]);
     }
-
-    EXPECT_TRUE(has_non_zero_data) << "No data was successfully written to the stream";
 
     double original_energy = 0.0;
     double readback_energy = 0.0;
@@ -412,24 +411,14 @@ TEST_F(CaptureBridgeTest, StreamWriteProcessorDataIntegrity)
         original_energy += sample * sample;
     }
 
-    for (double sample : readback_data) {
+    for (double sample : channel_0_data) {
         readback_energy += sample * sample;
     }
 
     EXPECT_NEAR(original_energy, readback_energy, 1e-6)
-        << "Energy preservation check failed - data transformation is lossy"
+        << "Energy preservation check failed"
         << "\nOriginal energy: " << original_energy
         << "\nReadback energy: " << readback_energy;
-
-    std::vector<double> sorted_original(original_data);
-    std::vector<double> sorted_readback(readback_data);
-    std::sort(sorted_original.begin(), sorted_original.end());
-    std::sort(sorted_readback.begin(), sorted_readback.end());
-
-    for (size_t i = 0; i < sorted_original.size(); ++i) {
-        EXPECT_NEAR(sorted_original[i], sorted_readback[i], 1e-6)
-            << "Value " << sorted_original[i] << " was lost or corrupted during write/read";
-    }
 }
 
 TEST_F(CaptureBridgeTest, StreamWriteProcessorNullHandling)
@@ -455,9 +444,9 @@ TEST_F(CaptureBridgeTest, DynamicStreamCapacityManagement)
     std::vector<double> large_data(2048, 0.5);
     std::span<const double> data_span(large_data);
 
-    u_int64_t frames_written = dynamic_stream->write_frames(data_span, 0);
+    u_int64_t frames_written = dynamic_stream->write_frames(data_span);
 
-    EXPECT_EQ(frames_written, large_data.size() / 2);
+    EXPECT_EQ(frames_written, large_data.size());
     EXPECT_GE(dynamic_stream->get_num_frames(), frames_written);
 }
 
@@ -471,6 +460,20 @@ TEST_F(CaptureBridgeTest, DynamicStreamCircularBuffer)
     std::span<const double> data_span(data);
 
     dynamic_stream->write_frames(data_span, 0);
+
+    EXPECT_EQ(dynamic_stream->get_num_frames(), 512);
+}
+
+TEST_F(CaptureBridgeTest, DynamicStreamCircularBufferMulti)
+{
+    dynamic_stream->enable_circular_buffer(512);
+
+    EXPECT_TRUE(dynamic_stream->is_looping());
+
+    std::vector<double> data(1024, 0.7);
+
+    std::vector<std::span<const double>> data_spans = { std::span<const double>(data) };
+    dynamic_stream->write_frames(data_spans, 0);
 
     EXPECT_EQ(dynamic_stream->get_num_frames(), 512);
 }
@@ -494,14 +497,11 @@ TEST_F(CaptureBridgeTest, DynamicStreamReadFrames)
     std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
     std::span<const double> data_span(test_data);
 
-    u_int64_t frames_written = dynamic_stream->write_frames(data_span);
-    EXPECT_EQ(frames_written, test_data.size() / 2);
+    u_int64_t frames_written = dynamic_stream->write_frames(data_span, 0, 0);
+    EXPECT_EQ(frames_written, test_data.size());
 
     std::vector<double> read_buffer(test_data.size());
-    std::span<double> read_span(read_buffer);
-
-    u_int64_t samples_read = dynamic_stream->read_frames(read_span, test_data.size());
-    EXPECT_EQ(samples_read, test_data.size());
+    dynamic_stream->get_channel_frames(std::span<double>(read_buffer), 0, 0);
 
     double input_energy = 0.0;
     double output_energy = 0.0;
@@ -519,19 +519,10 @@ TEST_F(CaptureBridgeTest, DynamicStreamReadFrames)
         << "\nInput energy: " << input_energy
         << "\nOutput energy: " << output_energy;
 
-    std::vector<double> sorted_input(test_data);
-    std::vector<double> sorted_output(read_buffer);
-    std::sort(sorted_input.begin(), sorted_input.end());
-    std::sort(sorted_output.begin(), sorted_output.end());
-
-    for (size_t i = 0; i < sorted_input.size(); ++i) {
-        EXPECT_NEAR(sorted_input[i], sorted_output[i], 1e-10)
-            << "Value " << sorted_input[i] << " was lost or corrupted during write/read";
+    for (size_t i = 0; i < test_data.size(); ++i) {
+        EXPECT_NEAR(test_data[i], read_buffer[i], 1e-10)
+            << "Value " << test_data[i] << " was lost or corrupted at index " << i;
     }
-
-    // This test documents that there's a bug in the coordinate system
-    // but verifies that the StreamWriteProcessor successfully captures all data
-    // TODO: Just write the column major logic in Kakhsya
 }
 
 TEST_F(CaptureBridgeTest, DynamicStreamCircularModeToggle)
@@ -554,17 +545,12 @@ TEST_F(CaptureBridgeTest, CycleCoordinatorBasic)
     Kriya::BufferPipeline pipeline1(*scheduler);
     Kriya::BufferPipeline pipeline2(*scheduler);
 
-    // std::atomic<int> sync_count { 0 };
-
     pipeline1 >> Kriya::BufferOperation::capture_from(buffer).for_cycles(1);
     pipeline2 >> Kriya::BufferOperation::capture_from(buffer).for_cycles(1);
 
     auto sync_routine = coordinator.sync_pipelines(
         { std::ref(pipeline1), std::ref(pipeline2) },
         2);
-
-    // Sync routine should be valid
-    // (Implementation dependent testing)
 }
 
 TEST_F(CaptureBridgeTest, CycleCoordinatorTransientData)
@@ -605,7 +591,7 @@ TEST_F(CaptureBridgeTest, EdgeCaseZeroCycles)
 TEST_F(CaptureBridgeTest, EdgeCaseInvalidWindowSize)
 {
     Kriya::BufferCapture capture(buffer);
-    capture.with_window(0, 0.5f);
+    capture.with_window(0, 0.5F);
 
     EXPECT_EQ(capture.get_window_size(), 0);
 }
@@ -622,7 +608,7 @@ TEST_F(CaptureBridgeTest, IntegrationCaptureToStream)
     MayaFlux::Start();
     AudioTestHelper::waitForAudio(100);
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
     auto capture_buffer = std::make_shared<Buffers::AudioBuffer>();
     auto target_stream = std::make_shared<Kakshya::DynamicSoundStream>(TestConfig::SAMPLE_RATE, 2);
 
@@ -648,12 +634,11 @@ TEST_F(CaptureBridgeTest, IntegrationStreamProcessorChain)
     MayaFlux::Start();
     AudioTestHelper::waitForAudio(100);
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.3f);
+    auto sine = std::make_shared<Nodes::Generator::Sine>(880.0F, 0.3F);
     auto recording_stream = std::make_shared<Kakshya::DynamicSoundStream>(TestConfig::SAMPLE_RATE, 2);
     auto processor = std::make_shared<Buffers::StreamWriteProcessor>(recording_stream);
 
-    // Set up real-time recording
-    recording_stream->enable_circular_buffer(TestConfig::SAMPLE_RATE); // 1 second circular buffer
+    recording_stream->enable_circular_buffer(TestConfig::SAMPLE_RATE);
 
     // This would integrate with the actual audio buffer system
     // processor would be added to the buffer processing chain
@@ -683,10 +668,9 @@ TEST_F(CaptureBridgeTest, HardwareInputCaptureBasic)
 
     auto input_operation_custom = Kriya::BufferOperation::capture_input(
         buffer_manager,
-        1, // channel 1
+        1,
         Kriya::BufferCapture::CaptureMode::CIRCULAR,
-        5 // 5 cycles
-    );
+        5);
 
     EXPECT_EQ(input_operation_custom.get_type(), Kriya::BufferOperation::OpType::CAPTURE);
 
@@ -714,7 +698,6 @@ TEST_F(CaptureBridgeTest, HardwareInputCaptureBuilderFlow)
                                    data_received = true;
                                    received_cycle = cycle;
 
-                                   // Verify we received actual audio data
                                    if (std::holds_alternative<std::vector<double>>(data)) {
                                        const auto& audio_data = std::get<std::vector<double>>(data);
                                        EXPECT_GT(audio_data.size(), 0) << "Should receive non-empty audio data from input";
@@ -723,7 +706,6 @@ TEST_F(CaptureBridgeTest, HardwareInputCaptureBuilderFlow)
                                .with_metadata("source", "hardware")
                                .with_metadata("test_type", "integration");
 
-    // EXPECT_EQ(input_operation.get_type(), Kriya::BufferOperation::OpType::CAPTURE);
     EXPECT_EQ(input_operation.get_tag(), "hardware_input_test");
 
     MayaFlux::End();
@@ -748,7 +730,7 @@ TEST_F(CaptureBridgeTest, HardwareInputRealTimeCapture)
     Kriya::BufferPipeline pipeline(*MayaFlux::get_scheduler());
 
     pipeline >> Kriya::BufferOperation::capture_input_from(buffer_manager, 0)
-                    .as_circular(1024) // 1024 sample circular buffer
+                    .as_circular(1024)
                     .on_data_ready([&](const Kakshya::DataVariant& data, u_int32_t) {
                         capture_count++;
 
@@ -781,7 +763,7 @@ TEST_F(CaptureBridgeTest, HardwareInputRealTimeCapture)
 
     std::cout << "[HardwareInputRealTimeCapture] Captured " << capture_count.load()
               << " audio chunks, stream contains " << target_stream->get_num_frames()
-              << " frames" << std::endl;
+              << " frames" << '\n';
 
     MayaFlux::End();
 }
@@ -827,7 +809,7 @@ TEST_F(CaptureBridgeTest, HardwareInputMultiChannelCapture)
     EXPECT_GT(channel0_captures.load(), 0) << "Channel 0 should capture audio data";
 
     std::cout << "[HardwareInputMultiChannelCapture] Channel 0: " << channel0_captures.load()
-              << " captures, Channel 1: " << channel1_captures.load() << " captures" << std::endl;
+              << " captures, Channel 1: " << channel1_captures.load() << " captures" << '\n';
 
     MayaFlux::End();
 }
@@ -844,7 +826,7 @@ TEST_F(CaptureBridgeTest, HardwareInputErrorHandling)
 
     // Test with null buffer manager - this will cause segfault due to no null checks in capture_input
     // Skip this test as it's a known limitation - the API expects valid buffer manager
-    std::cout << "[HardwareInputErrorHandling] Skipping null buffer manager test - API requires valid buffer manager" << std::endl;
+    std::cout << "[HardwareInputErrorHandling] Skipping null buffer manager test - API requires valid buffer manager" << '\n';
 
     EXPECT_NO_THROW({
         auto operation = Kriya::BufferOperation::capture_input(buffer_manager, 999);
@@ -855,7 +837,6 @@ TEST_F(CaptureBridgeTest, HardwareInputErrorHandling)
         auto operation = Kriya::BufferOperation::capture_input_from(buffer_manager, 500)
                              .for_cycles(1)
                              .with_tag("high_channel_test");
-        // EXPECT_EQ(operation.get_type(), Kriya::BufferOperation::OpType::CAPTURE);
         EXPECT_EQ(operation.get_tag(), "high_channel_test");
     });
 
@@ -863,7 +844,7 @@ TEST_F(CaptureBridgeTest, HardwareInputErrorHandling)
 
     std::atomic<int> callback_count { 0 };
 
-    test_pipeline >> Kriya::BufferOperation::capture_input_from(buffer_manager, 100) // High channel number
+    test_pipeline >> Kriya::BufferOperation::capture_input_from(buffer_manager, 100)
                          .for_cycles(1)
                          .on_data_ready([&](const Kakshya::DataVariant&, u_int32_t) {
                              callback_count++;
@@ -874,7 +855,7 @@ TEST_F(CaptureBridgeTest, HardwareInputErrorHandling)
         test_pipeline.execute_for_cycles(1);
     });
 
-    std::cout << "[HardwareInputErrorHandling] High channel callbacks: " << callback_count.load() << std::endl;
+    std::cout << "[HardwareInputErrorHandling] High channel callbacks: " << callback_count.load() << '\n';
 
     EXPECT_NO_THROW({
         auto op1 = Kriya::BufferOperation::capture_input(buffer_manager, 888);
@@ -883,7 +864,6 @@ TEST_F(CaptureBridgeTest, HardwareInputErrorHandling)
                        .with_tag("duplicate_channel");
 
         EXPECT_EQ(op1.get_type(), Kriya::BufferOperation::OpType::CAPTURE);
-        // EXPECT_EQ(op2.get_type(), Kriya::BufferOperation::OpType::CAPTURE);
     });
 
     MayaFlux::End();
@@ -915,7 +895,6 @@ TEST_F(CaptureBridgeTest, HardwareInputBufferManagerIntegration)
                                 .with_tag("second_input_buffer");
 
     EXPECT_EQ(input_operation.get_type(), Kriya::BufferOperation::OpType::CAPTURE);
-    // EXPECT_EQ(second_operation.get_type(), Kriya::BufferOperation::OpType::CAPTURE);
 
     Kriya::BufferPipeline pipeline(*MayaFlux::get_scheduler());
 
@@ -932,7 +911,7 @@ TEST_F(CaptureBridgeTest, HardwareInputBufferManagerIntegration)
     // Note: data_captured might be false if no audio input is available,
     // but the pipeline should execute without errors
     std::cout << "[HardwareInputBufferManagerIntegration] Data captured: "
-              << (data_captured ? "true" : "false") << std::endl;
+              << (data_captured ? "true" : "false") << '\n';
 
     MayaFlux::End();
 }

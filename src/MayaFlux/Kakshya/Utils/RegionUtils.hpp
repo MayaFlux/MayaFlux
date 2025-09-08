@@ -261,7 +261,15 @@ void set_or_update_region_data(
         u_int64_t linear_index = coordinates_to_linear(current, dimensions);
         dest_data[linear_index] = source_data[source_index++];
         bool done = true;
-        for (size_t dim = 0; dim < current.size(); ++dim) {
+        /* for (size_t dim = 0; dim < current.size(); ++dim) {
+            if (current[dim] < region.end_coordinates[dim]) {
+                current[dim]++;
+                done = false;
+                break;
+            }
+            current[dim] = region.start_coordinates[dim];
+        } */
+        for (int dim = static_cast<int>(current.size()) - 1; dim >= 0; --dim) {
             if (current[dim] < region.end_coordinates[dim]) {
                 current[dim]++;
                 done = false;
@@ -269,6 +277,7 @@ void set_or_update_region_data(
             }
             current[dim] = region.start_coordinates[dim];
         }
+
         if (done)
             break;
     }
