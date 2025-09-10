@@ -25,6 +25,7 @@ namespace MayaFlux::Yantra {
 template <typename T>
 concept ComputeData =
     std::same_as<T, Kakshya::DataVariant> ||
+    std::same_as<T, std::vector<Kakshya::DataVariant>> ||
     std::same_as<T, std::shared_ptr<Kakshya::SignalSourceContainer>> ||
     std::same_as<T, Kakshya::Region> ||
     std::same_as<T, Kakshya::RegionGroup> ||

@@ -112,6 +112,7 @@ u_int64_t DynamicSoundStream::write_frames(std::vector<std::span<const double>> 
 
         if (frames_to_end > 0) {
             std::vector<std::span<const double>> first_part;
+            first_part.reserve(data.size());
             for (const auto& span : data) {
                 first_part.emplace_back(span.subspan(0, frames_to_end));
             }
@@ -120,6 +121,7 @@ u_int64_t DynamicSoundStream::write_frames(std::vector<std::span<const double>> 
 
         if (frames_from_start > 0) {
             std::vector<std::span<const double>> second_part;
+            second_part.reserve(data.size());
             for (const auto& span : data) {
                 second_part.emplace_back(span.subspan(frames_to_end, frames_from_start));
             }

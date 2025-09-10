@@ -386,4 +386,18 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions);
  * dimension information, including size, stride, and semantic roles.
  */
 std::vector<Kakshya::DataDimension> detect_data_dimensions(const DataVariant& data);
+
+/**
+ * @brief Detect data dimensions from a vector of DataVariants
+ * @param variants Vector of DataVariants to analyze
+ * @return Vector of DataDimension descriptors
+ *
+ * This function analyzes the structure of the provided vector of DataVariants and extracts
+ * dimension information, including size, stride, and semantic roles.
+ *
+ * WARNING: This method makes naive assumptions about the data structure and may lead to incorrect interpretations.
+ * It is recommended to use more specific methods when dealing with known containers, regions, or segments.
+ * Use this function only when absolutely necessary and be aware of potential computational errors.
+ */
+std::vector<Kakshya::DataDimension> detect_data_dimensions(const std::vector<Kakshya::DataVariant>& variants);
 }
