@@ -180,6 +180,18 @@ std::span<T> convert_variant(DataVariant& variant,
         variant);
 }
 
+template <ProcessableData T>
+std::vector<std::span<T>> convert_variants(
+    std::vector<DataVariant> variants,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+{
+    return variants
+        | std::views::transform([strategy](auto& variant) {
+              return convert_variant<double>(const_cast<DataVariant&>(variant, strategy));
+          })
+        | std::ranges::to<std::vector>();
+}
+
 /**
  * @brief Get const span from DataVariant without conversion (zero-copy for matching types)
  * @tparam T Data type (must match DataVariant contents)
