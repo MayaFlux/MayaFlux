@@ -139,6 +139,51 @@ void SoundStreamContainer::set_region_data(const Region& region, const std::vect
     m_double_extraction_dirty.store(true, std::memory_order_release);
 }
 
+std::vector<DataVariant> SoundStreamContainer::get_region_group_data(const RegionGroup& region_group) const
+{
+    const auto& spans = get_span_cache();
+
+    if (spans.empty())
+        return {};
+
+    auto const_spans = spans | std::views::transform([](const auto& span) {
+        return std::span<const double>(span.data(), span.size());
+    });
+
+    auto extracted_channels = extract_group_data<double>(
+        std::vector<std::span<const double>>(const_spans.begin(), const_spans.end()),
+        region_group, m_structure.dimensions, m_structure.organization);
+
+    return extracted_channels
+        | std::views::transform([](auto&& channel) {
+              return DataVariant(std::forward<decltype(channel)>(channel));
+          })
+        | std::ranges::to<std::vector>();
+}
+
+std::vector<DataVariant> SoundStreamContainer::get_segments_data(const std::vector<RegionSegment>& segments) const
+{
+    const auto& spans = get_span_cache();
+
+    if (spans.empty() || segments.empty())
+        return {};
+
+    auto const_spans = spans | std::views::transform([](const auto& span) {
+        return std::span<const double>(span.data(), span.size());
+    });
+
+    auto extracted_channels = extract_segments_data<double>(
+        segments,
+        std::vector<std::span<const double>>(const_spans.begin(), const_spans.end()),
+        m_structure.dimensions, m_structure.organization);
+
+    return extracted_channels
+        | std::views::transform([](auto&& channel) {
+              return DataVariant(std::forward<decltype(channel)>(channel));
+          })
+        | std::ranges::to<std::vector>();
+}
+
 std::span<const double> SoundStreamContainer::get_frame(u_int64_t frame_index) const
 {
     if (frame_index >= m_num_frames) {

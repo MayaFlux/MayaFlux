@@ -81,14 +81,6 @@ std::vector<T> extract_region_data(const std::span<const T>& source_data, const 
         result.push_back(source_data[linear_index]);
 
         bool done = true;
-        /* for (size_t dim = 0; dim < current.size(); ++dim) {
-            if (current[dim] < region.end_coordinates[dim]) {
-                current[dim]++;
-                done = false;
-                break;
-            }
-            current[dim] = region.start_coordinates[dim];
-        } */
         for (int dim = current.size() - 1; dim >= 0; --dim) {
             if (current[dim] < region.end_coordinates[dim]) {
                 current[dim]++;
@@ -163,10 +155,87 @@ std::vector<std::vector<T>> extract_group_data(
         auto region_data = extract_region_data<T>(source_spans, region, dimensions, organization);
 
         if (organization == OrganizationStrategy::INTERLEAVED) {
-            result.push_back(std::move(region_data[0]));
+            if (result.empty())
+                result.resize(1);
+
+            for (size_t i = 0; i < region_data[0].size(); i++) {
+                result[0].push_back(region_data[0][i]);
+            }
         } else {
-            auto flattened = flatten_channels(region_data);
-            result.push_back(std::move(flattened));
+            if (result.empty())
+                result.resize(region_data.size());
+
+            auto channel_pairs = std::views::zip(result, region_data);
+            auto total_sizes = channel_pairs | std::views::transform([](auto&& pair) {
+                return std::get<0>(pair).size() + std::get<1>(pair).size();
+            });
+
+            size_t i = 0;
+            for (auto size : total_sizes) {
+                result[i].reserve(size);
+                std::ranges::copy(region_data[i],
+                    std::back_inserter(result[i]));
+                ++i;
+            }
+        }
+    }
+
+    return result;
+}
+
+/**
+ * @brief Extract data for multiple segments from multi-channel source data.
+ * @tparam T Data type.
+ * @param segments Vector of region segments to extract.
+ * @param source_spans Vector of source data spans (one per channel).
+ * @param dimensions Dimension descriptors.
+ * @param organization Storage organization strategy.
+ * @return Vector of vectors, each containing extracted data for one segment.
+ */
+template <typename T>
+std::vector<std::vector<T>> extract_segments_data(
+    const std::vector<RegionSegment>& segments,
+    const std::vector<std::span<const T>>& source_spans,
+    const std::vector<DataDimension>& dimensions,
+    OrganizationStrategy organization)
+{
+    if (source_spans.size() != 1) {
+        throw std::invalid_argument("Source spans cannot be empty");
+    }
+
+    std::vector<std::vector<T>> result;
+
+    for (const auto& segment : segments) {
+        if (segment.is_cached && !segment.cache.data.empty()) {
+            for (const auto& variant : segment.cache.data) {
+                std::vector<T> converted;
+                auto span = extract_from_variant<T>(variant, converted);
+                std::vector<T> cached_data(span.begin(), span.end());
+
+                if (organization == OrganizationStrategy::INTERLEAVED) {
+                    if (result.empty())
+                        result.resize(1);
+                    std::ranges::copy(cached_data, std::back_inserter(result[0]));
+                } else {
+                    if (result.size() <= result.size())
+                        result.resize(result.size() + 1);
+                    result.back() = std::move(cached_data);
+                }
+            }
+        } else {
+            auto region_data = extract_region_data<T>(source_spans, segment.source_region, dimensions, organization);
+
+            if (organization == OrganizationStrategy::INTERLEAVED) {
+                if (result.empty())
+                    result.resize(1);
+                std::ranges::copy(region_data[0], std::back_inserter(result[0]));
+            } else {
+                if (result.empty())
+                    result.resize(region_data.size());
+                for (size_t i = 0; i < region_data.size(); ++i) {
+                    std::ranges::copy(region_data[i], std::back_inserter(result[i]));
+                }
+            }
         }
     }
 
@@ -542,15 +611,6 @@ std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(
  * @return Map containing group bounds metadata.
  */
 std::unordered_map<std::string, std::any> extract_group_bounds_info(const RegionGroup& group);
-
-/**
- * @brief Extract data from region segments.
- * @param segments Vector of region segments.
- * @param container Container providing the data.
- * @return Vector of DataVariants, one per segment.
- */
-std::vector<std::vector<DataVariant>> extract_segments_data(const std::vector<RegionSegment>& segments,
-    const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Extract metadata from region segments.

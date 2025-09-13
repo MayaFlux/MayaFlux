@@ -51,6 +51,9 @@ public:
     std::vector<DataVariant> get_region_data(const Region& region) const override;
     void set_region_data(const Region& region, const std::vector<DataVariant>& data) override;
 
+    std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
+    std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segment) const override;
+
     std::span<const double> get_frame(u_int64_t frame_index) const override;
     void get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const override;
 

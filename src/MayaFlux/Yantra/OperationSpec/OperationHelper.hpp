@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/Utils/ContainerUtils.hpp"
 #include "MayaFlux/Yantra/Data/DataIO.hpp"
 
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
@@ -62,132 +63,158 @@ public:
      */
     static inline Utils::ComplexConversionStrategy get_complex_conversion_strategy() { return s_complex_strategy; }
 
-    template <typename U>
-    static std::span<double> extract_numerical_data(
-        IO<U>& compute_data,
-        const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
-    {
-        try {
-            if (auto variant = to_data_variant(compute_data.data, container)) {
-                auto data_tuple = extract_structured_double(variant);
-                compute_data.update_structure(
-                    std::move(std::get<1>(data_tuple).dimensions),
-                    std::get<1>(data_tuple).modality);
-                return data_tuple.second;
-            }
-        } catch (const std::exception& e) {
-            throw std::runtime_error(std::string("Error extracting numerical data: ") + e.what());
-        }
-    }
-
-    template <ComputeData T>
-    static std::span<double> extract_numerical_data(
-        const T& compute_data,
-        const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
-    {
-        try {
-            if (auto variant = to_data_variant(compute_data.data, container)) {
-                return Kakshya::convert_variant_to_double(variant, s_complex_strategy);
-            }
-        } catch (const std::exception& e) {
-            throw std::runtime_error(std::string("Error extracting numerical data: ") + e.what());
-        }
-    }
-
     /**
-     * @brief Convert any ComputeData type to DataVariant
+     * @brief extract numeric data from single-variant types
      * @tparam T ComputeData type
      * @param compute_data Input data
-     * @return DataVariant representation
+     * @return Span of double data
      */
-    template <ComputeData T>
-    static Kakshya::DataVariant to_data_variant(const T& compute_data, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
+    template <typename T>
+        requires SingleVariant<T>
+    static std::span<double> extract_numeric_data(const T& compute_data)
     {
         if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
-            return compute_data;
+            return Kakshya::convert_variant<double>(compute_data, s_complex_strategy);
+        }
+        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
+            Kakshya::DataVariant variant = create_data_variant_from_eigen(compute_data);
+            return Kakshya::convert_variant<double>(variant, s_complex_strategy);
+        }
 
-        } else if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
-            if (!compute_data) {
-                throw std::invalid_argument("Null container provided to OperationHelper");
-            }
-            return compute_data->get_processed_data();
+        Kakshya::DataVariant variant { compute_data };
+        return Kakshya::convert_variant_to_double(variant, s_complex_strategy);
+    }
 
-        } else if constexpr (std::is_same_v<T, Kakshya::Region>) {
-            if (!container) {
-                throw std::runtime_error("Region conversion requires container context. Use extract_with_container()");
+    /**
+     * @brief extract numeric data from multi-variant types
+     * @tparam T ComputeData type
+     * @param compute_data Input data
+     * @return Vector of spans of double data (one per channel/variant)
+     */
+    template <typename T>
+        requires MultiVariant<T>
+    static std::vector<std::span<double>> extract_numeric_data(const T& compute_data)
+    {
+        if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
+            return Kakshya::convert_variants<double>(compute_data, s_complex_strategy);
+        }
+
+        if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
+            if (compute_data->get_processing_state() == Kakshya::ProcessingState::PROCESSED) {
+                std::vector<Kakshya::DataVariant> variant = compute_data->get_processed_data();
+                return Kakshya::convert_variants<double>(variant, s_complex_strategy);
             }
-            return extract_region_with_container(compute_data, container);
+            std::vector<Kakshya::DataVariant> variant = compute_data->get_data();
+            return Kakshya::convert_variants<double>(variant, s_complex_strategy);
+        }
+
+        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>)
+            return extract_from_eigen_matrix(compute_data);
+    }
+
+    /**
+     * @brief extract numeric data from region-like types
+     * @tparam T ComputeData type
+     * @param compute_data Input data
+     * @param container Container to extract data from
+     * @return Vector of spans of double data (one per region/segment)
+     */
+    template <typename T>
+        requires RegionLike<T>
+    static std::vector<std::span<double>> extract_numeric_data(
+        const T& compute_data,
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
+    {
+        if (!container) {
+            throw std::invalid_argument("Null container provided for region extraction");
+        }
+
+        if constexpr (std::is_same_v<T, Kakshya::Region>) {
+            auto data = container->get_region_data(compute_data);
+            return Kakshya::convert_variants<double>(data);
 
         } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
-            if (compute_data.regions.empty() || !container) {
-                throw std::runtime_error("Empty RegionGroup cannot be converted to DataVariant. RegionGroup conversion requires container context. Use extract_with_container()");
+            if (compute_data.regions.empty()) {
+                throw std::runtime_error("Empty RegionGroup cannot be extracted");
             }
-            return extract_region_group_with_container(compute_data, container);
+            auto data = container->get_region_group_data(compute_data);
+            return Kakshya::convert_variants<double>(data);
 
         } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
-            return extract_from_segments(compute_data);
-        } else if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
-
-            return create_data_variant_from_eigen(compute_data);
-        } else {
-            return Kakshya::DataVariant { compute_data };
+            if (compute_data.empty()) {
+                throw std::runtime_error("RegionSegment contains no extractable data");
+            }
+            auto data = container->get_segments_data(compute_data);
+            return Kakshya::convert_variants<double>(data);
         }
     }
 
     /**
-     * @brief Convert Region with container context to DataVariant
-     * @param region Region to extract
-     * @param container Container providing the data
-     * @return DataVariant representation
+     * @brief Convert ComputeData to DataVariant format
+     * @tparam T ComputeData type
+     * @param compute_data Input data
+     * @return Vector of DataVariant (one per channel/variant)
      */
-    static Kakshya::DataVariant extract_region_with_container(
-        const Kakshya::Region& region,
-        const std::shared_ptr<Kakshya::SignalSourceContainer>& container);
+    template <typename T>
+        requires MultiVariant<T>
+    static std::vector<Kakshya::DataVariant> to_data_variant(const T& compute_data)
+    {
+        if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
+            return compute_data;
+        }
+
+        if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
+            if (compute_data->get_processing_state() == Kakshya::ProcessingState::PROCESSED) {
+                return compute_data->get_processed_data();
+            }
+            return compute_data->get_data();
+        }
+
+        if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
+            return convert_eigen_matrix_to_variant(compute_data);
+        }
+    }
 
     /**
-     * @brief Convert RegionGroup with container context to DataVariant
-     * @param group RegionGroup to extract
-     * @param container Container providing the data
-     * @return DataVariant representation (combined from all regions)
+     * @brief Convert region-like ComputeData to DataVariant format
+     * @tparam T ComputeData type
+     * @param compute_data Input data
+     * @param container Container to extract data from
+     * @return Vector of DataVariant (one per region/segment)
      */
-    static Kakshya::DataVariant extract_region_group_with_container(
-        const Kakshya::RegionGroup& group,
-        const std::shared_ptr<Kakshya::SignalSourceContainer>& container);
+    template <typename T>
+        requires RegionLike<T>
+    static std::vector<Kakshya::DataVariant> to_data_variant(
+        const T& compute_data,
+        const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
+    {
+        if constexpr (std::is_same_v<T, Kakshya::Region>) {
+            return container->get_region_data(compute_data);
+        } else if constexpr (std::is_same_v<T, Kakshya::RegionGroup>) {
+            return container->get_region_group_data(compute_data);
+        } else if constexpr (std::is_same_v<T, std::vector<Kakshya::RegionSegment>>) {
+            return container->get_segments_data(compute_data);
+        }
+    }
 
     /**
      * @brief Universal extraction to structured double data
      * @param data_variant DataVariant to process
      * @return Tuple of (double_vector, structure_info)
      */
-    static std::tuple<std::span<double>, DataStructureInfo>
-    extract_structured_double(Kakshya::DataVariant& data_variant);
-
-    /**
-     * @brief Combined extraction for any ComputeData type
-     * @tparam T ComputeData type
-     * @param compute_data Input data
-     * @return Tuple of (double_vector, structure_info)
-     */
-    template <ComputeData T>
-    static std::tuple<std::span<double>, DataStructureInfo>
-    extract_with_structure(const T& compute_data)
+    template <typename T>
+        requires MultiVariant<T> || RegionLike<T>
+    static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
+    extract_structured_double(T compute_data, const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
     {
+        DataStructureInfo info {};
+        info.original_type = std::type_index(typeid(compute_data));
+        std::vector<std::span<double>> double_data = extract_numeric_data(compute_data, container);
+        auto [dimensions, modality] = infer_structure(compute_data, container);
+        info.dimensions = dimensions;
+        info.modality = modality;
 
-        Kakshya::DataVariant data_variant = to_data_variant(compute_data);
-        return extract_structured_double(data_variant);
-    }
-
-    /**
-     * @brief Simple extraction to double vector (no structure info)
-     * @tparam T ComputeData type
-     * @param compute_data Input data
-     * @return Double vector for processing
-     */
-    template <ComputeData T>
-    static std::vector<double> extract_as_double(const T& compute_data)
-    {
-        auto [double_data, structure_info] = extract_with_structure(compute_data);
-        return std::vector<double>(double_data.begin(), double_data.end());
+        return std::make_tuple(double_data, info);
     }
 
     /**
@@ -198,33 +225,49 @@ public:
      * @return Reconstructed data of type T
      */
     template <ComputeData T>
-    static T reconstruct_from_double(const std::vector<double>& double_data,
+    static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
         const DataStructureInfo& structure_info)
     {
-        if constexpr (std::is_same_v<T, std::vector<double>>) {
+        if constexpr (std::is_same_v<T, std::vector<std::vector<double>>>) {
             return double_data;
-        } else if constexpr (std::is_same_v<T, Eigen::VectorXd>) {
-            return create_eigen_vector_from_double(double_data);
         } else if constexpr (std::is_same_v<T, Eigen::MatrixXd>) {
-            return create_eigen_matrix_from_double(double_data, structure_info.dimensions);
+            return recreate_eigen_matrix(double_data, structure_info);
+        } else if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
+            std::vector<Kakshya::DataVariant> variants;
+            variants.reserve(double_data.size());
+            for (const auto& vec : double_data) {
+                variants.emplace_back(vec);
+            }
+            return variants;
         } else if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
-            return reconstruct_data_variant_from_double(double_data, structure_info);
+            auto data = Kakshya::interleave_channels<double>(double_data);
+            return reconstruct_data_variant_from_double(data, structure_info);
         } else {
             throw std::runtime_error("Reconstruction not implemented for target type");
         }
     }
 
+    /**
+     * @brief Convert double vector to target ComputeData type (non-region)
+     * @tparam OutputType Target ComputeData type
+     * @param result_data Processed double vector
+     * @return Converted data of type OutputType
+     */
     template <ComputeData OutputType>
-    static OutputType convert_result_to_output_type(const std::vector<double>& result_data)
+        requires(!std::is_same_v<OutputType, std::shared_ptr<Kakshya::SignalSourceContainer>>) && (!RegionLike<OutputType>)
+    static OutputType convert_result_to_output_type(const std::vector<std::vector<double>>& result_data)
     {
-        if constexpr (std::is_same_v<OutputType, std::vector<double>>) {
+        if constexpr (std::is_same_v<OutputType, std::vector<std::vector<double>>>) {
             return result_data;
-        } else if constexpr (std::is_same_v<OutputType, Eigen::VectorXd>) {
-            return create_eigen_vector_from_double(result_data);
-            // } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
-            //     return create_eigen_matrix_from_double(result_data); // Column vector
-        } else if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
-            return Kakshya::DataVariant { result_data };
+        } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
+            return create_eigen_matrix(result_data);
+        } else if constexpr (std::is_same_v<OutputType, std::vector<Kakshya::DataVariant>>) {
+            std::vector<Kakshya::DataVariant> variants;
+            variants.reserve(result_data.size());
+            for (const auto& vec : result_data) {
+                variants.emplace_back(vec);
+            }
+            return variants;
         } else {
             return OutputType {};
         }
@@ -238,27 +281,27 @@ public:
      * @return Tuple of [target_data_reference, structure_info]
      */
     template <ComputeData DataType>
-    static auto setup_operation_buffer(DataType& input, std::vector<double>& working_buffer)
+    static auto setup_operation_buffer(DataType& input, std::vector<std::vector<double>>& working_buffer)
     {
-        auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
+        auto [data, structure_info] = OperationHelper::extract_structured_double(input);
 
-        if (working_buffer.size() != data_span.size()) {
-            working_buffer.resize(data_span.size());
+        if (working_buffer.size() != data.size()) {
+            working_buffer.resize(data.size());
         }
 
-        std::ranges::copy(data_span, working_buffer.begin());
+        std::vector<std::span<double>> working_span(working_buffer.size());
 
-        std::span<double> working_span(working_buffer.data(), data_span.size());
+        for (size_t i = 0; i < data.size(); i++) {
+            working_buffer[i].resize(data[i].size());
+            std::ranges::copy(data[i], working_buffer[i].begin());
+            working_span[i] = std::span<double>(working_buffer[i].data(), working_buffer[i].size());
+        }
+
         return std::make_tuple(working_span, structure_info);
     }
 
 private:
     static inline Utils::ComplexConversionStrategy s_complex_strategy = Utils::ComplexConversionStrategy::MAGNITUDE;
-
-    /**
-     * @brief Extract data from RegionSegments
-     */
-    static Kakshya::DataVariant extract_from_segments(const std::vector<Kakshya::RegionSegment>& segments);
 
     /**
      * @brief Create DataVariant from Eigen matrix/vector
@@ -274,7 +317,6 @@ private:
                 flat_data[i] = static_cast<double>(eigen_data(i));
             }
         } else {
-            // Flatten matrix row-wise
             flat_data.resize(eigen_data.size());
             int idx = 0;
             for (int i = 0; i < eigen_data.rows(); ++i) {
@@ -288,15 +330,127 @@ private:
     }
 
     /**
-     * @brief Create Eigen vector from double data
+     * @brief Infer data structure from ComputeData type
+     * @tparam T ComputeData type
+     * @param compute_data Input data
+     * @return Pair of (dimensions, modality)
      */
-    static Eigen::VectorXd create_eigen_vector_from_double(const std::vector<double>& double_data);
+    template <typename EigenMatrix>
+    static std::vector<std::span<double>> extract_from_eigen_matrix(const EigenMatrix& matrix)
+    {
+        static thread_local std::vector<std::vector<double>> columns;
+        columns.clear();
+        columns.resize(matrix.cols());
+        std::vector<std::span<double>> spans;
+        spans.reserve(matrix.cols());
+
+        for (int col = 0; col < matrix.cols(); ++col) {
+            auto row_indices = std::views::iota(0, matrix.rows());
+            auto col_data = row_indices
+                | std::views::transform([&](int row) { return static_cast<double>(matrix(row, col)); });
+            columns[col] = std::vector<double>(col_data.begin(), col_data.end());
+            spans.emplace_back(columns[col].data(), columns[col].size());
+        }
+        return spans;
+    }
 
     /**
-     * @brief Create Eigen matrix from double data using dimension info
+     * @brief Convert Eigen matrix to DataVariant format
      */
-    static Eigen::MatrixXd create_eigen_matrix_from_double(const std::vector<double>& double_data,
-        const std::vector<Kakshya::DataDimension>& dimensions);
+    template <typename EigenMatrix>
+    static std::vector<Kakshya::DataVariant> convert_eigen_matrix_to_variant(const EigenMatrix& matrix)
+    {
+        std::vector<Kakshya::DataVariant> columns(matrix.cols());
+
+        for (int col = 0; col < matrix.cols(); ++col) {
+            auto row_indices = std::views::iota(0, matrix.rows());
+            auto col_data = row_indices
+                | std::views::transform([&](int row) { return static_cast<double>(matrix(row, col)); });
+            columns[col] = { std::vector<double>(col_data.begin(), col_data.end()) };
+        }
+        return columns;
+    }
+
+    /**
+     * @brief Infer data structure from ComputeData type
+     * @tparam T ComputeData type
+     * @param compute_data Input data
+     * @return Pair of (dimensions, modality)
+     */
+    template <typename T>
+    static Eigen::MatrixXd create_eigen_matrix(const std::vector<std::vector<T>>& columns)
+    {
+        if (columns.empty()) {
+            return {};
+        }
+
+        int rows = columns[0].size();
+        int cols = columns.size();
+
+        for (const auto& col : columns) {
+            if (col.size() != rows) {
+                throw std::invalid_argument("All columns must have same size");
+            }
+        }
+
+        Eigen::MatrixXd matrix(rows, cols);
+        for (int col = 0; col < cols; ++col) {
+            for (int row = 0; row < rows; ++row) {
+                matrix(row, col) = static_cast<double>(columns[col][row]);
+            }
+        }
+        return matrix;
+    }
+
+    /**
+     * @brief Create Eigen matrix from spans
+     */
+    template <typename T>
+    static Eigen::MatrixXd create_eigen_matrix(const std::vector<std::span<const T>>& spans)
+    {
+        if (spans.empty()) {
+            return {};
+        }
+
+        int rows = spans[0].size();
+        int cols = spans.size();
+
+        for (const auto& span : spans) {
+            if (span.size() != rows) {
+                throw std::invalid_argument("All spans must have same size");
+            }
+        }
+
+        Eigen::MatrixXd matrix(rows, cols);
+        for (int col = 0; col < cols; ++col) {
+            for (int row = 0; row < rows; ++row) {
+                matrix(row, col) = static_cast<double>(spans[col][row]);
+            }
+        }
+        return matrix;
+    }
+
+    /**
+     * @brief Infer data structure from ComputeData type
+     * @tparam T ComputeData type
+     * @param compute_data Input data
+     * @param container Optional container for region-like types
+     * @return Pair of (dimensions, modality)
+     */
+    static Eigen::MatrixXd recreate_eigen_matrix(
+        const std::vector<std::vector<double>>& columns,
+        const DataStructureInfo& structure_info);
+
+    /**
+     * @brief Infer data structure from ComputeData type
+     * @tparam T ComputeData type
+     * @param compute_data Input data
+     * @param container Optional container for region-like types
+     * @return Pair of (dimensions, modality)
+     */
+    static Eigen::MatrixXd recreate_eigen_matrix(
+        const std::vector<std::span<const double>>& spans,
+        const DataStructureInfo& structure_info);
 
     /**
      * @brief Reconstruct DataVariant from double data and structure info

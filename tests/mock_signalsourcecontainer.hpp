@@ -118,6 +118,22 @@ public:
         return result;
     }
 
+    std::vector<DataVariant> get_region_group_data(const RegionGroup& regions) const override
+    {
+        /* std::vector<DataVariant> all_data;
+        for (const auto& region : regions) {
+            auto region_data = get_region_data(region);
+            all_data.insert(all_data.end(), region_data.begin(), region_data.end());
+        }
+        return all_data; */
+        return {};
+    }
+
+    std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>&) const override
+    {
+        return {};
+    }
+
     void set_region_data(const Region&, const std::vector<DataVariant>& data) override
     {
         if (!data.empty()) {

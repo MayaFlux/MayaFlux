@@ -9,6 +9,7 @@ namespace MayaFlux::Kakshya {
  */
 struct Region;
 struct RegionGroup;
+struct RegionSegment;
 
 /**
  * @brief Container structure for consistent dimension ordering.
@@ -258,6 +259,20 @@ public:
      * @return std::vector<DataVariant> containing the region's data
      */
     [[nodiscard]] virtual std::vector<DataVariant> get_region_data(const Region& region) const = 0;
+
+    /**
+     * @brief Get data for multiple regions efficiently.
+     * @param regions Vector of regions to extract data from
+     * @return Vector of DataVariant vectors, one per region
+     */
+    [[nodiscard]] virtual std::vector<DataVariant> get_region_group_data(const RegionGroup& regions) const = 0;
+
+    /**
+     * @brief Get data for multiple region segments efficiently.
+     * @param segments Vector of region segments to extract data from
+     * @return Vector of DataVariant vectors, one per segment
+     */
+    [[nodiscard]] virtual std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segments) const = 0;
 
     /**
      * @brief Set data for a specific region.

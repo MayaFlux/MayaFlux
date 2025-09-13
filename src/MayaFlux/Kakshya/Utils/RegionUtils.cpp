@@ -311,24 +311,6 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
     return bounds_info;
 }
 
-std::vector<std::vector<DataVariant>> extract_segments_data(const std::vector<RegionSegment>& segments,
-    const std::shared_ptr<SignalSourceContainer>& container)
-{
-    if (!container) {
-        throw std::invalid_argument("Container is null");
-    }
-
-    std::vector<std::vector<DataVariant>> results;
-    results.reserve(segments.size());
-
-    std::ranges::transform(segments, std::back_inserter(results),
-        [&container](const RegionSegment& segment) {
-            return container->get_region_data(segment.source_region);
-        });
-
-    return results;
-}
-
 std::vector<std::unordered_map<std::string, std::any>> extract_segments_metadata(const std::vector<RegionSegment>& segments)
 {
     std::vector<std::unordered_map<std::string, std::any>> metadata_list;
