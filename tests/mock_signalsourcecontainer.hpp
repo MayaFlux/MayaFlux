@@ -70,6 +70,19 @@ public:
         }
     }
 
+    void set_multi_channel_test_data(const std::vector<std::vector<double>>& channel_data)
+    {
+        m_processed_data.clear();
+        m_processed_data.reserve(channel_data.size());
+
+        for (const auto& channel : channel_data) {
+            m_processed_data.emplace_back(Kakshya::DataVariant { channel });
+        }
+
+        m_num_channels = static_cast<u_int32_t>(channel_data.size());
+        m_data_structure.organization = OrganizationStrategy::PLANAR;
+    }
+
     std::vector<DataDimension> get_dimensions() const override
     {
         return m_data_structure.dimensions;

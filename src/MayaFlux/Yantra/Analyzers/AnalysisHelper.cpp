@@ -1,5 +1,7 @@
 #include "AnalysisHelper.hpp"
 
+#include <numeric>
+
 #ifdef MAYAFLUX_PLATFORM_MACOS
 #include "oneapi/dpl/algorithm"
 #include "oneapi/dpl/execution"
@@ -17,7 +19,7 @@ std::vector<double> compute_dynamic_range_energy(std::span<const double> data, c
     std::vector<double> dr_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -47,7 +49,7 @@ std::vector<double> compute_zero_crossing_energy(std::span<const double> data, c
     std::vector<double> zcr_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -72,7 +74,7 @@ std::vector<double> compute_power_energy(std::span<const double> data, const siz
     std::vector<double> power_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -95,7 +97,7 @@ std::vector<double> compute_peak_energy(std::span<const double> data, const u_in
     std::vector<double> peak_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -118,7 +120,7 @@ std::vector<double> compute_rms_energy(std::span<const double> data, const u_int
     std::vector<double> rms_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -141,7 +143,7 @@ std::vector<double> compute_spectral_energy(std::span<const double> data, const 
     std::vector<double> spectral_energy(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     Eigen::VectorXd hanning_window(window_size);
     for (u_int32_t i = 0; i < window_size; ++i) {
@@ -157,7 +159,7 @@ std::vector<double> compute_spectral_energy(std::span<const double> data, const 
             Eigen::VectorXd windowed_data = Eigen::VectorXd::Zero(window_size);
             const size_t actual_size = window.size();
 
-            for (size_t j = 0; j < actual_size; ++j) {
+            for (int j = 0; j < actual_size; ++j) {
                 windowed_data(j) = window[j] * hanning_window(j);
             }
 
@@ -181,7 +183,7 @@ std::vector<double> compute_harmonic_energy(std::span<const double> data, const 
     std::vector<double> harmonic_energy(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     Eigen::VectorXd hanning_window(window_size);
     for (u_int32_t i = 0; i < window_size; ++i) {
@@ -197,7 +199,7 @@ std::vector<double> compute_harmonic_energy(std::span<const double> data, const 
             Eigen::VectorXd windowed_data = Eigen::VectorXd::Zero(window_size);
             const size_t actual_size = window.size();
 
-            for (size_t j = 0; j < actual_size; ++j) {
+            for (int j = 0; j < actual_size; ++j) {
                 windowed_data(j) = window[j] * hanning_window(j);
             }
 
@@ -223,7 +225,7 @@ std::vector<double> compute_mean_statistic(std::span<const double> data, const s
     std::vector<double> mean_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -246,7 +248,7 @@ std::vector<double> compute_variance_statistic(std::span<const double> data, con
     std::vector<double> variance_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -295,7 +297,7 @@ std::vector<double> compute_skewness_statistic(std::span<const double> data, con
     std::vector<double> skewness_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -343,7 +345,7 @@ std::vector<double> compute_kurtosis_statistic(std::span<const double> data, con
     std::vector<double> kurtosis_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -390,7 +392,7 @@ std::vector<double> compute_median_statistic(std::span<const double> data, const
     std::vector<double> median_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -427,7 +429,7 @@ std::vector<double> compute_percentile_statistic(std::span<const double> data, c
         percentile = 100.0;
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -452,14 +454,14 @@ std::vector<double> compute_percentile_statistic(std::span<const double> data, c
                 return;
             }
 
-            double index = (percentile / 100.0) * (sorted_window.size() - 1);
+            double index = (percentile / 100.0) * static_cast<double>(sorted_window.size() - 1);
             auto lower_idx = static_cast<size_t>(std::floor(index));
             auto upper_idx = static_cast<size_t>(std::ceil(index));
 
             if (lower_idx == upper_idx) {
                 percentile_values[i] = sorted_window[lower_idx];
             } else {
-                double weight = index - lower_idx;
+                double weight = index - static_cast<double>(lower_idx);
                 percentile_values[i] = sorted_window[lower_idx] * (1.0 - weight) + sorted_window[upper_idx] * weight;
             }
         });
@@ -472,7 +474,7 @@ std::vector<double> compute_entropy_statistic(std::span<const double> data, cons
     std::vector<double> entropy_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -501,7 +503,7 @@ std::vector<double> compute_entropy_statistic(std::span<const double> data, cons
                 return;
             }
 
-            double bin_width = (max_val - min_val) / bins;
+            double bin_width = (max_val - min_val) / static_cast<double>(bins);
 
             std::vector<size_t> bin_counts(bins, 0);
             for (double value : window) {
@@ -516,7 +518,7 @@ std::vector<double> compute_entropy_statistic(std::span<const double> data, cons
 
             for (size_t count : bin_counts) {
                 if (count > 0) {
-                    double probability = static_cast<double>(count) / total_count;
+                    double probability = static_cast<double>(count) / static_cast<double>(total_count);
                     entropy -= probability * std::log2(probability);
                 }
             }
@@ -532,7 +534,7 @@ std::vector<double> compute_min_statistic(std::span<const double> data, const si
     std::vector<double> min_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -551,7 +553,7 @@ std::vector<double> compute_max_statistic(std::span<const double> data, const si
     std::vector<double> max_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -570,7 +572,7 @@ std::vector<double> compute_range_statistic(std::span<const double> data, const 
     std::vector<double> range_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -590,7 +592,7 @@ std::vector<double> compute_sum_statistic(std::span<const double> data, const si
     std::vector<double> sum_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -609,7 +611,7 @@ std::vector<double> compute_count_statistic(std::span<const double> data, const 
     std::vector<double> count_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -627,7 +629,7 @@ std::vector<double> compute_mad_statistic(std::span<const double> data, const si
     std::vector<double> mad_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -689,7 +691,7 @@ std::vector<double> compute_mode_statistic(std::span<const double> data, const s
     constexpr double tolerance = 1e-10;
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -710,7 +712,7 @@ std::vector<double> compute_mode_statistic(std::span<const double> data, const s
                     frequency_map[bucket] = { value, 1 };
                 } else {
                     frequency_map[bucket].second++;
-                    frequency_map[bucket].first = (frequency_map[bucket].first * (frequency_map[bucket].second - 1) + value) / frequency_map[bucket].second;
+                    frequency_map[bucket].first = (frequency_map[bucket].first * static_cast<double>(frequency_map[bucket].second - 1) + value) / static_cast<double>(frequency_map[bucket].second);
                 }
             }
 
@@ -728,7 +730,7 @@ std::vector<double> compute_zscore_statistic(std::span<const double> data, const
     std::vector<double> zscore_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::iota(indices.begin(), indices.end(), 0);
+    std::ranges::iota(indices, 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -763,7 +765,7 @@ std::vector<double> compute_zscore_statistic(std::span<const double> data, const
                 for (double val : window) {
                     sum_zscore += (val - mean) / std_dev;
                 }
-                zscore_values[i] = sum_zscore / window.size();
+                zscore_values[i] = sum_zscore / static_cast<double>(window.size());
             } else {
                 zscore_values[i] = 0.0;
             }

@@ -68,32 +68,40 @@ enum class StatisticalLevel : u_int8_t {
 };
 
 /**
- * @struct StatisticalAnalysisResult
- * @brief Analysis result structure for statistical analysis
+ * @struct ChannelStatistics
+ * @brief Statistical results for a single data channel
  */
-struct StatisticalAnalysisResult {
+struct ChannelStatistics {
     std::vector<double> statistical_values;
-    StatisticalMethod method_used;
-    u_int32_t window_size;
-    u_int32_t hop_size;
 
-    double mean_stat;
-    double max_stat;
-    double min_stat;
-    double stat_variance;
-    double stat_std_dev;
+    double mean_stat {};
+    double max_stat {};
+    double min_stat {};
+    double stat_variance {};
+    double stat_std_dev {};
 
-    double skewness;
-    double kurtosis;
-    double median;
+    double skewness {};
+    double kurtosis {};
+    double median {};
     std::vector<double> percentiles;
 
     std::vector<StatisticalLevel> stat_classifications;
-    std::map<StatisticalLevel, int> level_distribution;
+    std::array<int, 6> level_counts {};
 
     std::vector<std::pair<size_t, size_t>> window_positions;
-
     std::map<std::string, std::any> method_specific_data;
+};
+
+/**
+ * @struct StatisticalAnalysis
+ * @brief Analysis result structure for statistical analysis
+ */
+struct StatisticalAnalysis {
+    StatisticalMethod method_used { StatisticalMethod::MEAN };
+    u_int32_t window_size {};
+    u_int32_t hop_size {};
+
+    std::vector<ChannelStatistics> channel_statistics;
 };
 
 /**
@@ -117,7 +125,7 @@ struct StatisticalAnalysisResult {
  * auto pipeline_output = stat_analyzer->apply_operation(IO{numeric_data});
  * ```
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = Eigen::VectorXd>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
 class StatisticalAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -141,19 +149,19 @@ public:
      * @param data Input data
      * @return StatisticalAnalysisResult directly
      */
-    StatisticalAnalysisResult analyze_statistics(const InputType& data)
+    StatisticalAnalysis analyze_statistics(const InputType& data)
     {
         auto result = this->analyze_data(data);
-        return safe_any_cast_or_throw<StatisticalAnalysisResult>(result);
+        return safe_any_cast_or_throw<StatisticalAnalysis>(result);
     }
 
     /**
      * @brief Get last statistical analysis result (type-safe)
      * @return StatisticalAnalysisResult from last operation
      */
-    [[nodiscard]] StatisticalAnalysisResult get_statistical_analysis() const
+    [[nodiscard]] StatisticalAnalysis get_statistical_analysis() const
     {
-        return safe_any_cast_or_throw<StatisticalAnalysisResult>(this->get_current_analysis());
+        return safe_any_cast_or_throw<StatisticalAnalysis>(this->get_current_analysis());
     }
 
     /**
@@ -341,22 +349,29 @@ protected:
      */
     output_type analyze_implementation(const input_type& input) override
     {
+        if (input.data.empty()) {
+            throw std::runtime_error("Input is empty");
+        }
+
         auto input_data = const_cast<InputType&>(input.data);
         auto data_variant = OperationHelper::to_data_variant(input_data);
         auto [data_span, structure_info] = OperationHelper::extract_structured_double(data_variant);
 
-        if (data_span.size() < m_window_size) {
-            throw std::runtime_error("Input data size (" + std::to_string(data_span.size()) + ") is smaller than window size (" + std::to_string(m_window_size) + ")");
+        std::vector<std::span<const double>> channel_spans;
+        for (const auto& span : data_span)
+            channel_spans.emplace_back(span.data(), span.size());
+
+        std::vector<std::vector<double>> stat_values;
+        stat_values.reserve(channel_spans.size());
+        for (const auto& ch_span : channel_spans) {
+            stat_values.push_back(compute_statistical_values(ch_span, m_method));
         }
 
-        std::vector<double> stat_values = compute_statistical_values(data_span, m_method);
-
-        StatisticalAnalysisResult analysis_result = create_analysis_result(
-            stat_values, data_span, structure_info);
+        StatisticalAnalysis analysis_result = create_analysis_result(
+            stat_values, channel_spans, structure_info);
 
         this->store_current_analysis(analysis_result);
-
-        return create_pipeline_output(input, stat_values);
+        return create_pipeline_output(input, analysis_result);
     }
 
     /**
@@ -521,60 +536,75 @@ private:
     /**
      * @brief Create comprehensive analysis result
      */
-    StatisticalAnalysisResult create_analysis_result(const std::vector<double>& stat_values,
-        std::span<const double> original_data, const auto& /*structure_info*/) const
+    StatisticalAnalysis create_analysis_result(const std::vector<std::vector<double>>& stat_values,
+        std::vector<std::span<const double>> original_data, const auto& /*structure_info*/) const
     {
-        StatisticalAnalysisResult result;
-
-        result.statistical_values = stat_values;
+        StatisticalAnalysis result;
         result.method_used = m_method;
         result.window_size = m_window_size;
         result.hop_size = m_hop_size;
 
-        if (!stat_values.empty()) {
-            auto mean_result = compute_mean_statistic(std::span<const double>(stat_values), 1, 0, stat_values.size());
-            result.mean_stat = mean_result.empty() ? 0.0 : mean_result[0];
+        if (stat_values.empty()) {
+            return result;
+        }
 
-            result.max_stat = *std::ranges::max_element(stat_values);
-            result.min_stat = *std::ranges::min_element(stat_values);
+        result.channel_statistics.resize(stat_values.size());
 
-            auto variance_result = compute_variance_statistic(std::span<const double>(stat_values), 1, 0, stat_values.size(), m_sample_variance);
-            result.stat_variance = variance_result.empty() ? 0.0 : variance_result[0];
-            result.stat_std_dev = std::sqrt(result.stat_variance);
+        for (size_t ch = 0; ch < stat_values.size(); ++ch) {
+            auto& channel_result = result.channel_statistics[ch];
+            const auto& ch_stats = stat_values[ch];
 
-            auto skew_result = compute_skewness_statistic(std::span<const double>(stat_values), 1, 0, stat_values.size());
-            result.skewness = skew_result.empty() ? 0.0 : skew_result[0];
+            channel_result.statistical_values = ch_stats;
 
-            auto kurt_result = compute_kurtosis_statistic(std::span<const double>(stat_values), 1, 0, stat_values.size());
-            result.kurtosis = kurt_result.empty() ? 0.0 : kurt_result[0];
+            if (ch_stats.empty())
+                continue;
 
-            auto median_result = compute_median_statistic(std::span<const double>(stat_values), 1, 0, stat_values.size());
-            result.median = median_result.empty() ? 0.0 : median_result[0];
+            const auto [min_it, max_it] = std::ranges::minmax_element(ch_stats);
+            channel_result.min_stat = *min_it;
+            channel_result.max_stat = *max_it;
 
-            auto q25_result = compute_percentile_statistic(std::span<const double>(stat_values), 1, 0, stat_values.size(), 25.0);
-            auto q75_result = compute_percentile_statistic(std::span<const double>(stat_values), 1, 0, stat_values.size(), 75.0);
+            auto mean_result = compute_mean_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size());
+            channel_result.mean_stat = mean_result.empty() ? 0.0 : mean_result[0];
 
-            result.percentiles = {
-                q25_result.empty() ? 0.0 : q25_result[0],
-                result.median,
-                q75_result.empty() ? 0.0 : q75_result[0]
+            auto variance_result = compute_variance_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size(), m_sample_variance);
+            channel_result.stat_variance = variance_result.empty() ? 0.0 : variance_result[0];
+            channel_result.stat_std_dev = std::sqrt(channel_result.stat_variance);
+
+            auto skew_result = compute_skewness_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size());
+            channel_result.skewness = skew_result.empty() ? 0.0 : skew_result[0];
+
+            auto kurt_result = compute_kurtosis_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size());
+            channel_result.kurtosis = kurt_result.empty() ? 0.0 : kurt_result[0];
+
+            auto median_result = compute_median_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size());
+            channel_result.median = median_result.empty() ? 0.0 : median_result[0];
+
+            auto q25_result = compute_percentile_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size(), 25.0);
+            auto q75_result = compute_percentile_statistic(std::span<const double>(ch_stats), 1, 0, ch_stats.size(), 75.0);
+            channel_result.percentiles = {
+                q25_result.empty() ? 0.0 : q25_result[0], // Q1
+                channel_result.median, // Q2
+                q75_result.empty() ? 0.0 : q75_result[0] // Q3
             };
-        }
 
-        if (m_classification_enabled) {
-            result.stat_classifications.reserve(stat_values.size());
-            for (double value : stat_values) {
-                auto level = classify_statistical_level(value);
-                result.stat_classifications.push_back(level);
-                result.level_distribution[level]++;
+            const size_t data_size = (ch < original_data.size()) ? original_data[ch].size() : 0;
+            channel_result.window_positions.reserve(ch_stats.size());
+            for (size_t i = 0; i < ch_stats.size(); ++i) {
+                const size_t start = i * m_hop_size;
+                const size_t end = std::min(start + m_window_size, data_size);
+                channel_result.window_positions.emplace_back(start, end);
             }
-        }
 
-        result.window_positions.reserve(stat_values.size());
-        for (size_t i = 0; i < stat_values.size(); ++i) {
-            size_t start = i * m_hop_size;
-            size_t end = std::min(start + m_window_size, original_data.size());
-            result.window_positions.emplace_back(start, end);
+            if (m_classification_enabled) {
+                channel_result.stat_classifications.reserve(ch_stats.size());
+                channel_result.level_counts.fill(0);
+
+                for (double value : ch_stats) {
+                    const StatisticalLevel level = classify_statistical_level(value);
+                    channel_result.stat_classifications.push_back(level);
+                    channel_result.level_counts[static_cast<size_t>(level)]++;
+                }
+            }
         }
 
         return result;
@@ -583,38 +613,66 @@ private:
     /**
      * @brief Create pipeline output for operation chaining
      */
-    output_type create_pipeline_output(const input_type& input, const std::vector<double>& stat_values) const
+    output_type create_pipeline_output(const input_type& input, const StatisticalAnalysis& analysis_result) const
     {
-        output_type output;
-
-        output.dimensions = input.dimensions;
-        output.modality = input.modality;
-        output.metadata = input.metadata;
-
-        if constexpr (std::same_as<OutputType, Eigen::VectorXd>) {
-            Eigen::VectorXd eigen_result = Eigen::Map<const Eigen::VectorXd>(
-                stat_values.data(), stat_values.size());
-            output.data = eigen_result;
-        } else if constexpr (std::same_as<OutputType, std::vector<double>>) {
-            output.data = stat_values;
-        } else if constexpr (std::same_as<OutputType, Kakshya::DataVariant>) {
-            output.data = Kakshya::DataVariant(stat_values);
-        } else {
-            output.data = OutputType(stat_values.begin(), stat_values.end());
+        std::vector<std::vector<double>> channel_stats;
+        channel_stats.reserve(analysis_result.channel_statistics.size());
+        for (const auto& ch : analysis_result.channel_statistics) {
+            channel_stats.push_back(ch.statistical_values);
         }
 
-        output.set_metadata("analyzer_type", std::string("StatisticalAnalyzer"));
-        output.set_metadata("method", method_to_string(m_method));
-        output.set_metadata("window_size", m_window_size);
-        output.set_metadata("hop_size", m_hop_size);
-        output.set_metadata("num_values", stat_values.size());
+        OutputType result_data = OperationHelper::convert_result_to_output_type<OutputType>(channel_stats);
+
+        output_type output;
+        if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
+            auto [out_dims, out_modality] = Yantra::infer_from_data_variant(result_data);
+            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
+        } else {
+            auto [out_dims, out_modality] = Yantra::infer_structure(result_data);
+            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
+        }
+
+        output.metadata = input.metadata;
+
+        output.metadata["source_analyzer"] = "StatisticalAnalyzer";
+        output.metadata["statistical_method"] = method_to_string(analysis_result.method_used);
+        output.metadata["window_size"] = analysis_result.window_size;
+        output.metadata["hop_size"] = analysis_result.hop_size;
+        output.metadata["num_channels"] = analysis_result.channel_statistics.size();
+
+        if (!analysis_result.channel_statistics.empty()) {
+            std::vector<double> channel_means, channel_maxs, channel_mins, channel_variances, channel_stddevs, channel_skewness, channel_kurtosis, channel_medians;
+            std::vector<size_t> channel_window_counts;
+
+            for (const auto& ch : analysis_result.channel_statistics) {
+                channel_means.push_back(ch.mean_stat);
+                channel_maxs.push_back(ch.max_stat);
+                channel_mins.push_back(ch.min_stat);
+                channel_variances.push_back(ch.stat_variance);
+                channel_stddevs.push_back(ch.stat_std_dev);
+                channel_skewness.push_back(ch.skewness);
+                channel_kurtosis.push_back(ch.kurtosis);
+                channel_medians.push_back(ch.median);
+                channel_window_counts.push_back(ch.statistical_values.size());
+            }
+
+            output.metadata["mean_per_channel"] = channel_means;
+            output.metadata["max_per_channel"] = channel_maxs;
+            output.metadata["min_per_channel"] = channel_mins;
+            output.metadata["variance_per_channel"] = channel_variances;
+            output.metadata["stddev_per_channel"] = channel_stddevs;
+            output.metadata["skewness_per_channel"] = channel_skewness;
+            output.metadata["kurtosis_per_channel"] = channel_kurtosis;
+            output.metadata["median_per_channel"] = channel_medians;
+            output.metadata["window_count_per_channel"] = channel_window_counts;
+        }
 
         return output;
     }
 };
 
 /// Standard statistical analyzer: DataVariant -> VectorXd
-using StandardStatisticalAnalyzer = StatisticalAnalyzer<Kakshya::DataVariant, Eigen::VectorXd>;
+using StandardStatisticalAnalyzer = StatisticalAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>;
 
 /// Container statistical analyzer: SignalContainer -> VectorXd
 using ContainerStatisticalAnalyzer = StatisticalAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::VectorXd>;
@@ -623,11 +681,11 @@ using ContainerStatisticalAnalyzer = StatisticalAnalyzer<std::shared_ptr<Kakshya
 using RegionStatisticalAnalyzer = StatisticalAnalyzer<Kakshya::Region, Eigen::VectorXd>;
 
 /// Raw statistical analyzer: produces double vectors
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using RawStatisticalAnalyzer = StatisticalAnalyzer<InputType, std::vector<double>>;
 
 /// Variant statistical analyzer: produces DataVariant output
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VariantStatisticalAnalyzer = StatisticalAnalyzer<InputType, Kakshya::DataVariant>;
 
 } // namespace MayaFlux::Yantra

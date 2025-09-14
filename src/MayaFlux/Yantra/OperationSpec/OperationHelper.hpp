@@ -203,9 +203,24 @@ public:
      * @return Tuple of (double_vector, structure_info)
      */
     template <typename T>
-        requires MultiVariant<T> || RegionLike<T>
+        requires MultiVariant<T>
     static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
-    extract_structured_double(T compute_data, const std::shared_ptr<Kakshya::SignalSourceContainer>& container)
+    extract_structured_double(T& compute_data)
+    {
+        DataStructureInfo info {};
+        info.original_type = std::type_index(typeid(compute_data));
+        std::vector<std::span<double>> double_data = extract_numeric_data(compute_data);
+        auto [dimensions, modality] = infer_structure(compute_data);
+        info.dimensions = dimensions;
+        info.modality = modality;
+
+        return std::make_tuple(double_data, info);
+    }
+
+    template <typename T>
+        requires RegionLike<T>
+    static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
+    extract_structured_double(T& compute_data, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
     {
         DataStructureInfo info {};
         info.original_type = std::type_index(typeid(compute_data));
@@ -353,6 +368,22 @@ private:
         }
         return spans;
     }
+
+    /**
+     * @brief Extract data from Eigen vector to double span
+     */
+    /* template <typename EigenVector>
+    static std::span<double> extract_from_eigen_vector(const EigenVector& vec)
+    {
+        thread_local std::vector<double> buffer;
+        buffer.clear();
+        buffer.resize(vec.size());
+
+        for (int i = 0; i < vec.size(); ++i) {
+            buffer[i] = static_cast<double>(vec(i));
+        }
+        return { buffer.data(), buffer.size() };
+    } */
 
     /**
      * @brief Convert Eigen matrix to DataVariant format

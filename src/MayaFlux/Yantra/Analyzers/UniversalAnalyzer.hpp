@@ -366,8 +366,8 @@ private:
 };
 
 /// Analyzer that takes DataVariant and produces DataVariant
-template <ComputeData OutputType = Kakshya::DataVariant>
-using DataAnalyzer = UniversalAnalyzer<Kakshya::DataVariant, OutputType>;
+template <ComputeData OutputType = std::vector<Kakshya::DataVariant>>
+using DataAnalyzer = UniversalAnalyzer<std::vector<Kakshya::DataVariant>, OutputType>;
 
 /// Analyzer for signal container processing
 template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
@@ -386,11 +386,11 @@ template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
 using SegmentAnalyzer = UniversalAnalyzer<std::vector<Kakshya::RegionSegment>, OutputType>;
 
 /// Analyzer that produces Eigen matrices
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using MatrixAnalyzer = UniversalAnalyzer<InputType, Eigen::MatrixXd>;
 
 /// Analyzer that produces Eigen vectors
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VectorAnalyzer = UniversalAnalyzer<InputType, Eigen::VectorXd>;
 
 } // namespace MayaFlux::Yantra

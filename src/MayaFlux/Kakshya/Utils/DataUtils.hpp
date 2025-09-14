@@ -182,14 +182,18 @@ std::span<T> convert_variant(DataVariant& variant,
 
 template <ProcessableData T>
 std::vector<std::span<T>> convert_variants(
-    std::vector<DataVariant> variants,
+    // std::vector<DataVariant>& variants,
+    const std::vector<DataVariant>& variants,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    return variants
-        | std::views::transform([strategy](auto& variant) {
-              return convert_variant<double>(const_cast<DataVariant&>(variant, strategy));
-          })
-        | std::ranges::to<std::vector>();
+    std::vector<std::span<T>> result;
+    result.reserve(variants.size());
+    // for (auto& variant : variants) {
+    //     result.push_back(convert_variant<T>(variant, strategy));
+    for (size_t i = 0; i < variants.size(); ++i) {
+        result.push_back(convert_variant<T>(const_cast<DataVariant&>(variants[i]), strategy));
+    }
+    return result;
 }
 
 /**
