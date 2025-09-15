@@ -4,6 +4,8 @@
 #include "MayaFlux/EnumUtils.hpp"
 #include "UniversalExtractor.hpp"
 
+#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
+
 /**
  * @file FeatureExtractor.hpp
  * @brief Concrete feature extractor using analyzer-guided extraction
@@ -55,7 +57,7 @@ enum class ExtractionMethod : u_int8_t {
  * or spectral characteristics, then extracts the actual data from those regions.
  * All extraction logic is delegated to ExtractionHelper functions.
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = std::vector<double>>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = std::vector<double>>
 class FeatureExtractor : public UniversalExtractor<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -183,9 +185,15 @@ public:
     bool validate_extraction_input(const input_type& input) const override
     {
         try {
-            auto numeric_data = extract_numeric_data(input.data);
-            return validate_extraction_parameters(m_window_size, m_hop_size, numeric_data.size());
-        } catch (const std::exception&) {
+            auto numeric_data = OperationHelper::extract_numeric_data(input.data);
+            if (numeric_data.empty())
+                return false;
+            for (const auto& span : numeric_data) {
+                return validate_extraction_parameters(m_window_size, m_hop_size, span.size());
+            }
+            return true;
+        } catch (const std::exception& e) {
+            std::cerr << e.what() << "\n";
             return false;
         }
     }
@@ -208,10 +216,14 @@ protected:
     output_type extract_implementation(const input_type& input) override
     {
         try {
-            auto numeric_data = extract_numeric_data(input.data);
-            std::span<const double> data_span(numeric_data);
+            auto numeric_data = OperationHelper::extract_numeric_data(input.data);
+            std::vector<std::span<const double>> data_span;
+            data_span.reserve(numeric_data.size());
+            for (auto& span : numeric_data) {
+                data_span.emplace_back(span.data(), span.size());
+            }
 
-            std::vector<double> extracted_data;
+            std::vector<std::vector<double>> extracted_data;
 
             switch (m_method) {
             case ExtractionMethod::HIGH_ENERGY_DATA: {
@@ -243,10 +255,7 @@ protected:
             }
             case ExtractionMethod::OVERLAPPING_WINDOWS: {
                 double overlap = this->template get_parameter_or_default<double>("overlap", 0.5);
-                auto windowed_data = extract_overlapping_windows(data_span, m_window_size, overlap);
-                for (const auto& window : windowed_data) {
-                    extracted_data.insert(extracted_data.end(), window.begin(), window.end());
-                }
+                extracted_data = extract_overlapping_windows(data_span, m_window_size, overlap);
                 break;
             }
             case ExtractionMethod::ZERO_CROSSING_DATA: {
@@ -366,35 +375,25 @@ private:
      * @param extracted_data Extracted data as vector<double>
      * @return Data converted to OutputType
      */
-    OutputType convert_extracted_data_to_output_type(const std::vector<double>& extracted_data) const
+    OutputType convert_extracted_data_to_output_type(const std::vector<std::vector<double>>& extracted_data) const
     {
-        if constexpr (std::is_same_v<OutputType, std::vector<double>>) {
-            return extracted_data;
-        } else if constexpr (std::is_same_v<OutputType, Eigen::VectorXd>) {
-            return extract_direct_conversion<std::vector<double>, Eigen::VectorXd>(extracted_data);
-        } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
-            return extract_direct_conversion<std::vector<double>, Eigen::MatrixXd>(extracted_data);
-        } else if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
-            return Kakshya::DataVariant { extracted_data };
-        } else {
-            return OperationHelper::convert_result_to_output_type<OutputType>(extracted_data);
-        }
+        return OperationHelper::convert_result_to_output_type<OutputType>(extracted_data);
     }
 };
 
-/// Standard feature extractor: DataVariant -> vector<double>
-using StandardFeatureExtractor = FeatureExtractor<Kakshya::DataVariant, std::vector<double>>;
+/// Standard feature extractor: vector of [DataVariant -> vector<double>]
+using StandardFeatureExtractor = FeatureExtractor<std::vector<Kakshya::DataVariant>, std::vector<std::vector<double>>>;
 
-/// Eigen vector feature extractor: DataVariant -> VectorXd
-using VectorFeatureExtractor = FeatureExtractor<Kakshya::DataVariant, Eigen::VectorXd>;
+/// Eigen Matrix feature extractor: DataVariant -> Matrixxd
+using MatrixFeatureExtractor = FeatureExtractor<std::vector<Kakshya::DataVariant>, Eigen::MatrixXd>;
 
-/// Container feature extractor: SignalContainer -> vector<double>
-using ContainerFeatureExtractor = FeatureExtractor<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<double>>;
+/// Container feature extractor: SignalContainer -> multi vector<double>
+using ContainerFeatureExtractor = FeatureExtractor<std::shared_ptr<Kakshya::SignalSourceContainer>, std::vector<std::vector<double>>>;
 
-/// Region feature extractor: Region -> vector<double>
-using RegionFeatureExtractor = FeatureExtractor<Kakshya::Region, std::vector<double>>;
+/// Region feature extractor: Region -> multi vector<double>
+using RegionFeatureExtractor = FeatureExtractor<Kakshya::Region, std::vector<std::vector<double>>>;
 
 /// Variant feature extractor: DataVariant -> DataVariant
-using VariantFeatureExtractor = FeatureExtractor<Kakshya::DataVariant, Kakshya::DataVariant>;
+using VariantFeatureExtractor = FeatureExtractor<std::vector<Kakshya::DataVariant>, std::vector<Kakshya::DataVariant>>;
 
 } // namespace MayaFlux::Yantra

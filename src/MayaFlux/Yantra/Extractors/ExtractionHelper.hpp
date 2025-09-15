@@ -1,9 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Utils.hpp"
-#include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
-#include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
-#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
+#include "MayaFlux/Kakshya/Region.hpp"
 
 /**
  * @file ExtractionHelper.hpp
@@ -20,57 +17,6 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @brief Extract numeric vector from any ComputeData type
- * @tparam InputType Source ComputeData type
- * @param input_data Input data
- * @param strategy Complex conversion strategy (default: MAGNITUDE)
- * @return Extracted numeric vector
- */
-template <ComputeData InputType>
-std::vector<double> extract_numeric_data(const InputType& input_data,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
-{
-    OperationHelper::set_complex_conversion_strategy(strategy);
-    return OperationHelper::extract_as_double(input_data);
-}
-
-/**
- * @brief Extract Eigen vector from ComputeData
- * @tparam InputType Source ComputeData type
- * @param input_data Input data
- * @param strategy Complex conversion strategy (default: MAGNITUDE)
- * @return Extracted Eigen vector
- */
-template <ComputeData InputType>
-Eigen::VectorXd extract_vector_data(const InputType& input_data,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
-{
-    auto double_data = extract_numeric_data(input_data, strategy);
-    return OperationHelper::convert_result_to_output_type<Eigen::VectorXd>(double_data);
-}
-
-/**
- * @brief Direct conversion between ComputeData types
- * @tparam InputType Source ComputeData type
- * @tparam OutputType Target ComputeData type
- * @param input_data Input data
- * @return Converted data
- */
-template <ComputeData InputType, ComputeData OutputType>
-OutputType extract_direct_conversion(const InputType& input_data)
-{
-    if constexpr (std::is_same_v<OutputType, std::vector<double>>) {
-        return extract_numeric_data(input_data);
-    } else if constexpr (std::is_same_v<OutputType, Eigen::VectorXd>) {
-        return extract_vector_data(input_data);
-    } else {
-        auto [double_data, structure_info] = OperationHelper::extract_with_structure(input_data);
-        std::vector<double> data_vec(double_data.begin(), double_data.end());
-        return OperationHelper::reconstruct_from_double<OutputType>(data_vec, structure_info);
-    }
-}
-
-/**
  * @brief Extract data from high-energy regions using EnergyAnalyzer
  * @param data Input data span
  * @param energy_threshold Minimum energy threshold for region selection
@@ -78,8 +24,8 @@ OutputType extract_direct_conversion(const InputType& input_data)
  * @param hop_size Hop size between windows
  * @return Vector containing actual data from high-energy regions
  */
-std::vector<double> extract_high_energy_data(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_high_energy_data(
+    const std::vector<std::span<const double>>& data,
     double energy_threshold = 0.1,
     u_int32_t window_size = 512,
     u_int32_t hop_size = 256);
@@ -92,8 +38,8 @@ std::vector<double> extract_high_energy_data(
  * @param region_size Size of region around each peak to extract
  * @return Vector containing actual data from peak regions
  */
-std::vector<double> extract_peak_data(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_peak_data(
+    const std::vector<std::span<const double>>& data,
     double threshold = 0.1,
     double min_distance = 10.0,
     u_int32_t region_size = 256);
@@ -106,8 +52,8 @@ std::vector<double> extract_peak_data(
  * @param hop_size Hop size between windows
  * @return Vector containing actual data from outlier regions
  */
-std::vector<double> extract_outlier_data(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_outlier_data(
+    const std::vector<std::span<const double>>& data,
     double std_dev_threshold = 2.0,
     u_int32_t window_size = 512,
     u_int32_t hop_size = 256);
@@ -120,8 +66,8 @@ std::vector<double> extract_outlier_data(
  * @param hop_size Hop size between windows
  * @return Vector containing actual data from high spectral energy regions
  */
-std::vector<double> extract_high_spectral_data(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_high_spectral_data(
+    const std::vector<std::span<const double>>& data,
     double spectral_threshold = 0.1,
     u_int32_t window_size = 512,
     u_int32_t hop_size = 256);
@@ -134,8 +80,8 @@ std::vector<double> extract_high_spectral_data(
  * @param hop_size Hop size between windows
  * @return Vector containing actual data from above-mean regions
  */
-std::vector<double> extract_above_mean_data(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_above_mean_data(
+    const std::vector<std::span<const double>>& data,
     double mean_multiplier = 1.5,
     u_int32_t window_size = 512,
     u_int32_t hop_size = 256);
@@ -148,7 +94,7 @@ std::vector<double> extract_above_mean_data(
  * @return Vector of data segments (each segment contains actual data values)
  */
 std::vector<std::vector<double>> extract_overlapping_windows(
-    std::span<const double> data,
+    const std::vector<std::span<const double>>& data,
     u_int32_t window_size = 512,
     double overlap = 0.5);
 
@@ -160,7 +106,7 @@ std::vector<std::vector<double>> extract_overlapping_windows(
  * @return Vector of data segments from specified windows
  */
 std::vector<std::vector<double>> extract_windowed_data_by_indices(
-    std::span<const double> data,
+    const std::vector<std::span<const double>>& data,
     const std::vector<size_t>& window_indices,
     u_int32_t window_size = 512);
 
@@ -170,8 +116,8 @@ std::vector<std::vector<double>> extract_windowed_data_by_indices(
  * @param regions Vector of regions to extract data from
  * @return Vector containing concatenated data from all regions
  */
-std::vector<double> extract_data_from_regions(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_data_from_regions(
+    const std::vector<std::span<const double>>& data,
     const std::vector<Kakshya::Region>& regions);
 
 /**
@@ -180,8 +126,8 @@ std::vector<double> extract_data_from_regions(
  * @param region_group RegionGroup containing regions to extract
  * @return Vector containing concatenated data from all regions in group
  */
-std::vector<double> extract_data_from_region_group(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_data_from_region_group(
+    const std::vector<std::span<const double>>& data,
     const Kakshya::RegionGroup& region_group);
 
 /**
@@ -207,8 +153,8 @@ bool validate_extraction_parameters(u_int32_t window_size, u_int32_t hop_size, s
  * @param region_size Size of region around each crossing to extract
  * @return Vector containing actual data from zero crossing regions
  */
-std::vector<double> extract_zero_crossing_data(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_zero_crossing_data(
+    const std::vector<std::span<const double>>& data,
     double threshold = 0.0,
     double min_distance = 1.0,
     u_int32_t region_size = 1);
@@ -222,8 +168,8 @@ std::vector<double> extract_zero_crossing_data(
  * @param hop_size Hop size between windows
  * @return Vector containing actual data from silent regions
  */
-std::vector<double> extract_silence_data(
-    std::span<const double> data,
+std::vector<std::vector<double>> extract_silence_data(
+    const std::vector<std::span<const double>>& data,
     double silence_threshold = 0.01,
     u_int32_t min_duration = 1024,
     u_int32_t window_size = 512,

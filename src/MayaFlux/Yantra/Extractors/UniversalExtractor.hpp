@@ -80,7 +80,7 @@ enum class ExtractionScope : u_int8_t {
  * - Parameter management with type safety
  * - Integration with ComputeMatrix execution modes
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class UniversalExtractor : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -328,7 +328,7 @@ private:
 
 /// Extractor that takes DataVariant and produces any ComputeData type
 template <ComputeData OutputType = Kakshya::DataVariant>
-using DataExtractor = UniversalExtractor<Kakshya::DataVariant, OutputType>;
+using DataExtractor = UniversalExtractor<std::vector<Kakshya::DataVariant>, OutputType>;
 
 /// Extractor for signal container processing
 template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
@@ -347,15 +347,15 @@ template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
 using SegmentExtractor = UniversalExtractor<std::vector<Kakshya::RegionSegment>, OutputType>;
 
 /// Extractor that produces Eigen matrices
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using MatrixExtractor = UniversalExtractor<InputType, Eigen::MatrixXd>;
 
 /// Extractor that produces Eigen vectors
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VectorExtractor = UniversalExtractor<InputType, Eigen::VectorXd>;
 
 /// Extractor that produces numeric vectors
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using NumericExtractor = UniversalExtractor<InputType, std::vector<double>>;
 
 } // namespace MayaFlux::Yantra
