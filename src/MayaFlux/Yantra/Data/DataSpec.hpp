@@ -6,6 +6,14 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 namespace MayaFlux::Yantra {
+
+template <typename T>
+concept VariantVector = requires {
+    typename T::value_type;
+    requires std::same_as<T, std::vector<typename T::value_type>>;
+    requires std::constructible_from<Kakshya::DataVariant, typename T::value_type>;
+};
+
 // clang-format off
 
 /**
@@ -33,6 +41,7 @@ concept ComputeData =
     std::same_as<T, Kakshya::RegionGroup> ||
     std::same_as<T, std::vector<Kakshya::RegionSegment>> ||
     std::is_base_of_v<Eigen::MatrixBase<T>, T> ||
+    VariantVector<T> ||
     std::constructible_from<Kakshya::DataVariant, T>;
 // clang-format on
 
