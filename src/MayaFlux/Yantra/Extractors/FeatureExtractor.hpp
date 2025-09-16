@@ -185,6 +185,10 @@ public:
     bool validate_extraction_input(const input_type& input) const override
     {
         try {
+            if constexpr (RequiresContainer<input_type>) {
+                if (!input.has_container())
+                    return false;
+            }
             auto numeric_data = OperationHelper::extract_numeric_data(input.data);
             if (numeric_data.empty())
                 return false;

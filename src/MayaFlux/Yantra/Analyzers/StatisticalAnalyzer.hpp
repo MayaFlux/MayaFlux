@@ -352,26 +352,32 @@ protected:
         if (input.data.empty()) {
             throw std::runtime_error("Input is empty");
         }
+        try {
+            auto [data_span, structure_info] = OperationHelper::extract_structured_double(
+                const_cast<input_type&>(input));
 
-        auto input_data = const_cast<InputType&>(input.data);
-        auto data_variant = OperationHelper::to_data_variant(input_data);
-        auto [data_span, structure_info] = OperationHelper::extract_structured_double(data_variant);
+            std::vector<std::span<const double>> channel_spans;
+            for (const auto& span : data_span)
+                channel_spans.emplace_back(span.data(), span.size());
 
-        std::vector<std::span<const double>> channel_spans;
-        for (const auto& span : data_span)
-            channel_spans.emplace_back(span.data(), span.size());
+            std::vector<std::vector<double>> stat_values;
+            stat_values.reserve(channel_spans.size());
+            for (const auto& ch_span : channel_spans) {
+                stat_values.push_back(compute_statistical_values(ch_span, m_method));
+            }
 
-        std::vector<std::vector<double>> stat_values;
-        stat_values.reserve(channel_spans.size());
-        for (const auto& ch_span : channel_spans) {
-            stat_values.push_back(compute_statistical_values(ch_span, m_method));
+            StatisticalAnalysis analysis_result = create_analysis_result(
+                stat_values, channel_spans, structure_info);
+
+            this->store_current_analysis(analysis_result);
+            return create_pipeline_output(input, analysis_result);
+        } catch (const std::exception& e) {
+            std::cerr << "Energy analysis failed: " << e.what() << '\n';
+            output_type error_result;
+            error_result.metadata = input.metadata;
+            error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
+            return error_result;
         }
-
-        StatisticalAnalysis analysis_result = create_analysis_result(
-            stat_values, channel_spans, structure_info);
-
-        this->store_current_analysis(analysis_result);
-        return create_pipeline_output(input, analysis_result);
     }
 
     /**

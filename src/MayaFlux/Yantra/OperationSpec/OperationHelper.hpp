@@ -198,6 +198,34 @@ public:
     }
 
     /**
+     * @brief Extract structured double data from IO container with automatic container handling
+     * @tparam T ComputeData type
+     * @param compute_data IO container with data and optional container
+     * @return Tuple of [spans, structure_info]
+     * @throws std::runtime_error if container required but not provided
+     */
+    template <typename T>
+    static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
+    extract_structured_double(IO<T>& compute_data)
+    {
+        DataStructureInfo info {};
+        info.original_type = std::type_index(typeid(T));
+        info.dimensions = compute_data.dimensions;
+        info.modality = compute_data.modality;
+
+        if constexpr (RequiresContainer<T>) {
+            if (!compute_data.has_container()) {
+                throw std::runtime_error("Container is required for region-like data extraction but not provided");
+            }
+            std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data, compute_data.container.value());
+            return std::make_tuple(double_data, info);
+        } else {
+            std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data);
+            return std::make_tuple(double_data, info);
+        }
+    }
+
+    /**
      * @brief Universal extraction to structured double data
      * @param data_variant DataVariant to process
      * @return Tuple of (double_vector, structure_info)
@@ -313,6 +341,33 @@ public:
         }
 
         return std::make_tuple(working_span, structure_info);
+    }
+
+    /**
+     * @brief Setup operation buffer from IO container
+     * @tparam T ComputeData type
+     * @param input IO container with data
+     * @param working_buffer Buffer to setup (will be resized)
+     * @return Tuple of [working_spans, structure_info]
+     */
+    template <typename T>
+    static auto setup_operation_buffer(IO<T>& input, std::vector<std::vector<double>>& working_buffer)
+    {
+        auto [data_spans, structure_info] = extract_structured_double(input);
+
+        if (working_buffer.size() != data_spans.size()) {
+            working_buffer.resize(data_spans.size());
+        }
+
+        std::vector<std::span<double>> working_spans(working_buffer.size());
+
+        for (size_t i = 0; i < data_spans.size(); i++) {
+            working_buffer[i].resize(data_spans[i].size());
+            std::ranges::copy(data_spans[i], working_buffer[i].begin());
+            working_spans[i] = std::span<double>(working_buffer[i].data(), working_buffer[i].size());
+        }
+
+        return std::make_tuple(working_spans, structure_info);
     }
 
 private:

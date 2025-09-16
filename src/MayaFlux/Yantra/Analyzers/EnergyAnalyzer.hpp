@@ -298,37 +298,39 @@ protected:
      */
     output_type analyze_implementation(const input_type& input) override
     {
-        auto input_data = const_cast<InputType&>(input.data);
-        auto data_variant = OperationHelper::to_data_variant(input_data);
-        auto [data_span, structure_info] = OperationHelper::extract_structured_double(data_variant);
+        try {
+            auto [data_span, structure_info] = OperationHelper::extract_structured_double(
+                const_cast<input_type&>(input));
 
-        std::vector<std::span<const double>> channel_spans;
-        for (auto& span : data_span)
-            channel_spans.emplace_back(span.data(), span.size());
-        /* if constexpr (std::is_same_v<std::decay_t<decltype(data_span)>, std::span<const double>>) {
-            channel_spans.push_back(data_span);
-        } else {
-            channel_spans = data_span;
-        } */
+            std::vector<std::span<const double>> channel_spans;
+            for (auto& span : data_span)
+                channel_spans.emplace_back(span.data(), span.size());
 
-        for (const auto& channel_span : channel_spans) {
-            if (channel_span.size() < m_window_size) {
-                throw std::runtime_error("One or more channels in input data are smaller than window size (" + std::to_string(m_window_size) + ")");
+            for (const auto& channel_span : channel_spans) {
+                if (channel_span.size() < m_window_size) {
+                    throw std::runtime_error("One or more channels in input data are smaller than window size (" + std::to_string(m_window_size) + ")");
+                }
             }
+
+            std::vector<std::vector<double>> energy_values;
+            energy_values.reserve(channel_spans.size());
+            for (const auto& channel_span : channel_spans) {
+                energy_values.push_back(compute_energy_values(channel_span, m_method));
+            }
+
+            EnergyAnalysis analysis_result = create_analysis_result(
+                energy_values, channel_spans, structure_info);
+
+            this->store_current_analysis(analysis_result);
+
+            return create_pipeline_output(input, analysis_result);
+        } catch (const std::exception& e) {
+            std::cerr << "Energy analysis failed: " << e.what() << '\n';
+            output_type error_result;
+            error_result.metadata = input.metadata;
+            error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
+            return error_result;
         }
-
-        std::vector<std::vector<double>> energy_values;
-        energy_values.reserve(channel_spans.size());
-        for (const auto& channel_span : channel_spans) {
-            energy_values.push_back(compute_energy_values(channel_span, m_method));
-        }
-
-        EnergyAnalysis analysis_result = create_analysis_result(
-            energy_values, channel_spans, structure_info);
-
-        this->store_current_analysis(analysis_result);
-
-        return create_pipeline_output(input, analysis_result);
     }
 
     /**

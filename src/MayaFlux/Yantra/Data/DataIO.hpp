@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "StructureIntrospection.hpp"
 
 namespace MayaFlux::Yantra {
@@ -19,12 +20,14 @@ namespace MayaFlux::Yantra {
  * - Flexible metadata storage for operation-specific information
  * - Move semantics for efficiency with large data
  */
-template <ComputeData T = Kakshya::DataVariant>
+template <ComputeData T = std::vector<Kakshya::DataVariant>>
 struct IO {
     T data; ///< The actual computation data
     std::vector<Kakshya::DataDimension> dimensions; ///< Data dimensional structure
     Kakshya::DataModality modality {}; ///< Data modality (audio, image, spectral, etc.)
     std::unordered_map<std::string, std::any> metadata; ///< Associated metadata
+
+    std::optional<std::shared_ptr<Kakshya::SignalSourceContainer>> container; ///< Optional reference to container, required for regions
 
     IO() = default; ///< Default constructor
 
@@ -38,6 +41,23 @@ struct IO {
      */
     IO(const T& d)
         : data(d)
+    {
+        auto [dims, mod] = infer_structure(d);
+        dimensions = std::move(dims);
+        modality = mod;
+    }
+
+    /**
+     * @brief Construct from data by copy with container reference and automatic structure inference
+     * @param d Data to copy into the container
+     * @param cont Shared pointer to the associated RegionLike Data
+     *
+     * This constructor is useful when the data is part of a larger container
+     * and we want to maintain a reference to that container for context.
+     */
+    IO(const T& d, const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
+        : data(d)
+        , container(cont)
     {
         auto [dims, mod] = infer_structure(d);
         dimensions = std::move(dims);
@@ -62,19 +82,20 @@ struct IO {
     }
 
     /**
-     * @brief Construct with explicit structure information
-     * @param d Data to store
-     * @param dims Explicit dimensional structure
-     * @param mod Explicit data modality
+     * @brief Construct from data by move with automatic structure inference
+     * @param d Data to move into the container
+     * @param cont Shared pointer to the associated RegionLike Data
      *
-     * Use this constructor when you want to override the automatic inference
-     * or when you have more accurate structure information than can be inferred.
+     * Automatically infers dimensions and modality before moving the data.
+     * More efficient for large data structures.
      */
-    IO(const T& d, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
-        : data(d)
-        , dimensions(std::move(dims))
-        , modality(mod)
+    IO(T&& d, const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
+        : data(std::move(d))
+        , container(cont)
     {
+        auto [dims, mod] = infer_structure(data);
+        dimensions = std::move(dims);
+        modality = mod;
     }
 
     /**
@@ -85,6 +106,21 @@ struct IO {
      */
     IO(T&& d, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
         : data(std::move(d))
+        , dimensions(std::move(dims))
+        , modality(mod)
+    {
+    }
+
+    /**
+     * @brief Construct with move and explicit structure information
+     * @param d Data to move
+     * @param container Shared pointer to the associated RegionLike Data
+     * @param dims Explicit dimensional structure
+     * @param mod Explicit data modality
+     */
+    IO(T&& d, const std::shared_ptr<Kakshya::SignalSourceContainer> container, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
+        : data(std::move(d))
+        , container(container)
         , dimensions(std::move(dims))
         , modality(mod)
     {
@@ -103,10 +139,22 @@ struct IO {
     T& operator*() { return data; }
 
     /**
-     * @brief Get data dimensionality (number of dimensions)
-     * @return Number of dimensions in the data structure
+     * @brief Set or update the associated container reference
+     * @param cont Shared pointer to the new container
      */
-    [[nodiscard]] size_t get_dimensionality() const { return dimensions.size(); }
+    void set_container(const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
+    {
+        container = cont;
+    }
+
+    /**
+     * @brief Check if a container reference is associated
+     * @return True if a container is set
+     */
+    [[nodiscard]] bool has_container() const
+    {
+        return container.has_value();
+    }
 
     /**
      * @brief Check if data has specific modality
@@ -138,12 +186,7 @@ struct IO {
      */
     [[nodiscard]] int find_dimension_by_role(Kakshya::DataDimension::Role role) const
     {
-        for (size_t i = 0; i < dimensions.size(); ++i) {
-            if (dimensions[i].role == role) {
-                return static_cast<int>(i);
-            }
-        }
-        return -1;
+        return Kakshya::find_dimension_by_role(dimensions, role);
     }
 
     /**
@@ -155,6 +198,11 @@ struct IO {
     [[nodiscard]] bool is_suitable_for_processing(Kakshya::DataModality required_modality,
         size_t min_dimensions = 1) const
     {
+        if constexpr (RequiresContainer<T>) {
+            if (!container.has_value()) {
+                return false;
+            }
+        }
         return (modality == required_modality || required_modality == Kakshya::DataModality::UNKNOWN) && dimensions.size() >= min_dimensions;
     }
 
@@ -214,7 +262,7 @@ struct IO {
  * dependencies on other operation units. Forms the building blocks of
  * computation pipelines with automatic dependency resolution.
  */
-template <ComputeData T = Kakshya::DataVariant>
+template <ComputeData T = std::vector<Kakshya::DataVariant>>
 class OpUnit {
 public:
     virtual ~OpUnit() = default;
@@ -253,7 +301,7 @@ protected:
     std::vector<std::shared_ptr<OpUnit<T>>> dependencies; ///< Operation dependencies
 };
 
-using DataIO = IO<Kakshya::DataVariant>; ///< IO for universal data variant
+using DataIO = IO<std::vector<Kakshya::DataVariant>>; ///< IO for universal data variant
 using ContainerIO = IO<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
 using RegionIO = IO<Kakshya::Region>; ///< IO for single regions
 using RegionGroupIO = IO<Kakshya::RegionGroup>; ///< IO for region groups
