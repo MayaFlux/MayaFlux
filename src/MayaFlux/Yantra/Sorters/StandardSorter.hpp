@@ -72,7 +72,6 @@ protected:
      */
     output_type sort_implementation(const input_type& input) override
     {
-        // Use strategy pattern for different sorting approaches
         switch (this->get_strategy()) {
         case SortingStrategy::IN_PLACE:
             return sort_in_place(input);
@@ -146,13 +145,27 @@ private:
      */
     output_type sort_copy(const input_type& input)
     {
-        if constexpr (std::same_as<InputType, OutputType>) {
-            auto result = input;
-            result.data = sort_data_copy(input.data);
+        try {
+            std::vector<std::vector<double>> working_buffer;
+            auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
+                const_cast<input_type&>(input), working_buffer);
+
+            sort_channels_inplace(working_spans, this->get_direction(), m_algorithm);
+
+            output_type result;
+            result.data = OperationHelper::reconstruct_from_double<OutputType>(working_buffer, structure_info);
+            result.metadata = input.metadata;
+            result.container = input.container;
+            result.metadata["sort_type"] = "copy";
+
             return result;
-        } else {
-            // Handle type conversion case
-            return convert_and_sort(input);
+
+        } catch (const std::exception& e) {
+            output_type error_result;
+            error_result.metadata = input.metadata;
+            error_result.container = input.container;
+            error_result.metadata["error"] = std::string("Sorting failed: ") + e.what();
+            return error_result;
         }
     }
 
@@ -163,10 +176,9 @@ private:
     {
         if constexpr (std::same_as<InputType, OutputType>) {
             auto result = input;
-            sort_data_in_place(result.data);
+            sort_data_in_place(result);
             return result;
         } else {
-            // For type conversion, fall back to copy sort
             return sort_copy(input);
         }
     }
@@ -178,7 +190,7 @@ private:
     {
         if constexpr (std::same_as<OutputType, std::vector<size_t>>) {
             auto result = output_type {};
-            result.data = generate_compute_data_indices(input.data, this->get_direction());
+            result.data = generate_compute_data_indices(input, this->get_direction());
             result.metadata = input.metadata;
             result.metadata["sort_type"] = "indices_only";
             return result;
@@ -195,31 +207,10 @@ private:
     {
         auto result = input;
         if constexpr (std::same_as<InputType, OutputType>) {
-            result.data = sort_data_partial(input.data);
+            result.data = sort_data_partial(input);
             return result;
         } else {
             return convert_and_sort(input);
-        }
-    }
-
-    /**
-     * @brief Chunked sorting for large datasets
-     */
-    output_type sort_chunked(const input_type& input)
-    {
-        if constexpr (std::same_as<OutputType, std::vector<InputType>>) {
-            // Return chunks as separate items
-            auto chunks = sort_data_chunked(input.data);
-            output_type result {};
-            result.data = chunks;
-            result.metadata = input.metadata;
-            result.metadata["sort_type"] = "chunked";
-            result.metadata["chunk_count"] = chunks.size();
-            return result;
-        } else {
-            // Merge chunks back into single result
-            auto chunks = sort_data_chunked(input.data);
-            return merge_chunks_to_result(chunks, input);
         }
     }
 
@@ -241,7 +232,7 @@ private:
     /**
      * @brief Sort data with copy semantics
      */
-    InputType sort_data_copy(const InputType& data)
+    InputType sort_data_copy(const input_type& data)
     {
         return sort_compute_data_extract(data, this->get_direction(), m_algorithm);
     }
@@ -249,7 +240,7 @@ private:
     /**
      * @brief Sort data in-place
      */
-    void sort_data_in_place(InputType& data)
+    void sort_data_in_place(input_type& data)
     {
         sort_compute_data_inplace(data, this->get_direction(), m_algorithm);
     }
@@ -257,7 +248,7 @@ private:
     /**
      * @brief Partial sorting implementation
      */
-    InputType sort_data_partial(const InputType& data)
+    InputType sort_data_partial(const input_type& data)
     {
         auto old_algorithm = m_algorithm;
         m_algorithm = SortingAlgorithm::PARTIAL;
@@ -266,15 +257,39 @@ private:
         return result;
     }
 
+    std::vector<InputType> extract_chunked_data(std::vector<std::span<double>> channels, DataStructureInfo info)
+    {
+        std::vector<InputType> chunks;
+
+        for (size_t start = 0; start < channels[0].size(); start += m_chunk_size) {
+            std::vector<std::vector<double>> chunk_data;
+            chunk_data.resize(channels.size());
+
+            for (size_t ch = 0; ch < channels.size(); ++ch) {
+                size_t end = std::min(start + m_chunk_size, channels[ch].size());
+                auto chunk_span = channels[ch].subspan(start, end - start);
+
+                chunk_data[ch].assign(chunk_span.begin(), chunk_span.end());
+                sort_span_inplace(std::span<double>(chunk_data[ch]), this->get_direction(), m_algorithm);
+            }
+
+            chunks.push_back(OperationHelper::reconstruct_from_double<InputType>(chunk_data, info));
+        }
+
+        return chunks;
+    }
+
     /**
      * @brief Chunked sorting implementation
      */
-    std::vector<InputType> sort_data_chunked(const InputType& data)
+    output_type sort_chunked(const input_type& data)
     {
-        if constexpr (SortableContainerType<InputType>) {
-            return MayaFlux::Yantra::sort_chunked(data, m_chunk_size, this->get_direction(), m_algorithm);
-        } else {
-            // For non-container types, return single "chunk"
+        try {
+            auto [data_span, structure_info] = OperationHelper::extract_structured_double(
+                const_cast<input_type&>(data));
+            return merge_chunks_to_result(extract_chunked_data(data_span, structure_info), data, structure_info);
+
+        } catch (...) {
             return { sort_data_copy(data) };
         }
     }
@@ -282,31 +297,41 @@ private:
     /**
      * @brief Merge chunks back to single result
      */
-    output_type merge_chunks_to_result(const std::vector<InputType>& chunks, const input_type& original_input)
+    output_type merge_chunks_to_result(const std::vector<InputType>& chunks, const input_type& original_input, DataStructureInfo info)
     {
-        if constexpr (std::same_as<InputType, OutputType> && SortableContainerType<InputType>) {
-            // Merge sorted chunks
-            InputType merged;
-            for (const auto& chunk : chunks) {
-                merged.insert(merged.end(), chunk.begin(), chunk.end());
+        output_type result {};
+        result.metadata = original_input.metadata;
+        result.metadata["sort_type"] = "chunked_merged";
+
+        if constexpr (std::same_as<InputType, OutputType>) {
+            if (chunks.empty()) {
+                return result;
             }
 
-            output_type result {};
-            result.data = merged;
-            result.metadata = original_input.metadata;
-            result.metadata["sort_type"] = "chunked_merged";
-            return result;
-        } else {
-            // If can't merge, return first chunk or empty
-            output_type result {};
-            if (!chunks.empty()) {
-                if constexpr (std::same_as<InputType, OutputType>) {
-                    result.data = chunks[0];
+            try {
+                std::vector<std::vector<double>> merged_channels;
+
+                for (const auto& chunk : chunks) {
+                    auto chunk_channels = OperationHelper::extract_numeric_data(chunk);
+
+                    if (merged_channels.empty()) {
+                        merged_channels.resize(chunk_channels.size());
+                    }
+
+                    for (size_t ch = 0; ch < chunk_channels.size() && ch < merged_channels.size(); ++ch) {
+                        merged_channels[ch].insert(merged_channels[ch].end(),
+                            chunk_channels[ch].begin(), chunk_channels[ch].end());
+                    }
                 }
+
+                result.data = OperationHelper::reconstruct_from_double<InputType>(merged_channels, info);
+
+            } catch (...) {
+                result.data = chunks[0];
             }
-            result.metadata = original_input.metadata;
-            return result;
         }
+
+        return result;
     }
 
     /**
@@ -314,44 +339,37 @@ private:
      */
     output_type convert_and_sort(const input_type& input)
     {
-        // Use OperationHelper for type conversion if needed
-        // This is a simplified version - you'd integrate with your actual OperationHelper
         output_type result {};
-        result.metadata = input.metadata;
-        result.metadata["conversion_applied"] = true;
 
-        // TODO: Implement actual conversion logic using OperationHelper
-        // For now, just indicate conversion is needed
-        result.metadata["needs_conversion"] = true;
+        std::vector<std::vector<double>> working_buffer;
+        auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
+            const_cast<input_type&>(input), working_buffer);
 
+        sort_channels_inplace(working_spans, this->get_direction(), SortingAlgorithm::PARTIAL);
+        result.data = OperationHelper::convert_result_to_output_type<OutputType>(working_buffer);
         return result;
     }
 
     /**
      * @brief Validate input type for sorting
      */
-    bool validate_input_type(const InputType& data) const
+    bool validate_input_type(const input_type& data) const
     {
-        if constexpr (std::same_as<InputType, Kakshya::DataVariant>) {
-            return is_data_variant_sortable(data);
-        } else if constexpr (SortableContainerType<InputType>) {
-            return !data.empty();
-        } else if constexpr (EigenSortable<InputType>) {
-            return data.size() > 0;
-        } else {
-            return true; // Accept other types optimistically
+        if constexpr (RequiresContainer<InputType>) {
+            return data.has_container();
         }
+        return true;
     }
 };
 
 // ===== Convenience Specializations =====
 
 /// Standard sorter for DataVariant
-using StandardDataSorter = StandardSorter<Kakshya::DataVariant>;
+using StandardDataSorter = StandardSorter<std::vector<Kakshya::DataVariant>>;
 
 /// Standard sorter for numeric vectors (DataVariant contains these)
 template <typename T>
-using StandardVectorSorter = StandardSorter<std::vector<T>>;
+using StandardVectorSorter = StandardSorter<std::vector<std::vector<T>>>;
 
 /// Standard sorter for region groups (proper way to handle multiple regions)
 using StandardRegionGroupSorter = StandardSorter<Kakshya::RegionGroup>;
@@ -366,7 +384,7 @@ using StandardMatrixSorter = StandardSorter<Eigen::MatrixXd>;
 using StandardVectorSorterEigen = StandardSorter<Eigen::VectorXd>;
 
 /// Standard sorter that generates indices
-template <ComputeData InputType = Kakshya::DataVariant>
-using StandardIndexSorter = StandardSorter<InputType, std::vector<size_t>>;
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
+using StandardIndexSorter = StandardSorter<InputType, std::vector<std::vector<size_t>>>;
 
 } // namespace MayaFlux::Yantra

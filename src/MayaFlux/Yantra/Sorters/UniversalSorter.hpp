@@ -127,7 +127,7 @@ struct SortKey {
  * digital paradigm with analyzer delegation, cross-modal sorting, and computational
  * approaches that go beyond analog metaphors.
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class UniversalSorter : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -444,8 +444,8 @@ private:
 };
 
 /// Sorter that takes DataVariant and produces DataVariant
-template <ComputeData OutputType = Kakshya::DataVariant>
-using DataSorter = UniversalSorter<Kakshya::DataVariant, OutputType>;
+template <ComputeData OutputType = std::vector<Kakshya::DataVariant>>
+using DataSorter = UniversalSorter<std::vector<Kakshya::DataVariant>, OutputType>;
 
 /// Sorter for signal container processing
 template <ComputeData OutputType = std::shared_ptr<Kakshya::SignalSourceContainer>>
@@ -464,19 +464,19 @@ template <ComputeData OutputType = std::vector<Kakshya::RegionSegment>>
 using SegmentSorter = UniversalSorter<std::vector<Kakshya::RegionSegment>, OutputType>;
 
 /// Sorter that produces Eigen matrices
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using MatrixSorter = UniversalSorter<InputType, Eigen::MatrixXd>;
 
 /// Sorter that produces Eigen vectors
-template <ComputeData InputType = Kakshya::DataVariant>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
 using VectorSorter = UniversalSorter<InputType, Eigen::VectorXd>;
 
 /// Sorter for vector containers
-template <typename T, ComputeData OutputType = std::vector<T>>
-using VectorContainerSorter = UniversalSorter<std::vector<T>, OutputType>;
+template <typename T, ComputeData OutputType = std::vector<std::vector<T>>>
+using VectorContainerSorter = UniversalSorter<std::vector<std::vector<T>>, OutputType>;
 
 /// Sorter for indices generation
-template <ComputeData InputType = Kakshya::DataVariant>
-using IndexSorter = UniversalSorter<InputType, std::vector<size_t>>;
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
+using IndexSorter = UniversalSorter<InputType, std::vector<std::vector<size_t>>>;
 
 } // namespace MayaFlux::Yantra
