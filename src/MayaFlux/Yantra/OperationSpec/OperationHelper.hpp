@@ -92,7 +92,7 @@ public:
      * @return Vector of spans of double data (one per channel/variant)
      */
     template <typename T>
-        requires MultiVariant<T>
+        requires(MultiVariant<T> || EigenMatrixLike<T>)
     static std::vector<std::span<double>> extract_numeric_data(const T& compute_data)
     {
         if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
@@ -231,7 +231,7 @@ public:
      * @return Tuple of (double_vector, structure_info)
      */
     template <typename T>
-        requires MultiVariant<T>
+        requires(MultiVariant<T> || EigenMatrixLike<T>)
     static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
     extract_structured_double(T& compute_data)
     {
@@ -415,10 +415,10 @@ private:
         spans.reserve(matrix.cols());
 
         for (int col = 0; col < matrix.cols(); ++col) {
-            auto row_indices = std::views::iota(0, matrix.rows());
-            auto col_data = row_indices
-                | std::views::transform([&](int row) { return static_cast<double>(matrix(row, col)); });
-            columns[col] = std::vector<double>(col_data.begin(), col_data.end());
+            columns[col].resize(matrix.rows());
+            for (int row = 0; row < matrix.rows(); ++row) {
+                columns[col][row] = static_cast<double>(matrix(row, col));
+            }
             spans.emplace_back(columns[col].data(), columns[col].size());
         }
         return spans;

@@ -212,6 +212,13 @@ struct extraction_traits_d<Eigen::MatrixXd> {
     using variant_result_type = std::vector<Kakshya::DataVariant>;
 };
 
+/**
+ * @concept EigenMatrixLike
+ * @brief Concept for Eigen matrix types with double scalar
+ */
+template <typename T>
+concept EigenMatrixLike = is_eigen_matrix_v<T> && std::is_same_v<typename T::Scalar, double>;
+
 template <typename T>
 using enable_if_single_variant_t = std::enable_if_t<SingleVariant<T>>;
 
