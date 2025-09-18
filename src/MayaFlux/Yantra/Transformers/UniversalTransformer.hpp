@@ -3,6 +3,8 @@
 #include "MayaFlux/EnumUtils.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
+#include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
+
 /**
  * @brief Float Processing Guidelines
  *
@@ -136,6 +138,10 @@ enum class TransformationScope : u_int8_t {
 struct TransformationKey {
     std::string name; ///< Unique identifier for this transformation key
     std::function<double(const std::any&)> parameter_extractor; ///< Extract parameter value from data
+
+    u_int channel = 0; ///< Which channel to extract for
+    std::optional<char> axis = std::nullopt; ///< Which axis (if spatial processing)
+
     double intensity = 1.0; ///< Transformation intensity/amount
     double weight = 1.0; ///< Weight for multi-key transformations
     bool normalize = false; ///< Normalize parameters before transformation
@@ -435,7 +441,7 @@ public:
      * Allows injection of custom transformation logic for specialized use cases.
      * The function will be called for each data element during transformation.
      */
-    template <typename T>
+    template <ComputeData T>
     void set_custom_function(std::function<T(const T&)> func)
     {
         m_custom_function = [func](const std::any& a) -> std::any {
@@ -576,7 +582,12 @@ protected:
 
         for (const auto& key : m_transformation_keys) {
             try {
-                double param = key.parameter_extractor(input.data);
+                double param {};
+                if (key.axis.has_value()) {
+                    // TODO: Implement dimension validation
+                } else {
+                    param = key.parameter_extractor(input.data[key.channel]);
+                }
                 if (key.normalize) {
                     param = std::clamp(param, 0.0, 1.0);
                 }
@@ -604,26 +615,13 @@ protected:
      */
     bool validate_input(const input_type& input) const override
     {
-        try {
-            auto size = get_input_data_size(input.data);
-
-            if (size == 0) {
+        if constexpr (RequiresContainer<InputType>) {
+            if (!input.has_container()) {
                 return false;
             }
-
-            if (!is_data_valid(input.data)) {
-                return false;
-            }
-
-            // TODO: concrete class overrides for
-            // - Minimum size for spectral operations
-            // - NaN/infinity detection for mathematical operations
-            // - etc.
-
-            return true;
-        } catch (...) {
-            return false;
+            return !OperationHelper::extract_numeric_data(input.data, input.container.value()).empty();
         }
+        return !OperationHelper::extract_numeric_data(input.data).empty();
     }
 
 private:
@@ -651,125 +649,17 @@ private:
         if constexpr (std::is_same_v<InputType, OutputType>) {
             result.data = input.data;
         } else {
-            result.data = create_safe_empty_output<OutputType>();
+            if constexpr (RequiresContainer<InputType>) {
+                if (!input.has_container()) {
+                    result.container = std::make_shared<Kakshya::SignalSourceContainer>();
+                } else {
+                    result.container = input.container;
+                }
+            }
+            result.data = {};
         }
 
         return result;
-    }
-
-    /**
-     * @brief Get the size of input data for validation
-     * @param data Input data variant
-     * @return Number of elements in the data
-     *
-     * Handles different data types (variants, containers, scalars) to determine
-     * the data size for validation purposes.
-     */
-    size_t get_input_data_size(const InputType& data) const
-    {
-        if constexpr (std::is_same_v<InputType, Kakshya::DataVariant>) {
-            return std::visit([](const auto& container) -> size_t {
-                if constexpr (requires { container.size(); }) {
-                    return container.size();
-                } else {
-                    return 1;
-                }
-            },
-                data);
-        } else if constexpr (requires { data.size(); }) {
-            return data.size();
-        } else {
-            return 1;
-        }
-    }
-
-    /**
-     * @brief Check if data contains valid values (not all NaN/inf)
-     * @param data Input data to check
-     * @return true if data is valid for processing
-     *
-     * Performs statistical validation to ensure the data contains mostly finite values.
-     * Samples a portion of the data for efficiency on large datasets.
-     * Handles different numeric types including complex numbers.
-     */
-    bool is_data_valid(const InputType& data) const
-    {
-        if constexpr (std::is_same_v<InputType, Kakshya::DataVariant>) {
-            return std::visit([](const auto& container) -> bool {
-                using ContainerType = std::decay_t<decltype(container)>;
-                using ValueType = typename ContainerType::value_type;
-
-                if constexpr (std::is_arithmetic_v<ValueType>) {
-                    if (container.empty())
-                        return false;
-
-                    size_t valid_count = 0;
-                    size_t check_limit = std::min(container.size(), size_t(100));
-
-                    for (size_t i = 0; i < check_limit; ++i) {
-                        if (std::isfinite(static_cast<double>(container[i]))) {
-                            valid_count++;
-                        }
-                    }
-
-                    return (valid_count * 2) > check_limit;
-                } else if constexpr (std::is_same_v<ValueType, std::complex<float>> || std::is_same_v<ValueType, std::complex<double>>) {
-                    if (container.empty())
-                        return false;
-
-                    size_t valid_count = 0;
-                    size_t check_limit = std::min(container.size(), size_t(100));
-
-                    for (size_t i = 0; i < check_limit; ++i) {
-                        double magnitude = std::abs(container[i]);
-                        if (std::isfinite(magnitude)) {
-                            valid_count++;
-                        }
-                    }
-
-                    return (valid_count * 2) > check_limit;
-                } else {
-                    return !container.empty();
-                }
-            },
-                data);
-        } else {
-            if constexpr (requires { data.size(); }) {
-                return data.size() > 0;
-            } else {
-                return true;
-            }
-        }
-    }
-
-    /**
-     * @brief Create safe empty output for type conversion cases
-     * @tparam T Output type
-     * @return Minimal valid output of type T
-     *
-     * Creates appropriate empty/default instances for different output types
-     * when input validation fails and type conversion is needed.
-     */
-    template <typename T>
-    T create_safe_empty_output() const
-    {
-        if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
-            return Kakshya::DataVariant { std::vector<double> {} };
-        } else if constexpr (std::is_same_v<T, std::vector<double>>) {
-            return std::vector<double> {};
-        } else if constexpr (std::is_same_v<T, std::vector<float>>) {
-            return std::vector<float> {};
-        } else if constexpr (std::is_same_v<T, Eigen::VectorXd>) {
-            return Eigen::VectorXd {};
-        } else if constexpr (std::is_same_v<T, Eigen::MatrixXd>) {
-            return Eigen::MatrixXd {};
-        } else if constexpr (requires { T {}; }) {
-            return T {};
-        } else {
-            static_assert(std::is_default_constructible_v<T>,
-                "Output type must be default constructible for safe fallback");
-            return T {};
-        }
     }
 
     /** @brief Core transformation configuration */
