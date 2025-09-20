@@ -198,66 +198,42 @@ public:
     }
 
     /**
-     * @brief Extract structured double data from IO container with automatic container handling
-     * @tparam T ComputeData type
-     * @param compute_data IO container with data and optional container
+     * @brief Extract structured double data from IO container or direct ComputeData with automatic container handling
+     * @tparam T OperationReadyData type
+     * @param compute_data  or IO container with data and optional container
      * @return Tuple of [spans, structure_info]
      * @throws std::runtime_error if container required but not provided
      */
-    template <typename T>
-    static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
-    extract_structured_double(IO<T>& compute_data)
-    {
-        DataStructureInfo info {};
-        info.original_type = std::type_index(typeid(T));
-        info.dimensions = compute_data.dimensions;
-        info.modality = compute_data.modality;
-
-        if constexpr (RequiresContainer<T>) {
-            if (!compute_data.has_container()) {
-                throw std::runtime_error("Container is required for region-like data extraction but not provided");
-            }
-            std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data, compute_data.container.value());
-            return std::make_tuple(double_data, info);
-        } else {
-            std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data);
-            return std::make_tuple(double_data, info);
-        }
-    }
-
-    /**
-     * @brief Universal extraction to structured double data
-     * @param data_variant DataVariant to process
-     * @return Tuple of (double_vector, structure_info)
-     */
-    template <typename T>
-        requires(MultiVariant<T> || EigenMatrixLike<T>)
+    template <OperationReadyData T>
     static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
     extract_structured_double(T& compute_data)
     {
-        DataStructureInfo info {};
-        info.original_type = std::type_index(typeid(compute_data));
-        std::vector<std::span<double>> double_data = extract_numeric_data(compute_data);
-        auto [dimensions, modality] = infer_structure(compute_data);
-        info.dimensions = dimensions;
-        info.modality = modality;
+        if constexpr (is_IO<T>::value) {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(std::decay_t<decltype(compute_data.data)>));
+            info.dimensions = compute_data.dimensions;
+            info.modality = compute_data.modality;
 
-        return std::make_tuple(double_data, info);
-    }
+            if constexpr (RequiresContainer<std::decay_t<decltype(compute_data.data)>>) {
+                if (!compute_data.has_container()) {
+                    throw std::runtime_error("Container is required for region-like data extraction but not provided");
+                }
+                std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data, compute_data.container.value());
+                return std::make_tuple(double_data, info);
+            } else {
+                std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data);
+                return std::make_tuple(double_data, info);
+            }
+        } else {
+            DataStructureInfo info {};
+            info.original_type = std::type_index(typeid(T));
+            std::vector<std::span<double>> double_data = extract_numeric_data(compute_data);
+            auto [dimensions, modality] = infer_structure(compute_data);
+            info.dimensions = dimensions;
+            info.modality = modality;
 
-    template <typename T>
-        requires RegionLike<T>
-    static std::tuple<std::vector<std::span<double>>, DataStructureInfo>
-    extract_structured_double(T& compute_data, const std::shared_ptr<Kakshya::SignalSourceContainer>& container = nullptr)
-    {
-        DataStructureInfo info {};
-        info.original_type = std::type_index(typeid(compute_data));
-        std::vector<std::span<double>> double_data = extract_numeric_data(compute_data, container);
-        auto [dimensions, modality] = infer_structure(compute_data, container);
-        info.dimensions = dimensions;
-        info.modality = modality;
-
-        return std::make_tuple(double_data, info);
+            return std::make_tuple(double_data, info);
+        }
     }
 
     /**
@@ -317,41 +293,14 @@ public:
     }
 
     /**
-     * @brief Helper to setup working data for out-of-place operations
-     * @tparam DataType ComputeData type
-     * @param input Input data
-     * @param working_buffer Buffer for out-of-place operations (will be resized if needed)
-     * @return Tuple of [target_data_reference, structure_info]
-     */
-    template <ComputeData DataType>
-    static auto setup_operation_buffer(DataType& input, std::vector<std::vector<double>>& working_buffer)
-    {
-        auto [data, structure_info] = OperationHelper::extract_structured_double(input);
-
-        if (working_buffer.size() != data.size()) {
-            working_buffer.resize(data.size());
-        }
-
-        std::vector<std::span<double>> working_span(working_buffer.size());
-
-        for (size_t i = 0; i < data.size(); i++) {
-            working_buffer[i].resize(data[i].size());
-            std::ranges::copy(data[i], working_buffer[i].begin());
-            working_span[i] = std::span<double>(working_buffer[i].data(), working_buffer[i].size());
-        }
-
-        return std::make_tuple(working_span, structure_info);
-    }
-
-    /**
-     * @brief Setup operation buffer from IO container
-     * @tparam T ComputeData type
-     * @param input IO container with data
+     * @brief Setup operation buffer from IO or ComputeData type
+     * @tparam T IO or ComputeData type
+     * @param input IO container or direct ComputeData
      * @param working_buffer Buffer to setup (will be resized)
      * @return Tuple of [working_spans, structure_info]
      */
-    template <typename T>
-    static auto setup_operation_buffer(IO<T>& input, std::vector<std::vector<double>>& working_buffer)
+    template <OperationReadyData T>
+    static auto setup_operation_buffer(T& input, std::vector<std::vector<double>>& working_buffer)
     {
         auto [data_spans, structure_info] = extract_structured_double(input);
 

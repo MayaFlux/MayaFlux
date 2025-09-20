@@ -301,6 +301,26 @@ protected:
     std::vector<std::shared_ptr<OpUnit<T>>> dependencies; ///< Operation dependencies
 };
 
+/// Helper to detect if a type is an IO
+template <typename>
+struct is_IO : std::false_type { };
+/// Specialization for IO types
+template <typename T>
+struct is_IO<IO<T>> : std::true_type { };
+
+/**
+ * @concept OperationReadyData
+ * @brief Concept to constrain types suitable for operation units
+ *
+ * Ensures that types used in operation units are either:
+ * - MultiVariant (universal data variant)
+ * - RegionLike (regions or region groups)
+ * - EigenMatrixLike (Eigen matrices/vectors)
+ * - IO (input/output containers with structure)
+ */
+template <typename T>
+concept OperationReadyData = MultiVariant<T> || RegionLike<T> || EigenMatrixLike<T> || is_IO<T>::value;
+
 using DataIO = IO<std::vector<Kakshya::DataVariant>>; ///< IO for universal data variant
 using ContainerIO = IO<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
 using RegionIO = IO<Kakshya::Region>; ///< IO for single regions
