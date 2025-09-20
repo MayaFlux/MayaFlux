@@ -32,7 +32,7 @@ enum class MathematicalOperation : u_int8_t {
  * - Polynomial and power functions
  * - Quantization and bit reduction
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -213,7 +213,7 @@ protected:
 
 private:
     MathematicalOperation m_operation; ///< Current mathematical operation
-    mutable std::vector<double> m_working_buffer; ///< Buffer for out-of-place operations
+    mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place operations
 
     /**
      * @brief Sets default parameter values for all mathematical operations
