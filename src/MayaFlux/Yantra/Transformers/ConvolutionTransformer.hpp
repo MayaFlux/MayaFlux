@@ -27,7 +27,7 @@ enum class ConvolutionOperation : u_int8_t {
  * - Matched filtering and signal detection
  * - Deconvolution and restoration
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class ConvolutionTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -75,16 +75,14 @@ protected:
      */
     output_type transform_implementation(input_type& input) override
     {
-        auto& input_data = input.data;
-
         switch (m_operation) {
         case ConvolutionOperation::DIRECT_CONVOLUTION: {
             auto impulse_response = get_parameter_or<std::vector<double>>("impulse_response", std::vector<double> { 1.0 });
 
             if (this->is_in_place()) {
-                return create_output(transform_convolve(input_data, impulse_response));
+                return create_output(transform_convolve(input, impulse_response));
             }
-            return create_output(transform_convolve(input_data, impulse_response, m_working_buffer));
+            return create_output(transform_convolve(input, impulse_response, m_working_buffer));
         }
 
         case ConvolutionOperation::CROSS_CORRELATION: {
@@ -92,18 +90,18 @@ protected:
             auto normalize = get_parameter_or<bool>("normalize", true);
 
             if (this->is_in_place()) {
-                return create_output(transform_cross_correlate(input_data, template_signal, normalize));
+                return create_output(transform_cross_correlate(input, template_signal, normalize));
             }
-            return create_output(transform_cross_correlate(input_data, template_signal, normalize, m_working_buffer));
+            return create_output(transform_cross_correlate(input, template_signal, normalize, m_working_buffer));
         }
 
         case ConvolutionOperation::MATCHED_FILTER: {
             auto reference_signal = get_parameter_or<std::vector<double>>("reference_signal", std::vector<double> { 1.0 });
 
             if (this->is_in_place()) {
-                return create_output(transform_matched_filter(input_data, reference_signal));
+                return create_output(transform_matched_filter(input, reference_signal));
             }
-            return create_output(transform_matched_filter(input_data, reference_signal, m_working_buffer));
+            return create_output(transform_matched_filter(input, reference_signal, m_working_buffer));
         }
 
         case ConvolutionOperation::DECONVOLUTION: {
@@ -111,22 +109,22 @@ protected:
             auto regularization = get_parameter_or<double>("regularization", 1e-6);
 
             if (this->is_in_place()) {
-                return create_output(transform_deconvolve(input_data, impulse_response, regularization));
+                return create_output(transform_deconvolve(input, impulse_response, regularization));
             }
-            return create_output(transform_deconvolve(input_data, impulse_response, regularization, m_working_buffer));
+            return create_output(transform_deconvolve(input, impulse_response, regularization, m_working_buffer));
         }
 
         case ConvolutionOperation::AUTO_CORRELATION: {
             auto normalize = get_parameter_or<bool>("normalize", true);
 
             if (this->is_in_place()) {
-                return create_output(transform_auto_correlate_fft(input_data, normalize));
+                return create_output(transform_auto_correlate_fft(input, normalize));
             }
-            return create_output(transform_auto_correlate_fft(input_data, m_working_buffer, normalize));
+            return create_output(transform_auto_correlate_fft(input, m_working_buffer, normalize));
         }
 
         default:
-            return create_output(input_data);
+            return create_output(input);
         }
     }
 
@@ -165,7 +163,7 @@ protected:
 
 private:
     ConvolutionOperation m_operation; ///< Current convolution operation
-    mutable std::vector<double> m_working_buffer; ///< Buffer for out-of-place convolution operations
+    mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place convolution operations
 
     /**
      * @brief Sets default parameter values for all convolution operations

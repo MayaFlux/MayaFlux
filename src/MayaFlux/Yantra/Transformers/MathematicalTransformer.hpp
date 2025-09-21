@@ -77,32 +77,30 @@ protected:
      */
     output_type transform_implementation(input_type& input) override
     {
-        auto& input_data = input.data;
-
         switch (m_operation) {
         case MathematicalOperation::GAIN: {
             auto gain_factor = get_parameter_or<double>("gain_factor", 1.0);
             if (this->is_in_place()) {
-                return create_output(transform_linear(input_data, gain_factor, 0.0));
+                return create_output(transform_linear(input, gain_factor, 0.0));
             }
-            return create_output(transform_linear(input_data, gain_factor, 0.0, m_working_buffer));
+            return create_output(transform_linear(input, gain_factor, 0.0, m_working_buffer));
         }
 
         case MathematicalOperation::OFFSET: {
             auto offset_value = get_parameter_or<double>("offset_value", 0.0);
             if (this->is_in_place()) {
-                return create_output(transform_linear(input_data, 1.0, offset_value));
+                return create_output(transform_linear(input, 1.0, offset_value));
             }
-            return create_output(transform_linear(input_data, 1.0, offset_value, m_working_buffer));
+            return create_output(transform_linear(input, 1.0, offset_value, m_working_buffer));
         }
 
         case MathematicalOperation::POWER: {
             auto exponent = get_parameter_or<double>("exponent", 2.0);
 
             if (this->is_in_place()) {
-                return create_output(transform_power(input_data, exponent));
+                return create_output(transform_power(input, exponent));
             }
-            return create_output(transform_power(input_data, exponent, m_working_buffer));
+            return create_output(transform_power(input, exponent, m_working_buffer));
         }
 
         case MathematicalOperation::LOGARITHMIC: {
@@ -112,9 +110,9 @@ protected:
             auto base = get_parameter_or<double>("base", std::numbers::e);
 
             if (this->is_in_place()) {
-                return create_output(transform_logarithmic(input_data, scale, input_scale, offset, base));
+                return create_output(transform_logarithmic(input, scale, input_scale, offset, base));
             }
-            return create_output(transform_logarithmic(input_data, scale, input_scale, offset, m_working_buffer, base));
+            return create_output(transform_logarithmic(input, scale, input_scale, offset, m_working_buffer, base));
         }
 
         case MathematicalOperation::EXPONENTIAL: {
@@ -123,9 +121,9 @@ protected:
             auto base = get_parameter_or<double>("base", std::numbers::e);
 
             if (this->is_in_place()) {
-                return create_output(transform_exponential(input_data, scale, rate, base));
+                return create_output(transform_exponential(input, scale, rate, base));
             }
-            return create_output(transform_exponential(input_data, scale, rate, m_working_buffer, base));
+            return create_output(transform_exponential(input, scale, rate, m_working_buffer, base));
         }
 
         case MathematicalOperation::TRIGONOMETRIC: {
@@ -136,52 +134,52 @@ protected:
 
             if (trig_function == "sin") {
                 if (this->is_in_place()) {
-                    return create_output(transform_trigonometric(input_data, [](double x) { return std::sin(x); }, frequency, amplitude, phase));
+                    return create_output(transform_trigonometric(input, [](double x) { return std::sin(x); }, frequency, amplitude, phase));
                 }
-                return create_output(transform_trigonometric(input_data, [](double x) { return std::sin(x); }, frequency, amplitude, phase, m_working_buffer));
+                return create_output(transform_trigonometric(input, [](double x) { return std::sin(x); }, frequency, amplitude, phase, m_working_buffer));
             }
             if (trig_function == "cos") {
                 if (this->is_in_place()) {
-                    return create_output(transform_trigonometric(input_data, [](double x) { return std::cos(x); }, frequency, amplitude, phase));
+                    return create_output(transform_trigonometric(input, [](double x) { return std::cos(x); }, frequency, amplitude, phase));
                 }
-                return create_output(transform_trigonometric(input_data, [](double x) { return std::cos(x); }, frequency, amplitude, phase, m_working_buffer));
+                return create_output(transform_trigonometric(input, [](double x) { return std::cos(x); }, frequency, amplitude, phase, m_working_buffer));
             }
             if (trig_function == "tan") {
                 if (this->is_in_place()) {
-                    return create_output(transform_trigonometric(input_data, [](double x) { return std::tan(x); }, frequency, amplitude, phase));
+                    return create_output(transform_trigonometric(input, [](double x) { return std::tan(x); }, frequency, amplitude, phase));
                 }
-                return create_output(transform_trigonometric(input_data, [](double x) { return std::tan(x); }, frequency, amplitude, phase, m_working_buffer));
+                return create_output(transform_trigonometric(input, [](double x) { return std::tan(x); }, frequency, amplitude, phase, m_working_buffer));
             }
-            return create_output(input_data);
+            return create_output(input);
         }
 
         case MathematicalOperation::QUANTIZE: {
             auto bits = get_parameter_or<u_int8_t>("bits", 16);
             if (this->is_in_place()) {
-                return create_output(transform_quantize(input_data, bits));
+                return create_output(transform_quantize(input, bits));
             }
-            return create_output(transform_quantize(input_data, bits, m_working_buffer));
+            return create_output(transform_quantize(input, bits, m_working_buffer));
         }
 
         case MathematicalOperation::NORMALIZE: {
             auto target_peak = get_parameter_or<double>("target_peak", 1.0);
             std::pair<double, double> target_range = { -target_peak, target_peak };
             if (this->is_in_place()) {
-                return create_output(transform_normalize(input_data, target_range));
+                return create_output(transform_normalize(input, target_range));
             }
-            return create_output(transform_normalize(input_data, target_range, m_working_buffer));
+            return create_output(transform_normalize(input, target_range, m_working_buffer));
         }
 
         case MathematicalOperation::POLYNOMIAL: {
             auto coefficients = get_parameter_or<std::vector<double>>("coefficients", std::vector<double> { 0.0, 1.0 });
             if (this->is_in_place()) {
-                return create_output(transform_polynomial(input_data, coefficients));
+                return create_output(transform_polynomial(input, coefficients));
             }
-            return create_output(transform_polynomial(input_data, coefficients, m_working_buffer));
+            return create_output(transform_polynomial(input, coefficients, m_working_buffer));
         }
 
         default:
-            return create_output(input_data);
+            return create_output(input);
         }
     }
 
