@@ -29,7 +29,7 @@ enum class TemporalOperation : u_int8_t {
  * - Temporal slicing and repositioning
  * - Rhythm and timing manipulations
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class TemporalTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -188,7 +188,7 @@ protected:
 
 private:
     TemporalOperation m_operation; ///< Current temporal operation
-    mutable std::vector<double> m_working_buffer; ///< Buffer for out-of-place temporal operations
+    mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place temporal operations
 
     /**
      * @brief Sets default parameter values for all temporal operations
