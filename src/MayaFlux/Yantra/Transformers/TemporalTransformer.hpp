@@ -76,54 +76,52 @@ protected:
      */
     output_type transform_implementation(input_type& input) override
     {
-        auto& input_data = input.data;
-
         switch (m_operation) {
         case TemporalOperation::TIME_REVERSE: {
             if (this->is_in_place()) {
-                return create_output(transform_time_reverse(input_data));
+                return create_output(transform_time_reverse(input));
             }
 
-            return create_output(transform_time_reverse(input_data, m_working_buffer));
+            return create_output(transform_time_reverse(input, m_working_buffer));
         }
 
         case TemporalOperation::TIME_STRETCH: {
             auto stretch_factor = get_parameter_or<double>("stretch_factor", 1.0);
             if (this->is_in_place()) {
-                return create_output(transform_time_stretch(input_data, stretch_factor));
+                return create_output(transform_time_stretch(input, stretch_factor));
             }
 
-            return create_output(transform_time_stretch(input_data, stretch_factor, m_working_buffer));
+            return create_output(transform_time_stretch(input, stretch_factor, m_working_buffer));
         }
 
         case TemporalOperation::DELAY: {
             auto delay_samples = get_parameter_or<u_int32_t>("delay_samples", 1000);
             auto fill_value = get_parameter_or<double>("fill_value", 0.0);
             if (this->is_in_place()) {
-                return create_output(transform_delay(input_data, delay_samples, fill_value));
+                return create_output(transform_delay(input, delay_samples, fill_value));
             }
 
-            return create_output(transform_delay(input_data, delay_samples, fill_value, m_working_buffer));
+            return create_output(transform_delay(input, delay_samples, fill_value, m_working_buffer));
         }
 
         case TemporalOperation::FADE_IN_OUT: {
             auto fade_in_ratio = get_parameter_or<double>("fade_in_ratio", 0.1);
             auto fade_out_ratio = get_parameter_or<double>("fade_out_ratio", 0.1);
             if (this->is_in_place()) {
-                return create_output(transform_fade(input_data, fade_in_ratio, fade_out_ratio));
+                return create_output(transform_fade(input, fade_in_ratio, fade_out_ratio));
             }
 
-            return create_output(transform_fade(input_data, fade_in_ratio, fade_out_ratio, m_working_buffer));
+            return create_output(transform_fade(input, fade_in_ratio, fade_out_ratio, m_working_buffer));
         }
 
         case TemporalOperation::SLICE: {
             auto start_ratio = get_parameter_or<double>("start_ratio", 0.0);
             auto end_ratio = get_parameter_or<double>("end_ratio", 1.0);
             if (this->is_in_place()) {
-                return create_output(transform_slice(input_data, start_ratio, end_ratio));
+                return create_output(transform_slice(input, start_ratio, end_ratio));
             }
 
-            return create_output(transform_slice(input_data, start_ratio, end_ratio, m_working_buffer));
+            return create_output(transform_slice(input, start_ratio, end_ratio, m_working_buffer));
         }
 
         case TemporalOperation::INTERPOLATE: {
@@ -132,22 +130,22 @@ protected:
             if (target_size > 0) {
                 if (use_cubic) {
                     if (this->is_in_place()) {
-                        return create_output(interpolate_cubic(input_data, target_size));
+                        return create_output(interpolate_cubic(input, target_size));
                     }
 
-                    return create_output(interpolate_cubic(input_data, target_size, m_working_buffer));
+                    return create_output(interpolate_cubic(input, target_size, m_working_buffer));
                 }
 
                 if (this->is_in_place()) {
-                    return create_output(interpolate_linear(input_data, target_size));
+                    return create_output(interpolate_linear(input, target_size));
                 }
-                return create_output(interpolate_linear(input_data, target_size, m_working_buffer));
+                return create_output(interpolate_linear(input, target_size, m_working_buffer));
             }
-            return create_output(input_data);
+            return create_output(input);
         }
 
         default:
-            return create_output(input_data);
+            return create_output(input);
         }
     }
 

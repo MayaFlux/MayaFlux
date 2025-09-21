@@ -61,12 +61,17 @@ DataType transform_time_reverse(DataType& input)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
-    std::vector<std::vector<double>> result;
     for (auto& span : target_data) {
-        result.push_back(std::vector<double>(span.rbegin(), span.rend()));
+        std::ranges::reverse(span);
     }
 
-    return OperationHelper::reconstruct_from_double<DataType>(result, structure_info);
+    auto reconstructed_data = target_data
+        | std::views::transform([](const auto& span) {
+              return std::vector<double>(span.begin(), span.end());
+          })
+        | std::ranges::to<std::vector>();
+
+    return OperationHelper::reconstruct_from_double<DataType>(reconstructed_data, structure_info);
 }
 
 /**
@@ -199,27 +204,29 @@ DataType transform_fade(DataType& input, double fade_in_duration_ratio = 0.0, do
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
-    std::vector<std::vector<double>> result(target_data.size());
-    for (size_t i = 0; i < target_data.size(); ++i) {
-        auto& span = target_data[i];
-        result[i].assign(span.begin(), span.end());
-
+    for (auto& span : target_data) {
         auto fade_in_samples = static_cast<size_t>(span.size() * fade_in_duration_ratio);
         auto fade_out_samples = static_cast<size_t>(span.size() * fade_out_duration_ratio);
         size_t fade_out_start = span.size() - fade_out_samples;
 
         for (size_t j = 0; j < fade_in_samples && fade_in_samples > 1; ++j) {
             double fade_factor = static_cast<double>(j) / static_cast<double>(fade_in_samples - 1);
-            result[i][j] *= fade_factor;
+            span[j] *= fade_factor;
         }
 
         for (size_t j = 0; j < fade_out_samples && fade_out_samples > 1 && fade_out_start + j < span.size(); ++j) {
             double fade_factor = 1.0 - (static_cast<double>(j) / static_cast<double>(fade_out_samples - 1));
-            result[i][fade_out_start + j] *= fade_factor;
+            span[fade_out_start + j] *= fade_factor;
         }
     }
 
-    return OperationHelper::reconstruct_from_double<DataType>(result, structure_info);
+    auto reconstructed_data = target_data
+        | std::views::transform([](const auto& span) {
+              return std::vector<double>(span.begin(), span.end());
+          })
+        | std::ranges::to<std::vector>();
+
+    return OperationHelper::reconstruct_from_double<DataType>(reconstructed_data, structure_info);
 }
 
 /**
