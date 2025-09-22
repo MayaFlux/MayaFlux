@@ -74,7 +74,8 @@ public:
     static std::span<double> extract_numeric_data(const T& compute_data)
     {
         if constexpr (std::is_same_v<T, Kakshya::DataVariant>) {
-            return Kakshya::convert_variant<double>(compute_data, s_complex_strategy);
+            auto const_span = Kakshya::convert_variant<double>(compute_data);
+            return std::span<double>(const_cast<double*>(const_span.data()), const_span.size());
         }
         if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>) {
             Kakshya::DataVariant variant = create_data_variant_from_eigen(compute_data);

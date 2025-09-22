@@ -57,7 +57,7 @@ enum class ExtractionMethod : u_int8_t {
  * or spectral characteristics, then extracts the actual data from those regions.
  * All extraction logic is delegated to ExtractionHelper functions.
  */
-template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = std::vector<double>>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = std::vector<std::vector<double>>>
 class FeatureExtractor : public UniversalExtractor<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
