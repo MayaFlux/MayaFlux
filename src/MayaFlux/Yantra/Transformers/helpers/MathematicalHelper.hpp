@@ -678,41 +678,59 @@ DataType interpolate_linear(DataType& input, size_t target_size, std::vector<std
 template <OperationReadyData DataType>
 DataType interpolate_cubic(DataType& input, size_t target_size)
 {
-    auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
+    auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
-    if (target_size == data_span.size()) {
+    bool needs_resize = false;
+    for (const auto& span : target_data) {
+        if (target_size != span.size()) {
+            needs_resize = true;
+            break;
+        }
+    }
+
+    if (!needs_resize) {
         return input;
     }
 
-    std::vector<double> interpolated(target_size);
+    std::vector<std::vector<double>> result(target_data.size());
 
-    auto indices = std::views::iota(size_t { 0 }, target_size);
+    for (size_t ch = 0; ch < target_data.size(); ++ch) {
+        const auto& data_span = target_data[ch];
+        auto& interpolated = result[ch];
+        interpolated.resize(target_size);
 
-    std::ranges::transform(indices, interpolated.begin(),
-        [&data_span, target_size](size_t i) {
-            double pos = static_cast<double>(i) * (data_span.size() - 1) / (target_size - 1);
-            int idx = static_cast<int>(pos);
-            double frac = pos - idx;
+        if (target_size <= 1 || data_span.size() <= 1) {
+            std::fill(interpolated.begin(), interpolated.end(),
+                data_span.empty() ? 0.0 : data_span[0]);
+            continue;
+        }
 
-            auto get_sample = [&data_span](int i) {
-                return data_span[std::clamp(i, 0, static_cast<int>(data_span.size() - 1))];
-            };
+        auto indices = std::views::iota(size_t { 0 }, target_size);
+        std::ranges::transform(indices, interpolated.begin(),
+            [&data_span, target_size](size_t i) {
+                double pos = static_cast<double>(i) * (data_span.size() - 1) / (target_size - 1);
+                int idx = static_cast<int>(pos);
+                double frac = pos - idx;
 
-            double y0 = get_sample(idx - 1);
-            double y1 = get_sample(idx);
-            double y2 = get_sample(idx + 1);
-            double y3 = get_sample(idx + 2);
+                auto get_sample = [&data_span](int i) {
+                    return data_span[std::clamp(i, 0, static_cast<int>(data_span.size() - 1))];
+                };
 
-            double a = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
-            double b = y0 - 2.5 * y1 + 2.0 * y2 - 0.5 * y3;
-            double c = -0.5 * y0 + 0.5 * y2;
-            double d = y1;
+                double y0 = get_sample(idx - 1);
+                double y1 = get_sample(idx);
+                double y2 = get_sample(idx + 1);
+                double y3 = get_sample(idx + 2);
 
-            return ((a * frac + b) * frac + c) * frac + d;
-        });
+                double a = -0.5 * y0 + 1.5 * y1 - 1.5 * y2 + 0.5 * y3;
+                double b = y0 - 2.5 * y1 + 2.0 * y2 - 0.5 * y3;
+                double c = -0.5 * y0 + 0.5 * y2;
+                double d = y1;
 
-    input = OperationHelper::reconstruct_from_double<DataType>(interpolated, structure_info);
-    return input;
+                return ((a * frac + b) * frac + c) * frac + d;
+            });
+    }
+
+    return OperationHelper::reconstruct_from_double<DataType>(result, structure_info);
 }
 
 /**
@@ -728,20 +746,37 @@ DataType interpolate_cubic(DataType& input, size_t target_size, std::vector<std:
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
-    for (size_t span_idx = 0; span_idx < target_data.size(); span_idx++) {
-        if (target_size != target_data[span_idx].size()) {
-            working_buffer[span_idx].resize(target_size);
+    bool needs_resize = false;
+    for (const auto& span : target_data) {
+        if (target_size != span.size()) {
+            needs_resize = true;
+            break;
+        }
+    }
 
-            auto& current_span = target_data[span_idx];
-            auto& output_buffer = working_buffer[span_idx];
+    if (!needs_resize) {
+        return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
+    }
 
-            for (size_t out_idx = 0; out_idx < target_size; out_idx++) {
-                double pos = static_cast<double>(out_idx) * (current_span.size() - 1) / (target_size - 1);
+    for (size_t ch = 0; ch < target_data.size(); ++ch) {
+        const auto& data_span = target_data[ch];
+        working_buffer[ch].resize(target_size);
+
+        if (target_size <= 1 || data_span.size() <= 1) {
+            std::fill(working_buffer[ch].begin(), working_buffer[ch].end(),
+                data_span.empty() ? 0.0 : data_span[0]);
+            continue;
+        }
+
+        auto indices = std::views::iota(size_t { 0 }, target_size);
+        std::ranges::transform(indices, working_buffer[ch].begin(),
+            [&data_span, target_size](size_t i) {
+                double pos = static_cast<double>(i) * (data_span.size() - 1) / (target_size - 1);
                 int idx = static_cast<int>(pos);
                 double frac = pos - idx;
 
-                auto get_sample = [&current_span](int sample_idx) {
-                    return current_span[std::clamp(sample_idx, 0, static_cast<int>(current_span.size() - 1))];
+                auto get_sample = [&data_span](int i) {
+                    return data_span[std::clamp(i, 0, static_cast<int>(data_span.size() - 1))];
                 };
 
                 double y0 = get_sample(idx - 1);
@@ -754,9 +789,8 @@ DataType interpolate_cubic(DataType& input, size_t target_size, std::vector<std:
                 double c = -0.5 * y0 + 0.5 * y2;
                 double d = y1;
 
-                output_buffer[out_idx] = ((a * frac + b) * frac + c) * frac + d;
-            }
-        }
+                return ((a * frac + b) * frac + c) * frac + d;
+            });
     }
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);

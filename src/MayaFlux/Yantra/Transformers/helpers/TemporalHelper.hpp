@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "MathematicalHelper.hpp"
 
 /**
@@ -136,7 +138,6 @@ DataType transform_time_stretch(DataType& input, double stretch_factor, std::vec
     }
 
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
-    auto new_size = static_cast<size_t>(target_data.size() * stretch_factor);
 
     for (size_t i = 0; i < target_data.size(); ++i) {
         auto new_size = static_cast<size_t>(target_data[i].size() * stretch_factor);
@@ -162,7 +163,8 @@ DataType transform_delay(DataType& input, u_int32_t delay_samples, double fill_v
 
     std::vector<std::vector<double>> result(target_data.size());
     for (size_t i = 0; i < target_data.size(); ++i) {
-        result[i].resize(target_data[i].size() + delay_samples, fill_value);
+        result[i].resize(target_data[i].size() + delay_samples);
+        std::fill_n(result[i].begin(), delay_samples, fill_value);
         std::copy(target_data[i].begin(), target_data[i].end(), result[i].begin() + delay_samples);
     }
 
@@ -184,8 +186,11 @@ DataType transform_delay(DataType& input, u_int32_t delay_samples, double fill_v
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
     for (size_t i = 0; i < target_data.size(); ++i) {
-        working_buffer[i].resize(target_data[i].size() + delay_samples, fill_value);
-        std::copy(target_data[i].begin(), target_data[i].end(), working_buffer[i].begin() + delay_samples);
+        std::vector<double> original_data(target_data[i].begin(), target_data[i].end());
+
+        working_buffer[i].resize(original_data.size() + delay_samples);
+        std::fill_n(working_buffer[i].begin(), delay_samples, fill_value);
+        std::ranges::copy(original_data, working_buffer[i].begin() + delay_samples);
     }
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);

@@ -131,11 +131,18 @@ protected:
                     }
                 };
 
-                auto result = process_spectral_windows(data_span, window_size, hop_size, processor);
-                std::copy(result.begin(), result.end(), data_span.begin());
+                for (auto& span : data_span) {
+                    auto result = process_spectral_windows(span, window_size, hop_size, processor);
+                    std::ranges::copy(result, span.begin());
+                }
 
-                return create_output(OperationHelper::reconstruct_from_double<InputType>(
-                    std::vector<double>(data_span.begin(), data_span.end()), structure_info));
+                auto reconstructed_data = data_span
+                    | std::views::transform([](const auto& span) {
+                          return std::vector<double>(span.begin(), span.end());
+                      })
+                    | std::ranges::to<std::vector>();
+
+                return create_output(OperationHelper::reconstruct_from_double<InputType>(reconstructed_data, structure_info));
             }
 
             auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, m_working_buffer);
@@ -147,8 +154,10 @@ protected:
                 }
             };
 
-            auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
-            m_working_buffer = std::move(result);
+            for (size_t i = 0; i < target_data.size(); ++i) {
+                auto result = process_spectral_windows(target_data[i], window_size, hop_size, processor);
+                m_working_buffer[i] = std::move(result);
+            }
 
             return create_output(OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
         }
@@ -169,11 +178,18 @@ protected:
                     });
                 };
 
-                auto result = process_spectral_windows(data_span, window_size, hop_size, processor);
-                std::copy(result.begin(), result.end(), data_span.begin());
+                for (auto& span : data_span) {
+                    auto result = process_spectral_windows(span, window_size, hop_size, processor);
+                    std::ranges::copy(result, span.begin());
+                }
 
-                return create_output(OperationHelper::reconstruct_from_double<InputType>(
-                    std::vector<double>(data_span.begin(), data_span.end()), structure_info));
+                auto reconstructed_data = data_span
+                    | std::views::transform([](const auto& span) {
+                          return std::vector<double>(span.begin(), span.end());
+                      })
+                    | std::ranges::to<std::vector>();
+
+                return create_output(OperationHelper::reconstruct_from_double<InputType>(reconstructed_data, structure_info));
             }
 
             auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, m_working_buffer);
@@ -183,8 +199,10 @@ protected:
                 });
             };
 
-            auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
-            m_working_buffer = std::move(result);
+            for (size_t i = 0; i < target_data.size(); ++i) {
+                auto result = process_spectral_windows(target_data[i], window_size, hop_size, processor);
+                m_working_buffer[i] = std::move(result);
+            }
 
             return create_output(OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
         }
@@ -279,15 +297,15 @@ private:
      * or direct assignment when types match. Ensures spectral processing results
      * are properly converted back to the expected output type.
      */
-    output_type create_output(const InputType& data)
+    output_type create_output(const input_type& input)
     {
-        output_type result;
         if constexpr (std::is_same_v<InputType, OutputType>) {
-            result.data = data;
+            return input;
         } else {
-            result.data = OperationHelper::convert_result_to_output_type<OutputType>(data);
+            output_type result = input;
+            result.data = OperationHelper::convert_result_to_output_type<OutputType>(input.data);
+            return result;
         }
-        return result;
     }
 };
 }

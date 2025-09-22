@@ -17,12 +17,30 @@ template <typename OperationFunc>
 std::vector<double> fft_convolve_helper(
     std::span<const double> data_span,
     std::span<const double> kernel,
-    OperationFunc&& operation)
+    OperationFunc&& operation,
+    bool return_full_size = true)
 {
+    if (data_span.empty() || kernel.empty()) {
+        if (return_full_size && !data_span.empty() && !kernel.empty()) {
+            return std::vector<double>(data_span.size() + kernel.size() - 1, 0.0);
+        } else {
+            return std::vector<double>(data_span.size(), 0.0);
+        }
+    }
+
     size_t conv_size = data_span.size() + kernel.size() - 1;
+    /*
     size_t fft_size = 1;
     while (fft_size < conv_size)
         fft_size *= 2;
+
+    if (fft_size < 2) {
+        fft_size = 2;
+    }
+    */
+
+    size_t fft_size = std::max(256uz, conv_size);
+    fft_size = 1 << (32 - __builtin_clz(fft_size - 1));
 
     Eigen::VectorXd padded_input = Eigen::VectorXd::Zero(fft_size);
     Eigen::VectorXd padded_kernel = Eigen::VectorXd::Zero(fft_size);
@@ -38,13 +56,25 @@ std::vector<double> fft_convolve_helper(
     Eigen::VectorXcd result_fft(fft_size);
     operation(input_fft, kernel_fft, result_fft);
 
+    // new
+    double scale_factor = 1.0 / fft_size;
+    std::ranges::transform(result_fft, result_fft.begin(),
+        [scale_factor](std::complex<double>& c) {
+            return c * scale_factor;
+        });
+
     Eigen::VectorXd time_result;
     fft.inv(time_result, result_fft);
 
-    std::vector<double> result(data_span.size());
-    std::ranges::copy(time_result | std::views::take(data_span.size()), result.begin());
-
-    return result;
+    if (return_full_size) {
+        std::vector<double> result(conv_size);
+        std::ranges::copy(time_result | std::views::take(conv_size), result.begin());
+        return result;
+    } else {
+        std::vector<double> result(data_span.size());
+        std::ranges::copy(time_result | std::views::take(data_span.size()), result.begin());
+        return result;
+    }
 }
 
 /**
@@ -117,6 +147,22 @@ DataType transform_convolve_with_fir(DataType& input, const std::vector<double>&
 template <OperationReadyData DataType>
 DataType transform_convolve(DataType& input, const std::vector<double>& impulse_response)
 {
+    if (impulse_response.size() == 1) {
+        if (std::abs(impulse_response[0] - 1.0) < 1e-15) {
+            return input;
+        } else {
+            auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
+
+            std::vector<std::vector<double>> reconstructed_data(target_data.size());
+
+            for (size_t i = 0; i < target_data.size(); ++i) {
+                std::ranges::transform(target_data[i], reconstructed_data[i].begin(),
+                    [gain = impulse_response[0]](double x) { return x * gain; });
+            }
+            return OperationHelper::reconstruct_from_double<DataType>(reconstructed_data, structure_info);
+        }
+    }
+
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
     auto convolution_op = [](const Eigen::VectorXcd& input_fft,
@@ -129,7 +175,7 @@ DataType transform_convolve(DataType& input, const std::vector<double>& impulse_
     };
 
     for (auto& span : target_data) {
-        auto result = fft_convolve_helper(span, std::span<const double>(impulse_response), convolution_op);
+        auto result = fft_convolve_helper(span, std::span<const double>(impulse_response), convolution_op, false);
         std::copy(result.begin(), result.end(), span.begin());
     }
 
@@ -153,6 +199,19 @@ DataType transform_convolve(DataType& input, const std::vector<double>& impulse_
 template <OperationReadyData DataType>
 DataType transform_convolve(DataType& input, const std::vector<double>& impulse_response, std::vector<std::vector<double>>& working_buffer)
 {
+    if (impulse_response.size() == 1) {
+        if (std::abs(impulse_response[0] - 1.0) < 1e-15) {
+            return input;
+        } else {
+            auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
+            for (size_t i = 0; i < target_data.size(); ++i) {
+                std::ranges::transform(target_data[i], working_buffer[i].begin(),
+                    [gain = impulse_response[0]](double x) { return x * gain; });
+            }
+            return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
+        }
+    }
+
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
     working_buffer.clear();
@@ -168,7 +227,7 @@ DataType transform_convolve(DataType& input, const std::vector<double>& impulse_
     };
 
     for (size_t i = 0; i < target_data.size(); ++i) {
-        working_buffer[i] = fft_convolve_helper(target_data[i], std::span<const double>(impulse_response), convolution_op);
+        working_buffer[i] = fft_convolve_helper(target_data[i], std::span<const double>(impulse_response), convolution_op, false);
     }
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
@@ -247,9 +306,6 @@ DataType transform_cross_correlate(DataType& input, const std::vector<double>& t
             });
     };
 
-    working_buffer.clear();
-    working_buffer.resize(target_data.size());
-
     for (size_t i = 0; i < target_data.size(); ++i) {
         auto result = fft_convolve_helper(target_data[i], reversed_template, correlation_op);
 
@@ -262,6 +318,7 @@ DataType transform_cross_correlate(DataType& input, const std::vector<double>& t
             }
         }
 
+        working_buffer[i].resize(result.size());
         working_buffer[i] = std::move(result);
     }
 
@@ -338,9 +395,6 @@ DataType transform_auto_correlate_fft(DataType& input, std::vector<std::vector<d
             });
     };
 
-    working_buffer.clear();
-    working_buffer.resize(target_data.size());
-
     for (size_t i = 0; i < target_data.size(); ++i) {
         std::vector<double> signal_copy(target_data[i].begin(), target_data[i].end());
         auto result = fft_convolve_helper(target_data[i], signal_copy, correlation_op);
@@ -353,6 +407,7 @@ DataType transform_auto_correlate_fft(DataType& input, std::vector<std::vector<d
             }
         }
 
+        working_buffer[i].resize(result.size());
         working_buffer[i] = std::move(result);
     }
 

@@ -619,9 +619,12 @@ protected:
             if (!input.has_container()) {
                 return false;
             }
-            return !OperationHelper::extract_numeric_data(input.data, input.container.value()).empty();
+            auto numeric_data = OperationHelper::extract_numeric_data(input.data, input.container.value());
+            return validate_multi_channel_data(numeric_data);
+        } else {
+            auto numeric_data = OperationHelper::extract_numeric_data(input.data);
+            return validate_multi_channel_data(numeric_data);
         }
-        return !OperationHelper::extract_numeric_data(input.data).empty();
     }
 
 private:
@@ -660,6 +663,38 @@ private:
         }
 
         return result;
+    }
+
+    /**
+     * @brief Validates multi-channel numeric data for NaN/Infinity values
+     * @param channels Vector of spans representing each channel's data
+     * @return true if all channels are valid, false if any contain invalid values
+     *
+     * Checks each channel's samples to ensure they are finite numbers.
+     * Empty channels are considered valid.
+     */
+    [[nodiscard]] bool validate_multi_channel_data(const std::vector<std::span<double>>& channels) const
+    {
+        if (channels.empty()) {
+            return false;
+        }
+
+        for (const auto& channel : channels) {
+            if (channel.empty()) {
+                continue;
+            }
+
+            for (double sample : channel) {
+                if (std::isnan(sample)) {
+                    return false;
+                }
+                if (std::isinf(sample)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /** @brief Core transformation configuration */

@@ -244,6 +244,7 @@ public:
      * @return Reconstructed data of type T
      */
     template <ComputeData T>
+        requires(!is_IO<T>::value)
     static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
         const DataStructureInfo& structure_info)
     {
@@ -264,6 +265,29 @@ public:
         } else {
             throw std::runtime_error("Reconstruction not implemented for target type");
         }
+    }
+
+    /**
+     * @brief Reconstruct IO type from double vector and structure info
+     * @tparam T Target IO type
+     * @param double_data Processed double vector
+     * @param structure_info Original structure metadata
+     * @return Reconstructed data of type T
+     */
+    template <typename T>
+        requires is_IO<T>::value
+    static T reconstruct_from_double(const std::vector<std::vector<double>>& double_data,
+        const DataStructureInfo& structure_info)
+    {
+        using UnderlyingType = std::decay_t<decltype(std::declval<T>().data)>;
+
+        T io_data;
+        io_data.dimensions = structure_info.dimensions;
+        io_data.modality = structure_info.modality;
+
+        io_data.data = reconstruct_from_double<UnderlyingType>(double_data, structure_info);
+
+        return io_data;
     }
 
     /**

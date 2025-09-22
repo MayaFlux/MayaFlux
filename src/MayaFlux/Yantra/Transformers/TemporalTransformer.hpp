@@ -235,15 +235,15 @@ private:
      * or direct assignment when types match. Ensures temporal processing results
      * maintain the correct output type and temporal characteristics.
      */
-    output_type create_output(const InputType& data)
+    output_type create_output(const input_type& input)
     {
-        output_type result;
         if constexpr (std::is_same_v<InputType, OutputType>) {
-            result.data = data;
+            return input;
         } else {
-            result.data = OperationHelper::convert_result_to_output_type<OutputType>(data);
+            output_type result = input;
+            result.data = OperationHelper::convert_result_to_output_type<OutputType>(input.data);
+            return result;
         }
-        return result;
     }
 };
 
