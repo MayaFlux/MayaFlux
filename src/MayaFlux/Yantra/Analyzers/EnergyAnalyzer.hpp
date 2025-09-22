@@ -568,21 +568,21 @@ private:
     }
 };
 
-/// Standard energy analyzer: DataVariant -> VectorXd
-using StandardEnergyAnalyzer = EnergyAnalyzer<Kakshya::DataVariant, Eigen::VectorXd>;
+/// Standard energy analyzer: DataVariant -> MatrixXd
+using StandardEnergyAnalyzer = EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::MatrixXd>;
 
-/// Container energy analyzer: SignalContainer -> VectorXd
-using ContainerEnergyAnalyzer = EnergyAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::VectorXd>;
+/// Container energy analyzer: SignalContainer -> MatrixXd
+using ContainerEnergyAnalyzer = EnergyAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
 
-/// Region energy analyzer: Region -> VectorXd
-using RegionEnergyAnalyzer = EnergyAnalyzer<Kakshya::Region, Eigen::VectorXd>;
+/// Region energy analyzer: Region -> MatrixXd
+using RegionEnergyAnalyzer = EnergyAnalyzer<Kakshya::Region, Eigen::MatrixXd>;
 
 /// Raw energy analyzer: produces double vectors
-template <ComputeData InputType = Kakshya::DataVariant>
-using RawEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<double>>;
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
+using RawEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<std::vector<double>>>;
 
 /// Variant energy analyzer: produces DataVariant output
-template <ComputeData InputType = Kakshya::DataVariant>
-using VariantEnergyAnalyzer = EnergyAnalyzer<InputType, Kakshya::DataVariant>;
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
+using VariantEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<Kakshya::DataVariant>>;
 
 } // namespace MayaFlux::Yantra

@@ -70,13 +70,13 @@ enum class AnalysisGranularity : u_int8_t {
  * Usage:
  * ```cpp
  * // Create analyzer for DataVariant -> Eigen::VectorXd
- * auto analyzer = std::make_shared<MyAnalyzer<Kakshya::DataVariant, Eigen::VectorXd>>();
+ * auto analyzer = std::make_shared<MyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>();
  *
  * // Or for Region -> RegionGroup
  * auto region_analyzer = std::make_shared<MyAnalyzer<Kakshya::Region, Kakshya::RegionGroup>>();
  * ```
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class UniversalAnalyzer : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;

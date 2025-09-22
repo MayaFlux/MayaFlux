@@ -677,18 +677,18 @@ private:
     }
 };
 
-/// Standard statistical analyzer: DataVariant -> VectorXd
-using StandardStatisticalAnalyzer = StatisticalAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>;
+/// Standard statistical analyzer: DataVariant -> MatrixXd
+using StandardStatisticalAnalyzer = StatisticalAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::MatrixXd>;
 
-/// Container statistical analyzer: SignalContainer -> VectorXd
-using ContainerStatisticalAnalyzer = StatisticalAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::VectorXd>;
+/// Container statistical analyzer: SignalContainer -> MatrixXd
+using ContainerStatisticalAnalyzer = StatisticalAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
 
-/// Region statistical analyzer: Region -> VectorXd
+/// Region statistical analyzer: Region -> MatrixXd
 using RegionStatisticalAnalyzer = StatisticalAnalyzer<Kakshya::Region, Eigen::VectorXd>;
 
 /// Raw statistical analyzer: produces double vectors
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
-using RawStatisticalAnalyzer = StatisticalAnalyzer<InputType, std::vector<double>>;
+using RawStatisticalAnalyzer = StatisticalAnalyzer<InputType, std::vector<std::vector<double>>>;
 
 /// Variant statistical analyzer: produces DataVariant output
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
