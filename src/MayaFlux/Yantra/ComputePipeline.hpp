@@ -8,7 +8,7 @@ namespace MayaFlux::Yantra {
 /**
  * @class ComputationPipeline
  * @brief Pipeline that uses grammar rules for operation composition
- * @tparam InputType Input data type (defaults to Kakshya::DataVariant)
+ * @tparam InputType Input data type (defaults to std::vector<Kakshya::DataVariant>)
  * @tparam OutputType Output data type (defaults to InputType)
  *
  * The ComputationPipeline provides a flexible, grammar-aware system for chaining
@@ -35,7 +35,7 @@ namespace MayaFlux::Yantra {
  *
  * ### Basic Pipeline Construction
  * ```cpp
- * auto pipeline = std::make_shared<ComputationPipeline<Kakshya::DataVariant>>();
+ * auto pipeline = std::make_shared<ComputationPipeline<std::vector<Kakshya::DataVariant>>>();
  *
  * // Add operations with names for later reference
  * pipeline->create_operation<MathematicalTransformer<>>("gain_stage")
@@ -63,7 +63,7 @@ namespace MayaFlux::Yantra {
  *     });
  * ```
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class ComputationPipeline {
 public:
     using input_type = IO<InputType>;
@@ -344,7 +344,7 @@ namespace PipelineFactory {
 
     /**
      * @brief Create an audio processing pipeline
-     * @tparam DataType The data type for the pipeline (defaults to Kakshya::DataVariant)
+     * @tparam DataType The data type for the pipeline (defaults to std::vector<Kakshya::DataVariant>)
      * @return Shared pointer to a configured audio processing pipeline
      *
      * Creates a pipeline pre-configured for audio processing workflows with
@@ -353,11 +353,11 @@ namespace PipelineFactory {
      *
      * Example:
      * ```cpp
-     * auto audio_pipeline = PipelineFactory::create_audio_pipeline<Kakshya::DataVariant>();
+     * auto audio_pipeline = PipelineFactory::create_audio_pipeline<std::vector<Kakshya::DataVariant>>();
      * auto result = audio_pipeline->process(audio_data, context);
      * ```
      */
-    template <ComputeData DataType = Kakshya::DataVariant>
+    template <ComputeData DataType = std::vector<Kakshya::DataVariant>>
     std::shared_ptr<ComputationPipeline<DataType>> create_audio_pipeline()
     {
         auto pipeline = std::make_shared<ComputationPipeline<DataType>>();
@@ -372,7 +372,7 @@ namespace PipelineFactory {
 
     /**
      * @brief Create an analysis pipeline
-     * @tparam DataType The data type for the pipeline (defaults to Kakshya::DataVariant)
+     * @tparam DataType The data type for the pipeline (defaults to std::vector<Kakshya::DataVariant>)
      * @return Shared pointer to a configured analysis pipeline
      *
      * Creates a pipeline pre-configured for data analysis workflows with
@@ -385,7 +385,7 @@ namespace PipelineFactory {
      * auto features = analysis_pipeline->process(raw_data, analysis_context);
      * ```
      */
-    template <ComputeData DataType = Kakshya::DataVariant>
+    template <ComputeData DataType = std::vector<Kakshya::DataVariant>>
     std::shared_ptr<ComputationPipeline<DataType>> create_analysis_pipeline()
     {
         auto pipeline = std::make_shared<ComputationPipeline<DataType>>();
