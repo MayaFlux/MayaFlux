@@ -111,6 +111,8 @@ public:
 
         if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>)
             return extract_from_eigen_matrix(compute_data);
+
+        return std::vector<std::span<double>>{};
     }
 
     /**

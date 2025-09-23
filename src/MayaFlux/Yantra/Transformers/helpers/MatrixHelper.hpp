@@ -409,7 +409,7 @@ DataType transform_matrix(DataType& input, const Eigen::MatrixXd& transformation
             Eigen::Map<Eigen::VectorXd> data_vector(channel_span.data(), channel_span.size());
             Eigen::VectorXd result = transformation_matrix * data_vector;
 
-            auto copy_size = std::min(result.size(), static_cast<long>(channel_span.size()));
+            auto copy_size = std::min<long>(result.size(), static_cast<long>(channel_span.size()));
             std::ranges::copy(result.head(copy_size), channel_span.begin());
         }
     }

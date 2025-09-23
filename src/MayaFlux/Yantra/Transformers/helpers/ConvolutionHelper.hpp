@@ -40,7 +40,7 @@ std::vector<double> fft_convolve_helper(
     */
 
     size_t fft_size = std::max(256uz, conv_size);
-    fft_size = 1 << (32 - __builtin_clz(fft_size - 1));
+    fft_size = 1 << (32 - std::countl_zero(fft_size - 1));
 
     Eigen::VectorXd padded_input = Eigen::VectorXd::Zero(fft_size);
     Eigen::VectorXd padded_kernel = Eigen::VectorXd::Zero(fft_size);
