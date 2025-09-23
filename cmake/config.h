@@ -2,6 +2,7 @@
 
 // Cross-platform definitions
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
+using u_int = uint;
 using u_int8_t = uint8_t;
 using u_int16_t = uint16_t;
 using u_int32_t = uint32_t;
@@ -34,12 +35,10 @@ using u_int64_t = uint64_t;
 #endif
 #endif
 
-namespace MayaFlux {
-namespace Platform {
+namespace MayaFlux::Platform {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    constexpr char PathSeparator = '\\';
+constexpr char PathSeparator = '\\';
 #else
-    constexpr char PathSeparator = '/';
+constexpr char PathSeparator = '/';
 #endif
-} // namespace Platform
-} // namespace MayaFlux
+} // namespace MayaFlux::Platform

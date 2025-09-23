@@ -49,7 +49,7 @@ void ContiguousAccessProcessor::store_metadata(const std::shared_ptr<SignalSourc
         u_int64_t num_channels = m_structure.get_channel_count();
 
         m_output_shape = {
-            std::min(1024UL, num_frames),
+            std::min<u_int64_t>(1024UL, num_frames),
             num_channels
         };
     }
