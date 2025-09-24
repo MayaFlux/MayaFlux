@@ -1,9 +1,12 @@
 name: MayaFlux CI
 on:
-  push:
-    branches: [main, containerdata]
-  pull_request:
-    branches: [main]
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      run_tests:
+        description: "Run tests after build"
+        required: false
+        default: true
+        type: boolean
 env:
   BUILD_TYPE: Release
 jobs:
