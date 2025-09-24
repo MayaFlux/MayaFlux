@@ -1,0 +1,70 @@
+name: MayaFlux CI
+on:
+  push:
+    branches: [main, containerdata]
+  pull_request:
+    branches: [main]
+env:
+  BUILD_TYPE: Release
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            name: "macOS LLVM"
+            cc: /opt/homebrew/opt/llvm/bin/clang
+            cxx: /opt/homebrew/opt/llvm/bin/clang++
+            install_deps: |
+              brew update
+              brew install cmake ninja pkg-config llvm
+              brew install rtaudio eigen magic_enum
+              brew install ffmpeg glfw googletest
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up environment
+        shell: bash
+        run: |
+          echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
+          echo "CXX=${{ matrix.cxx }}" >> $GITHUB_ENV
+      - name: Install dependencies
+        shell: bash
+        run: ${{ matrix.install_deps }}
+
+      - name: Debug LLVM setup
+        shell: bash
+        run: |
+          echo "=== LLVM libc++ libraries ==="
+          ls -la /opt/homebrew/opt/llvm/lib/libc*
+          echo "=== Checking for missing symbol ==="
+          nm -D /opt/homebrew/opt/llvm/lib/libc++.dylib 2>/dev/null | grep hash_memory || echo "hash_memory symbol not found"
+          echo "=== Compiler version ==="
+          ${{ matrix.cxx }} --version
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_VERBOSE_MAKEFILE=ON
+      - name: Build
+        shell: bash
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel --verbose
+      - name: Test
+        shell: bash
+        working-directory: build
+        run: ctest --output-on-failure --parallel
+      - name: Upload build artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.name }}
+          path: |
+            build/CMakeFiles/CMakeOutput.log
+            build/CMakeFiles/CMakeError.log
+            build/Testing/Temporary/LastTest.log
