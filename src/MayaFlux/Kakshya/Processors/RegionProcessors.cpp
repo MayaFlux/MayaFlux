@@ -256,6 +256,18 @@ void RegionOrganizationProcessor::process_region_segment(const OrganizedRegion&,
         });
 }
 
+/* void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion& current_region,
+    const OrganizedRegion& next_region,
+    const std::shared_ptr<SignalSourceContainer>& container,
+    std::vector<DataVariant>& output_data)
+{
+    if (next_region.segments.empty()) {
+        return;
+    }
+
+
+} */
+
 void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion& current_region,
     const OrganizedRegion& next_region,
     const std::shared_ptr<SignalSourceContainer>& container,
@@ -267,10 +279,10 @@ void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion&
 
     auto next_data = container->get_region_data(next_region.segments[0].source_region);
 
-    for (auto&& [current_var, next_var] : std::views::zip(output_data, next_data)) {
+    // TODO:: Reenable when C++23 is more widely supported
+    /* for (auto&& [current_var, next_var] : std::views::zip(output_data, next_data)) {
         auto current_span = convert_variant<double>(current_var);
         auto next_span = convert_variant<double>(const_cast<DataVariant&>(next_var));
-
         auto paired_samples = std::views::zip(current_span, next_span)
             | std::views::enumerate;
 
@@ -290,6 +302,32 @@ void RegionOrganizationProcessor::apply_region_transition(const OrganizedRegion&
                 auto [current, next] = sample_pair;
                 current = current * 0.5 + next * 0.5;
             });
+            break;
+
+        default:
+            break;
+        }
+    } */
+
+    const size_t data_count = std::min<size_t>(output_data.size(), next_data.size());
+    for (size_t variant_idx = 0; variant_idx < data_count; ++variant_idx) {
+        auto current_span = convert_variant<double>(output_data[variant_idx]);
+        auto next_span = convert_variant<double>(const_cast<DataVariant&>(next_data[variant_idx]));
+
+        const size_t sample_count = std::min<size_t>(current_span.size(), next_span.size());
+
+        switch (current_region.transition_type) {
+        case RegionTransition::CROSSFADE:
+            for (size_t i = 0; i < sample_count; ++i) {
+                double fade_factor = static_cast<double>(i) / static_cast<double>(sample_count);
+                current_span[i] = current_span[i] * (1.0 - fade_factor) + next_span[i] * fade_factor;
+            }
+            break;
+
+        case RegionTransition::OVERLAP:
+            for (size_t i = 0; i < sample_count; ++i) {
+                current_span[i] = current_span[i] * 0.5 + next_span[i] * 0.5;
+            }
             break;
 
         default:
@@ -341,7 +379,8 @@ std::optional<size_t> RegionOrganizationProcessor::find_region_for_position(
 void RegionOrganizationProcessor::organize_group(const std::shared_ptr<SignalSourceContainer>& container,
     const RegionGroup& group)
 {
-    for (auto&& [i, region] : std::views::enumerate(group.regions)) {
+    // TODO:: Reenable when C++23 is more widely supported
+    /* for (auto&& [i, region] : std::views::enumerate(group.regions)) {
         OrganizedRegion organized_region(group.name, i);
 
         RegionSegment segment(region);
@@ -359,6 +398,20 @@ void RegionOrganizationProcessor::organize_group(const std::shared_ptr<SignalSou
         organized_region.state = RegionState::READY;
 
         m_organized_regions.push_back(std::move(organized_region));
+    } */
+    for (size_t i = 0; const auto& region : group.regions) {
+        OrganizedRegion organized_region(group.name, i);
+        RegionSegment segment(region);
+        cache_region_if_needed(segment, container);
+        organized_region.segments.push_back(std::move(segment));
+        std::ranges::copy(group.attributes,
+            std::inserter(organized_region.attributes, organized_region.attributes.end()));
+        std::ranges::copy(region.attributes,
+            std::inserter(organized_region.attributes, organized_region.attributes.end()));
+        organized_region.current_position = region.start_coordinates;
+        organized_region.state = RegionState::READY;
+        m_organized_regions.push_back(std::move(organized_region));
+        ++i;
     }
 }
 

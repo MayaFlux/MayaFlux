@@ -16,6 +16,7 @@ elseif(UNIX)
 else()
     add_compile_definitions(MAYAFLUX_PLATFORM_UNKNOWN)
 endif()
+add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 
 if(WIN32)
     if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -76,7 +77,6 @@ else()
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
 endif()
 
-add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/version.h

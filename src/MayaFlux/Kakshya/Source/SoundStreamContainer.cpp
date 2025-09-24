@@ -212,7 +212,7 @@ void SoundStreamContainer::get_frames(std::span<double> output, u_int64_t start_
         return;
     }
 
-    u_int64_t frames_to_copy = std::min(num_frames, m_num_frames - start_frame);
+    u_int64_t frames_to_copy = std::min<size_t>(num_frames, m_num_frames - start_frame);
     u_int64_t elements_to_copy = std::min(
         frames_to_copy * m_num_channels,
         static_cast<u_int64_t>(output.size()));
@@ -221,7 +221,7 @@ void SoundStreamContainer::get_frames(std::span<double> output, u_int64_t start_
     u_int64_t offset = start_frame * m_num_channels;
 
     if (offset < interleaved_data.size()) {
-        u_int64_t available = std::min(elements_to_copy, interleaved_data.size() - offset);
+        u_int64_t available = std::min<size_t>(elements_to_copy, interleaved_data.size() - offset);
         std::copy_n(interleaved_data.begin() + offset, available, output.begin());
 
         if (available < output.size()) {

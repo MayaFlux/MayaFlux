@@ -388,7 +388,7 @@ std::vector<DataVariant> DynamicSoundStream::create_expanded_data(u_int64_t new_
             std::vector<double> expanded_buffer(new_frame_count * get_num_channels(), 0.0);
 
             std::ranges::copy_n(current_data.begin(),
-                std::min(current_data.size(), expanded_buffer.size()),
+                std::min<size_t>(current_data.size(), expanded_buffer.size()),
                 expanded_buffer.begin());
 
             expanded_data[0] = DataVariant(std::move(expanded_buffer));
@@ -404,7 +404,7 @@ std::vector<DataVariant> DynamicSoundStream::create_expanded_data(u_int64_t new_
 
                   std::vector<double> expanded_channel(new_frame_count, 0.0);
                   std::ranges::copy_n(current_channel_data.begin(),
-                      std::min(current_channel_data.size(), expanded_channel.size()),
+                      std::min<size_t>(current_channel_data.size(), expanded_channel.size()),
                       expanded_channel.begin());
 
                   return { std::move(expanded_channel) };

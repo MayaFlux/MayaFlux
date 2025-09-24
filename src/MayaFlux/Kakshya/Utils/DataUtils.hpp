@@ -39,7 +39,8 @@ template <ProcessableData T>
 constexpr std::span<T> extract_frame(std::span<T> data, u_int64_t frame_index, u_int64_t frame_size) noexcept
 {
     u_int64_t start = frame_index * frame_size;
-    u_int64_t end = std::min(start + frame_size, data.size());
+    u_int64_t end = std::min(static_cast<u_int64_t>(start + frame_size),
+        static_cast<u_int64_t>(data.size()));
 
     if (start >= data.size()) {
         return {};

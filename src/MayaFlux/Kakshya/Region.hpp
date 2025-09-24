@@ -394,7 +394,7 @@ struct Region {
     Region scale(const std::vector<double>& factors) const
     {
         Region result = *this;
-        for (size_t i = 0; i < std::min(factors.size(), start_coordinates.size()); i++) {
+        for (size_t i = 0; i < std::min<size_t>(factors.size(), start_coordinates.size()); i++) {
             u_int64_t center = (start_coordinates[i] + end_coordinates[i]) / 2;
             u_int64_t half_span = get_span(i) / 2;
             auto new_half_span = static_cast<u_int64_t>((double)half_span * factors[i]);
@@ -879,8 +879,8 @@ struct RegionGroup {
         for (const auto& region : regions) {
             for (size_t i = 0; i < min_coords.size(); i++) {
                 if (i < region.start_coordinates.size()) {
-                    min_coords[i] = std::min(min_coords[i], region.start_coordinates[i]);
-                    max_coords[i] = std::max(max_coords[i], region.end_coordinates[i]);
+                    min_coords[i] = std::min<size_t>(min_coords[i], region.start_coordinates[i]);
+                    max_coords[i] = std::max<size_t>(max_coords[i], region.end_coordinates[i]);
                 }
             }
         }

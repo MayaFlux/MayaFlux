@@ -136,12 +136,19 @@ DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& c
         throw std::runtime_error("Interleaved data size is not a multiple of channel count");
     }
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::vector<double> channel_data;
+    for (size_t i = channel_index; i < interleaved_span.size(); i += channel_count) {
+        channel_data.push_back(interleaved_span[i]);
+    }
+#else
     auto channel_view = interleaved_span
         | std::views::drop(channel_index)
         | std::views::stride(channel_count);
 
     std::vector<double> channel_data;
     std::ranges::copy(channel_view, std::back_inserter(channel_data));
+#endif // MAYAFLUX_PLATFORM_MACOS
 
     return DataVariant { std::move(channel_data) };
 }
