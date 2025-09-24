@@ -12,15 +12,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Use Xcode Clang (preinstalled)
           - os: macos-latest
-            name: "macOS LLVM"
-            cc: /opt/homebrew/opt/llvm/bin/clang
-            cxx: /opt/homebrew/opt/llvm/bin/clang++
+            name: "macOS Xcode Clang"
+            cc: clang
+            cxx: clang++
             install_deps: |
-              brew update
-              brew install cmake ninja pkg-config llvm
-              brew install rtaudio eigen magic_enum
+              brew install rtaudio eigen magic_enum onedpl
               brew install ffmpeg glfw googletest
+
+          # Use Homebrew Clang (preinstalled, just needs path)
+          - os: macos-latest
+            name: "macOS Homebrew Clang"
+            cc: /opt/homebrew/opt/llvm@18/bin/clang
+            cxx: /opt/homebrew/opt/llvm@18/bin/clang++
+            install_deps: |
+              brew install rtaudio eigen magic_enum onedpl
+              brew install ffmpeg glfw googletest
+
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name }}
     steps:
@@ -35,14 +44,15 @@ jobs:
         shell: bash
         run: ${{ matrix.install_deps }}
 
-      - name: Debug LLVM setup
+      # Debug what compilers are available
+      - name: Debug available compilers
         shell: bash
         run: |
-          echo "=== LLVM libc++ libraries ==="
-          ls -la /opt/homebrew/opt/llvm/lib/libc*
-          echo "=== Checking for missing symbol ==="
-          nm -D /opt/homebrew/opt/llvm/lib/libc++.dylib 2>/dev/null | grep hash_memory || echo "hash_memory symbol not found"
-          echo "=== Compiler version ==="
+          echo "=== System Clang ==="
+          clang --version
+          echo "=== Homebrew LLVM location ==="
+          ls -la $(brew --prefix llvm@18)/bin/ || echo "Homebrew LLVM not found"
+          echo "=== Selected compiler ==="
           ${{ matrix.cxx }} --version
 
       - name: Configure CMake
