@@ -8,17 +8,8 @@ env:
   BUILD_TYPE: Release
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            name: "macOS System Clang"
-            cc: clang
-            cxx: clang++
-
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.name }}
+    runs-on: macos-latest
+    name: "macOS LLVM C++23"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,32 +22,36 @@ jobs:
             /opt/homebrew/Cellar
             /opt/homebrew/lib
             /opt/homebrew/include
-          key: homebrew-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          key: homebrew-${{ runner.os }}-llvm-${{ hashFiles('.github/workflows/ci.yml') }}
           restore-keys: |
+            homebrew-${{ runner.os }}-llvm-
             homebrew-${{ runner.os }}-
 
-      - name: Set up environment
+      - name: Install LLVM and dependencies
         shell: bash
         run: |
-          echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
-          echo "CXX=${{ matrix.cxx }}" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        shell: bash
-        run: |
-          # Update brew and install dependencies
           brew update
-          brew install rtaudio eigen magic_enum onedpl
+          brew install llvm rtaudio eigen magic_enum onedpl
           brew install ffmpeg glfw googletest
 
-      - name: Debug available compilers
+      - name: Set up LLVM environment
         shell: bash
         run: |
-          echo "=== System Clang ==="
-          which clang++
+          LLVM_PREFIX=$(brew --prefix llvm)
+          echo "LLVM_PREFIX=${LLVM_PREFIX}" >> $GITHUB_ENV
+          echo "${LLVM_PREFIX}/bin" >> $GITHUB_PATH
+          echo "CC=${LLVM_PREFIX}/bin/clang" >> $GITHUB_ENV
+          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
+
+      - name: Verify LLVM setup
+        shell: bash
+        run: |
+          echo "=== LLVM Path: $LLVM_PREFIX ==="
           clang++ --version
-          echo "=== Dependencies check ==="
-          brew list | grep -E "(rtaudio|eigen|ffmpeg|onedpl)"
+          echo "=== C++23 feature check ==="
+          echo '#include <ranges>' > test.cpp
+          echo 'int main() { auto v = std::views::iota(0, 5); return 0; }' >> test.cpp
+          clang++ -std=c++23 test.cpp -o test && echo "C++23 working" || echo "C++23 failed"
 
       - name: Configure CMake
         shell: bash
@@ -65,14 +60,6 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_VERBOSE_MAKEFILE=ON
-
-      - name: Cache CMake build
-        uses: actions/cache@v4
-        with:
-          path: build
-          key: cmake-build-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'src/**/*.cpp', 'src/**/*.hpp') }}
-          restore-keys: |
-            cmake-build-${{ runner.os }}-
 
       - name: Build
         shell: bash
@@ -87,7 +74,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-${{ matrix.name }}
+          name: build-logs-llvm
           path: |
             build/CMakeFiles/CMakeOutput.log
             build/CMakeFiles/CMakeError.log

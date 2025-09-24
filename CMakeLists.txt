@@ -35,14 +35,29 @@ if(WIN32)
 endif()
 
 if(APPLE)
-    if(EXISTS "/opt/homebrew/opt/llvm/bin/clang")
-        set(CMAKE_C_COMPILER "/opt/homebrew/opt/llvm/bin/clang" CACHE STRING "Homebrew Clang C compiler" FORCE)
-        set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++" CACHE STRING "Homebrew Clang C++ compiler" FORCE)
-        set(LLVM_ROOT "/opt/homebrew/opt/llvm")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -I${LLVM_ROOT}/include/c++/v1")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${LLVM_ROOT}/lib -Wl,-rpath,${LLVM_ROOT}/lib")
+    find_program(BREW_EXECUTABLE brew)
+    if(BREW_EXECUTABLE)
+        execute_process(
+            COMMAND ${BREW_EXECUTABLE} --prefix llvm
+            OUTPUT_VARIABLE LLVM_PREFIX
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+
+        if(LLVM_PREFIX AND EXISTS "${LLVM_PREFIX}/bin/clang++")
+            message(STATUS "Found Homebrew LLVM at: ${LLVM_PREFIX}")
+            set(CMAKE_C_COMPILER "${LLVM_PREFIX}/bin/clang" CACHE STRING "Homebrew Clang C compiler" FORCE)
+            set(CMAKE_CXX_COMPILER "${LLVM_PREFIX}/bin/clang++" CACHE STRING "Homebrew Clang C++ compiler" FORCE)
+
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -I${LLVM_PREFIX}/include/c++/v1")
+            set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${LLVM_PREFIX}/lib -Wl,-rpath,${LLVM_PREFIX}/lib")
+
+            message(STATUS "Using Homebrew LLVM toolchain")
+        else()
+            message(WARNING "Homebrew LLVM not found, using system compiler")
+        endif()
     else()
-        message(STATUS "Using system Clang compiler")
+        message(STATUS "Homebrew not found, using system compiler")
     endif()
 endif()
 
