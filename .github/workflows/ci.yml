@@ -12,14 +12,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Use system Xcode Clang (definitely exists)
           - os: macos-latest
             name: "macOS System Clang"
             cc: clang
             cxx: clang++
-            install_deps: |
-              brew install rtaudio eigen magic_enum
-              brew install ffmpeg glfw googletest
 
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name }}
@@ -27,18 +23,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Debug available compilers
-        shell: bash
-        run: |
-          echo "=== System PATH ==="
-          echo $PATH
-          echo "=== Available clang ==="
-          which clang
-          which clang++
-          clang --version
-          clang++ --version
-          echo "=== Homebrew LLVM check ==="
-          ls -la /opt/homebrew/opt/ | grep llvm || echo "No LLVM in homebrew"
+      - name: Cache Homebrew packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /opt/homebrew/Cellar
+            /opt/homebrew/lib
+            /opt/homebrew/include
+          key: homebrew-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            homebrew-${{ runner.os }}-
 
       - name: Set up environment
         shell: bash
@@ -48,22 +43,46 @@ jobs:
 
       - name: Install dependencies
         shell: bash
-        run: ${{ matrix.install_deps }}
+        run: |
+          # Update brew and install dependencies
+          brew update
+          brew install rtaudio eigen magic_enum onedpl
+          brew install ffmpeg glfw googletest
 
-      - name: Configure CMake (remove hardcoded paths)
+      - name: Debug available compilers
+        shell: bash
+        run: |
+          echo "=== System Clang ==="
+          which clang++
+          clang++ --version
+          echo "=== Dependencies check ==="
+          brew list | grep -E "(rtaudio|eigen|ffmpeg|onedpl)"
+
+      - name: Configure CMake
         shell: bash
         run: |
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_VERBOSE_MAKEFILE=ON
+
+      - name: Cache CMake build
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: cmake-build-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'src/**/*.cpp', 'src/**/*.hpp') }}
+          restore-keys: |
+            cmake-build-${{ runner.os }}-
+
       - name: Build
         shell: bash
         run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel --verbose
+
       - name: Test
         shell: bash
         working-directory: build
         run: ctest --output-on-failure --parallel
+
       - name: Upload build artifacts (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
