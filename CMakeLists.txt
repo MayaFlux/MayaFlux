@@ -97,7 +97,6 @@ configure_file(
 )
 
 find_package(GTest REQUIRED)
-enable_testing()
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 list(FILTER SOURCES EXCLUDE REGEX ".*main\\.cpp$")
@@ -205,7 +204,11 @@ else()
     )
 endif()
 
-add_subdirectory(tests)
+if(NOT DEFINED ENV{GITHUB_ACTIONS})
+    # Only enable tests locally, not on CI
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 if(UNIX)
     execute_process(
