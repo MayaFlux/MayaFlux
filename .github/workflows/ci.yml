@@ -9,7 +9,7 @@ env:
 jobs:
   build:
     runs-on: macos-latest
-    name: "macOS LLVM C++23"
+    name: "macOS System Clang C++23"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,36 +22,33 @@ jobs:
             /opt/homebrew/Cellar
             /opt/homebrew/lib
             /opt/homebrew/include
-          key: homebrew-${{ runner.os }}-llvm-${{ hashFiles('.github/workflows/ci.yml') }}
+          key: homebrew-${{ runner.os }}-deps-${{ hashFiles('.github/workflows/ci.yml') }}
           restore-keys: |
-            homebrew-${{ runner.os }}-llvm-
+            homebrew-${{ runner.os }}-deps-
             homebrew-${{ runner.os }}-
 
-      - name: Install LLVM and dependencies
+      - name: Install dependencies
         shell: bash
         run: |
           brew update
-          brew install llvm rtaudio eigen magic_enum onedpl
+          brew install rtaudio eigen magic_enum onedpl
           brew install ffmpeg glfw googletest
 
-      - name: Set up LLVM environment
+      - name: Check system Clang C++23 support
         shell: bash
         run: |
-          LLVM_PREFIX=$(brew --prefix llvm)
-          echo "LLVM_PREFIX=${LLVM_PREFIX}" >> $GITHUB_ENV
-          echo "${LLVM_PREFIX}/bin" >> $GITHUB_PATH
-          echo "CC=${LLVM_PREFIX}/bin/clang" >> $GITHUB_ENV
-          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
-
-      - name: Verify LLVM setup
-        shell: bash
-        run: |
-          echo "=== LLVM Path: $LLVM_PREFIX ==="
+          echo "=== System Clang Version ==="
           clang++ --version
-          echo "=== C++23 feature check ==="
+          echo "=== Testing C++23 features ==="
           echo '#include <ranges>' > test.cpp
           echo 'int main() { auto v = std::views::iota(0, 5); return 0; }' >> test.cpp
-          clang++ -std=c++23 test.cpp -o test && echo "C++23 working" || echo "C++23 failed"
+          clang++ -std=c++23 test.cpp -o test && echo "✅ C++23 works with system Clang" || echo "❌ C++23 failed"
+
+      - name: Set up system environment (no LLVM paths)
+        shell: bash
+        run: |
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
 
       - name: Configure CMake
         shell: bash
@@ -74,7 +71,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-llvm
+          name: build-logs-system-clang
           path: |
             build/CMakeFiles/CMakeOutput.log
             build/CMakeFiles/CMakeError.log
