@@ -12,22 +12,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Use Xcode Clang (preinstalled)
+          # Use system Xcode Clang (definitely exists)
           - os: macos-latest
-            name: "macOS Xcode Clang"
+            name: "macOS System Clang"
             cc: clang
             cxx: clang++
             install_deps: |
-              brew install rtaudio eigen magic_enum onedpl
-              brew install ffmpeg glfw googletest
-
-          # Use Homebrew Clang (preinstalled, just needs path)
-          - os: macos-latest
-            name: "macOS Homebrew Clang"
-            cc: /opt/homebrew/opt/llvm@18/bin/clang
-            cxx: /opt/homebrew/opt/llvm@18/bin/clang++
-            install_deps: |
-              brew install rtaudio eigen magic_enum onedpl
+              brew install rtaudio eigen magic_enum
               brew install ffmpeg glfw googletest
 
     runs-on: ${{ matrix.os }}
@@ -35,27 +26,31 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Debug available compilers
+        shell: bash
+        run: |
+          echo "=== System PATH ==="
+          echo $PATH
+          echo "=== Available clang ==="
+          which clang
+          which clang++
+          clang --version
+          clang++ --version
+          echo "=== Homebrew LLVM check ==="
+          ls -la /opt/homebrew/opt/ | grep llvm || echo "No LLVM in homebrew"
+
       - name: Set up environment
         shell: bash
         run: |
           echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
           echo "CXX=${{ matrix.cxx }}" >> $GITHUB_ENV
+
       - name: Install dependencies
         shell: bash
         run: ${{ matrix.install_deps }}
 
-      # Debug what compilers are available
-      - name: Debug available compilers
-        shell: bash
-        run: |
-          echo "=== System Clang ==="
-          clang --version
-          echo "=== Homebrew LLVM location ==="
-          ls -la $(brew --prefix llvm@18)/bin/ || echo "Homebrew LLVM not found"
-          echo "=== Selected compiler ==="
-          ${{ matrix.cxx }} --version
-
-      - name: Configure CMake
+      - name: Configure CMake (remove hardcoded paths)
         shell: bash
         run: |
           cmake -B build \

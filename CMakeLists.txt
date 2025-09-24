@@ -35,19 +35,15 @@ if(WIN32)
 endif()
 
 if(APPLE)
-    set(CMAKE_C_COMPILER "/opt/homebrew/opt/llvm/bin/clang" CACHE STRING "Homebrew Clang C compiler" FORCE)
-    set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++" CACHE STRING "Homebrew Clang C++ compiler" FORCE)
-    # Use Homebrew LLVM's libc++ and includes
-    set(LLVM_ROOT "/opt/homebrew/opt/llvm")
-    set(CMAKE_SYSROOT "") # Don't use Xcode SDK
-    # Set C++ standard library and include paths
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -I${LLVM_ROOT}/include/c++/v1")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${LLVM_ROOT}/lib -Wl,-rpath,${LLVM_ROOT}/lib")
-    # Optionally, set environment variables for subprocesses
-    set(ENV{CPATH} "${LLVM_ROOT}/include/c++/v1")
-    set(ENV{LIBRARY_PATH} "${LLVM_ROOT}/lib")
-    set(ENV{LD_LIBRARY_PATH} "${LLVM_ROOT}/lib")
-    # set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk" CACHE STRING "" FORCE)
+    if(EXISTS "/opt/homebrew/opt/llvm/bin/clang")
+        set(CMAKE_C_COMPILER "/opt/homebrew/opt/llvm/bin/clang" CACHE STRING "Homebrew Clang C compiler" FORCE)
+        set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++" CACHE STRING "Homebrew Clang C++ compiler" FORCE)
+        set(LLVM_ROOT "/opt/homebrew/opt/llvm")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -I${LLVM_ROOT}/include/c++/v1")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${LLVM_ROOT}/lib -Wl,-rpath,${LLVM_ROOT}/lib")
+    else()
+        message(STATUS "Using system Clang compiler")
+    endif()
 endif()
 
 project(MayaFlux VERSION 0.1.0)
