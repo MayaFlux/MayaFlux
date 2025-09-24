@@ -59,7 +59,7 @@ std::vector<size_t> generate_span_sort_indices(std::span<double> data,
     SortingDirection direction)
 {
     std::vector<size_t> indices(data.size());
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     if (data.empty()) {
         return indices;

@@ -13,7 +13,7 @@ std::vector<double> compute_dynamic_range_energy(std::span<const double> data, c
     std::vector<double> dr_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     MayaFlux::Parallel::for_each(MayaFlux::Parallel::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -43,7 +43,7 @@ std::vector<double> compute_zero_crossing_energy(std::span<const double> data, c
     std::vector<double> zcr_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -68,7 +68,7 @@ std::vector<double> compute_power_energy(std::span<const double> data, const siz
     std::vector<double> power_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -91,7 +91,7 @@ std::vector<double> compute_peak_energy(std::span<const double> data, const u_in
     std::vector<double> peak_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -114,7 +114,7 @@ std::vector<double> compute_rms_energy(std::span<const double> data, const u_int
     std::vector<double> rms_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -137,7 +137,7 @@ std::vector<double> compute_spectral_energy(std::span<const double> data, const 
     std::vector<double> spectral_energy(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     Eigen::VectorXd hanning_window(window_size);
     for (u_int32_t i = 0; i < window_size; ++i) {
@@ -177,7 +177,7 @@ std::vector<double> compute_harmonic_energy(std::span<const double> data, const 
     std::vector<double> harmonic_energy(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     Eigen::VectorXd hanning_window(window_size);
     for (u_int32_t i = 0; i < window_size; ++i) {
@@ -219,7 +219,7 @@ std::vector<double> compute_mean_statistic(std::span<const double> data, const s
     std::vector<double> mean_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -242,7 +242,7 @@ std::vector<double> compute_variance_statistic(std::span<const double> data, con
     std::vector<double> variance_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -291,7 +291,7 @@ std::vector<double> compute_skewness_statistic(std::span<const double> data, con
     std::vector<double> skewness_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -339,7 +339,7 @@ std::vector<double> compute_kurtosis_statistic(std::span<const double> data, con
     std::vector<double> kurtosis_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -386,7 +386,7 @@ std::vector<double> compute_median_statistic(std::span<const double> data, const
     std::vector<double> median_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -423,7 +423,7 @@ std::vector<double> compute_percentile_statistic(std::span<const double> data, c
         percentile = 100.0;
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -468,7 +468,7 @@ std::vector<double> compute_entropy_statistic(std::span<const double> data, cons
     std::vector<double> entropy_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -528,7 +528,7 @@ std::vector<double> compute_min_statistic(std::span<const double> data, const si
     std::vector<double> min_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -547,7 +547,7 @@ std::vector<double> compute_max_statistic(std::span<const double> data, const si
     std::vector<double> max_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -566,7 +566,7 @@ std::vector<double> compute_range_statistic(std::span<const double> data, const 
     std::vector<double> range_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -586,7 +586,7 @@ std::vector<double> compute_sum_statistic(std::span<const double> data, const si
     std::vector<double> sum_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -605,7 +605,7 @@ std::vector<double> compute_count_statistic(std::span<const double> data, const 
     std::vector<double> count_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -623,7 +623,7 @@ std::vector<double> compute_mad_statistic(std::span<const double> data, const si
     std::vector<double> mad_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -685,7 +685,7 @@ std::vector<double> compute_mode_statistic(std::span<const double> data, const s
     constexpr double tolerance = 1e-10;
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
@@ -724,7 +724,7 @@ std::vector<double> compute_zscore_statistic(std::span<const double> data, const
     std::vector<double> zscore_values(num_windows);
 
     std::vector<size_t> indices(num_windows);
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
