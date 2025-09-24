@@ -35,7 +35,7 @@ if(WIN32)
 endif()
 
 if(APPLE)
-    if(DEFINED ENV{GITHUB_ACTIONS})
+    if(DEFINED ENV{GITHUB_ACTIONS} OR DEFINED ENV{MAYAFLUX_USE_SYSTEM_CLANG})
         message(STATUS "Using system Clang on GitHub CI")
     else()
         find_program(BREW_EXECUTABLE brew)
@@ -208,11 +208,8 @@ else()
     )
 endif()
 
-if(NOT DEFINED ENV{GITHUB_ACTIONS})
-    # Only enable tests locally, not on CI
-    enable_testing()
-    add_subdirectory(tests)
-endif()
+enable_testing()
+add_subdirectory(tests)
 
 if(UNIX)
     execute_process(
