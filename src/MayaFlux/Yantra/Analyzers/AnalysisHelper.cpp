@@ -2,13 +2,7 @@
 
 #include <numeric>
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include "oneapi/dpl/algorithm"
-#include "oneapi/dpl/execution"
-#include "oneapi/dpl/numeric"
-#else
-#include "execution"
-#endif
+#include "MayaFlux/Parallel.hpp"
 
 #include "unsupported/Eigen/FFT"
 
@@ -21,7 +15,7 @@ std::vector<double> compute_dynamic_range_energy(std::span<const double> data, c
     std::vector<size_t> indices(num_windows);
     std::ranges::iota(indices, 0);
 
-    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(),
+    MayaFlux::Parallel::for_each(MayaFlux::Parallel::par_unseq, indices.begin(), indices.end(),
         [&](size_t i) {
             const size_t start_idx = i * hop_size;
             const size_t end_idx = std::min(start_idx + window_size, data.size());

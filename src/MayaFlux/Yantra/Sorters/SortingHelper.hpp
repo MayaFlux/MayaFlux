@@ -4,13 +4,7 @@
 
 #include "UniversalSorter.hpp"
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include "oneapi/dpl/algorithm"
-#include "oneapi/dpl/execution"
-#include "oneapi/dpl/numeric"
-#else
-#include "execution"
-#endif
+#include "MayaFlux/Parallel.hpp"
 
 /**
  * @file SortingHelpers.hpp
@@ -164,7 +158,7 @@ void execute_sorting_algorithm(Iterator begin, Iterator end,
     }
 
     case SortingAlgorithm::PARALLEL:
-        std::sort(std::execution::par_unseq, begin, end, comp);
+        MayaFlux::Parallel::sort(MayaFlux::Parallel::par_unseq, begin, end, comp);
         break;
 
     case SortingAlgorithm::RADIX:

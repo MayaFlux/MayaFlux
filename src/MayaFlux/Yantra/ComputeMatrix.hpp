@@ -4,13 +4,7 @@
 #include "OperationSpec/OperationChain.hpp"
 #include "OperationSpec/OperationPool.hpp"
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include "oneapi/dpl/algorithm"
-#include "oneapi/dpl/execution"
-#include "oneapi/dpl/numeric"
-#else
-#include "execution"
-#endif
+#include "MayaFlux/Parallel.hpp"
 
 namespace MayaFlux::Yantra {
 
@@ -331,7 +325,7 @@ public:
 
         std::vector<std::optional<IO<OutputType>>> results(inputs.size());
 
-        std::transform(std::execution::par_unseq,
+        MayaFlux::Parallel::transform(MayaFlux::Parallel::par_unseq,
             inputs.begin(), inputs.end(),
             results.begin(),
             [this, operation](const InputType& input) {
