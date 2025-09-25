@@ -13,8 +13,18 @@ env:
   BUILD_TYPE: Release
 jobs:
   build:
-    runs-on: macos-latest
-    name: "macOS CMake Auto-Detection"
+    strategy:
+      matrix:
+        include:
+          - os: macos-14 # Older runner - might have Apple Clang 15
+            name: "macOS 14 System Clang"
+          - os: macos-13 # Even older - Apple Clang 14
+            name: "macOS 13 System Clang"
+          - os: macos-latest # Current runner - Apple Clang 16+
+            name: "macOS Latest System Clang"
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,16 +37,42 @@ jobs:
             /opt/homebrew/Cellar
             /opt/homebrew/lib
             /opt/homebrew/include
-          key: homebrew-${{ runner.os }}-deps-${{ hashFiles('.github/workflows/ci.yml') }}
+          key: homebrew-${{ matrix.os }}-deps-${{ hashFiles('.github/workflows/ci.yml') }}
           restore-keys: |
-            homebrew-${{ runner.os }}-deps-
-            homebrew-${{ runner.os }}-
+            homebrew-${{ matrix.os }}-deps-
+            homebrew-${{ matrix.os }}-
 
       - name: Install dependencies
         shell: bash
         run: |
           brew update
-          brew install llvm rtaudio eigen magic_enum onedpl ffmpeg glfw googletest
+          brew install rtaudio eigen magic_enum onedpl ffmpeg glfw googletest
+
+      - name: Check system Clang C++23 support
+        shell: bash
+        run: |
+          echo "=== System Clang Version ==="
+          clang++ --version
+          echo "=== Testing std::ranges::to support ==="
+          cat > test.cpp << 'EOF'
+          #include <ranges>
+          #include <vector>
+          int main() {
+              auto v = std::views::iota(0, 5) | std::ranges::to<std::vector>();
+              return 0;
+          }
+          EOF
+          clang++ -std=c++23 test.cpp -o test && echo "✅ std::ranges::to works" || echo "❌ std::ranges::to failed"
+
+          echo "=== Testing UZ suffix ==="
+          cat > test2.cpp << 'EOF'
+          #include <cstddef>
+          int main() {
+              auto x = 42UZ;
+              return 0;
+          }
+          EOF
+          clang++ -std=c++23 test2.cpp -o test2 && echo "✅ UZ suffix works" || echo "❌ UZ suffix failed"
 
       - name: Configure CMake
         shell: bash
@@ -50,7 +86,8 @@ jobs:
         shell: bash
         run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 4
 
-      - name: Test
+      - name: Test (conditional)
+        if: ${{ inputs.run_tests != false }}
         shell: bash
         working-directory: build
         run: ctest --output-on-failure --parallel 4
@@ -59,7 +96,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-cmake-auto
+          name: build-logs-${{ matrix.os }}
           path: |
             build/CMakeFiles/CMakeOutput.log
             build/CMakeFiles/CMakeError.log
