@@ -16,11 +16,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14 # Older runner - might have Apple Clang 15
-            name: "macOS 14 System Clang"
-          - os: macos-13 # Even older - Apple Clang 14
-            name: "macOS 13 System Clang"
-          - os: macos-latest # Current runner - Apple Clang 16+
+          - os: macos-14 # Apple Clang 15 with C++23 support
+            name: "macOS 14 System Clang (Minimum)"
+          - os: macos-latest # Current runner - latest C++23 features
             name: "macOS Latest System Clang"
 
     runs-on: ${{ matrix.os }}
@@ -34,26 +32,18 @@ jobs:
         run: |
           echo "=== System Clang Version ==="
           clang++ --version
-          echo "=== Testing std::ranges::to support ==="
+          echo "=== Testing C++23 standard library support ==="
           cat > test.cpp << 'EOF'
           #include <ranges>
           #include <vector>
+          #include <cstddef>
           int main() {
+              auto x = 42UZ;  // UZ suffix
               auto v = std::views::iota(0, 5) | std::ranges::to<std::vector>();
               return 0;
           }
           EOF
-          clang++ -std=c++2b test.cpp -o test && echo "✅ std::ranges::to works" || echo "❌ std::ranges::to failed"
-
-          echo "=== Testing UZ suffix ==="
-          cat > test2.cpp << 'EOF'
-          #include <cstddef>
-          int main() {
-              auto x = 42UZ;
-              return 0;
-          }
-          EOF
-          clang++ -std=c++2b test2.cpp -o test2 && echo "✅ UZ suffix works" || echo "❌ UZ suffix failed"
+          clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
 
       - name: Cache Homebrew packages
         uses: actions/cache@v4
