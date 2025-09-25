@@ -6,6 +6,8 @@
 
 namespace MayaFlux::Kakshya {
 
+static bool is_segment_complete(const OrganizedRegion& region, size_t segment_index);
+
 /**
  * @class RegionOrganizationProcessor
  * @brief Data-driven processor for organizing and processing non-linear audio regions.
@@ -120,11 +122,9 @@ protected:
      * @brief Process regions according to their selection pattern.
      * @param container The signal container to process.
      * @param output_data Output data variant to fill.
-     * @param output_shape Shape of the output data.
      */
     virtual void process_organized_regions(const std::shared_ptr<SignalSourceContainer>& container,
-        DataVariant& output_data,
-        const std::vector<u_int64_t>& output_shape);
+        std::vector<DataVariant>& output_data);
 
     /**
      * @brief Process a single region segment.
@@ -132,15 +132,11 @@ protected:
      * @param segment The segment within the region.
      * @param container The signal container.
      * @param output_data Output data variant to fill.
-     * @param output_offset Offset in the output data.
-     * @param output_shape Shape of the output data.
      */
     virtual void process_region_segment(const OrganizedRegion& region,
         const RegionSegment& segment,
         const std::shared_ptr<SignalSourceContainer>& container,
-        DataVariant& output_data,
-        const std::vector<u_int64_t>& output_offset,
-        const std::vector<u_int64_t>& output_shape);
+        std::vector<DataVariant>& output_data);
 
     /**
      * @brief Apply a transition between two regions.
@@ -148,13 +144,11 @@ protected:
      * @param next_region The next region.
      * @param container The signal container.
      * @param output_data Output data variant to fill.
-     * @param transition_shape Shape of the transition region.
      */
     virtual void apply_region_transition(const OrganizedRegion& current_region,
         const OrganizedRegion& next_region,
         const std::shared_ptr<SignalSourceContainer>& container,
-        DataVariant& output_data,
-        const std::vector<u_int64_t>& transition_shape);
+        std::vector<DataVariant>& output_data);
 
     /**
      * @brief Select the next segment to process according to the region's pattern.

@@ -21,9 +21,8 @@ Kakshya::Region FileRegion::to_region() const
     if (start_coordinates.size() == 1 && end_coordinates.size() == 1) {
         if (start_coordinates[0] == end_coordinates[0]) {
             return Kakshya::Region::time_point(start_coordinates[0], name);
-        } else {
-            return Kakshya::Region::time_span(start_coordinates[0], end_coordinates[0], name);
         }
+        return Kakshya::Region::time_span(start_coordinates[0], end_coordinates[0], name);
     }
 
     Kakshya::Region region(start_coordinates, end_coordinates);
@@ -194,7 +193,12 @@ bool SoundFileReader::setup_resampler()
 
     int out_sample_rate = m_target_sample_rate > 0 ? m_target_sample_rate : m_codec_context->sample_rate;
 
-    AVSampleFormat out_sample_fmt = AV_SAMPLE_FMT_DBL;
+    AVSampleFormat out_sample_fmt;
+    if ((m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE) {
+        out_sample_fmt = AV_SAMPLE_FMT_DBLP;
+    } else {
+        out_sample_fmt = AV_SAMPLE_FMT_DBL;
+    }
 
     int ret = swr_alloc_set_opts2(&m_swr_context,
         &out_ch_layout, out_sample_fmt, out_sample_rate,
@@ -364,19 +368,17 @@ void SoundFileReader::extract_regions()
         }
     }
 
-    // Check stream metadata for additional regions
     AVStream* stream = m_format_context->streams[m_audio_stream_index];
     tag = nullptr;
     while ((tag = av_dict_get(stream->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
         std::string key = tag->key;
 
-        // Look for markers in stream metadata
         if (key.find("marker") != std::string::npos || key.find("MARKER") != std::string::npos) {
             FileRegion region;
             region.type = "marker";
             region.name = key;
             region.attributes["value"] = tag->value;
-            region.start_coordinates = { 0 }; // Would need format-specific parsing
+            region.start_coordinates = { 0 };
             region.end_coordinates = { 0 };
             m_cached_regions.push_back(region);
         }
@@ -393,37 +395,37 @@ std::vector<FileRegion> SoundFileReader::get_regions() const
     return m_cached_regions;
 }
 
-Kakshya::DataVariant SoundFileReader::read_all()
+std::vector<Kakshya::DataVariant> SoundFileReader::read_all()
 {
     if (!m_is_open) {
         set_error("File not open");
-        return Kakshya::DataVariant {};
+        return {};
     }
 
     return read_frames(m_total_frames, 0);
 }
 
-Kakshya::DataVariant SoundFileReader::read_frames(u_int64_t num_frames, u_int64_t offset)
+std::vector<Kakshya::DataVariant> SoundFileReader::read_frames(u_int64_t num_frames, u_int64_t offset)
 {
     if (!m_is_open) {
         set_error("File not open");
-        return Kakshya::DataVariant {};
+        return {};
     }
 
     std::lock_guard<std::mutex> lock(m_read_mutex);
 
     if (offset != m_current_frame_position) {
         if (!seek({ offset })) {
-            return Kakshya::DataVariant {};
+            return {};
         }
     }
 
     return decode_frames(num_frames, offset);
 }
 
-Kakshya::DataVariant SoundFileReader::decode_frames(u_int64_t num_frames, u_int64_t offset)
+std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(u_int64_t num_frames, u_int64_t offset)
 {
-    std::vector<double> output_data;
+    std::vector<Kakshya::DataVariant> output_data;
     u_int64_t frames_decoded = 0;
 
     AVPacket* packet = av_packet_alloc();
@@ -433,26 +435,40 @@ Kakshya::DataVariant SoundFileReader::decode_frames(u_int64_t num_frames, u_int6
         av_packet_free(&packet);
         av_frame_free(&frame);
         set_error("Failed to allocate packet/frame");
-        return Kakshya::DataVariant {};
+        return {};
     }
 
     int channels = m_codec_context->ch_layout.nb_channels;
-    output_data.reserve(num_frames * channels);
+    bool use_planar = (m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE;
+
+    if (use_planar) {
+        output_data.resize(channels);
+        for (auto& channel_vector : output_data) {
+            channel_vector = std::vector<double>();
+            std::get<std::vector<double>>(channel_vector).reserve(num_frames);
+        }
+    } else {
+        output_data.resize(1);
+        output_data[0] = std::vector<double>(num_frames * channels);
+    }
 
     u_int8_t** resample_buffer = nullptr;
-    int resample_linesize;
+    int resample_linesize {};
+
     int max_resample_samples = av_rescale_rnd(num_frames,
         m_target_sample_rate > 0 ? m_target_sample_rate : m_codec_context->sample_rate,
         m_codec_context->sample_rate, AV_ROUND_UP);
 
+    AVSampleFormat target_format = use_planar ? AV_SAMPLE_FMT_DBLP : AV_SAMPLE_FMT_DBL;
+
     av_samples_alloc_array_and_samples(&resample_buffer, &resample_linesize,
-        channels, max_resample_samples, AV_SAMPLE_FMT_DBL, 0);
+        channels, max_resample_samples, target_format, 0);
 
     if (!resample_buffer) {
         av_packet_free(&packet);
         av_frame_free(&frame);
         set_error("Failed to allocate resample buffer");
-        return Kakshya::DataVariant {};
+        return {};
     }
 
     while (frames_decoded < num_frames) {
@@ -490,13 +506,23 @@ Kakshya::DataVariant SoundFileReader::decode_frames(u_int64_t num_frames, u_int6
                 (const u_int8_t**)frame->data, frame->nb_samples);
 
             if (out_samples > 0) {
-                double* double_data = (double*)resample_buffer[0];
                 int samples_to_copy = std::min(static_cast<u_int64_t>(out_samples),
                     num_frames - frames_decoded);
 
-                output_data.insert(output_data.end(),
-                    double_data,
-                    double_data + samples_to_copy * channels);
+                if (use_planar) {
+                    for (size_t ch = 0; ch < channels; ++ch) {
+                        double* channel_data = (double*)resample_buffer[ch];
+                        auto& channel_vector = std::get<std::vector<double>>(output_data[ch]);
+                        channel_vector.insert(channel_vector.end(),
+                            channel_data, channel_data + samples_to_copy);
+                    }
+                } else {
+                    double* interleaved_data = (double*)resample_buffer[0];
+
+                    auto& interleaved_vector = std::get<std::vector<double>>(output_data[0]);
+                    interleaved_vector.insert(interleaved_vector.end(),
+                        interleaved_data, interleaved_data + samples_to_copy * channels);
+                }
 
                 frames_decoded += samples_to_copy;
             }
@@ -511,46 +537,42 @@ Kakshya::DataVariant SoundFileReader::decode_frames(u_int64_t num_frames, u_int6
 
     av_frame_free(&frame);
     av_packet_free(&packet);
+
     if (resample_buffer) {
         av_freep(&resample_buffer[0]);
         av_freep(&resample_buffer);
     }
 
     m_current_frame_position = offset + frames_decoded;
-
-    if ((m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE) {
-        output_data = deinterleave_data(output_data, channels);
-    }
-
-    return Kakshya::DataVariant { output_data };
+    return output_data;
 }
 
-std::vector<double> SoundFileReader::deinterleave_data(
+std::vector<std::vector<double>> SoundFileReader::deinterleave_data(
     const std::vector<double>& interleaved, u_int32_t channels)
 {
     if (channels == 1) {
-        return interleaved;
+        return { interleaved };
     }
 
-    std::vector<double> deinterleaved;
-    deinterleaved.reserve(interleaved.size());
+    std::vector<std::vector<double>> deinterleaved(channels);
 
     size_t samples_per_channel = interleaved.size() / channels;
 
     for (u_int32_t ch = 0; ch < channels; ch++) {
+        deinterleaved[ch].reserve(samples_per_channel);
         for (size_t i = 0; i < samples_per_channel; i++) {
-            deinterleaved.push_back(interleaved[i * channels + ch]);
+            deinterleaved[ch].push_back(interleaved[i * channels + ch]);
         }
     }
 
     return deinterleaved;
 }
 
-Kakshya::DataVariant SoundFileReader::read_region(const FileRegion& region)
+std::vector<Kakshya::DataVariant> SoundFileReader::read_region(const FileRegion& region)
 {
     if (!m_is_open || region.start_coordinates.empty()) {
         set_error("File not open or invalid region");
-        return Kakshya::DataVariant {};
+        return {};
     }
 
     u_int64_t start = region.start_coordinates[0];
@@ -601,19 +623,20 @@ bool SoundFileReader::load_into_container(std::shared_ptr<Kakshya::SignalSourceC
 
     sound_container->setup(total_frames, sample_rate, channels);
 
-    Kakshya::DataVariant audio_data = read_all();
-    if (std::holds_alternative<std::vector<double>>(audio_data) && std::get<std::vector<double>>(audio_data).empty()) {
+    if ((m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE) {
+        sound_container->get_structure().organization = Kakshya::OrganizationStrategy::PLANAR;
+    } else {
+        sound_container->get_structure().organization = Kakshya::OrganizationStrategy::INTERLEAVED;
+    }
+
+    std::vector<Kakshya::DataVariant> audio_data = read_all();
+
+    if (audio_data.empty()) {
         set_error("Failed to read audio data");
         return false;
     }
 
     sound_container->set_raw_data(audio_data);
-
-    if ((m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE) {
-        sound_container->set_memory_layout(Kakshya::MemoryLayout::COLUMN_MAJOR);
-    } else {
-        sound_container->set_memory_layout(Kakshya::MemoryLayout::ROW_MAJOR);
-    }
 
     auto regions = get_regions();
     auto region_groups = regions_to_groups(regions);

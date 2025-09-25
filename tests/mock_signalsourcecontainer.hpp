@@ -10,34 +10,33 @@ class MockSignalSourceContainer : public SignalSourceContainer {
 public:
     MockSignalSourceContainer()
         : SignalSourceContainer()
-        , m_frame_size(1024)
-        , m_processing_state(ProcessingState::IDLE)
-        , m_ready_for_processing(false)
     {
-        m_processed_data = std::vector<double>(1024, 0.0F);
-
-        DataDimension time_dim("time", m_frame_size);
-        time_dim.role = DataDimension::Role::TIME;
-
-        DataDimension chan_dim("channels", 1);
-        chan_dim.role = DataDimension::Role::CHANNEL;
-
-        m_dimensions = { time_dim, chan_dim };
+        m_processed_data.resize(1);
+        m_processed_data[0] = std::vector<double>(1024, 0.0);
+        setup_structure();
     }
 
-    void add_dimension(const DataDimension& dim)
+    void setup_structure()
     {
-        bool dim_found = false;
-        for (auto& dimen : m_dimensions) {
-            if (dimen.role == dim.role) {
-                dimen = dim;
-                dim_found = true;
-            }
+        DataModality modality = (m_num_channels > 1)
+            ? DataModality::AUDIO_MULTICHANNEL
+            : DataModality::AUDIO_1D;
+
+        std::vector<u_int64_t> shape;
+        if (modality == DataModality::AUDIO_1D) {
+            shape = { m_num_frames };
+        } else {
+            shape = { m_num_frames, m_num_channels };
         }
 
-        if (!dim_found) {
-            m_dimensions.push_back(dim);
-        }
+        OrganizationStrategy org = OrganizationStrategy::PLANAR;
+        MemoryLayout layout = MemoryLayout::ROW_MAJOR;
+
+        m_data_structure = ContainerDataStructure(modality, org, layout);
+        m_data_structure.dimensions = DataDimension::create_dimensions(modality, shape, layout);
+
+        m_data_structure.time_dims = m_num_frames;
+        m_data_structure.channel_dims = m_num_channels;
     }
 
     void add_test_region_group(const std::string& name)
@@ -55,53 +54,110 @@ public:
 
     void set_test_data(const std::vector<double>& data)
     {
-        m_processed_data = data;
+        if (m_data_structure.organization == OrganizationStrategy::INTERLEAVED) {
+            m_processed_data.resize(1);
+            m_processed_data[0] = data;
+        } else {
+            m_processed_data.resize(m_num_channels);
+            for (u_int32_t ch = 0; ch < m_num_channels; ++ch) {
+                std::vector<double> channel_data;
+                channel_data.reserve(data.size() / m_num_channels);
+                for (size_t i = ch; i < data.size(); i += m_num_channels) {
+                    channel_data.push_back(data[i]);
+                }
+                m_processed_data[ch] = std::move(channel_data);
+            }
+        }
+    }
+
+    void set_multi_channel_test_data(const std::vector<std::vector<double>>& channel_data)
+    {
+        m_processed_data.clear();
+        m_processed_data.reserve(channel_data.size());
+
+        for (const auto& channel : channel_data) {
+            m_processed_data.emplace_back(Kakshya::DataVariant { channel });
+        }
+
+        m_num_channels = static_cast<u_int32_t>(channel_data.size());
+        m_data_structure.organization = OrganizationStrategy::PLANAR;
     }
 
     std::vector<DataDimension> get_dimensions() const override
     {
-        return m_dimensions;
+        return m_data_structure.dimensions;
     }
 
     u_int64_t get_total_elements() const override
     {
-        return m_frame_size;
+        return m_data_structure.get_total_elements();
     }
 
     MemoryLayout get_memory_layout() const override
     {
-        return MemoryLayout::ROW_MAJOR;
+        return m_data_structure.memory_layout;
     }
 
-    void set_memory_layout(MemoryLayout) override
+    void set_memory_layout(MemoryLayout layout) override
     {
-        // No-op for mock
+        m_data_structure.memory_layout = layout;
+        setup_structure(); // Recreate dimensions with new layout
     }
 
+    // Use cached values for performance (like SoundStreamContainer)
     u_int64_t get_num_frames() const override
     {
-        return 1;
+        return m_num_frames;
     }
 
-    DataVariant get_region_data(const Region&) const override
+    u_int64_t get_frame_size() const override
     {
-        return { m_processed_data };
+        return m_num_channels;
     }
 
-    void set_region_data(const Region&, const DataVariant&) override
+    std::vector<DataVariant> get_region_data(const Region&) const override
     {
-        // No-op for mock
+        if (m_data_structure.organization == OrganizationStrategy::INTERLEAVED) {
+            return { m_processed_data[0] };
+        }
+
+        std::vector<DataVariant> result;
+
+        result.reserve(m_processed_data.size());
+
+        for (const auto& channel_data : m_processed_data) {
+            result.push_back(channel_data);
+        }
+        return result;
+    }
+
+    std::vector<DataVariant> get_region_group_data(const RegionGroup& regions) const override
+    {
+        /* std::vector<DataVariant> all_data;
+        for (const auto& region : regions) {
+            auto region_data = get_region_data(region);
+            all_data.insert(all_data.end(), region_data.begin(), region_data.end());
+        }
+        return all_data; */
+        return {};
+    }
+
+    std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>&) const override
+    {
+        return {};
+    }
+
+    void set_region_data(const Region&, const std::vector<DataVariant>& data) override
+    {
+        if (!data.empty()) {
+            m_processed_data = data;
+        }
     }
 
     std::span<const double> get_frame(u_int64_t) const override
     {
         static std::vector<double> empty;
         return {};
-    }
-
-    u_int64_t get_frame_size() const override
-    {
-        return m_frame_size;
     }
 
     void get_frames(std::span<double>, u_int64_t, u_int64_t) const override
@@ -304,42 +360,44 @@ public:
         m_processing_state = new_state;
     }
 
-    DataVariant& get_processed_data() override
+    std::vector<DataVariant>& get_processed_data() override
     {
-        m_processed_variant = DataVariant(m_processed_data);
         return m_processed_variant;
     }
 
-    DataVariant& get_processed_data() const override
+    const std::vector<DataVariant>& get_processed_data() const override
     {
-        auto* self = const_cast<MockSignalSourceContainer*>(this);
-        self->m_processed_variant = DataVariant(self->m_processed_data);
-        return self->m_processed_variant;
+        // m_processed_variant[0] = DataVariant(m_processed_data);
+        return m_processed_variant;
     }
 
-    const ContainerDataStructure& get_structure() const override
-    {
-        return m_data_structure;
-    }
+    inline const ContainerDataStructure& get_structure() const override { return m_data_structure; }
+
+    inline ContainerDataStructure& get_structure() override { return m_data_structure; }
 
     void set_structure(ContainerDataStructure structure) override
     {
         m_data_structure = structure;
-        m_ready_for_processing = false; // Reset processing state on structure change
+        m_ready_for_processing = false;
     }
 
-private:
-    std::vector<double> m_processed_data;
-    DataVariant m_processed_variant;
+    const std::vector<DataVariant>& get_data() override { return m_processed_data; }
 
-    size_t m_frame_size;
-    std::vector<DataDimension> m_dimensions;
+private:
+    u_int32_t m_num_channels { 1 };
+    u_int64_t m_num_frames { 1024 };
+
+    std::vector<DataVariant> m_processed_data;
+    std::vector<DataVariant> m_processed_variant;
+
+    ContainerDataStructure m_data_structure;
+
     std::unordered_map<std::string, RegionGroup> m_region_groups;
-    ProcessingState m_processing_state;
-    bool m_ready_for_processing;
+    ProcessingState m_processing_state { ProcessingState::IDLE };
+    bool m_ready_for_processing {};
+
     std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_change_callback;
     std::shared_ptr<DataProcessor> m_default_processor;
     std::shared_ptr<DataProcessingChain> m_processing_chain;
-    ContainerDataStructure m_data_structure;
 };
 }

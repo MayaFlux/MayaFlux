@@ -111,7 +111,7 @@ std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coord
                 transformed[0] = static_cast<u_int64_t>(x * cos_a - y * sin_a);
                 transformed[1] = static_cast<u_int64_t>(x * sin_a + y * cos_a);
             } catch (const std::bad_any_cast&) {
-                // Ignore invalid rotation parameters
+                // TODO: DO better than ignore invalid
             }
         }
     }
@@ -119,42 +119,133 @@ std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coord
     return transformed;
 }
 
-u_int64_t wrap_position_with_loop(u_int64_t position, u_int64_t loop_start, u_int64_t loop_end, bool looping_enabled)
+std::vector<u_int64_t> wrap_position_with_loop(
+    const std::vector<u_int64_t>& positions,
+    const Region& loop_region,
+    bool looping_enabled)
 {
-    if (!looping_enabled || position < loop_end) {
-        return position;
-    }
-    u_int64_t loop_length = loop_end - loop_start;
-    if (loop_length == 0)
-        return loop_start;
-    return loop_start + ((position - loop_start) % loop_length);
-}
-
-u_int64_t wrap_position_with_loop(u_int64_t position, const Region& loop_region, size_t dim, bool looping_enabled)
-{
-    if (!looping_enabled || loop_region.start_coordinates.empty() || dim >= loop_region.start_coordinates.size() || dim >= loop_region.end_coordinates.size()) {
-        return position;
+    if (!looping_enabled || loop_region.start_coordinates.size() < 2 || loop_region.end_coordinates.size() < 2) {
+        return positions;
     }
 
-    return wrap_position_with_loop(position, loop_region.start_coordinates[dim], loop_region.end_coordinates[dim], looping_enabled);
+    u_int64_t loop_start_frame = loop_region.start_coordinates[0];
+    u_int64_t loop_start_channel = loop_region.start_coordinates[1];
+    u_int64_t loop_end_frame = loop_region.end_coordinates[0];
+    u_int64_t loop_end_channel = loop_region.end_coordinates[1];
+
+    if (loop_end_frame <= loop_start_frame) {
+        return positions;
+    }
+
+    std::vector<u_int64_t> wrapped_positions = positions;
+    u_int64_t loop_length = loop_end_frame - loop_start_frame + 1;
+
+    for (size_t ch = loop_start_channel; ch <= loop_end_channel && ch < positions.size(); ++ch) {
+        if (positions[ch] > loop_end_frame) {
+            u_int64_t overflow = positions[ch] - loop_end_frame;
+            wrapped_positions[ch] = loop_start_frame + (overflow % loop_length);
+        }
+    }
+
+    return wrapped_positions;
 }
 
-u_int64_t advance_position(u_int64_t current_pos, u_int64_t advance_amount, u_int64_t total_size, u_int64_t loop_start, u_int64_t loop_end, bool looping)
+std::vector<u_int64_t> advance_position(
+    const std::vector<u_int64_t>& current_positions,
+    u_int64_t frames_to_advance,
+    const ContainerDataStructure& structure,
+    bool looping_enabled,
+    const Region& loop_region)
 {
-    if (looping && loop_end > loop_start) {
-        u_int64_t loop_length = loop_end - loop_start;
+    u_int64_t num_channels = structure.get_channel_count();
+    u_int64_t total_frames = structure.get_samples_count_per_channel();
 
-        if (loop_length == 0) {
-            return loop_start;
+    if (current_positions.size() != num_channels) {
+        throw std::invalid_argument(
+            "Position vector size " + std::to_string(current_positions.size()) + " must match channel count " + std::to_string(num_channels));
+    }
+
+    std::vector<u_int64_t> new_positions;
+    new_positions.reserve(num_channels);
+
+    for (size_t ch = 0; ch < num_channels; ++ch) {
+        u_int64_t current_frame = current_positions[ch];
+        u_int64_t new_frame = current_frame + frames_to_advance;
+
+        if (new_frame >= total_frames) {
+            if (looping_enabled && !loop_region.start_coordinates.empty()) {
+                u_int64_t loop_start = (ch < loop_region.start_coordinates.size())
+                    ? loop_region.start_coordinates[ch]
+                    : loop_region.start_coordinates[0];
+                u_int64_t loop_end = (ch < loop_region.end_coordinates.size())
+                    ? loop_region.end_coordinates[ch]
+                    : loop_region.end_coordinates[0];
+
+                if (loop_end > loop_start) {
+                    u_int64_t loop_length = loop_end - loop_start + 1;
+                    u_int64_t overflow = new_frame - total_frames;
+                    new_frame = loop_start + (overflow % loop_length);
+                } else {
+                    new_frame = loop_start;
+                }
+            } else {
+                new_frame = total_frames - 1;
+            }
         }
 
-        u_int64_t offset = (current_pos < loop_start) ? 0 : (current_pos - loop_start);
-        u_int64_t new_offset = (offset + advance_amount) % loop_length;
-        return loop_start + new_offset;
+        new_positions.push_back(new_frame);
     }
 
-    u_int64_t new_pos = current_pos + advance_amount;
-    return (new_pos > total_size) ? total_size : new_pos;
+    return new_positions;
+}
+
+std::vector<u_int64_t> advance_position(
+    const std::vector<u_int64_t>& current_positions,
+    const std::vector<u_int64_t>& frames_per_channel,
+    const ContainerDataStructure& structure,
+    bool looping_enabled,
+    const Region& loop_region)
+{
+    u_int64_t num_channels = structure.get_channel_count();
+    u_int64_t total_frames = structure.get_samples_count_per_channel();
+
+    if (current_positions.size() != num_channels || frames_per_channel.size() != num_channels) {
+        throw std::invalid_argument("All vectors must match channel count");
+    }
+
+    std::vector<u_int64_t> new_positions;
+    new_positions.reserve(num_channels);
+
+    for (size_t ch = 0; ch < num_channels; ++ch) {
+        u_int64_t current_frame = current_positions[ch];
+        u_int64_t frames_to_advance = frames_per_channel[ch];
+        u_int64_t new_frame = current_frame + frames_to_advance;
+
+        if (new_frame >= total_frames) {
+            if (looping_enabled && !loop_region.start_coordinates.empty()) {
+                u_int64_t loop_start = (ch < loop_region.start_coordinates.size())
+                    ? loop_region.start_coordinates[ch]
+                    : loop_region.start_coordinates[0];
+                u_int64_t loop_end = (ch < loop_region.end_coordinates.size())
+                    ? loop_region.end_coordinates[ch]
+                    : loop_region.end_coordinates[0];
+
+                if (loop_end > loop_start) {
+                    u_int64_t loop_length = loop_end - loop_start + 1;
+                    u_int64_t overflow = new_frame - total_frames;
+                    new_frame = loop_start + (overflow % loop_length);
+                } else {
+                    new_frame = loop_start;
+                }
+            } else {
+                new_frame = total_frames - 1;
+            }
+        }
+
+        new_positions.push_back(new_frame);
+    }
+
+    return new_positions;
 }
 
 u_int64_t time_to_position(double time, double sample_rate)
@@ -181,8 +272,6 @@ u_int64_t calculate_frame_size_for_dimension(const std::vector<DataDimension>& d
     return frame_size;
 }
 
-// ===== COORDINATE MAPPING =====
-
 std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
@@ -203,7 +292,6 @@ std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::s
         dim_map["stride"] = dimensions[i].stride;
         dim_map["role"] = static_cast<int>(dimensions[i].role);
 
-        // Calculate offset for this dimension
         u_int64_t offset = (i == 0) ? 0ULL : std::accumulate(dimensions.begin(), dimensions.begin() + i, 1ULL, [](u_int64_t acc, const auto& d) { return acc * d.size; });
         dim_map["offset"] = offset;
 
@@ -219,8 +307,6 @@ std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::s
 
     return mapping_info;
 }
-
-// ===== DIMENSION ANALYSIS =====
 
 std::vector<int> extract_dimension_roles(const std::vector<DataDimension>& dimensions)
 {
@@ -261,6 +347,24 @@ std::vector<std::unordered_map<std::string, std::any>> create_dimension_info(con
     }
 
     return dim_info;
+}
+
+std::pair<size_t, u_int64_t> coordinates_to_planar_indices(
+    const std::vector<u_int64_t>& coords,
+    const std::vector<DataDimension>& dimensions)
+{
+    size_t channel_dim_idx = 0;
+    size_t time_dim_idx = 0;
+
+    for (size_t i = 0; i < dimensions.size(); ++i) {
+        if (dimensions[i].role == DataDimension::Role::CHANNEL) {
+            channel_dim_idx = i;
+        } else if (dimensions[i].role == DataDimension::Role::TIME) {
+            time_dim_idx = i;
+        }
+    }
+
+    return { coords[channel_dim_idx], coords[time_dim_idx] };
 }
 
 }

@@ -48,7 +48,7 @@ public:
      * The input is first processed by the source node, and the result
      * is then processed by the target node.
      */
-    double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples through the chain
@@ -303,7 +303,7 @@ public:
      * The input is processed by both the left and right nodes, and their
      * outputs are combined using the specified function.
      */
-    double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples through both nodes and combines the results

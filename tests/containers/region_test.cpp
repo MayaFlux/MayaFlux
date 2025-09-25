@@ -193,12 +193,12 @@ TEST_F(RegionTest, Transformations)
     auto scaled = time_span.scale({ 2.0 });
     u_int64_t center = (50 + 150) / 2; // 100
     u_int64_t half_span = (150 - 50) / 2; // 50
-    u_int64_t new_half_span = static_cast<u_int64_t>(half_span * 2.0); // 100
+    auto new_half_span = static_cast<u_int64_t>(half_span * 2.0); // 100
     EXPECT_EQ(scaled.start_coordinates[0], center - new_half_span); // 0
     EXPECT_EQ(scaled.end_coordinates[0], center + new_half_span); // 200
 
     auto scaled_down = time_span.scale({ 0.5 });
-    u_int64_t new_half_span_down = static_cast<u_int64_t>(half_span * 0.5); // 25
+    auto new_half_span_down = static_cast<u_int64_t>(half_span * 0.5); // 25
     EXPECT_EQ(scaled_down.start_coordinates[0], center - new_half_span_down); // 75
     EXPECT_EQ(scaled_down.end_coordinates[0], center + new_half_span_down); // 125
 
@@ -351,7 +351,7 @@ TEST_F(RegionSegmentTest, CacheManagement)
     EXPECT_EQ(segment.get_cache_age_seconds(), -1.0);
 
     DataVariant test_data = std::vector<double> { 1.0, 2.0, 3.0 };
-    segment.mark_cached(test_data);
+    segment.mark_cached({ test_data });
 
     EXPECT_TRUE(segment.is_cached);
     EXPECT_EQ(segment.state, RegionState::READY);
@@ -377,24 +377,22 @@ TEST_F(RegionSegmentTest, CacheManagement)
 
 TEST_F(RegionSegmentTest, PositionManagement)
 {
-    EXPECT_TRUE(std::all_of(segment.current_position.begin(), segment.current_position.end(),
+    EXPECT_TRUE(std::ranges::all_of(segment.current_position,
         [](u_int64_t pos) { return pos == 0; }));
 
     segment.current_position[0] = 50;
     segment.current_position[1] = 1;
     segment.reset_position();
-    EXPECT_TRUE(std::all_of(segment.current_position.begin(), segment.current_position.end(),
+    EXPECT_TRUE(std::ranges::all_of(segment.current_position,
         [](u_int64_t pos) { return pos == 0; }));
 
     EXPECT_TRUE(segment.advance_position(10, 0)); // advance 10 steps in dimension 0
     EXPECT_EQ(segment.current_position[0], 10);
     EXPECT_EQ(segment.current_position[1], 0);
 
-    // Advance to boundary of dimension 0
     EXPECT_TRUE(segment.advance_position(segment.segment_size[0] - 11, 0)); // to end - 1
     EXPECT_EQ(segment.current_position[0], segment.segment_size[0] - 1);
 
-    // Advance past boundary (should overflow to next dimension)
     EXPECT_TRUE(segment.advance_position(1, 0));
     EXPECT_EQ(segment.current_position[0], 0);
     EXPECT_EQ(segment.current_position[1], 1);
@@ -792,7 +790,7 @@ protected:
         test_data = std::vector<double> { 1.0, 2.0, 3.0, 4.0, 5.0 };
         region = Region::time_span(100, 200, "cached_region");
 
-        cache.data = test_data;
+        cache.data = { test_data };
         cache.source_region = region;
         cache.load_time = std::chrono::steady_clock::now();
         cache.access_count = 0;
@@ -824,7 +822,7 @@ TEST_F(RegionCacheTest, BasicOperations)
     EXPECT_GT(age.count(), 0.01);
     EXPECT_LT(age.count(), 1.0);
 
-    auto cached_data = std::get<std::vector<double>>(cache.data);
+    auto cached_data = std::get<std::vector<double>>(cache.data[0]);
     EXPECT_EQ(cached_data.size(), 5);
     EXPECT_DOUBLE_EQ(cached_data[0], 1.0);
     EXPECT_DOUBLE_EQ(cached_data[4], 5.0);
@@ -834,29 +832,28 @@ TEST_F(RegionCacheTest, DataVariantHandling)
 {
 
     RegionCache float_cache;
-    float_cache.data = std::vector<float> { 1.0f, 2.0f, 3.0f };
+    float_cache.data = { std::vector<float> { 1.0F, 2.0F, 3.0F } };
     float_cache.source_region = region;
 
-    auto float_data = std::get<std::vector<float>>(float_cache.data);
+    auto float_data = std::get<std::vector<float>>(float_cache.data[0]);
     EXPECT_EQ(float_data.size(), 3);
-    EXPECT_FLOAT_EQ(float_data[1], 2.0f);
+    EXPECT_FLOAT_EQ(float_data[1], 2.0F);
 
     RegionCache complex_cache;
-    complex_cache.data = std::vector<std::complex<double>> {
-        { 1.0, 0.0 }, { 0.0, 1.0 }, { -1.0, 0.0 }
-    };
+    complex_cache.data = { std::vector<std::complex<double>> {
+        { 1.0, 0.0 }, { 0.0, 1.0 }, { -1.0, 0.0 } } };
     complex_cache.source_region = region;
 
-    auto complex_data = std::get<std::vector<std::complex<double>>>(complex_cache.data);
+    auto complex_data = std::get<std::vector<std::complex<double>>>(complex_cache.data[0]);
     EXPECT_EQ(complex_data.size(), 3);
     EXPECT_DOUBLE_EQ(complex_data[0].real(), 1.0);
     EXPECT_DOUBLE_EQ(complex_data[1].imag(), 1.0);
 
     RegionCache int_cache;
-    int_cache.data = std::vector<u_int16_t> { 100, 200, 300 };
+    int_cache.data = { std::vector<u_int16_t> { 100, 200, 300 } };
     int_cache.source_region = region;
 
-    auto int_data = std::get<std::vector<u_int16_t>>(int_cache.data);
+    auto int_data = std::get<std::vector<u_int16_t>>(int_cache.data[0]);
     EXPECT_EQ(int_data.size(), 3);
     EXPECT_EQ(int_data[2], 300);
 }
@@ -965,12 +962,12 @@ TEST_F(RegionUtilityTest, RegionTransformations)
     auto scaled = scale_region(region1, { 2.0 });
     u_int64_t center = (100 + 200) / 2; // 150
     u_int64_t half_span = (200 - 100) / 2; // 50
-    u_int64_t new_half_span = static_cast<u_int64_t>(half_span * 2.0); // 100
+    auto new_half_span = static_cast<u_int64_t>(half_span * 2.0); // 100
     EXPECT_EQ(scaled.start_coordinates[0], center - new_half_span); // 50
     EXPECT_EQ(scaled.end_coordinates[0], center + new_half_span); // 250
 
     auto shrunk = scale_region(region1, { 0.5 });
-    u_int64_t shrunk_half_span = static_cast<u_int64_t>(half_span * 0.5); // 25
+    auto shrunk_half_span = static_cast<u_int64_t>(half_span * 0.5); // 25
     EXPECT_EQ(shrunk.start_coordinates[0], center - shrunk_half_span); // 125
     EXPECT_EQ(shrunk.end_coordinates[0], center + shrunk_half_span); // 175
 }
@@ -1006,14 +1003,15 @@ TEST_F(RegionUtilityTest, PointSorting)
     EXPECT_EQ(points[4].start_coordinates[0], 350); // point2
 
     for (auto& point : points) {
-        if (point.get_label() == "region1")
+        if (point.get_label() == "region1") {
             point.set_attribute("priority", std::string("high"));
-        else if (point.get_label() == "region2")
+        } else if (point.get_label() == "region2") {
             point.set_attribute("priority", std::string("low"));
-        else if (point.get_label() == "region3")
+        } else if (point.get_label() == "region3") {
             point.set_attribute("priority", std::string("medium"));
-        else
+        } else {
             point.set_attribute("priority", std::string("high"));
+        }
     }
 
     sort_regions_by_attribute(points, "priority");

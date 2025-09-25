@@ -5,18 +5,22 @@
 namespace MayaFlux::Kakshya {
 
 /**
- * @brief Convert N-dimensional coordinates to a linear index for a given memory layout.
+ * @brief Convert N-dimensional coordinates to a linear index for interleaved data.
  * @param coords N-dimensional coordinates.
  * @param dimensions Dimension descriptors (size/stride/role).
  * @return Linear index into the underlying data storage.
+ * @note Only works with interleaved organization strategy. For planar data,
+ *       use coordinates_to_planar_indices() instead.
  */
 u_int64_t coordinates_to_linear(const std::vector<u_int64_t>& coords, const std::vector<DataDimension>& dimensions);
 
 /**
- * @brief Convert a linear index to N-dimensional coordinates for a given memory layout.
+ * @brief Convert a linear index to N-dimensional coordinates for interleaved data.
  * @param index Linear index into the underlying data storage.
  * @param dimensions Dimension descriptors (size/stride/role).
  * @return N-dimensional coordinates.
+ * @note Only works with interleaved organization strategy. For planar data,
+ *       coordinates map directly to {channel_vector_index, frame_index}.
  */
 std::vector<u_int64_t> linear_to_coordinates(u_int64_t index, const std::vector<DataDimension>& dimensions);
 
@@ -68,36 +72,46 @@ std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coord
     const std::unordered_map<std::string, std::any>& rotation_params = {});
 
 /**
- * @brief Wrap a position within a loop range if looping is enabled.
+ * @brief Wrap a position within loop boundaries if looping is enabled.
  * @param position Current position.
  * @param loop_start Loop start position.
  * @param loop_end Loop end position.
  * @param looping_enabled Whether looping is enabled.
  * @return Wrapped position.
  */
-u_int64_t wrap_position_with_loop(u_int64_t position, u_int64_t loop_start, u_int64_t loop_end, bool looping_enabled);
+std::vector<u_int64_t> wrap_position_with_loop(const std::vector<u_int64_t>& position, const Region& loop_region, bool looping_enabled);
 
 /**
- * @brief Wrap a position within a loop region and dimension if looping is enabled.
- * @param position Current position.
- * @param loop_region Region defining the loop.
- * @param dim Dimension index.
+ * @brief Advance current positions by a number of frames, with optional looping.
+ * @param current_positions Current positions per channel.
+ * @param frames_to_advance Number of frames to advance.
+ * @param structure Container data structure (for total frames).
  * @param looping_enabled Whether looping is enabled.
- * @return Wrapped position.
+ * @param loop_region Loop region for wrapping.
+ * @return New advanced positions per channel.
  */
-u_int64_t wrap_position_with_loop(u_int64_t position, const Region& loop_region, size_t dim, bool looping_enabled);
+std::vector<u_int64_t> advance_position(
+    const std::vector<u_int64_t>& current_positions,
+    u_int64_t frames_to_advance,
+    const ContainerDataStructure& structure,
+    bool looping_enabled,
+    const Region& loop_region);
 
 /**
- * @brief Advance a position by a given amount, with optional looping.
- * @param current_pos Current position.
- * @param advance_amount Amount to advance.
- * @param total_size Total size of the dimension.
- * @param loop_start Loop start position.
- * @param loop_end Loop end position.
- * @param looping Whether looping is enabled.
- * @return New position.
+ * @brief Advance current positions by specified frames per channel, with optional looping.
+ * @param current_positions Current positions per channel.
+ * @param frames_per_channel Frames to advance per channel.
+ * @param structure Container data structure (for total frames).
+ * @param looping_enabled Whether looping is enabled.
+ * @param loop_region Loop region for wrapping.
+ * @return New advanced positions per channel.
  */
-u_int64_t advance_position(u_int64_t current_pos, u_int64_t advance_amount, u_int64_t total_size, u_int64_t loop_start, u_int64_t loop_end, bool looping);
+std::vector<u_int64_t> advance_position(
+    const std::vector<u_int64_t>& current_positions,
+    const std::vector<u_int64_t>& frames_per_channel,
+    const ContainerDataStructure& structure,
+    bool looping_enabled,
+    const Region& loop_region);
 
 /**
  * @brief Convert time (seconds) to position (samples/frames) given a sample rate.
@@ -151,4 +165,14 @@ std::vector<std::unordered_map<std::string, std::any>> create_dimension_info(con
  */
 std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::shared_ptr<SignalSourceContainer>& container);
 
+/**
+ * @brief Convert coordinates to planar indices (channel vector + frame index).
+ * @param coords N-dimensional coordinates.
+ * @param dimensions Dimension descriptors.
+ * @return Pair of {channel_index, frame_index} for planar access.
+ * @note Only works with planar organization strategy.
+ */
+std::pair<size_t, u_int64_t> coordinates_to_planar_indices(
+    const std::vector<u_int64_t>& coords,
+    const std::vector<DataDimension>& dimensions);
 }

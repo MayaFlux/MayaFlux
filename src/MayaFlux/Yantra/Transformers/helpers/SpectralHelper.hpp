@@ -18,6 +18,19 @@
  */
 namespace MayaFlux::Yantra {
 
+inline u_int64_t smallest_size(std::vector<std::vector<double>>& data)
+{
+    if (data.empty())
+        return 0;
+
+    auto smallest = *std::ranges::min_element(data,
+        [](const auto& a, const auto& b) {
+            return a.size() < b.size();
+        });
+
+    return static_cast<u_int64_t>(smallest.size());
+}
+
 /**
  * @brief Common spectral processing helper to eliminate code duplication
  * @tparam ProcessorFunc Function type for spectral processing
@@ -78,66 +91,84 @@ std::vector<double> process_spectral_windows(
 
 /**
  * @brief Windowing transformation using C++20 ranges (IN-PLACE)
- * @tparam DataType ComputeData type
+ * @tparam DataType OperationReadyData type
  * @param input Input data - WILL BE MODIFIED
  * @param window_type Type of window to apply
  * @param window_size Size of window (0 = full data size)
  * @return Windowed data
  */
-template <ComputeData DataType>
+template <OperationReadyData DataType>
 DataType transform_window(DataType& input,
     Nodes::Generator::WindowType window_type,
     u_int32_t window_size = 0)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
-    u_int32_t size = window_size > 0 ? window_size : static_cast<u_int32_t>(target_data.size());
+    u_int32_t size = window_size > 0 ? window_size : smallest_size(target_data);
 
     auto window = Nodes::Generator::generate_window(size, window_type);
 
-    auto data_view = target_data | std::views::take(std::min(size, static_cast<u_int32_t>(target_data.size())));
-    auto window_view = window | std::views::take(data_view.size());
+    for (auto& span : target_data) {
+        auto data_view = span | std::views::take(std::min(size, static_cast<u_int32_t>(span.size())));
+        auto window_view = window | std::views::take(data_view.size());
 
-    std::ranges::transform(data_view, window_view, data_view.begin(),
-        [](double sample, double win) { return sample * win; });
+        std::ranges::transform(data_view, window_view, data_view.begin(),
+            [](double sample, double win) { return sample * win; });
+    }
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    auto reconstructed_data = target_data
+        | std::views::transform([](const auto& span) {
+              return std::vector<double>(span.begin(), span.end());
+          })
+        | std::ranges::to<std::vector>();
+
+    return OperationHelper::reconstruct_from_double<DataType>(reconstructed_data, structure_info);
 }
 
 /**
  * @brief Windowing transformation using C++20 ranges (OUT-OF-PLACE)
- * @tparam DataType ComputeData type
+ * @tparam DataType OperationReadyData type
  * @param input Input data - will NOT be modified
  * @param window_type Type of window to apply
  * @param window_size Size of window (0 = full data size)
  * @param working_buffer Buffer for operations (will be resized if needed)
  * @return Windowed data
  */
-template <ComputeData DataType>
+template <OperationReadyData DataType>
 DataType transform_window(DataType& input,
     Nodes::Generator::WindowType window_type,
     u_int32_t window_size,
-    std::vector<double>& working_buffer)
+    std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
-    u_int32_t size = window_size > 0 ? window_size : static_cast<u_int32_t>(target_data.size());
+    u_int32_t size = window_size > 0 ? window_size : smallest_size(working_buffer);
 
     auto window = Nodes::Generator::generate_window(size, window_type);
 
-    auto data_view = target_data | std::views::take(std::min(size, static_cast<u_int32_t>(target_data.size())));
-    auto window_view = window | std::views::take(data_view.size());
+    working_buffer.resize(target_data.size());
+    for (size_t i = 0; i < target_data.size(); ++i) {
+        auto& span = target_data[i];
+        auto& buffer = working_buffer[i];
+        buffer.resize(span.size());
 
-    std::ranges::transform(data_view, window_view, data_view.begin(),
-        [](double sample, double win) { return sample * win; });
+        auto data_view = span | std::views::take(std::min(size, static_cast<u_int32_t>(span.size())));
+        auto window_view = window | std::views::take(data_view.size());
+
+        std::ranges::transform(data_view, window_view, buffer.begin(),
+            [](double sample, double win) { return sample * win; });
+
+        if (span.size() > size) {
+            std::copy(span.begin() + size, span.end(), buffer.begin() + size);
+        }
+    }
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 /**
  * @brief Spectral filtering using existing FFT infrastructure with C++20 ranges (IN-PLACE)
- * @tparam DataType ComputeData type
+ * @tparam DataType OperationReadyData type
  * @param input Input data - WILL BE MODIFIED
  * @param low_freq Low cutoff frequency (Hz)
  * @param high_freq High cutoff frequency (Hz)
@@ -146,7 +177,7 @@ DataType transform_window(DataType& input,
  * @param hop_size Hop size for overlap-add
  * @return Filtered data
  */
-template <ComputeData DataType>
+template <OperationReadyData DataType>
 DataType transform_spectral_filter(DataType& input,
     double low_freq,
     double high_freq,
@@ -166,17 +197,23 @@ DataType transform_spectral_filter(DataType& input,
         });
     };
 
-    auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
+    for (auto& span : target_data) {
+        auto result = process_spectral_windows(span, window_size, hop_size, processor);
+        std::ranges::copy(result, span.begin());
+    }
 
-    std::ranges::copy(result, target_data.begin());
+    auto reconstructed_data = target_data
+        | std::views::transform([](const auto& span) {
+              return std::vector<double>(span.begin(), span.end());
+          })
+        | std::ranges::to<std::vector>();
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(reconstructed_data, structure_info);
 }
 
 /**
  * @brief Spectral filtering using existing FFT infrastructure with C++20 ranges (OUT-OF-PLACE)
- * @tparam DataType ComputeData type
+ * @tparam DataType OperationReadyData type
  * @param input Input data - will NOT be modified
  * @param low_freq Low cutoff frequency (Hz)
  * @param high_freq High cutoff frequency (Hz)
@@ -186,14 +223,14 @@ DataType transform_spectral_filter(DataType& input,
  * @param working_buffer Buffer for operations (will be resized if needed)
  * @return Filtered data
  */
-template <ComputeData DataType>
+template <OperationReadyData DataType>
 DataType transform_spectral_filter(DataType& input,
     double low_freq,
     double high_freq,
     double sample_rate,
     u_int32_t window_size,
     u_int32_t hop_size,
-    std::vector<double>& working_buffer)
+    std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
@@ -207,23 +244,24 @@ DataType transform_spectral_filter(DataType& input,
         });
     };
 
-    auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
-
-    working_buffer = std::move(result);
+    working_buffer.resize(target_data.size());
+    for (size_t i = 0; i < target_data.size(); ++i) {
+        working_buffer[i] = process_spectral_windows(target_data[i], window_size, hop_size, processor);
+    }
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 /**
  * @brief Pitch shifting using existing FFT from AnalysisHelper with C++20 ranges (IN-PLACE)
- * @tparam DataType ComputeData type
+ * @tparam DataType OperationReadyData type
  * @param input Input data - WILL BE MODIFIED
  * @param semitones Pitch shift in semitones
  * @param window_size FFT window size
  * @param hop_size Hop size for overlap-add
  * @return Pitch-shifted data
  */
-template <ComputeData DataType>
+template <OperationReadyData DataType>
 DataType transform_pitch_shift(DataType& input,
     double semitones,
     u_int32_t window_size = 1024,
@@ -251,17 +289,23 @@ DataType transform_pitch_shift(DataType& input,
         spectrum = std::move(shifted_spectrum);
     };
 
-    auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
+    for (auto& span : target_data) {
+        auto result = process_spectral_windows(span, window_size, hop_size, processor);
+        std::ranges::copy(result, span.begin());
+    }
 
-    std::ranges::copy(result, target_data.begin());
+    auto reconstructed_data = target_data
+        | std::views::transform([](const auto& span) {
+              return std::vector<double>(span.begin(), span.end());
+          })
+        | std::ranges::to<std::vector>();
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(reconstructed_data, structure_info);
 }
 
 /**
  * @brief Pitch shifting using existing FFT from AnalysisHelper with C++20 ranges (OUT-OF-PLACE)
- * @tparam DataType ComputeData type
+ * @tparam DataType OperationReadyData type
  * @param input Input data - will NOT be modified
  * @param semitones Pitch shift in semitones
  * @param window_size FFT window size
@@ -269,12 +313,12 @@ DataType transform_pitch_shift(DataType& input,
  * @param working_buffer Buffer for operations (will be resized if needed)
  * @return Pitch-shifted data
  */
-template <ComputeData DataType>
+template <OperationReadyData DataType>
 DataType transform_pitch_shift(DataType& input,
     double semitones,
     u_int32_t window_size,
     u_int32_t hop_size,
-    std::vector<double>& working_buffer)
+    std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
@@ -298,22 +342,23 @@ DataType transform_pitch_shift(DataType& input,
         spectrum = std::move(shifted_spectrum);
     };
 
-    auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
-
-    working_buffer = std::move(result);
+    working_buffer.resize(target_data.size());
+    for (size_t i = 0; i < target_data.size(); ++i) {
+        working_buffer[i] = process_spectral_windows(target_data[i], window_size, hop_size, processor);
+    }
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
 /**
  * @brief Spectral inversion (phase inversion in frequency domain) using C++20 ranges (IN-PLACE)
- * @tparam DataType ComputeData type
+ * @tparam DataType OperationReadyData type
  * @param input Input data - WILL BE MODIFIED
  * @param window_size FFT window size
  * @param hop_size Hop size for overlap-add
  * @return Spectrally inverted data
  */
-template <ComputeData DataType>
+template <OperationReadyData DataType>
 DataType transform_spectral_invert(DataType& input,
     u_int32_t window_size = 1024,
     u_int32_t hop_size = 256)
@@ -325,28 +370,34 @@ DataType transform_spectral_invert(DataType& input,
             [](const std::complex<double>& bin) { return std::conj(bin); });
     };
 
-    auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
+    for (auto& span : target_data) {
+        auto result = process_spectral_windows(span, window_size, hop_size, processor);
+        std::ranges::copy(result, span.begin());
+    }
 
-    std::ranges::copy(result, target_data.begin());
+    auto reconstructed_data = target_data
+        | std::views::transform([](const auto& span) {
+              return std::vector<double>(span.begin(), span.end());
+          })
+        | std::ranges::to<std::vector>();
 
-    return OperationHelper::reconstruct_from_double<DataType>(
-        std::vector<double>(target_data.begin(), target_data.end()), structure_info);
+    return OperationHelper::reconstruct_from_double<DataType>(reconstructed_data, structure_info);
 }
 
 /**
  * @brief Spectral inversion (phase inversion in frequency domain) using C++20 ranges (OUT-OF-PLACE)
- * @tparam DataType ComputeData type
+ * @tparam DataType OperationReadyData type
  * @param input Input data - will NOT be modified
  * @param window_size FFT window size
  * @param hop_size Hop size for overlap-add
  * @param working_buffer Buffer for operations (will be resized if needed)
  * @return Spectrally inverted data
  */
-template <ComputeData DataType>
+template <OperationReadyData DataType>
 DataType transform_spectral_invert(DataType& input,
     u_int32_t window_size,
     u_int32_t hop_size,
-    std::vector<double>& working_buffer)
+    std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
@@ -355,9 +406,10 @@ DataType transform_spectral_invert(DataType& input,
             [](const std::complex<double>& bin) { return std::conj(bin); });
     };
 
-    auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
-
-    working_buffer = std::move(result);
+    working_buffer.resize(target_data.size());
+    for (size_t i = 0; i < target_data.size(); ++i) {
+        working_buffer[i] = process_spectral_windows(target_data[i], window_size, hop_size, processor);
+    }
 
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }

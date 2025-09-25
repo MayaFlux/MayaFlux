@@ -9,6 +9,7 @@ namespace MayaFlux::Kakshya {
  */
 struct Region;
 struct RegionGroup;
+struct RegionSegment;
 
 /**
  * @brief Container structure for consistent dimension ordering.
@@ -179,6 +180,14 @@ struct ContainerDataStructure {
      */
     [[nodiscard]] static size_t get_frame_count(const std::vector<DataDimension>& dimensions);
     [[nodiscard]] size_t get_frame_count() const { return get_frame_count(dimensions); }
+
+    /**
+     * @brief Extract the size of non time dimensions (channel, spatial, frequency)
+     * @param dimensions Vector of dimension descriptors
+     * @return cumulative size of non time dimensions
+     */
+    [[nodiscard]] static size_t get_frame_size(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] size_t get_frame_size() const { return get_frame_size(dimensions); }
 };
 
 /**
@@ -247,16 +256,30 @@ public:
     /**
      * @brief Get data for a specific region.
      * @param region The region to extract data from
-     * @return DataVariant containing the region's data
+     * @return std::vector<DataVariant> containing the region's data
      */
-    [[nodiscard]] virtual DataVariant get_region_data(const Region& region) const = 0;
+    [[nodiscard]] virtual std::vector<DataVariant> get_region_data(const Region& region) const = 0;
+
+    /**
+     * @brief Get data for multiple regions efficiently.
+     * @param regions Vector of regions to extract data from
+     * @return Vector of DataVariant vectors, one per region
+     */
+    [[nodiscard]] virtual std::vector<DataVariant> get_region_group_data(const RegionGroup& regions) const = 0;
+
+    /**
+     * @brief Get data for multiple region segments efficiently.
+     * @param segments Vector of region segments to extract data from
+     * @return Vector of DataVariant vectors, one per segment
+     */
+    [[nodiscard]] virtual std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segments) const = 0;
 
     /**
      * @brief Set data for a specific region.
      * @param region The region to write data to
      * @param data The data to write
      */
-    virtual void set_region_data(const Region& region, const DataVariant& data) = 0;
+    virtual void set_region_data(const Region& region, const std::vector<DataVariant>& data) = 0;
 
     /**
      * @brief Get a single frame of data efficiently.
@@ -382,6 +405,7 @@ public:
      * @brief Get the data structure defining this container's layout.
      * @return Reference to the ContainerDataStructure
      */
+    [[nodiscard]] virtual ContainerDataStructure& get_structure() = 0;
     [[nodiscard]] virtual const ContainerDataStructure& get_structure() const = 0;
 
     /**

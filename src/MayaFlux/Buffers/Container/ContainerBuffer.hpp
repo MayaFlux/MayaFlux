@@ -86,21 +86,15 @@ public:
 
 private:
     std::shared_ptr<Kakshya::StreamContainer> m_container;
-    u_int32_t m_source_channel = 0;
+    u_int32_t m_source_channel {};
     bool m_auto_advance = true;
     bool m_update_flags = true;
 
     u_int32_t m_time_reader_id = UINT32_MAX;
     u_int32_t m_channel_reader_id = UINT32_MAX;
 
-    // Dimension indices for audio data
-    struct DimensionInfo {
-        size_t time_dim = 0; ///< Index of time dimension
-        size_t channel_dim = 1; ///< Index of channel dimension
-        bool has_channels = false;
-        u_int32_t num_channels = 1;
-        u_int64_t frames_per_buffer = 512;
-    } m_dim_info;
+    u_int32_t m_num_channels { 1 };
+    u_int32_t m_reader_id {};
 
     // Cache for efficiency
     mutable std::vector<double> m_temp_buffer;
@@ -113,10 +107,8 @@ private:
     /**
      * @brief Extract channel data from the container into the output buffer.
      * @param output Output span to fill.
-     * @param start_frame Starting frame index.
-     * @param num_frames Number of frames to extract.
      */
-    void extract_channel_data(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames);
+    void extract_channel_data(std::span<double> output);
 
     /**
      * @brief Respond to container state changes (e.g., READY, PROCESSED, NEEDS_REMOVAL).

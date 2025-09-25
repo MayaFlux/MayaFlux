@@ -5,6 +5,7 @@
 
 #include "UniversalAnalyzer.hpp"
 #include <Eigen/Dense>
+#include <algorithm>
 
 #include "AnalysisHelper.hpp"
 
@@ -55,25 +56,28 @@ enum class EnergyLevel : u_int8_t {
     PEAK
 };
 
+struct ChannelEnergy {
+    std::vector<double> energy_values;
+    double mean_energy {};
+    double max_energy {};
+    double min_energy {};
+    double variance {};
+
+    std::vector<EnergyLevel> classifications;
+    std::array<int, 5> level_counts {}; // [SILENT, QUIET, MODERATE, LOUD, PEAK]
+    std::vector<std::pair<size_t, size_t>> window_positions;
+};
+
 /**
- * @struct EnergyAnalysisResult
+ * @struct EnergyAnalysis
  * @brief Analysis result structure for energy analysis
  */
-struct EnergyAnalysisResult {
-    std::vector<double> energy_values;
-    EnergyMethod method_used;
-    u_int32_t window_size;
-    u_int32_t hop_size;
+struct EnergyAnalysis {
+    std::vector<ChannelEnergy> channels;
 
-    double mean_energy;
-    double max_energy;
-    double min_energy;
-    double energy_variance;
-
-    std::vector<EnergyLevel> energy_classifications;
-    std::map<EnergyLevel, int> level_distribution;
-
-    std::vector<std::pair<size_t, size_t>> window_positions;
+    EnergyMethod method_used {};
+    u_int32_t window_size {};
+    u_int32_t hop_size {};
 };
 
 /**
@@ -91,13 +95,13 @@ struct EnergyAnalysisResult {
  *
  * // User-facing analysis
  * auto analysis = energy_analyzer->analyze_data(audio_data);
- * auto energy_result = safe_any_cast<EnergyAnalysisResult>(analysis);
+ * auto energy_result = safe_any_cast<EnergyAnalysis>(analysis);
  *
  * // Pipeline usage
  * auto pipeline_output = energy_analyzer->apply_operation(IO{audio_data});
  * ```
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = Eigen::VectorXd>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
 class EnergyAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -119,21 +123,21 @@ public:
     /**
      * @brief Type-safe energy analysis method
      * @param data Input data
-     * @return EnergyAnalysisResult directly
+     * @return EnergyAnalysis directly
      */
-    EnergyAnalysisResult analyze_energy(const InputType& data)
+    EnergyAnalysis analyze_energy(const InputType& data)
     {
         auto result = this->analyze_data(data);
-        return safe_any_cast_or_throw<EnergyAnalysisResult>(result);
+        return safe_any_cast_or_throw<EnergyAnalysis>(result);
     }
 
     /**
      * @brief Get last energy analysis result (type-safe)
-     * @return EnergyAnalysisResult from last operation
+     * @return EnergyAnalysis from last operation
      */
-    [[nodiscard]] EnergyAnalysisResult get_energy_analysis() const
+    [[nodiscard]] EnergyAnalysis get_energy_analysis() const
     {
-        return safe_any_cast_or_throw<EnergyAnalysisResult>(this->get_current_analysis());
+        return safe_any_cast_or_throw<EnergyAnalysis>(this->get_current_analysis());
     }
 
     /**
@@ -234,6 +238,18 @@ public:
     }
 
     /**
+     * @brief Get count of windows in a specific energy level for a channel
+     * @param channel ChannelEnergy result
+     * @param level EnergyLevel to query
+     * @return Count of windows in that level
+     */
+    [[nodiscard]]
+    int get_level_count(const ChannelEnergy& channel, EnergyLevel level)
+    {
+        return channel.level_counts[static_cast<size_t>(level)];
+    }
+
+    /**
      * @brief Convert energy method enum to string
      * @param method EnergyMethod value
      * @return String representation
@@ -282,22 +298,39 @@ protected:
      */
     output_type analyze_implementation(const input_type& input) override
     {
-        auto input_data = const_cast<InputType&>(input.data);
-        auto data_variant = OperationHelper::to_data_variant(input_data);
-        auto [data_span, structure_info] = OperationHelper::extract_structured_double(data_variant);
+        try {
+            auto [data_span, structure_info] = OperationHelper::extract_structured_double(
+                const_cast<input_type&>(input));
 
-        if (data_span.size() < m_window_size) {
-            throw std::runtime_error("Input data size (" + std::to_string(data_span.size()) + ") is smaller than window size (" + std::to_string(m_window_size) + ")");
+            std::vector<std::span<const double>> channel_spans;
+            for (auto& span : data_span)
+                channel_spans.emplace_back(span.data(), span.size());
+
+            for (const auto& channel_span : channel_spans) {
+                if (channel_span.size() < m_window_size) {
+                    throw std::runtime_error("One or more channels in input data are smaller than window size (" + std::to_string(m_window_size) + ")");
+                }
+            }
+
+            std::vector<std::vector<double>> energy_values;
+            energy_values.reserve(channel_spans.size());
+            for (const auto& channel_span : channel_spans) {
+                energy_values.push_back(compute_energy_values(channel_span, m_method));
+            }
+
+            EnergyAnalysis analysis_result = create_analysis_result(
+                energy_values, channel_spans, structure_info);
+
+            this->store_current_analysis(analysis_result);
+
+            return create_pipeline_output(input, analysis_result);
+        } catch (const std::exception& e) {
+            std::cerr << "Energy analysis failed: " << e.what() << '\n';
+            output_type error_result;
+            error_result.metadata = input.metadata;
+            error_result.metadata["error"] = std::string("Analysis failed: ") + e.what();
+            return error_result;
         }
-
-        std::vector<double> energy_values = compute_energy_values(data_span, m_method);
-
-        EnergyAnalysisResult analysis_result = create_analysis_result(
-            energy_values, data_span, structure_info);
-
-        this->store_current_analysis(analysis_result);
-
-        return create_pipeline_output(input, energy_values);
     }
 
     /**
@@ -383,47 +416,63 @@ private:
     /**
      * @brief Create comprehensive analysis result from energy computation
      */
-    [[nodiscard]] EnergyAnalysisResult create_analysis_result(
-        const std::vector<double>& energy_values,
-        std::span<const double> original_data,
+    [[nodiscard]] EnergyAnalysis create_analysis_result(
+        const std::vector<std::vector<double>>& energy_values,
+        std::vector<std::span<const double>> original_data,
         const DataStructureInfo& /*structure_info*/) const
     {
-        EnergyAnalysisResult result;
-        result.energy_values = energy_values;
+        EnergyAnalysis result;
         result.method_used = m_method;
         result.window_size = m_window_size;
         result.hop_size = m_hop_size;
 
-        if (!energy_values.empty()) {
-            auto [min_it, max_it] = std::ranges::minmax_element(energy_values);
-            result.min_energy = *min_it;
-            result.max_energy = *max_it;
-            result.mean_energy = std::accumulate(energy_values.begin(), energy_values.end(), 0.0) / static_cast<double>(energy_values.size());
-
-            double variance = 0.0;
-            for (double val : energy_values) {
-                variance += (val - result.mean_energy) * (val - result.mean_energy);
-            }
-            result.energy_variance = variance / static_cast<double>(energy_values.size());
+        if (energy_values.empty()) {
+            return result;
         }
 
-        result.window_positions.reserve(energy_values.size());
-        for (size_t i = 0; i < energy_values.size(); ++i) {
-            size_t start_idx = i * m_hop_size;
-            size_t end_idx = std::min(start_idx + m_window_size, original_data.size());
-            result.window_positions.emplace_back(start_idx, end_idx);
-        }
+        result.channels.resize(energy_values.size());
 
-        if (m_classification_enabled) {
-            result.energy_classifications.reserve(energy_values.size());
-            std::map<EnergyLevel, int> level_counts;
+        for (size_t ch = 0; ch < energy_values.size(); ch++) {
 
-            for (double energy : energy_values) {
-                EnergyLevel level = classify_energy_level(energy);
-                result.energy_classifications.push_back(level);
-                level_counts[level]++;
+            auto& channel_result = result.channels[ch];
+            const auto& ch_energy = energy_values[ch];
+
+            channel_result.energy_values = ch_energy;
+
+            if (!ch_energy.empty()) {
+                auto [min_it, max_it] = std::ranges::minmax_element(ch_energy);
+                channel_result.min_energy = *min_it;
+                channel_result.max_energy = *max_it;
+
+                const double sum = std::accumulate(ch_energy.begin(), ch_energy.end(), 0.0);
+                channel_result.mean_energy = sum / static_cast<double>(ch_energy.size());
+
+                const double mean = channel_result.mean_energy;
+                const double var_sum = std::transform_reduce(
+                    ch_energy.begin(), ch_energy.end(), 0.0, std::plus {},
+                    [mean](double val) { return (val - mean) * (val - mean); });
+                channel_result.variance = var_sum / static_cast<double>(ch_energy.size());
             }
-            result.level_distribution = std::move(level_counts);
+
+            const size_t data_size = (ch < original_data.size()) ? original_data[ch].size() : 0;
+            channel_result.window_positions.reserve(ch_energy.size());
+
+            for (size_t i = 0; i < ch_energy.size(); ++i) {
+                const size_t start = i * m_hop_size;
+                const size_t end = std::min(start + m_window_size, data_size);
+                channel_result.window_positions.emplace_back(start, end);
+            }
+
+            if (m_classification_enabled) {
+                channel_result.classifications.reserve(ch_energy.size());
+                channel_result.level_counts.fill(0);
+
+                for (double energy : ch_energy) {
+                    EnergyLevel level = classify_energy_level(energy);
+                    channel_result.classifications.push_back(level);
+                    channel_result.level_counts[static_cast<size_t>(level)]++;
+                }
+            }
         }
 
         return result;
@@ -432,37 +481,54 @@ private:
     /**
      * @brief Create pipeline output from input and energy values
      */
-    output_type create_pipeline_output(const input_type& input, const std::vector<double>& energy_values) const
+    output_type create_pipeline_output(const input_type& input, const EnergyAnalysis& analysis_result) const
     {
-        if constexpr (std::is_same_v<InputType, OutputType>) {
-            output_type output = input;
-            output.metadata["analyzed"] = true;
-            output.metadata["analyzer"] = "EnergyAnalyzer";
-            output.metadata["energy_method"] = method_to_string(m_method);
-            output.metadata["num_energy_windows"] = energy_values.size();
-            if (!energy_values.empty()) {
-                output.metadata["mean_energy"] = std::accumulate(energy_values.begin(), energy_values.end(), 0.0) / static_cast<double>(energy_values.size());
-            }
-            return output;
-        } else {
-            OutputType result_data = OperationHelper::convert_result_to_output_type<OutputType>(energy_values);
+        std::vector<std::vector<double>> channel_energies;
+        channel_energies.reserve(analysis_result.channels.size());
 
-            output_type output;
-            if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
-                auto [out_dims, out_modality] = Yantra::infer_from_data_variant(result_data);
-                output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-            } else {
-                auto [out_dims, out_modality] = Yantra::infer_structure(result_data);
-                output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-            }
-
-            output.metadata["source_analyzer"] = "EnergyAnalyzer";
-            output.metadata["energy_method"] = method_to_string(m_method);
-            output.metadata["window_size"] = m_window_size;
-            output.metadata["hop_size"] = m_hop_size;
-
-            return output;
+        for (const auto& ch : analysis_result.channels) {
+            channel_energies.push_back(ch.energy_values);
         }
+
+        OutputType result_data = OperationHelper::convert_result_to_output_type<OutputType>(channel_energies);
+
+        output_type output;
+        if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
+            auto [out_dims, out_modality] = Yantra::infer_from_data_variant(result_data);
+            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
+        } else {
+            auto [out_dims, out_modality] = Yantra::infer_structure(result_data);
+            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
+        }
+
+        output.metadata = input.metadata; // Preserve input metadata
+
+        output.metadata["source_analyzer"] = "EnergyAnalyzer";
+        output.metadata["energy_method"] = method_to_string(analysis_result.method_used);
+        output.metadata["window_size"] = analysis_result.window_size;
+        output.metadata["hop_size"] = analysis_result.hop_size;
+        output.metadata["num_channels"] = analysis_result.channels.size();
+
+        if (!analysis_result.channels.empty()) {
+            std::vector<double> channel_means, channel_maxs, channel_mins, channel_variances;
+            std::vector<size_t> channel_window_counts;
+
+            for (const auto& ch : analysis_result.channels) {
+                channel_means.push_back(ch.mean_energy);
+                channel_maxs.push_back(ch.max_energy);
+                channel_mins.push_back(ch.min_energy);
+                channel_variances.push_back(ch.variance);
+                channel_window_counts.push_back(ch.energy_values.size());
+            }
+
+            output.metadata["mean_energy_per_channel"] = channel_means;
+            output.metadata["max_energy_per_channel"] = channel_maxs;
+            output.metadata["min_energy_per_channel"] = channel_mins;
+            output.metadata["variance_per_channel"] = channel_variances;
+            output.metadata["window_count_per_channel"] = channel_window_counts;
+        }
+
+        return output;
     }
 
     /**
@@ -502,21 +568,21 @@ private:
     }
 };
 
-/// Standard energy analyzer: DataVariant -> VectorXd
-using StandardEnergyAnalyzer = EnergyAnalyzer<Kakshya::DataVariant, Eigen::VectorXd>;
+/// Standard energy analyzer: DataVariant -> MatrixXd
+using StandardEnergyAnalyzer = EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::MatrixXd>;
 
-/// Container energy analyzer: SignalContainer -> VectorXd
-using ContainerEnergyAnalyzer = EnergyAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::VectorXd>;
+/// Container energy analyzer: SignalContainer -> MatrixXd
+using ContainerEnergyAnalyzer = EnergyAnalyzer<std::shared_ptr<Kakshya::SignalSourceContainer>, Eigen::MatrixXd>;
 
-/// Region energy analyzer: Region -> VectorXd
-using RegionEnergyAnalyzer = EnergyAnalyzer<Kakshya::Region, Eigen::VectorXd>;
+/// Region energy analyzer: Region -> MatrixXd
+using RegionEnergyAnalyzer = EnergyAnalyzer<Kakshya::Region, Eigen::MatrixXd>;
 
 /// Raw energy analyzer: produces double vectors
-template <ComputeData InputType = Kakshya::DataVariant>
-using RawEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<double>>;
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
+using RawEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<std::vector<double>>>;
 
 /// Variant energy analyzer: produces DataVariant output
-template <ComputeData InputType = Kakshya::DataVariant>
-using VariantEnergyAnalyzer = EnergyAnalyzer<InputType, Kakshya::DataVariant>;
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>>
+using VariantEnergyAnalyzer = EnergyAnalyzer<InputType, std::vector<Kakshya::DataVariant>>;
 
 } // namespace MayaFlux::Yantra

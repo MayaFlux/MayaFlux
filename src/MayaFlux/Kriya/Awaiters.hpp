@@ -45,6 +45,11 @@ struct SampleDelay {
      */
     u_int64_t samples_to_wait;
 
+    SampleDelay(u_int64_t samples)
+        : samples_to_wait(samples)
+    {
+    }
+
     /**
      * @brief Checks if the delay should be bypassed
      * @return True if no delay is needed, false otherwise

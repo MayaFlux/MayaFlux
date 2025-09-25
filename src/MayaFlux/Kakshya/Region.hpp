@@ -83,7 +83,7 @@ struct Region {
      * @param coordinates The N-dimensional coordinates.
      * @param attributes Optional metadata.
      */
-    Region(std::vector<u_int64_t> coordinates,
+    Region(const std::vector<u_int64_t>& coordinates,
         std::unordered_map<std::string, std::any> attributes = {})
         : start_coordinates(coordinates)
         , end_coordinates(coordinates)
@@ -115,7 +115,7 @@ struct Region {
      */
     static Region time_point(u_int64_t frame,
         const std::string& label = "",
-        std::any extra_data = {})
+        const std::any& extra_data = {})
     {
         std::unordered_map<std::string, std::any> attrs;
         if (!label.empty())
@@ -137,7 +137,7 @@ struct Region {
     static Region time_span(u_int64_t start_frame,
         u_int64_t end_frame,
         const std::string& label = "",
-        std::any extra_data = {})
+        const std::any& extra_data = {})
     {
         std::unordered_map<std::string, std::any> attrs;
         if (!label.empty())
@@ -394,7 +394,7 @@ struct Region {
     Region scale(const std::vector<double>& factors) const
     {
         Region result = *this;
-        for (size_t i = 0; i < std::min(factors.size(), start_coordinates.size()); i++) {
+        for (size_t i = 0; i < std::min<size_t>(factors.size(), start_coordinates.size()); i++) {
             u_int64_t center = (start_coordinates[i] + end_coordinates[i]) / 2;
             u_int64_t half_span = get_span(i) / 2;
             auto new_half_span = static_cast<u_int64_t>((double)half_span * factors[i]);
@@ -443,7 +443,7 @@ struct Region {
  * @brief Stores cached data for a region, with metadata for cache management.
  */
 struct RegionCache {
-    DataVariant data; ///< Cached data
+    std::vector<DataVariant> data; ///< Cached data
     Region source_region; ///< Region this cache corresponds to
     std::chrono::steady_clock::time_point load_time; ///< When cache was loaded
     size_t access_count = 0; ///< Number of times accessed
@@ -588,7 +588,7 @@ struct RegionSegment {
      * @brief Mark this segment as cached and store the data.
      * @param data The cached data.
      */
-    void mark_cached(const DataVariant& data)
+    void mark_cached(const std::vector<DataVariant>& data)
     {
         cache.data = data;
         cache.source_region = source_region;
@@ -603,7 +603,7 @@ struct RegionSegment {
      */
     void clear_cache()
     {
-        cache.data = DataVariant {};
+        cache.data.clear();
         is_cached = false;
         if (state == RegionState::READY) {
             state = RegionState::IDLE;
@@ -626,23 +626,33 @@ struct RegionSegment {
      */
     bool advance_position(u_int64_t steps = 1, u_int32_t dimension = 0)
     {
-        if (dimension >= current_position.size())
+
+        if (current_position.empty() || segment_size.empty() || dimension >= current_position.size()) {
             return false;
+        }
 
         current_position[dimension] += steps;
 
-        // Handle overflow into next dimensions
-        for (size_t dim = dimension; dim < current_position.size() - 1; ++dim) {
+        // return current_position[dimension] < segment_size[dimension];
+
+        for (size_t dim = dimension; dim < current_position.size(); ++dim) {
             if (current_position[dim] >= segment_size[dim]) {
-                current_position[dim] = 0;
-                current_position[dim + 1]++;
+                if (dim == current_position.size() - 1) {
+                    return false;
+                }
+
+                u_int64_t overflow = current_position[dim] / segment_size[dim];
+                current_position[dim] = current_position[dim] % segment_size[dim];
+
+                if (dim + 1 < current_position.size()) {
+                    current_position[dim + 1] += overflow;
+                }
             } else {
                 break;
             }
         }
 
-        // Check if we've reached the end
-        return current_position.back() < segment_size.back();
+        return !is_at_end();
     }
 
     /**
@@ -650,8 +660,9 @@ struct RegionSegment {
      */
     bool is_at_end() const
     {
-        if (current_position.empty())
+        if (current_position.empty() || segment_size.empty())
             return true;
+
         return current_position.back() >= segment_size.back();
     }
 
@@ -868,8 +879,8 @@ struct RegionGroup {
         for (const auto& region : regions) {
             for (size_t i = 0; i < min_coords.size(); i++) {
                 if (i < region.start_coordinates.size()) {
-                    min_coords[i] = std::min(min_coords[i], region.start_coordinates[i]);
-                    max_coords[i] = std::max(max_coords[i], region.end_coordinates[i]);
+                    min_coords[i] = std::min<size_t>(min_coords[i], region.start_coordinates[i]);
+                    max_coords[i] = std::max<size_t>(max_coords[i], region.end_coordinates[i]);
                 }
             }
         }

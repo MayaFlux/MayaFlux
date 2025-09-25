@@ -10,6 +10,8 @@
 
 #include "MayaFlux/API/Random.hpp"
 
+#include "MayaFlux/API/Yantra.hpp"
+
 #ifdef MAYASIMPLE
 #include "MayaFlux/API/Proxy/Creator.hpp"
 
@@ -18,11 +20,11 @@
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
 #include "Nodes/Generators/Impulse.hpp"
-#include "Nodes/Generators/Logic.hpp"
 #include "Nodes/Generators/Phasor.hpp"
 #include "Nodes/Generators/Sine.hpp"
 #include "Nodes/Generators/Stochastic.hpp"
 #include "Nodes/NodeGraphManager.hpp"
+#include "Nodes/NodeStructure.hpp"
 
 #include "Buffers/BufferProcessingChain.hpp"
 #include "Buffers/Container/ContainerBuffer.hpp"
@@ -32,6 +34,7 @@
 #include "Buffers/Node/PolynomialProcessor.hpp"
 #include "Buffers/Recursive/FeedbackBuffer.hpp"
 
+#include "Kriya/Bridge.hpp"
 #include "Kriya/Chain.hpp"
 #include "Kriya/Tasks.hpp"
 

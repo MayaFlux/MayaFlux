@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
+#include "MayaFlux/Kakshya/NDData.hpp"
 
 #include "MayaFlux/Utils.hpp"
 
@@ -35,17 +35,46 @@ std::type_index get_variant_type_index(const DataVariant& data);
  * @param frame_size Number of elements per frame.
  * @return Span containing the frame data.
  */
-template <typename T>
+template <ProcessableData T>
 constexpr std::span<T> extract_frame(std::span<T> data, u_int64_t frame_index, u_int64_t frame_size) noexcept
 {
     u_int64_t start = frame_index * frame_size;
-    u_int64_t end = std::min(start + frame_size, data.size());
+    u_int64_t end = std::min(static_cast<u_int64_t>(start + frame_size),
+        static_cast<u_int64_t>(data.size()));
 
     if (start >= data.size()) {
         return {};
     }
 
     return data.subspan(start, end - start);
+}
+
+/**
+ * @brief Extract a single frame from planar data (returns interleaved).
+ * @tparam T Data type.
+ * @param channel_spans Vector of spans, one per channel.
+ * @param frame_index Index of the frame to extract.
+ * @param output_buffer Buffer to store interleaved frame data.
+ * @return Span containing the interleaved frame data.
+ */
+template <ProcessableData T>
+std::span<T> extract_frame(
+    const std::vector<std::span<T>>& channel_spans,
+    u_int64_t frame_index,
+    std::vector<T>& output_buffer) noexcept
+{
+    output_buffer.clear();
+    output_buffer.reserve(channel_spans.size());
+
+    for (const auto& channel_span : channel_spans) {
+        if (frame_index < channel_span.size()) {
+            output_buffer.push_back(channel_span[frame_index]);
+        } else {
+            output_buffer.push_back(T { 0 });
+        }
+    }
+
+    return std::span<T>(output_buffer.data(), output_buffer.size());
 }
 
 template <ProcessableData From, ProcessableData To>
@@ -120,7 +149,7 @@ std::span<To> convert_data(std::span<From> source,
     }
 
     else {
-        // some assert. dont know yet
+        // TODO: some assert. dont know yet
         return {};
     }
 }
@@ -148,6 +177,43 @@ std::span<T> convert_variant(DataVariant& variant,
             return std::span<T>(new_vec.data(), new_vec.size());
         }
         return {};
+    },
+        variant);
+}
+
+template <ProcessableData T>
+std::vector<std::span<T>> convert_variants(
+    // std::vector<DataVariant>& variants,
+    const std::vector<DataVariant>& variants,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+{
+    std::vector<std::span<T>> result;
+    result.reserve(variants.size());
+    // for (auto& variant : variants) {
+    //     result.push_back(convert_variant<T>(variant, strategy));
+    for (size_t i = 0; i < variants.size(); ++i) {
+        result.push_back(convert_variant<T>(const_cast<DataVariant&>(variants[i]), strategy));
+    }
+    return result;
+}
+
+/**
+ * @brief Get const span from DataVariant without conversion (zero-copy for matching types)
+ * @tparam T Data type (must match DataVariant contents)
+ * @param variant DataVariant to extract from
+ * @return Const span of type T
+ * @throws std::runtime_error if type doesn't match
+ */
+template <ProcessableData T>
+std::span<const T> convert_variant(const DataVariant& variant)
+{
+    return std::visit([](const auto& vec) -> std::span<const T> {
+        using VecType = typename std::decay_t<decltype(vec)>::value_type;
+        if constexpr (std::is_same_v<VecType, T>) {
+            return std::span<const T>(vec.data(), vec.size());
+        } else {
+            throw std::runtime_error("Type mismatch - conversion needed");
+        }
     },
         variant);
 }
@@ -319,37 +385,6 @@ std::optional<T> get_metadata_value(const std::unordered_map<std::string, std::a
 int find_dimension_by_role(const std::vector<DataDimension>& dimensions, DataDimension::Role role);
 
 /**
- * @brief Extract a specific frame from container.
- * @param container The container to extract from.
- * @param frame_index Index of the frame to extract.
- * @return DataVariant containing frame data.
- */
-DataVariant extract_frame_data(const std::shared_ptr<SignalSourceContainer>& container,
-    u_int64_t frame_index);
-
-/**
- * @brief Extract a slice of data with arbitrary coordinates.
- * @param container The container to extract from.
- * @param slice_start Starting coordinates for each dimension.
- * @param slice_end Ending coordinates for each dimension.
- * @return DataVariant containing sliced data.
- */
-DataVariant extract_slice_data(const std::shared_ptr<SignalSourceContainer>& container,
-    const std::vector<u_int64_t>& slice_start,
-    const std::vector<u_int64_t>& slice_end);
-
-/**
- * @brief Extract subsampled data from container.
- * @param container The container to extract from.
- * @param subsample_factor Factor to subsample by.
- * @param start_offset Optional starting offset.
- * @return DataVariant containing subsampled data.
- */
-DataVariant extract_subsample_data(const std::shared_ptr<SignalSourceContainer>& container,
-    u_int32_t subsample_factor,
-    u_int64_t start_offset = 0);
-
-/**
  * @brief Detects data modality from dimension information
  * @param dimensions Vector of data dimensions with role information
  * @return Detected DataModality type
@@ -368,4 +403,18 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions);
  * dimension information, including size, stride, and semantic roles.
  */
 std::vector<Kakshya::DataDimension> detect_data_dimensions(const DataVariant& data);
+
+/**
+ * @brief Detect data dimensions from a vector of DataVariants
+ * @param variants Vector of DataVariants to analyze
+ * @return Vector of DataDimension descriptors
+ *
+ * This function analyzes the structure of the provided vector of DataVariants and extracts
+ * dimension information, including size, stride, and semantic roles.
+ *
+ * WARNING: This method makes naive assumptions about the data structure and may lead to incorrect interpretations.
+ * It is recommended to use more specific methods when dealing with known containers, regions, or segments.
+ * Use this function only when absolutely necessary and be aware of potential computational errors.
+ */
+std::vector<Kakshya::DataDimension> detect_data_dimensions(const std::vector<Kakshya::DataVariant>& variants);
 }

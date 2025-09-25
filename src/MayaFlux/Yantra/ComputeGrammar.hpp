@@ -49,7 +49,7 @@ namespace MayaFlux::Yantra {
  * ### Complex Matcher Combinations
  * ```cpp
  * auto complex_matcher = UniversalMatcher::combine_and({
- *     UniversalMatcher::create_type_matcher<Kakshya::DataVariant>(),
+ *     UniversalMatcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
  *     UniversalMatcher::create_context_matcher(ComputationContext::SPECTRAL),
  *     UniversalMatcher::create_parameter_matcher("frequency_range", std::string("audio"))
  * });
@@ -69,7 +69,7 @@ namespace MayaFlux::Yantra {
  * grammar.add_operation_rule<MathematicalTransformer<>>(
  *     "auto_normalize",
  *     ComputationContext::MATHEMATICAL,
- *     UniversalMatcher::create_type_matcher<Kakshya::DataVariant>(),
+ *     UniversalMatcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
  *     {{"operation", std::string("normalize")}, {"target_peak", 1.0}},
  *     75 // priority
  * );
@@ -248,7 +248,7 @@ public:
      * grammar.add_operation_rule<SpectralTransformer<>>(
      *     "pitch_shift_rule",
      *     ComputationContext::SPECTRAL,
-     *     UniversalMatcher::create_type_matcher<Kakshya::DataVariant>(),
+     *     UniversalMatcher::create_type_matcher<std::vector<Kakshya::DataVariant>>(),
      *     {{"operation", std::string("pitch_shift")}, {"pitch_ratio", 1.5}},
      *     80 // priority
      * );
@@ -280,7 +280,7 @@ public:
 
             apply_context_parameters(operation, ctx);
 
-            auto typed_input = std::any_cast<IO<Kakshya::DataVariant>>(input);
+            auto typed_input = std::any_cast<IO<std::vector<Kakshya::DataVariant>>>(input);
             return operation->apply_operation(typed_input);
         };
 

@@ -27,7 +27,7 @@ enum class SpectralOperation : u_int8_t {
  * - Spectral morphing and cross-synthesis
  * - Frequency analysis and manipulation
  */
-template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
+template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class SpectralTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
@@ -73,8 +73,6 @@ protected:
      */
     output_type transform_implementation(input_type& input) override
     {
-        auto& input_data = input.data;
-
         switch (m_operation) {
         case SpectralOperation::FREQUENCY_SHIFT: {
             auto shift_hz = get_parameter_or<double>("shift_hz", 0.0);
@@ -86,9 +84,9 @@ protected:
             auto high_freq = sample_rate / 2.0 + shift_hz;
 
             if (this->is_in_place()) {
-                return create_output(transform_spectral_filter(input_data, low_freq, high_freq, sample_rate, window_size, hop_size));
+                return create_output(transform_spectral_filter(input, low_freq, high_freq, sample_rate, window_size, hop_size));
             }
-            return create_output(transform_spectral_filter(input_data, low_freq, high_freq, sample_rate, window_size, hop_size, m_working_buffer));
+            return create_output(transform_spectral_filter(input, low_freq, high_freq, sample_rate, window_size, hop_size, m_working_buffer));
         }
 
         case SpectralOperation::PITCH_SHIFT: {
@@ -99,9 +97,9 @@ protected:
             double semitones = 12.0 * std::log2(pitch_ratio);
 
             if (this->is_in_place()) {
-                return create_output(transform_pitch_shift(input_data, semitones, window_size, hop_size));
+                return create_output(transform_pitch_shift(input, semitones, window_size, hop_size));
             }
-            return create_output(transform_pitch_shift(input_data, semitones, window_size, hop_size, m_working_buffer));
+            return create_output(transform_pitch_shift(input, semitones, window_size, hop_size, m_working_buffer));
         }
 
         case SpectralOperation::SPECTRAL_FILTER: {
@@ -112,9 +110,9 @@ protected:
             auto sample_rate = get_parameter_or<double>("sample_rate", 48000.0);
 
             if (this->is_in_place()) {
-                return create_output(transform_spectral_filter(input_data, low_freq, high_freq, sample_rate, window_size, hop_size));
+                return create_output(transform_spectral_filter(input, low_freq, high_freq, sample_rate, window_size, hop_size));
             }
-            return create_output(transform_spectral_filter(input_data, low_freq, high_freq, sample_rate, window_size, hop_size, m_working_buffer));
+            return create_output(transform_spectral_filter(input, low_freq, high_freq, sample_rate, window_size, hop_size, m_working_buffer));
         }
 
         case SpectralOperation::HARMONIC_ENHANCE: {
@@ -123,7 +121,7 @@ protected:
             auto hop_size = get_parameter_or<u_int32_t>("hop_size", 512);
 
             if (this->is_in_place()) {
-                auto [data_span, structure_info] = OperationHelper::extract_structured_double(input_data);
+                auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
 
                 auto processor = [enhancement_factor](Eigen::VectorXcd& spectrum, size_t) {
                     for (int i = 1; i < spectrum.size() / 2; ++i) {
@@ -133,14 +131,21 @@ protected:
                     }
                 };
 
-                auto result = process_spectral_windows(data_span, window_size, hop_size, processor);
-                std::copy(result.begin(), result.end(), data_span.begin());
+                for (auto& span : data_span) {
+                    auto result = process_spectral_windows(span, window_size, hop_size, processor);
+                    std::ranges::copy(result, span.begin());
+                }
 
-                return create_output(OperationHelper::reconstruct_from_double<InputType>(
-                    std::vector<double>(data_span.begin(), data_span.end()), structure_info));
+                auto reconstructed_data = data_span
+                    | std::views::transform([](const auto& span) {
+                          return std::vector<double>(span.begin(), span.end());
+                      })
+                    | std::ranges::to<std::vector>();
+
+                return create_output(OperationHelper::reconstruct_from_double<InputType>(reconstructed_data, structure_info));
             }
 
-            auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input_data, m_working_buffer);
+            auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, m_working_buffer);
             auto processor = [enhancement_factor](Eigen::VectorXcd& spectrum, size_t) {
                 for (int i = 1; i < spectrum.size() / 2; ++i) {
                     double freq_factor = 1.0 + (enhancement_factor - 1.0) * (double(i) / (spectrum.size() / 2));
@@ -149,8 +154,10 @@ protected:
                 }
             };
 
-            auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
-            m_working_buffer = std::move(result);
+            for (size_t i = 0; i < target_data.size(); ++i) {
+                auto result = process_spectral_windows(target_data[i], window_size, hop_size, processor);
+                m_working_buffer[i] = std::move(result);
+            }
 
             return create_output(OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
         }
@@ -163,7 +170,7 @@ protected:
             double linear_threshold = std::pow(10.0, threshold / 20.0);
 
             if (this->is_in_place()) {
-                auto [data_span, structure_info] = OperationHelper::extract_structured_double(input_data);
+                auto [data_span, structure_info] = OperationHelper::extract_structured_double(input);
 
                 auto processor = [linear_threshold](Eigen::VectorXcd& spectrum, size_t) {
                     std::ranges::transform(spectrum, spectrum.begin(), [linear_threshold](const std::complex<double>& bin) {
@@ -171,28 +178,37 @@ protected:
                     });
                 };
 
-                auto result = process_spectral_windows(data_span, window_size, hop_size, processor);
-                std::copy(result.begin(), result.end(), data_span.begin());
+                for (auto& span : data_span) {
+                    auto result = process_spectral_windows(span, window_size, hop_size, processor);
+                    std::ranges::copy(result, span.begin());
+                }
 
-                return create_output(OperationHelper::reconstruct_from_double<InputType>(
-                    std::vector<double>(data_span.begin(), data_span.end()), structure_info));
+                auto reconstructed_data = data_span
+                    | std::views::transform([](const auto& span) {
+                          return std::vector<double>(span.begin(), span.end());
+                      })
+                    | std::ranges::to<std::vector>();
+
+                return create_output(OperationHelper::reconstruct_from_double<InputType>(reconstructed_data, structure_info));
             }
 
-            auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input_data, m_working_buffer);
+            auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, m_working_buffer);
             auto processor = [linear_threshold](Eigen::VectorXcd& spectrum, size_t) {
                 std::ranges::transform(spectrum, spectrum.begin(), [linear_threshold](const std::complex<double>& bin) {
                     return (std::abs(bin) > linear_threshold) ? bin : std::complex<double>(0.0, 0.0);
                 });
             };
 
-            auto result = process_spectral_windows(target_data, window_size, hop_size, processor);
-            m_working_buffer = std::move(result);
+            for (size_t i = 0; i < target_data.size(); ++i) {
+                auto result = process_spectral_windows(target_data[i], window_size, hop_size, processor);
+                m_working_buffer[i] = std::move(result);
+            }
 
             return create_output(OperationHelper::reconstruct_from_double<InputType>(m_working_buffer, structure_info));
         }
 
         default:
-            return create_output(input_data);
+            return create_output(input);
         }
     }
 
@@ -232,7 +248,7 @@ protected:
 
 private:
     SpectralOperation m_operation; ///< Current spectral operation
-    mutable std::vector<double> m_working_buffer; ///< Buffer for out-of-place spectral operations
+    mutable std::vector<std::vector<double>> m_working_buffer; ///< Buffer for out-of-place spectral operations
 
     /**
      * @brief Sets default parameter values for all spectral operations
@@ -281,15 +297,15 @@ private:
      * or direct assignment when types match. Ensures spectral processing results
      * are properly converted back to the expected output type.
      */
-    output_type create_output(const InputType& data)
+    output_type create_output(const input_type& input)
     {
-        output_type result;
         if constexpr (std::is_same_v<InputType, OutputType>) {
-            result.data = data;
+            return input;
         } else {
-            result.data = OperationHelper::convert_result_to_output_type<OutputType>(data);
+            output_type result = input;
+            result.data = OperationHelper::convert_result_to_output_type<OutputType>(input.data);
+            return result;
         }
-        return result;
     }
 };
 }

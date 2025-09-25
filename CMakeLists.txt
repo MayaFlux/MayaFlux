@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12...3.27)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -16,6 +16,7 @@ elseif(UNIX)
 else()
     add_compile_definitions(MAYAFLUX_PLATFORM_UNKNOWN)
 endif()
+add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 
 if(WIN32)
     if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -34,9 +35,7 @@ if(WIN32)
 endif()
 
 if(APPLE)
-    set(CMAKE_C_COMPILER "/opt/homebrew/opt/llvm/bin/clang" CACHE STRING "Homebrew Clang C compiler" FORCE)
-    set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++" CACHE STRING "Homebrew Clang C++ compiler" FORCE)
-    # set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk" CACHE STRING "" FORCE)
+    message(STATUS "Using system Clang on macOS (minimum macOS 14 required for C++23)")
 endif()
 
 project(MayaFlux VERSION 0.1.0)
@@ -66,7 +65,6 @@ else()
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
 endif()
 
-add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
     ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/version.h
@@ -74,7 +72,6 @@ configure_file(
 )
 
 find_package(GTest REQUIRED)
-enable_testing()
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 list(FILTER SOURCES EXCLUDE REGEX ".*main\\.cpp$")
@@ -175,13 +172,31 @@ target_link_libraries(MayaFlux PRIVATE MayaFluxLib)
 if(MSVC)
     add_compile_options(/W4)
 else()
-    add_compile_options(
+    if(APPLE AND CMAKE_SYSTEM_VERSION VERSION_LESS "15.0")
+        add_compile_options(
+            -fpermissive
+            -Wno-error
+            -Wno-unused-lambda-capture
+            -Wno-c++20-extensions
+            -Wno-c++23-extensions
+            -Wno-unused-variable
+            -Wno-unused-parameter
+            -Wno-extra
+            -Wno-pedantic
+        )
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++2b")
+
+        message(STATUS "Applied Apple Clang 15 (macOS 14) compatibility workarounds")
+    else()
+        add_compile_options(
         -Wall
         -Wextra
         -Wpedantic
     )
+    endif()
 endif()
 
+enable_testing()
 add_subdirectory(tests)
 
 if(UNIX)

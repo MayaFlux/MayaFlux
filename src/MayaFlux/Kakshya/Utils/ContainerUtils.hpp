@@ -37,15 +37,6 @@ std::unordered_map<std::string, std::any> analyze_access_pattern(const Region& r
     const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
- * @brief Extract data in interleaved format.
- * @param container The container to extract from.
- * @param pattern Interleaving pattern (e.g., which dimensions to interleave).
- * @return DataVariant containing interleaved data.
- */
-DataVariant extract_interleaved_data(const std::shared_ptr<SignalSourceContainer>& container,
-    const std::vector<size_t>& pattern = {});
-
-/**
  * @brief Interleave multiple channels of data into a single vector.
  * @tparam T Data type.
  * @param channels Vector of channel vectors.
@@ -117,7 +108,7 @@ validate_container_for_analysis(const std::shared_ptr<SignalSourceContainer>& co
  * @return Vector of double values from container data
  * @throws std::runtime_error if no numeric data can be extracted
  */
-std::span<double> extract_numeric_data_from_container(const std::shared_ptr<SignalSourceContainer>& container);
+std::vector<std::span<double>> extract_numeric_data(const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
  * @brief Validates numeric data for analysis operations

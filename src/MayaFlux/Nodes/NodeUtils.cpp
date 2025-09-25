@@ -69,7 +69,7 @@ bool safe_remove_conditional_callback(std::vector<std::pair<NodeHook, NodeCondit
 
     while (it != callbacks.end()) {
         if (it->second.target_type() == callback.target_type()) {
-            callbacks.erase(it);
+            it = callbacks.erase(it);
             removed = true;
         } else {
             ++it;

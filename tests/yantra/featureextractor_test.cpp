@@ -1,7 +1,5 @@
 #include "../test_config.h"
 
-#include "MayaFlux/Yantra/Analyzers/EnergyAnalyzer.hpp"
-#include "MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp"
 #include "MayaFlux/Yantra/Extractors/FeatureExtractor.hpp"
 
 using namespace MayaFlux::Yantra;
@@ -13,35 +11,45 @@ class FeatureExtractorBasicTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        test_data = create_test_audio_data();
+        multi_channel_data = create_multi_channel_audio_data();
         extractor = std::make_shared<StandardFeatureExtractor>(512, 256);
     }
 
-    std::vector<double> create_test_audio_data()
+    static std::vector<std::vector<double>> create_multi_channel_audio_data()
     {
-        std::vector<double> audio;
-        audio.reserve(2048);
+        std::vector<std::vector<double>> channels(2);
+        channels[0].reserve(2048);
+        channels[1].reserve(2048);
 
         for (size_t i = 0; i < 2048; ++i) {
             double t = static_cast<double>(i) / 44100.0;
 
-            double sample = 0.2 * std::sin(2.0 * M_PI * 440.0 * t);
-
+            // Channel 1: 440 Hz + bursts + spikes
+            double sample1 = 0.2 * std::sin(2.0 * M_PI * 440.0 * t);
             if ((i % 256) < 32) {
-                sample += 0.8 * std::sin(2.0 * M_PI * 1000.0 * t);
+                sample1 += 0.8 * std::sin(2.0 * M_PI * 1000.0 * t);
             }
-
             if (i % 200 == 0) {
-                sample += (i % 400 == 0) ? 1.2 : -1.2;
+                sample1 += (i % 400 == 0) ? 1.2 : -1.2;
             }
 
-            audio.push_back(sample);
+            // Channel 2: 880 Hz + different bursts + spikes
+            double sample2 = 0.2 * std::sin(2.0 * M_PI * 880.0 * t);
+            if ((i % 128) < 16) {
+                sample2 += 0.6 * std::sin(2.0 * M_PI * 2000.0 * t);
+            }
+            if (i % 150 == 0) {
+                sample2 += (i % 300 == 0) ? 1.0 : -1.0;
+            }
+
+            channels[0].push_back(sample1);
+            channels[1].push_back(sample2);
         }
 
-        return audio;
+        return channels;
     }
 
-    std::vector<double> test_data;
+    std::vector<std::vector<double>> multi_channel_data;
     std::shared_ptr<StandardFeatureExtractor> extractor;
 };
 
@@ -93,55 +101,66 @@ class FeatureExtractorTypeTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        test_data = std::vector<double> { 1.0, 2.0, 3.0, 4.0, 5.0 };
+        multi_channel_data = {
+            { 1.0, 2.0, 3.0, 4.0, 5.0 },
+            { 2.0, 4.0, 6.0, 8.0, 10.0 }
+        };
     }
 
-    std::vector<double> test_data;
+    std::vector<std::vector<double>> multi_channel_data;
 };
 
 TEST_F(FeatureExtractorTypeTest, DifferentOutputTypes)
 {
     auto vector_extractor = std::make_shared<StandardFeatureExtractor>();
-    EXPECT_NE(vector_extractor, nullptr);
+    auto eigen_extractor = std::make_shared<MatrixFeatureExtractor>();
 
-    auto eigen_extractor = std::make_shared<VectorFeatureExtractor>();
-    EXPECT_NE(eigen_extractor, nullptr);
+    std::vector<Kakshya::DataVariant> multi_channel_input = {
+        Kakshya::DataVariant { multi_channel_data[0] },
+        Kakshya::DataVariant { multi_channel_data[1] }
+    };
 
-    auto variant_extractor = std::make_shared<VariantFeatureExtractor>();
-    EXPECT_NE(variant_extractor, nullptr);
+    auto result_vec = vector_extractor->extract_data(multi_channel_input);
+    EXPECT_EQ(result_vec.size(), 2);
+    for (const auto& ch : result_vec) {
+        EXPECT_FALSE(ch.empty());
+    }
 
-    EXPECT_EQ(vector_extractor->get_extraction_type(), ExtractionType::FEATURE_GUIDED);
-    EXPECT_EQ(eigen_extractor->get_extraction_type(), ExtractionType::FEATURE_GUIDED);
-    EXPECT_EQ(variant_extractor->get_extraction_type(), ExtractionType::FEATURE_GUIDED);
+    auto result_eigen = eigen_extractor->extract_data(multi_channel_input);
+    EXPECT_EQ(result_eigen.cols(), 2);
+    for (int c = 0; c < result_eigen.cols(); ++c) {
+        EXPECT_GT(result_eigen.col(c).norm(), 0.0);
+    }
 }
 
 class FeatureExtractorFunctionalTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        test_data = create_synthetic_audio();
+        multi_channel_data = create_multi_channel_audio_data();
         extractor = std::make_shared<StandardFeatureExtractor>(256, 128);
     }
 
-    std::vector<double> create_synthetic_audio()
+    static std::vector<std::vector<double>> create_multi_channel_audio_data()
     {
-        std::vector<double> audio;
-        audio.reserve(1024);
+        std::vector<std::vector<double>> channels(2);
+        channels[0].reserve(1024);
+        channels[1].reserve(1024);
 
         for (size_t i = 0; i < 1024; ++i) {
-            double sample = 0.1 * std::sin(2.0 * M_PI * i / 32.0);
-
-            if ((i % 128) < 64) {
-                sample += 0.3;
-            }
-
-            audio.push_back(sample);
+            double sample1 = 0.1 * std::sin(2.0 * M_PI * i / 32.0);
+            if ((i % 128) < 64)
+                sample1 += 0.3;
+            double sample2 = 0.2 * std::sin(2.0 * M_PI * i / 64.0);
+            if ((i % 256) < 32)
+                sample2 += 0.5;
+            channels[0].push_back(sample1);
+            channels[1].push_back(sample2);
         }
-
-        return audio;
+        return channels;
     }
 
-    std::vector<double> test_data;
+    std::vector<std::vector<double>> multi_channel_data;
     std::shared_ptr<StandardFeatureExtractor> extractor;
 };
 
@@ -150,12 +169,18 @@ TEST_F(FeatureExtractorFunctionalTest, OverlappingWindowsExtraction)
     extractor->set_extraction_method(ExtractionMethod::OVERLAPPING_WINDOWS);
     extractor->set_parameter("overlap", 0.5);
 
-    Kakshya::DataVariant audio_variant { test_data };
+    std::vector<Kakshya::DataVariant> multi_channel_input = {
+        Kakshya::DataVariant { multi_channel_data[0] },
+        Kakshya::DataVariant { multi_channel_data[1] }
+    };
 
     EXPECT_NO_THROW({
-        auto result = extractor->extract_data(audio_variant);
-        EXPECT_FALSE(result.empty());
-        EXPECT_LE(result.size(), test_data.size() * 2);
+        auto result = extractor->extract_data(multi_channel_input);
+        EXPECT_EQ(result.size(), 2);
+        for (const auto& ch : result) {
+            EXPECT_FALSE(ch.empty());
+        }
+        EXPECT_NE(result[0], result[1]);
     });
 }
 
@@ -168,20 +193,26 @@ TEST_F(FeatureExtractorFunctionalTest, ParameterManagement)
     auto energy_param = extractor->get_parameter("energy_threshold");
     EXPECT_TRUE(energy_param.has_value());
 
-    double default_val = extractor->get_parameter_or_default<double>("nonexistent", 99.9);
+    auto default_val = extractor->get_parameter_or_default<double>("nonexistent", 99.9);
     EXPECT_EQ(default_val, 99.9);
 }
 
 TEST_F(FeatureExtractorFunctionalTest, InputValidation)
 {
-    Kakshya::DataVariant valid_variant { test_data };
+    std::vector<Kakshya::DataVariant> multi_channel_input = {
+        Kakshya::DataVariant { multi_channel_data[0] },
+        Kakshya::DataVariant { multi_channel_data[1] }
+    };
 
-    IO<Kakshya::DataVariant> valid_input(valid_variant);
+    IO<std::vector<Kakshya::DataVariant>> valid_input(multi_channel_input);
     EXPECT_TRUE(extractor->validate_extraction_input(valid_input));
 
     std::vector<double> empty_data;
-    Kakshya::DataVariant empty_variant { empty_data };
-    IO<Kakshya::DataVariant> empty_input(empty_variant);
+    std::vector<Kakshya::DataVariant> empty_multi_channel = {
+        Kakshya::DataVariant { empty_data },
+        Kakshya::DataVariant { empty_data }
+    };
+    IO<std::vector<Kakshya::DataVariant>> empty_input(empty_multi_channel);
 
     EXPECT_NO_THROW(extractor->validate_extraction_input(empty_input));
 }
@@ -199,13 +230,19 @@ protected:
 TEST_F(FeatureExtractorEdgeCaseTest, EmptyDataHandling)
 {
     std::vector<double> empty_data;
-    Kakshya::DataVariant empty_variant { empty_data };
+    std::vector<Kakshya::DataVariant> empty_multi_channel = {
+        Kakshya::DataVariant { empty_data },
+        Kakshya::DataVariant { empty_data }
+    };
 
     extractor->set_extraction_method(ExtractionMethod::OVERLAPPING_WINDOWS);
 
     EXPECT_NO_THROW({
-        auto result = extractor->extract_data(empty_variant);
-        EXPECT_TRUE(result.empty());
+        auto result = extractor->extract_data(empty_multi_channel);
+        EXPECT_EQ(result.size(), 2);
+        for (const auto& ch : result) {
+            EXPECT_TRUE(ch.empty());
+        }
     });
 }
 
@@ -223,11 +260,16 @@ TEST_F(FeatureExtractorEdgeCaseTest, ProblematicNumericalData)
         std::numeric_limits<double>::infinity(), -5.0, 0.0
     };
 
-    Kakshya::DataVariant variant { problematic_data };
+    std::vector<Kakshya::DataVariant> multi_channel_input = {
+        Kakshya::DataVariant { problematic_data },
+        Kakshya::DataVariant { problematic_data }
+    };
+
     extractor->set_extraction_method(ExtractionMethod::OVERLAPPING_WINDOWS);
 
     EXPECT_NO_THROW({
-        auto result = extractor->extract_data(variant);
+        auto result = extractor->extract_data(multi_channel_input);
+        EXPECT_EQ(result.size(), 2);
     });
 }
 
@@ -235,15 +277,18 @@ class FeatureExtractorPerformanceTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        large_data.resize(44100);
-        for (size_t i = 0; i < large_data.size(); ++i) {
-            large_data[i] = std::sin(2.0 * M_PI * 440.0 * i / 44100.0);
+        multi_channel_data.resize(2);
+        multi_channel_data[0].resize(44100);
+        multi_channel_data[1].resize(44100);
+        for (size_t i = 0; i < 44100; ++i) {
+            multi_channel_data[0][i] = std::sin(2.0 * M_PI * 440.0 * i / 44100.0);
+            multi_channel_data[1][i] = std::sin(2.0 * M_PI * 880.0 * i / 44100.0);
         }
 
         extractor = std::make_shared<StandardFeatureExtractor>(1024, 512);
     }
 
-    std::vector<double> large_data;
+    std::vector<std::vector<double>> multi_channel_data;
     std::shared_ptr<StandardFeatureExtractor> extractor;
 };
 
@@ -252,33 +297,46 @@ TEST_F(FeatureExtractorPerformanceTest, LargeDataProcessing)
     extractor->set_extraction_method(ExtractionMethod::OVERLAPPING_WINDOWS);
     extractor->set_parameter("overlap", 0.5);
 
-    Kakshya::DataVariant audio_variant { large_data };
+    std::vector<Kakshya::DataVariant> multi_channel_input = {
+        Kakshya::DataVariant { multi_channel_data[0] },
+        Kakshya::DataVariant { multi_channel_data[1] }
+    };
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    auto result = extractor->extract_data(audio_variant);
+    auto result = extractor->extract_data(multi_channel_input);
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
-    EXPECT_FALSE(result.empty());
+    EXPECT_EQ(result.size(), 2);
+    for (const auto& ch : result) {
+        EXPECT_FALSE(ch.empty());
+    }
     EXPECT_LT(duration.count(), 1000);
 }
 
 TEST_F(FeatureExtractorPerformanceTest, BatchProcessing)
 {
-    std::vector<Kakshya::DataVariant> batch_data;
-    for (int i = 0; i < 5; ++i) {
-        batch_data.emplace_back(large_data);
+    std::vector<std::vector<double>> base_channel(2);
+    base_channel[0].resize(44100, 0.0);
+    base_channel[1].resize(44100, 0.0);
+    for (size_t i = 0; i < 44100; ++i) {
+        base_channel[0][i] = std::sin(2.0 * M_PI * 440.0 * i / 44100.0);
+        base_channel[1][i] = std::sin(2.0 * M_PI * 880.0 * i / 44100.0);
     }
 
     extractor->set_extraction_method(ExtractionMethod::OVERLAPPING_WINDOWS);
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    std::vector<std::vector<double>> results;
-    for (const auto& variant : batch_data) {
-        results.push_back(extractor->extract_data(variant));
+    std::vector<std::vector<std::vector<double>>> results;
+    for (int i = 0; i < 5; ++i) {
+        std::vector<Kakshya::DataVariant> multi_channel_input = {
+            Kakshya::DataVariant { base_channel[0] },
+            Kakshya::DataVariant { base_channel[1] }
+        };
+        results.push_back(extractor->extract_data(multi_channel_input));
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

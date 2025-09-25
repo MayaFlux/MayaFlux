@@ -236,4 +236,15 @@ u_int64_t ContainerDataStructure::get_width(const std::vector<DataDimension>& di
     return 0;
 }
 
+size_t ContainerDataStructure::get_frame_size(const std::vector<DataDimension>& dimensions)
+{
+    size_t frame_size = 1;
+    for (const auto& dim : dimensions) {
+        if (dim.role != DataDimension::Role::TIME) {
+            frame_size *= dim.size;
+        }
+    }
+    return frame_size;
+}
+
 }

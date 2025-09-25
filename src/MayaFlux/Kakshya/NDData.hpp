@@ -137,9 +137,10 @@ struct DataDimension {
      * @param size Number of elements along this axis
      * @param axis Axis character ('x', 'y', or 'z')
      * @param stride Memory stride (default: 1)
+     * @param name Optional name (default: "pixels")
      * @return DataDimension representing a spatial axis
      */
-    static DataDimension spatial(u_int64_t size, char axis, u_int64_t stride = 1);
+    static DataDimension spatial(u_int64_t size, char axis, u_int64_t stride = 1, std::string name = "spatial");
 
     /**
      * @brief Data container combining variants and dimensions.

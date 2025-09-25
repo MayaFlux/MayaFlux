@@ -1,0 +1,94 @@
+name: MayaFlux CI
+on:
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      run_tests:
+        description: "Run tests after build"
+        required: false
+        default: true
+        type: boolean
+  # push:
+  #   branches: [containerdata]
+env:
+  BUILD_TYPE: Release
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14 # Apple Clang 15 with C++23 support
+            name: "macOS 14 System Clang (Minimum)"
+          - os: macos-latest # Current runner - latest C++23 features
+            name: "macOS Latest System Clang"
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check system Clang C++23 support
+        shell: bash
+        run: |
+          echo "=== System Clang Version ==="
+          clang++ --version
+          echo "=== Testing C++23 standard library support ==="
+          cat > test.cpp << 'EOF'
+          #include <ranges>
+          #include <vector>
+          #include <cstddef>
+          int main() {
+              auto x = 42UZ;  // UZ suffix
+              auto v = std::views::iota(0, 5) | std::ranges::to<std::vector>();
+              return 0;
+          }
+          EOF
+          clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
+
+      - name: Cache Homebrew packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /opt/homebrew/Cellar
+            /opt/homebrew/lib
+            /opt/homebrew/include
+          key: homebrew-${{ matrix.os }}-deps-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            homebrew-${{ matrix.os }}-deps-
+            homebrew-${{ matrix.os }}-
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          brew update
+          brew install rtaudio eigen magic_enum onedpl ffmpeg glfw googletest
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_VERBOSE_MAKEFILE=ON
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 4
+
+      - name: Test (conditional)
+        if: ${{ inputs.run_tests != false }}
+        shell: bash
+        working-directory: build
+        run: ctest --output-on-failure --parallel 4
+
+      - name: Upload build artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.os }}
+          path: |
+            build/CMakeFiles/CMakeOutput.log
+            build/CMakeFiles/CMakeError.log
+            build/Testing/Temporary/LastTest.log
+            build/compile_commands.json

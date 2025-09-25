@@ -25,7 +25,7 @@ DataDimension DataDimension::frequency(u_int64_t bins, std::string name)
     return { std::move(name), bins, 1, Role::FREQUENCY };
 }
 
-DataDimension DataDimension::spatial(u_int64_t size, char axis, u_int64_t stride)
+DataDimension DataDimension::spatial(u_int64_t size, char axis, u_int64_t stride, std::string name)
 {
     Role r = [axis]() {
         switch (axis) {
@@ -38,7 +38,11 @@ DataDimension DataDimension::spatial(u_int64_t size, char axis, u_int64_t stride
             return Role::SPATIAL_Z;
         }
     }();
-    return { std::string("spatial_") + axis, size, stride, r };
+
+    if (name == "") {
+        name = std::string("spatial_") + axis;
+    }
+    return { name, size, stride, r };
 }
 
 std::vector<DataDimension> DataDimension::create_dimensions(

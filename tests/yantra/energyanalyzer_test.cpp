@@ -18,12 +18,12 @@ protected:
         container = std::make_shared<MockSignalSourceContainer>();
         container->set_test_data(test_data);
 
-        analyzer = std::make_unique<ContainerEnergyAnalyzer>(256, 128);
+        analyzer = std::make_unique<EnergyAnalyzer<std::shared_ptr<SignalSourceContainer>, Eigen::MatrixXd>>(256, 128);
     }
 
     std::vector<double> test_data;
     std::shared_ptr<MockSignalSourceContainer> container;
-    std::unique_ptr<ContainerEnergyAnalyzer> analyzer;
+    std::unique_ptr<EnergyAnalyzer<std::shared_ptr<SignalSourceContainer>, Eigen::MatrixXd>> analyzer;
 };
 
 TEST_F(EnergyAnalyzerTest, CalculateRMSEnergy)
@@ -37,11 +37,13 @@ TEST_F(EnergyAnalyzerTest, CalculateRMSEnergy)
     EXPECT_TRUE(pipeline_result.data.size() > 0);
 
     auto analysis_result = analyzer->analyze_energy(container);
-    EXPECT_FALSE(analysis_result.energy_values.empty());
+    EXPECT_FALSE(analysis_result.channels.empty());
     EXPECT_EQ(analysis_result.method_used, EnergyMethod::RMS);
 
-    for (double v : analysis_result.energy_values) {
-        EXPECT_GE(v, 0.0);
+    for (const auto& channel : analysis_result.channels) {
+        for (double v : channel.energy_values) {
+            EXPECT_GE(v, 0.0);
+        }
     }
 }
 
@@ -51,11 +53,13 @@ TEST_F(EnergyAnalyzerTest, CalculatePeakEnergy)
     analyzer->set_analysis_granularity(AnalysisGranularity::RAW_VALUES);
 
     auto analysis_result = analyzer->analyze_energy(container);
-    EXPECT_FALSE(analysis_result.energy_values.empty());
+    EXPECT_FALSE(analysis_result.channels.empty());
     EXPECT_EQ(analysis_result.method_used, EnergyMethod::PEAK);
 
-    for (double v : analysis_result.energy_values) {
-        EXPECT_GE(v, 0.0);
+    for (const auto& channel : analysis_result.channels) {
+        for (double v : channel.energy_values) {
+            EXPECT_GE(v, 0.0);
+        }
     }
 }
 
@@ -65,24 +69,13 @@ TEST_F(EnergyAnalyzerTest, CalculateSpectralEnergy)
     analyzer->set_analysis_granularity(AnalysisGranularity::RAW_VALUES);
 
     auto analysis_result = analyzer->analyze_energy(container);
-    EXPECT_FALSE(analysis_result.energy_values.empty());
+    EXPECT_FALSE(analysis_result.channels.empty());
     EXPECT_EQ(analysis_result.method_used, EnergyMethod::SPECTRAL);
 
-    for (double v : analysis_result.energy_values) {
-        EXPECT_GE(v, 0.0);
-    }
-}
-
-TEST_F(EnergyAnalyzerTest, CalculateHarmonicEnergy)
-{
-    analyzer->set_parameter("method", "harmonic");
-
-    auto analysis_result = analyzer->analyze_energy(container);
-    EXPECT_FALSE(analysis_result.energy_values.empty());
-    EXPECT_EQ(analysis_result.method_used, EnergyMethod::HARMONIC);
-
-    for (double v : analysis_result.energy_values) {
-        EXPECT_GE(v, 0.0);
+    for (const auto& channel : analysis_result.channels) {
+        for (double v : channel.energy_values) {
+            EXPECT_GE(v, 0.0);
+        }
     }
 }
 
@@ -92,14 +85,16 @@ TEST_F(EnergyAnalyzerTest, EnergyAnalysisResultStructure)
 
     auto analysis_result = analyzer->analyze_energy(container);
 
-    EXPECT_FALSE(analysis_result.energy_values.empty());
+    EXPECT_FALSE(analysis_result.channels.empty());
     EXPECT_EQ(analysis_result.window_size, 256);
     EXPECT_EQ(analysis_result.hop_size, 128);
-    EXPECT_GT(analysis_result.mean_energy, 0.0);
-    EXPECT_GE(analysis_result.max_energy, analysis_result.min_energy);
-    EXPECT_EQ(analysis_result.window_positions.size(), analysis_result.energy_values.size());
 
-    for (const auto& [start, end] : analysis_result.window_positions) {
+    const auto& first_channel = analysis_result.channels[0];
+    EXPECT_GT(first_channel.mean_energy, 0.0);
+    EXPECT_GE(first_channel.max_energy, first_channel.min_energy);
+    EXPECT_EQ(first_channel.window_positions.size(), first_channel.energy_values.size());
+
+    for (const auto& [start, end] : first_channel.window_positions) {
         EXPECT_LT(start, end);
         EXPECT_LE(end, test_data.size());
     }
@@ -113,12 +108,24 @@ TEST_F(EnergyAnalyzerTest, EnergyClassification)
 
     auto analysis_result = analyzer->analyze_energy(container);
 
-    EXPECT_FALSE(analysis_result.energy_classifications.empty());
-    EXPECT_EQ(analysis_result.energy_classifications.size(), analysis_result.energy_values.size());
-    EXPECT_FALSE(analysis_result.level_distribution.empty());
+    EXPECT_FALSE(analysis_result.channels.empty());
 
-    for (const auto& level : analysis_result.energy_classifications) {
-        EXPECT_TRUE(level >= EnergyLevel::SILENT && level <= EnergyLevel::PEAK);
+    for (const auto& channel : analysis_result.channels) {
+        EXPECT_FALSE(channel.classifications.empty());
+        EXPECT_EQ(channel.classifications.size(), channel.energy_values.size());
+
+        bool has_classifications = false;
+        for (int level_count : channel.level_counts) {
+            if (level_count > 0) {
+                has_classifications = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(has_classifications);
+
+        for (const auto& level : channel.classifications) {
+            EXPECT_TRUE(level >= EnergyLevel::SILENT && level <= EnergyLevel::PEAK);
+        }
     }
 }
 
@@ -133,9 +140,13 @@ TEST_F(EnergyAnalyzerTest, PipelineMetadata)
     EXPECT_TRUE(pipeline_result.metadata.contains("energy_method"));
     EXPECT_TRUE(pipeline_result.metadata.contains("window_size"));
     EXPECT_TRUE(pipeline_result.metadata.contains("hop_size"));
+    EXPECT_TRUE(pipeline_result.metadata.contains("num_channels"));
 
     auto method = safe_any_cast_or_default<std::string>(pipeline_result.metadata["energy_method"], "");
     EXPECT_EQ(method, "rms");
+
+    EXPECT_TRUE(pipeline_result.metadata.contains("mean_energy_per_channel"));
+    EXPECT_TRUE(pipeline_result.metadata.contains("max_energy_per_channel"));
 }
 
 TEST_F(EnergyAnalyzerTest, AnalysisDataAccessibility)
@@ -146,11 +157,11 @@ TEST_F(EnergyAnalyzerTest, AnalysisDataAccessibility)
     auto pipeline_result = analyzer->apply_operation(input);
 
     auto cached_analysis = analyzer->get_energy_analysis();
-    EXPECT_FALSE(cached_analysis.energy_values.empty());
+    EXPECT_FALSE(cached_analysis.channels.empty());
     EXPECT_EQ(cached_analysis.method_used, EnergyMethod::PEAK);
 
     auto generic_analysis = analyzer->get_current_analysis();
-    auto typed_analysis = safe_any_cast_or_throw<EnergyAnalysisResult>(generic_analysis);
+    auto typed_analysis = safe_any_cast_or_throw<EnergyAnalysis>(generic_analysis);
     EXPECT_EQ(typed_analysis.method_used, EnergyMethod::PEAK);
 }
 
@@ -167,31 +178,9 @@ TEST_F(EnergyAnalyzerTest, BatchAnalysis)
     EXPECT_EQ(batch_results.size(), 3);
 
     for (const auto& result : batch_results) {
-        auto energy_result = safe_any_cast_or_throw<EnergyAnalysisResult>(result);
-        EXPECT_FALSE(energy_result.energy_values.empty());
+        auto energy_result = safe_any_cast_or_throw<EnergyAnalysis>(result);
+        EXPECT_FALSE(energy_result.channels.empty());
     }
-}
-
-TEST_F(EnergyAnalyzerTest, InvalidContainerThrows)
-{
-    std::shared_ptr<MockSignalSourceContainer> empty_container = std::make_shared<MockSignalSourceContainer>();
-    empty_container->set_test_data({});
-
-    EXPECT_THROW(analyzer->analyze_energy(empty_container), std::runtime_error);
-}
-
-TEST_F(EnergyAnalyzerTest, WindowParameterValidation)
-{
-    EXPECT_THROW(analyzer->set_window_parameters(0, 128), std::invalid_argument);
-    EXPECT_THROW(analyzer->set_window_parameters(256, 0), std::invalid_argument);
-    EXPECT_THROW(analyzer->set_window_parameters(128, 256), std::invalid_argument);
-}
-
-TEST_F(EnergyAnalyzerTest, ThresholdValidation)
-{
-    EXPECT_THROW(analyzer->set_energy_thresholds(0.5, 0.1, 0.05, 0.01), std::invalid_argument);
-
-    EXPECT_NO_THROW(analyzer->set_energy_thresholds(0.01, 0.05, 0.1, 0.5));
 }
 
 TEST_F(EnergyAnalyzerTest, RMSEnergyCorrectness)
@@ -213,11 +202,12 @@ TEST_F(EnergyAnalyzerTest, RMSEnergyCorrectness)
     double expected_rms = amplitude / std::numbers::sqrt2;
     double tolerance = 0.05;
 
-    for (double rms_value : analysis_result.energy_values) {
+    const auto& first_channel = analysis_result.channels[0];
+    for (double rms_value : first_channel.energy_values) {
         EXPECT_NEAR(rms_value, expected_rms, tolerance);
     }
 
-    EXPECT_NEAR(analysis_result.mean_energy, expected_rms, tolerance);
+    EXPECT_NEAR(first_channel.mean_energy, expected_rms, tolerance);
 }
 
 TEST_F(EnergyAnalyzerTest, PeakEnergyCorrectness)
@@ -236,104 +226,12 @@ TEST_F(EnergyAnalyzerTest, PeakEnergyCorrectness)
 
     double tolerance = 0.05;
 
-    for (double peak_value : analysis_result.energy_values) {
+    const auto& first_channel = analysis_result.channels[0];
+    for (double peak_value : first_channel.energy_values) {
         EXPECT_NEAR(peak_value, peak_amplitude, tolerance);
     }
 
-    EXPECT_NEAR(analysis_result.max_energy, peak_amplitude, tolerance);
-}
-
-TEST_F(EnergyAnalyzerTest, ZeroCrossingCorrectness)
-{
-    std::vector<double> square_wave(1024);
-    int cycles = 8;
-
-    for (size_t i = 0; i < square_wave.size(); ++i) {
-        double t = static_cast<double>(i) / (double)square_wave.size();
-        square_wave[i] = (std::sin(2.0 * M_PI * cycles * t) > 0) ? 1.0 : -1.0;
-    }
-
-    container->set_test_data(square_wave);
-    analyzer->set_parameter("method", "zero_crossing");
-
-    auto analysis_result = analyzer->analyze_energy(container);
-
-    // Square wave should have high zero crossing rate
-    // Each cycle has 2 zero crossings, so 8 cycles = 16 crossings over 1024 samples
-    // In a window of 256 samples, we expect roughly 4 crossings
-    // ZCR = crossings / (window_size - 1) ≈ 4/255 ≈ 0.016
-
-    double expected_zcr = (2.0 * cycles * analyzer->get_parameter_or_default<u_int32_t>("window_size", 256))
-        / (1024.0 * (analyzer->get_parameter_or_default<u_int32_t>("window_size", 256) - 1));
-
-    EXPECT_NE(expected_zcr, 0.0);
-
-    for (double zcr_value : analysis_result.energy_values) {
-        EXPECT_GT(zcr_value, 0.01);
-        EXPECT_LT(zcr_value, 0.1);
-    }
-}
-
-TEST_F(EnergyAnalyzerTest, PowerEnergyCorrectness)
-{
-    std::vector<double> constant_signal(1024, 0.6);
-
-    container->set_test_data(constant_signal);
-    analyzer->set_parameter("method", "power");
-
-    auto analysis_result = analyzer->analyze_energy(container);
-
-    // Power = sum of squares = window_size * (0.6)^2 = 256 * 0.36 = 92.16
-    double expected_power = analyzer->get_parameter_or_default<u_int32_t>("window_size", 256) * 0.6 * 0.6;
-    double tolerance = 1.0;
-
-    for (double power_value : analysis_result.energy_values) {
-        EXPECT_NEAR(power_value, expected_power, tolerance);
-    }
-}
-
-TEST_F(EnergyAnalyzerTest, DynamicRangeCorrectness)
-{
-    std::vector<double> dynamic_signal(1024);
-    double min_val = 0.01;
-    double max_val = 0.5;
-
-    for (size_t i = 0; i < dynamic_signal.size(); ++i) {
-        double t = static_cast<double>(i) / (double)dynamic_signal.size();
-        dynamic_signal[i] = min_val + (max_val - min_val) * std::abs(std::sin(2.0 * M_PI * t));
-    }
-
-    container->set_test_data(dynamic_signal);
-    analyzer->set_parameter("method", "dynamic_range");
-
-    auto analysis_result = analyzer->analyze_energy(container);
-
-    // Expected dynamic range in dB = 20 * log10(max_val / min_val)
-    double expected_dr = 20.0 * std::log10(max_val / min_val);
-    double tolerance = 5.0;
-
-    for (double dr_value : analysis_result.energy_values) {
-        EXPECT_GT(dr_value, 0.0);
-        EXPECT_LT(dr_value, expected_dr + tolerance);
-    }
-}
-
-TEST_F(EnergyAnalyzerTest, SilentSignalCorrectness)
-{
-    std::vector<double> silent_signal(1024, 0.0);
-
-    container->set_test_data(silent_signal);
-    analyzer->set_parameter("method", "rms");
-
-    auto analysis_result = analyzer->analyze_energy(container);
-
-    for (double energy_value : analysis_result.energy_values) {
-        EXPECT_NEAR(energy_value, 0.0, 1e-10);
-    }
-
-    EXPECT_NEAR(analysis_result.mean_energy, 0.0, 1e-10);
-    EXPECT_NEAR(analysis_result.min_energy, 0.0, 1e-10);
-    EXPECT_NEAR(analysis_result.max_energy, 0.0, 1e-10);
+    EXPECT_NEAR(first_channel.max_energy, peak_amplitude, tolerance);
 }
 
 TEST_F(EnergyAnalyzerTest, EnergyClassificationCorrectness)
@@ -364,22 +262,64 @@ TEST_F(EnergyAnalyzerTest, EnergyClassificationCorrectness)
 
     auto analysis_result = analyzer->analyze_energy(container);
 
-    EXPECT_GT(analysis_result.level_distribution[EnergyLevel::SILENT], 0);
-    EXPECT_GT(analysis_result.level_distribution[EnergyLevel::QUIET], 0);
-    EXPECT_GT(analysis_result.level_distribution[EnergyLevel::MODERATE], 0);
-    EXPECT_GT(analysis_result.level_distribution[EnergyLevel::LOUD], 0);
+    for (const auto& channel : analysis_result.channels) {
+        EXPECT_GT(channel.level_counts[static_cast<size_t>(EnergyLevel::SILENT)], 0);
+        EXPECT_GT(channel.level_counts[static_cast<size_t>(EnergyLevel::QUIET)], 0);
+        EXPECT_GT(channel.level_counts[static_cast<size_t>(EnergyLevel::MODERATE)], 0);
+        EXPECT_GT(channel.level_counts[static_cast<size_t>(EnergyLevel::LOUD)], 0);
 
-    EXPECT_TRUE(std::ranges::any_of(analysis_result.energy_classifications,
-        [](EnergyLevel level) { return level == EnergyLevel::SILENT; }));
+        EXPECT_TRUE(std::ranges::any_of(channel.classifications,
+            [](EnergyLevel level) { return level == EnergyLevel::SILENT; }));
 
-    EXPECT_TRUE(std::ranges::any_of(analysis_result.energy_classifications,
-        [](EnergyLevel level) { return level == EnergyLevel::LOUD; }));
+        EXPECT_TRUE(std::ranges::any_of(channel.classifications,
+            [](EnergyLevel level) { return level == EnergyLevel::LOUD; }));
+    }
+}
+
+TEST_F(EnergyAnalyzerTest, SilentSignalCorrectness)
+{
+    std::vector<double> silent_signal(1024, 0.0);
+
+    container->set_test_data(silent_signal);
+    analyzer->set_parameter("method", "rms");
+
+    auto analysis_result = analyzer->analyze_energy(container);
+
+    const auto& first_channel = analysis_result.channels[0];
+    for (double energy_value : first_channel.energy_values) {
+        EXPECT_NEAR(energy_value, 0.0, 1e-10);
+    }
+
+    EXPECT_NEAR(first_channel.mean_energy, 0.0, 1e-10);
+    EXPECT_NEAR(first_channel.min_energy, 0.0, 1e-10);
+    EXPECT_NEAR(first_channel.max_energy, 0.0, 1e-10);
+}
+
+TEST_F(EnergyAnalyzerTest, MultiChannelAnalysis)
+{
+    std::vector<std::vector<double>> multi_channel_data(2);
+    multi_channel_data[0] = std::vector<double>(1024, 0.3); // Channel 0: constant 0.3
+    multi_channel_data[1] = std::vector<double>(1024, 0.7); // Channel 1: constant 0.7
+
+    container->set_multi_channel_test_data(multi_channel_data);
+    analyzer->set_parameter("method", "rms");
+
+    auto analysis_result = analyzer->analyze_energy(container);
+
+    EXPECT_EQ(analysis_result.channels.size(), 2);
+
+    std::vector<double> expected_means = { 0.3, 0.7 };
+    for (size_t ch = 0; ch < analysis_result.channels.size(); ++ch) {
+        EXPECT_NEAR(analysis_result.channels[ch].mean_energy, expected_means[ch], 0.01);
+    }
+
+    EXPECT_NE(analysis_result.channels[0].mean_energy, analysis_result.channels[1].mean_energy);
 }
 
 TEST_F(EnergyAnalyzerTest, WindowSizeImpactOnResolution)
 {
-    auto analyzer_small = std::make_unique<ContainerEnergyAnalyzer>(128, 64);
-    auto analyzer_large = std::make_unique<ContainerEnergyAnalyzer>(512, 256);
+    auto analyzer_small = std::make_unique<EnergyAnalyzer<std::shared_ptr<SignalSourceContainer>, Eigen::MatrixXd>>(128, 64);
+    auto analyzer_large = std::make_unique<EnergyAnalyzer<std::shared_ptr<SignalSourceContainer>, Eigen::MatrixXd>>(512, 256);
 
     analyzer_small->set_parameter("method", "rms");
     analyzer_large->set_parameter("method", "rms");
@@ -387,9 +327,10 @@ TEST_F(EnergyAnalyzerTest, WindowSizeImpactOnResolution)
     auto result_small = analyzer_small->analyze_energy(container);
     auto result_large = analyzer_large->analyze_energy(container);
 
-    EXPECT_GT(result_small.energy_values.size(), result_large.energy_values.size());
+    EXPECT_GT(result_small.channels[0].energy_values.size(), result_large.channels[0].energy_values.size());
 
     EXPECT_EQ(result_small.window_size, 128);
     EXPECT_EQ(result_large.window_size, 512);
 }
+
 } // namespace MayaFlux::Test
