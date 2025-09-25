@@ -35,7 +35,8 @@ if(WIN32)
 endif()
 
 if(APPLE)
-    if(DEFINED ENV{GITHUB_ACTIONS} OR DEFINED ENV{MAYAFLUX_USE_SYSTEM_CLANG})
+    # if(DEFINED ENV{GITHUB_ACTIONS} OR DEFINED ENV{MAYAFLUX_USE_SYSTEM_CLANG})
+    if(DEFINED ENV{MAYAFLUX_USE_SYSTEM_CLANG})
         message(STATUS "Using system Clang on GitHub CI")
     else()
         find_program(BREW_EXECUTABLE brew)
@@ -52,10 +53,9 @@ if(APPLE)
                 set(CMAKE_C_COMPILER "${LLVM_PREFIX}/bin/clang" CACHE STRING "Homebrew Clang C compiler" FORCE)
                 set(CMAKE_CXX_COMPILER "${LLVM_PREFIX}/bin/clang++" CACHE STRING "Homebrew Clang C++ compiler" FORCE)
 
-                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -I${LLVM_PREFIX}/include/c++/v1")
-
-                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${LLVM_PREFIX}/lib -Wl,-rpath,${LLVM_PREFIX}/lib -lc++ -lc++abi")
-                set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L${LLVM_PREFIX}/lib -Wl,-rpath,${LLVM_PREFIX}/lib -lc++ -lc++abi")
+                # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -I${LLVM_PREFIX}/include/c++/v1")
+                # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${LLVM_PREFIX}/lib -Wl,-rpath,${LLVM_PREFIX}/lib -lc++ -lc++abi")
+                # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L${LLVM_PREFIX}/lib -Wl,-rpath,${LLVM_PREFIX}/lib -lc++ -lc++abi")
 
                 message(STATUS "Using Homebrew LLVM toolchain with explicit libc++abi linking")
             else()

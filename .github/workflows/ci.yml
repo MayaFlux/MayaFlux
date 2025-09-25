@@ -34,7 +34,7 @@ jobs:
         shell: bash
         run: |
           brew update
-          brew install rtaudio eigen magic_enum onedpl
+          brew install llvm rtaudio eigen magic_enum onedpl
           brew install ffmpeg glfw googletest
 
       - name: Check system Clang C++23 support
