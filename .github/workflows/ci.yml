@@ -29,6 +29,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check system Clang C++23 support
+        shell: bash
+        run: |
+          echo "=== System Clang Version ==="
+          clang++ --version
+          echo "=== Testing std::ranges::to support ==="
+          cat > test.cpp << 'EOF'
+          #include <ranges>
+          #include <vector>
+          int main() {
+              auto v = std::views::iota(0, 5) | std::ranges::to<std::vector>();
+              return 0;
+          }
+          EOF
+          clang++ -std=c++2b test.cpp -o test && echo "✅ std::ranges::to works" || echo "❌ std::ranges::to failed"
+
+          echo "=== Testing UZ suffix ==="
+          cat > test2.cpp << 'EOF'
+          #include <cstddef>
+          int main() {
+              auto x = 42UZ;
+              return 0;
+          }
+          EOF
+          clang++ -std=c++2b test2.cpp -o test2 && echo "✅ UZ suffix works" || echo "❌ UZ suffix failed"
+
       - name: Cache Homebrew packages
         uses: actions/cache@v4
         with:
@@ -47,32 +73,6 @@ jobs:
         run: |
           brew update
           brew install rtaudio eigen magic_enum onedpl ffmpeg glfw googletest
-
-      - name: Check system Clang C++23 support
-        shell: bash
-        run: |
-          echo "=== System Clang Version ==="
-          clang++ --version
-          echo "=== Testing std::ranges::to support ==="
-          cat > test.cpp << 'EOF'
-          #include <ranges>
-          #include <vector>
-          int main() {
-              auto v = std::views::iota(0, 5) | std::ranges::to<std::vector>();
-              return 0;
-          }
-          EOF
-          clang++ -std=c++23 test.cpp -o test && echo "✅ std::ranges::to works" || echo "❌ std::ranges::to failed"
-
-          echo "=== Testing UZ suffix ==="
-          cat > test2.cpp << 'EOF'
-          #include <cstddef>
-          int main() {
-              auto x = 42UZ;
-              return 0;
-          }
-          EOF
-          clang++ -std=c++23 test2.cpp -o test2 && echo "✅ UZ suffix works" || echo "❌ UZ suffix failed"
 
       - name: Configure CMake
         shell: bash
