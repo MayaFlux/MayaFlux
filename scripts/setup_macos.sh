@@ -15,10 +15,30 @@ if [ ! -x "$0" ]; then
     echo
 fi
 
+# Check macOS version requirement
+MACOS_VERSION=$(sw_vers -productVersion)
+MACOS_MAJOR=$(echo $MACOS_VERSION | cut -d. -f1)
+MACOS_MINOR=$(echo $MACOS_VERSION | cut -d. -f2)
+
+echo "Detected macOS version: $MACOS_VERSION"
+
+if [ "$MACOS_MAJOR" -lt 14 ]; then
+    echo "❌ Error: MayaFlux requires macOS 14 (Sonoma) or later for C++23 support."
+    echo "Current macOS version: $MACOS_VERSION"
+    echo "Please upgrade to macOS 14+ to use MayaFlux."
+    echo
+    echo "Academic users: macOS 14 provides excellent compatibility for institutional machines."
+    exit 1
+elif [ "$MACOS_MAJOR" -eq 14 ]; then
+    echo "✅ macOS 14 detected - excellent compatibility for academic/institutional use"
+else
+    echo "✅ macOS $MACOS_MAJOR detected - latest C++23 features available"
+fi
+
 # Check macOS architecture
 ARCH=$(uname -m)
 if [ "$ARCH" = "arm64" ]; then
-    echo "Detected Apple Silicon (M1/M2) Mac"
+    echo "Detected Apple Silicon (M1/M2/M3) Mac"
     HOMEBREW_PREFIX="/opt/homebrew"
 else
     echo "Detected Intel Mac"
@@ -64,7 +84,8 @@ if ! command -v brew &>/dev/null; then
 fi
 
 echo "Installing required packages..."
-brew install cmake rtaudio ffmpeg googletest pkg-config eigen onedpl magic_enum
+brew install cmake rtaudio ffmpeg googletest pkg-config eigen onedpl magic_enum glfw
+
 if [ $? -ne 0 ]; then
     echo "Error: Failed to install one or more packages."
     echo "Please check the output above for details."
@@ -74,7 +95,7 @@ fi
 # Verify package installation
 echo "Verifying package installation..."
 MISSING_PACKAGES=""
-for pkg in cmake llvm rtaudio glfw ffmpeg googletest pkg-config eigen onedpl magic_enum; do
+for pkg in cmake rtaudio glfw ffmpeg googletest pkg-config eigen onedpl magic_enum; do
     if ! brew list --formula | grep -q "^${pkg}$"; then
         MISSING_PACKAGES="$MISSING_PACKAGES $pkg"
     fi
@@ -83,6 +104,22 @@ done
 if [ -n "$MISSING_PACKAGES" ]; then
     echo "Warning: The following packages may not be installed correctly:$MISSING_PACKAGES"
     echo "You may need to install them manually."
+fi
+
+# Check system Clang version
+echo "Checking system Clang..."
+if command -v clang++ &>/dev/null; then
+    CLANG_VERSION=$(clang++ --version | head -n1)
+    echo "✓ System Clang found: $CLANG_VERSION"
+
+    if [ "$MACOS_MAJOR" -eq 14 ]; then
+        echo "Note: Using system Apple Clang with compatibility workarounds for macOS 14"
+    else
+        echo "Note: Using system Apple Clang with modern C++23 support"
+    fi
+else
+    echo "❌ Error: Clang not found. Please ensure Xcode command line tools are installed."
+    exit 1
 fi
 
 # Check CMake version
@@ -116,13 +153,18 @@ else
 fi
 
 echo
-echo "System setup complete!"
+echo "✅ System setup complete!"
+echo
+echo "System Summary:"
+echo "  ✓ macOS $MACOS_VERSION (C++23 compatible)"
+echo "  ✓ System Apple Clang (no Homebrew LLVM needed)"
+echo "  ✓ All dependencies installed via Homebrew"
 echo
 echo "Next steps:"
-echo "1. Run './setup_xcode.sh' to generate Xcode project"
-echo "2. Or manually configure your build environment"
+echo "1. Run './scripts/setup_xcode.sh' to generate Xcode project"
+echo "2. Or configure your preferred build environment"
 echo
 echo "Dependencies installed:"
-echo "  ✓ CMake, LLVM, GLFW, RTAudio, FFmpeg, GoogleTest"
+echo "  ✓ CMake, RtAudio, FFmpeg, GoogleTest, GLFW"
 echo "  ✓ Eigen, OneDPL, Magic Enum"
 echo

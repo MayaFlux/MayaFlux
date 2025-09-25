@@ -14,7 +14,7 @@ if (-not (New-Object Security.Principal.WindowsPrincipal([Security.Principal.Win
     Start-Sleep -Seconds 2
 }
 
-# Check for Visual Studio environment  
+# Check for Visual Studio environment
 if (-not $env:VisualStudioVersion) {
     Write-Host "Warning: Visual Studio environment not detected."
     Write-Host "Ensure you have:"
@@ -55,7 +55,7 @@ if ($env:VCPKG_ROOT) {
 
 # Install required packages
 Write-Host "Installing required packages (x64-windows)..."
-& "$vcpkgDir\vcpkg.exe" install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic-enum
+& "$vcpkgDir\vcpkg.exe" install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic-enum glfw3
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Package installation failed"
     exit 1
@@ -63,7 +63,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # Verify package installation
 Write-Host "Verifying package installation..."
-& "$vcpkgDir\vcpkg.exe" list | Where-Object { $_ -match "rtaudio|ffmpeg|gtest|eigen3|magic_enum" }
+& "$vcpkgDir\vcpkg.exe" list | Where-Object { $_ -match "rtaudio|ffmpeg|gtest|eigen3|magic_enum|glfw3" }
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Warning: Some packages may not have installed correctly."
     Write-Host "Please check the output above for errors."
@@ -83,7 +83,7 @@ if (-not (Test-Path -Path "$PROJECT_ROOT\build")) {
 $userProjectPath = Join-Path $PROJECT_ROOT "src/user_project.hpp"
 if (-not (Test-Path $userProjectPath)) {
     Write-Host "Creating user project file..."
-    
+
     "#pragma once" | Out-File -FilePath $userProjectPath -Encoding UTF8
     "#define MAYASIMPLE" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
     '#include "MayaFlux/MayaFlux.hpp"' | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
@@ -91,7 +91,7 @@ if (-not (Test-Path $userProjectPath)) {
     "void compose() {" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
     "    // Your MayaFlux code goes here!" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
     "}" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
-    
+
     Write-Host "Created src/user_project.hpp"
 } else {
     Write-Host "src/user_project.hpp already exists, skipping creation"

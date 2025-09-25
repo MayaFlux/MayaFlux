@@ -83,7 +83,7 @@ if ($env:VCPKG_ROOT) {
         try {
             git clone https://github.com/microsoft/vcpkg.git $VCPKG_DIR
             if (-not $?) { throw "vcpkg clone failed" }
-            
+
             Push-Location $VCPKG_DIR
             try {
                 & .\bootstrap-vcpkg.bat -disableMetrics
@@ -117,7 +117,7 @@ if (-not $env:VCPKG_ROOT) {
 
 Write-Host ""
 Write-Host "Installing dependencies (x64-windows)..."
-& (Join-Path $VCPKG_DIR "vcpkg") install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic-enum
+& (Join-Path $VCPKG_DIR "vcpkg") install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic-enum glfw3
 if (-not $?) {
     Write-Host "Dependency installation failed"
     exit 1
@@ -131,6 +131,7 @@ if (-not ($installed -match "ffmpeg")) { Write-Host "Warning: ffmpeg may not be 
 if (-not ($installed -match "gtest")) { Write-Host "Warning: gtest may not be installed correctly." }
 if (-not ($installed -match "eigen3")) { Write-Host "Warning: eigen3 may not be installed correctly." }
 if (-not ($installed -match "magic_enum")) { Write-Host "Warning: magic_enum may not be installed correctly." }
+if (-not ($installed -match "glfw3")) { Write-Host "Warning: glfw3 may not be installed correctly." }
 
 # Create build directory
 $buildDir = Join-Path $PROJECT_ROOT "build"
@@ -151,7 +152,7 @@ try {
         "-A", "x64",
         "-DCMAKE_INSTALL_PREFIX=`"$(Join-Path $PROJECT_ROOT "install")`""
     )
-    
+
     & cmake @cmakeArgs
     if (-not $?) {
         Write-Host "CMake generation failed. Potential fixes:"
