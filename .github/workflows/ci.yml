@@ -8,7 +8,7 @@ on:
         default: true
         type: boolean
   push:
-    branches: [ containerdata ]
+    branches: [containerdata]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -36,8 +36,7 @@ jobs:
         shell: bash
         run: |
           brew update
-          brew install llvm rtaudio eigen magic_enum onedpl
-          brew install ffmpeg glfw googletest
+          brew install llvm rtaudio eigen magic_enum onedpl ffmpeg glfw googletest
 
       - name: Configure CMake
         shell: bash
@@ -47,21 +46,14 @@ jobs:
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_VERBOSE_MAKEFILE=ON
 
-      - name: Show detected compiler
-        shell: bash
-        run: |
-          echo "=== CMake detected compiler ==="
-          grep -E "(CMAKE_CXX_COMPILER|CMAKE_C_COMPILER)" build/CMakeCache.txt || true
-          cmake --build build --target help | head -20
-
       - name: Build
         shell: bash
-        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel --verbose
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 4
 
       - name: Test
         shell: bash
         working-directory: build
-        run: ctest --output-on-failure --parallel
+        run: ctest --output-on-failure --parallel 4
 
       - name: Upload build artifacts (on failure)
         if: failure()
@@ -72,3 +64,4 @@ jobs:
             build/CMakeFiles/CMakeOutput.log
             build/CMakeFiles/CMakeError.log
             build/Testing/Temporary/LastTest.log
+            build/compile_commands.json
