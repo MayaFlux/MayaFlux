@@ -22,10 +22,10 @@ void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer>
         m_prepared = true;
         container->mark_ready_for_processing(true);
 
-        std::cout << std::format("ContiguousAccessProcessor attached: {} layout, {} total elements, {} channels",
-            m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar",
-            m_total_elements, m_structure.get_channel_count())
-                  << '\n';
+        std::cout << "ContiguousAccessProcessor attached: "
+                  << (m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar")
+                  << " layout, " << m_total_elements << " total elements, "
+                  << m_structure.get_channel_count() << " channels\n";
 
     } catch (const std::exception& e) {
         std::cerr << "Failed to attach processor: " << e.what() << '\n';
@@ -88,23 +88,20 @@ void ContiguousAccessProcessor::validate()
     }
 
     if (channels_requested > available_channels) {
-        throw std::runtime_error(std::format(
-            "Requested {} channels exceeds available {} channels",
-            channels_requested, available_channels));
+        throw std::runtime_error(
+            "Requested " + std::to_string(channels_requested) + " channels exceeds available " + std::to_string(available_channels) + " channels");
     }
 
     if (m_current_position.size() != available_channels) {
-        std::cerr << std::format(
-            "Warning: Position vector size {} doesn't match channel count {}, adjusting",
-            m_current_position.size(), available_channels)
-                  << '\n';
+        std::cerr << "Warning: Position vector size " << m_current_position.size()
+                  << " doesn't match channel count " << available_channels << ", adjusting\n";
         m_current_position.resize(available_channels, 0);
     }
 
-    std::cout << std::format("Audio processor: {} layout, processing {}×{} blocks, {} channel positions",
-        m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar",
-        frames_requested, channels_requested, m_current_position.size())
-              << '\n';
+    std::cout << "Audio processor: "
+              << (m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar")
+              << " layout, processing " << frames_requested << "×" << channels_requested
+              << " blocks, " << m_current_position.size() << " channel positions\n";
 }
 
 void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer> /*container*/)

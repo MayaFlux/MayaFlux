@@ -161,9 +161,8 @@ std::vector<u_int64_t> advance_position(
     u_int64_t total_frames = structure.get_samples_count_per_channel();
 
     if (current_positions.size() != num_channels) {
-        throw std::invalid_argument(std::format(
-            "Position vector size {} must match channel count {}",
-            current_positions.size(), num_channels));
+        throw std::invalid_argument(
+            "Position vector size " + std::to_string(current_positions.size()) + " must match channel count " + std::to_string(num_channels));
     }
 
     std::vector<u_int64_t> new_positions;
