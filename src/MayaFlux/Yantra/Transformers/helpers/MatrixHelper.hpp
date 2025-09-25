@@ -365,7 +365,7 @@ DataType transform_crossfade_regions(DataType& input,
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
-    std::ranges::for_each(fade_regions, [&](const auto& fade_pair) {
+    std::ranges::for_each(fade_regions, [&target_data, fade_duration](const auto& fade_pair) {
         const auto& [region_a, region_b] = fade_pair;
 
         auto start_a = static_cast<u_int64_t>(region_a.start_coordinates[0]);
@@ -380,7 +380,7 @@ DataType transform_crossfade_regions(DataType& input,
                 auto fade_span = channel_span.subspan(fade_start, fade_end - fade_start);
 
                 auto fade_indices = std::views::iota(size_t { 0 }, fade_span.size());
-                std::ranges::for_each(fade_indices, [&](size_t i) {
+                std::ranges::for_each(fade_indices, [&fade_span](size_t i) {
                     double ratio = static_cast<double>(i) / (fade_span.size() - 1);
                     double smooth_ratio = 0.5 * (1.0 - std::cos(ratio * M_PI));
                     fade_span[i] *= (1.0 - smooth_ratio);
