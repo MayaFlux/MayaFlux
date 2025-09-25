@@ -8,6 +8,11 @@
 
 ```bash
 git clone https://github.com/MayaFlux/MayaFlux.git
+# or
+git clone https://gitlab.com/MayaFlux/MayaFlux.git
+#or
+git clone https://codeberg.org/MayaFlux/MayaFlux.git
+# and then
 cd MayaFlux
 ```
 
@@ -33,13 +38,19 @@ MayaFlux includes automated setup scripts that handle all dependencies and build
 
 # For XCode users
 ./scripts/setup_xcode.sh
-
 ```
+
+**System Requirements:**
+- **Minimum**: macOS 14 (Sonoma) with Apple Clang 15+
+- **Recommended**: macOS 15+ (Sequoia)
+- **Academic Users**: macOS 14 provides excellent compatibility for institutional/shared machines
+
+> **Note**: macOS 13 and earlier are not supported due to missing modern C++ standard library features.
 
 #### Linux
 
 Linux users typically manage dependencies through their package manager. Install the standard development tools (cmake, build-essential, pkg-config)
-and audio/multimedia libraries (rtaudio, ffmpeg, eigen3, gtest, magic_enum) using your distribution's package manager.
+and audio/multimedia libraries (rtaudio, ffmpeg, eigen3, gtest, magic_enum and glfw) using your distribution's package manager.
 
 > **Note**: All setup scripts automatically handle dependency installation and build system configuration. No manual dependency management required.
 
