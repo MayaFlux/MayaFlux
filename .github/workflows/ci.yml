@@ -7,12 +7,14 @@ on:
         required: false
         default: true
         type: boolean
+  push:
+    branches: [ containerdata ]
 env:
   BUILD_TYPE: Release
 jobs:
   build:
     runs-on: macos-latest
-    name: "macOS System Clang C++23"
+    name: "macOS CMake Auto-Detection"
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,22 +39,6 @@ jobs:
           brew install llvm rtaudio eigen magic_enum onedpl
           brew install ffmpeg glfw googletest
 
-      - name: Check system Clang C++23 support
-        shell: bash
-        run: |
-          echo "=== System Clang Version ==="
-          clang++ --version
-          echo "=== Testing C++23 features ==="
-          echo '#include <ranges>' > test.cpp
-          echo 'int main() { auto v = std::views::iota(0, 5); return 0; }' >> test.cpp
-          clang++ -std=c++23 test.cpp -o test && echo "✅ C++23 works with system Clang" || echo "❌ C++23 failed"
-
-      - name: Set up system environment (no LLVM paths)
-        shell: bash
-        run: |
-          echo "CC=clang" >> $GITHUB_ENV
-          echo "CXX=clang++" >> $GITHUB_ENV
-
       - name: Configure CMake
         shell: bash
         run: |
@@ -60,6 +46,13 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_VERBOSE_MAKEFILE=ON
+
+      - name: Show detected compiler
+        shell: bash
+        run: |
+          echo "=== CMake detected compiler ==="
+          grep -E "(CMAKE_CXX_COMPILER|CMAKE_C_COMPILER)" build/CMakeCache.txt || true
+          cmake --build build --target help | head -20
 
       - name: Build
         shell: bash
@@ -74,7 +67,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs-system-clang
+          name: build-logs-cmake-auto
           path: |
             build/CMakeFiles/CMakeOutput.log
             build/CMakeFiles/CMakeError.log
