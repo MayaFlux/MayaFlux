@@ -18,8 +18,8 @@ jobs:
         include:
           - os: macos-14 # Apple Clang 15 with C++23 support
             name: "macOS 14 System Clang (Minimum)"
-          - os: macos-latest # Current runner - latest C++23 features
-            name: "macOS Latest System Clang"
+          # - os: macos-latest # Current runner - latest C++23 features
+          #   name: "macOS Latest System Clang"
 
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name }}

@@ -8,9 +8,11 @@ AudioSubsystem::AudioSubsystem(GlobalStreamInfo& stream_info, Utils::AudioBacken
     , m_audio_device(m_audiobackend->create_device_manager())
     , m_is_ready(false)
     , m_is_running(false)
-    , m_subsystem_tokens(
-          MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND,
-          MayaFlux::Nodes::ProcessingToken::AUDIO_RATE)
+    , m_subsystem_tokens {
+        .Buffer = MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND,
+        .Node = MayaFlux::Nodes::ProcessingToken::AUDIO_RATE,
+        .Task = MayaFlux::Vruta::ProcessingToken::SAMPLE_ACCURATE
+    }
 {
 }
 
