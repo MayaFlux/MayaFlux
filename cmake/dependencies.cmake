@@ -1,0 +1,31 @@
+if(WIN32)
+    find_package(RtAudio CONFIG REQUIRED)
+    find_package(Eigen3 CONFIG REQUIRED)
+    find_package(magic_enum CONFIG REQUIRED)
+    find_package(glfw3 CONFIG REQUIRED)
+else()
+    if(APPLE)
+        find_package(oneDPL)
+    endif()
+    find_package(TBB REQUIRED)
+
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
+    pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
+    pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
+    pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3)
+
+    pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
+    pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
+    pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
+    pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
+    pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
+endif()
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/version.h
+    @ONLY
+)
+
+find_package(GTest REQUIRED)
