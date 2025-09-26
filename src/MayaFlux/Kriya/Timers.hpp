@@ -77,7 +77,7 @@ public:
      * This method returns true if the timer has an active callback scheduled
      * to execute in the future, and false otherwise.
      */
-    inline bool is_active() const { return m_active; }
+    [[nodiscard]] inline bool is_active() const { return m_active; }
 
 private:
     /**
@@ -182,7 +182,7 @@ public:
      * This method returns true if an action has been started but not yet
      * completed or cancelled, and false otherwise.
      */
-    bool is_pending() const;
+    [[nodiscard]] bool is_pending() const;
 
 private:
     /**
@@ -256,7 +256,8 @@ public:
      * @brief Activates a processing node for a specific duration
      * @param node The processing node to activate
      * @param duration_seconds How long to keep the node active (in seconds)
-     * @param channel The output channel to connect the node to (default: 0)
+     * @param channels The output channels to connect the node to
+     * @param channel The output channel to connect the node to (single-channel overload)
      *
      * This method connects the specified node to the output channel,
      * activates it for the specified duration, then automatically disconnects it.
@@ -265,7 +266,9 @@ public:
      *
      * If a node is already active, it is deactivated before starting the new one.
      */
-    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, unsigned int channel = 0);
+    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, std::vector<u_int32_t> channels);
+    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, u_int32_t channel);
+    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds);
 
     /**
      * @brief Activates a processing node with custom setup and cleanup functions
@@ -273,7 +276,8 @@ public:
      * @param setup_func Function to call before activating the node
      * @param cleanup_func Function to call after deactivating the node
      * @param duration_seconds How long to keep the node active (in seconds)
-     * @param channel The output channel to connect the node to (default: 0)
+     * @param channels The output channel to connect the node to
+     * @param channel The output channel to connect the node to (single-channel overload)
      *
      * This method provides more control over the node activation process by
      * allowing custom setup and cleanup functions. The setup function is
@@ -289,8 +293,17 @@ public:
     void play_with_processing(std::shared_ptr<Nodes::Node> node,
         std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
         std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
-        double duration_seconds,
-        unsigned int channel = 0);
+        double duration_seconds, std::vector<u_int32_t> channels);
+
+    void play_with_processing(std::shared_ptr<Nodes::Node> node,
+        std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
+        std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
+        double duration_seconds, u_int32_t channel);
+
+    void play_with_processing(std::shared_ptr<Nodes::Node> node,
+        std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
+        std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
+        double duration_seconds);
 
     /**
      * @brief Cancels any currently active node
@@ -307,7 +320,7 @@ public:
      * This method returns true if the timer has an active node that's
      * currently processing, and false otherwise.
      */
-    inline bool is_active() const { return m_timer.is_active(); }
+    [[nodiscard]] inline bool is_active() const { return m_timer.is_active(); }
 
 private:
     /**
@@ -317,6 +330,15 @@ private:
      * precise control of node activation durations.
      */
     Vruta::TaskScheduler& m_scheduler;
+
+    /**
+     * @brief Cleans up the current operation, disconnecting the node and resetting state
+     *
+     * This method is called when the timer completes its specified duration.
+     * It disconnects the currently active node from the output channels and
+     * resets internal state to allow new operations to be started.
+     */
+    void cleanup_current_operation();
 
     /**
      * @brief Reference to the graph manager that manages processing nodes
@@ -344,13 +366,15 @@ private:
     std::shared_ptr<Nodes::Node> m_current_node;
 
     /**
-     * @brief The output channel the current node is connected to
+     * @brief The output channels the current node is connected to
      *
-     * This variable stores the output channel number that the current
+     * This vector stores the output channel numbers that the current
      * node is connected to. It is set when play_for() or play_with_processing()
      * is called and reset when the node finishes playing or is cancelled.
      */
-    unsigned int m_current_channel = 0;
+    std::vector<u_int32_t> m_channels;
+
+    size_t m_max_channels;
 };
 
 }

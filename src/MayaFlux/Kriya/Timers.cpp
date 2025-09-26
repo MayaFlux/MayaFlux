@@ -1,6 +1,8 @@
 #include "Timers.hpp"
+#include "MayaFlux/API/Core.hpp"
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Kriya/Awaiters.hpp"
+#include "MayaFlux/Nodes/Node.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
@@ -78,6 +80,8 @@ NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler)
     , m_node_graph_manager(*MayaFlux::get_node_graph_manager())
     , m_timer(scheduler)
 {
+    auto num_channels = MayaFlux::get_num_out_channels();
+    m_max_channels = num_channels > 0 ? num_channels : MayaFlux::node_channel_cache_size;
 }
 
 NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
@@ -85,45 +89,111 @@ NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& g
     , m_node_graph_manager(graph_manager)
     , m_timer(scheduler)
 {
+    auto num_channels = MayaFlux::get_num_out_channels();
+    m_max_channels = num_channels > 0 ? num_channels : MayaFlux::node_channel_cache_size;
 }
 
-void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, unsigned int channel)
+void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, u_int32_t channel)
+{
+    play_for(node, duration_seconds, std::vector<u_int32_t> { channel });
+}
+
+void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, std::vector<u_int32_t> channels)
 {
     cancel();
 
     m_current_node = node;
-    m_current_channel = channel;
+    m_channels = channels;
 
-    m_node_graph_manager.add_to_root(node, token, channel);
+    for (auto& channel : channels) {
+        m_node_graph_manager.add_to_root(node, token, channel);
+    }
 
-    m_timer.schedule(duration_seconds, [this, node, channel]() {
-        m_node_graph_manager.get_root_node(token, channel).unregister_node(node);
-        m_current_node = nullptr;
+    m_timer.schedule(duration_seconds, [this]() {
+        cleanup_current_operation();
     });
 }
 
-void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, unsigned int channel)
+void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds)
+{
+    auto source_mask = node->get_channel_mask().load(std::memory_order_relaxed);
+    std::vector<u_int32_t> channels;
+
+    if (source_mask == 0) {
+        channels = { 0 };
+    } else {
+        for (u_int32_t channel = 0; channel < m_max_channels; ++channel) {
+            if (node->is_used_by_channel(channel)) {
+                channels.push_back(channel);
+            }
+        }
+    }
+
+    play_for(node, duration_seconds, channels);
+}
+
+void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, u_int32_t channel)
+{
+    play_with_processing(node, setup_func, cleanup_func, duration_seconds, std::vector<u_int32_t> { channel });
+}
+
+void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, std::vector<u_int32_t> channels)
 {
     cancel();
 
     m_current_node = node;
-    m_current_channel = channel;
+    m_channels = channels;
 
     setup_func(node);
-    m_node_graph_manager.add_to_root(node, Nodes::ProcessingToken::AUDIO_RATE, channel);
 
-    m_timer.schedule(duration_seconds, [this, node, cleanup_func, channel]() {
+    for (auto channel : channels) {
+        m_node_graph_manager.add_to_root(node, token, channel);
+    }
+
+    m_timer.schedule(duration_seconds, [this, node, cleanup_func]() {
         cleanup_func(node);
-        m_node_graph_manager.get_root_node(Nodes::ProcessingToken::AUDIO_RATE, channel).unregister_node(node);
-        m_current_node = nullptr;
+        cleanup_current_operation();
     });
+}
+
+void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node,
+    std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
+    std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
+    double duration_seconds)
+{
+    auto source_mask = node->get_channel_mask().load(std::memory_order_relaxed);
+    std::vector<u_int32_t> channels;
+
+    if (source_mask == 0) {
+        channels = { 0 };
+    } else {
+        for (u_int32_t channel = 0; channel < m_max_channels; ++channel) {
+            if (node->is_used_by_channel(channel)) {
+                channels.push_back(channel);
+            }
+        }
+    }
+
+    play_with_processing(node, setup_func, cleanup_func, duration_seconds, channels);
+}
+
+void NodeTimer::cleanup_current_operation()
+{
+    if (m_current_node) {
+        for (auto channel : m_channels) {
+            if (m_current_node->is_used_by_channel(channel)) {
+                m_node_graph_manager.get_root_node(token, channel).unregister_node(m_current_node);
+            }
+        }
+        m_current_node = nullptr;
+        m_channels.clear();
+    }
 }
 
 void NodeTimer::cancel()
 {
-    if (m_timer.is_active() && m_current_node) {
-        m_node_graph_manager.get_root_node(token, m_current_channel).unregister_node(m_current_node);
-        m_current_node = nullptr;
+    if (m_timer.is_active()) {
+        cleanup_current_operation();
     }
     m_timer.cancel();
 }

@@ -261,7 +261,7 @@ TEST_F(TasksTest, TimeOperator)
     auto& root = node_graph_manager->get_root_node(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 0);
 
-    sine >> Kriya::TimeOperation(0.01, *scheduler, *node_graph_manager);
+    sine >> Kriya::NodeTimeSpec(0.01, *scheduler, *node_graph_manager);
 
     EXPECT_EQ(root.get_node_size(), 1);
 
@@ -714,7 +714,7 @@ TEST_F(TasksTest, TimeOperatorI)
 
     EXPECT_EQ(root.get_node_size(), 0);
 
-    sine >> Kriya::TimeOperation(0.1);
+    sine >> Kriya::NodeTimeSpec(0.1);
 
     EXPECT_EQ(root.get_node_size(), 1);
 

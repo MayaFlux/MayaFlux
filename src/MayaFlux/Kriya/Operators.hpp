@@ -5,10 +5,10 @@
 namespace MayaFlux::Kriya {
 
 /**
- * @class TimeOperation
+ * @class NodeTimeSpec
  * @brief Represents a timed activation operation for processing nodes
  *
- * The TimeOperation class encapsulates the concept of activating a processing node
+ * The NodeTimeSpec class encapsulates the concept of activating a processing node
  * for a specific duration. It's designed to be used with the stream operator (>>)
  * to create a fluent, expressive syntax for computational flow programming.
  *
@@ -27,22 +27,23 @@ namespace MayaFlux::Kriya {
  * // timer.play_for(process_node, 2.0);
  * ```
  *
- * The TimeOperation is part of a broader pattern of using operator overloading
+ * The NodeTimeSpec is part of a broader pattern of using operator overloading
  * to create a domain-specific language for computational flow programming within C++.
  */
-class TimeOperation {
+class NodeTimeSpec {
 public:
     /**
-     * @brief Constructs a TimeOperation with the specified duration
+     * @brief Constructs a NodeTimeSpec with the specified duration
      * @param seconds Duration of the operation in seconds
+     * @param channels Optional list of channels to activate; if not provided, all active channels are used
      *
      * This constructor is typically used internally by the Time() factory function.
-     * It creates a TimeOperation that will use the global scheduler and graph manager.
+     * It creates a NodeTimeSpec that will use the global scheduler and graph manager.
      */
-    TimeOperation(double seconds);
+    NodeTimeSpec(double seconds, std::optional<std::vector<u_int32_t>> channels = std::nullopt);
 
     /**
-     * @brief Constructs a TimeOperation with explicit scheduler and graph manager
+     * @brief Constructs a NodeTimeSpec with explicit scheduler and graph manager
      * @param seconds Duration of the operation in seconds
      * @param scheduler The TaskScheduler to use for timing
      * @param graph_manager The NodeGraphManager to use for node connections
@@ -50,7 +51,7 @@ public:
      * This constructor allows for more control over which scheduler and graph manager
      * are used, which is useful in contexts where multiple processing engines might exist.
      */
-    TimeOperation(double seconds, Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
+    NodeTimeSpec(double seconds, Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
 
     /**
      * @brief Gets the duration of this operation
@@ -59,7 +60,26 @@ public:
      * This method returns the time duration associated with this operation,
      * which determines how long a node will remain active when connected to this operation.
      */
-    inline double get_seconds() const { return m_seconds; }
+    [[nodiscard]] inline double get_seconds() const { return m_seconds; }
+
+    /**
+     * @brief Checks if explicit channels were specified
+     * @return True if specific channels were provided, false if all active channels should be used
+     *
+     * This method indicates whether the operation was created with an explicit
+     * list of channels to activate. If false, the operation will use all channels
+     * that the node is currently active on.
+     */
+    [[nodiscard]] bool has_explicit_channels() const { return m_channels.has_value(); }
+
+    /**
+     * @brief Gets the list of channels to activate
+     * @return Reference to the vector of channel indices
+     *
+     * This method returns the list of channels that were specified when creating
+     * this operation. If no channels were specified, this method should not be called.
+     */
+    [[nodiscard]] const std::vector<u_int32_t>& get_channels() const { return m_channels.value(); }
 
 private:
     /**
@@ -85,14 +105,16 @@ private:
      */
     Nodes::NodeGraphManager& m_graph_manager;
 
+    std::optional<std::vector<u_int32_t>> m_channels;
+
     /**
      * @brief Grants the stream operator access to private members
      *
      * This friendship declaration allows the stream operator to access
-     * the private members of TimeOperation, which is necessary for
+     * the private members of NodeTimeSpec, which is necessary for
      * implementing the node >> time syntax.
      */
-    friend void operator>>(std::shared_ptr<Nodes::Node>, const TimeOperation&);
+    friend void operator>>(std::shared_ptr<Nodes::Node>, const NodeTimeSpec&);
 };
 
 /**
@@ -177,7 +199,7 @@ void operator>>(std::shared_ptr<Nodes::Node> node, DAC& terminal);
 /**
  * @brief Activates a processing node for a specific duration
  * @param node The processing node to activate
- * @param time_op The TimeOperation specifying the duration
+ * @param time_op The NodeTimeSpec specifying the duration
  *
  * This operator overload implements the node >> Time(seconds) syntax, which
  * activates a processing node for a specific duration. It's a more expressive way
@@ -192,14 +214,16 @@ void operator>>(std::shared_ptr<Nodes::Node> node, DAC& terminal);
  * This is part of a broader pattern of using operator overloading to create
  * a domain-specific language for computational flow programming within C++.
  */
-void operator>>(std::shared_ptr<Nodes::Node> node, const TimeOperation& time_op);
+void operator>>(std::shared_ptr<Nodes::Node> node, const NodeTimeSpec& time_op);
 
 /**
- * @brief Creates a TimeOperation with the specified duration
+ * @brief Creates a NodeTimeSpec with the specified duration
  * @param seconds Duration in seconds
- * @return A TimeOperation object representing the specified duration
+ * @param channels Optional list of channels to activate
+ * @param channel Optional single channel to activate
+ * @return A NodeTimeSpec object representing the specified duration
  *
- * This factory function creates a TimeOperation with the specified duration,
+ * This factory function creates a NodeTimeSpec with the specified duration,
  * using the global scheduler and graph manager. It's designed to be used
  * with the stream operator to create a fluent, expressive syntax for
  * timed node activation.
@@ -213,6 +237,8 @@ void operator>>(std::shared_ptr<Nodes::Node> node, const TimeOperation& time_op)
  * This function is part of a broader pattern of using operator overloading
  * to create a domain-specific language for computational flow programming within C++.
  */
-TimeOperation Time(double seconds);
+NodeTimeSpec Time(double seconds, std::vector<uint32_t> channels);
+NodeTimeSpec Time(double seconds, uint32_t channel);
+NodeTimeSpec Time(double seconds);
 
 }

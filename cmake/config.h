@@ -35,10 +35,15 @@ using u_int64_t = uint64_t;
 #endif
 #endif
 
-namespace MayaFlux::Platform {
+namespace MayaFlux {
+
+constexpr size_t node_channel_cache_size = 256;
+
+namespace Platform {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-constexpr char PathSeparator = '\\';
+    constexpr char PathSeparator = '\\';
 #else
-constexpr char PathSeparator = '/';
+    constexpr char PathSeparator = '/';
 #endif
-} // namespace MayaFlux::Platform
+}
+} // namespace MayaFlux

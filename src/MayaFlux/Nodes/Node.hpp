@@ -283,6 +283,17 @@ public:
      */
     void request_reset_from_channel(u_int32_t channel_id);
 
+    /**
+     * @brief Retrieves the current bitmask of active channels using this node
+     * @return Bitmask where each bit represents an active channel
+     *
+     * This method returns the current bitmask that tracks which channels
+     * are actively using this node. Each bit in the mask corresponds to a
+     * specific channel ID, allowing the node to manage its state based on
+     * channel usage.
+     */
+    [[nodiscard]] const inline std::atomic<u_int32_t>& get_channel_mask() const { return m_active_channels_mask; }
+
 protected:
     /**
      * @brief Creates an appropriate context object for this node type
