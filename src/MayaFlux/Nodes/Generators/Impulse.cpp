@@ -1,5 +1,5 @@
 #include "Impulse.hpp"
-#include "MayaFlux/API/Core.hpp"
+#include "MayaFlux/API/Config.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
@@ -60,7 +60,7 @@ void Impulse::set_frequency(float frequency)
 
 void Impulse::update_phase_increment(float frequency)
 {
-    m_phase_inc = frequency / MayaFlux::get_sample_rate();
+    m_phase_inc = frequency / MayaFlux::Config::get_sample_rate();
 }
 
 void Impulse::set_frequency_modulator(std::shared_ptr<Node> modulator)

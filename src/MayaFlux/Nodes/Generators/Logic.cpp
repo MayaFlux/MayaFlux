@@ -1,5 +1,5 @@
 #include "Logic.hpp"
-#include "MayaFlux/API/Core.hpp"
+#include "MayaFlux/API/Config.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
@@ -216,7 +216,7 @@ double Logic::process_sample(double input)
     }
 
     case LogicMode::TEMPORAL: {
-        m_temporal_time += 1.0 / MayaFlux::get_sample_rate();
+        m_temporal_time += 1.0 / MayaFlux::Config::get_sample_rate();
         result = m_temporal_function(input, m_temporal_time);
         break;
     }

@@ -1,4 +1,5 @@
 #include "Depot.hpp"
+#include "MayaFlux/API/Config.hpp"
 #include "MayaFlux/API/Core.hpp"
 
 #include "MayaFlux/API/Graph.hpp"
@@ -21,7 +22,7 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
         return nullptr;
     }
 
-    reader->set_target_sample_rate(MayaFlux::get_sample_rate());
+    reader->set_target_sample_rate(MayaFlux::Config::get_sample_rate());
     reader->set_target_bit_depth(64);
     reader->set_audio_options(IO::AudioReadOptions::DEINTERLEAVE);
 
@@ -49,7 +50,7 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
         sound_container->get_default_processor());
 
     if (existing_processor) {
-        std::vector<u_int64_t> output_shape = { MayaFlux::get_buffer_size(), sound_container->get_num_channels() };
+        std::vector<u_int64_t> output_shape = { MayaFlux::Config::get_buffer_size(), sound_container->get_num_channels() };
         existing_processor->set_output_size(output_shape);
         existing_processor->set_auto_advance(true);
 
@@ -58,7 +59,7 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
         std::cerr << "Warning: No default processor found, creating a new one" << '\n';
 
         auto processor = std::make_shared<Kakshya::ContiguousAccessProcessor>();
-        std::vector<u_int64_t> output_shape = { MayaFlux::get_buffer_size(), sound_container->get_num_channels() };
+        std::vector<u_int64_t> output_shape = { MayaFlux::Config::get_buffer_size(), sound_container->get_num_channels() };
         processor->set_output_size(output_shape);
         processor->set_auto_advance(true);
 

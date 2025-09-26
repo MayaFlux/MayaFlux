@@ -39,6 +39,25 @@ enum NodeState : u_int32_t {
 };
 
 /**
+ * @enum NodeChainSemantics
+ * @brief Defines how to handle existing nodes when creating a new chain
+ */
+enum NodeChainSemantics : u_int8_t {
+    REPLACE_TARGET, ///< Unregister the target and register with the new chain node
+    PRESERVE_BOTH, ///< Preserve both nodes in the chain, add new chain node to root, i.e doubling the target signal
+    ONLY_CHAIN ///< Only keep the new chain node, unregistering the source and target
+};
+
+/**
+ * @enum NodeMixSemantics
+ * @brief Defines how to handle existing nodes when creating a new mix
+ */
+enum NodeBinaryOpSemantics : u_int8_t {
+    REPLACE, ///< Unregister both nodes and register with the new binary op node
+    KEEP ///< Preserve both nodes in the binary op, add new binary op node to root, i.e doubling the signal
+};
+
+/**
  * @enum ComplexConversionStrategy
  * @brief Strategy for converting complex numbers to real values
  */

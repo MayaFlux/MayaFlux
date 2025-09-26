@@ -108,32 +108,4 @@ void Resume();
  */
 void End();
 
-//-------------------------------------------------------------------------
-// Configuration Access
-//-------------------------------------------------------------------------
-
-/**
- * @brief Gets the stream configuration from the default engine
- * @return Copy of the GlobalStreamInfo struct
- */
-Core::GlobalStreamInfo get_global_stream_info();
-
-/**
- * @brief Gets the sample rate from the default engine
- * @return Current sample rate in Hz
- */
-u_int32_t get_sample_rate();
-
-/**
- * @brief Gets the buffer size from the default engine
- * @return Current buffer size in frames
- */
-u_int32_t get_buffer_size();
-
-/**
- * @brief Gets the number of output channels from the default engine
- * @return Current number of output channels
- */
-u_int32_t get_num_out_channels();
-
 }

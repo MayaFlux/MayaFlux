@@ -1,5 +1,5 @@
 #include "Timers.hpp"
-#include "MayaFlux/API/Core.hpp"
+#include "MayaFlux/API/Config.hpp"
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Kriya/Awaiters.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
@@ -80,8 +80,8 @@ NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler)
     , m_node_graph_manager(*MayaFlux::get_node_graph_manager())
     , m_timer(scheduler)
 {
-    auto num_channels = MayaFlux::get_num_out_channels();
-    m_max_channels = num_channels > 0 ? num_channels : MayaFlux::node_channel_cache_size;
+    auto num_channels = MayaFlux::Config::get_num_out_channels();
+    m_max_channels = num_channels > 0 ? num_channels : MayaFlux::Config::get_node_config().channel_cache_size;
 }
 
 NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
@@ -89,8 +89,8 @@ NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& g
     , m_node_graph_manager(graph_manager)
     , m_timer(scheduler)
 {
-    auto num_channels = MayaFlux::get_num_out_channels();
-    m_max_channels = num_channels > 0 ? num_channels : MayaFlux::node_channel_cache_size;
+    auto num_channels = MayaFlux::Config::get_num_out_channels();
+    m_max_channels = num_channels > 0 ? num_channels : MayaFlux::Config::get_node_config().channel_cache_size;
 }
 
 void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, u_int32_t channel)

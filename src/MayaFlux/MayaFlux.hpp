@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/API/Config.hpp"
+
 #include "MayaFlux/API/Core.hpp"
 
 #include "MayaFlux/API/Graph.hpp"
