@@ -136,18 +136,11 @@ fi
 
 # Create user project file if it doesn't exist
 USER_PROJECT_FILE="$PROJECT_ROOT/src/user_project.hpp"
+TEMPLATE_FILE="$PROJECT_ROOT/cmake/user_project.hpp.in"
 if [ ! -f "$USER_PROJECT_FILE" ]; then
-    echo "Creating user project file..."
-    cat >"$USER_PROJECT_FILE" <<'EOF'
-#pragma once
-#define MAYASIMPLE ;
-#include "MayaFlux/MayaFlux.hpp"
-
-void compose() {
-    // Your MayaFlux code goes here!
-}
-EOF
-    echo "✓ Created user_project.hpp"
+    echo "Copying user project template..."
+    cp "$TEMPLATE_FILE" "$USER_PROJECT_FILE"
+    echo "✓ Created user_project.hpp from template"
 else
     echo "src/user_project.hpp already exists, skipping creation"
 fi

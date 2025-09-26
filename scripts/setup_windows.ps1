@@ -81,18 +81,11 @@ if (-not (Test-Path -Path "$PROJECT_ROOT\build")) {
 }
 
 $userProjectPath = Join-Path $PROJECT_ROOT "src/user_project.hpp"
+$templatePath = Join-Path $PROJECT_ROOT "cmake/user_project.hpp.in"
 if (-not (Test-Path $userProjectPath)) {
-    Write-Host "Creating user project file..."
-
-    "#pragma once" | Out-File -FilePath $userProjectPath -Encoding UTF8
-    "#define MAYASIMPLE" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
-    '#include "MayaFlux/MayaFlux.hpp"' | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
-    "" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
-    "void compose() {" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
-    "    // Your MayaFlux code goes here!" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
-    "}" | Out-File -FilePath $userProjectPath -Append -Encoding UTF8
-
-    Write-Host "Created src/user_project.hpp"
+    Write-Host "Copying user project template..."
+    Copy-Item -Path $templatePath -Destination $userProjectPath
+    Write-Host "Created src/user_project.hpp from template"
 } else {
     Write-Host "src/user_project.hpp already exists, skipping creation"
 }

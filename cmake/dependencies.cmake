@@ -22,10 +22,4 @@ else()
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
 endif()
 
-configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/version.h
-    @ONLY
-)
-
 find_package(GTest REQUIRED)
