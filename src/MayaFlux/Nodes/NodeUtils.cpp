@@ -1,11 +1,14 @@
 #include "NodeUtils.hpp"
+
 #include "Node.hpp"
+
+#include "MayaFlux/API/Config.hpp"
 
 namespace MayaFlux::Nodes {
 
 bool callback_exists(const std::vector<NodeHook>& callbacks, const NodeHook& callback)
 {
-    return std::any_of(callbacks.begin(), callbacks.end(),
+    return std::ranges::any_of(callbacks,
         [&callback](const NodeHook& hook) {
             return hook.target_type() == callback.target_type();
         });
@@ -13,7 +16,7 @@ bool callback_exists(const std::vector<NodeHook>& callbacks, const NodeHook& cal
 
 bool conditional_callback_exists(const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeCondition& callback)
 {
-    return std::any_of(callbacks.begin(), callbacks.end(),
+    return std::ranges::any_of(callbacks,
         [&callback](const std::pair<NodeHook, NodeCondition>& pair) {
             return pair.second.target_type() == callback.target_type();
         });
@@ -21,7 +24,7 @@ bool conditional_callback_exists(const std::vector<std::pair<NodeHook, NodeCondi
 
 bool callback_pair_exists(const std::vector<std::pair<NodeHook, NodeCondition>>& callbacks, const NodeHook& callback, const NodeCondition& condition)
 {
-    return std::any_of(callbacks.begin(), callbacks.end(),
+    return std::ranges::any_of(callbacks,
         [&callback, &condition](const std::pair<NodeHook, NodeCondition>& pair) {
             return pair.first.target_type() == callback.target_type() && pair.second.target_type() == condition.target_type();
         });
@@ -133,4 +136,28 @@ void try_reset_processed_state(std::shared_ptr<Node> node)
         node->reset_processed_state();
     }
 }
+
+std::vector<u_int32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& node, u_int32_t fallback_channel)
+{
+    u_int32_t channel_mask = node ? node->get_channel_mask().load() : 0;
+    return get_active_channels(channel_mask, fallback_channel);
+}
+
+std::vector<u_int32_t> get_active_channels(u_int32_t channel_mask, u_int32_t fallback_channel)
+{
+    std::vector<u_int32_t> channels;
+
+    if (channel_mask == 0) {
+        channels.push_back(fallback_channel);
+    } else {
+        for (u_int32_t channel = 0; channel < MayaFlux::Config::get_node_config().max_channels; ++channel) {
+            if (channel_mask & (1ULL << channel)) {
+                channels.push_back(channel);
+            }
+        }
+    }
+
+    return channels;
+}
+
 }

@@ -373,8 +373,6 @@ private:
      * is called and reset when the node finishes playing or is cancelled.
      */
     std::vector<u_int32_t> m_channels;
-
-    size_t m_max_channels;
 };
 
 }

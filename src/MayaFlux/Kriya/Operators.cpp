@@ -39,7 +39,7 @@ void operator>>(std::shared_ptr<Nodes::Node> node, const NodeTimeSpec& time_op)
     static std::vector<std::shared_ptr<NodeTimer>> active_timers;
     active_timers.push_back(timer);
 
-    if (active_timers.size() > MayaFlux::Config::get_node_config().max_channels) {
+    if (active_timers.size() > MayaFlux::Config::get_node_config().callback_cache_size) {
         active_timers.erase(
             std::remove_if(active_timers.begin(), active_timers.end(),
                 [](const std::shared_ptr<NodeTimer>& t) {

@@ -225,4 +225,20 @@ void atomic_dec_modulator_count(std::atomic<u_int32_t>& count, int amount);
  */
 void try_reset_processed_state(std::shared_ptr<Node> node);
 
+/**
+ * @brief Extracts active channel list from a node's channel mask
+ * @param node Node to inspect (can be null)
+ * @param fallback_channel Channel to use if node has no active channels (default: 0)
+ * @return Vector of active channel indices
+ */
+std::vector<u_int32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& node, u_int32_t fallback_channel = 0);
+
+/**
+ * @brief Extracts active channel list from a channel mask
+ * @param channel_mask Bitmask of active channels
+ * @param fallback_channel Channel to use if mask is 0 (default: 0)
+ * @return Vector of active channel indices
+ */
+std::vector<u_int32_t> get_active_channels(u_int32_t channel_mask, u_int32_t fallback_channel = 0);
+
 }

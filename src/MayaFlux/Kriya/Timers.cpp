@@ -1,5 +1,4 @@
 #include "Timers.hpp"
-#include "MayaFlux/API/Config.hpp"
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Kriya/Awaiters.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
@@ -80,8 +79,6 @@ NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler)
     , m_node_graph_manager(*MayaFlux::get_node_graph_manager())
     , m_timer(scheduler)
 {
-    auto num_channels = MayaFlux::Config::get_num_out_channels();
-    m_max_channels = num_channels > 0 ? num_channels : MayaFlux::Config::get_node_config().channel_cache_size;
 }
 
 NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
@@ -89,8 +86,6 @@ NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& g
     , m_node_graph_manager(graph_manager)
     , m_timer(scheduler)
 {
-    auto num_channels = MayaFlux::Config::get_num_out_channels();
-    m_max_channels = num_channels > 0 ? num_channels : MayaFlux::Config::get_node_config().channel_cache_size;
 }
 
 void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, u_int32_t channel)
@@ -122,10 +117,8 @@ void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seco
     if (source_mask == 0) {
         channels = { 0 };
     } else {
-        for (u_int32_t channel = 0; channel < m_max_channels; ++channel) {
-            if (node->is_used_by_channel(channel)) {
-                channels.push_back(channel);
-            }
+        for (auto& channel : Nodes::get_active_channels(source_mask, 0)) {
+            channels.push_back(channel);
         }
     }
 
@@ -167,10 +160,8 @@ void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node,
     if (source_mask == 0) {
         channels = { 0 };
     } else {
-        for (u_int32_t channel = 0; channel < m_max_channels; ++channel) {
-            if (node->is_used_by_channel(channel)) {
-                channels.push_back(channel);
-            }
+        for (auto& channel : Nodes::get_active_channels(source_mask, 0)) {
+            channels.push_back(channel);
         }
     }
 
