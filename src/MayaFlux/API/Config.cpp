@@ -3,6 +3,7 @@
 #include "MayaFlux/Core/Engine.hpp"
 
 namespace MayaFlux::Config {
+
 GraphConfig graph_config;
 NodeConfig node_config;
 

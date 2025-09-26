@@ -1,4 +1,5 @@
 #include "NodeStructure.hpp"
+#include "MayaFlux/API/Config.hpp"
 #include "MayaFlux/API/Graph.hpp"
 
 namespace MayaFlux::Nodes {
@@ -12,16 +13,43 @@ ChainNode::ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target)
 
 void ChainNode::initialize()
 {
-    if (m_Source) {
-        MayaFlux::unregister_audio_node(m_Source);
-    }
-    if (m_Target) {
-        MayaFlux::unregister_audio_node(m_Target);
-    }
     if (!m_is_initialized) {
         auto self = shared_from_this();
-        MayaFlux::register_audio_node(self);
+
+        if (m_Target) {
+            for (auto& channel : get_active_channels(m_Target, 0)) {
+                MayaFlux::register_audio_node(self, channel);
+            }
+        } else {
+            MayaFlux::register_audio_node(self, 0);
+        }
         m_is_initialized = true;
+    }
+
+    auto semantics = MayaFlux::Config::get_graph_config().chain_semantics;
+    switch (semantics) {
+    case Utils::NodeChainSemantics::REPLACE_TARGET:
+        if (m_Target) {
+            for (auto& channel : get_active_channels(m_Target, 0)) {
+                MayaFlux::unregister_audio_node(m_Target, channel);
+            }
+        }
+        break;
+    case Utils::NodeChainSemantics::ONLY_CHAIN:
+        if (m_Source) {
+            for (auto& channel : get_active_channels(m_Source, 0)) {
+                MayaFlux::unregister_audio_node(m_Source, channel);
+            }
+        }
+        if (m_Target) {
+            for (auto& channel : get_active_channels(m_Target, 0)) {
+                MayaFlux::unregister_audio_node(m_Target, channel);
+            }
+        }
+        break;
+    case Utils::NodeChainSemantics::PRESERVE_BOTH:
+    default:
+        break;
     }
 }
 
@@ -68,7 +96,7 @@ std::vector<double> ChainNode::process_batch(unsigned int num_samples)
 {
     std::vector<double> output(num_samples);
     for (size_t i = 0; i < num_samples; i++) {
-        output[i] = process_sample(0.f);
+        output[i] = process_sample(0.F);
     }
     return output;
 }
@@ -92,16 +120,39 @@ BinaryOpNode::BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs,
 
 void BinaryOpNode::initialize()
 {
-    if (m_lhs) {
-        MayaFlux::unregister_audio_node(m_lhs);
-    }
-    if (m_rhs) {
-        MayaFlux::unregister_audio_node(m_rhs);
-    }
     if (!m_is_initialized) {
         auto self = shared_from_this();
-        MayaFlux::register_audio_node(self);
+        u_int32_t lhs_mask = m_lhs ? m_lhs->get_channel_mask().load() : 0;
+        u_int32_t rhs_mask = m_rhs ? m_rhs->get_channel_mask().load() : 0;
+        u_int32_t combined_mask = lhs_mask | rhs_mask;
+
+        if (combined_mask != 0) {
+            for (auto& channel : get_active_channels(combined_mask, 0)) {
+                MayaFlux::register_audio_node(self, channel);
+            }
+        } else {
+            MayaFlux::register_audio_node(self, 0);
+        }
         m_is_initialized = true;
+    }
+
+    auto semantics = MayaFlux::Config::get_graph_config().binary_op_semantics;
+    switch (semantics) {
+    case Utils::NodeBinaryOpSemantics::REPLACE:
+        if (m_lhs) {
+            for (auto& channel : get_active_channels(m_lhs, 0)) {
+                MayaFlux::unregister_audio_node(m_lhs, channel);
+            }
+        }
+        if (m_rhs) {
+            for (auto& channel : get_active_channels(m_rhs, 0)) {
+                MayaFlux::unregister_audio_node(m_rhs, channel);
+            }
+        }
+        break;
+    case Utils::NodeBinaryOpSemantics::KEEP:
+    default:
+        break;
     }
 }
 
