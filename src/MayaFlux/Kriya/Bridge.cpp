@@ -1,15 +1,145 @@
 #include "Bridge.hpp"
 
+#include <algorithm>
+
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kriya/Awaiters.hpp"
 
 namespace MayaFlux::Kriya {
 
-BufferPipeline& BufferPipeline::branch_if(std::function<bool(u_int32_t)> condition,
-    std::function<void(BufferPipeline&)> branch_builder)
+BufferOperation BufferOperation::capture_input(
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+    u_int32_t input_channel,
+    BufferCapture::CaptureMode mode,
+    u_int32_t cycle_count)
 {
-    m_branches.emplace_back(condition, BufferPipeline {});
+    // auto input_buffer = MayaFlux::create_input_listener_buffer(input_channel, true);
+    auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
+    buffer_manager->register_input_listener(input_buffer, input_channel);
+    buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
+
+    BufferCapture capture(input_buffer, mode, cycle_count);
+    if (mode == BufferCapture::CaptureMode::ACCUMULATE && cycle_count == 0) {
+        capture.as_circular(4096);
+    }
+
+    return { BufferOperation::OpType::CAPTURE, std::move(capture) };
+}
+
+CaptureBuilder BufferOperation::capture_input_from(
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+    u_int32_t input_channel)
+{
+    auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
+    buffer_manager->register_input_listener(input_buffer, input_channel);
+    buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
+    return CaptureBuilder(input_buffer);
+}
+
+BufferOperation BufferOperation::transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> transformer)
+{
+    BufferOperation op(OpType::TRANSFORM);
+    op.m_transformer = std::move(transformer);
+    return op;
+}
+
+BufferOperation BufferOperation::route_to_buffer(std::shared_ptr<Buffers::AudioBuffer> target)
+{
+    BufferOperation op(OpType::ROUTE);
+    op.m_target_buffer = std::move(target);
+    return op;
+}
+
+BufferOperation BufferOperation::route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target)
+{
+    BufferOperation op(OpType::ROUTE);
+    op.m_target_container = std::move(target);
+    return op;
+}
+
+BufferOperation BufferOperation::load_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> source,
+    std::shared_ptr<Buffers::AudioBuffer> target,
+    u_int64_t start_frame,
+    u_int32_t length)
+{
+    BufferOperation op(OpType::LOAD);
+    op.m_source_container = std::move(source);
+    op.m_target_buffer = std::move(target);
+    op.m_start_frame = start_frame;
+    op.m_load_length = length;
+    return op;
+}
+
+BufferOperation BufferOperation::when(std::function<bool(u_int32_t)> condition)
+{
+    BufferOperation op(OpType::CONDITION);
+    op.m_condition = std::move(condition);
+    return op;
+}
+
+BufferOperation BufferOperation::dispatch_to(std::function<void(const Kakshya::DataVariant&, u_int32_t)> handler)
+{
+    BufferOperation op(OpType::DISPATCH);
+    op.m_dispatch_handler = std::move(handler);
+    return op;
+}
+
+BufferOperation BufferOperation::fuse_data(std::vector<std::shared_ptr<Buffers::AudioBuffer>> sources,
+    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
+    std::shared_ptr<Buffers::AudioBuffer> target)
+{
+    BufferOperation op(OpType::FUSE);
+    op.m_source_buffers = std::move(sources);
+    op.m_fusion_function = std::move(fusion_func);
+    op.m_target_buffer = std::move(target);
+    return op;
+}
+
+BufferOperation BufferOperation::fuse_containers(std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> sources,
+    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
+    std::shared_ptr<Kakshya::DynamicSoundStream> target)
+{
+    BufferOperation op(OpType::FUSE);
+    op.m_source_containers = std::move(sources);
+    op.m_fusion_function = std::move(fusion_func);
+    op.m_target_container = std::move(target);
+    return op;
+}
+
+CaptureBuilder BufferOperation::capture_from(std::shared_ptr<Buffers::AudioBuffer> buffer)
+{
+    return CaptureBuilder(buffer);
+}
+
+BufferOperation& BufferOperation::with_priority(u_int8_t priority)
+{
+    m_priority = priority;
+    return *this;
+}
+
+BufferOperation& BufferOperation::on_token(Buffers::ProcessingToken token)
+{
+    m_token = token;
+    return *this;
+}
+
+BufferOperation& BufferOperation::every_n_cycles(u_int32_t n)
+{
+    m_cycle_interval = n;
+    return *this;
+}
+
+BufferOperation& BufferOperation::with_tag(const std::string& tag)
+{
+    m_tag = tag;
+    return *this;
+}
+
+BufferPipeline& BufferPipeline::branch_if(std::function<bool(u_int32_t)> condition,
+    const std::function<void(BufferPipeline&)>& branch_builder)
+{
+    m_branches.emplace_back(std::move(condition), BufferPipeline {});
     branch_builder(m_branches.back().second);
     return *this;
 }
@@ -32,6 +162,7 @@ BufferPipeline& BufferPipeline::with_lifecycle(
     m_cycle_end_callback = on_cycle_end;
     return *this;
 }
+
 void BufferPipeline::execute_continuous()
 {
     m_continuous_execution = true;
@@ -47,13 +178,8 @@ void BufferPipeline::mark_data_consumed(u_int32_t operation_index)
 
 bool BufferPipeline::has_pending_data() const
 {
-    return std::any_of(m_data_states.begin(), m_data_states.end(),
+    return std::ranges::any_of(m_data_states,
         [](DataState state) { return state == DataState::READY; });
-}
-
-CycleCoordinator::CycleCoordinator(Vruta::TaskScheduler& scheduler)
-    : m_scheduler(scheduler)
-{
 }
 
 void BufferPipeline::execute_internal(u_int32_t max_cycles)
@@ -117,8 +243,8 @@ void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
             if (m_operation_data.find(&op) != m_operation_data.end()) {
                 input_data = m_operation_data[&op];
             } else {
-                for (auto it = m_operation_data.begin(); it != m_operation_data.end(); ++it) {
-                    input_data = it->second;
+                for (auto& it : m_operation_data) {
+                    input_data = it.second;
                     break;
                 }
             }
@@ -135,8 +261,8 @@ void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
             if (m_operation_data.find(&op) != m_operation_data.end()) {
                 data_to_route = m_operation_data[&op];
             } else {
-                for (auto it = m_operation_data.begin(); it != m_operation_data.end(); ++it) {
-                    data_to_route = it->second;
+                for (auto& it : m_operation_data) {
+                    data_to_route = it.second;
                     break;
                 }
             }
@@ -194,8 +320,8 @@ void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
             if (m_operation_data.find(&op) != m_operation_data.end()) {
                 data_to_dispatch = m_operation_data[&op];
             } else {
-                for (auto it = m_operation_data.begin(); it != m_operation_data.end(); ++it) {
-                    data_to_dispatch = it->second;
+                for (auto& it : m_operation_data) {
+                    data_to_dispatch = it.second;
                     break;
                 }
             }
@@ -210,11 +336,11 @@ void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
             break;
 
         default:
-            std::cerr << "Unknown operation type in pipeline" << std::endl;
+            std::cerr << "Unknown operation type in pipeline\n";
             break;
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error processing operation: " << e.what() << std::endl;
+        std::cerr << "Error processing operation: " << e.what() << '\n';
     }
 }
 
@@ -281,10 +407,10 @@ void BufferPipeline::write_to_buffer(std::shared_ptr<Buffers::AudioBuffer> buffe
                 buffer_data.resize(audio_data.size());
             }
 
-            std::copy(audio_data.begin(), audio_data.end(), buffer_data.begin());
+            std::ranges::copy(audio_data, buffer_data.begin());
 
         } catch (const std::bad_variant_access& e) {
-            std::cerr << "Data type mismatch when writing to audio buffer: " << e.what() << std::endl;
+            std::cerr << "Data type mismatch when writing to audio buffer: " << e.what() << '\n';
         }
     }
 
@@ -300,9 +426,9 @@ void BufferPipeline::write_to_container(std::shared_ptr<Kakshya::DynamicSoundStr
         container->write_frames(data_span, 0);
 
     } catch (const std::bad_variant_access& e) {
-        std::cerr << "Data type mismatch when writing to container: " << e.what() << std::endl;
+        std::cerr << "Data type mismatch when writing to container: " << e.what() << '\n';
     } catch (const std::exception& e) {
-        std::cerr << "Error writing to container: " << e.what() << std::endl;
+        std::cerr << "Error writing to container: " << e.what() << '\n';
     }
 }
 
@@ -328,9 +454,14 @@ Kakshya::DataVariant BufferPipeline::read_from_container(std::shared_ptr<Kakshya
         return output_data;
 
     } catch (const std::exception& e) {
-        std::cerr << "Error reading from container: " << e.what() << std::endl;
+        std::cerr << "Error reading from container: " << e.what() << '\n';
         return std::vector<double> {};
     }
+}
+
+CycleCoordinator::CycleCoordinator(Vruta::TaskScheduler& scheduler)
+    : m_scheduler(scheduler)
+{
 }
 
 Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
@@ -350,7 +481,7 @@ Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
             for (auto& pipeline_ref : pipelines) {
                 auto& pipeline = pipeline_ref.get();
                 if (pipeline.has_pending_data()) {
-                    std::cout << "Sync point: Pipeline has stale data at cycle " << cycle << std::endl;
+                    std::cout << "Sync point: Pipeline has stale data at cycle " << cycle << '\n';
                 }
             }
         }

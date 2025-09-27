@@ -1,4 +1,7 @@
 #include "Capture.hpp"
+
+#include <utility>
+
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 
 #include "Bridge.hpp"
@@ -8,12 +11,12 @@ namespace MayaFlux::Kriya {
 BufferCapture::BufferCapture(std::shared_ptr<Buffers::AudioBuffer> buffer,
     CaptureMode mode,
     u_int32_t cycle_count)
-    : m_buffer(buffer)
+    : m_buffer(std::move(buffer))
     , m_mode(mode)
     , m_cycle_count(cycle_count)
     , m_window_size(0)
     , m_circular_size(0)
-    , m_overlap_ratio(0.0f)
+    , m_overlap_ratio(0.0F)
 {
 }
 
@@ -26,7 +29,7 @@ BufferCapture& BufferCapture::for_cycle(u_int32_t count)
 
 BufferCapture& BufferCapture::until_condition(std::function<bool()> predicate)
 {
-    m_stop_condition = predicate;
+    m_stop_condition = std::move(predicate);
     m_mode = CaptureMode::TRIGGERED;
     return *this;
 }
@@ -48,19 +51,19 @@ BufferCapture& BufferCapture::as_circular(u_int32_t buffer_size)
 
 BufferCapture& BufferCapture::on_data_ready(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback)
 {
-    m_data_ready_callback = callback;
+    m_data_ready_callback = std::move(callback);
     return *this;
 }
 
 BufferCapture& BufferCapture::on_cycle_complete(std::function<void(u_int32_t)> callback)
 {
-    m_cycle_callback = callback;
+    m_cycle_callback = std::move(callback);
     return *this;
 }
 
 BufferCapture& BufferCapture::on_data_expired(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback)
 {
-    m_data_expired_callback = callback;
+    m_data_expired_callback = std::move(callback);
     return *this;
 }
 
@@ -77,7 +80,7 @@ BufferCapture& BufferCapture::with_metadata(const std::string& key, const std::s
 }
 
 CaptureBuilder::CaptureBuilder(std::shared_ptr<Buffers::AudioBuffer> buffer)
-    : m_capture(buffer)
+    : m_capture(std::move(buffer))
 {
 }
 
@@ -89,7 +92,7 @@ CaptureBuilder& CaptureBuilder::for_cycles(u_int32_t count)
 
 CaptureBuilder& CaptureBuilder::until_condition(std::function<bool()> predicate)
 {
-    m_capture.until_condition(predicate);
+    m_capture.until_condition(std::move(predicate));
     return *this;
 }
 
@@ -107,19 +110,19 @@ CaptureBuilder& CaptureBuilder::with_window(u_int32_t window_size, float overlap
 
 CaptureBuilder& CaptureBuilder::on_data_ready(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback)
 {
-    m_capture.on_data_ready(callback);
+    m_capture.on_data_ready(std::move(callback));
     return *this;
 }
 
 CaptureBuilder& CaptureBuilder::on_cycle_complete(std::function<void(u_int32_t)> callback)
 {
-    m_capture.on_cycle_complete(callback);
+    m_capture.on_cycle_complete(std::move(callback));
     return *this;
 }
 
 CaptureBuilder& CaptureBuilder::on_data_expired(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback)
 {
-    m_capture.on_data_expired(callback);
+    m_capture.on_data_expired(std::move(callback));
     return *this;
 }
 
@@ -137,7 +140,7 @@ CaptureBuilder& CaptureBuilder::with_metadata(const std::string& key, const std:
 
 CaptureBuilder::operator BufferOperation()
 {
-    return BufferOperation(BufferOperation::OpType::CAPTURE, std::move(m_capture));
+    return { BufferOperation::OpType::CAPTURE, std::move(m_capture) };
 }
 
 }

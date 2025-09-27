@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "Capture.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
@@ -55,7 +57,7 @@ public:
      * @enum OpType
      * @brief Defines the fundamental operation types in the processing pipeline.
      */
-    enum class OpType {
+    enum class OpType : u_int8_t {
         CAPTURE, ///< Capture data from source buffer using BufferCapture strategy
         TRANSFORM, ///< Apply transformation function to data variants
         ROUTE, ///< Route data to destination (buffer or container)
@@ -74,7 +76,7 @@ public:
      */
     static BufferOperation capture(BufferCapture capture)
     {
-        return BufferOperation(OpType::CAPTURE, std::move(capture));
+        return { OpType::CAPTURE, std::move(capture) };
     }
 
     /**
@@ -87,23 +89,10 @@ public:
      * @return BufferOperation configured for input capture with default settings
      */
     static BufferOperation capture_input(
-        std::shared_ptr<Buffers::BufferManager> buffer_manager,
+        const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
         u_int32_t input_channel,
         BufferCapture::CaptureMode mode = BufferCapture::CaptureMode::ACCUMULATE,
-        u_int32_t cycle_count = 0)
-    {
-        // auto input_buffer = MayaFlux::create_input_listener_buffer(input_channel, true);
-        auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
-        buffer_manager->register_input_listener(input_buffer, input_channel);
-        buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
-
-        BufferCapture capture(input_buffer, mode, cycle_count);
-        if (mode == BufferCapture::CaptureMode::ACCUMULATE && cycle_count == 0) {
-            capture.as_circular(4096);
-        }
-
-        return BufferOperation(BufferOperation::OpType::CAPTURE, std::move(capture));
-    }
+        u_int32_t cycle_count = 0);
 
     /**
      * @brief Create CaptureBuilder for input channel with fluent configuration.
@@ -113,50 +102,29 @@ public:
      * @return CaptureBuilder for fluent configuration
      */
     static CaptureBuilder capture_input_from(
-        std::shared_ptr<Buffers::BufferManager> buffer_manager,
-        u_int32_t input_channel)
-    {
-        auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
-        buffer_manager->register_input_listener(input_buffer, input_channel);
-        buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
-        return CaptureBuilder(input_buffer);
-    }
+        const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+        u_int32_t input_channel);
 
     /**
      * @brief Create a transform operation with custom transformation function.
      * @param transformer Function that transforms DataVariant with cycle information
      * @return BufferOperation configured for data transformation
      */
-    static BufferOperation transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> transformer)
-    {
-        BufferOperation op(OpType::TRANSFORM);
-        op.m_transformer = transformer;
-        return op;
-    }
+    static BufferOperation transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> transformer);
 
     /**
      * @brief Create a routing operation to AudioBuffer destination.
      * @param target Target AudioBuffer to receive data
      * @return BufferOperation configured for buffer routing
      */
-    static BufferOperation route_to_buffer(std::shared_ptr<Buffers::AudioBuffer> target)
-    {
-        BufferOperation op(OpType::ROUTE);
-        op.m_target_buffer = target;
-        return op;
-    }
+    static BufferOperation route_to_buffer(std::shared_ptr<Buffers::AudioBuffer> target);
 
     /**
      * @brief Create a routing operation to DynamicSoundStream destination.
      * @param target Target container to receive data
      * @return BufferOperation configured for container routing
      */
-    static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target)
-    {
-        BufferOperation op(OpType::ROUTE);
-        op.m_target_container = target;
-        return op;
-    }
+    static BufferOperation route_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> target);
 
     /**
      * @brief Create a load operation from container to buffer.
@@ -169,39 +137,21 @@ public:
     static BufferOperation load_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> source,
         std::shared_ptr<Buffers::AudioBuffer> target,
         u_int64_t start_frame = 0,
-        u_int32_t length = 0)
-    {
-        BufferOperation op(OpType::LOAD);
-        op.m_source_container = source;
-        op.m_target_buffer = target;
-        op.m_start_frame = start_frame;
-        op.m_load_length = length;
-        return op;
-    }
+        u_int32_t length = 0);
 
     /**
      * @brief Create a conditional operation for pipeline branching.
      * @param condition Function that returns true when condition is met
      * @return BufferOperation configured for conditional execution
      */
-    static BufferOperation when(std::function<bool(u_int32_t)> condition)
-    {
-        BufferOperation op(OpType::CONDITION);
-        op.m_condition = condition;
-        return op;
-    }
+    static BufferOperation when(std::function<bool(u_int32_t)> condition);
 
     /**
      * @brief Create a dispatch operation for external processing.
      * @param handler Function to handle data with cycle information
      * @return BufferOperation configured for external dispatch
      */
-    static BufferOperation dispatch_to(std::function<void(const Kakshya::DataVariant&, u_int32_t)> handler)
-    {
-        BufferOperation op(OpType::DISPATCH);
-        op.m_dispatch_handler = handler;
-        return op;
-    }
+    static BufferOperation dispatch_to(std::function<void(const Kakshya::DataVariant&, u_int32_t)> handler);
 
     /**
      * @brief Create a fusion operation for multiple AudioBuffer sources.
@@ -212,14 +162,7 @@ public:
      */
     static BufferOperation fuse_data(std::vector<std::shared_ptr<Buffers::AudioBuffer>> sources,
         std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
-        std::shared_ptr<Buffers::AudioBuffer> target)
-    {
-        BufferOperation op(OpType::FUSE);
-        op.m_source_buffers = sources;
-        op.m_fusion_function = fusion_func;
-        op.m_target_buffer = target;
-        return op;
-    }
+        std::shared_ptr<Buffers::AudioBuffer> target);
 
     /**
      * @brief Create a fusion operation for multiple DynamicSoundStream sources.
@@ -230,74 +173,48 @@ public:
      */
     static BufferOperation fuse_containers(std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> sources,
         std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
-        std::shared_ptr<Kakshya::DynamicSoundStream> target)
-    {
-        BufferOperation op(OpType::FUSE);
-        op.m_source_containers = sources;
-        op.m_fusion_function = fusion_func;
-        op.m_target_container = target;
-        return op;
-    }
+        std::shared_ptr<Kakshya::DynamicSoundStream> target);
 
     /**
      * @brief Create a CaptureBuilder for fluent capture configuration.
      * @param buffer AudioBuffer to capture from
      * @return CaptureBuilder for fluent operation construction
      */
-    static CaptureBuilder capture_from(std::shared_ptr<Buffers::AudioBuffer> buffer)
-    {
-        return CaptureBuilder(buffer);
-    }
+    static CaptureBuilder capture_from(std::shared_ptr<Buffers::AudioBuffer> buffer);
 
     /**
      * @brief Set execution priority for scheduler ordering.
      * @param priority Priority value (0=highest, 255=lowest, default=128)
      * @return Reference to this operation for chaining
      */
-    BufferOperation& with_priority(u_int8_t priority)
-    {
-        m_priority = priority;
-        return *this;
-    }
+    BufferOperation& with_priority(u_int8_t priority);
 
     /**
      * @brief Set processing token for execution context.
      * @param token Processing token indicating execution context
      * @return Reference to this operation for chaining
      */
-    BufferOperation& on_token(Buffers::ProcessingToken token)
-    {
-        m_token = token;
-        return *this;
-    }
+    BufferOperation& on_token(Buffers::ProcessingToken token);
 
     /**
      * @brief Set cycle interval for periodic execution.
      * @param n Execute every n cycles (default: 1)
      * @return Reference to this operation for chaining
      */
-    BufferOperation& every_n_cycles(u_int32_t n)
-    {
-        m_cycle_interval = n;
-        return *this;
-    }
+    BufferOperation& every_n_cycles(u_int32_t n);
 
     /**
      * @brief Assign identification tag.
      * @param tag String identifier for debugging and organization
      * @return Reference to this operation for chaining
      */
-    BufferOperation& with_tag(const std::string& tag)
-    {
-        m_tag = tag;
-        return *this;
-    }
+    BufferOperation& with_tag(const std::string& tag);
 
     // Accessors
-    OpType get_type() const { return m_type; }
-    u_int8_t get_priority() const { return m_priority; }
-    Buffers::ProcessingToken get_token() const { return m_token; }
-    const std::string& get_tag() const { return m_tag; }
+    inline OpType get_type() const { return m_type; }
+    inline u_int8_t get_priority() const { return m_priority; }
+    inline Buffers::ProcessingToken get_token() const { return m_token; }
+    inline const std::string& get_tag() const { return m_tag; }
 
     BufferOperation(OpType type, BufferCapture capture)
         : m_type(type)
@@ -404,7 +321,7 @@ public:
      * @return Reference to this pipeline for continued chaining
      */
     BufferPipeline& branch_if(std::function<bool(u_int32_t)> condition,
-        std::function<void(BufferPipeline&)> branch_builder);
+        const std::function<void(BufferPipeline&)>& branch_builder);
 
     /**
      * @brief Execute operations in parallel within the current cycle.
@@ -435,7 +352,7 @@ public:
     u_int32_t get_current_cycle() const { return m_current_cycle; }
 
 private:
-    enum class DataState {
+    enum class DataState : u_int8_t {
         EMPTY, ///< No data available
         READY, ///< Data ready for processing
         CONSUMED, ///< Data has been processed
