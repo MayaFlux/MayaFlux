@@ -1,8 +1,8 @@
 #include "Bridge.hpp"
 
-#include <algorithm>
+#include "MayaFlux/API/Depot.hpp"
 
-#include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Buffers/Container/FileBridgeBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kriya/Awaiters.hpp"
 
@@ -35,6 +35,63 @@ CaptureBuilder BufferOperation::capture_input_from(
     buffer_manager->register_input_listener(input_buffer, input_channel);
     buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
     return CaptureBuilder(input_buffer);
+}
+
+BufferOperation BufferOperation::capture_file(
+    const std::string& filepath,
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+    u_int32_t channel,
+    u_int32_t cycle_count)
+{
+    auto file_container = MayaFlux::load_audio_file(filepath);
+    if (!file_container) {
+        throw std::runtime_error("Failed to load audio file: " + filepath);
+    }
+
+    auto file_buffer = std::make_shared<Buffers::FileBridgeBuffer>(channel, file_container);
+
+    // buffer_manager->add_audio_buffer(file_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+
+    BufferCapture capture(file_buffer,
+        cycle_count > 0 ? BufferCapture::CaptureMode::ACCUMULATE : BufferCapture::CaptureMode::TRANSIENT,
+        cycle_count);
+
+    return { BufferOperation::OpType::CAPTURE, std::move(capture) };
+}
+
+CaptureBuilder BufferOperation::capture_file_from(
+    const std::string& filepath,
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+    u_int32_t channel)
+{
+    auto file_container = MayaFlux::load_audio_file(filepath);
+    if (!file_container) {
+        throw std::runtime_error("Failed to load audio file: " + filepath);
+    }
+
+    auto file_buffer = std::make_shared<Buffers::FileBridgeBuffer>(channel, file_container);
+    // buffer_manager->add_audio_buffer(file_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+
+    return CaptureBuilder(file_buffer);
+}
+
+BufferOperation BufferOperation::file_to_stream(
+    const std::string& filepath,
+    std::shared_ptr<Kakshya::DynamicSoundStream> target_stream,
+    u_int32_t cycle_count)
+{
+    auto file_container = MayaFlux::load_audio_file(filepath);
+    if (!file_container) {
+        throw std::runtime_error("Failed to load audio file: " + filepath);
+    }
+
+    auto temp_buffer = std::make_shared<Buffers::FileBridgeBuffer>(0, file_container);
+
+    BufferOperation op(OpType::ROUTE);
+    op.m_source_container = temp_buffer->get_capture_stream();
+    op.m_target_container = target_stream;
+    op.m_load_length = cycle_count;
+    return op;
 }
 
 BufferOperation BufferOperation::transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> transformer)

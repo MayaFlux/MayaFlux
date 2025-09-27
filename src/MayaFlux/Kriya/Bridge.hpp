@@ -106,6 +106,44 @@ public:
         u_int32_t input_channel);
 
     /**
+     * @brief Create a file capture operation that reads from file and stores in stream.
+     * @param filepath Path to audio file
+     * @param buffer_manager System buffer manager
+     * @param channel Channel index (default: 0)
+     * @param cycle_count Number of cycles to capture (0 = continuous)
+     * @return BufferOperation configured for file capture
+     */
+    static BufferOperation capture_file(
+        const std::string& filepath,
+        const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+        u_int32_t channel = 0,
+        u_int32_t cycle_count = 0);
+
+    /**
+     * @brief Create CaptureBuilder for file with fluent configuration.
+     * @param filepath Path to audio file
+     * @param buffer_manager System buffer manager
+     * @param channel Channel index (default: 0)
+     * @return CaptureBuilder for fluent configuration
+     */
+    static CaptureBuilder capture_file_from(
+        const std::string& filepath,
+        const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
+        u_int32_t channel = 0);
+
+    /**
+     * @brief Create operation to route file data to DynamicSoundStream.
+     * @param filepath Path to audio file
+     * @param target_stream Target DynamicSoundStream
+     * @param cycle_count Number of cycles to read (0 = entire file)
+     * @return BufferOperation configured for file to stream routing
+     */
+    static BufferOperation file_to_stream(
+        const std::string& filepath,
+        std::shared_ptr<Kakshya::DynamicSoundStream> target_stream,
+        u_int32_t cycle_count = 0);
+
+    /**
      * @brief Create a transform operation with custom transformation function.
      * @param transformer Function that transforms DataVariant with cycle information
      * @return BufferOperation configured for data transformation

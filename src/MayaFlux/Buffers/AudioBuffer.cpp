@@ -1,7 +1,6 @@
 #include "AudioBuffer.hpp"
 
 #include "BufferProcessingChain.hpp"
-#include <algorithm>
 
 #include "MayaFlux/API/Config.hpp"
 
