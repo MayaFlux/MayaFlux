@@ -220,11 +220,22 @@ protected:
     output_type extract_implementation(const input_type& input) override
     {
         try {
-            auto numeric_data = OperationHelper::extract_numeric_data(input.data);
             std::vector<std::span<const double>> data_span;
-            data_span.reserve(numeric_data.size());
-            for (auto& span : numeric_data) {
-                data_span.emplace_back(span.data(), span.size());
+            if constexpr (RequiresContainer<InputType>) {
+                if (!input.has_container()) {
+                    throw std::invalid_argument("Container is required for extraction but not provided");
+                }
+                auto numeric_data = OperationHelper::extract_numeric_data(input.data, input.container.value());
+                data_span.reserve(numeric_data.size());
+                for (auto& span : numeric_data) {
+                    data_span.emplace_back(span.data(), span.size());
+                }
+            } else {
+                auto numeric_data = OperationHelper::extract_numeric_data(input.data, input.needs_processig());
+                data_span.reserve(numeric_data.size());
+                for (auto& span : numeric_data) {
+                    data_span.emplace_back(span.data(), span.size());
+                }
             }
 
             std::vector<std::vector<double>> extracted_data;
@@ -295,7 +306,7 @@ protected:
             output.template set_metadata<u_int32_t>("window_size", static_cast<u_int32_t>(m_window_size));
             output.template set_metadata<u_int32_t>("hop_size", static_cast<u_int32_t>(m_hop_size));
             output.template set_metadata<size_t>("extracted_samples", extracted_data.size());
-            output.template set_metadata<size_t>("original_samples", numeric_data.size());
+            output.template set_metadata<size_t>("original_samples", data_span.size());
 
             return output;
 

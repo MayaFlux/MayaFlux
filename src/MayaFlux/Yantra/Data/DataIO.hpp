@@ -26,6 +26,7 @@ struct IO {
     std::vector<Kakshya::DataDimension> dimensions; ///< Data dimensional structure
     Kakshya::DataModality modality {}; ///< Data modality (audio, image, spectral, etc.)
     std::unordered_map<std::string, std::any> metadata; ///< Associated metadata
+    bool b_container_processing {};
 
     std::optional<std::shared_ptr<Kakshya::SignalSourceContainer>> container; ///< Optional reference to container, required for regions
 
@@ -154,6 +155,31 @@ struct IO {
     [[nodiscard]] bool has_container() const
     {
         return container.has_value();
+    }
+
+    /**
+     * @brief Check if processing is needed (for container types)
+     * @return True if processing is required before data extraction
+     */
+    [[nodiscard]] bool needs_processig() const
+    {
+        if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
+            return b_container_processing;
+        }
+        return false;
+    }
+
+    /**
+     * @brief Set whether processing is needed (for container types)
+     * @param val True if processing should be done before data extraction
+     */
+    void set_container_processing(bool val)
+    {
+        if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
+            b_container_processing = val;
+        } else {
+            b_container_processing = false;
+        }
     }
 
     /**

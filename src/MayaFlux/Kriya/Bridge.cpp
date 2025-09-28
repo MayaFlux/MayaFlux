@@ -547,7 +547,7 @@ Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
             pipeline_ref.get().execute_once();
         }
 
-        cycle++;
+        ++cycle;
         co_await SampleDelay { 1 };
     }
 }
