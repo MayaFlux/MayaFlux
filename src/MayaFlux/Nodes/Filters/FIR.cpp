@@ -23,14 +23,14 @@ double FIR::process_sample(double input)
         atomic_inc_modulator_count(m_input_node->m_modulator_count, 1);
         u_int32_t state = m_input_node->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
-            processed_input = m_input_node->get_last_output();
+            processed_input += m_input_node->get_last_output();
         } else {
-            processed_input = m_input_node->process_sample(input);
+            processed_input += m_input_node->process_sample(input);
             atomic_add_flag(m_input_node->m_state, Utils::NodeState::PROCESSED);
         }
     }
 
-    update_inputs(input);
+    update_inputs(processed_input);
 
     double output = 0.0;
     const size_t num_taps = std::min(m_coef_b.size(), m_input_history.size());

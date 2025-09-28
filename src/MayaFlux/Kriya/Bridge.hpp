@@ -1,7 +1,5 @@
 #pragma once
 
-#include <utility>
-
 #include "Capture.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"

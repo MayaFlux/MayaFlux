@@ -19,6 +19,8 @@ Filter::Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts)
 {
     m_shift_config = shift_parser(zindex_shifts);
     initialize_shift_buffers();
+    m_coef_b.resize(m_input_history.size(), 1);
+    m_coef_a.resize(m_output_history.size(), 1);
 }
 
 Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<double> b_coef)
