@@ -108,27 +108,23 @@ public:
     /**
      * @brief Create a file capture operation that reads from file and stores in stream.
      * @param filepath Path to audio file
-     * @param buffer_manager System buffer manager
      * @param channel Channel index (default: 0)
      * @param cycle_count Number of cycles to capture (0 = continuous)
      * @return BufferOperation configured for file capture
      */
     static BufferOperation capture_file(
         const std::string& filepath,
-        const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
         u_int32_t channel = 0,
         u_int32_t cycle_count = 0);
 
     /**
      * @brief Create CaptureBuilder for file with fluent configuration.
      * @param filepath Path to audio file
-     * @param buffer_manager System buffer manager
      * @param channel Channel index (default: 0)
      * @return CaptureBuilder for fluent configuration
      */
     static CaptureBuilder capture_file_from(
         const std::string& filepath,
-        const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
         u_int32_t channel = 0);
 
     /**
@@ -412,7 +408,7 @@ private:
     void process_operation(BufferOperation& op, u_int32_t cycle);
     void process_branches(u_int32_t cycle);
     void cleanup_expired_data();
-    Kakshya::DataVariant extract_buffer_data(std::shared_ptr<Buffers::AudioBuffer> buffer);
+    Kakshya::DataVariant extract_buffer_data(std::shared_ptr<Buffers::AudioBuffer> buffer, bool should_process = false);
     void write_to_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, const Kakshya::DataVariant& data);
     void write_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, const Kakshya::DataVariant& data);
     Kakshya::DataVariant read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, u_int64_t start, u_int32_t length);

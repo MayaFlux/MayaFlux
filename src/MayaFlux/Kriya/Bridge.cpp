@@ -14,7 +14,6 @@ BufferOperation BufferOperation::capture_input(
     BufferCapture::CaptureMode mode,
     u_int32_t cycle_count)
 {
-    // auto input_buffer = MayaFlux::create_input_listener_buffer(input_channel, true);
     auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
     buffer_manager->register_input_listener(input_buffer, input_channel);
     buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
@@ -39,7 +38,6 @@ CaptureBuilder BufferOperation::capture_input_from(
 
 BufferOperation BufferOperation::capture_file(
     const std::string& filepath,
-    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
     u_int32_t channel,
     u_int32_t cycle_count)
 {
@@ -50,18 +48,17 @@ BufferOperation BufferOperation::capture_file(
 
     auto file_buffer = std::make_shared<Buffers::FileBridgeBuffer>(channel, file_container);
 
-    // buffer_manager->add_audio_buffer(file_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
-
     BufferCapture capture(file_buffer,
         cycle_count > 0 ? BufferCapture::CaptureMode::ACCUMULATE : BufferCapture::CaptureMode::TRANSIENT,
         cycle_count);
+
+    capture.set_processing_control(BufferCapture::ProcessingControl::ON_CAPTURE);
 
     return { BufferOperation::OpType::CAPTURE, std::move(capture) };
 }
 
 CaptureBuilder BufferOperation::capture_file_from(
     const std::string& filepath,
-    const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
     u_int32_t channel)
 {
     auto file_container = MayaFlux::load_audio_file(filepath);
@@ -70,9 +67,8 @@ CaptureBuilder BufferOperation::capture_file_from(
     }
 
     auto file_buffer = std::make_shared<Buffers::FileBridgeBuffer>(channel, file_container);
-    // buffer_manager->add_audio_buffer(file_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
 
-    return CaptureBuilder(file_buffer);
+    return CaptureBuilder(file_buffer).on_capture_processing();
 }
 
 BufferOperation BufferOperation::file_to_stream(
@@ -285,7 +281,8 @@ void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
     try {
         switch (op.get_type()) {
         case BufferOperation::OpType::CAPTURE: {
-            auto buffer_data = extract_buffer_data(op.m_capture.get_buffer());
+            bool should_process = op.m_capture.get_processing_control() == BufferCapture::ProcessingControl::ON_CAPTURE;
+            auto buffer_data = extract_buffer_data(op.m_capture.get_buffer(), should_process);
 
             if (op.m_capture.m_data_ready_callback) {
                 op.m_capture.m_data_ready_callback(buffer_data, cycle);
@@ -349,7 +346,8 @@ void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
             std::vector<Kakshya::DataVariant> fusion_inputs;
 
             for (auto& source_buffer : op.m_source_buffers) {
-                auto buffer_data = extract_buffer_data(source_buffer);
+                bool should_process = op.m_capture.get_processing_control() == BufferCapture::ProcessingControl::ON_CAPTURE;
+                auto buffer_data = extract_buffer_data(source_buffer, should_process);
                 fusion_inputs.push_back(buffer_data);
             }
 
@@ -440,10 +438,15 @@ void BufferPipeline::cleanup_expired_data()
     }
 }
 
-Kakshya::DataVariant BufferPipeline::extract_buffer_data(std::shared_ptr<Buffers::AudioBuffer> buffer)
+Kakshya::DataVariant BufferPipeline::extract_buffer_data(std::shared_ptr<Buffers::AudioBuffer> buffer, bool should_process)
 {
     auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
     if (audio_buffer) {
+        if (should_process) {
+            if (audio_buffer->try_acquire_processing()) {
+                audio_buffer->process_default();
+            }
+        }
         const auto& data_span = audio_buffer->get_data();
         std::vector<double> data_vector(data_span.begin(), data_span.end());
         return data_vector;

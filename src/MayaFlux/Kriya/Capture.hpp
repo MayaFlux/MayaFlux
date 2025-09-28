@@ -65,6 +65,16 @@ namespace Kriya {
         };
 
         /**
+         * @enum ProcessingControl
+         * @brief Controls how and when data processing occurs.
+         */
+        enum class ProcessingControl : u_int8_t {
+            AUTOMATIC, // Let BufferManager handle processing (default)
+            ON_CAPTURE, // Only process when capture reads data
+            MANUAL // User controls processing explicitly
+        };
+
+        /**
          * @brief Construct a BufferCapture with specified mode and parameters.
          * @param buffer Target AudioBuffer to capture from
          * @param mode Capture strategy to use (default: TRANSIENT)
@@ -73,6 +83,13 @@ namespace Kriya {
         BufferCapture(std::shared_ptr<Buffers::AudioBuffer> buffer,
             CaptureMode mode = CaptureMode::TRANSIENT,
             u_int32_t cycle_count = 1);
+
+        /**
+         * @brief Set processing control strategy.
+         * @param control ProcessingControl strategy (default: AUTOMATIC)
+         * @return Reference to this BufferCapture for chaining
+         */
+        BufferCapture& with_processing_control(ProcessingControl control);
 
         /**
          * @brief Set the number of cycles to capture data.
@@ -142,15 +159,18 @@ namespace Kriya {
         // Accessors
         inline std::shared_ptr<Buffers::AudioBuffer> get_buffer() const { return m_buffer; }
         inline CaptureMode get_mode() const { return m_mode; }
+        inline ProcessingControl get_processing_control() const { return m_processing_control; }
         inline u_int32_t get_cycle_count() const { return m_cycle_count; }
         inline const std::string& get_tag() const { return m_tag; }
         inline u_int32_t get_circular_size() const { return m_circular_size; }
         inline u_int32_t get_window_size() const { return m_window_size; }
         inline float get_overlap_ratio() const { return m_overlap_ratio; }
+        inline void set_processing_control(ProcessingControl control) { m_processing_control = control; }
 
     private:
         std::shared_ptr<Buffers::AudioBuffer> m_buffer;
         CaptureMode m_mode;
+        ProcessingControl m_processing_control = ProcessingControl::AUTOMATIC;
         u_int32_t m_cycle_count;
         u_int32_t m_window_size;
         u_int32_t m_circular_size;
@@ -215,6 +235,24 @@ namespace Kriya {
          * @return Reference to this builder for chaining
          */
         CaptureBuilder& for_cycles(u_int32_t count);
+
+        /**
+         * @brief Set processing control to ON_CAPTURE mode.
+         * @return Reference to this builder for chaining
+         */
+        CaptureBuilder& on_capture_processing();
+
+        /**
+         * @brief Set processing control to MANUAL mode.
+         * @return Reference to this builder for chaining
+         */
+        CaptureBuilder& manual_processing();
+
+        /**
+         * @brief Set processing control to AUTOMATIC mode.
+         * @return Reference to this builder for chaining
+         */
+        CaptureBuilder& auto_processing();
 
         /**
          * @brief Set stop condition (enables TRIGGERED mode).

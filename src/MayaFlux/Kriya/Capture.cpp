@@ -1,7 +1,5 @@
 #include "Capture.hpp"
 
-#include <utility>
-
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 
 #include "Bridge.hpp"
@@ -18,6 +16,12 @@ BufferCapture::BufferCapture(std::shared_ptr<Buffers::AudioBuffer> buffer,
     , m_circular_size(0)
     , m_overlap_ratio(0.0F)
 {
+}
+
+BufferCapture& BufferCapture::with_processing_control(ProcessingControl control)
+{
+    m_processing_control = control;
+    return *this;
 }
 
 BufferCapture& BufferCapture::for_cycle(u_int32_t count)
@@ -82,6 +86,24 @@ BufferCapture& BufferCapture::with_metadata(const std::string& key, const std::s
 CaptureBuilder::CaptureBuilder(std::shared_ptr<Buffers::AudioBuffer> buffer)
     : m_capture(std::move(buffer))
 {
+}
+
+CaptureBuilder& CaptureBuilder::on_capture_processing()
+{
+    m_capture.with_processing_control(BufferCapture::ProcessingControl::ON_CAPTURE);
+    return *this;
+}
+
+CaptureBuilder& CaptureBuilder::manual_processing()
+{
+    m_capture.with_processing_control(BufferCapture::ProcessingControl::MANUAL);
+    return *this;
+}
+
+CaptureBuilder& CaptureBuilder::auto_processing()
+{
+    m_capture.with_processing_control(BufferCapture::ProcessingControl::AUTOMATIC);
+    return *this;
 }
 
 CaptureBuilder& CaptureBuilder::for_cycles(u_int32_t count)
