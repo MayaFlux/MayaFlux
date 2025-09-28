@@ -220,22 +220,14 @@ protected:
     output_type extract_implementation(const input_type& input) override
     {
         try {
+            auto [numeric_data, info] = OperationHelper::extract_structured_double(const_cast<input_type&>(input));
+            DataStructureInfo structure_info = info;
+
             std::vector<std::span<const double>> data_span;
-            if constexpr (RequiresContainer<InputType>) {
-                if (!input.has_container()) {
-                    throw std::invalid_argument("Container is required for extraction but not provided");
-                }
-                auto numeric_data = OperationHelper::extract_numeric_data(input.data, input.container.value());
-                data_span.reserve(numeric_data.size());
-                for (auto& span : numeric_data) {
-                    data_span.emplace_back(span.data(), span.size());
-                }
-            } else {
-                auto numeric_data = OperationHelper::extract_numeric_data(input.data, input.needs_processig());
-                data_span.reserve(numeric_data.size());
-                for (auto& span : numeric_data) {
-                    data_span.emplace_back(span.data(), span.size());
-                }
+            data_span.reserve(numeric_data.size());
+
+            for (auto& span : numeric_data) {
+                data_span.emplace_back(span.data(), span.size());
             }
 
             std::vector<std::vector<double>> extracted_data;
@@ -290,16 +282,7 @@ protected:
                 throw std::invalid_argument("Unknown extraction method");
             }
 
-            OutputType result_data = convert_extracted_data_to_output_type(extracted_data);
-
-            output_type output;
-            if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
-                auto [out_dims, out_modality] = infer_from_data_variant(result_data);
-                output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-            } else {
-                auto [out_dims, out_modality] = infer_structure(result_data);
-                output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-            }
+            output_type output = this->convert_result(extracted_data, structure_info);
 
             output.template set_metadata<std::string>("extractor_type", "FeatureExtractor");
             output.template set_metadata<std::string>("extraction_method", method_to_string(m_method));
@@ -383,16 +366,6 @@ private:
         if (m_hop_size > m_window_size) {
             throw std::invalid_argument("Hop size should not exceed window size for optimal coverage");
         }
-    }
-
-    /**
-     * @brief Convert extracted data to target output type
-     * @param extracted_data Extracted data as vector<double>
-     * @return Data converted to OutputType
-     */
-    OutputType convert_extracted_data_to_output_type(const std::vector<std::vector<double>>& extracted_data) const
-    {
-        return OperationHelper::convert_result_to_output_type<OutputType>(extracted_data);
     }
 };
 

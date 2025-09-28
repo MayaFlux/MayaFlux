@@ -370,7 +370,7 @@ protected:
                 stat_values, channel_spans, structure_info);
 
             this->store_current_analysis(analysis_result);
-            return create_pipeline_output(input, analysis_result);
+            return create_pipeline_output(input, analysis_result, structure_info);
         } catch (const std::exception& e) {
             std::cerr << "Energy analysis failed: " << e.what() << '\n';
             output_type error_result;
@@ -619,7 +619,7 @@ private:
     /**
      * @brief Create pipeline output for operation chaining
      */
-    output_type create_pipeline_output(const input_type& input, const StatisticalAnalysis& analysis_result) const
+    output_type create_pipeline_output(const input_type& input, const StatisticalAnalysis& analysis_result, DataStructureInfo& info)
     {
         std::vector<std::vector<double>> channel_stats;
         channel_stats.reserve(analysis_result.channel_statistics.size());
@@ -627,16 +627,7 @@ private:
             channel_stats.push_back(ch.statistical_values);
         }
 
-        OutputType result_data = OperationHelper::convert_result_to_output_type<OutputType>(channel_stats);
-
-        output_type output;
-        if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
-            auto [out_dims, out_modality] = Yantra::infer_from_data_variant(result_data);
-            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-        } else {
-            auto [out_dims, out_modality] = Yantra::infer_structure(result_data);
-            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-        }
+        output_type output = this->convert_result(channel_stats, info);
 
         output.metadata = input.metadata;
 

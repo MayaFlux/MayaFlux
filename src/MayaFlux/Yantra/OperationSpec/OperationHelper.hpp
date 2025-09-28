@@ -298,32 +298,6 @@ public:
     }
 
     /**
-     * @brief Convert double vector to target ComputeData type (non-region)
-     * @tparam OutputType Target ComputeData type
-     * @param result_data Processed double vector
-     * @return Converted data of type OutputType
-     */
-    template <ComputeData OutputType>
-        requires(!std::is_same_v<OutputType, std::shared_ptr<Kakshya::SignalSourceContainer>>) && (!RegionLike<OutputType>)
-    static OutputType convert_result_to_output_type(const std::vector<std::vector<double>>& result_data)
-    {
-        if constexpr (std::is_same_v<OutputType, std::vector<std::vector<double>>>) {
-            return result_data;
-        } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
-            return create_eigen_matrix(result_data);
-        } else if constexpr (std::is_same_v<OutputType, std::vector<Kakshya::DataVariant>>) {
-            std::vector<Kakshya::DataVariant> variants;
-            variants.reserve(result_data.size());
-            for (const auto& vec : result_data) {
-                variants.emplace_back(vec);
-            }
-            return variants;
-        } else {
-            return OutputType {};
-        }
-    }
-
-    /**
      * @brief Setup operation buffer from IO or ComputeData type
      * @tparam T IO or ComputeData type
      * @param input IO container or direct ComputeData
