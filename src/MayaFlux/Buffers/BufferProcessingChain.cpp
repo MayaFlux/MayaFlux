@@ -1,5 +1,7 @@
 #include "BufferProcessingChain.hpp"
+
 #include "Buffer.hpp"
+#include <algorithm>
 
 namespace MayaFlux::Buffers {
 
@@ -53,7 +55,8 @@ bool BufferProcessingChain::add_processor_direct(std::shared_ptr<BufferProcessor
 
     auto& processors = m_buffer_processors[buffer];
 
-    auto it = std::find(processors.begin(), processors.end(), processor);
+    auto it = std::ranges::find(processors, processor);
+
     if (it != processors.end()) {
         if (rejection_reason) {
             *rejection_reason = "Processor already exists in chain for this buffer";
@@ -80,7 +83,7 @@ void BufferProcessingChain::remove_processor(std::shared_ptr<BufferProcessor> pr
 void BufferProcessingChain::remove_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer)
 {
     auto& processors = m_buffer_processors[buffer];
-    auto it = std::find(processors.begin(), processors.end(), processor);
+    auto it = std::ranges::find(processors, processor);
 
     if (it != processors.end()) {
         processor->on_detach(buffer);
@@ -88,6 +91,35 @@ void BufferProcessingChain::remove_processor_direct(std::shared_ptr<BufferProces
 
         m_conditional_processors[buffer].erase(processor);
         m_pending_removal[buffer].erase(processor);
+    }
+}
+
+void BufferProcessingChain::process_non_owning(std::shared_ptr<Buffer> buffer)
+{
+    if (m_pending_count.load(std::memory_order_relaxed) > 0) {
+        process_pending_processor_operations();
+    }
+
+    auto it = m_buffer_processors.find(buffer);
+    if (it == m_buffer_processors.end() || it->second.empty()) {
+        return;
+    }
+
+    for (auto& processor : it->second) {
+        bool should_process = true;
+
+        if (m_enforcement_strategy == TokenEnforcementStrategy::OVERRIDE_SKIP) {
+            auto processor_token = processor->get_processing_token();
+            should_process = are_tokens_compatible(m_token_filter_mask, processor_token);
+        }
+
+        if (should_process) {
+            processor->process_non_owning(buffer); // non-owning calls non-owning
+        }
+    }
+
+    if (m_enforcement_strategy == TokenEnforcementStrategy::OVERRIDE_REJECT) {
+        cleanup_rejected_processors(buffer);
     }
 }
 
@@ -311,16 +343,16 @@ void BufferProcessingChain::enforce_chain_token_on_processors()
 
 bool BufferProcessingChain::queue_pending_processor_op(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, bool is_addition, std::string* rejection_reason)
 {
-    for (size_t i = 0; i < MAX_PENDING_PROCESSORS; ++i) {
+    for (auto& m_pending_op : m_pending_ops) {
         bool expected = false;
-        if (m_pending_ops[i].active.compare_exchange_strong(
+        if (m_pending_op.active.compare_exchange_strong(
                 expected, true,
                 std::memory_order_acquire,
                 std::memory_order_relaxed)) {
 
-            m_pending_ops[i].processor = processor;
-            m_pending_ops[i].buffer = buffer;
-            m_pending_ops[i].is_addition = is_addition;
+            m_pending_op.processor = processor;
+            m_pending_op.buffer = buffer;
+            m_pending_op.is_addition = is_addition;
             m_pending_count.fetch_add(1, std::memory_order_relaxed);
             return true;
         }

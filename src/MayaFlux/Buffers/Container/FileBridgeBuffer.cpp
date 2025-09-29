@@ -42,7 +42,7 @@ FileBridgeProcessor::FileBridgeProcessor(std::shared_ptr<FileToStreamChain> chai
 void FileBridgeProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     if (m_chain) {
-        m_chain->process(buffer);
+        m_chain->process_non_owning(buffer);
     }
 }
 

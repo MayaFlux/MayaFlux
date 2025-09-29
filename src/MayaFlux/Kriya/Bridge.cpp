@@ -567,9 +567,7 @@ Kakshya::DataVariant BufferPipeline::extract_buffer_data(std::shared_ptr<Buffers
     auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
     if (audio_buffer) {
         if (should_process) {
-            if (audio_buffer->try_acquire_processing()) {
-                audio_buffer->process_default();
-            }
+            audio_buffer->process_default();
         }
         const auto& data_span = audio_buffer->get_data();
         std::vector<double> data_vector(data_span.begin(), data_span.end());
