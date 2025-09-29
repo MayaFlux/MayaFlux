@@ -65,7 +65,6 @@ FileBridgeBuffer::FileBridgeBuffer(u_int32_t channel_id,
     : AudioBuffer(channel_id, Config::get_buffer_size())
     , m_file_container(std::move(file_container))
 {
-    setup_chain_and_processor();
 }
 
 void FileBridgeBuffer::setup_chain_and_processor()

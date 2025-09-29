@@ -95,9 +95,9 @@ public:
         return m_chain;
     }
 
-private:
     void setup_chain_and_processor();
 
+private:
     std::shared_ptr<Kakshya::SoundFileContainer> m_file_container;
     std::shared_ptr<Kakshya::DynamicSoundStream> m_capture_stream;
     std::shared_ptr<FileToStreamChain> m_chain;
