@@ -342,12 +342,19 @@ Vruta::SoundRoutine BufferPipeline::execute_internal(u_int32_t max_cycles, u_int
             if (m_operations[i].get_type() != BufferOperation::OpType::CONDITION
                 || (m_operations[i].m_condition && m_operations[i].m_condition(m_current_cycle))) {
 
-                if (m_current_cycle % m_operations[i].m_cycle_interval == 0) {
-                    process_operation(m_operations[i], m_current_cycle);
-                    m_data_states[i] = DataState::READY;
+                u_int32_t op_iterations = 1;
+                if (m_operations[i].get_type() == BufferOperation::OpType::CAPTURE) {
+                    op_iterations = m_operations[i].m_capture.get_cycle_count();
+                }
 
-                    if (samples_per_operation > 0) {
-                        co_await SampleDelay { samples_per_operation };
+                for (u_int32_t iter = 0; iter < op_iterations; ++iter) {
+                    if (m_current_cycle % m_operations[i].m_cycle_interval == 0) {
+                        process_operation(m_operations[i], m_current_cycle + iter);
+                        m_data_states[i] = DataState::READY;
+
+                        if (samples_per_operation > 0) {
+                            co_await SampleDelay { samples_per_operation };
+                        }
                     }
                 }
             }
@@ -405,7 +412,6 @@ Vruta::SoundRoutine BufferPipeline::execute_internal(u_int32_t max_cycles, u_int
 void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
 {
     try {
-        std::cout << "Processing operation type: " << static_cast<int>(op.get_type()) << '\n';
         switch (op.get_type()) {
         case BufferOperation::OpType::CAPTURE: {
             bool should_process = op.m_capture.get_processing_control() == BufferCapture::ProcessingControl::ON_CAPTURE;

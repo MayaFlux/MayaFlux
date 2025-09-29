@@ -24,7 +24,7 @@ BufferCapture& BufferCapture::with_processing_control(ProcessingControl control)
     return *this;
 }
 
-BufferCapture& BufferCapture::for_cycle(u_int32_t count)
+BufferCapture& BufferCapture::for_cycles(u_int32_t count)
 {
     m_cycle_count = count;
     m_mode = (count > 1) ? CaptureMode::ACCUMULATE : CaptureMode::TRANSIENT;
@@ -108,7 +108,7 @@ CaptureBuilder& CaptureBuilder::auto_processing()
 
 CaptureBuilder& CaptureBuilder::for_cycles(u_int32_t count)
 {
-    m_capture.for_cycle(count);
+    m_capture.for_cycles(count);
     return *this;
 }
 

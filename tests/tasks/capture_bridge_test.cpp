@@ -60,7 +60,7 @@ TEST_F(CaptureBridgeTest, BufferCaptureBasic)
 TEST_F(CaptureBridgeTest, BufferCaptureForCycles)
 {
     Kriya::BufferCapture capture(buffer);
-    capture.for_cycle(10);
+    capture.for_cycles(10);
 
     EXPECT_EQ(capture.get_mode(), Kriya::BufferCapture::CaptureMode::ACCUMULATE);
     EXPECT_EQ(capture.get_cycle_count(), 10);
@@ -594,7 +594,7 @@ TEST_F(CaptureBridgeTest, ErrorHandlingNullPointers)
 TEST_F(CaptureBridgeTest, EdgeCaseZeroCycles)
 {
     Kriya::BufferCapture capture(buffer);
-    capture.for_cycle(0);
+    capture.for_cycles(0);
 
     EXPECT_EQ(capture.get_cycle_count(), 0);
 }

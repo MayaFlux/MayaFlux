@@ -92,11 +92,19 @@ namespace Kriya {
         BufferCapture& with_processing_control(ProcessingControl control);
 
         /**
-         * @brief Set the number of cycles to capture data.
-         * @param count Number of processing cycles to capture
+         * @brief Set the number of times to execute this capture operation.
+         * @param count Number of sequential executions per pipeline cycle
          * @return Reference to this BufferCapture for chaining
+         *
+         * Controls how many times the capture operation executes within a single
+         * pipeline cycle. Each execution receives an incrementing cycle number
+         * and calls the `on_data_ready` callback. The buffer is re-read for
+         * each iteration, allowing accumulation of multiple samples.
+         *
+         * @note This affects only CAPTURE operations. Other operation types
+         *       (TRANSFORM, ROUTE, etc.) always execute once per pipeline cycle.
          */
-        BufferCapture& for_cycle(u_int32_t count);
+        BufferCapture& for_cycles(u_int32_t count);
 
         /**
          * @brief Set a condition that stops capture when met.

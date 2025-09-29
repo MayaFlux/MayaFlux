@@ -46,6 +46,32 @@ class CycleCoordinator;
  *     })
  *     >> BufferOperation::route_to_container(output_stream);
  * ```
+ * @class BufferCapture
+ * ...existing intro...
+ *
+ * **Cycle Behavior:**
+ * The `for_cycles(N)` configuration controls how many times the capture operation
+ * executes within a single pipeline cycle. When a capture has `.for_cycles(20)`,
+ * the operation will capture 20 times sequentially, with each capture receiving
+ * incrementing cycle numbers (0, 1, 2... 19) and calling `on_data_ready()` for
+ * each iteration.
+ *
+ * This is distinct from pipeline-level cycle control:
+ * - `.for_cycles(20)` on capture → operation executes 20 times per pipeline cycle
+ * - `execute_scheduled(5, ...)` → pipeline runs 5 times total
+ * - Combined: 5 × 20 = 100 total capture executions
+ *
+ * **Example:**
+ * ```cpp
+ * auto pipeline = BufferPipeline::create(*scheduler);
+ * pipeline >> BufferOperation::capture_from(buffer)
+ *     .for_cycles(10)  // Capture 10 times per pipeline invocation
+ *     .on_data_ready([](const auto& data, u_int32_t cycle) {
+ *         std::cout << "Capture #" << cycle << '\n';  // Prints 0-9
+ *     });
+ * pipeline->execute_scheduled(3, 512);  // Runs pipeline 3 times → 30 total captures
+ * ```
+ *
  *
  * @see BufferPipeline For pipeline construction and execution
  * @see BufferCapture For flexible data capture strategies
@@ -211,8 +237,11 @@ public:
 
     /**
      * @brief Create a CaptureBuilder for fluent capture configuration.
-     * @param buffer AudioBuffer to capture from
+     * @param buffer AudioBuffer to capture from (must be registered with BufferManager if using AUTOMATIC processing)
      * @return CaptureBuilder for fluent operation construction
+     *
+     * @note If the buffer uses ProcessingControl::AUTOMATIC, ensure it's registered with
+     *       the BufferManager via add_audio_buffer() before pipeline execution.
      */
     static CaptureBuilder capture_from(std::shared_ptr<Buffers::AudioBuffer> buffer);
 
@@ -244,10 +273,24 @@ public:
      */
     BufferOperation& with_tag(const std::string& tag);
 
-    // Accessors
+    /**
+     * @brief Getters for internal state (read-only)
+     */
     inline OpType get_type() const { return m_type; }
+
+    /**
+     * @brief Getters for internal state (read-only)
+     */
     inline u_int8_t get_priority() const { return m_priority; }
+
+    /**
+     * @brief Getters for processing token
+     */
     inline Buffers::ProcessingToken get_token() const { return m_token; }
+
+    /**
+     * @brief Getters for user defined tag
+     */
     inline const std::string& get_tag() const { return m_tag; }
 
     BufferOperation(OpType type, BufferCapture capture)
@@ -302,7 +345,7 @@ private:
  *
  * **Example Usage:**
  * ```cpp
- * auto pipeline = BufferPipeline(*scheduler)
+ * auto pipeline = BufferPipeline::create(*scheduler)
  *     >> BufferOperation::capture_from(mic_buffer)
  *         .with_window(1024, 0.75f)
  *         .on_data_ready([](const auto& data, u_int32_t cycle) {
@@ -312,12 +355,12 @@ private:
  *     >> BufferOperation::route_to_container(recording_stream)
  *         .with_priority(64);
  *
- * pipeline.execute_continuous();
+ * pipeline->execute_continuous();
  * ```
  *
  * **Conditional Branching:**
  * ```cpp
- * pipeline.branch_if([](u_int32_t cycle) { return cycle % 10 == 0; },
+ * pipeline->branch_if([](u_int32_t cycle) { return cycle % 10 == 0; },
  *     [](BufferPipeline& branch) {
  *         branch >> BufferOperation::dispatch_to([](const auto& data, u_int32_t cycle) {
  *             save_snapshot(data, cycle);
@@ -379,18 +422,126 @@ public:
         std::function<void(u_int32_t)> on_cycle_start,
         std::function<void(u_int32_t)> on_cycle_end);
 
-    // Execution control
+    /**
+     * @brief Execute the pipeline for a single cycle.
+     *
+     * Schedules the pipeline to run once through all operations. The execution
+     * happens asynchronously via the scheduler's coroutine system. The pipeline
+     * must have a scheduler and will be kept alive via shared_ptr until execution
+     * completes.
+     *
+     * @throws std::runtime_error if pipeline has no scheduler
+     *
+     * @note This is asynchronous - the function returns immediately and execution
+     *       happens when the scheduler processes the coroutine.
+     */
     void execute_once();
+
+    /**
+     * @brief Execute the pipeline for a specified number of cycles.
+     * @param cycles Number of processing cycles to execute
+     *
+     * Schedules the pipeline to run for the given number of cycles. Each cycle
+     * processes all operations once. Execution is asynchronous via the scheduler.
+     * The pipeline remains alive until all cycles complete.
+     *
+     * @throws std::runtime_error if pipeline has no scheduler
+     *
+     * @note Execution happens asynchronously - this function returns immediately.
+     */
     void execute_for_cycles(u_int32_t cycles);
+
+    /**
+     * @brief Start continuous execution of the pipeline.
+     *
+     * Schedules the pipeline to run indefinitely until stop_continuous() is called.
+     * The pipeline processes all operations in each cycle and automatically
+     * advances to the next cycle. The pipeline keeps itself alive via shared_ptr
+     * during continuous execution.
+     *
+     * @throws std::runtime_error if pipeline has no scheduler
+     *
+     * @note Execution is asynchronous. Call stop_continuous() to halt execution.
+     * @see stop_continuous()
+     */
     void execute_continuous();
+
+    /**
+     * @brief Stop continuous execution of the pipeline.
+     *
+     * Signals the pipeline to stop after completing the current cycle. The
+     * pipeline will gracefully terminate its execution loop. Has no effect
+     * if the pipeline is not currently executing continuously.
+     *
+     * @note This only sets a flag - actual termination happens at the end of
+     *       the current cycle.
+     */
     inline void stop_continuous() { m_continuous_execution = false; }
 
+    /**
+     * @brief Execute pipeline with sample-accurate timing between operations.
+     * @param max_cycles Maximum number of cycles to execute (0 = infinite)
+     * @param samples_per_operation Number of samples to wait between operations (default: 1)
+     *
+     * Schedules pipeline execution with precise timing control. After each operation
+     * within a cycle, the pipeline waits for the specified number of samples before
+     * proceeding. Useful for rate-limiting operations or creating timed sequences.
+     *
+     * @throws std::runtime_error if pipeline has no scheduler
+     *
+     * @note Execution is asynchronous. The pipeline keeps itself alive until completion.
+     */
     void execute_scheduled(u_int32_t max_cycles, u_int64_t samples_per_operation = 1);
+
+    /**
+     * @brief Execute pipeline with real-time rate control.
+     * @param max_cycles Maximum number of cycles to execute
+     * @param seconds_per_operation Duration between operations in seconds
+     *
+     * Convenience wrapper around execute_scheduled() that converts time intervals
+     * to sample counts based on the scheduler's sample rate. Enables natural
+     * specification of timing in seconds rather than samples.
+     *
+     * @throws std::runtime_error if pipeline has no scheduler
+     *
+     * Example:
+     * ```cpp
+     * // Execute 10 cycles with 0.5 seconds between operations
+     * pipeline->execute_scheduled_at_rate(10, 0.5);
+     * ```
+     */
     void execute_scheduled_at_rate(u_int32_t max_cycles, double seconds_per_operation);
 
     // State management
+
+    /**
+     * @brief Mark operation data as consumed for cleanup.
+     * @param operation_index Index of the operation in the pipeline
+     *
+     * Manually marks an operation's data state as consumed, allowing it to be
+     * cleaned up in the next cleanup cycle. Useful for manual data lifecycle
+     * management in custom processing scenarios.
+     *
+     * @note Out-of-range indices are silently ignored.
+     */
     void mark_data_consumed(u_int32_t operation_index);
+
+    /**
+     * @brief Check if any operations have pending data ready for processing.
+     * @return true if any operation has data in READY state, false otherwise
+     *
+     * Queries the data states of all operations to determine if there is
+     * unprocessed data available. Useful for synchronization and debugging.
+     */
     bool has_pending_data() const;
+
+    /**
+     * @brief Get the current cycle number.
+     * @return Current cycle count since pipeline creation or last reset
+     *
+     * Returns the internal cycle counter that increments with each complete
+     * cycle execution. Useful for cycle-dependent logic and debugging.
+     */
     u_int32_t get_current_cycle() const { return m_current_cycle; }
 
 private:
@@ -400,6 +551,15 @@ private:
         CONSUMED, ///< Data has been processed
         EXPIRED ///< Data has expired and should be cleaned up
     };
+
+    struct BranchInfo {
+        std::function<bool(u_int32_t)> condition;
+        std::shared_ptr<BufferPipeline> pipeline;
+        bool synchronous;
+        u_int64_t samples_per_operation;
+    };
+
+    std::shared_ptr<BufferPipeline> m_active_self;
 
     std::vector<BufferOperation> m_operations;
     std::vector<DataState> m_data_states;
@@ -423,21 +583,11 @@ private:
 
     std::unordered_map<BufferOperation*, Kakshya::DataVariant> m_operation_data;
 
-    struct BranchInfo {
-        std::function<bool(u_int32_t)> condition;
-        std::shared_ptr<BufferPipeline> pipeline;
-        bool synchronous;
-        u_int64_t samples_per_operation;
-    };
-
     std::vector<BranchInfo> m_branches;
-
     std::vector<std::shared_ptr<Vruta::SoundRoutine>> m_branch_tasks;
 
     std::shared_ptr<Vruta::SoundRoutine> dispatch_branch_async(BranchInfo& branch, u_int32_t cycle);
     void cleanup_completed_branches();
-
-    std::shared_ptr<BufferPipeline> m_active_self;
 };
 
 inline std::shared_ptr<BufferPipeline> operator>>(
