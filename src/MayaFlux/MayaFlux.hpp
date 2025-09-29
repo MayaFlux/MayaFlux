@@ -38,6 +38,7 @@
 
 #include "Kriya/Bridge.hpp"
 #include "Kriya/Chain.hpp"
+#include "Kriya/CycleCoordinator.hpp"
 #include "Kriya/Tasks.hpp"
 
 #include "Kakshya/Source/DynamicSoundStream.hpp"

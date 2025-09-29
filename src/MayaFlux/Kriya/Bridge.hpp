@@ -7,6 +7,8 @@
 
 namespace MayaFlux::Kriya {
 
+class CycleCoordinator;
+
 /**
  * @class BufferOperation
  * @brief Fundamental unit of operation in buffer processing pipelines.
@@ -255,13 +257,13 @@ public:
     {
     }
 
-private:
     explicit BufferOperation(OpType type)
         : m_type(type)
         , m_capture(nullptr)
     {
     }
 
+private:
     OpType m_type;
     BufferCapture m_capture;
 
@@ -327,13 +329,15 @@ private:
  * @see CycleCoordinator For multi-pipeline synchronization
  * @see Vruta::TaskScheduler For execution scheduling
  */
-class BufferPipeline {
+class BufferPipeline : public std::enable_shared_from_this<BufferPipeline> {
 public:
-    BufferPipeline() = default;
-    explicit BufferPipeline(Vruta::TaskScheduler& scheduler)
-        : m_scheduler(&scheduler)
+    static std::shared_ptr<BufferPipeline> create(Vruta::TaskScheduler& scheduler)
     {
+        return std::make_shared<BufferPipeline>(scheduler);
     }
+
+    BufferPipeline() = default;
+    explicit BufferPipeline(Vruta::TaskScheduler& scheduler);
 
     /**
      * @brief Chain an operation to the pipeline.
@@ -350,10 +354,13 @@ public:
      * @brief Add conditional branch to the pipeline.
      * @param condition Function that determines if branch should execute
      * @param branch_builder Function that configures the branch pipeline
+     * @param synchronous If true, branch executes within main cycle (default: false)
+     * @param samples_per_operation Number of samples per operation in branch (default: 1)
      * @return Reference to this pipeline for continued chaining
      */
     BufferPipeline& branch_if(std::function<bool(u_int32_t)> condition,
-        const std::function<void(BufferPipeline&)>& branch_builder);
+        const std::function<void(BufferPipeline&)>& branch_builder,
+        bool synchronous = false, u_int64_t samples_per_operation = 1);
 
     /**
      * @brief Execute operations in parallel within the current cycle.
@@ -373,10 +380,13 @@ public:
         std::function<void(u_int32_t)> on_cycle_end);
 
     // Execution control
-    inline void execute_once() { execute_internal(1); }
-    inline void execute_for_cycles(u_int32_t cycles) { execute_internal(cycles); }
+    void execute_once();
+    void execute_for_cycles(u_int32_t cycles);
     void execute_continuous();
     inline void stop_continuous() { m_continuous_execution = false; }
+
+    void execute_scheduled(u_int32_t max_cycles, u_int64_t samples_per_operation = 1);
+    void execute_scheduled_at_rate(u_int32_t max_cycles, double seconds_per_operation);
 
     // State management
     void mark_data_consumed(u_int32_t operation_index);
@@ -392,19 +402,19 @@ private:
     };
 
     std::vector<BufferOperation> m_operations;
-    std::vector<std::pair<std::function<bool(u_int32_t)>, BufferPipeline>> m_branches;
     std::vector<DataState> m_data_states;
 
     Vruta::TaskScheduler* m_scheduler = nullptr;
+    std::shared_ptr<CycleCoordinator> m_coordinator;
+
     u_int32_t m_current_cycle = 0;
     bool m_continuous_execution = false;
 
     std::function<void(u_int32_t)> m_cycle_start_callback;
     std::function<void(u_int32_t)> m_cycle_end_callback;
 
-    void execute_internal(u_int32_t max_cycles);
+    Vruta::SoundRoutine execute_internal(u_int32_t max_cycles, u_int64_t samples_per_operation);
     void process_operation(BufferOperation& op, u_int32_t cycle);
-    void process_branches(u_int32_t cycle);
     void cleanup_expired_data();
     Kakshya::DataVariant extract_buffer_data(std::shared_ptr<Buffers::AudioBuffer> buffer, bool should_process = false);
     void write_to_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, const Kakshya::DataVariant& data);
@@ -412,75 +422,30 @@ private:
     Kakshya::DataVariant read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, u_int64_t start, u_int32_t length);
 
     std::unordered_map<BufferOperation*, Kakshya::DataVariant> m_operation_data;
+
+    struct BranchInfo {
+        std::function<bool(u_int32_t)> condition;
+        std::shared_ptr<BufferPipeline> pipeline;
+        bool synchronous;
+        u_int64_t samples_per_operation;
+    };
+
+    std::vector<BranchInfo> m_branches;
+
+    std::vector<std::shared_ptr<Vruta::SoundRoutine>> m_branch_tasks;
+
+    std::shared_ptr<Vruta::SoundRoutine> dispatch_branch_async(BranchInfo& branch, u_int32_t cycle);
+    void cleanup_completed_branches();
+
+    std::shared_ptr<BufferPipeline> m_active_self;
 };
 
-/**
- * @class CycleCoordinator
- * @brief Cross-pipeline synchronization and coordination system.
- *
- * CycleCoordinator provides synchronization mechanisms for coordinating multiple
- * BufferPipeline instances and managing transient data lifecycles. It integrates
- * with the Vruta scheduling system to provide sample-accurate timing coordination
- * across complex processing networks.
- *
- * **Example Usage:**
- * ```cpp
- * CycleCoordinator coordinator(*scheduler);
- *
- * // Synchronize multiple analysis pipelines
- * auto sync_routine = coordinator.sync_pipelines({
- *     std::ref(spectral_pipeline),
- *     std::ref(temporal_pipeline),
- *     std::ref(feature_pipeline)
- * }, 4); // Sync every 4 cycles
- *
- * // Manage transient capture data
- * auto data_routine = coordinator.manage_transient_data(
- *     capture_buffer,
- *     [](u_int32_t cycle) { std::cout << "Data ready: " << cycle << std::endl; },
- *     [](u_int32_t cycle) { cleanup_expired_data(cycle); }
- * );
- *
- * scheduler->add_task(sync_routine);
- * scheduler->add_task(data_routine);
- * ```
- *
- * @see BufferPipeline For pipeline construction
- * @see BufferCapture For data capture strategies
- * @see Vruta::TaskScheduler For execution scheduling
- */
-class CycleCoordinator {
-public:
-    /**
-     * @brief Construct coordinator with task scheduler integration.
-     * @param scheduler Vruta task scheduler for timing coordination
-     */
-    explicit CycleCoordinator(Vruta::TaskScheduler& scheduler);
-
-    /**
-     * @brief Create a synchronization routine for multiple pipelines.
-     * @param pipelines Vector of pipeline references to synchronize
-     * @param sync_every_n_cycles Synchronization interval in cycles
-     * @return SoundRoutine that manages pipeline synchronization
-     */
-    Vruta::SoundRoutine sync_pipelines(
-        std::vector<std::reference_wrapper<BufferPipeline>> pipelines,
-        u_int32_t sync_every_n_cycles = 1);
-
-    /**
-     * @brief Create a transient data management routine.
-     * @param buffer AudioBuffer with transient data lifecycle
-     * @param on_data_ready Callback when data becomes available
-     * @param on_data_expired Callback when data expires
-     * @return SoundRoutine that manages data lifecycle
-     */
-    Vruta::SoundRoutine manage_transient_data(
-        std::shared_ptr<Buffers::AudioBuffer> buffer,
-        std::function<void(u_int32_t)> on_data_ready,
-        std::function<void(u_int32_t)> on_data_expired);
-
-private:
-    Vruta::TaskScheduler& m_scheduler;
-};
+inline std::shared_ptr<BufferPipeline> operator>>(
+    std::shared_ptr<BufferPipeline> pipeline,
+    BufferOperation&& operation)
+{
+    *pipeline >> std::move(operation);
+    return pipeline;
+}
 
 }

@@ -4,6 +4,7 @@
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kriya/Bridge.hpp"
 #include "MayaFlux/Kriya/Capture.hpp"
+#include "MayaFlux/Kriya/CycleCoordinator.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
 #include "MayaFlux/MayaFlux.hpp"
@@ -276,6 +277,8 @@ TEST_F(CaptureBridgeTest, BufferPipelineBasic)
 
     pipeline.execute_once();
 
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 512);
+
     EXPECT_TRUE(transform_called);
 }
 
@@ -335,6 +338,8 @@ TEST_F(CaptureBridgeTest, BufferPipelineLifecycle)
 
     pipeline.execute_once();
 
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 512);
+
     EXPECT_TRUE(cycle_start_called);
     EXPECT_TRUE(cycle_end_called);
     EXPECT_EQ(start_cycle, end_cycle);
@@ -342,23 +347,30 @@ TEST_F(CaptureBridgeTest, BufferPipelineLifecycle)
 
 TEST_F(CaptureBridgeTest, BufferPipelineContinuous)
 {
-    Kriya::BufferPipeline pipeline(*scheduler);
-
     std::atomic<int> execution_count { 0 };
+    std::atomic<bool> should_stop { false };
 
-    pipeline >> Kriya::BufferOperation::capture_from(buffer).for_cycles(1)
+    auto pipeline = Kriya::BufferPipeline::create(*scheduler);
+
+    *pipeline >> Kriya::BufferOperation::capture_from(buffer).for_cycles(1)
         >> Kriya::BufferOperation::transform([&](const Kakshya::DataVariant& data, u_int32_t) {
               execution_count++;
               return data;
           });
 
+    pipeline->execute_continuous();
+
     std::future<void> execution_future = std::async(std::launch::async, [&]() {
-        pipeline.execute_continuous();
+        while (!should_stop.load()) {
+            scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 512);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
     });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-    pipeline.stop_continuous();
+    pipeline->stop_continuous();
+    should_stop = true;
 
     execution_future.wait_for(std::chrono::seconds(1));
 
@@ -565,7 +577,6 @@ TEST_F(CaptureBridgeTest, CycleCoordinatorTransientData)
         [&](u_int32_t) { data_ready_called = true; },
         [&](u_int32_t) { data_expired_called = true; });
 
-    // Callbacks should be set up correctly
     // (Implementation dependent testing)
 }
 
@@ -608,19 +619,20 @@ TEST_F(CaptureBridgeTest, IntegrationCaptureToStream)
     MayaFlux::Start();
     AudioTestHelper::waitForAudio(100);
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
     auto capture_buffer = std::make_shared<Buffers::AudioBuffer>();
     auto target_stream = std::make_shared<Kakshya::DynamicSoundStream>(TestConfig::SAMPLE_RATE, 2);
 
-    Kriya::BufferPipeline pipeline(*MayaFlux::get_scheduler());
+    auto pipeline = Kriya::BufferPipeline::create(*MayaFlux::get_scheduler());
 
-    pipeline >> Kriya::BufferOperation::capture_from(capture_buffer).for_cycles(10)
+    *pipeline >> Kriya::BufferOperation::capture_from(capture_buffer).for_cycles(10)
         >> Kriya::BufferOperation::route_to_container(target_stream);
 
-    // Connect sine wave to buffer (would need buffer manager integration)
-    // This would require extending the test with actual audio routing
+    pipeline->execute_for_cycles(10);
 
-    pipeline.execute_for_cycles(10);
+    for (int i = 0; i < 10; ++i) {
+        MayaFlux::get_scheduler()->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 512);
+        AudioTestHelper::waitForAudio(10);
+    }
 
     EXPECT_GT(target_stream->get_num_frames(), 0);
 
@@ -725,41 +737,39 @@ TEST_F(CaptureBridgeTest, HardwareInputRealTimeCapture)
     target_stream->set_auto_resize(true);
 
     std::atomic<int> capture_count { 0 };
-    std::atomic<bool> processing_active { true };
 
-    Kriya::BufferPipeline pipeline(*MayaFlux::get_scheduler());
+    auto pipeline = Kriya::BufferPipeline::create(*MayaFlux::get_scheduler());
 
-    pipeline >> Kriya::BufferOperation::capture_input_from(buffer_manager, 0)
-                    .as_circular(1024)
-                    .on_data_ready([&](const Kakshya::DataVariant& data, u_int32_t) {
-                        capture_count++;
+    *pipeline >> Kriya::BufferOperation::capture_input_from(buffer_manager, 0)
+                     .as_circular(1024)
+                     .on_data_ready([&](const Kakshya::DataVariant& data, u_int32_t) {
+                         capture_count++;
 
-                        if (std::holds_alternative<std::vector<double>>(data)) {
-                            const auto& audio_samples = std::get<std::vector<double>>(data);
-                            EXPECT_GT(audio_samples.size(), 0) << "Hardware input should provide audio samples";
+                         if (std::holds_alternative<std::vector<double>>(data)) {
+                             const auto& audio_samples = std::get<std::vector<double>>(data);
+                             EXPECT_GT(audio_samples.size(), 0) << "Hardware input should provide audio samples";
 
-                            for (const auto& sample : audio_samples) {
-                                EXPECT_GE(sample, -2.0) << "Audio sample should not exceed reasonable negative range";
-                                EXPECT_LE(sample, 2.0) << "Audio sample should not exceed reasonable positive range";
-                            }
-                        }
-                    })
-                    .with_tag("realtime_hw_capture")
+                             for (const auto& sample : audio_samples) {
+                                 EXPECT_GE(sample, -2.0) << "Audio sample should not exceed reasonable negative range";
+                                 EXPECT_LE(sample, 2.0) << "Audio sample should not exceed reasonable positive range";
+                             }
+                         }
+                     })
+                     .with_tag("realtime_hw_capture")
         >> Kriya::BufferOperation::route_to_container(target_stream);
 
-    std::future<void> execution_future = std::async(std::launch::async, [&]() {
-        pipeline.execute_continuous();
+    std::future<void> execution_future = std::async(std::launch::async, [pipeline]() {
+        pipeline->execute_continuous();
     });
 
     AudioTestHelper::waitForAudio(200);
 
-    pipeline.stop_continuous();
-    processing_active = false;
+    pipeline->stop_continuous();
 
     execution_future.wait_for(std::chrono::seconds(2));
 
-    EXPECT_GT(capture_count.load(), 0) << "Should have captured some audio data from hardware input";
-    EXPECT_GT(target_stream->get_num_frames(), 0) << "Target stream should contain captured audio";
+    EXPECT_GT(capture_count.load(), 0);
+    EXPECT_GT(target_stream->get_num_frames(), 0);
 
     std::cout << "[HardwareInputRealTimeCapture] Captured " << capture_count.load()
               << " audio chunks, stream contains " << target_stream->get_num_frames()
@@ -784,27 +794,32 @@ TEST_F(CaptureBridgeTest, HardwareInputMultiChannelCapture)
     auto stream0 = std::make_shared<Kakshya::DynamicSoundStream>(TestConfig::SAMPLE_RATE, 1);
     auto stream1 = std::make_shared<Kakshya::DynamicSoundStream>(TestConfig::SAMPLE_RATE, 1);
 
-    Kriya::BufferPipeline pipeline0(*MayaFlux::get_scheduler());
-    Kriya::BufferPipeline pipeline1(*MayaFlux::get_scheduler());
+    auto pipeline0 = Kriya::BufferPipeline::create(*MayaFlux::get_scheduler());
+    auto pipeline1 = Kriya::BufferPipeline::create(*MayaFlux::get_scheduler());
 
-    pipeline0 >> Kriya::BufferOperation::capture_input_from(buffer_manager, 0)
-                     .for_cycles(5)
-                     .on_data_ready([&](const Kakshya::DataVariant&, u_int32_t) {
-                         channel0_captures++;
-                     })
-                     .with_tag("channel_0_input")
+    *pipeline0 >> Kriya::BufferOperation::capture_input_from(buffer_manager, 0)
+                      .for_cycles(5)
+                      .on_data_ready([&](const Kakshya::DataVariant&, u_int32_t) {
+                          channel0_captures++;
+                      })
+                      .with_tag("channel_0_input")
         >> Kriya::BufferOperation::route_to_container(stream0);
 
-    pipeline1 >> Kriya::BufferOperation::capture_input_from(buffer_manager, 1)
-                     .for_cycles(5)
-                     .on_data_ready([&](const Kakshya::DataVariant&, u_int32_t) {
-                         channel1_captures++;
-                     })
-                     .with_tag("channel_1_input")
+    *pipeline1 >> Kriya::BufferOperation::capture_input_from(buffer_manager, 1)
+                      .for_cycles(5)
+                      .on_data_ready([&](const Kakshya::DataVariant&, u_int32_t) {
+                          channel1_captures++;
+                      })
+                      .with_tag("channel_1_input")
         >> Kriya::BufferOperation::route_to_container(stream1);
 
-    pipeline0.execute_for_cycles(5);
-    pipeline1.execute_for_cycles(5);
+    pipeline0->execute_for_cycles(5);
+    pipeline1->execute_for_cycles(5);
+
+    for (int i = 0; i < 5; ++i) {
+        MayaFlux::get_scheduler()->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, 512);
+        AudioTestHelper::waitForAudio(10);
+    }
 
     EXPECT_GT(channel0_captures.load(), 0) << "Channel 0 should capture audio data";
 
@@ -916,5 +931,4 @@ TEST_F(CaptureBridgeTest, HardwareInputBufferManagerIntegration)
     MayaFlux::End();
 }
 #endif
-
 }
