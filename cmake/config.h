@@ -35,6 +35,22 @@ using u_int64_t = uint64_t;
 #endif
 #endif
 
+// C++20 std::format availability detection
+// On macOS, we use fmt library due to runtime availability issues with macOS 14
+#if defined(__APPLE__) && defined(__MACH__)
+#define MAYAFLUX_USE_FMT 1
+#define MAYAFLUX_USE_STD_FORMAT 0
+#else
+// Check if std::format is available on other platforms
+#if __has_include(<format>) && defined(__cpp_lib_format)
+#define MAYAFLUX_USE_STD_FORMAT 1
+#define MAYAFLUX_USE_FMT 0
+#else
+#define MAYAFLUX_USE_FMT 1
+#define MAYAFLUX_USE_STD_FORMAT 0
+#endif
+#endif
+
 namespace MayaFlux::Platform {
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
