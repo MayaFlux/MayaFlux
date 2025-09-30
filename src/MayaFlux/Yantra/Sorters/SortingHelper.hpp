@@ -222,7 +222,7 @@ template <typename Container, typename Comparator>
 std::vector<size_t> generate_sort_indices(const Container& container, Comparator comp)
 {
     std::vector<size_t> indices(container.size());
-    std::ranges::iota(indices, 0);
+    std::iota(indices.begin(), indices.end(), 0);
 
     std::ranges::sort(indices, [&](size_t a, size_t b) {
         return comp(container[a], container[b]);
