@@ -113,7 +113,7 @@ public:
      * @param window_size Size of analysis window in samples (default: 512)
      * @param hop_size Step size between windows in samples (default: 256)
      */
-    explicit EnergyAnalyzer(u_int32_t window_size = 512, u_int32_t hop_size = 256)
+    explicit EnergyAnalyzer(u_int32_t window_size = 256, u_int32_t hop_size = 128)
         : m_window_size(window_size)
         , m_hop_size(hop_size)
     {
