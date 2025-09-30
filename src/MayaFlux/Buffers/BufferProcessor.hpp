@@ -184,6 +184,17 @@ protected:
 
 private:
     std::atomic<size_t> m_active_processing { 0 };
+
+    /**
+     * @brief Internal processing method for non-owning buffer contexts
+     * @param buffer Buffer to process
+     *
+     * This method is used internally by BufferProcessingChain to process buffers
+     * that are not owned by the chain itself. It ensures that the processor's
+     * processing function is called in a thread-safe manner, managing the
+     * active processing state to prevent concurrent access issues.
+     */
+    void process_non_owning(std::shared_ptr<Buffer> buffer);
 };
 
 /** * @struct ProcessorTokenInfo

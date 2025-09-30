@@ -1,5 +1,7 @@
 #include "RootAudioBuffer.hpp"
 
+#include <algorithm>
+
 namespace MayaFlux::Buffers {
 
 ChannelProcessor::ChannelProcessor(std::shared_ptr<Buffer> root_buffer)
@@ -18,7 +20,7 @@ void ChannelProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     auto& output_data = root_audio_buffer->get_data();
     const size_t buffer_size = output_data.size();
-    std::fill(output_data.begin(), output_data.end(), 0.0);
+    std::ranges::fill(output_data, 0.0);
 
     if (root_audio_buffer->has_node_output()) {
         const auto& node_output = root_audio_buffer->get_node_output();
@@ -99,7 +101,7 @@ void RootAudioBuffer::set_node_output(const std::vector<double>& data)
     if (m_node_output.size() != data.size()) {
         m_node_output.resize(data.size());
     }
-    std::copy(data.begin(), data.end(), m_node_output.begin());
+    std::ranges::copy(data, m_node_output.begin());
     m_has_node_output = true;
 }
 

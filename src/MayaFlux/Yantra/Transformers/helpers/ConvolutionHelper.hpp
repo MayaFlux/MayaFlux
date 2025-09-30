@@ -29,17 +29,8 @@ std::vector<double> fft_convolve_helper(
     }
 
     size_t conv_size = data_span.size() + kernel.size() - 1;
-    /*
-    size_t fft_size = 1;
-    while (fft_size < conv_size)
-        fft_size *= 2;
 
-    if (fft_size < 2) {
-        fft_size = 2;
-    }
-    */
-
-    size_t fft_size = std::max(256uz, conv_size);
+    size_t fft_size = std::max(256UZ, conv_size);
     fft_size = 1 << (32 - std::countl_zero(fft_size - 1));
 
     Eigen::VectorXd padded_input = Eigen::VectorXd::Zero(fft_size);
@@ -56,7 +47,6 @@ std::vector<double> fft_convolve_helper(
     Eigen::VectorXcd result_fft(fft_size);
     operation(input_fft, kernel_fft, result_fft);
 
-    // new
     double scale_factor = 1.0 / fft_size;
     std::ranges::transform(result_fft, result_fft.begin(),
         [scale_factor](std::complex<double>& c) {

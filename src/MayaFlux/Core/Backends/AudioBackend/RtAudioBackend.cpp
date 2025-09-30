@@ -1,6 +1,35 @@
 #include "RtAudioBackend.hpp"
 #include "RtAudioSingleton.hpp"
 
+namespace {
+
+RtAudio::Api to_rtaudio_api(MayaFlux::Core::GlobalStreamInfo::AudioApi api)
+{
+    using Api = MayaFlux::Core::GlobalStreamInfo::AudioApi;
+    switch (api) {
+    case Api::ALSA:
+        return RtAudio::LINUX_ALSA;
+    case Api::PULSE:
+        return RtAudio::LINUX_PULSE;
+    case Api::JACK:
+        return RtAudio::UNIX_JACK;
+    case Api::CORE:
+        return RtAudio::MACOSX_CORE;
+    case Api::WASAPI:
+        return RtAudio::WINDOWS_WASAPI;
+    case Api::ASIO:
+        return RtAudio::WINDOWS_ASIO;
+    case Api::DS:
+        return RtAudio::WINDOWS_DS;
+    case Api::OSS:
+        return RtAudio::LINUX_OSS;
+    default:
+        return RtAudio::UNSPECIFIED;
+    }
+}
+
+}
+
 namespace MayaFlux::Core {
 
 RtAudioBackend::RtAudioBackend()

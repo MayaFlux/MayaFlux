@@ -8,7 +8,7 @@ on:
         default: true
         type: boolean
   # push:
-  #   branches: [containerdata]
+  #   branches: [filebridge]
 env:
   BUILD_TYPE: Release
 jobs:

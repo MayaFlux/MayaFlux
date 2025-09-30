@@ -1,4 +1,5 @@
 #include "AudioBuffer.hpp"
+
 #include "BufferProcessingChain.hpp"
 
 #include "MayaFlux/API/Config.hpp"
@@ -41,7 +42,7 @@ void AudioBuffer::resize(u_int32_t num_samples)
 
 void AudioBuffer::clear()
 {
-    std::fill(m_data.begin(), m_data.end(), 0.0);
+    std::ranges::fill(m_data, 0.0);
 }
 
 void AudioBuffer::set_num_samples(u_int32_t num_samples)

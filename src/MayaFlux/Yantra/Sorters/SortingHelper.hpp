@@ -1,5 +1,7 @@
 #pragma once
 
+#include <numeric>
+
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "UniversalSorter.hpp"
@@ -254,7 +256,7 @@ void sort_compute_data_inplace(IO<T>& data,
         return;
     }
 
-    auto channels = OperationHelper::extract_numeric_data(data.data);
+    auto channels = OperationHelper::extract_numeric_data(data.data, data.needs_processig());
     sort_channels_inplace(channels, direction, algorithm);
 }
 
@@ -341,7 +343,7 @@ std::vector<std::vector<size_t>> generate_compute_data_indices(const IO<T>& data
         auto channel = OperationHelper::extract_numeric_data(data.data);
         return { generate_span_sort_indices({ channel }, direction) };
     } else {
-        auto channels = OperationHelper::extract_numeric_data(data.data);
+        auto channels = OperationHelper::extract_numeric_data(data.data, data.needs_processig());
         return generate_channels_sort_indices(channels, direction);
     }
 }

@@ -113,7 +113,7 @@ public:
      * @param window_size Size of analysis window in samples (default: 512)
      * @param hop_size Step size between windows in samples (default: 256)
      */
-    explicit EnergyAnalyzer(u_int32_t window_size = 512, u_int32_t hop_size = 256)
+    explicit EnergyAnalyzer(u_int32_t window_size = 256, u_int32_t hop_size = 128)
         : m_window_size(window_size)
         , m_hop_size(hop_size)
     {
@@ -323,7 +323,7 @@ protected:
 
             this->store_current_analysis(analysis_result);
 
-            return create_pipeline_output(input, analysis_result);
+            return create_pipeline_output(input, analysis_result, structure_info);
         } catch (const std::exception& e) {
             std::cerr << "Energy analysis failed: " << e.what() << '\n';
             output_type error_result;
@@ -481,7 +481,7 @@ private:
     /**
      * @brief Create pipeline output from input and energy values
      */
-    output_type create_pipeline_output(const input_type& input, const EnergyAnalysis& analysis_result) const
+    output_type create_pipeline_output(const input_type& input, const EnergyAnalysis& analysis_result, DataStructureInfo& info)
     {
         std::vector<std::vector<double>> channel_energies;
         channel_energies.reserve(analysis_result.channels.size());
@@ -490,18 +490,9 @@ private:
             channel_energies.push_back(ch.energy_values);
         }
 
-        OutputType result_data = OperationHelper::convert_result_to_output_type<OutputType>(channel_energies);
+        output_type output = this->convert_result(channel_energies, info);
 
-        output_type output;
-        if constexpr (std::is_same_v<OutputType, Kakshya::DataVariant>) {
-            auto [out_dims, out_modality] = Yantra::infer_from_data_variant(result_data);
-            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-        } else {
-            auto [out_dims, out_modality] = Yantra::infer_structure(result_data);
-            output = output_type(std::move(result_data), std::move(out_dims), out_modality);
-        }
-
-        output.metadata = input.metadata; // Preserve input metadata
+        output.metadata = input.metadata;
 
         output.metadata["source_analyzer"] = "EnergyAnalyzer";
         output.metadata["energy_method"] = method_to_string(analysis_result.method_used);

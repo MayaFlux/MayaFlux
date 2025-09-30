@@ -152,8 +152,7 @@ private:
 
             sort_channels_inplace(working_spans, this->get_direction(), m_algorithm);
 
-            output_type result;
-            result.data = OperationHelper::reconstruct_from_double<OutputType>(working_buffer, structure_info);
+            output_type result = this->convert_result(working_buffer, structure_info);
             result.metadata = input.metadata;
             result.container = input.container;
             result.metadata["sort_type"] = "copy";
@@ -324,7 +323,9 @@ private:
                     }
                 }
 
-                result.data = OperationHelper::reconstruct_from_double<InputType>(merged_channels, info);
+                result = this->convert_result(merged_channels, info);
+                result.metadata = original_input.metadata;
+                result.metadata["sort_type"] = "chunked_merged";
 
             } catch (...) {
                 result.data = chunks[0];
@@ -339,15 +340,12 @@ private:
      */
     output_type convert_and_sort(const input_type& input)
     {
-        output_type result {};
-
         std::vector<std::vector<double>> working_buffer;
         auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
             const_cast<input_type&>(input), working_buffer);
 
         sort_channels_inplace(working_spans, this->get_direction(), SortingAlgorithm::PARTIAL);
-        result.data = OperationHelper::convert_result_to_output_type<OutputType>(working_buffer);
-        return result;
+        return this->convert_result(working_buffer, structure_info);
     }
 
     /**

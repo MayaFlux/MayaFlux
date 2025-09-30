@@ -210,14 +210,12 @@ private:
      */
     output_type create_output(const input_type& input)
     {
-        output_type result;
         if constexpr (std::is_same_v<InputType, OutputType>) {
             return input;
         } else {
-            result = input;
-            result.data = OperationHelper::convert_result_to_output_type<OutputType>(input.data);
+            auto [result_data, metadata] = OperationHelper::extract_structured_double(input);
+            return this->convert_result(result_data, metadata);
         }
-        return result;
     }
 };
 

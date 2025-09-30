@@ -240,9 +240,8 @@ private:
         if constexpr (std::is_same_v<InputType, OutputType>) {
             return input;
         } else {
-            output_type result = input;
-            result.data = OperationHelper::convert_result_to_output_type<OutputType>(input.data);
-            return result;
+            auto [result_data, metadata] = OperationHelper::extract_structured_double(input);
+            return this->convert_result(result_data, metadata);
         }
     }
 };

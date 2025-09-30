@@ -94,14 +94,18 @@ public:
      */
     template <typename T>
         requires(MultiVariant<T> || EigenMatrixLike<T>)
-    static std::vector<std::span<double>> extract_numeric_data(const T& compute_data)
+    static std::vector<std::span<double>> extract_numeric_data(const T& compute_data, bool needs_processig = false)
     {
         if constexpr (std::is_same_v<T, std::vector<Kakshya::DataVariant>>) {
             return Kakshya::convert_variants<double>(compute_data, s_complex_strategy);
         }
 
         if constexpr (std::is_same_v<T, std::shared_ptr<Kakshya::SignalSourceContainer>>) {
-            if (compute_data->get_processing_state() == Kakshya::ProcessingState::PROCESSED) {
+            if (needs_processig) {
+                if (compute_data->get_processing_state() != Kakshya::ProcessingState::PROCESSED) {
+                    compute_data->process_default();
+                    compute_data->update_processing_state(Kakshya::ProcessingState::PROCESSED);
+                }
                 std::vector<Kakshya::DataVariant> variant = compute_data->get_processed_data();
                 return Kakshya::convert_variants<double>(variant, s_complex_strategy);
             }
@@ -112,7 +116,7 @@ public:
         if constexpr (std::is_base_of_v<Eigen::MatrixBase<T>, T>)
             return extract_from_eigen_matrix(compute_data);
 
-        return std::vector<std::span<double>>{};
+        return std::vector<std::span<double>> {};
     }
 
     /**
@@ -224,7 +228,7 @@ public:
                 std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data, compute_data.container.value());
                 return std::make_tuple(double_data, info);
             } else {
-                std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data);
+                std::vector<std::span<double>> double_data = extract_numeric_data(compute_data.data, compute_data.needs_processig());
                 return std::make_tuple(double_data, info);
             }
         } else {
@@ -291,32 +295,6 @@ public:
         io_data.data = reconstruct_from_double<UnderlyingType>(double_data, structure_info);
 
         return io_data;
-    }
-
-    /**
-     * @brief Convert double vector to target ComputeData type (non-region)
-     * @tparam OutputType Target ComputeData type
-     * @param result_data Processed double vector
-     * @return Converted data of type OutputType
-     */
-    template <ComputeData OutputType>
-        requires(!std::is_same_v<OutputType, std::shared_ptr<Kakshya::SignalSourceContainer>>) && (!RegionLike<OutputType>)
-    static OutputType convert_result_to_output_type(const std::vector<std::vector<double>>& result_data)
-    {
-        if constexpr (std::is_same_v<OutputType, std::vector<std::vector<double>>>) {
-            return result_data;
-        } else if constexpr (std::is_same_v<OutputType, Eigen::MatrixXd>) {
-            return create_eigen_matrix(result_data);
-        } else if constexpr (std::is_same_v<OutputType, std::vector<Kakshya::DataVariant>>) {
-            std::vector<Kakshya::DataVariant> variants;
-            variants.reserve(result_data.size());
-            for (const auto& vec : result_data) {
-                variants.emplace_back(vec);
-            }
-            return variants;
-        } else {
-            return OutputType {};
-        }
     }
 
     /**

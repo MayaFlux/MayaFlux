@@ -44,6 +44,8 @@ namespace MayaFlux::Buffers {
  */
 class BufferProcessingChain {
 public:
+    friend class BufferProcessor;
+
     /**
      * @brief Adds a processor to the transformation pipeline for a specific buffer
      * @param processor Processor to add
@@ -289,6 +291,17 @@ protected:
 
 private:
     /**
+     * @brief Internal processing method for non-owning buffer contexts
+     * @param buffer Buffer to process
+     *
+     * This method is used internally by BufferProcessingChain to process buffers
+     * that are not owned by the chain itself. It ensures that the processor's
+     * processing function is called in a thread-safe manner, managing the
+     * active processing state to prevent concurrent access issues.
+     */
+    void process_non_owning(std::shared_ptr<Buffer> buffer);
+
+    /**
      * @brief Validates the processing token against the chain's preferred token
      */
     void cleanup_rejected_processors(std::shared_ptr<Buffer> buffer);
@@ -360,5 +373,7 @@ private:
     PendingProcessorOp m_pending_ops[MAX_PENDING_PROCESSORS];
 
     std::atomic<u_int32_t> m_pending_count { 0 };
+
+    friend class FileBridgeProcessor;
 };
 }

@@ -29,6 +29,16 @@ enum class ExecutionMode : u_int8_t {
 };
 
 /**
+ * @brief Callback type for pre/post operation hooks
+ */
+using OpererationHookCallback = std::function<void(std::any&)>;
+
+/**
+ * @brief Callback type for custom reconstruction logic
+ */
+using ReconstructionCallback = std::function<std::any(std::vector<std::vector<double>>&, std::any&)>;
+
+/**
  * @struct ExecutionContext
  * @brief Context information for operation execution
  */
@@ -38,6 +48,10 @@ struct ExecutionContext {
     std::vector<std::type_index> dependencies;
     std::chrono::milliseconds timeout { 0 };
     std::unordered_map<std::string, std::any> execution_metadata;
+
+    OpererationHookCallback pre_execution_hook = nullptr;
+    OpererationHookCallback post_execution_hook = nullptr;
+    ReconstructionCallback reconstruction_callback = nullptr;
 };
 
 }

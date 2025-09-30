@@ -32,6 +32,25 @@ struct GlobalStreamInfo {
         INT32 ///< 32-bit integer representation (-2147483648 to 2147483647)
     };
 
+    /**
+     * @enum AudioApi
+     * @brief Enumeration of supported audio APIs
+     */
+    enum class AudioApi {
+        DEFAULT,
+        ALSA,
+        PULSE,
+        JACK,
+        CORE,
+        WASAPI,
+        ASIO,
+        DS,
+        OSS
+    };
+
+    /** @brief Selected audio API for stream processing */
+    AudioApi requested_api = AudioApi::DEFAULT;
+
     /** @brief Sample data format for stream processing */
     AudioFormat format = AudioFormat::FLOAT64;
 

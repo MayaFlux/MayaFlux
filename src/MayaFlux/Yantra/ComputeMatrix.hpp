@@ -425,7 +425,6 @@ private:
         std::shared_ptr<OpClass> operation,
         const InputType& input)
     {
-
         if (!operation)
             return std::nullopt;
 
