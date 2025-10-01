@@ -2,7 +2,7 @@
 
 #if MAYAFLUX_USE_STD_FORMAT
 #include <format>
-namespace MayaFlux::Log::fmt {
+namespace MayaFlux::Journal::fmt {
 using std::format;
 using std::format_string;
 using std::make_format_args;
@@ -11,8 +11,7 @@ using std::vformat;
 #elif MAYAFLUX_USE_FMT
 #include <fmt/core.h>
 #include <fmt/format.h>
-namespace MayaFlux::Log::fmt {
-// Wrap fmt library
+namespace MayaFlux::Journal::fmt {
 using ::fmt::format;
 using ::fmt::format_string;
 using ::fmt::make_format_args;
@@ -22,7 +21,7 @@ using ::fmt::vformat;
 #error "No formatting library available. Either std::format or fmt is required."
 #endif
 
-namespace MayaFlux::Log {
+namespace MayaFlux::Journal {
 
 template <typename... Args>
 using format_string = fmt::format_string<Args...>;
@@ -38,4 +37,4 @@ inline std::string vformat(std::string_view fmt_str, auto fmt_args)
     return fmt::vformat(fmt_str, fmt_args);
 }
 
-} // namespace MayaFlux::Log
+} // namespace MayaFlux::Journal

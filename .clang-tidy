@@ -1,0 +1,199 @@
+---
+Checks: >
+  bugprone-*,
+  cert-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-braces-around-statements,
+  readability-const-return-type,
+  readability-container-size-empty,
+  readability-convert-member-functions-to-static,
+  readability-delete-null-pointer,
+  readability-deleted-default,
+  readability-else-after-return,
+  readability-implicit-bool-conversion,
+  readability-inconsistent-declaration-parameter-name,
+  readability-make-member-function-const,
+  readability-misleading-indentation,
+  readability-misplaced-array-index,
+  readability-non-const-parameter,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-redundant-function-ptr-dereference,
+  readability-redundant-member-init,
+  readability-redundant-preprocessor,
+  readability-redundant-smartptr-get,
+  readability-redundant-string-cstr,
+  readability-redundant-string-init,
+  readability-simplify-boolean-expr,
+  readability-simplify-subscript-expr,
+  readability-static-accessed-through-instance,
+  readability-static-definition-in-anonymous-namespace,
+  readability-string-compare,
+  readability-uniqueptr-delete-release,
+  readability-uppercase-literal-suffix,
+  readability-use-anyofallof,
+  -abseil-*,
+  -altera-*,
+  -android-*,
+  -darwin-*,
+  -fuchsia-*,
+  -google-*,
+  -llvm-*,
+  -llvmlibc-*,
+  -zircon-*,
+  -readability-identifier-naming,
+  -readability-function-cognitive-complexity,
+  -readability-function-size,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -hicpp-no-array-decay,
+  -cert-err58-cpp,
+  -misc-non-private-member-variables-in-classes,
+  -misc-no-recursion,
+  -bugprone-easily-swappable-parameters,
+  -modernize-use-trailing-return-type,
+  -cppcoreguidelines-avoid-c-arrays,
+  -hicpp-avoid-c-arrays,
+  -modernize-avoid-c-arrays,
+  -cppcoreguidelines-macro-usage
+
+CheckOptions:
+  # Const-correctness and reference optimization (core focus)
+  - key: misc-const-correctness.AnalyzeValues
+    value: true
+  - key: misc-const-correctness.AnalyzeReferences
+    value: true
+  - key: misc-const-correctness.WarnPointersAsValues
+    value: true
+  - key: misc-const-correctness.TransformValues
+    value: true
+  - key: misc-const-correctness.TransformReferences
+    value: true
+  - key: misc-const-correctness.TransformPointersAsValues
+    value: true
+
+  # Performance optimizations
+  - key: performance-for-range-copy.WarnOnAllAutoCopies
+    value: true
+  - key: performance-for-range-copy.AllowedTypes
+    value: ""
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: ""
+  - key: performance-unnecessary-copy-initialization.AllowedTypes
+    value: ""
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: true
+  - key: performance-no-automatic-move.AllowedTypes
+    value: ""
+
+  # C++20 modernization
+  - key: modernize-use-auto.MinTypeNameLength
+    value: 5
+  - key: modernize-use-auto.RemoveStars
+    value: true
+  - key: modernize-loop-convert.MaxCopySize
+    value: 16
+  - key: modernize-loop-convert.MinConfidence
+    value: reasonable
+  - key: modernize-pass-by-value.IncludeStyle
+    value: google
+  - key: modernize-pass-by-value.ValuesOnly
+    value: false
+  - key: modernize-use-designated-initializers.RestrictToPODTypes
+    value: false
+  - key: modernize-use-designated-initializers.IgnoreSingleElementAggregates
+    value: false
+  - key: modernize-use-nullptr.NullMacros
+    value: "NULL"
+  - key: modernize-use-using.IgnoreMacros
+    value: false
+
+  # Core Guidelines compliance (performance focused)
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: true
+  - key: cppcoreguidelines-special-member-functions.AllowMissingMoveFunctions
+    value: false
+  - key: cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
+    value: false
+  - key: cppcoreguidelines-pro-type-member-init.IgnoreArrays
+    value: true
+  - key: cppcoreguidelines-narrowing-conversions.WarnOnFloatingPointNarrowingConversion
+    value: true
+  - key: cppcoreguidelines-narrowing-conversions.WarnOnIntegerNarrowingConversion
+    value: true
+  - key: cppcoreguidelines-narrowing-conversions.WarnOnIntegerToFloatingPointNarrowingConversion
+    value: true
+  - key: cppcoreguidelines-narrowing-conversions.PedanticMode
+    value: false
+
+  # Constexpr promotion
+  - key: cppcoreguidelines-interfaces-global-init.IgnoreTemplateInstantiations
+    value: true
+
+  # Bugprone settings
+  - key: bugprone-argument-comment.StrictMode
+    value: false
+  - key: bugprone-assert-side-effect.AssertMacros
+    value: "assert"
+  - key: bugprone-dangling-handle.HandleClasses
+    value: "std::basic_string_view;std::span"
+  - key: bugprone-exception-escape.FunctionsThatShouldNotThrow
+    value: ""
+  - key: bugprone-misplaced-widening-cast.CheckImplicitCasts
+    value: true
+  - key: bugprone-sizeof-expression.WarnOnSizeOfConstant
+    value: true
+  - key: bugprone-sizeof-expression.WarnOnSizeOfIntegerExpression
+    value: true
+  - key: bugprone-sizeof-expression.WarnOnSizeOfThis
+    value: true
+  - key: bugprone-sizeof-expression.WarnOnSizeOfCompareToConstant
+    value: true
+  - key: bugprone-string-constructor.WarnOnLargeLength
+    value: true
+  - key: bugprone-suspicious-string-compare.WarnOnImplicitComparison
+    value: true
+  - key: bugprone-suspicious-string-compare.WarnOnLogicalNotComparison
+    value: true
+  - key: bugprone-unhandled-self-assignment.WarnOnlyIfThisHasSuspiciousField
+    value: true
+
+  # Concurrency (for your audio processing)
+  - key: concurrency-mt-unsafe.FunctionSet
+    value: "any"
+
+  # CERT compliance (security focused)
+  - key: cert-dcl16-c.NewSuffixes
+    value: "L;LL;LU;LLU"
+  - key: cert-oop54-cpp.WarnOnlyIfThisHasSuspiciousField
+    value: false
+
+  # Misc optimizations
+  - key: misc-throw-by-value-catch-by-reference.CheckThrowTemporaries
+    value: true
+  - key: misc-unused-parameters.StrictMode
+    value: false
+
+  # Readability (only technical improvements, no naming)
+  - key: readability-braces-around-statements.ShortStatementLines
+    value: 2
+  - key: readability-simplify-boolean-expr.ChainedConditionalReturn
+    value: true
+  - key: readability-simplify-boolean-expr.ChainedConditionalAssignment
+    value: true
+  - key: readability-uppercase-literal-suffix.NewSuffixes
+    value: ""
+  - key: readability-uppercase-literal-suffix.IgnoreMacros
+    value: true
+  - key: readability-redundant-string-init.StringNames
+    value: "std::basic_string"
+
+HeaderFilterRegex: '^.*/(src|include|tests)/.*\.(h|hpp)$'
+FormatStyle: file
+User: root

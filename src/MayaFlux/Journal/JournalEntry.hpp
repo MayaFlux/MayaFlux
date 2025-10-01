@@ -6,7 +6,7 @@
 #include "source_location"
 #include "string_view"
 
-namespace MayaFlux::Log {
+namespace MayaFlux::Journal {
 
 enum class Severity : u_int8_t {
     TRACE,
@@ -39,7 +39,7 @@ enum class Context : u_int8_t {
     Unknown
 };
 
-struct LogEntry {
+struct JournalEntry {
     Severity severity;
     Component component;
     Context context;
@@ -47,7 +47,7 @@ struct LogEntry {
     std::source_location location;
     std::chrono::steady_clock::time_point timestamp;
 
-    LogEntry(Severity sev, Component comp, Context ctx,
+    JournalEntry(Severity sev, Component comp, Context ctx,
         std::string_view msg,
         std::source_location loc = std::source_location::current())
         : severity(sev)

@@ -1,12 +1,11 @@
-#include "Logger.hpp"
+#include "Archivist.hpp"
 
-namespace MayaFlux::Log {
+namespace MayaFlux::Journal {
 
-class Logger::Impl {
+class Archivist::Impl {
 public:
     Impl()
         : min_severity_(Severity::INFO)
-        , initialized_(false)
     {
         component_filters_.fill(true);
     }
@@ -18,7 +17,7 @@ public:
             return;
 
         initialized_ = true;
-        std::cout << "[MayaFlux::Log] Initialized\n";
+        std::cout << "[MayaFlux::Journal] Initialized\n";
     }
 
     void shutdown()
@@ -27,17 +26,23 @@ public:
         if (!initialized_)
             return;
 
-        std::cout << "[MayaFlux::Log] Shutdown\n";
+        std::cout << "[MayaFlux::Journal] Shutdown\n";
         initialized_ = false;
     }
 
-    void log(const LogEntry& entry)
+    void scribe(const JournalEntry& entry)
     {
         if (entry.severity < min_severity_.load(std::memory_order_relaxed)) {
             return;
         }
 
-        if (!component_filters_[static_cast<size_t>(entry.component)]) {
+        auto comp_idx = static_cast<size_t>(entry.component);
+        if (comp_idx >= component_filters_.size()) {
+            return;
+        }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+        if (!component_filters_[comp_idx]) {
             return;
         }
 
@@ -52,11 +57,17 @@ public:
 
     void set_component_filter(Component comp, bool enabled)
     {
-        component_filters_[static_cast<size_t>(comp)] = enabled;
+        auto comp_idx = static_cast<size_t>(comp);
+        if (comp_idx >= component_filters_.size()) {
+            return;
+        }
+
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+        component_filters_[comp_idx] = enabled;
     }
 
 private:
-    void write_to_console(const LogEntry& entry)
+    static void write_to_console(const JournalEntry& entry)
     {
         std::cout << "[" << Utils::enum_to_string(entry.severity) << "]"
                   << "[" << Utils::enum_to_string(entry.component) << "]"
@@ -68,58 +79,59 @@ private:
                       << ":" << entry.location.line() << ")";
         }
 
-        std::cout << std::endl;
+        std::cout << '\n';
     }
 
     std::mutex mutex_;
     std::atomic<Severity> min_severity_;
-    std::array<bool, 10> component_filters_;
-    bool initialized_;
+    std::array<bool, magic_enum::enum_count<Component>()> component_filters_ {};
+    bool initialized_ {};
 };
 
-Logger& Logger::instance()
+Archivist& Archivist::instance()
 {
-    static Logger logger;
-    return logger;
+    static Archivist archivist;
+    return archivist;
 }
 
-Logger::Logger()
+Archivist::Archivist()
     : impl_(std::make_unique<Impl>())
 {
 }
-Logger::~Logger() = default;
 
-void Logger::init()
+Archivist::~Archivist() = default;
+
+void Archivist::init()
 {
     instance().impl_->init();
 }
 
-void Logger::shutdown()
+void Archivist::shutdown()
 {
     instance().impl_->shutdown();
 }
 
-void Logger::log(Severity severity, Component component, Context context,
+void Archivist::scribe(Severity severity, Component component, Context context,
     std::string_view message, std::source_location location)
 {
-    LogEntry entry(severity, component, context, message, location);
-    impl_->log(entry);
+    JournalEntry entry(severity, component, context, message, location);
+    impl_->scribe(entry);
 }
 
-void Logger::log_rt(Severity severity, Component component, Context context,
+void Archivist::scribe_rt(Severity severity, Component component, Context context,
     std::string_view message, std::source_location location)
 {
-    log(severity, component, context, message, location);
+    scribe(severity, component, context, message, location);
 }
 
-void Logger::set_min_severity(Severity min_sev)
+void Archivist::set_min_severity(Severity min_sev)
 {
     impl_->set_min_severity(min_sev);
 }
 
-void Logger::set_component_filter(Component comp, bool enabled)
+void Archivist::set_component_filter(Component comp, bool enabled)
 {
     impl_->set_component_filter(comp, enabled);
 }
 
-} // namespace MayaF
+} // namespace MayaFlux::Journal
