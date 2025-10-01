@@ -27,9 +27,19 @@ template <typename... Args>
 using format_string = fmt::format_string<Args...>;
 
 template <typename... Args>
-inline std::string format(format_string<Args...> fmt_str, Args&&... args)
+inline std::string format(format_string<std::remove_cvref_t<Args>...> fmt_str, Args&&... args)
 {
     return fmt::format(fmt_str, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
+inline std::string format_runtime(std::string_view fmt_str, Args&&... args)
+{
+#if MAYAFLUX_USE_STD_FORMAT
+    return std::vformat(fmt_str, std::make_format_args(args...));
+#elif MAYAFLUX_USE_FMT
+    return fmt::vformat(fmt_str, fmt::make_format_args(args...));
+#endif
 }
 
 inline std::string vformat(std::string_view fmt_str, auto fmt_args)

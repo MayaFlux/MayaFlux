@@ -146,6 +146,16 @@ void scribef(Severity severity, Component component, Context context,
     Archivist::instance().scribe(severity, component, context, msg, location);
 }
 
+template <typename... Args>
+void scribef(Severity severity, Component component, Context context,
+    const char* fmt_str,
+    std::source_location location,
+    Args&&... args)
+{
+    auto msg = format_runtime(fmt_str, std::forward<Args>(args)...);
+    Archivist::instance().scribe(severity, component, context, msg, location);
+}
+
 /**
  * @brief Log a formatted message from a real-time context with the specified severity, component, and context.
  *
@@ -182,6 +192,18 @@ template <typename... Args>
 #define MF_RT_WARN(comp, ctx, msg) MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::WARN, comp, ctx, msg)
 #define MF_RT_ERROR(comp, ctx, msg) MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::ERROR, comp, ctx, msg)
 
-#define MFF_INFO(comp, ctx, fmt, ...) MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::INFO, comp, ctx, fmt, __VA_ARGS__)
-#define MFF_WARN(comp, ctx, fmt, ...) MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::WARN, comp, ctx, fmt, __VA_ARGS__)
-#define MFF_ERROR(comp, ctx, fmt, ...) MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::ERROR, comp, ctx, fmt, __VA_ARGS__)
+#define MFF_TRACE(comp, ctx, fmt, ...)                                             \
+    MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::TRACE, comp, ctx, fmt, \
+        std::source_location::current() __VA_OPT__(, ) __VA_ARGS__)
+#define MFF_DEBUG(comp, ctx, fmt, ...)                                             \
+    MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::DEBUG, comp, ctx, fmt, \
+        std::source_location::current() __VA_OPT__(, ) __VA_ARGS__)
+#define MFF_INFO(comp, ctx, fmt, ...)                                             \
+    MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::INFO, comp, ctx, fmt, \
+        std::source_location::current() __VA_OPT__(, ) __VA_ARGS__)
+#define MFF_WARN(comp, ctx, fmt, ...)                                             \
+    MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::WARN, comp, ctx, fmt, \
+        std::source_location::current() __VA_OPT__(, ) __VA_ARGS__)
+#define MFF_ERROR(comp, ctx, fmt, ...)                                             \
+    MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::ERROR, comp, ctx, fmt, \
+        std::source_location::current() __VA_OPT__(, ) __VA_ARGS__)

@@ -265,8 +265,8 @@ private:
 
     GlobalStreamInfo m_stream_info; ///< Stream configuration
 
-    bool m_is_paused; ///< Pause state flag
-    bool m_is_initialized;
+    bool m_is_paused {}; ///< Pause state flag
+    bool m_is_initialized {};
 
     //-------------------------------------------------------------------------
     // Core Components
