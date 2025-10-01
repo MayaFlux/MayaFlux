@@ -1,3 +1,5 @@
+#pragma once
+
 #include "MayaFlux/Core/Engine.hpp"
 #include "gtest/gtest.h"
 

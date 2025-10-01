@@ -10,8 +10,25 @@ public:
 
     Impl()
         : m_min_severity(Severity::INFO)
+        , m_shutdown_in_progress(false)
     {
         m_component_filters.fill(true);
+    }
+
+    ~Impl()
+    {
+        m_worker_running.store(false, std::memory_order_release);
+
+        if (m_worker_thread.joinable()) {
+            auto start = std::chrono::steady_clock::now();
+            while (m_worker_thread.joinable() && std::chrono::steady_clock::now() - start < std::chrono::milliseconds(500)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            if (m_worker_thread.joinable()) {
+                m_worker_thread.detach();
+            }
+        }
     }
 
     void init()
@@ -21,18 +38,31 @@ public:
             return;
 
         m_initialized = true;
+        m_worker_running.store(true, std::memory_order_release);
         start_worker();
         std::cout << "[MayaFlux::Journal] Initialized\n";
     }
 
     void shutdown()
     {
-        std::lock_guard lock(m_mutex);
-        if (!m_initialized)
+        std::unique_lock lock(m_mutex);
+        if (!m_initialized || m_shutdown_in_progress)
             return;
 
-        std::cout << "[MayaFlux::Journal] Shutdown\n";
+        m_shutdown_in_progress = true;
         m_initialized = false;
+        m_worker_running.store(false, std::memory_order_release);
+
+        lock.unlock();
+
+        if (m_worker_thread.joinable()) {
+            m_worker_thread.join();
+        }
+
+        lock.lock();
+        drain_ring_buffer();
+        m_shutdown_in_progress = false;
+        std::cout << "[MayaFlux::Journal] Shutdown\n";
     }
 
     void scribe(const JournalEntry& entry)
@@ -63,7 +93,7 @@ public:
 
         RealtimeEntry entry(severity, component, context, message, location);
 
-        if (m_ring_buffer.try_push(entry)) {
+        if (!m_ring_buffer.try_push(entry)) {
             m_dropped_messages.fetch_add(1, std::memory_order_relaxed);
         }
     }
@@ -107,7 +137,7 @@ private:
                   << "[" << Utils::enum_to_string(entry.context) << "] "
                   << entry.message;
 
-        if (entry.location.file_name() != nullptr) {
+        if (entry.location.file_name() != nullptr && entry.location.line() != 0) {
             std::cout << " (" << entry.location.file_name()
                       << ":" << entry.location.line() << ")";
         }
@@ -151,8 +181,14 @@ private:
         using namespace std::chrono_literals;
 
         while (m_worker_running.load(std::memory_order_acquire)) {
+            if (m_initialized) {
+                drain_ring_buffer();
+            }
+            std::this_thread::sleep_for(10ms);
+        }
+
+        if (m_initialized) {
             drain_ring_buffer();
-            std::this_thread::sleep_for(100ms);
         }
     }
 
@@ -180,6 +216,8 @@ private:
     std::atomic<bool> m_worker_running;
     std::thread m_worker_thread;
     std::atomic<uint64_t> m_dropped_messages { 0 };
+
+    std::atomic<bool> m_shutdown_in_progress;
 };
 
 Archivist& Archivist::instance()
@@ -216,6 +254,13 @@ void Archivist::scribe_rt(Severity severity, Component component, Context contex
     std::string_view message, std::source_location location)
 {
     m_impl->scribe_rt(severity, component, context, message, location);
+}
+
+void Archivist::scribe_simple(Severity severity, Component component, Context context,
+    std::string_view message)
+{
+    JournalEntry entry(severity, component, context, message, std::source_location {});
+    m_impl->scribe(entry);
 }
 
 void Archivist::set_min_severity(Severity min_sev)

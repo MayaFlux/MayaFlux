@@ -62,6 +62,17 @@ public:
         std::source_location location = std::source_location::current());
 
     /**
+     * @brief Log a simple message without source location information.
+     * This method is intended for use in contexts where source location is not available or needed.
+     * @param severity The severity level of the log message.
+     * @param component The component generating the log message.
+     * @param context The execution context of the log message.
+     * @param message The log message content.
+     */
+    void scribe_simple(Severity severity, Component component, Context context,
+        std::string_view message);
+
+    /**
      * @brief Set the minimum severity level for logging.
      * Messages with a severity lower than this level will be ignored.
      * @param min_sev The minimum severity level to log.
@@ -180,6 +191,42 @@ template <typename... Args>
     std::abort();
 }
 
+/**
+ * @brief Log a simple message without source location information.
+ *
+ * This function is intended for use in contexts where source location is not available or needed.
+ *
+ * @param severity The severity level of the log message.
+ * @param component The component generating the log message.
+ * @param context The execution context of the log message.
+ * @param message The log message content.
+ */
+inline void print(Severity severity, Component component, Context context,
+    std::string_view message)
+{
+    Archivist::instance().scribe_simple(severity, component, context, message);
+}
+
+/**
+ * @brief Log a formatted message without source location information.
+ *
+ * This function is intended for use in contexts where source location is not available or needed.
+ *
+ * @tparam Args The types of the format arguments.
+ * @param severity The severity level of the log message.
+ * @param component The component generating the log message.
+ * @param context The execution context of the log message.
+ * @param fmt_str The format string.
+ * @param args The format arguments.
+ */
+template <typename... Args>
+void printf(Severity severity, Component component, Context context,
+    const char* fmt_str, Args&&... args)
+{
+    auto msg = format_runtime(fmt_str, std::forward<Args>(args)...);
+    print(severity, component, context, msg);
+}
+
 } // namespace MayaFlux::Journal
 
 #define MF_TRACE(comp, ctx, msg) MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::TRACE, comp, ctx, msg)
@@ -207,3 +254,15 @@ template <typename... Args>
 #define MFF_ERROR(comp, ctx, fmt, ...)                                             \
     MayaFlux::Journal::scribef(MayaFlux::Journal::Severity::ERROR, comp, ctx, fmt, \
         std::source_location::current() __VA_OPT__(, ) __VA_ARGS__)
+
+#define MF_PRINT_INFO(comp, ctx, msg) \
+    MayaFlux::Journal::print(MayaFlux::Journal::Severity::INFO, comp, ctx, msg)
+#define MF_PRINT_WARN(comp, ctx, msg) \
+    MayaFlux::Journal::print(MayaFlux::Journal::Severity::WARN, comp, ctx, msg)
+#define MF_PRINT_ERROR(comp, ctx, msg) \
+    MayaFlux::Journal::print(MayaFlux::Journal::Severity::ERROR, comp, ctx, msg)
+
+#define MFP_INFO(comp, ctx, fmt, ...) \
+    MayaFlux::Journal::printf(MayaFlux::Journal::Severity::INFO, comp, ctx, fmt __VA_OPT__(, ) __VA_ARGS__)
+#define MFP_WARN(comp, ctx, fmt, ...) \
+    MayaFlux::Journal::printf(MayaFlux::Journal::Severity::WARN, comp, ctx, fmt __VA_OPT__(, ) __VA_ARGS__)

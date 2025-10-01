@@ -21,7 +21,6 @@ Engine::Engine()
 Engine::~Engine()
 {
     End();
-    Journal::Archivist::shutdown();
 }
 
 Engine::Engine(Engine&& other) noexcept

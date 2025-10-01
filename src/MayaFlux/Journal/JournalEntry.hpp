@@ -35,6 +35,7 @@ enum class Component : u_int8_t {
     Vruta, ///< Coroutines, schedulers, clocks, task management
     Yantra, ///< DSP algorithms, computational units, matrix operations, Grammar
     IO, ///< Networking, file handling, streaming
+    USER, ///< User code, scripts, plugins
     Unknown
 };
 
