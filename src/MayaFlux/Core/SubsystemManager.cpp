@@ -3,24 +3,29 @@
 
 #include "Subsystems/AudioSubsystem.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Core {
 
 SubsystemManager::SubsystemManager(
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Vruta::TaskScheduler> task_scheduler)
-    : m_node_graph_manager(node_graph_manager)
-    , m_buffer_manager(buffer_manager)
-    , m_task_scheduler(task_scheduler)
+    : m_node_graph_manager(std::move(node_graph_manager))
+    , m_buffer_manager(std::move(buffer_manager))
+    , m_task_scheduler(std::move(task_scheduler))
 {
     if (!m_node_graph_manager) {
-        throw std::runtime_error("SubsystemManager requires valid NodeGraphManager");
+        fatal(Journal::Component::Core, Journal::Context::Init,
+            "SubsystemManager requires valid NodeGraphManager");
     }
     if (!m_buffer_manager) {
-        throw std::runtime_error("SubsystemManager requires valid BufferManager");
+        fatal(Journal::Component::Core, Journal::Context::Init,
+            "SubsystemManager requires valid BufferManager");
     }
     if (!m_task_scheduler) {
-        throw std::runtime_error("SubsystemManager requires valid TaskScheduler");
+        fatal(Journal::Component::Core, Journal::Context::Init,
+            "SubsystemManager requires valid TaskScheduler");
     }
 }
 
@@ -29,7 +34,7 @@ void SubsystemManager::create_audio_subsystem(GlobalStreamInfo& stream_info, Uti
     create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, stream_info, backend_type);
 }
 
-void SubsystemManager::add_subsystem(SubsystemType type, std::shared_ptr<ISubsystem> subsystem)
+void SubsystemManager::add_subsystem(SubsystemType type, const std::shared_ptr<ISubsystem>& subsystem)
 {
     auto tokens = subsystem->get_tokens();
     auto handle = std::make_unique<SubsystemProcessingHandle>(

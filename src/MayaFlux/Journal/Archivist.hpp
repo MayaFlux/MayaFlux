@@ -5,6 +5,8 @@
 
 namespace MayaFlux::Journal {
 
+class Sink;
+
 /**
  * @class Archivist
  * @brief Singleton class responsible for managing log entries.
@@ -71,6 +73,17 @@ public:
      */
     void scribe_simple(Severity severity, Component component, Context context,
         std::string_view message);
+
+    /**
+     * @brief Add a log sink for output
+     * @param sink Unique pointer to a LogSink implementation
+     */
+    void add_sink(std::unique_ptr<Sink> sink);
+
+    /**
+     * @brief Remove all sinks
+     */
+    void clear_sinks();
 
     /**
      * @brief Set the minimum severity level for logging.
@@ -168,30 +181,6 @@ void scribef(Severity severity, Component component, Context context,
 }
 
 /**
- * @brief Log a formatted message from a real-time context with the specified severity, component, and context.
- *
- * This function is optimized for real-time contexts, captures the source location automatically,
- * and uses fmt library for formatting.
- *
- * @tparam Args The types of the format arguments.
- * @param severity The severity level of the log message.
- * @param component The component generating the log message.
- * @param context The execution context of the log message.
- * @param fmt_str The format string.
- * @param args The format arguments.
- * @param location The source location (file, line, function) of the log call.
- */
-template <typename... Args>
-[[noreturn]] void fatal(Component component, Context context,
-    format_string<Args...> fmt_str, Args&&... args,
-    std::source_location location = std::source_location::current())
-{
-    auto msg = format(fmt_str, std::forward<Args>(args)...);
-    Archivist::instance().scribe(Severity::FATAL, component, context, msg, location);
-    std::abort();
-}
-
-/**
  * @brief Log a simple message without source location information.
  *
  * This function is intended for use in contexts where source location is not available or needed.
@@ -225,6 +214,118 @@ void printf(Severity severity, Component component, Context context,
 {
     auto msg = format_runtime(fmt_str, std::forward<Args>(args)...);
     print(severity, component, context, msg);
+}
+
+/**
+ * @brief Log a formatted message from a real-time context with the specified severity, component, and context.
+ *
+ * This function is optimized for real-time contexts, captures the source location automatically,
+ * and uses fmt library for formatting.
+ *
+ * @tparam Args The types of the format arguments.
+ * @param severity The severity level of the log message.
+ * @param component The component generating the log message.
+ * @param context The execution context of the log message.
+ * @param fmt_str The format string.
+ * @param args The format arguments.
+ * @param location The source location (file, line, function) of the log call.
+ */
+[[noreturn]] inline void fatal(Component component, Context context,
+    std::string_view message,
+    std::source_location location = std::source_location::current())
+{
+    Archivist::instance().scribe(Severity::FATAL, component, context, message, location);
+    std::abort();
+}
+
+template <typename... Args>
+[[noreturn]] void fatal(Component component, Context context,
+    format_string<Args...> fmt_str, Args&&... args,
+    std::source_location location = std::source_location::current())
+{
+    auto msg = format(fmt_str, std::forward<Args>(args)...);
+    Archivist::instance().scribe(Severity::FATAL, component, context, msg, location);
+    std::abort();
+}
+
+/**
+ * @brief Defines the behavior when logging an error.
+ * @param Component The component generating the log message.
+ * @param Context The execution context of the log message.
+ * @param behavior The exception behavior (LogAndThrow, LogAndRethrow, LogOnly).
+ * @param fmt_str The format string.
+ * @param args The format arguments.
+ * @param location The source location (file, line, function) of the log call.
+ */
+inline void error(Component component, Context context,
+    ExceptionBehavior behavior,
+    std::string_view message,
+    std::source_location location = std::source_location::current())
+{
+    Archivist::instance().scribe(Severity::ERROR, component, context, message, location);
+
+    if (behavior == ExceptionBehavior::LogAndThrow) {
+        throw std::runtime_error(std::string(message));
+    }
+}
+
+template <typename ExceptionType = std::runtime_error>
+void error(Component component, Context context,
+    ExceptionBehavior behavior,
+    std::string_view message,
+    std::source_location location = std::source_location::current())
+{
+    Archivist::instance().scribe(Severity::ERROR, component, context, message, location);
+
+    if (behavior == ExceptionBehavior::LogAndThrow) {
+        throw ExceptionType(std::string(message));
+    }
+}
+
+template <typename ExceptionType = std::runtime_error, typename... Args>
+    requires(sizeof...(Args) > 0)
+void error(Component component, Context context,
+    ExceptionBehavior behavior,
+    format_string<Args...> fmt_str, Args&&... args,
+    std::source_location location = std::source_location::current())
+{
+    auto msg = format(fmt_str, std::forward<Args>(args)...);
+    Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
+
+    if (behavior == ExceptionBehavior::LogAndThrow) {
+        throw ExceptionType(msg);
+    }
+}
+
+/**
+ * @brief Catch and log an exception, then rethrow it.
+ * This function is intended to be called within a catch block.
+ * @param Component The component generating the log message.
+ * @param Context The execution context of the log message.
+ * @param additional_context Optional additional context to prepend to the exception message.
+ * @param location The source location (file, line, function) of the log call.
+ */
+inline void error_rethrow(Component component, Context context,
+    std::string_view additional_context = "",
+    std::source_location location = std::source_location::current())
+{
+    try {
+        throw;
+    } catch (const std::exception& e) {
+        std::string msg = std::string(e.what());
+        if (!additional_context.empty()) {
+            msg = std::string(additional_context) + ": " + msg;
+        }
+        Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
+        throw;
+    } catch (...) {
+        std::string msg = "Unknown exception";
+        if (!additional_context.empty()) {
+            msg = std::string(additional_context) + ": " + msg;
+        }
+        Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
+        throw;
+    }
 }
 
 } // namespace MayaFlux::Journal

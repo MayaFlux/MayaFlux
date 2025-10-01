@@ -53,6 +53,16 @@ enum class Context : u_int8_t {
 };
 
 /**
+ * @enum Exception Behavior
+ * @brief Defines how exceptions should be handled in various contexts.
+ */
+enum class ExceptionBehavior : uint8_t {
+    LogAndThrow, // Log as ERROR, then throw
+    LogAndRethrow, // Log caught exception, then rethrow
+    LogOnly // Just log, don't throw (caller handles)
+};
+
+/**
  * @brief A log entry structure to encapsulate log message details.
  */
 struct JournalEntry {

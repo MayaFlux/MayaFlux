@@ -1,4 +1,5 @@
 #include "BufferManager.hpp"
+
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
 #include "MayaFlux/Buffers/Root/MixProcessor.hpp"
@@ -11,7 +12,7 @@ namespace MayaFlux::Buffers {
 class QuickProcess : public BufferProcessor {
 public:
     QuickProcess(AudioProcessingFunction function)
-        : m_function(function)
+        : m_function(std::move(function))
     {
         m_processing_token = ProcessingToken::AUDIO_BACKEND;
     }
@@ -33,7 +34,7 @@ public:
         }
     }
 
-    bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override
+    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override
     {
         return std::dynamic_pointer_cast<AudioBuffer>(buffer) != nullptr;
     }

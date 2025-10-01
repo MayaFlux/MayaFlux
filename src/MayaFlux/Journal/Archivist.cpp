@@ -2,6 +2,8 @@
 #include "RealtimeEntry.hpp"
 #include "RingBuffer.hpp"
 
+#include "Sink.hpp"
+
 namespace MayaFlux::Journal {
 
 class Archivist::Impl {
@@ -82,7 +84,12 @@ public:
         }
 
         std::lock_guard lock(m_mutex);
-        write_to_console(entry);
+
+        if (m_sinks.empty()) {
+            write_to_console(entry);
+        } else {
+            write_to_sinks(entry);
+        }
     }
 
     void scribe_rt(Severity severity, Component component, Context context, std::string_view message, std::source_location location)
@@ -96,6 +103,18 @@ public:
         if (!m_ring_buffer.try_push(entry)) {
             m_dropped_messages.fetch_add(1, std::memory_order_relaxed);
         }
+    }
+
+    void add_sink(std::unique_ptr<Sink> sink)
+    {
+        std::lock_guard lock(m_mutex);
+        m_sinks.push_back(std::move(sink));
+    }
+
+    void clear_sinks()
+    {
+        std::lock_guard lock(m_mutex);
+        m_sinks.clear();
     }
 
     void set_min_severity(Severity sev)
@@ -160,6 +179,26 @@ private:
         std::cout << '\n';
     }
 
+    std::vector<std::unique_ptr<Sink>> m_sinks;
+
+    void write_to_sinks(const JournalEntry& entry)
+    {
+        for (auto& sink : m_sinks) {
+            if (sink->is_available()) {
+                sink->write(entry);
+            }
+        }
+    }
+
+    void write_to_sinks(const RealtimeEntry& entry)
+    {
+        for (auto& sink : m_sinks) {
+            if (sink->is_available()) {
+                sink->write(entry);
+            }
+        }
+    }
+
     void start_worker()
     {
         m_worker_running.store(true, std::memory_order_release);
@@ -196,7 +235,12 @@ private:
     {
         while (auto entry = m_ring_buffer.try_pop()) {
             std::lock_guard lock(m_mutex);
-            write_to_console(*entry);
+
+            if (m_sinks.empty()) {
+                write_to_console(*entry);
+            } else {
+                write_to_sinks(*entry);
+            }
         }
 
         auto dropped = m_dropped_messages.exchange(0, std::memory_order_acquire);
@@ -261,6 +305,16 @@ void Archivist::scribe_simple(Severity severity, Component component, Context co
 {
     JournalEntry entry(severity, component, context, message, std::source_location {});
     m_impl->scribe(entry);
+}
+
+void Archivist::add_sink(std::unique_ptr<Sink> sink)
+{
+    m_impl->add_sink(std::move(sink));
+}
+
+void Archivist::clear_sinks()
+{
+    m_impl->clear_sinks();
 }
 
 void Archivist::set_min_severity(Severity min_sev)

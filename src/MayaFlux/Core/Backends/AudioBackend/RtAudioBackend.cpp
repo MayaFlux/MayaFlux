@@ -33,8 +33,8 @@ RtAudio::Api to_rtaudio_api(MayaFlux::Core::GlobalStreamInfo::AudioApi api)
 namespace MayaFlux::Core {
 
 RtAudioBackend::RtAudioBackend()
+    : m_context(RtAudioSingleton::get_instance())
 {
-    m_context = RtAudioSingleton::get_instance();
 }
 
 RtAudioBackend::~RtAudioBackend() = default;
@@ -173,7 +173,6 @@ void RtAudioStream::configure_stream_options()
         m_options.flags |= RTAUDIO_SCHEDULE_REALTIME;
         break;
     case GlobalStreamInfo::StreamPriority::HIGH:
-        break;
     default:
         break;
     }
