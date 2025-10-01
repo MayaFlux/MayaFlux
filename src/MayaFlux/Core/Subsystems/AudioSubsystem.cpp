@@ -77,34 +77,41 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
 
     u_int32_t num_channels = m_stream_info.output.channels;
     size_t total_samples = static_cast<size_t>(num_frames) * num_channels;
-
     std::span<double> output_span(output_buffer, total_samples);
 
     std::vector<std::span<const double>> buffer_data(num_channels);
+    bool has_underrun = false;
+
     for (u_int32_t channel = 0; channel < num_channels; channel++) {
         m_handle->buffers.process_channel(channel, num_frames);
         auto channel_data = m_handle->buffers.read_channel_data(channel);
 
         if (channel_data.size() < num_frames) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::Realtime,
+            MF_RT_WARN(Journal::Component::Core, Journal::Context::Realtime,
                 "Channel buffer underrun");
-            return 1;
-        }
+            has_underrun = true;
 
-        buffer_data[channel] = channel_data;
+            buffer_data[channel] = std::span<const double>();
+        } else {
+            buffer_data[channel] = channel_data;
+        }
     }
 
     for (size_t i = 0; i < num_frames; ++i) {
         m_handle->tasks.process(1);
-
         for (size_t j = 0; j < num_channels; ++j) {
-            double sample = m_handle->nodes.process_sample(j) + buffer_data[j][i];
-            size_t index = i * num_channels + j;
+            double buffer_sample = 0.0;
+            if (!buffer_data[j].empty() && i < buffer_data[j].size()) {
+                buffer_sample = buffer_data[j][i];
+            }
 
+            double sample = m_handle->nodes.process_sample(j) + buffer_sample;
+            size_t index = i * num_channels + j;
             output_span[index] = std::clamp(sample, -1., 1.);
         }
     }
-    return 0;
+
+    return has_underrun ? 1 : 0;
 }
 
 int AudioSubsystem::process_input(double* input_buffer, unsigned int num_frames)
