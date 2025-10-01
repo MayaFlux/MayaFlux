@@ -8,6 +8,10 @@
 
 namespace MayaFlux::Journal {
 
+/**
+ * @enum Log Severity
+ * @brief Severity levels for log messages.
+ */
 enum class Severity : u_int8_t {
     TRACE,
     DEBUG,
@@ -17,28 +21,39 @@ enum class Severity : u_int8_t {
     FATAL
 };
 
+/**
+ * @enum Namespace Component
+ * @brief Components of the system for categorizing log messages.
+ */
 enum class Component : u_int8_t {
-    API,
-    Buffers,
-    Core,
-    Kakshya,
-    Kriya,
-    Nodes,
-    Vruta,
-    Yantra,
-    IO,
+    API, ///< MayaFlux/API Wrapper and convenience functions
+    Buffers, ///< Buffers, Managers, processors and processing chains
+    Core, ///< Core engine, backend, subsystems
+    Kakshya, ///< Containers[Signalsource, Stream, File], Regions, DataProcessors
+    Kriya, ///< Automatable tasks and fluent scheduling api for Nodes and Buffers
+    Nodes, ///< DSP Generator and Filter Nodes, graph pipeline, node management
+    Vruta, ///< Coroutines, schedulers, clocks, task management
+    Yantra, ///< DSP algorithms, computational units, matrix operations, Grammar
+    IO, ///< Networking, file handling, streaming
     Unknown
 };
 
+/**
+ * @enum Log Context
+ * @brief Execution contexts for log messages.
+ */
 enum class Context : u_int8_t {
-    Realtime, // Audio callback, render loop
-    Worker, // Scheduled tasks
-    UI, // User interface thread
-    Init, // Startup/shutdown
-    IO, // File/network operations
+    Realtime, ///< Audio callback, render loop
+    Worker, ///< Scheduled tasks
+    UI, ///< User interface thread
+    Init, ///< Startup/shutdown
+    IO, ///< File/network operations
     Unknown
 };
 
+/**
+ * @brief A log entry structure to encapsulate log message details.
+ */
 struct JournalEntry {
     Severity severity;
     Component component;
@@ -59,7 +74,6 @@ struct JournalEntry {
     {
     }
 
-    // Convenience helpers for logging context
     static inline std::string severity_to_string(Severity sev)
     {
         return std::string(Utils::enum_to_string(sev));
