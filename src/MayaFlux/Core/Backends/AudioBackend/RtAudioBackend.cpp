@@ -1,4 +1,5 @@
 #include "RtAudioBackend.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "RtAudioSingleton.hpp"
 
 namespace {
@@ -197,6 +198,11 @@ void RtAudioStream::configure_stream_options()
 #endif
             }
         } catch (const std::bad_any_cast&) {
+            error<std::runtime_error>(
+                Journal::Component::Core,
+                Journal::Context::Init,
+                std::source_location::current(),
+                "Invalid type for rtaudio.exclusive option; expected bool");
         }
     }
 }
@@ -252,9 +258,14 @@ void RtAudioStream::open()
         m_isOpen = true;
     } catch (const RtAudioErrorType& e) {
         RtAudioSingleton::mark_stream_closed();
-        std::cerr << "RtAudio error: " << m_context->getErrorText() << " of type: " << e << std::endl;
         m_isOpen = false;
-        throw std::runtime_error("Failed to open RtAudio stream");
+
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::Init,
+            std::source_location::current(),
+            "Failed to open RtAudio stream: {}",
+            m_context->getErrorText());
     }
 }
 
@@ -272,8 +283,12 @@ void RtAudioStream::start()
         m_context->startStream();
         m_isRunning = true;
     } catch (const RtAudioErrorType& e) {
-        std::cerr << "RtAudio error: " << m_context->getErrorText() << " of type: " << e << std::endl;
-        throw std::runtime_error("Failed to start stream");
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::Init,
+            std::source_location::current(),
+            "Failed to start RtAudio stream: {}",
+            m_context->getErrorText());
     }
 }
 
@@ -287,8 +302,12 @@ void RtAudioStream::stop()
         m_context->stopStream();
         m_isRunning = false;
     } catch (const RtAudioErrorType& e) {
-        std::cerr << "RtAudio error: " << m_context->getErrorText() << " of type: " << e << std::endl;
-        throw std::runtime_error("Failed to stop stream");
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "Failed to stop RtAudio stream: {}",
+            m_context->getErrorText());
     }
 }
 
@@ -309,9 +328,15 @@ void RtAudioStream::close()
         }
         m_isOpen = false;
     } catch (const RtAudioErrorType& e) {
-        std::cerr << "RtAudio error: " << m_context->getErrorText() << " of type: " << e << std::endl;
         m_isOpen = false;
         RtAudioSingleton::mark_stream_closed();
+
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "Failed to close RtAudio stream: {}",
+            m_context->getErrorText());
     }
 }
 
@@ -335,11 +360,11 @@ int RtAudioStream::rtAudioCallback(
     void* output_buffer,
     void* input_buffer,
     unsigned int num_frames,
-    double stream_time,
-    RtAudioStreamStatus status,
+    double /*stream_time*/,
+    RtAudioStreamStatus /*status*/,
     void* user_data)
 {
-    RtAudioStream* stream = static_cast<RtAudioStream*>(user_data);
+    auto stream = static_cast<RtAudioStream*>(user_data);
 
     if (stream && stream->m_process_callback) {
         return stream->m_process_callback(output_buffer, input_buffer, num_frames);

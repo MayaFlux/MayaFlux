@@ -120,12 +120,11 @@ private:
  * @param severity   The severity level of the log message.
  * @param component  The component generating the log message.
  * @param context    The execution context of the log message.
- * @param message    The log message content.
  * @param location   Source location (file, line, function) of the log call.
+ * @param message    The log message content.
  */
 inline void scribe(Severity severity, Component component, Context context,
-    std::string_view message,
-    std::source_location location = std::source_location::current())
+    std::source_location location, std::string_view message)
 {
     Archivist::instance().scribe(severity, component, context, message, location);
 }
@@ -140,8 +139,7 @@ inline void scribe(Severity severity, Component component, Context context,
  */
 template <typename... Args>
 void scribe(Severity severity, Component component, Context context,
-    const char* msg_or_fmt, Args&&... args,
-    std::source_location location = std::source_location::current())
+    std::source_location location, const char* msg_or_fmt, Args&&... args)
 {
     if constexpr (sizeof...(Args) == 0) {
         Archivist::instance().scribe(severity, component, context,
@@ -160,12 +158,11 @@ void scribe(Severity severity, Component component, Context context,
  * @param severity   The severity level of the log message.
  * @param component  The component generating the log message.
  * @param context    The execution context of the log message.
- * @param message    The log message content.
  * @param location   Source location (file, line, function) of the log call.
+ * @param message    The log message content.
  */
 inline void scribe_rt(Severity severity, Component component, Context context,
-    std::string_view message,
-    std::source_location location = std::source_location::current())
+    std::source_location location, std::string_view message)
 {
     Archivist::instance().scribe_rt(severity, component, context, message, location);
 }
@@ -180,8 +177,8 @@ inline void scribe_rt(Severity severity, Component component, Context context,
  */
 template <typename... Args>
 void scribe_rt(Severity severity, Component component, Context context,
-    const char* msg_or_fmt, Args&&... args,
-    std::source_location location = std::source_location::current())
+    std::source_location location,
+    const char* msg_or_fmt, Args&&... args)
 {
     if constexpr (sizeof...(Args) == 0) {
         Archivist::instance().scribe_rt(severity, component, context,
@@ -234,12 +231,11 @@ void print(Severity severity, Component component, Context context,
  *
  * @param component  The component generating the log message.
  * @param context    The execution context of the log message.
- * @param message    The fatal message content.
  * @param location   Source location (file, line, function) of the log call.
+ * @param message    The fatal message content.
  */
 [[noreturn]] inline void fatal(Component component, Context context,
-    std::string_view message,
-    std::source_location location = std::source_location::current())
+    std::source_location location, std::string_view message)
 {
     Archivist::instance().scribe(Severity::FATAL, component, context, message, location);
     std::abort();
@@ -256,8 +252,7 @@ void print(Severity severity, Component component, Context context,
  */
 template <typename... Args>
 [[noreturn]] void fatal(Component component, Context context,
-    format_string<Args...> fmt_str, Args&&... args,
-    std::source_location location = std::source_location::current())
+    std::source_location location, format_string<Args...> fmt_str, Args&&... args)
 {
     auto msg = format(fmt_str, std::forward<Args>(args)...);
     Archivist::instance().scribe(Severity::FATAL, component, context, msg, location);
@@ -269,21 +264,17 @@ template <typename... Args>
  *
  * @tparam ExceptionType  The exception type to throw when behavior == LogAndThrow.
  * @param context    The execution context of the log message.
- * @param behavior   How to handle the error (LogOnly, LogAndThrow, LogAndRethrow).
- * @param message    The error message content.
  * @param location   Source location (file, line, function) of the log call.
+ * @param message    The error message content.
  */
 template <typename ExceptionType = std::runtime_error>
 void error(Component component, Context context,
-    ExceptionBehavior behavior,
-    std::string_view message,
-    std::source_location location = std::source_location::current())
+    std::source_location location,
+    std::string_view message)
 {
     Archivist::instance().scribe(Severity::ERROR, component, context, message, location);
 
-    if (behavior == ExceptionBehavior::LogAndThrow) {
-        throw ExceptionType(std::string(message));
-    }
+    throw ExceptionType(std::string(message));
 }
 
 /**
@@ -297,16 +288,16 @@ void error(Component component, Context context,
  * @param args            The format arguments.
  */
 template <typename ExceptionType = std::runtime_error, typename... Args>
-    requires(sizeof...(Args) > 0)
 void error(Component component, Context context,
-    ExceptionBehavior behavior,
-    format_string<Args...> fmt_str, Args&&... args,
-    std::source_location location = std::source_location::current())
+    std::source_location location, const char* fmt_str, Args&&... args)
 {
-    auto msg = format(fmt_str, std::forward<Args>(args)...);
-    Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
-
-    if (behavior == ExceptionBehavior::LogAndThrow) {
+    if constexpr (sizeof...(Args) == 0) {
+        Archivist::instance().scribe(Severity::ERROR, component, context,
+            std::string_view(fmt_str), location);
+        throw ExceptionType(std::string(fmt_str));
+    } else {
+        auto msg = format_runtime(fmt_str, std::forward<Args>(args)...);
+        Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
         throw ExceptionType(msg);
     }
 }
@@ -316,12 +307,12 @@ void error(Component component, Context context,
  * This function is intended to be called within a catch block.
  * @param Component The component generating the log message.
  * @param Context The execution context of the log message.
- * @param additional_context Optional additional context to prepend to the exception message.
  * @param location The source location (file, line, function) of the log call.
+ * @param additional_context Optional additional context to prepend to the exception message.
  */
 inline void error_rethrow(Component component, Context context,
-    std::string_view additional_context = "",
-    std::source_location location = std::source_location::current())
+    std::source_location location = std::source_location::current(),
+    std::string_view additional_context = "")
 {
     try {
         throw;
@@ -344,23 +335,48 @@ inline void error_rethrow(Component component, Context context,
 
 } // namespace MayaFlux::Journal
 
-#define MF_TRACE(comp, ctx, ...) \
-    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::TRACE, comp, ctx, __VA_ARGS__)
-#define MF_DEBUG(comp, ctx, ...) \
-    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::DEBUG, comp, ctx, __VA_ARGS__)
-#define MF_INFO(comp, ctx, ...) \
-    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::INFO, comp, ctx, __VA_ARGS__)
-#define MF_WARN(comp, ctx, ...) \
-    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::WARN, comp, ctx, __VA_ARGS__)
-#define MF_ERROR(comp, ctx, ...) \
-    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::ERROR, comp, ctx, __VA_ARGS__)
+// ============================================================================
+// CONVENIENCE MACROS (for regular logging only)
+// ============================================================================
 
-#define MF_RT_TRACE(comp, ctx, ...) \
-    MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::TRACE, comp, ctx, __VA_ARGS__)
-#define MF_RT_WARN(comp, ctx, ...) \
-    MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::WARN, comp, ctx, __VA_ARGS__)
-#define MF_RT_ERROR(comp, ctx, ...) \
-    MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::ERROR, comp, ctx, __VA_ARGS__)
+#define MF_TRACE(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::TRACE, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
 
+#define MF_DEBUG(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::DEBUG, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
+
+#define MF_INFO(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::INFO, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
+
+#define MF_WARN(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::WARN, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
+
+#define MF_ERROR(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe(MayaFlux::Journal::Severity::ERROR, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
+
+// ============================================================================
+// CONVENIENCE MACROS for REAL-TIME LOGGING ONLY
+// ============================================================================
+
+#define MF_RT_TRACE(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::TRACE, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
+
+#define MF_RT_WARN(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::WARN, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
+
+#define MF_RT_ERROR(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::ERROR, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
+
+// ============================================================================
+// CONVENIENCE MACROS for SIMPLE PRINTING (no source-location)
+// ============================================================================
 #define MF_PRINT(comp, ctx, ...) \
     MayaFlux::Journal::print(MayaFlux::Journal::Severity::INFO, comp, ctx, __VA_ARGS__)

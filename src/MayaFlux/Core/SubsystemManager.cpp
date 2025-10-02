@@ -17,14 +17,17 @@ SubsystemManager::SubsystemManager(
 {
     if (!m_node_graph_manager) {
         fatal(Journal::Component::Core, Journal::Context::Init,
+            std::source_location::current(),
             "SubsystemManager requires valid NodeGraphManager");
     }
     if (!m_buffer_manager) {
         fatal(Journal::Component::Core, Journal::Context::Init,
+            std::source_location::current(),
             "SubsystemManager requires valid BufferManager");
     }
     if (!m_task_scheduler) {
         fatal(Journal::Component::Core, Journal::Context::Init,
+            std::source_location::current(),
             "SubsystemManager requires valid TaskScheduler");
     }
 }
@@ -138,13 +141,15 @@ SubsystemProcessingHandle* SubsystemManager::get_validated_handle(SubsystemType 
 {
     auto subsystem_it = m_subsystems.find(type);
     if (subsystem_it == m_subsystems.end()) {
-        std::cerr << "Invalid subsystem type: Subsystem not found." << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::Runtime,
+            "Invalid subsystem type: Subsystem not found.");
         return nullptr;
     }
 
     auto handle = subsystem_it->second->get_processing_context_handle();
     if (!handle) {
-        std::cerr << "Failed to get a valid processing context handle." << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::Runtime,
+            "Invalid processing context handle: Handle is null.");
         return nullptr;
     }
 
@@ -158,7 +163,8 @@ void SubsystemManager::register_process_hook(SubsystemType type, const std::stri
         return;
 
     if (!hook) {
-        std::cerr << "Invalid process hook: Hook cannot be null or invalid." << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::Runtime,
+            "Invalid process hook: Hook cannot be null or invalid.");
         return;
     }
 

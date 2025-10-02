@@ -37,7 +37,7 @@ void AudioSubsystem::register_callbacks()
         error<std::runtime_error>(
             Journal::Component::Core,
             Journal::Context::Init,
-            Journal::ExceptionBehavior::LogAndThrow,
+            std::source_location::current(),
             "AudioSubsystem not initialized");
     }
 
@@ -142,7 +142,7 @@ void AudioSubsystem::start()
         error<std::runtime_error>(
             Journal::Component::Core,
             Journal::Context::Init,
-            Journal::ExceptionBehavior::LogAndThrow,
+            std::source_location::current(),
             "Cannot start AudioSubsystem: not initialized");
     }
 
