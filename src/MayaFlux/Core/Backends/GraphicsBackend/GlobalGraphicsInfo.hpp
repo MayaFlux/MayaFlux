@@ -22,6 +22,19 @@ struct GraphicsSurfaceInfo {
     u_int32_t target_frame_rate = 60;
 
     /**
+     * @enum WindowingBackend
+     * @brief Windowing library selection
+     */
+    enum class WindowingBackend : u_int8_t {
+        GLFW, ///< GLFW3 (default, cross-platform)
+        SDL, ///< SDL2 (alternative, if implemented)
+        NATIVE, ///< Platform-native (Win32/X11/Cocoa, if implemented)
+    };
+
+    /** @brief Selected windowing backend */
+    WindowingBackend windowing_backend = WindowingBackend::GLFW;
+
+    /**
      * @enum VisualApi
      * @brief Supported graphics APIs (backend selection)
      */
@@ -218,7 +231,7 @@ struct InputConfig {
  * @enum WindowEventType
  * @brief Types of window and input events
  */
-enum class WindowEventType {
+enum class WindowEventType : u_int8_t {
     WINDOW_CREATED,
     WINDOW_DESTROYED,
     WINDOW_CLOSED,

@@ -77,4 +77,40 @@ MonitorInfo GLFWSingleton::get_primary_monitor()
     return {};
 }
 
+std::string GLFWSingleton::get_platform()
+{
+    if (!s_initialized)
+        return "";
+
+#if GLFW_VERSION_MAJOR >= 3 && GLFW_VERSION_MINOR >= 4
+    int platform = glfwGetPlatform();
+    switch (platform) {
+    case GLFW_PLATFORM_WAYLAND:
+        return "wayland";
+    case GLFW_PLATFORM_X11:
+        return "x11";
+    case GLFW_PLATFORM_WIN32:
+        return "win32";
+    case GLFW_PLATFORM_COCOA:
+        return "cocoa";
+    default:
+        return "unknown";
+    }
+#else
+// GLFW < 3.4 doesn't have glfwGetPlatform()
+#ifdef MAYAFLUX_PLATFORM_LINUX
+    return "x11"; // Assume X11 on old GLFW
+#elif MAYAFLUX_PLATFORM_WINDOWS
+    return "win32";
+#elif MAYAFLUX_PLATFORM_MACOS
+    return "cocoa";
+#endif
+#endif
+}
+
+bool GLFWSingleton::is_wayland()
+{
+    return get_platform() == "wayland";
+}
+
 }

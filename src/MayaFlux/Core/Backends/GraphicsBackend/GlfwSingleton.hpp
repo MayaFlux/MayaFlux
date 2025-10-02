@@ -105,6 +105,17 @@ public:
      */
     static u_int32_t get_window_count() { return s_window_count; }
 
+    /**
+     * @brief Gets the current GLFW platform (Wayland, X11, etc.)
+     * @return Platform identifier, or empty string if GLFW < 3.4
+     */
+    static std::string get_platform();
+
+    /**
+     * @brief Checks if running on Wayland
+     */
+    static bool is_wayland();
+
 private:
     /**
      * @brief Tracks whether GLFW has been initialized
