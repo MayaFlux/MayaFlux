@@ -6,6 +6,12 @@
 #include "source_location"
 #include "string_view"
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef ERROR
+#undef ERROR
+#endif // ERROR
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+
 namespace MayaFlux::Journal {
 
 /**
