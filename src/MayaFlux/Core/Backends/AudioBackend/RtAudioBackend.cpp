@@ -200,7 +200,7 @@ void RtAudioStream::configure_stream_options()
         } catch (const std::bad_any_cast&) {
             error<std::runtime_error>(
                 Journal::Component::Core,
-                Journal::Context::Init,
+                Journal::Context::AudioBackend,
                 std::source_location::current(),
                 "Invalid type for rtaudio.exclusive option; expected bool");
         }
@@ -262,7 +262,7 @@ void RtAudioStream::open()
 
         error<std::runtime_error>(
             Journal::Component::Core,
-            Journal::Context::Init,
+            Journal::Context::AudioBackend,
             std::source_location::current(),
             "Failed to open RtAudio stream: {}",
             m_context->getErrorText());
@@ -285,7 +285,7 @@ void RtAudioStream::start()
     } catch (const RtAudioErrorType& e) {
         error<std::runtime_error>(
             Journal::Component::Core,
-            Journal::Context::Init,
+            Journal::Context::AudioBackend,
             std::source_location::current(),
             "Failed to start RtAudio stream: {}",
             m_context->getErrorText());
@@ -304,7 +304,7 @@ void RtAudioStream::stop()
     } catch (const RtAudioErrorType& e) {
         error<std::runtime_error>(
             Journal::Component::Core,
-            Journal::Context::Runtime,
+            Journal::Context::AudioBackend,
             std::source_location::current(),
             "Failed to stop RtAudio stream: {}",
             m_context->getErrorText());
@@ -333,7 +333,7 @@ void RtAudioStream::close()
 
         error<std::runtime_error>(
             Journal::Component::Core,
-            Journal::Context::Runtime,
+            Journal::Context::AudioBackend,
             std::source_location::current(),
             "Failed to close RtAudio stream: {}",
             m_context->getErrorText());

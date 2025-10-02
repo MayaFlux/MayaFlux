@@ -36,7 +36,7 @@ void AudioSubsystem::register_callbacks()
     if (!m_is_ready || !m_audio_stream) {
         error<std::runtime_error>(
             Journal::Component::Core,
-            Journal::Context::Init,
+            Journal::Context::AudioSubsystem,
             std::source_location::current(),
             "AudioSubsystem not initialized");
     }
@@ -64,13 +64,13 @@ void AudioSubsystem::register_callbacks()
 int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frames)
 {
     if (output_buffer == nullptr) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::Realtime,
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::AudioCallback,
             "No output available");
         return 1;
     }
 
     if (m_handle == nullptr) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::Realtime,
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::AudioCallback,
             "Invalid processing handle");
         return 1;
     }
@@ -87,7 +87,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         auto channel_data = m_handle->buffers.read_channel_data(channel);
 
         if (channel_data.size() < num_frames) {
-            MF_RT_WARN(Journal::Component::Core, Journal::Context::Realtime,
+            MF_RT_WARN(Journal::Component::Core, Journal::Context::AudioCallback,
                 "Channel buffer underrun");
             has_underrun = true;
 
@@ -141,7 +141,7 @@ void AudioSubsystem::start()
     if (!m_is_ready || !m_audio_stream) {
         error<std::runtime_error>(
             Journal::Component::Core,
-            Journal::Context::Init,
+            Journal::Context::AudioSubsystem,
             std::source_location::current(),
             "Cannot start AudioSubsystem: not initialized");
     }

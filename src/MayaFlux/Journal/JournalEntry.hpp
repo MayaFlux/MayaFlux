@@ -40,26 +40,87 @@ enum class Component : u_int8_t {
 };
 
 /**
- * @enum Log Context
+ * @enum Context
  * @brief Execution contexts for log messages.
+ *
+ * Represents the computational domain and thread context where a log message originates.
+ * This enables context-aware filtering, real-time safety validation, and performance analysis.
  */
 enum class Context : u_int8_t {
-    Realtime, ///< Audio callback, render loop
-    Worker, ///< Scheduled tasks
-    UI, ///< User interface thread
-    Init, ///< Startup/shutdown
-    IO, ///< File/network operations
-    Unknown
-};
+    // ============================================================================
+    // REAL-TIME CONTEXTS (must never block, allocate, or throw)
+    // ============================================================================
 
-/**
- * @enum Exception Behavior
- * @brief Defines how exceptions should be handled in various contexts.
- */
-enum class ExceptionBehavior : uint8_t {
-    LogAndThrow, // Log as ERROR, then throw
-    LogAndRethrow, // Log caught exception, then rethrow
-    LogOnly // Just log, don't throw (caller handles)
+    AudioCallback, ///< Audio callback thread - strictest real-time requirements
+    GraphicsCallback, ///< Graphics/visual rendering callback - frame-rate real-time
+    Realtime, ///< Any real-time processing context (generic)
+
+    // ============================================================================
+    // BACKEND CONTEXTS
+    // ============================================================================
+
+    AudioBackend, ///< Audio processing backend (RtAudio, JACK, ASIO)
+    GraphicsBackend, ///< Graphics/visual rendering backend (Vulkan, OpenGL)
+    WindowingBackend, ///< Windowing system operations (GLFW, SDL)
+    CustomBackend, ///< Custom user-defined backend
+
+    // ============================================================================
+    // SUBSYSTEM CONTEXTS
+    // ============================================================================
+
+    AudioSubsystem, ///< Audio subsystem operations (backend, device, stream management)
+    GraphicsSubsystem, ///< Graphics subsystem operations (Vulkan, rendering pipeline)
+    CustomSubsystem, ///< Custom user-defined subsystem
+
+    // ============================================================================
+    // PROCESSING CONTEXTS
+    // ============================================================================
+
+    NodeProcessing, ///< Node graph processing (Nodes::NodeGraphManager)
+    BufferProcessing, ///< Buffer processing (Buffers::BufferManager, processing chains)
+    CoroutineScheduling, ///< Coroutine scheduling and temporal coordination (Vruta::TaskScheduler)
+    ContainerProcessing, ///< Container operations (Kakshya - file/stream/region processing)
+    ComputeProcessing, ///< Compute operations (Yantra - algorithms, matrices, DSP)
+
+    // ============================================================================
+    // WORKER CONTEXTS
+    // ============================================================================
+
+    Worker, ///< Background worker thread (non-real-time scheduled tasks)
+    AsyncIO, ///< Async I/O operations (file loading, network, streaming)
+    BackgroundCompile, ///< Background compilation/optimization tasks
+
+    // ============================================================================
+    // LIFECYCLE CONTEXTS
+    // ============================================================================
+
+    Init, ///< Engine/subsystem initialization
+    Shutdown, ///< Engine/subsystem shutdown and cleanup
+    Configuration, ///< Configuration and parameter updates
+
+    // ============================================================================
+    // USER INTERACTION CONTEXTS
+    // ============================================================================
+
+    UI, ///< User interface thread (UI events, rendering)
+    UserCode, ///< User script/plugin execution
+    Interactive, ///< Interactive shell/REPL
+
+    // ============================================================================
+    // COORDINATION CONTEXTS
+    // ============================================================================
+
+    CrossSubsystem, ///< Cross-subsystem data sharing and synchronization
+    ClockSync, ///< Clock synchronization (SampleClock, FrameClock coordination)
+    EventDispatch, ///< Event dispatching and coordination
+
+    // ============================================================================
+    // SPECIAL CONTEXTS
+    // ============================================================================
+
+    Runtime, ///< General runtime operations (default fallback)
+    Testing, ///< Testing/benchmarking context
+    Unknown ///< Unknown or unspecified context
 };
 
 /**

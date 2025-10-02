@@ -21,7 +21,7 @@ BufferProcessingHandle::BufferProcessingHandle(
 void BufferProcessingHandle::ensure_valid() const
 {
     if (!m_manager) {
-        fatal(Journal::Component::Core, Journal::Context::Runtime,
+        fatal(Journal::Component::Core, Journal::Context::BufferProcessing,
             std::source_location::current(),
             "Invalid buffer processing handle: BufferManager is null");
     }
@@ -109,7 +109,7 @@ TaskSchedulerHandle::TaskSchedulerHandle(
     , m_token(token)
 {
     if (!m_scheduler) {
-        fatal(Journal::Component::Core, Journal::Context::Init,
+        fatal(Journal::Component::Core, Journal::Context::CoroutineScheduling,
             std::source_location::current(),
             "TaskSchedulerHandle requires valid TaskScheduler");
     }
