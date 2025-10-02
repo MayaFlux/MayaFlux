@@ -29,15 +29,15 @@ int main()
 #endif // MAYASIMPLE
 
     try {
-        MF_PRINT_INFO(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Audio Engine ===");
-        MFP_INFO(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Version: {}", "0.1.0");
-        MF_PRINT_INFO(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "");
+        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Audio Engine ===");
+        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Version: {}", "0.1.0");
+        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "");
 
         MayaFlux::Init();
 
         MayaFlux::Start();
 
-        MF_PRINT_INFO(Journal::Component::USER, Journal::Context::Init, "=== Audio Processing Active ===");
+        MF_PRINT(Journal::Component::USER, Journal::Context::Init, "=== Audio Processing Active ===");
 
         create();
 

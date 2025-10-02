@@ -79,7 +79,7 @@ void Engine::Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_ou
 void Engine::Init(const GlobalStreamInfo& streamInfo)
 {
 
-    MF_INFO(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
+    MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
     m_stream_info = streamInfo;
 
     m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
@@ -97,7 +97,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo)
     m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
     m_is_initialized = true;
 
-    MFF_INFO(Journal::Component::Core, Journal::Context::Init, "Audio backend: RtAudio, Sample rate: {}", m_stream_info.sample_rate);
+    MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Audio backend: RtAudio, Sample rate: {}", m_stream_info.sample_rate);
 }
 
 void Engine::Start()
