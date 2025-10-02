@@ -44,6 +44,8 @@
 #include "Kakshya/Source/DynamicSoundStream.hpp"
 #include "Kakshya/Source/SoundFileContainer.hpp"
 
+#include "Journal/Archivist.hpp"
+
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;
 using namespace MayaFlux::Buffers;

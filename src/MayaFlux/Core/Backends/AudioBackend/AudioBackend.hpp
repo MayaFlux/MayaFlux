@@ -85,13 +85,13 @@ public:
      * @brief Retrieves the backend implementation version
      * @return String representation of the backend version
      */
-    virtual std::string get_version_string() const = 0;
+    [[nodiscard]] virtual std::string get_version_string() const = 0;
 
     /**
      * @brief Retrieves the backend API type identifier
      * @return Integer code representing the backend type
      */
-    virtual int get_api_type() const = 0;
+    [[nodiscard]] virtual int get_api_type() const = 0;
 
     /**
      * @brief Releases all resources held by the backend.
@@ -126,25 +126,25 @@ public:
      * @brief Retrieves information about all available output devices
      * @return Vector of DeviceInfo structures for output endpoints
      */
-    virtual std::vector<DeviceInfo> get_output_devices() const = 0;
+    [[nodiscard]] virtual std::vector<DeviceInfo> get_output_devices() const = 0;
 
     /**
      * @brief Retrieves information about all available input devices
      * @return Vector of DeviceInfo structures for input endpoints
      */
-    virtual std::vector<DeviceInfo> get_input_devices() const = 0;
+    [[nodiscard]] virtual std::vector<DeviceInfo> get_input_devices() const = 0;
 
     /**
      * @brief Gets the system's primary output device identifier
      * @return Device ID for the default output endpoint
      */
-    virtual unsigned int get_default_output_device() const = 0;
+    [[nodiscard]] virtual unsigned int get_default_output_device() const = 0;
 
     /**
      * @brief Gets the system's primary input device identifier
      * @return Device ID for the default input endpoint
      */
-    virtual unsigned int get_default_input_device() const = 0;
+    [[nodiscard]] virtual unsigned int get_default_input_device() const = 0;
 };
 
 /**
@@ -197,13 +197,13 @@ public:
      * @brief Checks if the stream is actively processing audio data
      * @return True if the stream is currently active, false otherwise
      */
-    virtual bool is_running() const = 0;
+    [[nodiscard]] virtual bool is_running() const = 0;
 
     /**
      * @brief Checks if the stream is initialized and ready for activation
      * @return True if the stream is open, false otherwise
      */
-    virtual bool is_open() const = 0;
+    [[nodiscard]] virtual bool is_open() const = 0;
 
     /**
      * @brief Sets the function to process audio data

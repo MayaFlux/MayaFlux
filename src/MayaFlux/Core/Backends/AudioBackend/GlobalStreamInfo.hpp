@@ -24,7 +24,7 @@ struct GlobalStreamInfo {
      * Specifies the numerical precision and memory layout for digital
      * audio samples throughout the processing chain.
      */
-    enum class AudioFormat {
+    enum class AudioFormat : u_int8_t {
         FLOAT32, ///< 32-bit floating point representation (-1.0 to 1.0)
         FLOAT64, ///< 64-bit floating point representation (-1.0 to 1.0)
         INT16, ///< 16-bit integer representation (-32768 to 32767)
@@ -34,9 +34,9 @@ struct GlobalStreamInfo {
 
     /**
      * @enum AudioApi
-     * @brief Enumeration of supported audio APIs
+     * @brief Enumeration of supported audio APIs for wrapper backends like RtAudio
      */
-    enum class AudioApi {
+    enum class AudioApi : u_int8_t {
         DEFAULT,
         ALSA,
         PULSE,
@@ -82,7 +82,7 @@ struct GlobalStreamInfo {
     ChannelConfig output;
 
     /** @brief Configuration for input signal channels (disabled by default) */
-    ChannelConfig input = { false, 2, -1, "" };
+    ChannelConfig input = { .enabled = false, .channels = 2, .device_id = -1, .device_name = "" };
 
     /**
      * @enum StreamPriority
@@ -91,7 +91,7 @@ struct GlobalStreamInfo {
      * Defines the system resource allocation priority for the audio
      * processing thread relative to other system processes.
      */
-    enum class StreamPriority {
+    enum class StreamPriority : u_int8_t {
         LOW, ///< Minimal resource priority
         NORMAL, ///< Standard resource priority
         HIGH, ///< Elevated resource priority
@@ -102,7 +102,7 @@ struct GlobalStreamInfo {
     StreamPriority priority = StreamPriority::REALTIME;
 
     /** @brief Number of buffers in the processing queue (0 for system default) */
-    double buffer_count = 0.f;
+    double buffer_count = 0.F;
 
     /** @brief Whether to automatically convert between sample formats */
     bool auto_convert_format = true;
@@ -123,7 +123,7 @@ struct GlobalStreamInfo {
      * Defines the mathematical approach used to distribute quantization
      * errors when converting between different sample formats.
      */
-    enum class DitherMethod {
+    enum class DitherMethod : u_int8_t {
         NONE, ///< No dithering applied
         RECTANGULAR, ///< Uniform random distribution
         TRIANGULAR, ///< Weighted triangular distribution

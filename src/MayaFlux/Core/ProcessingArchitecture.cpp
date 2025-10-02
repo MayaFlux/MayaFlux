@@ -1,4 +1,7 @@
 #include "ProcessingArchitecture.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
+
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
@@ -9,7 +12,7 @@ namespace MayaFlux::Core {
 BufferProcessingHandle::BufferProcessingHandle(
     std::shared_ptr<Buffers::BufferManager> manager,
     Buffers::ProcessingToken token)
-    : m_manager(manager)
+    : m_manager(std::move(manager))
     , m_token(token)
     , m_locked(false)
 {
@@ -18,7 +21,9 @@ BufferProcessingHandle::BufferProcessingHandle(
 void BufferProcessingHandle::ensure_valid() const
 {
     if (!m_manager) {
-        throw std::runtime_error("Invalid buffer processing handle");
+        fatal(Journal::Component::Core, Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "Invalid buffer processing handle: BufferManager is null");
     }
 }
 
@@ -77,7 +82,7 @@ void BufferProcessingHandle::setup_channels(u_int32_t num_channels, u_int32_t bu
 NodeProcessingHandle::NodeProcessingHandle(
     std::shared_ptr<Nodes::NodeGraphManager> manager,
     Nodes::ProcessingToken token)
-    : m_manager(manager)
+    : m_manager(std::move(manager))
     , m_token(token)
 {
 }
@@ -98,13 +103,15 @@ double NodeProcessingHandle::process_sample(u_int32_t channel)
 }
 
 TaskSchedulerHandle::TaskSchedulerHandle(
-    std::shared_ptr<Vruta::TaskScheduler> scheduler,
+    std::shared_ptr<Vruta::TaskScheduler> task_manager,
     Vruta::ProcessingToken token)
-    : m_scheduler(scheduler)
+    : m_scheduler(std::move(task_manager))
     , m_token(token)
 {
     if (!m_scheduler) {
-        throw std::runtime_error("TaskProcessingHandle requires valid TaskScheduler");
+        fatal(Journal::Component::Core, Journal::Context::CoroutineScheduling,
+            std::source_location::current(),
+            "TaskSchedulerHandle requires valid TaskScheduler");
     }
 }
 
@@ -118,9 +125,9 @@ SubsystemProcessingHandle::SubsystemProcessingHandle(
     std::shared_ptr<Nodes::NodeGraphManager> node_manager,
     std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
     SubsystemTokens tokens)
-    : buffers(buffer_manager, tokens.Buffer)
-    , nodes(node_manager, tokens.Node)
-    , tasks(task_scheduler, tokens.Task)
+    : buffers(std::move(buffer_manager), tokens.Buffer)
+    , nodes(std::move(node_manager), tokens.Node)
+    , tasks(std::move(task_scheduler), tokens.Task)
     , m_tokens(tokens)
 {
 }

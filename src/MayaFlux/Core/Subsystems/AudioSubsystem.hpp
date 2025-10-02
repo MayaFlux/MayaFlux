@@ -22,28 +22,28 @@ public:
     virtual ~AudioSubsystem() = default;
 
     /** @brief Initialize audio processing with provided handle */
-    virtual void initialize(SubsystemProcessingHandle& handle) override;
+    void initialize(SubsystemProcessingHandle& handle) override;
 
     /** @brief Register audio backend callbacks for real-time processing */
-    virtual void register_callbacks() override;
+    void register_callbacks() override;
 
     /** @brief Start audio processing and streaming */
-    virtual void start() override;
+    void start() override;
 
     /** @brief Stop audio processing and streaming */
-    virtual void stop() override;
+    void stop() override;
 
     /** @brief Shutdown and cleanup audio resources */
-    virtual void shutdown() override;
+    void shutdown() override;
 
     /** @brief Get audio subsystem token configuration */
-    inline virtual SubsystemTokens get_tokens() const override { return m_subsystem_tokens; }
+    inline SubsystemTokens get_tokens() const override { return m_subsystem_tokens; }
 
     /** @brief Check if audio subsystem is ready for operation */
-    inline virtual bool is_ready() const override { return m_is_ready; }
+    inline bool is_ready() const override { return m_is_ready; }
 
     /** @brief Check if audio subsystem is currently running */
-    inline virtual bool is_running() const override { return m_is_running; }
+    inline bool is_running() const override { return m_is_running; }
 
     /** @brief Get access to the underlying audio backend */
     inline IAudioBackend* get_audio_backend() { return m_audiobackend.get(); }
@@ -102,9 +102,9 @@ public:
      */
     explicit AudioSubsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type = Utils::AudioBackendType::RTAUDIO);
 
-    inline virtual SubsystemType get_type() const override { return m_type; }
+    inline SubsystemType get_type() const override { return m_type; }
 
-    virtual SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
+    SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
 
 private:
     GlobalStreamInfo m_stream_info; ///< Audio stream configuration
@@ -116,8 +116,8 @@ private:
     SubsystemTokens m_subsystem_tokens; ///< Processing token configuration
     SubsystemProcessingHandle* m_handle; ///< Reference to processing handle
 
-    bool m_is_ready; ///< Subsystem ready state
-    bool m_is_running; ///< Subsystem running state
+    bool m_is_ready {}; ///< Subsystem ready state
+    bool m_is_running {}; ///< Subsystem running state
 
     static const SubsystemType m_type = SubsystemType::AUDIO;
 };

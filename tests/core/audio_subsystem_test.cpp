@@ -6,6 +6,7 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Core/SubsystemManager.hpp"
 #include "MayaFlux/Core/Subsystems/AudioSubsystem.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
@@ -24,6 +25,7 @@ class AudioSubsystemTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
+        Journal::Archivist::init();
         node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
         buffer_manager = std::make_shared<Buffers::BufferManager>(
             TestConfig::NUM_CHANNELS,
@@ -52,6 +54,8 @@ protected:
         task_scheduler.reset();
         buffer_manager.reset();
         node_graph_manager.reset();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     std::shared_ptr<Core::AudioSubsystem> audio_subsystem;
@@ -296,15 +300,12 @@ TEST_F(AudioSubsystemTest, ProcessingWithNullBuffers)
     audio_subsystem->initialize(handle);
     audio_subsystem->register_callbacks();
 
-    // Test with null buffers - should handle gracefully
     EXPECT_NO_THROW({
         audio_subsystem->process_output(nullptr, TestConfig::BUFFER_SIZE);
-        // Result depends on implementation - focus on not crashing
     });
 
     EXPECT_NO_THROW({
         audio_subsystem->process_input(nullptr, TestConfig::BUFFER_SIZE);
-        // Result depends on implementation - focus on not crashing
     });
 }
 

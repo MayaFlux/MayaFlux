@@ -1,6 +1,8 @@
 #include "Core.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux {
 
 //-------------------------------------------------------------------------
@@ -22,6 +24,7 @@ namespace internal {
                     engine_ref->Pause();
                 }
                 engine_ref->End();
+                Journal::Archivist::shutdown();
             }
             engine_ref.reset();
             initialized = false;
@@ -113,7 +116,6 @@ void Resume()
 void End()
 {
     if (internal::initialized) {
-        // get_context().End();
         internal::cleanup_engine();
     }
 }

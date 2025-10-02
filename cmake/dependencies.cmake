@@ -6,6 +6,7 @@ if(WIN32)
 else()
     if(APPLE)
         find_package(oneDPL)
+        find_package(fmt REQUIRED)
     endif()
     find_package(TBB REQUIRED)
 

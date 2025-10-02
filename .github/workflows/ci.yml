@@ -8,7 +8,7 @@ on:
         default: true
         type: boolean
   # push:
-  #   branches: [filebridge]
+  #   branches: [Logging]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -62,7 +62,7 @@ jobs:
         shell: bash
         run: |
           brew update
-          brew install rtaudio eigen magic_enum onedpl ffmpeg glfw googletest
+          brew install rtaudio eigen magic_enum fmt onedpl ffmpeg glfw googletest
 
       - name: Configure CMake
         shell: bash

@@ -1,6 +1,7 @@
 #define MAYASIMPLE ;
 
 #include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/version.h"
 
 #ifdef __has_include
 #if __has_include("user_project.hpp")
@@ -28,13 +29,15 @@ int main()
 #endif // MAYASIMPLE
 
     try {
-        std::cout << "Initializing MayaFlux...\n";
+        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Audio Engine ===");
+        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Version: {}", "0.1.0");
+        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "");
 
         MayaFlux::Init();
 
         MayaFlux::Start();
 
-        std::cout << "\n=== Audio Processing Active ===\n";
+        MF_PRINT(Journal::Component::USER, Journal::Context::Init, "=== Audio Processing Active ===");
 
         create();
 

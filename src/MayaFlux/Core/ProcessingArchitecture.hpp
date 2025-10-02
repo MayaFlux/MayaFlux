@@ -30,7 +30,7 @@ namespace MayaFlux::Core {
  * Process hooks can be registered to run either before or after the main audio processing
  * to perform additional operations or monitoring at specific points in the signal chain.
  */
-enum class HookPosition {
+enum class HookPosition : u_int8_t {
     PRE_PROCESS, ///< Execute hook before any audio processing occurs
     POST_PROCESS ///< Execute hook after all audio processing is complete
 };
@@ -104,7 +104,7 @@ public:
     void process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames);
 
     /** @brief Get read-only access to channel data */
-    std::span<const double> read_channel_data(u_int32_t channel) const;
+    [[nodiscard]] std::span<const double> read_channel_data(u_int32_t channel) const;
 
     /** @brief Get write access to channel data with automatic locking */
     std::span<double> write_channel_data(u_int32_t channel);
@@ -194,7 +194,7 @@ public:
     TaskSchedulerHandle tasks;
 
     /** @brief Get processing token configuration */
-    inline SubsystemTokens get_tokens() const { return m_tokens; }
+    [[nodiscard]] inline SubsystemTokens get_tokens() const { return m_tokens; }
 
     std::map<std::string, ProcessHook> pre_process_hooks;
     std::map<std::string, ProcessHook> post_process_hooks;

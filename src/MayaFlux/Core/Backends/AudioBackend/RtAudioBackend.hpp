@@ -96,7 +96,7 @@ public:
      * @brief Retrieves the RtAudio library version
      * @return String representation of the RtAudio version
      */
-    std::string get_version_string() const override;
+    [[nodiscard]] std::string get_version_string() const override;
 
     /**
      * @brief Retrieves the RtAudio API type identifier
@@ -105,7 +105,7 @@ public:
      * Returns a value from the RtAudio::Api enumeration indicating
      * which underlying audio system is being used (WASAPI, ALSA, etc.).
      */
-    int get_api_type() const override;
+    [[nodiscard]] int get_api_type() const override;
 
     /**
      * @brief Provides safe access to the RtAudio context
@@ -160,25 +160,25 @@ public:
      * @brief Retrieves information about all available output devices
      * @return Vector of DeviceInfo structures for output endpoints
      */
-    std::vector<DeviceInfo> get_output_devices() const override;
+    [[nodiscard]] std::vector<DeviceInfo> get_output_devices() const override;
 
     /**
      * @brief Retrieves information about all available input devices
      * @return Vector of DeviceInfo structures for input endpoints
      */
-    std::vector<DeviceInfo> get_input_devices() const override;
+    [[nodiscard]] std::vector<DeviceInfo> get_input_devices() const override;
 
     /**
      * @brief Gets the system's primary output device identifier
      * @return Device ID for the default output endpoint
      */
-    unsigned int get_default_output_device() const override;
+    [[nodiscard]] unsigned int get_default_output_device() const override;
 
     /**
      * @brief Gets the system's primary input device identifier
      * @return Device ID for the default input endpoint
      */
-    unsigned int get_default_input_device() const override;
+    [[nodiscard]] unsigned int get_default_input_device() const override;
 
 private:
     /** @brief Pointer to the underlying RtAudio context */

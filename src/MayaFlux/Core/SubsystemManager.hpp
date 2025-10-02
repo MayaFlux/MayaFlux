@@ -114,7 +114,7 @@ public:
      * Registers a pre-constructed subsystem with the manager and creates
      * its processing handle. The subsystem is initialized but not started.
      */
-    void add_subsystem(SubsystemType type, std::shared_ptr<ISubsystem> subsystem);
+    void add_subsystem(SubsystemType type, const std::shared_ptr<ISubsystem>& subsystem);
 
     /**
      * @brief Remove and shutdown a subsystem

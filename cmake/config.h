@@ -7,6 +7,9 @@ using u_int8_t = uint8_t;
 using u_int16_t = uint16_t;
 using u_int32_t = uint32_t;
 using u_int64_t = uint64_t;
+#ifdef ERROR
+#undef ERROR
+#endif // ERROR
 #define MAYAFLUX_FORCEINLINE __forceinline
 #else
 #define MAYAFLUX_FORCEINLINE __attribute__((always_inline))
@@ -32,6 +35,22 @@ using u_int64_t = uint64_t;
 #endif
 #else
 #define MAYAFLUX_API
+#endif
+#endif
+
+// C++20 std::format availability detection
+// On macOS, we use fmt library due to runtime availability issues with macOS 14
+#if defined(__APPLE__) && defined(__MACH__)
+#define MAYAFLUX_USE_FMT 1
+#define MAYAFLUX_USE_STD_FORMAT 0
+#else
+// Check if std::format is available on other platforms
+#if __has_include(<format>) && defined(__cpp_lib_format)
+#define MAYAFLUX_USE_STD_FORMAT 1
+#define MAYAFLUX_USE_FMT 0
+#else
+#define MAYAFLUX_USE_FMT 1
+#define MAYAFLUX_USE_STD_FORMAT 0
 #endif
 #endif
 

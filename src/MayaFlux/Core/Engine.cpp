@@ -4,6 +4,8 @@
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Core {
 
 //-------------------------------------------------------------------------
@@ -11,10 +13,9 @@ namespace MayaFlux::Core {
 //-------------------------------------------------------------------------
 
 Engine::Engine()
-    : m_is_initialized(false)
-    , m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
-    , m_is_paused(false)
+    : m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
 {
+    Journal::Archivist::init();
 }
 
 Engine::~Engine()
@@ -23,14 +24,14 @@ Engine::~Engine()
 }
 
 Engine::Engine(Engine&& other) noexcept
-    : m_subsystem_manager(std::move(other.m_subsystem_manager))
+    : m_stream_info(other.m_stream_info)
+    , m_is_paused(other.m_is_paused)
+    , m_is_initialized(other.m_is_initialized)
+    , m_scheduler(std::move(other.m_scheduler))
     , m_node_graph_manager(std::move(other.m_node_graph_manager))
     , m_buffer_manager(std::move(other.m_buffer_manager))
-    , m_scheduler(std::move(other.m_scheduler))
+    , m_subsystem_manager(std::move(other.m_subsystem_manager))
     , m_rng(std::move(other.m_rng))
-    , m_stream_info(other.m_stream_info)
-    , m_is_initialized(other.m_is_initialized)
-    , m_is_paused(other.m_is_paused)
 {
     other.m_is_initialized = false;
     other.m_is_paused = false;
@@ -77,6 +78,8 @@ void Engine::Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_ou
 
 void Engine::Init(const GlobalStreamInfo& streamInfo)
 {
+
+    MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
     m_stream_info = streamInfo;
 
     m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
@@ -93,6 +96,8 @@ void Engine::Init(const GlobalStreamInfo& streamInfo)
 
     m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
     m_is_initialized = true;
+
+    MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Audio backend: RtAudio, Sample rate: {}", m_stream_info.sample_rate);
 }
 
 void Engine::Start()
@@ -146,7 +151,7 @@ void Engine::End()
     if (m_node_graph_manager) {
         for (auto token : m_node_graph_manager->get_active_tokens()) {
             for (auto root : m_node_graph_manager->get_all_root_nodes(token)) {
-                if (root) {
+                if (root != nullptr) {
                     root->clear_all_nodes();
                 }
             }
