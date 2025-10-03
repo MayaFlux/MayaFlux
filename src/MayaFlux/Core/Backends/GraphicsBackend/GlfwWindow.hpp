@@ -1,4 +1,5 @@
 #pragma once
+#include "MayaFlux/Vruta/EventSource.hpp"
 #include "Window.hpp"
 #include <GLFW/glfw3.h>
 
@@ -67,12 +68,17 @@ public:
 
     void set_position(u_int32_t x, u_int32_t y) override;
 
+    Vruta::EventSource& get_event_source() override { return m_event_source; }
+    [[nodiscard]] const Vruta::EventSource& get_event_source() const override { return m_event_source; }
+
 private:
     GLFWwindow* m_window = nullptr;
     WindowCreateInfo m_create_info;
     WindowState m_state;
     InputConfig m_input_config;
     WindowEventCallback m_event_callback;
+
+    Vruta::EventSource m_event_source;
 
     void configure_window_hints(const GraphicsSurfaceInfo& global_info) const;
     void setup_callbacks();

@@ -242,11 +242,11 @@ void GlfwWindow::glfw_window_size_callback(GLFWwindow* window, int width, int he
         win->m_state.current_height = height;
 
         if (win->m_event_callback) {
-            WindowEvent event {
-                .type = WindowEventType::WINDOW_RESIZED,
-                .timestamp = glfwGetTime()
-            };
-            event.data.resize = { .width = static_cast<u_int32_t>(width), .height = static_cast<u_int32_t>(height) };
+            WindowEvent event;
+            event.type = WindowEventType::WINDOW_RESIZED;
+            event.timestamp = glfwGetTime();
+            event.data.resize.width = static_cast<u_int32_t>(width);
+            event.data.resize.height = static_cast<u_int32_t>(height);
             win->m_event_callback(event);
         }
     }

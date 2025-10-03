@@ -293,7 +293,65 @@ struct WindowEvent {
         {
         }
         ~EventData() { }
+
+        EventData(const EventData& other)
+        {
+            new (&custom) std::any(other.custom);
+        }
+
+        EventData(EventData&& other) noexcept
+        {
+            new (&custom) std::any(std::move(other.custom));
+        }
+
+        EventData& operator=(const EventData& other)
+        {
+            if (this != &other) {
+                custom = other.custom;
+            }
+            return *this;
+        }
+
+        EventData& operator=(EventData&& other) noexcept
+        {
+            if (this != &other) {
+                custom = std::move(other.custom);
+            }
+            return *this;
+        }
     } data;
+
+    WindowEvent(const WindowEvent& other) = default;
+
+    WindowEvent(WindowEvent&& other) noexcept
+        : type(other.type)
+        , timestamp(other.timestamp)
+        , data(std::move(other.data))
+    {
+    }
+
+    WindowEvent& operator=(const WindowEvent& other)
+    {
+        if (this != &other) {
+            type = other.type;
+            timestamp = other.timestamp;
+            data = other.data;
+        }
+        return *this;
+    }
+
+    WindowEvent& operator=(WindowEvent&& other) noexcept
+    {
+        if (this != &other) {
+            type = other.type;
+            timestamp = other.timestamp;
+            data = std::move(other.data);
+        }
+        return *this;
+    }
+
+    WindowEvent() = default;
+    ~WindowEvent() = default;
 };
 
 using WindowEventCallback = std::function<void(const WindowEvent&)>;

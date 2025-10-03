@@ -2,6 +2,10 @@
 
 #include "GlobalGraphicsInfo.hpp"
 
+namespace MayaFlux::Vruta {
+class EventSource;
+}
+
 namespace MayaFlux::Core {
 
 /**
@@ -89,5 +93,11 @@ public:
      * @param y New Y coordinate
      */
     virtual void set_position(u_int32_t x, u_int32_t y) = 0;
+
+    /**
+     * @brief Gets the event source for awaiting events
+     */
+    [[nodiscard]] virtual Vruta::EventSource& get_event_source() = 0;
+    [[nodiscard]] virtual const Vruta::EventSource& get_event_source() const = 0;
 };
 }
