@@ -75,13 +75,6 @@ bool WindowManager::destroy_window_by_title(const std::string& title)
 void WindowManager::poll_events()
 {
     glfwPollEvents();
-
-    // During glfwPollEvents():
-    // - GLFW callbacks fire
-    // - Window states update
-    // - EventSource::signal() called
-    // - Event coroutines resume
-    // All happens synchronously inside this call
 }
 
 std::vector<std::shared_ptr<Window>> WindowManager::get_windows() const
@@ -167,6 +160,30 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 {
     const auto& title = window->get_create_info().title;
     m_window_lookup.erase(title);
+}
+
+bool WindowManager::process()
+{
+    poll_events();
+
+    for (const auto& [name, hook] : m_frame_hooks) {
+        hook();
+    }
+
+    destroy_closed_windows();
+
+    return window_count() > 0;
+}
+
+void WindowManager::register_frame_hook(const std::string& name,
+    std::function<void()> hook)
+{
+    m_frame_hooks[name] = std::move(hook);
+}
+
+void WindowManager::unregister_frame_hook(const std::string& name)
+{
+    m_frame_hooks.erase(name);
 }
 
 } // namespace MayaFlux::Core

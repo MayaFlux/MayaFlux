@@ -26,6 +26,7 @@ struct GraphicsSurfaceInfo {
         GLFW, ///< GLFW3 (default, cross-platform)
         SDL, ///< SDL2 (alternative, if implemented)
         NATIVE, ///< Platform-native (Win32/X11/Cocoa, if implemented)
+        NONE ///< No windowing (offscreen rendering only)
     };
 
     /** @brief Selected windowing backend */

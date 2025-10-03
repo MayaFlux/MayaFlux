@@ -46,6 +46,8 @@
 
 #include "Journal/Archivist.hpp"
 
+#include "Core/Windowing/WindowManager.hpp"
+
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;
 using namespace MayaFlux::Buffers;

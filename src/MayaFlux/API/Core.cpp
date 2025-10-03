@@ -94,6 +94,12 @@ void Init(Core::GlobalStreamInfo stream_info)
     engine.Init(stream_info);
 }
 
+void Init(Core::GlobalStreamInfo stream_info, Core::GraphicsSurfaceInfo graphics_info)
+{
+    auto& engine = internal::get_or_create_engine();
+    engine.Init(stream_info, graphics_info);
+}
+
 void Start()
 {
     get_context().Start();
@@ -118,6 +124,11 @@ void End()
     if (internal::initialized) {
         internal::cleanup_engine();
     }
+}
+
+Core::WindowManager& get_window_manager()
+{
+    return *get_context().get_window_manager();
 }
 
 }

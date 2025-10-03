@@ -1,5 +1,7 @@
 #include "Engine.hpp"
+
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
@@ -31,6 +33,7 @@ Engine::Engine(Engine&& other) noexcept
     , m_node_graph_manager(std::move(other.m_node_graph_manager))
     , m_buffer_manager(std::move(other.m_buffer_manager))
     , m_subsystem_manager(std::move(other.m_subsystem_manager))
+    , m_window_manager(std::move(other.m_window_manager))
     , m_rng(std::move(other.m_rng))
 {
     other.m_is_initialized = false;
@@ -48,6 +51,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
         m_node_graph_manager = std::move(other.m_node_graph_manager);
         m_buffer_manager = std::move(other.m_buffer_manager);
         m_scheduler = std::move(other.m_scheduler);
+        m_window_manager = std::move(other.m_window_manager);
         m_rng = std::move(other.m_rng);
 
         m_is_initialized = other.m_is_initialized;
@@ -73,14 +77,21 @@ void Engine::Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_ou
         streamInfo.input.enabled = false;
     }
 
-    Init(streamInfo);
+    GraphicsSurfaceInfo graphicsInfo;
+    Init(streamInfo, graphicsInfo);
 }
 
 void Engine::Init(const GlobalStreamInfo& streamInfo)
 {
+    GraphicsSurfaceInfo graphicsInfo;
+    Init(streamInfo, graphicsInfo);
+}
 
+void Engine::Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo& graphicsInfo)
+{
     MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
     m_stream_info = streamInfo;
+    m_graphics_info = graphicsInfo;
 
     m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
 
@@ -95,6 +106,13 @@ void Engine::Init(const GlobalStreamInfo& streamInfo)
         m_node_graph_manager, m_buffer_manager, m_scheduler);
 
     m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
+
+    if (m_graphics_info.windowing_backend != GraphicsSurfaceInfo::WindowingBackend::NONE) {
+        m_window_manager = std::make_shared<WindowManager>(m_graphics_info);
+    } else {
+        MF_WARN(Journal::Component::Core, Journal::Context::Init, "No windowing backend selected - running in audio-only mode");
+    }
+
     m_is_initialized = true;
 
     MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Audio backend: RtAudio, Sample rate: {}", m_stream_info.sample_rate);
@@ -159,6 +177,14 @@ void Engine::End()
                 }
             }
         }
+    }
+
+    if (m_window_manager) {
+        auto windows = m_window_manager->get_windows();
+        for (auto& window : windows) {
+            m_window_manager->destroy_window(window);
+        }
+        m_window_manager.reset();
     }
 }
 

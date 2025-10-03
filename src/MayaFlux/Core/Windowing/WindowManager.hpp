@@ -105,6 +105,33 @@ public:
      */
     const GraphicsSurfaceInfo& get_config() const { return m_config; }
 
+    /**
+     * @brief Process windows for one frame
+     *
+     * This is the main per-frame operation that should be called
+     * from the application's main loop. It:
+     * 1. Polls GLFW events (triggers EventSource)
+     * 2. Cleans up closed windows
+     * 3. Optionally runs per-frame hooks
+     *
+     * @return True if processing should continue, false if all windows closed
+     */
+    bool process();
+
+    /**
+     * @brief Register a hook that runs every frame
+     * @param name Hook identifier
+     * @param hook Function to call each frame
+     */
+    void register_frame_hook(const std::string& name,
+        std::function<void()> hook);
+
+    /**
+     * @brief Unregister a previously registered frame hook
+     * @param name Hook identifier to remove
+     */
+    void unregister_frame_hook(const std::string& name);
+
 private:
     GraphicsSurfaceInfo m_config;
     std::vector<std::shared_ptr<Window>> m_windows;
@@ -119,6 +146,11 @@ private:
      * @brief Removes window from lookup table
      */
     void remove_from_lookup(const std::shared_ptr<Window>& window);
+
+    /**
+     * @brief Calls all registered frame hooks
+     */
+    std::unordered_map<std::string, std::function<void()>> m_frame_hooks;
 };
 
 } // namespace MayaFlux::Core
