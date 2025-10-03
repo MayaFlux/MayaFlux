@@ -110,18 +110,21 @@ void Engine::Start()
 
 void Engine::Pause()
 {
-    if (m_is_paused) {
+    if (m_is_paused || !m_is_initialized) {
         return;
     }
 
+    m_subsystem_manager->pause_all_subsystems();
     m_is_paused = true;
 }
 
 void Engine::Resume()
 {
-    if (!m_is_paused) {
+    if (!m_is_paused || !m_is_initialized) {
         return;
     }
+
+    m_subsystem_manager->resume_all_subsystems();
     m_is_paused = false;
 }
 

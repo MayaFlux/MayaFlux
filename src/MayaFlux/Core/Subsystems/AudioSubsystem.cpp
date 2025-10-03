@@ -159,6 +159,22 @@ void AudioSubsystem::stop()
     }
 }
 
+void AudioSubsystem::pause()
+{
+    if (m_audio_stream && m_is_running) {
+        m_audio_stream->stop();
+        m_is_paused = true;
+    }
+}
+
+void AudioSubsystem::resume()
+{
+    if (m_audio_stream && m_is_paused) {
+        m_audio_stream->start();
+        m_is_paused = false;
+    }
+}
+
 void AudioSubsystem::shutdown()
 {
     stop();
