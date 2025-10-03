@@ -7,12 +7,6 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #elif MAYAFLUX_PLATFORM_LINUX
-#if defined(GLFW_EXPOSE_NATIVE_WAYLAND)
-#define GLFW_EXPOSE_NATIVE_WAYLAND
-#endif
-#if defined(GLFW_EXPOSE_NATIVE_X11)
-#define GLFW_EXPOSE_NATIVE_X11
-#endif
 #include <GLFW/glfw3native.h>
 #elif MAYAFLUX_PLATFORM_MACOS
 #define GLFW_EXPOSE_NATIVE_COCOA
@@ -25,8 +19,10 @@ GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
     const GraphicsSurfaceInfo& global_info)
     : m_create_info(create_info)
 {
+    setup_preinit_hints(global_info);
+
     if (!GLFWSingleton::initialize()) {
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingBackend, std::source_location::current(),
+        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem, std::source_location::current(),
             "Failed to initialize GLFW for window creation");
     }
 
@@ -36,7 +32,7 @@ GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
     if (create_info.fullscreen) {
         if (create_info.monitor_id >= 0) {
             int count {};
-            GLFWmonitor** monitors = glfwGetMonitors(&count);
+            std::span<GLFWmonitor*> monitors(glfwGetMonitors(&count), count);
             if (create_info.monitor_id < count) {
                 monitor = monitors[create_info.monitor_id];
             }
@@ -53,14 +49,14 @@ GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
         nullptr);
 
     if (!m_window) {
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingBackend, std::source_location::current(),
+        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem, std::source_location::current(),
             "Failed to create GLFW window: {}", create_info.title);
     }
 
     glfwSetWindowUserPointer(m_window, this);
     setup_callbacks();
 
-    int w, h;
+    int w {}, h {};
     glfwGetWindowSize(m_window, &w, &h);
     m_state.current_width = w;
     m_state.current_height = h;
@@ -68,7 +64,7 @@ GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
 
     GLFWSingleton::mark_window_created();
 
-    MF_INFO(Journal::Component::Core, Journal::Context::WindowingBackend,
+    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
         "Created window '{}' ({}x{})", create_info.title, w, h);
 }
 
@@ -116,7 +112,31 @@ GlfwWindow& GlfwWindow::operator=(GlfwWindow&& other) noexcept
     return *this;
 }
 
-void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& global_info)
+void GlfwWindow::setup_preinit_hints(const GraphicsSurfaceInfo& global_info)
+{
+#ifdef MAYAFLUX_PLATFORM_LINUX
+    int desired_platform = GLFW_ANY_PLATFORM;
+
+    if (global_info.linux_force_wayland) {
+        if (glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
+            desired_platform = GLFW_PLATFORM_WAYLAND;
+        } else {
+            MF_WARN(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+                "Wayland requested but not supported by GLFW, falling back to X11");
+        }
+    } else {
+        if (glfwPlatformSupported(GLFW_PLATFORM_X11)) {
+            desired_platform = GLFW_PLATFORM_X11;
+        }
+    }
+
+    if (desired_platform != GLFW_ANY_PLATFORM) {
+        glfwInitHint(GLFW_PLATFORM, desired_platform);
+    }
+#endif
+}
+
+void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& global_info) const
 {
     glfwDefaultWindowHints();
 
@@ -199,7 +219,7 @@ void* GlfwWindow::get_native_handle() const
 
 void* GlfwWindow::get_native_display() const
 {
-#ifdef __linux__
+#ifdef MAYAFLUX_PLATFORM_LINUX
 #if defined(GLFW_EXPOSE_NATIVE_WAYLAND)
     if (glfwGetPlatform() == GLFW_PLATFORM_WAYLAND) {
         return glfwGetWaylandDisplay();
@@ -210,15 +230,14 @@ void* GlfwWindow::get_native_display() const
         return glfwGetX11Display();
     }
 #endif
-#else
-    return nullptr;
 #endif
+    return nullptr;
 }
 
 void GlfwWindow::glfw_window_size_callback(GLFWwindow* window, int width, int height)
 {
     auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
-    if (win) {
+    if (win && win->m_event_callback) {
         win->m_state.current_width = width;
         win->m_state.current_height = height;
 

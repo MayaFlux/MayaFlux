@@ -164,10 +164,10 @@ Can the caller handle this error?
 | `Realtime`            | Any real-time processing context    | Updates to system components via RT scheduled entities |
 | `AudioBackend`        | Audio backend operations            | RtAudio, JACK, ASIO driver calls                       |
 | `GraphicsBackend`     | Graphics backend operations         | Vulkan/OpenGL driver calls                             |
-| `WindowingBackend`    | Windowing system operations         | GLFW, SDL                                              |
 | `CustomBackend`       | User-defined backend                | Plugin-defined backend                                 |
 | `AudioSubsystem`      | Audio subsystem orchestration       | Device management, stream setup                        |
 | `GraphicsSubsystem`   | Graphics subsystem orchestration    | Rendering pipeline, swapchain setup                    |
+| `WindowingSubsystem`  | Windowing system operations         | GLFW, SDL                                              |
 | `CustomSubsystem`     | User-defined subsystem              | Plugin-defined subsystem                               |
 | `NodeProcessing`      | Node graph operations               | Node creation, evaluation, graph scheduling            |
 | `BufferProcessing`    | Buffer operations                   | Allocation, processing chains                          |

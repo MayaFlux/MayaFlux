@@ -22,22 +22,6 @@ else()
     pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
     pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
-
-    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-        include(CheckSymbolExists)
-        check_symbol_exists(glfwGetWaylandWindow "GLFW/glfw3.h;GLFW/glfw3native.h" GLFW_HAS_WAYLAND)
-        check_symbol_exists(glfwGetX11Window "GLFW/glfw3.h;GLFW/glfw3native.h" GLFW_HAS_X11)
-
-        if(GLFW_HAS_WAYLAND)
-            message(STATUS "GLFW built with Wayland support")
-            target_compile_definitions(mayaflux PRIVATE GLFW_EXPOSE_NATIVE_WAYLAND)
-        endif()
-
-        if(GLFW_HAS_X11)
-            message(STATUS "GLFW built with X11 support")
-            target_compile_definitions(mayaflux PRIVATE GLFW_EXPOSE_NATIVE_X11)
-        endif()
-    endif()
 endif()
 
 find_package(GTest REQUIRED)

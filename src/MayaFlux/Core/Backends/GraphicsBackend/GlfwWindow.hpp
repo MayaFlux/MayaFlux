@@ -74,8 +74,9 @@ private:
     InputConfig m_input_config;
     WindowEventCallback m_event_callback;
 
-    void configure_window_hints(const GraphicsSurfaceInfo& global_info);
+    void configure_window_hints(const GraphicsSurfaceInfo& global_info) const;
     void setup_callbacks();
+    static void setup_preinit_hints(const GraphicsSurfaceInfo& global_info);
 
     // GLFW callbacks (static, route to instance via user pointer)
     static void glfw_window_size_callback(GLFWwindow* window, int width, int height);

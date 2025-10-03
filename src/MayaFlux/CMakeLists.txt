@@ -16,6 +16,10 @@ target_include_directories(MayaFluxLib PUBLIC
 )
 target_precompile_headers(MayaFluxLib PUBLIC ../../cmake/pch.h)
 
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+    target_compile_definitions(MayaFluxLib PRIVATE GLFW_EXPOSE_NATIVE_WAYLAND)
+endif()
+
 if(WIN32)
     find_path(FFMPEG_INCLUDE_DIR libavcodec/avcodec.h)
     if(NOT FFMPEG_INCLUDE_DIR)

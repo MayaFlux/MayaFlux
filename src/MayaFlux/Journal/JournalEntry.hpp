@@ -67,7 +67,6 @@ enum class Context : u_int8_t {
 
     AudioBackend, ///< Audio processing backend (RtAudio, JACK, ASIO)
     GraphicsBackend, ///< Graphics/visual rendering backend (Vulkan, OpenGL)
-    WindowingBackend, ///< Windowing system operations (GLFW, SDL)
     CustomBackend, ///< Custom user-defined backend
 
     // ============================================================================
@@ -75,6 +74,7 @@ enum class Context : u_int8_t {
     // ============================================================================
 
     AudioSubsystem, ///< Audio subsystem operations (backend, device, stream management)
+    WindowingSubsystem, ///< Windowing system operations (GLFW, SDL)
     GraphicsSubsystem, ///< Graphics subsystem operations (Vulkan, rendering pipeline)
     CustomSubsystem, ///< Custom user-defined subsystem
 

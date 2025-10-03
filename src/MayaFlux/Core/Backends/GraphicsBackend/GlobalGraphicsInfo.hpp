@@ -103,13 +103,16 @@ struct GraphicsSurfaceInfo {
     u_int32_t max_regions_per_window = 256;
 
     /** @brief Enable HDR output if available */
-    bool enable_hdr = false;
+    bool enable_hdr {};
 
     /** @brief Measure and report actual frame times */
-    bool measure_frame_time = false;
+    bool measure_frame_time {};
 
     /** @brief Output detailed diagnostic information */
-    bool verbose_logging = false;
+    bool verbose_logging {};
+
+    /** @brief On Linux, force use of Wayland even if X11 is available */
+    bool linux_force_wayland = true;
 
     /** @brief Backend-specific configuration parameters */
     std::unordered_map<std::string, std::any> backend_options;
