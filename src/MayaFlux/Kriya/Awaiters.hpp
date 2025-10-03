@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Core/Backends/GraphicsBackend/GlobalGraphicsInfo.hpp"
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "MayaFlux/Vruta/Promise.hpp"
 
 namespace MayaFlux::Vruta {
