@@ -6,7 +6,7 @@ namespace MayaFlux::Nodes::Generator::Stochastics {
 class NoiseEngine;
 }
 
-#include "Backends/AudioBackend/GlobalStreamInfo.hpp"
+#include "GlobalStreamInfo.hpp"
 
 namespace MayaFlux::Core {
 

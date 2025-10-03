@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GlobalGraphicsInfo.hpp"
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 
 namespace MayaFlux::Vruta {
 class EventSource;
