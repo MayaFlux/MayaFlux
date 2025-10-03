@@ -7,6 +7,7 @@ namespace MayaFlux::Core {
 
 bool GLFWSingleton::s_initialized {};
 uint32_t GLFWSingleton::s_window_count {};
+std::function<void(int, const char*)> GLFWSingleton::s_error_callback;
 
 bool GLFWSingleton::initialize()
 {

@@ -1,6 +1,8 @@
 #pragma once
+
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Vruta/EventSource.hpp"
-#include "Window.hpp"
+
 #include <GLFW/glfw3.h>
 
 namespace MayaFlux::Core {
@@ -84,7 +86,6 @@ private:
     void setup_callbacks();
     static void setup_preinit_hints(const GraphicsSurfaceInfo& global_info);
 
-    // GLFW callbacks (static, route to instance via user pointer)
     static void glfw_window_size_callback(GLFWwindow* window, int width, int height);
     static void glfw_window_close_callback(GLFWwindow* window);
     static void glfw_window_focus_callback(GLFWwindow* window, int focused);

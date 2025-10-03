@@ -22,7 +22,6 @@ public:
     EventSource() = default;
     ~EventSource() = default;
 
-    // Non-copyable, movable
     EventSource(const EventSource&) = delete;
     EventSource& operator=(const EventSource&) = delete;
     EventSource(EventSource&&) noexcept = default;
@@ -65,7 +64,6 @@ private:
     std::queue<Core::WindowEvent> m_pending_events;
     std::vector<Kriya::EventAwaiter*> m_waiters;
 
-    // Used by EventAwaiter
     std::optional<Core::WindowEvent> pop_event(std::optional<Core::WindowEventType> filter);
     void register_waiter(Kriya::EventAwaiter* awaiter);
     void unregister_waiter(Kriya::EventAwaiter* awaiter);

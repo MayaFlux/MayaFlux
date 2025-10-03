@@ -112,6 +112,14 @@ GlfwWindow& GlfwWindow::operator=(GlfwWindow&& other) noexcept
     return *this;
 }
 
+void GlfwWindow::set_title(const std::string& title)
+{
+    if (m_window) {
+        glfwSetWindowTitle(m_window, title.c_str());
+        m_create_info.title = title;
+    }
+}
+
 void GlfwWindow::setup_preinit_hints(const GraphicsSurfaceInfo& global_info)
 {
 #ifdef MAYAFLUX_PLATFORM_LINUX
@@ -245,10 +253,190 @@ void GlfwWindow::glfw_window_size_callback(GLFWwindow* window, int width, int he
             WindowEvent event;
             event.type = WindowEventType::WINDOW_RESIZED;
             event.timestamp = glfwGetTime();
-            event.data.resize.width = static_cast<u_int32_t>(width);
-            event.data.resize.height = static_cast<u_int32_t>(height);
+            event.data = WindowEvent::ResizeData {
+                .width = static_cast<u_int32_t>(width),
+                .height = static_cast<u_int32_t>(height)
+            };
             win->m_event_callback(event);
         }
+    }
+}
+
+void GlfwWindow::set_size(u_int32_t width, u_int32_t height)
+{
+    if (m_window) {
+        glfwSetWindowSize(m_window, static_cast<int>(width), static_cast<int>(height));
+    }
+
+    m_create_info.width = width;
+    m_create_info.height = height;
+}
+
+void GlfwWindow::set_position(u_int32_t x, u_int32_t y)
+{
+    if (m_window) {
+        glfwSetWindowPos(m_window, static_cast<int>(x), static_cast<int>(y));
+    }
+}
+
+void GlfwWindow::glfw_window_close_callback(GLFWwindow* window)
+{
+    auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+    if (!win)
+        return;
+
+    WindowEvent event;
+    event.type = WindowEventType::WINDOW_CLOSED;
+    event.timestamp = glfwGetTime();
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
+    }
+}
+
+void GlfwWindow::glfw_window_focus_callback(GLFWwindow* window, int focused)
+{
+    auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+    if (!win)
+        return;
+
+    win->m_state.is_focused = (focused == GLFW_TRUE);
+
+    WindowEvent event;
+    event.type = focused ? WindowEventType::WINDOW_FOCUS_GAINED
+                         : WindowEventType::WINDOW_FOCUS_LOST;
+    event.timestamp = glfwGetTime();
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
+    }
+}
+
+void GlfwWindow::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+    if (!win)
+        return;
+
+    WindowEvent event;
+    event.type = WindowEventType::FRAMEBUFFER_RESIZED;
+    event.timestamp = glfwGetTime();
+    event.data = WindowEvent::ResizeData {
+        .width = static_cast<u_int32_t>(width),
+        .height = static_cast<u_int32_t>(height)
+    };
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
+    }
+}
+
+void GlfwWindow::glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+    if (!win)
+        return;
+
+    WindowEventType type;
+    switch (action) {
+    case GLFW_PRESS:
+        type = WindowEventType::KEY_PRESSED;
+        break;
+    case GLFW_RELEASE:
+        type = WindowEventType::KEY_RELEASED;
+        break;
+    case GLFW_REPEAT:
+        type = WindowEventType::KEY_REPEAT;
+        break;
+    default:
+        return;
+    }
+
+    WindowEvent event;
+    event.type = type;
+    event.timestamp = glfwGetTime();
+    event.data = WindowEvent::KeyData {
+        .key = key,
+        .scancode = scancode,
+        .mods = mods
+    };
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
+    }
+}
+
+void GlfwWindow::glfw_cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+    if (!win)
+        return;
+
+    WindowEvent event;
+    event.type = WindowEventType::MOUSE_MOVED;
+    event.timestamp = glfwGetTime();
+
+    event.data = WindowEvent::MousePosData {
+        .x = xpos,
+        .y = ypos
+    };
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
+    }
+}
+
+void GlfwWindow::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+    if (!win)
+        return;
+
+    WindowEvent event;
+    event.type = (action == GLFW_PRESS) ? WindowEventType::MOUSE_BUTTON_PRESSED
+                                        : WindowEventType::MOUSE_BUTTON_RELEASED;
+    event.timestamp = glfwGetTime();
+
+    event.data = WindowEvent::MouseButtonData {
+        .button = button,
+        .mods = mods
+    };
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
+    }
+}
+
+void GlfwWindow::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));
+    if (!win)
+        return;
+
+    WindowEvent event;
+    event.type = WindowEventType::MOUSE_SCROLLED;
+    event.timestamp = glfwGetTime();
+    event.data = WindowEvent::ScrollData {
+        .x_offset = xoffset,
+        .y_offset = yoffset
+    };
+
+    win->m_event_source.signal(event);
+
+    if (win->m_event_callback) {
+        win->m_event_callback(event);
     }
 }
 
