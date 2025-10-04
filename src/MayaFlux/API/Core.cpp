@@ -37,7 +37,6 @@ namespace internal {
         if (!engine_ref) {
             engine_ref = std::make_unique<Core::Engine>();
             engine_ref->Init();
-            initialized = true;
             std::atexit(cleanup_engine);
         }
         return *engine_ref;

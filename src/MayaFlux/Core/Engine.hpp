@@ -181,6 +181,19 @@ public:
     void Resume();
 
     /**
+     * @brief Run main loop (optional - for simple apps)
+     *
+     * Blocks until windows close or shutdown requested.
+     * On platforms that support it, windows run on background thread.
+     * On macOS, polls windows on main thread.
+     */
+    void Run();
+
+    /**
+     * @brief Request shutdown of main loop
+     */
+    void Request_shutdown();
+    /**
      * @brief Stops all processing and performs clean shutdown
      *
      * Orchestrates the shutdown sequence:
@@ -295,6 +308,8 @@ private:
 
     bool m_is_paused {}; ///< Pause state flag
     bool m_is_initialized {};
+
+    std::atomic<bool> m_should_shutdown { false };
 
     //-------------------------------------------------------------------------
     // Core Components

@@ -27,8 +27,10 @@ Engine::~Engine()
 
 Engine::Engine(Engine&& other) noexcept
     : m_stream_info(other.m_stream_info)
+    , m_graphics_info(other.m_graphics_info)
     , m_is_paused(other.m_is_paused)
     , m_is_initialized(other.m_is_initialized)
+    , m_should_shutdown(other.m_should_shutdown.load())
     , m_scheduler(std::move(other.m_scheduler))
     , m_node_graph_manager(std::move(other.m_node_graph_manager))
     , m_buffer_manager(std::move(other.m_buffer_manager))
@@ -46,6 +48,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
         End();
 
         m_stream_info = other.m_stream_info;
+        m_graphics_info = other.m_graphics_info;
 
         m_subsystem_manager = std::move(other.m_subsystem_manager);
         m_node_graph_manager = std::move(other.m_node_graph_manager);
@@ -56,6 +59,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
 
         m_is_initialized = other.m_is_initialized;
         m_is_paused = other.m_is_paused;
+        m_should_shutdown = other.m_should_shutdown.load();
 
         other.m_is_initialized = false;
         other.m_is_paused = false;
@@ -124,6 +128,16 @@ void Engine::Start()
         Init();
     }
     m_subsystem_manager->start_all_subsystems();
+
+    if (m_window_manager) {
+        try {
+            m_window_manager->start_event_loop();
+        } catch (const std::exception& e) {
+            error<std::runtime_error>(Journal::Component::Core, Journal::Context::Init,
+                std::source_location::current(),
+                "Failed to start window event loop: {}", e.what());
+        }
+    }
 }
 
 void Engine::Pause()
@@ -144,6 +158,47 @@ void Engine::Resume()
 
     m_subsystem_manager->resume_all_subsystems();
     m_is_paused = false;
+}
+
+void Engine::Run()
+{
+    if (!m_is_initialized) {
+        throw std::runtime_error("Engine must be initialized before run()");
+        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            std::source_location::current(),
+            "Engine must be initialized before run()");
+    }
+
+    if (!m_window_manager) {
+        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Running in headless mode");
+
+        while (!m_should_shutdown) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        return;
+    }
+
+    auto frame_time = Utils::frame_duration_ms(m_graphics_info.target_frame_rate);
+
+    if (m_window_manager->is_event_loop_running()) {
+        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Running with background window thread - main thread available");
+
+        while (!m_should_shutdown && m_window_manager->window_count() > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    } else {
+        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Running with main thread window polling (target: {} FPS)",
+            m_window_manager->get_config().target_frame_rate);
+
+        while (!m_should_shutdown && m_window_manager->process()) {
+            std::this_thread::sleep_for(frame_time);
+        }
+    }
+
+    End();
 }
 
 void Engine::End()
@@ -180,12 +235,18 @@ void Engine::End()
     }
 
     if (m_window_manager) {
+        m_window_manager->stop_event_loop();
         auto windows = m_window_manager->get_windows();
         for (auto& window : windows) {
             m_window_manager->destroy_window(window);
         }
         m_window_manager.reset();
     }
+}
+
+void Engine::Request_shutdown()
+{
+    m_should_shutdown = true;
 }
 
 bool Engine::is_running() const

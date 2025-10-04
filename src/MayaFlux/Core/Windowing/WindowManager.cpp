@@ -3,6 +3,7 @@
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Utils.hpp"
 
 namespace MayaFlux::Core {
 
@@ -15,6 +16,8 @@ WindowManager::WindowManager(const GraphicsSurfaceInfo& config)
 
 WindowManager::~WindowManager()
 {
+    stop_event_loop();
+
     m_windows.clear();
     m_window_lookup.clear();
 
@@ -70,11 +73,6 @@ bool WindowManager::destroy_window_by_title(const std::string& title)
         return true;
     }
     return false;
-}
-
-void WindowManager::poll_events()
-{
-    glfwPollEvents();
 }
 
 std::vector<std::shared_ptr<Window>> WindowManager::get_windows() const
@@ -162,12 +160,92 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
     m_window_lookup.erase(title);
 }
 
+void WindowManager::start_event_loop()
+{
+    if (m_event_loop_running) {
+        MF_WARN(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Event loop already running");
+        return;
+    }
+
+    if (!can_use_background_thread()) {
+        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            std::source_location::current(),
+            "Background window thread not supported on this platform (likely macOS). \n Falling back to main thread polling.");
+    }
+
+    m_should_stop = false;
+    m_event_loop_running = true;
+
+    m_event_thread = std::make_unique<std::thread>(
+        &WindowManager::event_loop_thread_func, this);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+        "Started window event loop on dedicated thread");
+}
+
+void WindowManager::stop_event_loop()
+{
+    if (!m_event_loop_running) {
+        return;
+    }
+
+    m_should_stop = true;
+
+    if (m_event_thread && m_event_thread->joinable()) {
+        m_event_thread->join();
+    }
+
+    m_event_loop_running = false;
+    m_event_thread.reset();
+
+    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+        "Stopped window event loop thread");
+}
+
+void WindowManager::event_loop_thread_func()
+{
+    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+        "Window event loop thread started (target: {} FPS)", m_config.target_frame_rate);
+
+    const auto frame_time = Utils::frame_duration_ms(m_config.target_frame_rate);
+
+    while (!m_should_stop && window_count() > 0) {
+        auto frame_start = std::chrono::steady_clock::now();
+
+        glfwPollEvents();
+
+        {
+            std::lock_guard<std::mutex> lock(m_hooks_mutex);
+            for (const auto& [name, hook] : m_frame_hooks) {
+                hook();
+            }
+        }
+
+        destroy_closed_windows();
+
+        auto frame_end = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            frame_end - frame_start);
+
+        if (elapsed < frame_time) {
+            std::this_thread::sleep_for(frame_time - elapsed);
+        }
+    }
+
+    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+        "Window event loop thread exiting");
+}
+
 bool WindowManager::process()
 {
-    poll_events();
+    glfwPollEvents();
 
-    for (const auto& [name, hook] : m_frame_hooks) {
-        hook();
+    {
+        std::lock_guard<std::mutex> lock(m_hooks_mutex);
+        for (const auto& [name, hook] : m_frame_hooks) {
+            hook();
+        }
     }
 
     destroy_closed_windows();
@@ -178,12 +256,23 @@ bool WindowManager::process()
 void WindowManager::register_frame_hook(const std::string& name,
     std::function<void()> hook)
 {
+    std::lock_guard<std::mutex> lock(m_hooks_mutex);
     m_frame_hooks[name] = std::move(hook);
 }
 
 void WindowManager::unregister_frame_hook(const std::string& name)
 {
+    std::lock_guard<std::mutex> lock(m_hooks_mutex);
     m_frame_hooks.erase(name);
+}
+
+bool WindowManager::can_use_background_thread()
+{
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    return false;
+#else
+    return true;
+#endif
 }
 
 } // namespace MayaFlux::Core
