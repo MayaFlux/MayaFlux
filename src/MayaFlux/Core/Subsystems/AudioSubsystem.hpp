@@ -30,6 +30,12 @@ public:
     /** @brief Start audio processing and streaming */
     void start() override;
 
+    /** @brief Pause audio processing without stopping the stream */
+    void pause() override;
+
+    /** @brief Resume audio processing after pause */
+    void resume() override;
+
     /** @brief Stop audio processing and streaming */
     void stop() override;
 
@@ -118,6 +124,7 @@ private:
 
     bool m_is_ready {}; ///< Subsystem ready state
     bool m_is_running {}; ///< Subsystem running state
+    bool m_is_paused {}; ///< Subsystem paused state
 
     static const SubsystemType m_type = SubsystemType::AUDIO;
 };

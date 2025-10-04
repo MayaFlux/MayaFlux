@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GlobalStreamInfo.hpp"
+#include "MayaFlux/Core/GlobalStreamInfo.hpp"
 #include "MayaFlux/Utils.hpp"
 
 namespace MayaFlux::Core {

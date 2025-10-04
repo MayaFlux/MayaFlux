@@ -102,7 +102,34 @@ enum Domain : u_int64_t {
      * Routes audio through GPU for compute-intensive processing
      * while maintaining sample-accurate timing
      */
-    AUDIO_GPU = (static_cast<u_int64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::GPU_PPOCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::MULTI_RATE))
+    AUDIO_GPU = (static_cast<u_int64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::GPU_PPOCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::MULTI_RATE)),
+
+    /**
+     * @brief Pure windowing domain (no rendering)
+     *
+     * Handles window lifecycle, input events, and frame timing coordination.
+     * Does not perform any GPU rendering - that's handled by GRAPHICS domain.
+     *
+     * Use case: Headless window manager, input-only applications, or when
+     * separating windowing from rendering into different subsystems.
+     */
+    WINDOWING = (static_cast<u_int64_t>(Nodes::ProcessingToken::VISUAL_RATE) << 32)
+        | (static_cast<u_int64_t>(Buffers::ProcessingToken::WINDOW_EVENTS) << 16)
+        | (static_cast<u_int64_t>(Vruta::ProcessingToken::FRAME_ACCURATE)),
+
+    /**
+     * @brief Input event processing domain
+     *
+     * Handles input events (keyboard, mouse, MIDI) asynchronously without
+     * frame synchronization. Events are processed as they arrive, not locked
+     * to vsync or audio callbacks.
+     *
+     * Use case: Input gesture recognition, MIDI controllers, or when input
+     * latency must be minimized independently of rendering frame rate.
+     */
+    INPUT_EVENTS = (static_cast<u_int64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32)
+        | (static_cast<u_int64_t>(Buffers::ProcessingToken::WINDOW_EVENTS) << 16)
+        | (static_cast<u_int64_t>(Vruta::ProcessingToken::EVENT_DRIVEN)),
 };
 
 /**

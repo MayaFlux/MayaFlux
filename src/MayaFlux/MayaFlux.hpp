@@ -12,6 +12,8 @@
 
 #include "MayaFlux/API/Random.hpp"
 
+#include "MayaFlux/API/Windowing.hpp"
+
 #include "MayaFlux/API/Yantra.hpp"
 
 #ifdef MAYASIMPLE
@@ -36,15 +38,22 @@
 #include "Buffers/Node/PolynomialProcessor.hpp"
 #include "Buffers/Recursive/FeedbackBuffer.hpp"
 
+#include "Kriya/Awaiters.hpp"
 #include "Kriya/Bridge.hpp"
 #include "Kriya/Chain.hpp"
 #include "Kriya/CycleCoordinator.hpp"
 #include "Kriya/Tasks.hpp"
 
+#include "Vruta/Event.hpp"
+#include "Vruta/EventManager.hpp"
+#include "Vruta/EventSource.hpp"
+
 #include "Kakshya/Source/DynamicSoundStream.hpp"
 #include "Kakshya/Source/SoundFileContainer.hpp"
 
 #include "Journal/Archivist.hpp"
+
+#include "Core/Windowing/WindowManager.hpp"
 
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;

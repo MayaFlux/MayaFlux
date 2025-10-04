@@ -3,7 +3,7 @@
 
 namespace MayaFlux::Vruta {
 
-SampleClock::SampleClock(unsigned int sample_rate)
+SampleClock::SampleClock(u_int64_t sample_rate)
     : m_sample_rate(sample_rate)
     , m_current_sample(0)
 {
@@ -39,7 +39,7 @@ void SampleClock::reset()
     m_current_sample = 0;
 }
 
-FrameClock::FrameClock(unsigned int frame_rate)
+FrameClock::FrameClock(u_int64_t frame_rate)
     : m_frame_rate(frame_rate)
     , m_current_frame(0)
 {
@@ -65,12 +65,12 @@ double FrameClock::current_time() const
     return Utils::units_to_seconds(m_current_frame, m_frame_rate);
 }
 
-unsigned int FrameClock::rate() const
+u_int32_t FrameClock::rate() const
 {
     return m_frame_rate;
 }
 
-unsigned int FrameClock::frame_rate() const
+u_int64_t FrameClock::frame_rate() const
 {
     return m_frame_rate;
 }
@@ -84,7 +84,7 @@ void FrameClock::reset()
 // CustomClock Implementation
 // ========================================
 
-CustomClock::CustomClock(unsigned int processing_rate, const std::string& unit_name)
+CustomClock::CustomClock(u_int64_t processing_rate, const std::string& unit_name)
     : m_processing_rate(processing_rate)
     , m_current_position(0)
     , m_unit_name(unit_name)
@@ -106,7 +106,7 @@ double CustomClock::current_time() const
     return Utils::units_to_seconds(m_current_position, m_processing_rate);
 }
 
-unsigned int CustomClock::rate() const
+u_int32_t CustomClock::rate() const
 {
     return m_processing_rate;
 }

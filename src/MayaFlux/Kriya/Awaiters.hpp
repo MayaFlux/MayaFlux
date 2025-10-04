@@ -1,6 +1,11 @@
 #pragma once
 
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "MayaFlux/Vruta/Promise.hpp"
+
+namespace MayaFlux::Vruta {
+class EventSource;
+}
 
 namespace MayaFlux::Kriya {
 
@@ -58,7 +63,7 @@ struct SampleDelay {
      * without suspending. This optimization avoids the overhead
      * of suspension for zero-length delays.
      */
-    inline bool await_ready() const { return samples_to_wait == 0; }
+    [[nodiscard]] inline bool await_ready() const { return samples_to_wait == 0; }
 
     /**
      * @brief Called when the coroutine is resumed after the delay
@@ -90,7 +95,7 @@ struct SampleDelay {
 struct FrameDelay {
     u_int32_t frames_to_wait;
 
-    constexpr bool await_ready() const noexcept
+    [[nodiscard]] constexpr bool await_ready() const noexcept
     {
         return frames_to_wait == 0;
     }
@@ -104,7 +109,7 @@ struct MultiRateDelay {
     u_int64_t samples_to_wait;
     u_int32_t frames_to_wait;
 
-    constexpr bool await_ready() const noexcept
+    [[nodiscard]] constexpr bool await_ready() const noexcept
     {
         return samples_to_wait == 0 && frames_to_wait == 0;
     }
@@ -163,7 +168,7 @@ struct GetPromise {
      * This method always returns false to ensure that the coroutine
      * suspends so that await_suspend can capture the promise pointer.
      */
-    inline bool await_ready() const noexcept { return false; }
+    [[nodiscard]] inline bool await_ready() const noexcept { return false; }
 
     /**
      * @brief Captures the promise object when the coroutine suspends
@@ -181,6 +186,59 @@ struct GetPromise {
      * This method is called when the coroutine resumes. It returns a
      * reference to the promise object that was captured during suspension.
      */
-    promise_handle& await_resume() const noexcept;
+    [[nodiscard]] promise_handle& await_resume() const noexcept;
+};
+
+/**
+ * @class EventAwaiter
+ * @brief Awaiter for suspending on window events
+ *
+ * Usage:
+ *   auto event = co_await window->get_event_source().next_event();
+ *   auto key_event = co_await window->get_event_source().await_event(WindowEventType::KEY_PRESSED);
+ */
+class EventAwaiter {
+public:
+    EventAwaiter(Vruta::EventSource& source, std::optional<Core::WindowEventType> filter = std::nullopt)
+        : m_source(source)
+        , m_filter(filter)
+    {
+    }
+
+    ~EventAwaiter();
+
+    EventAwaiter(const EventAwaiter&) = delete;
+    EventAwaiter& operator=(const EventAwaiter&) = delete;
+    EventAwaiter(EventAwaiter&&) noexcept = default;
+    EventAwaiter& operator=(EventAwaiter&&) noexcept = delete;
+
+    /**
+     * @brief Check if event already available
+     */
+    bool await_ready();
+
+    /**
+     * @brief Suspend coroutine, register for event notification
+     */
+    void await_suspend(std::coroutine_handle<> handle);
+
+    /**
+     * @brief Resume with event data
+     */
+    Core::WindowEvent await_resume();
+
+    /**
+     * @brief Called by EventSource when event arrives
+     */
+    void try_resume();
+
+private:
+    Vruta::EventSource& m_source;
+    std::optional<Core::WindowEventType> m_filter;
+    Core::WindowEvent m_result;
+    std::coroutine_handle<> m_handle;
+    bool m_is_suspended = false;
+
+    friend class Vruta::EventSource;
 };
 }

@@ -2,15 +2,20 @@
 
 #include "SubsystemManager.hpp"
 
+#include "GlobalGraphicsInfo.hpp"
+#include "GlobalStreamInfo.hpp"
+
 namespace MayaFlux::Nodes::Generator::Stochastics {
 class NoiseEngine;
 }
 
-#include "Backends/AudioBackend/GlobalStreamInfo.hpp"
+namespace MayaFlux::Vruta {
+class EventManager;
+}
 
 namespace MayaFlux::Core {
 
-class SubsystemManager;
+class WindowManager;
 
 // struct GlobalEngineInfo {
 //     GlobalStreamInfo audio;
@@ -124,7 +129,7 @@ public:
      *
      * This method must be called before Start().
      */
-    void Init(u_int32_t sample_rate = 48000u, u_int32_t buffer_size = 512u, u_int32_t num_out_channels = 2u, u_int32_t num_in_channels = 0u);
+    void Init(u_int32_t sample_rate = 48000U, u_int32_t buffer_size = 512U, u_int32_t num_out_channels = 2U, u_int32_t num_in_channels = 0U);
 
     /**
      * @brief Initializes the processing engine with a custom stream configuration
@@ -134,6 +139,16 @@ public:
      * This method must be called before starting the engine.
      */
     void Init(const GlobalStreamInfo& streamInfo);
+
+    /**
+     * @brief Initializes the processing engine with custom stream and graphics configurations
+     * @param streamInfo Configuration for sample rate, buffer size, and channels
+     * @param graphicsInfo Configuration for graphics/windowing backend
+     *
+     * Configures the processing engine with the specified stream and graphics information.
+     * This method must be called before starting the engine.
+     */
+    void Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo& graphicsInfo);
 
     /**
      * @brief Starts the coordinated processing of all subsystems
@@ -169,6 +184,19 @@ public:
     void Resume();
 
     /**
+     * @brief Run main loop (optional - for simple apps)
+     *
+     * Blocks until windows close or shutdown requested.
+     * On platforms that support it, windows run on background thread.
+     * On macOS, polls windows on main thread.
+     */
+    void Run();
+
+    /**
+     * @brief Request shutdown of main loop
+     */
+    void Request_shutdown();
+    /**
      * @brief Stops all processing and performs clean shutdown
      *
      * Orchestrates the shutdown sequence:
@@ -197,6 +225,12 @@ public:
      * @return Reference to the GlobalStreamInfo struct
      */
     inline GlobalStreamInfo& get_stream_info() { return m_stream_info; }
+
+    /**
+     * @brief Gets the current graphics configuration
+     * @return Reference to the GraphicsSurfaceInfo struct
+     */
+    inline GraphicsSurfaceInfo& get_graphics_info() { return m_graphics_info; }
 
     //-------------------------------------------------------------------------
     // Component Access - Engine acts as access router to all subsystems
@@ -228,6 +262,24 @@ public:
      * Access through Engine ensures buffers are sized correctly for the stream.
      */
     inline std::shared_ptr<Buffers::BufferManager> get_buffer_manager() { return m_buffer_manager; }
+
+    /**
+     * @brief Gets the window manager
+     * @return Shared pointer to the WindowManager for windowing operations
+     *
+     * The WindowManager handles creation and management of application windows.
+     * Access through Engine ensures proper graphics backend initialization.
+     */
+    inline std::shared_ptr<WindowManager> get_window_manager() { return m_window_manager; }
+
+    /**
+     * @brief Gets the event manager
+     * @return Shared pointer to the EventManager for input/event handling
+     *
+     * The EventManager processes input events (keyboard, mouse, etc.).
+     * Access through Engine ensures events are routed correctly to windows.
+     */
+    inline std::shared_ptr<Vruta::EventManager> get_event_manager() { return m_event_manager; }
 
     /**
      * @brief Gets the stochastic signal generator engine
@@ -264,9 +316,12 @@ private:
     //-------------------------------------------------------------------------
 
     GlobalStreamInfo m_stream_info; ///< Stream configuration
+    GraphicsSurfaceInfo m_graphics_info; ///< Graphics/windowing configuration
 
     bool m_is_paused {}; ///< Pause state flag
     bool m_is_initialized {};
+
+    std::atomic<bool> m_should_shutdown { false };
 
     //-------------------------------------------------------------------------
     // Core Components
@@ -276,6 +331,8 @@ private:
     std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager; ///< Node graph manager
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager; ///< Buffer manager
     std::shared_ptr<SubsystemManager> m_subsystem_manager;
+    std::shared_ptr<WindowManager> m_window_manager; ///< Window manager (Windowing subsystem)
+    std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager (currently only glfw events)
     std::unique_ptr<Nodes::Generator::Stochastics::NoiseEngine> m_rng; ///< Stochastic signal generator
 };
 

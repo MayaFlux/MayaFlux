@@ -81,6 +81,48 @@ inline u_int64_t frames_to_seconds(u_int64_t frames, u_int32_t frame_rate)
     return frames / frame_rate;
 }
 
+/**
+ * @brief Get duration of a single frame at given frame rate
+ * @param frame_rate Frame rate in Hz
+ * @return Duration in milliseconds
+ */
+inline std::chrono::milliseconds frame_duration_ms(u_int32_t frame_rate)
+{
+    return std::chrono::milliseconds(1000 / frame_rate);
+}
+
+/**
+ * @brief Get duration of a single frame at given frame rate (high precision)
+ * @param frame_rate Frame rate in Hz
+ * @return Duration in microseconds
+ */
+inline std::chrono::microseconds frame_duration_us(u_int32_t frame_rate)
+{
+    return std::chrono::microseconds(1000000 / frame_rate);
+}
+
+/**
+ * @brief Get duration for N frames at given frame rate
+ * @param num_frames Number of frames
+ * @param frame_rate Frame rate in Hz
+ * @return Duration in milliseconds
+ */
+inline std::chrono::milliseconds frames_duration_ms(u_int64_t num_frames, u_int32_t frame_rate)
+{
+    return std::chrono::milliseconds((num_frames * 1000) / frame_rate);
+}
+
+/**
+ * @brief Get duration for N frames at given frame rate (high precision)
+ * @param num_frames Number of frames
+ * @param frame_rate Frame rate in Hz
+ * @return Duration in microseconds
+ */
+inline std::chrono::microseconds frames_duration_us(u_int64_t num_frames, u_int32_t frame_rate)
+{
+    return std::chrono::microseconds((num_frames * 1000000) / frame_rate);
+}
+
 /** * @brief Convert samples to seconds at a given sample rate
  * @param samples Number of samples
  * @param sample_rate Sample rate in Hz

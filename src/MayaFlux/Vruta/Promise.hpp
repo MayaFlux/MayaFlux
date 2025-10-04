@@ -9,6 +9,7 @@ namespace MayaFlux::Vruta {
 class SoundRoutine;
 class GraphicsRoutine;
 class ComplexRoutine;
+class Event;
 
 /**
  * @struct routine_promise
@@ -245,4 +246,19 @@ struct complex_promise : public routine_promise<ComplexRoutine> {
 
     u_int64_t next_frame = 0;
 };
+
+/**
+ * @struct EventPromise
+ * @brief Promise type for event-driven coroutines
+ *
+ * Unlike time-based promises (SampleClockPromise, FrameClockPromise),
+ * EventPromise has no clock. Coroutines suspend/resume based on
+ * discrete event signals, not periodic ticks.
+ */
+struct event_promise : public routine_promise<Event> {
+    Event get_return_object();
+
+    ProcessingToken processing_token { ProcessingToken::EVENT_DRIVEN };
+};
+
 }

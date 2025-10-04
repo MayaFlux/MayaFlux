@@ -1,3 +1,4 @@
+#include "MayaFlux/Core/Engine.hpp"
 #define MAYASIMPLE ;
 
 #include "MayaFlux/MayaFlux.hpp"
@@ -41,10 +42,7 @@ int main()
 
         create();
 
-        std::cout << "Press any key to terminate\n";
-        std::cin.get();
-        MayaFlux::End();
-        std::cout << "✓ Clean shutdown" << std::endl;
+        MayaFlux::Run();
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

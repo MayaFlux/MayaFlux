@@ -36,10 +36,9 @@ namespace internal {
         std::lock_guard<std::recursive_mutex> lock(engine_mutex);
         if (!engine_ref) {
             engine_ref = std::make_unique<Core::Engine>();
-            engine_ref->Init();
-            initialized = true;
             std::atexit(cleanup_engine);
         }
+        initialized = true;
         return *engine_ref;
     }
 
@@ -94,6 +93,12 @@ void Init(Core::GlobalStreamInfo stream_info)
     engine.Init(stream_info);
 }
 
+void Init(Core::GlobalStreamInfo stream_info, Core::GraphicsSurfaceInfo graphics_info)
+{
+    auto& engine = internal::get_or_create_engine();
+    engine.Init(stream_info, graphics_info);
+}
+
 void Start()
 {
     get_context().Start();
@@ -110,6 +115,13 @@ void Resume()
 {
     if (internal::initialized) {
         get_context().Resume();
+    }
+}
+
+void Run()
+{
+    if (internal::initialized) {
+        get_context().Run();
     }
 }
 

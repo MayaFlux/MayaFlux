@@ -70,6 +70,24 @@ void SubsystemManager::start_all_subsystems()
     }
 }
 
+void SubsystemManager::pause_all_subsystems()
+{
+    for (auto& [type, subsystem] : m_subsystems) {
+        if (subsystem->is_running()) {
+            subsystem->pause();
+        }
+    }
+}
+
+void SubsystemManager::resume_all_subsystems()
+{
+    for (auto& [type, subsystem] : m_subsystems) {
+        if (subsystem->is_ready()) {
+            subsystem->resume();
+        }
+    }
+}
+
 std::shared_ptr<ISubsystem> SubsystemManager::get_subsystem(SubsystemType type)
 {
     return has_subsystem(type) ? m_subsystems[type] : nullptr;

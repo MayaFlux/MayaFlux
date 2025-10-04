@@ -5,6 +5,15 @@ namespace MayaFlux::Vruta {
 enum class ProcessingToken {
     SAMPLE_ACCURATE, ///< Coroutine is sample-accurate
     FRAME_ACCURATE, ///< Coroutine is frame-accurate
+    /**
+     * @brief Event-driven execution - process when events arrive
+     *
+     * Unlike FRAME_ACCURATE (which waits for vsync) or SAMPLE_ACCURATE
+     * (which waits for audio callback), EVENT_DRIVEN coroutines resume
+     * whenever their associated events fire. Used for input handling,
+     * UI interactions, or any sporadic/asynchronous processing.
+     */
+    EVENT_DRIVEN,
     MULTI_RATE, ///< Coroutine can handle multiple sample rates. Picks the frame-accurate processing token by default
     ON_DEMAND, ///< Coroutine is executed on demand, not scheduled
     CUSTOM
@@ -132,7 +141,17 @@ enum ProcessingToken : u_int32_t {
      * for parallel execution. Useful for computationally intensive audio operations
      * like convolution, FFT processing, or complex effects that benefit from GPU parallelization.
      */
-    AUDIO_PARALLEL = SAMPLE_RATE | GPU_PPOCESS | PARALLEL
+    AUDIO_PARALLEL = SAMPLE_RATE | GPU_PPOCESS | PARALLEL,
+
+    /**
+     * @brief Window event stream processing
+     *
+     * Processes window lifecycle events (resize, close, focus) and input events
+     * (keyboard, mouse) at frame rate using CPU in sequential order. This is
+     * distinct from graphics rendering - it handles the window container itself,
+     * not its visual content.
+     */
+    WINDOW_EVENTS = FRAME_RATE | CPU_PROCESS | SEQUENTIAL,
 };
 
 }

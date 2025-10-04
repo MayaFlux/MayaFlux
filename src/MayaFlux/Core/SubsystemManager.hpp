@@ -70,6 +70,12 @@ public:
     /** @brief Start all registered subsystems in coordination */
     void start_all_subsystems();
 
+    /** @brief Pause all subsystems */
+    void pause_all_subsystems();
+
+    /** @brief Resume all paused subsystems */
+    void resume_all_subsystems();
+
     /**
      * @brief Get access to a specific subsystem by type
      * @param type SubsystemType enum value identifying the subsystem

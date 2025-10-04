@@ -1,5 +1,7 @@
 #include "Chronie.hpp"
 
+#include <utility>
+
 #include "Core.hpp"
 
 #include "MayaFlux/Core/Engine.hpp"
@@ -13,6 +15,11 @@ std::shared_ptr<Vruta::TaskScheduler> get_scheduler()
     return get_context().get_scheduler();
 }
 
+std::shared_ptr<Vruta::EventManager> get_event_manager()
+{
+    return get_context().get_event_manager();
+}
+
 template <typename... Args>
 bool update_task_params(const std::string& name, Args... args)
 {
@@ -21,7 +28,7 @@ bool update_task_params(const std::string& name, Args... args)
 
 Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback)
 {
-    return Kriya::metro(*get_scheduler(), interval_seconds, callback);
+    return Kriya::metro(*get_scheduler(), interval_seconds, std::move(callback));
 }
 
 void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name)
@@ -30,14 +37,14 @@ void schedule_metro(double interval_seconds, std::function<void()> callback, std
     if (name.empty()) {
         name = "metro_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto metronome = std::make_shared<Vruta::SoundRoutine>(create_metro(interval_seconds, callback));
+    auto metronome = std::make_shared<Vruta::SoundRoutine>(create_metro(interval_seconds, std::move(callback)));
 
     get_scheduler()->add_task(std::move(metronome), name, false);
 }
 
 Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
 {
-    return Kriya::sequence(*get_scheduler(), seq);
+    return Kriya::sequence(*get_scheduler(), std::move(seq));
 }
 
 void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name)
@@ -46,7 +53,7 @@ void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq
     if (name.empty()) {
         name = "seq_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto tseq = std::make_shared<Vruta::SoundRoutine>(create_sequence(seq));
+    auto tseq = std::make_shared<Vruta::SoundRoutine>(create_sequence(std::move(seq)));
     get_scheduler()->add_task(std::move(tseq), name, false);
 }
 
@@ -57,7 +64,7 @@ Vruta::SoundRoutine create_line(float start_value, float end_value, float durati
 
 Vruta::SoundRoutine create_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
 {
-    return Kriya::pattern(*get_scheduler(), pattern_func, callback, interval_seconds);
+    return Kriya::pattern(*get_scheduler(), std::move(pattern_func), std::move(callback), interval_seconds);
 }
 
 void schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name)
@@ -66,23 +73,23 @@ void schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::func
     if (name.empty()) {
         name = "pattern_" + std::to_string(scheduler->get_next_task_id());
     }
-    auto pattern = std::make_shared<Vruta::SoundRoutine>(create_pattern(pattern_func, callback, interval_seconds));
+    auto pattern = std::make_shared<Vruta::SoundRoutine>(create_pattern(std::move(pattern_func), std::move(callback), interval_seconds));
     get_scheduler()->add_task(std::move(pattern), name, false);
 }
 
 float* get_line_value(const std::string& name)
 {
-    std::string err = "";
+    std::string err;
     if (auto task = get_scheduler()->get_task(name)) {
-        float* cur_val = task->get_state<float>("current_value");
+        auto cur_val = task->get_state<float>("current_value");
         if (cur_val) {
             return cur_val;
-        } else {
-            std::cerr << "line value not returned from task. Verify that tasks has not returned" << std::endl;
-            return nullptr;
         }
+
+        std::cerr << "line value not returned from task. Verify that tasks has not returned" << '\n';
+        return nullptr;
     }
-    std::cerr << "Task: " << name << " not found. Verify task validity or if its been scheduled" << std::endl;
+    std::cerr << "Task: " << name << " not found. Verify task validity or if its been scheduled" << '\n';
     return nullptr;
 }
 
@@ -104,17 +111,17 @@ bool restart_task(const std::string& name)
 
 Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node)
 {
-    return Kriya::ActionToken(node);
+    return { std::move(node) };
 }
 
 Kriya::ActionToken Wait(double seconds)
 {
-    return Kriya::ActionToken(seconds);
+    return { seconds };
 }
 
 Kriya::ActionToken Action(std::function<void()> func)
 {
-    return Kriya::ActionToken(func);
+    return { std::move(func) };
 }
 
 }

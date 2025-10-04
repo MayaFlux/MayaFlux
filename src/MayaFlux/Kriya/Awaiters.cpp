@@ -1,4 +1,5 @@
 #include "Awaiters.hpp"
+#include "MayaFlux/Vruta/EventSource.hpp"
 
 namespace MayaFlux::Kriya {
 
@@ -10,10 +11,6 @@ void GetPromise::await_suspend(std::coroutine_handle<promise_handle> h) noexcept
 promise_handle& GetPromise::await_resume() const noexcept
 {
     return *promise_ptr;
-}
-
-void await_suspend(std::coroutine_handle<promise_handle> h) noexcept
-{
 }
 
 void SampleDelay::await_suspend(std::coroutine_handle<promise_handle> h) noexcept
@@ -56,4 +53,44 @@ void MultiRateDelay::await_suspend(std::coroutine_handle<Vruta::complex_promise>
         h.promise().next_frame += frames_to_wait;
     }
 }
+
+EventAwaiter::~EventAwaiter()
+{
+    if (m_is_suspended) {
+        m_source.unregister_waiter(this);
+    }
+}
+
+bool EventAwaiter::await_ready()
+{
+    if (auto event = m_source.pop_event(m_filter)) {
+        m_result = *event;
+        return true;
+    }
+    return false;
+}
+
+void EventAwaiter::await_suspend(std::coroutine_handle<> handle)
+{
+    m_handle = handle;
+    m_is_suspended = true;
+    m_source.register_waiter(this);
+}
+
+Core::WindowEvent EventAwaiter::await_resume()
+{
+    m_is_suspended = false;
+    return m_result;
+}
+
+void EventAwaiter::try_resume()
+{
+    if (auto event = m_source.pop_event(m_filter)) {
+        m_result = *event;
+        m_source.unregister_waiter(this);
+        m_is_suspended = false;
+        m_handle.resume();
+    }
+}
+
 }

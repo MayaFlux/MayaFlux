@@ -40,7 +40,7 @@ public:
      * This position serves as the primary time reference for scheduling tasks
      * in this domain. Routines use this value to determine execution timing.
      */
-    virtual u_int64_t current_position() const = 0;
+    [[nodiscard]] virtual u_int64_t current_position() const = 0;
 
     /**
      * @brief Get current time converted to seconds
@@ -49,7 +49,7 @@ public:
      * Provides a universal time representation for cross-domain coordination
      * and user interface display purposes.
      */
-    virtual double current_time() const = 0;
+    [[nodiscard]] virtual double current_time() const = 0;
 
     /**
      * @brief Get the processing rate for this timing domain
@@ -57,7 +57,7 @@ public:
      *
      * Used for time conversions and calculating delays in domain-specific units.
      */
-    virtual unsigned int rate() const = 0;
+    [[nodiscard]] virtual u_int32_t rate() const = 0;
 
     /**
      * @brief Reset clock to initial state (position 0)
@@ -97,7 +97,7 @@ public:
      * The sample rate determines the relationship between sample counts
      * and real-time durations for all audio timing calculations.
      */
-    SampleClock(unsigned int sample_rate = 48000);
+    SampleClock(u_int64_t sample_rate = 48000);
 
     /**
      * @brief Advances the clock by the specified number of samples
@@ -116,9 +116,9 @@ public:
      * This sample count serves as the primary time reference for audio tasks.
      * Audio routines use this value for precise scheduling and timing calculations.
      */
-    inline u_int64_t current_sample() const { return current_position(); }
+    [[nodiscard]] inline u_int64_t current_sample() const { return current_position(); }
 
-    u_int64_t current_position() const override;
+    [[nodiscard]] u_int64_t current_position() const override;
 
     /**
      * @brief Converts current sample position to seconds
@@ -127,7 +127,7 @@ public:
      * Provides real-time representation useful for user interfaces,
      * cross-domain synchronization, and integration with non-audio systems.
      */
-    double current_time() const override;
+    [[nodiscard]] double current_time() const override;
 
     /**
      * @brief Gets the audio sample rate
@@ -136,9 +136,9 @@ public:
      * The sample rate defines the clock's time scale and is used for
      * converting between samples and real-time durations.
      */
-    u_int32_t sample_rate() const;
+    [[nodiscard]] u_int32_t sample_rate() const;
 
-    u_int32_t rate() const override;
+    [[nodiscard]] u_int32_t rate() const override;
 
     void reset() override;
 
@@ -186,7 +186,7 @@ public:
      * Creates a FrameClock initialized at frame 0. The frame rate determines
      * the relationship between frame counts and real-time durations.
      */
-    FrameClock(unsigned int frame_rate = 60);
+    FrameClock(u_int64_t frame_rate = 60);
 
     /**
      * @brief Advances the clock by the specified number of frames
@@ -197,7 +197,7 @@ public:
      */
     void tick(u_int64_t frames = 1) override;
 
-    u_int64_t current_position() const override;
+    [[nodiscard]] u_int64_t current_position() const override;
 
     /**
      * @brief Gets the current frame number
@@ -205,21 +205,21 @@ public:
      *
      * Frame-specific accessor for compatibility with existing visual code.
      */
-    u_int64_t current_frame() const;
+    [[nodiscard]] u_int64_t current_frame() const;
 
     /**
      * @brief Converts current frame position to seconds
      * @return Current time in seconds based on frame rate
      */
-    double current_time() const override;
+    [[nodiscard]] double current_time() const override;
 
-    u_int32_t rate() const override;
+    [[nodiscard]] u_int32_t rate() const override;
 
     /**
      * @brief Gets the video frame rate
      * @return Number of frames per second
      */
-    unsigned int frame_rate() const;
+    [[nodiscard]] u_int64_t frame_rate() const;
 
     void reset() override;
 
@@ -227,7 +227,7 @@ private:
     /**
      * @brief Video frame rate in frames per second
      */
-    unsigned int m_frame_rate;
+    u_int64_t m_frame_rate;
 
     /**
      * @brief Current frame position counter
@@ -259,7 +259,7 @@ public:
      * Creates a flexible clock for custom processing domget_clockains.
      * The unit name is stored for debugging and logging purposes.
      */
-    CustomClock(unsigned int processing_rate = 1000, const std::string& unit_name = "units");
+    CustomClock(u_int64_t processing_rate = 1000, const std::string& unit_name = "units");
 
     /**
      * @brief Advances the clock by the specified number of custom units
@@ -267,21 +267,21 @@ public:
      */
     void tick(u_int64_t units = 1) override;
 
-    u_int64_t current_position() const override;
+    [[nodiscard]] u_int64_t current_position() const override;
 
     /**
      * @brief Converts current position to seconds using custom rate
      * @return Current time in seconds
      */
-    double current_time() const override;
+    [[nodiscard]] double current_time() const override;
 
-    unsigned int rate() const override;
+    [[nodiscard]] u_int32_t rate() const override;
 
     /**
      * @brief Gets the name of the processing units
      * @return String describing the unit type (e.g., "events", "packets", "cycles")
      */
-    const std::string& unit_name() const;
+    [[nodiscard]] const std::string& unit_name() const;
 
     void reset() override;
 
@@ -289,7 +289,7 @@ private:
     /**
      * @brief Custom processing rate in units per second
      */
-    unsigned int m_processing_rate;
+    u_int64_t m_processing_rate;
 
     /**
      * @brief Current position in custom units

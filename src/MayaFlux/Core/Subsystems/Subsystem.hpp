@@ -3,7 +3,7 @@
 
 namespace MayaFlux::Core {
 
-enum class SubsystemType {
+enum class SubsystemType : uint8_t {
     AUDIO,
     VISUAL,
     WINDOWING,
@@ -71,6 +71,12 @@ public:
     /** @brief Stop the subsystem's processing/event loops */
     virtual void stop() = 0;
 
+    /** @brief Pause the subsystem's processing/event loops */
+    virtual void pause() = 0;
+
+    /** @brief Resume the subsystem's processing/event loops */
+    virtual void resume() = 0;
+
     /**
      * @brief Get the processing token configuration this subsystem manages
      * @return SubsystemTokens defining buffer and node processing characteristics
@@ -79,19 +85,19 @@ public:
      * buffers and nodes. Used by the SubsystemManager for routing and coordination.
      * Should remain constant throughout the subsystem's lifetime.
      */
-    virtual SubsystemTokens get_tokens() const = 0;
+    [[nodiscard]] virtual SubsystemTokens get_tokens() const = 0;
 
     /** @brief Check if subsystem is ready for operation */
-    virtual bool is_ready() const = 0;
+    [[nodiscard]] virtual bool is_ready() const = 0;
 
     /** @brief Check if subsystem is currently processing */
-    virtual bool is_running() const = 0;
+    [[nodiscard]] virtual bool is_running() const = 0;
 
     /** @brief Shutdown and cleanup subsystem resources */
     virtual void shutdown() = 0;
 
     /** @brief Get the type of this subsystem */
-    virtual SubsystemType get_type() const = 0;
+    [[nodiscard]] virtual SubsystemType get_type() const = 0;
 
     /** @brief Get the processing context handle for this subsystem */
     virtual SubsystemProcessingHandle* get_processing_context_handle() = 0;
