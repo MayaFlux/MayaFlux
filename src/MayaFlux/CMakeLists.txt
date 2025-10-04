@@ -39,6 +39,7 @@ if(WIN32)
         RtAudio::rtaudio
         Eigen3::Eigen
         glfw
+        Vulkan::Vulkan
         ${AVCODEC_LIB}
         ${AVFORMAT_LIB}
         ${AVUTIL_LIB}
@@ -61,6 +62,7 @@ else()
         PkgConfig::RtAudio
         PkgConfig::Eigen
         PkgConfig::Glfw
+        PkgConfig::Vulkan
         PkgConfig::LIBAVCODEC
         PkgConfig::LIBAVFORMAT
         PkgConfig::LIBAVUTIL
