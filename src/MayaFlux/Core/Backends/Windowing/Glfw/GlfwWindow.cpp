@@ -4,6 +4,15 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef MOUSE_WHEELED  
+#undef MOUSE_WHEELED
+#endif
+#ifdef KEY_EVENT
+#undef KEY_EVENT
+#endif
+#ifdef FOCUS_EVENT
+#undef FOCUS_EVENT
+#endif
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #elif MAYAFLUX_PLATFORM_LINUX
@@ -381,7 +390,7 @@ void GlfwWindow::glfw_cursor_pos_callback(GLFWwindow* window, double xpos, doubl
         return;
 
     WindowEvent event;
-    event.type = WindowEventType::MOUSE_MOVED;
+    event.type = WindowEventType::MOUSE_MOTION;
     event.timestamp = glfwGetTime();
 
     event.data = WindowEvent::MousePosData {
@@ -441,3 +450,4 @@ void GlfwWindow::glfw_scroll_callback(GLFWwindow* window, double xoffset, double
 }
 
 }
+

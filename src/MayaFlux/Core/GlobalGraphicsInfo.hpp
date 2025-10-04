@@ -1,5 +1,17 @@
 #pragma once
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef MOUSE_WHEELED  
+#undef MOUSE_WHEELED
+#endif
+#ifdef KEY_EVENT
+#undef KEY_EVENT
+#endif
+#ifdef FOCUS_EVENT
+#undef FOCUS_EVENT
+#endif
+#endif
+
 namespace MayaFlux::Core {
 
 //==============================================================================
@@ -248,7 +260,7 @@ enum class WindowEventType : u_int8_t {
     KEY_PRESSED,
     KEY_RELEASED,
     KEY_REPEAT,
-    MOUSE_MOVED,
+    MOUSE_MOTION,
     MOUSE_BUTTON_PRESSED,
     MOUSE_BUTTON_RELEASED,
     MOUSE_SCROLLED,
