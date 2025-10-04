@@ -128,16 +128,6 @@ void Engine::Start()
         Init();
     }
     m_subsystem_manager->start_all_subsystems();
-
-    if (m_window_manager) {
-        try {
-            m_window_manager->start_event_loop();
-        } catch (const std::exception& e) {
-            error<std::runtime_error>(Journal::Component::Core, Journal::Context::Init,
-                std::source_location::current(),
-                "Failed to start window event loop: {}", e.what());
-        }
-    }
 }
 
 void Engine::Pause()

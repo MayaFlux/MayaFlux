@@ -12,6 +12,8 @@
 
 #include "MayaFlux/API/Random.hpp"
 
+#include "MayaFlux/API/Windowing.hpp"
+
 #include "MayaFlux/API/Yantra.hpp"
 
 #ifdef MAYASIMPLE

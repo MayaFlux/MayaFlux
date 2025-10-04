@@ -36,9 +36,9 @@ namespace internal {
         std::lock_guard<std::recursive_mutex> lock(engine_mutex);
         if (!engine_ref) {
             engine_ref = std::make_unique<Core::Engine>();
-            engine_ref->Init();
             std::atexit(cleanup_engine);
         }
+        initialized = true;
         return *engine_ref;
     }
 
@@ -118,16 +118,18 @@ void Resume()
     }
 }
 
+void Run()
+{
+    if (internal::initialized) {
+        get_context().Run();
+    }
+}
+
 void End()
 {
     if (internal::initialized) {
         internal::cleanup_engine();
     }
-}
-
-Core::WindowManager& get_window_manager()
-{
-    return *get_context().get_window_manager();
 }
 
 }

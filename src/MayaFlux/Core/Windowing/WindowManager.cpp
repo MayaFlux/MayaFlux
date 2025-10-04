@@ -46,6 +46,19 @@ std::shared_ptr<Window> WindowManager::create_window(const WindowCreateInfo& cre
     MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
         "Created window '{}' - total: {}", create_info.title, m_windows.size());
 
+    if (m_windows.size() == 1 && !m_event_loop_running) {
+        if (can_use_background_thread()) {
+            try {
+                start_event_loop();
+                MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+                    "Auto-started window event loop on first window creation");
+            } catch (const std::runtime_error& e) {
+                error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem, std::source_location::current(),
+                    "Could not auto-start event loop: {}", e.what());
+            }
+        }
+    }
+
     return window;
 }
 
