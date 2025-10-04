@@ -108,23 +108,6 @@ public:
     [[nodiscard]] std::coroutine_handle<promise_type> get_handle() const;
 
     /**
-     * @brief Get auto_resume flag from promise
-     * @return True if coroutine should be automatically resumed
-     */
-    [[nodiscard]] virtual bool get_auto_resume() const
-    {
-        return m_handle.promise().auto_resume;
-    }
-    /**
-     * @brief Set auto_resume flag in promise
-     * @param auto_resume Whether the coroutine should be automatically resumed
-     */
-    virtual void set_auto_resume(bool auto_resume)
-    {
-        m_handle.promise().auto_resume = auto_resume;
-    }
-
-    /**
      * @brief Get should_terminate flag from promise
      * @return True if coroutine should be terminated
      */

@@ -87,6 +87,7 @@ void EventAwaiter::try_resume()
 {
     if (auto event = m_source.pop_event(m_filter)) {
         m_result = *event;
+        m_source.unregister_waiter(this);
         m_is_suspended = false;
         m_handle.resume();
     }

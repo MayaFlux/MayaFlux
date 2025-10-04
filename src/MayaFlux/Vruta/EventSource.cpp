@@ -1,7 +1,5 @@
 #include "EventSource.hpp"
 
-#include <algorithm>
-
 #include "MayaFlux/Kriya/Awaiters.hpp"
 
 namespace MayaFlux::Vruta {

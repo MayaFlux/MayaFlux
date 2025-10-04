@@ -97,6 +97,7 @@ void* Event::get_state_impl_raw(const std::string& key)
     }
     return nullptr;
 }
+
 void Event::resume()
 {
     if (m_handle && !m_handle.done()) {
