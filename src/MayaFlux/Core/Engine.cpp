@@ -4,6 +4,7 @@
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -36,6 +37,7 @@ Engine::Engine(Engine&& other) noexcept
     , m_buffer_manager(std::move(other.m_buffer_manager))
     , m_subsystem_manager(std::move(other.m_subsystem_manager))
     , m_window_manager(std::move(other.m_window_manager))
+    , m_event_manager(std::move(other.m_event_manager))
     , m_rng(std::move(other.m_rng))
 {
     other.m_is_initialized = false;
@@ -55,6 +57,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
         m_buffer_manager = std::move(other.m_buffer_manager);
         m_scheduler = std::move(other.m_scheduler);
         m_window_manager = std::move(other.m_window_manager);
+        m_event_manager = std::move(other.m_event_manager);
         m_rng = std::move(other.m_rng);
 
         m_is_initialized = other.m_is_initialized;
@@ -98,6 +101,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo&
     m_graphics_info = graphicsInfo;
 
     m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
+    m_event_manager = std::make_shared<Vruta::EventManager>();
 
     m_buffer_manager = std::make_shared<Buffers::BufferManager>(
         m_stream_info.output.channels,

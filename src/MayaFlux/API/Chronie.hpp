@@ -8,6 +8,7 @@ namespace Nodes {
 
 namespace Vruta {
     class TaskScheduler;
+    class EventManager;
     class SoundRoutine;
 }
 
@@ -23,6 +24,15 @@ namespace Kriya {
  * All scheduled tasks using the convenience functions will use this scheduler.
  */
 std::shared_ptr<Vruta::TaskScheduler> get_scheduler();
+
+/**
+ * @brief Gets the event manager from the default engine
+ * @return Shared pointer to the centrally managed EventManager
+ *
+ * Returns the event manager that's managed by the default engine instance.
+ * Used for handling windowing and input events.
+ */
+std::shared_ptr<Vruta::EventManager> get_event_manager();
 
 /**
  * @brief Creates a simple task that calls a function at a specified interval

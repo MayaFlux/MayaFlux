@@ -2,16 +2,19 @@
 
 #include "SubsystemManager.hpp"
 
+#include "GlobalGraphicsInfo.hpp"
+#include "GlobalStreamInfo.hpp"
+
 namespace MayaFlux::Nodes::Generator::Stochastics {
 class NoiseEngine;
 }
 
-#include "GlobalGraphicsInfo.hpp"
-#include "GlobalStreamInfo.hpp"
+namespace MayaFlux::Vruta {
+class EventManager;
+}
 
 namespace MayaFlux::Core {
 
-class SubsystemManager;
 class WindowManager;
 
 // struct GlobalEngineInfo {
@@ -270,6 +273,15 @@ public:
     inline std::shared_ptr<WindowManager> get_window_manager() { return m_window_manager; }
 
     /**
+     * @brief Gets the event manager
+     * @return Shared pointer to the EventManager for input/event handling
+     *
+     * The EventManager processes input events (keyboard, mouse, etc.).
+     * Access through Engine ensures events are routed correctly to windows.
+     */
+    inline std::shared_ptr<Vruta::EventManager> get_event_manager() { return m_event_manager; }
+
+    /**
      * @brief Gets the stochastic signal generator engine
      * @return Pointer to the NoiseEngine for random signal generation
      *
@@ -320,6 +332,7 @@ private:
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager; ///< Buffer manager
     std::shared_ptr<SubsystemManager> m_subsystem_manager;
     std::shared_ptr<WindowManager> m_window_manager; ///< Window manager (Windowing subsystem)
+    std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager (currently only glfw events)
     std::unique_ptr<Nodes::Generator::Stochastics::NoiseEngine> m_rng; ///< Stochastic signal generator
 };
 

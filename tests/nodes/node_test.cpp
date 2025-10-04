@@ -493,6 +493,8 @@ protected:
         noise = std::make_shared<Nodes::Generator::Stochastics::NoiseEngine>();
         fir_coeffs = { 0.2, 0.2, 0.2, 0.2, 0.2 };
         fir = std::make_shared<Nodes::Filters::FIR>(sine, fir_coeffs);
+
+        MayaFlux::Init();
     }
 
     std::shared_ptr<Nodes::Generator::Sine> sine;
