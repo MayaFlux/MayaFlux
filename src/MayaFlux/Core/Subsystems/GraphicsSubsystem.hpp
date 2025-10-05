@@ -1,0 +1,161 @@
+#pragma once
+
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
+#include "Subsystem.hpp"
+
+namespace MayaFlux::Vruta {
+class FrameClock;
+}
+
+namespace MayaFlux::Core {
+
+class VKContext;
+
+/**
+ * @class GraphicsSubsystem
+ * @brief Vulkan-based graphics subsystem for visual processing
+ *
+ * Manages graphics thread, Vulkan context, and frame-based processing.
+ * Parallel to AudioSubsystem but with self-driven timing model.
+ *
+ * **Key Architectural Differences from AudioSubsystem:**
+ *
+ * AudioSubsystem:
+ *   RTAudio callback → process() → scheduler.tick(samples)
+ *   Clock is externally driven by audio hardware
+ *
+ * GraphicsSubsystem:
+ *   Graphics thread loop → clock.tick() → process() → scheduler observes
+ *   Clock is self-driven based on wall-clock time
+ *
+ * The FrameClock manages its own timing and the subsystem's process
+ * methods are called from the graphics thread loop, not from an
+ * external callback.
+ */
+class GraphicsSubsystem : public ISubsystem {
+public:
+    GraphicsSubsystem();
+    ~GraphicsSubsystem() override;
+
+    /**
+     * @brief Initialize with graphics configuration
+     * @param handle Processing handle for domain registration
+     * @param surface_info Global graphics/windowing configuration
+     */
+    void initialize(SubsystemProcessingHandle& handle,
+        const GraphicsSurfaceInfo& surface_info);
+
+    void register_callbacks() override;
+    void start() override;
+    void stop() override;
+    void pause() override;
+    void resume() override;
+
+    [[nodiscard]] SubsystemTokens get_tokens() const override { return m_subsystem_tokens; }
+
+    /**
+     * @brief Get Vulkan context
+     */
+    [[nodiscard]] VKContext& get_vulkan_context() { return *m_vulkan_context; }
+    [[nodiscard]] const VKContext& get_vulkan_context() const { return *m_vulkan_context; }
+
+    /**
+     * @brief Get frame clock
+     *
+     * The FrameClock is self-driven and manages its own timing.
+     * The scheduler reads from it but doesn't control it.
+     */
+    [[nodiscard]] Vruta::FrameClock& get_frame_clock() { return *m_frame_clock; }
+    [[nodiscard]] const Vruta::FrameClock& get_frame_clock() const { return *m_frame_clock; }
+
+    /**
+     * @brief Get graphics thread ID
+     */
+    [[nodiscard]] std::thread::id get_graphics_thread_id() const
+    {
+        return m_graphics_thread_id;
+    }
+
+    /**
+     * @brief Check if currently on graphics thread
+     */
+    [[nodiscard]] bool is_graphics_thread() const
+    {
+        return std::this_thread::get_id() == m_graphics_thread_id;
+    }
+
+    /**
+     * @brief Get target frame rate
+     */
+    [[nodiscard]] uint32_t get_target_fps() const;
+
+    /**
+     * @brief Get actual measured FPS
+     */
+    [[nodiscard]] double get_measured_fps() const;
+
+    /**
+     * @brief Set target frame rate (can be changed at runtime)
+     */
+    void set_target_fps(uint32_t fps);
+
+    /**
+     * @brief Unified processing callback (alternative to separate methods)
+     *
+     * This is called once per frame and handles all processing:
+     * - Visual nodes (VISUAL_RATE)
+     * - Graphics buffers (GRAPHICS_BACKEND)
+     * - Frame coroutines (FRAME_ACCURATE)
+     *
+     * Can be overridden or extended via hooks.
+     */
+    void process();
+
+private:
+    std::unique_ptr<VKContext> m_vulkan_context;
+    std::shared_ptr<Vruta::FrameClock> m_frame_clock;
+
+    std::thread m_graphics_thread;
+    std::thread::id m_graphics_thread_id;
+    std::atomic<bool> m_running { false };
+    std::atomic<bool> m_paused { false };
+
+    SubsystemTokens m_subsystem_tokens; ///< Processing token configuration
+    SubsystemProcessingHandle* m_handle; ///< Reference to processing handle
+    GraphicsSurfaceInfo m_graphics_info; ///< Graphics/windowing configuration
+
+    /**
+     * @brief Register custom frame processor with scheduler
+     *
+     * This is the key integration point that makes graphics timing work.
+     * Registers a custom processor for FRAME_ACCURATE token that:
+     * - Does NOT tick the clock (already done)
+     * - Just processes coroutines based on current clock position
+     */
+    void register_frame_processor();
+
+    /**
+     * @brief Graphics thread main loop
+     *
+     * Self-driven frame processing:
+     * 1. Tick frame clock (advances based on wall-clock time)
+     * 2. Process visual nodes (VISUAL_RATE nodes)
+     * 3. Process graphics buffers (GRAPHICS_BACKEND buffers)
+     * 4. Tick scheduler coroutines (FRAME_ACCURATE tasks)
+     * 5. Record/submit Vulkan commands (future)
+     * 6. Wait for next frame (vsync timing)
+     */
+    void graphics_thread_loop();
+
+    /**
+     * @brief Process all FRAME_ACCURATE coroutines for given frames
+     * @param tasks Vector of routines to process
+     * @param processing_units Number of frames to process
+     *
+     * Advances the frame clock and processes all FRAME_ACCURATE tasks
+     * that are ready to execute for each frame. This is called from
+     * the graphics thread loop after ticking the frame clock.
+     */
+    void process_frame_coroutines_impl(const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, u_int64_t processing_units);
+};
+}

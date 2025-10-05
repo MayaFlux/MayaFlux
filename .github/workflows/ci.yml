@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  push:
-    branches: [develop]
+  # push:
+  #   branches: [develop]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -61,7 +61,7 @@ jobs:
         shell: bash
         run: |
           brew update
-          brew install rtaudio molten-vk eigen magic_enum fmt onedpl ffmpeg glfw googletest
+          brew install rtaudio eigen magic_enum fmt onedpl ffmpeg glfw googletest
           for pkg in "${pkgs[@]}"; do
             if ! brew list --formula | grep -q "^$pkg\$"; then
               echo "🧩 Installing $pkg..."
