@@ -26,6 +26,9 @@ using token_processing_func_t = std::function<void(const std::vector<std::shared
  */
 namespace MayaFlux::Core {
 
+class Window;
+class WindowManager;
+
 /**
  * @enum HookPosition
  * @brief Defines the position in the processing cycle where a hook should be executed
@@ -179,6 +182,21 @@ private:
     Vruta::ProcessingToken m_token;
 };
 
+class WindowManagerHandle {
+public:
+    /** @brief Constructs handle for specific window manager */
+    WindowManagerHandle(std::shared_ptr<Core::WindowManager> window_manager);
+
+    /** @brief Process window events and frame hooks */
+    void process();
+
+    /** @brief Get list of windows that are open and not minimized */
+    [[nodiscard]] std::vector<std::shared_ptr<Core::Window>> get_processing_windows() const;
+
+private:
+    std::shared_ptr<Core::WindowManager> m_window_manager;
+};
+
 /**
  * @class SubsystemProcessingHandle
  * @brief Unified interface combining buffer and node processing for subsystems
@@ -194,6 +212,13 @@ public:
         std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
         SubsystemTokens tokens);
 
+    SubsystemProcessingHandle(
+        std::shared_ptr<Buffers::BufferManager> buffer_manager,
+        std::shared_ptr<Nodes::NodeGraphManager> node_manager,
+        std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
+        std::shared_ptr<Core::WindowManager> window_manager,
+        SubsystemTokens tokens);
+
     /** @brief Buffer processing interface */
     BufferProcessingHandle buffers;
 
@@ -201,6 +226,8 @@ public:
     NodeProcessingHandle nodes;
 
     TaskSchedulerHandle tasks;
+
+    WindowManagerHandle windows;
 
     /** @brief Get processing token configuration */
     [[nodiscard]] inline SubsystemTokens get_tokens() const { return m_tokens; }

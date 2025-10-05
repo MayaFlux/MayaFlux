@@ -3,6 +3,8 @@
 
 #include "Subsystems/AudioSubsystem.hpp"
 
+#include "Subsystems/GraphicsSubsystem.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Core {
@@ -10,10 +12,12 @@ namespace MayaFlux::Core {
 SubsystemManager::SubsystemManager(
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
-    std::shared_ptr<Vruta::TaskScheduler> task_scheduler)
+    std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
+    std::shared_ptr<Core::WindowManager> window_manager)
     : m_node_graph_manager(std::move(node_graph_manager))
     , m_buffer_manager(std::move(buffer_manager))
     , m_task_scheduler(std::move(task_scheduler))
+    , m_window_manager(std::move(window_manager))
 {
     if (!m_node_graph_manager) {
         fatal(Journal::Component::Core, Journal::Context::Init,
@@ -30,11 +34,28 @@ SubsystemManager::SubsystemManager(
             std::source_location::current(),
             "SubsystemManager requires valid TaskScheduler");
     }
+    if (!m_window_manager) {
+        MF_WARN(Journal::Component::Core, Journal::Context::Init,
+            "No WindowManager provided - Graphics subsystems will be unavailable");
+    }
 }
 
 void SubsystemManager::create_audio_subsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type)
 {
     create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, stream_info, backend_type);
+}
+
+void SubsystemManager::create_graphics_subsystem(const GraphicsSurfaceInfo& surface_info)
+{
+    if (!m_window_manager) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::Init,
+            std::source_location::current(),
+            "Cannot create GraphicsSubsystem without a valid WindowManager");
+    }
+
+    create_subsystem_internal<GraphicsSubsystem>(SubsystemType::GRAPHICS, surface_info);
 }
 
 void SubsystemManager::add_subsystem(SubsystemType type, const std::shared_ptr<ISubsystem>& subsystem)
@@ -44,6 +65,7 @@ void SubsystemManager::add_subsystem(SubsystemType type, const std::shared_ptr<I
         m_buffer_manager,
         m_node_graph_manager,
         m_task_scheduler,
+        m_window_manager,
         tokens);
 
     subsystem->initialize(*handle);
@@ -56,6 +78,14 @@ void SubsystemManager::add_subsystem(SubsystemType type, const std::shared_ptr<I
 std::shared_ptr<AudioSubsystem> SubsystemManager::get_audio_subsystem()
 {
     if (auto subsystem = std::dynamic_pointer_cast<AudioSubsystem>(get_subsystem(SubsystemType::AUDIO))) {
+        return subsystem;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<GraphicsSubsystem> SubsystemManager::get_graphics_subsystem()
+{
+    if (auto subsystem = std::dynamic_pointer_cast<GraphicsSubsystem>(get_subsystem(SubsystemType::GRAPHICS))) {
         return subsystem;
     }
     return nullptr;

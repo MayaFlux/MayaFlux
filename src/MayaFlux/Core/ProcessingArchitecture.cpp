@@ -1,5 +1,6 @@
 #include "ProcessingArchitecture.hpp"
 
+#include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
@@ -125,6 +126,26 @@ void TaskSchedulerHandle::process(u_int64_t processing_units)
     m_scheduler->process_token(m_token, processing_units);
 }
 
+WindowManagerHandle::WindowManagerHandle(std::shared_ptr<Core::WindowManager> window_manager)
+    : m_window_manager(std::move(window_manager))
+{
+}
+
+void WindowManagerHandle::process()
+{
+    if (m_window_manager) {
+        m_window_manager->process();
+    }
+}
+
+std::vector<std::shared_ptr<Core::Window>> WindowManagerHandle::get_processing_windows() const
+{
+    if (m_window_manager) {
+        return m_window_manager->get_processing_windows();
+    }
+    return {};
+}
+
 SubsystemProcessingHandle::SubsystemProcessingHandle(
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Nodes::NodeGraphManager> node_manager,
@@ -133,6 +154,21 @@ SubsystemProcessingHandle::SubsystemProcessingHandle(
     : buffers(std::move(buffer_manager), tokens.Buffer)
     , nodes(std::move(node_manager), tokens.Node)
     , tasks(std::move(task_scheduler), tokens.Task)
+    , windows(nullptr)
+    , m_tokens(tokens)
+{
+}
+
+SubsystemProcessingHandle::SubsystemProcessingHandle(
+    std::shared_ptr<Buffers::BufferManager> buffer_manager,
+    std::shared_ptr<Nodes::NodeGraphManager> node_manager,
+    std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
+    std::shared_ptr<Core::WindowManager> window_manager,
+    SubsystemTokens tokens)
+    : buffers(std::move(buffer_manager), tokens.Buffer)
+    , nodes(std::move(node_manager), tokens.Node)
+    , tasks(std::move(task_scheduler), tokens.Task)
+    , windows(std::move(window_manager))
     , m_tokens(tokens)
 {
 }

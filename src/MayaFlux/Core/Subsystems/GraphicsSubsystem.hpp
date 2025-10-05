@@ -34,16 +34,18 @@ class VKContext;
  */
 class GraphicsSubsystem : public ISubsystem {
 public:
-    GraphicsSubsystem();
+    /**
+     * @brief GraphicsSubsystem constructor
+     * @param surface_info Global graphics/windowing configuration
+     */
+    GraphicsSubsystem(const GraphicsSurfaceInfo& surface_info);
     ~GraphicsSubsystem() override;
 
     /**
      * @brief Initialize with graphics configuration
      * @param handle Processing handle for domain registration
-     * @param surface_info Global graphics/windowing configuration
      */
-    void initialize(SubsystemProcessingHandle& handle,
-        const GraphicsSurfaceInfo& surface_info);
+    void initialize(SubsystemProcessingHandle& handle) override;
 
     void register_callbacks() override;
     void start() override;
@@ -111,6 +113,12 @@ public:
      */
     void process();
 
+    bool is_ready() const override { return m_is_ready; }
+    bool is_running() const override { return m_running.load(std::memory_order_acquire) && !m_paused.load(std::memory_order_acquire); }
+    void shutdown() override;
+    SubsystemType get_type() const override { return SubsystemType::GRAPHICS; }
+    SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
+
 private:
     std::unique_ptr<VKContext> m_vulkan_context;
     std::shared_ptr<Vruta::FrameClock> m_frame_clock;
@@ -120,9 +128,11 @@ private:
     std::atomic<bool> m_running { false };
     std::atomic<bool> m_paused { false };
 
+    bool m_is_ready {};
+
     SubsystemTokens m_subsystem_tokens; ///< Processing token configuration
     SubsystemProcessingHandle* m_handle; ///< Reference to processing handle
-    GraphicsSurfaceInfo m_graphics_info; ///< Graphics/windowing configuration
+    GraphicsSurfaceInfo m_surface_info; ///< Graphics/windowing configuration
 
     /**
      * @brief Register custom frame processor with scheduler

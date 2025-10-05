@@ -110,16 +110,18 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo&
 
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
 
-    m_subsystem_manager = std::make_shared<SubsystemManager>(
-        m_node_graph_manager, m_buffer_manager, m_scheduler);
-
-    m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
-
     if (m_graphics_info.windowing_backend != GraphicsSurfaceInfo::WindowingBackend::NONE) {
         m_window_manager = std::make_shared<WindowManager>(m_graphics_info);
     } else {
         MF_WARN(Journal::Component::Core, Journal::Context::Init, "No windowing backend selected - running in audio-only mode");
     }
+
+    m_subsystem_manager = std::make_shared<SubsystemManager>(
+        m_node_graph_manager, m_buffer_manager, m_scheduler, m_window_manager);
+
+    m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
+
+    m_subsystem_manager->create_graphics_subsystem(m_graphics_info);
 
     m_is_initialized = true;
 
