@@ -66,8 +66,7 @@ TEST_F(SubsystemManagerTest, ValidConstruction)
     ASSERT_NE(subsystem_manager, nullptr);
 
     EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
-    EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::VISUAL));
-    EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::WINDOWING));
+    EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::GRAPHICS));
 }
 
 /* TEST_F(SubsystemManagerTest, ConstructionWithNullManagers)
@@ -270,14 +269,14 @@ TEST_F(SubsystemManagerTest, CrossAccessPermissions)
 
     EXPECT_NO_THROW({
         subsystem_manager->allow_cross_access(
-            Core::SubsystemType::VISUAL,
+            Core::SubsystemType::GRAPHICS,
             Core::SubsystemType::AUDIO);
     });
 
     // Test cross-subsystem buffer reading
     // Note: This would typically fail since VISUAL subsystem doesn't exist
     auto buffer_data = subsystem_manager->read_cross_subsystem_buffer(
-        Core::SubsystemType::VISUAL,
+        Core::SubsystemType::GRAPHICS,
         Core::SubsystemType::AUDIO,
         0);
 
@@ -377,11 +376,10 @@ TEST_F(SubsystemManagerTest, InvalidSubsystemAccess)
         node_graph_manager, buffer_manager, task_scheduler);
 
     EXPECT_EQ(subsystem_manager->get_audio_subsystem(), nullptr);
-    EXPECT_EQ(subsystem_manager->get_subsystem(Core::SubsystemType::VISUAL), nullptr);
-    EXPECT_EQ(subsystem_manager->get_subsystem(Core::SubsystemType::WINDOWING), nullptr);
+    EXPECT_EQ(subsystem_manager->get_subsystem(Core::SubsystemType::GRAPHICS), nullptr);
 
     EXPECT_NO_THROW({
-        subsystem_manager->remove_subsystem(Core::SubsystemType::VISUAL);
+        subsystem_manager->remove_subsystem(Core::SubsystemType::GRAPHICS);
     });
 
     EXPECT_NO_THROW({
@@ -391,7 +389,7 @@ TEST_F(SubsystemManagerTest, InvalidSubsystemAccess)
             [](unsigned int) { });
     });
 
-    EXPECT_FALSE(subsystem_manager->has_process_hook(Core::SubsystemType::VISUAL, "test_hook"));
+    EXPECT_FALSE(subsystem_manager->has_process_hook(Core::SubsystemType::GRAPHICS, "test_hook"));
 }
 
 TEST_F(SubsystemManagerTest, DuplicateSubsystemCreation)

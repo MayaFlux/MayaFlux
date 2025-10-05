@@ -5,8 +5,7 @@ namespace MayaFlux::Core {
 
 enum class SubsystemType : uint8_t {
     AUDIO,
-    VISUAL,
-    WINDOWING,
+    GRAPHICS,
     NETWORK,
     CUSTOM
 };

@@ -14,14 +14,14 @@ bool GLFWSingleton::initialize()
     if (s_initialized)
         return true;
 
-    glfwSetErrorCallback([](int error, const char* description) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem, "GLFW Error {}: {}", error, description);
-    });
-
     if (!glfwInit()) {
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem, "Failed to initialize GLFW");
         return false;
     }
+
+    glfwSetErrorCallback([](int error, const char* description) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem, "GLFW Error {}: {}", error, description);
+    });
 
     s_initialized = true;
     s_window_count = 0;

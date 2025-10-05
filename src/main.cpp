@@ -42,7 +42,9 @@ int main()
 
         create();
 
-        MayaFlux::Run();
+        std::cout << "Press any key to stop..." << std::endl;
+        std::cin.get();
+        MayaFlux::End();
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

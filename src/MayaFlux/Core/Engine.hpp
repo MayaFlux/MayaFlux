@@ -184,19 +184,6 @@ public:
     void Resume();
 
     /**
-     * @brief Run main loop (optional - for simple apps)
-     *
-     * Blocks until windows close or shutdown requested.
-     * On platforms that support it, windows run on background thread.
-     * On macOS, polls windows on main thread.
-     */
-    void Run();
-
-    /**
-     * @brief Request shutdown of main loop
-     */
-    void Request_shutdown();
-    /**
      * @brief Stops all processing and performs clean shutdown
      *
      * Orchestrates the shutdown sequence:

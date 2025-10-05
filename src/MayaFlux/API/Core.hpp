@@ -112,13 +112,6 @@ void Pause();
 void Resume();
 
 /**
- * @brief Runs the main loop of the default engine
- *
- * Convenience wrapper for Engine::Run() on the default engine.
- */
-void Run();
-
-/**
  * @brief Stops and cleans up the default engine
  *
  * Convenience wrapper for Engine::End() on the default engine.

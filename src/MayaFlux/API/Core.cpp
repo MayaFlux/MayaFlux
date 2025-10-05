@@ -118,13 +118,6 @@ void Resume()
     }
 }
 
-void Run()
-{
-    if (internal::initialized) {
-        get_context().Run();
-    }
-}
-
 void End()
 {
     if (internal::initialized) {

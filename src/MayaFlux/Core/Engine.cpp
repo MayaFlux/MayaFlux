@@ -154,47 +154,6 @@ void Engine::Resume()
     m_is_paused = false;
 }
 
-void Engine::Run()
-{
-    if (!m_is_initialized) {
-        throw std::runtime_error("Engine must be initialized before run()");
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            std::source_location::current(),
-            "Engine must be initialized before run()");
-    }
-
-    if (!m_window_manager) {
-        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Running in headless mode");
-
-        while (!m_should_shutdown) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        return;
-    }
-
-    auto frame_time = Utils::frame_duration_ms(m_graphics_info.target_frame_rate);
-
-    if (m_window_manager->is_event_loop_running()) {
-        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Running with background window thread - main thread available");
-
-        while (!m_should_shutdown && m_window_manager->window_count() > 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    } else {
-        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Running with main thread window polling (target: {} FPS)",
-            m_window_manager->get_config().target_frame_rate);
-
-        while (!m_should_shutdown && m_window_manager->process()) {
-            std::this_thread::sleep_for(frame_time);
-        }
-    }
-
-    End();
-}
-
 void Engine::End()
 {
     if (m_subsystem_manager) {
@@ -236,11 +195,6 @@ void Engine::End()
         }
         m_window_manager.reset();
     }
-}
-
-void Engine::Request_shutdown()
-{
-    m_should_shutdown = true;
 }
 
 bool Engine::is_running() const
