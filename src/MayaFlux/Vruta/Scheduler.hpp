@@ -16,6 +16,16 @@ struct TaskEntry {
     }
 };
 
+/** @typedef token_processing_func_t
+ *  @brief Function type for processing tasks in a specific token domain
+ *
+ *  This function type defines the signature for custom processing functions
+ *  that can be registered to handle tasks in a specific processing domain.
+ *  The function receives a vector of routines and the number of processing
+ *  units (samples, frames, etc.) to advance.
+ */
+using token_processing_func_t = std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)>;
+
 /**
  * @class TaskScheduler
  * @brief Token-based multimodal task scheduling system for unified coroutine processing
@@ -130,9 +140,7 @@ public:
      * a graphics backend might register a processor that batches frame-accurate
      * tasks for optimal GPU utilization.
      */
-    void register_token_processor(
-        ProcessingToken token,
-        std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)> processor);
+    void register_token_processor(ProcessingToken token, token_processing_func_t processor);
 
     /**
      * @brief Convert seconds to processing units for a specific domain
@@ -388,7 +396,7 @@ private:
      * Allows registering domain-specific scheduling algorithms that can
      * optimize task execution for particular backends or use cases.
      */
-    std::unordered_map<ProcessingToken, std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)>> m_token_processors;
+    std::unordered_map<ProcessingToken, token_processing_func_t> m_token_processors;
 
     /**
      * @brief Default processing rates for each domain

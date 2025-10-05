@@ -117,7 +117,7 @@ if (-not $env:VCPKG_ROOT) {
 
 Write-Host ""
 Write-Host "Installing dependencies (x64-windows)..."
-& (Join-Path $VCPKG_DIR "vcpkg") install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic-enum glfw3
+& (Join-Path $VCPKG_DIR "vcpkg") install --triplet x64-windows rtaudio vulkan ffmpeg gtest eigen3 magic-enum glfw3
 if (-not $?) {
     Write-Host "Dependency installation failed"
     exit 1
@@ -127,6 +127,7 @@ if (-not $?) {
 Write-Host "Verifying package installation..."
 $installed = & (Join-Path $VCPKG_DIR "vcpkg") list
 if (-not ($installed -match "rtaudio")) { Write-Host "Warning: rtaudio may not be installed correctly." }
+if (-not ($installed -match "vulkan")) { Write-Host "Warning: vulkan may not be installed correctly." }
 if (-not ($installed -match "ffmpeg")) { Write-Host "Warning: ffmpeg may not be installed correctly." }
 if (-not ($installed -match "gtest")) { Write-Host "Warning: gtest may not be installed correctly." }
 if (-not ($installed -match "eigen3")) { Write-Host "Warning: eigen3 may not be installed correctly." }

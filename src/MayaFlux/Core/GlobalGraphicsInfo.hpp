@@ -1,7 +1,9 @@
 #pragma once
 
+#include <filesystem>
+
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-#ifdef MOUSE_WHEELED  
+#ifdef MOUSE_WHEELED
 #undef MOUSE_WHEELED
 #endif
 #ifdef KEY_EVENT
@@ -13,6 +15,101 @@
 #endif
 
 namespace MayaFlux::Core {
+
+//==============================================================================
+// GRAPHICS BACKEND CONFIGURATION (Vulkan/OpenGL/etc.)
+//==============================================================================
+
+/**
+ * @struct GraphicsBackendInfo
+ * @brief Configuration for graphics API backend (Vulkan/OpenGL/etc.)
+ *
+ * Separate from windowing - this is GPU/rendering configuration.
+ * GraphicsSurfaceInfo handles windows, this handles the graphics API.
+ */
+struct GraphicsBackendInfo {
+    /** @brief Enable validation layers (debug builds) */
+    bool enable_validation = true;
+
+    /** @brief Enable GPU debug markers (for profiling tools) */
+    bool enable_debug_markers = false;
+
+    /** @brief Required device features (Vulkan-specific) */
+    struct {
+        bool compute_shaders = true;
+        bool geometry_shaders = false;
+        bool tessellation_shaders = false;
+        bool multi_viewport = false;
+        bool sampler_anisotropy = true;
+        bool fill_mode_non_solid = false;
+    } required_features;
+
+    /** @brief Memory allocation strategy */
+    enum class MemoryStrategy : u_int8_t {
+        CONSERVATIVE, ///< Minimize allocations
+        BALANCED, ///< Balance speed and memory
+        AGGRESSIVE ///< Maximize performance
+    } memory_strategy
+        = MemoryStrategy::BALANCED;
+
+    /** @brief Command buffer pooling strategy */
+    enum class CommandPooling : u_int8_t {
+        PER_THREAD, ///< One pool per thread
+        SHARED, ///< Shared pool
+        PER_QUEUE ///< One pool per queue family
+    } command_pooling
+        = CommandPooling::PER_THREAD;
+
+    /** @brief Maximum number of frames in flight (GPU pipelining) */
+    u_int32_t max_frames_in_flight = 2;
+
+    /** @brief Enable compute queue (separate from graphics) */
+    bool enable_compute_queue = true;
+
+    /** @brief Enable transfer queue (separate from graphics) */
+    bool enable_transfer_queue = false;
+
+    /** @brief Shader compilation strategy */
+    enum class ShaderCompilation : u_int8_t {
+        RUNTIME, ///< Compile at runtime
+        PRECOMPILED, ///< Use pre-compiled SPIR-V
+        CACHED ///< Cache compiled shaders
+    } shader_compilation
+        = ShaderCompilation::CACHED;
+
+    /** @brief Shader cache directory (if caching enabled) */
+    std::filesystem::path shader_cache_dir = "cache/shaders";
+
+    /** @brief Backend-specific extensions to request */
+    std::vector<std::string> required_extensions;
+    std::vector<std::string> optional_extensions;
+};
+
+/**
+ * @struct GraphicsResourceLimits
+ * @brief Resource limits and budgets for graphics subsystem
+ *
+ * Prevents runaway resource usage, similar to audio buffer limits.
+ */
+struct GraphicsResourceLimits {
+    /** @brief Maximum number of concurrent windows */
+    u_int32_t max_windows = 16;
+
+    /** @brief Maximum staging buffer size (MB) */
+    u_int32_t max_staging_buffer_mb = 256;
+
+    /** @brief Maximum compute buffer size (MB) */
+    u_int32_t max_compute_buffer_mb = 1024;
+
+    /** @brief Maximum texture cache size (MB) */
+    u_int32_t max_texture_cache_mb = 2048;
+
+    /** @brief Maximum number of descriptor sets */
+    u_int32_t max_descriptor_sets = 1024;
+
+    /** @brief Maximum number of pipeline state objects */
+    u_int32_t max_pipelines = 256;
+};
 
 //==============================================================================
 // GLOBAL VISUAL STREAM INFO (Parallel to GlobalStreamInfo)
@@ -126,6 +223,12 @@ struct GraphicsSurfaceInfo {
 
     /** @brief Backend-specific configuration parameters */
     std::unordered_map<std::string, std::any> backend_options;
+
+    /** @brief Graphics backend configuration */
+    GraphicsBackendInfo backend_config;
+
+    /** @brief Resource limits */
+    GraphicsResourceLimits resource_limits;
 };
 
 //==============================================================================

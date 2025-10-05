@@ -12,6 +12,9 @@ class BufferManager;
 
 namespace MayaFlux::Vruta {
 class TaskScheduler;
+class Routine;
+
+using token_processing_func_t = std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)>;
 }
 
 /**
@@ -162,8 +165,14 @@ public:
         std::shared_ptr<MayaFlux::Vruta::TaskScheduler> task_manager,
         MayaFlux::Vruta::ProcessingToken token);
 
+    /** @brief Register custom processing function for token domain */
+    void register_token_processor(Vruta::token_processing_func_t processor);
+
     /** @brief Process all tasks in token domain */
     void process(u_int64_t processing_units);
+
+    /** @brief Check if handle is valid */
+    [[nodiscard]] bool is_valid() const { return m_scheduler != nullptr; }
 
 private:
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;

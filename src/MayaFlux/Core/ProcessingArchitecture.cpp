@@ -115,6 +115,11 @@ TaskSchedulerHandle::TaskSchedulerHandle(
     }
 }
 
+void TaskSchedulerHandle::register_token_processor(Vruta::token_processing_func_t processor)
+{
+    m_scheduler->register_token_processor(m_token, std::move(processor));
+}
+
 void TaskSchedulerHandle::process(u_int64_t processing_units)
 {
     m_scheduler->process_token(m_token, processing_units);

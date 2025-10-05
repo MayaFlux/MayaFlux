@@ -126,9 +126,7 @@ void TaskScheduler::process_all_tokens()
     }
 }
 
-void TaskScheduler::register_token_processor(
-    ProcessingToken token,
-    std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)> processor)
+void TaskScheduler::register_token_processor(ProcessingToken token, token_processing_func_t processor)
 {
     ensure_domain(token);
     m_token_processors[token] = std::move(processor);
