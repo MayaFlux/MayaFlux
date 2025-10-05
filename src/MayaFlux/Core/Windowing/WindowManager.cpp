@@ -1,5 +1,7 @@
 #include "WindowManager.hpp"
 
+#include <algorithm>
+
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -43,6 +45,10 @@ std::shared_ptr<Window> WindowManager::create_window(const WindowCreateInfo& cre
     m_windows.push_back(window);
     m_window_lookup[create_info.title] = window;
 
+    if (window->get_create_info().register_for_processing) {
+        m_processing_windows.push_back(window);
+    }
+
     MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
         "Created window '{}' - total: {}", create_info.title, m_windows.size());
 
@@ -66,6 +72,11 @@ void WindowManager::destroy_window(const std::shared_ptr<Window>& window)
 {
     if (!window)
         return;
+
+    auto pr_it = std::ranges::find(m_processing_windows, window);
+    if (pr_it != m_processing_windows.end()) {
+        m_processing_windows.erase(pr_it);
+    }
 
     const std::string title = window->get_create_info().title;
     remove_from_lookup(window);
@@ -226,16 +237,7 @@ void WindowManager::event_loop_thread_func()
     while (!m_should_stop && window_count() > 0) {
         auto frame_start = std::chrono::steady_clock::now();
 
-        glfwPollEvents();
-
-        {
-            std::lock_guard<std::mutex> lock(m_hooks_mutex);
-            for (const auto& [name, hook] : m_frame_hooks) {
-                hook();
-            }
-        }
-
-        destroy_closed_windows();
+        process();
 
         auto frame_end = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(

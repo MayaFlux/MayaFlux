@@ -137,6 +137,11 @@ public:
      */
     void unregister_frame_hook(const std::string& name);
 
+    /**
+     * @brief Get windows registered for processing
+     */
+    std::vector<std::shared_ptr<Window>> get_processing_windows() const { return m_processing_windows; }
+
 private:
     GraphicsSurfaceInfo m_config;
     std::vector<std::shared_ptr<Window>> m_windows;
@@ -174,6 +179,8 @@ private:
 
     /** @brief Thread for background event polling */
     static bool can_use_background_thread();
+
+    std::vector<std::shared_ptr<Window>> m_processing_windows;
 };
 
 } // namespace MayaFlux::Core

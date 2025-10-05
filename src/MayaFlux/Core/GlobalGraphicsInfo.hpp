@@ -269,6 +269,9 @@ struct WindowCreateInfo {
     /** @brief Window always on top */
     bool floating = false;
 
+    /** @brief Register this window for processing (if false, no grpahics API handles visuals) */
+    bool register_for_processing = true;
+
     /** @brief Override global surface format (nullopt = use global default) */
     std::optional<GraphicsSurfaceInfo::SurfaceFormat> surface_format;
 

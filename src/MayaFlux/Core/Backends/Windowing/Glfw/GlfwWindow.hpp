@@ -73,12 +73,25 @@ public:
     Vruta::EventSource& get_event_source() override { return m_event_source; }
     [[nodiscard]] const Vruta::EventSource& get_event_source() const override { return m_event_source; }
 
+    /**
+     * @brief Check if window is registered with graphics subsystem
+     */
+    [[nodiscard]] bool is_graphics_registered() const override { return m_graphics_registered; }
+
+    /**
+     * @brief Mark window as registered/unregistered with graphics
+     * Called by GraphicsSubsystem during register/unregister
+     */
+    void set_graphics_registered(bool registered) override { m_graphics_registered = registered; }
+
 private:
     GLFWwindow* m_window = nullptr;
     WindowCreateInfo m_create_info;
     WindowState m_state;
     InputConfig m_input_config;
     WindowEventCallback m_event_callback;
+
+    bool m_graphics_registered {};
 
     Vruta::EventSource m_event_source;
 
