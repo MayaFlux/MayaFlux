@@ -31,7 +31,7 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle, const Grap
     m_handle = &handle;
     m_graphics_info = surface_info;
 
-    if (!m_vulkan_context->initialize(true)) {
+    if (!m_vulkan_context->initialize(m_graphics_info, true)) {
         error<std::runtime_error>(
             Journal::Component::Core,
             Journal::Context::GraphicsSubsystem,

@@ -1,11 +1,20 @@
 #include "VKContext.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
+
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#include <algorithm>
+
 namespace MayaFlux::Core {
 
-bool VKContext::initialize(bool enable_validation,
+bool VKContext::initialize(const GraphicsSurfaceInfo& surface_info, bool enable_validation,
     const std::vector<const char*>& required_extensions)
 {
+    m_surface_info = surface_info;
+
     if (!m_instance.initialize(enable_validation, required_extensions)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend, "Failed to initialize Vulkan instance!");
         return false;
@@ -21,8 +30,71 @@ bool VKContext::initialize(bool enable_validation,
     return true;
 }
 
+vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
+{
+    if (!window) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot create surface: null window");
+        return nullptr;
+    }
+
+    auto* glfw_window = dynamic_cast<GlfwWindow*>(window.get());
+    if (!glfw_window) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot create surface: window is not a GlfwWindow");
+        return nullptr;
+    }
+
+    GLFWwindow* glfw_handle = glfw_window->get_glfw_handle();
+    if (!glfw_handle) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot create surface: null GLFW handle");
+        return nullptr;
+    }
+
+    VkSurfaceKHR c_surface;
+    VkResult result = glfwCreateWindowSurface(
+        static_cast<VkInstance>(m_instance.get_instance()),
+        glfw_handle,
+        nullptr,
+        &c_surface);
+
+    if (result != VK_SUCCESS) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create window surface");
+        return nullptr;
+    }
+
+    vk::SurfaceKHR surface(c_surface);
+    m_surfaces.push_back(surface);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Surface created for window '{}'", window->get_create_info().title);
+
+    return surface;
+}
+
+void VKContext::destroy_surface(vk::SurfaceKHR surface)
+{
+    if (!surface)
+        return;
+
+    auto it = std::ranges::find(m_surfaces, surface);
+    if (it != m_surfaces.end()) {
+        m_instance.get_instance().destroySurfaceKHR(*it);
+        m_surfaces.erase(it);
+    }
+}
+
 void VKContext::cleanup()
 {
+    for (auto surface : m_surfaces) {
+        if (surface) {
+            m_instance.get_instance().destroySurfaceKHR(surface);
+        }
+    }
+    m_surfaces.clear();
+
     m_device.cleanup();
     m_instance.cleanup();
 }

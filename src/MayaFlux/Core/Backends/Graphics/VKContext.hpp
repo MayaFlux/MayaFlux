@@ -1,8 +1,11 @@
 #pragma once
 
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "VKDevice.hpp"
 
 namespace MayaFlux::Core {
+
+class Window;
 
 /**
  * @class VKContext
@@ -17,11 +20,12 @@ public:
 
     /**
      * @brief Initialize Vulkan context
+     * @param global_config Global graphics configuration
      * @param enable_validation Enable validation layers
      * @param required_extensions Required instance extensions
      * @return true if successful
      */
-    bool initialize(bool enable_validation = true,
+    bool initialize(const GraphicsSurfaceInfo& surface_info, bool enable_validation = true,
         const std::vector<const char*>& required_extensions = {});
 
     /**
@@ -67,9 +71,33 @@ public:
         return m_device.get_queue_families();
     }
 
+    /**
+     * @brief Create surface from window's native handles
+     * @param window Window to create surface for
+     * @return Surface handle, or null on failure
+     */
+    vk::SurfaceKHR create_surface(std::shared_ptr<Window> window);
+
+    /**
+     * @brief Destroy a specific surface
+     * Called when window is unregistered
+     */
+    void destroy_surface(vk::SurfaceKHR surface);
+
+    /**
+     * @brief Wait for device idle
+     */
+    void wait_idle();
+
+    const GraphicsSurfaceInfo& get_surface_info() const { return m_surface_info; }
+
 private:
     VKInstance m_instance;
     VKDevice m_device;
+
+    GraphicsSurfaceInfo m_surface_info;
+
+    std::vector<vk::SurfaceKHR> m_surfaces;
 };
 
 }
