@@ -16,7 +16,6 @@ else()
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
     pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
-    # pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3)
     pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
     pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
 

@@ -65,7 +65,7 @@ bool VKSwapchain::create(VKContext& context,
     create_info.imageColorSpace = surface_format.colorSpace;
     create_info.imageExtent = extent;
     create_info.imageArrayLayers = 1;
-    create_info.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
+    create_info.imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst;
 
     const auto& queue_families = m_context->get_queue_families();
 

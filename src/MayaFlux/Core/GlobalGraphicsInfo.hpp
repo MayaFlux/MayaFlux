@@ -140,7 +140,7 @@ struct GraphicsSurfaceInfo {
     };
 
     /** @brief Default surface format for new windows */
-    SurfaceFormat default_format = SurfaceFormat::B8G8R8A8_SRGB;
+    SurfaceFormat default_format = SurfaceFormat::R8G8B8A8_SRGB;
 
     /**
      * @enum ColorSpace

@@ -87,7 +87,7 @@ public:
     /**
      * @brief Wait for device idle
      */
-    void wait_idle();
+    void wait_idle() const { m_device.wait_idle(); }
 
     /**
      * @brief Get graphics surface info

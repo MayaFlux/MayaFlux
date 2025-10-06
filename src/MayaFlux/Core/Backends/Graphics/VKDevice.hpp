@@ -81,6 +81,16 @@ public:
      */
     [[nodiscard]] const QueueFamilyIndices& get_queue_families() const { return m_queue_families; }
 
+    /**
+     * @brief Wait for the device to become idle
+     */
+    void wait_idle() const
+    {
+        if (m_logical_device) {
+            m_logical_device.waitIdle();
+        }
+    }
+
 private:
     vk::PhysicalDevice m_physical_device; ///< Selected physical device (GPU)
     vk::Device m_logical_device; ///< Logical device handle
