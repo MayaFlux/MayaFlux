@@ -20,11 +20,12 @@ struct WindowSwapchainConfig {
     vk::SurfaceKHR surface;
     std::unique_ptr<VKSwapchain> swapchain;
 
-    vk::Semaphore image_available;
-    vk::Semaphore render_finished;
-    vk::Fence in_flight;
+    std::vector<vk::Semaphore> image_available;
+    std::vector<vk::Semaphore> render_finished;
+    std::vector<vk::Fence> in_flight;
 
     bool needs_recreation = false;
+    size_t current_frame = 0;
 
     WindowSwapchainConfig() = default;
 

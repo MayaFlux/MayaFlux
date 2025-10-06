@@ -14,18 +14,28 @@ void WindowSwapchainConfig::cleanup(VKContext& context)
 {
     vk::Device device = context.get_device();
 
-    if (image_available) {
-        device.destroySemaphore(image_available);
-        image_available = nullptr;
+    device.waitIdle();
+
+    for (auto& img : image_available) {
+        if (img) {
+            device.destroySemaphore(img);
+        }
     }
-    if (render_finished) {
-        device.destroySemaphore(render_finished);
-        render_finished = nullptr;
+    image_available.clear();
+
+    for (auto& render : render_finished) {
+        if (render) {
+            device.destroySemaphore(render);
+        }
     }
-    if (in_flight) {
-        device.destroyFence(in_flight);
-        in_flight = nullptr;
+    render_finished.clear();
+
+    for (auto& fence : in_flight) {
+        if (fence) {
+            device.destroyFence(fence);
+        }
     }
+    in_flight.clear();
 
     if (swapchain) {
         swapchain->cleanup();
@@ -36,6 +46,8 @@ void WindowSwapchainConfig::cleanup(VKContext& context)
         context.destroy_surface(surface);
         surface = nullptr;
     }
+
+    window->set_graphics_registered(false);
 }
 
 GraphicsSubsystem::GraphicsSubsystem(const GlobalGraphicsConfig& graphics_config)
@@ -322,7 +334,6 @@ void GraphicsSubsystem::register_windows_for_processing()
         config.surface = surface;
         config.swapchain = std::make_unique<VKSwapchain>();
 
-        // const auto& window_state = window->get_state();
         if (!config.swapchain->create(*m_vulkan_context, surface, window->get_create_info())) {
             MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
                 "Failed to create swapchain for window '{}'", window->get_create_info().title);
@@ -349,15 +360,24 @@ void GraphicsSubsystem::register_windows_for_processing()
 bool GraphicsSubsystem::create_sync_objects(WindowSwapchainConfig& config)
 {
     auto device = m_vulkan_context->get_device();
+    u_int32_t frames_in_flight = config.swapchain->get_image_count();
 
     try {
-        vk::SemaphoreCreateInfo semaphore_info {};
-        config.image_available = device.createSemaphore(semaphore_info);
-        config.render_finished = device.createSemaphore(semaphore_info);
+        config.image_available.resize(frames_in_flight);
+        config.render_finished.resize(frames_in_flight);
+        config.in_flight.resize(frames_in_flight);
 
+        vk::SemaphoreCreateInfo semaphore_info {};
         vk::FenceCreateInfo fence_info {};
         fence_info.flags = vk::FenceCreateFlagBits::eSignaled;
-        config.in_flight = device.createFence(fence_info);
+
+        for (uint32_t i = 0; i < frames_in_flight; ++i) {
+            config.image_available[i] = device.createSemaphore(semaphore_info);
+            config.render_finished[i] = device.createSemaphore(semaphore_info);
+            config.in_flight[i] = device.createFence(fence_info);
+        }
+
+        config.current_frame = 0;
 
         return true;
     } catch (const vk::SystemError& e) {
