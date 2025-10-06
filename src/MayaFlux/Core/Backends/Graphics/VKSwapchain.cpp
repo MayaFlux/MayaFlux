@@ -70,11 +70,11 @@ bool VKSwapchain::create(VKContext& context,
     const auto& queue_families = m_context->get_queue_families();
 
     std::vector<uint32_t> queue_family_indices;
-    if (queue_families.graphics_family.value() != queue_families.compute_family.value()) {
-        queue_family_indices = {
-            queue_families.graphics_family.value(),
-            queue_families.compute_family.value()
-        };
+    uint32_t graphics_family = queue_families.graphics_family.value();
+    uint32_t present_family = queue_families.present_family.value();
+
+    if (graphics_family != present_family) {
+        queue_family_indices = { graphics_family, present_family };
         create_info.imageSharingMode = vk::SharingMode::eConcurrent;
         create_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
         create_info.pQueueFamilyIndices = queue_family_indices.data();

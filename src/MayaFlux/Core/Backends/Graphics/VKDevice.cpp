@@ -46,9 +46,9 @@ VKDevice& VKDevice::operator=(VKDevice&& other) noexcept
     return *this;
 }
 
-bool VKDevice::initialize(vk::Instance instance, const GraphicsBackendInfo& backend_info)
+bool VKDevice::initialize(vk::Instance instance, vk::SurfaceKHR temp_surface, const GraphicsBackendInfo& backend_info)
 {
-    if (!pick_physical_device(instance)) {
+    if (!pick_physical_device(instance, nullptr)) {
         return false;
     }
 
@@ -69,7 +69,7 @@ void VKDevice::cleanup()
     m_queue_families = {};
 }
 
-bool VKDevice::pick_physical_device(vk::Instance instance)
+bool VKDevice::pick_physical_device(vk::Instance instance, vk::SurfaceKHR temp_surface)
 {
     vk::Instance vk_instance(instance);
     auto devices = vk_instance.enumeratePhysicalDevices();
@@ -81,9 +81,9 @@ bool VKDevice::pick_physical_device(vk::Instance instance)
     }
 
     for (const auto& device : devices) {
-        QueueFamilyIndices indices = find_queue_families(device);
+        QueueFamilyIndices indices = find_queue_families(device, nullptr);
 
-        if (indices.is_complete()) {
+        if (indices.graphics_family.has_value()) {
             m_physical_device = device;
             m_queue_families = indices;
 
@@ -100,10 +100,9 @@ bool VKDevice::pick_physical_device(vk::Instance instance)
     return false;
 }
 
-QueueFamilyIndices VKDevice::find_queue_families(vk::PhysicalDevice device)
+QueueFamilyIndices VKDevice::find_queue_families(vk::PhysicalDevice device, vk::SurfaceKHR surface)
 {
     QueueFamilyIndices indices;
-
     auto queue_families = device.getQueueFamilyProperties();
 
     int i = 0;
@@ -120,6 +119,15 @@ QueueFamilyIndices VKDevice::find_queue_families(vk::PhysicalDevice device)
             indices.transfer_family = i;
         }
 
+        if (surface && queue_family.queueCount > 0) {
+            vk::Bool32 presentSupport = device.getSurfaceSupportKHR(i, surface);
+            if (presentSupport) {
+                indices.present_family = i;
+                MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                    "Found presentation support in queue family {}", i);
+            }
+        }
+
         i++;
     }
 
@@ -133,6 +141,49 @@ QueueFamilyIndices VKDevice::find_queue_families(vk::PhysicalDevice device)
     }
 
     return indices;
+}
+
+bool VKDevice::update_presentation_queue(vk::SurfaceKHR surface)
+{
+    if (!surface) {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "No surface provided for presentation support check");
+        return false;
+    }
+
+    auto queue_families = m_physical_device.getQueueFamilyProperties();
+
+    for (uint32_t i = 0; i < queue_families.size(); i++) {
+        if (queue_families[i].queueCount > 0) {
+            vk::Bool32 presentSupport = m_physical_device.getSurfaceSupportKHR(i, surface);
+            if (presentSupport) {
+                if (i == m_queue_families.graphics_family.value()) {
+                    m_queue_families.present_family = i;
+                    m_presentation_initialized = true;
+                    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                        "Graphics queue family {} supports presentation", i);
+                    return true;
+                }
+            }
+        }
+    }
+
+    for (uint32_t i = 0; i < queue_families.size(); i++) {
+        if (queue_families[i].queueCount > 0) {
+            vk::Bool32 presentSupport = m_physical_device.getSurfaceSupportKHR(i, surface);
+            if (presentSupport) {
+                m_queue_families.present_family = i;
+                m_presentation_initialized = true;
+                MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                    "Found presentation support in queue family {}", i);
+                return true;
+            }
+        }
+    }
+
+    MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "No queue family with presentation support found!");
+    return false;
 }
 
 bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info)

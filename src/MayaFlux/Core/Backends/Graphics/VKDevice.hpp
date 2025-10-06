@@ -14,6 +14,7 @@ struct QueueFamilyIndices {
     std::optional<uint32_t> graphics_family;
     std::optional<uint32_t> compute_family;
     std::optional<uint32_t> transfer_family;
+    std::optional<uint32_t> present_family;
 
     [[nodiscard]] bool is_complete() const
     {
@@ -42,9 +43,10 @@ public:
      * @brief Initialize device (pick physical device and create logical device)
      * @param instance Vulkan instance
      * @param backend_info Graphics surface configuration
+     * @param temp_surface Temporary surface for presentation support checks (real surface created with windows and swapchain later)
      * @return true if initialization succeeded
      */
-    bool initialize(vk::Instance instance, const GraphicsBackendInfo& backend_info);
+    bool initialize(vk::Instance instance, vk::SurfaceKHR temp_surface, const GraphicsBackendInfo& backend_info);
 
     /**
      * @brief Cleanup device resources
@@ -82,6 +84,13 @@ public:
     [[nodiscard]] const QueueFamilyIndices& get_queue_families() const { return m_queue_families; }
 
     /**
+     * @brief Update presentation queue family for a specific surface
+     * @param surface Surface to check presentation support for
+     * @return true if presentation support found
+     */
+    bool update_presentation_queue(vk::SurfaceKHR surface);
+
+    /**
      * @brief Wait for the device to become idle
      */
     void wait_idle() const
@@ -104,16 +113,18 @@ private:
     /**
      * @brief Pick a suitable physical device (GPU)
      * @param instance Vulkan instance
+     * @param temp_surface Temporary surface for presentation support checks
      * @return true if a suitable device was found
      */
-    bool pick_physical_device(vk::Instance instance);
+    bool pick_physical_device(vk::Instance instance, vk::SurfaceKHR temp_surface);
 
     /**
      * @brief Find queue families on the given physical device
      * @param device Physical device to query
+     * @param surface Optional surface to check for presentation support
      * @return QueueFamilyIndices with found queue family indices
      */
-    QueueFamilyIndices find_queue_families(vk::PhysicalDevice device);
+    QueueFamilyIndices find_queue_families(vk::PhysicalDevice device, vk::SurfaceKHR surface = nullptr);
 
     /**
      * @brief Create the logical device and retrieve queue handles
@@ -123,6 +134,8 @@ private:
      * @return true if logical device creation succeeded
      */
     bool create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info);
+
+    bool m_presentation_initialized = false;
 
     // Add more members and methods as needed for device management
 };

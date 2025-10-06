@@ -446,8 +446,6 @@ void GraphicsSubsystem::graphics_thread_loop()
 
         m_frame_clock->tick();
 
-        register_windows_for_processing();
-
         process();
 
         m_frame_clock->wait_for_next_frame();

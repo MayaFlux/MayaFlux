@@ -72,6 +72,13 @@ public:
     }
 
     /**
+     * @brief Update presentation support for a surface
+     * @param surface Surface to check
+     * @return true if presentation is supported
+     */
+    bool update_present_family(vk::SurfaceKHR surface);
+
+    /**
      * @brief Create surface from window's native handles
      * @param window Window to create surface for
      * @return Surface handle, or null on failure
