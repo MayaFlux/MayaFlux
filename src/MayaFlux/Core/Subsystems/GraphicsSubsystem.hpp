@@ -217,5 +217,15 @@ private:
      * the graphics thread loop after ticking the frame clock.
      */
     void process_frame_coroutines_impl(const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, u_int64_t processing_units);
+
+    /**
+     * @brief Handle window resize events and recreate swapchains as needed
+     */
+    void handle_window_resizes();
+
+    /**
+     * @brief Cleanup resources for windows that have been closed
+     */
+    void cleanup_closed_windows();
 };
 }

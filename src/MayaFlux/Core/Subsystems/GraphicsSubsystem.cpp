@@ -294,6 +294,10 @@ void GraphicsSubsystem::process()
 
     m_handle->buffers.process(1);
 
+    cleanup_closed_windows();
+    register_windows_for_processing();
+    handle_window_resizes();
+
     m_handle->windows.process();
 
     // TODO: Need to consider if specific synchronization is needed here
@@ -352,6 +356,15 @@ void GraphicsSubsystem::register_windows_for_processing()
         m_window_configs.push_back(std::move(config));
         window->set_graphics_registered(true);
 
+        window->set_event_callback([this, window_ptr = window](const WindowEvent& event) {
+            if (event.type == WindowEventType::WINDOW_RESIZED) {
+                auto* config = find_config(window_ptr);
+                if (config) {
+                    config->needs_recreation = true;
+                }
+            }
+        });
+
         MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
             "Registered window '{}' for graphics processing", window->get_create_info().title);
     }
@@ -384,6 +397,42 @@ bool GraphicsSubsystem::create_sync_objects(WindowSwapchainConfig& config)
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to create sync objects: {}", e.what());
         return false;
+    }
+}
+
+void GraphicsSubsystem::handle_window_resizes()
+{
+    for (auto& config : m_window_configs) {
+        if (config.needs_recreation) {
+            const auto& state = config.window->get_state();
+
+            m_vulkan_context->wait_idle();
+
+            if (!config.swapchain->recreate(state.current_width, state.current_height)) {
+                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                    "Failed to recreate swapchain for window '{}'",
+                    config.window->get_create_info().title);
+            } else {
+                config.needs_recreation = false;
+            }
+        }
+    }
+}
+
+void GraphicsSubsystem::cleanup_closed_windows()
+{
+    auto it = m_window_configs.begin();
+    while (it != m_window_configs.end()) {
+        if (it->window->should_close()) {
+            it->cleanup(*m_vulkan_context);
+
+            MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                "Unregistered window '{}'", it->window->get_create_info().title);
+
+            it = m_window_configs.erase(it);
+        } else {
+            ++it;
+        }
     }
 }
 
