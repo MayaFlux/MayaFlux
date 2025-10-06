@@ -142,4 +142,23 @@ void GLFWSingleton::set_error_callback(std::function<void(int, const char*)> cal
     s_error_callback = std::move(callback);
 }
 
+std::vector<const char*> GLFWSingleton::get_required_instance_extensions()
+{
+    if (!initialize()) {
+        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            std::source_location::current(),
+            "GLFW must be initialized before querying required instance extensions");
+    }
+
+    uint32_t count = 0;
+    const char** extensions = glfwGetRequiredInstanceExtensions(&count);
+    if (!extensions || count == 0) {
+        MF_WARN(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "No required instance extensions reported by GLFW");
+        return {};
+    }
+
+    return { extensions, extensions + count };
+}
+
 }

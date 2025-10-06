@@ -1,12 +1,11 @@
 #include "VKContext.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-
-#include <algorithm>
 
 namespace MayaFlux::Core {
 
@@ -15,7 +14,26 @@ bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool ena
 {
     m_graphics_config = graphics_config;
 
-    if (!m_instance.initialize(enable_validation, required_extensions)) {
+    if (graphics_config.requested_api != GlobalGraphicsConfig::GraphicsApi::VULKAN) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Vulkan context initialization requested, but graphics API is not set to Vulkan!");
+        return false;
+    }
+
+    std::vector<const char*> extensions;
+    if (graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::GLFW) {
+        extensions = GLFWSingleton::get_required_instance_extensions();
+
+        for (const char* ext : required_extensions) {
+            if (std::ranges::find(extensions, ext) == extensions.end()) {
+                extensions.push_back(ext);
+            }
+        }
+    } else {
+        extensions = required_extensions;
+    }
+
+    if (!m_instance.initialize(enable_validation, extensions)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend, "Failed to initialize Vulkan instance!");
         return false;
     }

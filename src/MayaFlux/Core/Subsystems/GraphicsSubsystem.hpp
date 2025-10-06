@@ -3,6 +3,9 @@
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "Subsystem.hpp"
 
+#include <algorithm>
+#include <vulkan/vulkan.hpp>
+
 namespace MayaFlux::Vruta {
 class FrameClock;
 }
@@ -10,6 +13,28 @@ class FrameClock;
 namespace MayaFlux::Core {
 
 class VKContext;
+class VKSwapchain;
+
+struct WindowSwapchainConfig {
+    std::shared_ptr<Window> window;
+    vk::SurfaceKHR surface;
+    std::unique_ptr<VKSwapchain> swapchain;
+
+    vk::Semaphore image_available;
+    vk::Semaphore render_finished;
+    vk::Fence in_flight;
+
+    bool needs_recreation = false;
+
+    WindowSwapchainConfig() = default;
+
+    WindowSwapchainConfig(WindowSwapchainConfig&&) = default;
+    WindowSwapchainConfig& operator=(WindowSwapchainConfig&&) = default;
+    WindowSwapchainConfig(const WindowSwapchainConfig&) = delete;
+    WindowSwapchainConfig& operator=(const WindowSwapchainConfig&) = delete;
+
+    void cleanup(VKContext& context);
+};
 
 /**
  * @class GraphicsSubsystem
@@ -113,6 +138,21 @@ public:
      */
     void process();
 
+    /**
+     * @brief Register markend windows from window manager for swapchain processing
+     *
+     * Creates Vulkan surfaces and swapchains for each window.
+     * Called during initialization and whenever new windows are created.
+     */
+    void register_windows_for_processing();
+
+    /**
+     * @brief Create synchronization objects for a window's swapchain
+     * @param config Window swapchain configuration to populate
+     * @return True if creation succeeded
+     */
+    bool create_sync_objects(WindowSwapchainConfig& config);
+
     bool is_ready() const override { return m_is_ready; }
     bool is_running() const override { return m_running.load(std::memory_order_acquire) && !m_paused.load(std::memory_order_acquire); }
     void shutdown() override;
@@ -127,6 +167,15 @@ private:
     std::thread::id m_graphics_thread_id;
     std::atomic<bool> m_running { false };
     std::atomic<bool> m_paused { false };
+
+    std::vector<WindowSwapchainConfig> m_window_configs;
+
+    WindowSwapchainConfig* find_config(const std::shared_ptr<Window>& window)
+    {
+        auto it = std::ranges::find_if(m_window_configs,
+            [window](const auto& config) { return config.window == window; });
+        return it != m_window_configs.end() ? &(*it) : nullptr;
+    }
 
     bool m_is_ready {};
 

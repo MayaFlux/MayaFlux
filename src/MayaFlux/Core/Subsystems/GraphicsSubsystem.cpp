@@ -1,11 +1,42 @@
 #include "GraphicsSubsystem.hpp"
-#include "MayaFlux/Core/Backends/Graphics/VKContext.hpp"
+#include "MayaFlux/Core/Backends/Graphics/VKSwapchain.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
+
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 #include "MayaFlux/Vruta/Clock.hpp"
 #include "MayaFlux/Vruta/Routine.hpp"
 
 namespace MayaFlux::Core {
+
+void WindowSwapchainConfig::cleanup(VKContext& context)
+{
+    vk::Device device = context.get_device();
+
+    if (image_available) {
+        device.destroySemaphore(image_available);
+        image_available = nullptr;
+    }
+    if (render_finished) {
+        device.destroySemaphore(render_finished);
+        render_finished = nullptr;
+    }
+    if (in_flight) {
+        device.destroyFence(in_flight);
+        in_flight = nullptr;
+    }
+
+    if (swapchain) {
+        swapchain->cleanup();
+        swapchain.reset();
+    }
+
+    if (surface) {
+        context.destroy_surface(surface);
+        surface = nullptr;
+    }
+}
 
 GraphicsSubsystem::GraphicsSubsystem(const GlobalGraphicsConfig& graphics_config)
     : m_vulkan_context(std::make_unique<VKContext>())
@@ -179,6 +210,10 @@ void GraphicsSubsystem::stop()
         m_graphics_thread.join();
     }
 
+    for (auto& config : m_window_configs) {
+        config.cleanup(*m_vulkan_context);
+    }
+
     m_vulkan_context->cleanup();
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
@@ -266,6 +301,72 @@ void GraphicsSubsystem::process()
     }
 }
 
+void GraphicsSubsystem::register_windows_for_processing()
+{
+    for (auto& window : m_handle->windows.get_processing_windows()) {
+
+        if (window->is_graphics_registered() || find_config(window)) {
+            continue;
+        }
+
+        vk::SurfaceKHR surface = m_vulkan_context->create_surface(window);
+        if (!surface) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                "Failed to create Vulkan surface for window '{}'",
+                window->get_create_info().title);
+            continue;
+        }
+
+        WindowSwapchainConfig config;
+        config.window = window;
+        config.surface = surface;
+        config.swapchain = std::make_unique<VKSwapchain>();
+
+        // const auto& window_state = window->get_state();
+        if (!config.swapchain->create(*m_vulkan_context, surface, window->get_create_info())) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                "Failed to create swapchain for window '{}'", window->get_create_info().title);
+            continue;
+        }
+
+        if (!create_sync_objects(config)) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                "Failed to create sync objects for window '{}'",
+                window->get_create_info().title);
+            config.swapchain->cleanup();
+            m_vulkan_context->destroy_surface(surface);
+            continue;
+        }
+
+        m_window_configs.push_back(std::move(config));
+        window->set_graphics_registered(true);
+
+        MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+            "Registered window '{}' for graphics processing", window->get_create_info().title);
+    }
+}
+
+bool GraphicsSubsystem::create_sync_objects(WindowSwapchainConfig& config)
+{
+    auto device = m_vulkan_context->get_device();
+
+    try {
+        vk::SemaphoreCreateInfo semaphore_info {};
+        config.image_available = device.createSemaphore(semaphore_info);
+        config.render_finished = device.createSemaphore(semaphore_info);
+
+        vk::FenceCreateInfo fence_info {};
+        fence_info.flags = vk::FenceCreateFlagBits::eSignaled;
+        config.in_flight = device.createFence(fence_info);
+
+        return true;
+    } catch (const vk::SystemError& e) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create sync objects: {}", e.what());
+        return false;
+    }
+}
+
 void GraphicsSubsystem::graphics_thread_loop()
 {
     while (m_running.load(std::memory_order_acquire)) {
@@ -276,9 +377,9 @@ void GraphicsSubsystem::graphics_thread_loop()
 
         m_frame_clock->tick();
 
-        process();
+        register_windows_for_processing();
 
-        // uint64_t current_frame = m_frame_clock->current_frame();
+        process();
 
         m_frame_clock->wait_for_next_frame();
 

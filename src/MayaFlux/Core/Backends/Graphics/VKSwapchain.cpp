@@ -43,6 +43,12 @@ bool VKSwapchain::create(VKContext& context,
 
     vk::SurfaceFormatKHR surface_format = choose_surface_format(
         support.formats, desired_format, desired_color_space);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Chosen swapchain format: {}, color space: {}",
+        vk::to_string(surface_format.format),
+        vk::to_string(surface_format.colorSpace));
+
     vk::PresentModeKHR present_mode = choose_present_mode(
         support.present_modes, desired_present_mode);
     vk::Extent2D extent = choose_extent(support.capabilities, window_config.width, window_config.height);

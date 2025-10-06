@@ -116,6 +116,15 @@ public:
      */
     static bool is_wayland();
 
+    /**
+     * @brief Retrieves the list of required Vulkan instance extensions for GLFW
+     * @return A vector of extension names required by GLFW for Vulkan surface creation
+     *
+     * Calls glfwGetRequiredInstanceExtensions() to get the list of Vulkan
+     * instance extensions that must be enabled to create surfaces with GLFW.
+     */
+    static std::vector<const char*> get_required_instance_extensions();
+
 private:
     /**
      * @brief Tracks whether GLFW has been initialized
