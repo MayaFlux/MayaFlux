@@ -10,29 +10,24 @@ VKSwapchain::~VKSwapchain()
 
 bool VKSwapchain::create(VKContext& context,
     vk::SurfaceKHR surface,
-    uint32_t width,
-    uint32_t height,
-    const WindowCreateInfo* window_config)
+    const WindowCreateInfo& window_config)
 {
     m_context = &context;
     m_surface = surface;
 
-    const GraphicsSurfaceInfo* surface_info = &m_context->get_surface_info();
+    const GraphicsSurfaceInfo& surface_info = m_context->get_surface_info();
 
-    GraphicsSurfaceInfo::SurfaceFormat desired_format = (window_config && window_config->surface_format.has_value())
-        ? window_config->surface_format.value()
-        : (surface_info ? surface_info->default_format
-                        : GraphicsSurfaceInfo::SurfaceFormat::B8G8R8A8_SRGB);
+    GraphicsSurfaceInfo::SurfaceFormat desired_format = window_config.surface_format.has_value()
+        ? window_config.surface_format.value()
+        : surface_info.default_format;
 
-    GraphicsSurfaceInfo::ColorSpace desired_color_space = surface_info ? surface_info->default_color_space
-                                                                       : GraphicsSurfaceInfo::ColorSpace::SRGB_NONLINEAR;
+    GraphicsSurfaceInfo::ColorSpace desired_color_space = surface_info.default_color_space;
 
-    GraphicsSurfaceInfo::PresentMode desired_present_mode = (window_config && window_config->present_mode.has_value())
-        ? window_config->present_mode.value()
-        : (surface_info ? surface_info->default_present_mode
-                        : GraphicsSurfaceInfo::PresentMode::FIFO);
+    GraphicsSurfaceInfo::PresentMode desired_present_mode = window_config.present_mode.has_value()
+        ? window_config.present_mode.value()
+        : surface_info.default_present_mode;
 
-    uint32_t desired_image_count = surface_info ? surface_info->preferred_image_count : 2;
+    uint32_t desired_image_count = surface_info.preferred_image_count;
 
     vk::PhysicalDevice physical_device = m_context->get_physical_device();
     vk::Device device = m_context->get_device();
@@ -50,7 +45,7 @@ bool VKSwapchain::create(VKContext& context,
         support.formats, desired_format, desired_color_space);
     vk::PresentModeKHR present_mode = choose_present_mode(
         support.present_modes, desired_present_mode);
-    vk::Extent2D extent = choose_extent(support.capabilities, width, height);
+    vk::Extent2D extent = choose_extent(support.capabilities, window_config.width, window_config.height);
 
     uint32_t image_count = std::max(desired_image_count, support.capabilities.minImageCount);
     if (support.capabilities.maxImageCount > 0) {
@@ -102,7 +97,7 @@ bool VKSwapchain::create(VKContext& context,
     m_image_format = surface_format.format;
     m_extent = extent;
 
-    m_window_config = window_config;
+    m_window_config = &window_config;
 
     if (!create_image_views()) {
         cleanup_swapchain();
@@ -129,7 +124,7 @@ bool VKSwapchain::recreate(uint32_t width, uint32_t height)
 
     cleanup_swapchain();
 
-    return create(*m_context, m_surface, width, height, m_window_config);
+    return create(*m_context, m_surface, *m_window_config);
 }
 
 void VKSwapchain::cleanup()

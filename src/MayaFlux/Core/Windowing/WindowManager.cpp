@@ -9,7 +9,7 @@
 
 namespace MayaFlux::Core {
 
-WindowManager::WindowManager(const GraphicsSurfaceInfo& config)
+WindowManager::WindowManager(const GlobalGraphicsConfig& config)
     : m_config(config)
 {
     MF_PRINT(Journal::Component::Core, Journal::Context::WindowingSubsystem,
@@ -157,15 +157,16 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
     const WindowCreateInfo& create_info)
 {
     switch (m_config.windowing_backend) {
-    case GraphicsSurfaceInfo::WindowingBackend::GLFW:
-        return std::make_unique<GlfwWindow>(create_info, m_config);
+    case GlobalGraphicsConfig::WindowingBackend::GLFW:
+        return std::make_unique<GlfwWindow>(create_info, m_config.surface_info,
+            m_config.requested_api);
 
-    case GraphicsSurfaceInfo::WindowingBackend::SDL:
+    case GlobalGraphicsConfig::WindowingBackend::SDL:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
             "SDL backend not implemented");
         return nullptr;
 
-    case GraphicsSurfaceInfo::WindowingBackend::NATIVE:
+    case GlobalGraphicsConfig::WindowingBackend::NATIVE:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
             "Native backend not implemented");
         return nullptr;

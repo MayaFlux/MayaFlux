@@ -10,7 +10,7 @@ class WindowManager;
 class AudioSubsystem;
 class GraphicsSubsystem;
 struct GlobalStreamInfo;
-struct GraphicsSurfaceInfo;
+struct GlobalGraphicsConfig;
 
 /**
  * @class SubsystemManager
@@ -74,13 +74,12 @@ public:
 
     /**
      * @brief Create and register the graphics subsystem
-     * @tparam Args Constructor argument types
-     * @param args Constructor arguments for GraphicsSubsystem
+     * @param graphics_config Global graphics configuration
      *
      * Specialized creation method for GraphicsSubsystem. Only one graphics
      * subsystem is allowed per manager instance.
      */
-    void create_graphics_subsystem(const GraphicsSurfaceInfo& surface_info);
+    void create_graphics_subsystem(const GlobalGraphicsConfig& graphics_config);
 
     /** @brief Start all registered subsystems in coordination */
     void start_all_subsystems();

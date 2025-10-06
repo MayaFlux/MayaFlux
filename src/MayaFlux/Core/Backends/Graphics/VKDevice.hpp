@@ -4,6 +4,8 @@
 
 namespace MayaFlux::Core {
 
+struct GraphicsBackendInfo;
+
 /**
  * @struct QueueFamilyIndices
  * @brief Stores indices of queue families we need
@@ -39,10 +41,10 @@ public:
     /**
      * @brief Initialize device (pick physical device and create logical device)
      * @param instance Vulkan instance
-     * @param surface Optional surface for presentation support check
+     * @param backend_info Graphics surface configuration
      * @return true if initialization succeeded
      */
-    bool initialize(vk::Instance instance, vk::SurfaceKHR surface = VK_NULL_HANDLE);
+    bool initialize(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
     /**
      * @brief Cleanup device resources
@@ -92,31 +94,25 @@ private:
     /**
      * @brief Pick a suitable physical device (GPU)
      * @param instance Vulkan instance
-     * @param surface Vulkan surface for presentation
      * @return true if a suitable device was found
      */
-    bool pick_physical_device(vk::Instance instance, vk::SurfaceKHR surface);
-
-    /**
-     * @brief Create the logical device from the selected physical device
-     * @return true if logical device creation succeeded
-     */
-    bool is_device_suitable(vk::PhysicalDevice device, vk::SurfaceKHR surface);
+    bool pick_physical_device(vk::Instance instance);
 
     /**
      * @brief Find queue families on the given physical device
      * @param device Physical device to query
-     * @param surface Vulkan surface for presentation support check
      * @return QueueFamilyIndices with found queue family indices
      */
-    QueueFamilyIndices find_queue_families(vk::PhysicalDevice device, vk::SurfaceKHR surface);
+    QueueFamilyIndices find_queue_families(vk::PhysicalDevice device);
 
     /**
      * @brief Create the logical device and retrieve queue handles
      * @param instance Vulkan instance
+     * @param backend_info Graphics backend configuration
+
      * @return true if logical device creation succeeded
      */
-    bool create_logical_device(vk::Instance instance);
+    bool create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
     // Add more members and methods as needed for device management
 };

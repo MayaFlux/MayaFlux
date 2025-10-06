@@ -1,4 +1,5 @@
 #include "VKDevice.hpp"
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "set"
@@ -45,13 +46,13 @@ VKDevice& VKDevice::operator=(VKDevice&& other) noexcept
     return *this;
 }
 
-bool VKDevice::initialize(vk::Instance instance, vk::SurfaceKHR surface)
+bool VKDevice::initialize(vk::Instance instance, const GraphicsBackendInfo& backend_info)
 {
-    if (!pick_physical_device(instance, surface)) {
+    if (!pick_physical_device(instance)) {
         return false;
     }
 
-    return create_logical_device(instance);
+    return create_logical_device(instance, backend_info);
 }
 
 void VKDevice::cleanup()
@@ -68,7 +69,7 @@ void VKDevice::cleanup()
     m_queue_families = {};
 }
 
-bool VKDevice::pick_physical_device(vk::Instance instance, vk::SurfaceKHR surface)
+bool VKDevice::pick_physical_device(vk::Instance instance)
 {
     vk::Instance vk_instance(instance);
     auto devices = vk_instance.enumeratePhysicalDevices();
@@ -80,35 +81,26 @@ bool VKDevice::pick_physical_device(vk::Instance instance, vk::SurfaceKHR surfac
     }
 
     for (const auto& device : devices) {
-        if (is_device_suitable(device, surface)) {
+        QueueFamilyIndices indices = find_queue_families(device);
+
+        if (indices.is_complete()) {
             m_physical_device = device;
-            m_queue_families = find_queue_families(device, surface);
-            break;
+            m_queue_families = indices;
+
+            vk::PhysicalDeviceProperties props = device.getProperties();
+            MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Selected GPU: {}", props.deviceName.data());
+            return true;
         }
     }
 
-    if (!m_physical_device) {
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            std::source_location::current(),
-            "Failed to find a suitable GPU!");
-    }
-
-    vk::PhysicalDeviceProperties device_properties = m_physical_device.getProperties();
-    MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "Selected GPU: {}", device_properties.deviceName.data());
-
-    return true;
+    error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        std::source_location::current(),
+        "Failed to find a suitable GPU!");
+    return false;
 }
 
-bool VKDevice::is_device_suitable(vk::PhysicalDevice device, vk::SurfaceKHR surface)
-{
-    QueueFamilyIndices indices = find_queue_families(device, surface);
-
-    // TODO:: check for extensions and swapchain support if needed
-    return indices.is_complete();
-}
-
-QueueFamilyIndices VKDevice::find_queue_families(vk::PhysicalDevice device, vk::SurfaceKHR surface)
+QueueFamilyIndices VKDevice::find_queue_families(vk::PhysicalDevice device)
 {
     QueueFamilyIndices indices;
 
@@ -143,7 +135,7 @@ QueueFamilyIndices VKDevice::find_queue_families(vk::PhysicalDevice device, vk::
     return indices;
 }
 
-bool VKDevice::create_logical_device(vk::Instance instance)
+bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info)
 {
     if (!m_queue_families.graphics_family.has_value()) {
         error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -174,7 +166,17 @@ bool VKDevice::create_logical_device(vk::Instance instance)
     }
 
     vk::PhysicalDeviceFeatures device_features {};
-    // Enable any required features here
+    device_features.samplerAnisotropy = backend_info.required_features.sampler_anisotropy;
+    device_features.geometryShader = backend_info.required_features.geometry_shaders;
+    device_features.tessellationShader = backend_info.required_features.tessellation_shaders;
+    device_features.multiViewport = backend_info.required_features.multi_viewport;
+    device_features.fillModeNonSolid = backend_info.required_features.fill_mode_non_solid;
+
+    std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
+    for (const auto& ext : backend_info.required_extensions) {
+        device_extensions.push_back(ext.c_str());
+    }
 
     vk::DeviceCreateInfo create_info {};
     create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
@@ -192,8 +194,18 @@ bool VKDevice::create_logical_device(vk::Instance instance)
     }
 
     m_graphics_queue = m_logical_device.getQueue(m_queue_families.graphics_family.value(), 0);
-    m_compute_queue = m_logical_device.getQueue(m_queue_families.compute_family.value(), 0);
-    m_transfer_queue = m_logical_device.getQueue(m_queue_families.transfer_family.value(), 0);
+
+    if (backend_info.enable_compute_queue && m_queue_families.compute_family.has_value()) {
+        m_compute_queue = m_logical_device.getQueue(m_queue_families.compute_family.value(), 0);
+    } else {
+        m_compute_queue = m_graphics_queue;
+    }
+
+    if (backend_info.enable_transfer_queue && m_queue_families.transfer_family.has_value()) {
+        m_transfer_queue = m_logical_device.getQueue(m_queue_families.transfer_family.value(), 0);
+    } else {
+        m_transfer_queue = m_graphics_queue;
+    }
 
     return true;
 }

@@ -124,36 +124,6 @@ struct GraphicsResourceLimits {
  * Individual windows inherit these defaults but can override specific params.
  */
 struct GraphicsSurfaceInfo {
-    /** @brief Target frame rate for visual processing (Hz) */
-    u_int32_t target_frame_rate = 60;
-
-    /**
-     * @enum WindowingBackend
-     * @brief Windowing library selection
-     */
-    enum class WindowingBackend : u_int8_t {
-        GLFW, ///< GLFW3 (default, cross-platform)
-        SDL, ///< SDL2 (alternative, if implemented)
-        NATIVE, ///< Platform-native (Win32/X11/Cocoa, if implemented)
-        NONE ///< No windowing (offscreen rendering only)
-    };
-
-    /** @brief Selected windowing backend */
-    WindowingBackend windowing_backend = WindowingBackend::GLFW;
-
-    /**
-     * @enum VisualApi
-     * @brief Supported graphics APIs (backend selection)
-     */
-    enum class VisualApi : u_int8_t {
-        VULKAN,
-        OPENGL,
-        METAL,
-        DIRECTX12
-    };
-
-    /** @brief Selected graphics API for rendering */
-    VisualApi requested_api = VisualApi::VULKAN;
 
     /**
      * @enum SurfaceFormat
@@ -223,12 +193,48 @@ struct GraphicsSurfaceInfo {
 
     /** @brief Backend-specific configuration parameters */
     std::unordered_map<std::string, std::any> backend_options;
+};
+
+struct GlobalGraphicsConfig {
+    /** @brief System-wide configuration for visual stream processing */
+    GraphicsSurfaceInfo surface_info;
 
     /** @brief Graphics backend configuration */
-    GraphicsBackendInfo backend_config;
+    GraphicsBackendInfo backend_info;
 
     /** @brief Resource limits */
     GraphicsResourceLimits resource_limits;
+
+    /**
+     * @enum WindowingBackend
+     * @brief Windowing library selection
+     */
+    enum class WindowingBackend : u_int8_t {
+        GLFW, ///< GLFW3 (default, cross-platform)
+        SDL, ///< SDL2 (alternative, if implemented)
+        NATIVE, ///< Platform-native (Win32/X11/Cocoa, if implemented)
+        NONE ///< No windowing (offscreen rendering only)
+    };
+
+    /**
+     * @enum VisualApi
+     * @brief Supported graphics APIs (backend selection)
+     */
+    enum class GraphicsApi : u_int8_t {
+        VULKAN,
+        OPENGL,
+        METAL,
+        DIRECTX12
+    };
+
+    /** @brief Target frame rate for visual processing (Hz) */
+    u_int32_t target_frame_rate = 60;
+
+    /** @brief Selected windowing backend */
+    WindowingBackend windowing_backend = WindowingBackend::GLFW;
+
+    /** @brief Selected graphics API for rendering */
+    GraphicsApi requested_api = GraphicsApi::VULKAN;
 };
 
 //==============================================================================

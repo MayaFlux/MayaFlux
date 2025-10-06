@@ -4,7 +4,7 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-#ifdef MOUSE_WHEELED  
+#ifdef MOUSE_WHEELED
 #undef MOUSE_WHEELED
 #endif
 #ifdef KEY_EVENT
@@ -25,17 +25,17 @@
 namespace MayaFlux::Core {
 
 GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
-    const GraphicsSurfaceInfo& global_info)
+    const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api)
     : m_create_info(create_info)
 {
-    setup_preinit_hints(global_info);
+    setup_preinit_hints(surface_info);
 
     if (!GLFWSingleton::initialize()) {
         error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem, std::source_location::current(),
             "Failed to initialize GLFW for window creation");
     }
 
-    configure_window_hints(global_info);
+    configure_window_hints(surface_info, api);
 
     GLFWmonitor* monitor = nullptr;
     if (create_info.fullscreen) {
@@ -153,7 +153,7 @@ void GlfwWindow::setup_preinit_hints(const GraphicsSurfaceInfo& global_info)
 #endif
 }
 
-void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& global_info) const
+void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api) const
 {
     glfwDefaultWindowHints();
 
@@ -163,9 +163,9 @@ void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& global_info) 
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, m_create_info.transparent ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    if (global_info.requested_api == GraphicsSurfaceInfo::VisualApi::VULKAN) {
+    if (api == GlobalGraphicsConfig::GraphicsApi::VULKAN) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    } else if (global_info.requested_api == GraphicsSurfaceInfo::VisualApi::OPENGL) {
+    } else if (api == GlobalGraphicsConfig::GraphicsApi::OPENGL) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
     }
 }
@@ -450,4 +450,3 @@ void GlfwWindow::glfw_scroll_callback(GLFWwindow* window, double xoffset, double
 }
 
 }
-

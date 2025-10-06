@@ -7,15 +7,15 @@
 
 namespace MayaFlux::Core {
 
-GraphicsSubsystem::GraphicsSubsystem(const GraphicsSurfaceInfo& surface_info)
+GraphicsSubsystem::GraphicsSubsystem(const GlobalGraphicsConfig& graphics_config)
     : m_vulkan_context(std::make_unique<VKContext>())
     , m_frame_clock(std::make_shared<Vruta::FrameClock>(60))
-    , m_surface_info(surface_info)
     , m_subsystem_tokens {
         .Buffer = Buffers::ProcessingToken::GRAPHICS_BACKEND,
         .Node = Nodes::ProcessingToken::VISUAL_RATE,
         .Task = Vruta::ProcessingToken::FRAME_ACCURATE
     }
+    , m_graphics_config(graphics_config)
 {
 }
 
@@ -31,7 +31,7 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
 
     m_handle = &handle;
 
-    if (!m_vulkan_context->initialize(m_surface_info, true)) {
+    if (!m_vulkan_context->initialize(m_graphics_config, true)) {
         error<std::runtime_error>(
             Journal::Component::Core,
             Journal::Context::GraphicsSubsystem,
@@ -39,8 +39,8 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
             "Failed to initialize Vulkan context!");
     }
 
-    if (m_surface_info.target_frame_rate > 0) {
-        m_frame_clock->set_target_fps(m_surface_info.target_frame_rate);
+    if (m_graphics_config.target_frame_rate > 0) {
+        m_frame_clock->set_target_fps(m_graphics_config.target_frame_rate);
     }
     // register_callbacks();
 

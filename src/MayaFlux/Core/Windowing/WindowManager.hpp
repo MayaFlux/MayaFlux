@@ -20,7 +20,7 @@ public:
      * @brief Constructs WindowManager with global graphics config
      * @param config Global graphics configuration for window defaults
      */
-    explicit WindowManager(const GraphicsSurfaceInfo& config);
+    explicit WindowManager(const GlobalGraphicsConfig& config);
 
     ~WindowManager();
 
@@ -86,7 +86,7 @@ public:
     /**
      * @brief Gets the global graphics configuration
      */
-    const GraphicsSurfaceInfo& get_config() const { return m_config; }
+    const GraphicsSurfaceInfo& get_config() const { return m_config.surface_info; }
 
     /**
      * @brief Start the window event loop on a dedicated thread
@@ -143,7 +143,7 @@ public:
     std::vector<std::shared_ptr<Window>> get_processing_windows() const { return m_processing_windows; }
 
 private:
-    GraphicsSurfaceInfo m_config;
+    GlobalGraphicsConfig m_config;
     std::vector<std::shared_ptr<Window>> m_windows;
     std::unordered_map<std::string, std::weak_ptr<Window>> m_window_lookup;
 

@@ -143,12 +143,12 @@ public:
     /**
      * @brief Initializes the processing engine with custom stream and graphics configurations
      * @param streamInfo Configuration for sample rate, buffer size, and channels
-     * @param graphicsInfo Configuration for graphics/windowing backend
+     * @param graphics_config Configuration for graphics/windowing backend
      *
      * Configures the processing engine with the specified stream and graphics information.
      * This method must be called before starting the engine.
      */
-    void Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo& graphicsInfo);
+    void Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config);
 
     /**
      * @brief Starts the coordinated processing of all subsystems
@@ -215,9 +215,9 @@ public:
 
     /**
      * @brief Gets the current graphics configuration
-     * @return Reference to the GraphicsSurfaceInfo struct
+     * @return Reference to the GlobalGraphicsConfig struct
      */
-    inline GraphicsSurfaceInfo& get_graphics_info() { return m_graphics_info; }
+    inline GlobalGraphicsConfig& get_graphics_config() { return m_graphics_config; }
 
     //-------------------------------------------------------------------------
     // Component Access - Engine acts as access router to all subsystems
@@ -303,7 +303,7 @@ private:
     //-------------------------------------------------------------------------
 
     GlobalStreamInfo m_stream_info; ///< Stream configuration
-    GraphicsSurfaceInfo m_graphics_info; ///< Graphics/windowing configuration
+    GlobalGraphicsConfig m_graphics_config; ///< Graphics/windowing configuration
 
     bool m_is_paused {}; ///< Pause state flag
     bool m_is_initialized {};

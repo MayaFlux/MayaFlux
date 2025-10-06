@@ -37,16 +37,10 @@ public:
      * @brief Create swapchain for the given surface using VKContext
      * @param context Vulkan context (provides device and configuration)
      * @param surface Window surface
-     * @param width Desired width
-     * @param height Desired height
-     * @param window_config Optional per-window configuration overrides
+     * @param window_config per-window configuration overrides
      * @return True if creation succeeded
      */
-    bool create(VKContext& context,
-        vk::SurfaceKHR surface,
-        uint32_t width,
-        uint32_t height,
-        const WindowCreateInfo* window_config = nullptr);
+    bool create(VKContext& context, vk::SurfaceKHR surface, const WindowCreateInfo& window_config);
 
     /**
      * @brief Recreate swapchain (for window resize)

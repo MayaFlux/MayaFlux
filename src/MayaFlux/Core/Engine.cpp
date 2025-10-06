@@ -28,7 +28,7 @@ Engine::~Engine()
 
 Engine::Engine(Engine&& other) noexcept
     : m_stream_info(other.m_stream_info)
-    , m_graphics_info(other.m_graphics_info)
+    , m_graphics_config(other.m_graphics_config)
     , m_is_paused(other.m_is_paused)
     , m_is_initialized(other.m_is_initialized)
     , m_should_shutdown(other.m_should_shutdown.load())
@@ -50,7 +50,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
         End();
 
         m_stream_info = other.m_stream_info;
-        m_graphics_info = other.m_graphics_info;
+        m_graphics_config = other.m_graphics_config;
 
         m_subsystem_manager = std::move(other.m_subsystem_manager);
         m_node_graph_manager = std::move(other.m_node_graph_manager);
@@ -84,21 +84,21 @@ void Engine::Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_ou
         streamInfo.input.enabled = false;
     }
 
-    GraphicsSurfaceInfo graphicsInfo;
-    Init(streamInfo, graphicsInfo);
+    GlobalGraphicsConfig graphics_config;
+    Init(streamInfo, graphics_config);
 }
 
 void Engine::Init(const GlobalStreamInfo& streamInfo)
 {
-    GraphicsSurfaceInfo graphicsInfo;
-    Init(streamInfo, graphicsInfo);
+    GlobalGraphicsConfig graphics_config;
+    Init(streamInfo, graphics_config);
 }
 
-void Engine::Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo& graphicsInfo)
+void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config)
 {
     MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
     m_stream_info = streamInfo;
-    m_graphics_info = graphicsInfo;
+    m_graphics_config = graphics_config;
 
     m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
     m_event_manager = std::make_shared<Vruta::EventManager>();
@@ -110,8 +110,8 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo&
 
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
 
-    if (m_graphics_info.windowing_backend != GraphicsSurfaceInfo::WindowingBackend::NONE) {
-        m_window_manager = std::make_shared<WindowManager>(m_graphics_info);
+    if (m_graphics_config.windowing_backend != GlobalGraphicsConfig::WindowingBackend::NONE) {
+        m_window_manager = std::make_shared<WindowManager>(m_graphics_config);
     } else {
         MF_WARN(Journal::Component::Core, Journal::Context::Init, "No windowing backend selected - running in audio-only mode");
     }
@@ -121,7 +121,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo&
 
     m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
 
-    m_subsystem_manager->create_graphics_subsystem(m_graphics_info);
+    m_subsystem_manager->create_graphics_subsystem(m_graphics_config);
 
     m_is_initialized = true;
 

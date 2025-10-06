@@ -10,17 +10,17 @@
 
 namespace MayaFlux::Core {
 
-bool VKContext::initialize(const GraphicsSurfaceInfo& surface_info, bool enable_validation,
+bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool enable_validation,
     const std::vector<const char*>& required_extensions)
 {
-    m_surface_info = surface_info;
+    m_graphics_config = graphics_config;
 
     if (!m_instance.initialize(enable_validation, required_extensions)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend, "Failed to initialize Vulkan instance!");
         return false;
     }
 
-    if (!m_device.initialize(m_instance.get_instance())) {
+    if (!m_device.initialize(m_instance.get_instance(), m_graphics_config.backend_info)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend, "Failed to initialize Vulkan device!");
         cleanup();
         return false;

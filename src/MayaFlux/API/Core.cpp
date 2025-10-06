@@ -93,10 +93,10 @@ void Init(Core::GlobalStreamInfo stream_info)
     engine.Init(stream_info);
 }
 
-void Init(Core::GlobalStreamInfo stream_info, Core::GraphicsSurfaceInfo graphics_info)
+void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config)
 {
     auto& engine = internal::get_or_create_engine();
-    engine.Init(stream_info, graphics_info);
+    engine.Init(stream_info, graphics_config);
 }
 
 void Start()

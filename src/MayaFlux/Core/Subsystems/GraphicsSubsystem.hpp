@@ -36,9 +36,9 @@ class GraphicsSubsystem : public ISubsystem {
 public:
     /**
      * @brief GraphicsSubsystem constructor
-     * @param surface_info Global graphics/windowing configuration
+     * @param graphics_config Global graphics configuration
      */
-    GraphicsSubsystem(const GraphicsSurfaceInfo& surface_info);
+    GraphicsSubsystem(const GlobalGraphicsConfig& graphics_config);
     ~GraphicsSubsystem() override;
 
     /**
@@ -132,7 +132,7 @@ private:
 
     SubsystemTokens m_subsystem_tokens; ///< Processing token configuration
     SubsystemProcessingHandle* m_handle; ///< Reference to processing handle
-    GraphicsSurfaceInfo m_surface_info; ///< Graphics/windowing configuration
+    GlobalGraphicsConfig m_graphics_config; ///< Graphics/windowing configuration
 
     /**
      * @brief Register custom frame processor with scheduler

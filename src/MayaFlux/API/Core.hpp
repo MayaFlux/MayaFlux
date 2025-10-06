@@ -22,7 +22,7 @@ namespace MayaFlux {
 
 namespace Core {
     struct GlobalStreamInfo;
-    struct GraphicsSurfaceInfo;
+    struct GlobalGraphicsConfig;
     class Engine;
 }
 
@@ -88,7 +88,7 @@ void Init(Core::GlobalStreamInfo stream_info);
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-void Init(Core::GlobalStreamInfo stream_info, Core::GraphicsSurfaceInfo graphics_info);
+void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config);
 
 /**
  * @brief Starts audio processing on the default engine

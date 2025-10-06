@@ -21,7 +21,7 @@ public:
      * @param global_info Global graphics configuration (for defaults)
      */
     GlfwWindow(const WindowCreateInfo& create_info,
-        const GraphicsSurfaceInfo& global_info);
+        const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api);
 
     ~GlfwWindow() override;
 
@@ -95,7 +95,7 @@ private:
 
     Vruta::EventSource m_event_source;
 
-    void configure_window_hints(const GraphicsSurfaceInfo& global_info) const;
+    void configure_window_hints(const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api) const;
     void setup_callbacks();
     static void setup_preinit_hints(const GraphicsSurfaceInfo& global_info);
 

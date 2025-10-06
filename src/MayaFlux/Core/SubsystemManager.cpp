@@ -45,7 +45,7 @@ void SubsystemManager::create_audio_subsystem(GlobalStreamInfo& stream_info, Uti
     create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, stream_info, backend_type);
 }
 
-void SubsystemManager::create_graphics_subsystem(const GraphicsSurfaceInfo& surface_info)
+void SubsystemManager::create_graphics_subsystem(const GlobalGraphicsConfig& graphics_config)
 {
     if (!m_window_manager) {
         error<std::runtime_error>(
@@ -55,7 +55,7 @@ void SubsystemManager::create_graphics_subsystem(const GraphicsSurfaceInfo& surf
             "Cannot create GraphicsSubsystem without a valid WindowManager");
     }
 
-    create_subsystem_internal<GraphicsSubsystem>(SubsystemType::GRAPHICS, surface_info);
+    create_subsystem_internal<GraphicsSubsystem>(SubsystemType::GRAPHICS, graphics_config);
 }
 
 void SubsystemManager::add_subsystem(SubsystemType type, const std::shared_ptr<ISubsystem>& subsystem)

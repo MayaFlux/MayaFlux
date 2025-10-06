@@ -25,7 +25,7 @@ public:
      * @param required_extensions Required instance extensions
      * @return true if successful
      */
-    bool initialize(const GraphicsSurfaceInfo& surface_info, bool enable_validation = true,
+    bool initialize(const GlobalGraphicsConfig& graphics_config, bool enable_validation = true,
         const std::vector<const char*>& required_extensions = {});
 
     /**
@@ -89,13 +89,16 @@ public:
      */
     void wait_idle();
 
-    const GraphicsSurfaceInfo& get_surface_info() const { return m_surface_info; }
+    /**
+     * @brief Get graphics surface info
+     */
+    [[nodiscard]] const GraphicsSurfaceInfo& get_surface_info() const { return m_graphics_config.surface_info; }
 
 private:
     VKInstance m_instance;
     VKDevice m_device;
 
-    GraphicsSurfaceInfo m_surface_info;
+    GlobalGraphicsConfig m_graphics_config;
 
     std::vector<vk::SurfaceKHR> m_surfaces;
 };
