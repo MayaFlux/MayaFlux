@@ -89,28 +89,6 @@ public:
     const GraphicsSurfaceInfo& get_config() const { return m_config.surface_info; }
 
     /**
-     * @brief Start the window event loop on a dedicated thread
-     *
-     * Creates a background thread that continuously polls GLFW events.
-     * This thread will run until stop() is called or all windows close.
-     *
-     * @note On macOS, this may not work - will fall back to main thread polling
-     */
-    void start_event_loop();
-
-    /**
-     * @brief Stop the window event loop thread
-     *
-     * Signals the event loop to stop and joins the thread.
-     */
-    void stop_event_loop();
-
-    /**
-     * @brief Check if event loop is running
-     */
-    bool is_event_loop_running() const { return m_event_loop_running; }
-
-    /**
      * @brief Process windows for one frame
      *
      * This is the main per-frame operation that should be called
@@ -152,12 +130,6 @@ private:
      */
     std::shared_ptr<Window> create_window_internal(const WindowCreateInfo& create_info);
 
-    /** @brief Mutex for protecting m_windows and m_window_lookup */
-    std::unique_ptr<std::thread> m_event_thread;
-
-    /** @brief Atomic flag indicating if event loop thread is running */
-    std::atomic<bool> m_event_loop_running { false };
-
     /** @brief Atomic flag to signal event loop thread to stop */
     std::atomic<bool> m_should_stop { false };
 
@@ -173,12 +145,6 @@ private:
 
     /** @brief Mutex for protecting m_windows and m_window_lookup */
     mutable std::mutex m_hooks_mutex;
-
-    /** @brief Mutex for protecting m_windows and m_window_lookup */
-    void event_loop_thread_func();
-
-    /** @brief Thread for background event polling */
-    static bool can_use_background_thread();
 
     std::vector<std::shared_ptr<Window>> m_processing_windows;
 };

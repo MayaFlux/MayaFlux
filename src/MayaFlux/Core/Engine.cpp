@@ -190,7 +190,6 @@ void Engine::End()
     }
 
     if (m_window_manager) {
-        m_window_manager->stop_event_loop();
         auto windows = m_window_manager->get_windows();
         for (auto& window : windows) {
             m_window_manager->destroy_window(window);
