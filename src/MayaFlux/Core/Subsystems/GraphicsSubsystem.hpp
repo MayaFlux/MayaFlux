@@ -14,6 +14,7 @@ namespace MayaFlux::Core {
 
 class VKContext;
 class VKSwapchain;
+class VKCommandManager;
 
 struct WindowSwapchainConfig {
     std::shared_ptr<Window> window;
@@ -154,6 +155,14 @@ public:
      */
     bool create_sync_objects(WindowSwapchainConfig& config);
 
+    /**
+     * @brief Render all registered windows
+     *
+     * Acquires swapchain images, records command buffers,
+     * submits to graphics queue, and presents.
+     */
+    void render_all_windows();
+
     bool is_ready() const override { return m_is_ready; }
     bool is_running() const override { return m_running.load(std::memory_order_acquire) && !m_paused.load(std::memory_order_acquire); }
     void shutdown() override;
@@ -162,6 +171,7 @@ public:
 
 private:
     std::unique_ptr<VKContext> m_vulkan_context;
+    std::unique_ptr<VKCommandManager> m_command_manager;
     std::shared_ptr<Vruta::FrameClock> m_frame_clock;
 
     std::thread m_graphics_thread;
@@ -227,5 +237,17 @@ private:
      * @brief Cleanup resources for windows that have been closed
      */
     void cleanup_closed_windows();
+
+    /**
+     * @brief Record commands to clear screen
+     * (placeholder until we have actual rendering)
+     */
+    void record_clear_commands(vk::CommandBuffer cmd, vk::Image image, vk::Extent2D extent);
+
+    /**
+     * @brief Render a single window's swapchain
+     * @param config Window swapchain configuration
+     */
+    void render_window(WindowSwapchainConfig& config);
 };
 }

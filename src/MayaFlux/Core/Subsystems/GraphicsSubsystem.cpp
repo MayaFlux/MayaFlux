@@ -1,4 +1,5 @@
 #include "GraphicsSubsystem.hpp"
+#include "MayaFlux/Core/Backends/Graphics/VKCommandManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/VKSwapchain.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -60,6 +61,7 @@ GraphicsSubsystem::GraphicsSubsystem(const GlobalGraphicsConfig& graphics_config
     }
     , m_graphics_config(graphics_config)
 {
+    m_command_manager = std::make_unique<VKCommandManager>();
 }
 
 GraphicsSubsystem::~GraphicsSubsystem()
@@ -85,7 +87,16 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
     if (m_graphics_config.target_frame_rate > 0) {
         m_frame_clock->set_target_fps(m_graphics_config.target_frame_rate);
     }
-    // register_callbacks();
+
+    if (!m_command_manager->initialize(
+            m_vulkan_context->get_device(),
+            m_vulkan_context->get_queue_families().graphics_family.value())) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsSubsystem,
+            std::source_location::current(),
+            "Failed to initialize command manager!");
+    }
 
     m_is_ready = true;
 
@@ -226,6 +237,12 @@ void GraphicsSubsystem::stop()
         config.cleanup(*m_vulkan_context);
     }
 
+    m_vulkan_context->wait_idle();
+
+    if (m_command_manager) {
+        m_command_manager->cleanup();
+    }
+
     m_vulkan_context->cleanup();
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
@@ -294,24 +311,14 @@ void GraphicsSubsystem::process()
 
     m_handle->buffers.process(1);
 
-    cleanup_closed_windows();
     register_windows_for_processing();
     handle_window_resizes();
 
     m_handle->windows.process();
 
-    // TODO: Need to consider if specific synchronization is needed here
+    render_all_windows();
 
-    // TODO Phase 1.4+: Record Vulkan commands
-    // auto cmd = m_cmd_manager.get_current_command_buffer();
-    // vkBeginCommandBuffer(cmd, ...);
-    // record_render_commands(cmd);
-    // vkEndCommandBuffer(cmd);
-    // vkQueueSubmit(...);
-
-    // TODO Phase 1.3+: Present to swapchain
-    // m_swapchain.present(image_index, ...);
-
+    cleanup_closed_windows();
     for (auto& [name, hook] : m_handle->post_process_hooks) {
         hook(1);
     }
@@ -330,6 +337,13 @@ void GraphicsSubsystem::register_windows_for_processing()
             MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
                 "Failed to create Vulkan surface for window '{}'",
                 window->get_create_info().title);
+            continue;
+        }
+
+        if (!m_vulkan_context->update_present_family(surface)) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                "No presentation support for window '{}'", window->get_create_info().title);
+            m_vulkan_context->destroy_surface(surface);
             continue;
         }
 
@@ -434,6 +448,129 @@ void GraphicsSubsystem::cleanup_closed_windows()
             ++it;
         }
     }
+}
+
+void GraphicsSubsystem::render_all_windows()
+{
+    for (auto& config : m_window_configs) {
+        render_window(config);
+    }
+}
+
+void GraphicsSubsystem::record_clear_commands(
+    vk::CommandBuffer cmd,
+    vk::Image image,
+    vk::Extent2D /*extent*/)
+{
+
+    vk::ImageMemoryBarrier barrier {};
+    barrier.oldLayout = vk::ImageLayout::eUndefined;
+    barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = vk::AccessFlags {};
+    barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+    cmd.pipelineBarrier(
+        vk::PipelineStageFlagBits::eTopOfPipe,
+        vk::PipelineStageFlagBits::eTransfer,
+        vk::DependencyFlags {},
+        0, nullptr,
+        0, nullptr,
+        1, &barrier);
+
+    vk::ClearColorValue clear_color {};
+    clear_color.float32[0] = 0.0F;
+    clear_color.float32[1] = 0.1F;
+    clear_color.float32[2] = 0.2F;
+    clear_color.float32[3] = 1.0F;
+
+    vk::ImageSubresourceRange range {};
+    range.aspectMask = vk::ImageAspectFlagBits::eColor;
+    range.baseMipLevel = 0;
+    range.levelCount = 1;
+    range.baseArrayLayer = 0;
+    range.layerCount = 1;
+
+    cmd.clearColorImage(
+        image,
+        vk::ImageLayout::eTransferDstOptimal,
+        &clear_color,
+        1, &range);
+
+    barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+    barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
+    barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+    barrier.dstAccessMask = vk::AccessFlags {};
+
+    cmd.pipelineBarrier(
+        vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eBottomOfPipe,
+        vk::DependencyFlags {},
+        0, nullptr,
+        0, nullptr,
+        1, &barrier);
+}
+
+void GraphicsSubsystem::render_window(WindowSwapchainConfig& config)
+{
+    auto device = m_vulkan_context->get_device();
+    auto graphics_queue = m_vulkan_context->get_graphics_queue();
+
+    size_t frame = config.current_frame;
+    auto& image_available = config.image_available[frame];
+    auto& render_finished = config.render_finished[frame];
+    auto& in_flight = config.in_flight[frame];
+
+    device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX);
+    device.resetFences(1, &in_flight);
+
+    auto image_index_opt = config.swapchain->acquire_next_image(image_available);
+    if (!image_index_opt.has_value()) {
+        config.needs_recreation = true;
+        return;
+    }
+    uint32_t image_index = image_index_opt.value();
+
+    vk::CommandBuffer cmd = m_command_manager->allocate_command_buffer();
+    vk::CommandBufferBeginInfo begin_info {};
+    begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+    cmd.begin(begin_info);
+
+    record_clear_commands(cmd, config.swapchain->get_images()[image_index], config.swapchain->get_extent());
+    cmd.end();
+
+    vk::SubmitInfo submit_info {};
+    vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores = &image_available;
+    submit_info.pWaitDstStageMask = wait_stages;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &cmd;
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &render_finished;
+
+    try {
+        graphics_queue.submit(1, &submit_info, in_flight);
+    } catch (const vk::SystemError& e) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to submit draw command buffer: {}", e.what());
+        m_command_manager->free_command_buffer(cmd);
+        return;
+    }
+
+    bool present_success = config.swapchain->present(image_index, render_finished, graphics_queue);
+    if (!present_success) {
+        config.needs_recreation = true;
+    }
+
+    config.current_frame = (frame + 1) % config.swapchain->get_image_count();
 }
 
 void GraphicsSubsystem::graphics_thread_loop()
