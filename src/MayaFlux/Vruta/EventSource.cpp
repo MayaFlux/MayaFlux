@@ -6,6 +6,11 @@ namespace MayaFlux::Vruta {
 
 void EventSource::signal(Core::WindowEvent event)
 {
+    if (event.type == Core::WindowEventType::WINDOW_CLOSED) {
+        m_pending_events.push(event);
+        return;
+    }
+
     m_pending_events.push(event);
 
     auto waiters = m_waiters;
