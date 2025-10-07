@@ -30,7 +30,7 @@ namespace Config {
      */
     struct NodeConfig {
         size_t channel_cache_size = 256; ///< Number of cached channels for oprations
-        u_int32_t max_channels = 32; ///< Maximum number of channels supported (u_int32_t bits)
+        uint32_t max_channels = 32; ///< Maximum number of channels supported (uint32_t bits)
         size_t callback_cache_size = 64;
         size_t timer_cleanup_threshold = 20;
     };
@@ -45,19 +45,19 @@ namespace Config {
      * @brief Gets the sample rate from the default engine
      * @return Current sample rate in Hz
      */
-    u_int32_t get_sample_rate();
+    uint32_t get_sample_rate();
 
     /**
      * @brief Gets the buffer size from the default engine
      * @return Current buffer size in frames
      */
-    u_int32_t get_buffer_size();
+    uint32_t get_buffer_size();
 
     /**
      * @brief Gets the number of output channels from the default engine
      * @return Current number of output channels
      */
-    u_int32_t get_num_out_channels();
+    uint32_t get_num_out_channels();
 
     /**
      * @brief Gets the stream configuration from the default engine

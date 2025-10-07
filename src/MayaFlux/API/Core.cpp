@@ -81,7 +81,7 @@ void set_and_transfer_context(Core::Engine instance)
     }
 }
 
-void Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_out_channels, u_int32_t num_in_channels)
+void Init(uint32_t sample_rate, uint32_t buffer_size, uint32_t num_out_channels, uint32_t num_in_channels)
 {
     auto& engine = internal::get_or_create_engine();
     auto& stream_info = engine.get_stream_info();

@@ -34,17 +34,17 @@ GraphConfig& get_graph_config() { return graph_config; }
 
 NodeConfig& get_node_config() { return node_config; }
 
-u_int32_t get_sample_rate()
+uint32_t get_sample_rate()
 {
     return get_context().get_stream_info().sample_rate;
 }
 
-u_int32_t get_buffer_size()
+uint32_t get_buffer_size()
 {
     return get_context().get_stream_info().buffer_size;
 }
 
-u_int32_t get_num_out_channels()
+uint32_t get_num_out_channels()
 {
     return get_context().get_stream_info().output.channels;
 }

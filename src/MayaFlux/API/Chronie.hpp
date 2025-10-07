@@ -97,7 +97,7 @@ Vruta::SoundRoutine create_line(float start_value, float end_value, float durati
  *
  * Uses the task scheduler from the default engine.
  */
-Vruta::SoundRoutine create_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
 
 /**
  * @brief Schedules a pattern generator that produces values based on a pattern function
@@ -110,7 +110,7 @@ Vruta::SoundRoutine create_pattern(std::function<std::any(u_int64_t)> pattern_fu
  *
  * Uses the task scheduler from the default engine.
  */
-void schedule_pattern(std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "");
+void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "");
 
 /**
  * @brief Gets a pointer to a task's current value
