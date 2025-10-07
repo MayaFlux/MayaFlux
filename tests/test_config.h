@@ -18,7 +18,12 @@ public:
     static std::unique_ptr<Core::Engine> createTestEngine()
     {
         auto engine = std::make_unique<Core::Engine>();
-        engine->Init(TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, TestConfig::NUM_CHANNELS);
+        auto& stream_info = engine->get_stream_info();
+        stream_info.sample_rate = TestConfig::SAMPLE_RATE;
+        stream_info.buffer_size = TestConfig::BUFFER_SIZE;
+        stream_info.output.channels = TestConfig::NUM_CHANNELS;
+        stream_info.input.channels = 0;
+        engine->Init();
         return engine;
     }
 

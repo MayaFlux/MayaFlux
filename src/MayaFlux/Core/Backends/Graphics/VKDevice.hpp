@@ -100,6 +100,11 @@ public:
         }
     }
 
+    /**
+     * @brief Query and log supported device extensions
+     */
+    void query_supported_extensions();
+
 private:
     vk::PhysicalDevice m_physical_device; ///< Selected physical device (GPU)
     vk::Device m_logical_device; ///< Logical device handle

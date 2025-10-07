@@ -36,6 +36,13 @@ protected:
 
     Nodes::ProcessingToken node_token = Nodes::ProcessingToken::AUDIO_RATE;
     Buffers::ProcessingToken buf_token = Buffers::ProcessingToken::AUDIO_BACKEND;
+
+    Core::GlobalStreamInfo custom_config {
+        .sample_rate = TestConfig::SAMPLE_RATE,
+        .buffer_size = TestConfig::BUFFER_SIZE,
+        .output = { .channels = TestConfig::NUM_CHANNELS },
+        .input = { .enabled = false, .channels = 0 },
+    };
 };
 
 #ifdef INTEGRATION_TEST
@@ -48,7 +55,7 @@ TEST_F(EngineTest, InitializationFlagHandling)
 {
     auto test_engine = std::make_unique<Core::Engine>();
 
-    EXPECT_NO_THROW(test_engine->Init(TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, TestConfig::NUM_CHANNELS));
+    EXPECT_NO_THROW(test_engine->Init(custom_config));
 
     EXPECT_NE(test_engine->get_subsystem_manager(), nullptr);
     EXPECT_NE(test_engine->get_scheduler(), nullptr);
@@ -63,7 +70,7 @@ TEST_F(EngineTest, AudioBackendDependentBehavior)
 {
     auto test_engine = std::make_unique<Core::Engine>();
 
-    EXPECT_NO_THROW(test_engine->Init(TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, TestConfig::NUM_CHANNELS));
+    EXPECT_NO_THROW(test_engine->Init(custom_config));
     EXPECT_NO_THROW(test_engine->Start());
 
     auto audio_subsystem = test_engine->get_subsystem_manager()->get_audio_subsystem();
@@ -96,7 +103,7 @@ TEST_F(EngineTest, InitializationCreatesAndWiresComponents)
 {
     auto test_engine = std::make_unique<Core::Engine>();
 
-    EXPECT_NO_THROW(test_engine->Init(TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, TestConfig::NUM_CHANNELS, 0));
+    EXPECT_NO_THROW(test_engine->Init(custom_config));
 
     EXPECT_NE(test_engine->get_subsystem_manager(), nullptr) << "SubsystemManager not created";
     EXPECT_NE(test_engine->get_node_graph_manager(), nullptr) << "NodeGraphManager not created";
@@ -229,7 +236,7 @@ TEST_F(EngineTest, CleanShutdownAndResourceManagement)
 TEST_F(EngineTest, MoveSemantics)
 {
     auto first_engine = std::make_unique<Core::Engine>();
-    first_engine->Init(TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, TestConfig::NUM_CHANNELS);
+    first_engine->Init(custom_config);
     first_engine->Start();
 
     auto second_engine = std::make_unique<Core::Engine>(std::move(*first_engine));
@@ -380,14 +387,27 @@ TEST_F(EngineTest, GracefulHandlingOfUninitializedState)
 
 TEST_F(EngineTest, MultipleInitializationHandling)
 {
-    EXPECT_NO_THROW(engine->Init(44100, 256, 1));
+
+    Core::GlobalStreamInfo config1 {
+        .sample_rate = 44100,
+        .buffer_size = 256,
+        .output = { .channels = 1 },
+    };
+
+    Core::GlobalStreamInfo config2 {
+        .sample_rate = 48000,
+        .buffer_size = 512,
+        .output = { .channels = 2 },
+    };
+
+    EXPECT_NO_THROW(engine->Init(config1));
 
     auto& stream_info = engine->get_stream_info();
     EXPECT_EQ(stream_info.sample_rate, 44100);
     EXPECT_EQ(stream_info.buffer_size, 256);
     EXPECT_EQ(stream_info.output.channels, 1);
 
-    EXPECT_NO_THROW(engine->Init(48000, 512, 2));
+    EXPECT_NO_THROW(engine->Init(config2));
 
     EXPECT_EQ(engine->get_stream_info().sample_rate, 48000);
     EXPECT_EQ(engine->get_stream_info().buffer_size, 512);

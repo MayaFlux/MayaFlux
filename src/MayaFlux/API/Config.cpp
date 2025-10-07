@@ -1,6 +1,7 @@
 #include "Config.hpp"
 #include "Core.hpp"
 #include "MayaFlux/Core/Engine.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Config {
 
@@ -15,7 +16,18 @@ GraphConfig::GraphConfig()
 
 Core::GlobalStreamInfo& get_global_stream_info()
 {
+    if (get_context().is_running()) {
+        MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Accessing stream info while engine is running may lead to inconsistent state.");
+    }
     return get_context().get_stream_info();
+}
+
+Core::GlobalGraphicsConfig& get_global_graphics_config()
+{
+    if (get_context().is_running()) {
+        MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Accessing graphics config while engine is running may lead to inconsistent state.");
+    }
+    return get_context().get_graphics_config();
 }
 
 GraphConfig& get_graph_config() { return graph_config; }

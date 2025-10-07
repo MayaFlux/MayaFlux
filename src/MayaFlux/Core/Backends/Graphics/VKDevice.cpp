@@ -186,6 +186,17 @@ bool VKDevice::update_presentation_queue(vk::SurfaceKHR surface)
     return false;
 }
 
+void VKDevice::query_supported_extensions()
+{
+    std::vector<vk::ExtensionProperties> availableExtensions = m_physical_device.enumerateDeviceExtensionProperties();
+
+    MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend, "Available physical device extensions:");
+    for (const auto& extension : availableExtensions) {
+        std::cout << "\t- " << extension.extensionName << " (Version: " << extension.specVersion << ")\n";
+    }
+    MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend, "End of list.");
+}
+
 bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info)
 {
     if (!m_queue_families.graphics_family.has_value()) {

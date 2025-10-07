@@ -11,10 +11,25 @@
 #endif
 #endif
 
-void create()
+void initialize()
 {
 #ifdef HAS_USER_PROJECT
-    compose();
+    try {
+        config();
+    } catch (const std::exception& e) {
+        MF_ERROR(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Error during user initialization: {}", e.what());
+    }
+#endif
+}
+
+void run()
+{
+#ifdef HAS_USER_PROJECT
+    try {
+        compose();
+    } catch (const std::exception& e) {
+        MF_ERROR(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Runtime, "Error running user code: {}", e.what());
+    }
 #else
     auto container = vega.read("res/audio.wav") | Audio;
 #endif
@@ -30,9 +45,11 @@ int main()
 #endif // MAYASIMPLE
 
     try {
-        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Audio Engine ===");
+        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Creative Coding Framework ===");
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Version: {}", "0.1.0");
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "");
+
+        initialize();
 
         MayaFlux::Init();
 
@@ -40,7 +57,7 @@ int main()
 
         MF_PRINT(Journal::Component::USER, Journal::Context::Init, "=== Audio Processing Active ===");
 
-        create();
+        run();
 
         std::cout << "Press any key to stop..." << std::endl;
         std::cin.get();

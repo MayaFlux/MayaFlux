@@ -84,7 +84,13 @@ void set_and_transfer_context(Core::Engine instance)
 void Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_out_channels, u_int32_t num_in_channels)
 {
     auto& engine = internal::get_or_create_engine();
-    engine.Init(sample_rate, buffer_size, num_out_channels, num_in_channels);
+    auto& stream_info = engine.get_stream_info();
+
+    stream_info.sample_rate = sample_rate;
+    stream_info.buffer_size = buffer_size;
+    stream_info.output.channels = num_out_channels;
+    stream_info.input.channels = num_in_channels;
+    engine.Init();
 }
 
 void Init(Core::GlobalStreamInfo stream_info)

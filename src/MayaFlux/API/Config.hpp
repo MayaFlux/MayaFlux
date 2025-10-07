@@ -4,6 +4,7 @@ namespace MayaFlux {
 
 namespace Core {
     struct GlobalStreamInfo;
+    struct GlobalGraphicsConfig;
 }
 
 /**
@@ -63,6 +64,12 @@ namespace Config {
      * @return Copy of the GlobalStreamInfo struct
      */
     Core::GlobalStreamInfo& get_global_stream_info();
+
+    /**
+     * @brief Gets the graphics configuration from the default engine
+     * @return Copy of the GlobalGraphicsConfig struct
+     */
+    Core::GlobalGraphicsConfig& get_global_graphics_config();
 
     // WindowContext& window_context;
 }

@@ -70,28 +70,14 @@ Engine& Engine::operator=(Engine&& other) noexcept
     return *this;
 }
 
-void Engine::Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_out_channels, u_int32_t num_in_channels)
+void Engine::Init()
 {
-    GlobalStreamInfo streamInfo;
-    streamInfo.sample_rate = sample_rate;
-    streamInfo.buffer_size = buffer_size;
-    streamInfo.output.channels = num_out_channels;
-
-    if (num_in_channels > 0) {
-        streamInfo.input.enabled = true;
-        streamInfo.input.channels = num_in_channels;
-    } else {
-        streamInfo.input.enabled = false;
-    }
-
-    GlobalGraphicsConfig graphics_config;
-    Init(streamInfo, graphics_config);
+    Init(m_stream_info, m_graphics_config);
 }
 
 void Engine::Init(const GlobalStreamInfo& streamInfo)
 {
-    GlobalGraphicsConfig graphics_config;
-    Init(streamInfo, graphics_config);
+    Init(streamInfo, m_graphics_config);
 }
 
 void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config)

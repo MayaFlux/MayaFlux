@@ -116,10 +116,6 @@ public:
 
     /**
      * @brief Initializes all system components and prepares for processing
-     * @param sample_rate Audio sample rate in Hz
-     * @param buffer_size Size of audio processing buffer in frames
-     * @param num_out_channels Number of output channels
-     * @param num_in_channels Number of input channels
      *
      * Orchestrates the initialization sequence for all core components:
      * - Creates and configures the task scheduler with the specified sample rate
@@ -129,7 +125,7 @@ public:
      *
      * This method must be called before Start().
      */
-    void Init(u_int32_t sample_rate = 48000U, u_int32_t buffer_size = 512U, u_int32_t num_out_channels = 2U, u_int32_t num_in_channels = 0U);
+    void Init();
 
     /**
      * @brief Initializes the processing engine with a custom stream configuration
@@ -302,8 +298,8 @@ private:
     // System Components
     //-------------------------------------------------------------------------
 
-    GlobalStreamInfo m_stream_info; ///< Stream configuration
-    GlobalGraphicsConfig m_graphics_config; ///< Graphics/windowing configuration
+    GlobalStreamInfo m_stream_info {}; ///< Stream configuration
+    GlobalGraphicsConfig m_graphics_config {}; ///< Graphics/windowing configuration
 
     bool m_is_paused {}; ///< Pause state flag
     bool m_is_initialized {};
