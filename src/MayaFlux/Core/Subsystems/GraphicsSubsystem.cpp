@@ -277,7 +277,7 @@ void GraphicsSubsystem::resume()
         "Graphics processing resumed");
 }
 
-uint32_t GraphicsSubsystem::get_target_fps() const
+u_int32_t GraphicsSubsystem::get_target_fps() const
 {
     return m_frame_clock->frame_rate();
 }
@@ -287,7 +287,7 @@ double GraphicsSubsystem::get_measured_fps() const
     return m_frame_clock->get_measured_fps();
 }
 
-void GraphicsSubsystem::set_target_fps(uint32_t fps)
+void GraphicsSubsystem::set_target_fps(u_int32_t fps)
 {
     m_frame_clock->set_target_fps(fps);
 
@@ -387,21 +387,24 @@ void GraphicsSubsystem::register_windows_for_processing()
 bool GraphicsSubsystem::create_sync_objects(WindowSwapchainConfig& config)
 {
     auto device = m_vulkan_context->get_device();
-    u_int32_t frames_in_flight = config.swapchain->get_image_count();
+    u_int32_t image_count = config.swapchain->get_image_count();
 
     try {
-        config.image_available.resize(frames_in_flight);
-        config.render_finished.resize(frames_in_flight);
-        config.in_flight.resize(frames_in_flight);
+        config.image_available.resize(image_count);
+        config.render_finished.resize(image_count);
+        config.in_flight.resize(image_count);
 
         vk::SemaphoreCreateInfo semaphore_info {};
         vk::FenceCreateInfo fence_info {};
         fence_info.flags = vk::FenceCreateFlagBits::eSignaled;
 
-        for (uint32_t i = 0; i < frames_in_flight; ++i) {
+        for (u_int32_t i = 0; i < image_count; ++i) {
             config.image_available[i] = device.createSemaphore(semaphore_info);
             config.render_finished[i] = device.createSemaphore(semaphore_info);
-            config.in_flight[i] = device.createFence(fence_info);
+        }
+
+        for (auto& i : config.in_flight) {
+            i = device.createFence(fence_info);
         }
 
         config.current_frame = 0;
@@ -462,7 +465,6 @@ void GraphicsSubsystem::record_clear_commands(
     vk::Image image,
     vk::Extent2D /*extent*/)
 {
-
     vk::ImageMemoryBarrier barrier {};
     barrier.oldLayout = vk::ImageLayout::eUndefined;
     barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
@@ -523,20 +525,21 @@ void GraphicsSubsystem::render_window(WindowSwapchainConfig& config)
     auto device = m_vulkan_context->get_device();
     auto graphics_queue = m_vulkan_context->get_graphics_queue();
 
-    size_t frame = config.current_frame;
-    auto& image_available = config.image_available[frame];
-    auto& render_finished = config.render_finished[frame];
-    auto& in_flight = config.in_flight[frame];
+    size_t frame_index = config.current_frame;
+    auto& in_flight = config.in_flight[frame_index];
 
     device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX);
     device.resetFences(1, &in_flight);
 
-    auto image_index_opt = config.swapchain->acquire_next_image(image_available);
+    auto image_index_opt = config.swapchain->acquire_next_image(config.image_available[frame_index]);
     if (!image_index_opt.has_value()) {
         config.needs_recreation = true;
         return;
     }
-    uint32_t image_index = image_index_opt.value();
+    u_int32_t image_index = image_index_opt.value();
+
+    auto& image_available = config.image_available[frame_index];
+    auto& render_finished = config.render_finished[frame_index];
 
     vk::CommandBuffer cmd = m_command_manager->allocate_command_buffer();
     vk::CommandBufferBeginInfo begin_info {};
@@ -570,7 +573,7 @@ void GraphicsSubsystem::render_window(WindowSwapchainConfig& config)
         config.needs_recreation = true;
     }
 
-    config.current_frame = (frame + 1) % config.swapchain->get_image_count();
+    config.current_frame = (frame_index + 1) % config.in_flight.size();
 }
 
 void GraphicsSubsystem::graphics_thread_loop()
@@ -588,7 +591,7 @@ void GraphicsSubsystem::graphics_thread_loop()
         m_frame_clock->wait_for_next_frame();
 
         if (m_frame_clock->is_frame_late()) {
-            uint64_t lag = m_frame_clock->get_frame_lag();
+            u_int64_t lag = m_frame_clock->get_frame_lag();
             if (lag > 2) {
                 MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
                     "Frame lag detected: {} frames behind (Measured FPS: {:.1f})",

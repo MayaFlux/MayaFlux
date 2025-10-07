@@ -1,6 +1,8 @@
 #include "VKSwapchain.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include "VKEnumUtils.hpp"
+
 namespace MayaFlux::Core {
 
 VKSwapchain::~VKSwapchain()
@@ -299,42 +301,6 @@ vk::SurfaceFormatKHR VKSwapchain::choose_surface_format(
     GraphicsSurfaceInfo::SurfaceFormat desired_format,
     GraphicsSurfaceInfo::ColorSpace desired_color_space) const
 {
-    auto to_vk_format = [](GraphicsSurfaceInfo::SurfaceFormat fmt) -> vk::Format {
-        switch (fmt) {
-        case GraphicsSurfaceInfo::SurfaceFormat::B8G8R8A8_SRGB:
-            return vk::Format::eB8G8R8A8Srgb;
-        case GraphicsSurfaceInfo::SurfaceFormat::R8G8B8A8_SRGB:
-            return vk::Format::eR8G8B8A8Srgb;
-        case GraphicsSurfaceInfo::SurfaceFormat::B8G8R8A8_UNORM:
-            return vk::Format::eB8G8R8A8Unorm;
-        case GraphicsSurfaceInfo::SurfaceFormat::R8G8B8A8_UNORM:
-            return vk::Format::eR8G8B8A8Unorm;
-        case GraphicsSurfaceInfo::SurfaceFormat::R16G16B16A16_SFLOAT:
-            return vk::Format::eR16G16B16A16Sfloat;
-        case GraphicsSurfaceInfo::SurfaceFormat::A2B10G10R10_UNORM:
-            return vk::Format::eA2B10G10R10UnormPack32;
-        case GraphicsSurfaceInfo::SurfaceFormat::R32G32B32A32_SFLOAT:
-            return vk::Format::eR32G32B32A32Sfloat;
-        default:
-            return vk::Format::eB8G8R8A8Srgb;
-        }
-    };
-
-    auto to_vk_color_space = [](GraphicsSurfaceInfo::ColorSpace space) -> vk::ColorSpaceKHR {
-        switch (space) {
-        case GraphicsSurfaceInfo::ColorSpace::SRGB_NONLINEAR:
-            return vk::ColorSpaceKHR::eSrgbNonlinear;
-        case GraphicsSurfaceInfo::ColorSpace::EXTENDED_SRGB:
-            return vk::ColorSpaceKHR::eExtendedSrgbLinearEXT;
-        case GraphicsSurfaceInfo::ColorSpace::HDR10_ST2084:
-            return vk::ColorSpaceKHR::eHdr10St2084EXT;
-        case GraphicsSurfaceInfo::ColorSpace::DISPLAY_P3:
-            return vk::ColorSpaceKHR::eDisplayP3NonlinearEXT;
-        default:
-            return vk::ColorSpaceKHR::eSrgbNonlinear;
-        }
-    };
-
     vk::Format vk_format = to_vk_format(desired_format);
     vk::ColorSpaceKHR vk_color_space = to_vk_color_space(desired_color_space);
 
@@ -362,21 +328,6 @@ vk::PresentModeKHR VKSwapchain::choose_present_mode(
     const std::vector<vk::PresentModeKHR>& available_modes,
     GraphicsSurfaceInfo::PresentMode desired_mode) const
 {
-    auto to_vk_present_mode = [](GraphicsSurfaceInfo::PresentMode mode) -> vk::PresentModeKHR {
-        switch (mode) {
-        case GraphicsSurfaceInfo::PresentMode::IMMEDIATE:
-            return vk::PresentModeKHR::eImmediate;
-        case GraphicsSurfaceInfo::PresentMode::MAILBOX:
-            return vk::PresentModeKHR::eMailbox;
-        case GraphicsSurfaceInfo::PresentMode::FIFO:
-            return vk::PresentModeKHR::eFifo;
-        case GraphicsSurfaceInfo::PresentMode::FIFO_RELAXED:
-            return vk::PresentModeKHR::eFifoRelaxed;
-        default:
-            return vk::PresentModeKHR::eFifo;
-        }
-    };
-
     vk::PresentModeKHR vk_mode = to_vk_present_mode(desired_mode);
 
     for (const auto& mode : available_modes) {
