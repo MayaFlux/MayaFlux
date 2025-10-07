@@ -16,12 +16,14 @@ class VKContext;
 class VKSwapchain;
 class VKCommandManager;
 class VKRenderPass;
+class VKFramebuffer;
 
 struct WindowSwapchainConfig {
     std::shared_ptr<Window> window;
     vk::SurfaceKHR surface;
     std::unique_ptr<VKSwapchain> swapchain;
     std::unique_ptr<VKRenderPass> render_pass;
+    std::vector<std::unique_ptr<VKFramebuffer>> framebuffers;
 
     std::vector<vk::Semaphore> image_available;
     std::vector<vk::Semaphore> render_finished;
@@ -239,12 +241,6 @@ private:
      * @brief Cleanup resources for windows that have been closed
      */
     void cleanup_closed_windows();
-
-    /**
-     * @brief Record commands to clear screen
-     * (placeholder until we have actual rendering)
-     */
-    void record_clear_commands(vk::CommandBuffer cmd, vk::Image image, vk::Extent2D extent);
 
     /**
      * @brief Render a single window's swapchain

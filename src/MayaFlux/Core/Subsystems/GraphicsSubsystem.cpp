@@ -1,5 +1,6 @@
 #include "GraphicsSubsystem.hpp"
 #include "MayaFlux/Core/Backends/Graphics/VKCommandManager.hpp"
+#include "MayaFlux/Core/Backends/Graphics/VKFramebuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/VKRenderPass.hpp"
 #include "MayaFlux/Core/Backends/Graphics/VKSwapchain.hpp"
 
@@ -17,6 +18,18 @@ void WindowSwapchainConfig::cleanup(VKContext& context)
     vk::Device device = context.get_device();
 
     device.waitIdle();
+
+    for (auto& framebuffer : framebuffers) {
+        if (framebuffer) {
+            framebuffer->cleanup(device);
+        }
+    }
+    framebuffers.clear();
+
+    if (render_pass) {
+        render_pass->cleanup(device);
+        render_pass.reset();
+    }
 
     for (auto& img : image_available) {
         if (img) {
@@ -47,11 +60,6 @@ void WindowSwapchainConfig::cleanup(VKContext& context)
     if (surface) {
         context.destroy_surface(surface);
         surface = nullptr;
-    }
-
-    if (render_pass) {
-        render_pass->cleanup(device);
-        render_pass.reset();
     }
 
     window->set_graphics_registered(false);
@@ -340,14 +348,14 @@ void GraphicsSubsystem::register_windows_for_processing()
 
         vk::SurfaceKHR surface = m_vulkan_context->create_surface(window);
         if (!surface) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
                 "Failed to create Vulkan surface for window '{}'",
                 window->get_create_info().title);
             continue;
         }
 
         if (!m_vulkan_context->update_present_family(surface)) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
                 "No presentation support for window '{}'", window->get_create_info().title);
             m_vulkan_context->destroy_surface(surface);
             continue;
@@ -359,26 +367,13 @@ void GraphicsSubsystem::register_windows_for_processing()
         config.swapchain = std::make_unique<VKSwapchain>();
 
         if (!config.swapchain->create(*m_vulkan_context, surface, window->get_create_info())) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
                 "Failed to create swapchain for window '{}'", window->get_create_info().title);
             continue;
         }
 
-        config.render_pass = std::make_unique<VKRenderPass>();
-        if (!config.render_pass->create(
-                m_vulkan_context->get_device(),
-                config.swapchain->get_image_format())) {
-
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
-                "Failed to create render pass for window '{}'", window->get_create_info().title);
-
-            config.swapchain->cleanup();
-            m_vulkan_context->destroy_surface(surface);
-            continue;
-        }
-
         if (!create_sync_objects(config)) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
                 "Failed to create sync objects for window '{}'",
                 window->get_create_info().title);
             config.swapchain->cleanup();
@@ -428,9 +423,37 @@ bool GraphicsSubsystem::create_sync_objects(WindowSwapchainConfig& config)
 
         config.current_frame = 0;
 
+        config.render_pass = std::make_unique<VKRenderPass>();
+        if (!config.render_pass->create(device, config.swapchain->get_image_format())) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Failed to create render pass");
+            return false;
+        }
+
+        config.framebuffers.resize(image_count);
+        auto extent = config.swapchain->get_extent();
+        const auto& image_views = config.swapchain->get_image_views();
+
+        for (uint32_t i = 0; i < image_count; ++i) {
+            config.framebuffers[i] = std::make_unique<VKFramebuffer>();
+
+            std::vector<vk::ImageView> attachments = { image_views[i] };
+
+            if (!config.framebuffers[i]->create(
+                    device,
+                    config.render_pass->get(),
+                    attachments,
+                    extent.width,
+                    extent.height)) {
+                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                    "Failed to create framebuffer {}", i);
+                return false;
+            }
+        }
+
         return true;
     } catch (const vk::SystemError& e) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to create sync objects: {}", e.what());
         return false;
     }
@@ -444,13 +467,63 @@ void GraphicsSubsystem::handle_window_resizes()
 
             m_vulkan_context->wait_idle();
 
+            for (auto& framebuffer : config.framebuffers) {
+                if (framebuffer) {
+                    framebuffer->cleanup(m_vulkan_context->get_device());
+                }
+            }
+            config.framebuffers.clear();
+
+            if (config.render_pass) {
+                config.render_pass->cleanup(m_vulkan_context->get_device());
+                config.render_pass.reset();
+            }
+
             if (!config.swapchain->recreate(state.current_width, state.current_height)) {
-                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
                     "Failed to recreate swapchain for window '{}'",
                     config.window->get_create_info().title);
-            } else {
-                config.needs_recreation = false;
+                continue;
             }
+
+            config.render_pass = std::make_unique<VKRenderPass>();
+            if (!config.render_pass->create(
+                    m_vulkan_context->get_device(),
+                    config.swapchain->get_image_format())) {
+                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                    "Failed to recreate render pass for window '{}'",
+                    config.window->get_create_info().title);
+                continue;
+            }
+
+            uint32_t image_count = config.swapchain->get_image_count();
+            config.framebuffers.resize(image_count);
+            auto extent = config.swapchain->get_extent();
+            const auto& image_views = config.swapchain->get_image_views();
+
+            for (uint32_t i = 0; i < image_count; ++i) {
+                config.framebuffers[i] = std::make_unique<VKFramebuffer>();
+
+                std::vector<vk::ImageView> attachments = { image_views[i] };
+
+                if (!config.framebuffers[i]->create(
+                        m_vulkan_context->get_device(),
+                        config.render_pass->get(),
+                        attachments,
+                        extent.width,
+                        extent.height)) {
+                    MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                        "Failed to recreate framebuffer {} for window '{}'",
+                        i, config.window->get_create_info().title);
+                }
+            }
+
+            config.needs_recreation = false;
+
+            MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Recreated swapchain for window '{}' ({}x{})",
+                config.window->get_create_info().title,
+                state.current_width, state.current_height);
         }
     }
 }
@@ -479,66 +552,6 @@ void GraphicsSubsystem::render_all_windows()
     }
 }
 
-void GraphicsSubsystem::record_clear_commands(
-    vk::CommandBuffer cmd,
-    vk::Image image,
-    vk::Extent2D /*extent*/)
-{
-    vk::ImageMemoryBarrier barrier {};
-    barrier.oldLayout = vk::ImageLayout::eUndefined;
-    barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = image;
-    barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-    barrier.srcAccessMask = vk::AccessFlags {};
-    barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-
-    cmd.pipelineBarrier(
-        vk::PipelineStageFlagBits::eTopOfPipe,
-        vk::PipelineStageFlagBits::eTransfer,
-        vk::DependencyFlags {},
-        0, nullptr,
-        0, nullptr,
-        1, &barrier);
-
-    vk::ClearColorValue clear_color {};
-    clear_color.float32[0] = 0.0F;
-    clear_color.float32[1] = 0.1F;
-    clear_color.float32[2] = 0.2F;
-    clear_color.float32[3] = 1.0F;
-
-    vk::ImageSubresourceRange range {};
-    range.aspectMask = vk::ImageAspectFlagBits::eColor;
-    range.baseMipLevel = 0;
-    range.levelCount = 1;
-    range.baseArrayLayer = 0;
-    range.layerCount = 1;
-
-    cmd.clearColorImage(
-        image,
-        vk::ImageLayout::eTransferDstOptimal,
-        &clear_color,
-        1, &range);
-
-    barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-    barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
-    barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-    barrier.dstAccessMask = vk::AccessFlags {};
-
-    cmd.pipelineBarrier(
-        vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eBottomOfPipe,
-        vk::DependencyFlags {},
-        0, nullptr,
-        0, nullptr,
-        1, &barrier);
-}
-
 void GraphicsSubsystem::render_window(WindowSwapchainConfig& config)
 {
     auto device = m_vulkan_context->get_device();
@@ -565,21 +578,20 @@ void GraphicsSubsystem::render_window(WindowSwapchainConfig& config)
     begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
     cmd.begin(begin_info);
 
-    // --- INTEGRATION POINT ---
-    // vk::RenderPassBeginInfo render_pass_info {};
-    // render_pass_info.renderPass = config.render_pass->get();
-    // render_pass_info.framebuffer = config.framebuffers[image_index];
-    // render_pass_info.renderArea.offset = {0, 0};
-    // render_pass_info.renderArea.extent = config.swapchain->get_extent();
-    // vk::ClearValue clear_value;
-    // clear_value.color = vk::ClearColorValue{...};
-    // render_pass_info.clearValueCount = 1;
-    // render_pass_info.pClearValues = &clear_value;
-    // cmd.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
-    // // ...draw calls here...
-    // cmd.endRenderPass();
+    vk::RenderPassBeginInfo render_pass_info {};
+    render_pass_info.renderPass = config.render_pass->get();
+    render_pass_info.framebuffer = config.framebuffers[image_index]->get();
+    render_pass_info.renderArea.offset = vk::Offset2D { 0, 0 };
+    render_pass_info.renderArea.extent = config.swapchain->get_extent();
 
-    record_clear_commands(cmd, config.swapchain->get_images()[image_index], config.swapchain->get_extent());
+    vk::ClearValue clear_color {};
+    clear_color.color = vk::ClearColorValue(std::array<float, 4> { 0.0F, 0.1F, 0.2F, 1.0F });
+    render_pass_info.clearValueCount = 1;
+    render_pass_info.pClearValues = &clear_color;
+
+    cmd.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
+    cmd.endRenderPass();
+
     cmd.end();
 
     vk::SubmitInfo submit_info {};
