@@ -22,6 +22,8 @@ bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool ena
 
     std::vector<const char*> extensions;
     if (graphics_config.windowing_backend == GlobalGraphicsConfig::WindowingBackend::GLFW) {
+
+        GLFWSingleton::configure(graphics_config.glfw_preinit_config);
         extensions = GLFWSingleton::get_required_instance_extensions();
 
         for (const char* ext : required_extensions) {

@@ -18,10 +18,12 @@ public:
     /**
      * @brief Creates a window with the given configuration
      * @param create_info Window creation parameters
-     * @param global_info Global graphics configuration (for defaults)
+     * @param surface_info Graphics surface parameters
+     * @param api Requested graphics API
+     * @param pre_init_config Optional pre-initialization configuration
      */
     GlfwWindow(const WindowCreateInfo& create_info,
-        const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api);
+        const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api, GlfwPreInitConfig pre_init_config = {});
 
     ~GlfwWindow() override;
 
@@ -97,7 +99,6 @@ private:
 
     void configure_window_hints(const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api) const;
     void setup_callbacks();
-    static void setup_preinit_hints(const GraphicsSurfaceInfo& global_info);
 
     static void glfw_window_size_callback(GLFWwindow* window, int width, int height);
     static void glfw_window_close_callback(GLFWwindow* window);

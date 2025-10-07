@@ -188,14 +188,45 @@ struct GraphicsSurfaceInfo {
     /** @brief Output detailed diagnostic information */
     bool verbose_logging {};
 
-    /** @brief On Linux, force use of Wayland even if X11 is available */
-    bool linux_force_wayland = true;
-
     /** @brief Backend-specific configuration parameters */
     std::unordered_map<std::string, std::any> backend_options;
 };
 
+/**
+ * @struct GlfwPreInitConfig
+ * @brief Configuration hints for GLFW initialization
+ *
+ * Set before initializing the GLFW library. These affect how GLFW sets up
+ * its internal state and platform integration.
+ */
+struct GlfwPreInitConfig {
+    /**
+     * @enum Platform
+     * @brief Force a specific windowing platform on Linux
+     */
+    enum class Platform {
+        Default,
+        Wayland,
+        X11
+    } platform
+        = Platform::Default;
+
+    /** this prevents crash on some wayland compositors */
+    bool disable_libdecor {};
+
+    bool cocoa_chdir_resources = true;
+    bool cocoa_menubar = true;
+
+    bool verbose_logging {};
+
+    /** @brief Request OpenGL debug context (if using OpenGL backend) */
+    bool force_headless_mode {};
+};
+
 struct GlobalGraphicsConfig {
+    /** @brief Pre-initialization configuration for GLFW */
+    GlfwPreInitConfig glfw_preinit_config;
+
     /** @brief System-wide configuration for visual stream processing */
     GraphicsSurfaceInfo surface_info;
 

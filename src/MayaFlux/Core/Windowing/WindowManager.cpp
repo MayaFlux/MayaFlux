@@ -34,6 +34,9 @@ std::shared_ptr<Window> WindowManager::create_window(const WindowCreateInfo& cre
         return nullptr;
     }
 
+    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+        "Creating window '{}' ({}x{}), for platform {}", create_info.title, create_info.width, create_info.height, GLFWSingleton::get_platform());
+
     auto window = create_window_internal(create_info);
     if (!window) {
         return nullptr;
@@ -143,7 +146,7 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
     switch (m_config.windowing_backend) {
     case GlobalGraphicsConfig::WindowingBackend::GLFW:
         return std::make_unique<GlfwWindow>(create_info, m_config.surface_info,
-            m_config.requested_api);
+            m_config.requested_api, m_config.glfw_preinit_config);
 
     case GlobalGraphicsConfig::WindowingBackend::SDL:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,

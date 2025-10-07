@@ -25,10 +25,10 @@
 namespace MayaFlux::Core {
 
 GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
-    const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api)
+    const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api, GlfwPreInitConfig pre_init_config)
     : m_create_info(create_info)
 {
-    setup_preinit_hints(surface_info);
+    GLFWSingleton::configure(pre_init_config);
 
     if (!GLFWSingleton::initialize()) {
         error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem, std::source_location::current(),
@@ -127,30 +127,6 @@ void GlfwWindow::set_title(const std::string& title)
         glfwSetWindowTitle(m_window, title.c_str());
         m_create_info.title = title;
     }
-}
-
-void GlfwWindow::setup_preinit_hints(const GraphicsSurfaceInfo& global_info)
-{
-#ifdef MAYAFLUX_PLATFORM_LINUX
-    int desired_platform = GLFW_ANY_PLATFORM;
-
-    if (global_info.linux_force_wayland) {
-        if (glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
-            desired_platform = GLFW_PLATFORM_WAYLAND;
-        } else {
-            MF_WARN(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-                "Wayland requested but not supported by GLFW, falling back to X11");
-        }
-    } else {
-        if (glfwPlatformSupported(GLFW_PLATFORM_X11)) {
-            desired_platform = GLFW_PLATFORM_X11;
-        }
-    }
-
-    if (desired_platform != GLFW_ANY_PLATFORM) {
-        glfwInitHint(GLFW_PLATFORM, desired_platform);
-    }
-#endif
 }
 
 void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api) const

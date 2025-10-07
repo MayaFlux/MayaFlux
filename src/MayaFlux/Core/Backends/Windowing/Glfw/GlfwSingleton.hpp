@@ -4,6 +4,8 @@
 
 namespace MayaFlux::Core {
 
+struct GlfwPreInitConfig;
+
 /**
  * @class GLFWSingleton
  * @brief Singleton utility for managing global GLFW initialization and termination
@@ -38,6 +40,16 @@ public:
      * tracked windows have been destroyed. Resets the initialization state.
      */
     static void terminate();
+
+    /**
+     * @brief Configures GLFW with pre-initialization hints
+     * @param config Configuration parameters to set before initialization
+     *
+     * Must be called before initialize() to take effect. Sets various GLFW
+     * windowing and context hints based on the provided configuration.
+     * If called after initialization, the hints will be ignored.
+     */
+    static void configure(const GlfwPreInitConfig& config);
 
     /**
      * @brief Increments the count of active GLFW windows
@@ -142,6 +154,10 @@ private:
      * @param description A human-readable description of the error
      */
     static std::function<void(int, const char*)> s_error_callback;
+
+    static bool s_configured;
+
+    static GlfwPreInitConfig s_preinit_config;
 };
 
 }
