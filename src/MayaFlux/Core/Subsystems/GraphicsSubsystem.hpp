@@ -15,11 +15,13 @@ namespace MayaFlux::Core {
 class VKContext;
 class VKSwapchain;
 class VKCommandManager;
+class VKRenderPass;
 
 struct WindowSwapchainConfig {
     std::shared_ptr<Window> window;
     vk::SurfaceKHR surface;
     std::unique_ptr<VKSwapchain> swapchain;
+    std::unique_ptr<VKRenderPass> render_pass;
 
     std::vector<vk::Semaphore> image_available;
     std::vector<vk::Semaphore> render_finished;

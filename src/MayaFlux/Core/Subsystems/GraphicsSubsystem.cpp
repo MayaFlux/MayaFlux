@@ -1,5 +1,6 @@
 #include "GraphicsSubsystem.hpp"
 #include "MayaFlux/Core/Backends/Graphics/VKCommandManager.hpp"
+#include "MayaFlux/Core/Backends/Graphics/VKRenderPass.hpp"
 #include "MayaFlux/Core/Backends/Graphics/VKSwapchain.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -46,6 +47,11 @@ void WindowSwapchainConfig::cleanup(VKContext& context)
     if (surface) {
         context.destroy_surface(surface);
         surface = nullptr;
+    }
+
+    if (render_pass) {
+        render_pass->cleanup(device);
+        render_pass.reset();
     }
 
     window->set_graphics_registered(false);
@@ -358,6 +364,19 @@ void GraphicsSubsystem::register_windows_for_processing()
             continue;
         }
 
+        config.render_pass = std::make_unique<VKRenderPass>();
+        if (!config.render_pass->create(
+                m_vulkan_context->get_device(),
+                config.swapchain->get_image_format())) {
+
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                "Failed to create render pass for window '{}'", window->get_create_info().title);
+
+            config.swapchain->cleanup();
+            m_vulkan_context->destroy_surface(surface);
+            continue;
+        }
+
         if (!create_sync_objects(config)) {
             MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
                 "Failed to create sync objects for window '{}'",
@@ -545,6 +564,20 @@ void GraphicsSubsystem::render_window(WindowSwapchainConfig& config)
     vk::CommandBufferBeginInfo begin_info {};
     begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
     cmd.begin(begin_info);
+
+    // --- INTEGRATION POINT ---
+    // vk::RenderPassBeginInfo render_pass_info {};
+    // render_pass_info.renderPass = config.render_pass->get();
+    // render_pass_info.framebuffer = config.framebuffers[image_index];
+    // render_pass_info.renderArea.offset = {0, 0};
+    // render_pass_info.renderArea.extent = config.swapchain->get_extent();
+    // vk::ClearValue clear_value;
+    // clear_value.color = vk::ClearColorValue{...};
+    // render_pass_info.clearValueCount = 1;
+    // render_pass_info.pClearValues = &clear_value;
+    // cmd.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
+    // // ...draw calls here...
+    // cmd.endRenderPass();
 
     record_clear_commands(cmd, config.swapchain->get_images()[image_index], config.swapchain->get_extent());
     cmd.end();
