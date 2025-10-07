@@ -127,6 +127,12 @@ private:
         uint32_t height) const;
 
     /**
+     * @brief Find an HDR-capable format from available formats
+     */
+    [[nodiscard]] std::optional<vk::SurfaceFormatKHR> find_hdr_format(
+        const std::vector<vk::SurfaceFormatKHR>& available_formats) const;
+
+    /**
      * @brief Create image views for swapchain images
      */
     bool create_image_views();

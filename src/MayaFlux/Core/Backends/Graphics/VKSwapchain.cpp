@@ -21,15 +21,15 @@ bool VKSwapchain::create(VKContext& context,
 
     GraphicsSurfaceInfo::SurfaceFormat desired_format = window_config.surface_format.has_value()
         ? window_config.surface_format.value()
-        : surface_info.default_format;
+        : surface_info.format;
 
-    GraphicsSurfaceInfo::ColorSpace desired_color_space = surface_info.default_color_space;
+    GraphicsSurfaceInfo::ColorSpace desired_color_space = surface_info.color_space;
 
     GraphicsSurfaceInfo::PresentMode desired_present_mode = window_config.present_mode.has_value()
         ? window_config.present_mode.value()
-        : surface_info.default_present_mode;
+        : surface_info.present_mode;
 
-    uint32_t desired_image_count = surface_info.preferred_image_count;
+    uint32_t desired_image_count = surface_info.image_count;
 
     vk::PhysicalDevice physical_device = m_context->get_physical_device();
     vk::Device device = m_context->get_device();
@@ -43,8 +43,23 @@ bool VKSwapchain::create(VKContext& context,
         return false;
     }
 
-    vk::SurfaceFormatKHR surface_format = choose_surface_format(
-        support.formats, desired_format, desired_color_space);
+    vk::SurfaceFormatKHR surface_format;
+
+    if (surface_info.enable_hdr) {
+        auto hdr_format = find_hdr_format(support.formats);
+
+        if (hdr_format.has_value()) {
+            surface_format = hdr_format.value();
+        } else {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "HDR requested but no HDR-capable format/colorspace supported by device/surface. Falling back to default.");
+
+            surface_format = choose_surface_format(support.formats, desired_format, desired_color_space);
+        }
+
+    } else {
+        surface_format = choose_surface_format(support.formats, desired_format, desired_color_space);
+    }
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Chosen swapchain format: {}, color space: {}",
@@ -356,6 +371,33 @@ vk::PresentModeKHR VKSwapchain::choose_present_mode(
     MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Desired present mode not available, falling back to FIFO (VSync)");
     return vk::PresentModeKHR::eFifo;
+}
+
+std::optional<vk::SurfaceFormatKHR> VKSwapchain::find_hdr_format(
+    const std::vector<vk::SurfaceFormatKHR>& available_formats) const
+{
+    vk::SurfaceFormatKHR selected_format;
+    std::vector<std::pair<vk::Format, vk::ColorSpaceKHR>> hdr_candidates = {
+        { vk::Format::eR16G16B16A16Sfloat, vk::ColorSpaceKHR::eHdr10St2084EXT },
+        { vk::Format::eR16G16B16A16Sfloat, vk::ColorSpaceKHR::eExtendedSrgbLinearEXT },
+        { vk::Format::eA2B10G10R10UnormPack32, vk::ColorSpaceKHR::eHdr10St2084EXT },
+        { vk::Format::eA2B10G10R10UnormPack32, vk::ColorSpaceKHR::eExtendedSrgbLinearEXT },
+    };
+
+    bool hdr_supported = false;
+    for (const auto& candidate : hdr_candidates) {
+        for (const auto& fmt : available_formats) {
+            if (fmt.format == candidate.first && fmt.colorSpace == candidate.second) {
+                selected_format = fmt;
+                hdr_supported = true;
+                break;
+            }
+        }
+        if (hdr_supported) {
+            return selected_format;
+        }
+    }
+    return std::nullopt;
 }
 
 vk::Extent2D VKSwapchain::choose_extent(

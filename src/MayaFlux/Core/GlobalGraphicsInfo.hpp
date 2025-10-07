@@ -140,7 +140,7 @@ struct GraphicsSurfaceInfo {
     };
 
     /** @brief Default surface format for new windows */
-    SurfaceFormat default_format = SurfaceFormat::R8G8B8A8_SRGB;
+    SurfaceFormat format = SurfaceFormat::R8G8B8A8_SRGB;
 
     /**
      * @enum ColorSpace
@@ -154,7 +154,7 @@ struct GraphicsSurfaceInfo {
     };
 
     /** @brief Default color space for new windows */
-    ColorSpace default_color_space = ColorSpace::SRGB_NONLINEAR;
+    ColorSpace color_space = ColorSpace::SRGB_NONLINEAR;
 
     /**
      * @enum PresentMode
@@ -168,10 +168,10 @@ struct GraphicsSurfaceInfo {
     };
 
     /** @brief Default presentation mode for new windows */
-    PresentMode default_present_mode = PresentMode::FIFO;
+    PresentMode present_mode = PresentMode::FIFO;
 
     /** @brief Default number of swapchain images (double/triple buffering) */
-    u_int32_t preferred_image_count = 3;
+    u_int32_t image_count = 3;
 
     /** @brief Enable region-based processing by default */
     bool enable_regions = true;
@@ -184,9 +184,6 @@ struct GraphicsSurfaceInfo {
 
     /** @brief Measure and report actual frame times */
     bool measure_frame_time {};
-
-    /** @brief Output detailed diagnostic information */
-    bool verbose_logging {};
 
     /** @brief Backend-specific configuration parameters */
     std::unordered_map<std::string, std::any> backend_options;
@@ -220,7 +217,7 @@ struct GlfwPreInitConfig {
     bool verbose_logging {};
 
     /** @brief Request OpenGL debug context (if using OpenGL backend) */
-    bool force_headless_mode {};
+    bool headless {};
 };
 
 struct GlobalGraphicsConfig {
