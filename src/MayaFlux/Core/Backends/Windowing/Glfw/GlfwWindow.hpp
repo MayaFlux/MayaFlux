@@ -68,9 +68,9 @@ public:
 
     void set_title(const std::string& title) override;
 
-    void set_size(u_int32_t width, u_int32_t height) override;
+    void set_size(uint32_t width, uint32_t height) override;
 
-    void set_position(u_int32_t x, u_int32_t y) override;
+    void set_position(uint32_t x, uint32_t y) override;
 
     Vruta::EventSource& get_event_source() override { return m_event_source; }
     [[nodiscard]] const Vruta::EventSource& get_event_source() const override { return m_event_source; }

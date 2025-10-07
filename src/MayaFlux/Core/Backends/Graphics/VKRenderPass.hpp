@@ -22,12 +22,12 @@ struct SubpassDescription {
     std::optional<vk::AttachmentReference> depth_stencil_attachment;
     std::vector<vk::AttachmentReference> input_attachments;
     std::vector<vk::AttachmentReference> resolve_attachments;
-    std::vector<u_int32_t> preserve_attachments;
+    std::vector<uint32_t> preserve_attachments;
 };
 
 struct SubpassDependency {
-    u_int32_t src_subpass { VK_SUBPASS_EXTERNAL };
-    u_int32_t dst_subpass {};
+    uint32_t src_subpass { VK_SUBPASS_EXTERNAL };
+    uint32_t dst_subpass {};
     vk::PipelineStageFlags src_stage_mask { vk::PipelineStageFlagBits::eColorAttachmentOutput };
     vk::PipelineStageFlags dst_stage_mask { vk::PipelineStageFlagBits::eColorAttachmentOutput };
     vk::AccessFlags src_access_mask;

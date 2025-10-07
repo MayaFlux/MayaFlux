@@ -239,15 +239,15 @@ void GlfwWindow::glfw_window_size_callback(GLFWwindow* window, int width, int he
             event.type = WindowEventType::WINDOW_RESIZED;
             event.timestamp = glfwGetTime();
             event.data = WindowEvent::ResizeData {
-                .width = static_cast<u_int32_t>(width),
-                .height = static_cast<u_int32_t>(height)
+                .width = static_cast<uint32_t>(width),
+                .height = static_cast<uint32_t>(height)
             };
             win->m_event_callback(event);
         }
     }
 }
 
-void GlfwWindow::set_size(u_int32_t width, u_int32_t height)
+void GlfwWindow::set_size(uint32_t width, uint32_t height)
 {
     if (m_window) {
         glfwSetWindowSize(m_window, static_cast<int>(width), static_cast<int>(height));
@@ -257,7 +257,7 @@ void GlfwWindow::set_size(u_int32_t width, u_int32_t height)
     m_create_info.height = height;
 }
 
-void GlfwWindow::set_position(u_int32_t x, u_int32_t y)
+void GlfwWindow::set_position(uint32_t x, uint32_t y)
 {
     if (m_window) {
         glfwSetWindowPos(m_window, static_cast<int>(x), static_cast<int>(y));
@@ -311,8 +311,8 @@ void GlfwWindow::glfw_framebuffer_size_callback(GLFWwindow* window, int width, i
     event.type = WindowEventType::FRAMEBUFFER_RESIZED;
     event.timestamp = glfwGetTime();
     event.data = WindowEvent::ResizeData {
-        .width = static_cast<u_int32_t>(width),
-        .height = static_cast<u_int32_t>(height)
+        .width = static_cast<uint32_t>(width),
+        .height = static_cast<uint32_t>(height)
     };
 
     win->m_event_source.signal(event);

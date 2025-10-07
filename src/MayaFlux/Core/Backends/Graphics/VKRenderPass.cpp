@@ -79,13 +79,13 @@ bool VKRenderPass::create(vk::Device device, const RenderPassCreateInfo& create_
     for (const auto& subpass : create_info.subpasses) {
         vk::SubpassDescription vk_subpass;
         vk_subpass.pipelineBindPoint = subpass.bind_point;
-        vk_subpass.colorAttachmentCount = static_cast<u_int32_t>(subpass.color_attachments.size());
+        vk_subpass.colorAttachmentCount = static_cast<uint32_t>(subpass.color_attachments.size());
         vk_subpass.pColorAttachments = subpass.color_attachments.empty() ? nullptr : subpass.color_attachments.data();
         vk_subpass.pDepthStencilAttachment = subpass.depth_stencil_attachment.has_value() ? &subpass.depth_stencil_attachment.value() : nullptr;
-        vk_subpass.inputAttachmentCount = static_cast<u_int32_t>(subpass.input_attachments.size());
+        vk_subpass.inputAttachmentCount = static_cast<uint32_t>(subpass.input_attachments.size());
         vk_subpass.pInputAttachments = subpass.input_attachments.empty() ? nullptr : subpass.input_attachments.data();
         vk_subpass.pResolveAttachments = subpass.resolve_attachments.empty() ? nullptr : subpass.resolve_attachments.data();
-        vk_subpass.preserveAttachmentCount = static_cast<u_int32_t>(subpass.preserve_attachments.size());
+        vk_subpass.preserveAttachmentCount = static_cast<uint32_t>(subpass.preserve_attachments.size());
         vk_subpass.pPreserveAttachments = subpass.preserve_attachments.empty() ? nullptr : subpass.preserve_attachments.data();
 
         vk_subpasses.push_back(vk_subpass);
@@ -107,11 +107,11 @@ bool VKRenderPass::create(vk::Device device, const RenderPassCreateInfo& create_
     }
 
     vk::RenderPassCreateInfo render_pass_info;
-    render_pass_info.attachmentCount = static_cast<u_int32_t>(vk_attachments.size());
+    render_pass_info.attachmentCount = static_cast<uint32_t>(vk_attachments.size());
     render_pass_info.pAttachments = vk_attachments.data();
-    render_pass_info.subpassCount = static_cast<u_int32_t>(vk_subpasses.size());
+    render_pass_info.subpassCount = static_cast<uint32_t>(vk_subpasses.size());
     render_pass_info.pSubpasses = vk_subpasses.data();
-    render_pass_info.dependencyCount = static_cast<u_int32_t>(vk_dependencies.size());
+    render_pass_info.dependencyCount = static_cast<uint32_t>(vk_dependencies.size());
     render_pass_info.pDependencies = vk_dependencies.data();
 
     try {

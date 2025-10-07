@@ -221,7 +221,7 @@ public:
     std::optional<std::span<const double>> read_cross_subsystem_buffer(
         SubsystemType requesting_type,
         SubsystemType target_type,
-        u_int32_t channel);
+        uint32_t channel);
 
     /**
      * @brief Register a processing hook for a specific subsystem

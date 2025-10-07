@@ -131,7 +131,7 @@ void GraphicsSubsystem::register_frame_processor()
     }
 
     scheduler.register_token_processor(
-        [this](const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, u_int64_t processing_units) {
+        [this](const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, uint64_t processing_units) {
             this->process_frame_coroutines_impl(tasks, processing_units);
         });
 
@@ -157,20 +157,20 @@ void GraphicsSubsystem::register_callbacks()
 
 void GraphicsSubsystem::process_frame_coroutines_impl(
     const std::vector<std::shared_ptr<Vruta::Routine>>& tasks,
-    u_int64_t processing_units)
+    uint64_t processing_units)
 {
     if (tasks.empty()) {
         return;
     }
 
-    u_int64_t current_frame = m_frame_clock->current_position();
+    uint64_t current_frame = m_frame_clock->current_position();
 
     if (processing_units == 0) {
         processing_units = 1;
     }
 
-    for (u_int64_t i = 0; i < processing_units; ++i) {
-        u_int64_t frame_to_process = current_frame + i;
+    for (uint64_t i = 0; i < processing_units; ++i) {
+        uint64_t frame_to_process = current_frame + i;
 
         for (auto& routine : tasks) {
             if (!routine || !routine->is_active()) {
@@ -283,7 +283,7 @@ void GraphicsSubsystem::resume()
         "Graphics processing resumed");
 }
 
-u_int32_t GraphicsSubsystem::get_target_fps() const
+uint32_t GraphicsSubsystem::get_target_fps() const
 {
     return m_frame_clock->frame_rate();
 }
@@ -293,7 +293,7 @@ double GraphicsSubsystem::get_measured_fps() const
     return m_frame_clock->get_measured_fps();
 }
 
-void GraphicsSubsystem::set_target_fps(u_int32_t fps)
+void GraphicsSubsystem::set_target_fps(uint32_t fps)
 {
     m_frame_clock->set_target_fps(fps);
 
@@ -406,7 +406,7 @@ void GraphicsSubsystem::register_windows_for_processing()
 bool GraphicsSubsystem::create_sync_objects(WindowSwapchainConfig& config)
 {
     auto device = m_vulkan_context->get_device();
-    u_int32_t image_count = config.swapchain->get_image_count();
+    uint32_t image_count = config.swapchain->get_image_count();
 
     try {
         config.image_available.resize(image_count);
@@ -417,7 +417,7 @@ bool GraphicsSubsystem::create_sync_objects(WindowSwapchainConfig& config)
         vk::FenceCreateInfo fence_info {};
         fence_info.flags = vk::FenceCreateFlagBits::eSignaled;
 
-        for (u_int32_t i = 0; i < image_count; ++i) {
+        for (uint32_t i = 0; i < image_count; ++i) {
             config.image_available[i] = device.createSemaphore(semaphore_info);
             config.render_finished[i] = device.createSemaphore(semaphore_info);
         }
@@ -555,7 +555,7 @@ void GraphicsSubsystem::render_window(WindowSwapchainConfig& config)
         config.needs_recreation = true;
         return;
     }
-    u_int32_t image_index = image_index_opt.value();
+    uint32_t image_index = image_index_opt.value();
 
     auto& image_available = config.image_available[frame_index];
     auto& render_finished = config.render_finished[frame_index];
@@ -624,7 +624,7 @@ void GraphicsSubsystem::graphics_thread_loop()
         m_frame_clock->wait_for_next_frame();
 
         if (m_frame_clock->is_frame_late()) {
-            u_int64_t lag = m_frame_clock->get_frame_lag();
+            uint64_t lag = m_frame_clock->get_frame_lag();
             if (lag > 2) {
                 MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
                     "Frame lag detected: {} frames behind (Measured FPS: {:.1f})",

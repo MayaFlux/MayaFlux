@@ -45,7 +45,7 @@ struct GraphicsBackendInfo {
     } required_features;
 
     /** @brief Memory allocation strategy */
-    enum class MemoryStrategy : u_int8_t {
+    enum class MemoryStrategy : uint8_t {
         CONSERVATIVE, ///< Minimize allocations
         BALANCED, ///< Balance speed and memory
         AGGRESSIVE ///< Maximize performance
@@ -53,7 +53,7 @@ struct GraphicsBackendInfo {
         = MemoryStrategy::BALANCED;
 
     /** @brief Command buffer pooling strategy */
-    enum class CommandPooling : u_int8_t {
+    enum class CommandPooling : uint8_t {
         PER_THREAD, ///< One pool per thread
         SHARED, ///< Shared pool
         PER_QUEUE ///< One pool per queue family
@@ -61,7 +61,7 @@ struct GraphicsBackendInfo {
         = CommandPooling::PER_THREAD;
 
     /** @brief Maximum number of frames in flight (GPU pipelining) */
-    u_int32_t max_frames_in_flight = 2;
+    uint32_t max_frames_in_flight = 2;
 
     /** @brief Enable compute queue (separate from graphics) */
     bool enable_compute_queue = true;
@@ -70,7 +70,7 @@ struct GraphicsBackendInfo {
     bool enable_transfer_queue = false;
 
     /** @brief Shader compilation strategy */
-    enum class ShaderCompilation : u_int8_t {
+    enum class ShaderCompilation : uint8_t {
         RUNTIME, ///< Compile at runtime
         PRECOMPILED, ///< Use pre-compiled SPIR-V
         CACHED ///< Cache compiled shaders
@@ -93,22 +93,22 @@ struct GraphicsBackendInfo {
  */
 struct GraphicsResourceLimits {
     /** @brief Maximum number of concurrent windows */
-    u_int32_t max_windows = 16;
+    uint32_t max_windows = 16;
 
     /** @brief Maximum staging buffer size (MB) */
-    u_int32_t max_staging_buffer_mb = 256;
+    uint32_t max_staging_buffer_mb = 256;
 
     /** @brief Maximum compute buffer size (MB) */
-    u_int32_t max_compute_buffer_mb = 1024;
+    uint32_t max_compute_buffer_mb = 1024;
 
     /** @brief Maximum texture cache size (MB) */
-    u_int32_t max_texture_cache_mb = 2048;
+    uint32_t max_texture_cache_mb = 2048;
 
     /** @brief Maximum number of descriptor sets */
-    u_int32_t max_descriptor_sets = 1024;
+    uint32_t max_descriptor_sets = 1024;
 
     /** @brief Maximum number of pipeline state objects */
-    u_int32_t max_pipelines = 256;
+    uint32_t max_pipelines = 256;
 };
 
 //==============================================================================
@@ -129,7 +129,7 @@ struct GraphicsSurfaceInfo {
      * @enum SurfaceFormat
      * @brief Default pixel format for window surfaces (Vulkan-compatible)
      */
-    enum class SurfaceFormat : u_int8_t {
+    enum class SurfaceFormat : uint8_t {
         B8G8R8A8_SRGB, ///< Most common - 8-bit SRGB
         R8G8B8A8_SRGB, ///< Alternative 8-bit SRGB
         B8G8R8A8_UNORM, ///< 8-bit linear
@@ -146,7 +146,7 @@ struct GraphicsSurfaceInfo {
      * @enum ColorSpace
      * @brief Default color space for window surfaces
      */
-    enum class ColorSpace : u_int8_t {
+    enum class ColorSpace : uint8_t {
         SRGB_NONLINEAR, ///< Standard sRGB
         EXTENDED_SRGB, ///< Extended sRGB for HDR
         HDR10_ST2084, ///< HDR10 PQ
@@ -160,7 +160,7 @@ struct GraphicsSurfaceInfo {
      * @enum PresentMode
      * @brief Frame presentation strategy
      */
-    enum class PresentMode : u_int8_t {
+    enum class PresentMode : uint8_t {
         IMMEDIATE, ///< No vsync, tear possible
         MAILBOX, ///< Triple buffering, no tear
         FIFO, ///< Vsync, no tear
@@ -171,13 +171,13 @@ struct GraphicsSurfaceInfo {
     PresentMode present_mode = PresentMode::FIFO;
 
     /** @brief Default number of swapchain images (double/triple buffering) */
-    u_int32_t image_count = 3;
+    uint32_t image_count = 3;
 
     /** @brief Enable region-based processing by default */
     bool enable_regions = true;
 
     /** @brief Maximum regions per window container */
-    u_int32_t max_regions_per_window = 256;
+    uint32_t max_regions_per_window = 256;
 
     /** @brief Enable HDR output if available */
     bool enable_hdr {};
@@ -237,7 +237,7 @@ struct GlobalGraphicsConfig {
      * @enum WindowingBackend
      * @brief Windowing library selection
      */
-    enum class WindowingBackend : u_int8_t {
+    enum class WindowingBackend : uint8_t {
         GLFW, ///< GLFW3 (default, cross-platform)
         SDL, ///< SDL2 (alternative, if implemented)
         NATIVE, ///< Platform-native (Win32/X11/Cocoa, if implemented)
@@ -248,7 +248,7 @@ struct GlobalGraphicsConfig {
      * @enum VisualApi
      * @brief Supported graphics APIs (backend selection)
      */
-    enum class GraphicsApi : u_int8_t {
+    enum class GraphicsApi : uint8_t {
         VULKAN,
         OPENGL,
         METAL,
@@ -256,7 +256,7 @@ struct GlobalGraphicsConfig {
     };
 
     /** @brief Target frame rate for visual processing (Hz) */
-    u_int32_t target_frame_rate = 60;
+    uint32_t target_frame_rate = 60;
 
     /** @brief Selected windowing backend */
     WindowingBackend windowing_backend = WindowingBackend::GLFW;
@@ -282,8 +282,8 @@ struct WindowCreateInfo {
     std::string title = "MayaFlux Window";
 
     /** @brief Initial window dimensions */
-    u_int32_t width = 1920;
-    u_int32_t height = 1080;
+    uint32_t width = 1920;
+    uint32_t height = 1080;
 
     /** @brief Target monitor ID (-1 = primary monitor) */
     int32_t monitor_id = -1;
@@ -314,7 +314,7 @@ struct WindowCreateInfo {
 
     /** @brief Container dimensions (channels) */
     struct {
-        u_int32_t color_channels = 4;
+        uint32_t color_channels = 4;
         bool has_depth = false;
         bool has_stencil = false;
     } container_format;
@@ -331,8 +331,8 @@ struct WindowCreateInfo {
  * You don't set these - the windowing subsystem updates them as events occur.
  */
 struct WindowState {
-    u_int32_t current_width = 0;
-    u_int32_t current_height = 0;
+    uint32_t current_width = 0;
+    uint32_t current_height = 0;
 
     bool is_visible = true;
     bool is_focused = false;
@@ -340,7 +340,7 @@ struct WindowState {
     bool is_maximized = false;
     bool is_hovered = false;
 
-    u_int64_t frame_count = 0;
+    uint64_t frame_count = 0;
     double last_present_time = 0.0;
     double average_frame_time = 0.0;
 };
@@ -353,7 +353,7 @@ struct WindowState {
  * @enum CursorMode
  * @brief Cursor visibility and behavior
  */
-enum class CursorMode : u_int8_t {
+enum class CursorMode : uint8_t {
     NORMAL, ///< Visible and movable
     HIDDEN, ///< Invisible but movable
     DISABLED, ///< Invisible and locked (FPS camera)
@@ -384,7 +384,7 @@ struct InputConfig {
  * @enum WindowEventType
  * @brief Types of window and input events
  */
-enum class WindowEventType : u_int8_t {
+enum class WindowEventType : uint8_t {
     WINDOW_CREATED,
     WINDOW_DESTROYED,
     WINDOW_CLOSED,
@@ -421,7 +421,7 @@ struct WindowEvent {
     double timestamp;
 
     struct ResizeData {
-        u_int32_t width, height;
+        uint32_t width, height;
     };
     struct KeyData {
         int32_t key, scancode, mods;
@@ -467,9 +467,9 @@ using WindowEventCallback = std::function<void(const WindowEvent&)>;
  * @brief Monitor video mode
  */
 struct VideoMode {
-    u_int32_t width, height;
-    u_int32_t refresh_rate;
-    u_int8_t red_bits, green_bits, blue_bits;
+    uint32_t width, height;
+    uint32_t refresh_rate;
+    uint8_t red_bits, green_bits, blue_bits;
 
     bool operator==(const VideoMode& other) const
     {

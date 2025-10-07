@@ -205,7 +205,7 @@ bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBacken
             "No graphics queue family found!");
     }
 
-    std::set<u_int32_t> unique_queue_families;
+    std::set<uint32_t> unique_queue_families;
     unique_queue_families.insert(m_queue_families.graphics_family.value());
 
     if (m_queue_families.compute_family.has_value()) {

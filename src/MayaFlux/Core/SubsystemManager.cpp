@@ -164,7 +164,7 @@ void SubsystemManager::allow_cross_access(SubsystemType from, SubsystemType to)
 std::optional<std::span<const double>> SubsystemManager::read_cross_subsystem_buffer(
     SubsystemType requesting_type,
     SubsystemType target_type,
-    u_int32_t channel)
+    uint32_t channel)
 {
     std::shared_lock lock(m_mutex);
 

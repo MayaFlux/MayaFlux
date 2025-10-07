@@ -115,7 +115,7 @@ public:
      * @brief Gets the current count of active GLFW windows
      * @return The number of currently active GLFW windows
      */
-    static u_int32_t get_window_count() { return s_window_count; }
+    static uint32_t get_window_count() { return s_window_count; }
 
     /**
      * @brief Gets the current GLFW platform (Wayland, X11, etc.)
@@ -146,7 +146,7 @@ private:
     /**
      * @brief Number of currently active GLFW windows
      */
-    static u_int32_t s_window_count;
+    static uint32_t s_window_count;
 
     /**
      * @brief Internal GLFW error callback that forwards to the user-defined callback if set

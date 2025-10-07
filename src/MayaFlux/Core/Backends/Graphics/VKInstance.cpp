@@ -60,13 +60,13 @@ bool VKInstance::initialize(bool enable_validation,
     if (m_validation_enabled) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
-    create_info.enabledExtensionCount = static_cast<u_int32_t>(extensions.size());
+    create_info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     create_info.ppEnabledExtensionNames = extensions.data();
 
     vk::DebugUtilsMessengerCreateInfoEXT debug_create_info {};
 
     if (m_validation_enabled) {
-        create_info.enabledLayerCount = static_cast<u_int32_t>(VALIDATION_LAYERS.size());
+        create_info.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
         create_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 
         debug_create_info.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose

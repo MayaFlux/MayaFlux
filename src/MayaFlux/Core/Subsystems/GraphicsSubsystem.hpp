@@ -118,7 +118,7 @@ public:
     /**
      * @brief Get target frame rate
      */
-    [[nodiscard]] u_int32_t get_target_fps() const;
+    [[nodiscard]] uint32_t get_target_fps() const;
 
     /**
      * @brief Get actual measured FPS
@@ -128,7 +128,7 @@ public:
     /**
      * @brief Set target frame rate (can be changed at runtime)
      */
-    void set_target_fps(u_int32_t fps);
+    void set_target_fps(uint32_t fps);
 
     /**
      * @brief Unified processing callback (alternative to separate methods)
@@ -228,7 +228,7 @@ private:
      * that are ready to execute for each frame. This is called from
      * the graphics thread loop after ticking the frame clock.
      */
-    void process_frame_coroutines_impl(const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, u_int64_t processing_units);
+    void process_frame_coroutines_impl(const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, uint64_t processing_units);
 
     /**
      * @brief Handle window resize events and recreate swapchains as needed
