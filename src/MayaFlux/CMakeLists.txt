@@ -53,16 +53,19 @@ else()
         target_link_libraries(MayaFluxLib PRIVATE oneDPL)
         target_link_libraries(MayaFluxLib PUBLIC fmt::fmt)
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
+
+        target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
     else()
         add_compile_definitions(USE_TBB_BACKEND)
+        target_link_libraries(MayaFluxLib PUBLIC PkgConfig::Vulkan)
     endif()
+
     target_link_libraries(MayaFluxLib PRIVATE TBB::tbb)
 
     target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::RtAudio
         PkgConfig::Eigen
         PkgConfig::Glfw
-        PkgConfig::Vulkan
         PkgConfig::LIBAVCODEC
         PkgConfig::LIBAVFORMAT
         PkgConfig::LIBAVUTIL

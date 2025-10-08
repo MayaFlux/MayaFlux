@@ -63,18 +63,18 @@ jobs:
           cache: yes
           verbose: true
 
-      - name: Install Vulkan SDK
+      - name: Install Vulkan SDK (LunarG)
         uses: jakoch/install-vulkan-sdk-action@v1
         with:
-          version: 1.3.290.0
+          vulkan_version: 1.4.328.0
           cache: true
           install_runtime: true
 
       - name: Verify Vulkan SDK
         run: |
           echo "VULKAN_SDK=$VULKAN_SDK"
-          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-          pkg-config --modversion vulkan
+          # echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+          # pkg-config --modversion vulkan
 
       - name: Configure CMake
         shell: bash
