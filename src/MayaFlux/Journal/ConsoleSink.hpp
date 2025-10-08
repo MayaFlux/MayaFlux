@@ -2,9 +2,6 @@
 
 #include "Sink.hpp"
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-#include <windows.h>
-#endif
 
 #include "Ansi.hpp"
 

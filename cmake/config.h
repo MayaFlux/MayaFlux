@@ -8,15 +8,6 @@ using u_int16_t = uint16_t;
 using u_int32_t = uint32_t;
 using u_int64_t = uint64_t;
 
-#ifdef MOUSE_WHEELED  
-#undef MOUSE_WHEELED
-#endif
-#ifdef KEY_EVENT
-#undef KEY_EVENT
-#endif
-#ifdef FOCUS_EVENT
-#undef FOCUS_EVENT
-#endif
 #ifdef ERROR
 #undef ERROR
 #endif // ERROR

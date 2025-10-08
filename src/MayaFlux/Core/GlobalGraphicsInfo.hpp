@@ -2,18 +2,6 @@
 
 #include <filesystem>
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-#ifdef MOUSE_WHEELED
-#undef MOUSE_WHEELED
-#endif
-#ifdef KEY_EVENT
-#undef KEY_EVENT
-#endif
-#ifdef FOCUS_EVENT
-#undef FOCUS_EVENT
-#endif
-#endif
-
 namespace MayaFlux::Core {
 
 //==============================================================================

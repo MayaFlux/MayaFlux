@@ -1,5 +1,15 @@
 #pragma once
 
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#include <windows.h>
+
+#ifdef ERROR
+#undef ERROR
+#endif // ERROR
+
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+
 namespace MayaFlux::Journal::AnsiColors {
 // Reset
 static constexpr std::string_view Reset = "\033[0m";

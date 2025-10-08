@@ -4,15 +4,6 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-#ifdef MOUSE_WHEELED
-#undef MOUSE_WHEELED
-#endif
-#ifdef KEY_EVENT
-#undef KEY_EVENT
-#endif
-#ifdef FOCUS_EVENT
-#undef FOCUS_EVENT
-#endif
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #elif MAYAFLUX_PLATFORM_LINUX
