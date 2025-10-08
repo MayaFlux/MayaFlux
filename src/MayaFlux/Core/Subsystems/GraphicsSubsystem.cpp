@@ -1,8 +1,8 @@
 #include "GraphicsSubsystem.hpp"
-#include "MayaFlux/Core/Backends/Graphics/VKCommandManager.hpp"
-#include "MayaFlux/Core/Backends/Graphics/VKFramebuffer.hpp"
-#include "MayaFlux/Core/Backends/Graphics/VKRenderPass.hpp"
-#include "MayaFlux/Core/Backends/Graphics/VKSwapchain.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKCommandManager.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKFramebuffer.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKRenderPass.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKSwapchain.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
