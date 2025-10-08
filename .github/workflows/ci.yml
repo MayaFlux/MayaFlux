@@ -68,7 +68,13 @@ jobs:
         with:
           version: 1.3.290.0
           cache: true
-          quiet: true
+          install_runtime: true
+
+      - name: Verify Vulkan SDK
+        run: |
+          echo "VULKAN_SDK=$VULKAN_SDK"
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+          pkg-config --modversion vulkan
 
       - name: Configure CMake
         shell: bash
