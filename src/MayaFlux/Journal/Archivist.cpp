@@ -2,9 +2,12 @@
 #include "RealtimeEntry.hpp"
 #include "RingBuffer.hpp"
 
+#include "Ansi.hpp"
 #include "Sink.hpp"
 
 namespace MayaFlux::Journal {
+
+static bool colors_enabled = AnsiColors::initialize_console_colors();
 
 class Archivist::Impl {
 public:
@@ -155,14 +158,55 @@ private:
 
     static void write_to_console(const JournalEntry& entry)
     {
-        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]"
-                  << "[" << Utils::enum_to_string(entry.component) << "]"
-                  << "[" << Utils::enum_to_string(entry.context) << "] "
-                  << entry.message;
+        if (colors_enabled) {
+            switch (entry.severity) {
+            case Severity::TRACE:
+                std::cout << AnsiColors::Cyan;
+                break;
+            case Severity::DEBUG:
+                std::cout << AnsiColors::Blue;
+                break;
+            case Severity::INFO:
+                std::cout << AnsiColors::Green;
+                break;
+            case Severity::WARN:
+                std::cout << AnsiColors::Yellow;
+                break;
+            case Severity::ERROR:
+                std::cout << AnsiColors::BrightRed;
+                break;
+            case Severity::FATAL:
+                std::cout << AnsiColors::BrightRed << AnsiColors::White;
+                break;
+            case Severity::NONE:
+                std::cout << AnsiColors::Reset;
+                break;
+            default:
+                std::cout << AnsiColors::Reset;
+                break;
+            }
+        }
+
+        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
+
+        if (colors_enabled) {
+            std::cout << AnsiColors::Magenta;
+        }
+        std::cout << "[" << Utils::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
+
+        if (colors_enabled) {
+            std::cout << AnsiColors::Cyan;
+        }
+        std::cout << "[" << Utils::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
+
+        std::cout << entry.message;
 
         if (entry.location.file_name() != nullptr && entry.location.line() != 0) {
+            if (colors_enabled) {
+                std::cout << AnsiColors::BrightBlue;
+            }
             std::cout << " (" << entry.location.file_name()
-                      << ":" << entry.location.line() << ")";
+                      << ":" << entry.location.line() << ")" << AnsiColors::Reset;
         }
 
         std::cout << '\n';
@@ -170,14 +214,55 @@ private:
 
     static void write_to_console(const RealtimeEntry& entry)
     {
-        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]"
-                  << "[" << Utils::enum_to_string(entry.component) << "]"
-                  << "[" << Utils::enum_to_string(entry.context) << "] "
-                  << entry.message;
+        if (colors_enabled) {
+            switch (entry.severity) {
+            case Severity::TRACE:
+                std::cout << AnsiColors::Cyan;
+                break;
+            case Severity::DEBUG:
+                std::cout << AnsiColors::Blue;
+                break;
+            case Severity::INFO:
+                std::cout << AnsiColors::Green;
+                break;
+            case Severity::WARN:
+                std::cout << AnsiColors::Yellow;
+                break;
+            case Severity::ERROR:
+                std::cout << AnsiColors::BrightRed;
+                break;
+            case Severity::FATAL:
+                std::cout << AnsiColors::BrightRed << AnsiColors::White;
+                break;
+            case Severity::NONE:
+                std::cout << AnsiColors::Reset;
+                break;
+            default:
+                std::cout << AnsiColors::Reset;
+                break;
+            }
+        }
+
+        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
+
+        if (colors_enabled) {
+            std::cout << AnsiColors::Magenta;
+        }
+        std::cout << "[" << Utils::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
+
+        if (colors_enabled) {
+            std::cout << AnsiColors::Cyan;
+        }
+        std::cout << "[" << Utils::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
+
+        std::cout << entry.message;
 
         if (entry.file_name != nullptr) {
+            if (colors_enabled) {
+                std::cout << AnsiColors::BrightBlue;
+            }
             std::cout << " (" << entry.file_name
-                      << ":" << entry.line << ")";
+                      << ":" << entry.line << ")" << AnsiColors::Reset;
         }
 
         std::cout << '\n';
