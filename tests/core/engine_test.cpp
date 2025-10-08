@@ -349,8 +349,6 @@ TEST_F(EngineTest, DataDrivenProcessingCapabilities)
     auto sequence_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::sequence(*scheduler, sequence));
     EXPECT_NO_THROW(scheduler->add_task(std::move(sequence_routine), "", false));
 
-    AudioTestHelper::waitForAudio(50);
-
     EXPECT_NE(scheduler, nullptr);
     EXPECT_NE(node_graph, nullptr);
 }

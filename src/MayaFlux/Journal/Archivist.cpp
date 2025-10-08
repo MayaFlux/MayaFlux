@@ -11,7 +11,7 @@ public:
     static constexpr size_t RING_BUFFER_SIZE = 8192;
 
     Impl()
-        : m_min_severity(Severity::INFO)
+        : m_min_severity(Severity::WARN)
         , m_worker_running(false)
         , m_shutdown_in_progress(false)
     {

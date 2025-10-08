@@ -29,7 +29,12 @@ public:
 
     static void waitForAudio(unsigned int ms = TestConfig::TEST_DURATION_MS)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+        auto start = std::chrono::steady_clock::now();
+        auto end = start + std::chrono::milliseconds(ms);
+
+        while (std::chrono::steady_clock::now() < end) {
+            std::this_thread::yield();
+        }
     }
 };
 }
