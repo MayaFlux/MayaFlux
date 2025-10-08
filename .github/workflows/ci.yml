@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  push:
-    branches: [develop]
+  # push:
+  #   branches: [develop]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -60,7 +60,6 @@ jobs:
             fmt
             glfw
           key: maya-brew-v1
-          cache: yes
           verbose: true
 
       - name: Install Vulkan SDK (LunarG)
@@ -73,8 +72,6 @@ jobs:
       - name: Verify Vulkan SDK
         run: |
           echo "VULKAN_SDK=$VULKAN_SDK"
-          # echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-          # pkg-config --modversion vulkan
 
       - name: Configure CMake
         shell: bash

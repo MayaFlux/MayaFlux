@@ -106,6 +106,41 @@ if [ -n "$MISSING_PACKAGES" ]; then
     echo "You may need to install them manually."
 fi
 
+# ------------------------------------------------------------
+# Install Vulkan SDK (LunarG) non-interactively
+# ------------------------------------------------------------
+
+VULKAN_VERSION="1.4.328.0"
+VULKAN_SDK_DIR="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
+
+if [ -d "$VULKAN_SDK_DIR" ]; then
+    echo "✅ Vulkan SDK $VULKAN_VERSION already installed at $VULKAN_SDK_DIR"
+else
+    echo "🔽 Downloading LunarG Vulkan SDK $VULKAN_VERSION for macOS..."
+    TMP_DMG="/tmp/vulkan-sdk-$VULKAN_VERSION.dmg"
+    curl -L "https://sdk.lunarg.com/sdk/download/$VULKAN_VERSION/mac/vulkan-sdk.dmg" -o "$TMP_DMG"
+
+    echo "📦 Mounting DMG..."
+    MOUNT_POINT=$(hdiutil attach "$TMP_DMG" -nobrowse -quiet | grep Volumes | awk '{print $3}')
+
+    echo "📁 Installing Vulkan SDK..."
+    INSTALLER_PKG=$(find "$MOUNT_POINT" -name "*.pkg" | head -n1)
+    sudo installer -pkg "$INSTALLER_PKG" -target / >/dev/null
+
+    echo "💿 Unmounting DMG..."
+    hdiutil detach "$MOUNT_POINT" -quiet
+
+    echo "✅ Vulkan SDK $VULKAN_VERSION installed."
+fi
+
+# Set environment variables for current session
+export VULKAN_SDK="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
+export PATH="$VULKAN_SDK/bin:$PATH"
+export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"
+export VK_ICD_FILENAMES="$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json"
+
+echo "VULKAN_SDK set to $VULKAN_SDK"
+
 # Check system Clang version
 echo "Checking system Clang..."
 if command -v clang++ &>/dev/null; then
