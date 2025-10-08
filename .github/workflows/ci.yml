@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  # push:
-  #   branches: [develop]
+  push:
+    branches: [develop]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -45,40 +45,30 @@ jobs:
           EOF
           clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
 
-      - name: Cache Homebrew packages
-        uses: actions/cache@v4
+      - name: Install Homebrew tools (cached)
+        uses: tecolicom/actions-use-homebrew-tools@v1
         with:
-          path: |
-            ~/Library/Caches/Homebrew
-            /opt/homebrew/Cellar
-            /opt/homebrew/lib
-            /opt/homebrew/include
-          key: homebrew-${{ runner.os }}-deps-v1
-          restore-keys: |
-            homebrew-${{ runner.os }}-
+          tools: >
+            cmake
+            rtaudio
+            ffmpeg
+            googletest
+            pkg-config
+            eigen
+            onedpl
+            magic_enum
+            fmt
+            glfw
+          key: maya-brew-v1
+          cache: yes
+          verbose: true
 
-      - name: Install dependencies
-        shell: bash
-        run: |
-          brew update
-          brew install rtaudio eigen magic_enum fmt onedpl ffmpeg glfw googletest
-          for pkg in "${pkgs[@]}"; do
-            if ! brew list --formula | grep -q "^$pkg\$"; then
-              echo "🧩 Installing $pkg..."
-              brew install "$pkg"
-            else
-              echo "✅ $pkg already installed, skipping."
-            fi
-          done
-          echo "All dependencies ready."
-
-      - name: Cache CMake build
-        uses: actions/cache@v4
+      - name: Install Vulkan SDK
+        uses: jakoch/install-vulkan-sdk-action@v1
         with:
-          path: build
-          key: cmake-${{ runner.os }}-${{ env.BUILD_TYPE }}-${{ hashFiles('CMakeLists.txt', 'src/**.cpp', 'src/**.hpp') }}
-          restore-keys: |
-            cmake-${{ runner.os }}-${{ env.BUILD_TYPE }}-
+          version: 1.3.290.0
+          cache: true
+          quiet: true
 
       - name: Configure CMake
         shell: bash
