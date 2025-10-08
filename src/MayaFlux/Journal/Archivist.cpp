@@ -12,6 +12,7 @@ public:
 
     Impl()
         : m_min_severity(Severity::INFO)
+        , m_worker_running(false)
         , m_shutdown_in_progress(false)
     {
         m_component_filters.fill(true);
@@ -36,7 +37,7 @@ public:
     void init()
     {
         std::lock_guard lock(m_mutex);
-        if (m_initialized)
+        if (m_initialized || m_shutdown_in_progress)
             return;
 
         m_initialized = true;
@@ -119,6 +120,9 @@ public:
 
     void set_min_severity(Severity sev)
     {
+        if (sev == Severity::NONE) {
+            return;
+        }
         m_min_severity.store(sev, std::memory_order_relaxed);
     }
 
@@ -136,7 +140,7 @@ public:
 private:
     [[nodiscard]] bool should_log(Severity severity, Component component) const
     {
-        if (severity < m_min_severity.load(std::memory_order_relaxed)) {
+        if (severity != Severity::NONE && severity < m_min_severity.load(std::memory_order_relaxed)) {
             return false;
         }
 
@@ -273,14 +277,10 @@ Archivist& Archivist::instance()
 Archivist::Archivist()
     : m_impl(std::make_unique<Impl>())
 {
+    m_impl->init();
 }
 
 Archivist::~Archivist() = default;
-
-void Archivist::init()
-{
-    instance().m_impl->init();
-}
 
 void Archivist::shutdown()
 {
@@ -300,10 +300,10 @@ void Archivist::scribe_rt(Severity severity, Component component, Context contex
     m_impl->scribe_rt(severity, component, context, message, location);
 }
 
-void Archivist::scribe_simple(Severity severity, Component component, Context context,
+void Archivist::scribe_simple(Component component, Context context,
     std::string_view message)
 {
-    JournalEntry entry(severity, component, context, message, std::source_location {});
+    JournalEntry entry(Severity::NONE, component, context, message, std::source_location {});
     m_impl->scribe(entry);
 }
 

@@ -24,12 +24,6 @@ public:
     static Archivist& instance();
 
     /**
-     * @brief Initialize the logging system.
-     * This should be called once at the start of the application.
-     */
-    static void init();
-
-    /**
      * @brief Shutdown the logging system.
      * This should be called once at the end of the application.
      */
@@ -66,12 +60,13 @@ public:
     /**
      * @brief Log a simple message without source location information.
      * This method is intended for use in contexts where source location is not available or needed.
-     * @param severity The severity level of the log message.
+     * It is not effected by severity filters, so use sparingly.
+     *
      * @param component The component generating the log message.
      * @param context The execution context of the log message.
      * @param message The log message content.
      */
-    void scribe_simple(Severity severity, Component component, Context context,
+    void scribe_simple(Component component, Context context,
         std::string_view message);
 
     /**
@@ -193,36 +188,36 @@ void scribe_rt(Severity severity, Component component, Context context,
  * @brief Log a simple message without source-location.
  *
  * Intended for contexts where source location is unavailable or unnecessary.
+ * It is not effected by severity filters, so use sparingly.
  *
- * @param severity   The severity level of the log message.
  * @param component  The component generating the log message.
  * @param context    The execution context of the log message.
  * @param message    The log message content.
  */
-inline void print(Severity severity, Component component, Context context,
+inline void print(Component component, Context context,
     std::string_view message)
 {
-    Archivist::instance().scribe_simple(severity, component, context, message);
+    Archivist::instance().scribe_simple(component, context, message);
 }
 
 /**
  * @brief printf-style overload of print().
  *
- * @copydoc print(Severity,Component,Context,std::string_view)
+ * @copydoc print(Component,Context,std::string_view)
  *
  * @param msg_or_fmt  The format string.
  * @param args        The format arguments.
  */
 template <typename... Args>
-void print(Severity severity, Component component, Context context,
+void print(Component component, Context context,
     const char* msg_or_fmt, Args&&... args)
 {
     if constexpr (sizeof...(Args) == 0) {
-        Archivist::instance().scribe_simple(severity, component, context,
+        Archivist::instance().scribe_simple(component, context,
             std::string_view(msg_or_fmt));
     } else {
         auto msg = format_runtime(msg_or_fmt, std::forward<Args>(args)...);
-        Archivist::instance().scribe_simple(severity, component, context, msg);
+        Archivist::instance().scribe_simple(component, context, msg);
     }
 }
 
@@ -400,5 +395,4 @@ inline void error_rethrow(Component component, Context context,
 // ============================================================================
 // CONVENIENCE MACROS for SIMPLE PRINTING (no source-location)
 // ============================================================================
-#define MF_PRINT(comp, ctx, ...) \
-    MayaFlux::Journal::print(MayaFlux::Journal::Severity::INFO, comp, ctx, __VA_ARGS__)
+#define MF_PRINT(comp, ctx, ...) MayaFlux::Journal::print(comp, ctx, __VA_ARGS__)

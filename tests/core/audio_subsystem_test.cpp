@@ -25,7 +25,6 @@ class AudioSubsystemTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        Journal::Archivist::init();
         node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
         buffer_manager = std::make_shared<Buffers::BufferManager>(
             TestConfig::NUM_CHANNELS,

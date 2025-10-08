@@ -1,3 +1,4 @@
+#include "MayaFlux/Journal/JournalEntry.hpp"
 #include "MayaFlux/Utils.hpp"
 
 namespace MayaFlux {
@@ -15,6 +16,7 @@ namespace Core {
 * from the default audio engine.
 */
 namespace Config {
+
     /**
      * @brief Configuration settings for the audio graph
      */
@@ -71,7 +73,23 @@ namespace Config {
      */
     Core::GlobalGraphicsConfig& get_global_graphics_config();
 
-    // WindowContext& window_context;
+    /**
+     * @brief Sets the minimum severity level for journal entries to be logged
+     * @param severity Minimum severity level (e.g., INFO, WARN, ERROR, TRACE, DEBUG, FATAL)
+     */
+    void set_journal_severity(Journal::Severity severity);
+
+    /**
+     * @brief Stores journal entries to a file by adding a FileSink to the Archivist
+     * @param file_name Path to the log file
+     */
+    void store_journal_entries(const std::string& file_name);
+
+    /**
+     * @brief Outputs journal entries to the console by adding a ConsoleSink to the Archivist
+     * NOTE: This records thread safe entries and cannot unsink once called.
+     */
+    void sink_journal_to_console();
 }
 
 }

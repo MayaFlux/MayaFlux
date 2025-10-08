@@ -172,7 +172,7 @@ vk::Bool32 VKInstance::debug_callback(
     const vk::DebugUtilsMessengerCallbackDataEXT* p_callback_data,
     void* /*pUserData*/)
 {
-    MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend, "Validation layer: {}", p_callback_data->pMessage);
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend, "Validation layer: {}", p_callback_data->pMessage);
     return VK_FALSE;
 }
 

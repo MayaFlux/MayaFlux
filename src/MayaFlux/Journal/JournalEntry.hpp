@@ -24,7 +24,8 @@ enum class Severity : u_int8_t {
     INFO,
     WARN,
     ERROR,
-    FATAL
+    FATAL,
+    NONE
 };
 
 /**
