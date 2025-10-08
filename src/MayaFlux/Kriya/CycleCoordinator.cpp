@@ -13,12 +13,12 @@ CycleCoordinator::CycleCoordinator(Vruta::TaskScheduler& scheduler)
 
 Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
     std::vector<std::reference_wrapper<BufferPipeline>> pipelines,
-    u_int32_t sync_every_n_cycles,
-    u_int64_t samples_per_cycle)
+    uint32_t sync_every_n_cycles,
+    uint64_t samples_per_cycle)
 {
 
     auto& promise = co_await GetPromise {};
-    u_int32_t cycle = 0;
+    uint32_t cycle = 0;
 
     while (true) {
         if (promise.should_terminate) {
@@ -45,22 +45,22 @@ Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
 
 std::shared_ptr<Vruta::SoundRoutine> CycleCoordinator::sync_pipelines_at_rate(
     std::vector<std::reference_wrapper<BufferPipeline>> pipelines,
-    u_int32_t sync_every_n_cycles,
+    uint32_t sync_every_n_cycles,
     double seconds_per_cycle)
 {
-    u_int64_t samples_per_cycle = m_scheduler.seconds_to_samples(seconds_per_cycle);
+    uint64_t samples_per_cycle = m_scheduler.seconds_to_samples(seconds_per_cycle);
     auto routine = sync_pipelines(pipelines, sync_every_n_cycles, samples_per_cycle);
     return std::make_shared<Vruta::SoundRoutine>(std::move(routine));
 }
 
 Vruta::SoundRoutine CycleCoordinator::manage_transient_data(
     std::shared_ptr<Buffers::AudioBuffer> buffer,
-    std::function<void(u_int32_t)> on_data_ready,
-    std::function<void(u_int32_t)> on_data_expired)
+    std::function<void(uint32_t)> on_data_ready,
+    std::function<void(uint32_t)> on_data_expired)
 {
 
     auto& promise = co_await GetPromise {};
-    u_int32_t cycle = 0;
+    uint32_t cycle = 0;
 
     while (true) {
         if (promise.should_terminate) {

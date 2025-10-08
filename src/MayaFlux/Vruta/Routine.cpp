@@ -77,7 +77,7 @@ bool SoundRoutine::is_active() const
     return m_handle.address() != nullptr && !m_handle.done();
 }
 
-bool SoundRoutine::initialize_state(u_int64_t current_sample)
+bool SoundRoutine::initialize_state(uint64_t current_sample)
 {
     if (!m_handle || !m_handle.address() || m_handle.done()) {
         return false;
@@ -88,7 +88,7 @@ bool SoundRoutine::initialize_state(u_int64_t current_sample)
     return true;
 }
 
-u_int64_t SoundRoutine::next_execution() const
+uint64_t SoundRoutine::next_execution() const
 {
     return is_active() ? m_handle.promise().next_sample : UINT64_MAX;
 }
@@ -101,7 +101,7 @@ bool SoundRoutine::requires_clock_sync() const
     return m_handle.promise().sync_to_clock;
 }
 
-bool SoundRoutine::try_resume(u_int64_t current_sample)
+bool SoundRoutine::try_resume(uint64_t current_sample)
 {
     if (!is_active())
         return false;

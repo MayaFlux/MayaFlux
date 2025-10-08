@@ -266,8 +266,8 @@ public:
      *
      * If a node is already active, it is deactivated before starting the new one.
      */
-    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, std::vector<u_int32_t> channels);
-    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, u_int32_t channel);
+    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, std::vector<uint32_t> channels);
+    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, uint32_t channel);
     void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds);
 
     /**
@@ -293,12 +293,12 @@ public:
     void play_with_processing(std::shared_ptr<Nodes::Node> node,
         std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
         std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
-        double duration_seconds, std::vector<u_int32_t> channels);
+        double duration_seconds, std::vector<uint32_t> channels);
 
     void play_with_processing(std::shared_ptr<Nodes::Node> node,
         std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
         std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
-        double duration_seconds, u_int32_t channel);
+        double duration_seconds, uint32_t channel);
 
     void play_with_processing(std::shared_ptr<Nodes::Node> node,
         std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
@@ -372,7 +372,7 @@ private:
      * node is connected to. It is set when play_for() or play_with_processing()
      * is called and reset when the node finishes playing or is cancelled.
      */
-    std::vector<u_int32_t> m_channels;
+    std::vector<uint32_t> m_channels;
 };
 
 }

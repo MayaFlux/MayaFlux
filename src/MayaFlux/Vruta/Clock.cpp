@@ -5,18 +5,18 @@
 
 namespace MayaFlux::Vruta {
 
-SampleClock::SampleClock(u_int64_t sample_rate)
+SampleClock::SampleClock(uint64_t sample_rate)
     : m_sample_rate(sample_rate)
     , m_current_sample(0)
 {
 }
 
-void SampleClock::tick(u_int64_t samples)
+void SampleClock::tick(uint64_t samples)
 {
     m_current_sample += samples;
 }
 
-u_int64_t SampleClock::current_position() const
+uint64_t SampleClock::current_position() const
 {
     return m_current_sample;
 }
@@ -26,12 +26,12 @@ double SampleClock::current_time() const
     return Utils::units_to_seconds(m_current_sample, m_sample_rate);
 }
 
-u_int32_t SampleClock::sample_rate() const
+uint32_t SampleClock::sample_rate() const
 {
     return m_sample_rate;
 }
 
-u_int32_t SampleClock::rate() const
+uint32_t SampleClock::rate() const
 {
     return m_sample_rate;
 }
@@ -41,7 +41,7 @@ void SampleClock::reset()
     m_current_sample = 0;
 }
 
-FrameClock::FrameClock(u_int32_t target_fps)
+FrameClock::FrameClock(uint32_t target_fps)
     : m_target_fps(target_fps)
     , m_current_frame(0)
     , m_start_time(std::chrono::steady_clock::now())
@@ -52,7 +52,7 @@ FrameClock::FrameClock(u_int32_t target_fps)
     recalculate_frame_duration();
 }
 
-void FrameClock::tick(u_int64_t forced_frames)
+void FrameClock::tick(uint64_t forced_frames)
 {
     auto now = std::chrono::steady_clock::now();
 
@@ -66,7 +66,7 @@ void FrameClock::tick(u_int64_t forced_frames)
     }
 }
 
-u_int64_t FrameClock::current_position() const
+uint64_t FrameClock::current_position() const
 {
     return m_current_frame.load(std::memory_order_acquire);
 }
@@ -76,7 +76,7 @@ double FrameClock::current_time() const
     return Utils::units_to_seconds(current_position(), m_target_fps);
 }
 
-u_int32_t FrameClock::rate() const
+uint32_t FrameClock::rate() const
 {
     return m_target_fps;
 }
@@ -104,7 +104,7 @@ bool FrameClock::is_frame_late() const
     return now > m_next_frame_time;
 }
 
-u_int64_t FrameClock::get_frame_lag() const
+uint64_t FrameClock::get_frame_lag() const
 {
     auto now = std::chrono::steady_clock::now();
 
@@ -114,7 +114,7 @@ u_int64_t FrameClock::get_frame_lag() const
 
     auto elapsed = now - m_next_frame_time;
     auto frames_behind = elapsed / m_frame_duration;
-    return static_cast<u_int64_t>(frames_behind);
+    return static_cast<uint64_t>(frames_behind);
 }
 
 void FrameClock::reset()
@@ -126,7 +126,7 @@ void FrameClock::reset()
     m_measured_fps.store(static_cast<double>(m_target_fps), std::memory_order_release);
 }
 
-void FrameClock::set_target_fps(u_int32_t new_fps)
+void FrameClock::set_target_fps(uint32_t new_fps)
 {
     if (new_fps == 0 || new_fps > 1000) {
         error<std::runtime_error>(Journal::Component::Vruta,
@@ -162,7 +162,7 @@ void FrameClock::update_fps_measurement(std::chrono::steady_clock::time_point no
     }
 }
 
-u_int64_t FrameClock::calculate_elapsed_frames(std::chrono::steady_clock::time_point now) const
+uint64_t FrameClock::calculate_elapsed_frames(std::chrono::steady_clock::time_point now) const
 {
     auto time_since_last_tick = now - m_last_tick_time;
     return static_cast<uint64_t>(time_since_last_tick / m_frame_duration);
@@ -171,7 +171,7 @@ u_int64_t FrameClock::calculate_elapsed_frames(std::chrono::steady_clock::time_p
 void FrameClock::recalculate_frame_duration()
 {
     double ns_per_frame = 1'000'000'000.0 / m_target_fps;
-    m_frame_duration = std::chrono::nanoseconds(static_cast<u_int64_t>(ns_per_frame));
+    m_frame_duration = std::chrono::nanoseconds(static_cast<uint64_t>(ns_per_frame));
 }
 
 void FrameClock::wait_for_next_frame()
@@ -193,19 +193,19 @@ void FrameClock::wait_for_next_frame()
 // CustomClock Implementation
 // ========================================
 
-CustomClock::CustomClock(u_int64_t processing_rate, const std::string& unit_name)
+CustomClock::CustomClock(uint64_t processing_rate, const std::string& unit_name)
     : m_processing_rate(processing_rate)
     , m_current_position(0)
     , m_unit_name(unit_name)
 {
 }
 
-void CustomClock::tick(u_int64_t units)
+void CustomClock::tick(uint64_t units)
 {
     m_current_position += units;
 }
 
-u_int64_t CustomClock::current_position() const
+uint64_t CustomClock::current_position() const
 {
     return m_current_position;
 }
@@ -215,7 +215,7 @@ double CustomClock::current_time() const
     return Utils::units_to_seconds(m_current_position, m_processing_rate);
 }
 
-u_int32_t CustomClock::rate() const
+uint32_t CustomClock::rate() const
 {
     return m_processing_rate;
 }

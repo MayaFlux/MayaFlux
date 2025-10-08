@@ -8,7 +8,7 @@ namespace MayaFlux::Kriya {
 
 BufferCapture::BufferCapture(std::shared_ptr<Buffers::AudioBuffer> buffer,
     CaptureMode mode,
-    u_int32_t cycle_count)
+    uint32_t cycle_count)
     : m_buffer(std::move(buffer))
     , m_mode(mode)
     , m_cycle_count(cycle_count)
@@ -24,7 +24,7 @@ BufferCapture& BufferCapture::with_processing_control(ProcessingControl control)
     return *this;
 }
 
-BufferCapture& BufferCapture::for_cycles(u_int32_t count)
+BufferCapture& BufferCapture::for_cycles(uint32_t count)
 {
     m_cycle_count = count;
     m_mode = (count > 1) ? CaptureMode::ACCUMULATE : CaptureMode::TRANSIENT;
@@ -38,7 +38,7 @@ BufferCapture& BufferCapture::until_condition(std::function<bool()> predicate)
     return *this;
 }
 
-BufferCapture& BufferCapture::with_window(u_int32_t window_size, float overlap_ratio)
+BufferCapture& BufferCapture::with_window(uint32_t window_size, float overlap_ratio)
 {
     m_window_size = window_size;
     m_overlap_ratio = overlap_ratio;
@@ -46,26 +46,26 @@ BufferCapture& BufferCapture::with_window(u_int32_t window_size, float overlap_r
     return *this;
 }
 
-BufferCapture& BufferCapture::as_circular(u_int32_t buffer_size)
+BufferCapture& BufferCapture::as_circular(uint32_t buffer_size)
 {
     m_circular_size = buffer_size;
     m_mode = CaptureMode::CIRCULAR;
     return *this;
 }
 
-BufferCapture& BufferCapture::on_data_ready(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback)
+BufferCapture& BufferCapture::on_data_ready(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback)
 {
     m_data_ready_callback = std::move(callback);
     return *this;
 }
 
-BufferCapture& BufferCapture::on_cycle_complete(std::function<void(u_int32_t)> callback)
+BufferCapture& BufferCapture::on_cycle_complete(std::function<void(uint32_t)> callback)
 {
     m_cycle_callback = std::move(callback);
     return *this;
 }
 
-BufferCapture& BufferCapture::on_data_expired(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback)
+BufferCapture& BufferCapture::on_data_expired(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback)
 {
     m_data_expired_callback = std::move(callback);
     return *this;
@@ -106,7 +106,7 @@ CaptureBuilder& CaptureBuilder::auto_processing()
     return *this;
 }
 
-CaptureBuilder& CaptureBuilder::for_cycles(u_int32_t count)
+CaptureBuilder& CaptureBuilder::for_cycles(uint32_t count)
 {
     m_capture.for_cycles(count);
     return *this;
@@ -118,31 +118,31 @@ CaptureBuilder& CaptureBuilder::until_condition(std::function<bool()> predicate)
     return *this;
 }
 
-CaptureBuilder& CaptureBuilder::as_circular(u_int32_t buffer_size)
+CaptureBuilder& CaptureBuilder::as_circular(uint32_t buffer_size)
 {
     m_capture.as_circular(buffer_size);
     return *this;
 }
 
-CaptureBuilder& CaptureBuilder::with_window(u_int32_t window_size, float overlap_ratio)
+CaptureBuilder& CaptureBuilder::with_window(uint32_t window_size, float overlap_ratio)
 {
     m_capture.with_window(window_size, overlap_ratio);
     return *this;
 }
 
-CaptureBuilder& CaptureBuilder::on_data_ready(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback)
+CaptureBuilder& CaptureBuilder::on_data_ready(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback)
 {
     m_capture.on_data_ready(std::move(callback));
     return *this;
 }
 
-CaptureBuilder& CaptureBuilder::on_cycle_complete(std::function<void(u_int32_t)> callback)
+CaptureBuilder& CaptureBuilder::on_cycle_complete(std::function<void(uint32_t)> callback)
 {
     m_capture.on_cycle_complete(std::move(callback));
     return *this;
 }
 
-CaptureBuilder& CaptureBuilder::on_data_expired(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback)
+CaptureBuilder& CaptureBuilder::on_data_expired(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback)
 {
     m_capture.on_data_expired(std::move(callback));
     return *this;

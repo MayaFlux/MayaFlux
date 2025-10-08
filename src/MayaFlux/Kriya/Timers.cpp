@@ -21,7 +21,7 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
     m_callback = callback;
     m_active = true;
 
-    auto routine_func = [](Vruta::TaskScheduler& scheduler, u_int64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
+    auto routine_func = [](Vruta::TaskScheduler& scheduler, uint64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
         auto& promise = co_await Kriya::GetPromise {};
         co_await SampleDelay { delay_samples };
 
@@ -35,7 +35,7 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
         routine_func(m_Scheduler, m_Scheduler.seconds_to_samples(delay_seconds), this));
 
     Vruta::ProcessingToken token = m_routine->get_processing_token();
-    u_int64_t current_time = m_Scheduler.current_units(token);
+    uint64_t current_time = m_Scheduler.current_units(token);
 
     m_Scheduler.add_task(m_routine, "", false);
 
@@ -88,12 +88,12 @@ NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& g
 {
 }
 
-void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, u_int32_t channel)
+void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, uint32_t channel)
 {
-    play_for(node, duration_seconds, std::vector<u_int32_t> { channel });
+    play_for(node, duration_seconds, std::vector<uint32_t> { channel });
 }
 
-void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, std::vector<u_int32_t> channels)
+void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, std::vector<uint32_t> channels)
 {
     cancel();
 
@@ -112,7 +112,7 @@ void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seco
 void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds)
 {
     auto source_mask = node->get_channel_mask().load(std::memory_order_relaxed);
-    std::vector<u_int32_t> channels;
+    std::vector<uint32_t> channels;
 
     if (source_mask == 0) {
         channels = { 0 };
@@ -125,12 +125,12 @@ void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seco
     play_for(node, duration_seconds, channels);
 }
 
-void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, u_int32_t channel)
+void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, uint32_t channel)
 {
-    play_with_processing(node, setup_func, cleanup_func, duration_seconds, std::vector<u_int32_t> { channel });
+    play_with_processing(node, setup_func, cleanup_func, duration_seconds, std::vector<uint32_t> { channel });
 }
 
-void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, std::vector<u_int32_t> channels)
+void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, std::vector<uint32_t> channels)
 {
     cancel();
 
@@ -155,7 +155,7 @@ void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node,
     double duration_seconds)
 {
     auto source_mask = node->get_channel_mask().load(std::memory_order_relaxed);
-    std::vector<u_int32_t> channels;
+    std::vector<uint32_t> channels;
 
     if (source_mask == 0) {
         channels = { 0 };

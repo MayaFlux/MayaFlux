@@ -59,7 +59,7 @@ jobs:
             magic_enum
             fmt
             glfw
-          key: maya-brew-v1
+          # key: maya-brew-v1
           verbose: true
 
       - name: Install Vulkan SDK (LunarG)

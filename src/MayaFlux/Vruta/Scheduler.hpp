@@ -24,7 +24,7 @@ struct TaskEntry {
  *  The function receives a vector of routines and the number of processing
  *  units (samples, frames, etc.) to advance.
  */
-using token_processing_func_t = std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)>;
+using token_processing_func_t = std::function<void(const std::vector<std::shared_ptr<Routine>>&, uint64_t)>;
 
 /**
  * @class TaskScheduler
@@ -58,7 +58,7 @@ public:
      * to the given sample rate. The sample rate determines the relationship
      * between sample counts and real-time durations for all scheduled tasks.
      */
-    TaskScheduler(u_int32_t default_sample_rate = 48000, u_int32_t default_frame_rate = 60);
+    TaskScheduler(uint32_t default_sample_rate = 48000, uint32_t default_frame_rate = 60);
 
     /**
      * @brief Add a routine to the scheduler based on its processing token
@@ -120,7 +120,7 @@ public:
      * to execute in the specified domain. This is the main entry point for
      * backend-specific processing loops.
      */
-    void process_token(ProcessingToken token, u_int64_t processing_units = 1);
+    void process_token(ProcessingToken token, uint64_t processing_units = 1);
 
     /**
      * @brief Process all active domains
@@ -148,14 +148,14 @@ public:
      * @param token Processing domain (default: audio)
      * @return Number of processing units (samples/frames/etc.)
      */
-    u_int64_t seconds_to_units(double seconds, ProcessingToken token = ProcessingToken::SAMPLE_ACCURATE) const;
+    uint64_t seconds_to_units(double seconds, ProcessingToken token = ProcessingToken::SAMPLE_ACCURATE) const;
 
     /**
      * @brief Get current processing units for a domain
      * @param token Processing domain
      * @return Current position in the domain's timeline
      */
-    u_int64_t current_units(ProcessingToken token = ProcessingToken::SAMPLE_ACCURATE) const;
+    uint64_t current_units(ProcessingToken token = ProcessingToken::SAMPLE_ACCURATE) const;
 
     /**
      * @brief Get processing rate for a domain
@@ -172,7 +172,7 @@ public:
      * Convenience method that uses the audio domain's sample rate for conversion.
      * For domain-specific conversions, use seconds_to_units() with the appropriate token.
      */
-    u_int64_t seconds_to_samples(double seconds) const;
+    uint64_t seconds_to_samples(double seconds) const;
 
     /**
      * @brief Get the audio domain's SampleClock (legacy interface)
@@ -274,7 +274,7 @@ public:
      * @brief Generates a unique task ID for new tasks
      * @return A unique task ID
      */
-    u_int64_t get_next_task_id() const;
+    uint64_t get_next_task_id() const;
 
     /**
      * @brief Check if a processing domain has any active tasks
@@ -309,7 +309,7 @@ public:
      * This value determines how many processing units must pass before
      * the scheduler cleans up completed tasks.
      */
-    inline u_int32_t get_cleanup_threshold() const { return m_cleanup_threshold; }
+    inline uint32_t get_cleanup_threshold() const { return m_cleanup_threshold; }
 
     /** @brief Set the task cleanup threshold
      * @param threshold New threshold value
@@ -318,7 +318,7 @@ public:
      * the scheduler cleans up completed tasks. Lower values increase
      * cleanup frequency, while higher values reduce overhead.
      */
-    inline void set_cleanup_threshold(u_int32_t threshold) { m_cleanup_threshold = threshold; }
+    inline void set_cleanup_threshold(uint32_t threshold) { m_cleanup_threshold = threshold; }
 
 private:
     /**
@@ -368,7 +368,7 @@ private:
      * @param token Processing domain
      * @param processing_units Number of units to process
      */
-    void process_default(ProcessingToken token, u_int64_t processing_units);
+    void process_default(ProcessingToken token, uint64_t processing_units);
 
     /**
      * @brief Clean up completed tasks in a domain
@@ -409,7 +409,7 @@ private:
     /**
      * @brief Task ID counter for unique identification
      */
-    mutable std::atomic<u_int64_t> m_next_task_id { 1 };
+    mutable std::atomic<uint64_t> m_next_task_id { 1 };
 
     std::vector<TaskEntry> m_tasks;
 
@@ -428,7 +428,7 @@ private:
      * the scheduler cleans up completed tasks. It helps manage memory
      * and performance by removing inactive tasks periodically.
      */
-    u_int32_t m_cleanup_threshold;
+    uint32_t m_cleanup_threshold;
 };
 
 }

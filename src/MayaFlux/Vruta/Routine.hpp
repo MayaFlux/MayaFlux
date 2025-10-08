@@ -38,7 +38,7 @@ public:
      * sample position and other state. This should be called before
      * the first attempt to resume the coroutine.
      */
-    virtual bool initialize_state(u_int64_t current_context = 0u) = 0;
+    virtual bool initialize_state(uint64_t current_context = 0u) = 0;
 
     /**
      * @brief Checks if the coroutine is still active
@@ -52,13 +52,13 @@ public:
 
     /**
      * @brief Gets the sample position when this routine should next execute
-     * @return Sample position for next execution, or u_int64_MAX if inactive
+     * @return Sample position for next execution, or uint64_MAX if inactive
      *
      * This method is crucial for sample-accurate scheduling. It returns
      * the exact sample position when the coroutine should be resumed next.
      * The scheduler uses this to determine when to call try_resume().
      */
-    virtual inline u_int64_t next_execution() const = 0;
+    virtual inline uint64_t next_execution() const = 0;
 
     /**
      * @brief Attempts to resume the coroutine if it's ready to execute
@@ -70,7 +70,7 @@ public:
      * the coroutine, allowing it to execute until its next suspension
      * point or completion.
      */
-    virtual bool try_resume(u_int64_t current_context) = 0;
+    virtual bool try_resume(uint64_t current_context) = 0;
 
     /**
      * @brief Check if the routine should synchronize with a clock
@@ -123,25 +123,25 @@ public:
      * @brief Get next sample execution time (audio domain)
      * @return Sample position for next execution, or 0 if not audio domain
      */
-    virtual u_int64_t get_next_sample() const = 0;
+    virtual uint64_t get_next_sample() const = 0;
 
     /**
      * @brief Set next sample execution time (audio domain)
      * @param next_sample Sample position for next execution
      */
-    virtual void set_next_sample(u_int64_t next_sample) = 0;
+    virtual void set_next_sample(uint64_t next_sample) = 0;
 
     /**
      * @brief Get next frame execution time (graphics domain)
      * @return Frame position for next execution, or 0 if not graphics domain
      */
-    virtual u_int64_t get_next_frame() const = 0;
+    virtual uint64_t get_next_frame() const = 0;
 
     /**
      * @brief Set next frame execution time (graphics domain)
      * @param next_frame Frame position for next execution
      */
-    virtual void set_next_frame(u_int64_t next_frame) = 0;
+    virtual void set_next_frame(uint64_t next_frame) = 0;
 
     /**
      * @brief Updates multiple named parameters in the coroutine's state
@@ -342,13 +342,13 @@ public:
 
     bool is_active() const override;
 
-    bool initialize_state(u_int64_t current_sample = 0u) override;
+    bool initialize_state(uint64_t current_sample = 0u) override;
 
-    bool try_resume(u_int64_t current_context) override;
+    bool try_resume(uint64_t current_context) override;
 
     bool restart() override;
 
-    virtual u_int64_t next_execution() const override;
+    virtual uint64_t next_execution() const override;
 
     bool requires_clock_sync() const override;
 
@@ -378,19 +378,19 @@ public:
     }
 
     // Audio domain timing implementations
-    u_int64_t get_next_sample() const override
+    uint64_t get_next_sample() const override
     {
         return m_handle.promise().next_sample;
     }
 
-    void set_next_sample(u_int64_t next_sample) override
+    void set_next_sample(uint64_t next_sample) override
     {
         m_handle.promise().next_sample = next_sample;
     }
 
     // Non-audio domain methods (return defaults for audio routines)
-    u_int64_t get_next_frame() const override { return 0; }
-    void set_next_frame(u_int64_t /*next_frame*/) override { /* no-op for audio */ }
+    uint64_t get_next_frame() const override { return 0; }
+    void set_next_frame(uint64_t /*next_frame*/) override { /* no-op for audio */ }
 
 protected:
     void set_state_impl(const std::string& key, std::any value) override;
@@ -427,19 +427,19 @@ public:
     bool get_sync_to_clock() const override { return true; }
 
     // Graphics domain timing implementations
-    u_int64_t get_next_frame() const override { return 0; }
-    void set_next_frame(u_int64_t /*next_frame*/) override { /* TODO */ }
+    uint64_t get_next_frame() const override { return 0; }
+    void set_next_frame(uint64_t /*next_frame*/) override { /* TODO */ }
 
     // Non-graphics domain methods (return defaults)
-    u_int64_t get_next_sample() const override { return 0; }
-    void set_next_sample(u_int64_t /*next_sample*/) override { /* no-op for graphics */ }
+    uint64_t get_next_sample() const override { return 0; }
+    void set_next_sample(uint64_t /*next_sample*/) override { /* no-op for graphics */ }
 
     // TODO: Implement when visual subsystem is ready
     bool is_active() const override { return false; }
-    bool initialize_state(u_int64_t /*current_frame*/ = 0u) override { return false; }
-    bool try_resume(u_int64_t /*current_frame*/) override { return false; }
+    bool initialize_state(uint64_t /*current_frame*/ = 0u) override { return false; }
+    bool try_resume(uint64_t /*current_frame*/) override { return false; }
     bool restart() override { return false; }
-    u_int64_t next_execution() const override { return 0; }
+    uint64_t next_execution() const override { return 0; }
 
 protected:
     void set_state_impl(const std::string& /*key*/, std::any /*value*/) override { }
@@ -477,17 +477,17 @@ public:
     bool get_sync_to_clock() const override { return true; }
 
     // Multi-domain timing implementations (supports both audio and graphics)
-    u_int64_t get_next_sample() const override { return 0; }
-    void set_next_sample(u_int64_t /*next_sample*/) override { /* TODO */ }
-    u_int64_t get_next_frame() const override { return 0; }
-    void set_next_frame(u_int64_t /*next_frame*/) override { /* TODO */ }
+    uint64_t get_next_sample() const override { return 0; }
+    void set_next_sample(uint64_t /*next_sample*/) override { /* TODO */ }
+    uint64_t get_next_frame() const override { return 0; }
+    void set_next_frame(uint64_t /*next_frame*/) override { /* TODO */ }
 
     // TODO: Implement when multi-domain scheduling is ready
     bool is_active() const override { return false; }
-    bool initialize_state(u_int64_t /*current_context*/ = 0u) override { return false; }
-    bool try_resume(u_int64_t /*current_context*/) override { return false; }
+    bool initialize_state(uint64_t /*current_context*/ = 0u) override { return false; }
+    bool try_resume(uint64_t /*current_context*/) override { return false; }
     bool restart() override { return false; }
-    u_int64_t next_execution() const override { return 0; }
+    uint64_t next_execution() const override { return 0; }
 
 protected:
     void set_state_impl(const std::string& /*key*/, std::any /*value*/) override { }
