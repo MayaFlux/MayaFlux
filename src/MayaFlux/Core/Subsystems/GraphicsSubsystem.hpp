@@ -3,50 +3,19 @@
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "Subsystem.hpp"
 
-#include <algorithm>
-#include <vulkan/vulkan.hpp>
-
 namespace MayaFlux::Vruta {
 class FrameClock;
 }
 
 namespace MayaFlux::Core {
 
-class VKContext;
-class VKSwapchain;
-class VKCommandManager;
-class VKRenderPass;
-class VKFramebuffer;
-
-struct WindowSwapchainConfig {
-    std::shared_ptr<Window> window;
-    vk::SurfaceKHR surface;
-    std::unique_ptr<VKSwapchain> swapchain;
-    std::unique_ptr<VKRenderPass> render_pass;
-    std::vector<std::unique_ptr<VKFramebuffer>> framebuffers;
-
-    std::vector<vk::Semaphore> image_available;
-    std::vector<vk::Semaphore> render_finished;
-    std::vector<vk::Fence> in_flight;
-
-    bool needs_recreation = false;
-    size_t current_frame = 0;
-
-    WindowSwapchainConfig() = default;
-
-    WindowSwapchainConfig(WindowSwapchainConfig&&) = default;
-    WindowSwapchainConfig& operator=(WindowSwapchainConfig&&) = default;
-    WindowSwapchainConfig(const WindowSwapchainConfig&) = delete;
-    WindowSwapchainConfig& operator=(const WindowSwapchainConfig&) = delete;
-
-    void cleanup(VKContext& context);
-};
+class IGraphicsBackend;
 
 /**
  * @class GraphicsSubsystem
- * @brief Vulkan-based graphics subsystem for visual processing
+ * @brief Backend agnostic graphics subsystem for visual processing
  *
- * Manages graphics thread, Vulkan context, and frame-based processing.
+ * Manages graphics thread, backend context, and frame-based processing.
  * Parallel to AudioSubsystem but with self-driven timing model.
  *
  * **Key Architectural Differences from AudioSubsystem:**
@@ -85,12 +54,6 @@ public:
     void resume() override;
 
     [[nodiscard]] SubsystemTokens get_tokens() const override { return m_subsystem_tokens; }
-
-    /**
-     * @brief Get Vulkan context
-     */
-    [[nodiscard]] VKContext& get_vulkan_context() { return *m_vulkan_context; }
-    [[nodiscard]] const VKContext& get_vulkan_context() const { return *m_vulkan_context; }
 
     /**
      * @brief Get frame clock
@@ -147,17 +110,10 @@ public:
     /**
      * @brief Register markend windows from window manager for swapchain processing
      *
-     * Creates Vulkan surfaces and swapchains for each window.
+     * Creates surfaces and swapchains for each window.
      * Called during initialization and whenever new windows are created.
      */
     void register_windows_for_processing();
-
-    /**
-     * @brief Create synchronization objects for a window's swapchain
-     * @param config Window swapchain configuration to populate
-     * @return True if creation succeeded
-     */
-    bool create_sync_objects(WindowSwapchainConfig& config);
 
     /**
      * @brief Render all registered windows
@@ -173,9 +129,15 @@ public:
     SubsystemType get_type() const override { return SubsystemType::GRAPHICS; }
     SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
 
+    /**
+     * @brief Get underlying graphics backend for advanced usage
+     * Can be cast to VulkanBackend* or OpenGLBackend* for backend-specific operations
+     */
+    IGraphicsBackend* get_backend() { return m_backend.get(); }
+    const IGraphicsBackend* get_backend() const { return m_backend.get(); }
+
 private:
-    std::unique_ptr<VKContext> m_vulkan_context;
-    std::unique_ptr<VKCommandManager> m_command_manager;
+    std::unique_ptr<IGraphicsBackend> m_backend;
     std::shared_ptr<Vruta::FrameClock> m_frame_clock;
 
     std::thread m_graphics_thread;
@@ -183,14 +145,7 @@ private:
     std::atomic<bool> m_running { false };
     std::atomic<bool> m_paused { false };
 
-    std::vector<WindowSwapchainConfig> m_window_configs;
-
-    WindowSwapchainConfig* find_config(const std::shared_ptr<Window>& window)
-    {
-        auto it = std::ranges::find_if(m_window_configs,
-            [window](const auto& config) { return config.window == window; });
-        return it != m_window_configs.end() ? &(*it) : nullptr;
-    }
+    std::vector<std::shared_ptr<Window>> m_registered_windows;
 
     bool m_is_ready {};
 
@@ -216,7 +171,7 @@ private:
      * 2. Process visual nodes (VISUAL_RATE nodes)
      * 3. Process graphics buffers (GRAPHICS_BACKEND buffers)
      * 4. Tick scheduler coroutines (FRAME_ACCURATE tasks)
-     * 5. Record/submit Vulkan commands (future)
+     * 5. Record/submit Vulkan commands or OpenGL draw calls
      * 6. Wait for next frame (vsync timing)
      */
     void graphics_thread_loop();
@@ -233,19 +188,8 @@ private:
     void process_frame_coroutines_impl(const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, uint64_t processing_units);
 
     /**
-     * @brief Handle window resize events and recreate swapchains as needed
-     */
-    void handle_window_resizes();
-
-    /**
      * @brief Cleanup resources for windows that have been closed
      */
     void cleanup_closed_windows();
-
-    /**
-     * @brief Render a single window's swapchain
-     * @param config Window swapchain configuration
-     */
-    void render_window(WindowSwapchainConfig& config);
 };
 }

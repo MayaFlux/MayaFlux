@@ -1,72 +1,15 @@
 #include "GraphicsSubsystem.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKCommandManager.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKFramebuffer.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKRenderPass.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKSwapchain.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
-
-#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 #include "MayaFlux/Vruta/Clock.hpp"
 #include "MayaFlux/Vruta/Routine.hpp"
 
 namespace MayaFlux::Core {
 
-void WindowSwapchainConfig::cleanup(VKContext& context)
-{
-    vk::Device device = context.get_device();
-
-    device.waitIdle();
-
-    for (auto& framebuffer : framebuffers) {
-        if (framebuffer) {
-            framebuffer->cleanup(device);
-        }
-    }
-    framebuffers.clear();
-
-    if (render_pass) {
-        render_pass->cleanup(device);
-        render_pass.reset();
-    }
-
-    for (auto& img : image_available) {
-        if (img) {
-            device.destroySemaphore(img);
-        }
-    }
-    image_available.clear();
-
-    for (auto& render : render_finished) {
-        if (render) {
-            device.destroySemaphore(render);
-        }
-    }
-    render_finished.clear();
-
-    for (auto& fence : in_flight) {
-        if (fence) {
-            device.destroyFence(fence);
-        }
-    }
-    in_flight.clear();
-
-    if (swapchain) {
-        swapchain->cleanup();
-        swapchain.reset();
-    }
-
-    if (surface) {
-        context.destroy_surface(surface);
-        surface = nullptr;
-    }
-
-    window->set_graphics_registered(false);
-}
-
 GraphicsSubsystem::GraphicsSubsystem(const GlobalGraphicsConfig& graphics_config)
-    : m_vulkan_context(std::make_unique<VKContext>())
+    : m_backend(std::make_unique<VulkanBackend>())
     , m_frame_clock(std::make_shared<Vruta::FrameClock>(60))
     , m_subsystem_tokens {
         .Buffer = Buffers::ProcessingToken::GRAPHICS_BACKEND,
@@ -75,7 +18,6 @@ GraphicsSubsystem::GraphicsSubsystem(const GlobalGraphicsConfig& graphics_config
     }
     , m_graphics_config(graphics_config)
 {
-    m_command_manager = std::make_unique<VKCommandManager>();
 }
 
 GraphicsSubsystem::~GraphicsSubsystem()
@@ -90,26 +32,16 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
 
     m_handle = &handle;
 
-    if (!m_vulkan_context->initialize(m_graphics_config, true)) {
+    if (!m_backend->initialize(m_graphics_config)) {
         error<std::runtime_error>(
             Journal::Component::Core,
             Journal::Context::GraphicsSubsystem,
             std::source_location::current(),
-            "Failed to initialize Vulkan context!");
+            "No graphics backend available");
     }
 
     if (m_graphics_config.target_frame_rate > 0) {
         m_frame_clock->set_target_fps(m_graphics_config.target_frame_rate);
-    }
-
-    if (!m_command_manager->initialize(
-            m_vulkan_context->get_device(),
-            m_vulkan_context->get_queue_families().graphics_family.value())) {
-        error<std::runtime_error>(
-            Journal::Component::Core,
-            Journal::Context::GraphicsSubsystem,
-            std::source_location::current(),
-            "Failed to initialize command manager!");
     }
 
     m_is_ready = true;
@@ -247,17 +179,12 @@ void GraphicsSubsystem::stop()
         m_graphics_thread.join();
     }
 
-    for (auto& config : m_window_configs) {
-        config.cleanup(*m_vulkan_context);
+    m_backend->cleanup();
+
+    for (auto& window : m_registered_windows) {
+        window->set_graphics_registered(false);
     }
-
-    m_vulkan_context->wait_idle();
-
-    if (m_command_manager) {
-        m_command_manager->cleanup();
-    }
-
-    m_vulkan_context->cleanup();
+    m_registered_windows.clear();
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
         "Graphics Subsystem stopped.");
@@ -326,11 +253,10 @@ void GraphicsSubsystem::process()
     m_handle->buffers.process(1);
 
     register_windows_for_processing();
-    handle_window_resizes();
-
-    m_handle->windows.process();
+    m_backend->handle_window_resize();
 
     render_all_windows();
+    m_handle->windows.process();
 
     cleanup_closed_windows();
     for (auto& [name, hook] : m_handle->post_process_hooks) {
@@ -342,283 +268,42 @@ void GraphicsSubsystem::register_windows_for_processing()
 {
     for (auto& window : m_handle->windows.get_processing_windows()) {
 
-        if (window->is_graphics_registered() || find_config(window)) {
+        if (window->is_graphics_registered()) {
             continue;
         }
 
-        vk::SurfaceKHR surface = m_vulkan_context->create_surface(window);
-        if (!surface) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to create Vulkan surface for window '{}'",
+        if (m_backend->register_window(window)) {
+            m_registered_windows.push_back(window);
+        } else {
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+                "Failed to register window '{}' for graphics processing",
                 window->get_create_info().title);
             continue;
-        }
-
-        if (!m_vulkan_context->update_present_family(surface)) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "No presentation support for window '{}'", window->get_create_info().title);
-            m_vulkan_context->destroy_surface(surface);
-            continue;
-        }
-
-        WindowSwapchainConfig config;
-        config.window = window;
-        config.surface = surface;
-        config.swapchain = std::make_unique<VKSwapchain>();
-
-        if (!config.swapchain->create(*m_vulkan_context, surface, window->get_create_info())) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to create swapchain for window '{}'", window->get_create_info().title);
-            continue;
-        }
-
-        if (!create_sync_objects(config)) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to create sync objects for window '{}'",
-                window->get_create_info().title);
-            config.swapchain->cleanup();
-            m_vulkan_context->destroy_surface(surface);
-            continue;
-        }
-
-        m_window_configs.push_back(std::move(config));
-        window->set_graphics_registered(true);
-
-        window->set_event_callback([this, window_ptr = window](const WindowEvent& event) {
-            if (event.type == WindowEventType::WINDOW_RESIZED) {
-                auto* config = find_config(window_ptr);
-                if (config) {
-                    config->needs_recreation = true;
-                }
-            }
-        });
-
-        MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
-            "Registered window '{}' for graphics processing", window->get_create_info().title);
-    }
-}
-
-bool GraphicsSubsystem::create_sync_objects(WindowSwapchainConfig& config)
-{
-    auto device = m_vulkan_context->get_device();
-    uint32_t image_count = config.swapchain->get_image_count();
-
-    try {
-        config.image_available.resize(image_count);
-        config.render_finished.resize(image_count);
-        config.in_flight.resize(image_count);
-
-        vk::SemaphoreCreateInfo semaphore_info {};
-        vk::FenceCreateInfo fence_info {};
-        fence_info.flags = vk::FenceCreateFlagBits::eSignaled;
-
-        for (uint32_t i = 0; i < image_count; ++i) {
-            config.image_available[i] = device.createSemaphore(semaphore_info);
-            config.render_finished[i] = device.createSemaphore(semaphore_info);
-        }
-
-        for (auto& i : config.in_flight) {
-            i = device.createFence(fence_info);
-        }
-
-        config.current_frame = 0;
-
-        config.render_pass = std::make_unique<VKRenderPass>();
-        if (!config.render_pass->create(device, config.swapchain->get_image_format())) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to create render pass");
-            return false;
-        }
-
-        config.framebuffers.resize(image_count);
-        auto extent = config.swapchain->get_extent();
-        const auto& image_views = config.swapchain->get_image_views();
-
-        for (uint32_t i = 0; i < image_count; ++i) {
-            config.framebuffers[i] = std::make_unique<VKFramebuffer>();
-
-            std::vector<vk::ImageView> attachments = { image_views[i] };
-
-            if (!config.framebuffers[i]->create(
-                    device,
-                    config.render_pass->get(),
-                    attachments,
-                    extent.width,
-                    extent.height)) {
-                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                    "Failed to create framebuffer {}", i);
-                return false;
-            }
-        }
-
-        return true;
-    } catch (const vk::SystemError& e) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "Failed to create sync objects: {}", e.what());
-        return false;
-    }
-}
-
-void GraphicsSubsystem::handle_window_resizes()
-{
-    for (auto& config : m_window_configs) {
-        if (config.needs_recreation) {
-            const auto& state = config.window->get_state();
-
-            m_vulkan_context->wait_idle();
-
-            for (auto& framebuffer : config.framebuffers) {
-                if (framebuffer) {
-                    framebuffer->cleanup(m_vulkan_context->get_device());
-                }
-            }
-            config.framebuffers.clear();
-
-            if (config.render_pass) {
-                config.render_pass->cleanup(m_vulkan_context->get_device());
-                config.render_pass.reset();
-            }
-
-            if (!config.swapchain->recreate(state.current_width, state.current_height)) {
-                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                    "Failed to recreate swapchain for window '{}'",
-                    config.window->get_create_info().title);
-                continue;
-            }
-
-            config.render_pass = std::make_unique<VKRenderPass>();
-            if (!config.render_pass->create(
-                    m_vulkan_context->get_device(),
-                    config.swapchain->get_image_format())) {
-                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                    "Failed to recreate render pass for window '{}'",
-                    config.window->get_create_info().title);
-                continue;
-            }
-
-            uint32_t image_count = config.swapchain->get_image_count();
-            config.framebuffers.resize(image_count);
-            auto extent = config.swapchain->get_extent();
-            const auto& image_views = config.swapchain->get_image_views();
-
-            for (uint32_t i = 0; i < image_count; ++i) {
-                config.framebuffers[i] = std::make_unique<VKFramebuffer>();
-
-                std::vector<vk::ImageView> attachments = { image_views[i] };
-
-                if (!config.framebuffers[i]->create(
-                        m_vulkan_context->get_device(),
-                        config.render_pass->get(),
-                        attachments,
-                        extent.width,
-                        extent.height)) {
-                    MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                        "Failed to recreate framebuffer {} for window '{}'",
-                        i, config.window->get_create_info().title);
-                }
-            }
-
-            config.needs_recreation = false;
-
-            MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Recreated swapchain for window '{}' ({}x{})",
-                config.window->get_create_info().title,
-                state.current_width, state.current_height);
         }
     }
 }
 
 void GraphicsSubsystem::cleanup_closed_windows()
 {
-    auto it = m_window_configs.begin();
-    while (it != m_window_configs.end()) {
-        if (it->window->should_close()) {
-            it->cleanup(*m_vulkan_context);
-
-            MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
-                "Unregistered window '{}'", it->window->get_create_info().title);
-
-            it = m_window_configs.erase(it);
-        } else {
-            ++it;
+    for (auto& window : m_registered_windows) {
+        if (window->should_close() && window->is_graphics_registered()) {
+            m_backend->unregister_window(window);
+            window->set_graphics_registered(false);
         }
     }
+
+    m_registered_windows.erase(
+        std::remove_if(
+            m_registered_windows.begin(), m_registered_windows.end(),
+            [](const std::shared_ptr<Window>& win) { return win->should_close(); }),
+        m_registered_windows.end());
 }
 
 void GraphicsSubsystem::render_all_windows()
 {
-    for (auto& config : m_window_configs) {
-        render_window(config);
+    for (auto& window : m_registered_windows) {
+        m_backend->render_window(window);
     }
-}
-
-void GraphicsSubsystem::render_window(WindowSwapchainConfig& config)
-{
-    auto device = m_vulkan_context->get_device();
-    auto graphics_queue = m_vulkan_context->get_graphics_queue();
-
-    size_t frame_index = config.current_frame;
-    auto& in_flight = config.in_flight[frame_index];
-
-    device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX);
-    device.resetFences(1, &in_flight);
-
-    auto image_index_opt = config.swapchain->acquire_next_image(config.image_available[frame_index]);
-    if (!image_index_opt.has_value()) {
-        config.needs_recreation = true;
-        return;
-    }
-    uint32_t image_index = image_index_opt.value();
-
-    auto& image_available = config.image_available[frame_index];
-    auto& render_finished = config.render_finished[frame_index];
-
-    vk::CommandBuffer cmd = m_command_manager->allocate_command_buffer();
-    vk::CommandBufferBeginInfo begin_info {};
-    begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-    cmd.begin(begin_info);
-
-    vk::RenderPassBeginInfo render_pass_info {};
-    render_pass_info.renderPass = config.render_pass->get();
-    render_pass_info.framebuffer = config.framebuffers[image_index]->get();
-    render_pass_info.renderArea.offset = vk::Offset2D { 0, 0 };
-    render_pass_info.renderArea.extent = config.swapchain->get_extent();
-
-    vk::ClearValue clear_color {};
-    clear_color.color = vk::ClearColorValue(std::array<float, 4> { 0.0F, 0.1F, 0.2F, 1.0F });
-    render_pass_info.clearValueCount = 1;
-    render_pass_info.pClearValues = &clear_color;
-
-    cmd.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
-    cmd.endRenderPass();
-
-    cmd.end();
-
-    vk::SubmitInfo submit_info {};
-    vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = &image_available;
-    submit_info.pWaitDstStageMask = wait_stages;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd;
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &render_finished;
-
-    try {
-        graphics_queue.submit(1, &submit_info, in_flight);
-    } catch (const vk::SystemError& e) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to submit draw command buffer: {}", e.what());
-        m_command_manager->free_command_buffer(cmd);
-        return;
-    }
-
-    bool present_success = config.swapchain->present(image_index, render_finished, graphics_queue);
-    if (!present_success) {
-        config.needs_recreation = true;
-    }
-
-    config.current_frame = (frame_index + 1) % config.in_flight.size();
 }
 
 void GraphicsSubsystem::graphics_thread_loop()
