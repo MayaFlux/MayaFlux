@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Buffers {
 
-InputAudioBuffer::InputAudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
+InputAudioBuffer::InputAudioBuffer(uint32_t channel_id, uint32_t num_samples)
     : AudioBuffer(channel_id, num_samples)
 {
 }

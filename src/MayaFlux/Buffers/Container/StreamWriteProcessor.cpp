@@ -16,7 +16,7 @@ void StreamWriteProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     if (data_span.empty())
         return;
 
-    u_int32_t channel_id = audio_buffer->get_channel_id();
+    uint32_t channel_id = audio_buffer->get_channel_id();
 
     if (channel_id >= m_container->get_num_channels()) {
         std::cerr << "Warning: AudioBuffer channel " << channel_id
@@ -25,7 +25,7 @@ void StreamWriteProcessor::processing_function(std::shared_ptr<Buffer> buffer)
         return;
     }
 
-    u_int64_t frames_written = m_container->write_frames(data_span, m_write_position, channel_id);
+    uint64_t frames_written = m_container->write_frames(data_span, m_write_position, channel_id);
 
     if (frames_written > 0) {
         m_write_position += frames_written;

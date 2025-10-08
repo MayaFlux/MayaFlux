@@ -20,7 +20,7 @@ public:
      * @param channel_id Channel identifier
      * @param num_samples Buffer size
      */
-    InputAudioBuffer(u_int32_t channel_id, u_int32_t num_samples);
+    InputAudioBuffer(uint32_t channel_id, uint32_t num_samples);
 
     /**
      * @brief Deleted copy constructor - input buffers are unique resources

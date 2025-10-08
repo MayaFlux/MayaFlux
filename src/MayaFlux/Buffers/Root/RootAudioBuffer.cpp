@@ -39,7 +39,7 @@ void ChannelProcessor::processing_function(std::shared_ptr<Buffer> buffer)
         }
     }
 
-    u_int32_t active_buffers = 0;
+    uint32_t active_buffers = 0;
     for (auto& child : m_root_buffer->get_child_buffers()) {
         if (child->has_data_for_cycle() && !child->needs_removal()) {
             active_buffers++;
@@ -80,7 +80,7 @@ bool ChannelProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
     return root_audio_buffer != nullptr;
 }
 
-RootAudioBuffer::RootAudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
+RootAudioBuffer::RootAudioBuffer(uint32_t channel_id, uint32_t num_samples)
     : RootBuffer<AudioBuffer>(channel_id, num_samples)
     , m_has_node_output(false)
 {
@@ -116,7 +116,7 @@ void RootAudioBuffer::process_default()
     }
 }
 
-void RootAudioBuffer::resize(u_int32_t num_samples)
+void RootAudioBuffer::resize(uint32_t num_samples)
 {
     AudioBuffer::resize(num_samples);
 

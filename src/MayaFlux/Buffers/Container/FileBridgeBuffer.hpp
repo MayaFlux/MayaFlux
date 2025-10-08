@@ -23,7 +23,7 @@ class FileToStreamChain : public BufferProcessingChain {
 public:
     FileToStreamChain(std::shared_ptr<Kakshya::SoundFileContainer> file_container,
         std::shared_ptr<Kakshya::DynamicSoundStream> capture_stream,
-        u_int32_t source_channel = 0);
+        uint32_t source_channel = 0);
 
     inline std::shared_ptr<Kakshya::DynamicSoundStream> get_capture_stream() const
     {
@@ -39,7 +39,7 @@ private:
     std::shared_ptr<Kakshya::DynamicSoundStream> m_capture_stream;
     std::shared_ptr<ContainerToBufferAdapter> m_container_adapter;
     std::shared_ptr<StreamWriteProcessor> m_stream_writer;
-    u_int32_t m_source_channel;
+    uint32_t m_source_channel;
 };
 
 /**
@@ -76,9 +76,9 @@ private:
  */
 class FileBridgeBuffer : public AudioBuffer {
 public:
-    FileBridgeBuffer(u_int32_t channel_id,
+    FileBridgeBuffer(uint32_t channel_id,
         std::shared_ptr<Kakshya::SoundFileContainer> file_container,
-        u_int32_t source_channel = 0);
+        uint32_t source_channel = 0);
 
     inline std::shared_ptr<Kakshya::DynamicSoundStream> get_capture_stream() const
     {

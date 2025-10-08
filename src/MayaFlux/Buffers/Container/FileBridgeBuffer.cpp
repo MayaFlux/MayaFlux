@@ -12,7 +12,7 @@ namespace MayaFlux::Buffers {
 
 FileToStreamChain::FileToStreamChain(std::shared_ptr<Kakshya::SoundFileContainer> file_container,
     std::shared_ptr<Kakshya::DynamicSoundStream> capture_stream,
-    u_int32_t source_channel)
+    uint32_t source_channel)
     : m_file_container(std::move(file_container))
     , m_capture_stream(std::move(capture_stream))
     , m_source_channel(source_channel)
@@ -59,9 +59,9 @@ void FileBridgeProcessor::on_detach(std::shared_ptr<Buffer> /*buffer*/)
     m_attached_buffer.reset();
 }
 
-FileBridgeBuffer::FileBridgeBuffer(u_int32_t channel_id,
+FileBridgeBuffer::FileBridgeBuffer(uint32_t channel_id,
     std::shared_ptr<Kakshya::SoundFileContainer> file_container,
-    u_int32_t source_channel)
+    uint32_t source_channel)
     : AudioBuffer(channel_id, Config::get_buffer_size())
     , m_file_container(std::move(file_container))
 {

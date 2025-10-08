@@ -11,7 +11,7 @@ AudioBuffer::AudioBuffer()
 {
 }
 
-AudioBuffer::AudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
+AudioBuffer::AudioBuffer(uint32_t channel_id, uint32_t num_samples)
     : m_channel_id(channel_id)
     , m_num_samples(num_samples)
     , m_default_processor(nullptr)
@@ -28,13 +28,13 @@ AudioBuffer::AudioBuffer(u_int32_t channel_id, u_int32_t num_samples)
     m_data.resize(num_samples);
 }
 
-void AudioBuffer::setup(u_int32_t channel, u_int32_t num_samples)
+void AudioBuffer::setup(uint32_t channel, uint32_t num_samples)
 {
     m_channel_id = channel;
     resize(num_samples);
 }
 
-void AudioBuffer::resize(u_int32_t num_samples)
+void AudioBuffer::resize(uint32_t num_samples)
 {
     m_num_samples = num_samples;
     m_data.resize(num_samples);
@@ -45,7 +45,7 @@ void AudioBuffer::clear()
     std::ranges::fill(m_data, 0.0);
 }
 
-void AudioBuffer::set_num_samples(u_int32_t num_samples)
+void AudioBuffer::set_num_samples(uint32_t num_samples)
 {
     m_num_samples = num_samples;
     m_data.resize(num_samples);
@@ -74,7 +74,7 @@ void AudioBuffer::set_default_processor(std::shared_ptr<BufferProcessor> process
     }
 }
 
-std::shared_ptr<AudioBuffer> AudioBuffer::clone_to(u_int32_t channel)
+std::shared_ptr<AudioBuffer> AudioBuffer::clone_to(uint32_t channel)
 {
     auto buffer = std::make_shared<AudioBuffer>(channel, m_num_samples);
     buffer->get_data() = m_data;

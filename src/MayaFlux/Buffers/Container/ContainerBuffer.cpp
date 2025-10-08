@@ -46,10 +46,10 @@ void ContainerToBufferAdapter::processing_function(std::shared_ptr<Buffer> buffe
 
         auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
         auto& buffer_data = audio_buffer->get_data();
-        u_int32_t buffer_size = audio_buffer->get_num_samples();
+        uint32_t buffer_size = audio_buffer->get_num_samples();
 
         auto read_positions = m_container->get_read_position();
-        u_int64_t current_pos = (m_source_channel < read_positions.size())
+        uint64_t current_pos = (m_source_channel < read_positions.size())
             ? read_positions[m_source_channel]
             : 0;
 
@@ -150,7 +150,7 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<Buffer> buffer)
 
     try {
         auto& buffer_data = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data();
-        u_int32_t num_samples = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples();
+        uint32_t num_samples = std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_num_samples();
 
         extract_channel_data(buffer_data);
 
@@ -171,7 +171,7 @@ void ContainerToBufferAdapter::on_detach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void ContainerToBufferAdapter::set_source_channel(u_int32_t channel_index)
+void ContainerToBufferAdapter::set_source_channel(uint32_t channel_index)
 {
     if (channel_index >= m_num_channels) {
         throw std::out_of_range("Channel index exceeds container channel count");
@@ -215,9 +215,9 @@ void ContainerToBufferAdapter::on_container_state_change(
     }
 }
 
-ContainerBuffer::ContainerBuffer(u_int32_t channel_id, u_int32_t num_samples,
+ContainerBuffer::ContainerBuffer(uint32_t channel_id, uint32_t num_samples,
     std::shared_ptr<Kakshya::StreamContainer> container,
-    u_int32_t source_channel)
+    uint32_t source_channel)
     : AudioBuffer(channel_id, num_samples)
     , m_container(container)
     , m_source_channel(source_channel)
