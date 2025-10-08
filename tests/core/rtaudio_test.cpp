@@ -1,7 +1,7 @@
-/* #include "../test_config.h"
+#include "../test_config.h"
 
-#include "MayaFlux/Core/Backends/AudioBackend/RtAudioBackend.hpp"
-#include "MayaFlux/Core/Backends/AudioBackend/RtAudioSingleton.hpp"
+#include "MayaFlux/Core/Backends/Audio/RtAudioBackend.hpp"
+#include "MayaFlux/Core/Backends/Audio/RtAudioSingleton.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Core/Subsystems/AudioSubsystem.hpp"
 #include "MayaFlux/MayaFlux.hpp"
@@ -243,96 +243,97 @@ TEST_F(AudioStreamTest, InputEnabledStreamCreation)
 // Audio Subsystem Integration Tests
 //-------------------------------------------------------------------------
 
+/*
 class AudioSubsystemTest : public ::testing::Test {
 protected:
-    void SetUp() override
-    {
-        engine = AudioTestHelper::createTestEngine();
-    }
+void SetUp() override
+{
+    engine = AudioTestHelper::createTestEngine();
+}
 
-    void TearDown() override
-    {
-        if (engine) {
-            engine->End();
-        }
-        engine.reset();
+void TearDown() override
+{
+    if (engine) {
+        engine->End();
     }
+    engine.reset();
+}
 
-    std::unique_ptr<Core::Engine> engine;
+std::unique_ptr<Core::Engine> engine;
 };
 
 TEST_F(AudioSubsystemTest, SubsystemInitialization)
 {
-    auto subsystem_manager = engine->get_subsystem_manager();
-    ASSERT_NE(subsystem_manager, nullptr);
+auto subsystem_manager = engine->get_subsystem_manager();
+ASSERT_NE(subsystem_manager, nullptr);
 
-    auto audio_subsystem = subsystem_manager->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
+auto audio_subsystem = subsystem_manager->get_audio_subsystem();
+ASSERT_NE(audio_subsystem, nullptr);
 
-    EXPECT_EQ(audio_subsystem->get_type(), Core::SubsystemType::AUDIO);
-    EXPECT_TRUE(audio_subsystem->is_ready());
+EXPECT_EQ(audio_subsystem->get_type(), Core::SubsystemType::AUDIO);
+EXPECT_TRUE(audio_subsystem->is_ready());
 
-    auto* backend = audio_subsystem->get_audio_backend();
-    EXPECT_NE(backend, nullptr);
+auto* backend = audio_subsystem->get_audio_backend();
+EXPECT_NE(backend, nullptr);
 
-    auto* device_manager = audio_subsystem->get_device_manager();
-    EXPECT_NE(device_manager, nullptr);
+auto* device_manager = audio_subsystem->get_device_manager();
+EXPECT_NE(device_manager, nullptr);
 
-    auto* stream_manager = audio_subsystem->get_stream_manager();
-    EXPECT_NE(stream_manager, nullptr);
+auto* stream_manager = audio_subsystem->get_stream_manager();
+EXPECT_NE(stream_manager, nullptr);
 
-    const auto& stream_info = audio_subsystem->get_stream_info();
-    EXPECT_EQ(stream_info.sample_rate, TestConfig::SAMPLE_RATE);
-    EXPECT_EQ(stream_info.buffer_size, TestConfig::BUFFER_SIZE);
-    EXPECT_EQ(stream_info.output.channels, TestConfig::NUM_CHANNELS);
+const auto& stream_info = audio_subsystem->get_stream_info();
+EXPECT_EQ(stream_info.sample_rate, TestConfig::SAMPLE_RATE);
+EXPECT_EQ(stream_info.buffer_size, TestConfig::BUFFER_SIZE);
+EXPECT_EQ(stream_info.output.channels, TestConfig::NUM_CHANNELS);
 }
 
 TEST_F(AudioSubsystemTest, AudioProcessingPipeline)
 {
-    EXPECT_NO_THROW(engine->Start());
+EXPECT_NO_THROW(engine->Start());
 
-    auto audio_subsystem = engine->get_subsystem_manager()->get_audio_subsystem();
-    ASSERT_NE(audio_subsystem, nullptr);
+auto audio_subsystem = engine->get_subsystem_manager()->get_audio_subsystem();
+ASSERT_NE(audio_subsystem, nullptr);
 
-    std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
+std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
 
-    EXPECT_NO_THROW({
-        int result = audio_subsystem->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
-        std::cout << "Audio output processing result: " << result << std::endl;
-    });
+EXPECT_NO_THROW({
+    int result = audio_subsystem->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
+    std::cout << "Audio output processing result: " << result << std::endl;
+});
 
-    EXPECT_EQ(output_buffer.size(), TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS);
+EXPECT_EQ(output_buffer.size(), TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS);
 }
 
 TEST_F(AudioSubsystemTest, NodeGraphIntegration)
 {
-    EXPECT_NO_THROW(engine->Start());
+EXPECT_NO_THROW(engine->Start());
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto node_graph = engine->get_node_graph_manager();
-    ASSERT_NE(node_graph, nullptr);
+auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+auto node_graph = engine->get_node_graph_manager();
+ASSERT_NE(node_graph, nullptr);
 
-    EXPECT_NO_THROW(node_graph->add_to_root(sine, Nodes::ProcessingToken::AUDIO_RATE));
+EXPECT_NO_THROW(node_graph->add_to_root(sine, Nodes::ProcessingToken::AUDIO_RATE));
 
-    auto audio_subsystem = engine->get_subsystem_manager()->get_audio_subsystem();
+auto audio_subsystem = engine->get_subsystem_manager()->get_audio_subsystem();
 
-    std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
+std::vector<double> output_buffer(TestConfig::BUFFER_SIZE * TestConfig::NUM_CHANNELS, 0.0);
 
-    EXPECT_NO_THROW({
-        audio_subsystem->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
-    });
+EXPECT_NO_THROW({
+    audio_subsystem->process_output(output_buffer.data(), TestConfig::BUFFER_SIZE);
+});
 
-    bool has_signal = std::any_of(output_buffer.begin(), output_buffer.end(),
-        [](double sample) { return std::abs(sample) > 0.01; });
+bool has_signal = std::any_of(output_buffer.begin(), output_buffer.end(),
+    [](double sample) { return std::abs(sample) > 0.01; });
 
-    if (has_signal) {
-        std::cout << "Audio signal detected in output" << std::endl;
-    } else {
-        std::cout << "No audio signal detected (may be normal in CI)" << std::endl;
-    }
-
-    EXPECT_NO_THROW(node_graph->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0).unregister_node(sine));
+if (has_signal) {
+    std::cout << "Audio signal detected in output" << std::endl;
+} else {
+    std::cout << "No audio signal detected (may be normal in CI)" << std::endl;
 }
+
+EXPECT_NO_THROW(node_graph->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0).unregister_node(sine));
+} */
 
 #ifdef AUDIBLE_TEST
 //-------------------------------------------------------------------------
@@ -506,9 +507,9 @@ TEST_F(RtAudioUtilityTest, GlobalAPIValidation)
 
     MayaFlux::Init(44100, 256, 1, 0);
     EXPECT_TRUE(MayaFlux::is_engine_initialized());
-    EXPECT_EQ(MayaFlux::get_sample_rate(), 44100);
-    EXPECT_EQ(MayaFlux::get_buffer_size(), 256);
-    EXPECT_EQ(MayaFlux::get_num_out_channels(), 1);
+    EXPECT_EQ(Config::get_sample_rate(), 44100);
+    EXPECT_EQ(Config::get_buffer_size(), 256);
+    EXPECT_EQ(Config::get_num_out_channels(), 1);
 
     MayaFlux::End();
 
@@ -521,7 +522,7 @@ TEST_F(RtAudioUtilityTest, GlobalAPIValidation)
 
     MayaFlux::Init(duplex_config);
 
-    auto stream_info = MayaFlux::get_global_stream_info();
+    auto stream_info = Config::get_global_stream_info();
     EXPECT_EQ(stream_info.sample_rate, 48000);
     EXPECT_EQ(stream_info.output.channels, 2);
     EXPECT_TRUE(stream_info.input.enabled);
@@ -543,4 +544,4 @@ TEST_F(RtAudioUtilityTest, BackendFactoryValidation)
     EXPECT_NE(device_manager, nullptr);
 }
 
-} // namespace MayaFlux::Test */
+} // namespace MayaFlux::Test
