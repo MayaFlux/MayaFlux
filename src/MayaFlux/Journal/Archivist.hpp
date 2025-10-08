@@ -333,6 +333,28 @@ inline void error_rethrow(Component component, Context context,
     }
 }
 
+/**
+ * @brief fmt-style overload of error_rethrow().
+ *
+ * @copydoc error_rethrow(Component,Context,std::source_location,std::string_view)
+ *
+ * @tparam Args      Types of the format arguments.
+ * @param fmt_str    The format string.
+ * @param args       The format arguments.
+ */
+template <typename... Args>
+inline void error_rethrow(Component component, Context context,
+    std::source_location location, const char* fmt_str, Args&&... args)
+{
+    if constexpr (sizeof...(Args) == 0) {
+        error_rethrow(component, context, location,
+            std::string_view(fmt_str));
+        return;
+    }
+    auto additional_context = format_runtime(fmt_str, std::forward<Args>(args)...);
+    error_rethrow(component, context, location, additional_context);
+}
+
 } // namespace MayaFlux::Journal
 
 // ============================================================================

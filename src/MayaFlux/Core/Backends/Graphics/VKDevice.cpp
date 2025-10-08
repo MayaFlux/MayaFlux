@@ -251,7 +251,7 @@ bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBacken
     try {
         m_logical_device = m_physical_device.createDevice(create_info);
     } catch (const std::exception& e) {
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        error_rethrow(Journal::Component::Core, Journal::Context::GraphicsBackend,
             std::source_location::current(),
             "Failed to create logical device: {}", e.what());
     }

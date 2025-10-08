@@ -8,6 +8,7 @@
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Journal/ConsoleSink.hpp"
 
 namespace MayaFlux::Core {
 
@@ -19,6 +20,7 @@ Engine::Engine()
     : m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
 {
     Journal::Archivist::init();
+    Journal::Archivist::instance().add_sink(std::make_unique<MayaFlux::Journal::ConsoleSink>());
 }
 
 Engine::~Engine()

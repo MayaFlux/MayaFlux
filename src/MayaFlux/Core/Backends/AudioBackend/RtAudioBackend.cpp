@@ -198,7 +198,7 @@ void RtAudioStream::configure_stream_options()
 #endif
             }
         } catch (const std::bad_any_cast&) {
-            error<std::runtime_error>(
+            error_rethrow(
                 Journal::Component::Core,
                 Journal::Context::AudioBackend,
                 std::source_location::current(),
@@ -260,7 +260,7 @@ void RtAudioStream::open()
         RtAudioSingleton::mark_stream_closed();
         m_isOpen = false;
 
-        error<std::runtime_error>(
+        error_rethrow(
             Journal::Component::Core,
             Journal::Context::AudioBackend,
             std::source_location::current(),
@@ -283,7 +283,7 @@ void RtAudioStream::start()
         m_context->startStream();
         m_isRunning = true;
     } catch (const RtAudioErrorType& e) {
-        error<std::runtime_error>(
+        error_rethrow(
             Journal::Component::Core,
             Journal::Context::AudioBackend,
             std::source_location::current(),
@@ -302,7 +302,7 @@ void RtAudioStream::stop()
         m_context->stopStream();
         m_isRunning = false;
     } catch (const RtAudioErrorType& e) {
-        error<std::runtime_error>(
+        error_rethrow(
             Journal::Component::Core,
             Journal::Context::AudioBackend,
             std::source_location::current(),
@@ -331,7 +331,7 @@ void RtAudioStream::close()
         m_isOpen = false;
         RtAudioSingleton::mark_stream_closed();
 
-        error<std::runtime_error>(
+        error_rethrow(
             Journal::Component::Core,
             Journal::Context::AudioBackend,
             std::source_location::current(),

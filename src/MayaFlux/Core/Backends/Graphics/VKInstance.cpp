@@ -89,7 +89,7 @@ bool VKInstance::initialize(bool enable_validation,
         m_dynamic_dispatcher = vk::detail::DispatchLoaderDynamic(m_instance, vkGetInstanceProcAddr);
 
     } catch (const std::exception& e) {
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        error_rethrow(Journal::Component::Core, Journal::Context::GraphicsBackend,
             std::source_location::current(),
             "Failed to create Vulkan instance: {}", e.what());
     }
@@ -157,7 +157,7 @@ bool VKInstance::setup_debug_messenger()
     try {
         m_debug_messenger = m_instance.createDebugUtilsMessengerEXT(create_info, nullptr, m_dynamic_dispatcher);
     } catch (const std::exception& e) {
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        error_rethrow(Journal::Component::Core, Journal::Context::GraphicsBackend,
             std::source_location::current(),
             "Failed to set up debug messenger: {}", e.what());
         return false;

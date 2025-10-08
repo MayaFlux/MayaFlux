@@ -220,11 +220,11 @@ void GraphicsSubsystem::start()
         try {
             graphics_thread_loop();
         } catch (const std::exception& e) {
-            error<std::runtime_error>(
+            error_rethrow(
                 Journal::Component::Core,
                 Journal::Context::GraphicsSubsystem,
                 std::source_location::current(),
-                "Graphics thread error: {}", e.what());
+                "Graphics thread error");
         }
 
         MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
