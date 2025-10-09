@@ -18,6 +18,7 @@ Makefile
 docs/html/
 src/MayaFlux/version.h
 src/user_project.hpp
+public/
 
 # User resources (not tracked)
 res/

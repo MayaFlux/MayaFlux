@@ -1,0 +1,39 @@
+# Doxygen documentation generation for Codeberg Pages
+# Only runs on main branch
+
+when:
+  branch: main
+
+steps:
+  generate-docs:
+    image: alpine:latest
+    commands:
+      - apk add --no-cache doxygen graphviz ttf-freefont git
+      - doxygen Doxyfile # Make sure your config file is named correctly
+      - mkdir -p .public
+      - cp -r docs/html/* .public/
+    when:
+      branch: main
+
+  deploy-pages:
+    image: bitnami/git:latest
+    environment:
+      CODEBERG_TOKEN:
+        from_secret: codeberg_token
+    commands:
+      # Configure git user
+      - git config --global user.name "Woodpecker CI"
+      - git config --global user.email "ci@codeberg.org"
+      # Clone the repository
+      - git clone --depth=1 https://codeberg.org/MayaFlux/MayaFlux.git pages-repo
+      - cd pages-repo
+      - git checkout -B pages
+      # Copy generated docs
+      - rm -rf *
+      - cp -r ../.public/* .
+      # Commit and push
+      - git add .
+      - 'git commit -m "docs: update Doxygen documentation [skip ci]" || exit 0'
+      - git push https://${CODEBERG_TOKEN}@codeberg.org/MayaFlux/MayaFlux.git pages
+    when:
+      branch: main

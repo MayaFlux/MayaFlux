@@ -1,0 +1,45 @@
+# Doxygen documentation generation
+# Only runs on main branch
+
+stages:
+  - documentation
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+generate-docs:
+  stage: documentation
+  image: alpine:latest
+
+  before_script:
+    - apk add --no-cache doxygen graphviz ttf-freefont
+
+  script:
+    - doxygen doxyconf
+    - mv docs/html public
+
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+
+  only:
+    - main
+
+pages:
+  stage: documentation
+  image: alpine:latest
+
+  before_script:
+    - apk add --no-cache doxygen graphviz ttf-freefont
+
+  script:
+    - doxygen doxyconf
+    - mv docs/html public
+
+  artifacts:
+    paths:
+      - public
+
+  only:
+    - main

@@ -5,6 +5,10 @@
 [![CMake](https://img.shields.io/badge/CMake-3.20+-064F8C?logo=cmake)](https://cmake.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)]()
 
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://mayaflux.github.io/MayaFlux/)
+[![Documentation](https://img.shields.io/badge/docs-GitLab%20Pages-orange)](https://mayaflux.gitlab.io/MayaFlux/)
+[![Documentation](https://img.shields.io/badge/docs-Codeberg%20Pages-green)](https://mayaflux.codeberg.page/)
+
 **Digital-first multimedia processing framework built on modern C++20**
 
 MayaFlux provides unified audio-visual computation through lock-free node graphs, C++20 coroutines for temporal coordination, and grammar-driven operation pipelines. Designed for creative coding, real-time processing, and cross-modal interaction.
@@ -68,6 +72,32 @@ This is **not production-ready software**. It's a paradigm exploration seeking v
 - [Digital Transformation Paradigm](docs/Digital_Transformation_Paradigm.md) - Core architectural philosophy
 - [Domain and Control](docs/Domain_and_Control.md) - Processing tokens and domain composition
 - [Advanced Context Control](docs/Advanced_Context_Control.md) - Backend customization
+
+API documentation is automatically generated and hosted on multiple platforms:
+
+- **GitHub Pages:** [mayaflux.github.io/MayaFlux](https://mayaflux.github.io/MayaFlux/)
+- **GitLab Pages:** [mayaflux.gitlab.io/MayaFlux](https://mayaflux.gitlab.io/MayaFlux/)
+- **Codeberg Pages:** [mayaflux.codeberg.page](https://mayaflux.codeberg.page/)
+
+Documentation is automatically updated on every push to the `main` branch.
+
+### Building Documentation Locally
+
+```sh
+# Install dependencies
+# Ubuntu/Debian:
+sudo apt-get install doxygen graphviz
+
+# macOS:
+brew install doxygen graphviz
+
+# Generate documentation
+doxygen doxyconf
+
+# Open in browser
+open docs/html/index.html  # macOS
+xdg-open docs/html/index.html  # Linux
+```
 
 ---
 
