@@ -16,7 +16,6 @@ else()
     endif()
     find_package(TBB REQUIRED)
 
-
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
     pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
