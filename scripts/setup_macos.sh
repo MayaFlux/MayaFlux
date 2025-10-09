@@ -111,7 +111,7 @@ fi
 # ------------------------------------------------------------
 
 echo "🔽 Fetching latest Vulkan SDK version for macOS..."
-VULKAN_VERSION=$(curl -s https://vulkan.lunarg.com/sdk/latest/mac.txt)
+VULKAN_VERSION=$(curl -s https://vulkan.lunarg.com/sdk/latest/mac.txt | grep -oP '(\d+\.){3}\d+' | head -n 1)
 
 if [ -z "$VULKAN_VERSION" ]; then
     echo "❌ Could not fetch latest Vulkan SDK version."

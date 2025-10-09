@@ -35,7 +35,7 @@ Refer to [Getting Started](docs/Getting_Started.md) for setup information and us
 
 ### Build
 
-```bash
+```sh
 git clone https://github.com/MayaFlux/MayaFlux.git
 cd MayaFlux
 ./scripts/setup_macos.sh
@@ -53,6 +53,7 @@ cd MayaFlux
 - ✓ Audio backend operational (RtAudio)
 - ✓ Lock-free node/buffer processing
 - ✓ Coroutine scheduling infrastructure
+- ⚙ OpenGL graphics pipeline (pending external)
 - ⚙ Vulkan graphics pipeline (in development)
 - ⚙ Grammar stress testing (ongoing)
 - ⚙ Inter-component integration testing (~40% coverage)
@@ -63,9 +64,9 @@ This is **not production-ready software**. It's a paradigm exploration seeking v
 
 ## Documentation
 
+- [Getting Started](docs/Getting_Started.md) - Setup and basic usage
 - [Digital Transformation Paradigm](docs/Digital_Transformation_Paradigm.md) - Core architectural philosophy
 - [Domain and Control](docs/Domain_and_Control.md) - Processing tokens and domain composition
-- [Getting Started](docs/Getting_Started.md) - Setup and basic usage
 - [Advanced Context Control](docs/Advanced_Context_Control.md) - Backend customization
 
 ---
