@@ -16,6 +16,7 @@ target_precompile_headers(MayaFlux PUBLIC ../cmake/pch.h)
 
 add_executable(test_lila test_lila.cpp)
 target_link_libraries(test_lila PRIVATE Lila)
+target_link_libraries(test_lila PRIVATE Lila MayaFluxLib)
 
 set_target_properties(test_lila PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}

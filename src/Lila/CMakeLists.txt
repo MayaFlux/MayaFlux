@@ -13,7 +13,8 @@ set(LILA_HEADERS
     Lila.hpp
 )
 
-add_library(Lila ${LILA_SOURCES} ${LILA_HEADERS})
+add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
+
 
 target_include_directories(Lila PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..  # For #include "Lila/..."

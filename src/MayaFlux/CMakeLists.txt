@@ -4,7 +4,7 @@ file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp)
 
-add_library(MayaFluxLib ${SOURCES} ${HEADERS})
+add_library(MayaFluxLib SHARED ${SOURCES} ${HEADERS})
 
 set_target_properties(MayaFluxLib PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -60,7 +60,7 @@ else()
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::Vulkan)
     endif()
 
-    target_link_libraries(MayaFluxLib PRIVATE TBB::tbb)
+    target_link_libraries(MayaFluxLib PUBLIC TBB::tbb)
 
     target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::RtAudio
