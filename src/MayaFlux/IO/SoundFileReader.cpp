@@ -141,10 +141,10 @@ bool SoundFileReader::open(const std::string& filepath, FileReadOptions options)
 
     if (stream->duration != AV_NOPTS_VALUE && stream->time_base.num && stream->time_base.den) {
         double duration_seconds = stream->duration * av_q2d(stream->time_base);
-        m_total_frames = static_cast<u_int64_t>(duration_seconds * m_codec_context->sample_rate);
+        m_total_frames = static_cast<uint64_t>(duration_seconds * m_codec_context->sample_rate);
     } else if (m_format_context->duration != AV_NOPTS_VALUE) {
         double duration_seconds = m_format_context->duration / static_cast<double>(AV_TIME_BASE);
-        m_total_frames = static_cast<u_int64_t>(duration_seconds * m_codec_context->sample_rate);
+        m_total_frames = static_cast<uint64_t>(duration_seconds * m_codec_context->sample_rate);
     } else {
         m_total_frames = 0;
     }
@@ -311,9 +311,9 @@ void SoundFileReader::extract_regions()
         FileRegion region;
         region.type = "chapter";
 
-        u_int64_t start = av_rescale_q(chapter->start, chapter->time_base,
+        uint64_t start = av_rescale_q(chapter->start, chapter->time_base,
             AVRational { 1, static_cast<int>(m_codec_context->sample_rate) });
-        u_int64_t end = av_rescale_q(chapter->end, chapter->time_base,
+        uint64_t end = av_rescale_q(chapter->end, chapter->time_base,
             AVRational { 1, static_cast<int>(m_codec_context->sample_rate) });
 
         region.start_coordinates = { start };
@@ -344,7 +344,7 @@ void SoundFileReader::extract_regions()
             region.name = key;
             region.attributes["description"] = tag->value;
             try {
-                u_int64_t position = std::stoull(tag->value);
+                uint64_t position = std::stoull(tag->value);
                 region.start_coordinates = { position };
                 region.end_coordinates = { position };
                 m_cached_regions.push_back(region);
@@ -405,7 +405,7 @@ std::vector<Kakshya::DataVariant> SoundFileReader::read_all()
     return read_frames(m_total_frames, 0);
 }
 
-std::vector<Kakshya::DataVariant> SoundFileReader::read_frames(u_int64_t num_frames, u_int64_t offset)
+std::vector<Kakshya::DataVariant> SoundFileReader::read_frames(uint64_t num_frames, uint64_t offset)
 {
     if (!m_is_open) {
         set_error("File not open");
@@ -423,10 +423,10 @@ std::vector<Kakshya::DataVariant> SoundFileReader::read_frames(u_int64_t num_fra
     return decode_frames(num_frames, offset);
 }
 
-std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(u_int64_t num_frames, u_int64_t offset)
+std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(uint64_t num_frames, uint64_t offset)
 {
     std::vector<Kakshya::DataVariant> output_data;
-    u_int64_t frames_decoded = 0;
+    uint64_t frames_decoded = 0;
 
     AVPacket* packet = av_packet_alloc();
     AVFrame* frame = av_frame_alloc();
@@ -452,7 +452,7 @@ std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(u_int64_t num_f
         output_data[0] = std::vector<double>(num_frames * channels);
     }
 
-    u_int8_t** resample_buffer = nullptr;
+    uint8_t** resample_buffer = nullptr;
     int resample_linesize {};
 
     int max_resample_samples = av_rescale_rnd(num_frames,
@@ -503,10 +503,10 @@ std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(u_int64_t num_f
 
             int out_samples = swr_convert(m_swr_context,
                 resample_buffer, max_resample_samples,
-                (const u_int8_t**)frame->data, frame->nb_samples);
+                (const uint8_t**)frame->data, frame->nb_samples);
 
             if (out_samples > 0) {
-                int samples_to_copy = std::min(static_cast<u_int64_t>(out_samples),
+                int samples_to_copy = std::min(static_cast<uint64_t>(out_samples),
                     num_frames - frames_decoded);
 
                 if (use_planar) {
@@ -548,7 +548,7 @@ std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(u_int64_t num_f
 }
 
 std::vector<std::vector<double>> SoundFileReader::deinterleave_data(
-    const std::vector<double>& interleaved, u_int32_t channels)
+    const std::vector<double>& interleaved, uint32_t channels)
 {
     if (channels == 1) {
         return { interleaved };
@@ -558,7 +558,7 @@ std::vector<std::vector<double>> SoundFileReader::deinterleave_data(
 
     size_t samples_per_channel = interleaved.size() / channels;
 
-    for (u_int32_t ch = 0; ch < channels; ch++) {
+    for (uint32_t ch = 0; ch < channels; ch++) {
         deinterleaved[ch].reserve(samples_per_channel);
         for (size_t i = 0; i < samples_per_channel; i++) {
             deinterleaved[ch].push_back(interleaved[i * channels + ch]);
@@ -575,9 +575,9 @@ std::vector<Kakshya::DataVariant> SoundFileReader::read_region(const FileRegion&
         return {};
     }
 
-    u_int64_t start = region.start_coordinates[0];
-    u_int64_t end = region.end_coordinates.empty() ? start : region.end_coordinates[0];
-    u_int64_t num_frames = (end > start) ? (end - start) : 1;
+    uint64_t start = region.start_coordinates[0];
+    uint64_t end = region.end_coordinates.empty() ? start : region.end_coordinates[0];
+    uint64_t num_frames = (end > start) ? (end - start) : 1;
 
     return read_frames(num_frames, start);
 }
@@ -617,9 +617,9 @@ bool SoundFileReader::load_into_container(std::shared_ptr<Kakshya::SignalSourceC
         return false;
     }
 
-    auto total_frames = metadata->get_attribute<u_int64_t>("total_frames").value_or(0);
-    auto sample_rate = metadata->get_attribute<u_int32_t>("sample_rate").value_or(48000);
-    auto channels = metadata->get_attribute<u_int32_t>("channels").value_or(2);
+    auto total_frames = metadata->get_attribute<uint64_t>("total_frames").value_or(0);
+    auto sample_rate = metadata->get_attribute<uint32_t>("sample_rate").value_or(48000);
+    auto channels = metadata->get_attribute<uint32_t>("channels").value_or(2);
 
     sound_container->setup(total_frames, sample_rate, channels);
 
@@ -650,18 +650,18 @@ bool SoundFileReader::load_into_container(std::shared_ptr<Kakshya::SignalSourceC
     return true;
 }
 
-std::vector<u_int64_t> SoundFileReader::get_read_position() const
+std::vector<uint64_t> SoundFileReader::get_read_position() const
 {
     return { m_current_frame_position };
 }
 
-bool SoundFileReader::seek(const std::vector<u_int64_t>& position)
+bool SoundFileReader::seek(const std::vector<uint64_t>& position)
 {
     if (!m_is_open || position.empty()) {
         return false;
     }
 
-    u_int64_t frame_position = position[0];
+    uint64_t frame_position = position[0];
 
     AVStream* stream = m_format_context->streams[m_audio_stream_index];
     int64_t timestamp = av_rescale_q(frame_position,
@@ -678,7 +678,7 @@ bool SoundFileReader::seek(const std::vector<u_int64_t>& position)
     avcodec_flush_buffers(m_codec_context);
 
     if (m_swr_context) {
-        u_int8_t** dummy = nullptr;
+        uint8_t** dummy = nullptr;
         av_samples_alloc_array_and_samples(&dummy, nullptr,
             m_codec_context->ch_layout.nb_channels, 2048, AV_SAMPLE_FMT_DBL, 0);
 
@@ -696,7 +696,7 @@ bool SoundFileReader::seek(const std::vector<u_int64_t>& position)
     return true;
 }
 
-u_int64_t SoundFileReader::get_preferred_chunk_size() const
+uint64_t SoundFileReader::get_preferred_chunk_size() const
 {
     if (m_codec_context && m_codec_context->codec) {
         if (m_codec_context->frame_size > 0) {
@@ -711,13 +711,13 @@ size_t SoundFileReader::get_num_dimensions() const
     return 2; // time × channels
 }
 
-std::vector<u_int64_t> SoundFileReader::get_dimension_sizes() const
+std::vector<uint64_t> SoundFileReader::get_dimension_sizes() const
 {
     if (!m_is_open) {
         return {};
     }
 
-    return { m_total_frames, static_cast<u_int64_t>(m_codec_context->ch_layout.nb_channels) };
+    return { m_total_frames, static_cast<uint64_t>(m_codec_context->ch_layout.nb_channels) };
 }
 
 std::vector<std::string> SoundFileReader::get_supported_extensions() const

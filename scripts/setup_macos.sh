@@ -107,39 +107,26 @@ if [ -n "$MISSING_PACKAGES" ]; then
 fi
 
 # ------------------------------------------------------------
-# Vulkan SDK (LunarG) Installation / Verification
+# Vulkan SDK (LunarG) Installation - Always Latest Version
 # ------------------------------------------------------------
 
-VULKAN_VERSION="1.4.328.0"
+echo "🔽 Fetching latest Vulkan SDK version for macOS..."
+VULKAN_VERSION=$(curl -s https://vulkan.lunarg.com/sdk/latest/mac.txt)
+
+if [ -z "$VULKAN_VERSION" ]; then
+    echo "❌ Could not fetch latest Vulkan SDK version."
+    exit 1
+fi
+
+echo "🔁 Using latest Vulkan SDK $VULKAN_VERSION"
+
 VULKAN_SDK_DIR="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
 TMP_DMG="/tmp/vulkan-sdk-$VULKAN_VERSION.dmg"
+URL="https://sdk.lunarg.com/sdk/download/$VULKAN_VERSION/mac/vulkan_sdk.dmg"
 
 if [ -d "$VULKAN_SDK_DIR" ]; then
     echo "✅ Vulkan SDK $VULKAN_VERSION already installed at $VULKAN_SDK_DIR"
 else
-    echo "🔽 Downloading LunarG Vulkan SDK $VULKAN_VERSION for macOS..."
-
-    URL="https://sdk.lunarg.com/sdk/download/$VULKAN_VERSION/mac/vulkan-sdk.dmg"
-    if ! curl --head --silent --fail "$URL" >/dev/null; then
-        echo "⚠️  Version $VULKAN_VERSION not available. Fetching latest info from LunarG..."
-        MANIFEST_URL="https://vulkan.lunarg.com/sdk/latest.json"
-        LATEST_JSON=$(curl -s "$MANIFEST_URL")
-
-        LATEST_VER=$(echo "$LATEST_JSON" | grep -oE '"mac":\s*\{[^}]*\}' | grep -oE '"version":\s*"[^"]+"' | cut -d'"' -f4)
-        LATEST_URL=$(echo "$LATEST_JSON" | grep -oE '"mac":\s*\{[^}]*\}' | grep -oE '"url":\s*"[^"]+"' | cut -d'"' -f4)
-
-        if [ -n "$LATEST_VER" ] && [ -n "$LATEST_URL" ]; then
-            echo "🔁 Using latest Vulkan SDK $LATEST_VER"
-            VULKAN_VERSION="$LATEST_VER"
-            URL="$LATEST_URL"
-            VULKAN_SDK_DIR="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
-            TMP_DMG="/tmp/vulkan-sdk-$VULKAN_VERSION.dmg"
-        else
-            echo "❌ Could not fetch latest Vulkan SDK info."
-            exit 1
-        fi
-    fi
-
     echo "⬇️  Downloading from: $URL"
     curl -L "$URL" -o "$TMP_DMG" --progress-bar || {
         echo "❌ Download failed."

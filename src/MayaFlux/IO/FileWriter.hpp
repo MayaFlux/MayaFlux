@@ -2,7 +2,7 @@
 
 namespace MayaFlux::IO {
 
-enum class FileWriteOptions : u_int32_t {
+enum class FileWriteOptions : uint32_t {
     NONE = 0,
     APPEND = 1 << 0, ///< Append to existing file
     CREATE = 1 << 1, ///< Create if doesn't exist

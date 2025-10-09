@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  push:
-    branches: [develop]
+  # push:
+  #   branches: [develop]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -59,7 +59,6 @@ jobs:
             magic_enum
             fmt
             glfw
-          # key: maya-brew-v1
           verbose: true
 
       - name: Install Vulkan SDK (LunarG)

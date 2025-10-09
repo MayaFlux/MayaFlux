@@ -18,7 +18,7 @@ namespace MayaFlux::IO {
  * @enum AudioReadOptions
  * @brief Audio-specific reading options
  */
-enum class AudioReadOptions : u_int32_t {
+enum class AudioReadOptions : uint32_t {
     NONE = 0,
     NORMALIZE = 1 << 0, // Not implemented - would use FFmpeg's volume filter
     CONVERT_TO_MONO = 1 << 1, // Not implemented - would use FFmpeg's channel mixer
@@ -28,12 +28,12 @@ enum class AudioReadOptions : u_int32_t {
 
 inline AudioReadOptions operator|(AudioReadOptions a, AudioReadOptions b)
 {
-    return static_cast<AudioReadOptions>(static_cast<u_int32_t>(a) | static_cast<u_int32_t>(b));
+    return static_cast<AudioReadOptions>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 
 inline AudioReadOptions operator&(AudioReadOptions a, AudioReadOptions b)
 {
-    return static_cast<AudioReadOptions>(static_cast<u_int32_t>(a) & static_cast<u_int32_t>(b));
+    return static_cast<AudioReadOptions>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 }
 
 /**
@@ -148,14 +148,14 @@ public:
      * @brief Get the current read position in the file.
      * @return Vector of dimension indices (e.g., frame index).
      */
-    std::vector<u_int64_t> get_read_position() const override;
+    std::vector<uint64_t> get_read_position() const override;
 
     /**
      * @brief Seek to a specific position in the file.
      * @param position Vector of dimension indices.
      * @return True if seek succeeded.
      */
-    bool seek(const std::vector<u_int64_t>& position) override;
+    bool seek(const std::vector<uint64_t>& position) override;
 
     /**
      * @brief Get supported file extensions for this reader.
@@ -191,7 +191,7 @@ public:
      * @brief Get the preferred chunk size for streaming reads.
      * @return Preferred chunk size in frames.
      */
-    u_int64_t get_preferred_chunk_size() const override;
+    uint64_t get_preferred_chunk_size() const override;
 
     /**
      * @brief Get the number of dimensions in the audio data (typically 2: time, channel).
@@ -203,7 +203,7 @@ public:
      * @brief Get the size of each dimension (e.g., frames, channels).
      * @return Vector of dimension sizes.
      */
-    std::vector<u_int64_t> get_dimension_sizes() const override;
+    std::vector<uint64_t> get_dimension_sizes() const override;
 
     /**
      * @brief Read a specific number of frames from the file.
@@ -211,7 +211,7 @@ public:
      * @param offset Frame offset from beginning.
      * @return DataVariant containing std::vector<double>.
      */
-    std::vector<Kakshya::DataVariant> read_frames(u_int64_t num_frames, u_int64_t offset = 0);
+    std::vector<Kakshya::DataVariant> read_frames(uint64_t num_frames, uint64_t offset = 0);
 
     /**
      * @brief Set audio-specific read options.
@@ -223,14 +223,14 @@ public:
      * @brief Set the target sample rate for resampling.
      * @param sample_rate Target sample rate (0 = no resampling).
      */
-    void set_target_sample_rate(u_int32_t sample_rate) { m_target_sample_rate = sample_rate; }
+    void set_target_sample_rate(uint32_t sample_rate) { m_target_sample_rate = sample_rate; }
 
     /**
      * @brief Set the target bit depth (ignored, always outputs double).
      * @param bit_depth Target bit depth.
      * @deprecated Always outputs double precision.
      */
-    void set_target_bit_depth(u_int32_t bit_depth) { m_target_bit_depth = bit_depth; }
+    void set_target_bit_depth(uint32_t bit_depth) { m_target_bit_depth = bit_depth; }
 
     /**
      * @brief Initialize FFmpeg libraries (thread-safe, called automatically).
@@ -298,22 +298,22 @@ private:
     /**
      * @brief Current frame position for reading.
      */
-    std::atomic<u_int64_t> m_current_frame_position { 0 };
+    std::atomic<uint64_t> m_current_frame_position { 0 };
 
     /**
      * @brief Total number of frames in the file.
      */
-    u_int64_t m_total_frames = 0;
+    uint64_t m_total_frames = 0;
 
     /**
      * @brief Target sample rate for resampling (0 = use source rate).
      */
-    u_int32_t m_target_sample_rate = 0;
+    uint32_t m_target_sample_rate = 0;
 
     /**
      * @brief Target bit depth (ignored, always outputs double).
      */
-    u_int32_t m_target_bit_depth = 0;
+    uint32_t m_target_bit_depth = 0;
 
     /**
      * @brief Mutex for thread-safe reading.
@@ -369,7 +369,7 @@ private:
      * @param offset Frame offset from beginning.
      * @return DataVariant containing decoded data.
      */
-    std::vector<Kakshya::DataVariant> decode_frames(u_int64_t num_frames, u_int64_t offset);
+    std::vector<Kakshya::DataVariant> decode_frames(uint64_t num_frames, uint64_t offset);
 
     /**
      * @brief Convert interleaved audio data to deinterleaved (planar) format.
@@ -377,7 +377,7 @@ private:
      * @param channels Number of channels.
      * @return Deinterleaved data as std::vector<double>.
      */
-    std::vector<std::vector<double>> deinterleave_data(const std::vector<double>& interleaved, u_int32_t channels);
+    std::vector<std::vector<double>> deinterleave_data(const std::vector<double>& interleaved, uint32_t channels);
 
     /**
      * @brief Set the last error message.
