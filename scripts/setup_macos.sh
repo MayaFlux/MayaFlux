@@ -107,34 +107,67 @@ if [ -n "$MISSING_PACKAGES" ]; then
 fi
 
 # ------------------------------------------------------------
-# Install Vulkan SDK (LunarG) non-interactively
+# Vulkan SDK (LunarG) Installation / Verification
 # ------------------------------------------------------------
 
 VULKAN_VERSION="1.4.328.0"
 VULKAN_SDK_DIR="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
+TMP_DMG="/tmp/vulkan-sdk-$VULKAN_VERSION.dmg"
 
 if [ -d "$VULKAN_SDK_DIR" ]; then
     echo "✅ Vulkan SDK $VULKAN_VERSION already installed at $VULKAN_SDK_DIR"
 else
     echo "🔽 Downloading LunarG Vulkan SDK $VULKAN_VERSION for macOS..."
-    TMP_DMG="/tmp/vulkan-sdk-$VULKAN_VERSION.dmg"
-    curl -L "https://sdk.lunarg.com/sdk/download/$VULKAN_VERSION/mac/vulkan-sdk.dmg" -o "$TMP_DMG"
+
+    URL="https://sdk.lunarg.com/sdk/download/$VULKAN_VERSION/mac/vulkan-sdk.dmg"
+    if ! curl --head --silent --fail "$URL" >/dev/null; then
+        echo "⚠️  Version $VULKAN_VERSION not available. Fetching latest info from LunarG..."
+        MANIFEST_URL="https://vulkan.lunarg.com/sdk/latest.json"
+        LATEST_JSON=$(curl -s "$MANIFEST_URL")
+
+        LATEST_VER=$(echo "$LATEST_JSON" | grep -oE '"mac":\s*\{[^}]*\}' | grep -oE '"version":\s*"[^"]+"' | cut -d'"' -f4)
+        LATEST_URL=$(echo "$LATEST_JSON" | grep -oE '"mac":\s*\{[^}]*\}' | grep -oE '"url":\s*"[^"]+"' | cut -d'"' -f4)
+
+        if [ -n "$LATEST_VER" ] && [ -n "$LATEST_URL" ]; then
+            echo "🔁 Using latest Vulkan SDK $LATEST_VER"
+            VULKAN_VERSION="$LATEST_VER"
+            URL="$LATEST_URL"
+            VULKAN_SDK_DIR="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
+            TMP_DMG="/tmp/vulkan-sdk-$VULKAN_VERSION.dmg"
+        else
+            echo "❌ Could not fetch latest Vulkan SDK info."
+            exit 1
+        fi
+    fi
+
+    echo "⬇️  Downloading from: $URL"
+    curl -L "$URL" -o "$TMP_DMG" --progress-bar || {
+        echo "❌ Download failed."
+        exit 1
+    }
 
     echo "📦 Mounting DMG..."
     MOUNT_POINT=$(hdiutil attach "$TMP_DMG" -nobrowse -quiet | grep Volumes | awk '{print $3}')
 
     echo "📁 Installing Vulkan SDK..."
     INSTALLER_PKG=$(find "$MOUNT_POINT" -name "*.pkg" | head -n1)
+    if [ -z "$INSTALLER_PKG" ]; then
+        echo "❌ No .pkg found in mounted image."
+        hdiutil detach "$MOUNT_POINT" -quiet || true
+        rm -f "$TMP_DMG"
+        exit 1
+    fi
+
     sudo installer -pkg "$INSTALLER_PKG" -target / >/dev/null
 
     echo "💿 Unmounting DMG..."
-    hdiutil detach "$MOUNT_POINT" -quiet
+    hdiutil detach "$MOUNT_POINT" -quiet || true
+    rm -f "$TMP_DMG"
 
-    echo "✅ Vulkan SDK $VULKAN_VERSION installed."
+    echo "✅ Vulkan SDK $VULKAN_VERSION installed at $VULKAN_SDK_DIR"
 fi
 
-# Set environment variables for current session
-export VULKAN_SDK="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
+export VULKAN_SDK="$VULKAN_SDK_DIR"
 export PATH="$VULKAN_SDK/bin:$PATH"
 export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"
 export VK_ICD_FILENAMES="$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json"
