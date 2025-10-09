@@ -5,6 +5,7 @@
 #include "VKRenderPass.hpp"
 #include "VKSwapchain.hpp"
 
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Core {
@@ -397,9 +398,8 @@ void VulkanBackend::unregister_window(std::shared_ptr<Window> window)
                 "Unregistered window '{}'", it->window->get_create_info().title);
             it = m_window_contexts.erase(it);
             return;
-        } else {
-            ++it;
         }
+        ++it;
     }
 }
 

@@ -1,6 +1,7 @@
 #include "GraphicsSubsystem.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Vruta/Clock.hpp"
@@ -8,8 +9,21 @@
 
 namespace MayaFlux::Core {
 
+std::unique_ptr<IGraphicsBackend> create_graphics_backend(GlobalGraphicsConfig::GraphicsApi api)
+{
+    switch (api) {
+    case GlobalGraphicsConfig::GraphicsApi::VULKAN:
+        return std::make_unique<VulkanBackend>();
+    case GlobalGraphicsConfig::GraphicsApi::OPENGL:
+    case GlobalGraphicsConfig::GraphicsApi::METAL:
+    case GlobalGraphicsConfig::GraphicsApi::DIRECTX12:
+    default:
+        return nullptr;
+    }
+}
+
 GraphicsSubsystem::GraphicsSubsystem(const GlobalGraphicsConfig& graphics_config)
-    : m_backend(std::make_unique<VulkanBackend>())
+    : m_backend(create_graphics_backend(graphics_config.requested_api))
     , m_frame_clock(std::make_shared<Vruta::FrameClock>(60))
     , m_subsystem_tokens {
         .Buffer = Buffers::ProcessingToken::GRAPHICS_BACKEND,

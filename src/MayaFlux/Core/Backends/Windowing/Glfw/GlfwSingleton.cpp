@@ -42,18 +42,16 @@ void GLFWSingleton::configure(const GlfwPreInitConfig& config)
 
     s_configured = true;
 
-    if (config.verbose_logging) {
-        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "GLFW pre-initialization configured: platform={}, libdecor={}, cocoa_chdir_resources={}, cocoa_menubar={}",
-            (config.platform == GlfwPreInitConfig::Platform::Default
-                    ? "default"
-                    : config.platform == GlfwPreInitConfig::Platform::Wayland
-                    ? "wayland"
-                    : "x11"),
-            config.disable_libdecor ? "disabled" : "enabled",
-            config.cocoa_chdir_resources ? "enabled" : "disabled",
-            config.cocoa_menubar ? "enabled" : "disabled");
-    }
+    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+        "GLFW pre-initialization configured: platform={}, libdecor={}, cocoa_chdir_resources={}, cocoa_menubar={}",
+        (config.platform == GlfwPreInitConfig::Platform::Default
+                ? "default"
+                : config.platform == GlfwPreInitConfig::Platform::Wayland
+                ? "wayland"
+                : "x11"),
+        config.disable_libdecor ? "disabled" : "enabled",
+        config.cocoa_chdir_resources ? "enabled" : "disabled",
+        config.cocoa_menubar ? "enabled" : "disabled");
 
     s_preinit_config = config;
 }

@@ -1,15 +1,16 @@
-#include "MayaFlux/Core/Engine.hpp"
-#define MAYASIMPLE ;
-
-#include "MayaFlux/MayaFlux.hpp"
-#include "MayaFlux/version.h"
-
 #ifdef __has_include
 #if __has_include("user_project.hpp")
 #include "user_project.hpp"
 #define HAS_USER_PROJECT
+#else
+#define MAYASIMPLE
+#include "MayaFlux/MayaFlux.hpp"
 #endif
 #endif
+
+#include "MayaFlux/Core/Engine.hpp"
+
+#include "MayaFlux/version.h"
 
 void initialize()
 {

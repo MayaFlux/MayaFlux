@@ -1,18 +1,10 @@
 #pragma once
 
-#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 
 namespace MayaFlux::Core {
 
-/**
- * @enum GraphicsBackendType
- * @brief Enumeration of supported graphics backend types
- */
-enum class GraphicsBackendType {
-    VULKAN,
-    OPENGL,
-};
+class Window;
 
 class IGraphicsBackend {
 public:
@@ -32,9 +24,9 @@ public:
 
     /**
      * @brief Get the type of the graphics backend
-     * @return GraphicsBackendType enum value representing the backend type
+     * @return GraphicsApi enum value representing the backend type
      */
-    virtual GraphicsBackendType get_backend_type() = 0;
+    virtual GlobalGraphicsConfig::GraphicsApi get_backend_type() = 0;
 
     /**
      * @brief Register a window with the graphics backend for rendering

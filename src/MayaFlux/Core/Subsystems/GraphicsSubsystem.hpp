@@ -136,6 +136,12 @@ public:
     IGraphicsBackend* get_backend() { return m_backend.get(); }
     const IGraphicsBackend* get_backend() const { return m_backend.get(); }
 
+    /**
+     * @brief Get the type of the graphics backend
+     * @return GraphicsBackendType enum value representing the backend type
+     */
+    GlobalGraphicsConfig::GraphicsApi get_backend_type() const { return m_graphics_config.requested_api; }
+
 private:
     std::unique_ptr<IGraphicsBackend> m_backend;
     std::shared_ptr<Vruta::FrameClock> m_frame_clock;

@@ -202,8 +202,6 @@ struct GlfwPreInitConfig {
     bool cocoa_chdir_resources = true;
     bool cocoa_menubar = true;
 
-    bool verbose_logging {};
-
     /** @brief Request OpenGL debug context (if using OpenGL backend) */
     bool headless {};
 };

@@ -1,5 +1,5 @@
 #pragma once
-#define MAYASIMPLE ;
+#define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 
 void config()

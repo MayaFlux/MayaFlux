@@ -27,6 +27,7 @@ struct WindowRenderContext {
     size_t current_frame = 0;
 
     WindowRenderContext() = default;
+    ~WindowRenderContext() = default;
 
     WindowRenderContext(WindowRenderContext&&) = default;
     WindowRenderContext& operator=(WindowRenderContext&&) = default;
@@ -67,7 +68,7 @@ public:
      * @brief Get the type of the graphics backend
      * @return GraphicsBackendType enum value representing the backend type
      */
-    inline GraphicsBackendType get_backend_type() override { return GraphicsBackendType::VULKAN; }
+    inline GlobalGraphicsConfig::GraphicsApi get_backend_type() override { return GlobalGraphicsConfig::GraphicsApi::VULKAN; }
 
     /**
      * @brief Register a window with the graphics backend for rendering
@@ -87,8 +88,11 @@ public:
     /**
      * @brief Begin rendering frame for the specified window
      * @param window Shared pointer to the window to begin frame for
+     *
+     * Default: no-op (handled in render_window)
+     * Vulkan handles frame begin internally when acquiring swapchain image
      */
-    void begin_frame(std::shared_ptr<Window> window) override { }
+    void begin_frame(std::shared_ptr<Window> /* window */) override { }
 
     /**
      * @brief Render the contents of the specified window
@@ -105,8 +109,11 @@ public:
     /**
      * @brief End rendering frame for the specified window
      * @param window Shared pointer to the window to end frame for
+     *
+     * Default: no-op (handled in render_window)
+     * Vulkan handles frame end internally after rendering
      */
-    void end_frame(std::shared_ptr<Window> window) override { }
+    void end_frame(std::shared_ptr<Window> /* window */) override { }
 
     /**
      * @brief Wait until the graphics backend is idle
@@ -148,9 +155,9 @@ private:
 
     /**
      * @brief Internal rendering logic for a window
-     * @param config Window render context
+     * @param context Window render context
      */
-    void render_window_internal(WindowRenderContext& config);
+    void render_window_internal(WindowRenderContext& context);
 
     /**
      * @brief Recreate the swapchain and related resources for a window
