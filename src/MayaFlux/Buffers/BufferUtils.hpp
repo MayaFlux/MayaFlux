@@ -202,7 +202,7 @@ inline bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken cur
  * The recommendations help achieve optimal performance by matching processing
  * requirements with available system capabilities.
  */
-inline ProcessingToken get_optimal_token(const std::string& buffer_type, u_int32_t system_capabilities)
+inline ProcessingToken get_optimal_token(const std::string& buffer_type, uint32_t system_capabilities)
 {
     // Implementation would analyze buffer type and system capabilities
     // This is a placeholder for the actual optimization logic
@@ -221,7 +221,7 @@ template <>
 struct hash<std::pair<MayaFlux::Buffers::ProcessingToken, MayaFlux::Buffers::ProcessingToken>> {
     size_t operator()(const std::pair<MayaFlux::Buffers::ProcessingToken, MayaFlux::Buffers::ProcessingToken>& pair) const
     {
-        return hash<u_int32_t>()(static_cast<u_int32_t>(pair.first)) ^ (hash<u_int32_t>()(static_cast<u_int32_t>(pair.second)) << 1);
+        return hash<uint32_t>()(static_cast<uint32_t>(pair.first)) ^ (hash<uint32_t>()(static_cast<uint32_t>(pair.second)) << 1);
     }
 };
 }

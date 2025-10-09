@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Buffers {
 
-FeedbackBuffer::FeedbackBuffer(u_int32_t channel_id, u_int32_t num_samples, float feedback)
+FeedbackBuffer::FeedbackBuffer(uint32_t channel_id, uint32_t num_samples, float feedback)
     : AudioBuffer(channel_id, num_samples)
     , m_feedback_amount(feedback)
 {

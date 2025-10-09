@@ -56,7 +56,7 @@ namespace Kriya {
          * @enum CaptureMode
          * @brief Defines the data capture and retention strategy.
          */
-        enum class CaptureMode : u_int8_t {
+        enum class CaptureMode : uint8_t {
             TRANSIENT, ///< Single cycle capture (default) - data expires after 1 cycle
             ACCUMULATE, ///< Accumulate over multiple cycles in container
             TRIGGERED, ///< Capture only when condition met
@@ -68,7 +68,7 @@ namespace Kriya {
          * @enum ProcessingControl
          * @brief Controls how and when data processing occurs.
          */
-        enum class ProcessingControl : u_int8_t {
+        enum class ProcessingControl : uint8_t {
             AUTOMATIC, // Let BufferManager handle processing (default)
             ON_CAPTURE, // Only process when capture reads data
             MANUAL // User controls processing explicitly
@@ -82,7 +82,7 @@ namespace Kriya {
          */
         BufferCapture(std::shared_ptr<Buffers::AudioBuffer> buffer,
             CaptureMode mode = CaptureMode::TRANSIENT,
-            u_int32_t cycle_count = 1);
+            uint32_t cycle_count = 1);
 
         /**
          * @brief Set processing control strategy.
@@ -104,7 +104,7 @@ namespace Kriya {
          * @note This affects only CAPTURE operations. Other operation types
          *       (TRANSFORM, ROUTE, etc.) always execute once per pipeline cycle.
          */
-        BufferCapture& for_cycles(u_int32_t count);
+        BufferCapture& for_cycles(uint32_t count);
 
         /**
          * @brief Set a condition that stops capture when met.
@@ -119,35 +119,35 @@ namespace Kriya {
          * @param overlap_ratio Overlap between windows (0.0-1.0, default: 0.0)
          * @return Reference to this BufferCapture for chaining
          */
-        BufferCapture& with_window(u_int32_t window_size, float overlap_ratio = 0.0F);
+        BufferCapture& with_window(uint32_t window_size, float overlap_ratio = 0.0F);
 
         /**
          * @brief Enable circular buffer mode with fixed size.
          * @param size Fixed size of the circular buffer
          * @return Reference to this BufferCapture for chaining
          */
-        BufferCapture& as_circular(u_int32_t size);
+        BufferCapture& as_circular(uint32_t size);
 
         /**
          * @brief Set callback for when captured data is ready.
          * @param callback Function called with captured data and cycle number
          * @return Reference to this BufferCapture for chaining
          */
-        BufferCapture& on_data_ready(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback);
+        BufferCapture& on_data_ready(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback);
 
         /**
          * @brief Set callback for when a capture cycle completes.
          * @param callback Function called with cycle number
          * @return Reference to this BufferCapture for chaining
          */
-        BufferCapture& on_cycle_complete(std::function<void(u_int32_t)> callback);
+        BufferCapture& on_cycle_complete(std::function<void(uint32_t)> callback);
 
         /**
          * @brief Set callback for when captured data expires.
          * @param callback Function called with expired data and cycle number
          * @return Reference to this BufferCapture for chaining
          */
-        BufferCapture& on_data_expired(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback);
+        BufferCapture& on_data_expired(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback);
 
         /**
          * @brief Assign a tag for identification and organization.
@@ -168,10 +168,10 @@ namespace Kriya {
         inline std::shared_ptr<Buffers::AudioBuffer> get_buffer() const { return m_buffer; }
         inline CaptureMode get_mode() const { return m_mode; }
         inline ProcessingControl get_processing_control() const { return m_processing_control; }
-        inline u_int32_t get_cycle_count() const { return m_cycle_count; }
+        inline uint32_t get_cycle_count() const { return m_cycle_count; }
         inline const std::string& get_tag() const { return m_tag; }
-        inline u_int32_t get_circular_size() const { return m_circular_size; }
-        inline u_int32_t get_window_size() const { return m_window_size; }
+        inline uint32_t get_circular_size() const { return m_circular_size; }
+        inline uint32_t get_window_size() const { return m_window_size; }
         inline float get_overlap_ratio() const { return m_overlap_ratio; }
         inline void set_processing_control(ProcessingControl control) { m_processing_control = control; }
 
@@ -179,15 +179,15 @@ namespace Kriya {
         std::shared_ptr<Buffers::AudioBuffer> m_buffer;
         CaptureMode m_mode;
         ProcessingControl m_processing_control = ProcessingControl::AUTOMATIC;
-        u_int32_t m_cycle_count;
-        u_int32_t m_window_size;
-        u_int32_t m_circular_size;
+        uint32_t m_cycle_count;
+        uint32_t m_window_size;
+        uint32_t m_circular_size;
         float m_overlap_ratio;
 
         std::function<bool()> m_stop_condition;
-        std::function<void(const Kakshya::DataVariant&, u_int32_t)> m_data_ready_callback;
-        std::function<void(u_int32_t)> m_cycle_callback;
-        std::function<void(const Kakshya::DataVariant&, u_int32_t)> m_data_expired_callback;
+        std::function<void(const Kakshya::DataVariant&, uint32_t)> m_data_ready_callback;
+        std::function<void(uint32_t)> m_cycle_callback;
+        std::function<void(const Kakshya::DataVariant&, uint32_t)> m_data_expired_callback;
 
         std::string m_tag;
         std::unordered_map<std::string, std::string> m_metadata;
@@ -221,7 +221,7 @@ namespace Kriya {
      * auto capture_op = CaptureBuilder(audio_buffer)
      *     .for_cycles(10)
      *     .with_window(512, 0.5f)
-     *     .on_data_ready([](const auto& data, u_int32_t cycle) {
+     *     .on_data_ready([](const auto& data, uint32_t cycle) {
      *         process_windowed_data(data, cycle);
      *     })
      *     .with_tag("spectral_analysis");
@@ -242,7 +242,7 @@ namespace Kriya {
          * @param count Number of processing cycles
          * @return Reference to this builder for chaining
          */
-        CaptureBuilder& for_cycles(u_int32_t count);
+        CaptureBuilder& for_cycles(uint32_t count);
 
         /**
          * @brief Set processing control to ON_CAPTURE mode.
@@ -274,7 +274,7 @@ namespace Kriya {
          * @param buffer_size Fixed size of the circular buffer
          * @return Reference to this builder for chaining
          */
-        CaptureBuilder& as_circular(u_int32_t buffer_size);
+        CaptureBuilder& as_circular(uint32_t buffer_size);
 
         /**
          * @brief Configure windowed capture (enables WINDOWED mode).
@@ -282,28 +282,28 @@ namespace Kriya {
          * @param overlap_ratio Overlap between windows (0.0-1.0)
          * @return Reference to this builder for chaining
          */
-        CaptureBuilder& with_window(u_int32_t window_size, float overlap_ratio = 0.0F);
+        CaptureBuilder& with_window(uint32_t window_size, float overlap_ratio = 0.0F);
 
         /**
          * @brief Set data ready callback.
          * @param callback Function called when data is available
          * @return Reference to this builder for chaining
          */
-        CaptureBuilder& on_data_ready(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback);
+        CaptureBuilder& on_data_ready(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback);
 
         /**
          * @brief Set cycle completion callback.
          * @param callback Function called at end of each cycle
          * @return Reference to this builder for chaining
          */
-        CaptureBuilder& on_cycle_complete(std::function<void(u_int32_t)> callback);
+        CaptureBuilder& on_cycle_complete(std::function<void(uint32_t)> callback);
 
         /**
          * @brief Set data expiration callback.
          * @param callback Function called when data expires
          * @return Reference to this builder for chaining
          */
-        CaptureBuilder& on_data_expired(std::function<void(const Kakshya::DataVariant&, u_int32_t)> callback);
+        CaptureBuilder& on_data_expired(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback);
 
         /**
          * @brief Assign identification tag.

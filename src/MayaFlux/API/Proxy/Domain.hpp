@@ -19,7 +19,7 @@ namespace Core {
  * The enum uses bitfield composition to create unified domain identifiers that can
  * be decomposed back into their constituent subsystem tokens when needed.
  */
-enum Domain : u_int64_t {
+enum Domain : uint64_t {
     // ===== CORE AUDIO DOMAINS =====
 
     /**
@@ -30,7 +30,7 @@ enum Domain : u_int64_t {
      * - Buffers::ProcessingToken::AUDIO_BACKEND
      * - Vruta::ProcessingToken::SAMPLE_ACCURATE
      */
-    AUDIO = (static_cast<u_int64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::AUDIO_BACKEND) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::SAMPLE_ACCURATE)),
+    AUDIO = (static_cast<uint64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::AUDIO_BACKEND) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::SAMPLE_ACCURATE)),
 
     /**
      * @brief High-performance parallel audio processing domain
@@ -40,7 +40,7 @@ enum Domain : u_int64_t {
      * - Buffers::ProcessingToken::AUDIO_PARALLEL
      * - Vruta::ProcessingToken::SAMPLE_ACCURATE
      */
-    AUDIO_PARALLEL = (static_cast<u_int64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::AUDIO_PARALLEL) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::SAMPLE_ACCURATE)),
+    AUDIO_PARALLEL = (static_cast<uint64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::AUDIO_PARALLEL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::SAMPLE_ACCURATE)),
 
     // ===== VISUAL/GRAPHICS DOMAINS =====
 
@@ -52,7 +52,7 @@ enum Domain : u_int64_t {
      * - Buffers::ProcessingToken::GRAPHICS_BACKEND
      * - Vruta::ProcessingToken::FRAME_ACCURATE
      */
-    GRAPHICS = (static_cast<u_int64_t>(Nodes::ProcessingToken::VISUAL_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::GRAPHICS_BACKEND) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::FRAME_ACCURATE)),
+    GRAPHICS = (static_cast<uint64_t>(Nodes::ProcessingToken::VISUAL_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::GRAPHICS_BACKEND) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::FRAME_ACCURATE)),
 
     /**
      * @brief Multi-rate graphics processing for adaptive frame rates
@@ -62,7 +62,7 @@ enum Domain : u_int64_t {
      * - Buffers::ProcessingToken::GRAPHICS_BACKEND
      * - Vruta::ProcessingToken::MULTI_RATE
      */
-    GRAPHICS_ADAPTIVE = (static_cast<u_int64_t>(Nodes::ProcessingToken::VISUAL_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::GRAPHICS_BACKEND) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::MULTI_RATE)),
+    GRAPHICS_ADAPTIVE = (static_cast<uint64_t>(Nodes::ProcessingToken::VISUAL_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::GRAPHICS_BACKEND) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::MULTI_RATE)),
 
     // ===== CUSTOM DOMAINS =====
 
@@ -74,7 +74,7 @@ enum Domain : u_int64_t {
      * - Buffers::ProcessingToken::SAMPLE_RATE | CPU_PROCESS | SEQUENTIAL
      * - Vruta::ProcessingToken::ON_DEMAND
      */
-    CUSTOM_ON_DEMAND = (static_cast<u_int64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::CPU_PROCESS | Buffers::ProcessingToken::SEQUENTIAL) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::ON_DEMAND)),
+    CUSTOM_ON_DEMAND = (static_cast<uint64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::CPU_PROCESS | Buffers::ProcessingToken::SEQUENTIAL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::ON_DEMAND)),
 
     /**
      * @brief Custom processing domain with flexible scheduling
@@ -84,7 +84,7 @@ enum Domain : u_int64_t {
      * - Buffers::ProcessingToken::FRAME_RATE | GPU_PROCESS | PARALLEL
      * - Vruta::ProcessingToken::CUSTOM
      */
-    CUSTOM_FLEXIBLE = (static_cast<u_int64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::FRAME_RATE | Buffers::ProcessingToken::GPU_PPOCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::CUSTOM)),
+    CUSTOM_FLEXIBLE = (static_cast<uint64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::FRAME_RATE | Buffers::ProcessingToken::GPU_PPOCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::CUSTOM)),
 
     // ===== HYBRID DOMAINS =====
 
@@ -94,7 +94,7 @@ enum Domain : u_int64_t {
      * Processes audio at sample rate but syncs with frame-accurate scheduling
      * Useful for multimedia applications requiring tight A/V sync
      */
-    AUDIO_VISUAL_SYNC = (static_cast<u_int64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::CPU_PROCESS | Buffers::ProcessingToken::SEQUENTIAL) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::FRAME_ACCURATE)),
+    AUDIO_VISUAL_SYNC = (static_cast<uint64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::CPU_PROCESS | Buffers::ProcessingToken::SEQUENTIAL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::FRAME_ACCURATE)),
 
     /**
      * @brief GPU-accelerated audio processing domain
@@ -102,7 +102,7 @@ enum Domain : u_int64_t {
      * Routes audio through GPU for compute-intensive processing
      * while maintaining sample-accurate timing
      */
-    AUDIO_GPU = (static_cast<u_int64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<u_int64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::GPU_PPOCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<u_int64_t>(Vruta::ProcessingToken::MULTI_RATE)),
+    AUDIO_GPU = (static_cast<uint64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::GPU_PPOCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::MULTI_RATE)),
 
     /**
      * @brief Pure windowing domain (no rendering)
@@ -113,9 +113,9 @@ enum Domain : u_int64_t {
      * Use case: Headless window manager, input-only applications, or when
      * separating windowing from rendering into different subsystems.
      */
-    WINDOWING = (static_cast<u_int64_t>(Nodes::ProcessingToken::VISUAL_RATE) << 32)
-        | (static_cast<u_int64_t>(Buffers::ProcessingToken::WINDOW_EVENTS) << 16)
-        | (static_cast<u_int64_t>(Vruta::ProcessingToken::FRAME_ACCURATE)),
+    WINDOWING = (static_cast<uint64_t>(Nodes::ProcessingToken::VISUAL_RATE) << 32)
+        | (static_cast<uint64_t>(Buffers::ProcessingToken::WINDOW_EVENTS) << 16)
+        | (static_cast<uint64_t>(Vruta::ProcessingToken::FRAME_ACCURATE)),
 
     /**
      * @brief Input event processing domain
@@ -127,9 +127,9 @@ enum Domain : u_int64_t {
      * Use case: Input gesture recognition, MIDI controllers, or when input
      * latency must be minimized independently of rendering frame rate.
      */
-    INPUT_EVENTS = (static_cast<u_int64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32)
-        | (static_cast<u_int64_t>(Buffers::ProcessingToken::WINDOW_EVENTS) << 16)
-        | (static_cast<u_int64_t>(Vruta::ProcessingToken::EVENT_DRIVEN)),
+    INPUT_EVENTS = (static_cast<uint64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32)
+        | (static_cast<uint64_t>(Buffers::ProcessingToken::WINDOW_EVENTS) << 16)
+        | (static_cast<uint64_t>(Vruta::ProcessingToken::EVENT_DRIVEN)),
 };
 
 /**
@@ -151,7 +151,7 @@ inline Domain compose_domain(Nodes::ProcessingToken node_token,
     Vruta::ProcessingToken task_token)
 {
     return static_cast<Domain>(
-        (static_cast<u_int64_t>(node_token) << 32) | (static_cast<u_int64_t>(buffer_token) << 16) | (static_cast<u_int64_t>(task_token)));
+        (static_cast<uint64_t>(node_token) << 32) | (static_cast<uint64_t>(buffer_token) << 16) | (static_cast<uint64_t>(task_token)));
 }
 
 /**

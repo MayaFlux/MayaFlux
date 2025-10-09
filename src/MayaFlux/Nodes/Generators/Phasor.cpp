@@ -91,7 +91,7 @@ double Phasor::process_sample(double input)
 
     if (m_frequency_modulator) {
         atomic_inc_modulator_count(m_frequency_modulator->m_modulator_count, 1);
-        u_int32_t state = m_frequency_modulator->m_state.load();
+        uint32_t state = m_frequency_modulator->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             effective_freq += m_frequency_modulator->get_last_output();
         } else {
@@ -106,7 +106,7 @@ double Phasor::process_sample(double input)
 
     if (m_amplitude_modulator) {
         atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
-        u_int32_t state = m_amplitude_modulator->m_state.load();
+        uint32_t state = m_amplitude_modulator->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             output *= m_amplitude_modulator->get_last_output();
         } else {

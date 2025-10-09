@@ -12,6 +12,9 @@ class BufferManager;
 
 namespace MayaFlux::Vruta {
 class TaskScheduler;
+class Routine;
+
+using token_processing_func_t = std::function<void(const std::vector<std::shared_ptr<Routine>>&, uint64_t)>;
 }
 
 /**
@@ -23,6 +26,9 @@ class TaskScheduler;
  */
 namespace MayaFlux::Core {
 
+class Window;
+class WindowManager;
+
 /**
  * @enum HookPosition
  * @brief Defines the position in the processing cycle where a hook should be executed
@@ -30,7 +36,7 @@ namespace MayaFlux::Core {
  * Process hooks can be registered to run either before or after the main audio processing
  * to perform additional operations or monitoring at specific points in the signal chain.
  */
-enum class HookPosition : u_int8_t {
+enum class HookPosition : uint8_t {
     PRE_PROCESS, ///< Execute hook before any audio processing occurs
     POST_PROCESS ///< Execute hook after all audio processing is complete
 };
@@ -89,28 +95,28 @@ public:
     BufferProcessingHandle& operator=(BufferProcessingHandle&&) = default;
 
     /** @brief Process all channels in token domain */
-    void process(u_int32_t processing_units);
+    void process(uint32_t processing_units);
 
     /** @brief Process specific channel */
-    void process_channel(u_int32_t channel, u_int32_t processing_units);
+    void process_channel(uint32_t channel, uint32_t processing_units);
 
     /** @brief Process channel with node output data integration */
     void process_channel_with_node_data(
-        u_int32_t channel,
-        u_int32_t processing_units,
+        uint32_t channel,
+        uint32_t processing_units,
         const std::vector<double>& node_data);
 
     /** @brienf Process Input from backend into buffer manager */
-    void process_input(double* input_data, u_int32_t num_channels, u_int32_t num_frames);
+    void process_input(double* input_data, uint32_t num_channels, uint32_t num_frames);
 
     /** @brief Get read-only access to channel data */
-    [[nodiscard]] std::span<const double> read_channel_data(u_int32_t channel) const;
+    [[nodiscard]] std::span<const double> read_channel_data(uint32_t channel) const;
 
     /** @brief Get write access to channel data with automatic locking */
-    std::span<double> write_channel_data(u_int32_t channel);
+    std::span<double> write_channel_data(uint32_t channel);
 
     /** @brief Configure channel layout for token domain */
-    void setup_channels(u_int32_t num_channels, u_int32_t buffer_size);
+    void setup_channels(uint32_t num_channels, uint32_t buffer_size);
 
 private:
     void ensure_valid() const;
@@ -135,12 +141,12 @@ public:
         Nodes::ProcessingToken token);
 
     /** @brief Process all nodes in token domain */
-    void process(u_int32_t num_samples);
+    void process(uint32_t num_samples);
 
     /** @brief Process nodes for specific channel and return output */
-    std::vector<double> process_channel(u_int32_t channel, u_int32_t num_samples);
+    std::vector<double> process_channel(uint32_t channel, uint32_t num_samples);
 
-    double process_sample(u_int32_t channel);
+    double process_sample(uint32_t channel);
 
     /** @brief Create node with automatic token assignment */
     template <typename NodeType, typename... Args>
@@ -162,12 +168,33 @@ public:
         std::shared_ptr<MayaFlux::Vruta::TaskScheduler> task_manager,
         MayaFlux::Vruta::ProcessingToken token);
 
+    /** @brief Register custom processing function for token domain */
+    void register_token_processor(Vruta::token_processing_func_t processor);
+
     /** @brief Process all tasks in token domain */
-    void process(u_int64_t processing_units);
+    void process(uint64_t processing_units);
+
+    /** @brief Check if handle is valid */
+    [[nodiscard]] bool is_valid() const { return m_scheduler != nullptr; }
 
 private:
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     Vruta::ProcessingToken m_token;
+};
+
+class WindowManagerHandle {
+public:
+    /** @brief Constructs handle for specific window manager */
+    WindowManagerHandle(std::shared_ptr<Core::WindowManager> window_manager);
+
+    /** @brief Process window events and frame hooks */
+    void process();
+
+    /** @brief Get list of windows that are open and not minimized */
+    [[nodiscard]] std::vector<std::shared_ptr<Core::Window>> get_processing_windows() const;
+
+private:
+    std::shared_ptr<Core::WindowManager> m_window_manager;
 };
 
 /**
@@ -185,6 +212,13 @@ public:
         std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
         SubsystemTokens tokens);
 
+    SubsystemProcessingHandle(
+        std::shared_ptr<Buffers::BufferManager> buffer_manager,
+        std::shared_ptr<Nodes::NodeGraphManager> node_manager,
+        std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
+        std::shared_ptr<Core::WindowManager> window_manager,
+        SubsystemTokens tokens);
+
     /** @brief Buffer processing interface */
     BufferProcessingHandle buffers;
 
@@ -192,6 +226,8 @@ public:
     NodeProcessingHandle nodes;
 
     TaskSchedulerHandle tasks;
+
+    WindowManagerHandle windows;
 
     /** @brief Get processing token configuration */
     [[nodiscard]] inline SubsystemTokens get_tokens() const { return m_tokens; }

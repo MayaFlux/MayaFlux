@@ -80,7 +80,7 @@ bool EventManager::has_active_events() const
         });
 }
 
-u_int64_t EventManager::get_next_event_id() const
+uint64_t EventManager::get_next_event_id() const
 {
     return m_next_event_id.fetch_add(1);
 }

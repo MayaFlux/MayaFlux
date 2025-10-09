@@ -8,7 +8,7 @@ on:
         default: true
         type: boolean
   # push:
-  #   branches: [Logging]
+  #   branches: [develop]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -45,24 +45,31 @@ jobs:
           EOF
           clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
 
-      - name: Cache Homebrew packages
-        uses: actions/cache@v4
+      - name: Install Homebrew tools (cached)
+        uses: tecolicom/actions-use-homebrew-tools@v1
         with:
-          path: |
-            ~/Library/Caches/Homebrew
-            /opt/homebrew/Cellar
-            /opt/homebrew/lib
-            /opt/homebrew/include
-          key: homebrew-${{ matrix.os }}-deps-${{ hashFiles('.github/workflows/ci.yml') }}
-          restore-keys: |
-            homebrew-${{ matrix.os }}-deps-
-            homebrew-${{ matrix.os }}-
+          tools: >
+            cmake
+            rtaudio
+            ffmpeg
+            googletest
+            pkg-config
+            eigen
+            onedpl
+            magic_enum
+            fmt
+            glfw
+          verbose: true
 
-      - name: Install dependencies
-        shell: bash
+      - name: Install Vulkan SDK (LunarG)
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          cache: true
+          install_runtime: true
+
+      - name: Verify Vulkan SDK
         run: |
-          brew update
-          brew install rtaudio eigen magic_enum fmt onedpl ffmpeg glfw googletest
+          echo "VULKAN_SDK=$VULKAN_SDK"
 
       - name: Configure CMake
         shell: bash

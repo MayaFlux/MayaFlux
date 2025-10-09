@@ -22,7 +22,7 @@ namespace MayaFlux {
 
 namespace Core {
     struct GlobalStreamInfo;
-    struct GraphicsSurfaceInfo;
+    struct GlobalGraphicsConfig;
     class Engine;
 }
 
@@ -71,7 +71,7 @@ void set_and_transfer_context(Core::Engine instance);
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-void Init(u_int32_t sample_rate = 48000, u_int32_t buffer_size = 512, u_int32_t num_out_channels = 2, u_int32_t num_in_channels = 0);
+void Init(uint32_t sample_rate = 48000, uint32_t buffer_size = 512, uint32_t num_out_channels = 2, uint32_t num_in_channels = 0);
 
 /**
  * @brief Initializes the default engine with specified stream info
@@ -88,7 +88,7 @@ void Init(Core::GlobalStreamInfo stream_info);
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-void Init(Core::GlobalStreamInfo stream_info, Core::GraphicsSurfaceInfo graphics_info);
+void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config);
 
 /**
  * @brief Starts audio processing on the default engine
@@ -110,13 +110,6 @@ void Pause();
  * Convenience wrapper for Engine::Resume() on the default engine.
  */
 void Resume();
-
-/**
- * @brief Runs the main loop of the default engine
- *
- * Convenience wrapper for Engine::Run() on the default engine.
- */
-void Run();
 
 /**
  * @brief Stops and cleans up the default engine

@@ -50,7 +50,7 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
         sound_container->get_default_processor());
 
     if (existing_processor) {
-        std::vector<u_int64_t> output_shape = { MayaFlux::Config::get_buffer_size(), sound_container->get_num_channels() };
+        std::vector<uint64_t> output_shape = { MayaFlux::Config::get_buffer_size(), sound_container->get_num_channels() };
         existing_processor->set_output_size(output_shape);
         existing_processor->set_auto_advance(true);
 
@@ -59,7 +59,7 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
         std::cerr << "Warning: No default processor found, creating a new one" << '\n';
 
         auto processor = std::make_shared<Kakshya::ContiguousAccessProcessor>();
-        std::vector<u_int64_t> output_shape = { MayaFlux::Config::get_buffer_size(), sound_container->get_num_channels() };
+        std::vector<uint64_t> output_shape = { MayaFlux::Config::get_buffer_size(), sound_container->get_num_channels() };
         processor->set_output_size(output_shape);
         processor->set_auto_advance(true);
 
@@ -77,11 +77,11 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
 void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container)
 {
     auto buffer_manager = MayaFlux::get_buffer_manager();
-    u_int32_t num_channels = container->get_num_channels();
+    uint32_t num_channels = container->get_num_channels();
 
     std::cout << "Setting up audio playback for " << num_channels << " channels..." << '\n';
 
-    for (u_int32_t channel = 0; channel < num_channels; ++channel) {
+    for (uint32_t channel = 0; channel < num_channels; ++channel) {
         auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
             MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND,
             channel,
@@ -99,7 +99,7 @@ void hook_sound_container_to_buffers_with_context(
     const CreationContext& context)
 {
     auto buffer_manager = MayaFlux::get_buffer_manager();
-    u_int32_t num_channels = container->get_num_channels();
+    uint32_t num_channels = container->get_num_channels();
 
     Domain target_domain = context.domain.value_or(Domain::AUDIO);
     MayaFlux::Buffers::ProcessingToken token = (target_domain == Domain::AUDIO)
@@ -107,7 +107,7 @@ void hook_sound_container_to_buffers_with_context(
         : MayaFlux::Buffers::ProcessingToken::GRAPHICS_BACKEND;
 
     if (context.channel.has_value()) {
-        u_int32_t target_channel = context.channel.value();
+        uint32_t target_channel = context.channel.value();
         if (target_channel < num_channels) {
             auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
                 token, target_channel, container, target_channel);
@@ -117,7 +117,7 @@ void hook_sound_container_to_buffers_with_context(
             std::cerr << "Requested channel " << target_channel << " exceeds available channels (" << num_channels << ")" << '\n';
         }
     } else {
-        for (u_int32_t channel = 0; channel < num_channels; ++channel) {
+        for (uint32_t channel = 0; channel < num_channels; ++channel) {
             auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
                 token, channel, container, channel);
             container_buffer->initialize();

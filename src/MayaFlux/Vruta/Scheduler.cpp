@@ -4,7 +4,7 @@
 
 namespace MayaFlux::Vruta {
 
-TaskScheduler::TaskScheduler(u_int32_t default_sample_rate, u_int32_t default_frame_rate)
+TaskScheduler::TaskScheduler(uint32_t default_sample_rate, uint32_t default_frame_rate)
     : m_clock(default_sample_rate)
     , m_cleanup_threshold(512)
 {
@@ -98,7 +98,7 @@ std::vector<std::shared_ptr<Routine>> TaskScheduler::get_tasks_for_token(Process
     return result;
 }
 
-void TaskScheduler::process_token(ProcessingToken token, u_int64_t processing_units)
+void TaskScheduler::process_token(ProcessingToken token, uint64_t processing_units)
 {
     auto processor_it = m_token_processors.find(token);
     if (processor_it != m_token_processors.end()) {
@@ -108,7 +108,7 @@ void TaskScheduler::process_token(ProcessingToken token, u_int64_t processing_un
         process_default(token, processing_units);
     }
 
-    static u_int64_t cleanup_counter = 0;
+    static uint64_t cleanup_counter = 0;
     if (++cleanup_counter % (m_cleanup_threshold * 2) == 0) {
         cleanup_completed_tasks();
     }
@@ -120,15 +120,13 @@ void TaskScheduler::process_all_tokens()
         process_token(token.first, 0);
     }
 
-    static u_int64_t cleanup_counter = 0;
+    static uint64_t cleanup_counter = 0;
     if (++cleanup_counter % m_cleanup_threshold == 0) {
         cleanup_completed_tasks();
     }
 }
 
-void TaskScheduler::register_token_processor(
-    ProcessingToken token,
-    std::function<void(const std::vector<std::shared_ptr<Routine>>&, u_int64_t)> processor)
+void TaskScheduler::register_token_processor(ProcessingToken token, token_processing_func_t processor)
 {
     ensure_domain(token);
     m_token_processors[token] = std::move(processor);
@@ -149,18 +147,18 @@ const IClock& TaskScheduler::get_clock(ProcessingToken token) const
     throw std::runtime_error("No clocks available in scheduler");
 }
 
-u_int64_t TaskScheduler::seconds_to_units(double seconds, ProcessingToken token) const
+uint64_t TaskScheduler::seconds_to_units(double seconds, ProcessingToken token) const
 {
     unsigned int rate = get_rate(token);
     return Utils::seconds_to_units(seconds, rate);
 }
 
-u_int64_t TaskScheduler::seconds_to_samples(double seconds) const
+uint64_t TaskScheduler::seconds_to_samples(double seconds) const
 {
     return Utils::seconds_to_samples(seconds, get_rate(ProcessingToken::SAMPLE_ACCURATE));
 }
 
-u_int64_t TaskScheduler::current_units(ProcessingToken token) const
+uint64_t TaskScheduler::current_units(ProcessingToken token) const
 {
     const auto& clock = get_clock(token);
     return clock.current_position();
@@ -184,7 +182,7 @@ bool TaskScheduler::has_active_tasks(ProcessingToken token) const
         });
 }
 
-u_int64_t TaskScheduler::get_next_task_id() const
+uint64_t TaskScheduler::get_next_task_id() const
 {
     return m_next_task_id.fetch_add(1);
 }
@@ -253,7 +251,7 @@ void TaskScheduler::ensure_domain(ProcessingToken token, unsigned int rate)
     }
 }
 
-void TaskScheduler::process_default(ProcessingToken token, u_int64_t processing_units)
+void TaskScheduler::process_default(ProcessingToken token, uint64_t processing_units)
 {
     auto clock_it = m_token_clocks.find(token);
     if (clock_it == m_token_clocks.end()) {
@@ -269,8 +267,8 @@ void TaskScheduler::process_default(ProcessingToken token, u_int64_t processing_
 
     auto& clock = *clock_it->second;
 
-    for (u_int64_t i = 0; i < processing_units; i++) {
-        u_int64_t current_context = clock.current_position();
+    for (uint64_t i = 0; i < processing_units; i++) {
+        uint64_t current_context = clock.current_position();
 
         for (auto& routine : tasks) {
             if (routine && routine->is_active()) {
@@ -309,7 +307,7 @@ bool TaskScheduler::initialize_routine_state(std::shared_ptr<Routine> routine, P
         return false;
     }
 
-    u_int64_t current_context = clock_it->second->current_position();
+    uint64_t current_context = clock_it->second->current_position();
     return routine->initialize_state(current_context);
 }
 

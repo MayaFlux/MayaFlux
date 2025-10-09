@@ -788,7 +788,7 @@ std::vector<double> extract_silent_data(const std::vector<double>& data,
     auto extractor = std::make_shared<Yantra::FeatureExtractor<>>();
     extractor->set_extraction_method(Yantra::ExtractionMethod::SILENCE_DATA);
     extractor->set_parameter("silence_threshold", threshold);
-    extractor->set_parameter("min_duration", static_cast<u_int32_t>(min_silence_duration));
+    extractor->set_parameter("min_duration", static_cast<uint32_t>(min_silence_duration));
 
     Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = extractor->apply_operation(input);
@@ -803,7 +803,7 @@ std::vector<double> extract_silent_data(const Kakshya::DataVariant& data,
     auto extractor = std::make_shared<Yantra::FeatureExtractor<>>();
     extractor->set_extraction_method(Yantra::ExtractionMethod::SILENCE_DATA);
     extractor->set_parameter("silence_threshold", threshold);
-    extractor->set_parameter("min_duration", static_cast<u_int32_t>(min_silence_duration));
+    extractor->set_parameter("min_duration", static_cast<uint32_t>(min_silence_duration));
 
     Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = extractor->apply_operation(input);
@@ -819,7 +819,7 @@ std::vector<double> extract_zero_crossing_regions(const std::vector<double>& dat
     extractor->set_extraction_method(Yantra::ExtractionMethod::ZERO_CROSSING_DATA);
     extractor->set_parameter("threshold", threshold);
     extractor->set_parameter("min_distance", 1.0);
-    extractor->set_parameter("region_size", static_cast<u_int32_t>(region_size));
+    extractor->set_parameter("region_size", static_cast<uint32_t>(region_size));
 
     Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = extractor->apply_operation(input);
@@ -835,7 +835,7 @@ std::vector<double> extract_zero_crossing_regions(const Kakshya::DataVariant& da
     extractor->set_extraction_method(Yantra::ExtractionMethod::ZERO_CROSSING_DATA);
     extractor->set_parameter("threshold", threshold);
     extractor->set_parameter("min_distance", 1.0);
-    extractor->set_parameter("region_size", static_cast<u_int32_t>(region_size));
+    extractor->set_parameter("region_size", static_cast<uint32_t>(region_size));
 
     Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = extractor->apply_operation(input);
@@ -945,7 +945,7 @@ std::vector<std::pair<size_t, size_t>> detect_silence(const std::vector<double>&
     auto extractor = std::make_shared<Yantra::FeatureExtractor<>>();
     extractor->set_extraction_method(Yantra::ExtractionMethod::SILENCE_DATA);
     extractor->set_parameter("silence_threshold", threshold);
-    extractor->set_parameter("min_duration", static_cast<u_int32_t>(min_silence_duration));
+    extractor->set_parameter("min_duration", static_cast<uint32_t>(min_silence_duration));
 
     Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = extractor->apply_operation(input);
@@ -966,7 +966,7 @@ std::vector<std::pair<size_t, size_t>> detect_silence(const Kakshya::DataVariant
     auto extractor = std::make_shared<Yantra::FeatureExtractor<>>();
     extractor->set_extraction_method(Yantra::ExtractionMethod::SILENCE_DATA);
     extractor->set_parameter("silence_threshold", threshold);
-    extractor->set_parameter("min_duration", static_cast<u_int32_t>(min_silence_duration));
+    extractor->set_parameter("min_duration", static_cast<uint32_t>(min_silence_duration));
 
     Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = extractor->apply_operation(input);

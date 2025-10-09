@@ -2,16 +2,20 @@
 #include "RealtimeEntry.hpp"
 #include "RingBuffer.hpp"
 
+#include "Ansi.hpp"
 #include "Sink.hpp"
 
 namespace MayaFlux::Journal {
+
+static bool colors_enabled = AnsiColors::initialize_console_colors();
 
 class Archivist::Impl {
 public:
     static constexpr size_t RING_BUFFER_SIZE = 8192;
 
     Impl()
-        : m_min_severity(Severity::INFO)
+        : m_min_severity(Severity::WARN)
+        , m_worker_running(false)
         , m_shutdown_in_progress(false)
     {
         m_component_filters.fill(true);
@@ -36,7 +40,7 @@ public:
     void init()
     {
         std::lock_guard lock(m_mutex);
-        if (m_initialized)
+        if (m_initialized || m_shutdown_in_progress)
             return;
 
         m_initialized = true;
@@ -119,6 +123,9 @@ public:
 
     void set_min_severity(Severity sev)
     {
+        if (sev == Severity::NONE) {
+            return;
+        }
         m_min_severity.store(sev, std::memory_order_relaxed);
     }
 
@@ -136,7 +143,7 @@ public:
 private:
     [[nodiscard]] bool should_log(Severity severity, Component component) const
     {
-        if (severity < m_min_severity.load(std::memory_order_relaxed)) {
+        if (severity != Severity::NONE && severity < m_min_severity.load(std::memory_order_relaxed)) {
             return false;
         }
 
@@ -151,14 +158,55 @@ private:
 
     static void write_to_console(const JournalEntry& entry)
     {
-        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]"
-                  << "[" << Utils::enum_to_string(entry.component) << "]"
-                  << "[" << Utils::enum_to_string(entry.context) << "] "
-                  << entry.message;
+        if (colors_enabled) {
+            switch (entry.severity) {
+            case Severity::TRACE:
+                std::cout << AnsiColors::Cyan;
+                break;
+            case Severity::DEBUG:
+                std::cout << AnsiColors::Blue;
+                break;
+            case Severity::INFO:
+                std::cout << AnsiColors::Green;
+                break;
+            case Severity::WARN:
+                std::cout << AnsiColors::Yellow;
+                break;
+            case Severity::ERROR:
+                std::cout << AnsiColors::BrightRed;
+                break;
+            case Severity::FATAL:
+                std::cout << AnsiColors::BrightRed << AnsiColors::White;
+                break;
+            case Severity::NONE:
+                std::cout << AnsiColors::Reset;
+                break;
+            default:
+                std::cout << AnsiColors::Reset;
+                break;
+            }
+        }
+
+        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
+
+        if (colors_enabled) {
+            std::cout << AnsiColors::Magenta;
+        }
+        std::cout << "[" << Utils::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
+
+        if (colors_enabled) {
+            std::cout << AnsiColors::Cyan;
+        }
+        std::cout << "[" << Utils::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
+
+        std::cout << entry.message;
 
         if (entry.location.file_name() != nullptr && entry.location.line() != 0) {
+            if (colors_enabled) {
+                std::cout << AnsiColors::BrightBlue;
+            }
             std::cout << " (" << entry.location.file_name()
-                      << ":" << entry.location.line() << ")";
+                      << ":" << entry.location.line() << ")" << AnsiColors::Reset;
         }
 
         std::cout << '\n';
@@ -166,14 +214,55 @@ private:
 
     static void write_to_console(const RealtimeEntry& entry)
     {
-        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]"
-                  << "[" << Utils::enum_to_string(entry.component) << "]"
-                  << "[" << Utils::enum_to_string(entry.context) << "] "
-                  << entry.message;
+        if (colors_enabled) {
+            switch (entry.severity) {
+            case Severity::TRACE:
+                std::cout << AnsiColors::Cyan;
+                break;
+            case Severity::DEBUG:
+                std::cout << AnsiColors::Blue;
+                break;
+            case Severity::INFO:
+                std::cout << AnsiColors::Green;
+                break;
+            case Severity::WARN:
+                std::cout << AnsiColors::Yellow;
+                break;
+            case Severity::ERROR:
+                std::cout << AnsiColors::BrightRed;
+                break;
+            case Severity::FATAL:
+                std::cout << AnsiColors::BrightRed << AnsiColors::White;
+                break;
+            case Severity::NONE:
+                std::cout << AnsiColors::Reset;
+                break;
+            default:
+                std::cout << AnsiColors::Reset;
+                break;
+            }
+        }
+
+        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
+
+        if (colors_enabled) {
+            std::cout << AnsiColors::Magenta;
+        }
+        std::cout << "[" << Utils::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
+
+        if (colors_enabled) {
+            std::cout << AnsiColors::Cyan;
+        }
+        std::cout << "[" << Utils::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
+
+        std::cout << entry.message;
 
         if (entry.file_name != nullptr) {
+            if (colors_enabled) {
+                std::cout << AnsiColors::BrightBlue;
+            }
             std::cout << " (" << entry.file_name
-                      << ":" << entry.line << ")";
+                      << ":" << entry.line << ")" << AnsiColors::Reset;
         }
 
         std::cout << '\n';
@@ -273,14 +362,10 @@ Archivist& Archivist::instance()
 Archivist::Archivist()
     : m_impl(std::make_unique<Impl>())
 {
+    m_impl->init();
 }
 
 Archivist::~Archivist() = default;
-
-void Archivist::init()
-{
-    instance().m_impl->init();
-}
 
 void Archivist::shutdown()
 {
@@ -300,10 +385,10 @@ void Archivist::scribe_rt(Severity severity, Component component, Context contex
     m_impl->scribe_rt(severity, component, context, message, location);
 }
 
-void Archivist::scribe_simple(Severity severity, Component component, Context context,
+void Archivist::scribe_simple(Component component, Context context,
     std::string_view message)
 {
-    JournalEntry entry(severity, component, context, message, std::source_location {});
+    JournalEntry entry(Severity::NONE, component, context, message, std::source_location {});
     m_impl->scribe(entry);
 }
 

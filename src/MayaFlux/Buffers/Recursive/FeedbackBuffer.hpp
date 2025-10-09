@@ -37,7 +37,7 @@ public:
      * The feedback parameter controls the coefficient of recursion, determining
      * how strongly the system's past states influence its future evolution.
      */
-    FeedbackBuffer(u_int32_t channel_id = 0, u_int32_t num_samples = 512, float feedback = 0.5f);
+    FeedbackBuffer(uint32_t channel_id = 0, uint32_t num_samples = 512, float feedback = 0.5f);
 
     /**
      * @brief Sets the feedback coefficient

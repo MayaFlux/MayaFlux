@@ -23,7 +23,7 @@ namespace MayaFlux::IO {
 struct FileMetadata {
     std::string format; ///< File format identifier (e.g., "wav", "mp3", "hdf5")
     std::string mime_type; ///< MIME type if applicable (e.g., "audio/wav")
-    u_int64_t file_size = 0; ///< Size in bytes
+    uint64_t file_size = 0; ///< Size in bytes
     std::chrono::system_clock::time_point creation_time; ///< File creation time
     std::chrono::system_clock::time_point modification_time; ///< Last modification time
 
@@ -57,7 +57,7 @@ struct FileMetadata {
  *
  * Bitmask flags to control file reading, metadata extraction, streaming, and more.
  */
-enum class FileReadOptions : u_int32_t {
+enum class FileReadOptions : uint32_t {
     NONE = 0, ///< No special options
     EXTRACT_METADATA = 1 << 0, ///< Extract file metadata
     EXTRACT_REGIONS = 1 << 1, ///< Extract semantic regions (format-specific)
@@ -72,12 +72,12 @@ enum class FileReadOptions : u_int32_t {
 
 inline FileReadOptions operator|(FileReadOptions a, FileReadOptions b)
 {
-    return static_cast<FileReadOptions>(static_cast<u_int32_t>(a) | static_cast<u_int32_t>(b));
+    return static_cast<FileReadOptions>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 
 inline FileReadOptions operator&(FileReadOptions a, FileReadOptions b)
 {
-    return static_cast<FileReadOptions>(static_cast<u_int32_t>(a) & static_cast<u_int32_t>(b));
+    return static_cast<FileReadOptions>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 }
 
 /**
@@ -90,8 +90,8 @@ inline FileReadOptions operator&(FileReadOptions a, FileReadOptions b)
 struct FileRegion {
     std::string type; ///< Region type identifier (e.g., "cue", "scene", "block")
     std::string name; ///< Human-readable name for the region
-    std::vector<u_int64_t> start_coordinates; ///< N-dimensional start position (e.g., frame, x, y)
-    std::vector<u_int64_t> end_coordinates; ///< N-dimensional end position (inclusive)
+    std::vector<uint64_t> start_coordinates; ///< N-dimensional start position (e.g., frame, x, y)
+    std::vector<uint64_t> end_coordinates; ///< N-dimensional end position (inclusive)
     std::unordered_map<std::string, std::any> attributes; ///< Region-specific metadata
 
     /**
@@ -201,14 +201,14 @@ public:
      * @brief Get current read position in primary dimension.
      * @return Current position (interpretation is format-specific).
      */
-    [[nodiscard]] virtual std::vector<u_int64_t> get_read_position() const = 0;
+    [[nodiscard]] virtual std::vector<uint64_t> get_read_position() const = 0;
 
     /**
      * @brief Seek to a specific position in the file.
      * @param position Target position in N-dimensional space.
      * @return true if seek was successful.
      */
-    virtual bool seek(const std::vector<u_int64_t>& position) = 0;
+    virtual bool seek(const std::vector<uint64_t>& position) = 0;
 
     /**
      * @brief Get supported file extensions for this reader.
@@ -244,7 +244,7 @@ public:
      * @brief Get the preferred chunk size for streaming.
      * @return Chunk size in primary dimension units.
      */
-    [[nodiscard]] virtual u_int64_t get_preferred_chunk_size() const = 0;
+    [[nodiscard]] virtual uint64_t get_preferred_chunk_size() const = 0;
 
     /**
      * @brief Get the dimensionality of the file data.
@@ -256,7 +256,7 @@ public:
      * @brief Get size of each dimension in the file data.
      * @return Vector of dimension sizes.
      */
-    [[nodiscard]] virtual std::vector<u_int64_t> get_dimension_sizes() const = 0;
+    [[nodiscard]] virtual std::vector<uint64_t> get_dimension_sizes() const = 0;
 
 protected:
     /**

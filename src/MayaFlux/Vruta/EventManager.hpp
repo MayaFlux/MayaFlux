@@ -107,7 +107,7 @@ public:
      * @brief Generates a unique event ID for new events
      * @return A unique event ID
      */
-    u_int64_t get_next_event_id() const;
+    uint64_t get_next_event_id() const;
 
     /**
      * @brief Check if the manager has any active events
@@ -156,7 +156,7 @@ private:
     /**
      * @brief event ID counter for unique identification
      */
-    mutable std::atomic<u_int64_t> m_next_event_id { 1 };
+    mutable std::atomic<uint64_t> m_next_event_id { 1 };
 
     std::vector<std::shared_ptr<Event>> m_events;
     std::unordered_map<std::string, std::shared_ptr<Event>> m_named_events;

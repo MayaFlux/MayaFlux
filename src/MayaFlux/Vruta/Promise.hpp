@@ -207,7 +207,7 @@ struct audio_promise : public routine_promise<SoundRoutine> {
      * When a coroutine co_awaits a SampleDelay, this value is updated to
      * indicate when the coroutine should be resumed next.
      */
-    u_int64_t next_sample = 0;
+    uint64_t next_sample = 0;
 };
 
 // TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first
@@ -228,7 +228,7 @@ struct graphics_promise : public routine_promise<GraphicsRoutine> {
      * When a coroutine co_awaits a FrameDelay, this value is updated to
      * indicate when the coroutine should be resumed next.
      */
-    u_int64_t next_frame = 0;
+    uint64_t next_frame = 0;
 };
 
 // TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first
@@ -242,9 +242,9 @@ struct complex_promise : public routine_promise<ComplexRoutine> {
 
     bool sync_to_clock = true;
 
-    u_int64_t next_sample = 0;
+    uint64_t next_sample = 0;
 
-    u_int64_t next_frame = 0;
+    uint64_t next_frame = 0;
 };
 
 /**

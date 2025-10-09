@@ -31,7 +31,7 @@ public:
      * This is the primary method for advancing time in any processing domain.
      * The scheduler calls this after processing each block to maintain synchronization.
      */
-    virtual void tick(u_int64_t units = 1) = 0;
+    virtual void tick(uint64_t units = 1) = 0;
 
     /**
      * @brief Get current position in the domain's timeline
@@ -40,7 +40,7 @@ public:
      * This position serves as the primary time reference for scheduling tasks
      * in this domain. Routines use this value to determine execution timing.
      */
-    [[nodiscard]] virtual u_int64_t current_position() const = 0;
+    [[nodiscard]] virtual uint64_t current_position() const = 0;
 
     /**
      * @brief Get current time converted to seconds
@@ -57,7 +57,7 @@ public:
      *
      * Used for time conversions and calculating delays in domain-specific units.
      */
-    [[nodiscard]] virtual u_int32_t rate() const = 0;
+    [[nodiscard]] virtual uint32_t rate() const = 0;
 
     /**
      * @brief Reset clock to initial state (position 0)
@@ -97,7 +97,7 @@ public:
      * The sample rate determines the relationship between sample counts
      * and real-time durations for all audio timing calculations.
      */
-    SampleClock(u_int64_t sample_rate = 48000);
+    SampleClock(uint64_t sample_rate = 48000);
 
     /**
      * @brief Advances the clock by the specified number of samples
@@ -107,7 +107,7 @@ public:
      * This maintains synchronization between the clock and the audio stream,
      * ensuring sample-accurate timing for all scheduled audio tasks.
      */
-    void tick(u_int64_t samples = 1) override;
+    void tick(uint64_t samples = 1) override;
 
     /**
      * @brief Gets the current sample position
@@ -116,9 +116,9 @@ public:
      * This sample count serves as the primary time reference for audio tasks.
      * Audio routines use this value for precise scheduling and timing calculations.
      */
-    [[nodiscard]] inline u_int64_t current_sample() const { return current_position(); }
+    [[nodiscard]] inline uint64_t current_sample() const { return current_position(); }
 
-    [[nodiscard]] u_int64_t current_position() const override;
+    [[nodiscard]] uint64_t current_position() const override;
 
     /**
      * @brief Converts current sample position to seconds
@@ -136,9 +136,9 @@ public:
      * The sample rate defines the clock's time scale and is used for
      * converting between samples and real-time durations.
      */
-    [[nodiscard]] u_int32_t sample_rate() const;
+    [[nodiscard]] uint32_t sample_rate() const;
 
-    [[nodiscard]] u_int32_t rate() const override;
+    [[nodiscard]] uint32_t rate() const override;
 
     void reset() override;
 
@@ -149,7 +149,7 @@ private:
      * Defines the clock's time scale, typically matching the audio engine's
      * processing rate (e.g., 44100, 48000, or 96000 Hz).
      */
-    u_int32_t m_sample_rate;
+    uint32_t m_sample_rate;
 
     /**
      * @brief Current sample position counter
@@ -157,82 +157,153 @@ private:
      * Monotonically increasing counter representing processed samples.
      * This is the authoritative time reference for the audio domain.
      */
-    u_int64_t m_current_sample;
+    uint64_t m_current_sample;
 };
 
 /**
  * @class FrameClock
  * @brief Frame-accurate timing system for visual processing domain
  *
- * FrameClock provides frame-based timing precision for visual processing tasks.
- * It advances based on rendered frames rather than samples, making it ideal
- * for graphics, animation, and visual effect scheduling.
+ * Self-driven clock: Manages its own timing and advances autonomously.
+ * Unlike SampleClock which is driven by external audio callbacks,
+ * FrameClock actively manages frame timing and vsync coordination.
  *
- * **Key Characteristics:**
- * - **Frame-Accurate Precision**: Time measured in video frames
- * - **Visual Synchronization**: Advances with frame rendering cycles
- * - **Animation Timing**: Perfect for frame-based animations and visual effects
- * - **Cross-Domain Coordination**: Can synchronize with audio through common time base
+ * **Threading Model:**
+ * - tick() is called from graphics thread ONLY
+ * - current_position() can be read from any thread (atomic)
+ * - Scheduler reads clock state but doesn't control advancement
  *
- * Currently provides basic functionality - will be fully implemented when
- * the graphics subsystem is integrated.
+ * **Timing Characteristics:**
+ * - Advances based on wall-clock time, not external callbacks
+ * - Handles frame pacing and vsync timing
+ * - Measures actual FPS for diagnostics
+ * - Supports variable frame rates and adaptive timing
  */
 class FrameClock : public IClock {
 public:
     /**
-     * @brief Constructs a FrameClock with the specified frame rate
-     * @param frame_rate Number of frames per second (default: 60)
-     *
-     * Creates a FrameClock initialized at frame 0. The frame rate determines
-     * the relationship between frame counts and real-time durations.
+     * @brief Constructs a FrameClock with target frame rate
+     * @param target_fps Target frames per second (default: 60)
      */
-    FrameClock(u_int64_t frame_rate = 60);
+    explicit FrameClock(uint32_t target_fps = 60);
 
     /**
-     * @brief Advances the clock by the specified number of frames
-     * @param frames Number of frames to advance (default: 1)
+     * @brief Advance clock by computing elapsed frames since last tick
      *
-     * Called by the graphics engine after rendering frames.
-     * Maintains synchronization between the clock and visual output.
+     * Self-driven advancement: Calculates how much time has passed
+     * since last tick and advances frame count accordingly.
+     *
+     * This is fundamentally different from SampleClock::tick(samples)
+     * which receives the sample count from external audio callback.
+     *
+     * Called from graphics thread loop. Thread-safe for single writer.
+     *
+     * @param forced_frames If non-zero, advances by this many frames
+     *                      instead of calculating from elapsed time.
+     *                      Used for testing or special cases.
      */
-    void tick(u_int64_t frames = 1) override;
-
-    [[nodiscard]] u_int64_t current_position() const override;
+    void tick(uint64_t forced_frames = 0) override;
 
     /**
-     * @brief Gets the current frame number
-     * @return Current frame count since clock initialization
-     *
-     * Frame-specific accessor for compatibility with existing visual code.
+     * @brief Get current frame position (thread-safe read)
      */
-    [[nodiscard]] u_int64_t current_frame() const;
+    [[nodiscard]] uint64_t current_position() const override;
 
     /**
-     * @brief Converts current frame position to seconds
-     * @return Current time in seconds based on frame rate
+     * @brief Get current frame number (alias for current_position)
+     */
+    [[nodiscard]] inline uint64_t current_frame() const { return current_position(); }
+
+    /**
+     * @brief Convert current frame to seconds
      */
     [[nodiscard]] double current_time() const override;
 
-    [[nodiscard]] u_int32_t rate() const override;
+    /**
+     * @brief Get target frame rate
+     */
+    [[nodiscard]] uint32_t rate() const override;
+    [[nodiscard]] inline uint32_t frame_rate() const { return rate(); }
 
     /**
-     * @brief Gets the video frame rate
-     * @return Number of frames per second
+     * @brief Get actual measured FPS (exponentially smoothed)
      */
-    [[nodiscard]] u_int64_t frame_rate() const;
+    [[nodiscard]] double get_measured_fps() const;
 
+    /**
+     * @brief Get time until next frame should occur
+     * @return Duration to sleep, or zero if already past next frame time
+     */
+    [[nodiscard]] std::chrono::nanoseconds time_until_next_frame() const;
+
+    /**
+     * @brief Wait (sleep) until next frame should occur
+     *
+     * Blocks calling thread until next frame time based on target FPS.
+     * Uses high-precision sleep for accurate frame pacing.
+     *
+     * Called from graphics thread loop after rendering to maintain
+     * consistent frame rate.
+     */
+    void wait_for_next_frame();
+
+    /**
+     * @brief Check if we're running behind target frame rate
+     * @return True if current time is past when next frame should occur
+     */
+    [[nodiscard]] bool is_frame_late() const;
+
+    /**
+     * @brief Get how many frames behind we are (if any)
+     * @return Number of frames we're running behind, or 0 if on time
+     */
+    [[nodiscard]] uint64_t get_frame_lag() const;
+
+    /**
+     * @brief Reset clock to initial state
+     */
     void reset() override;
 
-private:
     /**
-     * @brief Video frame rate in frames per second
+     * @brief Set new target frame rate (runtime adjustment)
+     * @param new_fps New target frames per second
      */
-    u_int64_t m_frame_rate;
+    void set_target_fps(uint32_t new_fps);
+
+private:
+    // Target timing
+    uint32_t m_target_fps;
+    std::chrono::nanoseconds m_frame_duration; // Cached: 1.0 / target_fps
+
+    // Current state (atomic for thread-safe reads)
+    std::atomic<uint64_t> m_current_frame;
+
+    // Timing tracking (written only from graphics thread)
+    std::chrono::steady_clock::time_point m_start_time;
+    std::chrono::steady_clock::time_point m_last_tick_time;
+    std::chrono::steady_clock::time_point m_next_frame_time;
+
+    // Measured FPS (smoothed, for diagnostics)
+    std::atomic<double> m_measured_fps;
+    static constexpr double FPS_SMOOTHING_ALPHA = 0.1; // Exponential smoothing factor
 
     /**
-     * @brief Current frame position counter
+     * @brief Update measured FPS based on tick interval
+     * Called internally during tick()
      */
-    u_int64_t m_current_frame;
+    void update_fps_measurement(std::chrono::steady_clock::time_point now);
+
+    /**
+     * @brief Calculate frames elapsed based on wall-clock time
+     * @param now Current time point
+     * @return Number of frames that should have elapsed
+     */
+    [[nodiscard]] uint64_t calculate_elapsed_frames(std::chrono::steady_clock::time_point now) const;
+
+    /**
+     * @brief Recalculate frame duration when target FPS changes
+     */
+    void recalculate_frame_duration();
 };
 
 /**
@@ -259,15 +330,15 @@ public:
      * Creates a flexible clock for custom processing domget_clockains.
      * The unit name is stored for debugging and logging purposes.
      */
-    CustomClock(u_int64_t processing_rate = 1000, const std::string& unit_name = "units");
+    CustomClock(uint64_t processing_rate = 1000, const std::string& unit_name = "units");
 
     /**
      * @brief Advances the clock by the specified number of custom units
      * @param units Number of custom processing units to advance (default: 1)
      */
-    void tick(u_int64_t units = 1) override;
+    void tick(uint64_t units = 1) override;
 
-    [[nodiscard]] u_int64_t current_position() const override;
+    [[nodiscard]] uint64_t current_position() const override;
 
     /**
      * @brief Converts current position to seconds using custom rate
@@ -275,7 +346,7 @@ public:
      */
     [[nodiscard]] double current_time() const override;
 
-    [[nodiscard]] u_int32_t rate() const override;
+    [[nodiscard]] uint32_t rate() const override;
 
     /**
      * @brief Gets the name of the processing units
@@ -289,12 +360,12 @@ private:
     /**
      * @brief Custom processing rate in units per second
      */
-    u_int64_t m_processing_rate;
+    uint64_t m_processing_rate;
 
     /**
      * @brief Current position in custom units
      */
-    u_int64_t m_current_position;
+    uint64_t m_current_position;
 
     /**
      * @brief Name describing the custom units

@@ -12,9 +12,9 @@ namespace MayaFlux::Kriya {
 
 BufferOperation BufferOperation::capture_input(
     const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
-    u_int32_t input_channel,
+    uint32_t input_channel,
     BufferCapture::CaptureMode mode,
-    u_int32_t cycle_count)
+    uint32_t cycle_count)
 {
     auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
     buffer_manager->register_input_listener(input_buffer, input_channel);
@@ -30,7 +30,7 @@ BufferOperation BufferOperation::capture_input(
 
 CaptureBuilder BufferOperation::capture_input_from(
     const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
-    u_int32_t input_channel)
+    uint32_t input_channel)
 {
     auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
     buffer_manager->register_input_listener(input_buffer, input_channel);
@@ -40,8 +40,8 @@ CaptureBuilder BufferOperation::capture_input_from(
 
 BufferOperation BufferOperation::capture_file(
     const std::string& filepath,
-    u_int32_t channel,
-    u_int32_t cycle_count)
+    uint32_t channel,
+    uint32_t cycle_count)
 {
     auto file_container = MayaFlux::load_audio_file(filepath);
     if (!file_container) {
@@ -62,7 +62,7 @@ BufferOperation BufferOperation::capture_file(
 
 CaptureBuilder BufferOperation::capture_file_from(
     const std::string& filepath,
-    u_int32_t channel)
+    uint32_t channel)
 {
     auto file_container = MayaFlux::load_audio_file(filepath);
     if (!file_container) {
@@ -78,7 +78,7 @@ CaptureBuilder BufferOperation::capture_file_from(
 BufferOperation BufferOperation::file_to_stream(
     const std::string& filepath,
     std::shared_ptr<Kakshya::DynamicSoundStream> target_stream,
-    u_int32_t cycle_count)
+    uint32_t cycle_count)
 {
     auto file_container = MayaFlux::load_audio_file(filepath);
     if (!file_container) {
@@ -95,7 +95,7 @@ BufferOperation BufferOperation::file_to_stream(
     return op;
 }
 
-BufferOperation BufferOperation::transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> transformer)
+BufferOperation BufferOperation::transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, uint32_t)> transformer)
 {
     BufferOperation op(OpType::TRANSFORM);
     op.m_transformer = std::move(transformer);
@@ -118,8 +118,8 @@ BufferOperation BufferOperation::route_to_container(std::shared_ptr<Kakshya::Dyn
 
 BufferOperation BufferOperation::load_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> source,
     std::shared_ptr<Buffers::AudioBuffer> target,
-    u_int64_t start_frame,
-    u_int32_t length)
+    uint64_t start_frame,
+    uint32_t length)
 {
     BufferOperation op(OpType::LOAD);
     op.m_source_container = std::move(source);
@@ -129,14 +129,14 @@ BufferOperation BufferOperation::load_from_container(std::shared_ptr<Kakshya::Dy
     return op;
 }
 
-BufferOperation BufferOperation::when(std::function<bool(u_int32_t)> condition)
+BufferOperation BufferOperation::when(std::function<bool(uint32_t)> condition)
 {
     BufferOperation op(OpType::CONDITION);
     op.m_condition = std::move(condition);
     return op;
 }
 
-BufferOperation BufferOperation::dispatch_to(std::function<void(const Kakshya::DataVariant&, u_int32_t)> handler)
+BufferOperation BufferOperation::dispatch_to(std::function<void(const Kakshya::DataVariant&, uint32_t)> handler)
 {
     BufferOperation op(OpType::DISPATCH);
     op.m_dispatch_handler = std::move(handler);
@@ -144,7 +144,7 @@ BufferOperation BufferOperation::dispatch_to(std::function<void(const Kakshya::D
 }
 
 BufferOperation BufferOperation::fuse_data(std::vector<std::shared_ptr<Buffers::AudioBuffer>> sources,
-    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
+    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> fusion_func,
     std::shared_ptr<Buffers::AudioBuffer> target)
 {
     BufferOperation op(OpType::FUSE);
@@ -155,7 +155,7 @@ BufferOperation BufferOperation::fuse_data(std::vector<std::shared_ptr<Buffers::
 }
 
 BufferOperation BufferOperation::fuse_containers(std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> sources,
-    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
+    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> fusion_func,
     std::shared_ptr<Kakshya::DynamicSoundStream> target)
 {
     BufferOperation op(OpType::FUSE);
@@ -170,7 +170,7 @@ CaptureBuilder BufferOperation::capture_from(std::shared_ptr<Buffers::AudioBuffe
     return CaptureBuilder(buffer);
 }
 
-BufferOperation& BufferOperation::with_priority(u_int8_t priority)
+BufferOperation& BufferOperation::with_priority(uint8_t priority)
 {
     m_priority = priority;
     return *this;
@@ -182,7 +182,7 @@ BufferOperation& BufferOperation::on_token(Buffers::ProcessingToken token)
     return *this;
 }
 
-BufferOperation& BufferOperation::every_n_cycles(u_int32_t n)
+BufferOperation& BufferOperation::every_n_cycles(uint32_t n)
 {
     m_cycle_interval = n;
     return *this;
@@ -201,10 +201,10 @@ BufferPipeline::BufferPipeline(Vruta::TaskScheduler& scheduler)
 }
 
 BufferPipeline& BufferPipeline::branch_if(
-    std::function<bool(u_int32_t)> condition,
+    std::function<bool(uint32_t)> condition,
     const std::function<void(BufferPipeline&)>& branch_builder,
     bool synchronous,
-    u_int64_t samples_per_operation)
+    uint64_t samples_per_operation)
 {
     auto branch_pipeline = std::make_shared<BufferPipeline>();
     if (m_scheduler) {
@@ -231,8 +231,8 @@ BufferPipeline& BufferPipeline::parallel(std::initializer_list<BufferOperation> 
 }
 
 BufferPipeline& BufferPipeline::with_lifecycle(
-    std::function<void(u_int32_t)> on_cycle_start,
-    std::function<void(u_int32_t)> on_cycle_end)
+    std::function<void(uint32_t)> on_cycle_start,
+    std::function<void(uint32_t)> on_cycle_end)
 {
     m_cycle_start_callback = on_cycle_start;
     m_cycle_end_callback = on_cycle_end;
@@ -255,8 +255,8 @@ void BufferPipeline::execute_continuous()
 }
 
 void BufferPipeline::execute_scheduled(
-    u_int32_t max_cycles,
-    u_int64_t samples_per_operation)
+    uint32_t max_cycles,
+    uint64_t samples_per_operation)
 {
     if (!m_scheduler) {
         throw std::runtime_error("Pipeline must have scheduler for scheduled execution");
@@ -273,18 +273,18 @@ void BufferPipeline::execute_scheduled(
 }
 
 void BufferPipeline::execute_scheduled_at_rate(
-    u_int32_t max_cycles,
+    uint32_t max_cycles,
     double seconds_per_operation)
 {
     if (!m_scheduler) {
         throw std::runtime_error("Pipeline must have scheduler for scheduled execution");
     }
 
-    u_int64_t samples = m_scheduler->seconds_to_samples(seconds_per_operation);
+    uint64_t samples = m_scheduler->seconds_to_samples(seconds_per_operation);
     execute_scheduled(max_cycles, samples);
 }
 
-void BufferPipeline::mark_data_consumed(u_int32_t operation_index)
+void BufferPipeline::mark_data_consumed(uint32_t operation_index)
 {
     if (operation_index < m_data_states.size()) {
         m_data_states[operation_index] = DataState::CONSUMED;
@@ -307,7 +307,7 @@ void BufferPipeline::execute_once()
     m_scheduler->add_task(std::move(routine));
 }
 
-void BufferPipeline::execute_for_cycles(u_int32_t cycles)
+void BufferPipeline::execute_for_cycles(uint32_t cycles)
 {
     if (!m_scheduler) {
         throw std::runtime_error("Pipeline requires scheduler for execution");
@@ -317,7 +317,7 @@ void BufferPipeline::execute_for_cycles(u_int32_t cycles)
     m_scheduler->add_task(std::move(routine));
 }
 
-Vruta::SoundRoutine BufferPipeline::execute_internal(u_int32_t max_cycles, u_int64_t samples_per_operation)
+Vruta::SoundRoutine BufferPipeline::execute_internal(uint32_t max_cycles, uint64_t samples_per_operation)
 {
     auto& promise = co_await Kriya::GetPromise {};
 
@@ -325,7 +325,7 @@ Vruta::SoundRoutine BufferPipeline::execute_internal(u_int32_t max_cycles, u_int
         co_return;
 
     m_data_states.resize(m_operations.size(), DataState::EMPTY);
-    u_int32_t cycles_executed = 0;
+    uint32_t cycles_executed = 0;
 
     while ((max_cycles == 0 || cycles_executed < max_cycles)
         && (m_continuous_execution || cycles_executed < max_cycles)) {
@@ -342,12 +342,12 @@ Vruta::SoundRoutine BufferPipeline::execute_internal(u_int32_t max_cycles, u_int
             if (m_operations[i].get_type() != BufferOperation::OpType::CONDITION
                 || (m_operations[i].m_condition && m_operations[i].m_condition(m_current_cycle))) {
 
-                u_int32_t op_iterations = 1;
+                uint32_t op_iterations = 1;
                 if (m_operations[i].get_type() == BufferOperation::OpType::CAPTURE) {
                     op_iterations = m_operations[i].m_capture.get_cycle_count();
                 }
 
-                for (u_int32_t iter = 0; iter < op_iterations; ++iter) {
+                for (uint32_t iter = 0; iter < op_iterations; ++iter) {
                     if (m_current_cycle % m_operations[i].m_cycle_interval == 0) {
                         process_operation(m_operations[i], m_current_cycle + iter);
                         m_data_states[i] = DataState::READY;
@@ -409,7 +409,7 @@ Vruta::SoundRoutine BufferPipeline::execute_internal(u_int32_t max_cycles, u_int
     }
 }
 
-void BufferPipeline::process_operation(BufferOperation& op, u_int32_t cycle)
+void BufferPipeline::process_operation(BufferOperation& op, uint32_t cycle)
 {
     try {
         switch (op.get_type()) {
@@ -615,19 +615,19 @@ void BufferPipeline::write_to_container(std::shared_ptr<Kakshya::DynamicSoundStr
 }
 
 Kakshya::DataVariant BufferPipeline::read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container,
-    u_int64_t start_frame,
-    u_int32_t length)
+    uint64_t start_frame,
+    uint32_t length)
 {
     try {
-        u_int32_t read_length = length;
+        uint32_t read_length = length;
         if (read_length == 0) {
-            read_length = static_cast<u_int32_t>(container->get_total_elements() / container->get_num_channels());
+            read_length = static_cast<uint32_t>(container->get_total_elements() / container->get_num_channels());
         }
 
         std::vector<double> output_data(read_length * container->get_num_channels());
         std::span<double> output_span(output_data.data(), output_data.size());
 
-        u_int64_t frames_read = container->read_frames(output_span, read_length);
+        uint64_t frames_read = container->read_frames(output_span, read_length);
 
         if (frames_read < output_data.size()) {
             output_data.resize(frames_read);
@@ -641,7 +641,7 @@ Kakshya::DataVariant BufferPipeline::read_from_container(std::shared_ptr<Kakshya
     }
 }
 
-std::shared_ptr<Vruta::SoundRoutine> BufferPipeline::dispatch_branch_async(BranchInfo& branch, u_int32_t cycle)
+std::shared_ptr<Vruta::SoundRoutine> BufferPipeline::dispatch_branch_async(BranchInfo& branch, uint32_t cycle)
 {
     if (!m_scheduler)
         return nullptr;

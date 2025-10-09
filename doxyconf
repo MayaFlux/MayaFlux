@@ -1,8 +1,25 @@
 # Project settings
-PROJECT_NAME           = "Maya Flux"
-PROJECT_BRIEF         = "Audio Engine"
+PROJECT_NAME           = "MayaFlux"
+-PROJECT_BRIEF         = "Audio Engine"
++PROJECT_BRIEF         = "Digital-First Multimedia Processing Framework"
 PROJECT_NUMBER        = "0.1.0"
 OUTPUT_DIRECTORY      = docs
+
+# HTML settings for better Pages deployment
+HTML_HEADER           = 
+HTML_FOOTER           = 
+HTML_COLORSTYLE_HUE   = 220
+HTML_COLORSTYLE_SAT   = 100
+HTML_COLORSTYLE_GAMMA = 80
+HTML_DYNAMIC_SECTIONS = YES
+
+# Use relative paths for portability
+FULL_PATH_NAMES       = NO
+
+# Input settings
+INPUT                 = src README.md CODE_OF_CONDUCT.md CONTRIBUTING.md docs/
+RECURSIVE             = YES
+USE_MDFILE_AS_MAINPAGE = README.md
 
 # Input settings
 INPUT                 = src README.md CODE_OF_CONDUCT.md CONTRIBUTING.md docs/

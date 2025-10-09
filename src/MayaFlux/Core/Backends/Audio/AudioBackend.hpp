@@ -19,19 +19,19 @@ struct DeviceInfo {
     std::string name;
 
     /** @brief Number of discrete input channels available for signal capture */
-    u_int32_t input_channels = 0;
+    uint32_t input_channels = 0;
 
     /** @brief Number of discrete output channels available for signal playback */
-    u_int32_t output_channels = 0;
+    uint32_t output_channels = 0;
 
     /** @brief Number of channels supporting simultaneous input and output */
-    u_int32_t duplex_channels = 0;
+    uint32_t duplex_channels = 0;
 
     /** @brief Optimal sample rate for this device as reported by the system */
-    u_int32_t preferred_sample_rate = 0;
+    uint32_t preferred_sample_rate = 0;
 
     /** @brief Collection of all sample rates supported by this device */
-    std::vector<u_int32_t> supported_samplerates;
+    std::vector<uint32_t> supported_samplerates;
 
     /** @brief Indicates if this device is the system's primary output endpoint */
     bool is_default_output = false;

@@ -6,8 +6,11 @@
 
 namespace MayaFlux::Core {
 
+class WindowManager;
 class AudioSubsystem;
+class GraphicsSubsystem;
 struct GlobalStreamInfo;
+struct GlobalGraphicsConfig;
 
 /**
  * @class SubsystemManager
@@ -30,6 +33,7 @@ public:
      * @param node_graph_manager Shared node graph manager for all subsystems
      * @param buffer_manager Shared buffer manager for all subsystems
      * @param task_scheduler Shared task scheduler for all subsystems
+     * @param window_manager Optional shared window manager for graphics subsystems
      *
      * Initializes the manager with references to the core processing systems.
      * These managers are shared across all subsystems but accessed through
@@ -38,7 +42,8 @@ public:
     SubsystemManager(
         std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
         std::shared_ptr<Buffers::BufferManager> buffer_manager,
-        std::shared_ptr<Vruta::TaskScheduler> task_scheduler);
+        std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
+        std::shared_ptr<Core::WindowManager> window_manager = nullptr);
 
     /**
      * @brief Internal template method for type-safe subsystem creation
@@ -67,6 +72,15 @@ public:
      */
     void create_audio_subsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type);
 
+    /**
+     * @brief Create and register the graphics subsystem
+     * @param graphics_config Global graphics configuration
+     *
+     * Specialized creation method for GraphicsSubsystem. Only one graphics
+     * subsystem is allowed per manager instance.
+     */
+    void create_graphics_subsystem(const GlobalGraphicsConfig& graphics_config);
+
     /** @brief Start all registered subsystems in coordination */
     void start_all_subsystems();
 
@@ -94,6 +108,15 @@ public:
      * Equivalent to dynamic_cast on get_subsystem(SubsystemType::AUDIO).
      */
     std::shared_ptr<AudioSubsystem> get_audio_subsystem();
+
+    /**
+     * @brief Get typed access to the graphics subsystem
+     * @return Shared pointer to GraphicsSubsystem or nullptr if not created
+     *
+     * Convenience method that automatically casts to GraphicsSubsystem type.
+     * Equivalent to dynamic_cast on get_subsystem(SubsystemType::GRAPHICS).
+     */
+    std::shared_ptr<GraphicsSubsystem> get_graphics_subsystem();
 
     /**
      * @brief Check if a subsystem type exists
@@ -198,7 +221,7 @@ public:
     std::optional<std::span<const double>> read_cross_subsystem_buffer(
         SubsystemType requesting_type,
         SubsystemType target_type,
-        u_int32_t channel);
+        uint32_t channel);
 
     /**
      * @brief Register a processing hook for a specific subsystem
@@ -246,6 +269,7 @@ private:
     std::shared_ptr<Nodes::NodeGraphManager> m_node_graph_manager;
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
     std::shared_ptr<Vruta::TaskScheduler> m_task_scheduler;
+    std::shared_ptr<Core::WindowManager> m_window_manager;
 
     std::unordered_map<SubsystemType, std::shared_ptr<ISubsystem>> m_subsystems;
     std::unordered_map<SubsystemType, std::unique_ptr<SubsystemProcessingHandle>> m_handles;

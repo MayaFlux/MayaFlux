@@ -43,7 +43,7 @@ std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager();
  * Adds the node as a child of the root node for the specified channel.
  * Uses the default engine's node graph manager.
  */
-void register_audio_node(std::shared_ptr<Nodes::Node> node, u_int32_t channel = 0);
+void register_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel = 0);
 
 /**
  * @brief Adds a node to the root node of specified channels
@@ -53,7 +53,7 @@ void register_audio_node(std::shared_ptr<Nodes::Node> node, u_int32_t channel = 
  * Adds the node as a child of the root node for the specified channels.
  * Uses the default engine's node graph manager.
  */
-void register_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<u_int32_t> channels);
+void register_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<uint32_t> channels);
 
 /**
  * @brief Removes a node from the root node of a specific channel
@@ -63,7 +63,7 @@ void register_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<u_int32_
  * Removes the node from being a child of the root node for the specified channel.
  * Uses the default engine's node graph manager.
  */
-void unregister_audio_node(std::shared_ptr<Nodes::Node> node, u_int32_t channel = 0);
+void unregister_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel = 0);
 
 /**
  * @brief Removes a node from the root node from list of channels
@@ -73,7 +73,7 @@ void unregister_audio_node(std::shared_ptr<Nodes::Node> node, u_int32_t channel 
  * Removes the node from being a child of the root node for the list of channels
  * Uses the default engine's node graph manager.
  */
-void unregister_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<u_int32_t> channels);
+void unregister_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<uint32_t> channels);
 
 /**
  * @brief Gets the root node for a specific channel
@@ -83,7 +83,7 @@ void unregister_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<u_int3
  * The root node is the top-level node in the processing hierarchy for a channel.
  * Uses the default engine's node graph manager.
  */
-Nodes::RootNode& get_audio_channel_root(u_int32_t channel = 0);
+Nodes::RootNode& get_audio_channel_root(uint32_t channel = 0);
 
 template <typename NodeType, typename... Args>
     requires std::derived_from<NodeType, Nodes::Node>
@@ -137,7 +137,7 @@ void add_processor_to_buffer(std::shared_ptr<Buffers::BufferProcessor> processor
  * processed during each audio cycle according to its configuration.
  * Multiple buffers can be registered to the same channel for layered processing.
  */
-void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
+void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel = 0);
 
 /**
  * @brief Unregisters an AudioBuffer from the default engine's buffer manager
@@ -149,7 +149,7 @@ void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32
  * This is essential for clean shutdown and preventing processing of
  * destroyed or invalid buffers.
  */
-void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
+void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel = 0);
 
 /**
  * @brief creates a new buffer of the specified type and registers it
@@ -160,7 +160,7 @@ void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int
  */
 template <typename BufferType, typename... Args>
     requires std::derived_from<BufferType, Buffers::AudioBuffer>
-auto create_buffer(u_int32_t channel, u_int32_t buffer_size, Args&&... args) -> std::shared_ptr<BufferType>
+auto create_buffer(uint32_t channel, uint32_t buffer_size, Args&&... args) -> std::shared_ptr<BufferType>
 {
     auto buffer = std::make_shared<BufferType>(channel, buffer_size, std::forward<Args>(args)...);
     register_audio_buffer(buffer, channel);
@@ -204,7 +204,7 @@ std::shared_ptr<Buffers::BufferProcessingChain> create_processing_chain();
  *
  * Returns the buffer from the default engine's buffer manager.
  */
-Buffers::RootAudioBuffer& get_root_audio_buffer(u_int32_t channel);
+Buffers::RootAudioBuffer& get_root_audio_buffer(uint32_t channel);
 
 /**
  * @brief Connects a node to a specific output channel
@@ -215,7 +215,7 @@ Buffers::RootAudioBuffer& get_root_audio_buffer(u_int32_t channel);
  *
  * Uses the default engine's buffer manager and node graph manager.
  */
-void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, u_int32_t channel_index = 0, float mix = 0.5F, bool clear_before = false);
+void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, uint32_t channel_index = 0, float mix = 0.5F, bool clear_before = false);
 
 /**
  * @brief Connects a node to a specific buffer
@@ -270,14 +270,14 @@ std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels
  * and fills the provided AudioBuffer with the captured audio samples.
  * This function is typically used to capture live audio input for processing.
  */
-void read_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
+void read_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel = 0);
 
 /**
  * @brief Stops reading audio data from the default input source
  * @param buffer Buffer to stop reading audio data from
  * @param channel Channel index to stop reading from (default: 0)
  */
-void detach_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int32_t channel = 0);
+void detach_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel = 0);
 
 /**
  * @brief Creates a new AudioBuffer for input listening
@@ -289,7 +289,7 @@ void detach_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, u_int
  * If `add_to_output` is true, the buffer will be automatically added to the output channel
  * for processing.
  */
-std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(u_int32_t channel = 0, bool add_to_output = false);
+std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(uint32_t channel = 0, bool add_to_output = false);
 
 /**
  * @brief Clones a buffer to multiple channels
@@ -302,7 +302,7 @@ std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(u_int32_t cha
  * Uses the default engine's buffer manager.
  */
 void clone_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
-    const std::vector<u_int32_t>& channels);
+    const std::vector<uint32_t>& channels);
 
 /**
  * @brief Supplies a buffer to a single channel with mixing
@@ -313,7 +313,7 @@ void clone_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
  * Convenience wrapper for single-channel buffer supply operations.
  */
 void supply_buffer_to_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
-    u_int32_t channel,
+    uint32_t channel,
     double mix = 1.0);
 
 /**
@@ -327,7 +327,7 @@ void supply_buffer_to_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
  * multiple outputs without duplicating processing.
  */
 void supply_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
-    const std::vector<u_int32_t>& channels,
+    const std::vector<uint32_t>& channels,
     double mix = 1.0);
 
 /**
@@ -338,7 +338,7 @@ void supply_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
  * Efficiently removes a buffer from channel mix processor.
  */
 void remove_supplied_buffer_from_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
-    const u_int32_t channel);
+    const uint32_t channel);
 
 /**
  * @brief Removes a supplied buffer from multiple channels
@@ -348,7 +348,7 @@ void remove_supplied_buffer_from_channel(std::shared_ptr<Buffers::AudioBuffer> b
  * Efficiently removes a buffer from multiple channel mix processors.
  */
 void remove_supplied_buffer_from_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
-    const std::vector<u_int32_t>& channels);
+    const std::vector<uint32_t>& channels);
 
 /**
  * @brief Registers all built-in buffer types with the default engine

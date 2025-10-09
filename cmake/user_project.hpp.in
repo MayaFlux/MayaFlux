@@ -1,7 +1,13 @@
 #pragma once
-#define MAYASIMPLE ;
+#define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 
-void compose() {
+void config()
+{
+    // Your MayaFlux configuration code goes here!
+}
+
+void compose()
+{
     // Your MayaFlux code goes here!
 }

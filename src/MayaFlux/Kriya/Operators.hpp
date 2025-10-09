@@ -40,7 +40,7 @@ public:
      * This constructor is typically used internally by the Time() factory function.
      * It creates a NodeTimeSpec that will use the global scheduler and graph manager.
      */
-    NodeTimeSpec(double seconds, std::optional<std::vector<u_int32_t>> channels = std::nullopt);
+    NodeTimeSpec(double seconds, std::optional<std::vector<uint32_t>> channels = std::nullopt);
 
     /**
      * @brief Constructs a NodeTimeSpec with explicit scheduler and graph manager
@@ -79,7 +79,7 @@ public:
      * This method returns the list of channels that were specified when creating
      * this operation. If no channels were specified, this method should not be called.
      */
-    [[nodiscard]] const std::vector<u_int32_t>& get_channels() const { return m_channels.value(); }
+    [[nodiscard]] const std::vector<uint32_t>& get_channels() const { return m_channels.value(); }
 
 private:
     /**
@@ -105,7 +105,7 @@ private:
      */
     Nodes::NodeGraphManager& m_graph_manager;
 
-    std::optional<std::vector<u_int32_t>> m_channels;
+    std::optional<std::vector<uint32_t>> m_channels;
 
     /**
      * @brief Grants the stream operator access to private members

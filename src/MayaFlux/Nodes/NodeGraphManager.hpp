@@ -4,8 +4,8 @@
 
 namespace MayaFlux::Nodes {
 
-using TokenChannelProcessor = std::function<std::vector<double>(RootNode*, u_int32_t)>;
-using TokenSampleProcessor = std::function<double(RootNode*, u_int32_t)>;
+using TokenChannelProcessor = std::function<std::vector<double>(RootNode*, uint32_t)>;
+using TokenSampleProcessor = std::function<double(RootNode*, uint32_t)>;
 
 /**
  * @class NodeGraphManager
@@ -233,7 +233,7 @@ public:
      * root node processing is performed.
      * As node graph manager feeds into hardware audio output, the value returned is normalized
      */
-    double process_sample(ProcessingToken token, u_int32_t channel);
+    double process_sample(ProcessingToken token, uint32_t channel);
 
     /**
      * @brief Process all channels for a token and return channel-separated data
@@ -396,7 +396,7 @@ private:
      * @param node Node to modify
      * @param channel_id Channel mask to set
      */
-    void set_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id);
+    void set_channel_mask(std::shared_ptr<Node> node, uint32_t channel_id);
 
     /**
      * @brief Unsets the specified channel mask from a node's global registration
@@ -405,7 +405,7 @@ private:
      *
      * Removes the specified channel mask from the node's global registration.
      */
-    void unset_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id);
+    void unset_channel_mask(std::shared_ptr<Node> node, uint32_t channel_id);
 
     /**
      * @brief Unregisters a node globally
@@ -422,7 +422,7 @@ private:
      *
      * Ensures that the sample value is within the valid range for audio processing.
      */
-    void normalize_sample(double& sample, u_int32_t num_nodes);
+    void normalize_sample(double& sample, uint32_t num_nodes);
 };
 
 }

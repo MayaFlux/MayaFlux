@@ -48,9 +48,9 @@ struct SampleDelay {
      * await_suspend is called, scheduling the coroutine to resume
      * after exactly this many discrete time units have been processed.
      */
-    u_int64_t samples_to_wait;
+    uint64_t samples_to_wait;
 
-    SampleDelay(u_int64_t samples)
+    SampleDelay(uint64_t samples)
         : samples_to_wait(samples)
     {
     }
@@ -93,7 +93,7 @@ struct SampleDelay {
  * This will work with visual_promise types that have next_frame fields.
  */
 struct FrameDelay {
-    u_int32_t frames_to_wait;
+    uint32_t frames_to_wait;
 
     [[nodiscard]] constexpr bool await_ready() const noexcept
     {
@@ -106,8 +106,8 @@ struct FrameDelay {
 };
 
 struct MultiRateDelay {
-    u_int64_t samples_to_wait;
-    u_int32_t frames_to_wait;
+    uint64_t samples_to_wait;
+    uint32_t frames_to_wait;
 
     [[nodiscard]] constexpr bool await_ready() const noexcept
     {

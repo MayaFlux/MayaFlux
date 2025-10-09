@@ -120,12 +120,12 @@ void atomic_set_flag_weak(std::atomic<Utils::NodeState>& flag, Utils::NodeState&
     flag.compare_exchange_weak(expected, desired);
 };
 
-void atomic_inc_modulator_count(std::atomic<u_int32_t>& count, int amount)
+void atomic_inc_modulator_count(std::atomic<uint32_t>& count, int amount)
 {
     count.fetch_add(amount, std::memory_order_relaxed);
 }
 
-void atomic_dec_modulator_count(std::atomic<u_int32_t>& count, int amount)
+void atomic_dec_modulator_count(std::atomic<uint32_t>& count, int amount)
 {
     count.fetch_sub(amount, std::memory_order_relaxed);
 }
@@ -137,20 +137,20 @@ void try_reset_processed_state(std::shared_ptr<Node> node)
     }
 }
 
-std::vector<u_int32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& node, u_int32_t fallback_channel)
+std::vector<uint32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& node, uint32_t fallback_channel)
 {
-    u_int32_t channel_mask = node ? node->get_channel_mask().load() : 0;
+    uint32_t channel_mask = node ? node->get_channel_mask().load() : 0;
     return get_active_channels(channel_mask, fallback_channel);
 }
 
-std::vector<u_int32_t> get_active_channels(u_int32_t channel_mask, u_int32_t fallback_channel)
+std::vector<uint32_t> get_active_channels(uint32_t channel_mask, uint32_t fallback_channel)
 {
-    std::vector<u_int32_t> channels;
+    std::vector<uint32_t> channels;
 
     if (channel_mask == 0) {
         channels.push_back(fallback_channel);
     } else {
-        for (u_int32_t channel = 0; channel < MayaFlux::Config::get_node_config().max_channels; ++channel) {
+        for (uint32_t channel = 0; channel < MayaFlux::Config::get_node_config().max_channels; ++channel) {
             if (channel_mask & (1ULL << channel)) {
                 channels.push_back(channel);
             }

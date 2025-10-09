@@ -51,7 +51,7 @@ public:
      * The default capacity of 512 samples is optimized for typical audio
      * processing block sizes.
      */
-    AudioBuffer(u_int32_t channel_id, u_int32_t num_samples = 512);
+    AudioBuffer(uint32_t channel_id, uint32_t num_samples = 512);
 
     /**
      * @brief Virtual destructor for proper resource management
@@ -70,7 +70,7 @@ public:
      * memory for the specified number of audio samples. This method should be
      * called on uninitialized buffers before use.
      */
-    virtual void setup(u_int32_t channel, u_int32_t num_samples);
+    virtual void setup(uint32_t channel, uint32_t num_samples);
 
     /**
      * @brief Adjusts the audio buffer's sample capacity
@@ -80,7 +80,7 @@ public:
      * where possible. If the new size is smaller, audio data may be truncated.
      * This operation maintains audio continuity when possible.
      */
-    virtual void resize(u_int32_t num_samples);
+    virtual void resize(uint32_t num_samples);
 
     /**
      * @brief Resets all audio samples in the buffer to silence
@@ -98,7 +98,7 @@ public:
      * Returns the number of double-precision audio samples that can be
      * stored in this buffer.
      */
-    inline virtual u_int32_t get_num_samples() const { return m_num_samples; }
+    inline virtual uint32_t get_num_samples() const { return m_num_samples; }
 
     /**
      * @brief Gets mutable access to the buffer's underlying audio data
@@ -136,7 +136,7 @@ public:
      * logical audio stream in multi-channel audio systems (e.g., left/right
      * for stereo, or numbered channels in surround sound configurations).
      */
-    virtual u_int32_t get_channel_id() const { return m_channel_id; }
+    virtual uint32_t get_channel_id() const { return m_channel_id; }
 
     /**
      * @brief Sets the audio channel identifier for this buffer
@@ -145,7 +145,7 @@ public:
      * Updates the channel identifier for this audio buffer, allowing it to
      * be reassigned to different audio channels in multi-channel configurations.
      */
-    inline void set_channel_id(u_int32_t id) { m_channel_id = id; }
+    inline void set_channel_id(uint32_t id) { m_channel_id = id; }
 
     /**
      * @brief Sets the capacity of the audio buffer
@@ -155,7 +155,7 @@ public:
      * implementation may vary in derived audio buffer classes to provide
      * specialized behavior for different audio buffer types.
      */
-    virtual void set_num_samples(u_int32_t num_samples);
+    virtual void set_num_samples(uint32_t num_samples);
 
     /**
      * @brief Sets the default audio transformation processor for this buffer
@@ -205,7 +205,7 @@ public:
      * No bounds checking is performed, so the caller must ensure the index is valid
      * within the buffer's capacity.
      */
-    inline virtual double& get_sample(u_int32_t index) { return get_data()[index]; }
+    inline virtual double& get_sample(uint32_t index) { return get_data()[index]; }
 
     /**
      * @brief Checks if the audio buffer has data for the current processing cycle
@@ -331,7 +331,7 @@ public:
      * and the cloned. While they both will follow the same processing chain or have the same
      * default procesor, any changes made to one buffer after cloning will not affect the other.
      */
-    virtual std::shared_ptr<AudioBuffer> clone_to(u_int32_t channel);
+    virtual std::shared_ptr<AudioBuffer> clone_to(uint32_t channel);
 
     /**
      * @brief Reads audio data into the buffer from the audio backend
@@ -353,7 +353,7 @@ protected:
      * audio systems. Typically corresponds to logical audio channels like
      * left/right for stereo or numbered channels in surround configurations.
      */
-    u_int32_t m_channel_id;
+    uint32_t m_channel_id;
 
     /**
      * @brief Capacity of the buffer in audio samples
@@ -362,7 +362,7 @@ protected:
      * buffer can contain. This determines the buffer's memory allocation
      * and processing block size.
      */
-    u_int32_t m_num_samples;
+    uint32_t m_num_samples;
 
     /**
      * @brief Vector storing the actual double-precision audio sample data

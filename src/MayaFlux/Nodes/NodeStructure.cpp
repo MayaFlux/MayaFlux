@@ -66,7 +66,7 @@ double ChainNode::process_sample(double input)
 
     m_last_output = input;
 
-    u_int32_t sstate = m_Source->m_state.load();
+    uint32_t sstate = m_Source->m_state.load();
     if (sstate & Utils::NodeState::PROCESSED) {
         m_last_output = input + m_Source->get_last_output();
     } else {
@@ -74,7 +74,7 @@ double ChainNode::process_sample(double input)
         atomic_add_flag(m_Source->m_state, Utils::NodeState::PROCESSED);
     }
 
-    u_int32_t tstate = m_Target->m_state.load();
+    uint32_t tstate = m_Target->m_state.load();
     if (tstate & Utils::NodeState::PROCESSED) {
         m_last_output += m_Target->get_last_output();
     } else {
@@ -122,9 +122,9 @@ void BinaryOpNode::initialize()
 {
     if (!m_is_initialized) {
         auto self = shared_from_this();
-        u_int32_t lhs_mask = m_lhs ? m_lhs->get_channel_mask().load() : 0;
-        u_int32_t rhs_mask = m_rhs ? m_rhs->get_channel_mask().load() : 0;
-        u_int32_t combined_mask = lhs_mask | rhs_mask;
+        uint32_t lhs_mask = m_lhs ? m_lhs->get_channel_mask().load() : 0;
+        uint32_t rhs_mask = m_rhs ? m_rhs->get_channel_mask().load() : 0;
+        uint32_t combined_mask = lhs_mask | rhs_mask;
 
         if (combined_mask != 0) {
             for (auto& channel : get_active_channels(combined_mask, 0)) {
@@ -168,7 +168,7 @@ double BinaryOpNode::process_sample(double input)
     atomic_inc_modulator_count(m_lhs->m_modulator_count, 1);
     atomic_inc_modulator_count(m_rhs->m_modulator_count, 1);
 
-    u_int32_t lstate = m_lhs->m_state.load();
+    uint32_t lstate = m_lhs->m_state.load();
     if (lstate & Utils::NodeState::PROCESSED) {
         m_last_lhs_value = input + m_lhs->get_last_output();
     } else {
@@ -176,7 +176,7 @@ double BinaryOpNode::process_sample(double input)
         atomic_add_flag(m_lhs->m_state, Utils::NodeState::PROCESSED);
     }
 
-    u_int32_t rstate = m_rhs->m_state.load();
+    uint32_t rstate = m_rhs->m_state.load();
     if (rstate & Utils::NodeState::PROCESSED) {
         m_last_rhs_value = input + m_rhs->get_last_output();
     } else {

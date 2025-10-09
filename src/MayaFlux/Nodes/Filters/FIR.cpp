@@ -21,7 +21,7 @@ double FIR::process_sample(double input)
     double processed_input = input;
     if (m_input_node) {
         atomic_inc_modulator_count(m_input_node->m_modulator_count, 1);
-        u_int32_t state = m_input_node->m_state.load();
+        uint32_t state = m_input_node->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             processed_input += m_input_node->get_last_output();
         } else {

@@ -12,10 +12,10 @@ namespace MayaFlux::Core {
  */
 struct GlobalStreamInfo {
     /** @brief Number of samples processed per second (Hz) */
-    u_int32_t sample_rate = 48000;
+    uint32_t sample_rate = 48000;
 
     /** @brief Number of samples per processing block */
-    u_int32_t buffer_size = 512;
+    uint32_t buffer_size = 512;
 
     /**
      * @enum AudioFormat
@@ -24,7 +24,7 @@ struct GlobalStreamInfo {
      * Specifies the numerical precision and memory layout for digital
      * audio samples throughout the processing chain.
      */
-    enum class AudioFormat : u_int8_t {
+    enum class AudioFormat : uint8_t {
         FLOAT32, ///< 32-bit floating point representation (-1.0 to 1.0)
         FLOAT64, ///< 64-bit floating point representation (-1.0 to 1.0)
         INT16, ///< 16-bit integer representation (-32768 to 32767)
@@ -36,7 +36,7 @@ struct GlobalStreamInfo {
      * @enum AudioApi
      * @brief Enumeration of supported audio APIs for wrapper backends like RtAudio
      */
-    enum class AudioApi : u_int8_t {
+    enum class AudioApi : uint8_t {
         DEFAULT,
         ALSA,
         PULSE,
@@ -69,7 +69,7 @@ struct GlobalStreamInfo {
         bool enabled = true;
 
         /** @brief Number of discrete channels in this set */
-        u_int32_t channels = 2;
+        uint32_t channels = 2;
 
         /** @brief System identifier for the associated device (-1 for default) */
         int device_id = -1;
@@ -91,7 +91,7 @@ struct GlobalStreamInfo {
      * Defines the system resource allocation priority for the audio
      * processing thread relative to other system processes.
      */
-    enum class StreamPriority : u_int8_t {
+    enum class StreamPriority : uint8_t {
         LOW, ///< Minimal resource priority
         NORMAL, ///< Standard resource priority
         HIGH, ///< Elevated resource priority
@@ -123,7 +123,7 @@ struct GlobalStreamInfo {
      * Defines the mathematical approach used to distribute quantization
      * errors when converting between different sample formats.
      */
-    enum class DitherMethod : u_int8_t {
+    enum class DitherMethod : uint8_t {
         NONE, ///< No dithering applied
         RECTANGULAR, ///< Uniform random distribution
         TRIANGULAR, ///< Weighted triangular distribution
@@ -168,7 +168,7 @@ struct GlobalStreamInfo {
      * @brief Calculates the total number of active channels across all directions
      * @return Sum of all enabled input and output channels
      */
-    u_int32_t get_total_channels() const
+    uint32_t get_total_channels() const
     {
         return (output.enabled ? output.channels : 0) + (input.enabled ? input.channels : 0);
     }
@@ -177,7 +177,7 @@ struct GlobalStreamInfo {
      * @brief Retrieves the number of output channels
      * @return Number of output channels configured in the stream
      */
-    u_int32_t get_num_channels() const { return output.channels; }
+    uint32_t get_num_channels() const { return output.channels; }
 };
 
 }

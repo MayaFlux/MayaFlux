@@ -85,19 +85,30 @@ public:
      * @param width New window width
      * @param height New window height
      */
-    virtual void set_size(u_int32_t width, u_int32_t height) = 0;
+    virtual void set_size(uint32_t width, uint32_t height) = 0;
 
     /**
      * @brief Move the window to a new position
      * @param x New X coordinate
      * @param y New Y coordinate
      */
-    virtual void set_position(u_int32_t x, u_int32_t y) = 0;
+    virtual void set_position(uint32_t x, uint32_t y) = 0;
 
     /**
      * @brief Gets the event source for awaiting events
      */
     [[nodiscard]] virtual Vruta::EventSource& get_event_source() = 0;
     [[nodiscard]] virtual const Vruta::EventSource& get_event_source() const = 0;
+
+    /**
+     * @brief Check if window is registered with graphics subsystem
+     */
+    [[nodiscard]] virtual bool is_graphics_registered() const = 0;
+
+    /**
+     * @brief Mark window as registered/unregistered with graphics
+     * Called by GraphicsSubsystem during register/unregister
+     */
+    virtual void set_graphics_registered(bool registered) = 0;
 };
 }

@@ -4,15 +4,6 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-#ifdef MOUSE_WHEELED  
-#undef MOUSE_WHEELED
-#endif
-#ifdef KEY_EVENT
-#undef KEY_EVENT
-#endif
-#ifdef FOCUS_EVENT
-#undef FOCUS_EVENT
-#endif
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #elif MAYAFLUX_PLATFORM_LINUX
@@ -25,17 +16,17 @@
 namespace MayaFlux::Core {
 
 GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
-    const GraphicsSurfaceInfo& global_info)
+    const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api, GlfwPreInitConfig pre_init_config)
     : m_create_info(create_info)
 {
-    setup_preinit_hints(global_info);
+    GLFWSingleton::configure(pre_init_config);
 
     if (!GLFWSingleton::initialize()) {
         error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem, std::source_location::current(),
             "Failed to initialize GLFW for window creation");
     }
 
-    configure_window_hints(global_info);
+    configure_window_hints(surface_info, api);
 
     GLFWmonitor* monitor = nullptr;
     if (create_info.fullscreen) {
@@ -129,31 +120,7 @@ void GlfwWindow::set_title(const std::string& title)
     }
 }
 
-void GlfwWindow::setup_preinit_hints(const GraphicsSurfaceInfo& global_info)
-{
-#ifdef MAYAFLUX_PLATFORM_LINUX
-    int desired_platform = GLFW_ANY_PLATFORM;
-
-    if (global_info.linux_force_wayland) {
-        if (glfwPlatformSupported(GLFW_PLATFORM_WAYLAND)) {
-            desired_platform = GLFW_PLATFORM_WAYLAND;
-        } else {
-            MF_WARN(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-                "Wayland requested but not supported by GLFW, falling back to X11");
-        }
-    } else {
-        if (glfwPlatformSupported(GLFW_PLATFORM_X11)) {
-            desired_platform = GLFW_PLATFORM_X11;
-        }
-    }
-
-    if (desired_platform != GLFW_ANY_PLATFORM) {
-        glfwInitHint(GLFW_PLATFORM, desired_platform);
-    }
-#endif
-}
-
-void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& global_info) const
+void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api) const
 {
     glfwDefaultWindowHints();
 
@@ -163,9 +130,9 @@ void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& global_info) 
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, m_create_info.transparent ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    if (global_info.requested_api == GraphicsSurfaceInfo::VisualApi::VULKAN) {
+    if (api == GlobalGraphicsConfig::GraphicsApi::VULKAN) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    } else if (global_info.requested_api == GraphicsSurfaceInfo::VisualApi::OPENGL) {
+    } else if (api == GlobalGraphicsConfig::GraphicsApi::OPENGL) {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
     }
 }
@@ -263,15 +230,15 @@ void GlfwWindow::glfw_window_size_callback(GLFWwindow* window, int width, int he
             event.type = WindowEventType::WINDOW_RESIZED;
             event.timestamp = glfwGetTime();
             event.data = WindowEvent::ResizeData {
-                .width = static_cast<u_int32_t>(width),
-                .height = static_cast<u_int32_t>(height)
+                .width = static_cast<uint32_t>(width),
+                .height = static_cast<uint32_t>(height)
             };
             win->m_event_callback(event);
         }
     }
 }
 
-void GlfwWindow::set_size(u_int32_t width, u_int32_t height)
+void GlfwWindow::set_size(uint32_t width, uint32_t height)
 {
     if (m_window) {
         glfwSetWindowSize(m_window, static_cast<int>(width), static_cast<int>(height));
@@ -281,7 +248,7 @@ void GlfwWindow::set_size(u_int32_t width, u_int32_t height)
     m_create_info.height = height;
 }
 
-void GlfwWindow::set_position(u_int32_t x, u_int32_t y)
+void GlfwWindow::set_position(uint32_t x, uint32_t y)
 {
     if (m_window) {
         glfwSetWindowPos(m_window, static_cast<int>(x), static_cast<int>(y));
@@ -335,8 +302,8 @@ void GlfwWindow::glfw_framebuffer_size_callback(GLFWwindow* window, int width, i
     event.type = WindowEventType::FRAMEBUFFER_RESIZED;
     event.timestamp = glfwGetTime();
     event.data = WindowEvent::ResizeData {
-        .width = static_cast<u_int32_t>(width),
-        .height = static_cast<u_int32_t>(height)
+        .width = static_cast<uint32_t>(width),
+        .height = static_cast<uint32_t>(height)
     };
 
     win->m_event_source.signal(event);
@@ -450,4 +417,3 @@ void GlfwWindow::glfw_scroll_callback(GLFWwindow* window, double xoffset, double
 }
 
 }
-

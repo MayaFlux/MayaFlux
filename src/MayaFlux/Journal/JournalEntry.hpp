@@ -18,20 +18,21 @@ namespace MayaFlux::Journal {
  * @enum Log Severity
  * @brief Severity levels for log messages.
  */
-enum class Severity : u_int8_t {
+enum class Severity : uint8_t {
     TRACE,
     DEBUG,
     INFO,
     WARN,
     ERROR,
-    FATAL
+    FATAL,
+    NONE
 };
 
 /**
  * @enum Namespace Component
  * @brief Components of the system for categorizing log messages.
  */
-enum class Component : u_int8_t {
+enum class Component : uint8_t {
     API, ///< MayaFlux/API Wrapper and convenience functions
     Buffers, ///< Buffers, Managers, processors and processing chains
     Core, ///< Core engine, backend, subsystems
@@ -52,7 +53,7 @@ enum class Component : u_int8_t {
  * Represents the computational domain and thread context where a log message originates.
  * This enables context-aware filtering, real-time safety validation, and performance analysis.
  */
-enum class Context : u_int8_t {
+enum class Context : uint8_t {
     // ============================================================================
     // REAL-TIME CONTEXTS (must never block, allocate, or throw)
     // ============================================================================

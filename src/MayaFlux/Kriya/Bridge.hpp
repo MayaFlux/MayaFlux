@@ -34,14 +34,14 @@ class CycleCoordinator;
  * // Capture audio with windowed analysis
  * auto capture_op = BufferOperation::capture_from(input_buffer)
  *     .with_window(512, 0.5f)
- *     .on_data_ready([](const auto& data, u_int32_t cycle) {
+ *     .on_data_ready([](const auto& data, uint32_t cycle) {
  *         analyze_spectrum(data);
  *     });
  *
  * // Transform and route to output
  * auto pipeline = BufferPipeline()
  *     >> capture_op
- *     >> BufferOperation::transform([](const auto& data, u_int32_t cycle) {
+ *     >> BufferOperation::transform([](const auto& data, uint32_t cycle) {
  *         return apply_reverb(data);
  *     })
  *     >> BufferOperation::route_to_container(output_stream);
@@ -66,7 +66,7 @@ class CycleCoordinator;
  * auto pipeline = BufferPipeline::create(*scheduler);
  * pipeline >> BufferOperation::capture_from(buffer)
  *     .for_cycles(10)  // Capture 10 times per pipeline invocation
- *     .on_data_ready([](const auto& data, u_int32_t cycle) {
+ *     .on_data_ready([](const auto& data, uint32_t cycle) {
  *         std::cout << "Capture #" << cycle << '\n';  // Prints 0-9
  *     });
  * pipeline->execute_scheduled(3, 512);  // Runs pipeline 3 times → 30 total captures
@@ -83,7 +83,7 @@ public:
      * @enum OpType
      * @brief Defines the fundamental operation types in the processing pipeline.
      */
-    enum class OpType : u_int8_t {
+    enum class OpType : uint8_t {
         CAPTURE, ///< Capture data from source buffer using BufferCapture strategy
         TRANSFORM, ///< Apply transformation function to data variants
         ROUTE, ///< Route data to destination (buffer or container)
@@ -116,9 +116,9 @@ public:
      */
     static BufferOperation capture_input(
         const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
-        u_int32_t input_channel,
+        uint32_t input_channel,
         BufferCapture::CaptureMode mode = BufferCapture::CaptureMode::ACCUMULATE,
-        u_int32_t cycle_count = 0);
+        uint32_t cycle_count = 0);
 
     /**
      * @brief Create CaptureBuilder for input channel with fluent configuration.
@@ -129,7 +129,7 @@ public:
      */
     static CaptureBuilder capture_input_from(
         const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
-        u_int32_t input_channel);
+        uint32_t input_channel);
 
     /**
      * @brief Create a file capture operation that reads from file and stores in stream.
@@ -140,8 +140,8 @@ public:
      */
     static BufferOperation capture_file(
         const std::string& filepath,
-        u_int32_t channel = 0,
-        u_int32_t cycle_count = 0);
+        uint32_t channel = 0,
+        uint32_t cycle_count = 0);
 
     /**
      * @brief Create CaptureBuilder for file with fluent configuration.
@@ -151,7 +151,7 @@ public:
      */
     static CaptureBuilder capture_file_from(
         const std::string& filepath,
-        u_int32_t channel = 0);
+        uint32_t channel = 0);
 
     /**
      * @brief Create operation to route file data to DynamicSoundStream.
@@ -163,14 +163,14 @@ public:
     static BufferOperation file_to_stream(
         const std::string& filepath,
         std::shared_ptr<Kakshya::DynamicSoundStream> target_stream,
-        u_int32_t cycle_count = 0);
+        uint32_t cycle_count = 0);
 
     /**
      * @brief Create a transform operation with custom transformation function.
      * @param transformer Function that transforms DataVariant with cycle information
      * @return BufferOperation configured for data transformation
      */
-    static BufferOperation transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> transformer);
+    static BufferOperation transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, uint32_t)> transformer);
 
     /**
      * @brief Create a routing operation to AudioBuffer destination.
@@ -196,22 +196,22 @@ public:
      */
     static BufferOperation load_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> source,
         std::shared_ptr<Buffers::AudioBuffer> target,
-        u_int64_t start_frame = 0,
-        u_int32_t length = 0);
+        uint64_t start_frame = 0,
+        uint32_t length = 0);
 
     /**
      * @brief Create a conditional operation for pipeline branching.
      * @param condition Function that returns true when condition is met
      * @return BufferOperation configured for conditional execution
      */
-    static BufferOperation when(std::function<bool(u_int32_t)> condition);
+    static BufferOperation when(std::function<bool(uint32_t)> condition);
 
     /**
      * @brief Create a dispatch operation for external processing.
      * @param handler Function to handle data with cycle information
      * @return BufferOperation configured for external dispatch
      */
-    static BufferOperation dispatch_to(std::function<void(const Kakshya::DataVariant&, u_int32_t)> handler);
+    static BufferOperation dispatch_to(std::function<void(const Kakshya::DataVariant&, uint32_t)> handler);
 
     /**
      * @brief Create a fusion operation for multiple AudioBuffer sources.
@@ -221,7 +221,7 @@ public:
      * @return BufferOperation configured for buffer fusion
      */
     static BufferOperation fuse_data(std::vector<std::shared_ptr<Buffers::AudioBuffer>> sources,
-        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
+        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> fusion_func,
         std::shared_ptr<Buffers::AudioBuffer> target);
 
     /**
@@ -232,7 +232,7 @@ public:
      * @return BufferOperation configured for container fusion
      */
     static BufferOperation fuse_containers(std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> sources,
-        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> fusion_func,
+        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> fusion_func,
         std::shared_ptr<Kakshya::DynamicSoundStream> target);
 
     /**
@@ -250,7 +250,7 @@ public:
      * @param priority Priority value (0=highest, 255=lowest, default=128)
      * @return Reference to this operation for chaining
      */
-    BufferOperation& with_priority(u_int8_t priority);
+    BufferOperation& with_priority(uint8_t priority);
 
     /**
      * @brief Set processing token for execution context.
@@ -264,7 +264,7 @@ public:
      * @param n Execute every n cycles (default: 1)
      * @return Reference to this operation for chaining
      */
-    BufferOperation& every_n_cycles(u_int32_t n);
+    BufferOperation& every_n_cycles(uint32_t n);
 
     /**
      * @brief Assign identification tag.
@@ -281,7 +281,7 @@ public:
     /**
      * @brief Getters for internal state (read-only)
      */
-    inline u_int8_t get_priority() const { return m_priority; }
+    inline uint8_t get_priority() const { return m_priority; }
 
     /**
      * @brief Getters for processing token
@@ -310,25 +310,25 @@ private:
     OpType m_type;
     BufferCapture m_capture;
 
-    std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, u_int32_t)> m_transformer;
+    std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, uint32_t)> m_transformer;
 
     std::shared_ptr<Buffers::AudioBuffer> m_target_buffer;
     std::shared_ptr<Kakshya::DynamicSoundStream> m_target_container;
 
     std::shared_ptr<Kakshya::DynamicSoundStream> m_source_container;
-    u_int64_t m_start_frame = 0;
-    u_int32_t m_load_length = 0;
+    uint64_t m_start_frame = 0;
+    uint32_t m_load_length = 0;
 
-    std::function<bool(u_int32_t)> m_condition;
-    std::function<void(const Kakshya::DataVariant&, u_int32_t)> m_dispatch_handler;
+    std::function<bool(uint32_t)> m_condition;
+    std::function<void(const Kakshya::DataVariant&, uint32_t)> m_dispatch_handler;
 
     std::vector<std::shared_ptr<Buffers::AudioBuffer>> m_source_buffers;
     std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> m_source_containers;
-    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, u_int32_t)> m_fusion_function;
+    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> m_fusion_function;
 
-    u_int8_t m_priority = 128;
+    uint8_t m_priority = 128;
     Buffers::ProcessingToken m_token = Buffers::ProcessingToken::AUDIO_BACKEND;
-    u_int32_t m_cycle_interval = 1;
+    uint32_t m_cycle_interval = 1;
     std::string m_tag;
 
     friend class BufferPipeline;
@@ -348,7 +348,7 @@ private:
  * auto pipeline = BufferPipeline::create(*scheduler)
  *     >> BufferOperation::capture_from(mic_buffer)
  *         .with_window(1024, 0.75f)
- *         .on_data_ready([](const auto& data, u_int32_t cycle) {
+ *         .on_data_ready([](const auto& data, uint32_t cycle) {
  *             auto spectrum = fft_transform(data);
  *             detect_pitch(spectrum);
  *         })
@@ -360,9 +360,9 @@ private:
  *
  * **Conditional Branching:**
  * ```cpp
- * pipeline->branch_if([](u_int32_t cycle) { return cycle % 10 == 0; },
+ * pipeline->branch_if([](uint32_t cycle) { return cycle % 10 == 0; },
  *     [](BufferPipeline& branch) {
- *         branch >> BufferOperation::dispatch_to([](const auto& data, u_int32_t cycle) {
+ *         branch >> BufferOperation::dispatch_to([](const auto& data, uint32_t cycle) {
  *             save_snapshot(data, cycle);
  *         });
  *     });
@@ -401,9 +401,9 @@ public:
      * @param samples_per_operation Number of samples per operation in branch (default: 1)
      * @return Reference to this pipeline for continued chaining
      */
-    BufferPipeline& branch_if(std::function<bool(u_int32_t)> condition,
+    BufferPipeline& branch_if(std::function<bool(uint32_t)> condition,
         const std::function<void(BufferPipeline&)>& branch_builder,
-        bool synchronous = false, u_int64_t samples_per_operation = 1);
+        bool synchronous = false, uint64_t samples_per_operation = 1);
 
     /**
      * @brief Execute operations in parallel within the current cycle.
@@ -419,8 +419,8 @@ public:
      * @return Reference to this pipeline for continued chaining
      */
     BufferPipeline& with_lifecycle(
-        std::function<void(u_int32_t)> on_cycle_start,
-        std::function<void(u_int32_t)> on_cycle_end);
+        std::function<void(uint32_t)> on_cycle_start,
+        std::function<void(uint32_t)> on_cycle_end);
 
     /**
      * @brief Execute the pipeline for a single cycle.
@@ -449,7 +449,7 @@ public:
      *
      * @note Execution happens asynchronously - this function returns immediately.
      */
-    void execute_for_cycles(u_int32_t cycles);
+    void execute_for_cycles(uint32_t cycles);
 
     /**
      * @brief Start continuous execution of the pipeline.
@@ -491,7 +491,7 @@ public:
      *
      * @note Execution is asynchronous. The pipeline keeps itself alive until completion.
      */
-    void execute_scheduled(u_int32_t max_cycles, u_int64_t samples_per_operation = 1);
+    void execute_scheduled(uint32_t max_cycles, uint64_t samples_per_operation = 1);
 
     /**
      * @brief Execute pipeline with real-time rate control.
@@ -510,7 +510,7 @@ public:
      * pipeline->execute_scheduled_at_rate(10, 0.5);
      * ```
      */
-    void execute_scheduled_at_rate(u_int32_t max_cycles, double seconds_per_operation);
+    void execute_scheduled_at_rate(uint32_t max_cycles, double seconds_per_operation);
 
     // State management
 
@@ -524,7 +524,7 @@ public:
      *
      * @note Out-of-range indices are silently ignored.
      */
-    void mark_data_consumed(u_int32_t operation_index);
+    void mark_data_consumed(uint32_t operation_index);
 
     /**
      * @brief Check if any operations have pending data ready for processing.
@@ -542,10 +542,10 @@ public:
      * Returns the internal cycle counter that increments with each complete
      * cycle execution. Useful for cycle-dependent logic and debugging.
      */
-    u_int32_t get_current_cycle() const { return m_current_cycle; }
+    uint32_t get_current_cycle() const { return m_current_cycle; }
 
 private:
-    enum class DataState : u_int8_t {
+    enum class DataState : uint8_t {
         EMPTY, ///< No data available
         READY, ///< Data ready for processing
         CONSUMED, ///< Data has been processed
@@ -553,10 +553,10 @@ private:
     };
 
     struct BranchInfo {
-        std::function<bool(u_int32_t)> condition;
+        std::function<bool(uint32_t)> condition;
         std::shared_ptr<BufferPipeline> pipeline;
         bool synchronous;
-        u_int64_t samples_per_operation;
+        uint64_t samples_per_operation;
     };
 
     std::shared_ptr<BufferPipeline> m_active_self;
@@ -567,26 +567,26 @@ private:
     Vruta::TaskScheduler* m_scheduler = nullptr;
     std::shared_ptr<CycleCoordinator> m_coordinator;
 
-    u_int32_t m_current_cycle = 0;
+    uint32_t m_current_cycle = 0;
     bool m_continuous_execution = false;
 
-    std::function<void(u_int32_t)> m_cycle_start_callback;
-    std::function<void(u_int32_t)> m_cycle_end_callback;
+    std::function<void(uint32_t)> m_cycle_start_callback;
+    std::function<void(uint32_t)> m_cycle_end_callback;
 
-    Vruta::SoundRoutine execute_internal(u_int32_t max_cycles, u_int64_t samples_per_operation);
-    void process_operation(BufferOperation& op, u_int32_t cycle);
+    Vruta::SoundRoutine execute_internal(uint32_t max_cycles, uint64_t samples_per_operation);
+    void process_operation(BufferOperation& op, uint32_t cycle);
     void cleanup_expired_data();
     Kakshya::DataVariant extract_buffer_data(std::shared_ptr<Buffers::AudioBuffer> buffer, bool should_process = false);
     void write_to_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, const Kakshya::DataVariant& data);
     void write_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, const Kakshya::DataVariant& data);
-    Kakshya::DataVariant read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, u_int64_t start, u_int32_t length);
+    Kakshya::DataVariant read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, uint64_t start, uint32_t length);
 
     std::unordered_map<BufferOperation*, Kakshya::DataVariant> m_operation_data;
 
     std::vector<BranchInfo> m_branches;
     std::vector<std::shared_ptr<Vruta::SoundRoutine>> m_branch_tasks;
 
-    std::shared_ptr<Vruta::SoundRoutine> dispatch_branch_async(BranchInfo& branch, u_int32_t cycle);
+    std::shared_ptr<Vruta::SoundRoutine> dispatch_branch_async(BranchInfo& branch, uint32_t cycle);
     void cleanup_completed_branches();
 };
 

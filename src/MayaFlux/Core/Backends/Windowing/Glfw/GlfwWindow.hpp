@@ -18,10 +18,12 @@ public:
     /**
      * @brief Creates a window with the given configuration
      * @param create_info Window creation parameters
-     * @param global_info Global graphics configuration (for defaults)
+     * @param surface_info Graphics surface parameters
+     * @param api Requested graphics API
+     * @param pre_init_config Optional pre-initialization configuration
      */
     GlfwWindow(const WindowCreateInfo& create_info,
-        const GraphicsSurfaceInfo& global_info);
+        const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api, GlfwPreInitConfig pre_init_config = {});
 
     ~GlfwWindow() override;
 
@@ -66,12 +68,23 @@ public:
 
     void set_title(const std::string& title) override;
 
-    void set_size(u_int32_t width, u_int32_t height) override;
+    void set_size(uint32_t width, uint32_t height) override;
 
-    void set_position(u_int32_t x, u_int32_t y) override;
+    void set_position(uint32_t x, uint32_t y) override;
 
     Vruta::EventSource& get_event_source() override { return m_event_source; }
     [[nodiscard]] const Vruta::EventSource& get_event_source() const override { return m_event_source; }
+
+    /**
+     * @brief Check if window is registered with graphics subsystem
+     */
+    [[nodiscard]] bool is_graphics_registered() const override { return m_graphics_registered; }
+
+    /**
+     * @brief Mark window as registered/unregistered with graphics
+     * Called by GraphicsSubsystem during register/unregister
+     */
+    void set_graphics_registered(bool registered) override { m_graphics_registered = registered; }
 
 private:
     GLFWwindow* m_window = nullptr;
@@ -80,11 +93,12 @@ private:
     InputConfig m_input_config;
     WindowEventCallback m_event_callback;
 
+    bool m_graphics_registered {};
+
     Vruta::EventSource m_event_source;
 
-    void configure_window_hints(const GraphicsSurfaceInfo& global_info) const;
+    void configure_window_hints(const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api) const;
     void setup_callbacks();
-    static void setup_preinit_hints(const GraphicsSurfaceInfo& global_info);
 
     static void glfw_window_size_callback(GLFWwindow* window, int width, int height);
     static void glfw_window_close_callback(GLFWwindow* window);

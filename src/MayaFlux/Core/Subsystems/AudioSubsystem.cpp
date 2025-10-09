@@ -75,14 +75,14 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         return 1;
     }
 
-    u_int32_t num_channels = m_stream_info.output.channels;
+    uint32_t num_channels = m_stream_info.output.channels;
     size_t total_samples = static_cast<size_t>(num_frames) * num_channels;
     std::span<double> output_span(output_buffer, total_samples);
 
     std::vector<std::span<const double>> buffer_data(num_channels);
     bool has_underrun = false;
 
-    for (u_int32_t channel = 0; channel < num_channels; channel++) {
+    for (uint32_t channel = 0; channel < num_channels; channel++) {
         m_handle->buffers.process_channel(channel, num_frames);
         auto channel_data = m_handle->buffers.read_channel_data(channel);
 

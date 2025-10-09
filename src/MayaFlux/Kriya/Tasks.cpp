@@ -7,7 +7,7 @@ namespace MayaFlux::Kriya {
 
 Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
 {
-    u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
+    uint64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
     auto& promise = co_await Kriya::GetPromise {};
 
     while (true) {
@@ -22,13 +22,13 @@ Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_secon
 Vruta::SoundRoutine sequence(Vruta::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence)
 {
     for (const auto& [time, callback] : sequence) {
-        u_int64_t delay_samples = scheduler.seconds_to_samples(time);
+        uint64_t delay_samples = scheduler.seconds_to_samples(time);
         co_await SampleDelay(delay_samples);
         callback();
     }
 }
 
-Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, u_int32_t step_duration, bool restartable)
+Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)
 {
     auto& promise_ref = co_await GetPromise {};
 
@@ -41,7 +41,7 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
         step_duration = 1;
     }
 
-    u_int64_t total_samples = duration_seconds * sample_rate;
+    uint64_t total_samples = duration_seconds * sample_rate;
     float per_sample_step = (end_value - start_value) / total_samples;
     float sample_step = per_sample_step * step_duration;
 
@@ -59,7 +59,7 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
 
         *current_value = start_value;
 
-        u_int64_t samples_elapsed = 0;
+        uint64_t samples_elapsed = 0;
 
         co_await SampleDelay { 1 };
 
@@ -88,10 +88,10 @@ Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, flo
     }
 }
 
-Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
+Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
 {
-    u_int64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
-    u_int64_t step = 0;
+    uint64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
+    uint64_t step = 0;
 
     while (true) {
         std::any value = pattern_func(step++);

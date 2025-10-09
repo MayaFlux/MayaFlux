@@ -130,13 +130,13 @@ public:
      * This helps the buffer optimize its processing for different rates.
      * Audio might be 48kHz, visual might be 60Hz, custom might be variable.
      */
-    virtual void set_processing_rate_hint(u_int32_t tick_rate) { m_processing_rate_hint = tick_rate; }
+    virtual void set_processing_rate_hint(uint32_t tick_rate) { m_processing_rate_hint = tick_rate; }
 
     /**
      * @brief Gets the processing rate hint
      * @return Expected processing rate in samples/frames per second
      */
-    virtual u_int32_t get_processing_rate_hint() const { return m_processing_rate_hint; }
+    virtual uint32_t get_processing_rate_hint() const { return m_processing_rate_hint; }
 
     /**
      * @brief Enables cross-modal data sharing
@@ -278,7 +278,7 @@ protected:
      * sample/frame rates, allowing the buffer to adapt its
      * processing strategy accordingly.
      */
-    u_int32_t m_processing_rate_hint;
+    uint32_t m_processing_rate_hint;
 
     /**
      * @brief Whether this buffer allows cross-modal data sharing
@@ -307,7 +307,7 @@ protected:
      */
     ProcessingToken m_preferred_processing_token;
 
-    std::atomic<u_int32_t> m_pending_count { 0 };
+    std::atomic<uint32_t> m_pending_count { 0 };
 
     static constexpr size_t MAX_PENDING = 64;
 

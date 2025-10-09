@@ -33,7 +33,7 @@ void PolynomialProcessor::process_single_sample(double& sample)
     }
 
     Nodes::atomic_inc_modulator_count(m_polynomial->m_modulator_count, 1);
-    u_int32_t state = m_polynomial->m_state.load();
+    uint32_t state = m_polynomial->m_state.load();
 
     if (state & Utils::NodeState::PROCESSED) {
         sample = m_polynomial->get_last_output();

@@ -30,8 +30,8 @@ class BufferPipeline;
  * // Manage transient capture data
  * auto data_routine = coordinator.manage_transient_data(
  *     capture_buffer,
- *     [](u_int32_t cycle) { std::cout << "Data ready: " << cycle << std::endl; },
- *     [](u_int32_t cycle) { cleanup_expired_data(cycle); }
+ *     [](uint32_t cycle) { std::cout << "Data ready: " << cycle << std::endl; },
+ *     [](uint32_t cycle) { cleanup_expired_data(cycle); }
  * );
  *
  * scheduler->add_task(sync_routine);
@@ -59,7 +59,7 @@ public:
      */
     Vruta::SoundRoutine sync_pipelines(
         std::vector<std::reference_wrapper<BufferPipeline>> pipelines,
-        u_int32_t sync_every_n_cycles = 1, u_int64_t samples_per_cycle = 1);
+        uint32_t sync_every_n_cycles = 1, uint64_t samples_per_cycle = 1);
 
     /**
      * @brief Create a synchronization routine based on real-time rate.
@@ -70,7 +70,7 @@ public:
      */
     std::shared_ptr<Vruta::SoundRoutine> sync_pipelines_at_rate(
         std::vector<std::reference_wrapper<BufferPipeline>> pipelines,
-        u_int32_t sync_every_n_cycles,
+        uint32_t sync_every_n_cycles,
         double seconds_per_cycle);
 
     /**
@@ -82,8 +82,8 @@ public:
      */
     Vruta::SoundRoutine manage_transient_data(
         std::shared_ptr<Buffers::AudioBuffer> buffer,
-        std::function<void(u_int32_t)> on_data_ready,
-        std::function<void(u_int32_t)> on_data_expired);
+        std::function<void(uint32_t)> on_data_ready,
+        std::function<void(uint32_t)> on_data_expired);
 
 private:
     Vruta::TaskScheduler& m_scheduler;

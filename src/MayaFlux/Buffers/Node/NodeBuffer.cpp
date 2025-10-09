@@ -39,7 +39,7 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-std::vector<double> NodeSourceProcessor::get_node_data(u_int32_t num_samples)
+std::vector<double> NodeSourceProcessor::get_node_data(uint32_t num_samples)
 {
     std::vector<double> output(num_samples);
 
@@ -67,7 +67,7 @@ double NodeSourceProcessor::get_node_sample()
     return output;
 }
 
-NodeBuffer::NodeBuffer(u_int32_t channel_id, u_int32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process)
+NodeBuffer::NodeBuffer(uint32_t channel_id, uint32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process)
     : AudioBuffer(channel_id, num_samples)
     , m_source_node(source)
     , m_clear_before_process(clear_before_process)

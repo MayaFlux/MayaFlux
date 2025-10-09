@@ -4,7 +4,7 @@
 
 namespace MayaFlux::Nodes {
 
-RootNode::RootNode(ProcessingToken token, u_int32_t channel)
+RootNode::RootNode(ProcessingToken token, uint32_t channel)
     : m_is_processing(false)
     , m_pending_count(0)
     , m_channel(channel)
@@ -17,7 +17,7 @@ void RootNode::register_node(std::shared_ptr<Node> node)
 {
     if (m_is_processing.load(std::memory_order_acquire)) {
         if (m_Nodes.end() != std::ranges::find(m_Nodes, node)) {
-            u_int32_t state = node->m_state.load();
+            uint32_t state = node->m_state.load();
             if (state & Utils::NodeState::INACTIVE) {
                 atomic_remove_flag(node->m_state, Utils::NodeState::INACTIVE);
                 atomic_add_flag(node->m_state, Utils::NodeState::ACTIVE);
@@ -45,13 +45,13 @@ void RootNode::register_node(std::shared_ptr<Node> node)
     }
 
     m_Nodes.push_back(node);
-    u_int32_t state = node->m_state.load();
+    uint32_t state = node->m_state.load();
     atomic_add_flag(node->m_state, Utils::NodeState::ACTIVE);
 }
 
 void RootNode::unregister_node(std::shared_ptr<Node> node)
 {
-    u_int32_t state = node->m_state.load();
+    uint32_t state = node->m_state.load();
     atomic_add_flag(node->m_state, Utils::NodeState::PENDING_REMOVAL);
 
     if (m_is_processing.load(std::memory_order_acquire)) {
@@ -83,10 +83,10 @@ void RootNode::unregister_node(std::shared_ptr<Node> node)
     }
     node->reset_processed_state();
 
-    u_int32_t flag = node->m_state.load();
-    flag &= ~static_cast<u_int32_t>(Utils::NodeState::PENDING_REMOVAL);
-    flag &= ~static_cast<u_int32_t>(Utils::NodeState::ACTIVE);
-    flag |= static_cast<u_int32_t>(Utils::NodeState::INACTIVE);
+    uint32_t flag = node->m_state.load();
+    flag &= ~static_cast<uint32_t>(Utils::NodeState::PENDING_REMOVAL);
+    flag &= ~static_cast<uint32_t>(Utils::NodeState::ACTIVE);
+    flag |= static_cast<uint32_t>(Utils::NodeState::INACTIVE);
     atomic_set_flag_strong(node->m_state, static_cast<Utils::NodeState>(flag));
 }
 
@@ -117,7 +117,7 @@ double RootNode::process_sample()
 
     for (auto& node : m_Nodes) {
 
-        u_int32_t state = node->m_state.load();
+        uint32_t state = node->m_state.load();
         if (!(state & Utils::NodeState::PROCESSED)) {
             auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
             if (generator && generator->should_mock_process()) {
@@ -165,13 +165,13 @@ void RootNode::process_pending_operations()
     for (auto& m_pending_op : m_pending_ops) {
         if (m_pending_op.active.load(std::memory_order_acquire)) {
             auto& op = m_pending_op;
-            u_int32_t state = op.node->m_state.load();
+            uint32_t state = op.node->m_state.load();
 
             if (!(state & Utils::NodeState::ACTIVE)) {
                 m_Nodes.push_back(op.node);
 
-                state &= ~static_cast<u_int32_t>(Utils::NodeState::INACTIVE);
-                state |= static_cast<u_int32_t>(Utils::NodeState::ACTIVE);
+                state &= ~static_cast<uint32_t>(Utils::NodeState::INACTIVE);
+                state |= static_cast<uint32_t>(Utils::NodeState::ACTIVE);
                 atomic_set_flag_strong(op.node->m_state, static_cast<Utils::NodeState>(state));
             } else if (state & Utils::NodeState::PENDING_REMOVAL) {
                 auto it = m_Nodes.begin();
@@ -184,9 +184,9 @@ void RootNode::process_pending_operations()
                 }
                 op.node->reset_processed_state();
 
-                state &= ~static_cast<u_int32_t>(Utils::NodeState::PENDING_REMOVAL);
-                state &= ~static_cast<u_int32_t>(Utils::NodeState::ACTIVE);
-                state |= static_cast<u_int32_t>(Utils::NodeState::INACTIVE);
+                state &= ~static_cast<uint32_t>(Utils::NodeState::PENDING_REMOVAL);
+                state &= ~static_cast<uint32_t>(Utils::NodeState::ACTIVE);
+                state |= static_cast<uint32_t>(Utils::NodeState::INACTIVE);
                 atomic_set_flag_strong(op.node->m_state, static_cast<Utils::NodeState>(state));
             }
 

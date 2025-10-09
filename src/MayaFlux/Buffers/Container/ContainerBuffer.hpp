@@ -58,8 +58,8 @@ public:
      * @brief Set which channel dimension to extract from the container.
      * @param channel_index Index in the channel dimension (default: 0)
      */
-    void set_source_channel(u_int32_t channel_index);
-    u_int32_t get_source_channel() const { return m_source_channel; }
+    void set_source_channel(uint32_t channel_index);
+    uint32_t get_source_channel() const { return m_source_channel; }
 
     /**
      * @brief Set the container to adapt.
@@ -86,15 +86,15 @@ public:
 
 private:
     std::shared_ptr<Kakshya::StreamContainer> m_container;
-    u_int32_t m_source_channel {};
+    uint32_t m_source_channel {};
     bool m_auto_advance = true;
     bool m_update_flags = true;
 
-    u_int32_t m_time_reader_id = UINT32_MAX;
-    u_int32_t m_channel_reader_id = UINT32_MAX;
+    uint32_t m_time_reader_id = UINT32_MAX;
+    uint32_t m_channel_reader_id = UINT32_MAX;
 
-    u_int32_t m_num_channels { 1 };
-    u_int32_t m_reader_id {};
+    uint32_t m_num_channels { 1 };
+    uint32_t m_reader_id {};
 
     // Cache for efficiency
     mutable std::vector<double> m_temp_buffer;
@@ -150,10 +150,10 @@ public:
      * @param container Backing StreamContainer.
      * @param source_channel Channel index in the container (default: 0).
      */
-    ContainerBuffer(u_int32_t channel_id,
-        u_int32_t num_samples,
+    ContainerBuffer(uint32_t channel_id,
+        uint32_t num_samples,
         std::shared_ptr<Kakshya::StreamContainer> container,
-        u_int32_t source_channel = 0);
+        uint32_t source_channel = 0);
 
     /**
      * @brief Initialize the buffer after construction.
@@ -169,7 +169,7 @@ public:
     /**
      * @brief Get the source channel in the container.
      */
-    u_int32_t get_source_channel() const { return m_source_channel; }
+    uint32_t get_source_channel() const { return m_source_channel; }
 
     /**
      * @brief Update the container reference.
@@ -192,7 +192,7 @@ protected:
 
 private:
     std::shared_ptr<Kakshya::StreamContainer> m_container;
-    u_int32_t m_source_channel;
+    uint32_t m_source_channel;
     std::shared_ptr<BufferProcessor> m_pending_adapter;
     bool m_zero_copy_mode = false;
 

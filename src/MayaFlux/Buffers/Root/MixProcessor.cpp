@@ -61,7 +61,7 @@ void MixProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
         auto& data = root_buffer->get_data();
 
-        for (u_int32_t i = 0; i < data.size(); i++) {
+        for (uint32_t i = 0; i < data.size(); i++) {
             for (const auto& source : m_sources) {
                 if (source.has_sample_at(i)) {
                     data[i] += source.get_mixed_sample(i);

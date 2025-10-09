@@ -36,7 +36,7 @@ public:
      * The buffer is automatically configured with a ChannelProcessor as
      * its default processor for data aggregation.
      */
-    RootAudioBuffer(u_int32_t channel_id, u_int32_t num_samples = 512);
+    RootAudioBuffer(uint32_t channel_id, uint32_t num_samples = 512);
 
     void initialize();
 
@@ -64,7 +64,7 @@ public:
      * Adjusts the capacity of this buffer and all its tributary buffers to
      * ensure consistent buffer dimensions throughout the aggregation hierarchy.
      */
-    virtual void resize(u_int32_t num_samples) override;
+    virtual void resize(uint32_t num_samples) override;
 
     /**
      * @brief Sets direct node network output data for this buffer

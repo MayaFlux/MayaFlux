@@ -55,7 +55,7 @@ if ($env:VCPKG_ROOT) {
 
 # Install required packages
 Write-Host "Installing required packages (x64-windows)..."
-& "$vcpkgDir\vcpkg.exe" install --triplet x64-windows rtaudio ffmpeg gtest eigen3 magic-enum glfw3
+& "$vcpkgDir\vcpkg.exe" install --triplet x64-windows rtaudio vulkan ffmpeg gtest eigen3 magic-enum glfw3
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Package installation failed"
     exit 1
@@ -63,7 +63,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # Verify package installation
 Write-Host "Verifying package installation..."
-& "$vcpkgDir\vcpkg.exe" list | Where-Object { $_ -match "rtaudio|ffmpeg|gtest|eigen3|magic_enum|glfw3" }
+& "$vcpkgDir\vcpkg.exe" list | Where-Object { $_ -match "rtaudio|vulkan|ffmpeg|gtest|eigen3|magic_enum|glfw3" }
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Warning: Some packages may not have installed correctly."
     Write-Host "Please check the output above for errors."

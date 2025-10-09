@@ -64,7 +64,7 @@ std::vector<double> ExponentialRamp(size_t length, double start, double end)
     return ramp;
 }
 
-std::vector<double> generate_window(u_int32_t size, WindowType window_type)
+std::vector<double> generate_window(uint32_t size, WindowType window_type)
 {
     switch (window_type) {
     case WindowType::HAMMING:

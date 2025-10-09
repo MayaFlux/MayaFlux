@@ -106,6 +106,61 @@ if [ -n "$MISSING_PACKAGES" ]; then
     echo "You may need to install them manually."
 fi
 
+# ------------------------------------------------------------
+# Vulkan SDK (LunarG) Installation - Always Latest Version
+# ------------------------------------------------------------
+
+echo "🔽 Fetching latest Vulkan SDK version for macOS..."
+VULKAN_VERSION=$(curl -s https://vulkan.lunarg.com/sdk/latest/mac.txt | grep -oP '(\d+\.){3}\d+' | head -n 1)
+
+if [ -z "$VULKAN_VERSION" ]; then
+    echo "❌ Could not fetch latest Vulkan SDK version."
+    exit 1
+fi
+
+echo "🔁 Using latest Vulkan SDK $VULKAN_VERSION"
+
+VULKAN_SDK_DIR="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
+TMP_DMG="/tmp/vulkan-sdk-$VULKAN_VERSION.dmg"
+URL="https://sdk.lunarg.com/sdk/download/$VULKAN_VERSION/mac/vulkan_sdk.dmg"
+
+if [ -d "$VULKAN_SDK_DIR" ]; then
+    echo "✅ Vulkan SDK $VULKAN_VERSION already installed at $VULKAN_SDK_DIR"
+else
+    echo "⬇️  Downloading from: $URL"
+    curl -L "$URL" -o "$TMP_DMG" --progress-bar || {
+        echo "❌ Download failed."
+        exit 1
+    }
+
+    echo "📦 Mounting DMG..."
+    MOUNT_POINT=$(hdiutil attach "$TMP_DMG" -nobrowse -quiet | grep Volumes | awk '{print $3}')
+
+    echo "📁 Installing Vulkan SDK..."
+    INSTALLER_PKG=$(find "$MOUNT_POINT" -name "*.pkg" | head -n1)
+    if [ -z "$INSTALLER_PKG" ]; then
+        echo "❌ No .pkg found in mounted image."
+        hdiutil detach "$MOUNT_POINT" -quiet || true
+        rm -f "$TMP_DMG"
+        exit 1
+    fi
+
+    sudo installer -pkg "$INSTALLER_PKG" -target / >/dev/null
+
+    echo "💿 Unmounting DMG..."
+    hdiutil detach "$MOUNT_POINT" -quiet || true
+    rm -f "$TMP_DMG"
+
+    echo "✅ Vulkan SDK $VULKAN_VERSION installed at $VULKAN_SDK_DIR"
+fi
+
+export VULKAN_SDK="$VULKAN_SDK_DIR"
+export PATH="$VULKAN_SDK/bin:$PATH"
+export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"
+export VK_ICD_FILENAMES="$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json"
+
+echo "VULKAN_SDK set to $VULKAN_SDK"
+
 # Check system Clang version
 echo "Checking system Clang..."
 if command -v clang++ &>/dev/null; then

@@ -18,7 +18,6 @@ namespace MayaFlux::Core {
 Engine::Engine()
     : m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
 {
-    Journal::Archivist::init();
 }
 
 Engine::~Engine()
@@ -28,7 +27,7 @@ Engine::~Engine()
 
 Engine::Engine(Engine&& other) noexcept
     : m_stream_info(other.m_stream_info)
-    , m_graphics_info(other.m_graphics_info)
+    , m_graphics_config(other.m_graphics_config)
     , m_is_paused(other.m_is_paused)
     , m_is_initialized(other.m_is_initialized)
     , m_should_shutdown(other.m_should_shutdown.load())
@@ -50,7 +49,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
         End();
 
         m_stream_info = other.m_stream_info;
-        m_graphics_info = other.m_graphics_info;
+        m_graphics_config = other.m_graphics_config;
 
         m_subsystem_manager = std::move(other.m_subsystem_manager);
         m_node_graph_manager = std::move(other.m_node_graph_manager);
@@ -70,35 +69,21 @@ Engine& Engine::operator=(Engine&& other) noexcept
     return *this;
 }
 
-void Engine::Init(u_int32_t sample_rate, u_int32_t buffer_size, u_int32_t num_out_channels, u_int32_t num_in_channels)
+void Engine::Init()
 {
-    GlobalStreamInfo streamInfo;
-    streamInfo.sample_rate = sample_rate;
-    streamInfo.buffer_size = buffer_size;
-    streamInfo.output.channels = num_out_channels;
-
-    if (num_in_channels > 0) {
-        streamInfo.input.enabled = true;
-        streamInfo.input.channels = num_in_channels;
-    } else {
-        streamInfo.input.enabled = false;
-    }
-
-    GraphicsSurfaceInfo graphicsInfo;
-    Init(streamInfo, graphicsInfo);
+    Init(m_stream_info, m_graphics_config);
 }
 
 void Engine::Init(const GlobalStreamInfo& streamInfo)
 {
-    GraphicsSurfaceInfo graphicsInfo;
-    Init(streamInfo, graphicsInfo);
+    Init(streamInfo, m_graphics_config);
 }
 
-void Engine::Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo& graphicsInfo)
+void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config)
 {
     MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
     m_stream_info = streamInfo;
-    m_graphics_info = graphicsInfo;
+    m_graphics_config = graphics_config;
 
     m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
     m_event_manager = std::make_shared<Vruta::EventManager>();
@@ -110,16 +95,18 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo&
 
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
 
-    m_subsystem_manager = std::make_shared<SubsystemManager>(
-        m_node_graph_manager, m_buffer_manager, m_scheduler);
-
-    m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
-
-    if (m_graphics_info.windowing_backend != GraphicsSurfaceInfo::WindowingBackend::NONE) {
-        m_window_manager = std::make_shared<WindowManager>(m_graphics_info);
+    if (m_graphics_config.windowing_backend != GlobalGraphicsConfig::WindowingBackend::NONE) {
+        m_window_manager = std::make_shared<WindowManager>(m_graphics_config);
     } else {
         MF_WARN(Journal::Component::Core, Journal::Context::Init, "No windowing backend selected - running in audio-only mode");
     }
+
+    m_subsystem_manager = std::make_shared<SubsystemManager>(
+        m_node_graph_manager, m_buffer_manager, m_scheduler, m_window_manager);
+
+    m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
+
+    m_subsystem_manager->create_graphics_subsystem(m_graphics_config);
 
     m_is_initialized = true;
 
@@ -152,47 +139,6 @@ void Engine::Resume()
 
     m_subsystem_manager->resume_all_subsystems();
     m_is_paused = false;
-}
-
-void Engine::Run()
-{
-    if (!m_is_initialized) {
-        throw std::runtime_error("Engine must be initialized before run()");
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            std::source_location::current(),
-            "Engine must be initialized before run()");
-    }
-
-    if (!m_window_manager) {
-        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Running in headless mode");
-
-        while (!m_should_shutdown) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-        return;
-    }
-
-    auto frame_time = Utils::frame_duration_ms(m_graphics_info.target_frame_rate);
-
-    if (m_window_manager->is_event_loop_running()) {
-        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Running with background window thread - main thread available");
-
-        while (!m_should_shutdown && m_window_manager->window_count() > 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    } else {
-        MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Running with main thread window polling (target: {} FPS)",
-            m_window_manager->get_config().target_frame_rate);
-
-        while (!m_should_shutdown && m_window_manager->process()) {
-            std::this_thread::sleep_for(frame_time);
-        }
-    }
-
-    End();
 }
 
 void Engine::End()
@@ -229,18 +175,12 @@ void Engine::End()
     }
 
     if (m_window_manager) {
-        m_window_manager->stop_event_loop();
         auto windows = m_window_manager->get_windows();
         for (auto& window : windows) {
             m_window_manager->destroy_window(window);
         }
         m_window_manager.reset();
     }
-}
-
-void Engine::Request_shutdown()
-{
-    m_should_shutdown = true;
 }
 
 bool Engine::is_running() const

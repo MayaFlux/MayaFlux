@@ -3,11 +3,10 @@
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwSingleton.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Utils.hpp"
 
 namespace MayaFlux::Core {
 
-WindowManager::WindowManager(const GraphicsSurfaceInfo& config)
+WindowManager::WindowManager(const GlobalGraphicsConfig& config)
     : m_config(config)
 {
     MF_PRINT(Journal::Component::Core, Journal::Context::WindowingSubsystem,
@@ -16,8 +15,6 @@ WindowManager::WindowManager(const GraphicsSurfaceInfo& config)
 
 WindowManager::~WindowManager()
 {
-    stop_event_loop();
-
     m_windows.clear();
     m_window_lookup.clear();
 
@@ -35,6 +32,9 @@ std::shared_ptr<Window> WindowManager::create_window(const WindowCreateInfo& cre
         return nullptr;
     }
 
+    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+        "Creating window '{}' ({}x{}), for platform {}", create_info.title, create_info.width, create_info.height, GLFWSingleton::get_platform());
+
     auto window = create_window_internal(create_info);
     if (!window) {
         return nullptr;
@@ -43,21 +43,12 @@ std::shared_ptr<Window> WindowManager::create_window(const WindowCreateInfo& cre
     m_windows.push_back(window);
     m_window_lookup[create_info.title] = window;
 
+    if (window->get_create_info().register_for_processing) {
+        m_processing_windows.push_back(window);
+    }
+
     MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
         "Created window '{}' - total: {}", create_info.title, m_windows.size());
-
-    if (m_windows.size() == 1 && !m_event_loop_running) {
-        if (can_use_background_thread()) {
-            try {
-                start_event_loop();
-                MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-                    "Auto-started window event loop on first window creation");
-            } catch (const std::runtime_error& e) {
-                error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem, std::source_location::current(),
-                    "Could not auto-start event loop: {}", e.what());
-            }
-        }
-    }
 
     return window;
 }
@@ -66,6 +57,11 @@ void WindowManager::destroy_window(const std::shared_ptr<Window>& window)
 {
     if (!window)
         return;
+
+    auto pr_it = std::ranges::find(m_processing_windows, window);
+    if (pr_it != m_processing_windows.end()) {
+        m_processing_windows.erase(pr_it);
+    }
 
     const std::string title = window->get_create_info().title;
     remove_from_lookup(window);
@@ -146,15 +142,16 @@ std::shared_ptr<Window> WindowManager::create_window_internal(
     const WindowCreateInfo& create_info)
 {
     switch (m_config.windowing_backend) {
-    case GraphicsSurfaceInfo::WindowingBackend::GLFW:
-        return std::make_unique<GlfwWindow>(create_info, m_config);
+    case GlobalGraphicsConfig::WindowingBackend::GLFW:
+        return std::make_unique<GlfwWindow>(create_info, m_config.surface_info,
+            m_config.requested_api, m_config.glfw_preinit_config);
 
-    case GraphicsSurfaceInfo::WindowingBackend::SDL:
+    case GlobalGraphicsConfig::WindowingBackend::SDL:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
             "SDL backend not implemented");
         return nullptr;
 
-    case GraphicsSurfaceInfo::WindowingBackend::NATIVE:
+    case GlobalGraphicsConfig::WindowingBackend::NATIVE:
         MF_ERROR(Journal::Component::Core, Journal::Context::WindowingSubsystem,
             "Native backend not implemented");
         return nullptr;
@@ -171,83 +168,6 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 {
     const auto& title = window->get_create_info().title;
     m_window_lookup.erase(title);
-}
-
-void WindowManager::start_event_loop()
-{
-    if (m_event_loop_running) {
-        MF_WARN(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            "Event loop already running");
-        return;
-    }
-
-    if (!can_use_background_thread()) {
-        error<std::runtime_error>(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-            std::source_location::current(),
-            "Background window thread not supported on this platform (likely macOS). \n Falling back to main thread polling.");
-    }
-
-    m_should_stop = false;
-    m_event_loop_running = true;
-
-    m_event_thread = std::make_unique<std::thread>(
-        &WindowManager::event_loop_thread_func, this);
-
-    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-        "Started window event loop on dedicated thread");
-}
-
-void WindowManager::stop_event_loop()
-{
-    if (!m_event_loop_running) {
-        return;
-    }
-
-    m_should_stop = true;
-
-    if (m_event_thread && m_event_thread->joinable()) {
-        m_event_thread->join();
-    }
-
-    m_event_loop_running = false;
-    m_event_thread.reset();
-
-    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-        "Stopped window event loop thread");
-}
-
-void WindowManager::event_loop_thread_func()
-{
-    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-        "Window event loop thread started (target: {} FPS)", m_config.target_frame_rate);
-
-    const auto frame_time = Utils::frame_duration_ms(m_config.target_frame_rate);
-
-    while (!m_should_stop && window_count() > 0) {
-        auto frame_start = std::chrono::steady_clock::now();
-
-        glfwPollEvents();
-
-        {
-            std::lock_guard<std::mutex> lock(m_hooks_mutex);
-            for (const auto& [name, hook] : m_frame_hooks) {
-                hook();
-            }
-        }
-
-        destroy_closed_windows();
-
-        auto frame_end = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            frame_end - frame_start);
-
-        if (elapsed < frame_time) {
-            std::this_thread::sleep_for(frame_time - elapsed);
-        }
-    }
-
-    MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
-        "Window event loop thread exiting");
 }
 
 bool WindowManager::process()
@@ -277,15 +197,6 @@ void WindowManager::unregister_frame_hook(const std::string& name)
 {
     std::lock_guard<std::mutex> lock(m_hooks_mutex);
     m_frame_hooks.erase(name);
-}
-
-bool WindowManager::can_use_background_thread()
-{
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    return false;
-#else
-    return true;
-#endif
 }
 
 } // namespace MayaFlux::Core

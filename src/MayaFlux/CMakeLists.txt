@@ -39,6 +39,7 @@ if(WIN32)
         RtAudio::rtaudio
         Eigen3::Eigen
         glfw
+        Vulkan::Vulkan
         ${AVCODEC_LIB}
         ${AVFORMAT_LIB}
         ${AVUTIL_LIB}
@@ -52,9 +53,13 @@ else()
         target_link_libraries(MayaFluxLib PRIVATE oneDPL)
         target_link_libraries(MayaFluxLib PUBLIC fmt::fmt)
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
+
+        target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
     else()
         add_compile_definitions(USE_TBB_BACKEND)
+        target_link_libraries(MayaFluxLib PUBLIC PkgConfig::Vulkan)
     endif()
+
     target_link_libraries(MayaFluxLib PRIVATE TBB::tbb)
 
     target_link_libraries(MayaFluxLib PUBLIC

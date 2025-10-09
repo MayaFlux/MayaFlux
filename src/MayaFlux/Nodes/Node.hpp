@@ -258,19 +258,19 @@ public:
      * the node can adjust its processing state accordingly, such as preventing state resets
      * within the same cycle, or use the same output for multiple channels
      */
-    void register_channel_usage(u_int32_t channel_id);
+    void register_channel_usage(uint32_t channel_id);
 
     /**
      * @brief Removes the specified channel from the usage tracking
      * @param channel_id The ID of the channel to unregister
      */
-    void unregister_channel_usage(u_int32_t channel_id);
+    void unregister_channel_usage(uint32_t channel_id);
 
     /**
      * @brief Checks if the node is currently used by a specific channel
      * @param channel_id The ID of the channel to check
      */
-    bool is_used_by_channel(u_int32_t channel_id) const;
+    bool is_used_by_channel(uint32_t channel_id) const;
 
     /**
      * @brief Requests a reset of the processed state from a specific channel
@@ -281,7 +281,7 @@ public:
      * to track pending resets and ensures that all channels have completed before
      * actually resetting the node's state.
      */
-    void request_reset_from_channel(u_int32_t channel_id);
+    void request_reset_from_channel(uint32_t channel_id);
 
     /**
      * @brief Retrieves the current bitmask of active channels using this node
@@ -292,7 +292,7 @@ public:
      * specific channel ID, allowing the node to manage its state based on
      * channel usage.
      */
-    [[nodiscard]] const inline std::atomic<u_int32_t>& get_channel_mask() const { return m_active_channels_mask; }
+    [[nodiscard]] const inline std::atomic<uint32_t>& get_channel_mask() const { return m_active_channels_mask; }
 
 protected:
     /**
@@ -393,13 +393,13 @@ public:
      * automatically after processing, ensuring that all dependent nodes can access
      * its output before it's cleared.
      */
-    std::atomic<u_int32_t> m_modulator_count { 0 };
+    std::atomic<uint32_t> m_modulator_count { 0 };
 
 private:
     /**
      * @brief Bitmask tracking which channels are currently using this node
      */
-    std::atomic<u_int32_t> m_active_channels_mask { 0 };
+    std::atomic<uint32_t> m_active_channels_mask { 0 };
 
     /**
      * @brief Bitmask tracking which channels have requested a reset
@@ -408,6 +408,6 @@ private:
      * state to be reset. When all channels that are currently using the node have
      * requested a reset, the node can safely clear its processed state.
      */
-    std::atomic<u_int32_t> m_pending_reset_mask { 0 };
+    std::atomic<uint32_t> m_pending_reset_mask { 0 };
 };
 }

@@ -48,7 +48,7 @@ public:
      * @param start_position Initial write position in frames (default: 0)
      */
     explicit StreamWriteProcessor(std::shared_ptr<Kakshya::DynamicSoundStream> container,
-        u_int64_t start_position = 0)
+        uint64_t start_position = 0)
         : m_container(container)
         , m_write_position(start_position)
     {
@@ -72,13 +72,13 @@ public:
      * @brief Set the current write position in the container.
      * @param position Frame position where next write will occur
      */
-    inline void set_write_position(u_int64_t position) { m_write_position = position; }
+    inline void set_write_position(uint64_t position) { m_write_position = position; }
 
     /**
      * @brief Get the current write position in the container.
      * @return Current frame position for writing
      */
-    [[nodiscard]] inline u_int64_t get_write_position() const { return m_write_position; }
+    [[nodiscard]] inline uint64_t get_write_position() const { return m_write_position; }
 
     /**
      * @brief Reset write position to the beginning.
@@ -100,7 +100,7 @@ public:
 
 private:
     std::shared_ptr<Kakshya::DynamicSoundStream> m_container;
-    u_int64_t m_write_position { 0 }; ///< Current write position in frames
+    uint64_t m_write_position { 0 }; ///< Current write position in frames
 };
 
 } // namespace MayaFlux::Buffers

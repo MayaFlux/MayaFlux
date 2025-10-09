@@ -6,7 +6,7 @@
 
 namespace MayaFlux::Kriya {
 
-NodeTimeSpec::NodeTimeSpec(double seconds, std::optional<std::vector<u_int32_t>> channels)
+NodeTimeSpec::NodeTimeSpec(double seconds, std::optional<std::vector<uint32_t>> channels)
     : m_seconds(seconds)
     , m_channels(std::move(channels))
     , m_scheduler(*MayaFlux::get_scheduler())
@@ -54,12 +54,12 @@ NodeTimeSpec Time(double seconds)
     return { seconds };
 }
 
-NodeTimeSpec Time(double seconds, u_int32_t channel)
+NodeTimeSpec Time(double seconds, uint32_t channel)
 {
-    return NodeTimeSpec(seconds, std::vector<u_int32_t> { channel });
+    return NodeTimeSpec(seconds, std::vector<uint32_t> { channel });
 }
 
-NodeTimeSpec Time(double seconds, std::vector<u_int32_t> channels)
+NodeTimeSpec Time(double seconds, std::vector<uint32_t> channels)
 {
     return { seconds, channels };
 }

@@ -58,7 +58,7 @@ namespace MayaFlux::Buffers {
  * resource allocation, and execution optimization while maintaining flexibility for custom processing
  * scenarios.
  */
-enum ProcessingToken : u_int32_t {
+enum ProcessingToken : uint32_t {
     /**
      * @brief Processes data at audio sample rate with buffer-sized chunks
      *

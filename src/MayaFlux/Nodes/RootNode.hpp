@@ -36,7 +36,7 @@ public:
      * Initializes the root node for the given processing domain and channel.
      * Each channel and processing domain combination should have its own RootNode.
      */
-    RootNode(ProcessingToken token = ProcessingToken::AUDIO_RATE, u_int32_t channel = 0);
+    RootNode(ProcessingToken token = ProcessingToken::AUDIO_RATE, uint32_t channel = 0);
 
     /**
      * @brief Adds a node to this root node
@@ -114,7 +114,7 @@ public:
      * @brief Gets the channel index associated with this root node
      * @return The channel index
      */
-    inline u_int32_t get_channel() { return m_channel; }
+    inline uint32_t get_channel() { return m_channel; }
 
     /**
      * @brief Gets the processing token associated with this root node
@@ -169,7 +169,7 @@ private:
      * allowing the system to quickly determine if there are operations
      * waiting to be processed without scanning the entire array.
      */
-    std::atomic<u_int32_t> m_pending_count;
+    std::atomic<uint32_t> m_pending_count;
 
     /**
      * @brief Processes any pending node registration/unregistration operations
@@ -189,7 +189,7 @@ private:
      * allowing multiple channels to coexist with their own independent
      * node collections and processing logic.
      */
-    u_int32_t m_channel;
+    uint32_t m_channel;
 
     /**
      * @brief Flag indicating whether to skip preprocessing and post processing

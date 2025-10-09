@@ -112,7 +112,7 @@ namespace Kriya {
      * If restartable is true, the interpolation task will remain active after reaching the
      * end value and can be restarted by calling restart() on the SoundRoutine.
      */
-    Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, u_int32_t step_duration = 5, bool restartable = false);
+    Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool restartable = false);
 
     /**
      * @brief Creates a generative algorithm that produces values based on a pattern function
@@ -138,7 +138,7 @@ namespace Kriya {
      * std::vector<int> fibonacci = {0, 1, 1, 2, 3, 5, 8, 13, 21};
      * auto generator = Kriya::pattern(*scheduler,
      *     // Pattern function - apply algorithmic rules
-     *     [&fibonacci](u_int64_t step) -> std::any {
+     *     [&fibonacci](uint64_t step) -> std::any {
      *         return fibonacci[step % fibonacci.size()];
      *     },
      *     // Callback - apply the generated value
@@ -155,7 +155,7 @@ namespace Kriya {
      * The pattern task continues indefinitely until explicitly cancelled, creating
      * an ongoing generative process within the computational system.
      */
-    Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(u_int64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+    Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
 
     /**
      * @brief Coroutine that executes callback continuously while logic node outputs true

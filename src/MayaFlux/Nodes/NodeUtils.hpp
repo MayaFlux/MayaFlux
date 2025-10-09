@@ -199,7 +199,7 @@ void atomic_set_flag_weak(std::atomic<Utils::NodeState>& flag, Utils::NodeState&
  * redundant processing while ensuring all dependent nodes receive the correct
  * modulation values.
  */
-void atomic_inc_modulator_count(std::atomic<u_int32_t>& count, int amount);
+void atomic_inc_modulator_count(std::atomic<uint32_t>& count, int amount);
 
 /**
  * @brief Atomically decrements the modulator count by a specified amount
@@ -211,7 +211,7 @@ void atomic_inc_modulator_count(std::atomic<u_int32_t>& count, int amount);
  * becomes eligible for state resets, allowing the audio engine to optimize
  * processing and avoid redundant calculations in the signal chain.
  */
-void atomic_dec_modulator_count(std::atomic<u_int32_t>& count, int amount);
+void atomic_dec_modulator_count(std::atomic<uint32_t>& count, int amount);
 
 /**
  * @brief Attempts to reset the processed state of a node
@@ -231,7 +231,7 @@ void try_reset_processed_state(std::shared_ptr<Node> node);
  * @param fallback_channel Channel to use if node has no active channels (default: 0)
  * @return Vector of active channel indices
  */
-std::vector<u_int32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& node, u_int32_t fallback_channel = 0);
+std::vector<uint32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& node, uint32_t fallback_channel = 0);
 
 /**
  * @brief Extracts active channel list from a channel mask
@@ -239,6 +239,6 @@ std::vector<u_int32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& n
  * @param fallback_channel Channel to use if mask is 0 (default: 0)
  * @return Vector of active channel indices
  */
-std::vector<u_int32_t> get_active_channels(u_int32_t channel_mask, u_int32_t fallback_channel = 0);
+std::vector<uint32_t> get_active_channels(uint32_t channel_mask, uint32_t fallback_channel = 0);
 
 }

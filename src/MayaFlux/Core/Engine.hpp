@@ -116,10 +116,6 @@ public:
 
     /**
      * @brief Initializes all system components and prepares for processing
-     * @param sample_rate Audio sample rate in Hz
-     * @param buffer_size Size of audio processing buffer in frames
-     * @param num_out_channels Number of output channels
-     * @param num_in_channels Number of input channels
      *
      * Orchestrates the initialization sequence for all core components:
      * - Creates and configures the task scheduler with the specified sample rate
@@ -129,7 +125,7 @@ public:
      *
      * This method must be called before Start().
      */
-    void Init(u_int32_t sample_rate = 48000U, u_int32_t buffer_size = 512U, u_int32_t num_out_channels = 2U, u_int32_t num_in_channels = 0U);
+    void Init();
 
     /**
      * @brief Initializes the processing engine with a custom stream configuration
@@ -143,12 +139,12 @@ public:
     /**
      * @brief Initializes the processing engine with custom stream and graphics configurations
      * @param streamInfo Configuration for sample rate, buffer size, and channels
-     * @param graphicsInfo Configuration for graphics/windowing backend
+     * @param graphics_config Configuration for graphics/windowing backend
      *
      * Configures the processing engine with the specified stream and graphics information.
      * This method must be called before starting the engine.
      */
-    void Init(const GlobalStreamInfo& streamInfo, const GraphicsSurfaceInfo& graphicsInfo);
+    void Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config);
 
     /**
      * @brief Starts the coordinated processing of all subsystems
@@ -184,19 +180,6 @@ public:
     void Resume();
 
     /**
-     * @brief Run main loop (optional - for simple apps)
-     *
-     * Blocks until windows close or shutdown requested.
-     * On platforms that support it, windows run on background thread.
-     * On macOS, polls windows on main thread.
-     */
-    void Run();
-
-    /**
-     * @brief Request shutdown of main loop
-     */
-    void Request_shutdown();
-    /**
      * @brief Stops all processing and performs clean shutdown
      *
      * Orchestrates the shutdown sequence:
@@ -228,9 +211,9 @@ public:
 
     /**
      * @brief Gets the current graphics configuration
-     * @return Reference to the GraphicsSurfaceInfo struct
+     * @return Reference to the GlobalGraphicsConfig struct
      */
-    inline GraphicsSurfaceInfo& get_graphics_info() { return m_graphics_info; }
+    inline GlobalGraphicsConfig& get_graphics_config() { return m_graphics_config; }
 
     //-------------------------------------------------------------------------
     // Component Access - Engine acts as access router to all subsystems
@@ -315,8 +298,8 @@ private:
     // System Components
     //-------------------------------------------------------------------------
 
-    GlobalStreamInfo m_stream_info; ///< Stream configuration
-    GraphicsSurfaceInfo m_graphics_info; ///< Graphics/windowing configuration
+    GlobalStreamInfo m_stream_info {}; ///< Stream configuration
+    GlobalGraphicsConfig m_graphics_config {}; ///< Graphics/windowing configuration
 
     bool m_is_paused {}; ///< Pause state flag
     bool m_is_initialized {};
