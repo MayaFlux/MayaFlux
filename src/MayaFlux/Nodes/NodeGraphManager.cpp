@@ -83,7 +83,7 @@ std::vector<double> NodeGraphManager::process_channel(ProcessingToken token,
         return it->second(&root, num_samples);
     } else {
         std::vector<double> samples = root.process_batch(num_samples);
-        u_int32_t node_size = root.get_node_size();
+        uint32_t node_size = root.get_node_size();
         for (double& sample : samples) {
             normalize_sample(sample, node_size);
         }
@@ -91,7 +91,7 @@ std::vector<double> NodeGraphManager::process_channel(ProcessingToken token,
     }
 }
 
-double NodeGraphManager::process_sample(ProcessingToken token, u_int32_t channel)
+double NodeGraphManager::process_sample(ProcessingToken token, uint32_t channel)
 {
     auto& root = get_root_node(token, channel);
 
@@ -104,7 +104,7 @@ double NodeGraphManager::process_sample(ProcessingToken token, u_int32_t channel
     }
 }
 
-void NodeGraphManager::normalize_sample(double& sample, u_int32_t num_nodes)
+void NodeGraphManager::normalize_sample(double& sample, uint32_t num_nodes)
 {
     if (num_nodes == 0)
         return;
@@ -187,7 +187,7 @@ void NodeGraphManager::register_global(std::shared_ptr<Node> node)
     }
 }
 
-void NodeGraphManager::set_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id)
+void NodeGraphManager::set_channel_mask(std::shared_ptr<Node> node, uint32_t channel_id)
 {
     register_global(node);
     node->register_channel_usage(channel_id);
@@ -203,7 +203,7 @@ void NodeGraphManager::unregister_global(std::shared_ptr<Node> node)
     }
 }
 
-void NodeGraphManager::unset_channel_mask(std::shared_ptr<Node> node, u_int32_t channel_id)
+void NodeGraphManager::unset_channel_mask(std::shared_ptr<Node> node, uint32_t channel_id)
 {
     unregister_global(node);
     node->unregister_channel_usage(channel_id);

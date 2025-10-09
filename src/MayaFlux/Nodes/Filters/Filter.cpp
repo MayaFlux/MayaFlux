@@ -121,7 +121,7 @@ void Filter::update_coef_from_input(int length, coefficients type)
     }
 }
 
-void Filter::add_coef_internal(u_int64_t index, double value, std::vector<double>& buffer)
+void Filter::add_coef_internal(uint64_t index, double value, std::vector<double>& buffer)
 {
     if (index > buffer.size()) {
         buffer.resize(index + 1, 1.f);

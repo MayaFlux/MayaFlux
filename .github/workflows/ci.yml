@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  # push:
-  #   branches: [develop]
+  push:
+    branches: [develop]
 env:
   BUILD_TYPE: Release
 jobs:

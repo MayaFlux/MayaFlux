@@ -427,7 +427,7 @@ protected:
      * Internal implementation for adding or modifying a coefficient
      * in either the 'a' or 'b' coefficient vectors.
      */
-    void add_coef_internal(u_int64_t index, double value, std::vector<double>& buffer);
+    void add_coef_internal(uint64_t index, double value, std::vector<double>& buffer);
 
     /**
      * @brief Initializes the input and output history buffers

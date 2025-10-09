@@ -57,7 +57,7 @@ void Sine::set_frequency(float frequency)
 
 void Sine::update_phase_increment(float frequency)
 {
-    u_int64_t s_rate = 48000u;
+    uint64_t s_rate = 48000u;
     if (MayaFlux::is_engine_initialized()) {
         s_rate = MayaFlux::Config::get_sample_rate();
     }
@@ -85,7 +85,7 @@ double Sine::process_sample(double input)
 {
     if (m_frequency_modulator) {
         atomic_inc_modulator_count(m_frequency_modulator->m_modulator_count, 1);
-        u_int32_t state = m_frequency_modulator->m_state.load();
+        uint32_t state = m_frequency_modulator->m_state.load();
         double current_freq = m_frequency;
 
         if (state & Utils::NodeState::PROCESSED) {
@@ -109,7 +109,7 @@ double Sine::process_sample(double input)
     float current_amplitude = m_amplitude;
     if (m_amplitude_modulator) {
         atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
-        u_int32_t state = m_amplitude_modulator->m_state.load();
+        uint32_t state = m_amplitude_modulator->m_state.load();
 
         if (state & Utils::NodeState::PROCESSED) {
             current_amplitude += m_amplitude_modulator->get_last_output();

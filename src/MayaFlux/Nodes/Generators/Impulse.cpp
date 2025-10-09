@@ -87,7 +87,7 @@ double Impulse::process_sample(double input)
     double effective_freq = m_frequency;
     if (m_frequency_modulator) {
         atomic_inc_modulator_count(m_frequency_modulator->m_modulator_count, 1);
-        u_int32_t state = m_frequency_modulator->m_state.load();
+        uint32_t state = m_frequency_modulator->m_state.load();
         if (state & Utils::NodeState::PROCESSED) {
             effective_freq += m_frequency_modulator->get_last_output();
         } else {
@@ -111,7 +111,7 @@ double Impulse::process_sample(double input)
     double current_amplitude = m_amplitude;
     if (m_amplitude_modulator) {
         atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
-        u_int32_t state = m_amplitude_modulator->m_state.load();
+        uint32_t state = m_amplitude_modulator->m_state.load();
 
         if (state & Utils::NodeState::PROCESSED) {
             current_amplitude += m_amplitude_modulator->get_last_output();
