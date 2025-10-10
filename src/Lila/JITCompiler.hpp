@@ -1,10 +1,7 @@
 #pragma once
 
-#include <atomic>
+#include "SymbolRegistry.hpp"
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace Lila {
 
@@ -22,6 +19,8 @@ public:
 
     std::string get_last_error() const { return m_last_error; }
 
+    const SymbolRegistry& get_symbol_registry() const { return m_symbol_registry; }
+
 private:
     std::unique_ptr<llvm::orc::LLJIT> m_jit;
     std::atomic<int> m_version_counter { 0 };
@@ -32,6 +31,8 @@ private:
     std::vector<std::string> m_system_include_paths;
 
     std::vector<std::string> m_loaded_libraries;
+
+    SymbolRegistry m_symbol_registry;
 
     bool compile_to_ir(const std::string& cpp_code,
         const std::string& output_ir_path);

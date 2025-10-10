@@ -10,6 +10,8 @@ set(LILA_SOURCES
 
 set(LILA_HEADERS
     JITCompiler.hpp
+    SimpleSymbolParser.hpp
+    SymbolRegistry.hpp
     Lila.hpp
     pch.h
     config.h

@@ -1,14 +1,16 @@
 #include "JITCompiler.hpp"
+#include "SimpleSymbolParser.hpp"
+
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
+#include <sstream>
+
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/TargetSelect.h>
-#include <sstream>
 
 namespace Lila {
 
@@ -156,6 +158,9 @@ std::string JITCompiler::generate_unique_name(const std::string& base_name)
 std::string JITCompiler::wrap_user_code(const std::string& user_code,
     const std::string& unique_entry_point)
 {
+    size_t current_version = m_version_counter.load();
+    std::string namespace_name = "__live_v" + std::to_string(current_version);
+
     std::vector<std::string> includes;
     std::string remaining_code;
 
@@ -173,21 +178,60 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
         }
     }
 
+    auto declarations = SimpleSymbolParser::parse_declarations(remaining_code);
+
     std::string wrapped;
+
+    wrapped += "#include \"MayaFlux/MayaFlux.hpp\"\n\n";
 
     for (const auto& inc : includes) {
         wrapped += inc + "\n";
     }
     wrapped += "\n";
 
-    wrapped += "extern \"C\" void " + unique_entry_point + "() {\n";
+    for (const auto& [name, symbol] : m_symbol_registry.get_symbols()) {
+        wrapped += "namespace " + symbol.namespace_name + " {\n";
+        wrapped += "    extern " + symbol.type + " " + symbol.name + ";\n";
+        wrapped += "}\n";
+    }
+    if (!m_symbol_registry.get_symbols().empty()) {
+        wrapped += "\n";
+    }
 
+    if (!declarations.empty()) {
+        wrapped += "namespace " + namespace_name + " {\n";
+        for (const auto& decl : declarations) {
+            wrapped += "    " + decl.type + " " + decl.name + " {};\n";
+        }
+        wrapped += "}\n\n";
+    }
+
+    for (const auto& decl : declarations) {
+        std::cout << "Registered symbol: " << decl.type << " " << decl.name << "\n";
+        m_symbol_registry.add_symbol(decl.name, decl.type, namespace_name, current_version);
+    }
+
+    wrapped += "extern \"C\" void " + unique_entry_point + "() {\n";
     wrapped += "MayaFlux::register_container_context_operations();\n";
     wrapped += "MayaFlux::register_all_buffers();\n";
     wrapped += "MayaFlux::register_all_nodes();\n";
 
-    wrapped += remaining_code;
+    for (const auto& [name, symbol] : m_symbol_registry.get_symbols()) {
+        wrapped += "using " + symbol.namespace_name + "::" + symbol.name + ";\n";
+    }
+
+    std::string transformed_code = remaining_code;
+    for (const auto& decl : declarations) {
+        std::regex decl_pattern("\\b" + decl.type + "\\s+" + decl.name + "\\s*=");
+        transformed_code = std::regex_replace(transformed_code, decl_pattern, decl.name + " =");
+    }
+
+    wrapped += transformed_code;
     wrapped += "\n}\n";
+
+    std::cout << "\n=== WRAPPED CODE (v" << current_version << ") ===\n";
+    std::cout << wrapped << "\n";
+    std::cout << "=== END WRAPPED CODE ===\n\n";
 
     return wrapped;
 }
@@ -196,6 +240,7 @@ bool JITCompiler::compile_to_ir(const std::string& cpp_code,
     const std::string& output_ir_path)
 {
     std::string cpp_path = "/tmp/lila_temp.cpp";
+
     std::ofstream cpp_file(cpp_path);
     if (!cpp_file) {
         m_last_error = "Failed to write temp C++ file";
@@ -205,7 +250,6 @@ bool JITCompiler::compile_to_ir(const std::string& cpp_code,
     cpp_file.close();
 
     std::string cmd = "clang++ -S -emit-llvm -O2 -std=c++23 ";
-
     cmd += "-DMAYASIMPLE ";
 
     std::string found_pch_path;
@@ -216,7 +260,6 @@ bool JITCompiler::compile_to_ir(const std::string& cpp_code,
         if (std::filesystem::exists(potential_path)) {
             found_pch_path = potential_path;
             pch_found = true;
-            std::cout << "Found PCH at: " << found_pch_path << "\n";
             break;
         }
     }
@@ -236,6 +279,9 @@ bool JITCompiler::compile_to_ir(const std::string& cpp_code,
     }
 
     cmd += cpp_path + " -o " + output_ir_path + " 2>&1";
+
+    std::cout << "Complete clang command:\n"
+              << cmd << "\n";
 
     int result = std::system(cmd.c_str());
     if (result != 0) {
