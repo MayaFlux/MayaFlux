@@ -42,6 +42,8 @@ private:
         const std::string& unique_entry_point);
 
     void detect_system_includes();
+
+    std::string m_pch_path;
 };
 
 } // namespace Lila

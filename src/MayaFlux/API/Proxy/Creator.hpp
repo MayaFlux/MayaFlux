@@ -147,26 +147,30 @@ class ContextAppliers {
 public:
     static auto& get_node_context_applier()
     {
-        static std::function<void(std::shared_ptr<Nodes::Node>, const CreationContext&)> applier;
-        return applier;
+        // static std::function<void(std::shared_ptr<Nodes::Node>, const CreationContext&)> applier;
+        // return applier;
+        return s_node_applier;
     }
 
     static auto& get_buffer_context_applier()
     {
-        static std::function<void(std::shared_ptr<Buffers::Buffer>, const CreationContext&)> applier;
-        return applier;
+        // static std::function<void(std::shared_ptr<Buffers::Buffer>, const CreationContext&)> applier;
+        // return applier;
+        return s_buffer_applier;
     }
 
     static auto& get_container_context_applier()
     {
-        static std::function<void(std::shared_ptr<Kakshya::SoundFileContainer>, const CreationContext&)> applier;
-        return applier;
+        // static std::function<void(std::shared_ptr<Kakshya::SoundFileContainer>, const CreationContext&)> applier;
+        // return applier;
+        return s_container_applier;
     }
 
     static auto& get_container_loader()
     {
-        static std::function<std::shared_ptr<Kakshya::SoundFileContainer>(const std::string&)> loader;
-        return loader;
+        // static std::function<std::shared_ptr<Kakshya::SoundFileContainer>(const std::string&)> loader;
+        // return loader;
+        return s_loader;
     }
 
     static void set_node_context_applier(std::function<void(std::shared_ptr<Nodes::Node>, const CreationContext&)> applier)
@@ -188,6 +192,13 @@ public:
     {
         get_container_loader() = std::move(loader);
     }
+
+    // Workaround for JIT:
+private:
+    static std::function<void(std::shared_ptr<Nodes::Node>, const CreationContext&)> s_node_applier;
+    static std::function<void(std::shared_ptr<Buffers::Buffer>, const CreationContext&)> s_buffer_applier;
+    static std::function<void(std::shared_ptr<Kakshya::SoundFileContainer>, const CreationContext&)> s_container_applier;
+    static std::function<std::shared_ptr<Kakshya::SoundFileContainer>(const std::string&)> s_loader;
 };
 
 template <typename T>

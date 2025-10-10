@@ -26,6 +26,8 @@ JITCompiler::JITCompiler()
         "./install/lib",
     };
 
+    m_pch_path = "/Lila/pch.h";
+
     for (const auto& path : possible_include_paths) {
         if (std::filesystem::exists(path)) {
             m_include_paths.push_back(path);
@@ -173,43 +175,17 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
 
     std::string wrapped;
 
-    wrapped += "#include <algorithm>\n";
-    wrapped += "#include <any>\n";
-    wrapped += "#include <atomic>\n";
-    wrapped += "#include <deque>\n";
-    wrapped += "#include <exception>\n";
-    wrapped += "#include <functional>\n";
-    wrapped += "#include <iostream>\n";
-    wrapped += "#include <list>\n";
-    wrapped += "#include <map>\n";
-    wrapped += "#include <memory>\n";
-    wrapped += "#include <mutex>\n";
-    wrapped += "#include <numbers>\n";
-    wrapped += "#include <numeric>\n";
-    wrapped += "#include <optional>\n";
-    wrapped += "#include <ranges>\n";
-    wrapped += "#include <shared_mutex>\n";
-    wrapped += "#include <span>\n";
-    wrapped += "#include <string>\n";
-    wrapped += "#include <thread>\n";
-    wrapped += "#include <unordered_map>\n";
-    wrapped += "#include <unordered_set>\n";
-    wrapped += "#include <utility>\n";
-    wrapped += "#include <variant>\n";
-    wrapped += "#include <vector>\n";
-    wrapped += "#include <cassert>\n";
-    wrapped += "#include <cmath>\n";
-    wrapped += "#include <complex>\n";
-    wrapped += "#include <cstdint>\n";
-    wrapped += "#include <cstring>\n";
-    wrapped += "\n";
-
     for (const auto& inc : includes) {
         wrapped += inc + "\n";
     }
     wrapped += "\n";
 
     wrapped += "extern \"C\" void " + unique_entry_point + "() {\n";
+
+    wrapped += "MayaFlux::register_container_context_operations();\n";
+    wrapped += "MayaFlux::register_all_buffers();\n";
+    wrapped += "MayaFlux::register_all_nodes();\n";
+
     wrapped += remaining_code;
     wrapped += "\n}\n";
 
@@ -228,7 +204,28 @@ bool JITCompiler::compile_to_ir(const std::string& cpp_code,
     cpp_file << cpp_code;
     cpp_file.close();
 
-    std::string cmd = "clang++ -S -emit-llvm -O2 -std=c++20 ";
+    std::string cmd = "clang++ -S -emit-llvm -O2 -std=c++23 ";
+
+    cmd += "-DMAYASIMPLE ";
+
+    std::string found_pch_path;
+    bool pch_found = false;
+
+    for (const auto& inc_path : m_include_paths) {
+        std::string potential_path = inc_path + m_pch_path;
+        if (std::filesystem::exists(potential_path)) {
+            found_pch_path = potential_path;
+            pch_found = true;
+            std::cout << "Found PCH at: " << found_pch_path << "\n";
+            break;
+        }
+    }
+
+    if (pch_found) {
+        cmd += "-include " + found_pch_path + " ";
+    } else {
+        std::cerr << "Warning: PCH file (pch.h) not found in any include path.\n";
+    }
 
     for (const auto& inc : m_system_include_paths) {
         cmd += "-isystem " + inc + " ";

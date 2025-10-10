@@ -11,6 +11,8 @@
 
 namespace MayaFlux {
 
+class CreationContext;
+
 namespace IO {
     class SoundFileReader;
 }
@@ -41,6 +43,10 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
  * Multiple containers can be connected simultaneously for layered playback.
  */
 void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container);
+
+void hook_sound_container_to_buffers_with_context(
+    std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container,
+    const CreationContext& context);
 
 /**
  * @brief Registers container context operations for the Creator proxy system

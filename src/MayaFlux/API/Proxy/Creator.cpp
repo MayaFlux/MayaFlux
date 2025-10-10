@@ -2,6 +2,11 @@
 
 namespace MayaFlux {
 
+std::function<void(std::shared_ptr<Nodes::Node>, const CreationContext&)> ContextAppliers::s_node_applier;
+std::function<void(std::shared_ptr<Buffers::Buffer>, const CreationContext&)> ContextAppliers::s_buffer_applier;
+std::function<void(std::shared_ptr<Kakshya::SoundFileContainer>, const CreationContext&)> ContextAppliers::s_container_applier;
+std::function<std::shared_ptr<Kakshya::SoundFileContainer>(const std::string&)> ContextAppliers::s_loader;
+
 auto CreationProxy::read(const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer>
 {
     auto container = create_container_impl(filepath);

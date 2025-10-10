@@ -11,6 +11,8 @@ set(LILA_SOURCES
 set(LILA_HEADERS
     JITCompiler.hpp
     Lila.hpp
+    pch.h
+    config.h
 )
 
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
@@ -55,7 +57,7 @@ target_link_libraries(Lila PUBLIC MayaFluxLib)
 set_target_properties(Lila PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
-    CXX_STANDARD 20
+    CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
 )
 

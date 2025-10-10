@@ -1,7 +1,7 @@
 install(TARGETS MayaFluxLib DESTINATION lib)
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
-        DESTINATION include
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/
+        DESTINATION include/MayaFlux
         FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h")
 
 configure_file(

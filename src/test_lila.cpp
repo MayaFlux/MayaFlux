@@ -7,9 +7,6 @@
 
 int main()
 {
-    std::cout << "Initializing MayaFlux...\n";
-    MayaFlux::Init(48000, 512, 2, 2);
-
     std::cout << "Initializing Lila...\n";
     Lila::Lila lila;
     if (!lila.initialize()) {
@@ -19,46 +16,33 @@ int main()
 
     std::cout << "\n=== Test 1: Access MayaFlux API ===\n";
     const char* test1 = R"(
-        #define MAYASIMPLE
         #include "MayaFlux/MayaFlux.hpp"
-        #include "MayaFlux/Nodes/Generators/Sine.hpp"
-        #include "MayaFlux/API/Proxy/Creator.hpp"
-        #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
-        #include "MayaFlux/Core/Windowing/WindowManager.hpp"
-        #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 
-        using namespace MayaFlux;
-
-
-        MayaFlux::register_container_context_operations();
-        MayaFlux::register_all_buffers();
-        MayaFlux::register_all_nodes();
         MayaFlux::Init();
         
         std::cout << "Sample rate: " << MayaFlux::Config::get_sample_rate() << "\n";
         std::cout << "Buffer size: " << MayaFlux::Config::get_buffer_size() << "\n";
         std::cout << "Output channels: " << MayaFlux::Config::get_num_out_channels() << "\n";
+
         MayaFlux::Start();
 
-        // auto node = vega.sine(440.f, 0.1f)[0] | Audio;
-        // MayaFlux::register_audio_node(node, 0);
-        // auto node = MayaFlux::create_node<MayaFlux::Nodes::Generator::Sine>();
-        // for (int i = 0; i < 10; ++i) {
-        //     std::cout << "Sine output [" << i << "]: " << node->process_sample(0.) << "\n";
-        // }
+        //auto container = vega.read("res/audio.wav") | Audio;
+
+         auto node = vega.sine(440.f, 0.1f)[0] | Audio;
+
         // MayaFlux::schedule_metro(1.0, []() {
         //     std::cout << "Metro tick!\n";
         // }); 
 
-        auto main_window = MayaFlux::create_window({ .title = "Main Output",
-            .width = 1920,
-            .height = 1080 });
+        // auto main_window = MayaFlux::create_window({ .title = "Main Output",
+        //     .width = 1920,
+        //     .height = 1080 });
 
-        main_window->show();
+        // main_window->show();
 
         std::cin.get();
 
-        MayaFlux::End();
+        //MayaFlux::End();
     )";
 
     if (lila.eval(test1)) {
