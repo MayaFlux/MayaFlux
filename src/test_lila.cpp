@@ -39,6 +39,10 @@ int main()
             .width = 1920,
             .height = 1080 });
         main_window->show();
+        // std::shared_ptr<Phasor> phasor = std::make_shared<Phasor>(10, 100.0f);
+        std::shared_ptr<Phasor> phasor = std::make_shared<Phasor>(10000, 0.7f);
+        phasor * node;
+        // node->set_frequency_modulator(phasor);
     )");
 
     if (!success) {
@@ -48,7 +52,6 @@ int main()
 
     std::cout << "\n========== TEST 3: Create another generator ==========\n";
     success = lila.eval(R"(
-        std::shared_ptr<Phasor> phasor = std::make_shared<Phasor>(220.0f);
         std::cout << "Created phasor at 220Hz\n";
         std::cout << "Sine and phasor both exist!\n";
         MayaFlux::End();

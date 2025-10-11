@@ -1,10 +1,10 @@
 #include "JITCompiler.hpp"
 #include "ClangSymbolParser.hpp"
-#include "regex"
 
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <regex>
 #include <sstream>
 
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
@@ -171,7 +171,7 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
         std::string trimmed = line;
         trimmed.erase(0, trimmed.find_first_not_of(" \t"));
 
-        if (trimmed.substr(0, 8) == "#include") {
+        if (trimmed.starts_with("#include")) {
             includes.push_back(line);
         } else {
             remaining_code += line + "\n";
@@ -185,6 +185,14 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
         for (const auto& inc : includes) {
             parse_out << inc << "\n";
         }
+
+        for (const auto& [name, symbol] : m_symbol_registry.get_symbols()) {
+            parse_out << "namespace " << symbol.namespace_name << " {\n";
+            parse_out << "    extern " << symbol.type << " " << symbol.name << ";\n";
+            parse_out << "}\n";
+            parse_out << "using " << symbol.namespace_name << "::" << symbol.name << ";\n";
+        }
+
         parse_out << "\nvoid __clang_parse_func() {\n";
         parse_out << remaining_code;
         parse_out << "\n}\n";
@@ -192,22 +200,22 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
     }
 
     std::vector<std::string> clang_compile_args;
-    clang_compile_args.push_back("-std=c++23");
-    clang_compile_args.push_back("-DMAYASIMPLE");
+    clang_compile_args.emplace_back("-std=c++23");
+    clang_compile_args.emplace_back("-DMAYASIMPLE");
 
     std::string found_pch_path;
     for (const auto& inc_path : m_include_paths) {
         std::string potential_path = inc_path + m_pch_path;
         if (std::filesystem::exists(potential_path)) {
             found_pch_path = potential_path;
-            clang_compile_args.push_back("-include");
+            clang_compile_args.emplace_back("-include");
             clang_compile_args.push_back(found_pch_path);
             break;
         }
     }
 
     for (const auto& inc : m_system_include_paths) {
-        clang_compile_args.push_back("-isystem");
+        clang_compile_args.emplace_back("-isystem");
         clang_compile_args.push_back(inc);
     }
 
