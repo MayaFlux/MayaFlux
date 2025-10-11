@@ -5,7 +5,8 @@ namespace Lila {
 struct Declaration {
     std::string type;
     std::string name;
-    bool has_initializer = false;
+    bool has_initializer {};
+    bool requires_type_deduction {};
 };
 
 /**

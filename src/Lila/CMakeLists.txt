@@ -11,12 +11,16 @@ add_definitions(${CLANG_DEFINITIONS})
 set(LILA_SOURCES
     Lila.cpp
     JITCompiler.cpp
+    ClangSymbolParser.cpp
+    SymbolActions.cpp
 )
 
 set(LILA_HEADERS
     JITCompiler.hpp
     SimpleSymbolParser.hpp
     SymbolRegistry.hpp
+    ClangSymbolParser.hpp
+    SymbolActions.hpp
     Lila.hpp
     pch.h
     config.h

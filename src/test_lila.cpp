@@ -14,16 +14,17 @@ int main()
     bool success = lila.eval(R"(
         MayaFlux::Init();
         std::cout << MayaFlux::Config::get_sample_rate() << " Hz sample rate\n";
-        // auto node = std::make_shared<Sine>(440.0f, 0.1);
-        std::cout << "Created sine generator at 440Hz\n";
+        auto node = std::make_shared<Sine>(440.0f, 0.1);
+        // std::cout << "Created sine generator at 440Hz\n";
         MayaFlux::Start();
-        std::shared_ptr<Sine> node = vega.sine(440.0f, 0.1f)[0] | Audio;
+        // auto node = vega.sine(440.0f, 0.1f)[0] | Audio;
+        // std::shared_ptr<Sine> node = vega.sine(440.0f, 0.1f)[0] | Audio;
         MayaFlux::schedule_metro(0.3, []() {
             std::cout << "Metro tick!\n";
         });
-        // MayaFlux::register_audio_node(node);
         // node >> Kriya::DAC::instance();
-        //std::shared_ptr<Kakshya::SoundFileContainer> container = vega.read("res/audio.wav") | Audio;
+        // std::shared_ptr<Kakshya::SoundFileContainer> container = vega.read("res/audio.wav") | Audio;
+        auto container = vega.read("res/audio.wav") | Audio;
     )");
 
     if (!success) {

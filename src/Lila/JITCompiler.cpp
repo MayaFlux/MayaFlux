@@ -225,6 +225,27 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
 
     auto declarations = ClangSymbolParser::parse_from_file(parse_file, clang_compile_args);
 
+    std::vector<Declaration> final_declarations;
+    for (auto& decl : declarations) {
+        if (decl.requires_type_deduction) {
+            std::cout << "Attempting to deduce type for auto variable: " << decl.name << "\n";
+
+            std::string deduced_type = ClangSymbolParser::deduce_auto_type(
+                parse_file, decl.name, clang_compile_args);
+
+            if (!deduced_type.empty()) {
+                std::cout << "Successfully deduced type: " << deduced_type
+                          << " for variable: " << decl.name << "\n";
+                decl.type = deduced_type;
+                decl.requires_type_deduction = false;
+            } else {
+                std::cout << "Warning: Could not deduce type for auto variable: " << decl.name << "\n";
+            }
+        }
+        final_declarations.push_back(decl);
+    }
+    declarations = std::move(final_declarations);
+
     std::string wrapped;
 
     wrapped += "#include \"MayaFlux/MayaFlux.hpp\"\n\n";
@@ -267,12 +288,15 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
 
     std::string transformed_code = remaining_code;
     for (const auto& decl : declarations) {
+        std::regex auto_pattern("\\bauto\\s+" + decl.name + "\\s*=");
+        transformed_code = std::regex_replace(transformed_code, auto_pattern, decl.name + " =");
+
         std::string escaped_type = std::regex_replace(
             decl.type,
             std::regex(R"([\[\]\(\)\*\+\?\{\}\|\^\$\.])"),
             R"(\$&)");
-        std::regex decl_pattern("\\b" + escaped_type + "\\s+" + decl.name + "\\s*=");
-        transformed_code = std::regex_replace(transformed_code, decl_pattern, decl.name + " =");
+        std::regex type_pattern("\\b" + escaped_type + "\\s+" + decl.name + "\\s*=");
+        transformed_code = std::regex_replace(transformed_code, type_pattern, decl.name + " =");
     }
 
     wrapped += transformed_code;
