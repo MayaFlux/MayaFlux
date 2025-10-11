@@ -1,5 +1,6 @@
 #include "JITCompiler.hpp"
-#include "SimpleSymbolParser.hpp"
+#include "ClangSymbolParser.hpp"
+#include "regex"
 
 #include <cstdlib>
 #include <filesystem>
@@ -15,6 +16,7 @@
 namespace Lila {
 
 JITCompiler::JITCompiler()
+    : m_pch_path("/Lila/pch.h")
 {
     std::vector<std::string> possible_include_paths = {
         "/usr/local/include",
@@ -27,8 +29,6 @@ JITCompiler::JITCompiler()
         "/usr/lib",
         "./install/lib",
     };
-
-    m_pch_path = "/Lila/pch.h";
 
     for (const auto& path : possible_include_paths) {
         if (std::filesystem::exists(path)) {
@@ -178,7 +178,44 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
         }
     }
 
-    auto declarations = SimpleSymbolParser::parse_declarations(remaining_code);
+    std::string parse_file = "/tmp/lila_parse_temp.cpp";
+    {
+        std::ofstream parse_out(parse_file);
+        parse_out << "#include \"MayaFlux/MayaFlux.hpp\"\n\n";
+        for (const auto& inc : includes) {
+            parse_out << inc << "\n";
+        }
+        parse_out << "\nvoid __clang_parse_func() {\n";
+        parse_out << remaining_code;
+        parse_out << "\n}\n";
+        parse_out.close();
+    }
+
+    std::vector<std::string> clang_compile_args;
+    clang_compile_args.push_back("-std=c++23");
+    clang_compile_args.push_back("-DMAYASIMPLE");
+
+    std::string found_pch_path;
+    for (const auto& inc_path : m_include_paths) {
+        std::string potential_path = inc_path + m_pch_path;
+        if (std::filesystem::exists(potential_path)) {
+            found_pch_path = potential_path;
+            clang_compile_args.push_back("-include");
+            clang_compile_args.push_back(found_pch_path);
+            break;
+        }
+    }
+
+    for (const auto& inc : m_system_include_paths) {
+        clang_compile_args.push_back("-isystem");
+        clang_compile_args.push_back(inc);
+    }
+
+    for (const auto& inc : m_include_paths) {
+        clang_compile_args.push_back("-I" + inc);
+    }
+
+    auto declarations = ClangSymbolParser::parse_from_file(parse_file, clang_compile_args);
 
     std::string wrapped;
 
@@ -207,7 +244,7 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
     }
 
     for (const auto& decl : declarations) {
-        std::cout << "Registered symbol: " << decl.type << " " << decl.name << "\n";
+        // std::cout << "Registered symbol: " << decl.type << " " << decl.name << "\n";
         m_symbol_registry.add_symbol(decl.name, decl.type, namespace_name, current_version);
     }
 
@@ -222,7 +259,11 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
 
     std::string transformed_code = remaining_code;
     for (const auto& decl : declarations) {
-        std::regex decl_pattern("\\b" + decl.type + "\\s+" + decl.name + "\\s*=");
+        std::string escaped_type = std::regex_replace(
+            decl.type,
+            std::regex(R"([\[\]\(\)\*\+\?\{\}\|\^\$\.])"),
+            R"(\$&)");
+        std::regex decl_pattern("\\b" + escaped_type + "\\s+" + decl.name + "\\s*=");
         transformed_code = std::regex_replace(transformed_code, decl_pattern, decl.name + " =");
     }
 

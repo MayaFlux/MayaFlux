@@ -3,6 +3,11 @@ if(NOT LLVM_FOUND)
     return()
 endif()
 
+find_package(Clang REQUIRED CONFIG)
+
+include_directories(${CLANG_INCLUDE_DIRS})
+add_definitions(${CLANG_DEFINITIONS})
+
 set(LILA_SOURCES
     Lila.cpp
     JITCompiler.cpp
@@ -53,6 +58,8 @@ target_link_libraries(Lila PUBLIC
     ${LLVM_LIBS}
     ${LLVM_SYSTEM_LIBS}
 )
+
+target_link_libraries(Lila PRIVATE clang-cpp)
 
 target_link_libraries(Lila PUBLIC MayaFluxLib)
 

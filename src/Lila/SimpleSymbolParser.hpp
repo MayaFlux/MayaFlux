@@ -1,4 +1,5 @@
 #pragma once
+#include "SymbolRegistry.hpp"
 
 #include <regex>
 
@@ -12,12 +13,6 @@ namespace Lila {
  */
 class SimpleSymbolParser {
 public:
-    struct Declaration {
-        std::string type;
-        std::string name;
-        bool has_initializer {};
-    };
-
     /**
      * @brief Parse simple variable declarations from code
      *

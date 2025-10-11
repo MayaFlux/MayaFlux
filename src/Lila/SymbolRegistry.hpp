@@ -2,6 +2,12 @@
 
 namespace Lila {
 
+struct Declaration {
+    std::string type;
+    std::string name;
+    bool has_initializer = false;
+};
+
 /**
  * @brief Tracks symbols declared in live coding sessions
  *

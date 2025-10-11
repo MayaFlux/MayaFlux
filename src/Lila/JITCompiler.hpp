@@ -12,7 +12,7 @@ public:
 
     bool initialize();
 
-    bool load_library(const std::string& library_path);
+    bool load_library(const std::string& library_name);
 
     bool compile_and_execute(const std::string& cpp_source,
         const std::string& entry_point = "live_reload");
