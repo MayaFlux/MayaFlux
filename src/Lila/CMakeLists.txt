@@ -13,6 +13,7 @@ set(LILA_SOURCES
     JITCompiler.cpp
     ClangSymbolParser.cpp
     SymbolActions.cpp
+    Server.cpp
 )
 
 set(LILA_HEADERS
@@ -24,6 +25,7 @@ set(LILA_HEADERS
     Lila.hpp
     pch.h
     config.h
+    Server.hpp
 )
 
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})

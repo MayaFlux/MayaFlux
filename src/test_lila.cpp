@@ -13,18 +13,18 @@ int main()
     std::cout << "\n========== TEST 1: Create a Sine generator ==========\n";
     bool success = lila.eval(R"(
         MayaFlux::Init();
-        std::cout << MayaFlux::Config::get_sample_rate() << " Hz sample rate\n";
-        auto node = std::make_shared<Sine>(440.0f, 0.1);
+        // std::cout << MayaFlux::Config::get_sample_rate() << " Hz sample rate\n";
+        // auto node = std::make_shared<Sine>(440.0f, 0.1);
         // std::cout << "Created sine generator at 440Hz\n";
         MayaFlux::Start();
         // auto node = vega.sine(440.0f, 0.1f)[0] | Audio;
-        // std::shared_ptr<Sine> node = vega.sine(440.0f, 0.1f)[0] | Audio;
-        MayaFlux::schedule_metro(0.3, []() {
+        std::shared_ptr<Sine> node = vega.sine(440.0f, 0.1f)[0] | Audio;
+        MayaFlux::schedule_metro(1, []() {
             std::cout << "Metro tick!\n";
         });
         // node >> Kriya::DAC::instance();
         // std::shared_ptr<Kakshya::SoundFileContainer> container = vega.read("res/audio.wav") | Audio;
-        auto container = vega.read("res/audio.wav") | Audio;
+        // auto container = vega.read("res/audio.wav") | Audio;
     )");
 
     if (!success) {
@@ -36,10 +36,10 @@ int main()
     success = lila.eval(R"(
         node->set_frequency(880.0f);
         std::cout << "Changed sine to 880Hz\n";
-        std::shared_ptr<MayaFlux::Core::Window> main_window = MayaFlux::create_window({ .title = "Main Output",
-            .width = 1920,
-            .height = 1080 });
-        main_window->show();
+        // std::shared_ptr<MayaFlux::Core::Window> main_window = MayaFlux::create_window({ .title = "Main Output",
+        //     .width = 1920,
+        //     .height = 1080 });
+        // main_window->show();
         // std::shared_ptr<Phasor> phasor = std::make_shared<Phasor>(10, 100.0f);
         std::shared_ptr<Phasor> phasor = std::make_shared<Phasor>(10000, 0.7f);
         phasor * node;

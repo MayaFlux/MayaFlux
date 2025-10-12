@@ -17,6 +17,8 @@ namespace Lila {
 
 JITCompiler::JITCompiler()
     : m_pch_path("/Lila/pch.h")
+    , m_pch_source_path("/usr/local/include/" + m_pch_path)
+    , m_pch_binary_path("/tmp/lila_pch.pch")
 {
     std::vector<std::string> possible_include_paths = {
         "/usr/local/include",
@@ -61,13 +63,11 @@ void JITCompiler::detect_system_includes()
 
         if (!path.empty() && std::filesystem::exists(path)) {
             m_system_include_paths.push_back(path);
-            std::cout << "Found system include: " << path << "\n";
+            // std::cout << "Found system include: " << path << "\n";
         }
     }
     pclose(pipe);
 }
-
-JITCompiler::~JITCompiler() = default;
 
 bool JITCompiler::initialize()
 {
@@ -99,6 +99,10 @@ bool JITCompiler::initialize()
     if (!load_library("libMayaFluxLib.so")) {
         std::cerr << "Warning: Failed to load MayaFlux library: "
                   << m_last_error << "\n";
+    }
+
+    if (!build_precompiled_header()) {
+        std::cerr << "Warning: PCH build failed, falling back to regular includes\n";
     }
 
     return true;
@@ -203,14 +207,20 @@ std::string JITCompiler::wrap_user_code(const std::string& user_code,
     clang_compile_args.emplace_back("-std=c++23");
     clang_compile_args.emplace_back("-DMAYASIMPLE");
 
-    std::string found_pch_path;
-    for (const auto& inc_path : m_include_paths) {
-        std::string potential_path = inc_path + m_pch_path;
-        if (std::filesystem::exists(potential_path)) {
-            found_pch_path = potential_path;
-            clang_compile_args.emplace_back("-include");
-            clang_compile_args.push_back(found_pch_path);
-            break;
+    if (m_pch_available && std::filesystem::exists(m_pch_binary_path)) {
+        clang_compile_args.emplace_back("-include-pch");
+        clang_compile_args.push_back(m_pch_binary_path);
+        std::cout << "Using PCH for faster parsing\n";
+    } else {
+        std::string found_pch_path;
+        for (const auto& inc_path : m_include_paths) {
+            std::string potential_path = inc_path + m_pch_path;
+            if (std::filesystem::exists(potential_path)) {
+                found_pch_path = potential_path;
+                clang_compile_args.emplace_back("-include");
+                clang_compile_args.push_back(found_pch_path);
+                break;
+            }
         }
     }
 
@@ -322,25 +332,26 @@ bool JITCompiler::compile_to_ir(const std::string& cpp_code,
     cpp_file << cpp_code;
     cpp_file.close();
 
-    std::string cmd = "clang++ -S -emit-llvm -O2 -std=c++23 ";
+    // std::string cmd = "clang++ -S -emit-llvm -O2 -std=c++23 ";
+    std::string cmd = "clang++ -S -emit-llvm -std=c++23 ";
     cmd += "-DMAYASIMPLE ";
 
-    std::string found_pch_path;
-    bool pch_found = false;
-
-    for (const auto& inc_path : m_include_paths) {
-        std::string potential_path = inc_path + m_pch_path;
-        if (std::filesystem::exists(potential_path)) {
-            found_pch_path = potential_path;
-            pch_found = true;
-            break;
-        }
-    }
-
-    if (pch_found) {
-        cmd += "-include " + found_pch_path + " ";
+    if (m_pch_available && std::filesystem::exists(m_pch_binary_path)) {
+        cmd += "-include-pch " + m_pch_binary_path + " ";
+        std::cout << "Using PCH for faster compilation\n";
     } else {
-        std::cerr << "Warning: PCH file (pch.h) not found in any include path.\n";
+        std::string found_pch_path;
+        for (const auto& inc_path : m_include_paths) {
+            std::string potential_path = inc_path + m_pch_path;
+            if (std::filesystem::exists(potential_path)) {
+                found_pch_path = potential_path;
+                cmd += "-include " + found_pch_path + " ";
+                break;
+            }
+        }
+        if (found_pch_path.empty()) {
+            std::cerr << "Warning: PCH file not found in any include path\n";
+        }
     }
 
     for (const auto& inc : m_system_include_paths) {
@@ -413,4 +424,66 @@ bool JITCompiler::compile_and_execute(const std::string& cpp_source,
     return true;
 }
 
+bool JITCompiler::build_precompiled_header()
+{
+    if (is_pch_up_to_date()) {
+        std::cout << "Using existing PCH: " << m_pch_binary_path << "\n";
+        m_pch_available = true;
+        return true;
+    }
+
+    std::cout << "Building precompiled header...\n";
+
+    // std::string cmd = "clang++ -x c++-header -std=c++23 -O2";
+    std::string cmd = "clang++ -x c++-header -std=c++23";
+    cmd += "-DMAYASIMPLE ";
+
+    for (const auto& inc : m_system_include_paths) {
+        cmd += "-isystem " + inc + " ";
+    }
+    for (const auto& inc : m_include_paths) {
+        cmd += "-I" + inc + " ";
+    }
+
+    cmd += m_pch_source_path + " -o " + m_pch_binary_path + " 2>&1";
+
+    std::cout << "PCH build command:\n"
+              << cmd << "\n";
+
+    int result = std::system(cmd.c_str());
+    if (result != 0) {
+        std::cerr << "PCH compilation failed\n";
+        m_pch_available = false;
+        return false;
+    }
+
+    m_pch_available = true;
+    std::cout << "PCH built successfully: " << m_pch_binary_path << "\n";
+    return true;
+}
+
+bool JITCompiler::is_pch_up_to_date()
+{
+    if (!std::filesystem::exists(m_pch_binary_path)) {
+        return false;
+    }
+
+    auto pch_time = std::filesystem::last_write_time(m_pch_binary_path);
+    auto source_time = std::filesystem::last_write_time(m_pch_source_path);
+
+    std::vector<std::string> important_headers = {
+        "/usr/local/include/MayaFlux/MayaFlux.hpp",
+    };
+
+    for (const auto& header : important_headers) {
+        if (std::filesystem::exists(header)) {
+            auto header_time = std::filesystem::last_write_time(header);
+            if (header_time > pch_time) {
+                return false;
+            }
+        }
+    }
+
+    return (source_time <= pch_time);
+}
 } // namespace Lila

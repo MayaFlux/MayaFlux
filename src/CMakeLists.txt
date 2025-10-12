@@ -21,3 +21,13 @@ target_link_libraries(test_lila PRIVATE Lila MayaFluxLib)
 set_target_properties(test_lila PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
+
+add_executable(lila_server lila_server.cpp)
+target_link_libraries(lila_server PRIVATE
+    Lila
+    MayaFluxLib
+)
+
+set_target_properties(lila_server PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+)

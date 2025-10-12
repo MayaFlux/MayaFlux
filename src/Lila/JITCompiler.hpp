@@ -8,7 +8,7 @@ namespace Lila {
 class JITCompiler {
 public:
     JITCompiler();
-    ~JITCompiler();
+    ~JITCompiler() = default;
 
     bool initialize();
 
@@ -25,6 +25,11 @@ private:
     std::unique_ptr<llvm::orc::LLJIT> m_jit;
     std::atomic<int> m_version_counter { 0 };
     std::string m_last_error;
+    std::string m_pch_path;
+
+    std::string m_pch_source_path;
+    std::string m_pch_binary_path;
+    bool m_pch_available = false;
 
     std::vector<std::string> m_include_paths;
     std::vector<std::string> m_library_paths;
@@ -44,7 +49,9 @@ private:
 
     void detect_system_includes();
 
-    std::string m_pch_path;
+    bool build_precompiled_header();
+
+    bool is_pch_up_to_date();
 };
 
 } // namespace Lila
