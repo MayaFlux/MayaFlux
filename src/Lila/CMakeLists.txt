@@ -13,6 +13,7 @@ set(LILA_SOURCES
     JITCompiler.cpp
     ClangSymbolParser.cpp
     SymbolActions.cpp
+    ClangInterpreter.cpp
     Server.cpp
 )
 
@@ -20,6 +21,7 @@ set(LILA_HEADERS
     JITCompiler.hpp
     SimpleSymbolParser.hpp
     SymbolRegistry.hpp
+    ClangInterpreter.hpp
     ClangSymbolParser.hpp
     SymbolActions.hpp
     Lila.hpp

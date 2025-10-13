@@ -2,7 +2,8 @@
 
 namespace Lila {
 
-class JITCompiler;
+// class JITCompiler;
+class ClangInterpreter;
 
 class Lila {
 public:
@@ -20,7 +21,8 @@ public:
     void on_error(std::function<void(const std::string&)> callback);
 
 private:
-    std::unique_ptr<JITCompiler> m_compiler;
+    // std::unique_ptr<JITCompiler> m_compiler;
+    std::unique_ptr<ClangInterpreter> m_interpreter;
     std::function<void()> m_success_callback;
     std::function<void(const std::string&)> m_error_callback;
 };
