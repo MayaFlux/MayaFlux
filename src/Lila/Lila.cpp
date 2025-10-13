@@ -1,11 +1,9 @@
 #include "Lila.hpp"
 #include "ClangInterpreter.hpp"
-#include "JITCompiler.hpp"
 
 namespace Lila {
 
 Lila::Lila()
-    // : m_compiler(std::make_unique<JITCompiler>())
     : m_interpreter(std::make_unique<ClangInterpreter>())
 {
 }
@@ -14,13 +12,11 @@ Lila::~Lila() = default;
 
 bool Lila::initialize()
 {
-    // return m_compiler->initialize();
     return m_interpreter->initialize();
 }
 
 bool Lila::eval(const std::string& code)
 {
-    // bool success = m_compiler->compile_and_execute(code);
     auto success = m_interpreter->eval(code);
 
     if (success.success && m_success_callback) {
@@ -34,7 +30,6 @@ bool Lila::eval(const std::string& code)
 
 std::string Lila::get_last_error() const
 {
-    // return m_compiler->get_last_error();
     return m_interpreter->get_last_error();
 }
 
