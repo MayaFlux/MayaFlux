@@ -74,19 +74,19 @@ set_target_properties(Lila PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
-install(TARGETS Lila
+#[[ install(TARGETS Lila
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
-)
+) ]]
 
-install(FILES ${LILA_HEADERS}
+#[[ install(FILES ${LILA_HEADERS}
     DESTINATION include/Lila
-)
+) ]]
 
-install(FILES ${CMAKE_SOURCE_DIR}/cmake/pch.h
+#[[ install(FILES ${CMAKE_SOURCE_DIR}/cmake/pch.h
     DESTINATION share/lila/runtime
 )
 
 install(FILES ${CMAKE_SOURCE_DIR}/cmake/config.h
     DESTINATION share/lila/runtime
-)
+) ]]

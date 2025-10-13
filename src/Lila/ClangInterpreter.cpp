@@ -88,7 +88,7 @@ bool ClangInterpreter::initialize()
     std::cout << "Clang Interpreter initialized successfully\n";
 
     auto result = m_impl->interpreter->ParseAndExecute(
-        "#include \"Lila/pch.h\"\n"
+        "#include \"pch.h\"\n"
         "#include \"MayaFlux/MayaFlux.hpp\"\n");
     if (result) {
         std::cout << "Warning: Failed to load MayaFlux headers: "
