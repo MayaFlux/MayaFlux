@@ -57,8 +57,17 @@ bool ClangInterpreter::initialize()
 
     m_impl->compile_flags.push_back("-I" + pch_dir);
 
-    std::string resource_dir = "-resource-dir=/usr/lib/clang/20";
-    m_impl->compile_flags.push_back(resource_dir);
+    std::string resource_dir = MayaFlux::Platform::SystemConfig::get_clang_resource_dir();
+    if (!resource_dir.empty()) {
+        m_impl->compile_flags.push_back("-resource-dir=" + resource_dir);
+    } else {
+        m_impl->compile_flags.emplace_back("-resource-dir=/usr/lib/clang/20");
+    }
+
+    auto system_includes = MayaFlux::Platform::SystemConfig::get_system_includes();
+    for (const auto& include : system_includes) {
+        m_impl->compile_flags.push_back("-isystem" + include);
+    }
 
     for (const auto& path : m_impl->include_paths) {
         m_impl->compile_flags.push_back("-I" + path);
