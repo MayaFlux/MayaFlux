@@ -14,6 +14,8 @@ if(LLVM_FOUND)
     target_link_libraries(lila_server PRIVATE Lila MayaFluxLib)
     set_target_properties(lila_server PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        CXX_STANDARD 23
+        CXX_STANDARD_REQUIRED ON
     )
 else()
     message(STATUS "⚠️  Lila live coding library disabled (LLVM not found)")

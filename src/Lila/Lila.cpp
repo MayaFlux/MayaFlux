@@ -3,46 +3,59 @@
 #include "ClangInterpreter.hpp"
 #include "Server.hpp"
 
+#include "Commentator.hpp"
+
 namespace Lila {
 
 Lila::Lila()
     : m_interpreter(std::make_unique<ClangInterpreter>())
     , m_current_mode(OperationMode::Direct)
 {
+    LILA_DEBUG(Emitter::SYSTEM, "Lila instance created");
 }
 
 Lila::~Lila()
 {
     stop_server();
+    LILA_DEBUG(Emitter::SYSTEM, "Lila instance destroyed");
 }
 
 bool Lila::initialize(OperationMode mode, int server_port)
 {
+    LILA_INFO(Emitter::SYSTEM, "Initializing Lila");
     m_current_mode = mode;
 
     if (!initialize_interpreter()) {
+        LILA_ERROR(Emitter::SYSTEM, "Failed to initialize interpreter");
         return false;
     }
 
     if (mode == OperationMode::Server || mode == OperationMode::Both) {
         if (!initialize_server(server_port)) {
+            LILA_ERROR(Emitter::SYSTEM, "Failed to initialize server");
             return false;
         }
     }
 
+    LILA_INFO(Emitter::SYSTEM, "Lila initialized successfully");
     return true;
 }
 
 bool Lila::initialize_interpreter()
 {
+    LILA_DEBUG(Emitter::SYSTEM, "Initializing interpreter subsystem");
     return m_interpreter->initialize();
 }
 
 bool Lila::initialize_server(int port)
 {
     if (m_server && m_server->is_running()) {
+        LILA_WARN(Emitter::SYSTEM, "Stopping existing server before starting new one");
         stop_server();
     }
+
+    LILA_DEBUG(Emitter::SYSTEM,
+        std::string("Initializing server on port ") + std::to_string(port));
 
     m_server = std::make_unique<Server>(port);
 
@@ -57,9 +70,11 @@ bool Lila::initialize_server(int port)
 std::string Lila::handle_server_message(const std::string& message)
 {
     if (message.empty()) {
+        LILA_WARN(Emitter::SERVER, "Received empty message");
         return R"({"status":"error","message":"Empty message"})";
     }
 
+    LILA_DEBUG(Emitter::SYSTEM, "Processing server message");
     auto result = m_interpreter->eval(message);
 
     if (result.success) {
@@ -78,6 +93,7 @@ std::string Lila::handle_server_message(const std::string& message)
 bool Lila::eval(const std::string& code)
 {
     if (!m_interpreter) {
+        LILA_ERROR(Emitter::SYSTEM, "Cannot eval: interpreter not initialized");
         return false;
     }
 
@@ -95,6 +111,7 @@ bool Lila::eval(const std::string& code)
 bool Lila::eval_file(const std::string& filepath)
 {
     if (!m_interpreter) {
+        LILA_ERROR(Emitter::SYSTEM, "Cannot eval file: interpreter not initialized");
         return false;
     }
 
@@ -104,12 +121,16 @@ bool Lila::eval_file(const std::string& filepath)
 
 void Lila::start_server(int port)
 {
+    LILA_INFO(Emitter::SYSTEM,
+        std::string("Starting server on port ") + std::to_string(port));
+
     initialize_server(port);
 }
 
 void Lila::stop_server()
 {
     if (m_server) {
+        LILA_INFO(Emitter::SYSTEM, "Stopping server");
         m_server->stop();
         m_server.reset();
     }
@@ -147,17 +168,20 @@ void Lila::add_compile_flag(const std::string& flag)
 void Lila::on_success(std::function<void()> callback)
 {
     m_success_callback = std::move(callback);
+    LILA_DEBUG(Emitter::SYSTEM, "Success callback registered");
 }
 
 void Lila::on_error(std::function<void(const std::string&)> callback)
 {
     m_error_callback = std::move(callback);
+    LILA_DEBUG(Emitter::SYSTEM, "Error callback registered");
 }
 
 void Lila::on_server_client_connected(std::function<void(int)> callback)
 {
     if (m_server) {
         m_server->on_client_connected(std::move(callback));
+        LILA_DEBUG(Emitter::SYSTEM, "Client connected callback registered");
     }
 }
 
@@ -165,6 +189,7 @@ void Lila::on_server_client_disconnected(std::function<void(int)> callback)
 {
     if (m_server) {
         m_server->on_client_disconnected(std::move(callback));
+        LILA_DEBUG(Emitter::SYSTEM, "Client disconnected callback registered");
     }
 }
 

@@ -1,5 +1,7 @@
 #include "ClangInterpreter.hpp"
 
+#include "Commentator.hpp"
+
 #include "LilaConfig.hpp"
 
 #include <clang/Frontend/CompilerInstance.h>
@@ -35,6 +37,8 @@ ClangInterpreter::~ClangInterpreter()
 
 bool ClangInterpreter::initialize()
 {
+    LILA_INFO(Emitter::INTERPRETER, "Initializing Clang interpreter");
+
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
@@ -46,12 +50,17 @@ bool ClangInterpreter::initialize()
     std::string pch_dir;
     if (std::filesystem::exists(Config::PCH_RUNTIME_PATH)) {
         pch_dir = Config::RUNTIME_DATA_DIR;
-        std::cout << "Using installed PCH from: " << Config::PCH_RUNTIME_PATH << "\n";
+        LILA_DEBUG(Emitter::INTERPRETER,
+            std::string("Using installed PCH from: ") + Config::PCH_RUNTIME_PATH);
+
     } else if (std::filesystem::exists(Config::PCH_SOURCE_PATH)) {
         pch_dir = std::string(Config::SOURCE_DIR) + "/cmake";
-        std::cout << "Using source PCH from: " << Config::PCH_SOURCE_PATH << "\n";
+        LILA_DEBUG(Emitter::INTERPRETER,
+            std::string("Using source PCH from: ") + Config::PCH_SOURCE_PATH);
+
     } else {
         m_last_error = "Cannot find pch.h in runtime or source locations";
+        LILA_ERROR(Emitter::INTERPRETER, m_last_error);
         return false;
     }
 
@@ -60,8 +69,12 @@ bool ClangInterpreter::initialize()
     std::string resource_dir = MayaFlux::Platform::SystemConfig::get_clang_resource_dir();
     if (!resource_dir.empty()) {
         m_impl->compile_flags.push_back("-resource-dir=" + resource_dir);
+        LILA_DEBUG(Emitter::INTERPRETER,
+            std::string("Using clang resource dir: ") + resource_dir);
     } else {
         m_impl->compile_flags.emplace_back("-resource-dir=/usr/lib/clang/20");
+        LILA_WARN(Emitter::INTERPRETER,
+            "Using default clang resource dir: /usr/lib/clang/20");
     }
 
     auto system_includes = MayaFlux::Platform::SystemConfig::get_system_includes();
@@ -72,6 +85,7 @@ bool ClangInterpreter::initialize()
     for (const auto& path : m_impl->include_paths) {
         m_impl->compile_flags.push_back("-I" + path);
     }
+
     std::vector<const char*> args;
     for (const auto& flag : m_impl->compile_flags) {
         args.push_back(flag.c_str());
@@ -83,27 +97,30 @@ bool ClangInterpreter::initialize()
     auto CI = ICB.CreateCpp();
     if (!CI) {
         m_last_error = "Failed to create CompilerInstance: " + llvm::toString(CI.takeError());
+        LILA_ERROR(Emitter::INTERPRETER, m_last_error);
         return false;
     }
 
     auto interp = clang::Interpreter::create(std::move(*CI));
     if (!interp) {
         m_last_error = "Failed to create interpreter: " + llvm::toString(interp.takeError());
+        LILA_ERROR(Emitter::INTERPRETER, m_last_error);
         return false;
     }
 
     m_impl->interpreter = std::move(*interp);
 
-    std::cout << "Clang Interpreter initialized successfully\n";
+    LILA_INFO(Emitter::INTERPRETER, "Clang interpreter created successfully");
 
     auto result = m_impl->interpreter->ParseAndExecute(
         "#include \"pch.h\"\n"
         "#include \"MayaFlux/MayaFlux.hpp\"\n");
+
     if (result) {
-        std::cout << "Warning: Failed to load MayaFlux headers: "
-                  << llvm::toString(std::move(result)) << "\n";
+        std::string warning = "Failed to load MayaFlux headers: " + llvm::toString(std::move(result));
+        LILA_WARN(Emitter::INTERPRETER, warning);
     } else {
-        std::cout << "MayaFlux headers loaded successfully\n";
+        LILA_INFO(Emitter::INTERPRETER, "MayaFlux headers loaded successfully");
     }
 
     return true;
@@ -115,16 +132,21 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 
     if (!m_impl->interpreter) {
         result.error = "Interpreter not initialized";
+        LILA_ERROR(Emitter::INTERPRETER, result.error);
         return result;
     }
+
+    LILA_DEBUG(Emitter::INTERPRETER, "Evaluating code...");
 
     auto eval_result = m_impl->interpreter->ParseAndExecute(code);
 
     if (!eval_result) {
         result.success = true;
+        LILA_DEBUG(Emitter::INTERPRETER, "Code evaluation succeeded");
     } else {
         result.success = false;
         result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
+        LILA_ERROR(Emitter::INTERPRETER, result.error);
     }
 
     m_impl->eval_counter++;
@@ -137,8 +159,11 @@ ClangInterpreter::EvalResult ClangInterpreter::eval_file(const std::string& file
 
     if (!std::filesystem::exists(filepath)) {
         result.error = "File does not exist: " + filepath;
+        LILA_ERROR(Emitter::INTERPRETER, result.error);
         return result;
     }
+
+    LILA_INFO(Emitter::INTERPRETER, std::string("Evaluating file: ") + filepath);
 
     std::string code = "#include \"" + filepath + "\"\n";
     return eval(code);
@@ -146,14 +171,18 @@ ClangInterpreter::EvalResult ClangInterpreter::eval_file(const std::string& file
 
 void* ClangInterpreter::get_symbol_address(const std::string& name)
 {
-    if (!m_impl->interpreter)
+    if (!m_impl->interpreter) {
+        LILA_WARN(Emitter::INTERPRETER, "Cannot get symbol: interpreter not initialized");
         return nullptr;
+    }
 
     auto symbol = m_impl->interpreter->getSymbolAddress(name);
     if (symbol) {
+        LILA_DEBUG(Emitter::INTERPRETER, std::string("Found symbol: ") + name);
         return reinterpret_cast<void*>(symbol->getValue());
     }
 
+    LILA_WARN(Emitter::INTERPRETER, std::string("Symbol not found: ") + name);
     return nullptr;
 }
 
@@ -170,26 +199,34 @@ void ClangInterpreter::add_include_path(const std::string& path)
 {
     if (std::filesystem::exists(path)) {
         m_impl->include_paths.push_back(path);
+        LILA_DEBUG(Emitter::INTERPRETER, std::string("Added include path: ") + path);
+    } else {
+        LILA_WARN(Emitter::INTERPRETER,
+            std::string("Include path does not exist: ") + path);
     }
 }
 
 void ClangInterpreter::add_library_path(const std::string& path)
 {
-    // Note: Library loading would need LoadDynamicLibrary() on the interpreter
+    LILA_DEBUG(Emitter::INTERPRETER,
+        std::string("Library path noted (not yet implemented): ") + path);
 }
 
 void ClangInterpreter::add_compile_flag(const std::string& flag)
 {
     m_impl->compile_flags.push_back(flag);
+    LILA_DEBUG(Emitter::INTERPRETER, std::string("Added compile flag: ") + flag);
 }
 
 void ClangInterpreter::set_target_triple(const std::string& triple)
 {
     m_impl->target_triple = triple;
+    LILA_INFO(Emitter::INTERPRETER, std::string("Target triple set to: ") + triple);
 }
 
 void ClangInterpreter::reset()
 {
+    LILA_INFO(Emitter::INTERPRETER, "Resetting interpreter");
     shutdown();
     m_impl = std::make_unique<Impl>();
 }
@@ -197,6 +234,7 @@ void ClangInterpreter::reset()
 void ClangInterpreter::shutdown()
 {
     if (m_impl->interpreter) {
+        LILA_INFO(Emitter::INTERPRETER, "Shutting down interpreter");
         m_impl->interpreter.reset();
     }
 }

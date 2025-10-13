@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+#include "Commentator.hpp"
+
 #include <cerrno>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -86,7 +88,7 @@ void Server::server_loop()
         return;
     }
 
-    std::cout << "Lila server listening on port " << m_port << "\n";
+    LILA_INFO(Emitter::SERVER, "Lila server listening on port " + m_port);
 
     while (m_running) {
         fd_set readfds;
