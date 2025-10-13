@@ -37,7 +37,7 @@ public:
     bool load_pch(const std::string& pch_path);
     bool create_pch(const std::string& header_path, const std::string& output_path);
 
-    std::string get_last_error() const { return m_last_error; }
+    [[nodiscard]] std::string get_last_error() const { return m_last_error; }
 
 private:
     struct Impl;

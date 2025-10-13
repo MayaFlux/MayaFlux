@@ -1,0 +1,11 @@
+#pragma once
+
+namespace Lila::Config {
+
+constexpr const char* RUNTIME_DATA_DIR = "@CMAKE_INSTALL_PREFIX@/share/lila/runtime";
+constexpr const char* PCH_RUNTIME_PATH = "@CMAKE_INSTALL_PREFIX@/share/lila/runtime/pch.h";
+
+constexpr const char* PCH_SOURCE_PATH = "@CMAKE_SOURCE_DIR@/cmake/pch.h";
+constexpr const char* SOURCE_DIR = "@CMAKE_SOURCE_DIR@";
+
+} // namespace Lila::Config

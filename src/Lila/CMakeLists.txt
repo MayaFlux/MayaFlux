@@ -10,28 +10,23 @@ add_definitions(${CLANG_DEFINITIONS})
 
 set(LILA_SOURCES
     Lila.cpp
-    JITCompiler.cpp
-    ClangSymbolParser.cpp
-    SymbolActions.cpp
     ClangInterpreter.cpp
     Server.cpp
 )
 
 set(LILA_HEADERS
-    JITCompiler.hpp
-    SimpleSymbolParser.hpp
-    SymbolRegistry.hpp
     ClangInterpreter.hpp
-    ClangSymbolParser.hpp
-    SymbolActions.hpp
     Lila.hpp
-    pch.h
-    config.h
     Server.hpp
 )
 
-add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
+configure_file(
+    "${CMAKE_SOURCE_DIR}/cmake/lila_config.hpp.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/LilaConfig.hpp"
+    @ONLY
+)
 
+add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
 
 target_include_directories(Lila PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..  # For #include "Lila/..."
@@ -39,6 +34,8 @@ target_include_directories(Lila PUBLIC
 )
 
 target_precompile_headers(Lila PUBLIC ../../cmake/pch.h)
+
+target_include_directories(Lila PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 target_compile_definitions(Lila PUBLIC ${LLVM_DEFINITIONS_LIST})
@@ -68,7 +65,6 @@ target_link_libraries(Lila PUBLIC
 )
 
 target_link_libraries(Lila PRIVATE clang-cpp)
-
 target_link_libraries(Lila PUBLIC MayaFluxLib)
 
 set_target_properties(Lila PROPERTIES
@@ -85,4 +81,12 @@ install(TARGETS Lila
 
 install(FILES ${LILA_HEADERS}
     DESTINATION include/Lila
+)
+
+install(FILES ${CMAKE_SOURCE_DIR}/cmake/pch.h
+    DESTINATION share/lila/runtime
+)
+
+install(FILES ${CMAKE_SOURCE_DIR}/cmake/config.h
+    DESTINATION share/lila/runtime
 )
