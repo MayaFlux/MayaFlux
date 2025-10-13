@@ -1,16 +1,16 @@
 #include "Server.hpp"
-// #include <cctype>
+
 #include <cerrno>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/select.h>
 #include <sys/socket.h>
-#include <utility>
+#include <unistd.h>
 
 namespace Lila {
-Server::Server(std::shared_ptr<Lila> lila, int port)
-    : m_lila(std::move(lila))
-    , m_port(port)
+
+Server::Server(int port)
+    : m_port(port)
     , m_server_fd(-1)
 {
 }
@@ -49,16 +49,6 @@ void Server::stop()
     if (m_server_thread.joinable()) {
         m_server_thread.join();
     }
-}
-
-void Server::on_eval(std::function<void(const std::string&)> callback)
-{
-    m_eval_callback = std::move(callback);
-}
-
-void Server::on_error(std::function<void(const std::string&)> callback)
-{
-    m_error_callback = std::move(callback);
 }
 
 void Server::server_loop()
@@ -134,46 +124,40 @@ void Server::server_loop()
             continue;
         }
 
-        std::cout << "Client connected\n";
+        if (m_connect_handler) {
+            m_connect_handler(client_fd);
+        }
 
         handle_client(client_fd);
-        close(client_fd);
 
-        std::cout << "Client disconnected\n";
+        if (m_disconnect_handler) {
+            m_disconnect_handler(client_fd);
+        }
+
+        close(client_fd);
     }
 }
 
 void Server::handle_client(int client_fd)
 {
-
-    std::cout << "Client connected\n";
-
     while (m_running) {
         std::string message = read_message(client_fd);
         if (message.empty())
-            break; // client disconnected
+            break;
 
-        if (m_eval_callback)
-            m_eval_callback(message);
-
-        bool success = m_lila->eval(message);
-        if (success) {
-            send_response(client_fd, R"({"status":"success"}\n)");
+        std::string response;
+        if (m_message_handler) {
+            response = m_message_handler(message);
         } else {
-            std::string err = R"({"status":"error","message":")" + m_lila->get_last_error() + "\"}\n";
-            if (m_error_callback)
-                m_error_callback(err);
-            send_response(client_fd, err);
+            response = R"({"status":"error","message":"No message handler configured"})";
         }
-    }
 
-    std::cout << "Client disconnected\n";
-    close(client_fd);
+        send_response(client_fd, response);
+    }
 }
 
 std::string Server::read_message(int client_fd)
 {
-
     constexpr size_t BUFFER_SIZE = 4096;
     std::string result;
     char buffer[BUFFER_SIZE];

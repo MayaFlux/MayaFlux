@@ -1,5 +1,4 @@
 #include "Lila/Lila.hpp"
-#include <iostream>
 
 int main()
 {
@@ -22,19 +21,24 @@ int main()
         auto node = vega.sine(440.0f, 0.1f)[0] | Audio;
         std::cout << "Created sine generator at 440Hz\n";
 
-        void metro_handler() { std::cout << "Metro tick!\n"; }
-
         // MayaFlux::schedule_metro(1, []() {
         //     std::cout << "Metro tick!\n";
         // });
-        MayaFlux::schedule_metro(2.0, metro_handler);
+
+        auto mh = [](){ std::cout << "Metro tick!\n"; };
+        MayaFlux::schedule_metro(2.0, mh);
 
         auto impulse = MayaFlux::create_node<Impulse>(1.0f, 0.1f);
-        void my_impulse_handler(const NodeContext& ctx) { std::cout << "Bang\n"; }
-        impulse->on_impulse(my_impulse_handler);
+
+        auto ih = [](const NodeContext& ctx) { std::cout << "Bang\n"; };
+        impulse->on_impulse(ih);
 
         // std::shared_ptr<Kakshya::SoundFileContainer> container = vega.read("res/audio.wav") | Audio;
         // auto container = vega.read("res/audio.wav") | Audio;
+
+        // int x = 3;
+        // void printer(int x) {[x](){std::cout << x << " was the value x -------------\n";}();}
+        // printer(x);
     )");
 
     if (!success) {
