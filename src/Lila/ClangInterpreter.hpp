@@ -34,8 +34,6 @@ public:
     void set_target_triple(const std::string& triple);
 
     void reset();
-    bool load_pch(const std::string& pch_path);
-    bool create_pch(const std::string& header_path, const std::string& output_path);
 
     [[nodiscard]] std::string get_last_error() const { return m_last_error; }
 

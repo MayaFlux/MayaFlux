@@ -1,12 +1,13 @@
 #include "ClangInterpreter.hpp"
 
+#include "LilaConfig.hpp"
+
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Interpreter/Interpreter.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/TargetParser/Host.h>
 
 #include <filesystem>
-#include <iostream>
 
 namespace Lila {
 
@@ -38,21 +39,33 @@ bool ClangInterpreter::initialize()
     llvm::InitializeNativeTargetAsmPrinter();
     llvm::InitializeNativeTargetAsmParser();
 
-    std::vector<const char*> args;
-    args.push_back("-std=c++23");
-    args.push_back("-DMAYASIMPLE");
+    m_impl->compile_flags.clear();
+    m_impl->compile_flags.emplace_back("-std=c++23");
+    m_impl->compile_flags.emplace_back("-DMAYASIMPLE");
 
-    // CRITICAL: Add resource directory for builtin headers
-    // things were failing because of this init order of not having IncrementalCompilerBuilder
-    // before Interpreter
-    // This is where stddef.h, stdint.h, etc. live
+    std::string pch_dir;
+    if (std::filesystem::exists(Config::PCH_RUNTIME_PATH)) {
+        pch_dir = Config::RUNTIME_DATA_DIR;
+        std::cout << "Using installed PCH from: " << Config::PCH_RUNTIME_PATH << "\n";
+    } else if (std::filesystem::exists(Config::PCH_SOURCE_PATH)) {
+        pch_dir = std::string(Config::SOURCE_DIR) + "/cmake";
+        std::cout << "Using source PCH from: " << Config::PCH_SOURCE_PATH << "\n";
+    } else {
+        m_last_error = "Cannot find pch.h in runtime or source locations";
+        return false;
+    }
+
+    m_impl->compile_flags.push_back("-I" + pch_dir);
+
     std::string resource_dir = "-resource-dir=/usr/lib/clang/20";
     m_impl->compile_flags.push_back(resource_dir);
-    args.push_back(m_impl->compile_flags.back().c_str());
 
     for (const auto& path : m_impl->include_paths) {
         m_impl->compile_flags.push_back("-I" + path);
-        args.push_back(m_impl->compile_flags.back().c_str());
+    }
+    std::vector<const char*> args;
+    for (const auto& flag : m_impl->compile_flags) {
+        args.push_back(flag.c_str());
     }
 
     clang::IncrementalCompilerBuilder ICB;
@@ -177,30 +190,6 @@ void ClangInterpreter::shutdown()
     if (m_impl->interpreter) {
         m_impl->interpreter.reset();
     }
-}
-
-bool ClangInterpreter::load_pch(const std::string& pch_path)
-{
-    // PCH would need to be added to compile flags before initialization
-    if (!std::filesystem::exists(pch_path)) {
-        m_last_error = "PCH file does not exist: " + pch_path;
-        return false;
-    }
-
-    m_impl->compile_flags.push_back("-include-pch");
-    m_impl->compile_flags.push_back(pch_path);
-    return true;
-}
-
-bool ClangInterpreter::create_pch(const std::string& header_path,
-    const std::string& output_path)
-{
-    std::string cmd = "clang++ -x c++-header -std=c++23 ";
-    for (const auto& flag : m_impl->compile_flags) {
-        cmd += flag + " ";
-    }
-    cmd += header_path + " -o " + output_path;
-    return std::system(cmd.c_str()) == 0;
 }
 
 } // namespace Lila
