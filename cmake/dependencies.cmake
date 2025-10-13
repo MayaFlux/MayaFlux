@@ -1,3 +1,12 @@
+if(BUILD_LILA)
+    find_package(LLVM CONFIG)
+    if(LLVM_FOUND)
+        message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    else()
+        message(WARNING "LLVM not found - Lila will not be built")
+    endif()
+endif()
+
 if(WIN32)
     find_package(RtAudio CONFIG REQUIRED)
     find_package(Eigen3 CONFIG REQUIRED)

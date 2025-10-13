@@ -77,7 +77,12 @@ public:
         if (!result.empty() && result.back() == '\n') {
             result.pop_back();
         }
-        return result;
+
+        if (!result.empty() && result.find("clang") != std::string::npos) {
+            return result;
+        }
+
+        return "";
     }
 
     static std::vector<std::string> get_system_includes()
@@ -146,30 +151,46 @@ private:
     {
         std::vector<std::string> includes;
 
-        // Try environment variables first
-        char* vc_install_dir = nullptr;
-        size_t len = 0;
-        if (_dupenv_s(&vc_install_dir, &len, "VCInstallDir") == 0 && vc_install_dir) {
-            includes.push_back(std::string(vc_install_dir) + "include");
-            free(vc_install_dir);
+        // Try vswhere.exe (VS2017+)
+        const char* vswhere_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" "
+                                  "-latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 "
+                                  "-property installationPath 2>nul";
+
+        std::string vs_path = exec_command(vswhere_cmd);
+        if (!vs_path.empty()) {
+            vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\r'), vs_path.end());
+            vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\n'), vs_path.end());
+
+            std::string msvc_base = vs_path + "\\VC\\Tools\\MSVC";
+            WIN32_FIND_DATAA fd;
+            HANDLE hFind = FindFirstFileA((msvc_base + "\\*").c_str(), &fd);
+            std::string latest;
+            if (hFind != INVALID_HANDLE_VALUE) {
+                do {
+                    if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && fd.cFileName[0] >= '0' && fd.cFileName[0] <= '9') {
+                        if (fd.cFileName > latest)
+                            latest = fd.cFileName;
+                    }
+                } while (FindNextFileA(hFind, &fd));
+                FindClose(hFind);
+            }
+
+            if (!latest.empty()) {
+                includes.push_back(msvc_base + "\\" + latest + "\\include");
+                std::string atlmfc = msvc_base + "\\" + latest + "\\atlmfc\\include";
+                if (GetFileAttributesA(atlmfc.c_str()) != INVALID_FILE_ATTRIBUTES)
+                    includes.push_back(atlmfc);
+            }
         }
 
-        // Fallback to registry query
-        HKEY hKey;
-        if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-                "SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7",
-                0, KEY_READ, &hKey)
-            == ERROR_SUCCESS) {
-            char install_dir[1024];
-            DWORD size = sizeof(install_dir);
-
-            // Try to get latest version
-            if (RegQueryValueExA(hKey, "17.0", nullptr, nullptr,
-                    (LPBYTE)install_dir, &size)
-                == ERROR_SUCCESS) {
-                includes.push_back(std::string(install_dir) + "VC\\Tools\\MSVC\\14.\\include");
+        // Fallback to environment
+        if (includes.empty()) {
+            char* dir = nullptr;
+            size_t len = 0;
+            if (_dupenv_s(&dir, &len, "VCInstallDir") == 0 && dir) {
+                includes.push_back(std::string(dir) + "\\include");
+                free(dir);
             }
-            RegCloseKey(hKey);
         }
 
         return includes;
@@ -178,12 +199,25 @@ private:
     static std::vector<std::string> get_windows_sdk_includes()
     {
         std::vector<std::string> includes;
-
-        char* windows_sdk_dir = nullptr;
+        char *sdk_dir = nullptr, *sdk_ver = nullptr;
         size_t len = 0;
-        if (_dupenv_s(&windows_sdk_dir, &len, "WindowsSdkDir") == 0 && windows_sdk_dir) {
-            includes.push_back(std::string(windows_sdk_dir) + "Include");
-            free(windows_sdk_dir);
+
+        if (_dupenv_s(&sdk_dir, &len, "WindowsSdkDir") == 0 && sdk_dir) {
+            std::string base = sdk_dir;
+            free(sdk_dir);
+            if (_dupenv_s(&sdk_ver, &len, "WindowsSDKVersion") == 0 && sdk_ver) {
+                std::string ver = sdk_ver;
+                free(sdk_ver);
+                if (!ver.empty() && ver.back() == '\\')
+                    ver.pop_back();
+                includes = {
+                    base + "Include\\" + ver + "\\ucrt",
+                    base + "Include\\" + ver + "\\shared",
+                    base + "Include\\" + ver + "\\um",
+                    base + "Include\\" + ver + "\\winrt",
+                    base + "Include\\" + ver + "\\cppwinrt"
+                };
+            }
         }
 
         return includes;

@@ -31,15 +31,6 @@ if(NOT EXISTS ${USER_PROJECT_FILE})
 endif()
 set(USER_SOURCES ${USER_PROJECT_FILE})
 
-if(BUILD_LILA AND NOT WIN32)
-    find_package(LLVM CONFIG)
-    if(LLVM_FOUND)
-        message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-    else()
-        message(WARNING "LLVM not found - Lila will not be built")
-    endif()
-endif()
-
 add_subdirectory(src)
 
 enable_testing()
