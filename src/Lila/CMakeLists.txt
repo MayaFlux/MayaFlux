@@ -11,12 +11,14 @@ add_definitions(${CLANG_DEFINITIONS})
 set(LILA_SOURCES
     Lila.cpp
     ClangInterpreter.cpp
+    Event.cpp
     Server.cpp
 )
 
 set(LILA_HEADERS
     ClangInterpreter.hpp
     Commentator.hpp
+    Event.hpp
     Lila.hpp
     Server.hpp
 )

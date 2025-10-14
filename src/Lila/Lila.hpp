@@ -1,9 +1,12 @@
 #pragma once
 
+#include <expected>
+
 namespace Lila {
 
 class ClangInterpreter;
 class Server;
+struct ClientInfo;
 
 enum class OperationMode : uint8_t {
     Direct, ///< Only direct evaluation
@@ -16,7 +19,7 @@ public:
     Lila();
     ~Lila(); // Remove "= default", declare only
 
-    bool initialize(OperationMode mode = OperationMode::Direct, int server_port = 9090);
+    bool initialize(OperationMode mode = OperationMode::Direct, int server_port = 9090) noexcept;
 
     bool eval(const std::string& code);
     bool eval_file(const std::string& filepath);
@@ -33,8 +36,8 @@ public:
 
     void on_success(std::function<void()> callback);
     void on_error(std::function<void(const std::string&)> callback);
-    void on_server_client_connected(std::function<void(int)> callback);
-    void on_server_client_disconnected(std::function<void(int)> callback);
+    void on_server_client_connected(std::function<void(const ClientInfo&)> callback);
+    void on_server_client_disconnected(std::function<void(const ClientInfo&)> callback);
 
     [[nodiscard]] std::string get_last_error() const;
     [[nodiscard]] OperationMode get_current_mode() const;
@@ -50,7 +53,7 @@ private:
     bool initialize_interpreter();
     bool initialize_server(int port);
 
-    std::string handle_server_message(const std::string& message);
+    std::expected<std::string, std::string> handle_server_message(std::string_view message);
 
     static std::string escape_json(const std::string& str);
 };

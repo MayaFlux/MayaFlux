@@ -1,6 +1,8 @@
 #include "Lila/Commentator.hpp"
 #include "Lila/Lila.hpp"
 
+#include "Lila/Event.hpp"
+
 #include <atomic>
 #include <csignal>
 #include <iostream>
@@ -27,7 +29,7 @@ void print_usage(const char* program_name)
               << "  " << program_name << "                    # Start on default port 9090\n"
               << "  " << program_name << " -p 8080            # Start on port 8080\n"
               << "  " << program_name << " -v -l DEBUG        # Verbose mode with DEBUG level\n"
-              << std::endl;
+              << '\n';
 }
 
 Lila::LogLevel parse_log_level(const std::string& level_str)
@@ -62,7 +64,9 @@ int main(int argc, char** argv)
         if (arg == "-h" || arg == "--help") {
             print_usage(argv[0]);
             return 0;
-        } else if (arg == "-p" || arg == "--port") {
+        }
+
+        if (arg == "-p" || arg == "--port") {
             if (i + 1 < argc) {
                 port = std::atoi(argv[++i]);
                 if (port <= 0 || port > 65535) {
@@ -89,23 +93,41 @@ int main(int argc, char** argv)
         }
     }
 
-    auto& logger = Lila::Commentary::instance();
+    auto& logger = Lila::Commentator::instance();
     logger.set_level(log_level);
     logger.set_verbose(verbose);
 
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
 
-    LILA_INFO(Lila::Emitter::SYSTEM,
-        "Starting Lila live coding server");
-    LILA_INFO(Lila::Emitter::SYSTEM,
-        std::string("Port: ") + std::to_string(port));
-    LILA_INFO(Lila::Emitter::SYSTEM,
-        std::string("Log level: ") + std::string(log_level == Lila::LogLevel::TRACE ? "TRACE" : log_level == Lila::LogLevel::DEBUG ? "DEBUG"
-                : log_level == Lila::LogLevel::INFO                                                                                ? "INFO"
-                : log_level == Lila::LogLevel::WARN                                                                                ? "WARN"
-                : log_level == Lila::LogLevel::ERROR                                                                               ? "ERROR"
-                                                                                                                                   : "FATAL"));
+    LILA_INFO(Lila::Emitter::SYSTEM, "Starting Lila live coding server");
+    LILA_INFO(Lila::Emitter::SYSTEM, std::string("Port: ") + std::to_string(port));
+
+    std::string level_str;
+    switch (log_level) {
+    case Lila::LogLevel::TRACE:
+        level_str = "TRACE";
+        break;
+    case Lila::LogLevel::DEBUG:
+        level_str = "DEBUG";
+        break;
+    case Lila::LogLevel::INFO:
+        level_str = "INFO";
+        break;
+    case Lila::LogLevel::WARN:
+        level_str = "WARN";
+        break;
+    case Lila::LogLevel::ERROR:
+        level_str = "ERROR";
+        break;
+    case Lila::LogLevel::FATAL:
+        level_str = "FATAL";
+        break;
+    default:
+        level_str = "UNKNOWN";
+        break;
+    }
+    LILA_INFO(Lila::Emitter::SYSTEM, std::string("Log level: ") + level_str);
 
     if (verbose) {
         LILA_INFO(Lila::Emitter::SYSTEM, "Verbose mode enabled");
@@ -123,25 +145,30 @@ int main(int argc, char** argv)
         LILA_INFO(Lila::Emitter::GENERAL, "Code evaluation succeeded");
     });
 
+    /*
     playground.on_error([](const std::string& error) {
         LILA_ERROR(Lila::Emitter::GENERAL,
             std::string("Evaluation error: ") + error);
     });
+    */
 
-    playground.on_server_client_connected([](int client_fd) {
+    playground.on_server_client_connected([](const Lila::ClientInfo& client) {
         LILA_INFO(Lila::Emitter::SERVER,
-            std::string("New client connection (fd: ") + std::to_string(client_fd) + ")");
+            std::string("New client connection (fd: ") + std::to_string(client.fd) + ", session: " + (client.session_id.empty() ? "none" : client.session_id) + ")");
     });
 
-    playground.on_server_client_disconnected([](int client_fd) {
+    playground.on_server_client_disconnected([](const Lila::ClientInfo& client) {
         LILA_INFO(Lila::Emitter::SERVER,
-            std::string("Client disconnected (fd: ") + std::to_string(client_fd) + ")");
+            std::string("Client disconnected (fd: ") + std::to_string(client.fd) + ", session: " + (client.session_id.empty() ? "none" : client.session_id) + ")");
     });
 
-    LILA_INFO(Lila::Emitter::SYSTEM,
-        "Server running. Press Ctrl+C to stop.");
+    LILA_INFO(Lila::Emitter::SYSTEM, "Server running. Press Ctrl+C to stop.");
 
-    while (g_running && playground.is_server_running()) {
+    while (g_running) {
+        if (!playground.is_server_running()) {
+            LILA_ERROR(Lila::Emitter::SYSTEM, "Server stopped unexpectedly");
+            break;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 

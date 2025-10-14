@@ -20,7 +20,7 @@ Lila::~Lila()
     LILA_DEBUG(Emitter::SYSTEM, "Lila instance destroyed");
 }
 
-bool Lila::initialize(OperationMode mode, int server_port)
+bool Lila::initialize(OperationMode mode, int server_port) noexcept
 {
     LILA_INFO(Emitter::SYSTEM, "Initializing Lila");
     m_current_mode = mode;
@@ -59,21 +59,20 @@ bool Lila::initialize_server(int port)
 
     m_server = std::make_unique<Server>(port);
 
-    m_server->set_message_handler([this](const std::string& message) {
+    m_server->set_message_handler([this](std::string_view message) {
         return this->handle_server_message(message);
     });
 
-    m_server->start();
-    return true;
+    return m_server->start();
 }
 
-std::string Lila::handle_server_message(const std::string& message)
+std::expected<std::string, std::string> Lila::handle_server_message(std::string_view message)
 {
     if (message.empty()) {
         return R"({"status":"error","message":"Empty message"})";
     }
 
-    auto result = m_interpreter->eval(message);
+    auto result = m_interpreter->eval(std::string(message));
 
     if (result.success) {
         if (m_success_callback) {
@@ -85,7 +84,8 @@ std::string Lila::handle_server_message(const std::string& message)
     if (m_error_callback) {
         m_error_callback(result.error);
     }
-    return escape_json(result.error);
+
+    return std::unexpected(escape_json(result.error));
 }
 
 bool Lila::eval(const std::string& code)
@@ -175,7 +175,7 @@ void Lila::on_error(std::function<void(const std::string&)> callback)
     LILA_DEBUG(Emitter::SYSTEM, "Error callback registered");
 }
 
-void Lila::on_server_client_connected(std::function<void(int)> callback)
+void Lila::on_server_client_connected(std::function<void(const ClientInfo&)> callback)
 {
     if (m_server) {
         m_server->on_client_connected(std::move(callback));
@@ -183,7 +183,7 @@ void Lila::on_server_client_connected(std::function<void(int)> callback)
     }
 }
 
-void Lila::on_server_client_disconnected(std::function<void(int)> callback)
+void Lila::on_server_client_disconnected(std::function<void(const ClientInfo&)> callback)
 {
     if (m_server) {
         m_server->on_client_disconnected(std::move(callback));
