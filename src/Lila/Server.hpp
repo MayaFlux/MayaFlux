@@ -11,6 +11,7 @@ class Server {
 public:
     using MessageHandler = std::function<std::expected<std::string, std::string>(std::string_view)>;
     using ConnectionHandler = std::function<void(const ClientInfo&)>;
+    using StartHandler = std::function<void()>;
 
     Server(int port = 9090);
     ~Server();
@@ -23,6 +24,7 @@ public:
     void set_message_handler(MessageHandler handler) { m_message_handler = std::move(handler); }
     void on_client_connected(ConnectionHandler handler) { m_connect_handler = std::move(handler); }
     void on_client_disconnected(ConnectionHandler handler) { m_disconnect_handler = std::move(handler); }
+    void on_server_started(StartHandler handler) { m_start_handler = std::move(handler); }
 
     EventBus& event_bus() { return m_event_bus; }
     const EventBus& event_bus() const noexcept { return m_event_bus; }
@@ -43,6 +45,7 @@ private:
     MessageHandler m_message_handler;
     ConnectionHandler m_connect_handler;
     ConnectionHandler m_disconnect_handler;
+    StartHandler m_start_handler;
     EventBus m_event_bus;
 
     mutable std::shared_mutex m_clients_mutex;

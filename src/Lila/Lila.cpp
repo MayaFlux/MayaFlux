@@ -175,6 +175,14 @@ void Lila::on_error(std::function<void(const std::string&)> callback)
     LILA_DEBUG(Emitter::SYSTEM, "Error callback registered");
 }
 
+void Lila::on_server_started(std::function<void()> callback)
+{
+    if (m_server) {
+        m_server->on_server_started(std::move(callback));
+        LILA_DEBUG(Emitter::SYSTEM, "Server started callback registered");
+    }
+}
+
 void Lila::on_server_client_connected(std::function<void(const ClientInfo&)> callback)
 {
     if (m_server) {

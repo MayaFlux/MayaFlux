@@ -60,6 +60,11 @@ bool Server::start() noexcept
         }
 
         m_running = true;
+        m_event_bus.publish(Event { EventType::ServerStart });
+        if (m_start_handler) {
+            m_start_handler();
+        }
+
         m_server_thread = std::jthread([this](const std::stop_token& token) { server_loop(token); });
 
         LILA_INFO(Emitter::SERVER, "Server started on port " + std::to_string(m_port));

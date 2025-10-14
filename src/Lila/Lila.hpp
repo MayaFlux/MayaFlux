@@ -38,6 +38,7 @@ public:
     void on_error(std::function<void(const std::string&)> callback);
     void on_server_client_connected(std::function<void(const ClientInfo&)> callback);
     void on_server_client_disconnected(std::function<void(const ClientInfo&)> callback);
+    void on_server_started(std::function<void()> callback);
 
     [[nodiscard]] std::string get_last_error() const;
     [[nodiscard]] OperationMode get_current_mode() const;

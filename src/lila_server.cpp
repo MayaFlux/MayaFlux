@@ -141,6 +141,12 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    playground.on_server_started([]() {
+        std::cout << "LILA_SERVER_READY\n"
+                  << std::flush;
+        LILA_INFO(Lila::Emitter::SYSTEM, "Server is ready to accept connections");
+    });
+
     playground.on_success([]() {
         LILA_INFO(Lila::Emitter::GENERAL, "Code evaluation succeeded");
     });

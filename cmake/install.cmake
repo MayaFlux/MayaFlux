@@ -34,4 +34,6 @@ if(LLVM_FOUND)
     )
 
     message(STATUS "Lila will be installed to ${CMAKE_INSTALL_PREFIX}")
+
+    install(TARGETS lila_server RUNTIME DESTINATION bin)
 endif()
