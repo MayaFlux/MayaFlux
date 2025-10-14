@@ -11,6 +11,7 @@ int main()
 
     std::cout << "\n========== TEST 1: Create a Sine generator ==========\n";
     bool success = lila.eval(R"(
+        MayaFlux::Config::set_journal_severity(MayaFlux::Journal::Severity::INFO);
         MayaFlux::Init();
         std::cout << MayaFlux::Config::get_sample_rate() << " Hz sample rate\n";
 

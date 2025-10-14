@@ -51,6 +51,8 @@ private:
     bool initialize_server(int port);
 
     std::string handle_server_message(const std::string& message);
+
+    static std::string escape_json(const std::string& str);
 };
 
 } // namespace Lila

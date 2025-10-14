@@ -40,11 +40,11 @@ enum class Emitter : uint8_t {
     GENERAL ///< General/uncategorized
 };
 
-class Commentary {
+class Commentator {
 public:
-    static Commentary& instance()
+    static Commentator& instance()
     {
-        static Commentary commentary;
+        static Commentator commentary;
         return commentary;
     }
 
@@ -59,10 +59,9 @@ public:
         m_verbose = verbose;
     }
 
-    void log(LogLevel level, Emitter source, std::string_view message,
+    void announce(LogLevel level, Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
-
         if (level < m_min_level)
             return;
 
@@ -72,17 +71,21 @@ public:
             return m_colors_enabled ? color_code : "";
         };
 
-        std::cout << use_color(Colors::Magenta) << "==LILA==" << use_color(Colors::Reset);
+        std::cout << "        "; // 8 spaces indent
+
+        std::cout << use_color(Colors::BrightBlue)
+                  << "▶ LILA "
+                  << use_color(Colors::Reset);
 
         std::cout << use_color(level_color(level))
-                  << "|" << level_string(level) << "|"
+                  << "|" << level_string(level) << "| "
                   << use_color(Colors::Reset);
 
         std::cout << use_color(Colors::Cyan)
-                  << "[" << emitter_string(source) << "]:LIVE:"
+                  << emitter_string(source) << " → "
                   << use_color(Colors::Reset);
 
-        std::cout << " " << message;
+        std::cout << message;
 
         if (m_verbose || level >= LogLevel::ERROR) {
             if (location.file_name() != nullptr) {
@@ -99,44 +102,44 @@ public:
     void trace(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
-        log(LogLevel::TRACE, source, message, location);
+        announce(LogLevel::TRACE, source, message, location);
     }
 
     void debug(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
-        log(LogLevel::DEBUG, source, message, location);
+        announce(LogLevel::DEBUG, source, message, location);
     }
 
     void info(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
-        log(LogLevel::INFO, source, message, location);
+        announce(LogLevel::INFO, source, message, location);
     }
 
     void warn(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
-        log(LogLevel::WARN, source, message, location);
+        announce(LogLevel::WARN, source, message, location);
     }
 
     void error(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
-        log(LogLevel::ERROR, source, message, location);
+        announce(LogLevel::ERROR, source, message, location);
     }
 
     void fatal(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
-        log(LogLevel::FATAL, source, message, location);
+        announce(LogLevel::FATAL, source, message, location);
     }
 
-    Commentary(const Commentary&) = delete;
-    Commentary& operator=(const Commentary&) = delete;
+    Commentator(const Commentator&) = delete;
+    Commentator& operator=(const Commentator&) = delete;
 
 private:
-    Commentary()
+    Commentator()
         : m_colors_enabled(initialize_console_colors())
     {
     }
@@ -237,9 +240,9 @@ private:
 
 } // namespace Lila
 
-#define LILA_TRACE(emitter, msg) ::Lila::Commentary::instance().trace(emitter, msg)
-#define LILA_DEBUG(emitter, msg) ::Lila::Commentary::instance().debug(emitter, msg)
-#define LILA_INFO(emitter, msg) ::Lila::Commentary::instance().info(emitter, msg)
-#define LILA_WARN(emitter, msg) ::Lila::Commentary::instance().warn(emitter, msg)
-#define LILA_ERROR(emitter, msg) ::Lila::Commentary::instance().error(emitter, msg)
-#define LILA_FATAL(emitter, msg) ::Lila::Commentary::instance().fatal(emitter, msg)
+#define LILA_TRACE(emitter, msg) ::Lila::Commentator::instance().trace(emitter, msg)
+#define LILA_DEBUG(emitter, msg) ::Lila::Commentator::instance().debug(emitter, msg)
+#define LILA_INFO(emitter, msg) ::Lila::Commentator::instance().info(emitter, msg)
+#define LILA_WARN(emitter, msg) ::Lila::Commentator::instance().warn(emitter, msg)
+#define LILA_ERROR(emitter, msg) ::Lila::Commentator::instance().error(emitter, msg)
+#define LILA_FATAL(emitter, msg) ::Lila::Commentator::instance().fatal(emitter, msg)

@@ -88,7 +88,8 @@ void Server::server_loop()
         return;
     }
 
-    LILA_INFO(Emitter::SERVER, "Lila server listening on port " + m_port);
+    LILA_INFO(Emitter::SERVER,
+        std::string("Lila server listening on port ") + std::to_string(m_port));
 
     while (m_running) {
         fd_set readfds;

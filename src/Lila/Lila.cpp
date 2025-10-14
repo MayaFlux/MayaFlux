@@ -70,24 +70,22 @@ bool Lila::initialize_server(int port)
 std::string Lila::handle_server_message(const std::string& message)
 {
     if (message.empty()) {
-        LILA_WARN(Emitter::SERVER, "Received empty message");
         return R"({"status":"error","message":"Empty message"})";
     }
 
-    LILA_DEBUG(Emitter::SYSTEM, "Processing server message");
     auto result = m_interpreter->eval(message);
 
     if (result.success) {
         if (m_success_callback) {
             m_success_callback();
         }
-        return R"({"status":"success"})";
-    } else {
-        if (m_error_callback) {
-            m_error_callback(result.error);
-        }
-        return R"({"status":"error","message":")" + result.error + "\"}";
+        return "";
     }
+
+    if (m_error_callback) {
+        m_error_callback(result.error);
+    }
+    return escape_json(result.error);
 }
 
 bool Lila::eval(const std::string& code)
@@ -201,6 +199,37 @@ std::string Lila::get_last_error() const
 OperationMode Lila::get_current_mode() const
 {
     return m_current_mode;
+}
+
+std::string Lila::escape_json(const std::string& str)
+{
+    std::string escaped;
+    escaped.reserve(str.size());
+
+    for (char c : str) {
+        switch (c) {
+        case '"':
+            escaped += "\\\"";
+            break;
+        case '\\':
+            escaped += "\\\\";
+            break;
+        case '\n':
+            escaped += "\\n";
+            break;
+        case '\r':
+            escaped += "\\r";
+            break;
+        case '\t':
+            escaped += "\\t";
+            break;
+        default:
+            if (c >= 0x20) {
+                escaped += c;
+            }
+        }
+    }
+    return escaped;
 }
 
 } // namespace Lila
