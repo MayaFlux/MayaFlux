@@ -70,7 +70,7 @@ public:
      * The method returns a reference to the EventChain itself, allowing for a
      * fluent, declarative API style.
      */
-    EventChain& then(std::function<void()> action, double delay_seconds = 0.f);
+    EventChain& then(std::function<void()> action, double delay_seconds = 0.F);
 
     /**
      * @brief Starts executing the event chain
@@ -196,7 +196,7 @@ public:
      * This field contains the delay duration, if this token
      * represents a time delay.
      */
-    double seconds = 0.f;
+    double seconds = 0.F;
 };
 
 /**
@@ -277,7 +277,7 @@ public:
      * The actions are executed in the order they were added, with any time
      * delays respected.
      */
-    void execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Vruta::TaskScheduler> scheduler);
+    void execute(const std::shared_ptr<Nodes::NodeGraphManager>& node_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler);
 
 private:
     /**

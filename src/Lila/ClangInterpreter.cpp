@@ -114,7 +114,7 @@ bool ClangInterpreter::initialize()
 
     auto result = m_impl->interpreter->ParseAndExecute(
         "#include \"pch.h\"\n"
-        "#include \"MayaFlux/MayaFlux.hpp\"\n");
+        "#include \"Lila/LiveAid.hpp\"\n");
 
     if (result) {
         std::string warning = "Failed to load MayaFlux headers: " + llvm::toString(std::move(result));

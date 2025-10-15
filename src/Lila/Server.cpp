@@ -187,7 +187,7 @@ void Server::handle_client(int client_fd)
             if (message.error() != "timeout" && message.error() != "would_block") {
                 break;
             }
-            // std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(8));
             continue;
         }
 

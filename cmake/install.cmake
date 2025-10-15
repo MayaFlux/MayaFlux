@@ -26,6 +26,7 @@ if(LLVM_FOUND)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/EventBus.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/Lila.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/Server.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/LiveAid.hpp
         DESTINATION include/Lila
     )
 

@@ -5,7 +5,7 @@
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
-static auto node_token = MayaFlux::Nodes::ProcessingToken::AUDIO_RATE;
+static const auto node_token = MayaFlux::Nodes::ProcessingToken::AUDIO_RATE;
 
 namespace MayaFlux::Kriya {
 
@@ -21,7 +21,7 @@ EventChain::EventChain(Vruta::TaskScheduler& scheduler)
 
 EventChain& EventChain::then(std::function<void()> action, double delay_seconds)
 {
-    m_events.push_back({ action, delay_seconds });
+    m_events.push_back({ std::move(action), delay_seconds });
     return *this;
 }
 
@@ -40,9 +40,9 @@ void EventChain::start()
                     event.action();
                 }
             } catch (const std::exception& e) {
-                std::cerr << "Exception in EventChain action: " << e.what() << std::endl;
+                std::cerr << "Exception in EventChain action: " << e.what() << '\n';
             } catch (...) {
-                std::cerr << "Unknown exception in EventChain action" << std::endl;
+                std::cerr << "Unknown exception in EventChain action" << '\n';
             }
         }
     };
@@ -53,7 +53,7 @@ void EventChain::start()
 
 ActionToken::ActionToken(std::shared_ptr<Nodes::Node> _node)
     : type(Utils::ActionType::NODE)
-    , node(_node)
+    , node(std::move(_node))
 {
 }
 
@@ -65,7 +65,7 @@ ActionToken::ActionToken(double _seconds)
 
 ActionToken::ActionToken(std::function<void()> _func)
     : type(Utils::ActionType::FUNCTION)
-    , func(_func)
+    , func(std::move(_func))
 {
 }
 
@@ -80,26 +80,24 @@ void Sequence::execute()
     execute(MayaFlux::get_node_graph_manager(), MayaFlux::get_scheduler());
 }
 
-void Sequence::execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Vruta::TaskScheduler> scheduler)
+void Sequence::execute(const std::shared_ptr<Nodes::NodeGraphManager>& node_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler)
 {
     EventChain chain(*scheduler);
-    double accumulated_time = 0.f;
+    double accumulated_time = 0.F;
 
-    for (size_t i = 0; i < tokens.size(); i++) {
-        const auto& token = tokens[i];
-
+    for (const auto& token : tokens) {
         if (token.type == Utils::ActionType::NODE) {
             chain.then([node = token.node, node_manager]() {
                 auto& root = node_manager->get_root_node(node_token, 0);
                 root.register_node(node);
             },
                 accumulated_time);
-            accumulated_time = 0.f;
+            accumulated_time = 0.F;
         } else if (token.type == Utils::ActionType::TIME) {
             accumulated_time += token.seconds;
         } else if (token.type == Utils::ActionType::FUNCTION) {
             chain.then(token.func, accumulated_time);
-            accumulated_time = 0.f;
+            accumulated_time = 0.F;
         }
     }
     chain.start();
