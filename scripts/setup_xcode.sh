@@ -36,7 +36,7 @@ if ! command -v cmake &>/dev/null; then
 fi
 
 # Check for key Homebrew packages
-for pkg in rtaudio ffmpeg googletest eigen onedpl magic_enum fmt glfw; do
+for pkg in rtaudio llvm ffmpeg googletest eigen onedpl magic_enum fmt glfw; do
     if ! brew list --formula | grep -q "^${pkg}$" 2>/dev/null; then
         MISSING_DEPS="$MISSING_DEPS $pkg"
     fi

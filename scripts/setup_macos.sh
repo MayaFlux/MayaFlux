@@ -84,7 +84,7 @@ if ! command -v brew &>/dev/null; then
 fi
 
 echo "Installing required packages..."
-brew install cmake rtaudio ffmpeg googletest pkg-config eigen onedpl magic_enum fmt glfw
+brew install cmake rtaudio ffmpeg llvm googletest pkg-config eigen onedpl magic_enum fmt glfw
 
 if [ $? -ne 0 ]; then
     echo "Error: Failed to install one or more packages."
@@ -95,7 +95,7 @@ fi
 # Verify package installation
 echo "Verifying package installation..."
 MISSING_PACKAGES=""
-for pkg in cmake rtaudio glfw ffmpeg googletest pkg-config eigen onedpl magic_enum fmt; do
+for pkg in cmake rtaudio llvm glfw ffmpeg googletest pkg-config eigen onedpl magic_enum fmt; do
     if ! brew list --formula | grep -q "^${pkg}$"; then
         MISSING_PACKAGES="$MISSING_PACKAGES $pkg"
     fi
@@ -213,6 +213,6 @@ echo "1. Run './scripts/setup_xcode.sh' to generate Xcode project"
 echo "2. Or configure your preferred build environment"
 echo
 echo "Dependencies installed:"
-echo "  ✓ CMake, RtAudio, FFmpeg, GoogleTest, GLFW"
+echo "  ✓ CMake, RtAudio, LLVM, FFmpeg, GoogleTest, GLFW"
 echo "  ✓ Eigen, OneDPL, Magic Enum, fmt"
 echo
