@@ -1,8 +1,8 @@
-#include "Event.hpp"
+#include "EventBus.hpp"
 
 namespace Lila {
 
-Event::Event(EventType t, EventData d)
+StreamEvent::StreamEvent(EventType t, EventData d)
     : type(t)
     , data(std::move(d))
     , timestamp(std::chrono::system_clock::now())
@@ -15,7 +15,7 @@ void EventBus::subscribe(EventType type, const std::shared_ptr<Subscription>& su
     m_subscribers[type].emplace_back(subscriber);
 }
 
-void EventBus::publish(const Event& event)
+void EventBus::publish(const StreamEvent& event)
 {
     std::vector<std::shared_ptr<Subscription>> active_subscribers;
 

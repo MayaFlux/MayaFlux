@@ -22,6 +22,8 @@ if(LLVM_FOUND)
 
     install(FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/ClangInterpreter.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/Commentator.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/EventBus.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/Lila.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/Server.hpp
         DESTINATION include/Lila

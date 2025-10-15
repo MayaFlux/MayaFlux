@@ -60,7 +60,7 @@ bool Server::start() noexcept
         }
 
         m_running = true;
-        m_event_bus.publish(Event { EventType::ServerStart });
+        m_event_bus.publish(StreamEvent { EventType::ServerStart });
         if (m_start_handler) {
             m_start_handler();
         }
@@ -69,7 +69,7 @@ bool Server::start() noexcept
 
         LILA_INFO(Emitter::SERVER, "Server started on port " + std::to_string(m_port));
 
-        m_event_bus.publish(Event { EventType::ServerStart });
+        m_event_bus.publish(StreamEvent { EventType::ServerStart });
 
         return true;
 
@@ -108,7 +108,7 @@ void Server::stop() noexcept
         m_connected_clients.clear();
     }
 
-    m_event_bus.publish(Event { EventType::ServerStop });
+    m_event_bus.publish(StreamEvent { EventType::ServerStop });
 
     LILA_INFO(Emitter::SERVER, "Server stopped");
 }
@@ -176,7 +176,7 @@ void Server::handle_client(int client_fd)
         m_connect_handler(client_info);
     }
 
-    m_event_bus.publish(Event { EventType::ClientConnected, client_info });
+    m_event_bus.publish(StreamEvent { EventType::ClientConnected, client_info });
 
     LILA_INFO(Emitter::SERVER, "Client connected fd: " + std::to_string(client_fd));
 
@@ -298,7 +298,7 @@ void Server::cleanup_client(int client_fd)
             m_disconnect_handler(*client_info);
         }
 
-        m_event_bus.publish(Event { EventType::ClientDisconnected, *client_info });
+        m_event_bus.publish(StreamEvent { EventType::ClientDisconnected, *client_info });
 
         LILA_INFO(Emitter::SERVER, "Client disconnected (fd: " + std::to_string(client_fd) + ")");
     }
@@ -306,7 +306,7 @@ void Server::cleanup_client(int client_fd)
     close(client_fd);
 }
 
-void Server::broadcast_event(const Event& /*event*/, std::optional<std::string_view> target_session)
+void Server::broadcast_event(const StreamEvent& /*event*/, std::optional<std::string_view> target_session)
 {
     std::shared_lock lock(m_clients_mutex);
 

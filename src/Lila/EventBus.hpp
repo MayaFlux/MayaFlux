@@ -71,22 +71,22 @@ using EventData = std::variant<
     SymbolEvent ///< SymbolDefined
     >;
 
-struct Event {
+struct StreamEvent {
     EventType type;
     EventData data;
     std::chrono::system_clock::time_point timestamp;
 
-    Event(EventType t, EventData d = std::monostate {});
+    StreamEvent(EventType t, EventData d = std::monostate {});
 };
 
 class Subscription {
 public:
     virtual ~Subscription() = default;
-    virtual void on_event(const Event& event) = 0;
+    virtual void on_event(const StreamEvent& event) = 0;
 };
 
 template <typename T>
-concept EventHandler = requires(T handler, const Event& event) {
+concept EventHandler = requires(T handler, const StreamEvent& event) {
     { handler(event) } -> std::same_as<void>;
 };
 
@@ -107,13 +107,13 @@ public:
                 : m_handler(std::forward<Handler>(h))
             {
             }
-            void on_event(const Event& event) override { m_handler(event); }
+            void on_event(const StreamEvent& event) override { m_handler(event); }
         };
 
         subscribe(type, std::make_shared<HandlerSubscription>(std::forward<Handler>(handler)));
     }
 
-    void publish(const Event& event);
+    void publish(const StreamEvent& event);
 };
 
 } // namespace Lila

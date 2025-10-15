@@ -3,7 +3,7 @@
 #include <expected>
 #include <netinet/in.h>
 
-#include "Event.hpp"
+#include "EventBus.hpp"
 
 namespace Lila {
 
@@ -29,7 +29,7 @@ public:
     EventBus& event_bus() { return m_event_bus; }
     const EventBus& event_bus() const noexcept { return m_event_bus; }
 
-    void broadcast_event(const Event& event, std::optional<std::string_view> target_session = std::nullopt);
+    void broadcast_event(const StreamEvent& event, std::optional<std::string_view> target_session = std::nullopt);
     void broadcast_to_all(std::string_view message);
 
     void set_client_session(int client_fd, std::string session_id);

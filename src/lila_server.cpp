@@ -1,7 +1,7 @@
 #include "Lila/Commentator.hpp"
 #include "Lila/Lila.hpp"
 
-#include "Lila/Event.hpp"
+#include "Lila/EventBus.hpp"
 
 #include <atomic>
 #include <csignal>
