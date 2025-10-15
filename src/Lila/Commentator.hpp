@@ -12,6 +12,12 @@
 
 namespace Lila {
 
+/**
+ * @namespace Colors
+ * @brief ANSI color codes for terminal output.
+ *
+ * Provides color codes for use in log messages. Automatically enabled on supported platforms.
+ */
 namespace Colors {
     constexpr std::string_view Reset = "\033[0m";
     constexpr std::string_view Red = "\033[31m";
@@ -24,15 +30,27 @@ namespace Colors {
     constexpr std::string_view BrightBlue = "\033[94m";
 }
 
+/**
+ * @enum LogLevel
+ * @brief Log severity levels for Commentator.
+ *
+ * Controls filtering and formatting of log output.
+ */
 enum class LogLevel : uint8_t {
-    TRACE,
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR,
-    FATAL
+    TRACE, ///< Fine-grained debug information
+    DEBUG, ///< Debug-level information
+    INFO, ///< Informational messages
+    WARN, ///< Warnings
+    ERROR, ///< Errors
+    FATAL ///< Fatal errors
 };
 
+/**
+ * @enum Emitter
+ * @brief Source category for log messages.
+ *
+ * Used to indicate which subsystem emitted the log.
+ */
 enum class Emitter : uint8_t {
     SERVER, ///< TCP server, connection handling
     INTERPRETER, ///< Clang interpreter, compilation, symbol resolution
@@ -40,6 +58,31 @@ enum class Emitter : uint8_t {
     GENERAL ///< General/uncategorized
 };
 
+/**
+ * @class Commentator
+ * @brief Centralized, thread-safe logging and announcement system for Lila.
+ *
+ * The Commentator class provides formatted, colorized, and categorized logging for all Lila subsystems.
+ * It supports log levels, verbosity, and source tagging, and is designed for both interactive and automated use.
+ *
+ * ## Core Features
+ * - Singleton access via Commentator::instance()
+ * - Log level filtering and verbosity control
+ * - Colorized output (ANSI codes, auto-enabled on supported platforms)
+ * - Source location reporting (file, line) for verbose/error/fatal logs
+ * - Thread-safe logging (mutex-protected)
+ * - Macros for convenient logging (LILA_INFO, LILA_ERROR, etc.)
+ *
+ * ## Usage Example
+ * ```cpp
+ * LILA_INFO(Lila::Emitter::SYSTEM, "Server started");
+ * LILA_ERROR(Lila::Emitter::INTERPRETER, "Compilation failed");
+ * Lila::Commentator::instance().set_level(Lila::LogLevel::DEBUG);
+ * Lila::Commentator::instance().set_verbose(true);
+ * ```
+ *
+ * Commentator is intended for internal use by Lila and its binaries.
+ */
 class Commentator {
 public:
     static Commentator& instance()
@@ -54,11 +97,22 @@ public:
         m_min_level = level;
     }
 
+    /**
+     * @brief Enables or disables verbose output (shows source location).
+     * @param verbose True to enable verbose mode.
+     */
     void set_verbose(bool verbose)
     {
         m_verbose = verbose;
     }
 
+    /**
+     * @brief Announces a log message with full control.
+     * @param level Log severity.
+     * @param source Emitter subsystem.
+     * @param message Log message.
+     * @param location Source location (auto-filled).
+     */
     void announce(LogLevel level, Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
@@ -99,36 +153,72 @@ public:
         std::cout << "\n";
     }
 
+    /**
+     * @brief Logs a TRACE-level message.
+     * @param source Emitter subsystem.
+     * @param message Log message.
+     * @param location Source location (auto-filled).
+     */
     void trace(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
         announce(LogLevel::TRACE, source, message, location);
     }
 
+    /**
+     * @brief Logs a DEBUG-level message.
+     * @param source Emitter subsystem.
+     * @param message Log message.
+     * @param location Source location (auto-filled).
+     */
     void debug(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
         announce(LogLevel::DEBUG, source, message, location);
     }
 
+    /**
+     * @brief Logs an INFO-level message.
+     * @param source Emitter subsystem.
+     * @param message Log message.
+     * @param location Source location (auto-filled).
+     */
     void info(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
         announce(LogLevel::INFO, source, message, location);
     }
 
+    /**
+     * @brief Logs a WARN-level message.
+     * @param source Emitter subsystem.
+     * @param message Log message.
+     * @param location Source location (auto-filled).
+     */
     void warn(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
         announce(LogLevel::WARN, source, message, location);
     }
 
+    /**
+     * @brief Logs an ERROR-level message.
+     * @param source Emitter subsystem.
+     * @param message Log message.
+     * @param location Source location (auto-filled).
+     */
     void error(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
         announce(LogLevel::ERROR, source, message, location);
     }
 
+    /**
+     * @brief Logs a FATAL-level message.
+     * @param source Emitter subsystem.
+     * @param message Log message.
+     * @param location Source location (auto-filled).
+     */
     void fatal(Emitter source, std::string_view message,
         std::source_location location = std::source_location::current())
     {
@@ -139,6 +229,10 @@ public:
     Commentator& operator=(const Commentator&) = delete;
 
 private:
+    /**
+     * @brief Initializes console color support (platform-specific).
+     * @return True if colors are enabled.
+     */
     Commentator()
         : m_colors_enabled(initialize_console_colors())
     {
@@ -175,6 +269,11 @@ private:
 #endif
     }
 
+    /**
+     * @brief Gets the ANSI color code for a log level.
+     * @param level LogLevel value.
+     * @return Color code string.
+     */
     static constexpr std::string_view level_color(LogLevel level)
     {
         switch (level) {
@@ -194,6 +293,11 @@ private:
         }
     }
 
+    /**
+     * @brief Gets the string representation of a log level.
+     * @param level LogLevel value.
+     * @return Log level string.
+     */
     static constexpr std::string_view level_string(LogLevel level)
     {
         switch (level) {
@@ -214,6 +318,11 @@ private:
         }
     }
 
+    /**
+     * @brief Gets the string representation of an emitter.
+     * @param source Emitter value.
+     * @return Emitter string.
+     */
     static constexpr std::string_view emitter_string(Emitter source)
     {
         switch (source) {
@@ -230,6 +339,11 @@ private:
         }
     }
 
+    /**
+     * @brief Extracts the filename from a file path.
+     * @param path File path.
+     * @return Filename string view.
+     */
     static std::string_view extract_filename(const char* path)
     {
         std::string_view sv(path);

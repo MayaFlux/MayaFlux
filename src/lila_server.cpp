@@ -1,3 +1,21 @@
+/**
+ * @file lila_server.cpp
+ * @brief Entry point for the Lila live coding TCP server binary.
+ *
+ * This program launches the Lila server, which enables interactive live coding sessions
+ * over TCP for MayaFlux. It parses command-line options for port, verbosity, and log level,
+ * sets up signal handling for graceful shutdown, and manages the main server loop.
+ *
+ * Usage:
+ *   lila_server [OPTIONS]
+ *
+ * Options:
+ *   -p, --port <port>     Server port (default: 9090)
+ *   -v, --verbose         Enable verbose logging
+ *   -l, --level <level>   Set log level (TRACE, DEBUG, INFO, WARN, ERROR, FATAL)
+ *   -h, --help            Show help message
+ */
+
 #include "Lila/Commentator.hpp"
 #include "Lila/Lila.hpp"
 
@@ -7,8 +25,15 @@
 #include <csignal>
 #include <iostream>
 
+/**
+ * @brief Global flag to control server running state.
+ */
 std::atomic<bool> g_running { true };
 
+/**
+ * @brief Handles SIGINT and SIGTERM for graceful shutdown.
+ * @param signal Signal number
+ */
 void signal_handler(int signal)
 {
     if (signal == SIGINT || signal == SIGTERM) {
@@ -17,6 +42,10 @@ void signal_handler(int signal)
     }
 }
 
+/**
+ * @brief Prints usage information for the server binary.
+ * @param program_name Name of the executable
+ */
 void print_usage(const char* program_name)
 {
     std::cout << "Usage: " << program_name << " [OPTIONS]\n"
@@ -32,6 +61,11 @@ void print_usage(const char* program_name)
               << '\n';
 }
 
+/**
+ * @brief Parses a string to a Lila::LogLevel value.
+ * @param level_str Log level string
+ * @return Corresponding LogLevel enum value
+ */
 Lila::LogLevel parse_log_level(const std::string& level_str)
 {
     if (level_str == "TRACE")
@@ -52,6 +86,12 @@ Lila::LogLevel parse_log_level(const std::string& level_str)
     return Lila::LogLevel::INFO;
 }
 
+/**
+ * @brief Main entry point for the Lila server binary.
+ * @param argc Argument count
+ * @param argv Argument vector
+ * @return Exit code
+ */
 int main(int argc, char** argv)
 {
     int port = 9090;
