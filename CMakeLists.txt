@@ -11,6 +11,11 @@ project(MayaFlux VERSION 0.1.0)
 
 option(BUILD_LILA "Build Lila live coding library" ON)
 
+if(WIN32 AND EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    set(MAYAFLUX_USE_CONAN ON)
+    message(STATUS "MayaFlux: Using Conan dependency management")
+endif()
+
 include(dependencies)
 include(compiler_config)
 
@@ -48,3 +53,4 @@ include(install)
 
 message(STATUS "MayaFlux configuration:")
 message(STATUS "  Version: ${PROJECT_VERSION}")
+message(STATUS "  Lila live coding: ${BUILD_LILA}")

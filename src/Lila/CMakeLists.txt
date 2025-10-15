@@ -4,6 +4,9 @@ if(NOT LLVM_FOUND)
 endif()
 
 find_package(Clang REQUIRED CONFIG)
+if(WIN32)
+    find_package(LLVM REQUIRED CONFIG)
+endif()
 
 include_directories(${CLANG_INCLUDE_DIRS})
 add_definitions(${CLANG_DEFINITIONS})
@@ -68,11 +71,17 @@ if(UNIX)
         ${LLVM_LIBS}
         ${LLVM_SYSTEM_LIBS}
     )
+    target_link_libraries(Lila PRIVATE clang-cpp)
 else()
-    target_link_libraries(Lila PRIVATE LLVM::Core LLVM::Support LLVM::OrcJIT LLVM::IRReader)
+    target_link_libraries(Lila PRIVATE
+    LLVM::Core
+    LLVM::Support
+    LLVM::OrcJIT
+    LLVM::IRReader
+    clang-cpp
+)
 endif()
 
-target_link_libraries(Lila PRIVATE clang-cpp)
 target_link_libraries(Lila PUBLIC MayaFluxLib)
 
 set_target_properties(Lila PROPERTIES
