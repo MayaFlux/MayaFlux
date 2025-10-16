@@ -18,8 +18,8 @@ set(LILA_HEADERS
 
 configure_file(
     "${CMAKE_SOURCE_DIR}/cmake/lila_config.hpp.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/LilaConfig.hpp"
-    @ONLY
+    "${CMAKE_SOURCE_DIR}/src/Lila/LilaConfig.hpp"
+     @ONLY
 )
 
 if(WIN32)

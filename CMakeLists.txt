@@ -31,14 +31,14 @@ set(USER_SOURCES ${USER_PROJECT_FILE})
 
 add_subdirectory(src)
 
-enable_testing()
-add_subdirectory(tests)
-
 if(UNIX)
     execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${CMAKE_BINARY_DIR}/compile_commands.json
     ${CMAKE_SOURCE_DIR}/compile_commands.json
+
+    enable_testing()
+    add_subdirectory(tests)
 )
 endif()
 

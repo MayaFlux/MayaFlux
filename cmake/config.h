@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cstdlib>
+#include <cstdio>
 #include <filesystem>
 #include <sstream>
 #include <string>
@@ -93,16 +94,13 @@ public:
         std::vector<std::string> includes;
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-        // Get MSVC includes using C++20 only
         auto msvc_includes = get_msvc_includes();
         includes.insert(includes.end(), msvc_includes.begin(), msvc_includes.end());
 
-        // Get Windows SDK includes using C++20 only
         auto sdk_includes = get_windows_sdk_includes();
         includes.insert(includes.end(), sdk_includes.begin(), sdk_includes.end());
 #endif
 
-        // Get Clang system includes
         const char* cmd =
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
             "clang -v -E -x c++ - 2>&1 <nul";

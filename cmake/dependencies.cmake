@@ -20,28 +20,38 @@ if(WIN32)
         set(magic_enum_POPULATED TRUE CACHE INTERNAL "magic_enum populated")
     endif()
 
-    message(STATUS "Fetching GoogleTest via FetchContent...")
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.14.0
-        GIT_SHALLOW TRUE
-    )
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
-    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    # message(STATUS "Fetching GoogleTest via FetchContent...")
+    # FetchContent_Declare(
+    #     googletest
+    #     GIT_REPOSITORY https://github.com/google/googletest.git
+    #     GIT_TAG v1.14.0
+    #     GIT_SHALLOW TRUE
+    # )
+    # set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    # set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+    # set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 
-    FetchContent_GetProperties(googletest)
-    if(NOT googletest_POPULATED)
-        FetchContent_Populate(googletest)
-    endif()
+    # FetchContent_GetProperties(googletest)
+    # if(NOT googletest_POPULATED)
+    #     FetchContent_Populate(googletest)
+    # endif()
+
+    # 
+    # if(EXISTS "${googletest_SOURCE_DIR}")
+    #     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
+    #     set_target_properties(gtest gtest_main PROPERTIES
+    #         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+    #     )
+    #     target_compile_options(gtest PRIVATE 
+    #         /MDd$<$<CONFIG:Release>:/MT>
+    #     )
+    #     target_compile_options(gtest_main PRIVATE 
+    #         /MDd$<$<CONFIG:Release>:/MT>
+    #     )
+    # endif()
 
     if(EXISTS "${magic_enum_SOURCE_DIR}")
         add_subdirectory(${magic_enum_SOURCE_DIR} ${magic_enum_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
-    
-    if(EXISTS "${googletest_SOURCE_DIR}")
-        add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
 
     add_library(Eigen3::Eigen INTERFACE IMPORTED)
