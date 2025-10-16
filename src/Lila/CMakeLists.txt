@@ -22,7 +22,11 @@ configure_file(
     @ONLY
 )
 
+if(WIN32)
+    add_library(Lila STATIC ${LILA_SOURCES} ${LILA_HEADERS})
+else()
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
+endif()
 
 target_include_directories(Lila PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..  # For #include "Lila/..."
@@ -67,64 +71,30 @@ if(UNIX)
     )
     target_link_libraries(Lila PRIVATE clang-cpp)
 else()
-    set(LLVM_LIB_DIR "C:/Program Files/LLVM/lib")
-    
-    set(LLVM_LIBS
-        "${LLVM_LIB_DIR}/LLVMCore.lib"
-        "${LLVM_LIB_DIR}/LLVMSupport.lib" 
-        "${LLVM_LIB_DIR}/LLVMOrcJIT.lib"
-        "${LLVM_LIB_DIR}/LLVMIRReader.lib"
-        "${LLVM_LIB_DIR}/LLVMExecutionEngine.lib"
-        "${LLVM_LIB_DIR}/LLVMRuntimeDyld.lib"
-        "${LLVM_LIB_DIR}/LLVMX86CodeGen.lib"
-        "${LLVM_LIB_DIR}/LLVMX86AsmParser.lib"
-        "${LLVM_LIB_DIR}/LLVMX86Desc.lib"
-        "${LLVM_LIB_DIR}/LLVMX86Info.lib"
-        "${LLVM_LIB_DIR}/LLVMTarget.lib"
-        "${LLVM_LIB_DIR}/LLVMMC.lib"
-        "${LLVM_LIB_DIR}/LLVMMCParser.lib"
-        "${LLVM_LIB_DIR}/LLVMObject.lib"
-        "${LLVM_LIB_DIR}/LLVMTransformUtils.lib"
-        "${LLVM_LIB_DIR}/LLVMAnalysis.lib"
-        "${LLVM_LIB_DIR}/LLVMPasses.lib"
-        "${LLVM_LIB_DIR}/LLVMBitReader.lib"
-        "${LLVM_LIB_DIR}/LLVMAsmParser.lib"
-        "${LLVM_LIB_DIR}/LLVMCodeGen.lib"
-        "${LLVM_LIB_DIR}/LLVMSelectionDAG.lib"
-        "${LLVM_LIB_DIR}/LLVMAsmPrinter.lib"
-        "${LLVM_LIB_DIR}/LLVMGlobalISel.lib"
-        "${LLVM_LIB_DIR}/LLVMMIRParser.lib"
-        "${LLVM_LIB_DIR}/LLVMProfileData.lib"
-        # ADD THESE MISSING ONES:
-        "${LLVM_LIB_DIR}/LLVMBinaryFormat.lib"
-        "${LLVM_LIB_DIR}/LLVMDemangle.lib"
-        "${LLVM_LIB_DIR}/LLVMRemarks.lib"
-        "${LLVM_LIB_DIR}/LLVMBitstreamReader.lib"
-    )
-    
-    set(CLANG_LIBS
-        "${LLVM_LIB_DIR}/clangInterpreter.lib"
-        "${LLVM_LIB_DIR}/clangFrontend.lib"
-        "${LLVM_LIB_DIR}/clangDriver.lib"
-        "${LLVM_LIB_DIR}/clangSerialization.lib"
-        "${LLVM_LIB_DIR}/clangCodeGen.lib"
-        "${LLVM_LIB_DIR}/clangParse.lib"
-        "${LLVM_LIB_DIR}/clangSema.lib"
-        "${LLVM_LIB_DIR}/clangAnalysis.lib"
-        "${LLVM_LIB_DIR}/clangEdit.lib"
-        "${LLVM_LIB_DIR}/clangAST.lib"
-        "${LLVM_LIB_DIR}/clangLex.lib"
-        "${LLVM_LIB_DIR}/clangBasic.lib"
-        # ADD THESE MISSING ONES:
-        "${LLVM_LIB_DIR}/clangASTMatchers.lib"
-        "${LLVM_LIB_DIR}/clangTooling.lib"
-        "${LLVM_LIB_DIR}/clangFormat.lib"
-    )
-    
     target_link_libraries(Lila PRIVATE
-        ${LLVM_LIBS}
-        ${CLANG_LIBS}
-        ws2_32  # Windows sockets
+        LLVMSupport
+        LLVMCore
+        LLVMOrcJIT
+        LLVMIRReader
+        LLVMExecutionEngine
+        LLVMRuntimeDyld
+        LLVMTarget
+        LLVMX86CodeGen
+        LLVMMC
+        LLVMBitReader
+        LLVMAsmParser
+        LLVMTransformUtils
+        clangAST
+        clangBasic
+        clangCodeGen
+        clangDriver
+        clangFrontend
+        clangLex
+        clangParse
+        clangSema
+        clangSerialization
+        clangInterpreter
+        ws2_32
     )
 endif()
 

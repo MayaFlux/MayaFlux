@@ -1,4 +1,10 @@
 #pragma once
+#include <algorithm>
+#include <cstdlib>
+#include <filesystem>
+#include <sstream>
+#include <string>
+#include <vector>
 
 // Cross-platform definitions
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
@@ -16,28 +22,25 @@ using u_int64_t = uint64_t;
 #define MAYAFLUX_FORCEINLINE __attribute__((always_inline))
 #endif
 
-// Unified export macro
-#if defined(_WIN32) || defined(_WIN64)
-#if defined(MAYAFLUX_STATIC)
+// #ifdef MAYAFLUX_PLATFORM_WINDOWS
+//     #if defined(MAYAFLUX_EXPORTS)
+//         #define MAYAFLUX_API __declspec(dllexport)
+//     #else
+//         #define MAYAFLUX_API __declspec(dllimport)
+//     #endif
+// #else
+//     #if defined(__GNUC__) && (__GNUC__ >= 4)
+//         #if defined(MAYAFLUX_EXPORTS)
+//             #define MAYAFLUX_API __attribute__((visibility("default")))
+//         #else
+//             #define MAYAFLUX_API
+//         #endif
+//     #else
+//         #define MAYAFLUX_API
+//     #endif
+// #endif
+
 #define MAYAFLUX_API
-#elif defined(MAYAFLUX_EXPORTS)
-#define MAYAFLUX_API __declspec(dllexport)
-#elif defined(MAYAFLUX_IMPORTS)
-#define MAYAFLUX_API __declspec(dllimport)
-#else
-#define MAYAFLUX_API
-#endif
-#else
-#if defined(__GNUC__) && (__GNUC__ >= 4)
-#if defined(MAYAFLUX_EXPORTS)
-#define MAYAFLUX_API __attribute__((visibility("default")))
-#else
-#define MAYAFLUX_API
-#endif
-#else
-#define MAYAFLUX_API
-#endif
-#endif
 
 // C++20 std::format availability detection
 // On macOS, we use fmt library due to runtime availability issues with macOS 14
@@ -78,7 +81,7 @@ public:
             result.pop_back();
         }
 
-        if (!result.empty() && result.find("clang") != std::string::npos) {
+        if (!result.empty() && (result.find("clang") != std::string::npos || result.find("lib") != std::string::npos)) {
             return result;
         }
 
@@ -90,20 +93,25 @@ public:
         std::vector<std::string> includes;
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
+        // Get MSVC includes using C++20 only
         auto msvc_includes = get_msvc_includes();
         includes.insert(includes.end(), msvc_includes.begin(), msvc_includes.end());
 
-        // Get Windows SDK includes
+        // Get Windows SDK includes using C++20 only
         auto sdk_includes = get_windows_sdk_includes();
         includes.insert(includes.end(), sdk_includes.begin(), sdk_includes.end());
-
-        // Get Clang system includes
-        const char* cmd = "clang -v -E -x c++ - 2>&1 <nul | findstr \"^ \\\\\"";
-#else
-        const char* cmd = "clang -v -E -x c++ - 2>&1 < /dev/null | grep \"^ /\"";
 #endif
 
-        auto clang_includes = exec_command_lines(cmd);
+        // Get Clang system includes
+        const char* cmd =
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+            "clang -v -E -x c++ - 2>&1 <nul";
+#else
+            "clang -v -E -x c++ - 2>&1 < /dev/null";
+#endif
+
+        auto clang_output = exec_command(cmd);
+        auto clang_includes = parse_clang_includes(clang_output);
         includes.insert(includes.end(), clang_includes.begin(), clang_includes.end());
 
         return includes;
@@ -114,82 +122,106 @@ private:
     {
         std::array<char, 128> buffer;
         std::string result;
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
+#else
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+#endif
 
         if (!pipe)
             return "";
 
-        while (fgets(buffer.data(), buffer.size(), pipe.get())) {
+        while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get())) {
             result += buffer.data();
         }
         return result;
     }
 
-    static std::vector<std::string> exec_command_lines(const char* cmd)
+    static std::vector<std::string> parse_clang_includes(const std::string& output)
     {
-        std::vector<std::string> lines;
-        std::array<char, 128> buffer;
+        std::vector<std::string> includes;
+        size_t start_pos = 0;
+        bool in_search_paths = false;
 
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
-        if (!pipe)
-            return lines;
+        std::istringstream stream(output);
+        std::string line;
 
-        while (fgets(buffer.data(), buffer.size(), pipe.get())) {
-            std::string line(buffer.data());
-            line.erase(0, line.find_first_not_of(" \t"));
-            line.erase(line.find_last_not_of(" \t\n\r") + 1);
-
-            if (!line.empty()) {
-                lines.push_back(line);
+        while (std::getline(stream, line)) {
+            if (line.find("#include <...> search starts here:") != std::string::npos) {
+                in_search_paths = true;
+                continue;
+            }
+            if (line.find("End of search list.") != std::string::npos) {
+                break;
+            }
+            if (in_search_paths) {
+                // Trim whitespace
+                auto start = line.find_first_not_of(" \t");
+                if (start != std::string::npos) {
+                    auto end = line.find_last_not_of(" \t");
+                    std::string path = line.substr(start, end - start + 1);
+                    if (!path.empty()) {
+                        includes.push_back(path);
+                    }
+                }
             }
         }
-        return lines;
+        return includes;
     }
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
     static std::vector<std::string> get_msvc_includes()
     {
         std::vector<std::string> includes;
+        namespace fs = std::filesystem;
 
-        // Try vswhere.exe (VS2017+)
+        // Method 1: Use vswhere to find Visual Studio
         const char* vswhere_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" "
                                   "-latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 "
                                   "-property installationPath 2>nul";
 
         std::string vs_path = exec_command(vswhere_cmd);
         if (!vs_path.empty()) {
+            // Clean path
             vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\r'), vs_path.end());
             vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\n'), vs_path.end());
+            vs_path.erase(vs_path.find_last_not_of(" \t") + 1);
 
-            std::string msvc_base = vs_path + "\\VC\\Tools\\MSVC";
-            WIN32_FIND_DATAA fd;
-            HANDLE hFind = FindFirstFileA((msvc_base + "\\*").c_str(), &fd);
-            std::string latest;
-            if (hFind != INVALID_HANDLE_VALUE) {
-                do {
-                    if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && fd.cFileName[0] >= '0' && fd.cFileName[0] <= '9') {
-                        if (fd.cFileName > latest)
-                            latest = fd.cFileName;
+            if (fs::exists(vs_path)) {
+                fs::path msvc_base = fs::path(vs_path) / "VC" / "Tools" / "MSVC";
+
+                if (fs::exists(msvc_base)) {
+                    std::string latest_version;
+                    for (const auto& entry : fs::directory_iterator(msvc_base)) {
+                        if (entry.is_directory()) {
+                            std::string name = entry.path().filename().string();
+                            if (!name.empty() && std::isdigit(name[0])) {
+                                if (latest_version.empty() || name > latest_version) {
+                                    latest_version = name;
+                                }
+                            }
+                        }
                     }
-                } while (FindNextFileA(hFind, &fd));
-                FindClose(hFind);
-            }
 
-            if (!latest.empty()) {
-                includes.push_back(msvc_base + "\\" + latest + "\\include");
-                std::string atlmfc = msvc_base + "\\" + latest + "\\atlmfc\\include";
-                if (GetFileAttributesA(atlmfc.c_str()) != INVALID_FILE_ATTRIBUTES)
-                    includes.push_back(atlmfc);
+                    if (!latest_version.empty()) {
+                        fs::path include_path = msvc_base / latest_version / "include";
+                        if (fs::exists(include_path)) {
+                            includes.push_back(include_path.string());
+                        }
+                    }
+                }
             }
         }
 
-        // Fallback to environment
+        // Method 2: Environment variable fallback
         if (includes.empty()) {
-            char* dir = nullptr;
-            size_t len = 0;
-            if (_dupenv_s(&dir, &len, "VCInstallDir") == 0 && dir) {
-                includes.push_back(std::string(dir) + "\\include");
-                free(dir);
+            const char* vc_dir = std::getenv("VCINSTALLDIR");
+            if (vc_dir && fs::exists(vc_dir)) {
+                fs::path include_path = fs::path(vc_dir) / "include";
+                if (fs::exists(include_path)) {
+                    includes.push_back(include_path.string());
+                }
             }
         }
 
@@ -199,24 +231,62 @@ private:
     static std::vector<std::string> get_windows_sdk_includes()
     {
         std::vector<std::string> includes;
-        char *sdk_dir = nullptr, *sdk_ver = nullptr;
-        size_t len = 0;
+        namespace fs = std::filesystem;
 
-        if (_dupenv_s(&sdk_dir, &len, "WindowsSdkDir") == 0 && sdk_dir) {
-            std::string base = sdk_dir;
-            free(sdk_dir);
-            if (_dupenv_s(&sdk_ver, &len, "WindowsSDKVersion") == 0 && sdk_ver) {
-                std::string ver = sdk_ver;
-                free(sdk_ver);
-                if (!ver.empty() && ver.back() == '\\')
-                    ver.pop_back();
-                includes = {
-                    base + "Include\\" + ver + "\\ucrt",
-                    base + "Include\\" + ver + "\\shared",
-                    base + "Include\\" + ver + "\\um",
-                    base + "Include\\" + ver + "\\winrt",
-                    base + "Include\\" + ver + "\\cppwinrt"
-                };
+        // Method 1: Environment variables
+        const char* sdk_dir = std::getenv("WindowsSdkDir");
+        const char* sdk_ver = std::getenv("WindowsSDKVersion");
+
+        if (sdk_dir && sdk_ver && fs::exists(sdk_dir)) {
+            fs::path base = fs::path(sdk_dir);
+            std::string version = sdk_ver;
+
+            // Remove trailing backslash from version if present
+            if (!version.empty() && version.back() == '\\') {
+                version.pop_back();
+            }
+
+            std::vector<std::string> subdirs = { "ucrt", "shared", "um", "winrt", "cppwinrt" };
+            for (const auto& subdir : subdirs) {
+                fs::path include_path = base / "Include" / version / subdir;
+                if (fs::exists(include_path)) {
+                    includes.push_back(include_path.string());
+                }
+            }
+        }
+
+        // Method 2: Common installation paths
+        if (includes.empty()) {
+            std::vector<fs::path> sdk_paths = {
+                "C:\\Program Files (x86)\\Windows Kits\\10\\Include",
+                "C:\\Program Files\\Windows Kits\\10\\Include"
+            };
+
+            for (const auto& base_path : sdk_paths) {
+                if (fs::exists(base_path)) {
+                    std::string latest_version;
+                    for (const auto& entry : fs::directory_iterator(base_path)) {
+                        if (entry.is_directory()) {
+                            std::string name = entry.path().filename().string();
+                            if (!name.empty() && std::isdigit(name[0])) {
+                                if (latest_version.empty() || name > latest_version) {
+                                    latest_version = name;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!latest_version.empty()) {
+                        std::vector<std::string> subdirs = { "ucrt", "shared", "um", "winrt", "cppwinrt" };
+                        for (const auto& subdir : subdirs) {
+                            fs::path include_path = base_path / latest_version / subdir;
+                            if (fs::exists(include_path)) {
+                                includes.push_back(include_path.string());
+                            }
+                        }
+                        break;
+                    }
+                }
             }
         }
 
