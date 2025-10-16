@@ -8,6 +8,7 @@ CMakeFiles/
 CTestTestfile.cmake
 cmake_install.cmake
 Makefile
+.dependencies
 
 # Clangd and language server files
 .clangd/

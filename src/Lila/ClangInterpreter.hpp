@@ -44,6 +44,11 @@ public:
      */
     ~ClangInterpreter();
 
+    ClangInterpreter(const ClangInterpreter&) = delete;
+    ClangInterpreter& operator=(const ClangInterpreter&) = delete;
+    ClangInterpreter(ClangInterpreter&&) noexcept;
+    ClangInterpreter& operator=(ClangInterpreter&&) noexcept;
+
     /**
      * @brief Initializes the Clang interpreter and prepares for code evaluation
      * @return True if initialization succeeded, false otherwise

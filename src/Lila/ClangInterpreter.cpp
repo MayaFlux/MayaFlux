@@ -9,6 +9,10 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/TargetParser/Host.h>
 
+#include <clang/AST/Type.h>  // For ExtQualsTypeCommonBase
+#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
+
 #include <filesystem>
 
 namespace Lila {
@@ -34,6 +38,9 @@ ClangInterpreter::~ClangInterpreter()
 {
     shutdown();
 }
+
+ClangInterpreter::ClangInterpreter(ClangInterpreter&&) noexcept = default;
+ClangInterpreter& ClangInterpreter::operator=(ClangInterpreter&&) noexcept = default;
 
 bool ClangInterpreter::initialize()
 {
