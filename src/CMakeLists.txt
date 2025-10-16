@@ -9,9 +9,19 @@ set_target_properties(lila_server PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
     CXX_STANDARD 23
     CXX_STANDARD_REQUIRED ON
-    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
-    INSTALL_RPATH_USE_LINK_PATH TRUE
 )
+
+if(WIN32)
+    set_target_properties(lila_server PROPERTIES
+        VS_DEBUGGER_ENVIRONMENT "PATH=${CMAKE_BINARY_DIR}/bin;$ENV{PATH}"
+    )
+else()
+    set_target_properties(lila_server PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+        INSTALL_RPATH_USE_LINK_PATH TRUE
+        # BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
+    )
+endif()
 
 add_executable(MayaFlux main.cpp ${HEADERS} ${USER_SOURCES})
 set_target_properties(MayaFlux PROPERTIES
@@ -20,4 +30,3 @@ set_target_properties(MayaFlux PROPERTIES
 
 target_link_libraries(MayaFlux PRIVATE MayaFluxLib)
 target_precompile_headers(MayaFlux PUBLIC ../cmake/pch.h)
-

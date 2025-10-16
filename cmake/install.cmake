@@ -35,6 +35,10 @@ install(FILES
     DESTINATION share/lila/runtime
 )
 
-message(STATUS "Lila will be installed to ${CMAKE_INSTALL_PREFIX}")
-
 install(TARGETS lila_server RUNTIME DESTINATION bin)
+
+message(STATUS "Lila (static) installed to:")
+message(STATUS "  - Libraries: ${CMAKE_INSTALL_PREFIX}/lib")
+message(STATUS "  - Headers: ${CMAKE_INSTALL_PREFIX}/include/Lila")
+message(STATUS "  - Runtime data: ${CMAKE_INSTALL_PREFIX}/share/lila/runtime")
+message(STATUS "  - Executables: ${CMAKE_INSTALL_PREFIX}/bin")

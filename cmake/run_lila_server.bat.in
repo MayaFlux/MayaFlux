@@ -1,0 +1,31 @@
+@echo off
+REM Helper script to run lila_server with proper environment on Windows
+REM Since Lila is a static library, the executable is self-contained
+
+setlocal enabledelayedexpansion
+
+REM Set the installation prefix (this gets configured by CMake)
+set LILA_PREFIX=@CMAKE_INSTALL_PREFIX@
+set LILA_BIN_DIR=%LILA_PREFIX%\bin
+set LILA_RUNTIME_DIR=%LILA_PREFIX%\share\lila\runtime
+
+REM Verify runtime files exist
+if not exist "%LILA_RUNTIME_DIR%\pch.h" (
+    echo Error: Runtime file not found: %LILA_RUNTIME_DIR%\pch.h
+    echo.
+    echo Make sure you've run:
+    echo   cmake --install build --config Release
+    echo.
+    pause
+    exit /b 1
+)
+
+REM Run lila_server
+echo Starting lila_server
+echo Runtime data directory: %LILA_RUNTIME_DIR%
+echo.
+
+cd /d "%LILA_BIN_DIR%"
+lila_server.exe %*
+
+endlocal
