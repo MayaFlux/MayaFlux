@@ -539,6 +539,66 @@ if (-not (Test-Path "$eigenDir\Eigen\Dense")) {
     Write-Output "Eigen3 installed at: $eigenDir"
 }
 
+# ----------------------------------------------------------------------
+#  MAGIC_ENUM SETUP (Header-only library)
+# ----------------------------------------------------------------------
+
+Write-Host -ForegroundColor Cyan "--- Magic Enum Dependency Setup ---"
+
+$MAGIC_ENUM_VERSION = "v0.9.5"
+$MAGIC_ENUM_INSTALL_ROOT = "C:\Program Files\magic_enum"
+$MAGIC_ENUM_TEMP_DIR = Join-Path $PSScriptRoot "temp\magic_enum"
+$MAGIC_ENUM_HEADER_FILE = "$MAGIC_ENUM_INSTALL_ROOT\include\magic_enum.hpp"
+
+if (-not (Test-Path $MAGIC_ENUM_HEADER_FILE -PathType Leaf)) {
+    Write-Host "Magic Enum not found. Installing..."
+    
+    # Create directories
+    if (-not (Test-Path $MAGIC_ENUM_TEMP_DIR)) {
+        mkdir $MAGIC_ENUM_TEMP_DIR | Out-Null
+    }
+    if (-not (Test-Path $MAGIC_ENUM_INSTALL_ROOT)) {
+        mkdir "$MAGIC_ENUM_INSTALL_ROOT\include" -Force | Out-Null
+    }
+
+    # Download and extract
+    $MAGIC_ENUM_URL = "https://github.com/Neargye/magic_enum/archive/refs/tags/$MAGIC_ENUM_VERSION.zip"
+    $MAGIC_ENUM_ZIP_PATH = Join-Path $MAGIC_ENUM_TEMP_DIR "magic_enum.zip"
+
+    if (-not (Test-Path $MAGIC_ENUM_ZIP_PATH)) {
+        Write-Host "Downloading Magic Enum..."
+        try {
+            Invoke-WebRequest -Uri $MAGIC_ENUM_URL -OutFile $MAGIC_ENUM_ZIP_PATH -MaximumRedirection 5
+            Write-Host "Download complete."
+        } catch {
+            Write-Error "Failed to download Magic Enum: $($_.Exception.Message)"
+            exit 1
+        }
+    }
+
+    # Extract and copy headers
+    Write-Host "Extracting Magic Enum..."
+    try {
+        Expand-Archive -Path $MAGIC_ENUM_ZIP_PATH -DestinationPath $MAGIC_ENUM_TEMP_DIR -Force
+        
+        $ExtractedDir = Join-Path $MAGIC_ENUM_TEMP_DIR "magic_enum-$($MAGIC_ENUM_VERSION.TrimStart('v'))"
+        $SrcIncludeDir = Join-Path $ExtractedDir "include"
+        
+        if (Test-Path $SrcIncludeDir) {
+            Copy-Item -Recurse -Path "$SrcIncludeDir\*" -Destination "$MAGIC_ENUM_INSTALL_ROOT\include\" -Force
+            Write-Host "Magic Enum headers installed to $MAGIC_ENUM_INSTALL_ROOT\include"
+        } else {
+            Write-Error "Magic Enum extraction failed: include directory not found"
+            exit 1
+        }
+    } catch {
+        Write-Error "Failed to extract Magic Enum: $($_.Exception.Message)"
+        exit 1
+    }
+} else {
+    Write-Host "Magic Enum installation already found at $MAGIC_ENUM_INSTALL_ROOT."
+}
+
 # Generate toolchain
 $configDir = "C:\MayaFlux"
 New-Item -ItemType Directory -Path $configDir -Force | Out-Null
@@ -552,6 +612,159 @@ $vulkanSdkActual = if ($env:VULKAN_SDK) {
     $vulkanVersionDir = Get-ChildItem "C:\VulkanSDK" -Directory | Select-Object -First 1
     if ($vulkanVersionDir) { $vulkanVersionDir.FullName } else { "" }
 }
+
+# Define environment functions BEFORE using them
+function Update-SystemIncludePath {
+    param([string[]]$IncludePaths)
+    
+    $currentInclude = [Environment]::GetEnvironmentVariable("INCLUDE", "Machine")
+    if (-not $currentInclude) {
+        $currentInclude = ""
+    }
+    
+    $updated = $false
+    foreach ($path in $IncludePaths) {
+        if ($currentInclude -notmatch [Regex]::Escape($path)) {
+            if ($currentInclude -eq "") {
+                $currentInclude = $path
+            } else {
+                $currentInclude = "$currentInclude;$path"
+            }
+            $updated = $true
+            Write-Host "Added to INCLUDE: $path"
+        }
+    }
+    
+    if ($updated) {
+        [Environment]::SetEnvironmentVariable("INCLUDE", $currentInclude, "Machine")
+        Write-Host "System INCLUDE environment variable updated"
+    }
+}
+
+function Refresh-Environment {
+    $env:INCLUDE = [Environment]::GetEnvironmentVariable("INCLUDE", "Machine")
+    $env:LIB = [Environment]::GetEnvironmentVariable("LIB", "Machine")
+    Refresh-PathInSession
+}
+
+# ----------------------------------------------------------------------
+#  COLLECT ALL INCLUDE PATHS (Dependencies + MayaFlux)
+# ----------------------------------------------------------------------
+
+Write-Host -ForegroundColor Cyan "--- Collecting All Include Paths ---"
+
+$includePaths = @()
+
+# Dependency includes
+$llvmIncludePath = Join-Path $LLVM_SYSTEM_ROOT "include"
+if (Test-Path $llvmIncludePath) {
+    $includePaths += $llvmIncludePath
+}
+
+$libxml2IncludePath = Join-Path $LIBXML2_INSTALL_ROOT "include"
+if (Test-Path $libxml2IncludePath) {
+    $includePaths += $libxml2IncludePath
+}
+
+$vulkanSdkActual = if ($env:VULKAN_SDK) { 
+    $env:VULKAN_SDK 
+} else { 
+    $vulkanVersionDir = Get-ChildItem "C:\VulkanSDK" -Directory | Select-Object -First 1
+    if ($vulkanVersionDir) { $vulkanVersionDir.FullName } else { "" }
+}
+if ($vulkanSdkActual -and (Test-Path "$vulkanSdkActual\Include")) {
+    $includePaths += "$vulkanSdkActual\Include"
+}
+
+$ffmpegIncludePath = Join-Path $ffmpegDir "include"
+if (Test-Path $ffmpegIncludePath) {
+    $includePaths += $ffmpegIncludePath
+}
+
+$glfwIncludePath = Join-Path $glfwDir "include"
+if (Test-Path $glfwIncludePath) {
+    $includePaths += $glfwIncludePath
+}
+
+$rtaudioIncludePath = Join-Path $rtaudioDir "include"
+if (Test-Path $rtaudioIncludePath) {
+    $includePaths += $rtaudioIncludePath
+}
+
+$eigenIncludePath = $eigenDir
+if (Test-Path $eigenIncludePath) {
+    $includePaths += $eigenIncludePath
+}
+
+$magicEnumIncludePath = Join-Path $MAGIC_ENUM_INSTALL_ROOT "include"
+if (Test-Path $magicEnumIncludePath) {
+    $includePaths += $magicEnumIncludePath
+}
+
+if ($diaSdkFound -and $diaSdkPath) {
+    $diaIncludePath = Join-Path $diaSdkPath "include"
+    if (Test-Path $diaIncludePath) {
+        $includePaths += $diaIncludePath
+    }
+}
+
+# ----------------------------------------------------------------------
+#  MAYAFLUX PATHS SETUP
+# ----------------------------------------------------------------------
+
+Write-Host -ForegroundColor Cyan "--- Registering MayaFlux Installation Paths ---"
+
+$MAYAFLUX_INSTALL_ROOT = "C:\MayaFlux"
+$MAYAFLUX_INCLUDE_PATH = Join-Path $MAYAFLUX_INSTALL_ROOT "include"
+$MAYAFLUX_LIB_PATH = Join-Path $MAYAFLUX_INSTALL_ROOT "lib" 
+$MAYAFLUX_BIN_PATH = Join-Path $MAYAFLUX_INSTALL_ROOT "bin"
+
+# Create the installation directory structure
+if (-not (Test-Path $MAYAFLUX_INSTALL_ROOT)) {
+    Write-Host "Creating MayaFlux installation directory: $MAYAFLUX_INSTALL_ROOT"
+    New-Item -ItemType Directory -Path $MAYAFLUX_INSTALL_ROOT -Force | Out-Null
+    New-Item -ItemType Directory -Path $MAYAFLUX_INCLUDE_PATH -Force | Out-Null
+    New-Item -ItemType Directory -Path $MAYAFLUX_LIB_PATH -Force | Out-Null
+    New-Item -ItemType Directory -Path $MAYAFLUX_BIN_PATH -Force | Out-Null
+}
+
+# Add MayaFlux to include paths collection
+$includePaths += $MAYAFLUX_INCLUDE_PATH
+
+# ----------------------------------------------------------------------
+#  UPDATE ALL ENVIRONMENT VARIABLES
+# ----------------------------------------------------------------------
+
+Write-Host -ForegroundColor Cyan "--- Updating System Environment Variables ---"
+
+# Update INCLUDE with ALL paths (dependencies + MayaFlux)
+Update-SystemIncludePath -IncludePaths $includePaths
+
+# Add MayaFlux lib path to system LIB
+$currentLib = [Environment]::GetEnvironmentVariable("LIB", "Machine")
+if ($currentLib -notmatch [Regex]::Escape($MAYAFLUX_LIB_PATH)) {
+    if ($currentLib -eq "") {
+        [Environment]::SetEnvironmentVariable("LIB", $MAYAFLUX_LIB_PATH, "Machine")
+    } else {
+        [Environment]::SetEnvironmentVariable("LIB", "$MAYAFLUX_LIB_PATH;$currentLib", "Machine")
+    }
+    Write-Host "Added to LIB: $MAYAFLUX_LIB_PATH"
+}
+
+# Add MayaFlux bin path to system PATH
+Add-ToSystemPath $MAYAFLUX_BIN_PATH
+
+# Refresh current session once
+Refresh-Environment
+
+Write-Host "MayaFlux environment paths registered:"
+Write-Host "  INCLUDE: $MAYAFLUX_INCLUDE_PATH"
+Write-Host "  LIB: $MAYAFLUX_LIB_PATH"
+Write-Host "  PATH: $MAYAFLUX_BIN_PATH"
+Write-Host ""
+
+Write-Host "Current INCLUDE paths:"
+$env:INCLUDE -split ';' | ForEach-Object { Write-Host "  - $_" }
 
 $toolchainContent = @"
 # MayaFlux Windows Initial Cache
@@ -597,6 +810,8 @@ set(SWSCALE_LIBRARY "C:/Program Files/FFmpeg/lib/swscale.lib" CACHE FILEPATH "" 
 
 set(EIGEN3_ROOT "C:/Program Files/Eigen3" CACHE PATH "" FORCE)
 set(EIGEN3_INCLUDE_DIR "C:/Program Files/Eigen3" CACHE PATH "" FORCE)
+
+set(MAGIC_ENUM_INCLUDE_DIR "C:/Program Files/magic_enum/include" CACHE PATH "" FORCE)
 "@
 
 Set-Content -Path "C:\MayaFlux\MayaFluxToolchain.cmake" -Value $toolchainContent

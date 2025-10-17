@@ -1,11 +1,19 @@
 #pragma once
 #include <algorithm>
-#include <cstdlib>
+#include <array>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <sstream>
 #include <string>
 #include <vector>
+
+// Redifinition needed as clang interpreter wont have cmake defines
+#if defined(_WIN32) || defined(_WIN64)
+#ifndef MAYAFLUX_PLATFORM_WINDOWS
+#define MAYAFLUX_PLATFORM_WINDOWS
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+#endif
 
 // Cross-platform definitions
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
@@ -44,12 +52,10 @@ using u_int64_t = uint64_t;
 #define MAYAFLUX_API
 
 // C++20 std::format availability detection
-// On macOS, we use fmt library due to runtime availability issues with macOS 14
 #if defined(__APPLE__) && defined(__MACH__)
 #define MAYAFLUX_USE_FMT 1
 #define MAYAFLUX_USE_STD_FORMAT 0
 #else
-// Check if std::format is available on other platforms
 #if __has_include(<format>) && defined(__cpp_lib_format)
 #define MAYAFLUX_USE_STD_FORMAT 1
 #define MAYAFLUX_USE_FMT 0
@@ -67,22 +73,23 @@ constexpr char PathSeparator = '\\';
 constexpr char PathSeparator = '/';
 #endif
 
+namespace fs = std::filesystem;
 class SystemConfig {
 public:
     static std::string get_clang_resource_dir()
     {
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-        const char* cmd = "clang -print-resource-dir 2>nul";
-#else
-        const char* cmd = "clang -print-resource-dir 2>/dev/null";
-#endif
+        const char* cmd = "clang -print-resource-dir";
 
         auto result = exec_command(cmd);
         if (!result.empty() && result.back() == '\n') {
             result.pop_back();
         }
 
-        if (!result.empty() && (result.find("clang") != std::string::npos || result.find("lib") != std::string::npos)) {
+        if (!result.empty()
+            && (result.find("error:") == std::string::npos)
+            && (result.find("clang") != std::string::npos
+                || result.find("lib") != std::string::npos
+                || fs::exists(result))) {
             return result;
         }
 
@@ -101,11 +108,10 @@ public:
         includes.insert(includes.end(), sdk_includes.begin(), sdk_includes.end());
 #endif
 
-        const char* cmd =
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-            "clang -v -E -x c++ - 2>&1 <nul";
+        const char* cmd = "echo. | clang -v -E -x c++ - 2>&1";
 #else
-            "clang -v -E -x c++ - 2>&1 < /dev/null";
+        const char* cmd = "clang -v -E -x c++ - 2>&1 < /dev/null";
 #endif
 
         auto clang_output = exec_command(cmd);
@@ -139,7 +145,6 @@ private:
     static std::vector<std::string> parse_clang_includes(const std::string& output)
     {
         std::vector<std::string> includes;
-        size_t start_pos = 0;
         bool in_search_paths = false;
 
         std::istringstream stream(output);
@@ -154,7 +159,6 @@ private:
                 break;
             }
             if (in_search_paths) {
-                // Trim whitespace
                 auto start = line.find_first_not_of(" \t");
                 if (start != std::string::npos) {
                     auto end = line.find_last_not_of(" \t");
@@ -172,47 +176,58 @@ private:
     static std::vector<std::string> get_msvc_includes()
     {
         std::vector<std::string> includes;
-        namespace fs = std::filesystem;
 
-        // Method 1: Use vswhere to find Visual Studio
-        const char* vswhere_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" "
-                                  "-latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 "
-                                  "-property installationPath 2>nul";
+        std::vector<std::string> vswhere_paths = {
+            "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+            "C:\\Program Files\\Microsoft Visual Studio\\Installer\\vswhere.exe"
+        };
 
-        std::string vs_path = exec_command(vswhere_cmd);
-        if (!vs_path.empty()) {
-            // Clean path
-            vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\r'), vs_path.end());
-            vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\n'), vs_path.end());
-            vs_path.erase(vs_path.find_last_not_of(" \t") + 1);
+        std::string vswhere_cmd;
+        for (const auto& path : vswhere_paths) {
+            if (fs::exists(path)) {
+                vswhere_cmd = "\"" + path + "\" -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath";
+                break;
+            }
+        }
 
-            if (fs::exists(vs_path)) {
-                fs::path msvc_base = fs::path(vs_path) / "VC" / "Tools" / "MSVC";
+        // const char* vswhere_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" "
+        //                           "-latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 "
+        //                           "-property installationPath 2>nul";
 
-                if (fs::exists(msvc_base)) {
-                    std::string latest_version;
-                    for (const auto& entry : fs::directory_iterator(msvc_base)) {
-                        if (entry.is_directory()) {
-                            std::string name = entry.path().filename().string();
-                            if (!name.empty() && std::isdigit(name[0])) {
-                                if (latest_version.empty() || name > latest_version) {
-                                    latest_version = name;
+        if (!vswhere_cmd.empty()) {
+            std::string vs_path = exec_command(vswhere_cmd.c_str());
+            if (!vs_path.empty()) {
+                vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\r'), vs_path.end());
+                vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\n'), vs_path.end());
+                vs_path.erase(vs_path.find_last_not_of(" \t") + 1);
+
+                if (fs::exists(vs_path)) {
+                    fs::path msvc_base = fs::path(vs_path) / "VC" / "Tools" / "MSVC";
+
+                    if (fs::exists(msvc_base)) {
+                        std::string latest_version;
+                        for (const auto& entry : fs::directory_iterator(msvc_base)) {
+                            if (entry.is_directory()) {
+                                std::string name = entry.path().filename().string();
+                                if (!name.empty() && std::isdigit(name[0])) {
+                                    if (latest_version.empty() || name > latest_version) {
+                                        latest_version = name;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if (!latest_version.empty()) {
-                        fs::path include_path = msvc_base / latest_version / "include";
-                        if (fs::exists(include_path)) {
-                            includes.push_back(include_path.string());
+                        if (!latest_version.empty()) {
+                            fs::path include_path = msvc_base / latest_version / "include";
+                            if (fs::exists(include_path)) {
+                                includes.push_back(include_path.string());
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Method 2: Environment variable fallback
         if (includes.empty()) {
             const char* vc_dir = std::getenv("VCINSTALLDIR");
             if (vc_dir && fs::exists(vc_dir)) {
@@ -231,7 +246,6 @@ private:
         std::vector<std::string> includes;
         namespace fs = std::filesystem;
 
-        // Method 1: Environment variables
         const char* sdk_dir = std::getenv("WindowsSdkDir");
         const char* sdk_ver = std::getenv("WindowsSDKVersion");
 
@@ -239,7 +253,6 @@ private:
             fs::path base = fs::path(sdk_dir);
             std::string version = sdk_ver;
 
-            // Remove trailing backslash from version if present
             if (!version.empty() && version.back() == '\\') {
                 version.pop_back();
             }
@@ -253,7 +266,6 @@ private:
             }
         }
 
-        // Method 2: Common installation paths
         if (includes.empty()) {
             std::vector<fs::path> sdk_paths = {
                 "C:\\Program Files (x86)\\Windows Kits\\10\\Include",

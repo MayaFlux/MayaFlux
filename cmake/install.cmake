@@ -10,6 +10,12 @@ configure_file(
     @ONLY
 )
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/lila.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/lila.pc
+    @ONLY
+)
+
 if(UNIX)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mayaflux.pc DESTINATION lib/pkgconfig)
 endif()

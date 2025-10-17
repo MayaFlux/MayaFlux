@@ -9,6 +9,11 @@ include(defines)
 
 project(MayaFlux VERSION 0.1.0)
 
+if(WIN32)
+    set(CMAKE_INSTALL_PREFIX "C:/MayaFlux" CACHE PATH "Installation directory" FORCE)
+    message(STATUS "Setting Windows install prefix to: ${CMAKE_INSTALL_PREFIX}")
+endif()
+
 include(dependencies)
 include(compiler_config)
 

@@ -4,21 +4,21 @@ if(WIN32)
     set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL "Don't update dependencies automatically")
     set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL "Use existing dependencies without network")
 
-    message(STATUS "Fetching magic_enum via FetchContent...")
-    FetchContent_Declare(
-        magic_enum
-        GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
-        GIT_TAG v0.9.5
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
-        USES_TERMINAL_DOWNLOAD TRUE
-    )
+    # message(STATUS "Fetching magic_enum via FetchContent...")
+    # FetchContent_Declare(
+    #     magic_enum
+    #     GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
+    #     GIT_TAG v0.9.5
+    #     GIT_SHALLOW TRUE
+    #     GIT_PROGRESS TRUE
+    #     USES_TERMINAL_DOWNLOAD TRUE
+    # )
     
-    FetchContent_GetProperties(magic_enum)
-    if(NOT magic_enum_POPULATED)
-        FetchContent_Populate(magic_enum)
-        set(magic_enum_POPULATED TRUE CACHE INTERNAL "magic_enum populated")
-    endif()
+    # FetchContent_GetProperties(magic_enum)
+    # if(NOT magic_enum_POPULATED)
+    #     FetchContent_Populate(magic_enum)
+    #     set(magic_enum_POPULATED TRUE CACHE INTERNAL "magic_enum populated")
+    # endif()
 
     # message(STATUS "Fetching GoogleTest via FetchContent...")
     # FetchContent_Declare(
@@ -50,9 +50,14 @@ if(WIN32)
     #     )
     # endif()
 
-    if(EXISTS "${magic_enum_SOURCE_DIR}")
-        add_subdirectory(${magic_enum_SOURCE_DIR} ${magic_enum_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    # if(EXISTS "${magic_enum_SOURCE_DIR}")
+    #     add_subdirectory(${magic_enum_SOURCE_DIR} ${magic_enum_BINARY_DIR} EXCLUDE_FROM_ALL)
+    # endif()
+
+    add_library(magic_enum INTERFACE IMPORTED)
+    set_target_properties(magic_enum PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${MAGIC_ENUM_INCLUDE_DIR}"
+    )
 
     add_library(Eigen3::Eigen INTERFACE IMPORTED)
     set_target_properties(Eigen3::Eigen PROPERTIES
