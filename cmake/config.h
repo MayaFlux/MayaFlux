@@ -50,6 +50,24 @@ using u_int64_t = uint64_t;
 //     #endif
 // #endif
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#if defined(LILA_EXPORTS)
+#define LILA_API __declspec(dllexport)
+#else
+#define LILA_API __declspec(dllimport)
+#endif
+#else
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#if defined(LILA_EXPORTS)
+#define LILA_API __attribute__((visibility("default")))
+#else
+#define LILA_API
+#endif
+#else
+#define LILA_API
+#endif
+#endif
+
 #define MAYAFLUX_API
 
 // C++20 std::format availability detection
@@ -408,16 +426,16 @@ private:
         }
 
         if (lib_paths.empty()) {
-            lib_paths = probe_sdk_paths("Lib", 
-                std::vector<std::string>{ "ucrt", "um" }, "x64");
+            lib_paths = probe_sdk_paths("Lib",
+                std::vector<std::string> { "ucrt", "um" }, "x64");
         }
 
         return lib_paths;
     }
 
-    static std::vector<std::string> probe_sdk_paths(const std::string& subpath, 
-                                                     const std::vector<std::string>& subdirs,
-                                                     const std::string& arch = "")
+    static std::vector<std::string> probe_sdk_paths(const std::string& subpath,
+        const std::vector<std::string>& subdirs,
+        const std::string& arch = "")
     {
         std::vector<std::string> paths;
         std::vector<fs::path> sdk_base_paths = {

@@ -32,7 +32,7 @@ namespace Lila {
  *
  * This class is intended for internal use by Lila and is not exposed to end users directly.
  */
-class ClangInterpreter {
+class LILA_API ClangInterpreter {
 public:
     /**
      * @brief Constructs a ClangInterpreter instance

@@ -83,7 +83,7 @@ enum class Emitter : uint8_t {
  *
  * Commentator is intended for internal use by Lila and its binaries.
  */
-class Commentator {
+class LILA_API Commentator {
 public:
     static Commentator& instance()
     {

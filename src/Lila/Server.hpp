@@ -37,7 +37,7 @@ namespace Lila {
  *
  * The Server is designed for internal use by Lila and is not intended for direct user interaction.
  */
-class Server {
+class LILA_API Server {
 public:
     /**
      * @brief Handler for processing incoming client messages
