@@ -59,7 +59,7 @@ $LLVM_URL = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLV
 $PSScriptRoot = (Split-Path -Path $MyInvocation.MyCommand.Definition -Parent)
 
 # FIX 1A: Target the required system path for final installation
-$LLVM_SYSTEM_ROOT = "C:\Program Files\LLVM"
+$LLVM_SYSTEM_ROOT = "C:\Program Files\LLVM_Libs"
 $LLVM_INSTALL_ROOT = $LLVM_SYSTEM_ROOT 
 
 # Use a temporary folder for downloading and staging
@@ -207,7 +207,7 @@ if (-not $diaSdkFound) {
 }
 
 # Create LLVM lib symlink structure to handle hardcoded paths
-$diaTargetDir = "C:\Program Files\LLVM\dia_sdk_compat"
+$diaTargetDir = "C:\Program Files\LLVM_Libs\dia_sdk_compat"
 if (-not (Test-Path "$diaTargetDir\lib\amd64")) {
     Write-Host "Setting up DIA SDK compatibility layer for LLVM..."
     New-Item -ItemType Directory -Path "$diaTargetDir\lib\amd64" -Force | Out-Null
@@ -310,11 +310,11 @@ $env:LIBXML2_INCLUDE_DIR = $LIBXML2_INCLUDE_DIR_TOOLCHAIN
 $env:LIBXML2_LIBRARY = $LIBXML2_LIBRARY_DUMMY_FILE
 Write-Host "Environment variables for LibXml2 set (for immediate session use)."
 
-$LLVM_INCLUDE_PATH_TOOLCHAIN = "C:/Program Files/LLVM/include"
-$LLVM_CORE_LIBRARY_PATH = "C:/Program Files/LLVM/lib/LLVMCore.lib" 
+$LLVM_INCLUDE_PATH_TOOLCHAIN = "C:/Program Files/LLVM_Libs/include"
+$LLVM_CORE_LIBRARY_PATH = "C:/Program Files/LLVM_Libs/lib/LLVMCore.lib" 
 
 if (-not (Test-Path "$($LLVM_CORE_LIBRARY_PATH -replace '/', '\')" -PathType Leaf)) {
-    Write-Error "CRITICAL: The core LLVM library file (LLVMCore.lib) was not found in C:\Program Files\LLVM\lib."
+    Write-Error "CRITICAL: The core LLVM library file (LLVMCore.lib) was not found in C:\Program Files\LLVM_Libs\lib."
     Write-Error "The pre-built binaries you downloaded may be incomplete or lack the required static libraries for linking."
     exit 1
 }
@@ -780,7 +780,7 @@ $env:INCLUDE -split ';' | ForEach-Object { Write-Host "  - $_" }
 $toolchainContent = @"
 # MayaFlux Windows Initial Cache
 
-set(LLVM_ROOT "C:/Program Files/LLVM" CACHE PATH "" FORCE)
+set(LLVM_ROOT "C:/Program Files/LLVM_Libs" CACHE PATH "" FORCE)
 set(LLVM_DIR "$LLVM_DIR_TOOLCHAIN" CACHE PATH "" FORCE)
 set(Clang_DIR "$LLVM_CLANG_DIR_TOOLCHAIN" CACHE PATH "" FORCE)
 
@@ -801,7 +801,7 @@ set(FFMPEG_ROOT "C:/Program Files/FFmpeg" CACHE PATH "" FORCE)
 set(GLFW_ROOT "C:/Program Files/GLFW" CACHE PATH "" FORCE)
 set(RTAUDIO_ROOT "C:/Program Files/RtAudio" CACHE PATH "" FORCE)
 
-set(CMAKE_PREFIX_PATH "C:/Program Files/RtAudio/share/rtaudio;C:/Program Files/LLVM/lib/cmake/llvm;C:/Program Files/LLVM/lib/cmake/clang" CACHE STRING "" FORCE)
+set(CMAKE_PREFIX_PATH "C:/Program Files/RtAudio/share/rtaudio;C:/Program Files/LLVM_Libs/lib/cmake/llvm;C:/Program Files/LLVM/lib/cmake/clang" CACHE STRING "" FORCE)
 
 set(GLFW_INCLUDE_DIR "C:/Program Files/GLFW/include" CACHE PATH "" FORCE)
 set(GLFW_LIBRARY "$($glfwLibDir -replace '\\','/')/glfw3dll.lib" CACHE FILEPATH "" FORCE)
