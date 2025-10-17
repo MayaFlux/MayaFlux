@@ -19,7 +19,9 @@ else()
     set_target_properties(lila_server PROPERTIES
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
         INSTALL_RPATH_USE_LINK_PATH TRUE
-        # BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
+    )
+    target_link_options(lila_server PRIVATE 
+        /WHOLEARCHIVE:$<TARGET_FILE:MayaFluxLib>
     )
 endif()
 

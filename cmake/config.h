@@ -75,7 +75,6 @@ constexpr char PathSeparator = '/';
 #endif
 
 namespace fs = std::filesystem;
-
 class SystemConfig {
 public:
     static std::string get_clang_resource_dir()
@@ -409,58 +408,44 @@ private:
         }
 
         if (lib_paths.empty()) {
-            lib_paths = probe_sdk_paths("Lib",
-                if (fs::exists(base_path)) {
-                std::string latest_version;
-                for (const auto& entry : fs::directory_iterator(base_path)) {
-                    if (entry.is_directory()) {
-                        std::string name = entry.path().filename().string();
-                        if (!name.empty() && std::isdigit(name[0])) {
-                            if (latest_version.empty() || name > latest_version) {
-                                latest_version = name;
-                            }
-                        }
-                    }
-                }
+            lib_paths = probe_sdk_paths("Lib", 
+                std::vector<std::string>{ "ucrt", "um" }, "x64");
+        }
 
-                if (!latest_version.empty()) {
-                std::vector<std::string> { "ucrt", "um" }, "x64");
-                }
-
-                return lib_paths;
+        return lib_paths;
     }
 
-    static std::vector<std::string> probe_sdk_paths(const std::string& subpath,
-        const std::vector<std::string>& subdirs,
-        const std::string& arch = "")
+    static std::vector<std::string> probe_sdk_paths(const std::string& subpath, 
+                                                     const std::vector<std::string>& subdirs,
+                                                     const std::string& arch = "")
     {
-                std::vector<std::string> paths;
-                std::vector<fs::path> sdk_base_paths = {
-                    "C:\\Program Files (x86)\\Windows Kits\\10",
-                    "C:\\Program Files\\Windows Kits\\10"
-                };
+        std::vector<std::string> paths;
+        std::vector<fs::path> sdk_base_paths = {
+            "C:\\Program Files (x86)\\Windows Kits\\10",
+            "C:\\Program Files\\Windows Kits\\10"
+        };
 
-                for (const auto& base_path : sdk_base_paths) {
-                    if (fs::exists(base_path)) {
-                        fs::path search_dir = fs::path(base_path) / subpath;
-                        std::string version = find_latest_sdk_version(search_dir);
+        for (const auto& base_path : sdk_base_paths) {
+            if (fs::exists(base_path)) {
+                fs::path search_dir = fs::path(base_path) / subpath;
+                std::string version = find_latest_sdk_version(search_dir);
 
-                        if (!version.empty()) {
-                            for (const auto& subdir : subdirs) {
-                                fs::path final_path = fs::path(base_path) / subpath / version / subdir;
-                                if (!arch.empty()) {
-                                    final_path = final_path / arch;
-                                }
-                                if (fs::exists(final_path)) {
-                                    paths.push_back(final_path.string());
-                                }
-                            }
-                            break;
+                if (!version.empty()) {
+                    for (const auto& subdir : subdirs) {
+                        fs::path final_path = fs::path(base_path) / subpath / version / subdir;
+                        if (!arch.empty()) {
+                            final_path = final_path / arch;
+                        }
+                        if (fs::exists(final_path)) {
+                            paths.push_back(final_path.string());
                         }
                     }
+                    break;
                 }
+            }
+        }
 
-                return paths;
+        return paths;
     }
 
 #else
@@ -497,6 +482,6 @@ private:
         return lib_paths;
     }
 #endif
-        };
+};
 
-    } // namespace MayaFlux::Platform
+} // namespace MayaFlux::Platform

@@ -89,25 +89,6 @@ bool ClangInterpreter::initialize()
         m_impl->compile_flags.push_back("-isystem" + include);
     }
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-    // Explicit install dir if using Windows setup script (recommended)
-    std::string mayaflux_lib_path = "C:/MayaFlux/lib/mayafluxlib.lib";
-
-    if (std::filesystem::exists(mayaflux_lib_path)) {
-        m_impl->compile_flags.push_back(mayaflux_lib_path);
-        LILA_INFO(Emitter::INTERPRETER, std::string("Linking against: ") + mayaflux_lib_path);
-    } else {
-        std::string mayaflux_lib = MayaFlux::Platform::SystemConfig::find_library("mayafluxlib");
-        if (!mayaflux_lib.empty()) {
-            m_impl->compile_flags.push_back(mayaflux_lib);
-            LILA_INFO(Emitter::INTERPRETER, std::string("Found mayafluxlib at: ") + mayaflux_lib);
-        } else {
-            LILA_ERROR(Emitter::INTERPRETER, "mayafluxlib.lib not found!");
-            return false;
-        }
-    }
-#endif
-
     for (const auto& path : m_impl->include_paths) {
         m_impl->compile_flags.push_back("-I" + path);
     }
