@@ -13,6 +13,13 @@ function Add-ToSystemPath($path) {
     }
 }
 
+function Add-ToSystemLibPath($path) {
+    $currentLib = [Environment]::GetEnvironmentVariable("LIB", "Machine")
+    if ($currentLib -notmatch [Regex]::Escape($path)) {
+        [Environment]::SetEnvironmentVariable("LIB", "$currentLib;$path", "Machine")
+    }
+}
+
 function Refresh-PathInSession {
     $env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" + 
                 [Environment]::GetEnvironmentVariable("Path","User")
@@ -730,6 +737,10 @@ if (-not (Test-Path $MAYAFLUX_INSTALL_ROOT)) {
 
 # Add MayaFlux to include paths collection
 $includePaths += $MAYAFLUX_INCLUDE_PATH
+
+# : Add the MayaFlux lib directory to the system LIB variable
+Add-ToSystemLibPath "C:\MayaFlux\lib"
+Write-Host "Added MayaFlux lib to system LIB: C:\MayaFlux\lib"
 
 # ----------------------------------------------------------------------
 #  UPDATE ALL ENVIRONMENT VARIABLES

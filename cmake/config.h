@@ -31,6 +31,7 @@ using u_int64_t = uint64_t;
 #define MAYAFLUX_FORCEINLINE __attribute__((always_inline))
 #endif
 
+// NEEDED for future when building shared libraries
 // #ifdef MAYAFLUX_PLATFORM_WINDOWS
 //     #if defined(MAYAFLUX_EXPORTS)
 //         #define MAYAFLUX_API __declspec(dllexport)
@@ -74,16 +75,14 @@ constexpr char PathSeparator = '/';
 #endif
 
 namespace fs = std::filesystem;
+
 class SystemConfig {
 public:
     static std::string get_clang_resource_dir()
     {
         const char* cmd = "clang -print-resource-dir";
-
         auto result = exec_command(cmd);
-        if (!result.empty() && result.back() == '\n') {
-            result.pop_back();
-        }
+        trim_output(result);
 
         if (!result.empty()
             && (result.find("error:") == std::string::npos)
@@ -108,17 +107,43 @@ public:
         includes.insert(includes.end(), sdk_includes.begin(), sdk_includes.end());
 #endif
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-        const char* cmd = "echo. | clang -v -E -x c++ - 2>&1";
-#else
-        const char* cmd = "clang -v -E -x c++ - 2>&1 < /dev/null";
-#endif
-
-        auto clang_output = exec_command(cmd);
-        auto clang_includes = parse_clang_includes(clang_output);
+        auto clang_includes = get_clang_includes();
         includes.insert(includes.end(), clang_includes.begin(), clang_includes.end());
 
         return includes;
+    }
+
+    static std::vector<std::string> get_system_libraries()
+    {
+        std::vector<std::string> lib_paths;
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        auto msvc_libs = get_msvc_libraries();
+        lib_paths.insert(lib_paths.end(), msvc_libs.begin(), msvc_libs.end());
+
+        auto sdk_libs = get_windows_sdk_libraries();
+        lib_paths.insert(lib_paths.end(), sdk_libs.begin(), sdk_libs.end());
+#else
+        auto system_libs = get_unix_library_paths();
+        lib_paths.insert(lib_paths.end(), system_libs.begin(), system_libs.end());
+#endif
+
+        return lib_paths;
+    }
+
+    static std::string find_library(const std::string& library_name)
+    {
+        auto lib_paths = get_system_libraries();
+        std::string search_name = format_library_name(library_name);
+
+        for (const auto& lib_path : lib_paths) {
+            fs::path full_path = fs::path(lib_path) / search_name;
+            if (fs::exists(full_path)) {
+                return full_path.string();
+            }
+        }
+
+        return "";
     }
 
 private:
@@ -142,9 +167,42 @@ private:
         return result;
     }
 
-    static std::vector<std::string> parse_clang_includes(const std::string& output)
+    static void trim_output(std::string& str)
     {
-        std::vector<std::string> includes;
+        str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
+        str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+        str.erase(str.find_last_not_of(" \t") + 1);
+    }
+
+    static std::string format_library_name(const std::string& library_name)
+    {
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        if (library_name.find(".lib") == std::string::npos) {
+            return library_name + ".lib";
+        }
+#else
+        if (library_name.find(".a") == std::string::npos && library_name.find(".so") == std::string::npos) {
+            return "lib" + library_name + ".a";
+        }
+#endif
+        return library_name;
+    }
+
+    static std::vector<std::string> get_clang_includes()
+    {
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        const char* cmd = "echo. | clang -v -E -x c++ - 2>&1";
+#else
+        const char* cmd = "clang -v -E -x c++ - 2>&1 < /dev/null";
+#endif
+
+        auto clang_output = exec_command(cmd);
+        return parse_clang_search_paths(clang_output);
+    }
+
+    static std::vector<std::string> parse_clang_search_paths(const std::string& output)
+    {
+        std::vector<std::string> paths;
         bool in_search_paths = false;
 
         std::istringstream stream(output);
@@ -164,12 +222,75 @@ private:
                     auto end = line.find_last_not_of(" \t");
                     std::string path = line.substr(start, end - start + 1);
                     if (!path.empty()) {
-                        includes.push_back(path);
+                        paths.push_back(path);
                     }
                 }
             }
         }
-        return includes;
+        return paths;
+    }
+
+    static std::string find_latest_vs_installation()
+    {
+        std::vector<std::string> vswhere_paths = {
+            "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+            "C:\\Program Files\\Microsoft Visual Studio\\Installer\\vswhere.exe"
+        };
+
+        for (const auto& path : vswhere_paths) {
+            if (fs::exists(path)) {
+                std::string cmd = "\"" + path + "\" -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath";
+                std::string vs_path = exec_command(cmd.c_str());
+                if (!vs_path.empty()) {
+                    trim_output(vs_path);
+                    if (fs::exists(vs_path)) {
+                        return vs_path;
+                    }
+                }
+            }
+        }
+
+        return "";
+    }
+
+    static std::string find_latest_msvc_version(const fs::path& msvc_base)
+    {
+        if (!fs::exists(msvc_base)) {
+            return "";
+        }
+
+        std::string latest_version;
+        for (const auto& entry : fs::directory_iterator(msvc_base)) {
+            if (entry.is_directory()) {
+                std::string name = entry.path().filename().string();
+                if (!name.empty() && std::isdigit(name[0])) {
+                    if (latest_version.empty() || name > latest_version) {
+                        latest_version = name;
+                    }
+                }
+            }
+        }
+        return latest_version;
+    }
+
+    static std::string find_latest_sdk_version(const fs::path& base)
+    {
+        if (!fs::exists(base)) {
+            return "";
+        }
+
+        std::string latest_version;
+        for (const auto& entry : fs::directory_iterator(base)) {
+            if (entry.is_directory()) {
+                std::string name = entry.path().filename().string();
+                if (!name.empty() && std::isdigit(name[0])) {
+                    if (latest_version.empty() || name > latest_version) {
+                        latest_version = name;
+                    }
+                }
+            }
+        }
+        return latest_version;
     }
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
@@ -177,53 +298,15 @@ private:
     {
         std::vector<std::string> includes;
 
-        std::vector<std::string> vswhere_paths = {
-            "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
-            "C:\\Program Files\\Microsoft Visual Studio\\Installer\\vswhere.exe"
-        };
+        std::string vs_path = find_latest_vs_installation();
+        if (!vs_path.empty()) {
+            fs::path msvc_base = fs::path(vs_path) / "VC" / "Tools" / "MSVC";
+            std::string version = find_latest_msvc_version(msvc_base);
 
-        std::string vswhere_cmd;
-        for (const auto& path : vswhere_paths) {
-            if (fs::exists(path)) {
-                vswhere_cmd = "\"" + path + "\" -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath";
-                break;
-            }
-        }
-
-        // const char* vswhere_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" "
-        //                           "-latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 "
-        //                           "-property installationPath 2>nul";
-
-        if (!vswhere_cmd.empty()) {
-            std::string vs_path = exec_command(vswhere_cmd.c_str());
-            if (!vs_path.empty()) {
-                vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\r'), vs_path.end());
-                vs_path.erase(std::remove(vs_path.begin(), vs_path.end(), '\n'), vs_path.end());
-                vs_path.erase(vs_path.find_last_not_of(" \t") + 1);
-
-                if (fs::exists(vs_path)) {
-                    fs::path msvc_base = fs::path(vs_path) / "VC" / "Tools" / "MSVC";
-
-                    if (fs::exists(msvc_base)) {
-                        std::string latest_version;
-                        for (const auto& entry : fs::directory_iterator(msvc_base)) {
-                            if (entry.is_directory()) {
-                                std::string name = entry.path().filename().string();
-                                if (!name.empty() && std::isdigit(name[0])) {
-                                    if (latest_version.empty() || name > latest_version) {
-                                        latest_version = name;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (!latest_version.empty()) {
-                            fs::path include_path = msvc_base / latest_version / "include";
-                            if (fs::exists(include_path)) {
-                                includes.push_back(include_path.string());
-                            }
-                        }
-                    }
+            if (!version.empty()) {
+                fs::path include_path = msvc_base / version / "include";
+                if (fs::exists(include_path)) {
+                    includes.push_back(include_path.string());
                 }
             }
         }
@@ -241,18 +324,46 @@ private:
         return includes;
     }
 
+    static std::vector<std::string> get_msvc_libraries()
+    {
+        std::vector<std::string> lib_paths;
+
+        std::string vs_path = find_latest_vs_installation();
+        if (!vs_path.empty()) {
+            fs::path msvc_base = fs::path(vs_path) / "VC" / "Tools" / "MSVC";
+            std::string version = find_latest_msvc_version(msvc_base);
+
+            if (!version.empty()) {
+                fs::path lib_path = msvc_base / version / "lib" / "x64";
+                if (fs::exists(lib_path)) {
+                    lib_paths.push_back(lib_path.string());
+                }
+            }
+        }
+
+        if (lib_paths.empty()) {
+            const char* vc_dir = std::getenv("VCINSTALLDIR");
+            if (vc_dir && fs::exists(vc_dir)) {
+                fs::path lib_path = fs::path(vc_dir) / "lib" / "x64";
+                if (fs::exists(lib_path)) {
+                    lib_paths.push_back(lib_path.string());
+                }
+            }
+        }
+
+        return lib_paths;
+    }
+
     static std::vector<std::string> get_windows_sdk_includes()
     {
         std::vector<std::string> includes;
-        namespace fs = std::filesystem;
 
         const char* sdk_dir = std::getenv("WindowsSdkDir");
         const char* sdk_ver = std::getenv("WindowsSDKVersion");
 
         if (sdk_dir && sdk_ver && fs::exists(sdk_dir)) {
             fs::path base = fs::path(sdk_dir);
-            std::string version = sdk_ver;
-
+            std::string version = std::string(sdk_ver);
             if (!version.empty() && version.back() == '\\') {
                 version.pop_back();
             }
@@ -267,42 +378,125 @@ private:
         }
 
         if (includes.empty()) {
-            std::vector<fs::path> sdk_paths = {
-                "C:\\Program Files (x86)\\Windows Kits\\10\\Include",
-                "C:\\Program Files\\Windows Kits\\10\\Include"
-            };
-
-            for (const auto& base_path : sdk_paths) {
-                if (fs::exists(base_path)) {
-                    std::string latest_version;
-                    for (const auto& entry : fs::directory_iterator(base_path)) {
-                        if (entry.is_directory()) {
-                            std::string name = entry.path().filename().string();
-                            if (!name.empty() && std::isdigit(name[0])) {
-                                if (latest_version.empty() || name > latest_version) {
-                                    latest_version = name;
-                                }
-                            }
-                        }
-                    }
-
-                    if (!latest_version.empty()) {
-                        std::vector<std::string> subdirs = { "ucrt", "shared", "um", "winrt", "cppwinrt" };
-                        for (const auto& subdir : subdirs) {
-                            fs::path include_path = base_path / latest_version / subdir;
-                            if (fs::exists(include_path)) {
-                                includes.push_back(include_path.string());
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
+            includes = probe_sdk_paths("Include",
+                std::vector<std::string> { "ucrt", "shared", "um", "winrt", "cppwinrt" });
         }
 
         return includes;
     }
-#endif
-};
 
-} // namespace MayaFlux::Platform
+    static std::vector<std::string> get_windows_sdk_libraries()
+    {
+        std::vector<std::string> lib_paths;
+
+        const char* sdk_dir = std::getenv("WindowsSdkDir");
+        const char* sdk_ver = std::getenv("WindowsSDKVersion");
+
+        if (sdk_dir && sdk_ver && fs::exists(sdk_dir)) {
+            fs::path base = fs::path(sdk_dir);
+            std::string version = std::string(sdk_ver);
+            if (!version.empty() && version.back() == '\\') {
+                version.pop_back();
+            }
+
+            std::vector<std::string> subdirs = { "ucrt", "um" };
+            for (const auto& subdir : subdirs) {
+                fs::path lib_path = base / "Lib" / version / subdir / "x64";
+                if (fs::exists(lib_path)) {
+                    lib_paths.push_back(lib_path.string());
+                }
+            }
+        }
+
+        if (lib_paths.empty()) {
+            lib_paths = probe_sdk_paths("Lib",
+                if (fs::exists(base_path)) {
+                std::string latest_version;
+                for (const auto& entry : fs::directory_iterator(base_path)) {
+                    if (entry.is_directory()) {
+                        std::string name = entry.path().filename().string();
+                        if (!name.empty() && std::isdigit(name[0])) {
+                            if (latest_version.empty() || name > latest_version) {
+                                latest_version = name;
+                            }
+                        }
+                    }
+                }
+
+                if (!latest_version.empty()) {
+                std::vector<std::string> { "ucrt", "um" }, "x64");
+                }
+
+                return lib_paths;
+    }
+
+    static std::vector<std::string> probe_sdk_paths(const std::string& subpath,
+        const std::vector<std::string>& subdirs,
+        const std::string& arch = "")
+    {
+                std::vector<std::string> paths;
+                std::vector<fs::path> sdk_base_paths = {
+                    "C:\\Program Files (x86)\\Windows Kits\\10",
+                    "C:\\Program Files\\Windows Kits\\10"
+                };
+
+                for (const auto& base_path : sdk_base_paths) {
+                    if (fs::exists(base_path)) {
+                        fs::path search_dir = fs::path(base_path) / subpath;
+                        std::string version = find_latest_sdk_version(search_dir);
+
+                        if (!version.empty()) {
+                            for (const auto& subdir : subdirs) {
+                                fs::path final_path = fs::path(base_path) / subpath / version / subdir;
+                                if (!arch.empty()) {
+                                    final_path = final_path / arch;
+                                }
+                                if (fs::exists(final_path)) {
+                                    paths.push_back(final_path.string());
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                return paths;
+    }
+
+#else
+    static std::vector<std::string> get_unix_library_paths()
+    {
+        std::vector<std::string> lib_paths;
+
+        const char* ld_library_path = std::getenv("LD_LIBRARY_PATH");
+        if (ld_library_path) {
+            std::istringstream stream(ld_library_path);
+            std::string path;
+            while (std::getline(stream, path, ':')) {
+                if (!path.empty() && fs::exists(path)) {
+                    lib_paths.push_back(path);
+                }
+            }
+        }
+
+        std::vector<std::string> default_paths = {
+            "/usr/local/lib",
+            "/usr/lib",
+            "/lib",
+            "/usr/local/lib64",
+            "/usr/lib64",
+            "/lib64"
+        };
+
+        for (const auto& path : default_paths) {
+            if (fs::exists(path)) {
+                lib_paths.push_back(path);
+            }
+        }
+
+        return lib_paths;
+    }
+#endif
+        };
+
+    } // namespace MayaFlux::Platform
