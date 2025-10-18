@@ -30,7 +30,7 @@ class Event;
  * to manipulate the coroutine.
  */
 template <typename RoutineType>
-struct routine_promise {
+struct MAYAFLUX_API routine_promise {
 
     RoutineType get_return_object()
     {

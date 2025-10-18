@@ -17,7 +17,7 @@ namespace MayaFlux::Vruta {
  * EventSource is signaled when discrete window events occur.
  * Coroutines can suspend until events arrive.
  */
-class EventSource {
+class MAYAFLUX_API EventSource {
 public:
     EventSource() = default;
     ~EventSource() = default;

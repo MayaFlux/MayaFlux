@@ -6,7 +6,7 @@
 
 namespace MayaFlux::Vruta {
 
-class EventManager {
+class MAYAFLUX_API EventManager {
 public:
     EventManager() = default;
 

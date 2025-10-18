@@ -48,7 +48,7 @@ using token_processing_func_t = std::function<void(const std::vector<std::shared
  * The scheduler creates appropriate clocks and task lists based on processing tokens,
  * ensuring optimal performance for each domain while enabling cross-domain synchronization.
  */
-class TaskScheduler {
+class MAYAFLUX_API TaskScheduler {
 public:
     /**
      * @brief Constructs a TaskScheduler with the specified sample rate
