@@ -6,12 +6,12 @@
 
 namespace MayaFlux {
 
-MAYAFLUX_API Core::WindowManager& get_window_manager()
+Core::WindowManager& get_window_manager()
 {
     return *get_context().get_window_manager();
 }
 
-MAYAFLUX_API std::shared_ptr<Core::Window> create_window(const Core::WindowCreateInfo& create_info)
+std::shared_ptr<Core::Window> create_window(const Core::WindowCreateInfo& create_info)
 {
     return get_window_manager().create_window(create_info);
 }
