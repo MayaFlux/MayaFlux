@@ -334,7 +334,7 @@ private:
         }
 
         if (includes.empty()) {
-            const char* vc_dir = std::getenv("VCINSTALLDIR");
+            const char* vc_dir = safe_getenv("VCINSTALLDIR");
             if (vc_dir && fs::exists(vc_dir)) {
                 fs::path include_path = fs::path(vc_dir) / "include";
                 if (fs::exists(include_path)) {
@@ -364,7 +364,7 @@ private:
         }
 
         if (lib_paths.empty()) {
-            const char* vc_dir = std::getenv("VCINSTALLDIR");
+            const char* vc_dir = safe_getenv("VCINSTALLDIR");
             if (vc_dir && fs::exists(vc_dir)) {
                 fs::path lib_path = fs::path(vc_dir) / "lib" / "x64";
                 if (fs::exists(lib_path)) {
@@ -380,8 +380,8 @@ private:
     {
         std::vector<std::string> includes;
 
-        const char* sdk_dir = std::getenv("WindowsSdkDir");
-        const char* sdk_ver = std::getenv("WindowsSDKVersion");
+        const char* sdk_dir = safe_getenv("WindowsSdkDir");
+        const char* sdk_ver = safe_getenv("WindowsSDKVersion");
 
         if (sdk_dir && sdk_ver && fs::exists(sdk_dir)) {
             fs::path base = fs::path(sdk_dir);
@@ -411,8 +411,8 @@ private:
     {
         std::vector<std::string> lib_paths;
 
-        const char* sdk_dir = std::getenv("WindowsSdkDir");
-        const char* sdk_ver = std::getenv("WindowsSDKVersion");
+        const char* sdk_dir = safe_getenv("WindowsSdkDir");
+        const char* sdk_ver = safe_getenv("WindowsSDKVersion");
 
         if (sdk_dir && sdk_ver && fs::exists(sdk_dir)) {
             fs::path base = fs::path(sdk_dir);
@@ -476,7 +476,7 @@ private:
     {
         std::vector<std::string> lib_paths;
 
-        const char* ld_library_path = std::getenv("LD_LIBRARY_PATH");
+        const char* ld_library_path = safe_getenv("LD_LIBRARY_PATH");
         if (ld_library_path) {
             std::istringstream stream(ld_library_path);
             std::string path;
