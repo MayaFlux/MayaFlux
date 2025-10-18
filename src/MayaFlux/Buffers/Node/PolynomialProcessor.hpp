@@ -26,6 +26,9 @@ public:
         WINDOWED ///< Process using a sliding window
     };
 
+    // TODO:: Temporary requirment on windows
+    PolynomialProcessor() = default;
+
     /**
      * @brief Creates a new processor that applies polynomial transformations
      * @param mode Processing mode (sample-by-sample, batch, or windowed)

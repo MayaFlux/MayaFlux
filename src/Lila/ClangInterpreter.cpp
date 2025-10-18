@@ -46,18 +46,17 @@ bool ClangInterpreter::initialize()
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
     HMODULE msvcp = LoadLibraryA("msvcp140.dll");
-    if(msvcp) {
+    if (msvcp) {
         LILA_INFO(Emitter::INTERPRETER, "Successfully loaded msvcp140.dll into process");
     } else {
         LILA_ERROR(Emitter::INTERPRETER,
             "Failed to load msvcp140.dll. Error: " + std::to_string(GetLastError()));
         return false;
-	}
-    HMODULE vcruntime = LoadLibraryA("vcruntime140.dll");
-    if(vcruntime) {
-        LILA_INFO(Emitter::INTERPRETER, "Successfully loaded vcruntime140.dll into process");
     }
-    else {
+    HMODULE vcruntime = LoadLibraryA("vcruntime140.dll");
+    if (vcruntime) {
+        LILA_INFO(Emitter::INTERPRETER, "Successfully loaded vcruntime140.dll into process");
+    } else {
         LILA_ERROR(Emitter::INTERPRETER,
             "Failed to load vcruntime140.dll. Error: " + std::to_string(GetLastError()));
         return false;
