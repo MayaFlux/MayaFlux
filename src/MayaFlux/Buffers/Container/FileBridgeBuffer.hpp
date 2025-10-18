@@ -19,7 +19,7 @@ class ContainerToBufferAdapter;
  * This chain is used to bridge a sound file container to a dynamic sound stream, allowing the audio data
  * from the file to be processed and played back in real-time.
  */
-class FileToStreamChain : public BufferProcessingChain {
+class MAYAFLUX_API FileToStreamChain : public BufferProcessingChain {
 public:
     FileToStreamChain(std::shared_ptr<Kakshya::SoundFileContainer> file_container,
         std::shared_ptr<Kakshya::DynamicSoundStream> capture_stream,
@@ -48,7 +48,7 @@ private:
  * This processor is responsible for managing the processing of audio data from a sound file container
  * to a dynamic sound stream using the provided FileToStreamChain.
  */
-class FileBridgeProcessor : public BufferProcessor {
+class MAYAFLUX_API FileBridgeProcessor : public BufferProcessor {
 public:
     FileBridgeProcessor(std::shared_ptr<FileToStreamChain> chain);
 
@@ -74,7 +74,7 @@ private:
  * This buffer uses a FileToStreamChain to read audio data from a sound file container and write it
  * to a dynamic sound stream, allowing for real-time playback of the audio data.
  */
-class FileBridgeBuffer : public AudioBuffer {
+class MAYAFLUX_API FileBridgeBuffer : public AudioBuffer {
 public:
     FileBridgeBuffer(uint32_t channel_id,
         std::shared_ptr<Kakshya::SoundFileContainer> file_container,

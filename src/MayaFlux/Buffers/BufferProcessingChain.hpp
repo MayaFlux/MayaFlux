@@ -42,7 +42,7 @@ namespace MayaFlux::Buffers {
  * - Allows dynamic reconfiguration of transformation pipelines at runtime
  * - Leverages processor agency for optimal backend selection and resource utilization
  */
-class BufferProcessingChain {
+class MAYAFLUX_API BufferProcessingChain {
 public:
     friend class BufferProcessor;
 

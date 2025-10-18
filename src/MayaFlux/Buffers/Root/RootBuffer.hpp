@@ -5,7 +5,7 @@
 namespace MayaFlux::Buffers {
 
 template <typename BufferType>
-class RootBuffer : public BufferType {
+class MAYAFLUX_API RootBuffer : public BufferType {
 public:
     using BufferType::BufferType;
 

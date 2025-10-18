@@ -40,7 +40,7 @@ namespace MayaFlux::Buffers {
  * @note For real-time use cases, consider pre-allocating container capacity or
  *       enabling circular mode to avoid dynamic allocations during processing.
  */
-class StreamWriteProcessor : public BufferProcessor {
+class MAYAFLUX_API StreamWriteProcessor : public BufferProcessor {
 public:
     /**
      * @brief Construct processor with target DynamicSoundStream container.

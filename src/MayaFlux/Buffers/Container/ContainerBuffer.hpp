@@ -29,7 +29,7 @@ namespace MayaFlux::Buffers {
  *
  * @see ContainerBuffer, StreamContainer, SoundFileContainer, ContiguousAccessProcessor
  */
-class ContainerToBufferAdapter : public BufferProcessor {
+class MAYAFLUX_API ContainerToBufferAdapter : public BufferProcessor {
 public:
     explicit ContainerToBufferAdapter(std::shared_ptr<Kakshya::StreamContainer> container);
 
@@ -141,7 +141,7 @@ private:
  *
  * @see ContainerToBufferAdapter, StreamContainer, SoundFileContainer
  */
-class ContainerBuffer : public AudioBuffer {
+class MAYAFLUX_API ContainerBuffer : public AudioBuffer {
 public:
     /**
      * @brief Construct a ContainerBuffer for a specific channel and container.

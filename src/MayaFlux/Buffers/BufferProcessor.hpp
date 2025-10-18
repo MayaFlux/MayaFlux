@@ -46,7 +46,7 @@ class Buffer;
  * compatibility with the buffer architecture while providing the agency to optimize
  * processing strategies based on runtime conditions and hardware capabilities.
  */
-class BufferProcessor {
+class MAYAFLUX_API BufferProcessor {
 public:
     friend class BufferProcessingChain;
 

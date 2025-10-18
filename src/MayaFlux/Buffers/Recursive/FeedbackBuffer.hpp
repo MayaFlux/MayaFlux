@@ -25,7 +25,7 @@ namespace MayaFlux::Buffers {
  * controlled way to introduce recursive elements without the risks of uncontrolled
  * recursion or stack overflow that can occur in node-based feedback.
  */
-class FeedbackBuffer : public AudioBuffer {
+class MAYAFLUX_API FeedbackBuffer : public AudioBuffer {
 public:
     /**
      * @brief Creates a new feedback buffer
@@ -136,7 +136,7 @@ private:
  * - Implementation of recursive mathematical functions
  * - Cross-domain feedback systems (audio influencing visual, data influencing audio, etc.)
  */
-class FeedbackProcessor : public BufferProcessor {
+class MAYAFLUX_API FeedbackProcessor : public BufferProcessor {
 
 public:
     /**

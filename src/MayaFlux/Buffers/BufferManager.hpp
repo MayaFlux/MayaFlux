@@ -57,7 +57,7 @@ struct RootAudioUnit {
  * The manager creates appropriate root buffers and processing chains based on processing tokens,
  * ensuring optimal performance for each domain while enabling cross-domain data interaction.
  */
-class BufferManager {
+class MAYAFLUX_API BufferManager {
 public:
     /**
      * @brief Creates a new multimodal buffer manager

@@ -29,7 +29,7 @@ namespace MayaFlux::Buffers {
  * - Implementing hybrid computational models that combine continuous and discrete processing
  * - Building feedback loops between different computational domains
  */
-class NodeSourceProcessor : public BufferProcessor {
+class MAYAFLUX_API NodeSourceProcessor : public BufferProcessor {
 public:
     /**
      * @brief Creates a new processor that connects a computational node to data buffers
@@ -114,7 +114,7 @@ private:
  * - Building data bridges between different computational domains
  * - Enabling analysis and visualization of dynamic computational processes
  */
-class NodeBuffer : public AudioBuffer {
+class MAYAFLUX_API NodeBuffer : public AudioBuffer {
 
 public:
     /**
