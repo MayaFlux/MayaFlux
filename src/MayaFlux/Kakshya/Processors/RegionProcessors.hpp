@@ -29,7 +29,7 @@ static bool is_segment_complete(const OrganizedRegion& region, size_t segment_in
  * transitions, and flexible segment definitions. All processing is data-driven and
  * unconstrained by analog metaphors.
  */
-class RegionOrganizationProcessor : public RegionProcessorBase {
+class MAYAFLUX_API RegionOrganizationProcessor : public RegionProcessorBase {
 public:
     /**
      * @brief Construct a region organization processor for a given container.
@@ -203,7 +203,7 @@ using RegionOrganizer = std::function<void(std::vector<OrganizedRegion>&, std::s
  * The processor can trigger reorganization on demand or automatically based on
  * user-defined criteria, making it ideal for advanced digital-first applications.
  */
-class DynamicRegionProcessor : public RegionOrganizationProcessor {
+class MAYAFLUX_API DynamicRegionProcessor : public RegionOrganizationProcessor {
 public:
     /**
      * @brief Construct a dynamic region processor for a given container.

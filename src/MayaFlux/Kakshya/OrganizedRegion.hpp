@@ -14,7 +14,7 @@ namespace MayaFlux::Kakshya {
  * Represents a higher-level organization of audio segments with associated
  * metadata, enabling complex non-linear audio arrangements and transitions.
  */
-struct OrganizedRegion {
+struct MAYAFLUX_API OrganizedRegion {
     std::string group_name; ///< Name of the region group
     size_t region_index {}; ///< Index within the group
     std::vector<RegionSegment> segments; ///< Audio segments in this region

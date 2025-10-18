@@ -30,7 +30,7 @@
  */
 namespace MayaFlux::Kakshya {
 
-class ContiguousAccessProcessor : public DataProcessor {
+class MAYAFLUX_API ContiguousAccessProcessor : public DataProcessor {
 public:
     ContiguousAccessProcessor() = default;
     ~ContiguousAccessProcessor() override = default;

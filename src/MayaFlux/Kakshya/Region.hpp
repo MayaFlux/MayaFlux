@@ -66,7 +66,7 @@ enum class RegionState : u_int8_t {
  * associated with specific signal locations, enabling advanced signal processing
  * workflows and algorithmic decision-making.
  */
-struct Region {
+struct MAYAFLUX_API Region {
     /** @brief Starting frame index (inclusive) */
     std::vector<u_int64_t> start_coordinates;
 
@@ -442,7 +442,7 @@ struct Region {
  * @struct RegionCache
  * @brief Stores cached data for a region, with metadata for cache management.
  */
-struct RegionCache {
+struct MAYAFLUX_API RegionCache {
     std::vector<DataVariant> data; ///< Cached data
     Region source_region; ///< Region this cache corresponds to
     std::chrono::steady_clock::time_point load_time; ///< When cache was loaded
@@ -472,7 +472,7 @@ struct RegionCache {
  * Defines a time-bounded segment of audio that can be cached for efficient
  * playback and manipulation in non-linear processing contexts.
  */
-struct RegionSegment {
+struct MAYAFLUX_API RegionSegment {
     Region source_region; ///< Associated region
     std::vector<u_int64_t> offset_in_region; ///< Offset within the source region
     std::vector<u_int64_t> segment_size; ///< Size in each dimension
@@ -713,7 +713,7 @@ struct RegionSegment {
  * where algorithms can operate on categorized signal segments without requiring
  * predefined musical or content-specific structures.
  */
-struct RegionGroup {
+struct MAYAFLUX_API RegionGroup {
     /** @brief Descriptive name of the group */
     std::string name;
 

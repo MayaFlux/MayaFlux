@@ -31,7 +31,7 @@ namespace MayaFlux::Kakshya {
  *
  * @see RegionOrganizationProcessor, DynamicRegionProcessor
  */
-class RegionProcessorBase : public DataProcessor {
+class MAYAFLUX_API RegionProcessorBase : public DataProcessor {
 public:
     virtual ~RegionProcessorBase() = default;
 

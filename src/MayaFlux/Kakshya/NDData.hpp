@@ -75,7 +75,7 @@ enum class DataModality : u_int8_t {
  * organizations, supporting digital-first, data-driven processing
  * without imposing analog metaphors (e.g., "track", "tape", etc.).
  */
-struct DataDimension {
+struct MAYAFLUX_API DataDimension {
     /**
      * @brief Semantic role of the dimension.
      *

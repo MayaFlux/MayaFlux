@@ -19,7 +19,7 @@ struct RegionSegment;
  * not tied to analog metaphors, but instead facilitate generic, flexible
  * processing of multi-dimensional data.
  */
-struct ContainerDataStructure {
+struct MAYAFLUX_API ContainerDataStructure {
 
     // Image/Video structures
     // static constexpr size_t FRAME_DIM = 0;
@@ -211,7 +211,7 @@ struct ContainerDataStructure {
  * enabling advanced workflows such as real-time streaming, offline analysis, and
  * hybrid computational models.
  */
-class NDDataContainer {
+class MAYAFLUX_API NDDataContainer {
 public:
     virtual ~NDDataContainer() = default;
 
