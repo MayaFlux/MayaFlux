@@ -14,7 +14,7 @@ namespace MayaFlux {
  *
  * Uses the random number generator from the default engine.
  */
-double get_uniform_random(double start = 0, double end = 1);
+MAYAFLUX_API double get_uniform_random(double start = 0, double end = 1);
 
 /**
  * @brief Generates a gaussian (normal) random number
@@ -24,7 +24,7 @@ double get_uniform_random(double start = 0, double end = 1);
  *
  * Uses the random number generator from the default engine.
  */
-double get_gaussian_random(double start = 0, double end = 1);
+MAYAFLUX_API double get_gaussian_random(double start = 0, double end = 1);
 
 /**
  * @brief Generates an exponential random number
@@ -34,7 +34,7 @@ double get_gaussian_random(double start = 0, double end = 1);
  *
  * Uses the random number generator from the default engine.
  */
-double get_exponential_random(double start = 0, double end = 1);
+MAYAFLUX_API double get_exponential_random(double start = 0, double end = 1);
 
 /**
  * @brief Generates a poisson random number
@@ -44,6 +44,6 @@ double get_exponential_random(double start = 0, double end = 1);
  *
  * Uses the random number generator from the default engine.
  */
-double get_poisson_random(double start = 0, double end = 1);
+MAYAFLUX_API double get_poisson_random(double start = 0, double end = 1);
 
 }
