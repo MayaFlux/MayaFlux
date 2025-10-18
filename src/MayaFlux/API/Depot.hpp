@@ -31,7 +31,7 @@ namespace Kakshya {
  * The container is immediately ready for use with buffer system integration.
  * Returns nullptr on failure with error details logged to stderr.
  */
-std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std::string& filepath);
+MAYAFLUX_API std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std::string& filepath);
 
 /**
  * @brief Connects a SoundFileContainer to the buffer system for immediate playback
@@ -42,9 +42,9 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
  * Creates ContainerBuffer instances for each channel and connects to AUDIO_BACKEND token.
  * Multiple containers can be connected simultaneously for layered playback.
  */
-void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container);
+MAYAFLUX_API void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container);
 
-void hook_sound_container_to_buffers_with_context(
+MAYAFLUX_API void hook_sound_container_to_buffers_with_context(
     std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container,
     const CreationContext& context);
 
@@ -56,6 +56,6 @@ void hook_sound_container_to_buffers_with_context(
  * Registers load_audio_file() as default loader and enables context-aware buffer connection.
  * Must be called during engine initialization before using Creator proxy with audio files.
  */
-void register_container_context_operations();
+MAYAFLUX_API void register_container_context_operations();
 
 }

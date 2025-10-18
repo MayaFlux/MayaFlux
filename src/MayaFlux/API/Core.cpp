@@ -48,17 +48,17 @@ namespace internal {
 // Engine Management
 //-------------------------------------------------------------------------
 
-bool is_engine_initialized()
+MAYAFLUX_API bool is_engine_initialized()
 {
     return internal::initialized;
 }
 
-Core::Engine& get_context()
+MAYAFLUX_API Core::Engine& get_context()
 {
     return internal::get_or_create_engine();
 }
 
-void set_and_transfer_context(Core::Engine instance)
+MAYAFLUX_API void set_and_transfer_context(Core::Engine instance)
 {
     bool is_same_instance = false;
 
@@ -81,7 +81,7 @@ void set_and_transfer_context(Core::Engine instance)
     }
 }
 
-void Init(uint32_t sample_rate, uint32_t buffer_size, uint32_t num_out_channels, uint32_t num_in_channels)
+MAYAFLUX_API void Init(uint32_t sample_rate, uint32_t buffer_size, uint32_t num_out_channels, uint32_t num_in_channels)
 {
     auto& engine = internal::get_or_create_engine();
     auto& stream_info = engine.get_stream_info();
@@ -93,38 +93,38 @@ void Init(uint32_t sample_rate, uint32_t buffer_size, uint32_t num_out_channels,
     engine.Init();
 }
 
-void Init(Core::GlobalStreamInfo stream_info)
+MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info)
 {
     auto& engine = internal::get_or_create_engine();
     engine.Init(stream_info);
 }
 
-void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config)
+MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config)
 {
     auto& engine = internal::get_or_create_engine();
     engine.Init(stream_info, graphics_config);
 }
 
-void Start()
+MAYAFLUX_API void Start()
 {
     get_context().Start();
 }
 
-void Pause()
+MAYAFLUX_API void Pause()
 {
     if (internal::initialized) {
         get_context().Pause();
     }
 }
 
-void Resume()
+MAYAFLUX_API void Resume()
 {
     if (internal::initialized) {
         get_context().Resume();
     }
 }
 
-void End()
+MAYAFLUX_API void End()
 {
     if (internal::initialized) {
         internal::cleanup_engine();

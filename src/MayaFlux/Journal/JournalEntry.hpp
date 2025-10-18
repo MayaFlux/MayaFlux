@@ -133,7 +133,7 @@ enum class Context : uint8_t {
 /**
  * @brief A log entry structure to encapsulate log message details.
  */
-struct JournalEntry {
+struct MAYAFLUX_API JournalEntry {
     Severity severity;
     Component component;
     Context context;

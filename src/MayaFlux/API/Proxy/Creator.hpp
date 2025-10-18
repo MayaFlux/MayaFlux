@@ -36,7 +36,7 @@ struct CreationContext {
 
 class Creator;
 
-class CreationProxy {
+class MAYAFLUX_API CreationProxy {
 public:
     CreationProxy(Creator* creator)
         : m_creator(creator)
@@ -143,7 +143,7 @@ private:
     Creator* m_creator;
 };
 
-class ContextAppliers {
+class MAYAFLUX_API ContextAppliers {
 public:
     static auto& get_node_context_applier() { return s_node_applier; }
 
@@ -274,7 +274,7 @@ private:
     mutable CreationContext m_accumulated_context;
 };
 
-class Creator {
+class MAYAFLUX_API Creator {
 public:
 #define DECLARE_NODE_CREATOR_METHOD(method_name, full_type_name)                  \
     template <typename... Args>                                                   \
@@ -426,7 +426,7 @@ void CreationProxy::apply_buffer_context(std::shared_ptr<T> obj)
 static constexpr auto Audio = Domain::AUDIO;
 static constexpr auto Graphics = Domain::GRAPHICS;
 
-inline Creator vega;
+extern MAYAFLUX_API Creator vega;
 
 template <typename T>
 auto operator|(std::shared_ptr<T> obj, Domain d) -> CreationHandle<T>

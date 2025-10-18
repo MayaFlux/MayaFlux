@@ -12,7 +12,7 @@
 
 namespace MayaFlux {
 
-std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std::string& filepath)
+MAYAFLUX_API std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std::string& filepath)
 {
     auto reader = std::make_unique<IO::SoundFileReader>();
     MayaFlux::IO::SoundFileReader::initialize_ffmpeg();
@@ -74,7 +74,7 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
     return sound_container;
 }
 
-void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container)
+MAYAFLUX_API void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container)
 {
     auto buffer_manager = MayaFlux::get_buffer_manager();
     uint32_t num_channels = container->get_num_channels();
@@ -94,7 +94,7 @@ void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFil
     }
 }
 
-void hook_sound_container_to_buffers_with_context(
+MAYAFLUX_API void hook_sound_container_to_buffers_with_context(
     std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container,
     const CreationContext& context)
 {
@@ -126,7 +126,7 @@ void hook_sound_container_to_buffers_with_context(
     }
 }
 
-void register_container_context_operations()
+MAYAFLUX_API void register_container_context_operations()
 {
     ContextAppliers::set_container_loader([](const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer> {
         return load_audio_file(filepath);

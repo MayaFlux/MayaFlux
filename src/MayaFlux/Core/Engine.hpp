@@ -74,7 +74,7 @@ class WindowManager;
  * The Engine does not perform direct signal processing or scheduling - it delegates these
  * responsibilities to specialized subsystems while ensuring they work together coherently.
  */
-class Engine {
+class MAYAFLUX_API Engine {
 public:
     //-------------------------------------------------------------------------
     // Initialization and Lifecycle

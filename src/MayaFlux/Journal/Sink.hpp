@@ -11,7 +11,7 @@ namespace MayaFlux::Journal {
  *
  * Allows pluggable log outputs (console, file, network, etc.)
  */
-class Sink {
+class MAYAFLUX_API Sink {
 public:
     virtual ~Sink() = default;
 

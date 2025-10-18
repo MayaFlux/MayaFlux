@@ -58,7 +58,7 @@ Nodes::RootNode& get_audio_channel_root(uint32_t channel)
     return *get_context().get_node_graph_manager()->get_all_root_nodes(Nodes::ProcessingToken::AUDIO_RATE)[channel];
 }
 
-void register_all_nodes()
+MAYAFLUX_API void register_all_nodes()
 {
     ContextAppliers::set_node_context_applier(
         [](std::shared_ptr<Nodes::Node> node, const CreationContext& context) {
@@ -205,7 +205,7 @@ void remove_supplied_buffer_from_channels(std::shared_ptr<Buffers::AudioBuffer> 
     }
 }
 
-void register_all_buffers()
+MAYAFLUX_API void register_all_buffers()
 {
     ContextAppliers::set_buffer_context_applier(
         [](std::shared_ptr<Buffers::Buffer> buffer, const CreationContext& context) {
