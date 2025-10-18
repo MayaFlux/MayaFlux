@@ -28,7 +28,7 @@ enum class ConvolutionOperation : u_int8_t {
  * - Deconvolution and restoration
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class ConvolutionTransformer final : public UniversalTransformer<InputType, OutputType> {
+class MAYAFLUX_API ConvolutionTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;

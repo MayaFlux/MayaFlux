@@ -81,7 +81,7 @@ enum class ExtractionScope : u_int8_t {
  * - Integration with ComputeMatrix execution modes
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class UniversalExtractor : public ComputeOperation<InputType, OutputType> {
+class MAYAFLUX_API UniversalExtractor : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;

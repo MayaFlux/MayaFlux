@@ -56,7 +56,7 @@ enum class EnergyLevel : u_int8_t {
     PEAK
 };
 
-struct ChannelEnergy {
+struct MAYAFLUX_API ChannelEnergy {
     std::vector<double> energy_values;
     double mean_energy {};
     double max_energy {};
@@ -72,7 +72,7 @@ struct ChannelEnergy {
  * @struct EnergyAnalysis
  * @brief Analysis result structure for energy analysis
  */
-struct EnergyAnalysis {
+struct MAYAFLUX_API EnergyAnalysis {
     std::vector<ChannelEnergy> channels;
 
     EnergyMethod method_used {};
@@ -102,7 +102,7 @@ struct EnergyAnalysis {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
-class EnergyAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class MAYAFLUX_API EnergyAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;

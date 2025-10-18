@@ -33,7 +33,7 @@ enum class MathematicalOperation : u_int8_t {
  * - Quantization and bit reduction
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
+class MAYAFLUX_API MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;

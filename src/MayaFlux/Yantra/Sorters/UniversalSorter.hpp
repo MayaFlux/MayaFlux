@@ -101,7 +101,7 @@ enum class SortingGranularity : u_int8_t {
  * @struct SortKey
  * @brief Multi-dimensional sort key specification for complex sorting
  */
-struct SortKey {
+struct MAYAFLUX_API SortKey {
     std::string name;
     std::function<double(const std::any&)> extractor; ///< Extract sort value from data
     SortingDirection direction = SortingDirection::ASCENDING;
@@ -128,7 +128,7 @@ struct SortKey {
  * approaches that go beyond analog metaphors.
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class UniversalSorter : public ComputeOperation<InputType, OutputType> {
+class MAYAFLUX_API UniversalSorter : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;
