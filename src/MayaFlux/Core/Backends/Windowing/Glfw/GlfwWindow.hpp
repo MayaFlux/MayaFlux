@@ -13,7 +13,7 @@ namespace MayaFlux::Core {
  * Wraps a GLFW window  and provides a unified interface
  * for window management, event handling, and state tracking.
  */
-class GlfwWindow : public Window {
+class MAYAFLUX_API GlfwWindow : public Window {
 public:
     /**
      * @brief Creates a window with the given configuration

@@ -480,6 +480,7 @@ $glfwLibRelativeName = Split-Path -Leaf $foundLibDir
 
 [Environment]::SetEnvironmentVariable("GLFW_ROOT", $glfwDir, "Machine")
 [Environment]::SetEnvironmentVariable("GLFW_LIB_DIR", $foundLibDir, "Machine")
+Add-ToSystemPath "$foundLibDir"
 
 Write-Host "GLFW configuration complete:"
 Write-Host "  Root: $glfwDir"
@@ -805,7 +806,7 @@ set(CMAKE_PREFIX_PATH "C:/Program Files/RtAudio/share/rtaudio;C:/Program Files/L
 
 set(GLFW_INCLUDE_DIR "C:/Program Files/GLFW/include" CACHE PATH "" FORCE)
 set(GLFW_LIBRARY "$($glfwLibDir -replace '\\','/')/glfw3dll.lib" CACHE FILEPATH "" FORCE)
-set(GLFW_DLL "$($glfwLibDir -replace '\\','/')/glfw3.dll" CACHE FILEPATH "" FORCE)
+# set(GLFW_DLL "$($glfwLibDir -replace '\\','/')/glfw3.dll" CACHE FILEPATH "" FORCE)
 
 set(AVCODEC_INCLUDE_DIR "C:/Program Files/FFmpeg/include" CACHE PATH "" FORCE)
 set(AVFORMAT_INCLUDE_DIR "C:/Program Files/FFmpeg/include" CACHE PATH "" FORCE)

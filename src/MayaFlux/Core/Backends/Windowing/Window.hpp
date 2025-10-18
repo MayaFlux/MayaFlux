@@ -15,7 +15,7 @@ namespace MayaFlux::Core {
  * Wraps a window (provided via a backend) and provides a unified interface
  * for window management, event handling, and state tracking.
  */
-class Window {
+class MAYAFLUX_API Window {
 public:
     virtual ~Window() = default;
 

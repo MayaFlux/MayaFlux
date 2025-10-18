@@ -32,7 +32,7 @@ class IGraphicsBackend;
  * methods are called from the graphics thread loop, not from an
  * external callback.
  */
-class GraphicsSubsystem : public ISubsystem {
+class MAYAFLUX_API GraphicsSubsystem : public ISubsystem {
 public:
     /**
      * @brief GraphicsSubsystem constructor

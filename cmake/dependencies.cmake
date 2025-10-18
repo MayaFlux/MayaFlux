@@ -4,22 +4,6 @@ if(WIN32)
     set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL "Don't update dependencies automatically")
     set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL "Use existing dependencies without network")
 
-    # message(STATUS "Fetching magic_enum via FetchContent...")
-    # FetchContent_Declare(
-    #     magic_enum
-    #     GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
-    #     GIT_TAG v0.9.5
-    #     GIT_SHALLOW TRUE
-    #     GIT_PROGRESS TRUE
-    #     USES_TERMINAL_DOWNLOAD TRUE
-    # )
-    
-    # FetchContent_GetProperties(magic_enum)
-    # if(NOT magic_enum_POPULATED)
-    #     FetchContent_Populate(magic_enum)
-    #     set(magic_enum_POPULATED TRUE CACHE INTERNAL "magic_enum populated")
-    # endif()
-
     # message(STATUS "Fetching GoogleTest via FetchContent...")
     # FetchContent_Declare(
     #     googletest

@@ -14,7 +14,7 @@ namespace MayaFlux::Core {
  * - Poll GLFW events (calls glfwPollEvents)
  * - Query windows by title/index
  */
-class WindowManager {
+class MAYAFLUX_API WindowManager {
 public:
     /**
      * @brief Constructs WindowManager with global graphics config
