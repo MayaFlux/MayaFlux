@@ -101,6 +101,11 @@ else()
         clangSerialization
         clangInterpreter
         ws2_32
+        legacy_stdio_definitions
+    )
+   target_link_options(Lila PRIVATE
+        /DEFAULTLIB:vcruntime.lib
+        /DEFAULTLIB:msvcrt.lib
     )
 endif()
 

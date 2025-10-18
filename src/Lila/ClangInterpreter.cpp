@@ -45,18 +45,29 @@ bool ClangInterpreter::initialize()
     LILA_INFO(Emitter::INTERPRETER, "Initializing Clang interpreter");
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
+    HMODULE msvcp = LoadLibraryA("msvcp140.dll");
+    if(msvcp) {
+        LILA_INFO(Emitter::INTERPRETER, "Successfully loaded msvcp140.dll into process");
+    } else {
+        LILA_ERROR(Emitter::INTERPRETER,
+            "Failed to load msvcp140.dll. Error: " + std::to_string(GetLastError()));
+        return false;
+	}
+    HMODULE vcruntime = LoadLibraryA("vcruntime140.dll");
+    if(vcruntime) {
+        LILA_INFO(Emitter::INTERPRETER, "Successfully loaded vcruntime140.dll into process");
+    }
+    else {
+        LILA_ERROR(Emitter::INTERPRETER,
+            "Failed to load vcruntime140.dll. Error: " + std::to_string(GetLastError()));
+        return false;
+    }
     HMODULE mayafluxHandle = LoadLibraryA("MayaFluxLib.dll");
     if (!mayafluxHandle) {
         mayafluxHandle = LoadLibraryA("C:\\MayaFlux\\bin\\MayaFluxLib.dll");
     }
-
     if (mayafluxHandle) {
         LILA_INFO(Emitter::INTERPRETER, "Successfully loaded mayafluxlib.dll into process");
-
-        // auto register_func = (void (*)())GetProcAddress(mayafluxHandle, "register_all_buffers");
-        // if (register_func) {
-        //     LILA_INFO(Emitter::INTERPRETER, "Can access MayaFlux symbols directly");
-        // }
     } else {
         LILA_ERROR(Emitter::INTERPRETER,
             "Failed to load MayaFluxLib.dll. Error: " + std::to_string(GetLastError()));
@@ -110,6 +121,12 @@ bool ClangInterpreter::initialize()
     for (const auto& path : m_impl->include_paths) {
         m_impl->compile_flags.push_back("-I" + path);
     }
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    m_impl->compile_flags.emplace_back("-fno-function-sections");
+    m_impl->compile_flags.emplace_back("-fno-data-sections");
+    m_impl->compile_flags.emplace_back("-fno-unique-section-names");
+#endif
 
     std::vector<const char*> args;
     for (const auto& flag : m_impl->compile_flags) {
