@@ -29,7 +29,7 @@ namespace MayaFlux::Nodes::Generator {
  * frequency control and efficient computation, avoiding repeated calls to
  * the computationally expensive sin() function.
  */
-class Sine : public Generator {
+class MAYAFLUX_API Sine : public Generator {
 public:
     /**
      * @brief Basic constructor with fixed parameters

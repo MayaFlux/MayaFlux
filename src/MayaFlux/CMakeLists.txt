@@ -4,10 +4,10 @@ file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp)
 
+add_library(MayaFluxLib SHARED ${SOURCES} ${HEADERS})
+
 if(WIN32)
-    add_library(MayaFluxLib STATIC ${SOURCES} ${HEADERS})
-else()
-    add_library(MayaFluxLib SHARED ${SOURCES} ${HEADERS})
+    target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_EXPORTS)
 endif()
 
 set_target_properties(MayaFluxLib PROPERTIES

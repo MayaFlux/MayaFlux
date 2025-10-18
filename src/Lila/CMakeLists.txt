@@ -23,10 +23,9 @@ configure_file(
 )
 
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
+
 if(WIN32)
     target_compile_definitions(Lila PRIVATE LILA_EXPORTS)
-#     add_library(Lila STATIC ${LILA_SOURCES} ${LILA_HEADERS})
-# else()
 endif()
 
 target_include_directories(Lila PUBLIC

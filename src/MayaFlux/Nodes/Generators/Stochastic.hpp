@@ -22,7 +22,7 @@ namespace MayaFlux::Nodes::Generator::Stochastics {
  * - Creating cross-domain mappings based on stochastic properties
  * - Detecting and responding to specific statistical conditions
  */
-class StochasticContext : public NodeContext {
+class MAYAFLUX_API StochasticContext : public NodeContext {
 public:
     /**
      * @brief Constructs a StochasticContext with the current generator state
@@ -105,7 +105,7 @@ public:
  * It can be integrated with other computational domains (graphics, physics, data)
  * to create cross-domain generative systems.
  */
-class NoiseEngine : public Generator {
+class MAYAFLUX_API NoiseEngine : public Generator {
 public:
     /**
      * @brief Constructor for the stochastic generator

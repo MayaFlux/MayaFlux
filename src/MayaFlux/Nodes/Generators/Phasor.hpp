@@ -28,7 +28,7 @@ namespace MayaFlux::Nodes::Generator {
  * The implementation uses a simple phase accumulation approach that ensures
  * sample-accurate timing and smooth transitions.
  */
-class Phasor : public Generator, public std::enable_shared_from_this<Phasor> {
+class MAYAFLUX_API Phasor : public Generator, public std::enable_shared_from_this<Phasor> {
 public:
     /**
      * @brief Basic constructor with fixed parameters
