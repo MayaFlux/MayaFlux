@@ -50,7 +50,7 @@ namespace Kriya {
      * @see BufferPipeline For execution context
      * @see CaptureBuilder For fluent construction
      */
-    class BufferCapture {
+    class MAYAFLUX_API BufferCapture {
     public:
         /**
          * @enum CaptureMode
@@ -229,7 +229,7 @@ namespace Kriya {
      * pipeline >> capture_op >> route_to_container(output_stream);
      * ```
      */
-    class CaptureBuilder {
+    class MAYAFLUX_API CaptureBuilder {
     public:
         /**
          * @brief Construct builder with target AudioBuffer.

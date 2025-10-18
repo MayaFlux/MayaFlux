@@ -40,7 +40,7 @@ using promise_handle = Vruta::audio_promise;
  * precise sequencing, modulation, and synchronization of events across multiple domains
  * (signal processing, visual rendering, data transformation, physical modeling, etc.).
  */
-struct SampleDelay {
+struct MAYAFLUX_API SampleDelay {
     /**
      * @brief Number of time units to wait before resuming the coroutine
      *
@@ -92,7 +92,7 @@ struct SampleDelay {
  * Future awaiter for visual processing routines that operate at frame rates.
  * This will work with visual_promise types that have next_frame fields.
  */
-struct FrameDelay {
+struct MAYAFLUX_API FrameDelay {
     uint32_t frames_to_wait;
 
     [[nodiscard]] constexpr bool await_ready() const noexcept
@@ -105,7 +105,7 @@ struct FrameDelay {
     void await_suspend(std::coroutine_handle<Vruta::graphics_promise> h) noexcept;
 };
 
-struct MultiRateDelay {
+struct MAYAFLUX_API MultiRateDelay {
     uint64_t samples_to_wait;
     uint32_t frames_to_wait;
 
@@ -143,7 +143,7 @@ struct MultiRateDelay {
  * complex internal state without requiring external management, supporting
  * the development of autonomous computational agents within the system.
  */
-struct GetPromise {
+struct MAYAFLUX_API GetPromise {
     /**
      * @brief Pointer to store the promise object
      *
@@ -197,7 +197,7 @@ struct GetPromise {
  *   auto event = co_await window->get_event_source().next_event();
  *   auto key_event = co_await window->get_event_source().await_event(WindowEventType::KEY_PRESSED);
  */
-class EventAwaiter {
+class MAYAFLUX_API EventAwaiter {
 public:
     EventAwaiter(Vruta::EventSource& source, std::optional<Core::WindowEventType> filter = std::nullopt)
         : m_source(source)

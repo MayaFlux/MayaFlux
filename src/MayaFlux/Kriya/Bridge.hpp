@@ -77,7 +77,7 @@ class CycleCoordinator;
  * @see BufferCapture For flexible data capture strategies
  * @see CycleCoordinator For cross-pipeline synchronization
  */
-class BufferOperation {
+class MAYAFLUX_API BufferOperation {
 public:
     /**
      * @enum OpType
@@ -372,7 +372,7 @@ private:
  * @see CycleCoordinator For multi-pipeline synchronization
  * @see Vruta::TaskScheduler For execution scheduling
  */
-class BufferPipeline : public std::enable_shared_from_this<BufferPipeline> {
+class MAYAFLUX_API BufferPipeline : public std::enable_shared_from_this<BufferPipeline> {
 public:
     static std::shared_ptr<BufferPipeline> create(Vruta::TaskScheduler& scheduler)
     {

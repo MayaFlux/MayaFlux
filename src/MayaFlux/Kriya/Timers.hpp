@@ -35,7 +35,7 @@ namespace MayaFlux::Kriya {
  * Only one callback can be scheduled at a time; scheduling a new callback
  * cancels any previously scheduled callback.
  */
-class Timer {
+class MAYAFLUX_API Timer {
 public:
     /**
      * @brief Constructs a Timer with the specified scheduler
@@ -139,7 +139,7 @@ private:
  * Only one action can be active at a time; executing a new action cancels
  * any previously active action.
  */
-class TimedAction {
+class MAYAFLUX_API TimedAction {
 public:
     /**
      * @brief Constructs a TimedAction with the specified scheduler
@@ -229,7 +229,7 @@ private:
  * Only one node can be active at a time; activating a new node cancels
  * any previously active node.
  */
-class NodeTimer {
+class MAYAFLUX_API NodeTimer {
 public:
     /**
      * @brief Constructs a NodeTimer with the specified scheduler

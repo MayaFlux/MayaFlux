@@ -42,7 +42,7 @@ class BufferPipeline;
  * @see BufferCapture For data capture strategies
  * @see Vruta::TaskScheduler For execution scheduling
  */
-class CycleCoordinator {
+class MAYAFLUX_API CycleCoordinator {
 public:
     /**
      * @brief Construct coordinator with task scheduler integration.
