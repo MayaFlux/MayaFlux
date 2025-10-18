@@ -48,6 +48,7 @@ install(FILES
 )
 
 install(TARGETS lila_server RUNTIME DESTINATION bin)
+install(TARGETS project_launcher RUNTIME DESTINATION bin)
 
 message(STATUS "Lila (static) installed to:")
 message(STATUS "  - Libraries: ${CMAKE_INSTALL_PREFIX}/lib")

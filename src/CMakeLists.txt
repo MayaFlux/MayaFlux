@@ -22,10 +22,10 @@ else()
     )
 endif()
 
-add_executable(MayaFlux main.cpp ${HEADERS} ${USER_SOURCES})
-set_target_properties(MayaFlux PROPERTIES
+add_executable(project_launcher main.cpp ${HEADERS} ${USER_SOURCES})
+set_target_properties(project_launcher PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
-target_link_libraries(MayaFlux PRIVATE MayaFluxLib)
-target_precompile_headers(MayaFlux PUBLIC ../cmake/pch.h)
+target_link_libraries(project_launcher PRIVATE MayaFluxLib)
+target_precompile_headers(project_launcher PUBLIC ../cmake/pch.h)

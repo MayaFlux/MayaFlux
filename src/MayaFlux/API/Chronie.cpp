@@ -1,7 +1,5 @@
 #include "Chronie.hpp"
 
-#include <utility>
-
 #include "Core.hpp"
 
 #include "MayaFlux/Core/Engine.hpp"
@@ -10,12 +8,12 @@
 
 namespace MayaFlux {
 
-std::shared_ptr<Vruta::TaskScheduler> get_scheduler()
+MAYAFLUX_API std::shared_ptr<Vruta::TaskScheduler> get_scheduler()
 {
     return get_context().get_scheduler();
 }
 
-std::shared_ptr<Vruta::EventManager> get_event_manager()
+MAYAFLUX_API std::shared_ptr<Vruta::EventManager> get_event_manager()
 {
     return get_context().get_event_manager();
 }
@@ -26,12 +24,12 @@ bool update_task_params(const std::string& name, Args... args)
     return get_scheduler()->update_task_params(name, args...);
 }
 
-Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback)
+MAYAFLUX_API Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback)
 {
     return Kriya::metro(*get_scheduler(), interval_seconds, std::move(callback));
 }
 
-void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name)
+MAYAFLUX_API void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
@@ -42,12 +40,12 @@ void schedule_metro(double interval_seconds, std::function<void()> callback, std
     get_scheduler()->add_task(std::move(metronome), name, false);
 }
 
-Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
+MAYAFLUX_API Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> seq)
 {
     return Kriya::sequence(*get_scheduler(), std::move(seq));
 }
 
-void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name)
+MAYAFLUX_API void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq, std::string name)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
@@ -57,17 +55,17 @@ void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq
     get_scheduler()->add_task(std::move(tseq), name, false);
 }
 
-Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
+MAYAFLUX_API Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
 {
     return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
 }
 
-Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
+MAYAFLUX_API Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds)
 {
     return Kriya::pattern(*get_scheduler(), std::move(pattern_func), std::move(callback), interval_seconds);
 }
 
-void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name)
+MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name)
 {
     auto scheduler = get_scheduler();
     if (name.empty()) {
@@ -77,7 +75,7 @@ void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::funct
     get_scheduler()->add_task(std::move(pattern), name, false);
 }
 
-float* get_line_value(const std::string& name)
+MAYAFLUX_API float* get_line_value(const std::string& name)
 {
     std::string err;
     if (auto task = get_scheduler()->get_task(name)) {
@@ -93,33 +91,33 @@ float* get_line_value(const std::string& name)
     return nullptr;
 }
 
-void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize)
+MAYAFLUX_API void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize)
 {
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(task);
     get_scheduler()->add_task(std::move(task_ptr), name, initialize);
 }
 
-bool cancel_task(const std::string& name)
+MAYAFLUX_API bool cancel_task(const std::string& name)
 {
     return get_scheduler()->cancel_task(name);
 }
 
-bool restart_task(const std::string& name)
+MAYAFLUX_API bool restart_task(const std::string& name)
 {
     return get_scheduler()->restart_task(name);
 }
 
-Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node)
+MAYAFLUX_API Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node)
 {
     return { std::move(node) };
 }
 
-Kriya::ActionToken Wait(double seconds)
+MAYAFLUX_API Kriya::ActionToken Wait(double seconds)
 {
     return { seconds };
 }
 
-Kriya::ActionToken Action(std::function<void()> func)
+MAYAFLUX_API Kriya::ActionToken Action(std::function<void()> func)
 {
     return { std::move(func) };
 }
