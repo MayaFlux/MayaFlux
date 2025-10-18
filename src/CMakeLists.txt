@@ -20,9 +20,6 @@ else()
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
         INSTALL_RPATH_USE_LINK_PATH TRUE
     )
-    target_link_options(lila_server PRIVATE 
-        /WHOLEARCHIVE:$<TARGET_FILE:MayaFluxLib>
-    )
 endif()
 
 add_executable(MayaFlux main.cpp ${HEADERS} ${USER_SOURCES})

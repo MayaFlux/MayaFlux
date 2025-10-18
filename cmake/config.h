@@ -31,24 +31,15 @@ using u_int64_t = uint64_t;
 #define MAYAFLUX_FORCEINLINE __attribute__((always_inline))
 #endif
 
-// NEEDED for future when building shared libraries
-// #ifdef MAYAFLUX_PLATFORM_WINDOWS
-//     #if defined(MAYAFLUX_EXPORTS)
-//         #define MAYAFLUX_API __declspec(dllexport)
-//     #else
-//         #define MAYAFLUX_API __declspec(dllimport)
-//     #endif
-// #else
-//     #if defined(__GNUC__) && (__GNUC__ >= 4)
-//         #if defined(MAYAFLUX_EXPORTS)
-//             #define MAYAFLUX_API __attribute__((visibility("default")))
-//         #else
-//             #define MAYAFLUX_API
-//         #endif
-//     #else
-//         #define MAYAFLUX_API
-//     #endif
-// #endif
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#if defined(MAYAFLUX_EXPORTS)
+#define MAYAFLUX_API __declspec(dllexport)
+#else
+#define MAYAFLUX_API __declspec(dllimport)
+#endif
+#else
+#define MAYAFLUX_API
+#endif
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #if defined(LILA_EXPORTS)
@@ -57,18 +48,8 @@ using u_int64_t = uint64_t;
 #define LILA_API __declspec(dllimport)
 #endif
 #else
-#if defined(__GNUC__) && (__GNUC__ >= 4)
-#if defined(LILA_EXPORTS)
-#define LILA_API __attribute__((visibility("default")))
-#else
 #define LILA_API
 #endif
-#else
-#define LILA_API
-#endif
-#endif
-
-#define MAYAFLUX_API
 
 // C++20 std::format availability detection
 #if defined(__APPLE__) && defined(__MACH__)

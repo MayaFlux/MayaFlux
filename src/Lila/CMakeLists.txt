@@ -46,6 +46,12 @@ set_target_properties(Lila PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
+if(WIN32)
+    set_target_properties(Lila PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+endif()
+
 if(UNIX)
     execute_process(
         COMMAND llvm-config --ldflags

@@ -1,4 +1,8 @@
-install(TARGETS MayaFluxLib DESTINATION lib)
+install(TARGETS MayaFluxLib 
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/
         DESTINATION include/MayaFlux
@@ -21,6 +25,7 @@ if(UNIX)
 endif()
 
 install(TARGETS Lila
+    RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
