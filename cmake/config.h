@@ -73,6 +73,30 @@ constexpr char PathSeparator = '\\';
 constexpr char PathSeparator = '/';
 #endif
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+static const char* safe_getenv(const char* var)
+{
+    static thread_local std::string buffer;
+    char* value = nullptr;
+    size_t len = 0;
+    buffer.clear();
+    if (_dupenv_s(&value, &len, var) == 0 && value != nullptr) {
+        buffer.assign(value);
+        free(value);
+        return buffer.c_str();
+    }
+    return "";
+}
+#else
+static const char* safe_getenv(const char* var)
+{
+    const char* value = std::getenv(var);
+    if (value)
+        return value;
+    return "";
+}
+#endif
+
 namespace fs = std::filesystem;
 class SystemConfig {
 public:

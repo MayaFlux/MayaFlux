@@ -13,8 +13,6 @@
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 
-#include <filesystem>
-
 namespace Lila {
 
 struct ClangInterpreter::Impl {
@@ -47,22 +45,21 @@ bool ClangInterpreter::initialize()
     LILA_INFO(Emitter::INTERPRETER, "Initializing Clang interpreter");
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    HMODULE mayafluxHandle = LoadLibraryA("mayafluxlib.dll");
+    HMODULE mayafluxHandle = LoadLibraryA("MayaFluxLib.dll");
     if (!mayafluxHandle) {
-        mayafluxHandle = LoadLibraryA("C:\\MayaFlux\\bin\\mayafluxlib.dll");
+        mayafluxHandle = LoadLibraryA("C:\\MayaFlux\\bin\\MayaFluxLib.dll");
     }
 
     if (mayafluxHandle) {
         LILA_INFO(Emitter::INTERPRETER, "Successfully loaded mayafluxlib.dll into process");
 
-        auto register_func = (void(*)())GetProcAddress(mayafluxHandle, "register_all_buffers");
-        if (register_func) {
-            LILA_INFO(Emitter::INTERPRETER, "Can access MayaFlux symbols directly");
-        }
-    }
-    else {
+        // auto register_func = (void (*)())GetProcAddress(mayafluxHandle, "register_all_buffers");
+        // if (register_func) {
+        //     LILA_INFO(Emitter::INTERPRETER, "Can access MayaFlux symbols directly");
+        // }
+    } else {
         LILA_ERROR(Emitter::INTERPRETER,
-            "Failed to load mayafluxlib.dll. Error: " + std::to_string(GetLastError()));
+            "Failed to load MayaFluxLib.dll. Error: " + std::to_string(GetLastError()));
         return false;
     }
 #endif
