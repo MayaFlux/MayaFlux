@@ -440,7 +440,7 @@ public:
 private:
     void setup_audio_buffers(SubsystemProcessingHandle& handle) {
         // Create input/output buffers for hardware interface
-        for (u_int32_t channel = 0; channel < m_stream_info.output.channels; ++channel) {
+        for (uint32_t channel = 0; channel < m_stream_info.output.channels; ++channel) {
             auto input_buffer = handle.buffers.create_buffer<AudioInputBuffer>(channel, 512);
             auto output_buffer = handle.buffers.create_buffer<AudioOutputBuffer>(channel, 512);
         }
