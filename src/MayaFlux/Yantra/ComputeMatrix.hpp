@@ -12,7 +12,7 @@ namespace MayaFlux::Yantra {
  * @enum ExecutionPolicy
  * @brief Policy for execution strategy selection
  */
-enum class ExecutionPolicy : u_int8_t {
+enum class ExecutionPolicy : uint8_t {
     CONSERVATIVE, // Prefer safety and predictability
     BALANCED, // Balance between performance and safety
     AGGRESSIVE // Maximize performance

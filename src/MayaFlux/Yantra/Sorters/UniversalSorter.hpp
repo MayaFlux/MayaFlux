@@ -49,7 +49,7 @@ namespace MayaFlux::Yantra {
  * @enum SortingType
  * @brief Categories of sorting operations for discovery and organization
  */
-enum class SortingType : u_int8_t {
+enum class SortingType : uint8_t {
     STANDARD, ///< Traditional comparison-based sorting
     ALGORITHMIC, ///< Mathematical/computational sorting algorithms
     PATTERN_BASED, ///< Sort based on pattern recognition
@@ -65,7 +65,7 @@ enum class SortingType : u_int8_t {
  * @enum SortingStrategy
  * @brief Sorting execution strategies
  */
-enum class SortingStrategy : u_int8_t {
+enum class SortingStrategy : uint8_t {
     IN_PLACE, ///< Sort data in-place (modifies input)
     COPY_SORT, ///< Create sorted copy (preserves input)
     INDEX_ONLY, ///< Generate sort indices only
@@ -79,7 +79,7 @@ enum class SortingStrategy : u_int8_t {
  * @enum SortingDirection
  * @brief Basic sort direction for simple comparisons
  */
-enum class SortingDirection : u_int8_t {
+enum class SortingDirection : uint8_t {
     ASCENDING, ///< Smallest to largest
     DESCENDING, ///< Largest to smallest
     CUSTOM, ///< Use custom comparator function
@@ -90,7 +90,7 @@ enum class SortingDirection : u_int8_t {
  * @enum SortingGranularity
  * @brief Output granularity control for sorting results
  */
-enum class SortingGranularity : u_int8_t {
+enum class SortingGranularity : uint8_t {
     RAW_DATA, ///< Direct sorted data
     ATTRIBUTED_INDICES, ///< Sort indices with metadata
     ORGANIZED_GROUPS, ///< Hierarchically organized sorted data

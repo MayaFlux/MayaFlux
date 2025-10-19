@@ -46,8 +46,8 @@ namespace MayaFlux::Yantra {
 std::vector<std::vector<double>> extract_high_energy_data(
     const std::vector<std::span<const double>>& data,
     double energy_threshold,
-    u_int32_t window_size,
-    u_int32_t hop_size)
+    uint32_t window_size,
+    uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
     result.reserve(data.size());
@@ -58,8 +58,8 @@ std::vector<std::vector<double>> extract_high_energy_data(
             continue;
         }
 
-        u_int32_t effective_window_size = std::min(window_size, static_cast<u_int32_t>(channel.size()));
-        u_int32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
+        uint32_t effective_window_size = std::min(window_size, static_cast<uint32_t>(channel.size()));
+        uint32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
         if (effective_hop_size == 0)
             effective_hop_size = 1;
 
@@ -114,7 +114,7 @@ std::vector<std::vector<double>> extract_peak_data(
     const std::vector<std::span<const double>>& data,
     double threshold,
     double min_distance,
-    u_int32_t region_size)
+    uint32_t region_size)
 {
     std::vector<std::vector<double>> result;
     result.reserve(data.size());
@@ -156,8 +156,8 @@ std::vector<std::vector<double>> extract_peak_data(
 std::vector<std::vector<double>> extract_outlier_data(
     const std::vector<std::span<const double>>& data,
     double std_dev_threshold,
-    u_int32_t window_size,
-    u_int32_t hop_size)
+    uint32_t window_size,
+    uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
     result.reserve(data.size());
@@ -168,8 +168,8 @@ std::vector<std::vector<double>> extract_outlier_data(
             continue;
         }
 
-        u_int32_t effective_window_size = std::min(window_size, static_cast<u_int32_t>(channel.size()));
-        u_int32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
+        uint32_t effective_window_size = std::min(window_size, static_cast<uint32_t>(channel.size()));
+        uint32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
         if (effective_hop_size == 0)
             effective_hop_size = 1;
 
@@ -225,8 +225,8 @@ std::vector<std::vector<double>> extract_outlier_data(
 std::vector<std::vector<double>> extract_high_spectral_data(
     const std::vector<std::span<const double>>& data,
     double spectral_threshold,
-    u_int32_t window_size,
-    u_int32_t hop_size)
+    uint32_t window_size,
+    uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
     result.reserve(data.size());
@@ -237,8 +237,8 @@ std::vector<std::vector<double>> extract_high_spectral_data(
             continue;
         }
 
-        u_int32_t effective_window_size = std::min(window_size, static_cast<u_int32_t>(channel.size()));
-        u_int32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
+        uint32_t effective_window_size = std::min(window_size, static_cast<uint32_t>(channel.size()));
+        uint32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
         if (effective_hop_size == 0)
             effective_hop_size = 1;
 
@@ -292,8 +292,8 @@ std::vector<std::vector<double>> extract_high_spectral_data(
 std::vector<std::vector<double>> extract_above_mean_data(
     const std::vector<std::span<const double>>& data,
     double mean_multiplier,
-    u_int32_t window_size,
-    u_int32_t hop_size)
+    uint32_t window_size,
+    uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
     result.reserve(data.size());
@@ -304,8 +304,8 @@ std::vector<std::vector<double>> extract_above_mean_data(
             continue;
         }
 
-        u_int32_t effective_window_size = std::min(window_size, static_cast<u_int32_t>(channel.size()));
-        u_int32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
+        uint32_t effective_window_size = std::min(window_size, static_cast<uint32_t>(channel.size()));
+        uint32_t effective_hop_size = std::min(hop_size, effective_window_size / 2);
         if (effective_hop_size == 0)
             effective_hop_size = 1;
 
@@ -358,7 +358,7 @@ std::vector<std::vector<double>> extract_above_mean_data(
 
 std::vector<std::vector<double>> extract_overlapping_windows(
     const std::vector<std::span<const double>>& data,
-    u_int32_t window_size,
+    uint32_t window_size,
     double overlap)
 {
     std::vector<std::vector<double>> result;
@@ -376,7 +376,7 @@ std::vector<std::vector<double>> extract_overlapping_windows(
             continue;
         }
 
-        const auto hop_size = std::max(1U, static_cast<u_int32_t>(window_size * (1.0 - overlap)));
+        const auto hop_size = std::max(1U, static_cast<uint32_t>(window_size * (1.0 - overlap)));
         std::vector<double> channel_windows;
 
         for (size_t start = 0; start + window_size <= channel.size(); start += hop_size) {
@@ -394,7 +394,7 @@ std::vector<std::vector<double>> extract_overlapping_windows(
 std::vector<std::vector<double>> extract_windowed_data_by_indices(
     const std::vector<std::span<const double>>& data,
     const std::vector<size_t>& window_indices,
-    u_int32_t window_size)
+    uint32_t window_size)
 {
     std::vector<std::vector<double>> result;
     result.reserve(data.size());
@@ -431,7 +431,7 @@ std::vector<std::string> get_available_extraction_methods()
     };
 }
 
-bool validate_extraction_parameters(u_int32_t window_size, u_int32_t hop_size, size_t data_size)
+bool validate_extraction_parameters(uint32_t window_size, uint32_t hop_size, size_t data_size)
 {
     if (window_size == 0 || hop_size == 0) {
         return false;
@@ -452,7 +452,7 @@ std::vector<std::vector<double>> extract_zero_crossing_data(
     const std::vector<std::span<const double>>& data,
     double threshold,
     double min_distance,
-    u_int32_t region_size)
+    uint32_t region_size)
 {
     std::vector<std::vector<double>> result;
     result.reserve(data.size());
@@ -465,7 +465,7 @@ std::vector<std::vector<double>> extract_zero_crossing_data(
 
         try {
             auto analyzer = std::make_shared<EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
-                region_size * 2, static_cast<u_int32_t>(min_distance));
+                region_size * 2, static_cast<uint32_t>(min_distance));
             analyzer->set_parameter("method", "zero_crossing");
 
             std::vector<Kakshya::DataVariant> data_variant { Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) } };
@@ -512,9 +512,9 @@ std::vector<std::vector<double>> extract_zero_crossing_data(
 std::vector<std::vector<double>> extract_silence_data(
     const std::vector<std::span<const double>>& data,
     double silence_threshold,
-    u_int32_t min_duration,
-    u_int32_t window_size,
-    u_int32_t hop_size)
+    uint32_t min_duration,
+    uint32_t window_size,
+    uint32_t hop_size)
 {
     std::vector<std::vector<double>> result;
     result.reserve(data.size());
@@ -525,8 +525,8 @@ std::vector<std::vector<double>> extract_silence_data(
             continue;
         }
 
-        u_int32_t effective_window = std::min(window_size, static_cast<u_int32_t>(channel.size()));
-        u_int32_t effective_hop = std::max(1U, std::min(hop_size, window_size / 2));
+        uint32_t effective_window = std::min(window_size, static_cast<uint32_t>(channel.size()));
+        uint32_t effective_hop = std::max(1U, std::min(hop_size, window_size / 2));
 
         try {
             auto analyzer = std::make_shared<EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(

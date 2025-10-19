@@ -18,7 +18,7 @@
  */
 namespace MayaFlux::Yantra {
 
-inline u_int64_t smallest_size(std::vector<std::vector<double>>& data)
+inline uint64_t smallest_size(std::vector<std::vector<double>>& data)
 {
     if (data.empty())
         return 0;
@@ -28,7 +28,7 @@ inline u_int64_t smallest_size(std::vector<std::vector<double>>& data)
             return a.size() < b.size();
         });
 
-    return static_cast<u_int64_t>(smallest.size());
+    return static_cast<uint64_t>(smallest.size());
 }
 
 /**
@@ -43,8 +43,8 @@ inline u_int64_t smallest_size(std::vector<std::vector<double>>& data)
 template <typename ProcessorFunc>
 std::vector<double> process_spectral_windows(
     std::span<double> data,
-    u_int32_t window_size,
-    u_int32_t hop_size,
+    uint32_t window_size,
+    uint32_t hop_size,
     ProcessorFunc&& processor)
 {
     const size_t num_windows = (data.size() >= window_size) ? (data.size() - window_size) / hop_size + 1 : 0;
@@ -100,16 +100,16 @@ std::vector<double> process_spectral_windows(
 template <OperationReadyData DataType>
 DataType transform_window(DataType& input,
     Nodes::Generator::WindowType window_type,
-    u_int32_t window_size = 0)
+    uint32_t window_size = 0)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
-    u_int32_t size = window_size > 0 ? window_size : smallest_size(target_data);
+    uint32_t size = window_size > 0 ? window_size : smallest_size(target_data);
 
     auto window = Nodes::Generator::generate_window(size, window_type);
 
     for (auto& span : target_data) {
-        auto data_view = span | std::views::take(std::min(size, static_cast<u_int32_t>(span.size())));
+        auto data_view = span | std::views::take(std::min(size, static_cast<uint32_t>(span.size())));
         auto window_view = window | std::views::take(data_view.size());
 
         std::ranges::transform(data_view, window_view, data_view.begin(),
@@ -137,12 +137,12 @@ DataType transform_window(DataType& input,
 template <OperationReadyData DataType>
 DataType transform_window(DataType& input,
     Nodes::Generator::WindowType window_type,
-    u_int32_t window_size,
+    uint32_t window_size,
     std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
-    u_int32_t size = window_size > 0 ? window_size : smallest_size(working_buffer);
+    uint32_t size = window_size > 0 ? window_size : smallest_size(working_buffer);
 
     auto window = Nodes::Generator::generate_window(size, window_type);
 
@@ -152,7 +152,7 @@ DataType transform_window(DataType& input,
         auto& buffer = working_buffer[i];
         buffer.resize(span.size());
 
-        auto data_view = span | std::views::take(std::min(size, static_cast<u_int32_t>(span.size())));
+        auto data_view = span | std::views::take(std::min(size, static_cast<uint32_t>(span.size())));
         auto window_view = window | std::views::take(data_view.size());
 
         std::ranges::transform(data_view, window_view, buffer.begin(),
@@ -182,8 +182,8 @@ DataType transform_spectral_filter(DataType& input,
     double low_freq,
     double high_freq,
     double sample_rate = 48000.0,
-    u_int32_t window_size = 1024,
-    u_int32_t hop_size = 256)
+    uint32_t window_size = 1024,
+    uint32_t hop_size = 256)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -228,8 +228,8 @@ DataType transform_spectral_filter(DataType& input,
     double low_freq,
     double high_freq,
     double sample_rate,
-    u_int32_t window_size,
-    u_int32_t hop_size,
+    uint32_t window_size,
+    uint32_t hop_size,
     std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -264,8 +264,8 @@ DataType transform_spectral_filter(DataType& input,
 template <OperationReadyData DataType>
 DataType transform_pitch_shift(DataType& input,
     double semitones,
-    u_int32_t window_size = 1024,
-    u_int32_t hop_size = 256)
+    uint32_t window_size = 1024,
+    uint32_t hop_size = 256)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -316,8 +316,8 @@ DataType transform_pitch_shift(DataType& input,
 template <OperationReadyData DataType>
 DataType transform_pitch_shift(DataType& input,
     double semitones,
-    u_int32_t window_size,
-    u_int32_t hop_size,
+    uint32_t window_size,
+    uint32_t hop_size,
     std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -360,8 +360,8 @@ DataType transform_pitch_shift(DataType& input,
  */
 template <OperationReadyData DataType>
 DataType transform_spectral_invert(DataType& input,
-    u_int32_t window_size = 1024,
-    u_int32_t hop_size = 256)
+    uint32_t window_size = 1024,
+    uint32_t hop_size = 256)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -395,8 +395,8 @@ DataType transform_spectral_invert(DataType& input,
  */
 template <OperationReadyData DataType>
 DataType transform_spectral_invert(DataType& input,
-    u_int32_t window_size,
-    u_int32_t hop_size,
+    uint32_t window_size,
+    uint32_t hop_size,
     std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);

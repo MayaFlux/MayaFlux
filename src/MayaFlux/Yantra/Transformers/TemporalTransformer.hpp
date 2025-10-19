@@ -10,7 +10,7 @@ namespace MayaFlux::Yantra {
  * @enum TemporalOperation
  * @brief Specific temporal operations supported
  */
-enum class TemporalOperation : u_int8_t {
+enum class TemporalOperation : uint8_t {
     TIME_REVERSE, ///< Reverse temporal order
     TIME_STRETCH, ///< Change playback speed
     DELAY, ///< Add temporal delay
@@ -95,7 +95,7 @@ protected:
         }
 
         case TemporalOperation::DELAY: {
-            auto delay_samples = get_parameter_or<u_int32_t>("delay_samples", 1000);
+            auto delay_samples = get_parameter_or<uint32_t>("delay_samples", 1000);
             auto fill_value = get_parameter_or<double>("fill_value", 0.0);
             if (this->is_in_place()) {
                 return create_output(transform_delay(input, delay_samples, fill_value));
@@ -198,7 +198,7 @@ private:
     void set_default_parameters()
     {
         this->set_parameter("stretch_factor", 1.0);
-        this->set_parameter("delay_samples", u_int32_t { 1000 });
+        this->set_parameter("delay_samples", uint32_t { 1000 });
         this->set_parameter("fill_value", 0.0);
         this->set_parameter("fade_in_ratio", 0.1);
         this->set_parameter("fade_out_ratio", 0.1);

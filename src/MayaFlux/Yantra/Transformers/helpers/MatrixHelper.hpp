@@ -46,8 +46,8 @@ DataType transform_regions(DataType& input,
         auto transformed_region = transform_func(region_data);
         auto transformed_doubles = OperationHelper::extract_numeric_data(transformed_region);
 
-        auto start_sample = static_cast<u_int64_t>(region.start_coordinates[0]);
-        auto end_sample = static_cast<u_int64_t>(region.end_coordinates[0]);
+        auto start_sample = static_cast<uint64_t>(region.start_coordinates[0]);
+        auto end_sample = static_cast<uint64_t>(region.end_coordinates[0]);
 
         for (size_t channel_idx = 0; channel_idx < target_data.size() && channel_idx < transformed_doubles.size(); ++channel_idx) {
             auto& target_channel = target_data[channel_idx];
@@ -102,8 +102,8 @@ DataType transform_regions(DataType& input,
         auto transformed_region = transform_func(region_data);
         auto transformed_doubles = OperationHelper::extract_numeric_data(transformed_region);
 
-        auto start_sample = static_cast<u_int64_t>(region.start_coordinates[0]);
-        auto end_sample = static_cast<u_int64_t>(region.end_coordinates[0]);
+        auto start_sample = static_cast<uint64_t>(region.start_coordinates[0]);
+        auto end_sample = static_cast<uint64_t>(region.end_coordinates[0]);
 
         for (size_t channel_idx = 0; channel_idx < target_data.size() && channel_idx < transformed_doubles.size(); ++channel_idx) {
             auto& target_channel = target_data[channel_idx];
@@ -138,8 +138,8 @@ template <OperationReadyData DataType, typename TransformFunc>
 DataType transform_by_energy(DataType& input,
     double energy_threshold,
     TransformFunc transform_func,
-    u_int32_t window_size = 1024,
-    u_int32_t hop_size = 512)
+    uint32_t window_size = 1024,
+    uint32_t hop_size = 512)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -189,8 +189,8 @@ template <OperationReadyData DataType, typename TransformFunc>
 DataType transform_by_energy(DataType& input,
     double energy_threshold,
     TransformFunc transform_func,
-    u_int32_t window_size,
-    u_int32_t hop_size,
+    uint32_t window_size,
+    uint32_t hop_size,
     std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -311,7 +311,7 @@ DataType transform_outliers(DataType& input,
 template <OperationReadyData DataType>
 DataType transform_crossfade_regions(DataType& input,
     const std::vector<std::pair<Kakshya::Region, Kakshya::Region>>& fade_regions,
-    u_int32_t fade_duration)
+    uint32_t fade_duration)
 {
     // OLD: auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
     auto extraction_result = OperationHelper::extract_structured_double(input);
@@ -321,12 +321,12 @@ DataType transform_crossfade_regions(DataType& input,
     std::ranges::for_each(fade_regions, [&target_data, fade_duration](const auto& fade_pair) {
         const auto& [region_a, region_b] = fade_pair;
 
-        auto start_a = static_cast<u_int64_t>(region_a.start_coordinates[0]);
-        auto end_a = static_cast<u_int64_t>(region_a.end_coordinates[0]);
-        auto start_b = static_cast<u_int64_t>(region_b.start_coordinates[0]);
+        auto start_a = static_cast<uint64_t>(region_a.start_coordinates[0]);
+        auto end_a = static_cast<uint64_t>(region_a.end_coordinates[0]);
+        auto start_b = static_cast<uint64_t>(region_b.start_coordinates[0]);
 
-        u_int64_t fade_start = (end_a > fade_duration) ? end_a - fade_duration : 0;
-        u_int64_t fade_end = std::min(start_b + fade_duration, static_cast<u_int64_t>(target_data[0].size()));
+        uint64_t fade_start = (end_a > fade_duration) ? end_a - fade_duration : 0;
+        uint64_t fade_end = std::min(start_b + fade_duration, static_cast<uint64_t>(target_data[0].size()));
 
         for (auto& channel_span : target_data) {
             if (fade_start < fade_end && fade_start < channel_span.size()) {
@@ -363,7 +363,7 @@ DataType transform_crossfade_regions(DataType& input,
 template <OperationReadyData DataType>
 DataType transform_crossfade_regions(DataType& input,
     const std::vector<std::pair<Kakshya::Region, Kakshya::Region>>& fade_regions,
-    u_int32_t fade_duration,
+    uint32_t fade_duration,
     std::vector<std::vector<double>>& working_buffer)
 {
     // OLD: auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -374,12 +374,12 @@ DataType transform_crossfade_regions(DataType& input,
     std::ranges::for_each(fade_regions, [&target_data, fade_duration](const auto& fade_pair) {
         const auto& [region_a, region_b] = fade_pair;
 
-        auto start_a = static_cast<u_int64_t>(region_a.start_coordinates[0]);
-        auto end_a = static_cast<u_int64_t>(region_a.end_coordinates[0]);
-        auto start_b = static_cast<u_int64_t>(region_b.start_coordinates[0]);
+        auto start_a = static_cast<uint64_t>(region_a.start_coordinates[0]);
+        auto end_a = static_cast<uint64_t>(region_a.end_coordinates[0]);
+        auto start_b = static_cast<uint64_t>(region_b.start_coordinates[0]);
 
-        u_int64_t fade_start = (end_a > fade_duration) ? end_a - fade_duration : 0;
-        u_int64_t fade_end = std::min(start_b + fade_duration, static_cast<u_int64_t>(target_data[0].size()));
+        uint64_t fade_start = (end_a > fade_duration) ? end_a - fade_duration : 0;
+        uint64_t fade_end = std::min(start_b + fade_duration, static_cast<uint64_t>(target_data[0].size()));
 
         for (auto& channel_span : target_data) {
             if (fade_start < fade_end && fade_start < channel_span.size()) {
@@ -467,7 +467,7 @@ DataType transform_matrix(DataType& input, const Eigen::MatrixXd& transformation
 template <OperationReadyData DataType>
 DataType transform_matrix_multichannel(DataType& input,
     const Eigen::MatrixXd& transformation_matrix,
-    u_int32_t num_channels)
+    uint32_t num_channels)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -518,7 +518,7 @@ DataType transform_matrix_multichannel(DataType& input,
 template <OperationReadyData DataType>
 DataType transform_matrix_multichannel(DataType& input,
     const Eigen::MatrixXd& transformation_matrix,
-    u_int32_t num_channels,
+    uint32_t num_channels,
     std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
@@ -562,7 +562,7 @@ DataType transform_matrix_multichannel(DataType& input,
  */
 template <OperationReadyData DataType>
 DataType transform_channel_operation(DataType& input,
-    u_int32_t num_channels,
+    uint32_t num_channels,
     bool interleave)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
@@ -591,7 +591,7 @@ DataType transform_channel_operation(DataType& input,
  */
 template <OperationReadyData DataType>
 DataType transform_channel_operation(DataType& input,
-    u_int32_t num_channels,
+    uint32_t num_channels,
     bool interleave,
     std::vector<std::vector<double>>& working_buffer)
 {
@@ -617,9 +617,9 @@ DataType transform_channel_operation(DataType& input,
 template <OperationReadyData DataType>
 std::vector<Kakshya::Region> detect_regions_by_energy(const DataType& input,
     double energy_threshold,
-    u_int32_t min_region_size,
-    u_int32_t window_size,
-    u_int32_t hop_size)
+    uint32_t min_region_size,
+    uint32_t window_size,
+    uint32_t hop_size)
 {
     auto energy_analyzer = std::make_shared<StandardEnergyAnalyzer>(window_size, hop_size);
     energy_analyzer->set_energy_method(EnergyMethod::RMS);
@@ -632,7 +632,7 @@ std::vector<Kakshya::Region> detect_regions_by_energy(const DataType& input,
     }
 
     const auto& first_channel = energy_result.channels[0];
-    std::optional<u_int64_t> region_start;
+    std::optional<uint64_t> region_start;
 
     for (size_t i = 0; i < first_channel.energy_values.size(); ++i) {
         bool above_threshold = first_channel.energy_values[i] > energy_threshold;
@@ -643,7 +643,7 @@ std::vector<Kakshya::Region> detect_regions_by_energy(const DataType& input,
             }
         } else if (!above_threshold && region_start.has_value()) {
             if (i < first_channel.window_positions.size()) {
-                u_int64_t region_end = first_channel.window_positions[i].second;
+                uint64_t region_end = first_channel.window_positions[i].second;
 
                 if (region_end - region_start.value() >= min_region_size) {
                     Kakshya::Region region;
@@ -657,7 +657,7 @@ std::vector<Kakshya::Region> detect_regions_by_energy(const DataType& input,
     }
 
     if (region_start.has_value() && !first_channel.window_positions.empty()) {
-        u_int64_t region_end = first_channel.window_positions.back().second;
+        uint64_t region_end = first_channel.window_positions.back().second;
         if (region_end - region_start.value() >= min_region_size) {
             Kakshya::Region region;
 
@@ -670,7 +670,7 @@ std::vector<Kakshya::Region> detect_regions_by_energy(const DataType& input,
     return regions;
 }
 
-Eigen::MatrixXd create_rotation_matrix(double angle, u_int32_t axis = 2, u_int32_t dimensions = 2);
+Eigen::MatrixXd create_rotation_matrix(double angle, uint32_t axis = 2, uint32_t dimensions = 2);
 Eigen::MatrixXd create_scaling_matrix(const std::vector<double>& scale_factors);
 
 } // namespace MayaFlux::Yantra

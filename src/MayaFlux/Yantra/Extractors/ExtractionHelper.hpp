@@ -27,8 +27,8 @@ namespace MayaFlux::Yantra {
 std::vector<std::vector<double>> extract_high_energy_data(
     const std::vector<std::span<const double>>& data,
     double energy_threshold = 0.1,
-    u_int32_t window_size = 512,
-    u_int32_t hop_size = 256);
+    uint32_t window_size = 512,
+    uint32_t hop_size = 256);
 
 /**
  * @brief Extract data from peak regions using peak detection
@@ -42,7 +42,7 @@ std::vector<std::vector<double>> extract_peak_data(
     const std::vector<std::span<const double>>& data,
     double threshold = 0.1,
     double min_distance = 10.0,
-    u_int32_t region_size = 256);
+    uint32_t region_size = 256);
 
 /**
  * @brief Extract data from statistical outlier regions
@@ -55,8 +55,8 @@ std::vector<std::vector<double>> extract_peak_data(
 std::vector<std::vector<double>> extract_outlier_data(
     const std::vector<std::span<const double>>& data,
     double std_dev_threshold = 2.0,
-    u_int32_t window_size = 512,
-    u_int32_t hop_size = 256);
+    uint32_t window_size = 512,
+    uint32_t hop_size = 256);
 
 /**
  * @brief Extract data from regions with high spectral energy
@@ -69,8 +69,8 @@ std::vector<std::vector<double>> extract_outlier_data(
 std::vector<std::vector<double>> extract_high_spectral_data(
     const std::vector<std::span<const double>>& data,
     double spectral_threshold = 0.1,
-    u_int32_t window_size = 512,
-    u_int32_t hop_size = 256);
+    uint32_t window_size = 512,
+    uint32_t hop_size = 256);
 
 /**
  * @brief Extract data from regions with values above statistical mean
@@ -83,8 +83,8 @@ std::vector<std::vector<double>> extract_high_spectral_data(
 std::vector<std::vector<double>> extract_above_mean_data(
     const std::vector<std::span<const double>>& data,
     double mean_multiplier = 1.5,
-    u_int32_t window_size = 512,
-    u_int32_t hop_size = 256);
+    uint32_t window_size = 512,
+    uint32_t hop_size = 256);
 
 /**
  * @brief Extract overlapping windows of actual data
@@ -95,7 +95,7 @@ std::vector<std::vector<double>> extract_above_mean_data(
  */
 std::vector<std::vector<double>> extract_overlapping_windows(
     const std::vector<std::span<const double>>& data,
-    u_int32_t window_size = 512,
+    uint32_t window_size = 512,
     double overlap = 0.5);
 
 /**
@@ -108,7 +108,7 @@ std::vector<std::vector<double>> extract_overlapping_windows(
 std::vector<std::vector<double>> extract_windowed_data_by_indices(
     const std::vector<std::span<const double>>& data,
     const std::vector<size_t>& window_indices,
-    u_int32_t window_size = 512);
+    uint32_t window_size = 512);
 
 /**
  * @brief Extract actual data from specified regions
@@ -143,7 +143,7 @@ std::vector<std::string> get_available_extraction_methods();
  * @param data_size Size of data to process
  * @return True if parameters are valid
  */
-bool validate_extraction_parameters(u_int32_t window_size, u_int32_t hop_size, size_t data_size);
+bool validate_extraction_parameters(uint32_t window_size, uint32_t hop_size, size_t data_size);
 
 /**
  * @brief Extract data at zero crossing points using existing EnergyAnalyzer
@@ -157,7 +157,7 @@ std::vector<std::vector<double>> extract_zero_crossing_data(
     const std::vector<std::span<const double>>& data,
     double threshold = 0.0,
     double min_distance = 1.0,
-    u_int32_t region_size = 1);
+    uint32_t region_size = 1);
 
 /**
  * @brief Extract data from silent regions using existing EnergyAnalyzer
@@ -171,8 +171,8 @@ std::vector<std::vector<double>> extract_zero_crossing_data(
 std::vector<std::vector<double>> extract_silence_data(
     const std::vector<std::span<const double>>& data,
     double silence_threshold = 0.01,
-    u_int32_t min_duration = 1024,
-    u_int32_t window_size = 512,
-    u_int32_t hop_size = 256);
+    uint32_t min_duration = 1024,
+    uint32_t window_size = 512,
+    uint32_t hop_size = 256);
 
 } // namespace MayaFlux::Yantra

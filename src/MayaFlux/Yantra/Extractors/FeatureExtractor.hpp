@@ -38,7 +38,7 @@ namespace MayaFlux::Yantra {
  * @enum ExtractionMethod
  * @brief Supported extraction methods for FeatureExtractor
  */
-enum class ExtractionMethod : u_int8_t {
+enum class ExtractionMethod : uint8_t {
     HIGH_ENERGY_DATA, ///< Extract data from high-energy regions
     PEAK_DATA, ///< Extract data around detected peaks
     OUTLIER_DATA, ///< Extract data from statistical outlier regions
@@ -70,8 +70,8 @@ public:
      * @param hop_size Hop size between windows (default: 256)
      * @param method Initial extraction method (default: HIGH_ENERGY_DATA)
      */
-    explicit FeatureExtractor(u_int32_t window_size = 512,
-        u_int32_t hop_size = 256,
+    explicit FeatureExtractor(uint32_t window_size = 512,
+        uint32_t hop_size = 256,
         ExtractionMethod method = ExtractionMethod::HIGH_ENERGY_DATA)
         : m_window_size(window_size)
         , m_hop_size(hop_size)
@@ -131,7 +131,7 @@ public:
      * @brief Set window size for analysis
      * @param size Window size in samples
      */
-    void set_window_size(u_int32_t size)
+    void set_window_size(uint32_t size)
     {
         m_window_size = size;
         validate_parameters();
@@ -141,7 +141,7 @@ public:
      * @brief Set hop size for analysis
      * @param size Hop size in samples
      */
-    void set_hop_size(u_int32_t size)
+    void set_hop_size(uint32_t size)
     {
         m_hop_size = size;
         validate_parameters();
@@ -151,13 +151,13 @@ public:
      * @brief Get current window size
      * @return Window size in samples
      */
-    [[nodiscard]] u_int32_t get_window_size() const { return m_window_size; }
+    [[nodiscard]] uint32_t get_window_size() const { return m_window_size; }
 
     /**
      * @brief Get current hop size
      * @return Hop size in samples
      */
-    [[nodiscard]] u_int32_t get_hop_size() const { return m_hop_size; }
+    [[nodiscard]] uint32_t get_hop_size() const { return m_hop_size; }
 
     /**
      * @brief Convert extraction method enum to string
@@ -241,7 +241,7 @@ protected:
             case ExtractionMethod::PEAK_DATA: {
                 double threshold = this->template get_parameter_or_default<double>("threshold", 0.1);
                 double min_distance = this->template get_parameter_or_default<double>("min_distance", 10.0);
-                u_int32_t region_size = this->template get_parameter_or_default<u_int32_t>("region_size", 256);
+                uint32_t region_size = this->template get_parameter_or_default<uint32_t>("region_size", 256);
                 extracted_data = extract_peak_data(data_span, threshold, min_distance, region_size);
                 break;
             }
@@ -268,13 +268,13 @@ protected:
             case ExtractionMethod::ZERO_CROSSING_DATA: {
                 double threshold = this->template get_parameter_or_default<double>("threshold", 0.0);
                 double min_distance = this->template get_parameter_or_default<double>("min_distance", 1.0);
-                u_int32_t region_size = this->template get_parameter_or_default<u_int32_t>("region_size", 1);
+                uint32_t region_size = this->template get_parameter_or_default<uint32_t>("region_size", 1);
                 extracted_data = extract_zero_crossing_data(data_span, threshold, min_distance, region_size);
                 break;
             }
             case ExtractionMethod::SILENCE_DATA: {
                 double silence_threshold = this->template get_parameter_or_default<double>("silence_threshold", 0.01);
-                u_int32_t min_duration = this->template get_parameter_or_default<u_int32_t>("min_duration", 1024);
+                uint32_t min_duration = this->template get_parameter_or_default<uint32_t>("min_duration", 1024);
                 extracted_data = extract_silence_data(data_span, silence_threshold, min_duration, m_window_size, m_hop_size);
                 break;
             }
@@ -286,8 +286,8 @@ protected:
 
             output.template set_metadata<std::string>("extractor_type", "FeatureExtractor");
             output.template set_metadata<std::string>("extraction_method", method_to_string(m_method));
-            output.template set_metadata<u_int32_t>("window_size", static_cast<u_int32_t>(m_window_size));
-            output.template set_metadata<u_int32_t>("hop_size", static_cast<u_int32_t>(m_hop_size));
+            output.template set_metadata<uint32_t>("window_size", static_cast<uint32_t>(m_window_size));
+            output.template set_metadata<uint32_t>("hop_size", static_cast<uint32_t>(m_hop_size));
             output.template set_metadata<size_t>("extracted_samples", extracted_data.size());
             output.template set_metadata<size_t>("original_samples", data_span.size());
 
@@ -315,14 +315,14 @@ protected:
             throw std::invalid_argument("Method parameter must be string or ExtractionMethod enum");
         }
         if (name == "window_size") {
-            if (auto* size = std::any_cast<u_int32_t>(&value)) {
+            if (auto* size = std::any_cast<uint32_t>(&value)) {
                 m_window_size = *size;
                 validate_parameters();
                 return;
             }
         }
         if (name == "hop_size") {
-            if (auto* size = std::any_cast<u_int32_t>(&value)) {
+            if (auto* size = std::any_cast<uint32_t>(&value)) {
                 m_hop_size = *size;
                 validate_parameters();
                 return;
@@ -348,8 +348,8 @@ protected:
     }
 
 private:
-    u_int32_t m_window_size;
-    u_int32_t m_hop_size;
+    uint32_t m_window_size;
+    uint32_t m_hop_size;
     ExtractionMethod m_method;
 
     /**

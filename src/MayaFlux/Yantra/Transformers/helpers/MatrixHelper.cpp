@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Yantra {
 
-Eigen::MatrixXd create_rotation_matrix(double angle, u_int32_t axis, u_int32_t dimensions)
+Eigen::MatrixXd create_rotation_matrix(double angle, uint32_t axis, uint32_t dimensions)
 {
     if (dimensions == 2) {
         Eigen::Matrix2d rotation;

@@ -29,7 +29,7 @@ namespace MayaFlux::Yantra {
  * @enum AnalysisType
  * @brief Categories of analysis operations for discovery and organization
  */
-enum class AnalysisType : u_int8_t {
+enum class AnalysisType : uint8_t {
     STATISTICAL, ///< Mean, variance, distribution analysis
     SPECTRAL, ///< FFT, frequency domain analysis
     TEMPORAL, ///< Time-based patterns, onset detection
@@ -44,7 +44,7 @@ enum class AnalysisType : u_int8_t {
  * @enum AnalysisGranularity
  * @brief Output granularity control for analysis results
  */
-enum class AnalysisGranularity : u_int8_t {
+enum class AnalysisGranularity : uint8_t {
     RAW_VALUES, ///< Direct analysis results
     ATTRIBUTED_SEGMENTS, ///< Results with metadata/attribution
     ORGANIZED_GROUPS, ///< Hierarchically organized results

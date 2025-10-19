@@ -10,7 +10,7 @@ namespace MayaFlux::Yantra {
  * @enum ComputationContext
  * @brief Defines the computational contexts in which rules can be applied
  */
-enum class ComputationContext : u_int8_t {
+enum class ComputationContext : uint8_t {
     TEMPORAL, ///< Time-domain operations
     SPECTRAL, ///< Frequency-domain operations
     SPATIAL, ///< Spatial operations

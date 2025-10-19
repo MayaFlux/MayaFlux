@@ -8,7 +8,7 @@ namespace MayaFlux::Yantra {
  * @enum OperationType
  * @brief Operation categories for organization and discovery
  */
-enum class OperationType : u_int8_t {
+enum class OperationType : uint8_t {
     ANALYZER,
     SORTER,
     EXTRACTOR,
@@ -20,7 +20,7 @@ enum class OperationType : u_int8_t {
  * @enum ExecutionMode
  * @brief Execution paradigms for operations
  */
-enum class ExecutionMode : u_int8_t {
+enum class ExecutionMode : uint8_t {
     SYNC, ///< Synchronous execution
     ASYNC, ///< Asynchronous execution
     PARALLEL, ///< Parallel with other operations

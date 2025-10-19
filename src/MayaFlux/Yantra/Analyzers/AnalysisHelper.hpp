@@ -18,8 +18,8 @@ namespace MayaFlux::Yantra {
 std::vector<double> compute_dynamic_range_energy(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute zero-crossing energy using zero-copy processing
@@ -36,8 +36,8 @@ std::vector<double> compute_dynamic_range_energy(
 std::vector<double> compute_zero_crossing_energy(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute power energy using zero-copy processing
@@ -54,8 +54,8 @@ std::vector<double> compute_zero_crossing_energy(
 std::vector<double> compute_power_energy(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t m_hop_size,
-    const u_int32_t m_window_size);
+    const uint32_t m_hop_size,
+    const uint32_t m_window_size);
 
 /**
  * @brief Compute peak energy using zero-copy processing
@@ -71,9 +71,9 @@ std::vector<double> compute_power_energy(
  */
 std::vector<double> compute_peak_energy(
     std::span<const double> data,
-    const u_int32_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t num_windows,
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute RMS energy using zero-copy processing
@@ -89,9 +89,9 @@ std::vector<double> compute_peak_energy(
  */
 std::vector<double> compute_rms_energy(
     std::span<const double> data,
-    const u_int32_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t num_windows,
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute spectral energy using FFT-based analysis
@@ -108,8 +108,8 @@ std::vector<double> compute_rms_energy(
 std::vector<double> compute_spectral_energy(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute harmonic energy using low-frequency FFT analysis
@@ -126,8 +126,8 @@ std::vector<double> compute_spectral_energy(
 std::vector<double> compute_harmonic_energy(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute mean statistic using zero-copy processing
@@ -144,8 +144,8 @@ std::vector<double> compute_harmonic_energy(
 std::vector<double> compute_mean_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute variance statistic using zero-copy processing
@@ -163,8 +163,8 @@ std::vector<double> compute_mean_statistic(
 std::vector<double> compute_variance_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size,
+    const uint32_t hop_size,
+    const uint32_t window_size,
     bool sample_variance = true);
 
 /**
@@ -183,8 +183,8 @@ std::vector<double> compute_variance_statistic(
 std::vector<double> compute_std_dev_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size,
+    const uint32_t hop_size,
+    const uint32_t window_size,
     bool sample_variance = true);
 
 /**
@@ -202,8 +202,8 @@ std::vector<double> compute_std_dev_statistic(
 std::vector<double> compute_skewness_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute kurtosis statistic using zero-copy processing
@@ -220,8 +220,8 @@ std::vector<double> compute_skewness_statistic(
 std::vector<double> compute_kurtosis_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute median statistic using zero-copy processing
@@ -238,8 +238,8 @@ std::vector<double> compute_kurtosis_statistic(
 std::vector<double> compute_median_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute percentile statistic using zero-copy processing
@@ -257,8 +257,8 @@ std::vector<double> compute_median_statistic(
 std::vector<double> compute_percentile_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size,
+    const uint32_t hop_size,
+    const uint32_t window_size,
     double percentile);
 
 /**
@@ -277,8 +277,8 @@ std::vector<double> compute_percentile_statistic(
 std::vector<double> compute_entropy_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size,
+    const uint32_t hop_size,
+    const uint32_t window_size,
     size_t num_bins = 0);
 
 /**
@@ -287,8 +287,8 @@ std::vector<double> compute_entropy_statistic(
 std::vector<double> compute_min_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute max statistic using zero-copy processing
@@ -296,8 +296,8 @@ std::vector<double> compute_min_statistic(
 std::vector<double> compute_max_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute range statistic using zero-copy processing
@@ -305,8 +305,8 @@ std::vector<double> compute_max_statistic(
 std::vector<double> compute_range_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute sum statistic using zero-copy processing
@@ -314,8 +314,8 @@ std::vector<double> compute_range_statistic(
 std::vector<double> compute_sum_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute count statistic using zero-copy processing
@@ -323,8 +323,8 @@ std::vector<double> compute_sum_statistic(
 std::vector<double> compute_count_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute MAD (Median Absolute Deviation) statistic using zero-copy processing
@@ -332,8 +332,8 @@ std::vector<double> compute_count_statistic(
 std::vector<double> compute_mad_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute CV (Coefficient of Variation) statistic using zero-copy processing
@@ -341,8 +341,8 @@ std::vector<double> compute_mad_statistic(
 std::vector<double> compute_cv_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size,
+    const uint32_t hop_size,
+    const uint32_t window_size,
     bool sample_variance = true);
 
 /**
@@ -351,8 +351,8 @@ std::vector<double> compute_cv_statistic(
 std::vector<double> compute_mode_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size);
+    const uint32_t hop_size,
+    const uint32_t window_size);
 
 /**
  * @brief Compute z-score statistic using zero-copy processing
@@ -360,7 +360,7 @@ std::vector<double> compute_mode_statistic(
 std::vector<double> compute_zscore_statistic(
     std::span<const double> data,
     const size_t num_windows,
-    const u_int32_t hop_size,
-    const u_int32_t window_size,
+    const uint32_t hop_size,
+    const uint32_t window_size,
     bool sample_variance = true);
 }
