@@ -45,33 +45,10 @@ bool ClangInterpreter::initialize()
     LILA_INFO(Emitter::INTERPRETER, "Initializing Clang interpreter");
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    HMODULE msvcp = LoadLibraryA("msvcp140.dll");
-    if (msvcp) {
-        LILA_INFO(Emitter::INTERPRETER, "Successfully loaded msvcp140.dll into process");
-    } else {
-        LILA_ERROR(Emitter::INTERPRETER,
-            "Failed to load msvcp140.dll. Error: " + std::to_string(GetLastError()));
-        return false;
-    }
-    HMODULE vcruntime = LoadLibraryA("vcruntime140.dll");
-    if (vcruntime) {
-        LILA_INFO(Emitter::INTERPRETER, "Successfully loaded vcruntime140.dll into process");
-    } else {
-        LILA_ERROR(Emitter::INTERPRETER,
-            "Failed to load vcruntime140.dll. Error: " + std::to_string(GetLastError()));
-        return false;
-    }
-    HMODULE mayafluxHandle = LoadLibraryA("MayaFluxLib.dll");
-    if (!mayafluxHandle) {
-        mayafluxHandle = LoadLibraryA("C:\\MayaFlux\\bin\\MayaFluxLib.dll");
-    }
-    if (mayafluxHandle) {
-        LILA_INFO(Emitter::INTERPRETER, "Successfully loaded mayafluxlib.dll into process");
-    } else {
-        LILA_ERROR(Emitter::INTERPRETER,
-            "Failed to load MayaFluxLib.dll. Error: " + std::to_string(GetLastError()));
-        return false;
-    }
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently("msvcp140.dll");
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently("vcruntime140.dll");
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently("ucrtbase.dll");
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently("MayaFluxLib.dll");
 #endif
 
     llvm::InitializeNativeTarget();
@@ -164,9 +141,7 @@ bool ClangInterpreter::initialize()
         LILA_INFO(Emitter::INTERPRETER, "MayaFlux headers loaded successfully");
     }
 
-    result = m_impl->interpreter->ParseAndExecute(
-        "std::cout << \"test\" << std::flush;"
-    );
+    result = m_impl->interpreter->ParseAndExecute("std::cout << \"test\" << std::flush;");
 
     return true;
 }
