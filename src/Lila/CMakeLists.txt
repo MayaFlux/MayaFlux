@@ -1,11 +1,3 @@
-if(NOT LLVM_FOUND)
-    message(WARNING "LLVM not found - Lila live coding library will not be built")
-    return()
-endif()
-
-find_package(Clang REQUIRED CONFIG)
-
-include_directories(${CLANG_INCLUDE_DIRS})
 add_definitions(${CLANG_DEFINITIONS})
 
 set(LILA_SOURCES
@@ -13,6 +5,7 @@ set(LILA_SOURCES
     ClangInterpreter.cpp
     EventBus.cpp
     Server.cpp
+    WindowsJITSymbols.cpp
 )
 
 set(LILA_HEADERS
@@ -26,23 +19,38 @@ set(LILA_HEADERS
 
 configure_file(
     "${CMAKE_SOURCE_DIR}/cmake/lila_config.hpp.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/LilaConfig.hpp"
-    @ONLY
+    "${CMAKE_SOURCE_DIR}/src/Lila/LilaConfig.hpp"
+     @ONLY
 )
 
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
 
+if(WIN32)
+    target_compile_definitions(Lila PRIVATE LILA_EXPORTS)
+endif()
+
 target_include_directories(Lila PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..  # For #include "Lila/..."
     ${LLVM_INCLUDE_DIRS}
+    ${CLANG_INCLUDE_DIRS}
 )
 
 target_precompile_headers(Lila PUBLIC ../../cmake/pch.h)
-
 target_include_directories(Lila PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 target_compile_definitions(Lila PUBLIC ${LLVM_DEFINITIONS_LIST})
+
+set_target_properties(Lila PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
+
+if(WIN32)
+    set_target_properties(Lila PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
+endif()
 
 if(UNIX)
     execute_process(
@@ -68,16 +76,39 @@ if(UNIX)
         ${LLVM_LIBS}
         ${LLVM_SYSTEM_LIBS}
     )
+    target_link_libraries(Lila PRIVATE clang-cpp)
 else()
-    target_link_libraries(Lila PRIVATE LLVM::Core LLVM::Support LLVM::OrcJIT LLVM::IRReader)
+    target_link_libraries(Lila PRIVATE
+        LLVMSupport
+        LLVMCore
+        LLVMOrcJIT
+        LLVMIRReader
+        LLVMExecutionEngine
+        LLVMRuntimeDyld
+        LLVMTarget
+        LLVMX86CodeGen
+        LLVMMC
+        LLVMBitReader
+        LLVMAsmParser
+        LLVMTransformUtils
+        clangAST
+        clangBasic
+        clangCodeGen
+        clangDriver
+        clangFrontend
+        clangLex
+        clangParse
+        clangSema
+        clangSerialization
+        clangInterpreter
+        ws2_32
+        legacy_stdio_definitions
+    )
+   target_link_options(Lila PRIVATE
+        /DEFAULTLIB:vcruntime.lib
+        /DEFAULTLIB:msvcrt.lib
+    )
 endif()
 
-target_link_libraries(Lila PRIVATE clang-cpp)
 target_link_libraries(Lila PUBLIC MayaFluxLib)
 
-set_target_properties(Lila PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    CXX_STANDARD 23
-    CXX_STANDARD_REQUIRED ON
-)

@@ -71,7 +71,7 @@ enum class StatisticalLevel : u_int8_t {
  * @struct ChannelStatistics
  * @brief Statistical results for a single data channel
  */
-struct ChannelStatistics {
+struct MAYAFLUX_API ChannelStatistics {
     std::vector<double> statistical_values;
 
     double mean_stat {};
@@ -96,7 +96,7 @@ struct ChannelStatistics {
  * @struct StatisticalAnalysis
  * @brief Analysis result structure for statistical analysis
  */
-struct StatisticalAnalysis {
+struct MAYAFLUX_API StatisticalAnalysis {
     StatisticalMethod method_used { StatisticalMethod::MEAN };
     u_int32_t window_size {};
     u_int32_t hop_size {};
@@ -126,7 +126,7 @@ struct StatisticalAnalysis {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
-class StatisticalAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class MAYAFLUX_API StatisticalAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;

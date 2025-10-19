@@ -18,7 +18,7 @@ namespace MayaFlux::Nodes {
  * 3. Passes that as input to the target node
  * 4. Returns the output from the target node
  */
-class ChainNode : public Node, public std::enable_shared_from_this<ChainNode> {
+class MAYAFLUX_API ChainNode : public Node, public std::enable_shared_from_this<ChainNode> {
 public:
     /**
      * @brief Creates a new chain connecting source to target
@@ -209,7 +209,7 @@ public:
  * - Detecting specific interaction patterns between signals
  * - Creating visualizations that show both inputs and their combination
  */
-class BinaryOpContext : public NodeContext {
+class MAYAFLUX_API BinaryOpContext : public NodeContext {
 public:
     /**
      * @brief Constructs a BinaryOpContext with the current operation state
@@ -262,7 +262,7 @@ public:
  * 3. Combines the outputs using the specified function
  * 4. Returns the combined result
  */
-class BinaryOpNode : public Node, public std::enable_shared_from_this<BinaryOpNode> {
+class MAYAFLUX_API BinaryOpNode : public Node, public std::enable_shared_from_this<BinaryOpNode> {
 public:
     /**
      * @typedef CombineFunc

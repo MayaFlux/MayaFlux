@@ -34,7 +34,7 @@ namespace MayaFlux::Kakshya {
  * DataProcessingChain is foundational for building scalable, maintainable, and future-proof
  * data processing architectures in digital-first, data-driven applications.
  */
-class DataProcessingChain {
+class MAYAFLUX_API DataProcessingChain {
 public:
     DataProcessingChain() = default;
 

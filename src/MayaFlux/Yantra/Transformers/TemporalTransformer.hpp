@@ -30,7 +30,7 @@ enum class TemporalOperation : u_int8_t {
  * - Rhythm and timing manipulations
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class TemporalTransformer final : public UniversalTransformer<InputType, OutputType> {
+class MAYAFLUX_API TemporalTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;

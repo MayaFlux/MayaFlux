@@ -33,7 +33,7 @@ namespace MayaFlux::Nodes::Filters {
  * - Predictive modeling in time-series data
  * - Simulation of natural and mechanical systems
  */
-class IIR : public Filter {
+class MAYAFLUX_API IIR : public Filter {
 public:
     /**
      * @brief Creates an IIR filter with specified order

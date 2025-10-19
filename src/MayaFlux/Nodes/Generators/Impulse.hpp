@@ -29,7 +29,7 @@ namespace MayaFlux::Nodes::Generator {
  * The implementation uses a phase accumulation approach similar to other oscillators
  * but only outputs a non-zero value at the beginning of each cycle.
  */
-class Impulse : public Generator, public std::enable_shared_from_this<Impulse> {
+class MAYAFLUX_API Impulse : public Generator, public std::enable_shared_from_this<Impulse> {
 public:
     /**
      * @brief Basic constructor with fixed parameters

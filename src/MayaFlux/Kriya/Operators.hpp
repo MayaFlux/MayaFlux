@@ -30,7 +30,7 @@ namespace MayaFlux::Kriya {
  * The NodeTimeSpec is part of a broader pattern of using operator overloading
  * to create a domain-specific language for computational flow programming within C++.
  */
-class NodeTimeSpec {
+class MAYAFLUX_API NodeTimeSpec {
 public:
     /**
      * @brief Constructs a NodeTimeSpec with the specified duration
@@ -142,7 +142,7 @@ private:
  * The OutputTerminal is part of a broader pattern of using operator overloading to create
  * a domain-specific language for computational flow programming within C++.
  */
-class DAC {
+class MAYAFLUX_API DAC {
 public:
     /**
      * @brief Gets the singleton instance of OutputTerminal

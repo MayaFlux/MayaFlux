@@ -13,7 +13,7 @@ namespace MayaFlux::Buffers {
  * - Dispatches data to registered listener buffers
  * - Maintains clean, stable operation without complex features
  */
-class InputAudioBuffer : public AudioBuffer {
+class MAYAFLUX_API InputAudioBuffer : public AudioBuffer {
 public:
     /**
      * @brief Constructor - only BufferManager can create
@@ -73,7 +73,7 @@ public:
  * Handles the distribution of input data to registered listener buffers.
  * No complex features - just clean, stable dispatch.
  */
-class InputAccessProcessor : public BufferProcessor {
+class MAYAFLUX_API InputAccessProcessor : public BufferProcessor {
 public:
     /**
      * @brief Main processing function - dispatches data to listeners

@@ -96,7 +96,7 @@ enum class ProcessingState : u_int8_t {
  * real-time streaming, offline analysis, hybrid computation, and seamless integration of
  * unconventional or future-facing signal sources.
  */
-class SignalSourceContainer : public NDDataContainer, public std::enable_shared_from_this<SignalSourceContainer> {
+class MAYAFLUX_API SignalSourceContainer : public NDDataContainer, public std::enable_shared_from_this<SignalSourceContainer> {
 public:
     ~SignalSourceContainer() override = default;
 

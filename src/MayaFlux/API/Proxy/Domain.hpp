@@ -171,7 +171,7 @@ Domain create_custom_domain(Nodes::ProcessingToken node_token,
  * @param domain The unified domain
  * @return Node processing token
  */
-inline Nodes::ProcessingToken get_node_token(Domain domain)
+MAYAFLUX_API inline Nodes::ProcessingToken get_node_token(Domain domain)
 {
     return static_cast<Nodes::ProcessingToken>((domain >> 32) & 0xFFFF);
 }
@@ -181,7 +181,7 @@ inline Nodes::ProcessingToken get_node_token(Domain domain)
  * @param domain The unified domain
  * @return Buffer processing token
  */
-inline Buffers::ProcessingToken get_buffer_token(Domain domain)
+MAYAFLUX_API inline Buffers::ProcessingToken get_buffer_token(Domain domain)
 {
     return static_cast<Buffers::ProcessingToken>((domain >> 16) & 0xFFFF);
 }
@@ -191,7 +191,7 @@ inline Buffers::ProcessingToken get_buffer_token(Domain domain)
  * @param domain The unified domain
  * @return Task processing token
  */
-inline Vruta::ProcessingToken get_task_token(Domain domain)
+MAYAFLUX_API inline Vruta::ProcessingToken get_task_token(Domain domain)
 {
     return static_cast<Vruta::ProcessingToken>(domain & 0xFFFF);
 }
@@ -201,13 +201,13 @@ inline Vruta::ProcessingToken get_task_token(Domain domain)
  * @param domain The domain to validate
  * @return true if domain is valid, false otherwise
  */
-bool is_domain_valid(Domain domain);
+MAYAFLUX_API bool is_domain_valid(Domain domain);
 
 /**
  * @brief Gets a human-readable string representation of a domain
  * @param domain The domain to stringify
  * @return String description of the domain
  */
-std::string domain_to_string(Domain domain);
+MAYAFLUX_API std::string domain_to_string(Domain domain);
 
 } // namespace MayaFlux

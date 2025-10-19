@@ -42,7 +42,7 @@ using ReconstructionCallback = std::function<std::any(std::vector<std::vector<do
  * @struct ExecutionContext
  * @brief Context information for operation execution
  */
-struct ExecutionContext {
+struct MAYAFLUX_API ExecutionContext {
     ExecutionMode mode = ExecutionMode::SYNC;
     std::shared_ptr<std::thread> thread_pool = nullptr;
     std::vector<std::type_index> dependencies;

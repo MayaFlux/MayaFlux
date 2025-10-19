@@ -20,7 +20,7 @@ namespace MayaFlux::Vruta {
  *
  * Implementations must ensure thread-safety if used in multi-threaded contexts.
  */
-class IClock {
+class MAYAFLUX_API IClock {
 public:
     virtual ~IClock() = default;
 
@@ -87,7 +87,7 @@ public:
  * is critical and operations must align perfectly with audio buffer boundaries.
  * SampleClock serves as the authoritative timekeeper for the audio processing domain.
  */
-class SampleClock : public IClock {
+class MAYAFLUX_API SampleClock : public IClock {
 public:
     /**
      * @brief Constructs a SampleClock with the specified sample rate
@@ -179,7 +179,7 @@ private:
  * - Measures actual FPS for diagnostics
  * - Supports variable frame rates and adaptive timing
  */
-class FrameClock : public IClock {
+class MAYAFLUX_API FrameClock : public IClock {
 public:
     /**
      * @brief Constructs a FrameClock with target frame rate
@@ -320,7 +320,7 @@ private:
  * - Experimental processing domains during development
  * - On-demand processing that doesn't follow regular timing patterns
  */
-class CustomClock : public IClock {
+class MAYAFLUX_API CustomClock : public IClock {
 public:
     /**
      * @brief Constructs a CustomClock with configurable parameters

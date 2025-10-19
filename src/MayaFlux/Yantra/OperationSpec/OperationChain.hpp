@@ -38,7 +38,7 @@ concept ExecutorConcept = requires(T t) {
  * ```
  */
 template <typename Executor, ComputeData DataType>
-class FluentExecutor {
+class MAYAFLUX_API FluentExecutor {
 public:
     using executor_type = Executor;
     using data_type = DataType;

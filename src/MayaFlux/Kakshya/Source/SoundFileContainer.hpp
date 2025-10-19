@@ -24,7 +24,7 @@ namespace MayaFlux::Kakshya {
  * - [1] Channels
  * - [N] Additional dimensions for spectral data, analysis results, etc.
  */
-class SoundFileContainer : public FileContainer, public SoundStreamContainer {
+class MAYAFLUX_API SoundFileContainer : public FileContainer, public SoundStreamContainer {
 public:
     /**
      * @brief Construct a SoundFileContainer with default parameters

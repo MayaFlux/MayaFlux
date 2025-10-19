@@ -9,7 +9,10 @@ include(defines)
 
 project(MayaFlux VERSION 0.1.0)
 
-option(BUILD_LILA "Build Lila live coding library" ON)
+if(WIN32)
+    set(CMAKE_INSTALL_PREFIX "C:/MayaFlux" CACHE PATH "Installation directory" FORCE)
+    message(STATUS "Setting Windows install prefix to: ${CMAKE_INSTALL_PREFIX}")
+endif()
 
 include(dependencies)
 include(compiler_config)
@@ -33,15 +36,14 @@ set(USER_SOURCES ${USER_PROJECT_FILE})
 
 add_subdirectory(src)
 
-enable_testing()
-add_subdirectory(tests)
-
 if(UNIX)
     execute_process(
     COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${CMAKE_BINARY_DIR}/compile_commands.json
-    ${CMAKE_SOURCE_DIR}/compile_commands.json
-)
+    ${CMAKE_SOURCE_DIR}/compile_commands.json)
+
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 include(install)

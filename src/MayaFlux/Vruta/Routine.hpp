@@ -12,7 +12,7 @@ namespace MayaFlux::Vruta {
  * It enables polymorphic handling of different routine types while maintaining
  * type safety through the template-based promise system.
  */
-class Routine {
+class MAYAFLUX_API Routine {
 public:
     /**
      * @brief Destructor

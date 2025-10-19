@@ -32,7 +32,7 @@ namespace Lila {
  *
  * This class is intended for internal use by Lila and is not exposed to end users directly.
  */
-class ClangInterpreter {
+class LILA_API ClangInterpreter {
 public:
     /**
      * @brief Constructs a ClangInterpreter instance
@@ -43,6 +43,11 @@ public:
      * @brief Destructor; shuts down the interpreter if active
      */
     ~ClangInterpreter();
+
+    ClangInterpreter(const ClangInterpreter&) = delete;
+    ClangInterpreter& operator=(const ClangInterpreter&) = delete;
+    ClangInterpreter(ClangInterpreter&&) noexcept;
+    ClangInterpreter& operator=(ClangInterpreter&&) noexcept;
 
     /**
      * @brief Initializes the Clang interpreter and prepares for code evaluation

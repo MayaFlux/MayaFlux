@@ -26,7 +26,7 @@ enum coefficients {
  * - Visualizing filter behavior through external interfaces
  * - Recording filter state for later analysis or debugging
  */
-class FilterContext : public NodeContext {
+class MAYAFLUX_API FilterContext : public NodeContext {
 public:
     /**
      * @brief Constructs a FilterContext with the current filter state
@@ -117,7 +117,7 @@ std::pair<int, int> shift_parser(const std::string& str);
  * equations can process audio, control data, or even be applied to visual or
  * physical simulation parameters.
  */
-class Filter : public Node {
+class MAYAFLUX_API Filter : public Node {
 public:
     /**
      * @brief Constructor using string-based filter configuration

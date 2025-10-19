@@ -45,7 +45,7 @@ namespace MayaFlux::Kakshya {
  * @warning Circular mode discards old data when capacity is exceeded. Ensure appropriate
  *          capacity sizing for your use case to prevent data loss.
  */
-class DynamicSoundStream : public SoundStreamContainer {
+class MAYAFLUX_API DynamicSoundStream : public SoundStreamContainer {
 public:
     /**
      * @brief Construct a DynamicSoundStream with specified audio parameters.

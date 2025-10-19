@@ -36,7 +36,7 @@ namespace MayaFlux::Kriya {
  * state transitions, or any series of time-based events that need to occur in a specific
  * order with deterministic timing.
  */
-class EventChain {
+class MAYAFLUX_API EventChain {
 public:
     /**
      * @brief Constructs an EventChain using the global scheduler
@@ -137,7 +137,7 @@ private:
  * ActionTokens are typically created implicitly through conversions from nodes,
  * time values, or functions, making the API more concise and expressive.
  */
-class ActionToken {
+class MAYAFLUX_API ActionToken {
 public:
     /**
      * @brief Constructs an ActionToken representing a node connection
@@ -237,7 +237,7 @@ public:
  * The Sequence is part of a broader pattern of using operator overloading
  * to create a domain-specific language for computational flow programming within C++.
  */
-class Sequence {
+class MAYAFLUX_API Sequence {
 public:
     /**
      * @brief Adds an action to the sequence

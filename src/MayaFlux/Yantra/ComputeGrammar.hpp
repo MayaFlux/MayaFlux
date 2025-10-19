@@ -1,7 +1,5 @@
 #pragma once
 
-#include <algorithm>
-
 #include "OperationSpec/GrammarHelper.hpp"
 
 namespace MayaFlux::Yantra {
@@ -75,7 +73,7 @@ namespace MayaFlux::Yantra {
  * );
  * ```
  */
-class ComputationGrammar {
+class MAYAFLUX_API ComputationGrammar {
 public:
     /**
      * @struct Rule
@@ -86,7 +84,7 @@ public:
      * and what computation it should perform (executor), along with metadata
      * for organization and optimization.
      */
-    struct Rule {
+    struct MAYAFLUX_API Rule {
         std::string name; ///< Unique identifier for this rule
         std::string description; ///< Human-readable description of what the rule does
         ComputationContext context {}; ///< Computational context this rule operates in
@@ -311,7 +309,7 @@ public:
      *     .build();
      * ```
      */
-    class RuleBuilder {
+    class MAYAFLUX_API RuleBuilder {
     private:
         Rule m_rule; ///< Rule being constructed
         ComputationGrammar* m_grammar; ///< Reference to parent grammar

@@ -1,31 +1,56 @@
 #include "Creator.hpp"
 
+#include "MayaFlux/API/Depot.hpp"
+#include "MayaFlux/API/Graph.hpp"
+
+#include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
+
 namespace MayaFlux {
 
-std::function<void(std::shared_ptr<Nodes::Node>, const CreationContext&)> ContextAppliers::s_node_applier;
-std::function<void(std::shared_ptr<Buffers::Buffer>, const CreationContext&)> ContextAppliers::s_buffer_applier;
-std::function<void(std::shared_ptr<Kakshya::SoundFileContainer>, const CreationContext&)> ContextAppliers::s_container_applier;
-std::function<std::shared_ptr<Kakshya::SoundFileContainer>(const std::string&)> ContextAppliers::s_loader;
+Creator vega {};
 
-auto CreationProxy::read(const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer>
+void register_node(const std::shared_ptr<Nodes::Node>& node, const CreationContext& ctx)
 {
-    auto container = create_container_impl(filepath);
-    apply_container_context(container);
-    return container;
-}
+    auto token = get_node_token(ctx.domain.value());
 
-std::shared_ptr<Kakshya::SoundFileContainer> CreationProxy::create_container_impl(const std::string& filepath)
-{
-    return m_creator->create_container_for_proxy(filepath);
-}
-
-void CreationProxy::apply_container_context(std::shared_ptr<Kakshya::SoundFileContainer> container)
-{
-    if (!container)
-        return;
-    if (auto& applier = ContextAppliers::get_container_context_applier()) {
-        applier(container, m_context);
+    if (ctx.channel.has_value()) {
+        register_node(node, token, ctx.channel.value());
+    } else if (ctx.channels.has_value()) {
+        for (uint32_t ch : ctx.channels.value()) {
+            register_node(node, token, ch);
+        }
+    } else {
+        register_node(node, token, 0);
     }
+}
+
+void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const CreationContext& ctx)
+{
+    auto token = get_buffer_token(ctx.domain.value());
+
+    if (auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)) {
+        if (ctx.channel.has_value()) {
+            register_audio_buffer(audio_buffer, ctx.channel.value());
+        } else if (ctx.channels.has_value()) {
+            clone_buffer_to_channels(audio_buffer, ctx.channels.value(), token);
+        }
+        return;
+    }
+}
+
+void register_container(const std::shared_ptr<Kakshya::SignalSourceContainer>& container, const Domain& domain)
+{
+    if (auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(container)) {
+        if (domain == Domain::AUDIO) {
+            hook_sound_container_to_buffers(sound_container);
+        }
+    }
+}
+
+std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_container(const std::string& filepath)
+{
+    return load_audio_file(filepath);
 }
 
 } // namespace MayaFlux

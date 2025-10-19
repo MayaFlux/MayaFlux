@@ -43,7 +43,7 @@ enum class OperationMode : uint8_t {
  * End users interact with Lila via higher-level interfaces or the live_server binary,
  * not directly with its internal components.
  */
-class Lila {
+class LILA_API Lila {
 public:
     /**
      * @brief Constructs a Lila instance

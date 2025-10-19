@@ -29,7 +29,7 @@ namespace MayaFlux::Kakshya {
  * StreamContainer is foundational for digital-first, data-driven applications that require precise,
  * programmable control over temporal navigation and streaming, unconstrained by legacy analog models.
  */
-class StreamContainer : public SignalSourceContainer {
+class MAYAFLUX_API StreamContainer : public SignalSourceContainer {
 public:
     virtual ~StreamContainer() = default;
 

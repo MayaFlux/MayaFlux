@@ -29,7 +29,7 @@ class SignalSourceContainer;
  * - Scheduled or event-driven processing
  * - Integration with external data sources and sinks
  */
-class DataProcessor {
+class MAYAFLUX_API DataProcessor {
 public:
     /**
      * @brief Virtual destructor for proper cleanup

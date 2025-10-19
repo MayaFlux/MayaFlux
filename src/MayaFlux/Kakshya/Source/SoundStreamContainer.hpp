@@ -24,7 +24,7 @@ namespace MayaFlux::Kakshya {
  * Uses virtual inheritance to support diamond inheritance when used as a base
  * for FileContainer-derived classes.
  */
-class SoundStreamContainer : public virtual StreamContainer {
+class MAYAFLUX_API SoundStreamContainer : public virtual StreamContainer {
 public:
     /**
      * @brief Construct a SoundStreamContainer with specified parameters.

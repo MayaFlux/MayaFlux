@@ -22,7 +22,7 @@ enum class SubsystemType : uint8_t {
  * Subsystems follow a consistent lifecycle: register_callbacks() -> initialize()
  * -> start() -> [processing] -> stop() -> shutdown()
  */
-class ISubsystem {
+class MAYAFLUX_API ISubsystem {
 public:
     virtual ~ISubsystem() = default;
 

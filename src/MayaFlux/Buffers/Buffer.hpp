@@ -34,7 +34,7 @@ class BufferProcessingChain;
  * Different buffer types can be managed centrally while maintaining type-specific
  * processing capabilities through their concrete implementations.
  */
-class Buffer : public std::enable_shared_from_this<Buffer> {
+class MAYAFLUX_API Buffer : public std::enable_shared_from_this<Buffer> {
 public:
     /**
      * @brief Virtual destructor for proper resource management

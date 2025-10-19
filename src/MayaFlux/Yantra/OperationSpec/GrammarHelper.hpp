@@ -31,7 +31,7 @@ enum class ComputationContext : u_int8_t {
  * Provides factory methods for creating matcher functions that can be used
  * to determine if operations should be applied in specific contexts.
  */
-class UniversalMatcher {
+class MAYAFLUX_API UniversalMatcher {
 public:
     using MatcherFunc = std::function<bool(const std::any&, const ExecutionContext&)>;
 

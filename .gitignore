@@ -8,6 +8,7 @@ CMakeFiles/
 CTestTestfile.cmake
 cmake_install.cmake
 Makefile
+.dependencies
 
 # Clangd and language server files
 .clangd/
@@ -17,6 +18,7 @@ Makefile
 # Generated files
 docs/html/
 src/MayaFlux/version.h
+src/Lila/LilaConfig.hpp
 src/user_project.hpp
 public/
 

@@ -6,7 +6,7 @@ namespace MayaFlux::Core {
 
 class Window;
 
-class IGraphicsBackend {
+class MAYAFLUX_API IGraphicsBackend {
 public:
     virtual ~IGraphicsBackend() = default;
 

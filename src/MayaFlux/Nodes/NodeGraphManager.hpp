@@ -34,7 +34,7 @@ using TokenSampleProcessor = std::function<double(RootNode*, uint32_t)>;
  * This allows for independent transformation chains per channel while sharing nodes
  * between channels when needed.
  */
-class NodeGraphManager {
+class MAYAFLUX_API NodeGraphManager {
 public:
     /**
      * @brief Creates a new NodeGraphManager

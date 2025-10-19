@@ -1,7 +1,5 @@
 #pragma once
 
-#include <filesystem>
-
 namespace MayaFlux::Core {
 
 //==============================================================================
@@ -15,7 +13,7 @@ namespace MayaFlux::Core {
  * Separate from windowing - this is GPU/rendering configuration.
  * GraphicsSurfaceInfo handles windows, this handles the graphics API.
  */
-struct GraphicsBackendInfo {
+struct MAYAFLUX_API GraphicsBackendInfo {
     /** @brief Enable validation layers (debug builds) */
     bool enable_validation = true;
 
@@ -79,7 +77,7 @@ struct GraphicsBackendInfo {
  *
  * Prevents runaway resource usage, similar to audio buffer limits.
  */
-struct GraphicsResourceLimits {
+struct MAYAFLUX_API GraphicsResourceLimits {
     /** @brief Maximum number of concurrent windows */
     uint32_t max_windows = 16;
 
@@ -111,7 +109,7 @@ struct GraphicsResourceLimits {
  * This is set once at subsystem initialization, similar to audio sample rate.
  * Individual windows inherit these defaults but can override specific params.
  */
-struct GraphicsSurfaceInfo {
+struct MAYAFLUX_API GraphicsSurfaceInfo {
 
     /**
      * @enum SurfaceFormat
@@ -206,7 +204,7 @@ struct GlfwPreInitConfig {
     bool headless {};
 };
 
-struct GlobalGraphicsConfig {
+struct MAYAFLUX_API GlobalGraphicsConfig {
     /** @brief Pre-initialization configuration for GLFW */
     GlfwPreInitConfig glfw_preinit_config;
 
@@ -263,7 +261,7 @@ struct GlobalGraphicsConfig {
  * GraphicsSurfaceInfo. This is like creating a new audio channel - you specify
  * only what differs from global defaults.
  */
-struct WindowCreateInfo {
+struct MAYAFLUX_API WindowCreateInfo {
     /** @brief Window title/identifier */
     std::string title = "MayaFlux Window";
 

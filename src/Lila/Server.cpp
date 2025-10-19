@@ -5,12 +5,73 @@
 #include <cerrno>
 #include <cstddef>
 #include <fcntl.h>
-#include <netinet/tcp.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <unistd.h>
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    #include <mstcpip.h> 
+    using ssize_t = int;
+#else
+    #include <netinet/tcp.h>
+    #include <sys/select.h>
+    #include <sys/socket.h>
+    #include <unistd.h>
+    #include <arpa/inet.h>
+#endif
 
 namespace Lila {
+
+// --- Small platform abstraction helpers ------------------------------------
+
+static int socket_errno()
+{
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    return WSAGetLastError();
+#else
+    return errno;
+#endif
+}
+
+static std::string socket_error_string(int code)
+{
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    // Keep it simple: return numeric WSA code (can be extended with FormatMessage)
+    return "WSA error " + std::to_string(code);
+#else
+    return std::string(strerror(code));
+#endif
+}
+
+static void socket_close(int fd)
+{
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    closesocket(static_cast<SOCKET>(fd));
+#else
+    ::close(fd);
+#endif
+}
+
+static ssize_t socket_read(int fd, void* buf, size_t len)
+{
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    // recv returns int
+    return recv(static_cast<SOCKET>(fd), static_cast<char*>(buf), static_cast<int>(len), 0);
+#else
+    return ::read(fd, buf, len);
+#endif
+}
+
+static int set_nonblocking(int fd)
+{
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    u_long mode = 1;
+    return ioctlsocket(static_cast<SOCKET>(fd), FIONBIO, &mode);
+#else
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0) return -1;
+    return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+#endif
+}
+
+// --------------------------------------------------------------------------
 
 Server::Server(int port)
     : m_port(port)
@@ -31,19 +92,25 @@ bool Server::start() noexcept
     }
 
     try {
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+            throw std::system_error(WSAGetLastError(), std::system_category(), "WSAStartup failed");
+        }
+#endif
+
         m_server_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (m_server_fd < 0) {
-            throw std::system_error(errno, std::system_category(), "socket creation failed");
+            throw std::system_error(socket_errno(), std::system_category(), "socket creation failed");
         }
 
         int opt = 1;
-        if (setsockopt(m_server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-            throw std::system_error(errno, std::system_category(), "setsockopt failed");
+        if (setsockopt(m_server_fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char*>(&opt), sizeof(opt)) < 0) {
+            throw std::system_error(socket_errno(), std::system_category(), "setsockopt failed");
         }
 
-        int flags = fcntl(m_server_fd, F_GETFL, 0);
-        if (fcntl(m_server_fd, F_SETFL, flags | O_NONBLOCK) < 0) {
-            throw std::system_error(errno, std::system_category(), "fcntl failed");
+        if (set_nonblocking(m_server_fd) < 0) {
+            throw std::system_error(socket_errno(), std::system_category(), "set non-blocking failed");
         }
 
         sockaddr_in address {};
@@ -52,11 +119,11 @@ bool Server::start() noexcept
         address.sin_port = htons(m_port);
 
         if (bind(m_server_fd, reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0) {
-            throw std::system_error(errno, std::system_category(), "bind failed");
+            throw std::system_error(socket_errno(), std::system_category(), "bind failed");
         }
 
         if (listen(m_server_fd, 10) < 0) {
-            throw std::system_error(errno, std::system_category(), "listen failed");
+            throw std::system_error(socket_errno(), std::system_category(), "listen failed");
         }
 
         m_running = true;
@@ -76,9 +143,12 @@ bool Server::start() noexcept
     } catch (const std::system_error& e) {
         LILA_ERROR(Emitter::SERVER, "Failed to start server: " + std::string(e.what()) + " (code: " + std::to_string(e.code().value()) + ")");
         if (m_server_fd >= 0) {
-            close(m_server_fd);
+            socket_close(m_server_fd);
             m_server_fd = -1;
         }
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        WSACleanup();
+#endif
         return false;
     }
 }
@@ -96,19 +166,23 @@ void Server::stop() noexcept
     }
 
     if (m_server_fd >= 0) {
-        close(m_server_fd);
+        socket_close(m_server_fd);
         m_server_fd = -1;
     }
 
     {
         std::unique_lock lock(m_clients_mutex);
         for (const auto& [fd, client] : m_connected_clients) {
-            close(fd);
+            socket_close(fd);
         }
         m_connected_clients.clear();
     }
 
     m_event_bus.publish(StreamEvent { EventType::ServerStop });
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    WSACleanup();
+#endif
 
     LILA_INFO(Emitter::SERVER, "Server stopped");
 }
@@ -122,11 +196,19 @@ void Server::server_loop(const std::stop_token& stop_token)
 
         timeval timeout { .tv_sec = 1, .tv_usec = 0 };
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        int activity = select(0, &readfds, nullptr, nullptr, &timeout); // nfds ignored on Windows
+#else
         int activity = select(m_server_fd + 1, &readfds, nullptr, nullptr, &timeout);
+#endif
 
-        if (activity < 0 && errno != EINTR) {
+        if (activity < 0) {
+            int code = socket_errno();
+#ifndef MAYAFLUX_PLATFORM_WINDOWS
+            if (code == EINTR) continue;
+#endif
             if (m_running) {
-                LILA_ERROR(Emitter::SERVER, "Select error: " + std::string(strerror(errno)));
+                LILA_ERROR(Emitter::SERVER, "Select error: " + socket_error_string(code));
             }
             break;
         }
@@ -137,6 +219,18 @@ void Server::server_loop(const std::stop_token& stop_token)
         sockaddr_in client_addr {};
         socklen_t client_len = sizeof(client_addr);
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+        SOCKET client_socket = accept(static_cast<SOCKET>(m_server_fd), reinterpret_cast<sockaddr*>(&client_addr), &client_len);
+        int client_fd = static_cast<int>(client_socket);
+        if (client_socket == INVALID_SOCKET) {
+            int code = socket_errno();
+            if (code == WSAEWOULDBLOCK) continue;
+            if (m_running) {
+                LILA_ERROR(Emitter::SERVER, "Accept failed: " + socket_error_string(code));
+            }
+            continue;
+        }
+#else
         int client_fd = accept(m_server_fd, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
         if (client_fd < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -146,9 +240,11 @@ void Server::server_loop(const std::stop_token& stop_token)
             }
             continue;
         }
+#endif
 
-        int flags = fcntl(client_fd, F_GETFL, 0);
-        fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+        if (set_nonblocking(client_fd) < 0) {
+            LILA_WARN(Emitter::SERVER, "Failed to set non-blocking on client fd " + std::to_string(client_fd));
+        }
 
         handle_client(client_fd);
     }
@@ -157,8 +253,8 @@ void Server::server_loop(const std::stop_token& stop_token)
 void Server::handle_client(int client_fd)
 {
     int enable = 1;
-    if (setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, &enable, sizeof(enable)) < 0) {
-        LILA_WARN(Emitter::SERVER, "Failed to set TCP_NODELAY on client fd " + std::to_string(client_fd) + ": " + std::string(strerror(errno)));
+    if (setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&enable), sizeof(enable)) < 0) {
+        LILA_WARN(Emitter::SERVER, "Failed to set TCP_NODELAY on client fd " + std::to_string(client_fd) + ": " + socket_error_string(socket_errno()));
     }
 
     ClientInfo client_info {
@@ -242,13 +338,21 @@ std::expected<std::string, std::string> Server::read_message(int client_fd)
     std::array<char, BUFFER_SIZE> buffer {};
 
     while (true) {
-        ssize_t bytes_read = ::read(client_fd, buffer.data(), buffer.size() - 1);
+        ssize_t bytes_read = socket_read(client_fd, buffer.data(), buffer.size() - 1);
 
         if (bytes_read < 0) {
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+            int code = socket_errno();
+            if (code == WSAEWOULDBLOCK) {
+                return std::unexpected("would_block");
+            }
+            return std::unexpected("read error: " + socket_error_string(code));
+#else
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 return std::unexpected("would_block");
             }
             return std::unexpected("read error: " + std::string(strerror(errno)));
+#endif
         }
 
         if (bytes_read == 0) {
@@ -277,8 +381,13 @@ std::expected<std::string, std::string> Server::read_message(int client_fd)
 bool Server::send_message(int client_fd, std::string_view message)
 {
     std::string msg_with_newline = std::string(message) + "\n";
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    int sent = send(static_cast<SOCKET>(client_fd), msg_with_newline.data(), static_cast<int>(msg_with_newline.size()), 0);
+    return sent == static_cast<int>(msg_with_newline.size());
+#else
     ssize_t sent = send(client_fd, msg_with_newline.data(), msg_with_newline.size(), 0);
     return sent == static_cast<ssize_t>(msg_with_newline.size());
+#endif
 }
 
 void Server::cleanup_client(int client_fd)
@@ -303,7 +412,7 @@ void Server::cleanup_client(int client_fd)
         LILA_INFO(Emitter::SERVER, "Client disconnected (fd: " + std::to_string(client_fd) + ")");
     }
 
-    close(client_fd);
+    socket_close(client_fd);
 }
 
 void Server::broadcast_event(const StreamEvent& /*event*/, std::optional<std::string_view> target_session)

@@ -14,7 +14,7 @@ class Sink;
  * The Archivist class provides methods to log messages with various severity levels,
  * components, and contexts. It supports both standard and real-time logging.
  */
-class Archivist {
+class MAYAFLUX_API Archivist {
 
 public:
     /**

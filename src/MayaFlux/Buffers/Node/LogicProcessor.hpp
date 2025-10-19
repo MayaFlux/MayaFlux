@@ -22,7 +22,7 @@ namespace MayaFlux::Buffers {
  * - Digital state machine implementation
  * - Signal quantization and discretization
  */
-class LogicProcessor : public BufferProcessor {
+class MAYAFLUX_API LogicProcessor : public BufferProcessor {
 public:
     /**
      * @enum ProcessMode

@@ -26,7 +26,7 @@ namespace MayaFlux::Nodes {
  * Node implementations can extend this class to provide type-specific
  * context information, which can be safely accessed using the as<T>() method.
  */
-class NodeContext {
+class MAYAFLUX_API NodeContext {
 public:
     virtual ~NodeContext() = default;
 
@@ -105,7 +105,7 @@ protected:
  * The node system supports both single-sample processing for real-time applications
  * and batch processing for more efficient offline processing.
  */
-class Node {
+class MAYAFLUX_API Node {
 
 public:
     /**

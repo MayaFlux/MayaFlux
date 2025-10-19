@@ -9,7 +9,9 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/TargetParser/Host.h>
 
-#include <filesystem>
+#include <clang/AST/Type.h>
+#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 
 namespace Lila {
 
@@ -35,9 +37,19 @@ ClangInterpreter::~ClangInterpreter()
     shutdown();
 }
 
+ClangInterpreter::ClangInterpreter(ClangInterpreter&&) noexcept = default;
+ClangInterpreter& ClangInterpreter::operator=(ClangInterpreter&&) noexcept = default;
+
 bool ClangInterpreter::initialize()
 {
     LILA_INFO(Emitter::INTERPRETER, "Initializing Clang interpreter");
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently("msvcp140.dll");
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently("vcruntime140.dll");
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently("ucrtbase.dll");
+    llvm::sys::DynamicLibrary::LoadLibraryPermanently("MayaFluxLib.dll");
+#endif
 
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
@@ -86,6 +98,12 @@ bool ClangInterpreter::initialize()
         m_impl->compile_flags.push_back("-I" + path);
     }
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    m_impl->compile_flags.emplace_back("-fno-function-sections");
+    m_impl->compile_flags.emplace_back("-fno-data-sections");
+    m_impl->compile_flags.emplace_back("-fno-unique-section-names");
+#endif
+
     std::vector<const char*> args;
     for (const auto& flag : m_impl->compile_flags) {
         args.push_back(flag.c_str());
@@ -122,6 +140,8 @@ bool ClangInterpreter::initialize()
     } else {
         LILA_INFO(Emitter::INTERPRETER, "MayaFlux headers loaded successfully");
     }
+
+    result = m_impl->interpreter->ParseAndExecute("std::cout << \"test\" << std::flush;");
 
     return true;
 }

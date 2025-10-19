@@ -57,7 +57,7 @@ enum class LogicEventType {
     CONDITIONAL // Custom condition
 };
 
-class LogicContext : public NodeContext {
+class MAYAFLUX_API LogicContext : public NodeContext {
 public:
     /**
      * @brief Constructs a LogicContext with complete state information
@@ -134,7 +134,7 @@ private:
  * - Signal quantization and discretization
  * - Conditional processing chains
  */
-class Logic : public Generator {
+class MAYAFLUX_API Logic : public Generator {
 public:
     /**
      * @brief Function type for stateless boolean evaluation
