@@ -1,14 +1,11 @@
 #include "Depot.hpp"
 #include "MayaFlux/API/Config.hpp"
-#include "MayaFlux/API/Core.hpp"
 
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
 #include "MayaFlux/IO/SoundFileReader.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
-
-#include "MayaFlux/API/Proxy/Creator.hpp"
 
 namespace MayaFlux {
 
@@ -92,58 +89,6 @@ void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFil
 
         std::cout << "✓ Created buffer for channel " << channel << '\n';
     }
-}
-
-void hook_sound_container_to_buffers_with_context(
-    std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container,
-    const CreationContext& context)
-{
-    auto buffer_manager = MayaFlux::get_buffer_manager();
-    uint32_t num_channels = container->get_num_channels();
-
-    Domain target_domain = context.domain.value_or(Domain::AUDIO);
-    MayaFlux::Buffers::ProcessingToken token = (target_domain == Domain::AUDIO)
-        ? MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND
-        : MayaFlux::Buffers::ProcessingToken::GRAPHICS_BACKEND;
-
-    if (context.channel.has_value()) {
-        uint32_t target_channel = context.channel.value();
-        if (target_channel < num_channels) {
-            auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
-                token, target_channel, container, target_channel);
-            container_buffer->initialize();
-            std::cout << "✓ Created buffer for channel " << target_channel << '\n';
-        } else {
-            std::cerr << "Requested channel " << target_channel << " exceeds available channels (" << num_channels << ")" << '\n';
-        }
-    } else {
-        for (uint32_t channel = 0; channel < num_channels; ++channel) {
-            auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
-                token, channel, container, channel);
-            container_buffer->initialize();
-            std::cout << "✓ Created buffer for channel " << channel << '\n';
-        }
-    }
-}
-
-void register_container_context_operations()
-{
-    ContextAppliers::set_container_loader([](const std::string& filepath) -> std::shared_ptr<Kakshya::SoundFileContainer> {
-        return load_audio_file(filepath);
-    });
-
-    ContextAppliers::set_container_context_applier([](std::shared_ptr<Kakshya::SoundFileContainer> container, const CreationContext& context) {
-        if (!container) {
-            std::cerr << "Cannot apply context to null container" << '\n';
-            return;
-        }
-
-        if (context.domain.has_value()) {
-            hook_sound_container_to_buffers_with_context(container, context);
-        } else {
-            std::cout << "Container loaded but not hooked to buffers (no domain specified)" << '\n';
-        }
-    });
 }
 
 }

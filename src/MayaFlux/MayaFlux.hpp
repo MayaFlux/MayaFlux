@@ -62,33 +62,6 @@ using namespace MayaFlux::Nodes::Generator;
 using namespace MayaFlux::Nodes;
 using namespace MayaFlux;
 
-namespace {
-/**
- * @brief Automatic initializer for MayaFlux Simple mode
- *
- * This struct is designed to automatically register all necessary components of the MayaFlux
- * audio engine when the program starts. By creating a static instance of this struct, its
- * constructor is invoked before the main function, ensuring that all container context
- * operations, buffers, and nodes are registered and ready for use.
- *
- * This approach simplifies the setup process for users of the MayaFlux engine in Simple mode,
- * allowing them to focus on building audio applications without worrying about manual
- * initialization steps.
- *
- * NOTE: This is only effective if the same engine instance is used throughout the application.
- */
-struct MayaSimpleInitializer {
-    MayaSimpleInitializer()
-    {
-        MayaFlux::register_container_context_operations();
-        MayaFlux::register_all_buffers();
-        MayaFlux::register_all_nodes();
-    }
-};
-
-inline MayaSimpleInitializer __mayasimple_init [[maybe_unused]];
-}
-
 #endif // MAYASIMPLE
 
 /**

@@ -44,18 +44,4 @@ MAYAFLUX_API std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_f
  */
 MAYAFLUX_API void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container);
 
-MAYAFLUX_API void hook_sound_container_to_buffers_with_context(
-    std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container,
-    const CreationContext& context);
-
-/**
- * @brief Registers container context operations for the Creator proxy system
- *
- * Sets up integration between Creator proxy system and container loading functions,
- * enabling fluent API usage like `vega.read("audio.wav") | Audio`.
- * Registers load_audio_file() as default loader and enables context-aware buffer connection.
- * Must be called during engine initialization before using Creator proxy with audio files.
- */
-MAYAFLUX_API void register_container_context_operations();
-
 }
