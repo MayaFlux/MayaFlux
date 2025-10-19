@@ -47,8 +47,8 @@ void RegionOrganizationProcessor::process(std::shared_ptr<SignalSourceContainer>
     m_is_processing.store(true);
 
     try {
-        std::vector<u_int64_t> output_shape;
-        u_int64_t current_region_frames = 0;
+        std::vector<uint64_t> output_shape;
+        uint64_t current_region_frames = 0;
         if (m_current_region_index < m_organized_regions.size()) {
             auto& current_region = m_organized_regions[m_current_region_index];
             for (const auto& segment : current_region.segments) {
@@ -85,8 +85,8 @@ void RegionOrganizationProcessor::add_region_group(const std::string& group_name
 
 void RegionOrganizationProcessor::add_segment_to_region(const std::string& group_name,
     size_t region_index,
-    const std::vector<u_int64_t>& start_coords,
-    const std::vector<u_int64_t>& end_coords,
+    const std::vector<uint64_t>& start_coords,
+    const std::vector<uint64_t>& end_coords,
     const std::unordered_map<std::string, std::any>& attributes)
 {
     auto region_it = std::ranges::find_if(m_organized_regions, [&](const OrganizedRegion& region) {
@@ -136,8 +136,8 @@ void RegionOrganizationProcessor::set_selection_pattern(const std::string& group
 void RegionOrganizationProcessor::set_region_looping(const std::string& group_name,
     size_t region_index,
     bool enabled,
-    const std::vector<u_int64_t>& loop_start,
-    const std::vector<u_int64_t>& loop_end)
+    const std::vector<uint64_t>& loop_start,
+    const std::vector<uint64_t>& loop_end)
 {
     auto region_it = std::ranges::find_if(m_organized_regions, [&](OrganizedRegion& region) {
         return region.group_name == group_name && region.region_index == region_index;
@@ -166,7 +166,7 @@ void RegionOrganizationProcessor::jump_to_region(const std::string& group_name, 
     }
 }
 
-void RegionOrganizationProcessor::jump_to_position(const std::vector<u_int64_t>& position)
+void RegionOrganizationProcessor::jump_to_position(const std::vector<uint64_t>& position)
 {
     m_current_position = position;
 
@@ -365,7 +365,7 @@ size_t RegionOrganizationProcessor::select_next_segment(const OrganizedRegion& r
 }
 
 std::optional<size_t> RegionOrganizationProcessor::find_region_for_position(
-    const std::vector<u_int64_t>& position,
+    const std::vector<uint64_t>& position,
     const std::vector<OrganizedRegion>& regions) const
 {
     if (auto it = std::ranges::find_if(regions,

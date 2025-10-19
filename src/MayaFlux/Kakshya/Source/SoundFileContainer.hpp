@@ -38,7 +38,7 @@ public:
      * @param num_channels Number of audio channels
      * @param initial_capacity Initial capacity in frames
      */
-    SoundFileContainer(u_int32_t sample_rate, u_int32_t num_channels, u_int64_t initial_capacity = 0);
+    SoundFileContainer(uint32_t sample_rate, uint32_t num_channels, uint64_t initial_capacity = 0);
 
     ~SoundFileContainer() = default;
 
@@ -50,7 +50,7 @@ public:
      * @param sample_rate Sample rate of the audio
      * @param num_channels Number of audio channels
      */
-    void setup(u_int64_t num_frames, u_int32_t sample_rate, u_int32_t num_channels);
+    void setup(uint64_t num_frames, uint32_t sample_rate, uint32_t num_channels);
 
     /**
      * @brief Set raw data from external source (e.g., file loading)

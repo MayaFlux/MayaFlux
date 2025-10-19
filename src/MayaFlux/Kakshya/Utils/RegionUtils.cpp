@@ -59,7 +59,7 @@ std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const 
     return result;
 }
 
-std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<u_int64_t>& coordinates)
+std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<uint64_t>& coordinates)
 {
     std::vector<Region> result;
     std::ranges::copy_if(group.regions, std::back_inserter(result),
@@ -73,8 +73,8 @@ Region translate_region(const Region& region, const std::vector<int64_t>& offset
 {
     Region result = region;
     for (size_t i = 0; i < std::min(offset.size(), region.start_coordinates.size()); ++i) {
-        result.start_coordinates[i] = static_cast<u_int64_t>(static_cast<int64_t>(result.start_coordinates[i]) + offset[i]);
-        result.end_coordinates[i] = static_cast<u_int64_t>(static_cast<int64_t>(result.end_coordinates[i]) + offset[i]);
+        result.start_coordinates[i] = static_cast<uint64_t>(static_cast<int64_t>(result.start_coordinates[i]) + offset[i]);
+        result.end_coordinates[i] = static_cast<uint64_t>(static_cast<int64_t>(result.end_coordinates[i]) + offset[i]);
     }
     return result;
 }
@@ -83,9 +83,9 @@ Region scale_region(const Region& region, const std::vector<double>& factors)
 {
     Region result = region;
     for (size_t i = 0; i < std::min(factors.size(), region.start_coordinates.size()); ++i) {
-        u_int64_t center = (region.start_coordinates[i] + region.end_coordinates[i]) / 2;
-        u_int64_t half_span = (region.end_coordinates[i] - region.start_coordinates[i]) / 2;
-        auto new_half_span = static_cast<u_int64_t>(factors[i] * static_cast<double>(half_span));
+        uint64_t center = (region.start_coordinates[i] + region.end_coordinates[i]) / 2;
+        uint64_t half_span = (region.end_coordinates[i] - region.start_coordinates[i]) / 2;
+        auto new_half_span = static_cast<uint64_t>(factors[i] * static_cast<double>(half_span));
         result.start_coordinates[i] = center - new_half_span;
         result.end_coordinates[i] = center + new_half_span;
     }
@@ -182,14 +182,14 @@ void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, c
     groups.erase(name);
 }
 
-Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
-    const std::vector<u_int64_t>& output_shape)
+Region calculate_output_region(const std::vector<uint64_t>& current_pos,
+    const std::vector<uint64_t>& output_shape)
 {
     if (current_pos.size() != output_shape.size()) {
         throw std::invalid_argument("Position and shape vectors must have same size");
     }
 
-    std::vector<u_int64_t> end_pos;
+    std::vector<uint64_t> end_pos;
     end_pos.reserve(current_pos.size());
 
     for (size_t i = 0; i < current_pos.size(); ++i) {
@@ -202,20 +202,20 @@ Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
     return { current_pos, end_pos };
 }
 
-Region calculate_output_region(u_int64_t current_frame,
-    u_int64_t frames_to_process,
+Region calculate_output_region(uint64_t current_frame,
+    uint64_t frames_to_process,
     const std::shared_ptr<SignalSourceContainer>& container)
 {
     const auto& structure = container->get_structure();
-    u_int64_t total_frames = structure.get_samples_count_per_channel();
-    u_int64_t num_channels = structure.get_channel_count();
+    uint64_t total_frames = structure.get_samples_count_per_channel();
+    uint64_t num_channels = structure.get_channel_count();
 
     if (current_frame >= total_frames) {
         throw std::out_of_range("Current frame exceeds container bounds");
     }
 
-    u_int64_t available_frames = total_frames - current_frame;
-    u_int64_t actual_frames = std::min(frames_to_process, available_frames);
+    uint64_t available_frames = total_frames - current_frame;
+    uint64_t actual_frames = std::min(frames_to_process, available_frames);
 
     Region output_shape;
     output_shape.start_coordinates = { current_frame, 0 };
@@ -287,8 +287,8 @@ std::unordered_map<std::string, std::any> extract_group_bounds_info(const Region
     }
 
     const auto& first_region = group.regions[0];
-    std::vector<u_int64_t> min_coords = first_region.start_coordinates;
-    std::vector<u_int64_t> max_coords = first_region.end_coordinates;
+    std::vector<uint64_t> min_coords = first_region.start_coordinates;
+    std::vector<uint64_t> max_coords = first_region.end_coordinates;
 
     for (size_t i = 1; i < group.regions.size(); ++i) {
         const auto& region = group.regions[i];
@@ -335,7 +335,7 @@ std::unordered_map<std::string, std::any> extract_region_bounds_info(const Regio
     bounds_info["start_coordinates"] = region.start_coordinates;
     bounds_info["end_coordinates"] = region.end_coordinates;
 
-    std::vector<u_int64_t> sizes;
+    std::vector<uint64_t> sizes;
     sizes.reserve(region.start_coordinates.size());
 
     for (size_t i = 0; i < region.start_coordinates.size() && i < region.end_coordinates.size(); ++i) {
@@ -343,8 +343,8 @@ std::unordered_map<std::string, std::any> extract_region_bounds_info(const Regio
     }
     bounds_info["sizes"] = sizes;
 
-    u_int64_t total_elements = 1;
-    for (u_int64_t size : sizes) {
+    uint64_t total_elements = 1;
+    for (uint64_t size : sizes) {
         total_elements *= size;
     }
     bounds_info["total_elements"] = total_elements;
@@ -352,7 +352,7 @@ std::unordered_map<std::string, std::any> extract_region_bounds_info(const Regio
     return bounds_info;
 }
 
-std::optional<size_t> find_region_for_position(const std::vector<u_int64_t>& position,
+std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position,
     const std::vector<Region>& regions)
 {
     for (size_t i = 0; i < regions.size(); ++i) {
@@ -363,7 +363,7 @@ std::optional<size_t> find_region_for_position(const std::vector<u_int64_t>& pos
     return std::nullopt;
 }
 
-std::optional<size_t> find_region_for_position(const std::vector<u_int64_t>& position, std::vector<OrganizedRegion> regions)
+std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position, std::vector<OrganizedRegion> regions)
 {
     for (size_t i = 0; i < regions.size(); ++i) {
         if (regions[i].contains_position(position)) {

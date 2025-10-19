@@ -71,13 +71,13 @@ std::vector<T> extract_region_data(const std::span<const T>& source_data, const 
         }
     }
 
-    u_int64_t region_size = region.get_volume();
+    uint64_t region_size = region.get_volume();
     std::vector<T> result;
     result.reserve(region_size);
 
-    std::vector<u_int64_t> current = region.start_coordinates;
+    std::vector<uint64_t> current = region.start_coordinates;
     while (true) {
-        u_int64_t linear_index = coordinates_to_linear(current, dimensions);
+        uint64_t linear_index = coordinates_to_linear(current, dimensions);
         result.push_back(source_data[linear_index]);
 
         bool done = true;
@@ -324,10 +324,10 @@ void set_or_update_region_data(
     const Region& region,
     const std::vector<DataDimension>& dimensions)
 {
-    std::vector<u_int64_t> current = region.start_coordinates;
+    std::vector<uint64_t> current = region.start_coordinates;
     size_t source_index = 0;
     while (source_index < source_data.size()) {
-        u_int64_t linear_index = coordinates_to_linear(current, dimensions);
+        uint64_t linear_index = coordinates_to_linear(current, dimensions);
         dest_data[linear_index] = source_data[source_index++];
         bool done = true;
         /* for (size_t dim = 0; dim < current.size(); ++dim) {
@@ -423,7 +423,7 @@ void set_or_update_region_data(
  * @param region Region to query.
  * @return Product of spans across all dimensions.
  */
-u_int64_t calculate_region_size(const Region& region);
+uint64_t calculate_region_size(const Region& region);
 
 /**
  * @brief Get an attribute value from a Region by key.
@@ -477,7 +477,7 @@ std::vector<Region> find_regions_with_attribute(const RegionGroup& group, const 
  * @param coordinates N-dimensional coordinates.
  * @return Vector of matching Regions.
  */
-std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<u_int64_t>& coordinates);
+std::vector<Region> find_regions_containing_coordinates(const RegionGroup& group, const std::vector<uint64_t>& coordinates);
 
 /**
  * @brief Translate a Region by an offset vector.
@@ -575,8 +575,8 @@ void remove_region_group(std::unordered_map<std::string, RegionGroup>& groups, c
  * @param output_shape Desired output shape.
  * @return Region representing the output bounds.
  */
-Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
-    const std::vector<u_int64_t>& output_shape);
+Region calculate_output_region(const std::vector<uint64_t>& current_pos,
+    const std::vector<uint64_t>& output_shape);
 
 /**
  *@brief Calculate output region for frame-based processing.
@@ -585,8 +585,8 @@ Region calculate_output_region(const std::vector<u_int64_t>& current_pos,
  * @param container Container providing layout information.
  * @return Region representing the output bounds for the specified frames.
  */
-Region calculate_output_region(u_int64_t current_frame,
-    u_int64_t frames_to_process,
+Region calculate_output_region(uint64_t current_frame,
+    uint64_t frames_to_process,
     const std::shared_ptr<SignalSourceContainer>& container);
 
 /**
@@ -632,7 +632,7 @@ std::unordered_map<std::string, std::any> extract_region_bounds_info(const Regio
  * @param regions Vector of regions to search within.
  * @return Optional index of containing region.
  */
-std::optional<size_t> find_region_for_position(const std::vector<u_int64_t>& position,
+std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position,
     const std::vector<Region>& regions);
 
 /**
@@ -641,6 +641,6 @@ std::optional<size_t> find_region_for_position(const std::vector<u_int64_t>& pos
  * @param regions vector of OrganizedRegions
  * @return Optional index of the containing region, or std::nullopt if not found.
  */
-std::optional<size_t> find_region_for_position(const std::vector<u_int64_t>& position, std::vector<OrganizedRegion> regions);
+std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position, std::vector<OrganizedRegion> regions);
 
 }

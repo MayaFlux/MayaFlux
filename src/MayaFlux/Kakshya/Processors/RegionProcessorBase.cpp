@@ -39,7 +39,7 @@ void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, c
         return;
     }
 
-    u_int64_t segment_size = segment.get_total_elements();
+    uint64_t segment_size = segment.get_total_elements();
     if (segment_size <= m_max_cache_size / 10) { // Use max 10% of cache per segment
         try {
             RegionCache cache;
@@ -54,7 +54,7 @@ void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, c
     }
 }
 
-bool RegionProcessorBase::advance_position(std::vector<u_int64_t>& position, u_int64_t steps, const OrganizedRegion* region)
+bool RegionProcessorBase::advance_position(std::vector<uint64_t>& position, uint64_t steps, const OrganizedRegion* region)
 {
     if (position.empty())
         return false;
@@ -82,7 +82,7 @@ bool RegionProcessorBase::advance_position(std::vector<u_int64_t>& position, u_i
     return true;
 }
 
-void RegionProcessorBase::ensure_output_dimensioning(std::vector<DataVariant>& output_data, const std::vector<u_int64_t>& required_shape)
+void RegionProcessorBase::ensure_output_dimensioning(std::vector<DataVariant>& output_data, const std::vector<uint64_t>& required_shape)
 {
     if (output_data.size() < required_shape[1]) {
         output_data.resize(required_shape[1], DataVariant {});

@@ -52,7 +52,7 @@ public:
      * @param sample_rate Sample rate in Hz for temporal calculations and timing
      * @param num_channels Number of audio channels (typically 1=mono, 2=stereo)
      */
-    DynamicSoundStream(u_int32_t sample_rate = 48000, u_int32_t num_channels = 2);
+    DynamicSoundStream(uint32_t sample_rate = 48000, uint32_t num_channels = 2);
 
     /**
      * @brief Write audio frame data to the container with automatic capacity management.
@@ -61,8 +61,8 @@ public:
      % @param channel Channel index for planar data (default: 0)
      * @return Number of frames actually written
      */
-    u_int64_t write_frames(std::span<const double> data, u_int64_t start_frame = 0, u_int32_t channel = 0);
-    u_int64_t write_frames(std::vector<std::span<const double>> data, u_int64_t start_frame = 0);
+    uint64_t write_frames(std::span<const double> data, uint64_t start_frame = 0, uint32_t channel = 0);
+    uint64_t write_frames(std::vector<std::span<const double>> data, uint64_t start_frame = 0);
 
     /**
      * @brief Read audio frames using sequential reading with automatic position management.
@@ -70,7 +70,7 @@ public:
      * @param count Maximum number of frames to read
      * @return Number of frames actually read (may be less than requested)
      */
-    inline u_int64_t read_frames(std::span<double> output, u_int64_t count)
+    inline uint64_t read_frames(std::span<double> output, uint64_t count)
     {
         return read_sequential(output, count);
     }
@@ -92,14 +92,14 @@ public:
      * Essential for real-time scenarios where allocation delays are unacceptable.
      * @param required_frames Minimum number of frames the container should hold
      */
-    void ensure_capacity(u_int64_t required_frames);
+    void ensure_capacity(uint64_t required_frames);
 
     /**
      * @brief Enable circular buffer mode with fixed capacity.
      * Writes wrap around at capacity boundary, potentially overwriting older data.
      * @param capacity Fixed number of frames the circular buffer can hold
      */
-    void enable_circular_buffer(u_int64_t capacity);
+    void enable_circular_buffer(uint64_t capacity);
 
     /**
      * @brief Disable circular buffer mode and return to linear operation.
@@ -117,27 +117,27 @@ public:
      * @brief Get the fixed capacity of the circular buffer if enabled.
      * @return Capacity in frames if circular mode is active, 0 otherwise
      */
-    std::span<const double> get_channel_frames(u_int32_t channel, u_int64_t start_frame, u_int64_t num_frames) const;
+    std::span<const double> get_channel_frames(uint32_t channel, uint64_t start_frame, uint64_t num_frames) const;
 
-    void get_channel_frames(std::span<double> output, u_int32_t channel, u_int64_t start_frame) const;
+    void get_channel_frames(std::span<double> output, uint32_t channel, uint64_t start_frame) const;
 
-    u_int64_t get_circular_capacity() const { return m_circular_capacity; }
+    uint64_t get_circular_capacity() const { return m_circular_capacity; }
 
 private:
     bool m_auto_resize; ///< Enable automatic capacity expansion
     bool m_is_circular {}; ///< True when operating in circular buffer mode
-    u_int64_t m_circular_capacity {}; ///< Fixed capacity for circular mode
+    uint64_t m_circular_capacity {}; ///< Fixed capacity for circular mode
 
-    void expand_to(u_int64_t target_frames);
+    void expand_to(uint64_t target_frames);
 
-    std::vector<DataVariant> create_expanded_data(u_int64_t new_frame_count);
+    std::vector<DataVariant> create_expanded_data(uint64_t new_frame_count);
 
     void set_all_data(const DataVariant& new_data);
     void set_all_data(const std::vector<DataVariant>& new_data);
 
-    u_int64_t validate(std::vector<std::span<const double>>& data, u_int64_t start_frame = 0);
+    uint64_t validate(std::vector<std::span<const double>>& data, uint64_t start_frame = 0);
 
-    u_int64_t validate_single_channel(std::span<const double> data, u_int64_t start_frame = 0, u_int32_t channel = 0);
+    uint64_t validate_single_channel(std::span<const double> data, uint64_t start_frame = 0, uint32_t channel = 0);
 };
 
 } // namespace MayaFlux::Kakshya

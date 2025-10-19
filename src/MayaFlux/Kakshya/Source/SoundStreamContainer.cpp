@@ -6,8 +6,8 @@
 
 namespace MayaFlux::Kakshya {
 
-SoundStreamContainer::SoundStreamContainer(u_int32_t sample_rate, u_int32_t num_channels,
-    u_int64_t initial_capacity, bool circular_mode)
+SoundStreamContainer::SoundStreamContainer(uint32_t sample_rate, uint32_t num_channels,
+    uint64_t initial_capacity, bool circular_mode)
     : m_sample_rate(sample_rate)
     , m_num_channels(num_channels)
     , m_num_frames(initial_capacity)
@@ -15,7 +15,7 @@ SoundStreamContainer::SoundStreamContainer(u_int32_t sample_rate, u_int32_t num_
 {
     setup_dimensions();
 
-    m_read_position = std::vector<std::atomic<u_int64_t>>(m_num_channels);
+    m_read_position = std::vector<std::atomic<uint64_t>>(m_num_channels);
     for (auto& pos : m_read_position) {
         pos.store(0);
     }
@@ -31,7 +31,7 @@ void SoundStreamContainer::setup_dimensions()
         ? DataModality::AUDIO_MULTICHANNEL
         : DataModality::AUDIO_1D;
 
-    std::vector<u_int64_t> shape;
+    std::vector<uint64_t> shape;
     if (modality == DataModality::AUDIO_1D) {
         shape = { m_num_frames };
     } else {
@@ -53,7 +53,7 @@ std::vector<DataDimension> SoundStreamContainer::get_dimensions() const
     return m_structure.dimensions;
 }
 
-u_int64_t SoundStreamContainer::get_total_elements() const
+uint64_t SoundStreamContainer::get_total_elements() const
 {
     return m_structure.get_total_elements();
 }
@@ -68,13 +68,13 @@ void SoundStreamContainer::set_memory_layout(MemoryLayout layout)
     }
 }
 
-u_int64_t SoundStreamContainer::get_frame_size() const
+uint64_t SoundStreamContainer::get_frame_size() const
 {
     // return m_structure.get_channel_count();
     return m_num_channels;
 }
 
-u_int64_t SoundStreamContainer::get_num_frames() const
+uint64_t SoundStreamContainer::get_num_frames() const
 {
     // return m_structure.get_samples_count_per_channel();
     return m_num_frames;
@@ -184,7 +184,7 @@ std::vector<DataVariant> SoundStreamContainer::get_segments_data(const std::vect
         | std::ranges::to<std::vector>();
 }
 
-std::span<const double> SoundStreamContainer::get_frame(u_int64_t frame_index) const
+std::span<const double> SoundStreamContainer::get_frame(uint64_t frame_index) const
 {
     if (frame_index >= m_num_frames) {
         return {};
@@ -205,23 +205,23 @@ std::span<const double> SoundStreamContainer::get_frame(u_int64_t frame_index) c
     return { frame_span.data(), frame_span.size() };
 }
 
-void SoundStreamContainer::get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const
+void SoundStreamContainer::get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const
 {
     if (start_frame >= m_num_frames || output.empty()) {
         std::ranges::fill(output, 0.0);
         return;
     }
 
-    u_int64_t frames_to_copy = std::min<size_t>(num_frames, m_num_frames - start_frame);
-    u_int64_t elements_to_copy = std::min(
+    uint64_t frames_to_copy = std::min<size_t>(num_frames, m_num_frames - start_frame);
+    uint64_t elements_to_copy = std::min(
         frames_to_copy * m_num_channels,
-        static_cast<u_int64_t>(output.size()));
+        static_cast<uint64_t>(output.size()));
 
     auto interleaved_data = get_data_as_double();
-    u_int64_t offset = start_frame * m_num_channels;
+    uint64_t offset = start_frame * m_num_channels;
 
     if (offset < interleaved_data.size()) {
-        u_int64_t available = std::min<size_t>(elements_to_copy, interleaved_data.size() - offset);
+        uint64_t available = std::min<size_t>(elements_to_copy, interleaved_data.size() - offset);
         std::copy_n(interleaved_data.begin() + offset, available, output.begin());
 
         if (available < output.size()) {
@@ -232,14 +232,14 @@ void SoundStreamContainer::get_frames(std::span<double> output, u_int64_t start_
     }
 }
 
-double SoundStreamContainer::get_value_at(const std::vector<u_int64_t>& coordinates) const
+double SoundStreamContainer::get_value_at(const std::vector<uint64_t>& coordinates) const
 {
     if (!has_data() || coordinates.size() != 2) {
         return 0.0;
     }
 
-    u_int64_t frame = coordinates[0];
-    u_int64_t channel = coordinates[1];
+    uint64_t frame = coordinates[0];
+    uint64_t channel = coordinates[1];
 
     if (frame >= m_num_frames || channel >= m_num_channels) {
         return 0.0;
@@ -251,7 +251,7 @@ double SoundStreamContainer::get_value_at(const std::vector<u_int64_t>& coordina
         if (spans.empty())
             return 0.0;
 
-        u_int64_t linear_index = frame * m_num_channels + channel;
+        uint64_t linear_index = frame * m_num_channels + channel;
         return (linear_index < spans[0].size()) ? spans[0][linear_index] : 0.0;
     }
 
@@ -261,13 +261,13 @@ double SoundStreamContainer::get_value_at(const std::vector<u_int64_t>& coordina
     return (frame < spans[channel].size()) ? spans[channel][frame] : 0.0;
 }
 
-void SoundStreamContainer::set_value_at(const std::vector<u_int64_t>& coordinates, double value)
+void SoundStreamContainer::set_value_at(const std::vector<uint64_t>& coordinates, double value)
 {
     if (coordinates.size() != 2)
         return;
 
-    u_int64_t frame = coordinates[0];
-    u_int64_t channel = coordinates[1];
+    uint64_t frame = coordinates[0];
+    uint64_t channel = coordinates[1];
 
     if (frame >= m_num_frames || channel >= m_num_channels) {
         return;
@@ -279,7 +279,7 @@ void SoundStreamContainer::set_value_at(const std::vector<u_int64_t>& coordinate
         if (spans.empty())
             return;
 
-        u_int64_t linear_index = frame * m_num_channels + channel;
+        uint64_t linear_index = frame * m_num_channels + channel;
         if (linear_index < spans[0].size()) {
             const_cast<std::span<double>&>(spans[0])[linear_index] = value;
         }
@@ -297,12 +297,12 @@ void SoundStreamContainer::set_value_at(const std::vector<u_int64_t>& coordinate
     m_double_extraction_dirty.store(true, std::memory_order_release);
 }
 
-u_int64_t SoundStreamContainer::coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const
+uint64_t SoundStreamContainer::coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const
 {
     return coordinates_to_linear(coordinates, m_structure.dimensions);
 }
 
-std::vector<u_int64_t> SoundStreamContainer::linear_index_to_coordinates(u_int64_t linear_index) const
+std::vector<uint64_t> SoundStreamContainer::linear_index_to_coordinates(uint64_t linear_index) const
 {
     return linear_to_coordinates(linear_index, m_structure.dimensions);
 }
@@ -322,7 +322,7 @@ void SoundStreamContainer::clear()
     m_num_frames = 0;
     m_circular_write_position = 0;
 
-    m_read_position = std::vector<std::atomic<u_int64_t>>(m_num_channels);
+    m_read_position = std::vector<std::atomic<uint64_t>>(m_num_channels);
     for (auto& pos : m_read_position) {
         pos.store(0);
     }
@@ -388,10 +388,10 @@ void SoundStreamContainer::unload_region(const Region& region)
     // No-op for in-memory container
 }
 
-void SoundStreamContainer::set_read_position(const std::vector<u_int64_t>& position)
+void SoundStreamContainer::set_read_position(const std::vector<uint64_t>& position)
 {
     if (m_read_position.size() != position.size()) {
-        m_read_position = std::vector<std::atomic<u_int64_t>>(position.size());
+        m_read_position = std::vector<std::atomic<uint64_t>>(position.size());
     }
 
     auto wrapped_pos = wrap_position_with_loop(position, m_loop_region, m_looping_enabled);
@@ -401,16 +401,16 @@ void SoundStreamContainer::set_read_position(const std::vector<u_int64_t>& posit
     }
 }
 
-void SoundStreamContainer::update_read_position_for_channel(size_t channel, u_int64_t frame)
+void SoundStreamContainer::update_read_position_for_channel(size_t channel, uint64_t frame)
 {
     if (channel < m_read_position.size()) {
         m_read_position[channel].store(frame);
     }
 }
 
-const std::vector<u_int64_t>& SoundStreamContainer::get_read_position() const
+const std::vector<uint64_t>& SoundStreamContainer::get_read_position() const
 {
-    static thread_local std::vector<u_int64_t> pos_cache;
+    static thread_local std::vector<uint64_t> pos_cache;
     pos_cache.resize(m_read_position.size());
 
     for (size_t i = 0; i < m_read_position.size(); ++i) {
@@ -420,12 +420,12 @@ const std::vector<u_int64_t>& SoundStreamContainer::get_read_position() const
     return pos_cache;
 }
 
-void SoundStreamContainer::advance_read_position(const std::vector<u_int64_t>& frames)
+void SoundStreamContainer::advance_read_position(const std::vector<uint64_t>& frames)
 {
     if (frames.empty())
         return;
 
-    std::vector<u_int64_t> current_pos(m_read_position.size());
+    std::vector<uint64_t> current_pos(m_read_position.size());
     for (size_t i = 0; i < m_read_position.size(); ++i) {
         current_pos[i] = m_read_position[i].load();
     }
@@ -447,22 +447,22 @@ bool SoundStreamContainer::is_at_end() const
         return true;
     }
 
-    u_int64_t current_frame = m_read_position[0].load();
+    uint64_t current_frame = m_read_position[0].load();
     return current_frame >= m_num_frames;
 }
 
 void SoundStreamContainer::reset_read_position()
 {
-    std::vector<u_int64_t> start_pos;
+    std::vector<uint64_t> start_pos;
 
     if (m_looping_enabled && !m_loop_region.start_coordinates.empty()) {
         start_pos = m_loop_region.start_coordinates;
     } else {
-        start_pos = std::vector<u_int64_t>(m_num_channels, 0);
+        start_pos = std::vector<uint64_t>(m_num_channels, 0);
     }
 
     if (m_read_position.size() != start_pos.size()) {
-        m_read_position = std::vector<std::atomic<u_int64_t>>(start_pos.size());
+        m_read_position = std::vector<std::atomic<uint64_t>>(start_pos.size());
     }
 
     for (size_t i = 0; i < start_pos.size(); ++i) {
@@ -470,12 +470,12 @@ void SoundStreamContainer::reset_read_position()
     }
 }
 
-u_int64_t SoundStreamContainer::time_to_position(double time) const
+uint64_t SoundStreamContainer::time_to_position(double time) const
 {
     return Kakshya::time_to_position(time, m_sample_rate);
 }
 
-double SoundStreamContainer::position_to_time(u_int64_t position) const
+double SoundStreamContainer::position_to_time(uint64_t position) const
 {
     return Kakshya::position_to_time(position, m_sample_rate);
 }
@@ -493,7 +493,7 @@ void SoundStreamContainer::set_loop_region(const Region& region)
     m_loop_region = region;
 
     if (m_looping_enabled && !region.start_coordinates.empty()) {
-        std::vector<u_int64_t> current_pos(m_read_position.size());
+        std::vector<uint64_t> current_pos(m_read_position.size());
         for (size_t i = 0; i < m_read_position.size(); ++i) {
             current_pos[i] = m_read_position[i].load();
         }
@@ -523,47 +523,47 @@ bool SoundStreamContainer::is_ready() const
     return has_data() && (state == ProcessingState::READY || state == ProcessingState::PROCESSED);
 }
 
-std::vector<u_int64_t> SoundStreamContainer::get_remaining_frames() const
+std::vector<uint64_t> SoundStreamContainer::get_remaining_frames() const
 {
-    std::vector<u_int64_t> frames(m_num_channels);
+    std::vector<uint64_t> frames(m_num_channels);
     if (m_looping_enabled || m_read_position.empty()) {
 
         for (auto& frame : frames) {
-            frame = std::numeric_limits<u_int64_t>::max();
+            frame = std::numeric_limits<uint64_t>::max();
         }
         return frames;
     }
 
     for (size_t i = 0; i < frames.size(); i++) {
-        u_int64_t current_frame = m_read_position[i].load();
+        uint64_t current_frame = m_read_position[i].load();
         frames[i] = (current_frame < m_num_frames) ? (m_num_frames - current_frame) : 0;
     }
     return frames;
 }
 
-u_int64_t SoundStreamContainer::read_sequential(std::span<double> output, u_int64_t count)
+uint64_t SoundStreamContainer::read_sequential(std::span<double> output, uint64_t count)
 {
-    u_int64_t frames_read = peek_sequential(output, count, 0);
+    uint64_t frames_read = peek_sequential(output, count, 0);
 
-    u_int64_t frames_to_advance = frames_read / m_num_channels;
-    std::vector<u_int64_t> advance_amount(m_num_channels, frames_to_advance);
+    uint64_t frames_to_advance = frames_read / m_num_channels;
+    std::vector<uint64_t> advance_amount(m_num_channels, frames_to_advance);
 
     advance_read_position(advance_amount);
     return frames_read;
 }
 
-u_int64_t SoundStreamContainer::peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset) const
+uint64_t SoundStreamContainer::peek_sequential(std::span<double> output, uint64_t count, uint64_t offset) const
 {
     auto interleaved_span = get_data_as_double();
     if (interleaved_span.empty() || output.empty())
         return 0;
 
-    u_int64_t start_frame = m_read_position.empty() ? 0 : m_read_position[0].load();
+    uint64_t start_frame = m_read_position.empty() ? 0 : m_read_position[0].load();
     start_frame += offset;
-    u_int64_t elements_to_read = std::min<u_int64_t>(count, static_cast<u_int64_t>(output.size()));
+    uint64_t elements_to_read = std::min<uint64_t>(count, static_cast<uint64_t>(output.size()));
 
     if (!m_looping_enabled) {
-        u_int64_t linear_start = start_frame * m_num_channels;
+        uint64_t linear_start = start_frame * m_num_channels;
         if (linear_start >= interleaved_span.size()) {
             std::ranges::fill(output, 0.0);
             return 0;
@@ -574,7 +574,7 @@ u_int64_t SoundStreamContainer::peek_sequential(std::span<double> output, u_int6
 
         auto copied = std::ranges::copy(view, output.begin());
         std::ranges::fill(output.subspan(copied.out - output.begin()), 0.0);
-        return static_cast<u_int64_t>(copied.out - output.begin());
+        return static_cast<uint64_t>(copied.out - output.begin());
     }
 
     if (m_loop_region.start_coordinates.empty()) {
@@ -582,19 +582,19 @@ u_int64_t SoundStreamContainer::peek_sequential(std::span<double> output, u_int6
         return 0;
     }
 
-    u_int64_t loop_start_frame = m_loop_region.start_coordinates[0];
-    u_int64_t loop_end_frame = m_loop_region.end_coordinates[0];
-    u_int64_t loop_length_frames = loop_end_frame - loop_start_frame + 1;
+    uint64_t loop_start_frame = m_loop_region.start_coordinates[0];
+    uint64_t loop_end_frame = m_loop_region.end_coordinates[0];
+    uint64_t loop_length_frames = loop_end_frame - loop_start_frame + 1;
 
     std::ranges::for_each(
         std::views::iota(0UZ, elements_to_read),
-        [&](u_int64_t i) {
-            u_int64_t element_pos = start_frame * m_num_channels + i;
-            u_int64_t frame_pos = element_pos / m_num_channels;
-            u_int64_t channel_offset = element_pos % m_num_channels;
+        [&](uint64_t i) {
+            uint64_t element_pos = start_frame * m_num_channels + i;
+            uint64_t frame_pos = element_pos / m_num_channels;
+            uint64_t channel_offset = element_pos % m_num_channels;
 
-            u_int64_t wrapped_frame = ((frame_pos - loop_start_frame) % loop_length_frames) + loop_start_frame;
-            u_int64_t wrapped_element = wrapped_frame * m_num_channels + channel_offset;
+            uint64_t wrapped_frame = ((frame_pos - loop_start_frame) % loop_length_frames) + loop_start_frame;
+            uint64_t wrapped_element = wrapped_frame * m_num_channels + channel_offset;
 
             output[i] = (wrapped_element < interleaved_span.size()) ? interleaved_span[wrapped_element] : 0.0;
         });
@@ -677,18 +677,18 @@ std::shared_ptr<DataProcessor> SoundStreamContainer::get_default_processor() con
     return m_default_processor;
 }
 
-u_int32_t SoundStreamContainer::register_dimension_reader(u_int32_t dimension_index)
+uint32_t SoundStreamContainer::register_dimension_reader(uint32_t dimension_index)
 {
     std::lock_guard<std::mutex> lock(m_reader_mutex);
     m_active_readers[dimension_index]++;
 
-    u_int32_t reader_id = m_dimension_to_next_reader_id[dimension_index]++;
-    m_reader_consumed_dimensions[reader_id] = std::unordered_set<u_int32_t>();
+    uint32_t reader_id = m_dimension_to_next_reader_id[dimension_index]++;
+    m_reader_consumed_dimensions[reader_id] = std::unordered_set<uint32_t>();
 
     return reader_id;
 }
 
-void SoundStreamContainer::unregister_dimension_reader(u_int32_t dimension_index)
+void SoundStreamContainer::unregister_dimension_reader(uint32_t dimension_index)
 {
     std::lock_guard<std::mutex> lock(m_reader_mutex);
     if (auto it = m_active_readers.find(dimension_index); it != m_active_readers.end()) {
@@ -706,7 +706,7 @@ bool SoundStreamContainer::has_active_readers() const
     return !m_active_readers.empty();
 }
 
-void SoundStreamContainer::mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id)
+void SoundStreamContainer::mark_dimension_consumed(uint32_t dimension_index, uint32_t reader_id)
 {
     if (m_reader_consumed_dimensions.contains(reader_id)) {
         m_reader_consumed_dimensions[reader_id].insert(dimension_index);

@@ -10,7 +10,7 @@ namespace MayaFlux::Kakshya {
  * @enum RegionSelectionPattern
  * @brief Describes how regions are selected for processing or playback.
  */
-enum class RegionSelectionPattern : u_int8_t {
+enum class RegionSelectionPattern : uint8_t {
     ALL, ///< Process all regions
     SEQUENTIAL, ///< Process regions in order
     RANDOM, ///< Random selection
@@ -25,7 +25,7 @@ enum class RegionSelectionPattern : u_int8_t {
  * @enum RegionTransition
  * @brief Describes how transitions between regions are handled.
  */
-enum class RegionTransition : u_int8_t {
+enum class RegionTransition : uint8_t {
     IMMEDIATE, ///< No transition, jump directly
     CROSSFADE, ///< Crossfade between regions
     OVERLAP, ///< Overlap regions during transition
@@ -37,7 +37,7 @@ enum class RegionTransition : u_int8_t {
  * @enum RegionState
  * @brief Processing state for regions.
  */
-enum class RegionState : u_int8_t {
+enum class RegionState : uint8_t {
     IDLE, ///< Not being processed
     LOADING, ///< Data being loaded
     READY, ///< Ready for processing
@@ -68,10 +68,10 @@ enum class RegionState : u_int8_t {
  */
 struct MAYAFLUX_API Region {
     /** @brief Starting frame index (inclusive) */
-    std::vector<u_int64_t> start_coordinates;
+    std::vector<uint64_t> start_coordinates;
 
     /** @brief Ending frame index (inclusive) */
-    std::vector<u_int64_t> end_coordinates;
+    std::vector<uint64_t> end_coordinates;
 
     /** @brief Flexible key-value store for region-specific attributes */
     std::unordered_map<std::string, std::any> attributes;
@@ -83,7 +83,7 @@ struct MAYAFLUX_API Region {
      * @param coordinates The N-dimensional coordinates.
      * @param attributes Optional metadata.
      */
-    Region(const std::vector<u_int64_t>& coordinates,
+    Region(const std::vector<uint64_t>& coordinates,
         std::unordered_map<std::string, std::any> attributes = {})
         : start_coordinates(coordinates)
         , end_coordinates(coordinates)
@@ -97,8 +97,8 @@ struct MAYAFLUX_API Region {
      * @param end End coordinates (inclusive).
      * @param attributes Optional metadata.
      */
-    Region(std::vector<u_int64_t> start,
-        std::vector<u_int64_t> end,
+    Region(std::vector<uint64_t> start,
+        std::vector<uint64_t> end,
         std::unordered_map<std::string, std::any> attributes = {})
         : start_coordinates(std::move(start))
         , end_coordinates(std::move(end))
@@ -113,7 +113,7 @@ struct MAYAFLUX_API Region {
      * @param extra_data Optional extra metadata (e.g., analysis result).
      * @return Region at the specified frame.
      */
-    static Region time_point(u_int64_t frame,
+    static Region time_point(uint64_t frame,
         const std::string& label = "",
         const std::any& extra_data = {})
     {
@@ -134,8 +134,8 @@ struct MAYAFLUX_API Region {
      * @param extra_data Optional extra metadata.
      * @return Region covering the specified time span.
      */
-    static Region time_span(u_int64_t start_frame,
-        u_int64_t end_frame,
+    static Region time_span(uint64_t start_frame,
+        uint64_t end_frame,
         const std::string& label = "",
         const std::any& extra_data = {})
     {
@@ -155,8 +155,8 @@ struct MAYAFLUX_API Region {
      * @param label Optional label for this region.
      * @return Region at the specified frame/channel.
      */
-    static Region audio_point(u_int64_t frame,
-        u_int32_t channel,
+    static Region audio_point(uint64_t frame,
+        uint32_t channel,
         const std::string& label = "")
     {
         std::unordered_map<std::string, std::any> attrs;
@@ -175,10 +175,10 @@ struct MAYAFLUX_API Region {
      * @param label Optional label for this region.
      * @return Region covering the specified audio region.
      */
-    static Region audio_span(u_int64_t start_frame,
-        u_int64_t end_frame,
-        u_int32_t start_channel,
-        u_int32_t end_channel,
+    static Region audio_span(uint64_t start_frame,
+        uint64_t end_frame,
+        uint32_t start_channel,
+        uint32_t end_channel,
         const std::string& label = "")
     {
         std::unordered_map<std::string, std::any> attrs;
@@ -198,8 +198,8 @@ struct MAYAFLUX_API Region {
      * @param label Optional label for this rectangle.
      * @return Region covering the specified image rectangle.
      */
-    static Region image_rect(u_int64_t x1, u_int64_t y1,
-        u_int64_t x2, u_int64_t y2,
+    static Region image_rect(uint64_t x1, uint64_t y1,
+        uint64_t x2, uint64_t y2,
         const std::string& label = "")
     {
         std::unordered_map<std::string, std::any> attrs;
@@ -220,10 +220,10 @@ struct MAYAFLUX_API Region {
      * @param label Optional label for this region.
      * @return Region covering the specified video region.
      */
-    static Region video_region(u_int64_t start_frame,
-        u_int64_t end_frame,
-        u_int64_t x1, u_int64_t y1,
-        u_int64_t x2, u_int64_t y2,
+    static Region video_region(uint64_t start_frame,
+        uint64_t end_frame,
+        uint64_t x1, uint64_t y1,
+        uint64_t x2, uint64_t y2,
         const std::string& label = "")
     {
         std::unordered_map<std::string, std::any> attrs;
@@ -247,7 +247,7 @@ struct MAYAFLUX_API Region {
      * @param coordinates N-dimensional coordinates to check.
      * @return True if contained, false otherwise.
      */
-    bool contains(const std::vector<u_int64_t>& coordinates) const
+    bool contains(const std::vector<uint64_t>& coordinates) const
     {
         if (coordinates.size() != start_coordinates.size())
             return false;
@@ -283,7 +283,7 @@ struct MAYAFLUX_API Region {
      * @param dimension_index The dimension to query.
      * @return The span (number of elements) along the dimension.
      */
-    u_int64_t get_span(u_int32_t dimension_index = 0) const
+    uint64_t get_span(uint32_t dimension_index = 0) const
     {
         if (dimension_index >= start_coordinates.size())
             return 0;
@@ -294,9 +294,9 @@ struct MAYAFLUX_API Region {
      * @brief Get the total volume (number of elements) in the region.
      * @return The product of spans across all dimensions.
      */
-    u_int64_t get_volume() const
+    uint64_t get_volume() const
     {
-        u_int64_t volume = 1;
+        uint64_t volume = 1;
         for (size_t i = 0; i < start_coordinates.size(); i++) {
             volume *= get_span(i);
         }
@@ -308,7 +308,7 @@ struct MAYAFLUX_API Region {
      * @param dimension_index The dimension to query.
      * @return The duration (number of elements) along the dimension.
      */
-    u_int64_t get_duration(u_int32_t dimension_index = 0) const
+    uint64_t get_duration(uint32_t dimension_index = 0) const
     {
         if (dimension_index >= start_coordinates.size()) {
             return 0;
@@ -395,9 +395,9 @@ struct MAYAFLUX_API Region {
     {
         Region result = *this;
         for (size_t i = 0; i < std::min<size_t>(factors.size(), start_coordinates.size()); i++) {
-            u_int64_t center = (start_coordinates[i] + end_coordinates[i]) / 2;
-            u_int64_t half_span = get_span(i) / 2;
-            auto new_half_span = static_cast<u_int64_t>((double)half_span * factors[i]);
+            uint64_t center = (start_coordinates[i] + end_coordinates[i]) / 2;
+            uint64_t half_span = get_span(i) / 2;
+            auto new_half_span = static_cast<uint64_t>((double)half_span * factors[i]);
 
             result.start_coordinates[i] = center - new_half_span;
             result.end_coordinates[i] = center + new_half_span;
@@ -474,13 +474,13 @@ struct MAYAFLUX_API RegionCache {
  */
 struct MAYAFLUX_API RegionSegment {
     Region source_region; ///< Associated region
-    std::vector<u_int64_t> offset_in_region; ///< Offset within the source region
-    std::vector<u_int64_t> segment_size; ///< Size in each dimension
+    std::vector<uint64_t> offset_in_region; ///< Offset within the source region
+    std::vector<uint64_t> segment_size; ///< Size in each dimension
 
     RegionCache cache; ///< Multi-channel cached audio data
     bool is_cached = false; ///< Flag indicating if data is cached
 
-    std::vector<u_int64_t> current_position { 0 }; ///< Current position within segment
+    std::vector<uint64_t> current_position { 0 }; ///< Current position within segment
     bool is_active = false;
     RegionState state = RegionState::IDLE;
 
@@ -510,8 +510,8 @@ struct MAYAFLUX_API RegionSegment {
      * @param size Size of the segment.
      */
     RegionSegment(const Region& region,
-        const std::vector<u_int64_t>& offset,
-        const std::vector<u_int64_t>& size)
+        const std::vector<uint64_t>& offset,
+        const std::vector<uint64_t>& size)
         : source_region(region)
         , offset_in_region(offset)
         , segment_size(size)
@@ -522,9 +522,9 @@ struct MAYAFLUX_API RegionSegment {
     /**
      * @brief Get the total number of elements in the segment.
      */
-    u_int64_t get_total_elements() const
+    uint64_t get_total_elements() const
     {
-        u_int64_t total = 1;
+        uint64_t total = 1;
         for (auto s : segment_size) {
             total *= s;
         }
@@ -536,7 +536,7 @@ struct MAYAFLUX_API RegionSegment {
      * @param pos The N-dimensional position.
      * @return True if contained, false otherwise.
      */
-    bool contains_position(const std::vector<u_int64_t>& pos) const
+    bool contains_position(const std::vector<uint64_t>& pos) const
     {
         if (pos.size() != offset_in_region.size())
             return false;
@@ -624,7 +624,7 @@ struct MAYAFLUX_API RegionSegment {
      * @param dimension Dimension to advance.
      * @return True if not at end, false if at end.
      */
-    bool advance_position(u_int64_t steps = 1, u_int32_t dimension = 0)
+    bool advance_position(uint64_t steps = 1, uint32_t dimension = 0)
     {
 
         if (current_position.empty() || segment_size.empty() || dimension >= current_position.size()) {
@@ -641,7 +641,7 @@ struct MAYAFLUX_API RegionSegment {
                     return false;
                 }
 
-                u_int64_t overflow = current_position[dim] / segment_size[dim];
+                uint64_t overflow = current_position[dim] / segment_size[dim];
                 current_position[dim] = current_position[dim] % segment_size[dim];
 
                 if (dim + 1 < current_position.size()) {
@@ -873,8 +873,8 @@ struct MAYAFLUX_API RegionGroup {
             return Region {};
 
         auto first = regions[0];
-        std::vector<u_int64_t> min_coords = first.start_coordinates;
-        std::vector<u_int64_t> max_coords = first.end_coordinates;
+        std::vector<uint64_t> min_coords = first.start_coordinates;
+        std::vector<uint64_t> max_coords = first.end_coordinates;
 
         for (const auto& region : regions) {
             for (size_t i = 0; i < min_coords.size(); i++) {
@@ -935,7 +935,7 @@ struct MAYAFLUX_API RegionGroup {
      * @param coordinates N-dimensional coordinates.
      * @return Vector of matching Regions.
      */
-    std::vector<Region> find_regions_containing_coordinates(const std::vector<u_int64_t>& coordinates) const
+    std::vector<Region> find_regions_containing_coordinates(const std::vector<uint64_t>& coordinates) const
     {
         std::vector<Region> result;
         for (const auto& region : regions) {

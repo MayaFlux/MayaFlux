@@ -90,7 +90,7 @@ std::vector<std::vector<T>> deinterleave_channels(std::span<const T> interleaved
  * @return DataVariant containing channel data.
  */
 DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& container,
-    u_int32_t channel_index);
+    uint32_t channel_index);
 
 /**
  * @brief Validates container for analysis operations with comprehensive checks

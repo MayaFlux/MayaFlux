@@ -33,20 +33,20 @@ public:
      * @param initial_capacity Initial capacity in frames (0 = minimal allocation)
      * @param circular_mode If true, acts as circular buffer with fixed capacity
      */
-    SoundStreamContainer(u_int32_t sample_rate = 48000,
-        u_int32_t num_channels = 2,
-        u_int64_t initial_capacity = 0,
+    SoundStreamContainer(uint32_t sample_rate = 48000,
+        uint32_t num_channels = 2,
+        uint64_t initial_capacity = 0,
         bool circular_mode = false);
 
     ~SoundStreamContainer() override = default;
 
     std::vector<DataDimension> get_dimensions() const override;
-    u_int64_t get_total_elements() const override;
+    uint64_t get_total_elements() const override;
     MemoryLayout get_memory_layout() const override { return m_structure.memory_layout; }
     void set_memory_layout(MemoryLayout layout) override;
 
-    u_int64_t get_frame_size() const override;
-    u_int64_t get_num_frames() const override;
+    uint64_t get_frame_size() const override;
+    uint64_t get_num_frames() const override;
 
     std::vector<DataVariant> get_region_data(const Region& region) const override;
     void set_region_data(const Region& region, const std::vector<DataVariant>& data) override;
@@ -54,14 +54,14 @@ public:
     std::vector<DataVariant> get_region_group_data(const RegionGroup& group) const override;
     std::vector<DataVariant> get_segments_data(const std::vector<RegionSegment>& segment) const override;
 
-    std::span<const double> get_frame(u_int64_t frame_index) const override;
-    void get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const override;
+    std::span<const double> get_frame(uint64_t frame_index) const override;
+    void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const override;
 
-    double get_value_at(const std::vector<u_int64_t>& coordinates) const override;
-    void set_value_at(const std::vector<u_int64_t>& coordinates, double value) override;
+    double get_value_at(const std::vector<uint64_t>& coordinates) const override;
+    void set_value_at(const std::vector<uint64_t>& coordinates, double value) override;
 
-    u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const override;
-    std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t linear_index) const override;
+    uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const override;
+    std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
     void clear() override;
     void lock() override { m_data_mutex.lock(); }
@@ -85,16 +85,16 @@ public:
     void load_region(const Region& region) override;
     void unload_region(const Region& region) override;
 
-    void set_read_position(const std::vector<u_int64_t>& position) override;
-    void update_read_position_for_channel(size_t channel, u_int64_t frame) override;
-    const std::vector<u_int64_t>& get_read_position() const override;
-    void advance_read_position(const std::vector<u_int64_t>& frames) override;
+    void set_read_position(const std::vector<uint64_t>& position) override;
+    void update_read_position_for_channel(size_t channel, uint64_t frame) override;
+    const std::vector<uint64_t>& get_read_position() const override;
+    void advance_read_position(const std::vector<uint64_t>& frames) override;
     bool is_at_end() const override;
     void reset_read_position() override;
 
-    u_int64_t get_temporal_rate() const override { return m_sample_rate; }
-    u_int64_t time_to_position(double time) const override;
-    double position_to_time(u_int64_t position) const override;
+    uint64_t get_temporal_rate() const override { return m_sample_rate; }
+    uint64_t time_to_position(double time) const override;
+    double position_to_time(uint64_t position) const override;
 
     void set_looping(bool enable) override;
     bool is_looping() const override { return m_looping_enabled; }
@@ -102,9 +102,9 @@ public:
     Region get_loop_region() const override;
 
     bool is_ready() const override;
-    std::vector<u_int64_t> get_remaining_frames() const override;
-    u_int64_t read_sequential(std::span<double> output, u_int64_t count) override;
-    u_int64_t peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset = 0) const override;
+    std::vector<uint64_t> get_remaining_frames() const override;
+    uint64_t read_sequential(std::span<double> output, uint64_t count) override;
+    uint64_t peek_sequential(std::span<double> output, uint64_t count, uint64_t offset = 0) const override;
 
     ProcessingState get_processing_state() const override { return m_processing_state.load(); }
     void update_processing_state(ProcessingState new_state) override;
@@ -134,10 +134,10 @@ public:
     std::shared_ptr<DataProcessingChain> get_processing_chain() override { return m_processing_chain; }
     void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) override { m_processing_chain = chain; }
 
-    u_int32_t register_dimension_reader(u_int32_t dimension_index) override;
-    void unregister_dimension_reader(u_int32_t dimension_index) override;
+    uint32_t register_dimension_reader(uint32_t dimension_index) override;
+    void unregister_dimension_reader(uint32_t dimension_index) override;
     bool has_active_readers() const override;
-    void mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id) override;
+    void mark_dimension_consumed(uint32_t dimension_index, uint32_t reader_id) override;
     bool all_dimensions_consumed() const override;
 
     virtual void clear_all_consumption();
@@ -155,20 +155,20 @@ public:
     void mark_buffers_for_processing(bool) override { /* Delegate to buffer integration */ }
     void mark_buffers_for_removal() override { /* Delegate to buffer integration */ }
 
-    // void ensure_capacity(u_int64_t required_frames);
-    // u_int64_t get_capacity() const;
-    // void set_circular_mode(bool enable, std::optional<u_int64_t> fixed_capacity = std::nullopt);
+    // void ensure_capacity(uint64_t required_frames);
+    // uint64_t get_capacity() const;
+    // void set_circular_mode(bool enable, std::optional<uint64_t> fixed_capacity = std::nullopt);
     // bool is_circular_mode() const { return m_circular_mode; }
 
-    // void setup(u_int64_t num_frames, u_int32_t sample_rate, u_int32_t num_channels);
+    // void setup(uint64_t num_frames, uint32_t sample_rate, uint32_t num_channels);
     // void set_raw_data(const DataVariant& data);
     // void set_all_raw_data(const DataVariant& data);
 
-    virtual u_int32_t get_sample_rate() const { return m_sample_rate; }
+    virtual uint32_t get_sample_rate() const { return m_sample_rate; }
 
-    inline virtual u_int32_t get_num_channels() const
+    inline virtual uint32_t get_num_channels() const
     {
-        return static_cast<u_int32_t>(m_structure.get_channel_count());
+        return static_cast<uint32_t>(m_structure.get_channel_count());
     }
     // double get_duration_seconds() const;
 
@@ -209,16 +209,16 @@ protected:
 
     std::atomic<int> m_processing_token_channel { -1 };
 
-    u_int32_t m_sample_rate = 48000;
-    u_int32_t m_num_channels {};
-    u_int64_t m_num_frames {};
+    uint32_t m_sample_rate = 48000;
+    uint32_t m_num_channels {};
+    uint64_t m_num_frames {};
 
-    std::vector<std::atomic<u_int64_t>> m_read_position;
+    std::vector<std::atomic<uint64_t>> m_read_position;
     bool m_looping_enabled = false;
     Region m_loop_region;
 
     bool m_circular_mode {};
-    u_int64_t m_circular_write_position {};
+    uint64_t m_circular_write_position {};
 
     std::atomic<ProcessingState> m_processing_state { ProcessingState::IDLE };
     std::shared_ptr<DataProcessor> m_default_processor;
@@ -226,11 +226,11 @@ protected:
 
     std::unordered_map<std::string, RegionGroup> m_region_groups;
 
-    std::unordered_map<u_int32_t, int> m_active_readers;
-    std::unordered_set<u_int32_t> m_consumed_dimensions;
+    std::unordered_map<uint32_t, int> m_active_readers;
+    std::unordered_set<uint32_t> m_consumed_dimensions;
 
-    std::unordered_map<u_int32_t, std::unordered_set<u_int32_t>> m_reader_consumed_dimensions;
-    std::unordered_map<u_int32_t, u_int32_t> m_dimension_to_next_reader_id;
+    std::unordered_map<uint32_t, std::unordered_set<uint32_t>> m_reader_consumed_dimensions;
+    std::unordered_map<uint32_t, uint32_t> m_dimension_to_next_reader_id;
 
     std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> m_state_callback;
 

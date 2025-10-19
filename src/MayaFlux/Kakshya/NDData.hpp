@@ -12,7 +12,7 @@ namespace MayaFlux::Kakshya {
  * This abstraction enables flexible, efficient access patterns for
  * digital-first, data-driven workflows, unconstrained by analog conventions.
  */
-enum class MemoryLayout : u_int8_t {
+enum class MemoryLayout : uint8_t {
     ROW_MAJOR, ///< C/C++ style (last dimension varies fastest)
     COLUMN_MAJOR ///< Fortran/MATLAB style (first dimension varies fastest)
 };
@@ -22,7 +22,7 @@ enum class MemoryLayout : u_int8_t {
  *
  * Determines how logical units (channels, frames) are stored in memory.
  */
-enum class OrganizationStrategy : u_int8_t {
+enum class OrganizationStrategy : uint8_t {
     INTERLEAVED, ///< Single DataVariant with interleaved data (LRLRLR for stereo)
     PLANAR, ///< Separate DataVariant per logical unit (LLL...RRR for stereo)
     HYBRID, ///< Mixed approach based on access patterns
@@ -40,9 +40,9 @@ enum class OrganizationStrategy : u_int8_t {
 using DataVariant = std::variant<
     std::vector<double>, ///< High precision floating point
     std::vector<float>, ///< Standard precision floating point
-    std::vector<u_int8_t>, ///< 8-bit data (images, compressed audio)
-    std::vector<u_int16_t>, ///< 16-bit data (CD audio, images)
-    std::vector<u_int32_t>, ///< 32-bit data (high precision int)
+    std::vector<uint8_t>, ///< 8-bit data (images, compressed audio)
+    std::vector<uint16_t>, ///< 16-bit data (CD audio, images)
+    std::vector<uint32_t>, ///< 32-bit data (high precision int)
     std::vector<std::complex<float>>, ///< Complex data (spectral)
     std::vector<std::complex<double>> ///< High precision complex
     >;
@@ -50,7 +50,7 @@ using DataVariant = std::variant<
 /**
  * @brief Data modality types for cross-modal analysis
  */
-enum class DataModality : u_int8_t {
+enum class DataModality : uint8_t {
     AUDIO_1D, ///< 1D audio signal
     AUDIO_MULTICHANNEL, ///< Multi-channel audio
     IMAGE_2D, ///< 2D image (grayscale or single channel)
@@ -82,7 +82,7 @@ struct MAYAFLUX_API DataDimension {
      * Used to indicate the intended interpretation of the dimension,
      * enabling generic algorithms to adapt to data structure.
      */
-    enum class Role : u_int8_t {
+    enum class Role : uint8_t {
         TIME, ///< Temporal progression (samples, frames, steps)
         CHANNEL, ///< Parallel streams (audio channels, color channels)
         SPATIAL_X, ///< Spatial X axis (images, tensors)
@@ -93,8 +93,8 @@ struct MAYAFLUX_API DataDimension {
     };
 
     std::string name; ///< Human-readable identifier for the dimension
-    u_int64_t size {}; ///< Number of elements in this dimension
-    u_int64_t stride {}; ///< Memory stride (elements between consecutive indices)
+    uint64_t size {}; ///< Number of elements in this dimension
+    uint64_t stride {}; ///< Memory stride (elements between consecutive indices)
     Role role = Role::CUSTOM; ///< Semantic hint for common operations
 
     DataDimension() = default;
@@ -106,7 +106,7 @@ struct MAYAFLUX_API DataDimension {
      * @param st Stride (default: 1)
      * @param r Semantic role (default: CUSTOM)
      */
-    DataDimension(std::string n, u_int64_t s, u_int64_t st = 1, Role r = Role::CUSTOM);
+    DataDimension(std::string n, uint64_t s, uint64_t st = 1, Role r = Role::CUSTOM);
 
     /**
      * @brief Convenience constructor for a temporal (time) dimension.
@@ -114,7 +114,7 @@ struct MAYAFLUX_API DataDimension {
      * @param name Optional name (default: "time")
      * @return DataDimension representing time
      */
-    static DataDimension time(u_int64_t samples, std::string name = "time");
+    static DataDimension time(uint64_t samples, std::string name = "time");
 
     /**
      * @brief Convenience constructor for a channel dimension.
@@ -122,7 +122,7 @@ struct MAYAFLUX_API DataDimension {
      * @param stride Memory stride (default: 1)
      * @return DataDimension representing channels
      */
-    static DataDimension channel(u_int64_t count, u_int64_t stride = 1);
+    static DataDimension channel(uint64_t count, uint64_t stride = 1);
 
     /**
      * @brief Convenience constructor for a frequency dimension.
@@ -130,7 +130,7 @@ struct MAYAFLUX_API DataDimension {
      * @param name Optional name (default: "frequency")
      * @return DataDimension representing frequency
      */
-    static DataDimension frequency(u_int64_t bins, std::string name = "frequency");
+    static DataDimension frequency(uint64_t bins, std::string name = "frequency");
 
     /**
      * @brief Convenience constructor for a spatial dimension.
@@ -140,7 +140,7 @@ struct MAYAFLUX_API DataDimension {
      * @param name Optional name (default: "pixels")
      * @return DataDimension representing a spatial axis
      */
-    static DataDimension spatial(u_int64_t size, char axis, u_int64_t stride = 1, std::string name = "spatial");
+    static DataDimension spatial(uint64_t size, char axis, uint64_t stride = 1, std::string name = "spatial");
 
     /**
      * @brief Data container combining variants and dimensions.
@@ -160,7 +160,7 @@ struct MAYAFLUX_API DataDimension {
     template <typename T>
     static DataModule create_for_modality(
         DataModality modality,
-        const std::vector<u_int64_t>& shape,
+        const std::vector<uint64_t>& shape,
         T default_value = T {},
         MemoryLayout layout = MemoryLayout::ROW_MAJOR,
         OrganizationStrategy strategy = OrganizationStrategy::PLANAR)
@@ -180,7 +180,7 @@ struct MAYAFLUX_API DataDimension {
      */
     static std::vector<DataDimension> create_dimensions(
         DataModality modality,
-        const std::vector<u_int64_t>& shape,
+        const std::vector<uint64_t>& shape,
         MemoryLayout layout = MemoryLayout::ROW_MAJOR);
 
     /**
@@ -191,7 +191,7 @@ struct MAYAFLUX_API DataDimension {
      * @return DataModule for 1D audio
      */
     template <typename T>
-    static DataModule create_audio_1d(u_int64_t samples, T default_value = T {})
+    static DataModule create_audio_1d(uint64_t samples, T default_value = T {})
     {
         return create_for_modality(DataModality::AUDIO_1D, { samples }, default_value);
     }
@@ -205,7 +205,7 @@ struct MAYAFLUX_API DataDimension {
      * @return DataModule for multi-channel audio
      */
     template <typename T>
-    static DataModule create_audio_multichannel(u_int64_t samples, u_int64_t channels, T default_value = T {})
+    static DataModule create_audio_multichannel(uint64_t samples, uint64_t channels, T default_value = T {})
     {
         return create_for_modality(DataModality::AUDIO_MULTICHANNEL, { samples, channels }, default_value);
     }
@@ -219,7 +219,7 @@ struct MAYAFLUX_API DataDimension {
      * @return DataModule for 2D image
      */
     template <typename T>
-    static DataModule create_image_2d(u_int64_t height, u_int64_t width, T default_value = T {})
+    static DataModule create_image_2d(uint64_t height, uint64_t width, T default_value = T {})
     {
         return create_for_modality(DataModality::IMAGE_2D, { height, width }, default_value);
     }
@@ -233,7 +233,7 @@ struct MAYAFLUX_API DataDimension {
      * @return DataModule for spectral data
      */
     template <typename T>
-    static DataModule create_spectral_2d(u_int64_t time_windows, u_int64_t frequency_bins, T default_value = T {})
+    static DataModule create_spectral_2d(uint64_t time_windows, uint64_t frequency_bins, T default_value = T {})
     {
         return create_for_modality(DataModality::SPECTRAL_2D, { time_windows, frequency_bins }, default_value);
     }
@@ -244,8 +244,8 @@ struct MAYAFLUX_API DataDimension {
      * @param layout Memory layout strategy
      * @return Vector of stride values for each dimension
      */
-    static std::vector<u_int64_t> calculate_strides(
-        const std::vector<u_int64_t>& shape,
+    static std::vector<uint64_t> calculate_strides(
+        const std::vector<uint64_t>& shape,
         MemoryLayout layout);
 
 private:
@@ -261,14 +261,14 @@ private:
     template <typename T>
     static std::vector<DataVariant> create_variants(
         DataModality modality,
-        const std::vector<u_int64_t>& shape,
+        const std::vector<uint64_t>& shape,
         T default_value,
         OrganizationStrategy org = OrganizationStrategy::PLANAR)
     {
         std::vector<DataVariant> variants;
 
         if (org == OrganizationStrategy::INTERLEAVED) {
-            u_int64_t total = std::accumulate(shape.begin(), shape.end(), u_int64_t(1), std::multiplies<>());
+            uint64_t total = std::accumulate(shape.begin(), shape.end(), uint64_t(1), std::multiplies<>());
             variants.emplace_back(std::vector<T>(total, default_value));
             return variants;
         }
@@ -279,10 +279,10 @@ private:
             break;
 
         case DataModality::AUDIO_MULTICHANNEL: {
-            u_int64_t samples = shape[0];
-            u_int64_t channels = shape[1];
+            uint64_t samples = shape[0];
+            uint64_t channels = shape[1];
             variants.reserve(channels);
-            for (u_int64_t ch = 0; ch < channels; ++ch) {
+            for (uint64_t ch = 0; ch < channels; ++ch) {
                 variants.emplace_back(std::vector<T>(samples, default_value));
             }
             break;
@@ -293,12 +293,12 @@ private:
             break;
 
         case DataModality::IMAGE_COLOR: {
-            u_int64_t height = shape[0];
-            u_int64_t width = shape[1];
-            u_int64_t channels = shape[2];
-            u_int64_t pixels = height * width;
+            uint64_t height = shape[0];
+            uint64_t width = shape[1];
+            uint64_t channels = shape[2];
+            uint64_t pixels = height * width;
             variants.reserve(channels);
-            for (u_int64_t ch = 0; ch < channels; ++ch) {
+            for (uint64_t ch = 0; ch < channels; ++ch) {
                 variants.emplace_back(std::vector<T>(pixels, default_value));
             }
             break;
@@ -313,26 +313,26 @@ private:
             break;
 
         case DataModality::VIDEO_GRAYSCALE: {
-            u_int64_t frames = shape[0];
-            u_int64_t height = shape[1];
-            u_int64_t width = shape[2];
-            u_int64_t frame_size = height * width;
+            uint64_t frames = shape[0];
+            uint64_t height = shape[1];
+            uint64_t width = shape[2];
+            uint64_t frame_size = height * width;
             variants.reserve(frames);
-            for (u_int64_t f = 0; f < frames; ++f) {
+            for (uint64_t f = 0; f < frames; ++f) {
                 variants.emplace_back(std::vector<T>(frame_size, default_value));
             }
             break;
         }
 
         case DataModality::VIDEO_COLOR: {
-            u_int64_t frames = shape[0];
-            u_int64_t height = shape[1];
-            u_int64_t width = shape[2];
-            u_int64_t channels = shape[3];
-            u_int64_t frame_size = height * width;
+            uint64_t frames = shape[0];
+            uint64_t height = shape[1];
+            uint64_t width = shape[2];
+            uint64_t channels = shape[3];
+            uint64_t frame_size = height * width;
             variants.reserve(frames * channels);
-            for (u_int64_t f = 0; f < frames; ++f) {
-                for (u_int64_t ch = 0; ch < channels; ++ch) {
+            for (uint64_t f = 0; f < frames; ++f) {
+                for (uint64_t ch = 0; ch < channels; ++ch) {
                     variants.emplace_back(std::vector<T>(frame_size, default_value));
                 }
             }
@@ -340,7 +340,7 @@ private:
         }
 
         default:
-            u_int64_t total = std::accumulate(shape.begin(), shape.end(), u_int64_t(1), std::multiplies<>());
+            uint64_t total = std::accumulate(shape.begin(), shape.end(), uint64_t(1), std::multiplies<>());
             variants.emplace_back(std::vector<T>(total, default_value));
             break;
         }

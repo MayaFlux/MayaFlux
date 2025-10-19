@@ -66,7 +66,7 @@ public:
      * @brief Set the output buffer size (shape) for each processing call.
      * @param shape Vector specifying the size in each dimension.
      */
-    void set_output_size(const std::vector<u_int64_t>& shape);
+    void set_output_size(const std::vector<uint64_t>& shape);
 
     /**
      * @brief Enable or disable automatic advancement of the read position after each process call.
@@ -78,7 +78,7 @@ public:
      * @brief Set the current read position (N-dimensional coordinates).
      * @param new_position New position vector.
      */
-    inline void set_current_position(const std::vector<u_int64_t>& new_position)
+    inline void set_current_position(const std::vector<uint64_t>& new_position)
     {
         m_current_position = new_position;
     }
@@ -96,15 +96,15 @@ private:
     ContainerDataStructure m_structure;
 
     // Position tracking
-    std::vector<u_int64_t> m_current_position;
-    std::vector<u_int64_t> m_output_shape;
+    std::vector<uint64_t> m_current_position;
+    std::vector<uint64_t> m_output_shape;
 
     // Loop configuration
     bool m_looping_enabled {};
     Region m_loop_region;
 
     // Metadata
-    u_int64_t m_total_elements {};
+    uint64_t m_total_elements {};
     std::chrono::steady_clock::time_point m_last_process_time;
 
     /**

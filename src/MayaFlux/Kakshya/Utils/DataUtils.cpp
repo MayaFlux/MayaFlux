@@ -2,24 +2,24 @@
 
 namespace MayaFlux::Kakshya {
 
-u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
+uint64_t calculate_total_elements(const std::vector<DataDimension>& dimensions)
 {
     if (dimensions.empty())
         return 0;
 
     return std::transform_reduce(dimensions.begin(), dimensions.end(),
-        u_int64_t(1), std::multiplies<>(),
+        uint64_t(1), std::multiplies<>(),
         [](const DataDimension& dim) { return dim.size; });
 }
 
-u_int64_t calculate_frame_size(const std::vector<DataDimension>& dimensions)
+uint64_t calculate_frame_size(const std::vector<DataDimension>& dimensions)
 {
     if (dimensions.empty())
         return 0;
 
     return std::transform_reduce(
         dimensions.begin() + 1, dimensions.end(),
-        u_int64_t(1), std::multiplies<>(),
+        uint64_t(1), std::multiplies<>(),
         [](const DataDimension& dim) constexpr { return dim.size; });
 }
 
@@ -169,21 +169,21 @@ std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
             dims.emplace_back(DataDimension::frequency(vec.size()));
 
         } else if constexpr (IntegerData<ValueType>) {
-            // u_int8_t, u_int16_t, u_int32_t -> flattened 2D (images typically)
+            // uint8_t, uint16_t, uint32_t -> flattened 2D (images typically)
             // Need to guess reasonable 2D dimensions from 1D size
-            u_int64_t total_size = vec.size();
+            uint64_t total_size = vec.size();
 
             if (total_size == 0) {
                 dims.emplace_back(DataDimension::spatial(0, 'x'));
                 dims.emplace_back(DataDimension::spatial(0, 'y'));
             } else {
-                auto sqrt_size = static_cast<u_int64_t>(std::sqrt(total_size));
+                auto sqrt_size = static_cast<uint64_t>(std::sqrt(total_size));
                 if (sqrt_size * sqrt_size == total_size) {
                     dims.emplace_back(DataDimension::spatial(sqrt_size, 'x'));
                     dims.emplace_back(DataDimension::spatial(sqrt_size, 'y'));
                 } else {
-                    u_int64_t width = sqrt_size;
-                    u_int64_t height = total_size / width;
+                    uint64_t width = sqrt_size;
+                    uint64_t height = total_size / width;
                     while (width * height != total_size && width > 1) {
                         width--;
                         height = total_size / width;

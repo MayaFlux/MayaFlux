@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Kakshya {
 
-DataDimension::DataDimension(std::string n, u_int64_t s, u_int64_t st, Role r)
+DataDimension::DataDimension(std::string n, uint64_t s, uint64_t st, Role r)
     : name(std::move(n))
     , size(s)
     , stride(st)
@@ -10,22 +10,22 @@ DataDimension::DataDimension(std::string n, u_int64_t s, u_int64_t st, Role r)
 {
 }
 
-DataDimension DataDimension::time(u_int64_t samples, std::string name)
+DataDimension DataDimension::time(uint64_t samples, std::string name)
 {
     return { std::move(name), samples, 1, Role::TIME };
 }
 
-DataDimension DataDimension::channel(u_int64_t count, u_int64_t stride)
+DataDimension DataDimension::channel(uint64_t count, uint64_t stride)
 {
     return { "channel", count, stride, Role::CHANNEL };
 }
 
-DataDimension DataDimension::frequency(u_int64_t bins, std::string name)
+DataDimension DataDimension::frequency(uint64_t bins, std::string name)
 {
     return { std::move(name), bins, 1, Role::FREQUENCY };
 }
 
-DataDimension DataDimension::spatial(u_int64_t size, char axis, u_int64_t stride, std::string name)
+DataDimension DataDimension::spatial(uint64_t size, char axis, uint64_t stride, std::string name)
 {
     Role r = [axis]() {
         switch (axis) {
@@ -47,7 +47,7 @@ DataDimension DataDimension::spatial(u_int64_t size, char axis, u_int64_t stride
 
 std::vector<DataDimension> DataDimension::create_dimensions(
     DataModality modality,
-    const std::vector<u_int64_t>& shape,
+    const std::vector<uint64_t>& shape,
     MemoryLayout layout)
 {
     std::vector<DataDimension> dims;
@@ -130,14 +130,14 @@ std::vector<DataDimension> DataDimension::create_dimensions(
     return dims;
 }
 
-std::vector<u_int64_t> DataDimension::calculate_strides(
-    const std::vector<u_int64_t>& shape,
+std::vector<uint64_t> DataDimension::calculate_strides(
+    const std::vector<uint64_t>& shape,
     MemoryLayout layout)
 {
     if (shape.empty())
         return {};
 
-    std::vector<u_int64_t> strides(shape.size());
+    std::vector<uint64_t> strides(shape.size());
 
     if (layout == MemoryLayout::ROW_MAJOR) {
         auto reversed_shape = shape | std::views::reverse;
@@ -146,14 +146,14 @@ std::vector<u_int64_t> DataDimension::calculate_strides(
             reversed_shape.end(),
             strides.rbegin(),
             1U,
-            std::multiplies<u_int64_t> {});
+            std::multiplies<uint64_t> {});
     } else {
         std::exclusive_scan(
             shape.begin(),
             shape.end(),
             strides.begin(),
             1U,
-            std::multiplies<u_int64_t> {});
+            std::multiplies<uint64_t> {});
     }
 
     return strides;

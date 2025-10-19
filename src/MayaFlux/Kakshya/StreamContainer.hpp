@@ -41,7 +41,7 @@ public:
      *
      * Enables random access and programmatic navigation within the stream.
      */
-    virtual void set_read_position(const std::vector<u_int64_t>& position) = 0;
+    virtual void set_read_position(const std::vector<uint64_t>& position) = 0;
 
     /**
      * @brief Update the read position for a specific channel.
@@ -50,7 +50,7 @@ public:
      *
      * Allows fine-grained control over individual channels in multi-channel streams.
      */
-    virtual void update_read_position_for_channel(size_t channel, u_int64_t frame) = 0;
+    virtual void update_read_position_for_channel(size_t channel, uint64_t frame) = 0;
 
     /**
      * @brief Get the current read position.
@@ -58,7 +58,7 @@ public:
      *
      * Allows external components to query or synchronize playback/processing state.
      */
-    virtual const std::vector<u_int64_t>& get_read_position() const = 0;
+    virtual const std::vector<uint64_t>& get_read_position() const = 0;
 
     /**
      * @brief Advance the read position by a specified amount.
@@ -67,7 +67,7 @@ public:
      *
      * Supports efficient sequential access and playback scenarios.
      */
-    virtual void advance_read_position(const std::vector<u_int64_t>& frames) = 0;
+    virtual void advance_read_position(const std::vector<uint64_t>& frames) = 0;
 
     /**
      * @brief Check if read position has reached the end of the stream.
@@ -92,7 +92,7 @@ public:
      *
      * Enables time-based navigation and synchronization with external systems.
      */
-    virtual u_int64_t get_temporal_rate() const = 0;
+    virtual uint64_t get_temporal_rate() const = 0;
 
     /**
      * @brief Convert from time (seconds) to position units (e.g., frame/sample index).
@@ -101,7 +101,7 @@ public:
      *
      * Supports time-based seeking and integration with time-aware workflows.
      */
-    virtual u_int64_t time_to_position(double time) const = 0;
+    virtual uint64_t time_to_position(double time) const = 0;
 
     /**
      * @brief Convert from position units (e.g., frame/sample index) to time (seconds).
@@ -110,7 +110,7 @@ public:
      *
      * Enables precise mapping between temporal and positional domains.
      */
-    virtual double position_to_time(u_int64_t position) const = 0;
+    virtual double position_to_time(uint64_t position) const = 0;
 
     /**
      * @brief Enable or disable looping behavior for the stream.
@@ -154,7 +154,7 @@ public:
      *
      * Enables efficient buffer management and lookahead in streaming scenarios.
      */
-    virtual std::vector<u_int64_t> get_remaining_frames() const = 0;
+    virtual std::vector<uint64_t> get_remaining_frames() const = 0;
 
     /**
      * @brief Read data sequentially from the current position.
@@ -165,7 +165,7 @@ public:
      *
      * Supports efficient, contiguous data access for playback or processing.
      */
-    virtual u_int64_t read_sequential(std::span<double> output, u_int64_t count) = 0;
+    virtual uint64_t read_sequential(std::span<double> output, uint64_t count) = 0;
 
     /**
      * @brief Peek at data without advancing the read position.
@@ -176,7 +176,7 @@ public:
      *
      * Enables lookahead, preview, or non-destructive inspection of stream data.
      */
-    virtual u_int64_t peek_sequential(std::span<double> output, u_int64_t count, u_int64_t offset = 0) const = 0;
+    virtual uint64_t peek_sequential(std::span<double> output, uint64_t count, uint64_t offset = 0) const = 0;
 
     virtual void reset_processing_token() = 0;
 
