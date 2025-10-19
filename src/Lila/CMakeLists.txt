@@ -5,6 +5,7 @@ set(LILA_SOURCES
     ClangInterpreter.cpp
     EventBus.cpp
     Server.cpp
+    WindowsJITSymbols.cpp
 )
 
 set(LILA_HEADERS
