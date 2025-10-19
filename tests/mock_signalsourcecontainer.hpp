@@ -22,7 +22,7 @@ public:
             ? DataModality::AUDIO_MULTICHANNEL
             : DataModality::AUDIO_1D;
 
-        std::vector<u_int64_t> shape;
+        std::vector<uint64_t> shape;
         if (modality == DataModality::AUDIO_1D) {
             shape = { m_num_frames };
         } else {
@@ -59,7 +59,7 @@ public:
             m_processed_data[0] = data;
         } else {
             m_processed_data.resize(m_num_channels);
-            for (u_int32_t ch = 0; ch < m_num_channels; ++ch) {
+            for (uint32_t ch = 0; ch < m_num_channels; ++ch) {
                 std::vector<double> channel_data;
                 channel_data.reserve(data.size() / m_num_channels);
                 for (size_t i = ch; i < data.size(); i += m_num_channels) {
@@ -79,7 +79,7 @@ public:
             m_processed_data.emplace_back(Kakshya::DataVariant { channel });
         }
 
-        m_num_channels = static_cast<u_int32_t>(channel_data.size());
+        m_num_channels = static_cast<uint32_t>(channel_data.size());
         m_data_structure.organization = OrganizationStrategy::PLANAR;
     }
 
@@ -88,7 +88,7 @@ public:
         return m_data_structure.dimensions;
     }
 
-    u_int64_t get_total_elements() const override
+    uint64_t get_total_elements() const override
     {
         return m_data_structure.get_total_elements();
     }
@@ -105,12 +105,12 @@ public:
     }
 
     // Use cached values for performance (like SoundStreamContainer)
-    u_int64_t get_num_frames() const override
+    uint64_t get_num_frames() const override
     {
         return m_num_frames;
     }
 
-    u_int64_t get_frame_size() const override
+    uint64_t get_frame_size() const override
     {
         return m_num_channels;
     }
@@ -154,23 +154,23 @@ public:
         }
     }
 
-    std::span<const double> get_frame(u_int64_t) const override
+    std::span<const double> get_frame(uint64_t) const override
     {
         static std::vector<double> empty;
         return {};
     }
 
-    void get_frames(std::span<double>, u_int64_t, u_int64_t) const override
+    void get_frames(std::span<double>, uint64_t, uint64_t) const override
     {
         // No-op for mock
     }
 
-    double get_value_at(const std::vector<u_int64_t>&) const override
+    double get_value_at(const std::vector<uint64_t>&) const override
     {
         return 0.0;
     }
 
-    void set_value_at(const std::vector<u_int64_t>&, double) override
+    void set_value_at(const std::vector<uint64_t>&, double) override
     {
         // No-op for mock
     }
@@ -215,12 +215,12 @@ public:
         // No-op for mock
     }
 
-    u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>&) const override
+    uint64_t coordinates_to_linear_index(const std::vector<uint64_t>&) const override
     {
         return 0;
     }
 
-    std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t) const override
+    std::vector<uint64_t> linear_index_to_coordinates(uint64_t) const override
     {
         return { 0, 0 };
     }
@@ -306,13 +306,13 @@ public:
         m_processing_chain = chain;
     }
 
-    u_int32_t register_dimension_reader(u_int32_t) override
+    uint32_t register_dimension_reader(uint32_t) override
     {
         // No-op for mock
         return 0;
     }
 
-    void unregister_dimension_reader(u_int32_t) override
+    void unregister_dimension_reader(uint32_t) override
     {
         // No-op for mock
     }
@@ -322,7 +322,7 @@ public:
         return false;
     }
 
-    void mark_dimension_consumed(u_int32_t, u_int32_t) override
+    void mark_dimension_consumed(uint32_t, uint32_t) override
     {
         // No-op for mock
     }
@@ -384,8 +384,8 @@ public:
     const std::vector<DataVariant>& get_data() override { return m_processed_data; }
 
 private:
-    u_int32_t m_num_channels { 1 };
-    u_int64_t m_num_frames { 1024 };
+    uint32_t m_num_channels { 1 };
+    uint64_t m_num_frames { 1024 };
 
     std::vector<DataVariant> m_processed_data;
     std::vector<DataVariant> m_processed_variant;

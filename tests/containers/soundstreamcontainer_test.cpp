@@ -47,7 +47,7 @@ TEST_F(DynamicSoundStreamTest, WriteFramesWithAutoResize)
     std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
     auto data_span = { std::span<const double>(test_data) };
 
-    u_int64_t frames_written = container->write_frames(data_span, 0);
+    uint64_t frames_written = container->write_frames(data_span, 0);
 
     EXPECT_EQ(frames_written, 4); // 8 samples / 2 channels = 4 frames
     EXPECT_GE(container->get_num_frames(), 4);
@@ -61,7 +61,7 @@ TEST_F(DynamicSoundStreamTest, WriteFramesAtNonZeroStartFrame)
     auto second_span = { std::span<const double>(second_data) };
 
     container->write_frames(first_span, 0);
-    u_int64_t frames_written = container->write_frames(second_span, 3);
+    uint64_t frames_written = container->write_frames(second_span, 3);
 
     EXPECT_EQ(frames_written, 2);
     EXPECT_GE(container->get_num_frames(), 5);
@@ -87,7 +87,7 @@ TEST_F(DynamicSoundStreamTest, UnderstandDataLayout)
 
     std::vector<double> read_buffer(4, 0.0);
     container->set_read_position({ 0, 0 });
-    u_int64_t samples_read = container->peek_sequential(std::span<double>(read_buffer), 4, 0);
+    uint64_t samples_read = container->peek_sequential(std::span<double>(read_buffer), 4, 0);
 
     std::cout << "=== Data Layout Test ===" << '\n';
     std::cout << "Container channels: " << container->get_num_channels() << '\n';
@@ -124,7 +124,7 @@ TEST_F(DynamicSoundStreamTest, ReadFramesAfterWrite)
 
     std::vector<double> read_buffer(6, 0.0);
     container->set_read_position({ 0, 0 });
-    u_int64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 6);
+    uint64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 6);
 
     EXPECT_GT(frames_read, 0) << "Should be able to read some data";
     EXPECT_LE(frames_read, 6) << "Should not read more than requested";
@@ -145,7 +145,7 @@ TEST_F(DynamicSoundStreamTest, ReadFramesAfterWrite)
 
 TEST_F(DynamicSoundStreamTest, EnsureCapacityExpandsContainer)
 {
-    u_int64_t initial_frames = container->get_num_frames();
+    uint64_t initial_frames = container->get_num_frames();
     container->ensure_capacity(100);
 
     EXPECT_GE(container->get_num_frames(), 100);
@@ -176,7 +176,7 @@ TEST_F(DynamicSoundStreamTest, CircularBufferWriteAndLoop)
 
     std::vector<double> read_buffer(16);
     container->set_read_position({ 0, 0 });
-    u_int64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 16);
+    uint64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 16);
 
     EXPECT_GT(frames_read, 0);
 
@@ -213,7 +213,7 @@ TEST_F(DynamicSoundStreamTest, PlanarOrganizationTest)
 
     std::vector<std::span<const double>> planar_data = { lspan, rspan };
 
-    u_int64_t frames_written = container->write_frames(planar_data, 0);
+    uint64_t frames_written = container->write_frames(planar_data, 0);
     EXPECT_EQ(frames_written, 4);
 
     auto frame0 = container->get_frame(0);
@@ -258,7 +258,7 @@ TEST_F(StreamWriteProcessorTest, ConstructorSetsContainer)
 
 TEST_F(StreamWriteProcessorTest, ProcessWritesToContainer)
 {
-    u_int64_t initial_frames = container->get_num_frames();
+    uint64_t initial_frames = container->get_num_frames();
 
     processor->processing_function(buffer);
 
@@ -278,7 +278,7 @@ TEST_F(StreamWriteProcessorTest, ProcessWithEmptyBufferDoesNotCrash)
 
 TEST_F(StreamWriteProcessorTest, ProcessWritesCorrectData)
 {
-    u_int64_t initial_frames = container->get_num_frames();
+    uint64_t initial_frames = container->get_num_frames();
 
     processor->processing_function(buffer);
 
@@ -286,8 +286,8 @@ TEST_F(StreamWriteProcessorTest, ProcessWritesCorrectData)
 
     std::vector<double> read_data(4, 0.0);
     auto read_positions = container->get_read_position();
-    container->set_read_position(std::vector<u_int64_t>(container->get_num_channels(), initial_frames));
-    u_int64_t frames_read = container->read_sequential(std::span<double>(read_data), 4);
+    container->set_read_position(std::vector<uint64_t>(container->get_num_channels(), initial_frames));
+    uint64_t frames_read = container->read_sequential(std::span<double>(read_data), 4);
 
     EXPECT_GT(frames_read, 0) << "Should be able to read back some data";
 
@@ -308,7 +308,7 @@ TEST_F(StreamWriteProcessorTest, ProcessWritesCorrectData)
 
 TEST_F(StreamWriteProcessorTest, MultipleProcessCallsAccumulateData)
 {
-    u_int64_t initial_frames = container->get_num_frames();
+    uint64_t initial_frames = container->get_num_frames();
 
     processor->processing_function(buffer);
     processor->processing_function(buffer);
@@ -347,7 +347,7 @@ protected:
 TEST_F(DynamicSoundStreamBufferInteropTest, ReadFromDynamicSoundStreamWriteToBuffer)
 {
     std::vector<double> temp_buffer(4, 0.0);
-    u_int64_t frames_read = source_container->read_sequential(std::span<double>(temp_buffer), 4);
+    uint64_t frames_read = source_container->read_sequential(std::span<double>(temp_buffer), 4);
 
     EXPECT_EQ(frames_read, 4);
 
@@ -379,7 +379,7 @@ TEST_F(DynamicSoundStreamBufferInteropTest, WriteFromBufferToDynamicSoundStream)
 
     std::vector<double> verify_buffer(8, 0.0);
     sink_container->set_read_position({ 0, 0 });
-    u_int64_t frames_read = sink_container->read_sequential(std::span<double>(verify_buffer), 8);
+    uint64_t frames_read = sink_container->read_sequential(std::span<double>(verify_buffer), 8);
 
     EXPECT_GT(frames_read, 0);
 
@@ -410,7 +410,7 @@ TEST_F(DynamicSoundStreamBufferInteropTest, WriteFromBufferToDynamicSoundStream)
 TEST_F(DynamicSoundStreamBufferInteropTest, FullPipelineSourceToSink)
 {
     std::vector<double> temp_buffer(4, 0.0);
-    u_int64_t frames_read = source_container->read_sequential(std::span<double>(temp_buffer), 4);
+    uint64_t frames_read = source_container->read_sequential(std::span<double>(temp_buffer), 4);
 
     auto& buffer_data = buffer->get_data();
     for (size_t i = 0; i < std::min<size_t>(frames_read, buffer_data.size()); ++i) {
@@ -423,7 +423,7 @@ TEST_F(DynamicSoundStreamBufferInteropTest, FullPipelineSourceToSink)
 
     std::vector<double> final_buffer(4, 0.0);
     sink_container->set_read_position({ 0, 0 });
-    u_int64_t final_frames = sink_container->read_sequential(std::span<double>(final_buffer), 4);
+    uint64_t final_frames = sink_container->read_sequential(std::span<double>(final_buffer), 4);
 
     EXPECT_GT(final_frames, 0) << "Should be able to read data from sink";
 
@@ -555,14 +555,14 @@ TEST_F(DynamicSoundStreamEdgeCasesTest, WriteEmptyData)
 {
     std::vector<double> empty_data;
     auto data_span = { std::span<const double>(empty_data) };
-    u_int64_t frames_written = container->write_frames(data_span, 0);
+    uint64_t frames_written = container->write_frames(data_span, 0);
     EXPECT_EQ(frames_written, 0);
 }
 
 TEST_F(DynamicSoundStreamEdgeCasesTest, ReadFromEmptyContainer)
 {
     std::vector<double> read_buffer(4);
-    u_int64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 4);
+    uint64_t frames_read = container->read_sequential(std::span<double>(read_buffer), 4);
     EXPECT_EQ(frames_read, 0);
 }
 

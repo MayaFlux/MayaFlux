@@ -30,7 +30,7 @@ TEST_F(SchedulerTest, Initialize)
 TEST_F(SchedulerTest, SampleConversion)
 {
     double seconds = 1.0;
-    u_int64_t expected_samples = TestConfig::SAMPLE_RATE;
+    uint64_t expected_samples = TestConfig::SAMPLE_RATE;
 
     EXPECT_EQ(scheduler->seconds_to_samples(seconds), expected_samples);
     EXPECT_EQ(scheduler->seconds_to_samples(0.5), expected_samples / 2);
@@ -187,7 +187,7 @@ TEST_F(SchedulerTest, MetroTask)
 {
     int metro_count = 0;
     constexpr double interval = 0.01;
-    u_int64_t expected_samples = scheduler->seconds_to_samples(interval);
+    uint64_t expected_samples = scheduler->seconds_to_samples(interval);
 
     auto metro_task = Kriya::metro(*scheduler, interval, [&metro_count]() {
         metro_count++;
@@ -210,7 +210,7 @@ TEST_F(SchedulerTest, LineTask)
     float start_value = 0.0f;
     float end_value = 1.0f;
     float duration = 0.1f;
-    u_int32_t step_duration = 10;
+    uint32_t step_duration = 10;
 
     auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, false);
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(line_task));
@@ -226,7 +226,7 @@ TEST_F(SchedulerTest, LineTask)
 
     scheduler->process_token(token, step_duration);
 
-    u_int64_t total_samples = scheduler->seconds_to_samples(duration);
+    uint64_t total_samples = scheduler->seconds_to_samples(duration);
     float expected_step = (end_value - start_value) * step_duration / total_samples;
 
     EXPECT_NEAR(*current_value, start_value + expected_step, 0.001f);
@@ -250,7 +250,7 @@ TEST_F(SchedulerTest, LineTaskRestart)
     float start_value = 0.0f;
     float end_value = 1.0f;
     float duration = 0.1f;
-    u_int32_t step_duration = 10;
+    uint32_t step_duration = 10;
     bool restartable = true;
 
     auto line_task = Kriya::line(*scheduler, start_value, end_value, duration, step_duration, restartable);
@@ -263,7 +263,7 @@ TEST_F(SchedulerTest, LineTaskRestart)
 
     scheduler->process_token(token);
 
-    u_int64_t total_samples = scheduler->seconds_to_samples(duration);
+    uint64_t total_samples = scheduler->seconds_to_samples(duration);
     scheduler->process_token(token, total_samples);
 
     EXPECT_FLOAT_EQ(*current_value, end_value);
@@ -311,7 +311,7 @@ TEST_F(SchedulerTest, CustomTokenProcessing)
 
     scheduler->register_token_processor(
         Vruta::ProcessingToken::ON_DEMAND,
-        [&custom_processor_called, &task_count](const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, u_int64_t) {
+        [&custom_processor_called, &task_count](const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, uint64_t) {
             custom_processor_called = true;
             task_count = static_cast<int>(tasks.size());
         });

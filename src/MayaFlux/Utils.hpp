@@ -25,7 +25,7 @@ enum ActionType {
     FUNCTION
 };
 
-enum NodeState : u_int32_t {
+enum NodeState : uint32_t {
     INACTIVE = 0x00, ///< Engine is not processing this node
     ACTIVE = 0x01, ///< Engine is processing this node
     PENDING_REMOVAL = 0x02, ///< Node is marked for removal
@@ -42,7 +42,7 @@ enum NodeState : u_int32_t {
  * @enum NodeChainSemantics
  * @brief Defines how to handle existing nodes when creating a new chain
  */
-enum NodeChainSemantics : u_int8_t {
+enum NodeChainSemantics : uint8_t {
     REPLACE_TARGET, ///< Unregister the target and register with the new chain node
     PRESERVE_BOTH, ///< Preserve both nodes in the chain, add new chain node to root, i.e doubling the target signal
     ONLY_CHAIN ///< Only keep the new chain node, unregistering the source and target
@@ -52,7 +52,7 @@ enum NodeChainSemantics : u_int8_t {
  * @enum NodeMixSemantics
  * @brief Defines how to handle existing nodes when creating a new mix
  */
-enum NodeBinaryOpSemantics : u_int8_t {
+enum NodeBinaryOpSemantics : uint8_t {
     REPLACE, ///< Unregister both nodes and register with the new binary op node
     KEEP ///< Preserve both nodes in the binary op, add new binary op node to root, i.e doubling the signal
 };
@@ -61,7 +61,7 @@ enum NodeBinaryOpSemantics : u_int8_t {
  * @enum ComplexConversionStrategy
  * @brief Strategy for converting complex numbers to real values
  */
-enum class ComplexConversionStrategy : u_int8_t {
+enum class ComplexConversionStrategy : uint8_t {
     MAGNITUDE, ///< |z| = sqrt(real² + imag²)
     REAL_PART, ///< z.real()
     IMAG_PART, ///< z.imag()
@@ -76,7 +76,7 @@ std::any safe_get_parameter(const std::string& parameter_name, const std::map<st
  * @param frame_rate Frame rate in Hz
  * @return Time duration in seconds
  */
-inline u_int64_t frames_to_seconds(u_int64_t frames, u_int32_t frame_rate)
+inline uint64_t frames_to_seconds(uint64_t frames, uint32_t frame_rate)
 {
     return frames / frame_rate;
 }
@@ -86,7 +86,7 @@ inline u_int64_t frames_to_seconds(u_int64_t frames, u_int32_t frame_rate)
  * @param frame_rate Frame rate in Hz
  * @return Duration in milliseconds
  */
-inline std::chrono::milliseconds frame_duration_ms(u_int32_t frame_rate)
+inline std::chrono::milliseconds frame_duration_ms(uint32_t frame_rate)
 {
     return std::chrono::milliseconds(1000 / frame_rate);
 }
@@ -96,7 +96,7 @@ inline std::chrono::milliseconds frame_duration_ms(u_int32_t frame_rate)
  * @param frame_rate Frame rate in Hz
  * @return Duration in microseconds
  */
-inline std::chrono::microseconds frame_duration_us(u_int32_t frame_rate)
+inline std::chrono::microseconds frame_duration_us(uint32_t frame_rate)
 {
     return std::chrono::microseconds(1000000 / frame_rate);
 }
@@ -107,7 +107,7 @@ inline std::chrono::microseconds frame_duration_us(u_int32_t frame_rate)
  * @param frame_rate Frame rate in Hz
  * @return Duration in milliseconds
  */
-inline std::chrono::milliseconds frames_duration_ms(u_int64_t num_frames, u_int32_t frame_rate)
+inline std::chrono::milliseconds frames_duration_ms(uint64_t num_frames, uint32_t frame_rate)
 {
     return std::chrono::milliseconds((num_frames * 1000) / frame_rate);
 }
@@ -118,7 +118,7 @@ inline std::chrono::milliseconds frames_duration_ms(u_int64_t num_frames, u_int3
  * @param frame_rate Frame rate in Hz
  * @return Duration in microseconds
  */
-inline std::chrono::microseconds frames_duration_us(u_int64_t num_frames, u_int32_t frame_rate)
+inline std::chrono::microseconds frames_duration_us(uint64_t num_frames, uint32_t frame_rate)
 {
     return std::chrono::microseconds((num_frames * 1000000) / frame_rate);
 }
@@ -128,7 +128,7 @@ inline std::chrono::microseconds frames_duration_us(u_int64_t num_frames, u_int3
  * @param sample_rate Sample rate in Hz
  * @return Time duration in seconds
  */
-inline u_int64_t samples_to_seconds(u_int64_t samples, u_int32_t sample_rate)
+inline uint64_t samples_to_seconds(uint64_t samples, uint32_t sample_rate)
 {
     return samples / sample_rate;
 }
@@ -140,7 +140,7 @@ inline u_int64_t samples_to_seconds(u_int64_t samples, u_int32_t sample_rate)
  * @param frame_rate Frame rate in Hz
  * @return Number of samples
  */
-inline u_int64_t frames_to_samples(u_int64_t frames, u_int32_t sample_rate, u_int32_t frame_rate)
+inline uint64_t frames_to_samples(uint64_t frames, uint32_t sample_rate, uint32_t frame_rate)
 {
     return (frames * sample_rate) / frame_rate;
 }
@@ -152,7 +152,7 @@ inline u_int64_t frames_to_samples(u_int64_t frames, u_int32_t sample_rate, u_in
  * @param frame_rate Frame rate in Hz
  * @return Number of frames
  */
-inline u_int64_t samples_to_frames(u_int64_t samples, u_int32_t sample_rate, u_int32_t frame_rate)
+inline uint64_t samples_to_frames(uint64_t samples, uint32_t sample_rate, uint32_t frame_rate)
 {
     return (samples * frame_rate) / sample_rate;
 }
@@ -163,9 +163,9 @@ inline u_int64_t samples_to_frames(u_int64_t samples, u_int32_t sample_rate, u_i
  * @param sample_rate Sample rate in Hz
  * @return Number of samples
  */
-inline u_int64_t seconds_to_samples(double seconds, u_int32_t sample_rate)
+inline uint64_t seconds_to_samples(double seconds, uint32_t sample_rate)
 {
-    return static_cast<u_int64_t>(seconds * sample_rate);
+    return static_cast<uint64_t>(seconds * sample_rate);
 }
 
 /**
@@ -174,9 +174,9 @@ inline u_int64_t seconds_to_samples(double seconds, u_int32_t sample_rate)
  * @param frame_rate Frame rate in Hz
  * @return Number of frames
  */
-inline u_int64_t seconds_to_frames(double seconds, u_int32_t frame_rate)
+inline uint64_t seconds_to_frames(double seconds, uint32_t frame_rate)
 {
-    return static_cast<u_int64_t>(seconds * frame_rate);
+    return static_cast<uint64_t>(seconds * frame_rate);
 }
 
 /**
@@ -185,9 +185,9 @@ inline u_int64_t seconds_to_frames(double seconds, u_int32_t frame_rate)
  * @param rate Processing rate (samples/sec, frames/sec, etc.)
  * @return Number of processing units
  */
-inline u_int64_t seconds_to_units(double seconds, u_int32_t rate)
+inline uint64_t seconds_to_units(double seconds, uint32_t rate)
 {
-    return static_cast<u_int64_t>(seconds * rate);
+    return static_cast<uint64_t>(seconds * rate);
 }
 
 /**
@@ -196,7 +196,7 @@ inline u_int64_t seconds_to_units(double seconds, u_int32_t rate)
  * @param rate Processing rate (samples/sec, frames/sec, etc.)
  * @return Time duration in seconds
  */
-inline double units_to_seconds(u_int64_t units, u_int32_t rate)
+inline double units_to_seconds(uint64_t units, uint32_t rate)
 {
     return static_cast<double>(units) / rate;
 }

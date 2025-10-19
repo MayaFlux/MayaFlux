@@ -271,7 +271,7 @@ TEST_F(PeakExtractionTest, DetectsAllPeaks)
 {
     extractor->set_parameter("threshold", 1.0);
     extractor->set_parameter("min_distance", 50.0);
-    extractor->set_parameter("region_size", static_cast<u_int32_t>(64));
+    extractor->set_parameter("region_size", static_cast<uint32_t>(64));
 
     std::vector<DataVariant> signal_variant(test_signal.size());
     for (size_t i = 0; i < test_signal.size(); ++i) {
@@ -291,7 +291,7 @@ TEST_F(PeakExtractionTest, RespectsPeakThreshold)
 {
     extractor->set_parameter("threshold", 2.0);
     extractor->set_parameter("min_distance", 50.0);
-    extractor->set_parameter("region_size", static_cast<u_int32_t>(64));
+    extractor->set_parameter("region_size", static_cast<uint32_t>(64));
 
     std::vector<DataVariant> signal_variant(test_signal.size());
     for (size_t i = 0; i < test_signal.size(); ++i) {
@@ -309,7 +309,7 @@ TEST_F(PeakExtractionTest, MinimumDistanceConstraint)
 {
     extractor->set_parameter("threshold", 1.0);
     extractor->set_parameter("min_distance", 500.0);
-    extractor->set_parameter("region_size", static_cast<u_int32_t>(64));
+    extractor->set_parameter("region_size", static_cast<uint32_t>(64));
 
     std::vector<DataVariant> signal_variant(test_signal.size());
     for (size_t i = 0; i < test_signal.size(); ++i) {
@@ -330,7 +330,7 @@ TEST_F(PeakExtractionTest, RegionSizeEffect)
     extractor->set_parameter("threshold", 1.0);
     extractor->set_parameter("min_distance", 50.0);
 
-    extractor->set_parameter("region_size", static_cast<u_int32_t>(16));
+    extractor->set_parameter("region_size", static_cast<uint32_t>(16));
     std::vector<DataVariant> signal_variant(test_signal.size());
     for (size_t i = 0; i < test_signal.size(); ++i) {
         signal_variant[i] = test_signal[i];
@@ -338,7 +338,7 @@ TEST_F(PeakExtractionTest, RegionSizeEffect)
 
     auto small_region = extractor->extract_data(signal_variant);
 
-    extractor->set_parameter("region_size", static_cast<u_int32_t>(128));
+    extractor->set_parameter("region_size", static_cast<uint32_t>(128));
     auto large_region = extractor->extract_data(signal_variant);
 
     for (size_t i = 0; i < large_region.size(); i++) {

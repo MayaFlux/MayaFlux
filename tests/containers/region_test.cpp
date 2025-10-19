@@ -21,8 +21,8 @@ protected:
         time_span.set_attribute("energy", 0.75);
         time_span.set_attribute("frequency", 440.0);
 
-        std::vector<u_int64_t> start_index = { 10, 20, 30 };
-        std::vector<u_int64_t> end_index = { 50, 60, 70 };
+        std::vector<uint64_t> start_index = { 10, 20, 30 };
+        std::vector<uint64_t> end_index = { 50, 60, 70 };
         multi_dim = Kakshya::Region(start_index, end_index);
     }
 
@@ -156,9 +156,9 @@ TEST_F(RegionTest, ContainmentAndOverlap)
     EXPECT_FALSE(region.contains({ 100, 200 }));
     EXPECT_FALSE(multi_dim.contains({ 25, 40 }));
 
-    Region overlap1(std::vector<u_int64_t>({ 75 }), std::vector<u_int64_t>({ 125 }));
-    Region overlap2(std::vector<u_int64_t>({ 125 }), std::vector<u_int64_t>({ 175 }));
-    Region no_overlap(std::vector<u_int64_t>({ 200 }), std::vector<u_int64_t>({ 250 }));
+    Region overlap1(std::vector<uint64_t>({ 75 }), std::vector<uint64_t>({ 125 }));
+    Region overlap2(std::vector<uint64_t>({ 125 }), std::vector<uint64_t>({ 175 }));
+    Region no_overlap(std::vector<uint64_t>({ 200 }), std::vector<uint64_t>({ 250 }));
 
     EXPECT_TRUE(time_span.overlaps(overlap1));
     EXPECT_TRUE(time_span.overlaps(overlap2));
@@ -166,10 +166,10 @@ TEST_F(RegionTest, ContainmentAndOverlap)
 
     EXPECT_TRUE(time_span.overlaps(time_span));
 
-    Region multi_overlap(std::vector<u_int64_t>({ 40, 50, 60 }), std::vector<u_int64_t>({ 80, 90, 100 }));
+    Region multi_overlap(std::vector<uint64_t>({ 40, 50, 60 }), std::vector<uint64_t>({ 80, 90, 100 }));
     EXPECT_TRUE(multi_dim.overlaps(multi_overlap));
 
-    Region multi_no_overlap(std::vector<u_int64_t>({ 100, 100, 100 }), std::vector<u_int64_t>({ 200, 200, 200 }));
+    Region multi_no_overlap(std::vector<uint64_t>({ 100, 100, 100 }), std::vector<uint64_t>({ 200, 200, 200 }));
     EXPECT_FALSE(multi_dim.overlaps(multi_no_overlap));
 }
 
@@ -191,14 +191,14 @@ TEST_F(RegionTest, Transformations)
     EXPECT_EQ(negative_translate.start_coordinates[0], 0);
 
     auto scaled = time_span.scale({ 2.0 });
-    u_int64_t center = (50 + 150) / 2; // 100
-    u_int64_t half_span = (150 - 50) / 2; // 50
-    auto new_half_span = static_cast<u_int64_t>(half_span * 2.0); // 100
+    uint64_t center = (50 + 150) / 2; // 100
+    uint64_t half_span = (150 - 50) / 2; // 50
+    auto new_half_span = static_cast<uint64_t>(half_span * 2.0); // 100
     EXPECT_EQ(scaled.start_coordinates[0], center - new_half_span); // 0
     EXPECT_EQ(scaled.end_coordinates[0], center + new_half_span); // 200
 
     auto scaled_down = time_span.scale({ 0.5 });
-    auto new_half_span_down = static_cast<u_int64_t>(half_span * 0.5); // 25
+    auto new_half_span_down = static_cast<uint64_t>(half_span * 0.5); // 25
     EXPECT_EQ(scaled_down.start_coordinates[0], center - new_half_span_down); // 75
     EXPECT_EQ(scaled_down.end_coordinates[0], center + new_half_span_down); // 125
 
@@ -224,8 +224,8 @@ TEST_F(RegionTest, EqualityOperators)
     EXPECT_TRUE(time_span == span_identical);
     EXPECT_FALSE(time_span == span_different);
 
-    Region multi_identical(std::vector<u_int64_t>({ 10, 20, 30 }), std::vector<u_int64_t>({ 50, 60, 70 }));
-    Region multi_different(std::vector<u_int64_t>({ 10, 20, 30 }), std::vector<u_int64_t>({ 50, 60, 71 }));
+    Region multi_identical(std::vector<uint64_t>({ 10, 20, 30 }), std::vector<uint64_t>({ 50, 60, 70 }));
+    Region multi_different(std::vector<uint64_t>({ 10, 20, 30 }), std::vector<uint64_t>({ 50, 60, 71 }));
 
     EXPECT_TRUE(multi_dim == multi_identical);
     EXPECT_FALSE(multi_dim == multi_different);
@@ -378,13 +378,13 @@ TEST_F(RegionSegmentTest, CacheManagement)
 TEST_F(RegionSegmentTest, PositionManagement)
 {
     EXPECT_TRUE(std::ranges::all_of(segment.current_position,
-        [](u_int64_t pos) { return pos == 0; }));
+        [](uint64_t pos) { return pos == 0; }));
 
     segment.current_position[0] = 50;
     segment.current_position[1] = 1;
     segment.reset_position();
     EXPECT_TRUE(std::ranges::all_of(segment.current_position,
-        [](u_int64_t pos) { return pos == 0; }));
+        [](uint64_t pos) { return pos == 0; }));
 
     EXPECT_TRUE(segment.advance_position(10, 0)); // advance 10 steps in dimension 0
     EXPECT_EQ(segment.current_position[0], 10);
@@ -850,10 +850,10 @@ TEST_F(RegionCacheTest, DataVariantHandling)
     EXPECT_DOUBLE_EQ(complex_data[1].imag(), 1.0);
 
     RegionCache int_cache;
-    int_cache.data = { std::vector<u_int16_t> { 100, 200, 300 } };
+    int_cache.data = { std::vector<uint16_t> { 100, 200, 300 } };
     int_cache.source_region = region;
 
-    auto int_data = std::get<std::vector<u_int16_t>>(int_cache.data[0]);
+    auto int_data = std::get<std::vector<uint16_t>>(int_cache.data[0]);
     EXPECT_EQ(int_data.size(), 3);
     EXPECT_EQ(int_data[2], 300);
 }
@@ -960,14 +960,14 @@ TEST_F(RegionUtilityTest, RegionTransformations)
     EXPECT_EQ(multi_translated.end_coordinates[1], 1);
 
     auto scaled = scale_region(region1, { 2.0 });
-    u_int64_t center = (100 + 200) / 2; // 150
-    u_int64_t half_span = (200 - 100) / 2; // 50
-    auto new_half_span = static_cast<u_int64_t>(half_span * 2.0); // 100
+    uint64_t center = (100 + 200) / 2; // 150
+    uint64_t half_span = (200 - 100) / 2; // 50
+    auto new_half_span = static_cast<uint64_t>(half_span * 2.0); // 100
     EXPECT_EQ(scaled.start_coordinates[0], center - new_half_span); // 50
     EXPECT_EQ(scaled.end_coordinates[0], center + new_half_span); // 250
 
     auto shrunk = scale_region(region1, { 0.5 });
-    auto shrunk_half_span = static_cast<u_int64_t>(half_span * 0.5); // 25
+    auto shrunk_half_span = static_cast<uint64_t>(half_span * 0.5); // 25
     EXPECT_EQ(shrunk.start_coordinates[0], center - shrunk_half_span); // 125
     EXPECT_EQ(shrunk.end_coordinates[0], center + shrunk_half_span); // 175
 }

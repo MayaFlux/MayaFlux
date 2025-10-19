@@ -32,7 +32,7 @@ TEST_F(BufferManagerTest, Initialization)
     EXPECT_EQ(manager->get_num_channels(default_token), TestConfig::NUM_CHANNELS);
     EXPECT_EQ(manager->get_root_audio_buffer_size(default_token), TestConfig::BUFFER_SIZE);
 
-    for (u_int32_t i = 0; i < TestConfig::NUM_CHANNELS; i++) {
+    for (uint32_t i = 0; i < TestConfig::NUM_CHANNELS; i++) {
         auto buffer = manager->get_root_audio_buffer(default_token, i);
         EXPECT_NE(buffer, nullptr);
 
@@ -102,7 +102,7 @@ public:
 TEST_F(BufferManagerTest, CloneBufferForChannels)
 {
     auto source_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
         source_buffer->get_data()[i] = static_cast<double>(i) * 0.1;
     }
 
@@ -124,7 +124,7 @@ TEST_F(BufferManagerTest, CloneBufferForChannels)
     auto test_processor = std::make_shared<TestCloneProcessor>();
     source_buffer->set_default_processor(test_processor);
 
-    std::vector<u_int32_t> target_channels = { 1 };
+    std::vector<uint32_t> target_channels = { 1 };
     if (TestConfig::NUM_CHANNELS > 2) {
         target_channels.push_back(2);
     }
@@ -140,7 +140,7 @@ TEST_F(BufferManagerTest, CloneBufferForChannels)
         EXPECT_EQ(cloned_buffer->get_channel_id(), channel);
         EXPECT_EQ(cloned_buffer->get_num_samples(), source_buffer->get_num_samples());
 
-        for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+        for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
             EXPECT_DOUBLE_EQ(cloned_buffer->get_data()[i], source_buffer->get_data()[i]);
         }
 
@@ -158,11 +158,11 @@ TEST_F(BufferManagerTest, CloneBufferForChannels)
 TEST_F(BufferManagerTest, SupplyBufferBasicOperation)
 {
     auto source_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-    for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
         source_buffer->get_data()[i] = static_cast<double>(i) * 0.2 + 1.0;
     }
 
-    u_int32_t target_channel = 1;
+    uint32_t target_channel = 1;
     double mix_level = 0.8;
 
     EXPECT_TRUE(manager->supply_buffer_to(source_buffer, default_token, target_channel, mix_level));
@@ -193,7 +193,7 @@ TEST_F(BufferManagerTest, SupplyBufferBasicOperation)
 
 TEST_F(BufferManagerTest, SupplyBufferMultipleSources)
 {
-    u_int32_t target_channel = 1;
+    uint32_t target_channel = 1;
 
     auto source1 = std::make_shared<Buffers::AudioBuffer>(2, TestConfig::BUFFER_SIZE);
     auto source2 = std::make_shared<Buffers::AudioBuffer>(3, TestConfig::BUFFER_SIZE);
@@ -244,7 +244,7 @@ TEST_F(BufferManagerTest, TokenBasedProcessing)
 
     manager->add_audio_buffer(buffer, default_token, 0);
 
-    u_int32_t processing_units = manager->get_root_audio_buffer_size(default_token);
+    uint32_t processing_units = manager->get_root_audio_buffer_size(default_token);
     manager->process_channel(default_token, 0, processing_units);
 
     auto& root_data = manager->get_buffer_data(default_token, 0);
@@ -267,7 +267,7 @@ TEST_F(BufferManagerTest, InterleaveOperations)
 
     manager->fill_interleaved(interleaved.data(), TestConfig::BUFFER_SIZE, default_token, TestConfig::NUM_CHANNELS);
 
-    for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
         EXPECT_DOUBLE_EQ(interleaved[i * TestConfig::NUM_CHANNELS], 1.0);
         EXPECT_DOUBLE_EQ(interleaved[i * TestConfig::NUM_CHANNELS + 1], -1.0);
     }
@@ -282,7 +282,7 @@ TEST_F(BufferManagerTest, InterleaveOperations)
     const auto& channel0 = manager->get_buffer_data(default_token, 0);
     const auto& channel1 = manager->get_buffer_data(default_token, 1);
 
-    for (u_int32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
+    for (uint32_t i = 0; i < TestConfig::BUFFER_SIZE; i++) {
         EXPECT_DOUBLE_EQ(channel0[i], 1.0);
         EXPECT_DOUBLE_EQ(channel1[i], -1.0);
     }
@@ -290,19 +290,19 @@ TEST_F(BufferManagerTest, InterleaveOperations)
 
 TEST_F(BufferManagerTest, Resize)
 {
-    u_int32_t new_size = TestConfig::BUFFER_SIZE * 2;
+    uint32_t new_size = TestConfig::BUFFER_SIZE * 2;
 
     manager->resize_root_audio_buffers(default_token, new_size);
     EXPECT_EQ(manager->get_root_audio_buffer_size(default_token), new_size);
 
-    for (u_int32_t i = 0; i < TestConfig::NUM_CHANNELS; i++) {
+    for (uint32_t i = 0; i < TestConfig::NUM_CHANNELS; i++) {
         EXPECT_EQ(manager->get_root_audio_buffer(default_token, i)->get_num_samples(), new_size);
     }
 
     auto buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
     manager->add_audio_buffer(buffer, default_token, 0);
 
-    u_int32_t newer_size = new_size + 100;
+    uint32_t newer_size = new_size + 100;
     manager->resize_root_audio_buffers(default_token, newer_size);
 
     auto root = std::dynamic_pointer_cast<Buffers::RootAudioBuffer>(manager->get_root_audio_buffer(default_token, 0));
@@ -694,12 +694,12 @@ TEST_F(BufferManagerTest, NodeDataIntegration)
 
 TEST_F(BufferManagerTest, InputBufferCreationAndProcessing)
 {
-    const u_int32_t input_channels = 2;
-    const u_int32_t buffer_size = TestConfig::BUFFER_SIZE;
+    const uint32_t input_channels = 2;
+    const uint32_t buffer_size = TestConfig::BUFFER_SIZE;
 
     std::vector<double> input_data(buffer_size * input_channels, 0.0);
 
-    for (u_int32_t frame = 0; frame < buffer_size; ++frame) {
+    for (uint32_t frame = 0; frame < buffer_size; ++frame) {
         double t = static_cast<double>(frame) / 48000.0;
         input_data[frame * input_channels + 0] = 0.5 * std::sin(2 * M_PI * 440.0 * t);
         input_data[frame * input_channels + 1] = 0.3 * std::sin(2 * M_PI * 880.0 * t);
@@ -724,7 +724,7 @@ TEST_F(BufferManagerTest, InputBufferCreationAndProcessing)
 
 TEST_F(BufferManagerTest, InputListenerRegistrationAndDispatch)
 {
-    const u_int32_t input_channel = 0;
+    const uint32_t input_channel = 0;
 
     auto listener1 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
     auto listener2 = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
@@ -783,8 +783,8 @@ TEST_F(BufferManagerTest, InputListenerRegistrationAndDispatch)
 
 TEST_F(BufferManagerTest, InputToOutputRouting)
 {
-    const u_int32_t input_channels = 2;
-    const u_int32_t output_channels = TestConfig::NUM_CHANNELS;
+    const uint32_t input_channels = 2;
+    const uint32_t output_channels = TestConfig::NUM_CHANNELS;
 
     auto input_router_ch0 = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
     auto input_router_ch1 = std::make_shared<Buffers::AudioBuffer>(1, TestConfig::BUFFER_SIZE);
@@ -801,7 +801,7 @@ TEST_F(BufferManagerTest, InputToOutputRouting)
     }
 
     std::vector<double> input_data(TestConfig::BUFFER_SIZE * input_channels, 0.0);
-    for (u_int32_t frame = 0; frame < TestConfig::BUFFER_SIZE; ++frame) {
+    for (uint32_t frame = 0; frame < TestConfig::BUFFER_SIZE; ++frame) {
         input_data[frame * input_channels + 0] = 0.7; // Channel 0: constant
         input_data[frame * input_channels + 1] = static_cast<double>(frame) / TestConfig::BUFFER_SIZE; // Channel 1: ramp
     }
