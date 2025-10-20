@@ -1,4 +1,4 @@
-install(TARGETS MayaFluxLib 
+install(TARGETS MayaFluxLib
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
@@ -21,7 +21,10 @@ configure_file(
 )
 
 if(UNIX)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mayaflux.pc DESTINATION lib/pkgconfig)
+    install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/mayaflux.pc
+        ${CMAKE_CURRENT_BINARY_DIR}/lila.pc
+        DESTINATION lib/pkgconfig)
 endif()
 
 install(TARGETS Lila
@@ -37,7 +40,6 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/Lila.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/Server.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/LiveAid.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Lila/LilaConfig.hpp
     DESTINATION include/Lila
 )
 

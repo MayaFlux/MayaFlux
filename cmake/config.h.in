@@ -8,6 +8,11 @@
 #include <string>
 #include <vector>
 
+#define MAYAFLUX_VERSION "@PROJECT_VERSION@"
+#define MAYAFLUX_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define MAYAFLUX_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define MAYAFLUX_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
 // Redifinition needed as clang interpreter wont have cmake defines
 #if defined(_WIN32) || defined(_WIN64)
 #ifndef MAYAFLUX_PLATFORM_WINDOWS
@@ -100,61 +105,72 @@
 #endif
 #endif
 
-namespace MayaFlux::Platform {
+namespace MayaFlux {
+
+namespace Config {
+    constexpr std::string_view SOURCE_DIR = "@CMAKE_SOURCE_DIR@";
+    constexpr std::string_view PCH_SOURCE_PATH = "@CMAKE_SOURCE_DIR@/cmake";
+    constexpr std::string_view RUNTIME_DATA_DIR = "@CMAKE_INSTALL_PREFIX@/share/lila/runtime";
+    constexpr std::string_view PCH_RUNTIME_PATH = "@CMAKE_INSTALL_PREFIX@/share/lila/runtime/pch.h";
+}
+
+namespace Platform {
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-constexpr char PathSeparator = '\\';
+    constexpr char PathSeparator = '\\';
 #else
-constexpr char PathSeparator = '/';
+    constexpr char PathSeparator = '/';
 #endif
 
-static std::string safe_getenv(const char* var);
+    static std::string safe_getenv(const char* var);
 
-namespace fs = std::filesystem;
-class SystemConfig {
-public:
-    static std::string get_clang_resource_dir();
+    namespace fs = std::filesystem;
+    class SystemConfig {
+    public:
+        static std::string get_clang_resource_dir();
 
-    static std::vector<std::string> get_system_includes();
+        static std::vector<std::string> get_system_includes();
 
-    static std::vector<std::string> get_system_libraries();
+        static std::vector<std::string> get_system_libraries();
 
-    static std::string find_library(const std::string& library_name);
+        static std::string find_library(const std::string& library_name);
 
-private:
-    static std::string exec_command(const char* cmd);
+    private:
+        static std::string exec_command(const char* cmd);
 
-    static void trim_output(std::string& str);
+        static void trim_output(std::string& str);
 
-    static std::string format_library_name(const std::string& library_name);
+        static std::string format_library_name(const std::string& library_name);
 
-    static std::vector<std::string> get_clang_includes();
+        static std::vector<std::string> get_clang_includes();
 
-    static std::vector<std::string> parse_clang_search_paths(const std::string& output);
+        static std::vector<std::string> parse_clang_search_paths(const std::string& output);
 
-    static std::string find_latest_sdk_version(const fs::path& base);
+        static std::string find_latest_sdk_version(const fs::path& base);
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 
-    static std::string find_latest_vs_installation();
+        static std::string find_latest_vs_installation();
 
-    static std::string find_latest_msvc_version(const fs::path& msvc_base);
+        static std::string find_latest_msvc_version(const fs::path& msvc_base);
 
-    static std::vector<std::string> get_msvc_includes();
+        static std::vector<std::string> get_msvc_includes();
 
-    static std::vector<std::string> get_msvc_libraries();
+        static std::vector<std::string> get_msvc_libraries();
 
-    static std::vector<std::string> get_windows_sdk_includes();
+        static std::vector<std::string> get_windows_sdk_includes();
 
-    static std::vector<std::string> get_windows_sdk_libraries();
+        static std::vector<std::string> get_windows_sdk_libraries();
 
-    static std::vector<std::string> probe_sdk_paths(const std::string& subpath,
-        const std::vector<std::string>& subdirs,
-        const std::string& arch = "");
+        static std::vector<std::string> probe_sdk_paths(const std::string& subpath,
+            const std::vector<std::string>& subdirs,
+            const std::string& arch = "");
 
 #else
-    static std::vector<std::string> get_unix_library_paths();
+        static std::vector<std::string> get_unix_library_paths();
 #endif
-};
+    };
 
-} // namespace MayaFlux::Platform
+} // namespace Platform
+
+} // namespace MayaFlux

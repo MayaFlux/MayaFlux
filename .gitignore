@@ -2,7 +2,6 @@
 build/
 install/
 out/
-compile_commands.json
 CMakeCache.txt
 CMakeFiles/
 CTestTestfile.cmake
@@ -18,10 +17,10 @@ srcipts/temp/
 
 # Generated files
 docs/html/
-src/MayaFlux/version.h
-src/Lila/LilaConfig.hpp
+cmake/config.h
 src/user_project.hpp
 public/
+compile_commands.json
 
 # User resources (not tracked)
 res/

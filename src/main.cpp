@@ -10,8 +10,6 @@
 
 #include "MayaFlux/Core/Engine.hpp"
 
-#include "MayaFlux/version.h"
-
 void initialize()
 {
 #ifdef HAS_USER_PROJECT

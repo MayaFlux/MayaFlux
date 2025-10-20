@@ -17,12 +17,6 @@ set(LILA_HEADERS
     Server.hpp
 )
 
-configure_file(
-    "${CMAKE_SOURCE_DIR}/cmake/lila_config.hpp.in"
-    "${CMAKE_SOURCE_DIR}/src/Lila/LilaConfig.hpp"
-     @ONLY
-)
-
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
 target_sources(Lila PRIVATE ${CONFIG_IMPL})
 

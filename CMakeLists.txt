@@ -5,6 +5,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+set(CRITICAL_CMAKE_FILES
+    cmake/config.h.in
+    cmake/pch.h
+    cmake/defines.cmake
+    cmake/dependencies.cmake
+    cmake/compiler_config.cmake
+)
+
+foreach(file ${CRITICAL_CMAKE_FILES})
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${file}")
+        message(WARNING "Missing critical cmake file: ${file}")
+    endif()
+endforeach()
+
 include(defines)
 
 project(MayaFlux VERSION 0.1.0)
@@ -18,8 +32,8 @@ include(dependencies)
 include(compiler_config)
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/MayaFlux/version.h
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h"
     @ONLY
 )
 

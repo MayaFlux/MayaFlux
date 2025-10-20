@@ -2,8 +2,6 @@
 
 #include "Commentator.hpp"
 
-#include "LilaConfig.hpp"
-
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Interpreter/Interpreter.h>
 #include <llvm/Support/TargetSelect.h>
@@ -60,15 +58,15 @@ bool ClangInterpreter::initialize()
     m_impl->compile_flags.emplace_back("-DMAYASIMPLE");
 
     std::string pch_dir;
-    if (std::filesystem::exists(Config::PCH_RUNTIME_PATH)) {
-        pch_dir = Config::RUNTIME_DATA_DIR;
+    if (std::filesystem::exists(MayaFlux::Config::PCH_RUNTIME_PATH)) {
+        pch_dir = MayaFlux::Config::RUNTIME_DATA_DIR;
         LILA_DEBUG(Emitter::INTERPRETER,
-            std::string("Using installed PCH from: ") + Config::PCH_RUNTIME_PATH);
+            std::string("Using installed PCH from: ") + std::string(MayaFlux::Config::PCH_RUNTIME_PATH));
 
-    } else if (std::filesystem::exists(Config::PCH_SOURCE_PATH)) {
-        pch_dir = std::string(Config::SOURCE_DIR) + "/cmake";
+    } else if (std::filesystem::exists(MayaFlux::Config::PCH_SOURCE_PATH)) {
+        pch_dir = std::string(MayaFlux::Config::SOURCE_DIR) + "/cmake";
         LILA_DEBUG(Emitter::INTERPRETER,
-            std::string("Using source PCH from: ") + Config::PCH_SOURCE_PATH);
+            std::string("Using source PCH from: ") + std::string(MayaFlux::Config::PCH_SOURCE_PATH));
 
     } else {
         m_last_error = "Cannot find pch.h in runtime or source locations";
