@@ -5,7 +5,6 @@
 
 #include "UniversalAnalyzer.hpp"
 #include <Eigen/Dense>
-#include <algorithm>
 
 #include "AnalysisHelper.hpp"
 

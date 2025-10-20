@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/NDData.hpp"
+#include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
 #include "MayaFlux/Utils.hpp"
 

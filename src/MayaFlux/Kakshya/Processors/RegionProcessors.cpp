@@ -1,4 +1,5 @@
 #include "RegionProcessors.hpp"
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 

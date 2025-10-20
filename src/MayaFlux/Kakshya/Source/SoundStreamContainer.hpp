@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/Region.hpp"
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
 namespace MayaFlux::Kakshya {

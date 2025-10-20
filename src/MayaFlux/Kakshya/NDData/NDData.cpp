@@ -45,6 +45,17 @@ DataDimension DataDimension::spatial(uint64_t size, char axis, uint64_t stride, 
     return { name, size, stride, r };
 }
 
+DataDimension DataDimension::grouped(
+    std::string name,
+    u_int64_t element_count,
+    u_int8_t components_per_element,
+    Role role)
+{
+    DataDimension dim { std::move(name), element_count, 1, role };
+    dim.grouping = ComponentGroup { components_per_element, 0 };
+    return dim;
+}
+
 std::vector<DataDimension> DataDimension::create_dimensions(
     DataModality modality,
     const std::vector<uint64_t>& shape,

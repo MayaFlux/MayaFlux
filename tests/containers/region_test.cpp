@@ -1,7 +1,8 @@
 #include "../test_config.h"
 
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
-#include "MayaFlux/Kakshya/Region.hpp"
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
+
 #include <chrono>
 #include <thread>
 

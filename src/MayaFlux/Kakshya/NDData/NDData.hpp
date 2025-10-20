@@ -61,8 +61,31 @@ enum class DataModality : uint8_t {
     TENSOR_ND, ///< N-dimensional tensor
     SPECTRAL_2D, ///< 2D spectral data (time + frequency)
     VOLUMETRIC_3D, ///< 3D volumetric data
+    VERTEX_POSITIONS_3D, // glm::vec3 - vertex positions
+    VERTEX_NORMALS_3D, // glm::vec3 - vertex normals
+    VERTEX_TANGENTS_3D, // glm::vec3 - tangent vectors
+    VERTEX_COLORS_RGB, // glm::vec3 - RGB colors
+    VERTEX_COLORS_RGBA, // glm::vec4 - RGBA colors
+    TEXTURE_COORDS_2D, // glm::vec2 - UV coordinates
+    TRANSFORMATION_MATRIX, // glm::mat4 - transform matrices
     UNKNOWN ///< Unknown or undefined modality
 };
+
+inline bool is_structured_modality(DataModality modality)
+{
+    switch (modality) {
+    case DataModality::VERTEX_POSITIONS_3D:
+    case DataModality::VERTEX_NORMALS_3D:
+    case DataModality::VERTEX_TANGENTS_3D:
+    case DataModality::VERTEX_COLORS_RGB:
+    case DataModality::VERTEX_COLORS_RGBA:
+    case DataModality::TEXTURE_COORDS_2D:
+    case DataModality::TRANSFORMATION_MATRIX:
+        return true;
+    default:
+        return false;
+    }
+}
 
 /**
  * @brief Minimal dimension descriptor focusing on structure only.
@@ -91,6 +114,30 @@ struct MAYAFLUX_API DataDimension {
         FREQUENCY, ///< Spectral/frequency axis
         CUSTOM ///< User-defined or application-specific
     };
+
+    /**
+     * @brief Grouping information for sub-dimensions.
+     *
+     * Used to indicate that this dimension is composed of groups
+     * of sub-dimensions (e.g., color channels grouped per pixel).
+     */
+    struct ComponentGroup {
+        u_int8_t count;
+        u_int8_t offset;
+
+        ComponentGroup()
+            : count(0)
+            , offset(0)
+        {
+        }
+        ComponentGroup(u_int8_t c, u_int8_t o = 0)
+            : count(c)
+            , offset(o)
+        {
+        }
+    };
+
+    std::optional<ComponentGroup> grouping;
 
     std::string name; ///< Human-readable identifier for the dimension
     uint64_t size {}; ///< Number of elements in this dimension
@@ -141,6 +188,15 @@ struct MAYAFLUX_API DataDimension {
      * @return DataDimension representing a spatial axis
      */
     static DataDimension spatial(uint64_t size, char axis, uint64_t stride = 1, std::string name = "spatial");
+
+    /**
+     * @brief Create dimension with component grouping
+     * @param name Dimension name
+     * @param element_count Number of elements (not components)
+     * @param components_per_element Components per element (e.g., 3 for vec3)
+     * @param role Semantic role
+     */
+    static DataDimension grouped(std::string name, u_int64_t element_count, u_int8_t components_per_element, Role role = Role::CUSTOM);
 
     /**
      * @brief Data container combining variants and dimensions.

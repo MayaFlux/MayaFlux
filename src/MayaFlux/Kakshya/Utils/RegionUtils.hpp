@@ -2,7 +2,8 @@
 
 #include "CoordUtils.hpp"
 
-#include "MayaFlux/Kakshya/OrganizedRegion.hpp"
+#include "MayaFlux/Kakshya/Region/OrganizedRegion.hpp"
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 namespace MayaFlux::Kakshya {
 
