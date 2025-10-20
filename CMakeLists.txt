@@ -6,16 +6,16 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 set(CRITICAL_CMAKE_FILES
-    cmake/config.h.in
-    cmake/pch.h
-    cmake/defines.cmake
-    cmake/dependencies.cmake
-    cmake/compiler_config.cmake
+    config.h.in
+    pch.h
+    defines.cmake
+    dependencies.cmake
+    compiler_config.cmake
 )
 
 foreach(file ${CRITICAL_CMAKE_FILES})
     if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${file}")
-        message(WARNING "Missing critical cmake file: ${file}")
+        message(FATAL_ERROR "Missing critical cmake file: ${file}")
     endif()
 endforeach()
 

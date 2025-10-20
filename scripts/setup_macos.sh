@@ -1,218 +1,323 @@
 #!/bin/zsh
 
-echo "MayaFlux macOS System Setup"
-echo "==========================="
+set -e
+
+echo "MayaFlux macOS Development Environment Installer"
+echo "================================================"
 echo
 
-# Get the project root directory (one level up from the script location)
-SCRIPT_DIR="${0:a:h}"
-PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# Check if script has execute permissions
-if [ ! -x "$0" ]; then
-    echo "Warning: This script doesn't have execute permissions."
-    echo "You may need to run: chmod +x $0"
-    echo
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+if [[ "$(uname)" != "Darwin" ]]; then
+    print_error "This installer is for macOS only"
+    exit 1
 fi
 
-# Check macOS version requirement
 MACOS_VERSION=$(sw_vers -productVersion)
 MACOS_MAJOR=$(echo $MACOS_VERSION | cut -d. -f1)
-MACOS_MINOR=$(echo $MACOS_VERSION | cut -d. -f2)
 
-echo "Detected macOS version: $MACOS_VERSION"
-
-if [ "$MACOS_MAJOR" -lt 14 ]; then
-    echo "❌ Error: MayaFlux requires macOS 14 (Sonoma) or later for C++23 support."
-    echo "Current macOS version: $MACOS_VERSION"
-    echo "Please upgrade to macOS 14+ to use MayaFlux."
-    echo
-    echo "Academic users: macOS 14 provides excellent compatibility for institutional machines."
+if [[ $MACOS_MAJOR -lt 14 ]]; then
+    print_error "MayaFlux requires macOS 14.0 (Sonoma) or later"
+    print_error "Current version: $MACOS_VERSION"
     exit 1
-elif [ "$MACOS_MAJOR" -eq 14 ]; then
-    echo "✅ macOS 14 detected - excellent compatibility for academic/institutional use"
-else
-    echo "✅ macOS $MACOS_MAJOR detected - latest C++23 features available"
 fi
 
-# Check macOS architecture
+print_status "Detected macOS $MACOS_VERSION"
+
 ARCH=$(uname -m)
-if [ "$ARCH" = "arm64" ]; then
-    echo "Detected Apple Silicon (M1/M2/M3) Mac"
+if [[ "$ARCH" == "arm64" ]]; then
     HOMEBREW_PREFIX="/opt/homebrew"
+    print_status "Apple Silicon (M1/M2/M3) detected"
 else
-    echo "Detected Intel Mac"
     HOMEBREW_PREFIX="/usr/local"
+    print_status "Intel Mac detected"
 fi
 
-# Check if Git is installed
-if ! command -v git &>/dev/null; then
-    echo "Error: Git is required but not found."
-    echo "Please install Git from https://git-scm.com/download/mac"
-    echo "Or install via Homebrew: brew install git"
-    exit 1
-fi
-
-# Check if Xcode is installed
-if ! xcode-select -p &>/dev/null; then
-    echo "Error: Xcode command line tools are not installed."
-    echo "Please install by running: xcode-select --install"
-    exit 1
-fi
-
-# Check if Homebrew is installed
-if ! command -v brew &>/dev/null; then
-    echo "Homebrew is not installed. Would you like to install it? (y/n)"
-    read -r install_brew
-    if [[ $install_brew =~ ^[Yy]$ ]]; then
-        echo "Installing Homebrew..."
+install_homebrew() {
+    if ! command -v brew &>/dev/null; then
+        print_status "Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-        # Add Homebrew to PATH for this session
-        if [[ -f "$HOMEBREW_PREFIX/bin/brew" ]]; then
-            eval "$($HOMEBREW_PREFIX/bin/brew shellenv)"
-        elif [[ -f /usr/local/bin/brew ]]; then
-            eval "$(/usr/local/bin/brew shellenv)"
+        if [[ "$ARCH" == "arm64" ]]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
         else
-            echo "Error: Homebrew installation path not found."
-            exit 1
+            eval "$(/usr/local/bin/brew shellenv)"
         fi
     else
-        echo "Homebrew is required to install dependencies. Exiting."
-        exit 1
+        print_status "Homebrew already installed"
     fi
-fi
+}
 
-echo "Installing required packages..."
-brew install cmake rtaudio ffmpeg llvm googletest pkg-config eigen onedpl magic_enum fmt glfw
+install_build_dependencies() {
+    print_status "Installing build tools..."
 
-if [ $? -ne 0 ]; then
-    echo "Error: Failed to install one or more packages."
-    echo "Please check the output above for details."
-    exit 1
-fi
-
-# Verify package installation
-echo "Verifying package installation..."
-MISSING_PACKAGES=""
-for pkg in cmake rtaudio llvm glfw ffmpeg googletest pkg-config eigen onedpl magic_enum fmt; do
-    if ! brew list --formula | grep -q "^${pkg}$"; then
-        MISSING_PACKAGES="$MISSING_PACKAGES $pkg"
+    if ! xcode-select -p &>/dev/null; then
+        print_status "Installing Xcode command line tools..."
+        xcode-select --install
+        until xcode-select -p &>/dev/null; do
+            sleep 5
+        done
     fi
-done
 
-if [ -n "$MISSING_PACKAGES" ]; then
-    echo "Warning: The following packages may not be installed correctly:$MISSING_PACKAGES"
-    echo "You may need to install them manually."
-fi
+    brew update
 
-# ------------------------------------------------------------
-# Vulkan SDK (LunarG) Installation - Always Latest Version
-# ------------------------------------------------------------
+    local tools=(cmake git pkg-config ninja)
+    for tool in "${tools[@]}"; do
+        if ! brew list --formula | grep -q "^${tool}\$"; then
+            print_status "Installing $tool..."
+            brew install $tool
+        else
+            print_status "$tool already installed"
+        fi
+    done
+}
 
-echo "🔽 Fetching latest Vulkan SDK version for macOS..."
-VULKAN_VERSION=$(curl -s https://vulkan.lunarg.com/sdk/latest/mac.txt | grep -oP '(\d+\.){3}\d+' | head -n 1)
+install_llvm() {
+    print_status "Installing LLVM for JIT/runtime compilation..."
 
-if [ -z "$VULKAN_VERSION" ]; then
-    echo "❌ Could not fetch latest Vulkan SDK version."
-    exit 1
-fi
+    local found_llvm=false
+    local llvm_versions=("llvm@21" "llvm@20" "llvm")
 
-echo "🔁 Using latest Vulkan SDK $VULKAN_VERSION"
+    for version in "${llvm_versions[@]}"; do
+        if brew list --formula | grep -q "^${version}\$"; then
+            print_status "Found $version"
+            LLVM_PREFIX=$(brew --prefix $version)
+            if [[ -f "$LLVM_PREFIX/lib/cmake/llvm/LLVMConfig.cmake" ]]; then
+                found_llvm=true
+                break
+            fi
+        fi
+    done
 
-VULKAN_SDK_DIR="$HOME/VulkanSDK/$VULKAN_VERSION/macOS"
-TMP_DMG="/tmp/vulkan-sdk-$VULKAN_VERSION.dmg"
-URL="https://sdk.lunarg.com/sdk/download/$VULKAN_VERSION/mac/vulkan_sdk.dmg"
+    if ! $found_llvm; then
+        if brew info llvm@21 &>/dev/null; then
+            print_status "Installing LLVM 21 (recommended for in-place lambdas)..."
+            brew install llvm@21
+            LLVM_PREFIX=$(brew --prefix llvm@21)
+        else
+            print_status "Installing latest LLVM..."
+            brew install llvm
+            LLVM_PREFIX=$(brew --prefix llvm)
+        fi
+    fi
 
-if [ -d "$VULKAN_SDK_DIR" ]; then
-    echo "✅ Vulkan SDK $VULKAN_VERSION already installed at $VULKAN_SDK_DIR"
-else
-    echo "⬇️  Downloading from: $URL"
-    curl -L "$URL" -o "$TMP_DMG" --progress-bar || {
-        echo "❌ Download failed."
-        exit 1
-    }
-
-    echo "📦 Mounting DMG..."
-    MOUNT_POINT=$(hdiutil attach "$TMP_DMG" -nobrowse -quiet | grep Volumes | awk '{print $3}')
-
-    echo "📁 Installing Vulkan SDK..."
-    INSTALLER_PKG=$(find "$MOUNT_POINT" -name "*.pkg" | head -n1)
-    if [ -z "$INSTALLER_PKG" ]; then
-        echo "❌ No .pkg found in mounted image."
-        hdiutil detach "$MOUNT_POINT" -quiet || true
-        rm -f "$TMP_DMG"
+    if [[ ! -f "$LLVM_PREFIX/lib/cmake/llvm/LLVMConfig.cmake" ]]; then
+        print_error "LLVM installation incomplete - missing CMake configuration"
         exit 1
     fi
 
-    sudo installer -pkg "$INSTALLER_PKG" -target / >/dev/null
+    print_success "LLVM installed at $LLVM_PREFIX"
+}
 
-    echo "💿 Unmounting DMG..."
-    hdiutil detach "$MOUNT_POINT" -quiet || true
-    rm -f "$TMP_DMG"
+install_vulkan_sdk() {
+    print_status "Installing Vulkan SDK..."
 
-    echo "✅ Vulkan SDK $VULKAN_VERSION installed at $VULKAN_SDK_DIR"
-fi
+    if [[ -d "$HOME/VulkanSDK" ]] && find "$HOME/VulkanSDK" -name "vulkan.framework" -type d | read; then
+        print_status "Vulkan SDK already installed"
+        return 0
+    fi
 
-export VULKAN_SDK="$VULKAN_SDK_DIR"
-export PATH="$VULKAN_SDK/bin:$PATH"
-export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"
-export VK_ICD_FILENAMES="$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json"
+    local vulkan_json=$(curl -fsSL "https://vulkan.lunarg.com/sdk/latest/mac.json")
+    local latest_version=$(echo "$vulkan_json" | grep -o '"mac":"[^"]*' | cut -d'"' -f3)
 
-echo "VULKAN_SDK set to $VULKAN_SDK"
+    if [[ -z "$latest_version" ]]; then
+        print_error "Failed to fetch latest Vulkan SDK version"
+        return 1
+    fi
 
-# Check system Clang version
-echo "Checking system Clang..."
-if command -v clang++ &>/dev/null; then
-    CLANG_VERSION=$(clang++ --version | head -n1)
-    echo "✓ System Clang found: $CLANG_VERSION"
+    local download_url="https://sdk.lunarg.com/sdk/download/${latest_version}/mac/vulkan_sdk.dmg"
 
-    if [ "$MACOS_MAJOR" -eq 14 ]; then
-        echo "Note: Using system Apple Clang with compatibility workarounds for macOS 14"
+    print_status "Downloading Vulkan SDK $latest_version..."
+
+    local temp_dmg="/tmp/vulkan-sdk-${latest_version}.dmg"
+
+    if ! curl -L "$download_url" -o "$temp_dmg" --progress-bar; then
+        print_error "Failed to download Vulkan SDK"
+        return 1
+    fi
+
+    print_status "Installing Vulkan SDK..."
+    local mount_point=$(hdiutil attach "$temp_dmg" -nobrowse -quiet | awk -F '\t' 'END{print $3}')
+
+    if [[ -z "$mount_point" ]]; then
+        print_error "Failed to mount Vulkan SDK DMG"
+        rm -f "$temp_dmg"
+        return 1
+    fi
+
+    local pkg_path=$(find "$mount_point" -name "*.pkg" | head -1)
+    if [[ -n "$pkg_path" ]]; then
+        sudo installer -pkg "$pkg_path" -target /
+        local install_status=$?
+
+        if [[ $install_status -ne 0 ]]; then
+            print_error "Vulkan SDK installation failed with status $install_status"
+            hdiutil detach "$mount_point" -quiet
+            rm -f "$temp_dmg"
+            return 1
+        fi
     else
-        echo "Note: Using system Apple Clang with modern C++23 support"
+        print_error "No installer package found in DMG"
+        hdiutil detach "$mount_point" -quiet
+        rm -f "$temp_dmg"
+        return 1
     fi
-else
-    echo "❌ Error: Clang not found. Please ensure Xcode command line tools are installed."
-    exit 1
+
+    hdiutil detach "$mount_point" -quiet
+    rm -f "$temp_dmg"
+
+    local sdk_dir="$HOME/VulkanSDK/$latest_version/macOS"
+    if [[ -d "$sdk_dir" && -f "$sdk_dir/lib/libvulkan.1.dylib" ]]; then
+        print_success "Vulkan SDK $latest_version installed at $sdk_dir"
+    else
+        print_warning "Vulkan SDK installed but verification failed - may need manual setup"
+    fi
+}
+
+install_libraries() {
+    print_status "Installing development libraries..."
+
+    local libraries=(
+        rtaudio
+        ffmpeg
+        glfw
+        eigen
+        onedpl
+        magic_enum
+        fmt
+        googletest
+    )
+
+    for lib in "${libraries[@]}"; do
+        if ! brew list --formula | grep -q "^${lib}\$"; then
+            print_status "Installing $lib..."
+            brew install $lib
+        else
+            print_status "$lib already installed"
+        fi
+    done
+}
+
+setup_environment() {
+    print_status "Setting up environment..."
+
+    local env_file="$HOME/.mayaflux_macos_env"
+
+    cat >"$env_file" <<EOF
+# MayaFlux Development Environment
+# Generated by installer on $(date)
+
+export LLVM_DIR="$LLVM_PREFIX/lib/cmake/llvm"
+export CMAKE_PREFIX_PATH="$LLVM_PREFIX:\$CMAKE_PREFIX_PATH"
+export PATH="$LLVM_PREFIX/bin:\$PATH"
+
+# Add Homebrew libraries to pkg-config path
+export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/lib/pkgconfig:$HOMEBREW_PREFIX/opt/ffmpeg/lib/pkgconfig:\$PKG_CONFIG_PATH"
+
+# Vulkan SDK (if installed)
+if [ -d "\$HOME/VulkanSDK" ]; then
+    VULKAN_VERSION=\$(ls "\$HOME/VulkanSDK" | sort -V | tail -1)
+    if [ -n "\$VULKAN_VERSION" ]; then
+        export VULKAN_SDK="\$HOME/VulkanSDK/\$VULKAN_VERSION/macOS"
+        export PATH="\$VULKAN_SDK/bin:\$PATH"
+        export DYLD_LIBRARY_PATH="\$VULKAN_SDK/lib:\$DYLD_LIBRARY_PATH"
+        export VK_ICD_FILENAMES="\$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json"
+    fi
 fi
 
-# Check CMake version
-CMAKE_VERSION=$(cmake --version | head -n1 | awk '{print $3}')
-CMAKE_MAJOR=$(echo $CMAKE_VERSION | cut -d. -f1)
-CMAKE_MINOR=$(echo $CMAKE_VERSION | cut -d. -f2)
+# Homebrew paths
+export PATH="$HOMEBREW_PREFIX/bin:\$PATH"
+export CMAKE_PREFIX_PATH="$HOMEBREW_PREFIX:\$CMAKE_PREFIX_PATH"
 
-if [ "$CMAKE_MAJOR" -lt 3 ] || ([ "$CMAKE_MAJOR" -eq 3 ] && [ "$CMAKE_MINOR" -lt 15 ]); then
-    echo "Warning: CMake version $CMAKE_VERSION may be too old."
-    echo "MayaFlux recommends CMake 3.15 or newer."
-    echo "Consider upgrading: brew upgrade cmake"
+echo "MayaFlux environment loaded"
+EOF
+
+    local shell_rc=""
+    if [[ "$SHELL" == *"zsh" ]]; then
+        shell_rc="$HOME/.zshrc"
+    else
+        shell_rc="$HOME/.bash_profile"
+    fi
+
+    if [[ -f "$shell_rc" ]] && ! grep -q "mayaflux_macos_env" "$shell_rc"; then
+        echo "source $env_file" >>"$shell_rc"
+        print_status "Added environment setup to $shell_rc"
+    fi
+
+    source "$env_file"
+
+    print_success "Environment configured"
+}
+
+verify_installations() {
+    print_status "Verifying installations..."
+
+    local missing=()
+
+    if [[ ! -f "$LLVM_PREFIX/lib/cmake/llvm/LLVMConfig.cmake" ]]; then
+        missing+=("LLVM")
+    fi
+
+    local libs=("rtaudio" "ffmpeg" "glfw" "eigen" "onedpl" "fmt")
+    for lib in "${libs[@]}"; do
+        if ! brew list --formula | grep -q "^${lib}\$"; then
+            missing+=("$lib")
+        fi
+    done
+
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        print_warning "Some components may be missing: ${missing[*]}"
+        return 1
+    fi
+
+    print_success "All core components verified"
+}
+
+main() {
+    echo "Starting MayaFlux installation..."
     echo
-fi
 
-# Create user project file if it doesn't exist
-USER_PROJECT_FILE="$PROJECT_ROOT/src/user_project.hpp"
-TEMPLATE_FILE="$PROJECT_ROOT/cmake/user_project.hpp.in"
-if [ ! -f "$USER_PROJECT_FILE" ]; then
-    echo "Copying user project template..."
-    cp "$TEMPLATE_FILE" "$USER_PROJECT_FILE"
-    echo "✓ Created user_project.hpp from template"
-else
-    echo "src/user_project.hpp already exists, skipping creation"
-fi
+    install_homebrew
+    install_build_dependencies
+    install_llvm
+    install_vulkan_sdk
+    install_libraries
+    setup_environment
+    verify_installations
 
-echo
-echo "✅ System setup complete!"
-echo
-echo "System Summary:"
-echo "  ✓ macOS $MACOS_VERSION (C++23 compatible)"
-echo "  ✓ System Apple Clang (no Homebrew LLVM needed)"
-echo "  ✓ All dependencies installed via Homebrew"
-echo
-echo "Next steps:"
-echo "1. Run './scripts/setup_xcode.sh' to generate Xcode project"
-echo "2. Or configure your preferred build environment"
-echo
-echo "Dependencies installed:"
-echo "  ✓ CMake, RtAudio, LLVM, FFmpeg, GoogleTest, GLFW"
-echo "  ✓ Eigen, OneDPL, Magic Enum, fmt"
-echo
+    echo
+    print_success "MayaFlux development environment installation complete!"
+    echo
+    echo "Next steps:"
+    echo "1. Restart your terminal or run: source ~/.mayaflux_macos_env"
+    echo "2. Clone or create your MayaFlux project"
+    echo "3. Build using CMake:"
+    echo "   mkdir build && cd build"
+    echo "   cmake .."
+    echo "   make -j\$(sysctl -n hw.ncpu)"
+    echo
+    echo "Environment variables set in: ~/.mayaflux_macos_env"
+    echo "LLVM for JIT: $LLVM_PREFIX"
+}
+
+main "$@"
