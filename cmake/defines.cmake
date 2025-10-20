@@ -20,3 +20,5 @@ endif()
 if(APPLE)
     message(STATUS "Using system Clang on macOS (minimum macOS 14 required for C++23)")
 endif()
+
+set(CONFIG_IMPL ${CMAKE_SOURCE_DIR}/cmake/config.cpp)

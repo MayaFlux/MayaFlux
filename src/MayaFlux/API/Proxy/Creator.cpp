@@ -39,7 +39,7 @@ void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const Creat
     }
 }
 
-void register_container(const std::shared_ptr<Kakshya::SignalSourceContainer>& container, const Domain& domain)
+void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& container, const Domain& domain)
 {
     if (auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(container)) {
         if (domain == Domain::AUDIO) {

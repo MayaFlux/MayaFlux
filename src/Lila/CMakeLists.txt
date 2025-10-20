@@ -24,6 +24,7 @@ configure_file(
 )
 
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
+target_sources(Lila PRIVATE ${CONFIG_IMPL})
 
 if(WIN32)
     target_compile_definitions(Lila PRIVATE LILA_EXPORTS)
@@ -104,7 +105,7 @@ else()
         ws2_32
         legacy_stdio_definitions
     )
-   target_link_options(Lila PRIVATE
+    target_link_options(Lila PRIVATE
         /DEFAULTLIB:vcruntime.lib
         /DEFAULTLIB:msvcrt.lib
     )

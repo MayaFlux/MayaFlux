@@ -5,6 +5,7 @@ file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp)
 
 add_library(MayaFluxLib SHARED ${SOURCES} ${HEADERS})
+target_sources(MayaFluxLib PRIVATE ${CONFIG_IMPL})
 
 if(WIN32)
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_EXPORTS)
@@ -23,6 +24,7 @@ target_precompile_headers(MayaFluxLib PUBLIC ../../cmake/pch.h)
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     target_compile_definitions(MayaFluxLib PRIVATE GLFW_EXPOSE_NATIVE_WAYLAND)
 endif()
+
 
 if(WIN32)
     add_compile_definitions(USE_PPL_BACKEND)
