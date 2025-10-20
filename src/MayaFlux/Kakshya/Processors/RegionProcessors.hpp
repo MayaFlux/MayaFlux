@@ -29,7 +29,7 @@ static bool is_segment_complete(const OrganizedRegion& region, size_t segment_in
  * transitions, and flexible segment definitions. All processing is data-driven and
  * unconstrained by analog metaphors.
  */
-class RegionOrganizationProcessor : public RegionProcessorBase {
+class MAYAFLUX_API RegionOrganizationProcessor : public RegionProcessorBase {
 public:
     /**
      * @brief Construct a region organization processor for a given container.
@@ -68,8 +68,8 @@ public:
     void add_segment_to_region(
         const std::string& group_name,
         size_t region_index,
-        const std::vector<u_int64_t>& start_coords,
-        const std::vector<u_int64_t>& end_coords,
+        const std::vector<uint64_t>& start_coords,
+        const std::vector<uint64_t>& end_coords,
         const std::unordered_map<std::string, std::any>& attributes);
 
     /**
@@ -93,8 +93,8 @@ public:
     void set_region_looping(const std::string& group_name,
         size_t region_index,
         bool enabled,
-        const std::vector<u_int64_t>& loop_start = {},
-        const std::vector<u_int64_t>& loop_end = {});
+        const std::vector<uint64_t>& loop_start = {},
+        const std::vector<uint64_t>& loop_end = {});
 
     /**
      * @brief Jump to a specific region for processing or playback.
@@ -107,7 +107,7 @@ public:
      * @brief Jump to a specific position in the data.
      * @param position N-dimensional coordinates to jump to.
      */
-    void jump_to_position(const std::vector<u_int64_t>& position);
+    void jump_to_position(const std::vector<uint64_t>& position);
 
     /**
      * @brief Set the selection pattern for a region (e.g., sequential, random).
@@ -158,7 +158,7 @@ protected:
     virtual size_t select_next_segment(const OrganizedRegion& region) const;
 
     std::optional<size_t> find_region_for_position(
-        const std::vector<u_int64_t>& position,
+        const std::vector<uint64_t>& position,
         const std::vector<OrganizedRegion>& regions) const;
 
 private:
@@ -203,7 +203,7 @@ using RegionOrganizer = std::function<void(std::vector<OrganizedRegion>&, std::s
  * The processor can trigger reorganization on demand or automatically based on
  * user-defined criteria, making it ideal for advanced digital-first applications.
  */
-class DynamicRegionProcessor : public RegionOrganizationProcessor {
+class MAYAFLUX_API DynamicRegionProcessor : public RegionOrganizationProcessor {
 public:
     /**
      * @brief Construct a dynamic region processor for a given container.

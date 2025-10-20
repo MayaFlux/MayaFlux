@@ -376,7 +376,7 @@ DataType transform_trigonometric(DataType& input,
  * @return Quantized data
  */
 template <OperationReadyData DataType>
-DataType transform_quantize(DataType& input, u_int8_t bits)
+DataType transform_quantize(DataType& input, uint8_t bits)
 {
     auto [target_data, structure_info] = OperationHelper::extract_structured_double(input);
 
@@ -408,7 +408,7 @@ DataType transform_quantize(DataType& input, u_int8_t bits)
  * @return Quantized data
  */
 template <OperationReadyData DataType>
-DataType transform_quantize(DataType& input, u_int8_t bits, std::vector<std::vector<double>>& working_buffer)
+DataType transform_quantize(DataType& input, uint8_t bits, std::vector<std::vector<double>>& working_buffer)
 {
     auto [target_data, structure_info] = OperationHelper::setup_operation_buffer(input, working_buffer);
 
@@ -600,7 +600,7 @@ DataType transform_normalize(DataType& input, const std::pair<double, double>& t
     return OperationHelper::reconstruct_from_double<DataType>(working_buffer, structure_info);
 }
 
-inline void interpolate(std::span<double> input, std::vector<double>& output, u_int32_t target_size)
+inline void interpolate(std::span<double> input, std::vector<double>& output, uint32_t target_size)
 {
     auto indices = std::views::iota(size_t { 0 }, target_size);
 

@@ -14,7 +14,7 @@ enum class PolynomialMode {
     FEEDFORWARD ///< Evaluates using current and previous inputs: y[n] = f(x[n], x[n-1], ...)
 };
 
-class PolynomialContext : public NodeContext {
+class MAYAFLUX_API PolynomialContext : public NodeContext {
 public:
     /**
      * @brief Constructs a PolynomialContext
@@ -92,7 +92,7 @@ private:
  * This flexible approach allows implementing various types of polynomial
  * equations, difference equations, and recurrence relations.
  */
-class Polynomial : public Generator {
+class MAYAFLUX_API Polynomial : public Generator {
 public:
     /**
      * @brief Function type for direct polynomial evaluation

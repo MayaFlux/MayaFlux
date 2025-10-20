@@ -8,7 +8,7 @@
 
 namespace MayaFlux::Yantra {
 
-std::vector<double> compute_dynamic_range_energy(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_dynamic_range_energy(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> dr_values(num_windows);
 
@@ -38,7 +38,7 @@ std::vector<double> compute_dynamic_range_energy(std::span<const double> data, c
     return dr_values;
 }
 
-std::vector<double> compute_zero_crossing_energy(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_zero_crossing_energy(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> zcr_values(num_windows);
 
@@ -63,7 +63,7 @@ std::vector<double> compute_zero_crossing_energy(std::span<const double> data, c
     return zcr_values;
 }
 
-std::vector<double> compute_power_energy(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_power_energy(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> power_values(num_windows);
 
@@ -86,7 +86,7 @@ std::vector<double> compute_power_energy(std::span<const double> data, const siz
     return power_values;
 }
 
-std::vector<double> compute_peak_energy(std::span<const double> data, const u_int32_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_peak_energy(std::span<const double> data, const uint32_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> peak_values(num_windows);
 
@@ -109,7 +109,7 @@ std::vector<double> compute_peak_energy(std::span<const double> data, const u_in
     return peak_values;
 }
 
-std::vector<double> compute_rms_energy(std::span<const double> data, const u_int32_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_rms_energy(std::span<const double> data, const uint32_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> rms_values(num_windows);
 
@@ -132,7 +132,7 @@ std::vector<double> compute_rms_energy(std::span<const double> data, const u_int
     return rms_values;
 }
 
-std::vector<double> compute_spectral_energy(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_spectral_energy(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> spectral_energy(num_windows);
 
@@ -140,7 +140,7 @@ std::vector<double> compute_spectral_energy(std::span<const double> data, const 
     std::iota(indices.begin(), indices.end(), 0);
 
     Eigen::VectorXd hanning_window(window_size);
-    for (u_int32_t i = 0; i < window_size; ++i) {
+    for (uint32_t i = 0; i < window_size; ++i) {
         hanning_window(i) = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (window_size - 1)));
     }
 
@@ -172,7 +172,7 @@ std::vector<double> compute_spectral_energy(std::span<const double> data, const 
     return spectral_energy;
 }
 
-std::vector<double> compute_harmonic_energy(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_harmonic_energy(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> harmonic_energy(num_windows);
 
@@ -180,7 +180,7 @@ std::vector<double> compute_harmonic_energy(std::span<const double> data, const 
     std::iota(indices.begin(), indices.end(), 0);
 
     Eigen::VectorXd hanning_window(window_size);
-    for (u_int32_t i = 0; i < window_size; ++i) {
+    for (uint32_t i = 0; i < window_size; ++i) {
         hanning_window(i) = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (window_size - 1)));
     }
 
@@ -214,7 +214,7 @@ std::vector<double> compute_harmonic_energy(std::span<const double> data, const 
     return harmonic_energy;
 }
 
-std::vector<double> compute_mean_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_mean_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> mean_values(num_windows);
 
@@ -237,7 +237,7 @@ std::vector<double> compute_mean_statistic(std::span<const double> data, const s
     return mean_values;
 }
 
-std::vector<double> compute_variance_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size, bool sample_variance)
+std::vector<double> compute_variance_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size, bool sample_variance)
 {
     std::vector<double> variance_values(num_windows);
 
@@ -275,7 +275,7 @@ std::vector<double> compute_variance_statistic(std::span<const double> data, con
     return variance_values;
 }
 
-std::vector<double> compute_std_dev_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size, bool sample_variance)
+std::vector<double> compute_std_dev_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size, bool sample_variance)
 {
     auto variance_values = compute_variance_statistic(data, num_windows, hop_size, window_size, sample_variance);
 
@@ -286,7 +286,7 @@ std::vector<double> compute_std_dev_statistic(std::span<const double> data, cons
     return std_dev_values;
 }
 
-std::vector<double> compute_skewness_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_skewness_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> skewness_values(num_windows);
 
@@ -334,7 +334,7 @@ std::vector<double> compute_skewness_statistic(std::span<const double> data, con
     return skewness_values;
 }
 
-std::vector<double> compute_kurtosis_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_kurtosis_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> kurtosis_values(num_windows);
 
@@ -381,7 +381,7 @@ std::vector<double> compute_kurtosis_statistic(std::span<const double> data, con
     return kurtosis_values;
 }
 
-std::vector<double> compute_median_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_median_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> median_values(num_windows);
 
@@ -413,7 +413,7 @@ std::vector<double> compute_median_statistic(std::span<const double> data, const
     return median_values;
 }
 
-std::vector<double> compute_percentile_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size, double percentile)
+std::vector<double> compute_percentile_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size, double percentile)
 {
     std::vector<double> percentile_values(num_windows);
 
@@ -463,7 +463,7 @@ std::vector<double> compute_percentile_statistic(std::span<const double> data, c
     return percentile_values;
 }
 
-std::vector<double> compute_entropy_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size, size_t num_bins)
+std::vector<double> compute_entropy_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size, size_t num_bins)
 {
     std::vector<double> entropy_values(num_windows);
 
@@ -523,7 +523,7 @@ std::vector<double> compute_entropy_statistic(std::span<const double> data, cons
     return entropy_values;
 }
 
-std::vector<double> compute_min_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_min_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> min_values(num_windows);
 
@@ -542,7 +542,7 @@ std::vector<double> compute_min_statistic(std::span<const double> data, const si
     return min_values;
 }
 
-std::vector<double> compute_max_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_max_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> max_values(num_windows);
 
@@ -561,7 +561,7 @@ std::vector<double> compute_max_statistic(std::span<const double> data, const si
     return max_values;
 }
 
-std::vector<double> compute_range_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_range_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> range_values(num_windows);
 
@@ -581,7 +581,7 @@ std::vector<double> compute_range_statistic(std::span<const double> data, const 
     return range_values;
 }
 
-std::vector<double> compute_sum_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_sum_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> sum_values(num_windows);
 
@@ -600,7 +600,7 @@ std::vector<double> compute_sum_statistic(std::span<const double> data, const si
     return sum_values;
 }
 
-std::vector<double> compute_count_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_count_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> count_values(num_windows);
 
@@ -618,7 +618,7 @@ std::vector<double> compute_count_statistic(std::span<const double> data, const 
     return count_values;
 }
 
-std::vector<double> compute_mad_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_mad_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> mad_values(num_windows);
 
@@ -665,7 +665,7 @@ std::vector<double> compute_mad_statistic(std::span<const double> data, const si
     return mad_values;
 }
 
-std::vector<double> compute_cv_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size, bool sample_variance)
+std::vector<double> compute_cv_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size, bool sample_variance)
 {
     auto mean_vals = compute_mean_statistic(data, num_windows, hop_size, window_size);
     auto std_vals = compute_std_dev_statistic(data, num_windows, hop_size, window_size, sample_variance);
@@ -679,7 +679,7 @@ std::vector<double> compute_cv_statistic(std::span<const double> data, const siz
     return cv_values;
 }
 
-std::vector<double> compute_mode_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size)
+std::vector<double> compute_mode_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> mode_values(num_windows);
     constexpr double tolerance = 1e-10;
@@ -719,7 +719,7 @@ std::vector<double> compute_mode_statistic(std::span<const double> data, const s
     return mode_values;
 }
 
-std::vector<double> compute_zscore_statistic(std::span<const double> data, const size_t num_windows, const u_int32_t hop_size, const u_int32_t window_size, bool sample_variance)
+std::vector<double> compute_zscore_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size, bool sample_variance)
 {
     std::vector<double> zscore_values(num_windows);
 

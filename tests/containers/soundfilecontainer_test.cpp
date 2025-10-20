@@ -58,14 +58,14 @@ TEST_F(SoundFileContainerTest, FrameAndCoordinateAccess)
     auto frame4 = container->get_frame(4);
     EXPECT_TRUE(frame4.empty());
 
-    std::vector<u_int64_t> coords = { 1, 1 };
+    std::vector<uint64_t> coords = { 1, 1 };
     double val = container->get_value_at(coords);
     EXPECT_DOUBLE_EQ(val, 0.4);
 
     container->set_value_at(coords, 1.23);
     EXPECT_DOUBLE_EQ(container->get_value_at(coords), 1.23);
 
-    u_int64_t lin = container->coordinates_to_linear_index({ 2, 0 });
+    uint64_t lin = container->coordinates_to_linear_index({ 2, 0 });
     EXPECT_EQ(lin, 4);
     auto coords2 = container->linear_index_to_coordinates(7);
     ASSERT_EQ(coords2.size(), 2);
@@ -77,7 +77,7 @@ TEST_F(SoundFileContainerTest, RegionDataAccess)
 {
     container->set_value_at({ 1, 1 }, 1.23);
 
-    Region region(std::vector<u_int64_t>({ 1, 0 }), std::vector<u_int64_t>({ 2, 1 }));
+    Region region(std::vector<uint64_t>({ 1, 0 }), std::vector<uint64_t>({ 2, 1 }));
 
     auto region_data = container->get_region_data(region);
     ASSERT_FALSE(region_data.empty());
@@ -227,13 +227,13 @@ TEST_F(SoundFileContainerTest, OrganizationStrategyHandling)
 {
     container->reset_read_position();
     std::vector<double> out(4);
-    u_int64_t read = container->read_sequential(out, 4);
+    uint64_t read = container->read_sequential(out, 4);
     EXPECT_EQ(read, 4);
     EXPECT_DOUBLE_EQ(out[0], 0.1);
 
     container->reset_read_position();
     std::vector<double> peek_out(2);
-    u_int64_t peeked = container->peek_sequential(peek_out, 2, 1);
+    uint64_t peeked = container->peek_sequential(peek_out, 2, 1);
     EXPECT_EQ(peeked, 2);
     EXPECT_DOUBLE_EQ(peek_out[0], 0.3);
 
@@ -246,7 +246,7 @@ TEST_F(SoundFileContainerTest, OrganizationStrategyHandling)
     container->reset_read_position();
     auto reset_pos = container->get_read_position();
     EXPECT_TRUE(std::all_of(reset_pos.begin(), reset_pos.end(),
-                           [](u_int64_t pos) { return pos == 0; }));
+                           [](uint64_t pos) { return pos == 0; }));
 } */
 
 /* TEST_F(SoundFileContainerTest, LoopingBehavior)
@@ -256,7 +256,7 @@ TEST_F(SoundFileContainerTest, OrganizationStrategyHandling)
     container->set_loop_region(loop_region);
     container->set_read_position({2, 2});
 
-    std::vector<u_int64_t> advance_frames = {2, 2};
+    std::vector<uint64_t> advance_frames = {2, 2};
     container->advance_read_position(advance_frames);
 
     auto pos = container->get_read_position();

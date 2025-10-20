@@ -25,7 +25,7 @@ namespace MayaFlux::Buffers {
  * computational streams (child buffers and node output) are combined through a
  * configurable mixing algorithm before being transmitted to hardware interfaces.
  */
-class RootAudioBuffer : public RootBuffer<AudioBuffer> {
+class MAYAFLUX_API RootAudioBuffer : public RootBuffer<AudioBuffer> {
 public:
     /**
      * @brief Creates a new root aggregation buffer for a channel
@@ -147,7 +147,7 @@ private:
  * - Compatible with other audio processing tokens through token compatibility rules
  * - Not compatible with GRAPHICS_BACKEND tokens due to different processing models
  */
-class ChannelProcessor : public BufferProcessor {
+class MAYAFLUX_API ChannelProcessor : public BufferProcessor {
 public:
     /**
      * @brief Creates a new channel aggregation processor
@@ -212,7 +212,7 @@ private:
  * - Can adapt to GPU_PROCESS tokens for parallel limiting when beneficial
  * - Compatible with SEQUENTIAL and PARALLEL processing modes
  */
-class FinalLimiterProcessor : public BufferProcessor {
+class MAYAFLUX_API FinalLimiterProcessor : public BufferProcessor {
 public:
     /**
      * @brief Creates a new final limiter processor

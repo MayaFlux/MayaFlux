@@ -28,7 +28,7 @@ namespace MayaFlux::Yantra {
  * - Multi-key sorting with configurable weights
  */
 template <ComputeData InputType = Kakshya::DataVariant, ComputeData OutputType = InputType>
-class StandardSorter : public UniversalSorter<InputType, OutputType> {
+class MAYAFLUX_API StandardSorter : public UniversalSorter<InputType, OutputType> {
 public:
     using base_type = UniversalSorter<InputType, OutputType>;
     using input_type = typename base_type::input_type;

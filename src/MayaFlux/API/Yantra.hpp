@@ -32,110 +32,110 @@ namespace MayaFlux {
  * @param data Input data
  * @return Mean value
  */
-double mean(const std::vector<double>& data);
-double mean(const Kakshya::DataVariant& data);
+MAYAFLUX_API double mean(const std::vector<double>& data);
+MAYAFLUX_API double mean(const Kakshya::DataVariant& data);
 
 /**
  * @brief Calculate mean per channel for multi-channel data
  * @param channels Vector of channel data
  * @return Vector of mean values, one per channel
  */
-std::vector<double> mean_per_channel(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API std::vector<double> mean_per_channel(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Calculate mean across all channels (mix then analyze)
  * @param channels Vector of channel data
  * @return Single mean value across all mixed channels
  */
-double mean_combined(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API double mean_combined(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Calculate RMS (Root Mean Square) energy of single-channel data
  * @param data Input data
  * @return RMS value
  */
-double rms(const std::vector<double>& data);
-double rms(const Kakshya::DataVariant& data);
+MAYAFLUX_API double rms(const std::vector<double>& data);
+MAYAFLUX_API double rms(const Kakshya::DataVariant& data);
 
 /**
  * @brief Calculate RMS energy per channel for multi-channel data
  * @param channels Vector of channel data
  * @return Vector of RMS values, one per channel
  */
-std::vector<double> rms_per_channel(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API std::vector<double> rms_per_channel(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Calculate RMS energy across all channels (mix then analyze)
  * @param channels Vector of channel data
  * @return Single RMS value across all mixed channels
  */
-double rms_combined(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API double rms_combined(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Calculate standard deviation of single-channel data
  * @param data Input data
  * @return Standard deviation
  */
-double std_dev(const std::vector<double>& data);
-double std_dev(const Kakshya::DataVariant& data);
+MAYAFLUX_API double std_dev(const std::vector<double>& data);
+MAYAFLUX_API double std_dev(const Kakshya::DataVariant& data);
 
 /**
  * @brief Calculate standard deviation per channel for multi-channel data
  * @param channels Vector of channel data
  * @return Vector of standard deviation values, one per channel
  */
-std::vector<double> std_dev_per_channel(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API std::vector<double> std_dev_per_channel(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Calculate standard deviation across all channels (mix then analyze)
  * @param channels Vector of channel data
  * @return Single standard deviation value across all mixed channels
  */
-double std_dev_combined(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API double std_dev_combined(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Calculate dynamic range (max/min ratio in dB) of single-channel data
  * @param data Input data
  * @return Dynamic range in dB
  */
-double dynamic_range(const std::vector<double>& data);
-double dynamic_range(const Kakshya::DataVariant& data);
+MAYAFLUX_API double dynamic_range(const std::vector<double>& data);
+MAYAFLUX_API double dynamic_range(const Kakshya::DataVariant& data);
 
 /**
  * @brief Calculate dynamic range per channel for multi-channel data
  * @param channels Vector of channel data
  * @return Vector of dynamic range values in dB, one per channel
  */
-std::vector<double> dynamic_range_per_channel(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API std::vector<double> dynamic_range_per_channel(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Calculate dynamic range across all channels (global min/max)
  * @param channels Vector of channel data
  * @return Single dynamic range value in dB across all channels
  */
-double dynamic_range_global(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API double dynamic_range_global(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Find peak amplitude in single-channel data
  * @param data Input data
  * @return Peak amplitude value
  */
-double peak(const std::vector<double>& data);
-double peak(const Kakshya::DataVariant& data);
+MAYAFLUX_API double peak(const std::vector<double>& data);
+MAYAFLUX_API double peak(const Kakshya::DataVariant& data);
 
 /**
  * @brief Find peak amplitude across all channels (global peak)
  * @param channels Vector of channel data
  * @return Peak amplitude value across all channels
  */
-double peak(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API double peak(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Find peak amplitude per channel for multi-channel data
  * @param channels Vector of channel data
  * @return Vector of peak amplitude values, one per channel
  */
-std::vector<double> peak_per_channel(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API std::vector<double> peak_per_channel(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Find peak amplitude in specific channel
@@ -143,7 +143,7 @@ std::vector<double> peak_per_channel(const std::vector<Kakshya::DataVariant>& ch
  * @param channel_index Index of channel to analyze
  * @return Peak amplitude value for specified channel
  */
-double peak_channel(const std::vector<Kakshya::DataVariant>& channels, size_t channel_index);
+MAYAFLUX_API double peak_channel(const std::vector<Kakshya::DataVariant>& channels, size_t channel_index);
 
 //=========================================================================
 // FEATURE EXTRACTION - Common audio analysis
@@ -155,8 +155,8 @@ double peak_channel(const std::vector<Kakshya::DataVariant>& channels, size_t ch
  * @param threshold Minimum amplitude difference for crossing detection (default: 0.0)
  * @return Vector of zero crossing indices
  */
-std::vector<size_t> zero_crossings(const std::vector<double>& data, double threshold = 0.0);
-std::vector<size_t> zero_crossings(const Kakshya::DataVariant& data, double threshold = 0.0);
+MAYAFLUX_API std::vector<size_t> zero_crossings(const std::vector<double>& data, double threshold = 0.0);
+MAYAFLUX_API std::vector<size_t> zero_crossings(const Kakshya::DataVariant& data, double threshold = 0.0);
 
 /**
  * @brief Detect zero crossings per channel for multi-channel signal
@@ -164,7 +164,7 @@ std::vector<size_t> zero_crossings(const Kakshya::DataVariant& data, double thre
  * @param threshold Minimum amplitude difference for crossing detection (default: 0.0)
  * @return Vector of zero crossing indices for each channel
  */
-std::vector<std::vector<size_t>> zero_crossings_per_channel(const std::vector<Kakshya::DataVariant>& channels, double threshold = 0.0);
+MAYAFLUX_API std::vector<std::vector<size_t>> zero_crossings_per_channel(const std::vector<Kakshya::DataVariant>& channels, double threshold = 0.0);
 
 /**
  * @brief Calculate zero crossing rate for single-channel data
@@ -172,8 +172,8 @@ std::vector<std::vector<size_t>> zero_crossings_per_channel(const std::vector<Ka
  * @param window_size Analysis window size (0 = whole signal)
  * @return Zero crossing rate (crossings per sample)
  */
-double zero_crossing_rate(const std::vector<double>& data, size_t window_size = 0);
-double zero_crossing_rate(const Kakshya::DataVariant& data, size_t window_size = 0);
+MAYAFLUX_API double zero_crossing_rate(const std::vector<double>& data, size_t window_size = 0);
+MAYAFLUX_API double zero_crossing_rate(const Kakshya::DataVariant& data, size_t window_size = 0);
 
 /**
  * @brief Calculate zero crossing rate per channel for multi-channel data
@@ -181,7 +181,7 @@ double zero_crossing_rate(const Kakshya::DataVariant& data, size_t window_size =
  * @param window_size Analysis window size (0 = whole signal)
  * @return Vector of zero crossing rates, one per channel
  */
-std::vector<double> zero_crossing_rate_per_channel(const std::vector<Kakshya::DataVariant>& channels, size_t window_size = 0);
+MAYAFLUX_API std::vector<double> zero_crossing_rate_per_channel(const std::vector<Kakshya::DataVariant>& channels, size_t window_size = 0);
 
 /**
  * @brief Find spectral centroid (brightness measure) for single-channel data
@@ -189,8 +189,8 @@ std::vector<double> zero_crossing_rate_per_channel(const std::vector<Kakshya::Da
  * @param sample_rate Sample rate for frequency calculation (default: 44100 Hz)
  * @return Spectral centroid in Hz
  */
-double spectral_centroid(const std::vector<double>& data, double sample_rate = 44100.0);
-double spectral_centroid(const Kakshya::DataVariant& data, double sample_rate = 44100.0);
+MAYAFLUX_API double spectral_centroid(const std::vector<double>& data, double sample_rate = 44100.0);
+MAYAFLUX_API double spectral_centroid(const Kakshya::DataVariant& data, double sample_rate = 44100.0);
 
 /**
  * @brief Find spectral centroid per channel for multi-channel data
@@ -198,7 +198,7 @@ double spectral_centroid(const Kakshya::DataVariant& data, double sample_rate = 
  * @param sample_rate Sample rate for frequency calculation (default: 44100 Hz)
  * @return Vector of spectral centroids in Hz, one per channel
  */
-std::vector<double> spectral_centroid_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0);
+MAYAFLUX_API std::vector<double> spectral_centroid_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0);
 
 /**
  * @brief Detect onset times in single-channel signal
@@ -207,8 +207,8 @@ std::vector<double> spectral_centroid_per_channel(const std::vector<Kakshya::Dat
  * @param threshold Energy threshold for onset detection (default: 0.1)
  * @return Vector of onset times in seconds
  */
-std::vector<double> detect_onsets(const std::vector<double>& data, double sample_rate = 44100.0, double threshold = 0.1);
-std::vector<double> detect_onsets(const Kakshya::DataVariant& data, double sample_rate = 44100.0, double threshold = 0.1);
+MAYAFLUX_API std::vector<double> detect_onsets(const std::vector<double>& data, double sample_rate = 44100.0, double threshold = 0.1);
+MAYAFLUX_API std::vector<double> detect_onsets(const Kakshya::DataVariant& data, double sample_rate = 44100.0, double threshold = 0.1);
 
 /**
  * @brief Detect onset times per channel for multi-channel signal
@@ -217,7 +217,7 @@ std::vector<double> detect_onsets(const Kakshya::DataVariant& data, double sampl
  * @param threshold Energy threshold for onset detection (default: 0.1)
  * @return Vector of onset times for each channel
  */
-std::vector<std::vector<double>> detect_onsets_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0, double threshold = 0.1);
+MAYAFLUX_API std::vector<std::vector<double>> detect_onsets_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0, double threshold = 0.1);
 
 //=========================================================================
 // MULTI-CHANNEL SPECIFIC ANALYSIS - Channel relationships
@@ -228,7 +228,7 @@ std::vector<std::vector<double>> detect_onsets_per_channel(const std::vector<Kak
  * @param channels Vector of channel data
  * @return Single-channel mixed result
  */
-Kakshya::DataVariant mix_to_mono(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API Kakshya::DataVariant mix_to_mono(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Convert stereo L/R channels to Mid/Side format
@@ -236,7 +236,7 @@ Kakshya::DataVariant mix_to_mono(const std::vector<Kakshya::DataVariant>& channe
  * @return Pair of DataVariants (Mid, Side)
  * @throws std::invalid_argument if input doesn't have exactly 2 channels
  */
-std::pair<Kakshya::DataVariant, Kakshya::DataVariant> stereo_to_mid_side(const std::vector<Kakshya::DataVariant>& lr_channels);
+MAYAFLUX_API std::pair<Kakshya::DataVariant, Kakshya::DataVariant> stereo_to_mid_side(const std::vector<Kakshya::DataVariant>& lr_channels);
 
 /**
  * @brief Convert Mid/Side channels to stereo L/R format
@@ -244,7 +244,7 @@ std::pair<Kakshya::DataVariant, Kakshya::DataVariant> stereo_to_mid_side(const s
  * @return Pair of DataVariants (Left, Right)
  * @throws std::invalid_argument if input doesn't have exactly 2 channels
  */
-std::pair<Kakshya::DataVariant, Kakshya::DataVariant> mid_side_to_stereo(const std::vector<Kakshya::DataVariant>& ms_channels);
+MAYAFLUX_API std::pair<Kakshya::DataVariant, Kakshya::DataVariant> mid_side_to_stereo(const std::vector<Kakshya::DataVariant>& ms_channels);
 
 /**
  * @brief Calculate stereo width measure for L/R channels
@@ -252,14 +252,14 @@ std::pair<Kakshya::DataVariant, Kakshya::DataVariant> mid_side_to_stereo(const s
  * @return Stereo width value (0.0 = mono, 1.0 = full stereo)
  * @throws std::invalid_argument if input doesn't have exactly 2 channels
  */
-double stereo_width(const std::vector<Kakshya::DataVariant>& lr_channels);
+MAYAFLUX_API double stereo_width(const std::vector<Kakshya::DataVariant>& lr_channels);
 
 /**
  * @brief Calculate correlation matrix between all channel pairs
  * @param channels Vector of channel data
  * @return Correlation matrix as flat vector (row-major order)
  */
-std::vector<double> channel_correlation_matrix(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API std::vector<double> channel_correlation_matrix(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Calculate phase correlation between two channels
@@ -267,12 +267,12 @@ std::vector<double> channel_correlation_matrix(const std::vector<Kakshya::DataVa
  * @param channel2 Second channel data
  * @return Phase correlation value (-1.0 to 1.0)
  */
-double phase_correlation(const Kakshya::DataVariant& channel1, const Kakshya::DataVariant& channel2);
+MAYAFLUX_API double phase_correlation(const Kakshya::DataVariant& channel1, const Kakshya::DataVariant& channel2);
 
 /**
  * @brief Multi-channel feature analysis result
  */
-struct MultiChannelFeatures {
+struct MAYAFLUX_API MultiChannelFeatures {
     std::vector<double> per_channel_rms; ///< RMS energy per channel
     std::vector<double> per_channel_peak; ///< Peak amplitude per channel
     std::vector<double> per_channel_mean; ///< Mean value per channel
@@ -287,7 +287,7 @@ struct MultiChannelFeatures {
  * @param channels Vector of channel data
  * @return MultiChannelFeatures struct with analysis results
  */
-MultiChannelFeatures analyze_channels(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API MultiChannelFeatures analyze_channels(const std::vector<Kakshya::DataVariant>& channels);
 
 //=========================================================================
 // BASIC TRANSFORMATIONS - Simple modifications
@@ -298,15 +298,15 @@ MultiChannelFeatures analyze_channels(const std::vector<Kakshya::DataVariant>& c
  * @param data Input data (modified in-place)
  * @param gain_factor Multiplication factor
  */
-void apply_gain(std::vector<double>& data, double gain_factor);
-void apply_gain(Kakshya::DataVariant& data, double gain_factor);
+MAYAFLUX_API void apply_gain(std::vector<double>& data, double gain_factor);
+MAYAFLUX_API void apply_gain(Kakshya::DataVariant& data, double gain_factor);
 
 /**
  * @brief Apply gain to multi-channel data (in-place)
  * @param channels Vector of channel data (modified in-place)
  * @param gain_factor Multiplication factor applied to all channels
  */
-void apply_gain_channels(std::vector<Kakshya::DataVariant>& channels, double gain_factor);
+MAYAFLUX_API void apply_gain_channels(std::vector<Kakshya::DataVariant>& channels, double gain_factor);
 
 /**
  * @brief Apply different gain to each channel (in-place)
@@ -314,7 +314,7 @@ void apply_gain_channels(std::vector<Kakshya::DataVariant>& channels, double gai
  * @param gain_factors Vector of gain factors (must match channels.size())
  * @throws std::invalid_argument if gain_factors.size() != channels.size()
  */
-void apply_gain_per_channel(std::vector<Kakshya::DataVariant>& channels, const std::vector<double>& gain_factors);
+MAYAFLUX_API void apply_gain_per_channel(std::vector<Kakshya::DataVariant>& channels, const std::vector<double>& gain_factors);
 
 /**
  * @brief Apply gain to single-channel data (non-destructive)
@@ -322,8 +322,8 @@ void apply_gain_per_channel(std::vector<Kakshya::DataVariant>& channels, const s
  * @param gain_factor Multiplication factor
  * @return Modified copy of data
  */
-std::vector<double> with_gain(const std::vector<double>& data, double gain_factor);
-Kakshya::DataVariant with_gain(const Kakshya::DataVariant& data, double gain_factor);
+MAYAFLUX_API std::vector<double> with_gain(const std::vector<double>& data, double gain_factor);
+MAYAFLUX_API Kakshya::DataVariant with_gain(const Kakshya::DataVariant& data, double gain_factor);
 
 /**
  * @brief Apply gain to multi-channel data (non-destructive)
@@ -331,29 +331,29 @@ Kakshya::DataVariant with_gain(const Kakshya::DataVariant& data, double gain_fac
  * @param gain_factor Multiplication factor applied to all channels
  * @return Vector of modified channel copies
  */
-std::vector<Kakshya::DataVariant> with_gain_channels(const std::vector<Kakshya::DataVariant>& channels, double gain_factor);
+MAYAFLUX_API std::vector<Kakshya::DataVariant> with_gain_channels(const std::vector<Kakshya::DataVariant>& channels, double gain_factor);
 
 /**
  * @brief Normalize single-channel data to specified peak level (in-place)
  * @param data Input data (modified in-place)
  * @param target_peak Target peak amplitude (default: 1.0)
  */
-void normalize(std::vector<double>& data, double target_peak = 1.0);
-void normalize(Kakshya::DataVariant& data, double target_peak = 1.0);
+MAYAFLUX_API void normalize(std::vector<double>& data, double target_peak = 1.0);
+MAYAFLUX_API void normalize(Kakshya::DataVariant& data, double target_peak = 1.0);
 
 /**
  * @brief Normalize each channel independently to specified peak level (in-place)
  * @param channels Vector of channel data (modified in-place)
  * @param target_peak Target peak amplitude (default: 1.0)
  */
-void normalize_channels(std::vector<Kakshya::DataVariant>& channels, double target_peak = 1.0);
+MAYAFLUX_API void normalize_channels(std::vector<Kakshya::DataVariant>& channels, double target_peak = 1.0);
 
 /**
  * @brief Normalize multi-channel data relative to global peak (in-place)
  * @param channels Vector of channel data (modified in-place)
  * @param target_peak Target peak amplitude (default: 1.0)
  */
-void normalize_together(std::vector<Kakshya::DataVariant>& channels, double target_peak = 1.0);
+MAYAFLUX_API void normalize_together(std::vector<Kakshya::DataVariant>& channels, double target_peak = 1.0);
 
 /**
  * @brief Normalize single-channel data (non-destructive)
@@ -361,8 +361,8 @@ void normalize_together(std::vector<Kakshya::DataVariant>& channels, double targ
  * @param target_peak Target peak amplitude (default: 1.0)
  * @return Normalized copy of data
  */
-std::vector<double> normalized(const std::vector<double>& data, double target_peak = 1.0);
-Kakshya::DataVariant normalized(const Kakshya::DataVariant& data, double target_peak = 1.0);
+MAYAFLUX_API std::vector<double> normalized(const std::vector<double>& data, double target_peak = 1.0);
+MAYAFLUX_API Kakshya::DataVariant normalized(const Kakshya::DataVariant& data, double target_peak = 1.0);
 
 /**
  * @brief Normalize each channel independently (non-destructive)
@@ -370,35 +370,35 @@ Kakshya::DataVariant normalized(const Kakshya::DataVariant& data, double target_
  * @param target_peak Target peak amplitude (default: 1.0)
  * @return Vector of normalized channel copies
  */
-std::vector<Kakshya::DataVariant> normalized_channels(const std::vector<Kakshya::DataVariant>& channels, double target_peak = 1.0);
+MAYAFLUX_API std::vector<Kakshya::DataVariant> normalized_channels(const std::vector<Kakshya::DataVariant>& channels, double target_peak = 1.0);
 
 /**
  * @brief Reverse time order of single-channel data (in-place)
  * @param data Input data (modified in-place)
  */
-void reverse(std::vector<double>& data);
-void reverse(Kakshya::DataVariant& data);
+MAYAFLUX_API void reverse(std::vector<double>& data);
+MAYAFLUX_API void reverse(Kakshya::DataVariant& data);
 
 /**
  * @brief Reverse time order of multi-channel data (in-place)
  * @param channels Vector of channel data (modified in-place)
  */
-void reverse_channels(std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API void reverse_channels(std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Reverse time order of single-channel data (non-destructive)
  * @param data Input data
  * @return Time-reversed copy of data
  */
-std::vector<double> reversed(const std::vector<double>& data);
-Kakshya::DataVariant reversed(const Kakshya::DataVariant& data);
+MAYAFLUX_API std::vector<double> reversed(const std::vector<double>& data);
+MAYAFLUX_API Kakshya::DataVariant reversed(const Kakshya::DataVariant& data);
 
 /**
  * @brief Reverse time order of multi-channel data (non-destructive)
  * @param channels Vector of channel data
  * @return Vector of time-reversed channel copies
  */
-std::vector<Kakshya::DataVariant> reversed_channels(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API std::vector<Kakshya::DataVariant> reversed_channels(const std::vector<Kakshya::DataVariant>& channels);
 
 //=========================================================================
 // FREQUENCY DOMAIN - Quick spectral operations
@@ -410,8 +410,8 @@ std::vector<Kakshya::DataVariant> reversed_channels(const std::vector<Kakshya::D
  * @param window_size FFT size (0 = use data size)
  * @return Magnitude spectrum
  */
-std::vector<double> magnitude_spectrum(const std::vector<double>& data, size_t window_size = 0);
-std::vector<double> magnitude_spectrum(const Kakshya::DataVariant& data, size_t window_size = 0);
+MAYAFLUX_API std::vector<double> magnitude_spectrum(const std::vector<double>& data, size_t window_size = 0);
+MAYAFLUX_API std::vector<double> magnitude_spectrum(const Kakshya::DataVariant& data, size_t window_size = 0);
 
 /**
  * @brief Compute magnitude spectrum per channel for multi-channel data
@@ -427,8 +427,8 @@ std::vector<std::vector<double>> magnitude_spectrum_per_channel(const std::vecto
  * @param window_size FFT size (0 = use data size)
  * @return Power spectrum (magnitude squared)
  */
-std::vector<double> power_spectrum(const std::vector<double>& data, size_t window_size = 0);
-std::vector<double> power_spectrum(const Kakshya::DataVariant& data, size_t window_size = 0);
+MAYAFLUX_API std::vector<double> power_spectrum(const std::vector<double>& data, size_t window_size = 0);
+MAYAFLUX_API std::vector<double> power_spectrum(const Kakshya::DataVariant& data, size_t window_size = 0);
 
 /**
  * @brief Compute power spectrum per channel for multi-channel data
@@ -436,7 +436,7 @@ std::vector<double> power_spectrum(const Kakshya::DataVariant& data, size_t wind
  * @param window_size FFT size (0 = use data size)
  * @return Vector of power spectra, one per channel
  */
-std::vector<std::vector<double>> power_spectrum_per_channel(const std::vector<Kakshya::DataVariant>& channels, size_t window_size = 0);
+MAYAFLUX_API std::vector<std::vector<double>> power_spectrum_per_channel(const std::vector<Kakshya::DataVariant>& channels, size_t window_size = 0);
 
 //=========================================================================
 // PITCH AND TIME - Common audio manipulations
@@ -450,9 +450,9 @@ std::vector<std::vector<double>> power_spectrum_per_channel(const std::vector<Ka
  * @param max_freq Maximum expected frequency (default: 2000 Hz)
  * @return Estimated F0 in Hz (0 if not detected)
  */
-double estimate_pitch(const std::vector<double>& data, double sample_rate = 44100.0,
+MAYAFLUX_API double estimate_pitch(const std::vector<double>& data, double sample_rate = 44100.0,
     double min_freq = 80.0, double max_freq = 2000.0);
-double estimate_pitch(const Kakshya::DataVariant& data, double sample_rate = 44100.0,
+MAYAFLUX_API double estimate_pitch(const Kakshya::DataVariant& data, double sample_rate = 44100.0,
     double min_freq = 80.0, double max_freq = 2000.0);
 
 /**
@@ -463,7 +463,7 @@ double estimate_pitch(const Kakshya::DataVariant& data, double sample_rate = 441
  * @param max_freq Maximum expected frequency (default: 2000 Hz)
  * @return Vector of estimated F0 values in Hz, one per channel (0 if not detected)
  */
-std::vector<double> estimate_pitch_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0,
+MAYAFLUX_API std::vector<double> estimate_pitch_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0,
     double min_freq = 80.0, double max_freq = 2000.0);
 
 //=========================================================================
@@ -477,10 +477,10 @@ std::vector<double> estimate_pitch_per_channel(const std::vector<Kakshya::DataVa
  * @param min_silence_duration Minimum silence length in samples (default: 1024)
  * @return Vector of silent data segments
  */
-std::vector<double> extract_silent_data(const std::vector<double>& data,
+MAYAFLUX_API std::vector<double> extract_silent_data(const std::vector<double>& data,
     double threshold,
     size_t min_silence_duration);
-std::vector<double> extract_silent_data(const Kakshya::DataVariant& data,
+MAYAFLUX_API std::vector<double> extract_silent_data(const Kakshya::DataVariant& data,
     double threshold,
     size_t min_silence_duration);
 
@@ -491,10 +491,10 @@ std::vector<double> extract_silent_data(const Kakshya::DataVariant& data,
  * @param region_size Size of each region in samples (default: 1024)
  * @return Vector of zero crossing regions
  */
-std::vector<double> extract_zero_crossing_regions(const std::vector<double>& data,
+MAYAFLUX_API std::vector<double> extract_zero_crossing_regions(const std::vector<double>& data,
     double threshold,
     size_t region_size);
-std::vector<double> extract_zero_crossing_regions(const Kakshya::DataVariant& data,
+MAYAFLUX_API std::vector<double> extract_zero_crossing_regions(const Kakshya::DataVariant& data,
     double threshold,
     size_t region_size);
 
@@ -503,15 +503,15 @@ std::vector<double> extract_zero_crossing_regions(const Kakshya::DataVariant& da
  * @param data Input data (modified in-place)
  * @param window_type "hann", "hamming", "blackman", "rectangular" (default: "hann")
  */
-void apply_window(std::vector<double>& data, const std::string& window_type = "hann");
-void apply_window(Kakshya::DataVariant& data, const std::string& window_type = "hann");
+MAYAFLUX_API void apply_window(std::vector<double>& data, const std::string& window_type = "hann");
+MAYAFLUX_API void apply_window(Kakshya::DataVariant& data, const std::string& window_type = "hann");
 
 /**
  * @brief Apply window function to multi-channel data (in-place)
  * @param channels Vector of channel data (modified in-place)
  * @param window_type "hann", "hamming", "blackman", "rectangular" (default: "hann")
  */
-void apply_window_channels(std::vector<Kakshya::DataVariant>& channels, const std::string& window_type = "hann");
+MAYAFLUX_API void apply_window_channels(std::vector<Kakshya::DataVariant>& channels, const std::string& window_type = "hann");
 
 /**
  * @brief Split single-channel data into overlapping windows
@@ -520,10 +520,10 @@ void apply_window_channels(std::vector<Kakshya::DataVariant>& channels, const st
  * @param hop_size Step size between windows
  * @return Vector of windowed segments
  */
-std::vector<std::vector<double>> windowed_segments(const std::vector<double>& data,
+MAYAFLUX_API std::vector<std::vector<double>> windowed_segments(const std::vector<double>& data,
     size_t window_size,
     size_t hop_size);
-std::vector<std::vector<double>> windowed_segments(const Kakshya::DataVariant& data,
+MAYAFLUX_API std::vector<std::vector<double>> windowed_segments(const Kakshya::DataVariant& data,
     size_t window_size,
     size_t hop_size);
 
@@ -534,7 +534,7 @@ std::vector<std::vector<double>> windowed_segments(const Kakshya::DataVariant& d
  * @param hop_size Step size between windows
  * @return Vector of windowed segments for each channel
  */
-std::vector<std::vector<std::vector<double>>> windowed_segments_per_channel(const std::vector<Kakshya::DataVariant>& channels,
+MAYAFLUX_API std::vector<std::vector<std::vector<double>>> windowed_segments_per_channel(const std::vector<Kakshya::DataVariant>& channels,
     size_t window_size,
     size_t hop_size);
 
@@ -545,10 +545,10 @@ std::vector<std::vector<std::vector<double>>> windowed_segments_per_channel(cons
  * @param min_silence_duration Minimum silence length in samples (default: 1024)
  * @return Vector of (start, end) silence regions
  */
-std::vector<std::pair<size_t, size_t>> detect_silence(const std::vector<double>& data,
+MAYAFLUX_API std::vector<std::pair<size_t, size_t>> detect_silence(const std::vector<double>& data,
     double threshold = 0.01,
     size_t min_silence_duration = 1024);
-std::vector<std::pair<size_t, size_t>> detect_silence(const Kakshya::DataVariant& data,
+MAYAFLUX_API std::vector<std::pair<size_t, size_t>> detect_silence(const Kakshya::DataVariant& data,
     double threshold = 0.01,
     size_t min_silence_duration = 1024);
 
@@ -559,7 +559,7 @@ std::vector<std::pair<size_t, size_t>> detect_silence(const Kakshya::DataVariant
  * @param min_silence_duration Minimum silence length in samples (default: 1024)
  * @return Vector of silence regions for each channel
  */
-std::vector<std::vector<std::pair<size_t, size_t>>> detect_silence_per_channel(const std::vector<Kakshya::DataVariant>& channels,
+MAYAFLUX_API std::vector<std::vector<std::pair<size_t, size_t>>> detect_silence_per_channel(const std::vector<Kakshya::DataVariant>& channels,
     double threshold = 0.01,
     size_t min_silence_duration = 1024);
 
@@ -572,8 +572,8 @@ std::vector<std::vector<std::pair<size_t, size_t>>> detect_silence_per_channel(c
  * @param streams Vector of data streams to mix
  * @return Mixed output data (average of all streams)
  */
-std::vector<double> mix(const std::vector<std::vector<double>>& streams);
-std::vector<double> mix(const std::vector<Kakshya::DataVariant>& streams);
+MAYAFLUX_API std::vector<double> mix(const std::vector<std::vector<double>>& streams);
+MAYAFLUX_API std::vector<double> mix(const std::vector<Kakshya::DataVariant>& streams);
 
 /**
  * @brief Mix multiple data streams with specified gains
@@ -582,9 +582,9 @@ std::vector<double> mix(const std::vector<Kakshya::DataVariant>& streams);
  * @return Mixed output data
  * @throws std::invalid_argument if gains.size() != streams.size()
  */
-std::vector<double> mix_with_gains(const std::vector<std::vector<double>>& streams,
+MAYAFLUX_API std::vector<double> mix_with_gains(const std::vector<std::vector<double>>& streams,
     const std::vector<double>& gains);
-std::vector<double> mix_with_gains(const std::vector<Kakshya::DataVariant>& streams,
+MAYAFLUX_API std::vector<double> mix_with_gains(const std::vector<Kakshya::DataVariant>& streams,
     const std::vector<double>& gains);
 
 /**
@@ -592,28 +592,28 @@ std::vector<double> mix_with_gains(const std::vector<Kakshya::DataVariant>& stre
  * @param data Input DataVariant
  * @return Extracted double vector, empty if conversion fails
  */
-std::vector<double> to_double_vector(const Kakshya::DataVariant& data);
+MAYAFLUX_API std::vector<double> to_double_vector(const Kakshya::DataVariant& data);
 
 /**
  * @brief Convert vector<double> to DataVariant
  * @param data Input double vector
  * @return DataVariant containing the data
  */
-Kakshya::DataVariant to_data_variant(const std::vector<double>& data);
+MAYAFLUX_API Kakshya::DataVariant to_data_variant(const std::vector<double>& data);
 
 /**
  * @brief Convert multi-channel data to vector of double vectors
  * @param channels Vector of channel data
  * @return Vector of double vectors, one per channel
  */
-std::vector<std::vector<double>> to_double_vectors(const std::vector<Kakshya::DataVariant>& channels);
+MAYAFLUX_API std::vector<std::vector<double>> to_double_vectors(const std::vector<Kakshya::DataVariant>& channels);
 
 /**
  * @brief Convert vector of double vectors to multi-channel DataVariant format
  * @param channel_data Vector of channel data as double vectors
  * @return Vector of DataVariants, one per channel
  */
-std::vector<Kakshya::DataVariant> to_data_variants(const std::vector<std::vector<double>>& channel_data);
+MAYAFLUX_API std::vector<Kakshya::DataVariant> to_data_variants(const std::vector<std::vector<double>>& channel_data);
 
 //=========================================================================
 // REGISTRY ACCESS - Bridge to full Yantra system
@@ -625,6 +625,6 @@ std::vector<Kakshya::DataVariant> to_data_variants(const std::vector<std::vector
  * Called automatically by engine initialization, but can be called manually
  * for custom setups or testing.
  */
-void initialize_yantra();
+MAYAFLUX_API void initialize_yantra();
 
 } // namespace MayaFlux

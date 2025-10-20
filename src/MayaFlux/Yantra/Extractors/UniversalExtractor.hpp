@@ -43,7 +43,7 @@ namespace MayaFlux::Yantra {
  * @enum ExtractionType
  * @brief Categories of extraction operations for discovery and organization
  */
-enum class ExtractionType : u_int8_t {
+enum class ExtractionType : uint8_t {
     DIRECT, ///< Direct data type conversion/extraction
     REGION_BASED, ///< Extract from spatial/temporal regions
     FEATURE_GUIDED, ///< Extract based on feature analysis
@@ -57,7 +57,7 @@ enum class ExtractionType : u_int8_t {
  * @enum ExtractionScope
  * @brief Scope control for extraction operations
  */
-enum class ExtractionScope : u_int8_t {
+enum class ExtractionScope : uint8_t {
     FULL_DATA, ///< Extract all available data
     TARGETED_REGIONS, ///< Extract only specific regions
     FILTERED_CONTENT, ///< Extract content meeting criteria
@@ -81,7 +81,7 @@ enum class ExtractionScope : u_int8_t {
  * - Integration with ComputeMatrix execution modes
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class UniversalExtractor : public ComputeOperation<InputType, OutputType> {
+class MAYAFLUX_API UniversalExtractor : public ComputeOperation<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;

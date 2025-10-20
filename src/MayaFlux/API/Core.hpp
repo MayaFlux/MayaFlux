@@ -34,7 +34,7 @@ namespace Core {
  * @brief Checks if the default engine has been initialized
  * @return true if the engine is initialized, false otherwise
  */
-bool is_engine_initialized();
+MAYAFLUX_API bool is_engine_initialized();
 
 /**
  * @brief Gets the default engine instance
@@ -43,7 +43,7 @@ bool is_engine_initialized();
  * Creates the engine if it doesn't exist yet. This is the centrally managed
  * engine instance that all convenience functions in this namespace operate on.
  */
-Core::Engine& get_context();
+MAYAFLUX_API Core::Engine& get_context();
 
 /**
  * @brief Replaces the default engine with a new instance
@@ -60,7 +60,7 @@ Core::Engine& get_context();
  * This function is intended for advanced use cases where custom engine configuration
  * is required beyond what the standard initialization functions provide.
  */
-void set_and_transfer_context(Core::Engine instance);
+MAYAFLUX_API void set_and_transfer_context(Core::Engine instance);
 
 /**
  * @brief Initializes the default engine with specified parameters
@@ -71,7 +71,7 @@ void set_and_transfer_context(Core::Engine instance);
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-void Init(uint32_t sample_rate = 48000, uint32_t buffer_size = 512, uint32_t num_out_channels = 2, uint32_t num_in_channels = 0);
+MAYAFLUX_API void Init(uint32_t sample_rate = 48000, uint32_t buffer_size = 512, uint32_t num_out_channels = 2, uint32_t num_in_channels = 0);
 
 /**
  * @brief Initializes the default engine with specified stream info
@@ -79,7 +79,7 @@ void Init(uint32_t sample_rate = 48000, uint32_t buffer_size = 512, uint32_t num
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-void Init(Core::GlobalStreamInfo stream_info);
+MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info);
 
 /**
  * @brief Initializes the default engine with specified stream and graphics info
@@ -88,34 +88,34 @@ void Init(Core::GlobalStreamInfo stream_info);
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config);
+MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config);
 
 /**
  * @brief Starts audio processing on the default engine
  *
  * Convenience wrapper for Engine::Start() on the default engine.
  */
-void Start();
+MAYAFLUX_API void Start();
 
 /**
  * @brief Pauses audio processing on the default engine
  *
  * Convenience wrapper for Engine::Pause() on the default engine.
  */
-void Pause();
+MAYAFLUX_API void Pause();
 
 /**
  * @brief Resumes audio processing on the default engine
  *
  * Convenience wrapper for Engine::Resume() on the default engine.
  */
-void Resume();
+MAYAFLUX_API void Resume();
 
 /**
  * @brief Stops and cleans up the default engine
  *
  * Convenience wrapper for Engine::End() on the default engine.
  */
-void End();
+MAYAFLUX_API void End();
 
 }

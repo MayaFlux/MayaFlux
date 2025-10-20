@@ -60,7 +60,7 @@ public:
     static std::vector<std::vector<double>> create_white_noise(
         size_t samples = 1024,
         double variance = 1.0,
-        u_int32_t seed = 42,
+        uint32_t seed = 42,
         size_t channels = 1)
     {
         std::vector<std::vector<double>> signal(channels, std::vector<double>(samples, 0.0));
@@ -635,7 +635,7 @@ TEST_F(MathematicalTransformerTest, TrigonometricCosine)
 TEST_F(MathematicalTransformerTest, QuantizationTransformation)
 {
     transformer->set_parameter("operation", MathematicalOperation::QUANTIZE);
-    transformer->set_parameter("bits", static_cast<u_int8_t>(8));
+    transformer->set_parameter("bits", static_cast<uint8_t>(8));
 
     auto result = transformer->apply_operation(test_input);
 
@@ -754,8 +754,8 @@ TEST_F(SpectralTransformerTest, FrequencyShiftTransformation)
 {
     transformer->set_parameter("operation", SpectralOperation::FREQUENCY_SHIFT);
     transformer->set_parameter("shift_hz", 100.0);
-    transformer->set_parameter("window_size", static_cast<u_int32_t>(1024));
-    transformer->set_parameter("hop_size", static_cast<u_int32_t>(512));
+    transformer->set_parameter("window_size", static_cast<uint32_t>(1024));
+    transformer->set_parameter("hop_size", static_cast<uint32_t>(512));
     transformer->set_parameter("sample_rate", 44100.0);
 
     auto result = transformer->apply_operation(test_input);
@@ -775,8 +775,8 @@ TEST_F(SpectralTransformerTest, PitchShiftTransformation)
 {
     transformer->set_parameter("operation", SpectralOperation::PITCH_SHIFT);
     transformer->set_parameter("pitch_ratio", 1.5);
-    transformer->set_parameter("window_size", static_cast<u_int32_t>(1024));
-    transformer->set_parameter("hop_size", static_cast<u_int32_t>(512));
+    transformer->set_parameter("window_size", static_cast<uint32_t>(1024));
+    transformer->set_parameter("hop_size", static_cast<uint32_t>(512));
 
     auto result = transformer->apply_operation(test_input);
 
@@ -799,8 +799,8 @@ TEST_F(SpectralTransformerTest, SpectralFilterTransformation)
     transformer->set_parameter("operation", SpectralOperation::SPECTRAL_FILTER);
     transformer->set_parameter("low_freq", 200.0);
     transformer->set_parameter("high_freq", 500.0); // Should preserve 220Hz and 440Hz, remove 880Hz
-    transformer->set_parameter("window_size", static_cast<u_int32_t>(1024));
-    transformer->set_parameter("hop_size", static_cast<u_int32_t>(512));
+    transformer->set_parameter("window_size", static_cast<uint32_t>(1024));
+    transformer->set_parameter("hop_size", static_cast<uint32_t>(512));
     transformer->set_parameter("sample_rate", 44100.0);
 
     auto result = transformer->apply_operation(test_input);
@@ -828,8 +828,8 @@ TEST_F(SpectralTransformerTest, HarmonicEnhanceTransformation)
 {
     transformer->set_parameter("operation", SpectralOperation::HARMONIC_ENHANCE);
     transformer->set_parameter("enhancement_factor", 2.0);
-    transformer->set_parameter("window_size", static_cast<u_int32_t>(1024));
-    transformer->set_parameter("hop_size", static_cast<u_int32_t>(512));
+    transformer->set_parameter("window_size", static_cast<uint32_t>(1024));
+    transformer->set_parameter("hop_size", static_cast<uint32_t>(512));
 
     auto result = transformer->apply_operation(test_input);
 
@@ -859,8 +859,8 @@ TEST_F(SpectralTransformerTest, SpectralGateTransformation)
 {
     transformer->set_parameter("operation", SpectralOperation::SPECTRAL_GATE);
     transformer->set_parameter("threshold", -30.0);
-    transformer->set_parameter("window_size", static_cast<u_int32_t>(1024));
-    transformer->set_parameter("hop_size", static_cast<u_int32_t>(512));
+    transformer->set_parameter("window_size", static_cast<uint32_t>(1024));
+    transformer->set_parameter("hop_size", static_cast<uint32_t>(512));
 
     auto result = transformer->apply_operation(test_input);
 
@@ -896,8 +896,8 @@ TEST_F(SpectralTransformerTest, MultiChannelSpectralConsistency)
 
     transformer->set_parameter("operation", SpectralOperation::HARMONIC_ENHANCE);
     transformer->set_parameter("enhancement_factor", 1.5);
-    transformer->set_parameter("window_size", static_cast<u_int32_t>(512));
-    transformer->set_parameter("hop_size", static_cast<u_int32_t>(256));
+    transformer->set_parameter("window_size", static_cast<uint32_t>(512));
+    transformer->set_parameter("hop_size", static_cast<uint32_t>(256));
 
     auto result = transformer->apply_operation(identical_input);
 
@@ -924,8 +924,8 @@ TEST_F(SpectralTransformerTest, SpectralParameterValidation)
     transformer->set_parameter("operation", SpectralOperation::PITCH_SHIFT);
 
     transformer->set_parameter("pitch_ratio", 0.5);
-    transformer->set_parameter("window_size", static_cast<u_int32_t>(2048));
-    transformer->set_parameter("hop_size", static_cast<u_int32_t>(1024));
+    transformer->set_parameter("window_size", static_cast<uint32_t>(2048));
+    transformer->set_parameter("hop_size", static_cast<uint32_t>(1024));
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(test_input);
@@ -1077,7 +1077,7 @@ TEST_F(TemporalTransformerTest, TimeStretchTransformation)
 TEST_F(TemporalTransformerTest, DelayTransformation)
 {
     transformer->set_parameter("operation", TemporalOperation::DELAY);
-    transformer->set_parameter("delay_samples", static_cast<u_int32_t>(100));
+    transformer->set_parameter("delay_samples", static_cast<uint32_t>(100));
     transformer->set_parameter("fill_value", 0.0);
 
     auto result = transformer->apply_operation(test_input);

@@ -40,16 +40,16 @@ void ContiguousAccessProcessor::store_metadata(const std::shared_ptr<SignalSourc
     m_total_elements = container->get_total_elements();
 
     if (m_current_position.empty()) {
-        u_int64_t num_channels = m_structure.get_channel_count();
+        uint64_t num_channels = m_structure.get_channel_count();
         m_current_position.assign(num_channels, 0);
     }
 
     if (m_output_shape.empty()) {
-        u_int64_t num_frames = m_structure.get_samples_count_per_channel();
-        u_int64_t num_channels = m_structure.get_channel_count();
+        uint64_t num_frames = m_structure.get_samples_count_per_channel();
+        uint64_t num_channels = m_structure.get_channel_count();
 
         m_output_shape = {
-            std::min<u_int64_t>(1024UL, num_frames),
+            std::min<uint64_t>(1024UL, num_frames),
             num_channels
         };
     }
@@ -75,9 +75,9 @@ void ContiguousAccessProcessor::validate()
         throw std::runtime_error("Audio output shape must be [frames, channels]");
     }
 
-    u_int64_t frames_requested = m_output_shape[0];
-    u_int64_t channels_requested = m_output_shape[1];
-    u_int64_t available_channels = m_structure.get_channel_count();
+    uint64_t frames_requested = m_output_shape[0];
+    uint64_t channels_requested = m_output_shape[1];
+    uint64_t available_channels = m_structure.get_channel_count();
 
     if (frames_requested == 0 || channels_requested == 0) {
         throw std::runtime_error("Frame and channel counts cannot be zero");
@@ -129,8 +129,8 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
     m_last_process_time = std::chrono::steady_clock::now();
 
     try {
-        u_int64_t min_frame = *std::ranges::min_element(m_current_position);
-        std::vector<u_int64_t> region_coords = { min_frame, 0 };
+        uint64_t min_frame = *std::ranges::min_element(m_current_position);
+        std::vector<uint64_t> region_coords = { min_frame, 0 };
 
         Region output_region = calculate_output_region(region_coords, m_output_shape);
 
@@ -143,7 +143,7 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
                 safe_copy_data_variant(region_data[0], processed_data_vector[0]);
             }
         } else {
-            u_int64_t channels_to_process = std::min(m_output_shape[1], static_cast<u_int64_t>(region_data.size()));
+            uint64_t channels_to_process = std::min(m_output_shape[1], static_cast<uint64_t>(region_data.size()));
             processed_data_vector.resize(channels_to_process);
 
             for (size_t ch = 0; ch < channels_to_process; ++ch) {
@@ -152,7 +152,7 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
         }
 
         if (m_auto_advance) {
-            u_int64_t frames_to_advance = m_output_shape[0];
+            uint64_t frames_to_advance = m_output_shape[0];
 
             m_current_position = advance_position(
                 m_current_position,
@@ -175,7 +175,7 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
     m_is_processing = false;
 }
 
-void ContiguousAccessProcessor::set_output_size(const std::vector<u_int64_t>& shape)
+void ContiguousAccessProcessor::set_output_size(const std::vector<uint64_t>& shape)
 {
     m_output_shape = shape;
     if (auto container = m_source_container_weak.lock()) {

@@ -64,7 +64,7 @@ namespace MayaFlux::Yantra {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class ComputationPipeline {
+class MAYAFLUX_API ComputationPipeline {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;
@@ -433,7 +433,7 @@ namespace PipelineFactory {
  * // Appropriate operations selected based on quality requirements and data size
  * ```
  */
-class GrammarAwareComputeMatrix : public ComputeMatrix {
+class MAYAFLUX_API GrammarAwareComputeMatrix : public ComputeMatrix {
 private:
     std::shared_ptr<ComputationGrammar> m_grammar; ///< Grammar instance for rule-based operation selection
 

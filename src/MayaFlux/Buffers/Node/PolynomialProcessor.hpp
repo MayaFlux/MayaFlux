@@ -15,7 +15,7 @@ namespace MayaFlux::Buffers {
  * polynomial modes (direct, recursive, and feedforward) and provides
  * configuration options for how the polynomial is applied.
  */
-class PolynomialProcessor : public BufferProcessor {
+class MAYAFLUX_API PolynomialProcessor : public BufferProcessor {
 public:
     /**
      * @brief Processing mode for the polynomial processor
@@ -25,6 +25,9 @@ public:
         BATCH, ///< Process the entire buffer at once
         WINDOWED ///< Process using a sliding window
     };
+
+    // TODO:: Temporary requirment on windows
+    PolynomialProcessor() = default;
 
     /**
      * @brief Creates a new processor that applies polynomial transformations

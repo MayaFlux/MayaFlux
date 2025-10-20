@@ -1,7 +1,5 @@
 #include "Chronie.hpp"
 
-#include <utility>
-
 #include "Core.hpp"
 
 #include "MayaFlux/Core/Engine.hpp"

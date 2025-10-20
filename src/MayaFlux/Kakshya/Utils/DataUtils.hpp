@@ -13,14 +13,14 @@ namespace MayaFlux::Kakshya {
  * @param dimensions Dimension descriptors.
  * @return Product of all dimension sizes.
  */
-u_int64_t calculate_total_elements(const std::vector<DataDimension>& dimensions);
+uint64_t calculate_total_elements(const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Calculate the frame size (number of elements per frame) for a set of dimensions.
  * @param dimensions Dimension descriptors.
  * @return Frame size (product of all but the first dimension).
  */
-u_int64_t calculate_frame_size(const std::vector<DataDimension>& dimensions);
+uint64_t calculate_frame_size(const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Get type index from DataVariant
@@ -36,11 +36,11 @@ std::type_index get_variant_type_index(const DataVariant& data);
  * @return Span containing the frame data.
  */
 template <ProcessableData T>
-constexpr std::span<T> extract_frame(std::span<T> data, u_int64_t frame_index, u_int64_t frame_size) noexcept
+constexpr std::span<T> extract_frame(std::span<T> data, uint64_t frame_index, uint64_t frame_size) noexcept
 {
-    u_int64_t start = frame_index * frame_size;
-    u_int64_t end = std::min(static_cast<u_int64_t>(start + frame_size),
-        static_cast<u_int64_t>(data.size()));
+    uint64_t start = frame_index * frame_size;
+    uint64_t end = std::min(static_cast<uint64_t>(start + frame_size),
+        static_cast<uint64_t>(data.size()));
 
     if (start >= data.size()) {
         return {};
@@ -60,7 +60,7 @@ constexpr std::span<T> extract_frame(std::span<T> data, u_int64_t frame_index, u
 template <ProcessableData T>
 std::span<T> extract_frame(
     const std::vector<std::span<T>>& channel_spans,
-    u_int64_t frame_index,
+    uint64_t frame_index,
     std::vector<T>& output_buffer) noexcept
 {
     output_buffer.clear();
@@ -274,7 +274,7 @@ std::span<T> extract_from_variant(const DataVariant& variant,
  * @return Optional value of type T.
  */
 template <typename T>
-std::optional<T> extract_from_variant_at(const DataVariant& variant, u_int64_t pos)
+std::optional<T> extract_from_variant_at(const DataVariant& variant, uint64_t pos)
 {
     return std::visit([pos](const auto& data) -> std::optional<T> {
         using DataType = std::decay_t<decltype(data)>;

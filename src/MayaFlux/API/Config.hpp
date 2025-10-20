@@ -20,7 +20,7 @@ namespace Config {
     /**
      * @brief Configuration settings for the audio graph
      */
-    struct GraphConfig {
+    struct MAYAFLUX_API GraphConfig {
         Utils::NodeChainSemantics chain_semantics;
         Utils::NodeBinaryOpSemantics binary_op_semantics;
 
@@ -40,56 +40,56 @@ namespace Config {
     extern GraphConfig graph_config;
     extern NodeConfig node_config;
 
-    GraphConfig& get_graph_config();
-    NodeConfig& get_node_config();
+    MAYAFLUX_API GraphConfig& get_graph_config();
+    MAYAFLUX_API NodeConfig& get_node_config();
 
     /**
      * @brief Gets the sample rate from the default engine
      * @return Current sample rate in Hz
      */
-    uint32_t get_sample_rate();
+    MAYAFLUX_API uint32_t get_sample_rate();
 
     /**
      * @brief Gets the buffer size from the default engine
      * @return Current buffer size in frames
      */
-    uint32_t get_buffer_size();
+    MAYAFLUX_API uint32_t get_buffer_size();
 
     /**
      * @brief Gets the number of output channels from the default engine
      * @return Current number of output channels
      */
-    uint32_t get_num_out_channels();
+    MAYAFLUX_API uint32_t get_num_out_channels();
 
     /**
      * @brief Gets the stream configuration from the default engine
      * @return Copy of the GlobalStreamInfo struct
      */
-    Core::GlobalStreamInfo& get_global_stream_info();
+    MAYAFLUX_API Core::GlobalStreamInfo& get_global_stream_info();
 
     /**
      * @brief Gets the graphics configuration from the default engine
      * @return Copy of the GlobalGraphicsConfig struct
      */
-    Core::GlobalGraphicsConfig& get_global_graphics_config();
+    MAYAFLUX_API Core::GlobalGraphicsConfig& get_global_graphics_config();
 
     /**
      * @brief Sets the minimum severity level for journal entries to be logged
      * @param severity Minimum severity level (e.g., INFO, WARN, ERROR, TRACE, DEBUG, FATAL)
      */
-    void set_journal_severity(Journal::Severity severity);
+    MAYAFLUX_API void set_journal_severity(Journal::Severity severity);
 
     /**
      * @brief Stores journal entries to a file by adding a FileSink to the Archivist
      * @param file_name Path to the log file
      */
-    void store_journal_entries(const std::string& file_name);
+    MAYAFLUX_API void store_journal_entries(const std::string& file_name);
 
     /**
      * @brief Outputs journal entries to the console by adding a ConsoleSink to the Archivist
      * NOTE: This records thread safe entries and cannot unsink once called.
      */
-    void sink_journal_to_console();
+    MAYAFLUX_API void sink_journal_to_console();
 }
 
 }

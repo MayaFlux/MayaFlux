@@ -21,7 +21,7 @@ namespace MayaFlux::Yantra {
  * - Move semantics for efficiency with large data
  */
 template <ComputeData T = std::vector<Kakshya::DataVariant>>
-struct IO {
+struct MAYAFLUX_API IO {
     T data; ///< The actual computation data
     std::vector<Kakshya::DataDimension> dimensions; ///< Data dimensional structure
     Kakshya::DataModality modality {}; ///< Data modality (audio, image, spectral, etc.)
@@ -196,9 +196,9 @@ struct IO {
      * @brief Get total number of elements across all dimensions
      * @return Product of all dimension sizes
      */
-    [[nodiscard]] u_int64_t get_total_elements() const
+    [[nodiscard]] uint64_t get_total_elements() const
     {
-        u_int64_t total = 1;
+        uint64_t total = 1;
         for (const auto& dim : dimensions) {
             total *= dim.size;
         }

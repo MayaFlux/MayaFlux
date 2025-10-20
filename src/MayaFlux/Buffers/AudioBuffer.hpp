@@ -30,7 +30,7 @@ namespace MayaFlux::Buffers {
  * capabilities essential for real-time audio processing, hardware interfacing, and
  * computationally intensive audio transformations that benefit from batch operations.
  */
-class AudioBuffer : public Buffer {
+class MAYAFLUX_API AudioBuffer : public Buffer {
 public:
     /**
      * @brief Creates a new uninitialized audio buffer

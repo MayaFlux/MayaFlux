@@ -7,12 +7,12 @@ SoundFileContainer::SoundFileContainer()
 {
 }
 
-SoundFileContainer::SoundFileContainer(u_int32_t sample_rate, u_int32_t num_channels, u_int64_t initial_capacity)
+SoundFileContainer::SoundFileContainer(uint32_t sample_rate, uint32_t num_channels, uint64_t initial_capacity)
     : SoundStreamContainer(sample_rate, num_channels, initial_capacity, false) // Files are not circular
 {
 }
 
-void SoundFileContainer::setup(u_int64_t num_frames, u_int32_t sample_rate, u_int32_t num_channels)
+void SoundFileContainer::setup(uint64_t num_frames, uint32_t sample_rate, uint32_t num_channels)
 {
     std::unique_lock lock(m_data_mutex);
 

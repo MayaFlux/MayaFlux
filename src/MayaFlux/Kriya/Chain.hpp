@@ -36,7 +36,7 @@ namespace MayaFlux::Kriya {
  * state transitions, or any series of time-based events that need to occur in a specific
  * order with deterministic timing.
  */
-class EventChain {
+class MAYAFLUX_API EventChain {
 public:
     /**
      * @brief Constructs an EventChain using the global scheduler
@@ -70,7 +70,7 @@ public:
      * The method returns a reference to the EventChain itself, allowing for a
      * fluent, declarative API style.
      */
-    EventChain& then(std::function<void()> action, double delay_seconds = 0.f);
+    EventChain& then(std::function<void()> action, double delay_seconds = 0.F);
 
     /**
      * @brief Starts executing the event chain
@@ -137,7 +137,7 @@ private:
  * ActionTokens are typically created implicitly through conversions from nodes,
  * time values, or functions, making the API more concise and expressive.
  */
-class ActionToken {
+class MAYAFLUX_API ActionToken {
 public:
     /**
      * @brief Constructs an ActionToken representing a node connection
@@ -196,7 +196,7 @@ public:
      * This field contains the delay duration, if this token
      * represents a time delay.
      */
-    double seconds = 0.f;
+    double seconds = 0.F;
 };
 
 /**
@@ -237,7 +237,7 @@ public:
  * The Sequence is part of a broader pattern of using operator overloading
  * to create a domain-specific language for computational flow programming within C++.
  */
-class Sequence {
+class MAYAFLUX_API Sequence {
 public:
     /**
      * @brief Adds an action to the sequence
@@ -277,7 +277,7 @@ public:
      * The actions are executed in the order they were added, with any time
      * delays respected.
      */
-    void execute(std::shared_ptr<Nodes::NodeGraphManager> node_manager, std::shared_ptr<Vruta::TaskScheduler> scheduler);
+    void execute(const std::shared_ptr<Nodes::NodeGraphManager>& node_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler);
 
 private:
     /**

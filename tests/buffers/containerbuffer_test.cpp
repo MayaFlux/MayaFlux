@@ -29,7 +29,7 @@ protected:
         container->set_raw_data({ test_data });
 
         auto processor = std::make_shared<MayaFlux::Kakshya::ContiguousAccessProcessor>();
-        std::vector<u_int64_t> shape { 4, 2 };
+        std::vector<uint64_t> shape { 4, 2 };
 
         processor->set_auto_advance(false);
         container->set_default_processor(processor);
@@ -159,7 +159,7 @@ TEST_F(ContainerBufferTest, MultipleSequentialProcessCallsAreConsistent)
 TEST_F(ContainerBufferTest, BufferWrapsCorrectlyWithLooping)
 {
     container->set_looping(true);
-    container->set_loop_region(Region(std::vector<u_int64_t>({ 0, 0 }), std::vector<u_int64_t>({ 3, 1 })));
+    container->set_loop_region(Region(std::vector<uint64_t>({ 0, 0 }), std::vector<uint64_t>({ 3, 1 })));
     container->set_read_position({ 0, 0 });
 
     auto adapter = std::make_shared<ContainerToBufferAdapter>(container);

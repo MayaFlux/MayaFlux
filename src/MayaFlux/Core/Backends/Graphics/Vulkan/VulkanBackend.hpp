@@ -46,7 +46,7 @@ struct WindowRenderContext {
  * objects for each registered window.
  * It supports window registration, rendering, and handling window resize events.
  */
-class VulkanBackend : public IGraphicsBackend {
+class MAYAFLUX_API VulkanBackend : public IGraphicsBackend {
 public:
     VulkanBackend();
 

@@ -2,12 +2,11 @@
 
 #include "Sink.hpp"
 
-
 #include "Ansi.hpp"
 
 namespace MayaFlux::Journal {
 
-class ConsoleSink : public Sink {
+class MAYAFLUX_API ConsoleSink : public Sink {
 private:
     bool m_colors_enabled;
 
@@ -103,7 +102,7 @@ private:
 
     std::mutex m_mutex;
 
-    std::string_view feed_severity(std::ostream& os, Severity severity) const
+    void feed_severity(std::ostream& os, Severity severity) const
     {
         switch (severity) {
         case Severity::TRACE:

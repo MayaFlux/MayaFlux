@@ -26,7 +26,7 @@ class Node;
  * processes all registered nodes and aggregates their outputs based on their
  * assigned processing rates.
  */
-class RootNode {
+class MAYAFLUX_API RootNode {
 public:
     /**
      * @brief Constructs a RootNode for a specific processing token and channel

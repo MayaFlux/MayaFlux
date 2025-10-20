@@ -2,12 +2,13 @@
 build/
 install/
 out/
-compile_commands.json
 CMakeCache.txt
 CMakeFiles/
 CTestTestfile.cmake
 cmake_install.cmake
 Makefile
+.dependencies
+srcipts/temp/
 
 # Clangd and language server files
 .clangd/
@@ -16,9 +17,10 @@ Makefile
 
 # Generated files
 docs/html/
-src/MayaFlux/version.h
+cmake/config.h
 src/user_project.hpp
 public/
+compile_commands.json
 
 # User resources (not tracked)
 res/

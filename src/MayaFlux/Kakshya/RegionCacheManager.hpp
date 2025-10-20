@@ -14,7 +14,7 @@ struct RegionHash {
  * Provides LRU-based caching for RegionCache and RegionSegment objects,
  * supporting efficient repeated/random access to region data.
  */
-class RegionCacheManager {
+class MAYAFLUX_API RegionCacheManager {
     std::unordered_map<Region, RegionCache, RegionHash> m_cache;
     std::list<Region> m_lru_list;
     size_t m_max_cache_size;

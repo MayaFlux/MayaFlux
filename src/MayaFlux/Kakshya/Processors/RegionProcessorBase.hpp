@@ -31,7 +31,7 @@ namespace MayaFlux::Kakshya {
  *
  * @see RegionOrganizationProcessor, DynamicRegionProcessor
  */
-class RegionProcessorBase : public DataProcessor {
+class MAYAFLUX_API RegionProcessorBase : public DataProcessor {
 public:
     virtual ~RegionProcessorBase() = default;
 
@@ -77,7 +77,7 @@ public:
      * @brief Get the current processing position (N-dimensional coordinates).
      * @return Reference to the current position vector.
      */
-    [[nodiscard]] inline const std::vector<u_int64_t>& get_current_position() const
+    [[nodiscard]] inline const std::vector<uint64_t>& get_current_position() const
     {
         return m_current_position;
     }
@@ -86,7 +86,7 @@ public:
      * @brief Set the current processing position (N-dimensional coordinates).
      * @param position New position vector.
      */
-    inline void set_current_position(const std::vector<u_int64_t>& position)
+    inline void set_current_position(const std::vector<uint64_t>& position)
     {
         m_current_position = position;
     }
@@ -99,7 +99,7 @@ protected:
     // Region organization and navigation
     std::vector<OrganizedRegion> m_organized_regions;
     size_t m_current_region_index = 0;
-    std::vector<u_int64_t> m_current_position;
+    std::vector<uint64_t> m_current_position;
 
     // Caching
     std::unique_ptr<RegionCacheManager> m_cache_manager;
@@ -132,8 +132,8 @@ protected:
      * @param region Optional region to constrain advancement.
      * @return true if position was advanced, false if at end.
      */
-    virtual bool advance_position(std::vector<u_int64_t>& position,
-        u_int64_t steps = 1,
+    virtual bool advance_position(std::vector<uint64_t>& position,
+        uint64_t steps = 1,
         const OrganizedRegion* region = nullptr);
 
     /**
@@ -143,7 +143,7 @@ protected:
      * @param required_shape Required shape for the output [num_frames, frame_size].
      */
     virtual void ensure_output_dimensioning(std::vector<DataVariant>& output_data,
-        const std::vector<u_int64_t>& required_shape);
+        const std::vector<uint64_t>& required_shape);
 };
 
 }

@@ -6,8 +6,6 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
-#include "Proxy/Creator.hpp"
-
 namespace MayaFlux {
 
 //-------------------------------------------------------------------------
@@ -24,7 +22,7 @@ void register_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel)
     auto manager = get_node_graph_manager();
     if (channel >= manager->get_channel_count(Nodes::ProcessingToken::AUDIO_RATE)) {
         std::out_of_range err("Channel index out of range for audio node registration");
-        std::cerr << err.what() << std::endl;
+        std::cerr << err.what() << '\n';
     }
     manager->add_to_root(node, Nodes::ProcessingToken::AUDIO_RATE, channel);
 }
@@ -53,26 +51,24 @@ void unregister_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<uint32
     }
 }
 
+void unregister_audio_node(std::shared_ptr<Nodes::Node> node, const Nodes::ProcessingToken& token, uint32_t channel)
+{
+    auto manager = get_node_graph_manager();
+    if (channel >= manager->get_channel_count(token)) {
+        std::out_of_range err("Channel index out of range for audio node registration");
+        std::cerr << err.what() << std::endl;
+    }
+    manager->remove_from_root(node, token, channel);
+}
+
 Nodes::RootNode& get_audio_channel_root(uint32_t channel)
 {
     return *get_context().get_node_graph_manager()->get_all_root_nodes(Nodes::ProcessingToken::AUDIO_RATE)[channel];
 }
 
-void register_all_nodes()
+void register_node(const std::shared_ptr<Nodes::Node>& node, const Nodes::ProcessingToken& token, uint32_t channel)
 {
-    ContextAppliers::set_node_context_applier(
-        [](std::shared_ptr<Nodes::Node> node, const CreationContext& context) {
-            if (context.domain) {
-                auto token = get_node_token(*context.domain);
-                if (context.channel) {
-                    get_node_graph_manager()->add_to_root(node, token, context.channel.value());
-                } else if (context.channels) {
-                    for (const auto& channel : context.channels.value()) {
-                        get_node_graph_manager()->add_to_root(node, token, channel);
-                    }
-                }
-            }
-        });
+    get_context().get_node_graph_manager()->add_to_root(node, token, channel);
 }
 
 //-------------------------------------------------------------------------
@@ -169,6 +165,11 @@ void clone_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
     get_buffer_manager()->clone_buffer_for_channels(buffer, channels, Buffers::ProcessingToken::AUDIO_BACKEND);
 }
 
+void clone_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer, const std::vector<uint32_t>& channels, const Buffers::ProcessingToken& token)
+{
+    get_buffer_manager()->clone_buffer_for_channels(buffer, channels, token);
+}
+
 void supply_buffer_to_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
     uint32_t channel, double mix)
 {
@@ -203,19 +204,6 @@ void remove_supplied_buffer_from_channels(std::shared_ptr<Buffers::AudioBuffer> 
     for (const auto& channel : channels) {
         remove_supplied_buffer_from_channel(buffer, channel);
     }
-}
-
-void register_all_buffers()
-{
-    ContextAppliers::set_buffer_context_applier(
-        [](std::shared_ptr<Buffers::Buffer> buffer, const CreationContext& context) {
-            if (context.domain && context.channel) {
-                auto token = get_buffer_token(*context.domain);
-                if (auto t_buffer = dynamic_pointer_cast<Buffers::AudioBuffer>(buffer)) {
-                    get_buffer_manager()->add_audio_buffer(t_buffer, token, context.channel.value());
-                }
-            }
-        });
 }
 
 }

@@ -12,7 +12,7 @@ class AudioBuffer;
  * This structure holds a reference to an audio buffer and its data, along with
  * the mix level and a flag indicating if it should be mixed only once.
  */
-struct MixSource {
+struct MAYAFLUX_API MixSource {
     std::span<double> data;
     double mix_level = 1.0;
     bool once = false;
@@ -58,7 +58,7 @@ private:
  * Hence, process once and supply to multiple channels is the most efficient method to send concurrent data
  * to multiple channels.
  */
-class MixProcessor : public BufferProcessor {
+class MAYAFLUX_API MixProcessor : public BufferProcessor {
 public:
     /**
      * @brief register an AudioBuffer source to be mixed into the output of specified channel

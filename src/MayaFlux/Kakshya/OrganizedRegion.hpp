@@ -14,7 +14,7 @@ namespace MayaFlux::Kakshya {
  * Represents a higher-level organization of audio segments with associated
  * metadata, enabling complex non-linear audio arrangements and transitions.
  */
-struct OrganizedRegion {
+struct MAYAFLUX_API OrganizedRegion {
     std::string group_name; ///< Name of the region group
     size_t region_index {}; ///< Index within the group
     std::vector<RegionSegment> segments; ///< Audio segments in this region
@@ -24,14 +24,14 @@ struct OrganizedRegion {
     RegionSelectionPattern selection_pattern = RegionSelectionPattern::SEQUENTIAL;
 
     RegionState state = RegionState::IDLE;
-    std::vector<u_int64_t> current_position; ///< Current read position
+    std::vector<uint64_t> current_position; ///< Current read position
     size_t active_segment_index = 0; ///< Currently active segment
     std::vector<size_t> active_segment_indices; ///< Multiple active segments (for overlapping)
 
     // Playback control
     bool looping_enabled = false;
-    std::vector<u_int64_t> loop_start; ///< Loop start coordinates
-    std::vector<u_int64_t> loop_end; ///< Loop end coordinates
+    std::vector<uint64_t> loop_start; ///< Loop start coordinates
+    std::vector<uint64_t> loop_end; ///< Loop end coordinates
 
     OrganizedRegion() = default;
 
@@ -44,9 +44,9 @@ struct OrganizedRegion {
     /**
      * @brief Get the total volume (elements) of all segments
      */
-    u_int64_t get_total_volume() const
+    uint64_t get_total_volume() const
     {
-        u_int64_t total = 0;
+        uint64_t total = 0;
         for (const auto& segment : segments) {
             total += segment.get_total_elements();
         }
@@ -56,7 +56,7 @@ struct OrganizedRegion {
     /**
      * @brief Check if position is within any segment
      */
-    bool contains_position(const std::vector<u_int64_t>& position) const
+    bool contains_position(const std::vector<uint64_t>& position) const
     {
         return std::ranges::any_of(segments,
             [&position](const RegionSegment& segment) {
@@ -78,7 +78,7 @@ struct OrganizedRegion {
     /**
      * @brief Find segment containing specific position
      */
-    std::optional<size_t> find_segment_for_position(const std::vector<u_int64_t>& position) const
+    std::optional<size_t> find_segment_for_position(const std::vector<uint64_t>& position) const
     {
         for (size_t i = 0; i < segments.size(); ++i) {
             if (segments[i].contains_position(position)) {

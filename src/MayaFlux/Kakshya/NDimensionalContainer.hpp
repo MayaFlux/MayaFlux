@@ -19,7 +19,7 @@ struct RegionSegment;
  * not tied to analog metaphors, but instead facilitate generic, flexible
  * processing of multi-dimensional data.
  */
-struct ContainerDataStructure {
+struct MAYAFLUX_API ContainerDataStructure {
 
     // Image/Video structures
     // static constexpr size_t FRAME_DIM = 0;
@@ -97,9 +97,9 @@ struct ContainerDataStructure {
      * @param variant_index Index of the variant (0-based)
      * @return Number of elements in the specified variant
      */
-    [[nodiscard]] static u_int64_t get_variant_size(const std::vector<DataDimension>& dimensions,
+    [[nodiscard]] static uint64_t get_variant_size(const std::vector<DataDimension>& dimensions,
         DataModality modality, OrganizationStrategy organization, size_t variant_index = 0);
-    [[nodiscard]] u_int64_t get_variant_size() const { return get_variant_size(dimensions, modality, organization); }
+    [[nodiscard]] uint64_t get_variant_size() const { return get_variant_size(dimensions, modality, organization); }
 
     /**
      * @brief Validate that dimensions match this structure's expectations.
@@ -122,56 +122,56 @@ struct ContainerDataStructure {
      * @param dimensions Vector of dimension descriptors
      * @return Total number of elements
      */
-    [[nodiscard]] static u_int64_t get_total_elements(const std::vector<DataDimension>& dimensions);
-    [[nodiscard]] u_int64_t get_total_elements() const { return get_total_elements(dimensions); }
+    [[nodiscard]] static uint64_t get_total_elements(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] uint64_t get_total_elements() const { return get_total_elements(dimensions); }
 
     /**
      * @brief Extract sample count from dimensions.
      * @param dimensions Vector of dimension descriptors
      * @return Number of samples in the temporal dimension
      */
-    [[nodiscard]] static u_int64_t get_samples_count(const std::vector<DataDimension>& dimensions);
-    [[nodiscard]] u_int64_t get_samples_count() const { return get_samples_count(dimensions); }
+    [[nodiscard]] static uint64_t get_samples_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] uint64_t get_samples_count() const { return get_samples_count(dimensions); }
 
     /**
      * @brief Get samples per channel (time dimension only).
      * @param dimensions Vector of dimension descriptors
      * @return Number of samples per channel
      */
-    [[nodiscard]] static u_int64_t get_samples_count_per_channel(const std::vector<DataDimension>& dimensions);
-    [[nodiscard]] u_int64_t get_samples_count_per_channel() const { return get_samples_count_per_channel(dimensions); }
+    [[nodiscard]] static uint64_t get_samples_count_per_channel(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] uint64_t get_samples_count_per_channel() const { return get_samples_count_per_channel(dimensions); }
 
     /**
      * @brief Extract channel count from dimensions.
      * @param dimensions Vector of dimension descriptors
      * @return Number of channels
      */
-    [[nodiscard]] static u_int64_t get_channel_count(const std::vector<DataDimension>& dimensions);
-    [[nodiscard]] u_int64_t get_channel_count() const { return get_channel_count(dimensions); }
+    [[nodiscard]] static uint64_t get_channel_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] uint64_t get_channel_count() const { return get_channel_count(dimensions); }
 
     /**
      * @brief Get pixel count (spatial dimensions only).
      * @param dimensions Vector of dimension descriptors
      * @return Number of pixels
      */
-    [[nodiscard]] static u_int64_t get_pixels_count(const std::vector<DataDimension>& dimensions);
-    [[nodiscard]] u_int64_t get_pixels_count() const { return get_pixels_count(dimensions); }
+    [[nodiscard]] static uint64_t get_pixels_count(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] uint64_t get_pixels_count() const { return get_pixels_count(dimensions); }
 
     /**
      * @brief Extract height from image/video dimensions.
      * @param dimensions Vector of dimension descriptors
      * @return Height in pixels
      */
-    [[nodiscard]] static u_int64_t get_height(const std::vector<DataDimension>& dimensions);
-    [[nodiscard]] u_int64_t get_height() const { return get_height(dimensions); }
+    [[nodiscard]] static uint64_t get_height(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] uint64_t get_height() const { return get_height(dimensions); }
 
     /**
      * @brief Extract width from image/video dimensions.
      * @param dimensions Vector of dimension descriptors
      * @return Width in pixels
      */
-    [[nodiscard]] static u_int64_t get_width(const std::vector<DataDimension>& dimensions);
-    [[nodiscard]] u_int64_t get_width() const { return get_width(dimensions); }
+    [[nodiscard]] static uint64_t get_width(const std::vector<DataDimension>& dimensions);
+    [[nodiscard]] uint64_t get_width() const { return get_width(dimensions); }
 
     /**
      * @brief Extract frame count from video dimensions.
@@ -211,7 +211,7 @@ struct ContainerDataStructure {
  * enabling advanced workflows such as real-time streaming, offline analysis, and
  * hybrid computational models.
  */
-class NDDataContainer {
+class MAYAFLUX_API NDDataContainer {
 public:
     virtual ~NDDataContainer() = default;
 
@@ -225,7 +225,7 @@ public:
      * @brief Get the total number of elements in the container.
      * @return Product of all dimension sizes
      */
-    [[nodiscard]] virtual u_int64_t get_total_elements() const = 0;
+    [[nodiscard]] virtual uint64_t get_total_elements() const = 0;
 
     /**
      * @brief Get the memory layout used by this container.
@@ -245,13 +245,13 @@ public:
      * For audio: channels per sample. For images: pixels per frame.
      * @return Number of elements per frame
      */
-    [[nodiscard]] virtual u_int64_t get_frame_size() const = 0;
+    [[nodiscard]] virtual uint64_t get_frame_size() const = 0;
 
     /**
      * @brief Get the number of frames in the primary (temporal) dimension.
      * @return Number of frames
      */
-    [[nodiscard]] virtual u_int64_t get_num_frames() const = 0;
+    [[nodiscard]] virtual uint64_t get_num_frames() const = 0;
 
     /**
      * @brief Get data for a specific region.
@@ -286,7 +286,7 @@ public:
      * @param frame_index Index of the frame (in the temporal dimension)
      * @return Span of data representing one complete frame
      */
-    [[nodiscard]] virtual std::span<const double> get_frame(u_int64_t frame_index) const = 0;
+    [[nodiscard]] virtual std::span<const double> get_frame(uint64_t frame_index) const = 0;
 
     /**
      * @brief Get multiple frames efficiently.
@@ -294,21 +294,21 @@ public:
      * @param start_frame First frame index
      * @param num_frames Number of frames to retrieve
      */
-    virtual void get_frames(std::span<double> output, u_int64_t start_frame, u_int64_t num_frames) const = 0;
+    virtual void get_frames(std::span<double> output, uint64_t start_frame, uint64_t num_frames) const = 0;
 
     /**
      * @brief Get a single value at the specified coordinates.
      * @param coordinates N-dimensional coordinates
      * @return Value at the specified location
      */
-    [[nodiscard]] virtual double get_value_at(const std::vector<u_int64_t>& coordinates) const = 0;
+    [[nodiscard]] virtual double get_value_at(const std::vector<uint64_t>& coordinates) const = 0;
 
     /**
      * @brief Set a single value at the specified coordinates.
      * @param coordinates N-dimensional coordinates
      * @param value Value to set
      */
-    virtual void set_value_at(const std::vector<u_int64_t>& coordinates, double value) = 0;
+    virtual void set_value_at(const std::vector<uint64_t>& coordinates, double value) = 0;
 
     /**
      * @brief Add a named group of regions to the container.
@@ -359,14 +359,14 @@ public:
      * @param coordinates N-dimensional coordinates
      * @return Linear index into the underlying data storage
      */
-    [[nodiscard]] virtual u_int64_t coordinates_to_linear_index(const std::vector<u_int64_t>& coordinates) const = 0;
+    [[nodiscard]] virtual uint64_t coordinates_to_linear_index(const std::vector<uint64_t>& coordinates) const = 0;
 
     /**
      * @brief Convert linear index to coordinates based on current memory layout.
      * @param linear_index Linear index into the underlying data storage
      * @return N-dimensional coordinates
      */
-    [[nodiscard]] virtual std::vector<u_int64_t> linear_index_to_coordinates(u_int64_t linear_index) const = 0;
+    [[nodiscard]] virtual std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const = 0;
 
     /**
      * @brief Clear all data in the container.

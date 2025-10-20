@@ -27,7 +27,7 @@ class DataProcessingChain;
  * activities with the container's lifecycle, enabling efficient resource
  * management and processing optimization.
  */
-enum class ProcessingState : u_int8_t {
+enum class ProcessingState : uint8_t {
     /**
      * Container is inactive with no data or not ready for processing.
      * Typically the initial state or when a container is reset.
@@ -96,7 +96,7 @@ enum class ProcessingState : u_int8_t {
  * real-time streaming, offline analysis, hybrid computation, and seamless integration of
  * unconventional or future-facing signal sources.
  */
-class SignalSourceContainer : public NDDataContainer, public std::enable_shared_from_this<SignalSourceContainer> {
+class MAYAFLUX_API SignalSourceContainer : public NDDataContainer, public std::enable_shared_from_this<SignalSourceContainer> {
 public:
     ~SignalSourceContainer() override = default;
 
@@ -195,13 +195,13 @@ public:
      * Used for tracking active readers in multi-threaded or streaming scenarios,
      * enabling safe concurrent access and efficient resource management.
      */
-    virtual u_int32_t register_dimension_reader(u_int32_t dimension_index) = 0;
+    virtual uint32_t register_dimension_reader(uint32_t dimension_index) = 0;
 
     /**
      * @brief Unregister a reader for a specific dimension.
      * @param dimension_index Index of the dimension no longer being read
      */
-    virtual void unregister_dimension_reader(u_int32_t dimension_index) = 0;
+    virtual void unregister_dimension_reader(uint32_t dimension_index) = 0;
 
     /**
      * @brief Check if any dimensions currently have active readers.
@@ -214,7 +214,7 @@ public:
      * @param dimension_index Index of the dimension that was processed
      * @param reader_id Reader ID for the dimension
      */
-    virtual void mark_dimension_consumed(u_int32_t dimension_index, u_int32_t reader_id) = 0;
+    virtual void mark_dimension_consumed(uint32_t dimension_index, uint32_t reader_id) = 0;
 
     /**
      * @brief Check if all active dimensions have been consumed in this cycle.

@@ -23,7 +23,7 @@ namespace Kriya {
  * Returns the scheduler that's managed by the default engine instance.
  * All scheduled tasks using the convenience functions will use this scheduler.
  */
-std::shared_ptr<Vruta::TaskScheduler> get_scheduler();
+MAYAFLUX_API std::shared_ptr<Vruta::TaskScheduler> get_scheduler();
 
 /**
  * @brief Gets the event manager from the default engine
@@ -32,7 +32,7 @@ std::shared_ptr<Vruta::TaskScheduler> get_scheduler();
  * Returns the event manager that's managed by the default engine instance.
  * Used for handling windowing and input events.
  */
-std::shared_ptr<Vruta::EventManager> get_event_manager();
+MAYAFLUX_API std::shared_ptr<Vruta::EventManager> get_event_manager();
 
 /**
  * @brief Creates a simple task that calls a function at a specified interval
@@ -40,7 +40,7 @@ std::shared_ptr<Vruta::EventManager> get_event_manager();
  * @param callback Function to call on each tick
  * This is conceptually similar to Metronomes in PureData and MaxMSP
  */
-Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback);
+MAYAFLUX_API Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> callback);
 
 /**
  * @brief Creates a metronome task and addes it to the default scheduler list for evaluation
@@ -51,7 +51,7 @@ Vruta::SoundRoutine create_metro(double interval_seconds, std::function<void()> 
  *
  * Uses the task scheduler from the default engine.
  */
-void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name = "");
+MAYAFLUX_API void schedule_metro(double interval_seconds, std::function<void()> callback, std::string name = "");
 
 /**
  * @brief Creates a sequence task that calls functions at specified times
@@ -62,7 +62,7 @@ void schedule_metro(double interval_seconds, std::function<void()> callback, std
  *
  * Uses the task scheduler from the default engine.
  */
-Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
+MAYAFLUX_API Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<void()>>> sequence);
 
 /**
  * @brief Creates a sequence task that calls functions at specified times
@@ -73,7 +73,7 @@ Vruta::SoundRoutine create_sequence(std::vector<std::pair<double, std::function<
  *
  * Uses the task scheduler from the default engine.
  */
-void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence, std::string name = "");
+MAYAFLUX_API void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> sequence, std::string name = "");
 
 /**
  * @brief Creates a line generator that interpolates between values over time
@@ -86,7 +86,7 @@ void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq
  *
  * Uses the task scheduler from the default engine.
  */
-Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop);
+MAYAFLUX_API Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop);
 
 /**
  * @brief Schedules a pattern generator that produces values based on a pattern function
@@ -97,7 +97,7 @@ Vruta::SoundRoutine create_line(float start_value, float end_value, float durati
  *
  * Uses the task scheduler from the default engine.
  */
-Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+MAYAFLUX_API Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
 
 /**
  * @brief Schedules a pattern generator that produces values based on a pattern function
@@ -110,7 +110,7 @@ Vruta::SoundRoutine create_pattern(std::function<std::any(uint64_t)> pattern_fun
  *
  * Uses the task scheduler from the default engine.
  */
-void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "");
+MAYAFLUX_API void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds, std::string name = "");
 
 /**
  * @brief Gets a pointer to a task's current value
@@ -119,7 +119,7 @@ void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::funct
  *
  * Convenience wrapper for Engine::get_line_value() on the default engine.
  */
-float* get_line_value(const std::string& name);
+MAYAFLUX_API float* get_line_value(const std::string& name);
 
 /**
  * @brief Schedules a new sound routine task
@@ -129,7 +129,7 @@ float* get_line_value(const std::string& name);
  *
  * Convenience wrapper for Engine::schedule_task() on the default engine.
  */
-void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize = false);
+MAYAFLUX_API void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize = false);
 
 /**
  * @brief Cancels a scheduled task
@@ -138,7 +138,7 @@ void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize
  *
  * Convenience wrapper for Engine::cancel_task() on the default engine.
  */
-bool cancel_task(const std::string& name);
+MAYAFLUX_API bool cancel_task(const std::string& name);
 
 /**
  * @brief Restarts a scheduled task
@@ -147,7 +147,7 @@ bool cancel_task(const std::string& name);
  *
  * Convenience wrapper for Engine::restart_task() on the default engine.
  */
-bool restart_task(const std::string& name);
+MAYAFLUX_API bool restart_task(const std::string& name);
 
 /**
  * @brief Updates parameters of a scheduled task
@@ -159,7 +159,7 @@ bool restart_task(const std::string& name);
  * Convenience wrapper for Engine::update_task_params() on the default engine.
  */
 template <typename... Args>
-bool update_task_params(const std::string& name, Args... args);
+MAYAFLUX_API bool update_task_params(const std::string& name, Args... args);
 
 /**
  * @brief Creates an action to play a node
@@ -168,7 +168,7 @@ bool update_task_params(const std::string& name, Args... args);
  *
  * Adds the node to the default engine's processing chain.
  */
-Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node);
+MAYAFLUX_API Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node);
 
 /**
  * @brief Creates a wait action
@@ -177,7 +177,7 @@ Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node);
  *
  * Uses the task scheduler from the default engine.
  */
-Kriya::ActionToken Wait(double seconds);
+MAYAFLUX_API Kriya::ActionToken Wait(double seconds);
 
 /**
  * @brief Creates a custom action
@@ -186,6 +186,6 @@ Kriya::ActionToken Wait(double seconds);
  *
  * Uses the task scheduler from the default engine.
  */
-Kriya::ActionToken Action(std::function<void()> func);
+MAYAFLUX_API Kriya::ActionToken Action(std::function<void()> func);
 
 }

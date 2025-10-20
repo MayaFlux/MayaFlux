@@ -26,7 +26,7 @@ struct GlobalGraphicsConfig;
  * - Cross-subsystem data access control
  * - Coordinated startup and shutdown sequences
  */
-class SubsystemManager {
+class MAYAFLUX_API SubsystemManager {
 public:
     /**
      * @brief Constructs SubsystemManager with required processing managers

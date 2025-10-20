@@ -10,8 +10,6 @@
 
 #include "MayaFlux/Core/Engine.hpp"
 
-#include "MayaFlux/version.h"
-
 void initialize()
 {
 #ifdef HAS_USER_PROJECT
@@ -38,13 +36,6 @@ void run()
 
 int main()
 {
-
-#ifdef MAYASIMPLE
-    register_container_context_operations();
-    register_all_buffers();
-    register_all_nodes();
-#endif // MAYASIMPLE
-
     try {
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Creative Coding Framework ===");
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Version: {}", "0.1.0");

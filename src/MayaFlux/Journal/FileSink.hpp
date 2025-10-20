@@ -5,7 +5,7 @@
 
 namespace MayaFlux::Journal {
 
-class FileSink : public Sink {
+class MAYAFLUX_API FileSink : public Sink {
 public:
     explicit FileSink(const std::string& filepath,
         size_t max_file_size_mb = 10)

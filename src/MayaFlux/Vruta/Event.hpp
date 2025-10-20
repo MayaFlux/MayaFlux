@@ -23,7 +23,7 @@ namespace MayaFlux::Vruta {
  *       }
  *   };
  */
-class Event {
+class MAYAFLUX_API Event {
 public:
     using promise_type = MayaFlux::Vruta::event_promise;
 

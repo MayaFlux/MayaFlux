@@ -21,7 +21,7 @@ namespace MayaFlux::Nodes::Generator {
  * - Synchronizing multiple generators based on phase relationships
  * - Implementing adaptive processing based on generator characteristics
  */
-class GeneratorContext : public NodeContext {
+class MAYAFLUX_API GeneratorContext : public NodeContext {
 public:
     /**
      * @brief Constructs a GeneratorContext with the current generator state
@@ -92,7 +92,7 @@ public:
  * The Generator class extends the base Node interface with additional
  * methods for visualization and analysis of the generated patterns.
  */
-class Generator : public Node {
+class MAYAFLUX_API Generator : public Node {
 public:
     /**
      * @brief Virtual destructor for proper cleanup

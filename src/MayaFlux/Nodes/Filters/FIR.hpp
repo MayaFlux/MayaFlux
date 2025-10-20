@@ -31,7 +31,7 @@ namespace MayaFlux::Nodes::Filters {
  * - Data smoothing and noise reduction in sensor data
  * - Feature extraction in pattern recognition
  */
-class FIR : public Filter {
+class MAYAFLUX_API FIR : public Filter {
 public:
     /**
      * @brief Creates an FIR filter with specified order

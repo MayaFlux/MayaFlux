@@ -79,8 +79,8 @@ TEST_F(RegionProcessorTest, AddSegmentToRegion)
 {
     processor->organize_container_data(container);
 
-    std::vector<u_int64_t> start_coords = { 100 };
-    std::vector<u_int64_t> end_coords = { 200 };
+    std::vector<uint64_t> start_coords = { 100 };
+    std::vector<uint64_t> end_coords = { 200 };
     std::unordered_map<std::string, std::any> attributes;
     attributes["gain"] = 0.5;
 
@@ -123,8 +123,8 @@ TEST_F(RegionProcessorTest, RegionLooping)
 
     processor->set_region_looping("line", 0, true);
 
-    std::vector<u_int64_t> loop_start = { 100 };
-    std::vector<u_int64_t> loop_end = { 400 };
+    std::vector<uint64_t> loop_start = { 100 };
+    std::vector<uint64_t> loop_end = { 400 };
     processor->set_region_looping("line", 1, true, loop_start, loop_end);
 
     for (int i = 0; i < 5; i++) {
@@ -143,7 +143,7 @@ TEST_F(RegionProcessorTest, JumpToRegion)
     processor->jump_to_region("line", 0);
     processor->process(container);
 
-    std::vector<u_int64_t> position = { 300 };
+    std::vector<uint64_t> position = { 300 };
     processor->jump_to_position(position);
     processor->process(container);
 

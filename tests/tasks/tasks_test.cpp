@@ -63,7 +63,7 @@ TEST_F(TasksTest, TimerOperations)
     EXPECT_TRUE(timer.is_active());
     EXPECT_FALSE(timer_triggered);
 
-    u_int64_t samples_5ms = scheduler->seconds_to_samples(0.005);
+    uint64_t samples_5ms = scheduler->seconds_to_samples(0.005);
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_5ms);
 
     EXPECT_TRUE(timer.is_active());
@@ -142,7 +142,7 @@ TEST_F(TasksTest, NodeTimer)
     auto& root = node_graph_manager->get_root_node(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 1);
 
-    u_int64_t samples_10ms = scheduler->seconds_to_samples(0.01);
+    uint64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
     root.process_batch(samples_10ms);
@@ -265,7 +265,7 @@ TEST_F(TasksTest, TimeOperator)
 
     EXPECT_EQ(root.get_node_size(), 1);
 
-    u_int64_t samples_10ms = scheduler->seconds_to_samples(0.01);
+    uint64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms - 1);
     root.process_batch(samples_10ms);
@@ -290,7 +290,7 @@ TEST_F(TasksTest, CoroutineTasks)
 
     scheduler->add_task(metro_routine);
 
-    u_int64_t samples_5ms = scheduler->seconds_to_samples(0.005);
+    uint64_t samples_5ms = scheduler->seconds_to_samples(0.005);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_5ms);
     EXPECT_TRUE(metro_called);
@@ -356,7 +356,7 @@ TEST_F(TasksTest, PatternTask)
     int pattern_count = 0;
     std::vector<int> received_values;
 
-    auto pattern_func = [](u_int64_t index) -> std::any {
+    auto pattern_func = [](uint64_t index) -> std::any {
         return static_cast<int>(index * 10);
     };
 
@@ -722,7 +722,7 @@ TEST_F(TasksTest, TimeOperatorI)
 
     EXPECT_EQ(root.get_node_size(), 1);
 
-    u_int64_t samples = scheduler->seconds_to_samples(0.11);
+    uint64_t samples = scheduler->seconds_to_samples(0.11);
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples);
     root.process_batch(samples);
 

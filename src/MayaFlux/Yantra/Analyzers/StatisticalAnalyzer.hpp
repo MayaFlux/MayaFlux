@@ -33,7 +33,7 @@ namespace MayaFlux::Yantra {
  * @enum StatisticalMethod
  * @brief Supported statistical computation methods
  */
-enum class StatisticalMethod : u_int8_t {
+enum class StatisticalMethod : uint8_t {
     MEAN, ///< Arithmetic mean
     VARIANCE, ///< Population or sample variance
     STD_DEV, ///< Standard deviation
@@ -58,7 +58,7 @@ enum class StatisticalMethod : u_int8_t {
  * @enum StatisticalLevel
  * @brief Qualitative classification of statistical values
  */
-enum class StatisticalLevel : u_int8_t {
+enum class StatisticalLevel : uint8_t {
     EXTREME_LOW,
     LOW,
     NORMAL,
@@ -71,7 +71,7 @@ enum class StatisticalLevel : u_int8_t {
  * @struct ChannelStatistics
  * @brief Statistical results for a single data channel
  */
-struct ChannelStatistics {
+struct MAYAFLUX_API ChannelStatistics {
     std::vector<double> statistical_values;
 
     double mean_stat {};
@@ -96,10 +96,10 @@ struct ChannelStatistics {
  * @struct StatisticalAnalysis
  * @brief Analysis result structure for statistical analysis
  */
-struct StatisticalAnalysis {
+struct MAYAFLUX_API StatisticalAnalysis {
     StatisticalMethod method_used { StatisticalMethod::MEAN };
-    u_int32_t window_size {};
-    u_int32_t hop_size {};
+    uint32_t window_size {};
+    uint32_t hop_size {};
 
     std::vector<ChannelStatistics> channel_statistics;
 };
@@ -126,7 +126,7 @@ struct StatisticalAnalysis {
  * ```
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
-class StatisticalAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
+class MAYAFLUX_API StatisticalAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;
@@ -137,7 +137,7 @@ public:
      * @param window_size Size of analysis window in samples (default: 512)
      * @param hop_size Step size between windows in samples (default: 256)
      */
-    explicit StatisticalAnalyzer(u_int32_t window_size = 512, u_int32_t hop_size = 256)
+    explicit StatisticalAnalyzer(uint32_t window_size = 512, uint32_t hop_size = 256)
         : m_window_size(window_size)
         , m_hop_size(hop_size)
     {
@@ -237,7 +237,7 @@ public:
      * @brief Set window size for windowed analysis
      * @param size Window size in samples
      */
-    void set_window_size(u_int32_t size)
+    void set_window_size(uint32_t size)
     {
         m_window_size = size;
         validate_window_parameters();
@@ -247,7 +247,7 @@ public:
      * @brief Set hop size for windowed analysis
      * @param size Hop size in samples
      */
-    void set_hop_size(u_int32_t size)
+    void set_hop_size(uint32_t size)
     {
         m_hop_size = size;
         validate_window_parameters();
@@ -257,13 +257,13 @@ public:
      * @brief Get window size
      * @return Current window size
      */
-    [[nodiscard]] u_int32_t get_window_size() const { return m_window_size; }
+    [[nodiscard]] uint32_t get_window_size() const { return m_window_size; }
 
     /**
      * @brief Get hop size
      * @return Current hop size
      */
-    [[nodiscard]] u_int32_t get_hop_size() const { return m_hop_size; }
+    [[nodiscard]] uint32_t get_hop_size() const { return m_hop_size; }
 
     /**
      * @brief Enable/disable outlier classification
@@ -395,11 +395,11 @@ protected:
                     m_method = method_enum;
                 }
             } else if (name == "window_size") {
-                auto size = safe_any_cast_or_throw<u_int32_t>(value);
+                auto size = safe_any_cast_or_throw<uint32_t>(value);
                 m_window_size = size;
                 validate_window_parameters();
             } else if (name == "hop_size") {
-                auto size = safe_any_cast_or_throw<u_int32_t>(value);
+                auto size = safe_any_cast_or_throw<uint32_t>(value);
                 m_hop_size = size;
                 validate_window_parameters();
             } else if (name == "classification_enabled") {
@@ -455,8 +455,8 @@ protected:
 
 private:
     StatisticalMethod m_method { StatisticalMethod::MEAN };
-    u_int32_t m_window_size;
-    u_int32_t m_hop_size;
+    uint32_t m_window_size;
+    uint32_t m_hop_size;
     bool m_classification_enabled { true };
     double m_percentile_value { 50.0 };
     bool m_sample_variance { true };

@@ -26,7 +26,7 @@ namespace MayaFlux::Yantra {
  * @enum SortingAlgorithm
  * @brief Available sorting algorithms for different use cases
  */
-enum class SortingAlgorithm : u_int8_t {
+enum class SortingAlgorithm : uint8_t {
     STANDARD, ///< std::sort with comparator
     STABLE, ///< std::stable_sort for equal element preservation
     PARTIAL, ///< std::partial_sort for top-K selection

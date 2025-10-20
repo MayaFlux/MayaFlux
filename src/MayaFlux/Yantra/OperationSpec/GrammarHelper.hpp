@@ -10,7 +10,7 @@ namespace MayaFlux::Yantra {
  * @enum ComputationContext
  * @brief Defines the computational contexts in which rules can be applied
  */
-enum class ComputationContext : u_int8_t {
+enum class ComputationContext : uint8_t {
     TEMPORAL, ///< Time-domain operations
     SPECTRAL, ///< Frequency-domain operations
     SPATIAL, ///< Spatial operations
@@ -31,7 +31,7 @@ enum class ComputationContext : u_int8_t {
  * Provides factory methods for creating matcher functions that can be used
  * to determine if operations should be applied in specific contexts.
  */
-class UniversalMatcher {
+class MAYAFLUX_API UniversalMatcher {
 public:
     using MatcherFunc = std::function<bool(const std::any&, const ExecutionContext&)>;
 

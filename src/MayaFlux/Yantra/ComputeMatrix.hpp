@@ -12,7 +12,7 @@ namespace MayaFlux::Yantra {
  * @enum ExecutionPolicy
  * @brief Policy for execution strategy selection
  */
-enum class ExecutionPolicy : u_int8_t {
+enum class ExecutionPolicy : uint8_t {
     CONSERVATIVE, // Prefer safety and predictability
     BALANCED, // Balance between performance and safety
     AGGRESSIVE // Maximize performance
@@ -37,7 +37,7 @@ enum class ExecutionPolicy : u_int8_t {
  * - Provide fluent interface through FluentExecutor
  * - Configure execution contexts for optimization
  */
-class ComputeMatrix : public std::enable_shared_from_this<ComputeMatrix> {
+class MAYAFLUX_API ComputeMatrix : public std::enable_shared_from_this<ComputeMatrix> {
 public:
     /**
      * @brief Create a new ComputeMatrix instance

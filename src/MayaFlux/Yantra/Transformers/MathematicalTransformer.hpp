@@ -9,7 +9,7 @@ namespace MayaFlux::Yantra {
  * @enum MathematicalOperation
  * @brief Specific mathematical operations supported
  */
-enum class MathematicalOperation : u_int8_t {
+enum class MathematicalOperation : uint8_t {
     GAIN, ///< Linear gain/attenuation
     OFFSET, ///< DC offset
     POWER, ///< Power function
@@ -33,7 +33,7 @@ enum class MathematicalOperation : u_int8_t {
  * - Quantization and bit reduction
  */
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
-class MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
+class MAYAFLUX_API MathematicalTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
     using input_type = IO<InputType>;
     using output_type = IO<OutputType>;
@@ -154,7 +154,7 @@ protected:
         }
 
         case MathematicalOperation::QUANTIZE: {
-            auto bits = get_parameter_or<u_int8_t>("bits", 16);
+            auto bits = get_parameter_or<uint8_t>("bits", 16);
             if (this->is_in_place()) {
                 return create_output(transform_quantize(input, bits));
             }
@@ -230,7 +230,7 @@ private:
         this->set_parameter("frequency", 1.0);
         this->set_parameter("amplitude", 1.0);
         this->set_parameter("phase", 0.0);
-        this->set_parameter("bits", u_int8_t { 16 });
+        this->set_parameter("bits", uint8_t { 16 });
         this->set_parameter("target_peak", 1.0);
         this->set_parameter("coefficients", std::vector<double> { 0.0, 1.0 });
         this->set_parameter("input_scale", 1.0);

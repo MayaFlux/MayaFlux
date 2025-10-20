@@ -42,7 +42,7 @@ namespace Kriya {
      * The metro task continues indefinitely until explicitly cancelled, creating
      * a persistent temporal structure within the computational system.
      */
-    Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback);
+    MAYAFLUX_API Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback);
 
     /**
      * @brief Creates a temporal sequence that executes callbacks at specified time offsets
@@ -73,7 +73,7 @@ namespace Kriya {
      *
      * The sequence task completes after executing all events in the defined timeline.
      */
-    Vruta::SoundRoutine sequence(Vruta::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence);
+    MAYAFLUX_API Vruta::SoundRoutine sequence(Vruta::TaskScheduler& scheduler, std::vector<std::pair<double, std::function<void()>>> sequence);
 
     /**
      * @brief Creates a continuous interpolation generator between two values over time
@@ -112,7 +112,7 @@ namespace Kriya {
      * If restartable is true, the interpolation task will remain active after reaching the
      * end value and can be restarted by calling restart() on the SoundRoutine.
      */
-    Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool restartable = false);
+    MAYAFLUX_API Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration = 5, bool restartable = false);
 
     /**
      * @brief Creates a generative algorithm that produces values based on a pattern function
@@ -155,7 +155,7 @@ namespace Kriya {
      * The pattern task continues indefinitely until explicitly cancelled, creating
      * an ongoing generative process within the computational system.
      */
-    Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
+    MAYAFLUX_API Vruta::SoundRoutine pattern(Vruta::TaskScheduler& scheduler, std::function<std::any(uint64_t)> pattern_func, std::function<void(std::any)> callback, double interval_seconds);
 
     /**
      * @brief Coroutine that executes callback continuously while logic node outputs true
@@ -165,7 +165,7 @@ namespace Kriya {
      * @param open Whether to subscribe to gate open (true) or close (false)
      * @return SoundRoutine coroutine handle
      */
-    Vruta::SoundRoutine Gate(
+    MAYAFLUX_API Vruta::SoundRoutine Gate(
         Vruta::TaskScheduler& scheduler, std::function<void()> callback,
         std::shared_ptr<Nodes::Generator::Logic> logic_node, bool open = true);
 
@@ -177,7 +177,7 @@ namespace Kriya {
      * @param callback Function to execute on state change
      * @return SoundRoutine coroutine handle
      */
-    Vruta::SoundRoutine Trigger(
+    MAYAFLUX_API Vruta::SoundRoutine Trigger(
         Vruta::TaskScheduler& scheduler,
         bool target_state,
         std::function<void()> callback,
@@ -190,7 +190,7 @@ namespace Kriya {
      * @param callback Function to execute on any state flip
      * @return SoundRoutine coroutine handle
      */
-    Vruta::SoundRoutine Toggle(
+    MAYAFLUX_API Vruta::SoundRoutine Toggle(
         Vruta::TaskScheduler& scheduler,
         std::function<void()> callback,
         std::shared_ptr<Nodes::Generator::Logic> logic_node);

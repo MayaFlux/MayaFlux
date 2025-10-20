@@ -12,7 +12,7 @@ namespace MayaFlux::Kakshya {
  * @note Only works with interleaved organization strategy. For planar data,
  *       use coordinates_to_planar_indices() instead.
  */
-u_int64_t coordinates_to_linear(const std::vector<u_int64_t>& coords, const std::vector<DataDimension>& dimensions);
+uint64_t coordinates_to_linear(const std::vector<uint64_t>& coords, const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Convert a linear index to N-dimensional coordinates for interleaved data.
@@ -22,14 +22,14 @@ u_int64_t coordinates_to_linear(const std::vector<u_int64_t>& coords, const std:
  * @note Only works with interleaved organization strategy. For planar data,
  *       coordinates map directly to {channel_vector_index, frame_index}.
  */
-std::vector<u_int64_t> linear_to_coordinates(u_int64_t index, const std::vector<DataDimension>& dimensions);
+std::vector<uint64_t> linear_to_coordinates(uint64_t index, const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Calculate memory strides for each dimension (row-major order).
  * @param dimensions Dimension descriptors.
  * @return Vector of strides for each dimension.
  */
-std::vector<u_int64_t> calculate_strides(const std::vector<DataDimension>& dimensions);
+std::vector<uint64_t> calculate_strides(const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Validate region bounds against container dimensions.
@@ -46,8 +46,8 @@ bool validate_region_bounds(const Region& region, const std::vector<DataDimensio
  * @param dimensions Container dimensions.
  * @return True if slice is valid, false otherwise.
  */
-bool validate_slice_bounds(const std::vector<u_int64_t>& slice_start,
-    const std::vector<u_int64_t>& slice_end,
+bool validate_slice_bounds(const std::vector<uint64_t>& slice_start,
+    const std::vector<uint64_t>& slice_end,
     const std::vector<DataDimension>& dimensions);
 
 /**
@@ -55,7 +55,7 @@ bool validate_slice_bounds(const std::vector<u_int64_t>& slice_start,
  * @param coords Coordinates to clamp (modified in place).
  * @param dimensions Container dimensions for bounds.
  */
-void clamp_coordinates_to_bounds(std::vector<u_int64_t>& coords,
+void clamp_coordinates_to_bounds(std::vector<uint64_t>& coords,
     const std::vector<DataDimension>& dimensions);
 
 /**
@@ -66,7 +66,7 @@ void clamp_coordinates_to_bounds(std::vector<u_int64_t>& coords,
  * @param rotation_params Optional rotation parameters.
  * @return Transformed coordinates.
  */
-std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coords,
+std::vector<uint64_t> transform_coordinates(const std::vector<uint64_t>& coords,
     const std::vector<double>& scale_factors = {},
     const std::vector<int64_t>& offset_values = {},
     const std::unordered_map<std::string, std::any>& rotation_params = {});
@@ -79,7 +79,7 @@ std::vector<u_int64_t> transform_coordinates(const std::vector<u_int64_t>& coord
  * @param looping_enabled Whether looping is enabled.
  * @return Wrapped position.
  */
-std::vector<u_int64_t> wrap_position_with_loop(const std::vector<u_int64_t>& position, const Region& loop_region, bool looping_enabled);
+std::vector<uint64_t> wrap_position_with_loop(const std::vector<uint64_t>& position, const Region& loop_region, bool looping_enabled);
 
 /**
  * @brief Advance current positions by a number of frames, with optional looping.
@@ -90,9 +90,9 @@ std::vector<u_int64_t> wrap_position_with_loop(const std::vector<u_int64_t>& pos
  * @param loop_region Loop region for wrapping.
  * @return New advanced positions per channel.
  */
-std::vector<u_int64_t> advance_position(
-    const std::vector<u_int64_t>& current_positions,
-    u_int64_t frames_to_advance,
+std::vector<uint64_t> advance_position(
+    const std::vector<uint64_t>& current_positions,
+    uint64_t frames_to_advance,
     const ContainerDataStructure& structure,
     bool looping_enabled,
     const Region& loop_region);
@@ -106,9 +106,9 @@ std::vector<u_int64_t> advance_position(
  * @param loop_region Loop region for wrapping.
  * @return New advanced positions per channel.
  */
-std::vector<u_int64_t> advance_position(
-    const std::vector<u_int64_t>& current_positions,
-    const std::vector<u_int64_t>& frames_per_channel,
+std::vector<uint64_t> advance_position(
+    const std::vector<uint64_t>& current_positions,
+    const std::vector<uint64_t>& frames_per_channel,
     const ContainerDataStructure& structure,
     bool looping_enabled,
     const Region& loop_region);
@@ -119,7 +119,7 @@ std::vector<u_int64_t> advance_position(
  * @param sample_rate Sample rate (Hz).
  * @return Position as integer index.
  */
-u_int64_t time_to_position(double time, double sample_rate);
+uint64_t time_to_position(double time, double sample_rate);
 
 /**
  * @brief Convert position (samples/frames) to time (seconds) given a sample rate.
@@ -127,7 +127,7 @@ u_int64_t time_to_position(double time, double sample_rate);
  * @param sample_rate Sample rate (Hz).
  * @return Time in seconds.
  */
-double position_to_time(u_int64_t position, double sample_rate);
+double position_to_time(uint64_t position, double sample_rate);
 
 /**
  * @brief Calculate the frame size for a specific primary dimension.
@@ -135,7 +135,7 @@ double position_to_time(u_int64_t position, double sample_rate);
  * @param primary_dim Index of the primary dimension.
  * @return Frame size (product of all but the primary dimension).
  */
-u_int64_t calculate_frame_size_for_dimension(const std::vector<DataDimension>& dimensions, size_t primary_dim = 0);
+uint64_t calculate_frame_size_for_dimension(const std::vector<DataDimension>& dimensions, size_t primary_dim = 0);
 
 /**
  * @brief Extract dimension roles as integers.
@@ -149,7 +149,7 @@ std::vector<int> extract_dimension_roles(const std::vector<DataDimension>& dimen
  * @param dimensions Container dimensions.
  * @return Vector of dimension sizes.
  */
-std::vector<u_int64_t> extract_dimension_sizes(const std::vector<DataDimension>& dimensions);
+std::vector<uint64_t> extract_dimension_sizes(const std::vector<DataDimension>& dimensions);
 
 /**
  * @brief Create structured dimension information.
@@ -172,7 +172,7 @@ std::unordered_map<std::string, std::any> create_coordinate_mapping(const std::s
  * @return Pair of {channel_index, frame_index} for planar access.
  * @note Only works with planar organization strategy.
  */
-std::pair<size_t, u_int64_t> coordinates_to_planar_indices(
-    const std::vector<u_int64_t>& coords,
+std::pair<size_t, uint64_t> coordinates_to_planar_indices(
+    const std::vector<uint64_t>& coords,
     const std::vector<DataDimension>& dimensions);
 }

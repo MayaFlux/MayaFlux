@@ -17,7 +17,7 @@ namespace MayaFlux::Core {
  * Uses AUDIO_BACKEND token for buffer processing and AUDIO_RATE token for node processing,
  * enabling real-time audio processing with proper thread safety and resource isolation.
  */
-class AudioSubsystem : public ISubsystem {
+class MAYAFLUX_API AudioSubsystem : public ISubsystem {
 public:
     virtual ~AudioSubsystem() = default;
 

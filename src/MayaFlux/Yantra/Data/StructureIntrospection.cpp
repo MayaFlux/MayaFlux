@@ -65,7 +65,7 @@ infer_from_region(const Kakshya::Region& region, const std::shared_ptr<Kakshya::
     auto [dimensions, modality] = infer_from_container(container);
 
     if (!region.start_coordinates.empty() && !region.end_coordinates.empty() && region.end_coordinates[1] != container->get_frame_size()) {
-        std::vector<u_int64_t> shape;
+        std::vector<uint64_t> shape;
         int size = static_cast<int>(region.end_coordinates[0] - region.start_coordinates[0]);
         shape.push_back(std::abs(size) + 1);
         shape.push_back(region.end_coordinates[1]);
@@ -117,10 +117,10 @@ infer_from_region_group(const Kakshya::RegionGroup& group, const std::shared_ptr
     auto bounds_info = Kakshya::extract_group_bounds_info(group);
 
     if (bounds_info.contains("bounding_min") && bounds_info.contains("bounding_max")) {
-        auto min_coords = std::any_cast<std::vector<u_int64_t>>(bounds_info["bounding_min"]);
-        auto max_coords = std::any_cast<std::vector<u_int64_t>>(bounds_info["bounding_max"]);
+        auto min_coords = std::any_cast<std::vector<uint64_t>>(bounds_info["bounding_min"]);
+        auto max_coords = std::any_cast<std::vector<uint64_t>>(bounds_info["bounding_max"]);
 
-        std::vector<u_int64_t> shape;
+        std::vector<uint64_t> shape;
         int size = static_cast<int>(max_coords[0] - min_coords[0]);
         shape.push_back(std::abs(size) + 1);
         shape.push_back(max_coords[1]);

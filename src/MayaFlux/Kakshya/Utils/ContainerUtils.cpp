@@ -88,7 +88,7 @@ std::unordered_map<std::string, std::any> analyze_access_pattern(const Region& r
     analysis["is_contiguous"] = is_region_access_contiguous(region, container);
     analysis["memory_layout"] = static_cast<int>(memory_layout);
 
-    u_int64_t region_size = 1;
+    uint64_t region_size = 1;
     for (size_t i = 0; i < region.start_coordinates.size() && i < region.end_coordinates.size(); ++i) {
         region_size *= (region.end_coordinates[i] - region.start_coordinates[i] + 1);
     }
@@ -103,7 +103,7 @@ std::unordered_map<std::string, std::any> analyze_access_pattern(const Region& r
 }
 
 DataVariant extract_channel_data(const std::shared_ptr<SignalSourceContainer>& container,
-    u_int32_t channel_index)
+    uint32_t channel_index)
 {
     if (!container) {
         throw std::invalid_argument("Container is null");
