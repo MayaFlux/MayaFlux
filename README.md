@@ -17,6 +17,7 @@ MayaFlux provides unified audio-visual computation through lock-free node graphs
 
 ## Core Features
 
+- **Interactive Live Coding**: Real-time C++ execution via Lila JIT interpreter - modify code while audio plays
 - **Lock-Free Processing**: Atomic node/buffer coordination without blocking
 - **Coroutine Temporal Control**: Sample-accurate and frame-accurate scheduling via C++20 coroutines
 - **Grammar-Driven Computation**: Declarative rule-based operation matching and adaptive pipelines
@@ -31,10 +32,11 @@ Refer to [Getting Started](docs/Getting_Started.md) for setup information and us
 
 ### Requirements
 
-- C++20 compatible compiler (GCC 11+, Clang 14+, MSVC 2022+)
+- C++23 compatible compiler (GCC 12+, Clang 16+, MSVC 2022+)
 - CMake 3.20+
 - RtAudio (audio backend)
 - GLFW (windowing)
+- LLVM/Clang 16+ (optional, for Lila live coding support)
 - FFmpeg (optional, for media file support)
 
 ### Build
@@ -51,18 +53,17 @@ cd MayaFlux
 
 ## Project Status
 
-**Early-stage architectural research** (~6 months development)
+**Active research and development** (~8 months development)
 
 - ✓ Core systems functional (700+ component tests)
 - ✓ Audio backend operational (RtAudio)
 - ✓ Lock-free node/buffer processing
 - ✓ Coroutine scheduling infrastructure
+- ✓ Lila live coding interpreter (JIT C++ execution)
 - ⚙ OpenGL graphics pipeline (pending external)
 - ⚙ Vulkan graphics pipeline (in development)
 - ⚙ Grammar stress testing (ongoing)
 - ⚙ Inter-component integration testing (~40% coverage)
-
-This is **not production-ready software**. It's a paradigm exploration seeking validation through community testing.
 
 ---
 
