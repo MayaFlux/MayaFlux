@@ -141,7 +141,7 @@ bool ClangInterpreter::initialize()
         LILA_INFO(Emitter::INTERPRETER, "MayaFlux headers loaded successfully");
     }
 
-    result = m_impl->interpreter->ParseAndExecute("std::cout << \"test\" << std::flush;");
+    result = m_impl->interpreter->ParseAndExecute("std::cout << \"Ready for Live\" << std::flush;");
 
     return true;
 }

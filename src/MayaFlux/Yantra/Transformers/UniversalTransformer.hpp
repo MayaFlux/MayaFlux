@@ -139,7 +139,7 @@ struct TransformationKey {
     std::string name; ///< Unique identifier for this transformation key
     std::function<double(const std::any&)> parameter_extractor; ///< Extract parameter value from data
 
-    uint channel = 0; ///< Which channel to extract for
+    uint32_t channel = 0; ///< Which channel to extract for
     std::optional<char> axis = std::nullopt; ///< Which axis (if spatial processing)
 
     double intensity = 1.0; ///< Transformation intensity/amount

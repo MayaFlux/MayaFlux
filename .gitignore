@@ -9,6 +9,7 @@ CTestTestfile.cmake
 cmake_install.cmake
 Makefile
 .dependencies
+srcipts/temp/
 
 # Clangd and language server files
 .clangd/
