@@ -240,6 +240,7 @@ install_libraries() {
         rtaudio
         ffmpeg
         glfw
+        glm
         eigen
         onedpl
         fmt
@@ -368,7 +369,7 @@ verify_installations() {
         missing+=("System clang++ (Xcode)")
     fi
 
-    local libs=("rtaudio" "ffmpeg" "glfw3")
+    local libs=("rtaudio" "ffmpeg" "glfw3" "glm")
     for lib in "${libs[@]}"; do
         if ! pkg-config --exists $lib 2>/dev/null; then
             missing+=("$lib pkg-config")

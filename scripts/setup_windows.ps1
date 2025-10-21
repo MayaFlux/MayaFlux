@@ -486,6 +486,102 @@ Write-Host "GLFW configuration complete:"
 Write-Host "  Root: $glfwDir"
 Write-Host "  Libs: $foundLibDir"
 
+# ----------------------------------------------------------------------
+#  GLM SETUP (Header-only mathematics library)
+# ----------------------------------------------------------------------
+
+Write-Host -ForegroundColor Cyan "--- GLM Mathematics Library Setup ---"
+
+$GLM_VERSION = "1.0.1"  # Latest stable as of 2024
+$GLM_INSTALL_ROOT = "C:\Program Files\glm"
+$GLM_TEMP_DIR = Join-Path $PSScriptRoot "temp\glm"
+$GLM_HEADER_CHECK = "$GLM_INSTALL_ROOT\include\glm\glm.hpp"
+
+if (-not (Test-Path $GLM_HEADER_CHECK -PathType Leaf)) {
+    Write-Host "GLM not found. Installing version $GLM_VERSION..."
+    
+    # Create directories
+    if (-not (Test-Path $GLM_TEMP_DIR)) {
+        mkdir $GLM_TEMP_DIR | Out-Null
+    }
+    if (-not (Test-Path $GLM_INSTALL_ROOT)) {
+        mkdir "$GLM_INSTALL_ROOT\include" -Force | Out-Null
+    }
+
+    # Download from GitHub releases (official source)
+    $GLM_URL = "https://github.com/g-truc/glm/releases/download/$GLM_VERSION/glm-$GLM_VERSION.zip"
+    $GLM_ZIP_PATH = Join-Path $GLM_TEMP_DIR "glm.zip"
+
+    if (-not (Test-Path $GLM_ZIP_PATH)) {
+        Write-Host "Downloading GLM $GLM_VERSION..."
+        try {
+            Invoke-WebRequest -Uri $GLM_URL -OutFile $GLM_ZIP_PATH -MaximumRedirection 5
+            Write-Host "Download complete."
+        } catch {
+            Write-Error "Failed to download GLM: $($_.Exception.Message)"
+            exit 1
+        }
+    }
+
+    # Extract and copy headers
+    Write-Host "Extracting GLM..."
+    try {
+        Expand-Archive -Path $GLM_ZIP_PATH -DestinationPath $GLM_TEMP_DIR -Force
+        
+        # GLM zip structure: glm/glm-1.0.1/glm/*
+        $ExtractedDir = Join-Path $GLM_TEMP_DIR "glm"
+        if (Test-Path $ExtractedDir) {
+            # Find the actual glm header directory
+            $GlmHeaderDir = Get-ChildItem -Path $ExtractedDir -Directory -Filter "glm-*" | Select-Object -First 1
+            if ($GlmHeaderDir) {
+                $SrcIncludeDir = Join-Path $GlmHeaderDir.FullName "glm"
+                if (Test-Path $SrcIncludeDir) {
+                    Copy-Item -Recurse -Path "$SrcIncludeDir\*" -Destination "$GLM_INSTALL_ROOT\include\glm\" -Force
+                    Write-Host "GLM headers installed to $GLM_INSTALL_ROOT\include\glm"
+                } else {
+                    # Alternative structure: direct glm folder
+                    $SrcIncludeDir = Join-Path $GlmHeaderDir.FullName "glm"
+                    if (Test-Path $SrcIncludeDir) {
+                        Copy-Item -Recurse -Path "$SrcIncludeDir\*" -Destination "$GLM_INSTALL_ROOT\include\glm\" -Force
+                        Write-Host "GLM headers installed to $GLM_INSTALL_ROOT\include\glm"
+                    } else {
+                        Write-Error "GLM extraction failed: glm header directory not found in expected structure"
+                        exit 1
+                    }
+                }
+            } else {
+                # Try direct extraction
+                $SrcIncludeDir = Join-Path $ExtractedDir "glm"
+                if (Test-Path $SrcIncludeDir) {
+                    Copy-Item -Recurse -Path "$SrcIncludeDir\*" -Destination "$GLM_INSTALL_ROOT\include\glm\" -Force
+                    Write-Host "GLM headers installed to $GLM_INSTALL_ROOT\include\glm"
+                } else {
+                    Write-Error "GLM extraction failed: cannot find glm headers in archive"
+                    exit 1
+                }
+            }
+        } else {
+            Write-Error "GLM extraction failed: root directory not found"
+            exit 1
+        }
+    } catch {
+        Write-Error "Failed to extract GLM: $($_.Exception.Message)"
+        exit 1
+    }
+    
+    # Cleanup
+    Remove-Item $GLM_ZIP_PATH -ErrorAction SilentlyContinue
+    Remove-Item $GLM_TEMP_DIR -Recurse -Force -ErrorAction SilentlyContinue
+    
+} else {
+    Write-Host "GLM installation already found at $GLM_INSTALL_ROOT."
+}
+
+# Add to environment variables
+[Environment]::SetEnvironmentVariable("GLM_ROOT", $GLM_INSTALL_ROOT, "Machine")
+$env:GLM_ROOT = $GLM_INSTALL_ROOT
+Write-Host "Environment variable GLM_ROOT set to: $GLM_INSTALL_ROOT"
+
 # RtAudio
 $rtaudioDir = "C:\Program Files\RtAudio"
 if (-not (Test-Path "$rtaudioDir\include\rtaudio\RtAudio.h")) {
@@ -709,6 +805,11 @@ if (Test-Path $magicEnumIncludePath) {
     $includePaths += $magicEnumIncludePath
 }
 
+$glmIncludePath = Join-Path $GLM_INSTALL_ROOT "include"
+if (Test-Path $glmIncludePath) {
+    $includePaths += $glmIncludePath
+}
+
 if ($diaSdkFound -and $diaSdkPath) {
     $diaIncludePath = Join-Path $diaSdkPath "include"
     if (Test-Path $diaIncludePath) {
@@ -823,6 +924,9 @@ set(SWSCALE_LIBRARY "C:/Program Files/FFmpeg/lib/swscale.lib" CACHE FILEPATH "" 
 set(EIGEN3_ROOT "C:/Program Files/Eigen3" CACHE PATH "" FORCE)
 set(EIGEN3_INCLUDE_DIR "C:/Program Files/Eigen3" CACHE PATH "" FORCE)
 
+set(GLM_ROOT "C:/Program Files/glm" CACHE PATH "" FORCE)
+set(GLM_INCLUDE_DIR "C:/Program Files/glm/include" CACHE PATH "" FORCE)
+
 set(MAGIC_ENUM_INCLUDE_DIR "C:/Program Files/magic_enum/include" CACHE PATH "" FORCE)
 "@
 
@@ -835,6 +939,7 @@ Write-Output "LibXml2: $LIBXML2_INSTALL_ROOT"
 Write-Output "Vulkan SDK: $env:VULKAN_SDK"
 Write-Output "FFmpeg: $ffmpegDir"
 Write-Output "GLFW: $glfwDir"
+Write-Output "GLM: $GLM_INSTALL_ROOT"
 Write-Output "RtAudio: $rtaudioDir"
 Write-Output ""
 Write-Output "Toolchain: C:\MayaFlux\MayaFluxToolchain.cmake"
