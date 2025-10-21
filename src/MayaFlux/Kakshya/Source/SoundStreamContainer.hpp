@@ -193,6 +193,18 @@ public:
 
     inline const std::vector<DataVariant>& get_data() override { return m_data; }
 
+    /**
+     * @brief Get channel data with semantic interpretation
+     * @param channel Channel index
+     * @return Type-erased data accessor
+     */
+    DataAccess channel_data(size_t channel) override;
+
+    /**
+     * @brief Get all channel data as accessors
+     */
+    std::vector<DataAccess> all_channel_data() override;
+
 protected:
     void setup_dimensions();
     void notify_state_change(ProcessingState new_state);

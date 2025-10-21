@@ -20,16 +20,16 @@ if(WIN32)
     #     FetchContent_Populate(googletest)
     # endif()
 
-    # 
+    #
     # if(EXISTS "${googletest_SOURCE_DIR}")
     #     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
     #     set_target_properties(gtest gtest_main PROPERTIES
     #         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
     #     )
-    #     target_compile_options(gtest PRIVATE 
+    #     target_compile_options(gtest PRIVATE
     #         /MDd$<$<CONFIG:Release>:/MT>
     #     )
-    #     target_compile_options(gtest_main PRIVATE 
+    #     target_compile_options(gtest_main PRIVATE
     #         /MDd$<$<CONFIG:Release>:/MT>
     #     )
     # endif()
@@ -54,12 +54,13 @@ if(WIN32)
         IMPORTED_IMPLIB "${GLFW_LIBRARY}"
         INTERFACE_INCLUDE_DIRECTORIES "${GLFW_INCLUDE_DIR}"
     )
-    
+
     find_package(RtAudio REQUIRED)
     find_package(Vulkan REQUIRED)
     find_package(LLVM CONFIG REQUIRED)
     find_package(Clang CONFIG REQUIRED )
-    
+    find_package(glm REQUIRED)
+
     add_library(FFmpeg::avcodec UNKNOWN IMPORTED)
     set_target_properties(FFmpeg::avcodec PROPERTIES
         IMPORTED_LOCATION "${AVCODEC_LIBRARY}"
@@ -96,11 +97,12 @@ else()
     else()
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
     endif()
-    
+
     find_package(TBB REQUIRED)
     find_package(GTest REQUIRED)
     find_package(LLVM CONFIG REQUIRED)
     find_package(Clang CONFIG REQUIRED)
+    find_package(glm REQUIRED)
 
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)

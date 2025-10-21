@@ -71,6 +71,18 @@ enum class DataModality : uint8_t {
     UNKNOWN ///< Unknown or undefined modality
 };
 
+/**
+ * @brief Convert DataModality enum to string representation.
+ * @param modality DataModality value
+ * @return String view of the modality name
+ */
+std::string_view modality_to_string(DataModality modality);
+
+/**
+ * @brief Check if a modality represents structured data (vectors, matrices).
+ * @param modality DataModality value
+ * @return True if structured, false otherwise
+ */
 inline bool is_structured_modality(DataModality modality)
 {
     switch (modality) {
@@ -112,6 +124,13 @@ struct MAYAFLUX_API DataDimension {
         SPATIAL_Y, ///< Spatial Y axis
         SPATIAL_Z, ///< Spatial Z axis
         FREQUENCY, ///< Spectral/frequency axis
+        POSITION, ///< Vertex positions (3D space)
+        NORMAL, ///< Surface normals
+        TANGENT, ///< Tangent vectors
+        BITANGENT, ///< Bitangent vectors
+        UV, ///< Texture coordinates
+        COLOR, ///< Color data (RGB/RGBA)
+        INDEX, ///< Index buffer data
         CUSTOM ///< User-defined or application-specific
     };
 
@@ -197,6 +216,26 @@ struct MAYAFLUX_API DataDimension {
      * @param role Semantic role
      */
     static DataDimension grouped(std::string name, u_int64_t element_count, u_int8_t components_per_element, Role role = Role::CUSTOM);
+
+    /**
+     * @brief Create dimension for vertex positions (vec3)
+     */
+    static DataDimension vertex_positions(uint64_t count);
+
+    /**
+     * @brief Create dimension for vertex normals (vec3)
+     */
+    static DataDimension vertex_normals(uint64_t count);
+
+    /**
+     * @brief Create dimension for texture coordinates (vec2)
+     */
+    static DataDimension texture_coords(uint64_t count);
+
+    /**
+     * @brief Create dimension for colors (vec3 or vec4)
+     */
+    static DataDimension vertex_colors(uint64_t count, bool has_alpha = false);
 
     /**
      * @brief Data container combining variants and dimensions.

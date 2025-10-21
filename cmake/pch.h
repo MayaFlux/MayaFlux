@@ -323,4 +323,7 @@ struct TypeHandler<std::size_t> {
 template <typename T>
 concept SupportedDataType = TypeHandler<T>::is_supported;
 
+template <typename T>
+inline constexpr bool always_false_v = false;
+
 } // namespace MayaFlux
