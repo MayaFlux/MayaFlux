@@ -387,19 +387,19 @@ template <typename From, typename To>
 struct is_convertible_data : std::false_type { };
 
 template <typename From, typename To>
-    requires ArithmeticData<From> && ArithmeticData<To>
+    requires ArithmeticData<From> && ArithmeticData<To> && (!GlmType<From>) && (!GlmType<To>)
 struct is_convertible_data<From, To> : std::true_type { };
 
 template <typename From, typename To>
-    requires ComplexData<From> && ArithmeticData<To>
+    requires ComplexData<From> && ArithmeticData<To> && (!GlmType<From>) && (!GlmType<To>)
 struct is_convertible_data<From, To> : std::true_type { };
 
 template <typename From, typename To>
-    requires ArithmeticData<From> && ComplexData<To>
+    requires ArithmeticData<From> && ComplexData<To> && (!GlmType<From>) && (!GlmType<To>)
 struct is_convertible_data<From, To> : std::true_type { };
 
 template <typename From, typename To>
-    requires ComplexData<From> && ComplexData<To>
+    requires ComplexData<From> && ComplexData<To> && (!GlmType<From>) && (!GlmType<To>)
 struct is_convertible_data<From, To> : std::true_type { };
 
 template <typename From, typename To>
@@ -407,11 +407,11 @@ template <typename From, typename To>
 struct is_convertible_data<From, To> : std::true_type { };
 
 template <typename From, typename To>
-    requires GlmType<From> && ArithmeticData<To>
+    requires GlmType<From> && ArithmeticData<To> && (!GlmType<To>)
 struct is_convertible_data<From, To> : std::true_type { };
 
 template <typename From, typename To>
-    requires ArithmeticData<From> && GlmType<To>
+    requires ArithmeticData<From> && GlmType<To> && (!GlmType<From>)
 struct is_convertible_data<From, To> : std::true_type { };
 
 template <typename From, typename To>

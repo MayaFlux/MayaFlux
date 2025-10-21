@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -44,7 +46,11 @@ using DataVariant = std::variant<
     std::vector<uint16_t>, ///< 16-bit data (CD audio, images)
     std::vector<uint32_t>, ///< 32-bit data (high precision int)
     std::vector<std::complex<float>>, ///< Complex data (spectral)
-    std::vector<std::complex<double>> ///< High precision complex
+    std::vector<std::complex<double>>, ///< High precision complex
+    std::vector<glm::vec2>, ///< 2D vector data
+    std::vector<glm::vec3>, ///< 3D vector data
+    std::vector<glm::vec4>, ///< 4D vector data
+    std::vector<glm::mat4> ///< 4x4 matrix data
     >;
 
 /**

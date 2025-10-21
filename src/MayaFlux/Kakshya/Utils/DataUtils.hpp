@@ -32,17 +32,23 @@ struct DataConverter<T, T> {
     }
 };
 
-// === Specialization: Arithmetic to Arithmetic ===
+// === Specialization: Arithmetic to Arithmetic (excluding GLM) ===
 
 template <typename From, typename To>
-struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && ArithmeticData<To> && !std::is_same_v<From, To>>> {
-    static std::span<To> convert(std::span<From> source,
+struct DataConverter<
+    From, To,
+    std::enable_if_t<
+        ArithmeticData<From> && ArithmeticData<To> && !std::is_same_v<From, To> && !GlmType<From> && !GlmType<To>>> {
+    static std::span<To> convert(
+        std::span<From> source,
         std::vector<To>& storage,
         Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
     {
         storage.resize(source.size());
-        std::transform(source.begin(), source.end(), storage.begin(),
+        std::transform(
+            source.begin(), source.end(), storage.begin(),
             [](From val) { return static_cast<To>(val); });
+
         return std::span<To>(storage.data(), storage.size());
     }
 };
@@ -50,8 +56,12 @@ struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && Arithmet
 // === Specialization: Complex to Arithmetic ===
 
 template <typename From, typename To>
-struct DataConverter<From, To, std::enable_if_t<ComplexData<From> && ArithmeticData<To>>> {
-    static std::span<To> convert(std::span<From> source,
+struct DataConverter<
+    From, To,
+    std::enable_if_t<
+        ComplexData<From> && ArithmeticData<To> && !GlmType<From> && !GlmType<To>>> {
+    static std::span<To> convert(
+        std::span<From> source,
         std::vector<To>& storage,
         Utils::ComplexConversionStrategy strategy)
     {
@@ -81,8 +91,12 @@ struct DataConverter<From, To, std::enable_if_t<ComplexData<From> && ArithmeticD
 // === Specialization: Arithmetic to Complex ===
 
 template <typename From, typename To>
-struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && ComplexData<To>>> {
-    static std::span<To> convert(std::span<From> source,
+struct DataConverter<
+    From, To,
+    std::enable_if_t<
+        ArithmeticData<From> && ComplexData<To> && !GlmType<From> && !GlmType<To>>> {
+    static std::span<To> convert(
+        std::span<From> source,
         std::vector<To>& storage,
         Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
     {
@@ -100,8 +114,12 @@ struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && ComplexD
 // === Specialization: GLM to Arithmetic (Flattening) ===
 
 template <typename From, typename To>
-struct DataConverter<From, To, std::enable_if_t<GlmType<From> && ArithmeticData<To>>> {
-    static std::span<To> convert(std::span<From> source,
+struct DataConverter<
+    From, To,
+    std::enable_if_t<
+        GlmType<From> && ArithmeticData<To> && !GlmType<To>>> {
+    static std::span<To> convert(
+        std::span<From> source,
         std::vector<To>& storage,
         Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
     {
@@ -125,8 +143,12 @@ struct DataConverter<From, To, std::enable_if_t<GlmType<From> && ArithmeticData<
 // === Specialization: Arithmetic to GLM (Structuring) ===
 
 template <typename From, typename To>
-struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && GlmType<To>>> {
-    static std::span<To> convert(std::span<From> source,
+struct DataConverter<
+    From, To,
+    std::enable_if_t<
+        ArithmeticData<From> && GlmType<To> && !GlmType<From>>> {
+    static std::span<To> convert(
+        std::span<From> source,
         std::vector<To>& storage,
         Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
     {
@@ -164,8 +186,12 @@ struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && GlmType<
 // === Specialization: GLM to GLM (same component count) ===
 
 template <typename From, typename To>
-struct DataConverter<From, To, std::enable_if_t<GlmType<From> && GlmType<To> && !std::is_same_v<From, To> && (glm_component_count<From>() == glm_component_count<To>())>> {
-    static std::span<To> convert(std::span<From> source,
+struct DataConverter<
+    From, To,
+    std::enable_if_t<
+        GlmType<From> && GlmType<To> && !std::is_same_v<From, To> && (glm_component_count<From>() == glm_component_count<To>())>> {
+    static std::span<To> convert(
+        std::span<From> source,
         std::vector<To>& storage,
         Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
     {
@@ -192,6 +218,31 @@ struct DataConverter<From, To, std::enable_if_t<GlmType<From> && GlmType<To> && 
             } else if constexpr (GlmMatrixType<To>) {
                 storage[i] = glm::make_mat4(temp);
             }
+        }
+
+        return std::span<To>(storage.data(), storage.size());
+    }
+};
+
+// === Specialization: Complex -> Complex ===
+template <typename From, typename To>
+struct DataConverter<
+    From, To,
+    std::enable_if_t<
+        ComplexData<From> && ComplexData<To> && !GlmType<From> && !GlmType<To> && !std::is_same_v<From, To>>> {
+    static std::span<To> convert(
+        std::span<From> source,
+        std::vector<To>& storage,
+        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    {
+        using FromValue = typename From::value_type;
+        using ToValue = typename To::value_type;
+
+        storage.resize(source.size());
+        for (size_t i = 0; i < source.size(); ++i) {
+            const FromValue r = static_cast<FromValue>(source[i].real());
+            const FromValue im = static_cast<FromValue>(source[i].imag());
+            storage[i] = To(static_cast<ToValue>(r), static_cast<ToValue>(im));
         }
 
         return std::span<To>(storage.data(), storage.size());
@@ -267,32 +318,6 @@ std::span<T> extract_frame(
     return std::span<T>(output_buffer.data(), output_buffer.size());
 }
 
-template <ProcessableData From, ProcessableData To>
-    requires(ComplexData<From> && ArithmeticData<To>)
-void convert_complex(std::span<From> source,
-    std::span<To> destination,
-    Utils::ComplexConversionStrategy strategy)
-{
-    const size_t count = std::min(source.size(), destination.size());
-
-    for (size_t i = 0; i < count; ++i) {
-        switch (strategy) {
-        case Utils::ComplexConversionStrategy::MAGNITUDE:
-            destination[i] = static_cast<To>(std::abs(source[i]));
-            break;
-        case Utils::ComplexConversionStrategy::REAL_PART:
-            destination[i] = static_cast<To>(source[i].real());
-            break;
-        case Utils::ComplexConversionStrategy::IMAG_PART:
-            destination[i] = static_cast<To>(source[i].imag());
-            break;
-        case Utils::ComplexConversionStrategy::SQUARED_MAGNITUDE:
-            destination[i] = static_cast<To>(std::norm(source[i]));
-            break;
-        }
-    }
-}
-
 /**
  * @brief Convert a span of one data type to another (with type conversion).
  * @tparam From Source type.
@@ -301,49 +326,35 @@ void convert_complex(std::span<From> source,
  * @param dest Destination data span.
  * @return Span of converted data.
  */
-template <ProcessableData From, ProcessableData To>
+template <typename From, typename To>
 std::span<To> convert_data(std::span<From> source,
+    std::vector<To>& storage,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    if constexpr (std::is_same_v<From, To>) {
-        return source;
-    }
-
-    else if constexpr (ComplexData<From> && ArithmeticData<To>) {
-        auto dest_span = std::span<To>(
-            reinterpret_cast<To*>(source.data()),
-            source.size());
-        convert_complex(source, dest_span, strategy);
-        return dest_span;
-    }
-
-    else if constexpr (ArithmeticData<From> && ComplexData<To>) {
-        using RealType = typename To::value_type;
-        To* dest = reinterpret_cast<To*>(source.data());
-        const size_t dest_size = source.size();
-
-        for (size_t i = 0; i < dest_size; ++i) {
-            dest[i] = To(static_cast<RealType>(source[i]), RealType { 0 });
-        }
-        return { dest, dest_size };
-    }
-
-    else if constexpr (ArithmeticData<From> && ArithmeticData<To>) {
-        To* dest = reinterpret_cast<To*>(source.data());
-        const size_t count = source.size();
-
-        for (size_t i = 0; i < count; ++i) {
-            dest[i] = static_cast<To>(source[i]);
-        }
-        return { dest, count };
-    }
-
-    else {
-        // TODO: some assert. dont know yet
-        return {};
-    }
+    return DataConverter<From, To>::convert(source, storage, strategy);
 }
 
+/**
+ * @brief Legacy interface - redirects to convert_data
+ */
+template <typename From, typename To>
+    requires(ComplexData<From> && ArithmeticData<To>)
+void convert_complex(std::span<From> source,
+    std::span<To> destination,
+    Utils::ComplexConversionStrategy strategy)
+{
+    std::vector<To> temp_storage;
+    auto result = convert_data(source, temp_storage, strategy);
+    std::copy_n(result.begin(), std::min(result.size(), destination.size()), destination.begin());
+}
+
+/**
+ * @brief Get const span from DataVariant without conversion (zero-copy for matching types)
+ * @tparam T Data type (must match DataVariant contents)
+ * @param variant DataVariant to extract from
+ * @return Const span of type T
+ * @throws std::runtime_error if type doesn't match
+ */
 template <ProcessableData T>
 std::span<T> convert_variant(DataVariant& variant,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
@@ -356,56 +367,39 @@ std::span<T> convert_variant(DataVariant& variant,
     return std::visit([&variant, strategy](auto& data) -> std::span<T> {
         using ValueType = typename std::decay_t<decltype(data)>::value_type;
 
-        if constexpr (ProcessableData<ValueType> && !std::is_same_v<ValueType, T>) {
+        if constexpr (is_convertible_data_v<ValueType, T>) {
+            std::vector<T> new_storage;
             auto source_span = std::span<ValueType>(data.data(), data.size());
-            auto converted_span = convert_data<ValueType, T>(source_span, strategy);
+            auto result = convert_data(source_span, new_storage, strategy);
 
-            std::vector<T> new_data(converted_span.begin(), converted_span.end());
-            variant = DataVariant { std::move(new_data) };
-
+            variant = std::move(new_storage);
             auto& new_vec = std::get<std::vector<T>>(variant);
             return std::span<T>(new_vec.data(), new_vec.size());
+        } else {
+            throw std::runtime_error("No conversion available from " + std::string(typeid(ValueType).name()) + " to " + std::string(typeid(T).name()));
         }
-        return {};
     },
         variant);
 }
 
 template <ProcessableData T>
+std::span<T> convert_variant(const DataVariant& variant,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+{
+    return convert_variant<T>(const_cast<DataVariant&>(variant), strategy);
+}
+
+template <ProcessableData T>
 std::vector<std::span<T>> convert_variants(
-    // std::vector<DataVariant>& variants,
     const std::vector<DataVariant>& variants,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
     std::vector<std::span<T>> result;
     result.reserve(variants.size());
-    // for (auto& variant : variants) {
-    //     result.push_back(convert_variant<T>(variant, strategy));
     for (size_t i = 0; i < variants.size(); ++i) {
         result.push_back(convert_variant<T>(const_cast<DataVariant&>(variants[i]), strategy));
     }
     return result;
-}
-
-/**
- * @brief Get const span from DataVariant without conversion (zero-copy for matching types)
- * @tparam T Data type (must match DataVariant contents)
- * @param variant DataVariant to extract from
- * @return Const span of type T
- * @throws std::runtime_error if type doesn't match
- */
-template <ProcessableData T>
-std::span<const T> convert_variant(const DataVariant& variant)
-{
-    return std::visit([](const auto& vec) -> std::span<const T> {
-        using VecType = typename std::decay_t<decltype(vec)>::value_type;
-        if constexpr (std::is_same_v<VecType, T>) {
-            return std::span<const T>(vec.data(), vec.size());
-        } else {
-            throw std::runtime_error("Type mismatch - conversion needed");
-        }
-    },
-        variant);
 }
 
 /**
@@ -422,13 +416,26 @@ std::span<To> extract_data(std::span<const From> source,
     std::vector<To>& destination,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    size_t required_elements = (source.size() * sizeof(From) + sizeof(To) - 1) / sizeof(To);
+    // Calculate required number of elements in To space
+    const size_t total_bytes = source.size() * sizeof(From);
+    const size_t required_elements = (total_bytes + sizeof(To) - 1) / sizeof(To);
     destination.resize(required_elements);
 
-    std::memcpy(destination.data(), source.data(), source.size() * sizeof(From));
-
-    auto source_span = std::span<From>(reinterpret_cast<From*>(destination.data()), source.size());
-    return convert_data<From, To>(source_span, strategy);
+    if constexpr (std::is_same_v<From, To>) {
+        // Fast path — identical types
+        std::memcpy(destination.data(), source.data(), total_bytes);
+        return std::span<To>(destination.data(), source.size());
+    } else if constexpr (std::is_trivially_copyable_v<From> && std::is_trivially_copyable_v<To> && (sizeof(From) == sizeof(To))) {
+        // Bitwise reinterpretation allowed (e.g. int32_t <-> float)
+        std::memcpy(destination.data(), source.data(), total_bytes);
+        return std::span<To>(destination.data(), source.size());
+    } else {
+        // General case — use proper conversion
+        std::vector<From> temp(source.begin(), source.end());
+        auto converted = convert_data<From, To>(std::span<const From>(temp), strategy);
+        destination.assign(converted.begin(), converted.end());
+        return std::span<To>(destination.data(), destination.size());
+    }
 }
 
 /**
@@ -439,19 +446,23 @@ std::span<To> extract_data(std::span<const From> source,
  */
 template <ProcessableData T>
 std::span<T> extract_from_variant(const DataVariant& variant,
-    std::vector<T>& user_storage,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE) noexcept
+    std::vector<T>& storage,
+    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    if (std::holds_alternative<std::vector<T>>(variant)) {
-        user_storage = std::get<std::vector<T>>(variant);
-        return std::span<T>(user_storage.data(), user_storage.size());
-    }
-
-    return std::visit([&user_storage, strategy](auto& data) -> std::span<T> {
+    return std::visit([&storage, strategy](const auto& data) -> std::span<T> {
         using ValueType = typename std::decay_t<decltype(data)>::value_type;
-        auto source_span = std::span<const ValueType>(data.data(), data.size());
-        auto result = extract_data<ValueType, T>(source_span, user_storage, strategy);
-        return std::span<T>(result.data(), result.size());
+
+        if constexpr (std::is_same_v<ValueType, T>) {
+            storage = data;
+            return std::span<T>(storage.data(), storage.size());
+        } else if constexpr (is_convertible_data_v<ValueType, T>) {
+            auto source_span = std::span<const ValueType>(data.data(), data.size());
+            std::vector<ValueType> temp_source(source_span.begin(), source_span.end());
+            auto temp_span = std::span<ValueType>(temp_source.data(), temp_source.size());
+            return convert_data(temp_span, storage, strategy);
+        } else {
+            throw std::runtime_error("Cannot convert from " + std::string(typeid(ValueType).name()) + " to " + std::string(typeid(T).name()));
+        }
     },
         variant);
 }
