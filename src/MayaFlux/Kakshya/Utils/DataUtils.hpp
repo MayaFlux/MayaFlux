@@ -4,9 +4,199 @@
 
 #include "MayaFlux/Utils.hpp"
 
+#include <glm/gtc/type_ptr.hpp>
 #include <typeindex>
 
 namespace MayaFlux::Kakshya {
+
+template <typename From, typename To, typename Enable = void>
+struct DataConverter {
+    static std::span<To> convert(std::span<From> source,
+        std::vector<To>& storage,
+        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    {
+        static_assert(always_false_v<From>, "No conversion available for these types");
+        return {};
+    }
+};
+
+// === Specialization: Identity Conversion ===
+
+template <typename T>
+struct DataConverter<T, T> {
+    static std::span<T> convert(std::span<T> source,
+        std::vector<T>&,
+        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    {
+        return source;
+    }
+};
+
+// === Specialization: Arithmetic to Arithmetic ===
+
+template <typename From, typename To>
+struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && ArithmeticData<To> && !std::is_same_v<From, To>>> {
+    static std::span<To> convert(std::span<From> source,
+        std::vector<To>& storage,
+        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    {
+        storage.resize(source.size());
+        std::transform(source.begin(), source.end(), storage.begin(),
+            [](From val) { return static_cast<To>(val); });
+        return std::span<To>(storage.data(), storage.size());
+    }
+};
+
+// === Specialization: Complex to Arithmetic ===
+
+template <typename From, typename To>
+struct DataConverter<From, To, std::enable_if_t<ComplexData<From> && ArithmeticData<To>>> {
+    static std::span<To> convert(std::span<From> source,
+        std::vector<To>& storage,
+        Utils::ComplexConversionStrategy strategy)
+    {
+        storage.resize(source.size());
+
+        for (size_t i = 0; i < source.size(); ++i) {
+            switch (strategy) {
+            case Utils::ComplexConversionStrategy::MAGNITUDE:
+                storage[i] = static_cast<To>(std::abs(source[i]));
+                break;
+            case Utils::ComplexConversionStrategy::REAL_PART:
+                storage[i] = static_cast<To>(source[i].real());
+                break;
+            case Utils::ComplexConversionStrategy::IMAG_PART:
+                storage[i] = static_cast<To>(source[i].imag());
+                break;
+            case Utils::ComplexConversionStrategy::SQUARED_MAGNITUDE:
+                storage[i] = static_cast<To>(std::norm(source[i]));
+                break;
+            }
+        }
+
+        return std::span<To>(storage.data(), storage.size());
+    }
+};
+
+// === Specialization: Arithmetic to Complex ===
+
+template <typename From, typename To>
+struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && ComplexData<To>>> {
+    static std::span<To> convert(std::span<From> source,
+        std::vector<To>& storage,
+        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    {
+        using ComplexValueType = typename To::value_type;
+        storage.resize(source.size());
+
+        for (size_t i = 0; i < source.size(); ++i) {
+            storage[i] = To(static_cast<ComplexValueType>(source[i]), ComplexValueType { 0 });
+        }
+
+        return std::span<To>(storage.data(), storage.size());
+    }
+};
+
+// === Specialization: GLM to Arithmetic (Flattening) ===
+
+template <typename From, typename To>
+struct DataConverter<From, To, std::enable_if_t<GlmType<From> && ArithmeticData<To>>> {
+    static std::span<To> convert(std::span<From> source,
+        std::vector<To>& storage,
+        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    {
+        constexpr size_t components = glm_component_count<From>();
+        using ComponentType = glm_component_type<From>;
+
+        storage.resize(source.size() * components);
+
+        size_t out_idx = 0;
+        for (const auto& elem : source) {
+            const ComponentType* ptr = glm::value_ptr(elem);
+            for (size_t c = 0; c < components; ++c) {
+                storage[out_idx++] = static_cast<To>(ptr[c]);
+            }
+        }
+
+        return std::span<To>(storage.data(), storage.size());
+    }
+};
+
+// === Specialization: Arithmetic to GLM (Structuring) ===
+
+template <typename From, typename To>
+struct DataConverter<From, To, std::enable_if_t<ArithmeticData<From> && GlmType<To>>> {
+    static std::span<To> convert(std::span<From> source,
+        std::vector<To>& storage,
+        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    {
+        constexpr size_t components = glm_component_count<To>();
+        using ComponentType = glm_component_type<To>;
+
+        if (source.size() % components != 0) {
+            throw std::runtime_error("Source size must be multiple of GLM component count");
+        }
+
+        size_t element_count = source.size() / components;
+        storage.resize(element_count);
+
+        for (size_t i = 0; i < element_count; ++i) {
+            ComponentType temp[components];
+            for (size_t c = 0; c < components; ++c) {
+                temp[c] = static_cast<ComponentType>(source[i * components + c]);
+            }
+
+            if constexpr (GlmVec2Type<To>) {
+                storage[i] = To(temp[0], temp[1]);
+            } else if constexpr (GlmVec3Type<To>) {
+                storage[i] = To(temp[0], temp[1], temp[2]);
+            } else if constexpr (GlmVec4Type<To>) {
+                storage[i] = To(temp[0], temp[1], temp[2], temp[3]);
+            } else if constexpr (GlmMatrixType<To>) {
+                storage[i] = glm::make_mat4(temp);
+            }
+        }
+
+        return std::span<To>(storage.data(), storage.size());
+    }
+};
+
+// === Specialization: GLM to GLM (same component count) ===
+
+template <typename From, typename To>
+struct DataConverter<From, To, std::enable_if_t<GlmType<From> && GlmType<To> && !std::is_same_v<From, To> && (glm_component_count<From>() == glm_component_count<To>())>> {
+    static std::span<To> convert(std::span<From> source,
+        std::vector<To>& storage,
+        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    {
+        using FromComponent = glm_component_type<From>;
+        using ToComponent = glm_component_type<To>;
+        constexpr size_t components = glm_component_count<From>();
+
+        storage.resize(source.size());
+
+        for (size_t i = 0; i < source.size(); ++i) {
+            const FromComponent* src_ptr = glm::value_ptr(source[i]);
+            ToComponent temp[components];
+
+            for (size_t c = 0; c < components; ++c) {
+                temp[c] = static_cast<ToComponent>(src_ptr[c]);
+            }
+
+            if constexpr (GlmVec2Type<To>) {
+                storage[i] = To(temp[0], temp[1]);
+            } else if constexpr (GlmVec3Type<To>) {
+                storage[i] = To(temp[0], temp[1], temp[2]);
+            } else if constexpr (GlmVec4Type<To>) {
+                storage[i] = To(temp[0], temp[1], temp[2], temp[3]);
+            } else if constexpr (GlmMatrixType<To>) {
+                storage[i] = glm::make_mat4(temp);
+            }
+        }
+
+        return std::span<To>(storage.data(), storage.size());
+    }
+};
 
 /**
  * @brief Calculate the total number of elements in an N-dimensional container.

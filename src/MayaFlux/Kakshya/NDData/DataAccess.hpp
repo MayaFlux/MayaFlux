@@ -1,7 +1,6 @@
 #pragma once
 
 #include "NDData.hpp"
-#include "TypeSpec.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 
