@@ -4,7 +4,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "MayaFlux/Journal/Format.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -278,9 +278,15 @@ auto DataAccess::view() const
 
             size_t required_components = m_dimensions[0].size * components;
             if (vec.size() < required_components) {
-                throw std::runtime_error(Journal::format(
-                    "Insufficient data: need {} components but have {}",
-                    required_components, vec.size()));
+                error<std::runtime_error>(
+                    Journal::Component::Kakshya,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "Insufficient data: need {} elements of type {} but have {} elements of type {}",
+                    m_dimensions[0].size,
+                    typeid(T).name(),
+                    vec.size() / components,
+                    typeid(StorageType).name());
             }
 
             if constexpr (std::is_same_v<StorageType, ComponentType>) {
@@ -295,10 +301,13 @@ auto DataAccess::view() const
 
                 return StructuredView<T>(cache_data, m_dimensions[0].size);
             } else {
-                throw std::runtime_error(Journal::format(
+                error<std::invalid_argument>(
+                    Journal::Component::Kakshya,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
                     "Cannot convert storage type {} to component type {}",
                     typeid(StorageType).name(),
-                    typeid(ComponentType).name()));
+                    typeid(ComponentType).name());
             }
         },
             m_variant);
@@ -331,10 +340,13 @@ std::span<const T> DataAccess::create_scalar_view() const
 
             return std::span<const T>(cache_data, vec.size());
         } else {
-            throw std::runtime_error(Journal::format(
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
                 "Cannot convert storage type {} to requested type {}",
                 typeid(StorageType).name(),
-                typeid(T).name()));
+                typeid(T).name());
         }
     },
         m_variant);
@@ -346,26 +358,35 @@ void DataAccess::validate_structured_access() const
     constexpr size_t requested_components = glm_component_count<T>();
 
     if (m_dimensions.empty()) {
-        throw std::runtime_error(
+        error<std::runtime_error>(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
             "Cannot create structured view: no dimensions defined");
     }
 
     if (!m_dimensions[0].grouping) {
-        throw std::runtime_error(Journal::format(
+        error<std::runtime_error>(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
             "Cannot create structured view: dimension '{}' missing component grouping. "
             "Use DataDimension::grouped() to create structured dimensions.",
-            m_dimensions[0].name));
+            m_dimensions[0].name);
     }
 
     size_t actual_components = m_dimensions[0].grouping->count;
     if (actual_components != requested_components) {
-        throw std::runtime_error(Journal::format(
+        error<std::runtime_error>(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
             "Component count mismatch: requested {} components ({}), but data has {} components per element. "
             "Suggested type: {}",
             requested_components,
             typeid(T).name(),
             actual_components,
-            suggested_view_type()));
+            suggested_view_type());
     }
 }
 

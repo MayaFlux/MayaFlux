@@ -44,7 +44,13 @@ void safe_copy_data_variant(const DataVariant& input, DataVariant& output)
             output_vec.resize(input_span.size());
             std::copy(input_span.begin(), input_span.end(), output_vec.begin());
         } else {
-            throw std::runtime_error("Unsupported type conversion");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "Unsupported type conversion from {} to {}",
+                typeid(InputType).name(),
+                typeid(OutputType).name());
         }
     },
         input, output);

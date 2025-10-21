@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Utils.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
@@ -156,7 +157,13 @@ struct DataConverter<
         using ComponentType = glm_component_type<To>;
 
         if (source.size() % components != 0) {
-            throw std::runtime_error("Source size must be multiple of GLM component count");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "Source size ({}) must be multiple of GLM component count ({})",
+                source.size(),
+                components);
         }
 
         size_t element_count = source.size() / components;
@@ -376,7 +383,13 @@ std::span<T> convert_variant(DataVariant& variant,
             auto& new_vec = std::get<std::vector<T>>(variant);
             return std::span<T>(new_vec.data(), new_vec.size());
         } else {
-            throw std::runtime_error("No conversion available from " + std::string(typeid(ValueType).name()) + " to " + std::string(typeid(T).name()));
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "No conversion available from {} to {}",
+                typeid(ValueType).name(),
+                typeid(T).name());
         }
     },
         variant);
@@ -461,7 +474,14 @@ std::span<T> extract_from_variant(const DataVariant& variant,
             auto temp_span = std::span<ValueType>(temp_source.data(), temp_source.size());
             return convert_data(temp_span, storage, strategy);
         } else {
-            throw std::runtime_error("Cannot convert from " + std::string(typeid(ValueType).name()) + " to " + std::string(typeid(T).name()));
+            // throw std::runtime_error("Cannot convert from " + std::string(typeid(ValueType).name()) + " to " + std::string(typeid(T).name()));
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "No conversion available from {} to {}",
+                typeid(ValueType).name(),
+                typeid(T).name());
         }
     },
         variant);

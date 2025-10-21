@@ -2,7 +2,7 @@
 
 #include "NDData.hpp"
 
-#include "MayaFlux/Journal/Format.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -123,14 +123,16 @@ public:
             std::ranges::transform(source, std::back_inserter(converted),
                 [](From val) { return static_cast<To>(val); });
         } else if constexpr (std::is_same_v<From, std::complex<float>> || std::is_same_v<From, std::complex<double>>) {
-            // Complex to real conversion
             std::ranges::transform(source, std::back_inserter(converted),
                 [](From val) { return static_cast<To>(std::abs(val)); });
         } else {
-            throw std::runtime_error(Journal::format(
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
                 "Unsupported conversion from {} to {}",
                 typeid(From).name(),
-                typeid(To).name()));
+                typeid(To).name());
         }
 
         insert_scalar(std::move(converted), target_modality);
@@ -170,7 +172,12 @@ public:
                 break;
 
             default:
-                throw std::runtime_error("Unknown structured modality");
+                error<std::invalid_argument>(
+                    Journal::Component::Kakshya,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "Modality {} does not represent structured GLM data",
+                    modality_to_string(target_modality));
             }
         } else {
             // Default to double for scalar modalities
@@ -208,10 +215,13 @@ private:
     void validate_scalar_insertion(DataModality modality) const
     {
         if (is_structured_modality(modality)) {
-            throw std::runtime_error(Journal::format(
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
                 "Modality {} expects structured data (GLM types), not scalars. "
                 "Use insert_structured() or change modality.",
-                modality_to_string(modality)));
+                modality_to_string(modality));
         }
     }
 
@@ -245,18 +255,24 @@ private:
             break;
 
         default:
-            throw std::runtime_error(Journal::format(
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
                 "Modality {} does not represent structured GLM data",
-                modality_to_string(modality)));
+                modality_to_string(modality));
         }
 
         if (!valid) {
-            throw std::runtime_error(Journal::format(
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
                 "GLM type component count ({}) doesn't match modality {}. "
                 "Suggested type: {}",
                 components,
                 modality_to_string(modality),
-                suggest_glm_type_for_modality(modality)));
+                suggest_glm_type_for_modality(modality));
         }
     }
 
@@ -317,8 +333,13 @@ private:
                     existing_vec.push_back(static_cast<ExistingType>(val));
                 }
             } else {
-                throw std::runtime_error(
-                    "Cannot append: incompatible types in variant");
+                error<std::invalid_argument>(
+                    Journal::Component::Kakshya,
+                    Journal::Context::Runtime,
+                    std::source_location::current(),
+                    "Cannot append: incompatible types in variant (existing: {}, new: {})",
+                    typeid(ExistingType).name(),
+                    typeid(T).name());
             }
         },
             m_variant);
@@ -338,8 +359,12 @@ private:
     void append_structured_to_existing(std::vector<T> new_data)
     {
         if (!std::holds_alternative<std::vector<T>>(m_variant)) {
-            throw std::runtime_error(
-                "Cannot append: existing variant doesn't hold matching GLM type");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "Cannot append: existing variant doesn't hold matching GLM type ({})",
+                typeid(T).name());
         }
 
         auto& existing = std::get<std::vector<T>>(m_variant);
