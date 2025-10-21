@@ -11,8 +11,8 @@ namespace MayaFlux::Kakshya {
 
 template <typename From, typename To, typename Enable = void>
 struct DataConverter {
-    static std::span<To> convert(std::span<From> source,
-        std::vector<To>& storage,
+    static std::span<To> convert(std::span<From> /*source*/,
+        std::vector<To>& /*storage*/,
         Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
     {
         static_assert(always_false_v<From>, "No conversion available for these types");
@@ -240,8 +240,8 @@ struct DataConverter<
 
         storage.resize(source.size());
         for (size_t i = 0; i < source.size(); ++i) {
-            const FromValue r = static_cast<FromValue>(source[i].real());
-            const FromValue im = static_cast<FromValue>(source[i].imag());
+            const auto r = static_cast<FromValue>(source[i].real());
+            const auto im = static_cast<FromValue>(source[i].imag());
             storage[i] = To(static_cast<ToValue>(r), static_cast<ToValue>(im));
         }
 
@@ -396,8 +396,9 @@ std::vector<std::span<T>> convert_variants(
 {
     std::vector<std::span<T>> result;
     result.reserve(variants.size());
-    for (size_t i = 0; i < variants.size(); ++i) {
-        result.push_back(convert_variant<T>(const_cast<DataVariant&>(variants[i]), strategy));
+
+    for (const auto& i : variants) {
+        result.push_back(convert_variant<T>(const_cast<DataVariant&>(i), strategy));
     }
     return result;
 }
@@ -416,13 +417,12 @@ std::span<To> extract_data(std::span<const From> source,
     std::vector<To>& destination,
     Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
 {
-    // Calculate required number of elements in To space
     const size_t total_bytes = source.size() * sizeof(From);
     const size_t required_elements = (total_bytes + sizeof(To) - 1) / sizeof(To);
     destination.resize(required_elements);
 
     if constexpr (std::is_same_v<From, To>) {
-        // Fast path — identical types
+        destination.resize(source.size());
         std::memcpy(destination.data(), source.data(), total_bytes);
         return std::span<To>(destination.data(), source.size());
     } else if constexpr (std::is_trivially_copyable_v<From> && std::is_trivially_copyable_v<To> && (sizeof(From) == sizeof(To))) {
