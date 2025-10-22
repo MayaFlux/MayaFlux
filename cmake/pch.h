@@ -22,7 +22,8 @@
 #include "utility"
 #include "variant"
 
-#include <cassert>
+#include <glm/fwd.hpp>
+
 #include <cmath>
 #include <complex>
 #include <cstdint>
@@ -54,8 +55,8 @@ concept ComplexData = requires {
 template <typename T>
 concept StringData = std::is_same_v<T, std::string> || std::is_same_v<T, const char*> || std::is_same_v<T, char*>;
 
-template <typename T>
-concept ProcessableData = ArithmeticData<T> || ComplexData<T>;
+// template <typename T>
+// concept ProcessableData = ArithmeticData<T> || ComplexData<T>;
 
 // === Universal Container Concepts ===
 
@@ -322,5 +323,98 @@ struct TypeHandler<std::size_t> {
 
 template <typename T>
 concept SupportedDataType = TypeHandler<T>::is_supported;
+
+template <typename T>
+inline constexpr bool always_false_v = false;
+
+template <typename T>
+concept GlmVec2Type = std::is_same_v<T, glm::vec2> || std::is_same_v<T, glm::dvec2>;
+
+template <typename T>
+concept GlmVec3Type = std::is_same_v<T, glm::vec3> || std::is_same_v<T, glm::dvec3>;
+
+template <typename T>
+concept GlmVec4Type = std::is_same_v<T, glm::vec4> || std::is_same_v<T, glm::dvec4>;
+
+template <typename T>
+concept GlmVectorType = GlmVec2Type<T> || GlmVec3Type<T> || GlmVec4Type<T>;
+
+template <typename T>
+concept GlmMatrixType = std::is_same_v<T, glm::mat2> || std::is_same_v<T, glm::mat3> || std::is_same_v<T, glm::mat4> || std::is_same_v<T, glm::dmat2> || std::is_same_v<T, glm::dmat3> || std::is_same_v<T, glm::dmat4>;
+
+template <typename T>
+concept GlmType = GlmVectorType<T> || GlmMatrixType<T>;
+
+template <typename T>
+constexpr size_t glm_component_count()
+{
+    if constexpr (GlmVec2Type<T>) {
+        return 2;
+    } else if constexpr (GlmVec3Type<T>) {
+        return 3;
+    } else if constexpr (GlmVec4Type<T>) {
+        return 4;
+    } else if constexpr (std::is_same_v<T, glm::mat2> || std::is_same_v<T, glm::dmat2>) {
+        return 4;
+    } else if constexpr (std::is_same_v<T, glm::mat3> || std::is_same_v<T, glm::dmat3>) {
+        return 9;
+    } else if constexpr (std::is_same_v<T, glm::mat4> || std::is_same_v<T, glm::dmat4>) {
+        return 16;
+    } else {
+        return 0;
+    }
+}
+
+template <typename T>
+using glm_component_type = typename T::value_type;
+
+template <typename T>
+concept GlmVectorData = GlmVectorType<T>;
+
+template <typename T>
+concept GlmMatrixData = GlmMatrixType<T>;
+
+template <typename T>
+concept GlmData = GlmVectorData<T> || GlmMatrixData<T>;
+
+template <typename T>
+concept ProcessableData = ArithmeticData<T> || ComplexData<T> || GlmData<T>;
+
+template <typename T>
+concept ComponentProcessableData = ArithmeticData<T> || ComplexData<T>;
+
+template <typename From, typename To>
+struct is_convertible_data : std::false_type { };
+
+template <typename From, typename To>
+    requires ArithmeticData<From> && ArithmeticData<To> && (!GlmType<From>) && (!GlmType<To>)
+struct is_convertible_data<From, To> : std::true_type { };
+
+template <typename From, typename To>
+    requires ComplexData<From> && ArithmeticData<To> && (!GlmType<From>) && (!GlmType<To>)
+struct is_convertible_data<From, To> : std::true_type { };
+
+template <typename From, typename To>
+    requires ArithmeticData<From> && ComplexData<To> && (!GlmType<From>) && (!GlmType<To>)
+struct is_convertible_data<From, To> : std::true_type { };
+
+template <typename From, typename To>
+    requires ComplexData<From> && ComplexData<To> && (!GlmType<From>) && (!GlmType<To>)
+struct is_convertible_data<From, To> : std::true_type { };
+
+template <typename From, typename To>
+    requires GlmType<From> && GlmType<To> && (glm_component_count<From>() == glm_component_count<To>())
+struct is_convertible_data<From, To> : std::true_type { };
+
+template <typename From, typename To>
+    requires GlmType<From> && ArithmeticData<To> && (!GlmType<To>)
+struct is_convertible_data<From, To> : std::true_type { };
+
+template <typename From, typename To>
+    requires ArithmeticData<From> && GlmType<To> && (!GlmType<From>)
+struct is_convertible_data<From, To> : std::true_type { };
+
+template <typename From, typename To>
+inline constexpr bool is_convertible_data_v = is_convertible_data<From, To>::value;
 
 } // namespace MayaFlux

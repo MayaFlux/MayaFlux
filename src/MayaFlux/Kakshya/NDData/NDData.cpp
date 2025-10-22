@@ -1,4 +1,5 @@
 #include "NDData.hpp"
+#include "MayaFlux/EnumUtils.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -43,6 +44,42 @@ DataDimension DataDimension::spatial(uint64_t size, char axis, uint64_t stride, 
         name = std::string("spatial_") + axis;
     }
     return { name, size, stride, r };
+}
+
+DataDimension DataDimension::grouped(
+    std::string name,
+    uint64_t element_count,
+    uint8_t components_per_element,
+    Role role)
+{
+    DataDimension dim { std::move(name), element_count, 1, role };
+    dim.grouping = ComponentGroup { components_per_element, 0 };
+    return dim;
+}
+
+std::string_view modality_to_string(DataModality modality)
+{
+    return Utils::enum_to_string(modality);
+}
+
+DataDimension DataDimension::vertex_positions(uint64_t count)
+{
+    return grouped("positions", count, 3, Role::POSITION);
+}
+
+DataDimension DataDimension::vertex_normals(uint64_t count)
+{
+    return grouped("normals", count, 3, Role::NORMAL);
+}
+
+DataDimension DataDimension::texture_coords(uint64_t count)
+{
+    return grouped("uvs", count, 2, Role::UV);
+}
+
+DataDimension DataDimension::vertex_colors(uint64_t count, bool has_alpha)
+{
+    return grouped("colors", count, has_alpha ? 4 : 3, Role::COLOR);
 }
 
 std::vector<DataDimension> DataDimension::create_dimensions(

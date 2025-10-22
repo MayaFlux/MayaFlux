@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kakshya/KakshyaUtils.hpp"
 
+#include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -816,6 +817,25 @@ std::span<const double> SoundStreamContainer::get_data_as_double() const
     m_double_extraction_dirty.store(false, std::memory_order_release);
 
     return { m_cached_ext_buffer };
+}
+
+DataAccess SoundStreamContainer::channel_data(size_t channel)
+{
+    if (channel >= m_data.size()) {
+        throw std::out_of_range("Channel index out of range");
+    }
+    return DataAccess { m_data[channel], m_structure.dimensions, m_structure.modality };
+}
+
+std::vector<DataAccess> SoundStreamContainer::all_channel_data()
+{
+    std::vector<DataAccess> result;
+    result.reserve(m_data.size());
+
+    for (auto& i : m_data) {
+        result.emplace_back(i, m_structure.dimensions, m_structure.modality);
+    }
+    return result;
 }
 
 const std::vector<std::span<double>>& SoundStreamContainer::get_span_cache() const

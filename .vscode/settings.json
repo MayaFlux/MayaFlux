@@ -15,7 +15,7 @@
   "C_Cpp.errorSquiggles": "enabled",
   "C_Cpp.dimInactiveRegions": true,
 
-  "cmake.configureOnOpen": true,
+  "cmake.configureOnOpen": false,
   "cmake.buildDirectory": "${workspaceFolder}/build",
   "cmake.installPrefix": "${workspaceFolder}/install",
   "cmake.generator": "Ninja",

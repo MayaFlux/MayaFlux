@@ -2,8 +2,8 @@
 
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 #include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
-#include "MayaFlux/Kakshya/OrganizedRegion.hpp"
-#include "MayaFlux/Kakshya/RegionCacheManager.hpp"
+#include "MayaFlux/Kakshya/Region/OrganizedRegion.hpp"
+#include "MayaFlux/Kakshya/Region/RegionCacheManager.hpp"
 
 namespace MayaFlux::Kakshya {
 

@@ -1,6 +1,7 @@
+#include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "test_config.h"
 
-#include "MayaFlux/Kakshya/Region.hpp"
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
 using namespace MayaFlux::Kakshya;
@@ -382,6 +383,25 @@ public:
     }
 
     const std::vector<DataVariant>& get_data() override { return m_processed_data; }
+
+    DataAccess channel_data(size_t channel)
+    {
+        if (channel >= m_processed_data.size()) {
+            throw std::out_of_range("Channel index out of range");
+        }
+        return DataAccess { m_processed_data[channel], m_data_structure.dimensions, m_data_structure.modality };
+    }
+
+    std::vector<DataAccess> all_channel_data()
+    {
+        std::vector<DataAccess> result;
+        result.reserve(m_processed_data.size());
+
+        for (auto& i : m_processed_data) {
+            result.emplace_back(i, m_data_structure.dimensions, m_data_structure.modality);
+        }
+        return result;
+    }
 
 private:
     uint32_t m_num_channels { 1 };

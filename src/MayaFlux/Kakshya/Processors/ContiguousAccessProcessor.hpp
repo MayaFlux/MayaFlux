@@ -4,7 +4,7 @@
 
 #include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
 
-#include "MayaFlux/Kakshya/Region.hpp"
+#include "MayaFlux/Kakshya/Region/Region.hpp"
 
 /**
  * @class ContiguousAccessProcessor

@@ -44,7 +44,13 @@ void safe_copy_data_variant(const DataVariant& input, DataVariant& output)
             output_vec.resize(input_span.size());
             std::copy(input_span.begin(), input_span.end(), output_vec.begin());
         } else {
-            throw std::runtime_error("Unsupported type conversion");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "Unsupported type conversion from {} to {}",
+                typeid(InputType).name(),
+                typeid(OutputType).name());
         }
     },
         input, output);
@@ -72,6 +78,32 @@ DataModality detect_data_modality(const std::vector<DataDimension>& dimensions)
     size_t time_dims = 0, spatial_dims = 0, channel_dims = 0, frequency_dims = 0, custom_dims = 0;
     size_t total_spatial_elements = 1;
     size_t total_channels = 0;
+
+    for (const auto& dim : dimensions) {
+        if (dim.grouping) {
+            switch (dim.role) {
+            case DataDimension::Role::POSITION:
+                return DataModality::VERTEX_POSITIONS_3D;
+            case DataDimension::Role::NORMAL:
+                return DataModality::VERTEX_NORMALS_3D;
+            case DataDimension::Role::TANGENT:
+            case DataDimension::Role::BITANGENT:
+                return DataModality::VERTEX_TANGENTS_3D;
+            case DataDimension::Role::UV:
+                return DataModality::TEXTURE_COORDS_2D;
+            case DataDimension::Role::COLOR:
+                if (dim.grouping->count == 3)
+                    return DataModality::VERTEX_COLORS_RGB;
+                if (dim.grouping->count == 4)
+                    return DataModality::VERTEX_COLORS_RGBA;
+                break;
+            default:
+                if (dim.grouping->count == 16)
+                    return DataModality::TRANSFORMATION_MATRIX;
+                break;
+            }
+        }
+    }
 
     for (const auto& dim : dimensions) {
         switch (dim.role) {
@@ -153,7 +185,7 @@ std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
 {
     std::cerr << "Inferring structure from single DataVariant...\n"
               << "This is not advisable as the method makes naive assumptions that can lead to massive computational errors\n"
-              << "If the varaint is part of a container, region, or segment, please use the appropriate method instead.\n"
+              << "If the variant is part of a container, region, or segment, please use the appropriate method instead.\n"
               << "If the variant is part of a vector, please use infer_from_data_variant_vector instead.\n"
               << "If you are sure you want to proceed, please ignore this warning.\n";
 
@@ -192,6 +224,25 @@ std::vector<DataDimension> detect_data_dimensions(const DataVariant& data)
                     dims.emplace_back(DataDimension::spatial(width, 'x'));
                 }
             }
+        } else if constexpr (GlmData<ValueType>) {
+            constexpr size_t components = glm_component_count<ValueType>();
+            DataDimension::Role role = DataDimension::Role::CUSTOM;
+
+            if constexpr (GlmVec2Type<ValueType>) {
+                role = DataDimension::Role::UV;
+            } else if constexpr (GlmVec3Type<ValueType>) {
+                role = DataDimension::Role::POSITION;
+            } else if constexpr (GlmVec4Type<ValueType>) {
+                role = DataDimension::Role::COLOR;
+            } else if constexpr (GlmMatrixType<ValueType>) {
+                role = DataDimension::Role::CUSTOM;
+            }
+
+            dims.push_back(DataDimension::grouped(
+                "glm_structured_data",
+                static_cast<uint64_t>(vec.size()),
+                static_cast<uint8_t>(components),
+                role));
         } else {
             dims.emplace_back(DataDimension::time(vec.size()));
         }
@@ -206,7 +257,7 @@ std::vector<DataDimension> detect_data_dimensions(
 {
     std::cerr << "Inferring structure from DataVariant vector...\n"
               << "This is not advisable as the method makes naive assumptions that can lead to massive computational errors\n"
-              << "If the varaint is part of a container, region, or segment, please use the appropriate method instead.\n"
+              << "If the variant is part of a container, region, or segment, please use the appropriate method instead.\n"
               << "If you are sure you want to proceed, please ignore this warning.\n";
 
     if (variants.empty()) {
@@ -222,6 +273,14 @@ std::vector<DataDimension> detect_data_dimensions(
         return vec.size();
     },
         variants[0]);
+
+    bool consistent_glm = std::ranges::all_of(variants, [](const auto& variant) {
+        return std::visit([](const auto& vec) -> bool {
+            using ValueType = typename std::decay_t<decltype(vec)>::value_type;
+            return GlmData<ValueType>;
+        },
+            variant);
+    });
 
     bool consistent_decimal = std::ranges::all_of(variants, [](const auto& variant) {
         return std::visit([](const auto& vec) -> bool {
@@ -246,6 +305,33 @@ std::vector<DataDimension> detect_data_dimensions(
         },
             variant);
     });
+
+    if (consistent_glm) {
+        dimensions.emplace_back(DataDimension::channel(variant_count));
+
+        std::visit([&](const auto& first_vec) {
+            using ValueType = typename std::decay_t<decltype(first_vec)>::value_type;
+            constexpr size_t components = glm_component_count<ValueType>();
+
+            DataDimension::Role role = DataDimension::Role::CUSTOM;
+            if constexpr (GlmVec2Type<ValueType>) {
+                role = DataDimension::Role::UV;
+            } else if constexpr (GlmVec3Type<ValueType>) {
+                role = DataDimension::Role::POSITION;
+            } else if constexpr (GlmVec4Type<ValueType>) {
+                role = DataDimension::Role::COLOR;
+            }
+
+            dimensions.emplace_back(DataDimension::grouped(
+                "glm_elements",
+                first_variant_size,
+                static_cast<uint8_t>(components),
+                role));
+        },
+            variants[0]);
+
+        return dimensions;
+    }
 
     if (variant_count == 1) {
         if (consistent_decimal) {

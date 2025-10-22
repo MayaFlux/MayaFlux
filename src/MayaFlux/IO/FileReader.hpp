@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/Region.hpp"
+#include "MayaFlux/Kakshya/Region/Region.hpp"
 
 #include "filesystem"
 #include "typeindex"

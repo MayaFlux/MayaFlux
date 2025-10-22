@@ -1,7 +1,5 @@
 #include "RegionCacheManager.hpp"
 
-#include <algorithm>
-
 namespace MayaFlux::Kakshya {
 
 std::size_t RegionHash::operator()(const Region& region) const

@@ -263,7 +263,7 @@ template <typename... Args>
  * @param message    The error message content.
  */
 template <typename ExceptionType = std::runtime_error>
-void error(Component component, Context context,
+[[noreturn]] void error(Component component, Context context,
     std::source_location location,
     std::string_view message)
 {
@@ -283,7 +283,7 @@ void error(Component component, Context context,
  * @param args            The format arguments.
  */
 template <typename ExceptionType = std::runtime_error, typename... Args>
-void error(Component component, Context context,
+[[noreturn]] void error(Component component, Context context,
     std::source_location location, const char* fmt_str, Args&&... args)
 {
     if constexpr (sizeof...(Args) == 0) {

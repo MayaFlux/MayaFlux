@@ -1,5 +1,5 @@
 #pragma once
-#include "Region.hpp"
+#include "RegionSegment.hpp"
 
 namespace MayaFlux::Kakshya {
 

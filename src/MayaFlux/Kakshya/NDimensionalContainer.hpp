@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NDData.hpp"
+#include "NDData/NDData.hpp"
 
 namespace MayaFlux::Kakshya {
 

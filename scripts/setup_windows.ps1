@@ -51,6 +51,11 @@ if (-not (Test-Command "ninja")) {
     Refresh-PathInSession
 }
 
+
+# ----------------------------------------------------------------------
+# LLVM setup (Required for JIT, NOT as compiler)
+# ----------------------------------------------------------------------
+
 # --- Configuration Variables ---
 $LLVM_VERSION = "21.1.3"
 $LLVM_ARCH = "x86_64-pc-windows-msvc"
@@ -63,7 +68,7 @@ $LLVM_SYSTEM_ROOT = "C:\Program Files\LLVM_Libs"
 $LLVM_INSTALL_ROOT = $LLVM_SYSTEM_ROOT 
 
 # Use a temporary folder for downloading and staging
-$LLVM_TEMP_DIR = Join-Path $PSScriptRoot "temp\llvm"
+$LLVM_TEMP_DIR = Join-Path $env:TEMP "MayaFlux-setup\llvm"
 $LLVM_DOWNLOAD_PATH = Join-Path $LLVM_TEMP_DIR $LLVM_TARBALL_NAME
 
 # The path to LLVMConfig.cmake relative to the installation root
@@ -229,7 +234,7 @@ Write-Host -ForegroundColor Cyan "--- LibXml2 Dependency Setup ---"
 
 # These paths are set to system conventions.
 $LIBXML2_INSTALL_ROOT = "C:\Program Files\LibXml2" 
-$LIBXML2_TEMP_DIR = Join-Path $PSScriptRoot "temp\libxml2"
+$LIBXML2_TEMP_DIR = Join-Path $env:TEMP "MayaFlux-setup\libxml2"
 
 # FIX 2A: Using the latest official source release URL and filename
 $LIBXML2_VERSION = "2.15.0" 
@@ -416,6 +421,10 @@ if (-not (Test-Path "$ffmpegDir\bin\ffmpeg.exe")) {
     Write-Output "FFmpeg installed at: $ffmpegDir"
 }
 
+# ----------------------------------------------------------------------
+# GLFW Setup
+# ----------------------------------------------------------------------
+
 # GLFW - Use prebuilt binaries (already has /MT)
 $glfwDir = "C:\Program Files\GLFW"
 if (-not (Test-Path "$glfwDir\include\GLFW\glfw3.h")) {
@@ -486,7 +495,70 @@ Write-Host "GLFW configuration complete:"
 Write-Host "  Root: $glfwDir"
 Write-Host "  Libs: $foundLibDir"
 
-# RtAudio
+# ----------------------------------------------------------------------
+#  GLM SETUP (Header-only mathematics library)
+# ----------------------------------------------------------------------
+
+Write-Host -ForegroundColor Cyan "--- GLM Mathematics Library Setup ---"
+
+$GLM_VERSION = "1.0.2"
+$GLM_INSTALL_ROOT = "C:\Program Files\glm"
+$GLM_HEADER_CHECK = "$GLM_INSTALL_ROOT\include\glm\glm.hpp"
+
+if (-not (Test-Path $GLM_HEADER_CHECK)) {
+    Write-Host "GLM not found. Installing version $GLM_VERSION..."
+    
+    # Clean up any previous failed attempts
+    if (Test-Path $GLM_INSTALL_ROOT) {
+        Remove-Item $GLM_INSTALL_ROOT -Recurse -Force
+    }
+    mkdir "$GLM_INSTALL_ROOT\include" -Force | Out-Null
+
+    # Download GLM
+    $GLM_URL = "https://github.com/g-truc/glm/releases/download/$GLM_VERSION/glm-$GLM_VERSION.zip"
+    $GLM_ZIP_PATH = "$env:TEMP\glm-$GLM_VERSION.zip"
+
+    if (-not (Test-Path $GLM_ZIP_PATH)) {
+        Write-Host "Downloading GLM..."
+        Invoke-WebRequest -Uri $GLM_URL -OutFile $GLM_ZIP_PATH
+    }
+
+    # Extract to TEMP (not the same directory as zip)
+    $GLM_EXTRACT_DIR = "$env:TEMP\glm-extract"
+    if (Test-Path $GLM_EXTRACT_DIR) {
+        Remove-Item $GLM_EXTRACT_DIR -Recurse -Force
+    }
+    
+    Write-Host "Extracting GLM..."
+    Expand-Archive -Path $GLM_ZIP_PATH -DestinationPath $GLM_EXTRACT_DIR -Force
+
+    # Copy headers - create the destination directory first, then copy contents
+    $SrcIncludeDir = Join-Path $GLM_EXTRACT_DIR "glm"
+    Write-Host "Copying headers from $SrcIncludeDir"
+    
+    # Create the destination glm directory
+    mkdir "$GLM_INSTALL_ROOT\include\glm" -Force | Out-Null
+    
+    # Copy the contents, not the directory itself
+    Copy-Item -Path "$SrcIncludeDir\*" -Destination "$GLM_INSTALL_ROOT\include\glm\" -Recurse -Force
+
+    # Cleanup
+    Remove-Item $GLM_EXTRACT_DIR -Recurse -Force
+    
+    Write-Host "GLM installed to $GLM_INSTALL_ROOT"
+} else {
+    Write-Host "GLM already installed at $GLM_INSTALL_ROOT"
+}
+
+# Add to environment variables
+[Environment]::SetEnvironmentVariable("GLM_ROOT", $GLM_INSTALL_ROOT, "Machine")
+$env:GLM_ROOT = $GLM_INSTALL_ROOT
+Write-Host "Environment variable GLM_ROOT set to: $GLM_INSTALL_ROOT"
+
+# ----------------------------------------------------------------------
+#  RtAudio SETUP
+# ----------------------------------------------------------------------
+
 $rtaudioDir = "C:\Program Files\RtAudio"
 if (-not (Test-Path "$rtaudioDir\include\rtaudio\RtAudio.h")) {
     Write-Output "Building RtAudio..."
@@ -514,6 +586,10 @@ if (-not (Test-Path "$rtaudioDir\include\rtaudio\RtAudio.h")) {
     Add-ToSystemPath "$rtaudioDir\bin"
     Write-Output "RtAudio installed at: $rtaudioDir"
 }
+
+# ----------------------------------------------------------------------
+#  EIGEN SETUP (Header-only library)
+# ----------------------------------------------------------------------
 
 # Eigen3 (header-only, just extract)
 $eigenDir = "C:\Program Files\Eigen3"
@@ -555,7 +631,7 @@ Write-Host -ForegroundColor Cyan "--- Magic Enum Dependency Setup ---"
 
 $MAGIC_ENUM_VERSION = "v0.9.5"
 $MAGIC_ENUM_INSTALL_ROOT = "C:\Program Files\magic_enum"
-$MAGIC_ENUM_TEMP_DIR = Join-Path $PSScriptRoot "temp\magic_enum"
+$MAGIC_ENUM_TEMP_DIR = Join-Path $env:TEMP "MayaFlux-setup\magic_enum"
 $MAGIC_ENUM_HEADER_FILE = "$MAGIC_ENUM_INSTALL_ROOT\include\magic_enum.hpp"
 
 if (-not (Test-Path $MAGIC_ENUM_HEADER_FILE -PathType Leaf)) {
@@ -709,6 +785,11 @@ if (Test-Path $magicEnumIncludePath) {
     $includePaths += $magicEnumIncludePath
 }
 
+$glmIncludePath = Join-Path $GLM_INSTALL_ROOT "include"
+if (Test-Path $glmIncludePath) {
+    $includePaths += $glmIncludePath
+}
+
 if ($diaSdkFound -and $diaSdkPath) {
     $diaIncludePath = Join-Path $diaSdkPath "include"
     if (Test-Path $diaIncludePath) {
@@ -823,6 +904,9 @@ set(SWSCALE_LIBRARY "C:/Program Files/FFmpeg/lib/swscale.lib" CACHE FILEPATH "" 
 set(EIGEN3_ROOT "C:/Program Files/Eigen3" CACHE PATH "" FORCE)
 set(EIGEN3_INCLUDE_DIR "C:/Program Files/Eigen3" CACHE PATH "" FORCE)
 
+set(GLM_ROOT "C:/Program Files/glm" CACHE PATH "" FORCE)
+set(GLM_INCLUDE_DIR "C:/Program Files/glm/include/" CACHE PATH "" FORCE)
+
 set(MAGIC_ENUM_INCLUDE_DIR "C:/Program Files/magic_enum/include" CACHE PATH "" FORCE)
 "@
 
@@ -835,6 +919,7 @@ Write-Output "LibXml2: $LIBXML2_INSTALL_ROOT"
 Write-Output "Vulkan SDK: $env:VULKAN_SDK"
 Write-Output "FFmpeg: $ffmpegDir"
 Write-Output "GLFW: $glfwDir"
+Write-Output "GLM: $GLM_INSTALL_ROOT"
 Write-Output "RtAudio: $rtaudioDir"
 Write-Output ""
 Write-Output "Toolchain: C:\MayaFlux\MayaFluxToolchain.cmake"

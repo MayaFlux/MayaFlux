@@ -1,7 +1,5 @@
 #include "RegionUtils.hpp"
 
-#include <algorithm>
-
 namespace MayaFlux::Kakshya {
 
 void set_region_attribute(Region& region, const std::string& key, std::any value)

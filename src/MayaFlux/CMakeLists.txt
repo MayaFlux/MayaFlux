@@ -57,7 +57,7 @@ else()
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::Vulkan)
     endif()
 
-    target_link_libraries(MayaFluxLib PUBLIC TBB::tbb)
+    target_link_libraries(MayaFluxLib PUBLIC TBB::tbb glm::glm)
 
     target_link_libraries(MayaFluxLib PUBLIC
         PkgConfig::RtAudio

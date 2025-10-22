@@ -6,6 +6,7 @@ namespace MayaFlux::Kakshya {
 
 class DataProcessor;
 class DataProcessingChain;
+class DataAccess;
 
 /**
  * @enum ProcessingState
@@ -264,6 +265,18 @@ public:
      * efficient resource management in dynamic, digital-first workflows.
      */
     virtual void mark_buffers_for_removal() = 0;
+
+    /**
+     * @brief Get channel data with semantic interpretation
+     * @param channel Channel index
+     * @return Type-erased data accessor
+     */
+    virtual DataAccess channel_data(size_t channel_index) = 0;
+
+    /**
+     * @brief Get all channel data as accessors
+     */
+    virtual std::vector<DataAccess> all_channel_data() = 0;
 };
 
 }

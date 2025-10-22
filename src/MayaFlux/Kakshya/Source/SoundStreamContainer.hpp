@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/Region.hpp"
+#include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -192,6 +192,18 @@ public:
     std::span<const double> get_data_as_double() const;
 
     inline const std::vector<DataVariant>& get_data() override { return m_data; }
+
+    /**
+     * @brief Get channel data with semantic interpretation
+     * @param channel Channel index
+     * @return Type-erased data accessor
+     */
+    DataAccess channel_data(size_t channel) override;
+
+    /**
+     * @brief Get all channel data as accessors
+     */
+    std::vector<DataAccess> all_channel_data() override;
 
 protected:
     void setup_dimensions();

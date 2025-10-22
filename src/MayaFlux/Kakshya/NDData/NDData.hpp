@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -44,7 +46,11 @@ using DataVariant = std::variant<
     std::vector<uint16_t>, ///< 16-bit data (CD audio, images)
     std::vector<uint32_t>, ///< 32-bit data (high precision int)
     std::vector<std::complex<float>>, ///< Complex data (spectral)
-    std::vector<std::complex<double>> ///< High precision complex
+    std::vector<std::complex<double>>, ///< High precision complex
+    std::vector<glm::vec2>, ///< 2D vector data
+    std::vector<glm::vec3>, ///< 3D vector data
+    std::vector<glm::vec4>, ///< 4D vector data
+    std::vector<glm::mat4> ///< 4x4 matrix data
     >;
 
 /**
@@ -61,8 +67,43 @@ enum class DataModality : uint8_t {
     TENSOR_ND, ///< N-dimensional tensor
     SPECTRAL_2D, ///< 2D spectral data (time + frequency)
     VOLUMETRIC_3D, ///< 3D volumetric data
+    VERTEX_POSITIONS_3D, // glm::vec3 - vertex positions
+    VERTEX_NORMALS_3D, // glm::vec3 - vertex normals
+    VERTEX_TANGENTS_3D, // glm::vec3 - tangent vectors
+    VERTEX_COLORS_RGB, // glm::vec3 - RGB colors
+    VERTEX_COLORS_RGBA, // glm::vec4 - RGBA colors
+    TEXTURE_COORDS_2D, // glm::vec2 - UV coordinates
+    TRANSFORMATION_MATRIX, // glm::mat4 - transform matrices
     UNKNOWN ///< Unknown or undefined modality
 };
+
+/**
+ * @brief Convert DataModality enum to string representation.
+ * @param modality DataModality value
+ * @return String view of the modality name
+ */
+std::string_view modality_to_string(DataModality modality);
+
+/**
+ * @brief Check if a modality represents structured data (vectors, matrices).
+ * @param modality DataModality value
+ * @return True if structured, false otherwise
+ */
+inline bool is_structured_modality(DataModality modality)
+{
+    switch (modality) {
+    case DataModality::VERTEX_POSITIONS_3D:
+    case DataModality::VERTEX_NORMALS_3D:
+    case DataModality::VERTEX_TANGENTS_3D:
+    case DataModality::VERTEX_COLORS_RGB:
+    case DataModality::VERTEX_COLORS_RGBA:
+    case DataModality::TEXTURE_COORDS_2D:
+    case DataModality::TRANSFORMATION_MATRIX:
+        return true;
+    default:
+        return false;
+    }
+}
 
 /**
  * @brief Minimal dimension descriptor focusing on structure only.
@@ -89,8 +130,39 @@ struct MAYAFLUX_API DataDimension {
         SPATIAL_Y, ///< Spatial Y axis
         SPATIAL_Z, ///< Spatial Z axis
         FREQUENCY, ///< Spectral/frequency axis
+        POSITION, ///< Vertex positions (3D space)
+        NORMAL, ///< Surface normals
+        TANGENT, ///< Tangent vectors
+        BITANGENT, ///< Bitangent vectors
+        UV, ///< Texture coordinates
+        COLOR, ///< Color data (RGB/RGBA)
+        INDEX, ///< Index buffer data
         CUSTOM ///< User-defined or application-specific
     };
+
+    /**
+     * @brief Grouping information for sub-dimensions.
+     *
+     * Used to indicate that this dimension is composed of groups
+     * of sub-dimensions (e.g., color channels grouped per pixel).
+     */
+    struct ComponentGroup {
+        uint8_t count;
+        uint8_t offset;
+
+        ComponentGroup()
+            : count(0)
+            , offset(0)
+        {
+        }
+        ComponentGroup(uint8_t c, uint8_t o = 0)
+            : count(c)
+            , offset(o)
+        {
+        }
+    };
+
+    std::optional<ComponentGroup> grouping;
 
     std::string name; ///< Human-readable identifier for the dimension
     uint64_t size {}; ///< Number of elements in this dimension
@@ -141,6 +213,35 @@ struct MAYAFLUX_API DataDimension {
      * @return DataDimension representing a spatial axis
      */
     static DataDimension spatial(uint64_t size, char axis, uint64_t stride = 1, std::string name = "spatial");
+
+    /**
+     * @brief Create dimension with component grouping
+     * @param name Dimension name
+     * @param element_count Number of elements (not components)
+     * @param components_per_element Components per element (e.g., 3 for vec3)
+     * @param role Semantic role
+     */
+    static DataDimension grouped(std::string name, uint64_t element_count, uint8_t components_per_element, Role role = Role::CUSTOM);
+
+    /**
+     * @brief Create dimension for vertex positions (vec3)
+     */
+    static DataDimension vertex_positions(uint64_t count);
+
+    /**
+     * @brief Create dimension for vertex normals (vec3)
+     */
+    static DataDimension vertex_normals(uint64_t count);
+
+    /**
+     * @brief Create dimension for texture coordinates (vec2)
+     */
+    static DataDimension texture_coords(uint64_t count);
+
+    /**
+     * @brief Create dimension for colors (vec3 or vec4)
+     */
+    static DataDimension vertex_colors(uint64_t count, bool has_alpha = false);
 
     /**
      * @brief Data container combining variants and dimensions.
