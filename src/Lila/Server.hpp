@@ -9,6 +9,7 @@
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 
 #include "EventBus.hpp"
+#include "ServerThread.hpp"
 
 namespace Lila {
 
@@ -161,7 +162,7 @@ private:
     int m_port; ///< TCP port to listen on
     int m_server_fd { -1 }; ///< Server socket file descriptor
     std::atomic<bool> m_running { false }; ///< Server running state
-    std::jthread m_server_thread; ///< Server thread
+    ServerThread m_server_thread; ///< Server thread
 
     MessageHandler m_message_handler; ///< Handler for client messages
     ConnectionHandler m_connect_handler; ///< Handler for client connections
@@ -176,7 +177,11 @@ private:
      * @brief Main server loop; accepts and manages clients
      * @param stop_token Token to signal server shutdown
      */
+#ifndef MAYAFLUX_JTHREAD_BROKEN
     void server_loop(const std::stop_token& stop_token);
+#else
+    void server_loop(const ServerThread::StopToken& stop_token);
+#endif
 
     /**
      * @brief Handles communication with a single client

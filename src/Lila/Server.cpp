@@ -7,14 +7,14 @@
 #include <fcntl.h>
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    #include <mstcpip.h> 
-    using ssize_t = int;
+#include <mstcpip.h>
+using ssize_t = int;
 #else
-    #include <netinet/tcp.h>
-    #include <sys/select.h>
-    #include <sys/socket.h>
-    #include <unistd.h>
-    #include <arpa/inet.h>
+#include <arpa/inet.h>
+#include <netinet/tcp.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #endif
 
 namespace Lila {
@@ -66,7 +66,8 @@ static int set_nonblocking(int fd)
     return ioctlsocket(static_cast<SOCKET>(fd), FIONBIO, &mode);
 #else
     int flags = fcntl(fd, F_GETFL, 0);
-    if (flags < 0) return -1;
+    if (flags < 0)
+        return -1;
     return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 #endif
 }
@@ -132,7 +133,7 @@ bool Server::start() noexcept
             m_start_handler();
         }
 
-        m_server_thread = std::jthread([this](const std::stop_token& token) { server_loop(token); });
+        m_server_thread = ServerThread([this](const auto& token) { server_loop(token); });
 
         LILA_INFO(Emitter::SERVER, "Server started on port " + std::to_string(m_port));
 
@@ -187,7 +188,11 @@ void Server::stop() noexcept
     LILA_INFO(Emitter::SERVER, "Server stopped");
 }
 
+#ifndef MAYAFLUX_JTHREAD_BROKEN
 void Server::server_loop(const std::stop_token& stop_token)
+#else
+void Server::server_loop(const ServerThread::StopToken& stop_token)
+#endif
 {
     while (!stop_token.stop_requested() && m_running) {
         fd_set readfds;
@@ -205,7 +210,8 @@ void Server::server_loop(const std::stop_token& stop_token)
         if (activity < 0) {
             int code = socket_errno();
 #ifndef MAYAFLUX_PLATFORM_WINDOWS
-            if (code == EINTR) continue;
+            if (code == EINTR)
+                continue;
 #endif
             if (m_running) {
                 LILA_ERROR(Emitter::SERVER, "Select error: " + socket_error_string(code));
@@ -224,7 +230,8 @@ void Server::server_loop(const std::stop_token& stop_token)
         int client_fd = static_cast<int>(client_socket);
         if (client_socket == INVALID_SOCKET) {
             int code = socket_errno();
-            if (code == WSAEWOULDBLOCK) continue;
+            if (code == WSAEWOULDBLOCK)
+                continue;
             if (m_running) {
                 LILA_ERROR(Emitter::SERVER, "Accept failed: " + socket_error_string(code));
             }
