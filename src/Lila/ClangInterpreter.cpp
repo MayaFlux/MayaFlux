@@ -2,14 +2,15 @@
 
 #include "Commentator.hpp"
 
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Interpreter/Interpreter.h>
+#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
+
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/TargetParser/Host.h>
 
 #include <clang/AST/Type.h>
-#include <llvm/ExecutionEngine/Orc/LLJIT.h>
-#include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Interpreter/Interpreter.h>
 
 namespace Lila {
 
