@@ -144,8 +144,8 @@ While the aforementioned backends, subsystems and Engine itself can be untangled
 
 ```cpp
 // Fluent API - Engine handles domain assignment and registration
-auto sine_node = vega.sine(440.0f) | Audio;     // Automatic AUDIO_RATE domain
-auto noise_gen = vega.stochastic(GAUSSIAN)[1];  // Automatic channel 1 assignment
+auto sine_node = vega.Sine(440.0f) | Audio;     // Automatic AUDIO_RATE domain
+auto noise_gen = vega.Random(GAUSSIAN)[1];  // Automatic channel 1 assignment
 
 // API Wrappers - Engine manages registration and token assignment
 auto envelope = MayaFlux::create_node<Shape>(0.0f, 1.0f, 2.5f);  // Auto-registered to default channel
@@ -162,7 +162,7 @@ The engine's NodeGraphManager automatically:
 - Manages root node hierarchies across different processing tokens
 - Coordinates timing and execution across multiple domains
 
-When initializing using vega, `vega.sine()[0] | Audio`, the instruction is to create node -> get default NodeGraphManger from engine -> register it for Channel 0's root -> at `Domain::Audio`, which resolves to `Nodes::ProcessingToken::AUDIO_RATE`
+When initializing using vega, `vega.Sine()[0] | Audio`, the instruction is to create node -> get default NodeGraphManger from engine -> register it for Channel 0's root -> at `Domain::Audio`, which resolves to `Nodes::ProcessingToken::AUDIO_RATE`
 
 #### Explicit user control
 
@@ -211,7 +211,7 @@ _Note:_ As `RootNode` only handles its own graph, it is unaware of registration 
 Nodes need not be added to `RootNode` or `NodeGraphManager` to enable processing. Calling `node->process_sample()` or `node->process_batch(num_samples)` evaluates the same as any automated procedure.
 
 ```cpp
-auto pulse = vega.impulse(200.f);
+auto pulse = vega.Impulse(200.f);
 // Process a node once every 2 seconds
 MayaFlux::schedule_metro(2, [pulse](){
     pulse->process_sample();
@@ -229,8 +229,8 @@ The second example creates a type of node called `BinaryOpNode` that handles a b
 And like `ChainNode`, the fluent `* or +` calls `BinaryOpNode::initialize()` for engine registration
 
 ```cpp
-auto pulse = vega.impulse(20.f);
-auto wave = vega.sine(880.f);
+auto pulse = vega.Impulse(20.f);
+auto wave = vega.Sine(880.f);
 // No engine registration
 auto chain_node = std::make_shared<Nodes::ChainNode>(pulse, wave);
 // Processes both nodes using sequence combination logic
@@ -260,17 +260,17 @@ Similar to `NodeGraphManager`, _Engine_ also handles lifecyle and visibility man
 ### BufferManager
 
 ```cpp
-auto temporal_buffer = vega.audio()[0] | Parallel;        // Automatic AUDIO_PARALLEL configuration
-auto feedback_buffer = vega.feedback(0.7f).domain(Audio).channel(0);   // Auto-assigned processing characteristics
+auto temporal_buffer = vega.AudioBuffer()[0] | Parallel;        // Automatic AUDIO_PARALLEL configuration
+auto feedback_buffer = vega.FeedbackBuffer(0.7f).domain(Audio).channel(0);   // Auto-assigned processing characteristics
 
-auto wave = vega.sine();
+auto wave = vega.Sine();
 auto Node_buffer = MayaFlux::create_buffer<Buffers::NodeBuffer>(0, 512, wave); // Implicitly added to engine audio domain
 auto proc = MayaFlux::create_processor<Buffers::StreamWriteProcessor>(temporal_buffer); // Automatic process registration
 get_buffer_manger()->supply_buffer_to(temporal_buffer, 1); // Automatically send buffer output to channel 1 of audio domain
 
 ```
 
-When using fluent structure `vega.audio[0] | Parallel`, the instruction is to create `AudioBuffer` -> set it to channel 0, get default buffer manager from engine -> register to `AUDIO_PARALLEL` token.
+When using fluent structure `vega.AudioBuffer[0] | Parallel`, the instruction is to create `AudioBuffer` -> set it to channel 0, get default buffer manager from engine -> register to `AUDIO_PARALLEL` token.
 
 Using `MayaFlux::create_buffer` or `::create`\_any_buffer_namespace_method, it internally evaluates to creating the specified entity and handling default registration procedure with `Engine` controlled `BufferManager`.
 
@@ -376,7 +376,7 @@ The Engine provides central lifecycle management for coroutines via `TaskSchedul
 
 ```cpp
 // Fluent API - Engine handles domain assignment and task registration
-auto shape_node = vega.poly({0.1, 0.5, 2.f});
+auto shape_node = vega.Polynomial({0.1, 0.5, 2.f});
 auto coordination_routine = shape_node >> Time(2.f);  // Automatic temporal domain assignment
 
 // API Wrappers - Engine manages task registration and token assignment

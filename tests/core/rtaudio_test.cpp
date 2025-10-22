@@ -427,7 +427,7 @@ TEST_F(AudibleTest, NoiseGeneratorOutput)
 {
     std::cout << "Testing various noise types..." << std::endl;
 
-    auto noise = std::make_shared<Nodes::Generator::Stochastics::NoiseEngine>();
+    auto noise = std::make_shared<Nodes::Generator::Stochastics::Random>();
     noise->set_amplitude(0.3f);
 
     auto node_graph = engine->get_node_graph_manager();

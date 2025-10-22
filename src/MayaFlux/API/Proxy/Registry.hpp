@@ -11,7 +11,7 @@ namespace Nodes {
         class Logic;
         class Polynomial;
         namespace Stochastics {
-            class NoiseEngine;
+            class Random;
         }
     }
     namespace Filters {
@@ -35,18 +35,18 @@ namespace Kakshya {
 }
 }
 
-#define ALL_NODE_REGISTRATIONS                                          \
-    X(sine, MayaFlux::Nodes::Generator::Sine)                           \
-    X(phasor, MayaFlux::Nodes::Generator::Phasor)                       \
-    X(impulse, MayaFlux::Nodes::Generator::Impulse)                     \
-    X(logic, MayaFlux::Nodes::Generator::Logic)                         \
-    X(polynomial, MayaFlux::Nodes::Generator::Polynomial)               \
-    X(stochastic, MayaFlux::Nodes::Generator::Stochastics::NoiseEngine) \
-    X(iir, MayaFlux::Nodes::Filters::IIR)                               \
-    X(fir, MayaFlux::Nodes::Filters::FIR)
+#define ALL_NODE_REGISTRATIONS                                 \
+    X(Sine, MayaFlux::Nodes::Generator::Sine)                  \
+    X(Phasor, MayaFlux::Nodes::Generator::Phasor)              \
+    X(Impulse, MayaFlux::Nodes::Generator::Impulse)            \
+    X(Logic, MayaFlux::Nodes::Generator::Logic)                \
+    X(Polynomial, MayaFlux::Nodes::Generator::Polynomial)      \
+    X(Random, MayaFlux::Nodes::Generator::Stochastics::Random) \
+    X(IIR, MayaFlux::Nodes::Filters::IIR)                      \
+    X(FIR, MayaFlux::Nodes::Filters::FIR)
 
-#define ALL_BUFFER_REGISTRATION                    \
-    B(audio, MayaFlux::Buffers::AudioBuffer)       \
-    B(node, MayaFlux::Buffers::NodeBuffer)         \
-    B(feedback, MayaFlux::Buffers::FeedbackBuffer) \
-    B(container, MayaFlux::Buffers::ContainerBuffer)
+#define ALL_BUFFER_REGISTRATION                          \
+    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)       \
+    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)         \
+    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer) \
+    B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer)

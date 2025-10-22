@@ -16,7 +16,7 @@ namespace MayaFlux::Core {
 //-------------------------------------------------------------------------
 
 Engine::Engine()
-    : m_rng(new Nodes::Generator::Stochastics::NoiseEngine())
+    : m_rng(new Nodes::Generator::Stochastics::Random())
 {
 }
 

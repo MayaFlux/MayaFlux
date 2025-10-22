@@ -413,10 +413,10 @@ class NoiseGeneratorTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        noise = std::make_shared<Nodes::Generator::Stochastics::NoiseEngine>();
+        noise = std::make_shared<Nodes::Generator::Stochastics::Random>();
     }
 
-    std::shared_ptr<Nodes::Generator::Stochastics::NoiseEngine> noise;
+    std::shared_ptr<Nodes::Generator::Stochastics::Random> noise;
 };
 
 TEST_F(NoiseGeneratorTest, BasicNoise)
@@ -490,7 +490,7 @@ protected:
     void SetUp() override
     {
         sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-        noise = std::make_shared<Nodes::Generator::Stochastics::NoiseEngine>();
+        noise = std::make_shared<Nodes::Generator::Stochastics::Random>();
         fir_coeffs = { 0.2, 0.2, 0.2, 0.2, 0.2 };
         fir = std::make_shared<Nodes::Filters::FIR>(sine, fir_coeffs);
 
@@ -498,7 +498,7 @@ protected:
     }
 
     std::shared_ptr<Nodes::Generator::Sine> sine;
-    std::shared_ptr<Nodes::Generator::Stochastics::NoiseEngine> noise;
+    std::shared_ptr<Nodes::Generator::Stochastics::Random> noise;
     std::vector<double> fir_coeffs;
     std::shared_ptr<Nodes::Filters::FIR> fir;
 

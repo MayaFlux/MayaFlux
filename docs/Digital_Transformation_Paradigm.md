@@ -94,9 +94,9 @@ wrappers or via directly creating a modern c++ shared pointers.
 
 ```cpp
 // Fluent
-auto wave = vega.sine(440.0f).channel(0) | Audio;
-auto noise = vega.stochastic(GUASSIAN).domain(Audio)[1];
-auto pulse = vega.impulse(2.0) | Audio;
+auto wave = vega.Sine(440.0f).channel(0) | Audio;
+auto noise = vega.Random(GUASSIAN).domain(Audio)[1];
+auto pulse = vega.Impulse(2.0) | Audio;
 
 // API Wrappers
 auto envelope = MayaFlux::ceate_node<Shape>(0.0f, 1.0f, 2.5f);
@@ -139,14 +139,14 @@ to the exact rhythm of transformation:
 
 ```cpp
 // Sync external processes to the pulse of transformation
-auto clock = vega.impulse(4.0) | Audio;
+auto clock = vega.Impulse(4.0) | Audio;
 clock->on_tick([](NodeContext ctx) {
     // Trigger visual events at 4Hz rhythm
     schedule_visual_pulse(ctx.value, ctx.timestamp);
 });
 
 // React to mathematical conditions becoming true
-auto wave = vega.sine(0.5f) | Audio;
+auto wave = vega.Sine(0.5f) | Audio;
 wave->on_tick_if([](NodeContext ctx) {
     return ctx.value > 0.8;
 }, [](NodeContext ctx) {
@@ -155,14 +155,14 @@ wave->on_tick_if([](NodeContext ctx) {
 });
 
 // Logic states create temporal regions for other processes
-auto gate = vega.logic([](double input) { return input > 0.0; });
+auto gate = vega.Logic([](double input) { return input > 0.0; });
 gate->while_true([](NodeContext ctx) {
     // Continuous processes that exist only during "true" time
     modulate_global_clock(ctx.value * 0.7);
 });
 
 // Mathematical relationships become event generators
-auto envelope = vega.poly({1.0, -0.5, 0.1});
+auto envelope = vega.Polynomial({1.0, -0.5, 0.1});
 envelope->on_change([](NodeContext ctx) {
     // React to any change in polynomial output
     update_filter_cutoff(ctx.value * 2000.0 + 200.0);
@@ -203,7 +203,7 @@ multiple ways of creating them.
 
 ```cpp
 // Fluent
-auto audio_buf = vega.audio()[1] | Audio;
+auto audio_buf = vega.AudioBuffer()[1] | Audio;
 
 // Convenience API
 auto wave = MayaFlux::create_node<Sine>();
@@ -240,7 +240,7 @@ samples from the stream source container The basic audio buffer has no
 default processor but it exposes methods to attach one.
 
 ```cpp
-auto buffer = vega.audio();
+auto buffer = vega.AudioBuffer();
 buffer->set_default_processor(FeedbackProcessor);
 ```
 
@@ -260,10 +260,10 @@ On the other hand, buffers themselves accommodate multiple processors
 using `BufferProcessingChain`
 
 ```cpp
-auto buffer = vega.audio();
+auto buffer = vega.AudioBuffer();
 
 auto feedback = MayaFlux::create_processor<FeedbackProcessor>(buffer);
-auto node = vega.poly([](auto x) {return x *= (sqrt(x));});
+auto node = vega.Polynomial([](auto x) {return x *= (sqrt(x));});
 
 auto poly_processor = MayaFlux::create_processor<PolynomialProcessor>(buffer, node);
 
@@ -314,7 +314,7 @@ MayaFlux offers several convenience methods to achieve the same.
 
     ```cpp
 
-    auto noise = vega.noise(UNIFORM);
+    auto noise = vega.Random(UNIFORM);
     auto my_num = 3.16f;
 
     MayaFlux::attach_quick_process([noise, my_num](auto buf){
@@ -393,9 +393,9 @@ simple non-verbose creation and not time manipulate **at** creation.
 
 ```cpp
 // Fluent API
-auto shape_node = vega.poly({0.1, 0.5, 2.f});
+auto shape_node = vega.Polynomial({0.1, 0.5, 2.f});
 shape_node >> Time(2.f);
-auto wave = vega.phasor(shape_node, 440.f);
+auto wave = vega.Phasor(shape_node, 440.f);
 NodeTimer::play_for(wave, 5.f);
 
 // Convenience wrappers
@@ -626,7 +626,7 @@ audio file handling:
 
 ```cpp
 // Fluent creation
-auto sound_file = vega.load("sample.wav").channels({0, 1});
+auto sound_file = vega.read("sample.wav").channels({0, 1});
 
 // Convenience API
 auto container = MayaFlux::load_sound_file("sample.wav");
@@ -723,8 +723,8 @@ The power emerges from their compositional relationships:
 
 ```cpp
 // Data flows through unified transformation architecture
-auto spectral_node = vega.poly({0.1, 0.8, 2.0});
-auto temporal_buffer = vega.audio()[0] | Audio;
+auto spectral_node = vega.Polynomial({0.1, 0.8, 2.0});
+auto temporal_buffer = vega.AudioBuffer()[0] | Audio;
 auto coordination_routine = Kriya::metro(*scheduler, 0.25, [&]() {
     auto region = container->get_region_data(analysis_region);
     temporal_buffer->apply_processor(spectral_node);

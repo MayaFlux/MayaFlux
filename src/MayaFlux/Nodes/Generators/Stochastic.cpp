@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Nodes::Generator::Stochastics {
 
-NoiseEngine::NoiseEngine(Utils::distribution type)
+Random::Random(Utils::distribution type)
     : m_random_engine(std::random_device {}())
     , m_current_start(-1.0f)
     , m_current_end(1.0f)
@@ -11,14 +11,14 @@ NoiseEngine::NoiseEngine(Utils::distribution type)
 {
 }
 
-double NoiseEngine::process_sample(double input)
+double Random::process_sample(double input)
 {
     m_last_output = input + random_sample(m_current_start, m_current_end);
     notify_tick(m_last_output);
     return m_last_output;
 }
 
-double NoiseEngine::random_sample(double start, double end)
+double Random::random_sample(double start, double end)
 {
     validate_range(start, end);
     m_current_start = start;
@@ -26,7 +26,7 @@ double NoiseEngine::random_sample(double start, double end)
     return transform_sample(generate_distributed_sample(), start, end) * m_amplitude;
 }
 
-std::vector<double> NoiseEngine::random_array(double start, double end, unsigned int num_samples)
+std::vector<double> Random::random_array(double start, double end, unsigned int num_samples)
 {
     validate_range(start, end);
     m_current_start = start;
@@ -42,12 +42,12 @@ std::vector<double> NoiseEngine::random_array(double start, double end, unsigned
     return samples;
 }
 
-std::vector<double> NoiseEngine::process_batch(unsigned int num_samples)
+std::vector<double> Random::process_batch(unsigned int num_samples)
 {
     return random_array(m_current_start, m_current_end, num_samples);
 }
 
-double NoiseEngine::generate_distributed_sample()
+double Random::generate_distributed_sample()
 {
     switch (m_type) {
     case Utils::distribution::UNIFORM: {
@@ -72,7 +72,7 @@ double NoiseEngine::generate_distributed_sample()
     }
 }
 
-double NoiseEngine::transform_sample(double sample, double start, double end) const
+double Random::transform_sample(double sample, double start, double end) const
 {
     if (m_type == Utils::distribution::NORMAL) {
         sample = std::max(start, std::min(end, sample));
@@ -83,19 +83,19 @@ double NoiseEngine::transform_sample(double sample, double start, double end) co
     return sample;
 }
 
-void NoiseEngine::validate_range(double start, double end) const
+void Random::validate_range(double start, double end) const
 {
     if (start > end) {
         throw std::invalid_argument("Start must be less than or equal to end");
     }
 }
 
-std::unique_ptr<NodeContext> NoiseEngine::create_context(double value)
+std::unique_ptr<NodeContext> Random::create_context(double value)
 {
     return std::make_unique<StochasticContext>(value, m_type, m_amplitude, m_current_start, m_current_end, m_normal_spread);
 }
 
-void NoiseEngine::notify_tick(double value)
+void Random::notify_tick(double value)
 {
     auto context = create_context(value);
     for (auto& callback : m_callbacks) {
@@ -108,12 +108,12 @@ void NoiseEngine::notify_tick(double value)
     }
 }
 
-void NoiseEngine::printGraph()
+void Random::printGraph()
 {
     // When opengl, vulkan or sciplot plugged in
 }
 
-void NoiseEngine::printCurrent()
+void Random::printCurrent()
 {
     // When opengl, vulkan or sciplot plugged in
 }

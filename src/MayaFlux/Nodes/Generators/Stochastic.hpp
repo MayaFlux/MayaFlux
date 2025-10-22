@@ -79,10 +79,10 @@ public:
 };
 
 /**
- * @class NoiseEngine
+ * @class Random
  * @brief Computational stochastic signal generator with multiple probability distributions
  *
- * The NoiseEngine generates algorithmic signals based on mathematical probability
+ * The Random generates algorithmic signals based on mathematical probability
  * distributions, serving as a foundational component for generative composition,
  * procedural sound design, and data-driven audio transformation. Unlike deterministic
  * processes, stochastic generators introduce controlled mathematical randomness
@@ -100,12 +100,12 @@ public:
  * - Normal (Gaussian): Bell-shaped distribution centered around the midpoint
  * - Exponential: Higher probability near the start, decreasing exponentially
  *
- * The NoiseEngine can function at any rate - from audio-rate signal generation to
+ * The Random can function at any rate - from audio-rate signal generation to
  * control-rate parameter modulation, to event-level algorithmic decision making.
  * It can be integrated with other computational domains (graphics, physics, data)
  * to create cross-domain generative systems.
  */
-class MAYAFLUX_API NoiseEngine : public Generator {
+class MAYAFLUX_API Random : public Generator {
 public:
     /**
      * @brief Constructor for the stochastic generator
@@ -115,12 +115,12 @@ public:
      * The generator is initialized with entropy from the system's
      * random device for non-deterministic behavior across program executions.
      */
-    NoiseEngine(Utils::distribution type = Utils::distribution::UNIFORM);
+    Random(Utils::distribution type = Utils::distribution::UNIFORM);
 
     /**
      * @brief Virtual destructor
      */
-    ~NoiseEngine() = default;
+    ~Random() = default;
 
     /**
      * @brief Changes the probability distribution type

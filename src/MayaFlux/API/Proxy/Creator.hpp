@@ -211,8 +211,8 @@ static constexpr auto Graphics = Domain::GRAPHICS;
  * Domains supported are AUDIO and GRAPHICS.
  * For example:
  * ```
- * auto myNode = ::vega.sine(440.0f).domain(Audio).channel(0);
- * auto node_buffer = vega.node(0, 512, myNode)[{0, 1, 2}] | Graphics;
+ * auto myNode = ::vega.Sine(440.0f).domain(Audio).channel(0);
+ * auto node_buffer = vega.NodeBuffer(0, 512, myNode)[{0, 1, 2}] | Graphics;
  * ```
  */
 extern MAYAFLUX_API Creator vega;

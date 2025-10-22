@@ -6,7 +6,7 @@
 #include "GlobalStreamInfo.hpp"
 
 namespace MayaFlux::Nodes::Generator::Stochastics {
-class NoiseEngine;
+class Random;
 }
 
 namespace MayaFlux::Vruta {
@@ -266,12 +266,12 @@ public:
 
     /**
      * @brief Gets the stochastic signal generator engine
-     * @return Pointer to the NoiseEngine for random signal generation
+     * @return Pointer to the Random node for random signal generation
      *
-     * The NoiseEngine provides various stochastic signal sources.
+     * The Random node provides various stochastic signal sources.
      * Managed directly by Engine for optimal performance in generator nodes.
      */
-    inline Nodes::Generator::Stochastics::NoiseEngine* get_random_engine() { return m_rng.get(); }
+    inline Nodes::Generator::Stochastics::Random* get_random_engine() { return m_rng.get(); }
 
     /**
      * @brief Gets the subsystem manager for advanced component access
@@ -316,7 +316,7 @@ private:
     std::shared_ptr<SubsystemManager> m_subsystem_manager;
     std::shared_ptr<WindowManager> m_window_manager; ///< Window manager (Windowing subsystem)
     std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager (currently only glfw events)
-    std::unique_ptr<Nodes::Generator::Stochastics::NoiseEngine> m_rng; ///< Stochastic signal generator
+    std::unique_ptr<Nodes::Generator::Stochastics::Random> m_rng; ///< Stochastic signal generator
 };
 
 } // namespace MayaFlux::Core
