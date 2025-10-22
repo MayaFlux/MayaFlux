@@ -1,8 +1,8 @@
 # Doxygen documentation generation for Codeberg Pages
 # Only runs on main branch
 
-when:
-  branch: main
+# when:
+# branch: main
 
 steps:
   generate-docs:
@@ -35,5 +35,5 @@ steps:
       - git add .
       - 'git commit -m "docs: update Doxygen documentation [skip ci]" || exit 0'
       - git push https://${CODEBERG_TOKEN}@codeberg.org/MayaFlux/MayaFlux.git pages
-    when:
-      branch: main
+    # when:
+    #   branch: main

@@ -20,7 +20,7 @@ namespace MayaFlux {
  * @note This header is automatically included in the PCH for JIT contexts (MAYASIMPLE mode).
  */
 
-#ifndef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef LILA_WORKAROUND
 
 template <typename Callable>
 void schedule_metro(double interval_seconds, Callable&& callback, std::string name = "")
@@ -119,6 +119,6 @@ Vruta::SoundRoutine Toggle(
     return Toggle(scheduler, std::move(func), std::move(logic_node));
 }
 
-#endif
+#endif // LILA_WORKAROUND
 
 }
