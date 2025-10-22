@@ -419,5 +419,48 @@ std::vector<std::string> SystemConfig::get_unix_library_paths()
     return lib_paths;
 }
 
-#endif
+#ifdef MAYAFLUX_PLATFORM_MACOS
+
+std::string SystemConfig::get_macos_sdk_path()
+{
+    const char* cmd = "xcrun --show-sdk-path 2>/dev/null";
+    std::string sdk_path = exec_command(cmd);
+    trim_output(sdk_path);
+
+    if (!sdk_path.empty() && fs::exists(sdk_path)) {
+        return sdk_path;
+    }
+
+    std::vector<std::string> possible_paths = {
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+    };
+
+    for (const auto& path : possible_paths) {
+        if (fs::exists(path)) {
+            return path;
+        }
+    }
+
+    return "";
+}
+
+std::string SystemConfig::get_xcode_system_includes()
+{
+    std::string sdk_path = get_macos_sdk_path();
+    if (sdk_path.empty()) {
+        return "";
+    }
+
+    std::string include_path = sdk_path + "/usr/include";
+    if (fs::exists(include_path)) {
+        return include_path;
+    }
+
+    return "";
+}
+
+#endif // MAYAFLUX_PLATFORM_MACOS
+
+#endif // MAYAFLUX_PLATFORM_WINDOWS
 }

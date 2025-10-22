@@ -93,6 +93,26 @@ bool ClangInterpreter::initialize()
         m_impl->compile_flags.push_back("-isystem" + include);
     }
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    // CRITICAL: JIT uses Homebrew LLVM but needs macOS SDK for system headers
+    // Homebrew LLVM's libc++ requires pthread.h, sched.h, time.h, etc. from SDK
+    std::string sdk_path = MayaFlux::Platform::SystemConfig::get_macos_sdk_path();
+    if (!sdk_path.empty()) {
+        m_impl->compile_flags.push_back("-isysroot" + sdk_path);
+        LILA_DEBUG(Emitter::INTERPRETER, "Using macOS SDK: " + sdk_path);
+    } else {
+        LILA_WARN(Emitter::INTERPRETER,
+            "Could not find macOS SDK - JIT may fail to find system headers");
+    }
+
+    // Ensure Xcode's system includes (pthread.h, sched.h, etc.) are available
+    std::string xcode_includes = MayaFlux::Platform::SystemConfig::get_xcode_system_includes();
+    if (!xcode_includes.empty()) {
+        m_impl->compile_flags.push_back("-isystem" + xcode_includes);
+        LILA_DEBUG(Emitter::INTERPRETER, "Using Xcode system includes: " + xcode_includes);
+    }
+#endif
+
     for (const auto& path : m_impl->include_paths) {
         m_impl->compile_flags.push_back("-I" + path);
     }

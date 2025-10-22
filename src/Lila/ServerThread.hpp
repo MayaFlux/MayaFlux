@@ -75,11 +75,9 @@ public:
     {
     }
 
-    // Explicitly defaulted to ensure proper move semantics
     ServerThread(ServerThread&&) noexcept = default;
     ServerThread& operator=(ServerThread&&) noexcept = default;
 
-    // Non-copyable like std::jthread
     ServerThread(const ServerThread&) = delete;
     ServerThread& operator=(const ServerThread&) = delete;
 
@@ -149,7 +147,7 @@ public:
         : m_stop_flag(std::make_shared<std::atomic<bool>>(false))
     {
         // Capture stop_flag by value (shared_ptr) to ensure it outlives the thread
-        // This is critical: the thread lambda must hold a reference to keep the flag alive
+        // critical: the thread lambda must hold a reference to keep the flag alive
         auto stop_flag = m_stop_flag;
 
         m_thread = std::thread([callback = std::move(callback), stop_flag]() {
@@ -158,7 +156,6 @@ public:
         });
     }
 
-    // Move-only semantics
     ServerThread(ServerThread&& other) noexcept
         : m_thread(std::move(other.m_thread))
         , m_stop_flag(std::move(other.m_stop_flag))
@@ -168,7 +165,6 @@ public:
     ServerThread& operator=(ServerThread&& other) noexcept
     {
         if (this != &other) {
-            // Clean up current thread if joinable
             if (m_thread.joinable()) {
                 request_stop();
                 m_thread.join();
@@ -180,7 +176,6 @@ public:
         return *this;
     }
 
-    // Non-copyable
     ServerThread(const ServerThread&) = delete;
     ServerThread& operator=(const ServerThread&) = delete;
 

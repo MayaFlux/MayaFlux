@@ -168,7 +168,13 @@ namespace Platform {
 
 #else
         static std::vector<std::string> get_unix_library_paths();
-#endif
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        static std::string get_macos_sdk_path();
+        static std::string get_xcode_system_includes();
+#endif // MAYAFLUX_PLATFORM_MACOS
+
+#endif // MAYAFLUX_PLATFORM_WINDOWS
     };
 
 } // namespace Platform
