@@ -59,11 +59,13 @@ jobs:
             magic_enum
             fmt
             glfw
+            glm
+            llvm
           verbose: true
 
       - name: Install LLVM via Homebrew
         run: |
-          brew install llvm
+          # brew install llvm
           LLVM_PREFIX=$(brew --prefix llvm)
           echo "LLVM_PREFIX=$LLVM_PREFIX" >> $GITHUB_ENV
           echo "PATH=$LLVM_PREFIX/bin:$PATH" >> $GITHUB_ENV
