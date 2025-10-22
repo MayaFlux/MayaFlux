@@ -48,8 +48,8 @@ DataDimension DataDimension::spatial(uint64_t size, char axis, uint64_t stride, 
 
 DataDimension DataDimension::grouped(
     std::string name,
-    u_int64_t element_count,
-    u_int8_t components_per_element,
+    uint64_t element_count,
+    uint8_t components_per_element,
     Role role)
 {
     DataDimension dim { std::move(name), element_count, 1, role };

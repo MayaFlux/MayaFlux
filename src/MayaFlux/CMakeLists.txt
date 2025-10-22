@@ -34,7 +34,6 @@ if(WIN32)
         Eigen3::Eigen
         glfw
         Vulkan::Vulkan
-        glm::glm
         FFmpeg::avcodec
         FFmpeg::avformat
         FFmpeg::avutil

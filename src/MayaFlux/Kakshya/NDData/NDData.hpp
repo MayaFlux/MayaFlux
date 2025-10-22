@@ -147,15 +147,15 @@ struct MAYAFLUX_API DataDimension {
      * of sub-dimensions (e.g., color channels grouped per pixel).
      */
     struct ComponentGroup {
-        u_int8_t count;
-        u_int8_t offset;
+        uint8_t count;
+        uint8_t offset;
 
         ComponentGroup()
             : count(0)
             , offset(0)
         {
         }
-        ComponentGroup(u_int8_t c, u_int8_t o = 0)
+        ComponentGroup(uint8_t c, uint8_t o = 0)
             : count(c)
             , offset(o)
         {
@@ -221,7 +221,7 @@ struct MAYAFLUX_API DataDimension {
      * @param components_per_element Components per element (e.g., 3 for vec3)
      * @param role Semantic role
      */
-    static DataDimension grouped(std::string name, u_int64_t element_count, u_int8_t components_per_element, Role role = Role::CUSTOM);
+    static DataDimension grouped(std::string name, uint64_t element_count, uint8_t components_per_element, Role role = Role::CUSTOM);
 
     /**
      * @brief Create dimension for vertex positions (vec3)

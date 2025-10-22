@@ -48,6 +48,8 @@ if(WIN32)
         INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
     )
 
+    include_directories(${GLM_INCLUDE_DIR})
+
     add_library(glfw SHARED IMPORTED)
     set_target_properties(glfw PROPERTIES
         IMPORTED_LOCATION "${GLFW_DLL}"
@@ -59,7 +61,7 @@ if(WIN32)
     find_package(Vulkan REQUIRED)
     find_package(LLVM CONFIG REQUIRED)
     find_package(Clang CONFIG REQUIRED )
-    find_package(glm REQUIRED)
+
 
     add_library(FFmpeg::avcodec UNKNOWN IMPORTED)
     set_target_properties(FFmpeg::avcodec PROPERTIES

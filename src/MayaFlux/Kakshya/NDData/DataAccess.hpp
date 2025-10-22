@@ -16,7 +16,7 @@ namespace MayaFlux::Kakshya {
  * (glm::vec3, etc.) or as scalar arrays (double, float), based on modality
  * and user intent. Container classes remain template-free.
  */
-class DataAccess {
+class MAYAFLUX_API DataAccess {
 public:
     DataAccess(DataVariant& variant,
         const std::vector<DataDimension>& dimensions,

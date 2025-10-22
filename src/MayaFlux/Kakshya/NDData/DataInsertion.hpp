@@ -19,7 +19,7 @@ namespace MayaFlux::Kakshya {
  * Design principle: All types are equal. GLM specializations exist for
  * ergonomics, not privileged status.
  */
-class DataInsertion {
+class MAYALFUX_API DataInsertion {
 public:
     DataInsertion(DataVariant& variant,
         std::vector<DataDimension>& dimensions,
