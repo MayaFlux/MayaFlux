@@ -188,6 +188,9 @@ public:
      */
     void reset(float frequency = 440, float amplitude = 0.5f, float offset = 0);
 
+    void save_state() override;
+    void restore_state() override;
+
 protected:
     /**
      * @brief Creates a context object for callbacks
@@ -255,5 +258,13 @@ private:
      * the specified frequency at the current sample rate.
      */
     void update_phase_increment(float frequency);
+
+    double m_saved_phase;
+    float m_saved_frequency;
+    float m_saved_offset;
+    double m_saved_phase_inc;
+    double m_saved_last_output;
+
+    bool m_state_saved {};
 };
 }

@@ -564,5 +564,10 @@ protected:
      * without applying any filtering.
      */
     bool m_bypass_enabled = false;
+
+    std::vector<double> m_saved_input_history;
+    std::vector<double> m_saved_output_history;
+
+    bool m_state_saved {};
 };
 }

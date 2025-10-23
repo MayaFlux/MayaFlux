@@ -227,6 +227,9 @@ public:
         m_impulse_callbacks.clear();
     }
 
+    void save_state() override;
+    void restore_state() override;
+
 protected:
     /**
      * @brief Creates a context object for callbacks
@@ -301,5 +304,13 @@ private:
     std::vector<NodeHook> m_impulse_callbacks;
 
     bool m_impulse_occurred;
+
+    double m_saved_phase;
+    float m_saved_frequency;
+    float m_saved_offset;
+    double m_saved_phase_inc;
+    double m_saved_last_output;
+
+    bool m_state_saved {};
 };
 }

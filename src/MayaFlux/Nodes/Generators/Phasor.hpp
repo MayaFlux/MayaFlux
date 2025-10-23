@@ -264,6 +264,9 @@ public:
         m_threshold_callbacks.clear();
     }
 
+    void save_state() override;
+    void restore_state() override;
+
 protected:
     /**
      * @brief Creates a context object for callbacks
@@ -361,5 +364,13 @@ private:
      * @brief Flag indicating whether the threshold has been crossed in the current sample
      */
     bool m_threshold_crossed;
+
+    double m_saved_phase;
+    float m_saved_frequency;
+    float m_saved_offset;
+    double m_saved_phase_inc;
+    double m_saved_last_output;
+
+    bool m_state_saved {};
 };
 }

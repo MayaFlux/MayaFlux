@@ -230,7 +230,9 @@ double Logic::process_sample(double input)
 
     m_input = input;
     auto current = result ? 1.0 : 0.0;
-    notify_tick(current);
+
+    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        notify_tick(current);
 
     if (m_input_node) {
         atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);
@@ -609,6 +611,34 @@ void Logic::remove_hooks_of_type(LogicEventType type)
             return cb.event_type == type;
         });
     m_all_callbacks.erase(it, m_all_callbacks.end());
+}
+
+void Logic::save_state()
+{
+    m_saved_history = m_history;
+    m_saved_hysteresis_state = m_hysteresis_state;
+    m_saved_edge_detected = m_edge_detected;
+    m_saved_temporal_time = m_temporal_time;
+    m_saved_last_output = m_last_output;
+
+    if (m_input_node)
+        m_input_node->save_state();
+
+    m_state_saved = true;
+}
+
+void Logic::restore_state()
+{
+    m_history = m_saved_history;
+    m_hysteresis_state = m_saved_hysteresis_state;
+    m_edge_detected = m_saved_edge_detected;
+    m_temporal_time = m_saved_temporal_time;
+    m_last_output = m_saved_last_output;
+
+    if (m_input_node)
+        m_input_node->restore_state();
+
+    m_state_saved = false;
 }
 
 }

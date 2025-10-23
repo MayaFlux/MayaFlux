@@ -367,6 +367,27 @@ protected:
 
 public:
     /**
+     * @brief Saves the node's current state for later restoration
+     * Recursively cascades through all connected modulator nodes
+     * Protected - only NodeSourceProcessor and NodeBuffer can call
+     */
+    virtual void save_state() = 0;
+
+    /**
+     * @brief Restores the node's state from the last save
+     * Recursively cascades through all connected modulator nodes
+     * Protected - only NodeSourceProcessor and NodeBuffer can call
+     */
+    virtual void restore_state() = 0;
+
+    /**
+     * @brief Internal flag controlling whether notify_tick fires during state snapshots
+     * Default: false (events don't fire during isolated buffer processing)
+     * Can be exposed in future if needed via concrete implementation in parent
+     */
+    bool m_fire_events_during_snapshot = false;
+
+    /**
      * @brief Atomic state flag tracking the node's processing status
      *
      * This atomic state variable tracks the node's current operational status using

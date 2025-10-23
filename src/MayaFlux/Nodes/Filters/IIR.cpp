@@ -46,7 +46,8 @@ double IIR::process_sample(double input)
 
     update_outputs(output);
 
-    notify_tick(output);
+    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        notify_tick(output);
 
     if (m_input_node) {
         atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);
@@ -54,6 +55,28 @@ double IIR::process_sample(double input)
     }
 
     return output * get_gain();
+}
+
+void IIR::save_state()
+{
+    m_saved_input_history = m_input_history;
+    m_saved_output_history = m_output_history;
+
+    if (m_input_node)
+        m_input_node->save_state();
+
+    m_state_saved = true;
+}
+
+void IIR::restore_state()
+{
+    m_input_history = m_saved_input_history;
+    m_output_history = m_saved_output_history;
+
+    if (m_input_node)
+        m_input_node->restore_state();
+
+    m_state_saved = false;
 }
 
 }

@@ -208,6 +208,9 @@ public:
         m_normal_spread = spread;
     }
 
+    void save_state() override { }
+    void restore_state() override { }
+
 protected:
     /**
      * @brief Creates a context object for callbacks

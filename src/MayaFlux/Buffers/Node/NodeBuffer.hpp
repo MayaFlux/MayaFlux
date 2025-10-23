@@ -92,8 +92,6 @@ private:
      * ensuring thread-safe access and proper state management.
      */
     std::vector<double> get_node_data(uint32_t num_samples);
-
-    double get_node_sample();
 };
 
 /**

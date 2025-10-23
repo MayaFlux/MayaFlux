@@ -505,6 +505,9 @@ public:
         }
     };
 
+    void save_state() override;
+    void restore_state() override;
+
 protected:
     /**
      * @brief Creates a context object for callbacks
@@ -571,6 +574,13 @@ private:
      * output without interrupting the generation process.
      */
     std::vector<LogicCallback> m_all_callbacks;
+
+    std::deque<bool> m_saved_history;
+    bool m_saved_hysteresis_state;
+    bool m_saved_edge_detected;
+    double m_saved_temporal_time;
+    double m_saved_last_output;
+    bool m_state_saved {};
 };
 
 } // namespace MayaFlux::Nodes::Generator

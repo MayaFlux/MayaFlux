@@ -73,6 +73,9 @@ public:
      * for each sample.
      */
     double process_sample(double input) override;
+
+    void save_state() override;
+    void restore_state() override;
 };
 
 }

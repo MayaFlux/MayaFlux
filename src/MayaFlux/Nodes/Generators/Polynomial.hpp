@@ -291,6 +291,9 @@ public:
      */
     inline double get_amplitude() const override { return m_scale_factor; }
 
+    void save_state() override;
+    void restore_state() override;
+
 protected:
     /**
      * @brief Creates a context object for callbacks
@@ -333,6 +336,11 @@ private:
     size_t m_buffer_size; ///< Maximum size of the buffers
     double m_scale_factor; ///< Scaling factor for output
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
+
+    std::deque<double> m_saved_input_buffer; ///< Buffer of input values for feedforward mode
+    std::deque<double> m_saved_output_buffer; ///< Buffer of output values for recursive mode
+    double m_saved_last_output;
+    bool m_state_saved {};
 };
 
 } // namespace MayaFlux::Nodes::Generator

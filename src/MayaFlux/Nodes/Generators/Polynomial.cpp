@@ -88,7 +88,9 @@ double Polynomial::process_sample(double input)
     result *= m_scale_factor;
 
     m_last_output = result;
-    notify_tick(result);
+
+    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        notify_tick(result);
 
     if (m_input_node) {
         atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);
@@ -193,6 +195,30 @@ void Polynomial::notify_tick(double value)
             callback(*context);
         }
     }
+}
+
+void Polynomial::save_state()
+{
+    m_saved_input_buffer = m_input_buffer;
+    m_saved_output_buffer = m_output_buffer;
+    m_saved_last_output = m_last_output;
+
+    if (m_input_node)
+        m_input_node->save_state();
+
+    m_state_saved = true;
+}
+
+void Polynomial::restore_state()
+{
+    m_input_buffer = m_saved_input_buffer;
+    m_output_buffer = m_saved_output_buffer;
+    m_last_output = m_saved_last_output;
+
+    if (m_input_node)
+        m_input_node->restore_state();
+
+    m_state_saved = false;
 }
 
 } // namespace MayaFlux::Nodes::Generator

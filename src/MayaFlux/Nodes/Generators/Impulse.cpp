@@ -132,7 +132,8 @@ double Impulse::process_sample(double input)
 
     m_last_output = output;
 
-    notify_tick(output);
+    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        notify_tick(output);
 
     if (m_frequency_modulator) {
         atomic_dec_modulator_count(m_frequency_modulator->m_modulator_count, 1);
@@ -200,6 +201,38 @@ void Impulse::notify_tick(double value)
             callback(*context);
         }
     }
+}
+
+void Impulse::save_state()
+{
+    m_saved_phase = m_phase;
+    m_saved_frequency = m_frequency;
+    m_saved_offset = m_offset;
+    m_saved_phase_inc = m_phase_inc;
+    m_saved_last_output = m_last_output;
+
+    if (m_frequency_modulator)
+        m_frequency_modulator->save_state();
+    if (m_amplitude_modulator)
+        m_amplitude_modulator->save_state();
+
+    m_state_saved = true;
+}
+
+void Impulse::restore_state()
+{
+    m_phase = m_saved_phase;
+    m_frequency = m_saved_frequency;
+    m_offset = m_saved_offset;
+    m_phase_inc = m_saved_phase_inc;
+    m_last_output = m_saved_last_output;
+
+    if (m_frequency_modulator)
+        m_frequency_modulator->restore_state();
+    if (m_amplitude_modulator)
+        m_amplitude_modulator->restore_state();
+
+    m_state_saved = false;
 }
 
 } // namespace MayaFlux::Nodes::Generator

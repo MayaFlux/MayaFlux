@@ -110,6 +110,26 @@ void ChainNode::reset_processed_state()
         m_Target->reset_processed_state();
 }
 
+void ChainNode::save_state()
+{
+    if (m_Source)
+        m_Source->save_state();
+    if (m_Target)
+        m_Target->save_state();
+
+    m_state_saved = true;
+}
+
+void ChainNode::restore_state()
+{
+    if (m_Source)
+        m_Source->restore_state();
+    if (m_Target)
+        m_Target->restore_state();
+
+    m_state_saved = false;
+}
+
 BinaryOpNode::BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs, CombineFunc func)
     : m_lhs(lhs)
     , m_rhs(rhs)
@@ -186,7 +206,8 @@ double BinaryOpNode::process_sample(double input)
 
     m_last_output = m_func(m_last_lhs_value, m_last_rhs_value);
 
-    notify_tick(m_last_output);
+    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        notify_tick(m_last_output);
 
     atomic_dec_modulator_count(m_lhs->m_modulator_count, 1);
     atomic_dec_modulator_count(m_rhs->m_modulator_count, 1);
@@ -227,5 +248,31 @@ void BinaryOpNode::reset_processed_state()
         m_lhs->reset_processed_state();
     if (m_rhs)
         m_rhs->reset_processed_state();
+}
+
+void BinaryOpNode::save_state()
+{
+    m_saved_last_lhs_value = m_last_lhs_value;
+    m_saved_last_rhs_value = m_last_rhs_value;
+
+    if (m_lhs)
+        m_lhs->save_state();
+    if (m_rhs)
+        m_rhs->save_state();
+
+    m_state_saved = true;
+}
+
+void BinaryOpNode::restore_state()
+{
+    m_last_lhs_value = m_saved_last_lhs_value;
+    m_last_rhs_value = m_saved_last_rhs_value;
+
+    if (m_lhs)
+        m_lhs->restore_state();
+    if (m_rhs)
+        m_rhs->restore_state();
+
+    m_state_saved = false;
 }
 }

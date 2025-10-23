@@ -137,6 +137,9 @@ public:
      */
     void reset_processed_state() override;
 
+    void save_state() override;
+    void restore_state() override;
+
 protected:
     /**
      * @brief Empty implementation of notify_tick
@@ -180,6 +183,8 @@ private:
      * processing inconsistencies.
      */
     bool m_is_initialized;
+
+    bool m_state_saved {};
 
 public:
     inline bool is_initialized() const
@@ -325,6 +330,9 @@ public:
      */
     void reset_processed_state() override;
 
+    void save_state() override;
+    void restore_state() override;
+
 protected:
     /**
      * @brief Notifies all registered callbacks about a new output value
@@ -395,6 +403,10 @@ private:
      * processing inconsistencies.
      */
     bool m_is_initialized;
+
+    bool m_state_saved {};
+    double m_saved_last_lhs_value;
+    double m_saved_last_rhs_value;
 
 public:
     inline bool is_initialized() const

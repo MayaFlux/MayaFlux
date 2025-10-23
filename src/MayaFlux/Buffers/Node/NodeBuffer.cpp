@@ -28,9 +28,11 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
             buffer->clear();
         }
 
+        m_node->save_state();
         for (size_t i = 0; i < buffer_data.size(); i++) {
-            buffer_data[i] += get_node_sample() * m_mix;
+            buffer_data[i] += m_node->process_sample(0.f) * m_mix;
         }
+        m_node->restore_state();
 
     } catch (const std::exception& e) {
         std::cerr << "Error processing node: " << e.what() << std::endl;
@@ -43,27 +45,11 @@ std::vector<double> NodeSourceProcessor::get_node_data(uint32_t num_samples)
 {
     std::vector<double> output(num_samples);
 
+    m_node->save_state();
     for (size_t i = 0; i < num_samples; i++) {
-        output[i] = get_node_sample();
+        output[i] = m_node->process_sample(0.f);
     }
-    return output;
-}
-
-double NodeSourceProcessor::get_node_sample()
-{
-    auto state = m_node->m_state.load();
-    double output = 0.;
-
-    Nodes::atomic_inc_modulator_count(m_node->m_modulator_count, 1);
-    if (state & Utils::NodeState::PROCESSED) {
-        output = m_node->get_last_output();
-    } else {
-        output = m_node->process_sample(0.f);
-        Nodes::atomic_add_flag(m_node->m_state, Utils::NodeState::PROCESSED);
-    }
-    Nodes::atomic_dec_modulator_count(m_node->m_modulator_count, 1);
-    Nodes::try_reset_processed_state(m_node);
-
+    m_node->restore_state();
     return output;
 }
 
