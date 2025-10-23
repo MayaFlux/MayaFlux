@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -97,6 +97,186 @@ jobs:
         shell: bash
         working-directory: build
         run: ctest --output-on-failure --parallel 4
+
+      - name: Install to staging directory
+        if: ${{ inputs.create_distribution != false }}
+        shell: bash
+        run: |
+          mkdir -p dist_staging
+          cmake --install build --prefix dist_staging
+          echo "Installation completed to dist_staging/"
+
+      - name: Verify installation structure
+        if: ${{ inputs.create_distribution != false }}
+        shell: bash
+        run: |
+          echo "=== MayaFlux Distribution Structure ==="
+          echo "MayaFluxLib (Core Library):"
+          find dist_staging/include/MayaFlux -name "*.hpp" | head -5 || echo "No MayaFlux headers found"
+          find dist_staging/lib -name "*MayaFlux*" | head -5 || echo "No MayaFlux libraries found"
+
+          echo ""
+          echo "Lila (JIT Interface):"
+          find dist_staging/include/Lila -name "*.hpp" | head -5 || echo "No Lila headers found"
+          find dist_staging/lib -name "*Lila*" | head -5 || echo "No Lila libraries found"
+
+          echo ""
+          echo "lila_server (User Executable):"
+          find dist_staging/bin -name "*lila_server*" | head -5 || echo "No lila_server found"
+
+          echo ""
+          echo "Runtime (JIT Context):"
+          find dist_staging/share/lila/runtime -type f | head -5 || echo "No runtime files found"
+
+      - name: Create MayaFlux distribution package
+        if: ${{ inputs.create_distribution != false }}
+        shell: bash
+        run: |
+          # Extract version from CMake
+          VERSION=$(grep "project(MayaFlux VERSION" CMakeLists.txt | sed -n 's/.*VERSION \([0-9.]*\).*/\1/p')
+          SHORT_SHA=${GITHUB_SHA:0:8}
+          OS_NAME="${{ matrix.os }}"
+
+          # Create descriptive package name
+          PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}-${SHORT_SHA}"
+
+          # Create comprehensive README
+          cat > dist_staging/README.md << EOF
+          # MayaFlux Distribution
+
+          Complete MayaFlux platform distribution containing three integrated components:
+
+          ## 🏗️ 1. MayaFluxLib (Core Library)
+          - **Purpose**: Core graphics and computation engine for developers
+          - **Location**: 
+            - Headers: \`include/MayaFlux/\`
+            - Library: \`lib/libMayaFluxLib.dylib\`
+          - **Use Case**: Direct integration for applications requiring advanced graphics/compute
+
+          ## ⚡ 2. Lila (JIT Interface) 
+          - **Purpose**: Just-In-Time compilation interface that binds to MayaFluxLib
+          - **Location**:
+            - Headers: \`include/Lila/\`
+            - Library: \`lib/libLila.dylib\`
+          - **Use Case**: Developer tool for dynamic code execution and JIT compilation
+
+          ## 🚀 3. lila_server (User Application)
+          - **Purpose**: Ready-to-use server application wrapping Lila + MayaFluxLib
+          - **Location**: \`bin/lila_server\`
+          - **Use Case**: End-user application for interactive development and execution
+
+          ## 🔧 Runtime Dependencies
+          - **Purpose**: Essential files for Lila JIT context
+          - **Location**: \`share/lila/runtime/\`
+
+          ## Quick Start
+          \`\`\`bash
+          # Run the user-facing server
+          ./bin/lila_server
+
+          # Develop against MayaFluxLib
+          #include <MayaFlux/MayaFlux.hpp>
+
+          # Develop against Lila JIT interface  
+          #include <Lila/Lila.hpp>
+          \`\`\`
+
+          Build Details:
+          - Version: ${VERSION}
+          - Platform: ${OS_NAME}
+          - Commit: ${GITHUB_SHA}
+          - Build Date: $(date -u)
+          EOF
+
+          # Create verification script
+          cat > dist_staging/verify_components.sh << 'EOF'
+          #!/bin/bash
+          echo "=== MayaFlux Distribution Verification ==="
+          echo ""
+
+          echo "🔍 1. Checking MayaFluxLib (Core Library):"
+          if find include/MayaFlux -name "*.hpp" | head -1 > /dev/null; then
+              echo "   ✅ Headers found: $(find include/MayaFlux -name "*.hpp" | wc -l) files"
+          else
+              echo "   ❌ No MayaFluxLib headers found"
+          fi
+
+          if find lib -name "*MayaFluxLib*" | head -1 > /dev/null; then
+              echo "   ✅ Library found: $(find lib -name "*MayaFluxLib*")"
+          else
+              echo "   ❌ No MayaFluxLib library found"
+          fi
+
+          echo ""
+          echo "🔍 2. Checking Lila (JIT Interface):"
+          if find include/Lila -name "*.hpp" | head -1 > /dev/null; then
+              echo "   ✅ Headers found: $(find include/Lila -name "*.hpp" | wc -l) files"
+          else
+              echo "   ❌ No Lila headers found"
+          fi
+
+          if find lib -name "*Lila*" | head -1 > /dev/null; then
+              echo "   ✅ Library found: $(find lib -name "*Lila*")"
+          else
+              echo "   ❌ No Lila library found"
+          fi
+
+          echo ""
+          echo "🔍 3. Checking lila_server (User Application):"
+          if find bin -name "*lila_server*" | head -1 > /dev/null; then
+              echo "   ✅ Executable found: $(find bin -name "*lila_server*")"
+          else
+              echo "   ❌ No lila_server executable found"
+          fi
+
+          echo ""
+          echo "🔍 4. Checking Runtime (JIT Context):"
+          if find share/lila/runtime -name "*.h" | head -1 > /dev/null; then
+              echo "   ✅ Runtime files found: $(find share/lila/runtime -type f | wc -l) files"
+          else
+              echo "   ❌ No runtime files found"
+          fi
+
+          echo ""
+          echo "=== Verification Complete ==="
+          EOF
+          chmod +x dist_staging/verify_components.sh
+
+          # Create packages
+          tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
+          zip -r "${PACKAGE_NAME}.zip" dist_staging/
+
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
+          echo "Created distribution packages:"
+          ls -la *.tar.gz *.zip
+
+      - name: Upload MayaFlux distribution
+        if: ${{ inputs.create_distribution != false }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mayaflux-distribution-${{ matrix.os }}
+          path: |
+            ${{ env.PACKAGE_NAME }}.tar.gz
+            ${{ env.PACKAGE_NAME }}.zip
+          retention-days: 30
+
+      - name: Display distribution summary
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          echo "=== MayaFlux Distribution Created ==="
+          echo "📦 Package: ${{ env.PACKAGE_NAME }}"
+          echo ""
+          echo "Contains three integrated components:"
+          echo "  1. 🏗️  MayaFluxLib - Core graphics/compute engine"
+          echo "  2. ⚡ Lila - JIT interface binding to MayaFluxLib" 
+          echo "  3. 🚀 lila_server - User application wrapping both"
+          echo ""
+          echo "Archive includes:"
+          echo "  - Headers for MayaFluxLib and Lila"
+          echo "  - Shared libraries"
+          echo "  - lila_server executable"
+          echo "  - Runtime files for JIT context"
+          echo "  - Verification scripts and documentation"
 
       - name: Upload build artifacts (on failure)
         if: failure()

@@ -46,10 +46,17 @@ std::vector<std::string> SystemConfig::get_system_includes()
 
     auto sdk_includes = get_windows_sdk_includes();
     includes.insert(includes.end(), sdk_includes.begin(), sdk_includes.end());
-#endif
+#endif // MAYAFLUX_PLATFORM_WINDOWS
 
     auto clang_includes = get_clang_includes();
     includes.insert(includes.end(), clang_includes.begin(), clang_includes.end());
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::string xcode_includes = SystemConfig::get_xcode_system_includes();
+    if (!xcode_includes.empty()) {
+        includes.push_back(xcode_includes);
+    }
+#endif // MAYAFLUX_PLATFORM_MACOS
 
     return includes;
 }

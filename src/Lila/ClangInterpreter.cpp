@@ -104,13 +104,6 @@ bool ClangInterpreter::initialize()
         LILA_WARN(Emitter::INTERPRETER,
             "Could not find macOS SDK - JIT may fail to find system headers");
     }
-
-    // Ensure Xcode's system includes (pthread.h, sched.h, etc.) are available
-    std::string xcode_includes = MayaFlux::Platform::SystemConfig::get_xcode_system_includes();
-    if (!xcode_includes.empty()) {
-        m_impl->compile_flags.push_back("-isystem" + xcode_includes);
-        LILA_DEBUG(Emitter::INTERPRETER, "Using Xcode system includes: " + xcode_includes);
-    }
 #endif
 
     for (const auto& path : m_impl->include_paths) {

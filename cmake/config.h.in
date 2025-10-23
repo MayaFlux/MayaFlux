@@ -135,6 +135,10 @@ namespace Platform {
 
         static std::string find_library(const std::string& library_name);
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        static std::string get_macos_sdk_path();
+#endif // MAYAFLUX_PLATFORM_MACOS
+
     private:
         static std::string exec_command(const char* cmd);
 
@@ -168,9 +172,7 @@ namespace Platform {
 
 #else
         static std::vector<std::string> get_unix_library_paths();
-
 #ifdef MAYAFLUX_PLATFORM_MACOS
-        static std::string get_macos_sdk_path();
         static std::string get_xcode_system_includes();
 #endif // MAYAFLUX_PLATFORM_MACOS
 
