@@ -18,6 +18,22 @@ enum class ProcessingToken {
     ON_DEMAND, ///< Coroutine is executed on demand, not scheduled
     CUSTOM
 };
+
+/**
+ * @enum DelayContext
+ * @brief Discriminator for different temporal delay mechanisms
+ *
+ * Allows routines to specify which timing mechanism should trigger
+ * their resumption, preventing cross-contamination between different
+ * temporal domains within the same processing token.
+ */
+enum class DelayContext : uint8_t {
+    NONE = 0, ///< No active delay, resume immediately
+    SAMPLE_BASED = 1, ///< Sample-accurate delay (audio domain)
+    BUFFER_BASED = 2, ///< Buffer-cycle delay (audio hardware boundary)
+    FRAME_BASED = 3, ///< Frame-accurate delay (graphics domain)
+    EVENT_BASED = 4 ///< Event-driven delay (user events, etc.)
+};
 }
 
 namespace MayaFlux::Nodes {

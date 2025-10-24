@@ -208,6 +208,15 @@ struct audio_promise : public routine_promise<SoundRoutine> {
      * indicate when the coroutine should be resumed next.
      */
     uint64_t next_sample = 0;
+
+    /**
+     * @brief The buffer cycle when this coroutine should next execute
+     * Managed by BufferDelay awaiter. Incremented on each co_await BufferDelay{}.
+     * Starts at 0, incremented to 1 on first await.
+     */
+    uint64_t next_buffer_cycle = 0;
+
+    DelayContext active_delay_context = DelayContext::NONE;
 };
 
 // TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first

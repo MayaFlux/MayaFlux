@@ -19,6 +19,7 @@ void SampleDelay::await_suspend(std::coroutine_handle<promise_handle> h) noexcep
         || std::is_same_v<promise_handle, Vruta::complex_promise>) {
         if constexpr (requires { h.promise().next_sample; }) {
             h.promise().next_sample += samples_to_wait;
+            h.promise().active_delay_context = Vruta::DelayContext::SAMPLE_BASED;
         }
     } else {
         if constexpr (requires { h.promise().domain_mismatch_error("", ""); }) {

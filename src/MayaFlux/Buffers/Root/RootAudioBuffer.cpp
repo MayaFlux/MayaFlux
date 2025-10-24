@@ -1,7 +1,5 @@
 #include "RootAudioBuffer.hpp"
 
-#include <algorithm>
-
 namespace MayaFlux::Buffers {
 
 ChannelProcessor::ChannelProcessor(std::shared_ptr<Buffer> root_buffer)

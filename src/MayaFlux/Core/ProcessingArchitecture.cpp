@@ -126,6 +126,11 @@ void TaskSchedulerHandle::process(uint64_t processing_units)
     m_scheduler->process_token(m_token, processing_units);
 }
 
+void TaskSchedulerHandle::process_buffer_cycle()
+{
+    m_scheduler->process_buffer_cycle_tasks();
+}
+
 WindowManagerHandle::WindowManagerHandle(std::shared_ptr<Core::WindowManager> window_manager)
     : m_window_manager(std::move(window_manager))
 {

@@ -101,22 +101,52 @@ bool SoundRoutine::requires_clock_sync() const
     return m_handle.promise().sync_to_clock;
 }
 
-bool SoundRoutine::try_resume(uint64_t current_sample)
+bool SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext context)
 {
     if (!is_active())
         return false;
 
     auto& promise_ref = m_handle.promise();
 
-    if (promise_ref.should_terminate) {
+    if (promise_ref.should_terminate || !promise_ref.auto_resume) {
         return false;
     }
 
-    if (promise_ref.auto_resume && current_sample >= promise_ref.next_sample) {
+    if (promise_ref.active_delay_context != DelayContext::NONE && promise_ref.active_delay_context != context) {
+        return false;
+    }
+
+    bool should_resume = false;
+
+    switch (context) {
+    case DelayContext::SAMPLE_BASED:
+        should_resume = (current_value >= promise_ref.next_sample);
+        break;
+
+    case DelayContext::BUFFER_BASED:
+        should_resume = (current_value >= promise_ref.next_buffer_cycle);
+        break;
+
+    case DelayContext::NONE:
+        should_resume = true;
+        break;
+
+    default:
+        return false;
+    }
+
+    if (should_resume) {
         m_handle.resume();
+        promise_ref.active_delay_context = DelayContext::NONE;
         return true;
     }
+
     return false;
+}
+
+bool SoundRoutine::try_resume(uint64_t current_sample)
+{
+    return try_resume_with_context(current_sample, DelayContext::SAMPLE_BASED);
 }
 
 bool SoundRoutine::restart()

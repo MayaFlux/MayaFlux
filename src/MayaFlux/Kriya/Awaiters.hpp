@@ -86,6 +86,39 @@ struct MAYAFLUX_API SampleDelay {
 };
 
 /**
+ * @struct BufferDelay
+ * @brief Awaiter for suspending until a buffer cycle boundary
+ *
+ * Works identically to SampleDelay but at buffer cycle granularity.
+ * Accumulates cycles in promise.next_buffer_cycle.
+ *
+ * **Usage:**
+ * ```cpp
+ * auto routine = []() -> SoundRoutine {
+ *     while (true) {
+ *         process_buffer();
+ *         co_await BufferDelay{2};  // Resume every 2 buffer cycles
+ *     }
+ * };
+ * ```
+ */
+struct MAYAFLUX_API BufferDelay {
+    uint64_t num_cycles;
+
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
+
+    template <typename Promise>
+    void await_suspend(std::coroutine_handle<Promise> h) noexcept
+    {
+        auto& promise = h.promise();
+        promise.next_buffer_cycle += num_cycles;
+        promise.active_delay_context = Vruta::DelayContext::SAMPLE_BASED;
+    }
+
+    constexpr void await_resume() const noexcept { }
+};
+
+/**
  * @struct FrameDelay
  * @brief graphics-domain awaiter for frame-accurate timing delays
  *

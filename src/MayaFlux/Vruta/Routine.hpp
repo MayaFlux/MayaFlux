@@ -73,6 +73,26 @@ public:
     virtual bool try_resume(uint64_t current_context) = 0;
 
     /**
+     * @brief Attempts to resume the coroutine with explicit temporal context
+     * @param current_value Current position in the timeline (samples, frames, cycles, etc.)
+     * @param context The temporal context being processed
+     * @return True if the coroutine was resumed, false otherwise
+     *
+     * This context-aware resume method allows different temporal mechanisms
+     * to coexist within the same processing token. For example, both sample-based
+     * and buffer-cycle-based delays can use SAMPLE_ACCURATE token without
+     * interfering with each other.
+     *
+     * The default implementation delegates to try_resume(uint64_t) for backward
+     * compatibility. Derived classes can override to implement context-specific
+     * resumption logic.
+     */
+    virtual bool try_resume_with_context(uint64_t current_value, DelayContext context)
+    {
+        return try_resume(current_value);
+    }
+
+    /**
      * @brief Check if the routine should synchronize with a clock
      * @return True if the routine requires clock synchronization
      */
@@ -142,6 +162,18 @@ public:
      * @param next_frame Frame position for next execution
      */
     virtual void set_next_frame(uint64_t next_frame) = 0;
+
+    /**
+     * @brief Get the active delay context for this routine
+     * @return Current delay context, or NONE if not waiting
+     */
+    virtual DelayContext get_delay_context() const { return DelayContext::NONE; }
+
+    /**
+     * @brief Set the active delay context for this routine
+     * @param context New delay context
+     */
+    virtual void set_delay_context(DelayContext context) { /* no-op in base */ }
 
     /**
      * @brief Updates multiple named parameters in the coroutine's state
@@ -346,6 +378,18 @@ public:
 
     bool try_resume(uint64_t current_context) override;
 
+    bool try_resume_with_context(uint64_t current_value, DelayContext context) override;
+
+    DelayContext get_delay_context() const override
+    {
+        return m_handle.promise().active_delay_context;
+    }
+
+    void set_delay_context(DelayContext context) override
+    {
+        m_handle.promise().active_delay_context = context;
+    }
+
     bool restart() override;
 
     virtual uint64_t next_execution() const override;
@@ -377,7 +421,6 @@ public:
         return m_handle.promise().sync_to_clock;
     }
 
-    // Audio domain timing implementations
     uint64_t get_next_sample() const override
     {
         return m_handle.promise().next_sample;
@@ -388,9 +431,19 @@ public:
         m_handle.promise().next_sample = next_sample;
     }
 
+    uint64_t get_next_frame() const override
+    {
+        return m_handle.promise().next_buffer_cycle;
+    }
+
+    void set_next_frame(uint64_t next_cycle) override
+    {
+        m_handle.promise().next_buffer_cycle = next_cycle;
+    }
+
     // Non-audio domain methods (return defaults for audio routines)
-    uint64_t get_next_frame() const override { return 0; }
-    void set_next_frame(uint64_t /*next_frame*/) override { /* no-op for audio */ }
+    // uint64_t get_next_frame() const override { return 0; }
+    // void set_next_frame(uint64_t /*next_frame*/) override { /* no-op for audio */ }
 
 protected:
     void set_state_impl(const std::string& key, std::any value) override;
