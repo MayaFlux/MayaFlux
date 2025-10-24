@@ -180,7 +180,7 @@ public:
     virtual bool is_compatible_with(std::shared_ptr<Buffer>) const { return true; }
 
 protected:
-    ProcessingToken m_processing_token;
+    ProcessingToken m_processing_token { ProcessingToken::AUDIO_BACKEND };
 
 private:
     std::atomic<size_t> m_active_processing { 0 };

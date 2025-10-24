@@ -32,12 +32,13 @@ public:
      * @param channel_id Channel identifier for this buffer
      * @param num_samples Buffer size in samples
      * @param feedback Feedback coefficient (0.0-1.0)
+     * @param feed_samples Number of samples to feed back
      *
      * Initializes a buffer that implements a discrete-time recursive system.
      * The feedback parameter controls the coefficient of recursion, determining
      * how strongly the system's past states influence its future evolution.
      */
-    FeedbackBuffer(uint32_t channel_id = 0, uint32_t num_samples = 512, float feedback = 0.5f);
+    FeedbackBuffer(uint32_t channel_id = 0, uint32_t num_samples = 512, float feedback = 0.5F, uint32_t feed_samples = 512);
 
     /**
      * @brief Sets the feedback coefficient
@@ -81,6 +82,10 @@ public:
      */
     void process_default() override;
 
+    inline void set_feed_samples(uint32_t samples) { m_feed_samples = samples; }
+
+    [[nodiscard]] inline uint32_t get_feed_samples() const { return m_feed_samples; }
+
 protected:
     /**
      * @brief Creates the default processor for this buffer type
@@ -113,6 +118,8 @@ private:
      * processing cycle, enabling the implementation of recursive algorithms.
      */
     std::vector<double> m_previous_buffer;
+
+    uint32_t m_feed_samples { 512 }; /// Number of samples to feed back
 };
 
 /**
@@ -147,7 +154,7 @@ public:
      * combining a system's current state with its previous state
      * according to the specified feedback coefficient.
      */
-    FeedbackProcessor(float feedback = 0.5f);
+    FeedbackProcessor(float feedback = 0.5F, uint32_t feed_samples = 512);
 
     /**
      * @brief Processes a buffer by applying the recursive algorithm
@@ -190,13 +197,30 @@ public:
      * @brief Gets the current feedback coefficient
      * @return Current feedback coefficient (0.0-1.0)
      */
-    inline float get_feedback() const { return m_feedback_amount; }
+    [[nodiscard]] inline float get_feedback() const { return m_feedback_amount; }
+
+    /**
+     * @brief Gets the number of samples to feed back
+     * @return Number of samples to feed back
+     */
+    [[nodiscard]] inline uint32_t get_feed_samples() const { return m_feed_samples; }
+
+    /**
+     * @brief Sets the number of samples to feed back
+     * @param samples Number of samples to feed back
+     */
+    inline void set_feed_samples(uint32_t samples) { m_feed_samples = samples; }
 
 private:
     /**
      * @brief Feedback coefficient (0.0-1.0)
      */
     float m_feedback_amount;
+
+    /**
+     * @brief Number of samples to feed back
+     */
+    uint32_t m_feed_samples;
 
     /**
      * @brief Storage for the previous system state
@@ -213,5 +237,7 @@ private:
      * internal previous state instead of maintaining its own.
      */
     bool m_using_internal_buffer;
+
+    size_t m_buffer_index {}; /// Current index in the previous buffer for feedback
 };
 }
