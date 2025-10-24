@@ -3,8 +3,11 @@
 #include "Core.hpp"
 
 #include "MayaFlux/Core/Engine.hpp"
+#include "MayaFlux/Kriya/Bridge.hpp"
 #include "MayaFlux/Kriya/Chain.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux {
 
@@ -55,7 +58,7 @@ void schedule_sequence(std::vector<std::pair<double, std::function<void()>>> seq
     get_scheduler()->add_task(std::move(tseq), name, false);
 }
 
-Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop)
+Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool loop)
 {
     return Kriya::line(*get_scheduler(), start_value, end_value, duration_seconds, step_duration, loop);
 }
@@ -77,21 +80,20 @@ void schedule_pattern(std::function<std::any(uint64_t)> pattern_func, std::funct
 
 float* get_line_value(const std::string& name)
 {
-    std::string err;
     if (auto task = get_scheduler()->get_task(name)) {
         auto cur_val = task->get_state<float>("current_value");
         if (cur_val) {
             return cur_val;
         }
 
-        std::cerr << "line value not returned from task. Verify that tasks has not returned" << '\n';
+        MF_ERROR(Journal::Component::API, Journal::Context::CoroutineScheduling, "line value not returned from task. Verify that tasks has not returned");
         return nullptr;
     }
-    std::cerr << "Task: " << name << " not found. Verify task validity or if its been scheduled" << '\n';
+    MF_ERROR(Journal::Component::API, Journal::Context::CoroutineScheduling, "Task: {} not found. Verify task validity or if its been scheduled", name);
     return nullptr;
 }
 
-void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize)
+void schedule_task(const std::string& name, Vruta::SoundRoutine&& task, bool initialize)
 {
     auto task_ptr = std::make_shared<Vruta::SoundRoutine>(task);
     get_scheduler()->add_task(std::move(task_ptr), name, initialize);
@@ -120,6 +122,11 @@ Kriya::ActionToken Wait(double seconds)
 Kriya::ActionToken Action(std::function<void()> func)
 {
     return { std::move(func) };
+}
+
+std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline()
+{
+    return Kriya::BufferPipeline::create(*get_scheduler());
 }
 
 }

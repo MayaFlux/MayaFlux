@@ -14,6 +14,7 @@ namespace Vruta {
 
 namespace Kriya {
     class ActionToken;
+    class BufferPipeline;
 }
 
 /**
@@ -86,7 +87,7 @@ MAYAFLUX_API void schedule_sequence(std::vector<std::pair<double, std::function<
  *
  * Uses the task scheduler from the default engine.
  */
-MAYAFLUX_API Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, float step_duration, bool loop);
+MAYAFLUX_API Vruta::SoundRoutine create_line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool loop);
 
 /**
  * @brief Schedules a pattern generator that produces values based on a pattern function
@@ -129,7 +130,7 @@ MAYAFLUX_API float* get_line_value(const std::string& name);
  *
  * Convenience wrapper for Engine::schedule_task() on the default engine.
  */
-MAYAFLUX_API void schedule_task(std::string name, Vruta::SoundRoutine&& task, bool initialize = false);
+MAYAFLUX_API void schedule_task(const std::string& name, Vruta::SoundRoutine&& task, bool initialize = false);
 
 /**
  * @brief Cancels a scheduled task
@@ -187,5 +188,13 @@ MAYAFLUX_API Kriya::ActionToken Wait(double seconds);
  * Uses the task scheduler from the default engine.
  */
 MAYAFLUX_API Kriya::ActionToken Action(std::function<void()> func);
+
+/**
+ * @brief Creates a new buffer pipeline instance
+ * @return Shared pointer to the created BufferPipeline
+ *
+ * Uses the task scheduler from the default engine.
+ */
+MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline();
 
 }

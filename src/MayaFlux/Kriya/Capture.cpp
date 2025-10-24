@@ -53,7 +53,7 @@ BufferCapture& BufferCapture::as_circular(uint32_t buffer_size)
     return *this;
 }
 
-BufferCapture& BufferCapture::on_data_ready(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback)
+BufferCapture& BufferCapture::on_data_ready(OperationFunction callback)
 {
     m_data_ready_callback = std::move(callback);
     return *this;
@@ -130,7 +130,7 @@ CaptureBuilder& CaptureBuilder::with_window(uint32_t window_size, float overlap_
     return *this;
 }
 
-CaptureBuilder& CaptureBuilder::on_data_ready(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback)
+CaptureBuilder& CaptureBuilder::on_data_ready(OperationFunction callback)
 {
     m_capture.on_data_ready(std::move(callback));
     return *this;

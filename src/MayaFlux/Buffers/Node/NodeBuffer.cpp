@@ -30,12 +30,7 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
             buffer->clear();
         }
 
-        m_node->save_state();
-
-        for (double& i : buffer_data) {
-            i += m_node->process_sample(0.F) * m_mix;
-        }
-        m_node->restore_state();
+        update_buffer(buffer_data);
 
     } catch (const std::exception& e) {
         error_rethrow(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(), "Error processing node: {}", e.what());
@@ -45,13 +40,38 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 std::vector<double> NodeSourceProcessor::get_node_data(uint32_t num_samples)
 {
     std::vector<double> output(num_samples);
+    const auto& state = m_node->m_state.load();
 
+    if (state == Utils::NodeState::INACTIVE) {
+        for (size_t i = 0; i < num_samples; i++) {
+            output[i] = m_node->process_sample(0.F);
+        }
+    } else {
+        m_node->save_state();
+        for (size_t i = 0; i < num_samples; i++) {
+            output[i] = m_node->process_sample(0.F);
+        }
+        m_node->restore_state();
+    }
+
+    return output;
+}
+
+void NodeSourceProcessor::update_buffer(std::vector<double>& buffer_data)
+{
+    const auto& state = m_node->m_state.load();
+    if (state == Utils::NodeState::INACTIVE) {
+        for (double& i : buffer_data) {
+            i += m_node->process_sample(0.F) * m_mix;
+        }
+        return;
+    }
     m_node->save_state();
-    for (size_t i = 0; i < num_samples; i++) {
-        output[i] = m_node->process_sample(0.F);
+
+    for (double& i : buffer_data) {
+        i += m_node->process_sample(0.F) * m_mix;
     }
     m_node->restore_state();
-    return output;
 }
 
 NodeBuffer::NodeBuffer(uint32_t channel_id, uint32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process)

@@ -16,6 +16,9 @@ namespace Kriya {
 
     class BufferOperation;
 
+    using OperationFunction = std::function<void(Kakshya::DataVariant&, uint32_t)>;
+    using TransformationFunction = std::function<Kakshya::DataVariant(Kakshya::DataVariant&, uint32_t)>;
+
     /**
      * @class BufferCapture
      * @brief Flexible data capture interface for buffer-based processing pipelines.
@@ -133,7 +136,7 @@ namespace Kriya {
          * @param callback Function called with captured data and cycle number
          * @return Reference to this BufferCapture for chaining
          */
-        BufferCapture& on_data_ready(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback);
+        BufferCapture& on_data_ready(OperationFunction callback);
 
         /**
          * @brief Set callback for when a capture cycle completes.
@@ -185,7 +188,7 @@ namespace Kriya {
         float m_overlap_ratio;
 
         std::function<bool()> m_stop_condition;
-        std::function<void(const Kakshya::DataVariant&, uint32_t)> m_data_ready_callback;
+        OperationFunction m_data_ready_callback;
         std::function<void(uint32_t)> m_cycle_callback;
         std::function<void(const Kakshya::DataVariant&, uint32_t)> m_data_expired_callback;
 
@@ -289,7 +292,7 @@ namespace Kriya {
          * @param callback Function called when data is available
          * @return Reference to this builder for chaining
          */
-        CaptureBuilder& on_data_ready(std::function<void(const Kakshya::DataVariant&, uint32_t)> callback);
+        CaptureBuilder& on_data_ready(OperationFunction callback);
 
         /**
          * @brief Set cycle completion callback.

@@ -92,6 +92,15 @@ private:
      * ensuring thread-safe access and proper state management.
      */
     std::vector<double> get_node_data(uint32_t num_samples);
+
+    /**
+     * @brief Updates the buffer data with node output
+     * @param buffer_data Reference to the buffer's data vector
+     *
+     * This method applies the node-generated data to the buffer according to
+     * the configured interpolation coefficient and clear_before_process setting.
+     */
+    void update_buffer(std::vector<double>& buffer_data);
 };
 
 /**

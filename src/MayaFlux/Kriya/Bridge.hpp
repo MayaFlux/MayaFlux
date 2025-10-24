@@ -9,6 +9,8 @@ namespace MayaFlux::Kriya {
 
 class CycleCoordinator;
 
+using TransformVectorFunction = std::function<Kakshya::DataVariant(std::vector<Kakshya::DataVariant>&, uint32_t)>;
+
 /**
  * @class BufferOperation
  * @brief Fundamental unit of operation in buffer processing pipelines.
@@ -170,7 +172,7 @@ public:
      * @param transformer Function that transforms DataVariant with cycle information
      * @return BufferOperation configured for data transformation
      */
-    static BufferOperation transform(std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, uint32_t)> transformer);
+    static BufferOperation transform(TransformationFunction transformer);
 
     /**
      * @brief Create a routing operation to AudioBuffer destination.
@@ -211,7 +213,7 @@ public:
      * @param handler Function to handle data with cycle information
      * @return BufferOperation configured for external dispatch
      */
-    static BufferOperation dispatch_to(std::function<void(const Kakshya::DataVariant&, uint32_t)> handler);
+    static BufferOperation dispatch_to(OperationFunction handler);
 
     /**
      * @brief Create a fusion operation for multiple AudioBuffer sources.
@@ -221,7 +223,7 @@ public:
      * @return BufferOperation configured for buffer fusion
      */
     static BufferOperation fuse_data(std::vector<std::shared_ptr<Buffers::AudioBuffer>> sources,
-        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> fusion_func,
+        TransformVectorFunction fusion_func,
         std::shared_ptr<Buffers::AudioBuffer> target);
 
     /**
@@ -232,7 +234,7 @@ public:
      * @return BufferOperation configured for container fusion
      */
     static BufferOperation fuse_containers(std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> sources,
-        std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> fusion_func,
+        TransformVectorFunction fusion_func,
         std::shared_ptr<Kakshya::DynamicSoundStream> target);
 
     /**
@@ -310,7 +312,7 @@ private:
     OpType m_type;
     BufferCapture m_capture;
 
-    std::function<Kakshya::DataVariant(const Kakshya::DataVariant&, uint32_t)> m_transformer;
+    TransformationFunction m_transformer;
 
     std::shared_ptr<Buffers::AudioBuffer> m_target_buffer;
     std::shared_ptr<Kakshya::DynamicSoundStream> m_target_container;
@@ -320,11 +322,11 @@ private:
     uint32_t m_load_length = 0;
 
     std::function<bool(uint32_t)> m_condition;
-    std::function<void(const Kakshya::DataVariant&, uint32_t)> m_dispatch_handler;
+    OperationFunction m_dispatch_handler;
 
     std::vector<std::shared_ptr<Buffers::AudioBuffer>> m_source_buffers;
     std::vector<std::shared_ptr<Kakshya::DynamicSoundStream>> m_source_containers;
-    std::function<Kakshya::DataVariant(const std::vector<Kakshya::DataVariant>&, uint32_t)> m_fusion_function;
+    TransformVectorFunction m_fusion_function;
 
     uint8_t m_priority = 128;
     Buffers::ProcessingToken m_token = Buffers::ProcessingToken::AUDIO_BACKEND;
@@ -576,10 +578,10 @@ private:
     Vruta::SoundRoutine execute_internal(uint32_t max_cycles, uint64_t samples_per_operation);
     void process_operation(BufferOperation& op, uint32_t cycle);
     void cleanup_expired_data();
-    Kakshya::DataVariant extract_buffer_data(std::shared_ptr<Buffers::AudioBuffer> buffer, bool should_process = false);
-    void write_to_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, const Kakshya::DataVariant& data);
-    void write_to_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, const Kakshya::DataVariant& data);
-    Kakshya::DataVariant read_from_container(std::shared_ptr<Kakshya::DynamicSoundStream> container, uint64_t start, uint32_t length);
+    Kakshya::DataVariant extract_buffer_data(const std::shared_ptr<Buffers::AudioBuffer>& buffer, bool should_process = false);
+    void write_to_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, const Kakshya::DataVariant& data);
+    void write_to_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, const Kakshya::DataVariant& data);
+    Kakshya::DataVariant read_from_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, uint64_t start, uint32_t length);
 
     std::unordered_map<BufferOperation*, Kakshya::DataVariant> m_operation_data;
 

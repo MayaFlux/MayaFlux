@@ -105,7 +105,7 @@ TEST_F(CaptureBridgeTest, BufferCaptureCallbacks)
 
     Kriya::BufferCapture capture(buffer);
 
-    capture.on_data_ready([&](const Kakshya::DataVariant&, uint32_t cycle) {
+    capture.on_data_ready([&](Kakshya::DataVariant&, uint32_t cycle) {
                data_ready_called = true;
                received_cycle = cycle;
            })
@@ -151,7 +151,7 @@ TEST_F(CaptureBridgeTest, CaptureBuilderChaining)
                                            .for_cycles(3)
                                            .as_circular(512)
                                            .with_window(128, 0.25F)
-                                           .on_data_ready([&](const Kakshya::DataVariant&, uint32_t) {
+                                           .on_data_ready([&](Kakshya::DataVariant&, uint32_t) {
                                                callback_triggered = true;
                                            })
                                            .with_tag("chained_capture")
@@ -168,7 +168,7 @@ TEST_F(CaptureBridgeTest, BufferOperationTypes)
     auto capture_op = Kriya::BufferOperation::capture(Kriya::BufferCapture(buffer));
     EXPECT_EQ(capture_op.get_type(), Kriya::BufferOperation::OpType::CAPTURE);
 
-    auto transform_op = Kriya::BufferOperation::transform([](const Kakshya::DataVariant& data, uint32_t) {
+    auto transform_op = Kriya::BufferOperation::transform([](Kakshya::DataVariant& data, uint32_t) {
         return data;
     });
     EXPECT_EQ(transform_op.get_type(), Kriya::BufferOperation::OpType::TRANSFORM);
@@ -208,7 +208,7 @@ TEST_F(CaptureBridgeTest, BufferOperationFusion)
 
     auto fusion_op = Kriya::BufferOperation::fuse_data(
         sources,
-        [](const std::vector<Kakshya::DataVariant>& inputs, uint32_t) -> Kakshya::DataVariant {
+        [](std::vector<Kakshya::DataVariant>& inputs, uint32_t) -> Kakshya::DataVariant {
             std::vector<double> result;
             if (!inputs.empty() && std::holds_alternative<std::vector<double>>(inputs[0])) {
                 result = std::get<std::vector<double>>(inputs[0]);
@@ -237,7 +237,7 @@ TEST_F(CaptureBridgeTest, BufferOperationContainerFusion)
 
     auto container_fusion = Kriya::BufferOperation::fuse_containers(
         sources,
-        [](const std::vector<Kakshya::DataVariant>& inputs, uint32_t) -> Kakshya::DataVariant {
+        [](std::vector<Kakshya::DataVariant>& inputs, uint32_t) -> Kakshya::DataVariant {
             std::vector<double> result;
             if (!inputs.empty()) {
                 for (const auto& input : inputs) {
@@ -269,7 +269,7 @@ TEST_F(CaptureBridgeTest, BufferPipelineBasic)
     bool transform_called = false;
 
     pipeline >> Kriya::BufferOperation::capture_from(buffer).for_cycles(1)
-        >> Kriya::BufferOperation::transform([&](const Kakshya::DataVariant& data, uint32_t) {
+        >> Kriya::BufferOperation::transform([&](Kakshya::DataVariant& data, uint32_t) {
               transform_called = true;
               return data;
           })
@@ -292,7 +292,7 @@ TEST_F(CaptureBridgeTest, BufferPipelineBranching)
 
     pipeline.branch_if([](uint32_t cycle) { return cycle == 0; },
         [&](Kriya::BufferPipeline& branch) {
-            branch >> Kriya::BufferOperation::transform([&](const Kakshya::DataVariant& data, uint32_t) {
+            branch >> Kriya::BufferOperation::transform([&](Kakshya::DataVariant& data, uint32_t) {
                 branch_executed = true;
                 return data;
             });
@@ -308,7 +308,7 @@ TEST_F(CaptureBridgeTest, BufferPipelineParallel)
     pipeline >> Kriya::BufferOperation::capture_from(buffer).for_cycles(1);
 
     pipeline.parallel({ Kriya::BufferOperation::route_to_container(dynamic_stream).with_priority(255),
-        Kriya::BufferOperation::transform([](const Kakshya::DataVariant& data, uint32_t) {
+        Kriya::BufferOperation::transform([](Kakshya::DataVariant& data, uint32_t) {
             return data;
         }).with_priority(255) });
 
@@ -353,7 +353,7 @@ TEST_F(CaptureBridgeTest, BufferPipelineContinuous)
     auto pipeline = Kriya::BufferPipeline::create(*scheduler);
 
     *pipeline >> Kriya::BufferOperation::capture_from(buffer).for_cycles(1)
-        >> Kriya::BufferOperation::transform([&](const Kakshya::DataVariant& data, uint32_t) {
+        >> Kriya::BufferOperation::transform([&](Kakshya::DataVariant& data, uint32_t) {
               execution_count++;
               return data;
           });
@@ -706,7 +706,7 @@ TEST_F(CaptureBridgeTest, HardwareInputCaptureBuilderFlow)
                                .for_cycles(3)
                                .as_circular(2048)
                                .with_tag("hardware_input_test")
-                               .on_data_ready([&](const Kakshya::DataVariant& data, uint32_t cycle) {
+                               .on_data_ready([&](Kakshya::DataVariant& data, uint32_t cycle) {
                                    data_received = true;
                                    received_cycle = cycle;
 
@@ -742,7 +742,7 @@ TEST_F(CaptureBridgeTest, HardwareInputRealTimeCapture)
 
     *pipeline >> Kriya::BufferOperation::capture_input_from(buffer_manager, 0)
                      .as_circular(1024)
-                     .on_data_ready([&](const Kakshya::DataVariant& data, uint32_t) {
+                     .on_data_ready([&](Kakshya::DataVariant& data, uint32_t) {
                          capture_count++;
 
                          if (std::holds_alternative<std::vector<double>>(data)) {
@@ -799,7 +799,7 @@ TEST_F(CaptureBridgeTest, HardwareInputMultiChannelCapture)
 
     *pipeline0 >> Kriya::BufferOperation::capture_input_from(buffer_manager, 0)
                       .for_cycles(5)
-                      .on_data_ready([&](const Kakshya::DataVariant&, uint32_t) {
+                      .on_data_ready([&](Kakshya::DataVariant&, uint32_t) {
                           channel0_captures++;
                       })
                       .with_tag("channel_0_input")
@@ -807,7 +807,7 @@ TEST_F(CaptureBridgeTest, HardwareInputMultiChannelCapture)
 
     *pipeline1 >> Kriya::BufferOperation::capture_input_from(buffer_manager, 1)
                       .for_cycles(5)
-                      .on_data_ready([&](const Kakshya::DataVariant&, uint32_t) {
+                      .on_data_ready([&](Kakshya::DataVariant&, uint32_t) {
                           channel1_captures++;
                       })
                       .with_tag("channel_1_input")
@@ -861,7 +861,7 @@ TEST_F(CaptureBridgeTest, HardwareInputErrorHandling)
 
     test_pipeline >> Kriya::BufferOperation::capture_input_from(buffer_manager, 100)
                          .for_cycles(1)
-                         .on_data_ready([&](const Kakshya::DataVariant&, uint32_t) {
+                         .on_data_ready([&](Kakshya::DataVariant&, uint32_t) {
                              callback_count++;
                          })
                          .with_tag("error_test");
@@ -916,7 +916,7 @@ TEST_F(CaptureBridgeTest, HardwareInputBufferManagerIntegration)
     std::atomic<bool> data_captured { false };
 
     pipeline >> second_operation
-        >> Kriya::BufferOperation::transform([&](const Kakshya::DataVariant& data, uint32_t) {
+        >> Kriya::BufferOperation::transform([&](Kakshya::DataVariant& data, uint32_t) {
               data_captured = true;
               return data;
           });
