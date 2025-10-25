@@ -8,10 +8,6 @@ namespace Buffers {
     class AudioBuffer;
 }
 
-namespace Kakshya {
-    class DynamicSoundStream;
-}
-
 namespace Kriya {
 
     class BufferOperation;

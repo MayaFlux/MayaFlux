@@ -2,8 +2,7 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/Container/StreamWriteProcessor.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
-#include "MayaFlux/Kriya/Bridge.hpp"
-#include "MayaFlux/Kriya/Capture.hpp"
+#include "MayaFlux/Kriya/BufferPipeline.hpp"
 #include "MayaFlux/Kriya/CycleCoordinator.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 

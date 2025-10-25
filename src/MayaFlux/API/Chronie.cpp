@@ -3,7 +3,7 @@
 #include "Core.hpp"
 
 #include "MayaFlux/Core/Engine.hpp"
-#include "MayaFlux/Kriya/Bridge.hpp"
+#include "MayaFlux/Kriya/BufferPipeline.hpp"
 #include "MayaFlux/Kriya/Chain.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
@@ -126,7 +126,7 @@ Kriya::ActionToken Action(std::function<void()> func)
 
 std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline()
 {
-    return Kriya::BufferPipeline::create(*get_scheduler());
+    return Kriya::BufferPipeline::create(*get_scheduler(), get_context().get_buffer_manager());
 }
 
 }

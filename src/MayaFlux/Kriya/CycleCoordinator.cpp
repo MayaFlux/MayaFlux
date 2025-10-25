@@ -1,6 +1,6 @@
 #include "CycleCoordinator.hpp"
 
-#include "Bridge.hpp"
+#include "BufferPipeline.hpp"
 
 #include "MayaFlux/Kriya/Awaiters.hpp"
 
