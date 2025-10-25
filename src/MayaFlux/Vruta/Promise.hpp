@@ -216,6 +216,13 @@ struct audio_promise : public routine_promise<SoundRoutine> {
      */
     uint64_t next_buffer_cycle = 0;
 
+    /**
+     * @brief The active delay context for this coroutine
+     *
+     * This value indicates which type of delay (sample, buffer, event)
+     * is currently being awaited by the coroutine. It helps the scheduler
+     * determine how to manage the coroutine's timing.
+     */
     DelayContext active_delay_context = DelayContext::NONE;
 };
 

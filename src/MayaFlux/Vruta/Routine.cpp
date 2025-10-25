@@ -4,7 +4,7 @@ namespace MayaFlux::Vruta {
 
 SoundRoutine audio_promise::get_return_object()
 {
-    return SoundRoutine(std::coroutine_handle<audio_promise>::from_promise(*this));
+    return { std::coroutine_handle<audio_promise>::from_promise(*this) };
 }
 
 SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
@@ -120,11 +120,19 @@ bool SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext 
 
     switch (context) {
     case DelayContext::SAMPLE_BASED:
-        should_resume = (current_value >= promise_ref.next_sample);
+        if (promise_ref.active_delay_context == DelayContext::SAMPLE_BASED) {
+            should_resume = (current_value >= promise_ref.next_sample);
+        } else {
+            should_resume = false;
+        }
         break;
 
     case DelayContext::BUFFER_BASED:
-        should_resume = (current_value >= promise_ref.next_buffer_cycle);
+        if (promise_ref.active_delay_context == DelayContext::BUFFER_BASED) {
+            should_resume = (current_value >= promise_ref.next_buffer_cycle);
+        } else {
+            should_resume = false;
+        }
         break;
 
     case DelayContext::NONE:
@@ -137,16 +145,15 @@ bool SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext 
 
     if (should_resume) {
         m_handle.resume();
-        promise_ref.active_delay_context = DelayContext::NONE;
         return true;
     }
 
     return false;
 }
 
-bool SoundRoutine::try_resume(uint64_t current_sample)
+bool SoundRoutine::try_resume(uint64_t current_context)
 {
-    return try_resume_with_context(current_sample, DelayContext::SAMPLE_BASED);
+    return try_resume_with_context(current_context, DelayContext::SAMPLE_BASED);
 }
 
 bool SoundRoutine::restart()

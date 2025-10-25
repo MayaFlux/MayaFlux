@@ -28,11 +28,10 @@ enum class ProcessingToken {
  * temporal domains within the same processing token.
  */
 enum class DelayContext : uint8_t {
-    NONE = 0, ///< No active delay, resume immediately
-    SAMPLE_BASED = 1, ///< Sample-accurate delay (audio domain)
-    BUFFER_BASED = 2, ///< Buffer-cycle delay (audio hardware boundary)
-    FRAME_BASED = 3, ///< Frame-accurate delay (graphics domain)
-    EVENT_BASED = 4 ///< Event-driven delay (user events, etc.)
+    NONE, ///< No active delay, resume immediately
+    SAMPLE_BASED, ///< Sample-accurate delay (audio domain)
+    BUFFER_BASED, ///< Buffer-cycle delay (audio hardware boundary)
+    EVENT_BASED ///< Event-driven delay (user events, etc.)
 };
 }
 

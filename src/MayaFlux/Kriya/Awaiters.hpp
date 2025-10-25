@@ -103,16 +103,21 @@ struct MAYAFLUX_API SampleDelay {
  * ```
  */
 struct MAYAFLUX_API BufferDelay {
+
+    BufferDelay(uint64_t cycles)
+        : num_cycles(cycles)
+    {
+    }
+
     uint64_t num_cycles;
 
-    [[nodiscard]] constexpr bool await_ready() const noexcept { return false; }
+    [[nodiscard]] constexpr bool await_ready() const noexcept { return num_cycles == 0; }
 
-    template <typename Promise>
-    void await_suspend(std::coroutine_handle<Promise> h) noexcept
+    void await_suspend(std::coroutine_handle<promise_handle> h) noexcept
     {
         auto& promise = h.promise();
         promise.next_buffer_cycle += num_cycles;
-        promise.active_delay_context = Vruta::DelayContext::SAMPLE_BASED;
+        promise.active_delay_context = Vruta::DelayContext::BUFFER_BASED;
     }
 
     constexpr void await_resume() const noexcept { }

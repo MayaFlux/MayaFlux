@@ -274,11 +274,9 @@ void TaskScheduler::process_default(ProcessingToken token, uint64_t processing_u
             if (routine && routine->is_active()) {
                 if (routine->requires_clock_sync()) {
                     if (current_context >= routine->next_execution()) {
-                        // routine->try_resume(current_context);
                         routine->try_resume_with_context(current_context, DelayContext::SAMPLE_BASED);
                     }
                 } else {
-                    // routine->try_resume(current_context);
                     routine->try_resume_with_context(current_context, DelayContext::SAMPLE_BASED);
                 }
             }
@@ -359,7 +357,13 @@ void TaskScheduler::process_buffer_cycle_tasks()
 
     for (auto& task : tasks) {
         if (task && task->is_active()) {
-            task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
+            if (task->requires_clock_sync()) {
+                if (m_current_buffer_cycle >= task->next_execution()) {
+                    task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
+                }
+            } else {
+                task->try_resume_with_context(m_current_buffer_cycle, DelayContext::BUFFER_BASED);
+            }
         }
     }
 }
