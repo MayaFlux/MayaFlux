@@ -112,6 +112,11 @@ bool SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext 
         return false;
     }
 
+    if (context != DelayContext::NONE && promise_ref.active_delay_context == DelayContext::AWAIT) {
+        initialize_state(current_value);
+        return false;
+    }
+
     if (promise_ref.active_delay_context != DelayContext::NONE && promise_ref.active_delay_context != context) {
         return false;
     }

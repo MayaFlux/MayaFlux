@@ -11,7 +11,6 @@ Checks: >
   readability-braces-around-statements,
   readability-const-return-type,
   readability-container-size-empty,
-  readability-convert-member-functions-to-static,
   readability-delete-null-pointer,
   readability-deleted-default,
   readability-else-after-return,
@@ -60,7 +59,9 @@ Checks: >
   -cppcoreguidelines-avoid-c-arrays,
   -hicpp-avoid-c-arrays,
   -modernize-avoid-c-arrays,
-  -cppcoreguidelines-macro-usage
+  -cppcoreguidelines-macro-usage,
+  -readability-avoid-protected-members-in-classes,
+  -cppcoreguidelines-avoid-const-or-ref-data-members
 
 CheckOptions:
   # Const-correctness and reference optimization (core focus)
