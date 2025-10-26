@@ -62,8 +62,6 @@ namespace Kriya {
         REACTIVE
     };
 
-    // Forward declarations
-    // class BufferOperation;
     class BufferPipeline;
     class CycleCoordinator;
 

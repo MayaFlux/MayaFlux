@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 #pragma once
 #define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
@@ -11,3 +12,4 @@ void compose()
 {
     // Your MayaFlux code goes here!
 }
+// NOLINTEND

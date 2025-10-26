@@ -9,41 +9,161 @@ class CycleCoordinator;
 
 /**
  * @class BufferPipeline
- * @brief Execution engine for composable buffer processing operations.
+ * @brief Coroutine-based execution engine for composable, multi-strategy buffer processing.
  *
- * BufferPipeline orchestrates the execution of BufferOperation sequences with
- * sophisticated control flow, data lifecycle management, and scheduling integration.
- * It supports linear operation chains, conditional branching, parallel execution,
- * and cycle-based coordination through fluent operator>> chaining.
+ * BufferPipeline provides a flexible framework for orchestrating complex data flow patterns
+ * through declarative operation chains. It supports multiple execution strategies (phased,
+ * streaming, parallel, reactive), sophisticated data accumulation modes, and sample-accurate
+ * timing coordination via the coroutine scheduler.
  *
- * **Example Usage:**
+ * **Core Concepts:**
+ * - **Operations**: Composable units (capture, transform, route, modify, fuse) chained via >>
+ * - **Execution Strategies**: PHASED (capture-then-process), STREAMING (immediate flow-through),
+ *   PARALLEL (concurrent captures), REACTIVE (data-driven)
+ * - **Capture Modes**: TRANSIENT (single), ACCUMULATE (concatenate), CIRCULAR (rolling buffer),
+ *   WINDOWED (overlapping windows), TRIGGERED (conditional)
+ * - **Timing Control**: Buffer-rate synchronization, sample-accurate delays, or immediate execution
+ *
+ * **Simple Capture & Route:**
  * ```cpp
- * auto pipeline = BufferPipeline::create(*scheduler)
- *     >> BufferOperation::capture_from(mic_buffer)
- *         .with_window(1024, 0.75f)
- *         .on_data_ready([](const auto& data, uint32_t cycle) {
- *             auto spectrum = fft_transform(data);
- *             detect_pitch(spectrum);
- *         })
- *     >> BufferOperation::route_to_container(recording_stream)
- *         .with_priority(64);
+ * auto pipeline = BufferPipeline::create(*scheduler, buffer_manager);
+ * *pipeline
+ *     >> BufferOperation::capture_from(input_buffer)
+ *         .for_cycles(1)
+ *     >> BufferOperation::route_to_buffer(output_buffer);
  *
- * pipeline->execute_continuous();
+ * pipeline->execute_buffer_rate(100);  // Run for 100 audio buffer cycles
+ * ```
+ *
+ * **Accumulation & Batch Processing (PHASED strategy):**
+ * ```cpp
+ * auto pipeline = BufferPipeline::create(*scheduler, buffer_manager)
+ *     ->with_strategy(ExecutionStrategy::PHASED)
+ *     ->capture_timing(Vruta::DelayContext::BUFFER_BASED);
+ *
+ * *pipeline
+ *     >> BufferOperation::capture_from(audio_buffer)
+ *         .for_cycles(20)  // Captures 20 times, concatenates into single buffer
+ *     >> BufferOperation::transform([](const auto& data, uint32_t cycle) {
+ *         const auto& accumulated = std::get<std::vector<double>>(data);
+ *         // Process 20 * buffer_size samples as one batch
+ *         return apply_batch_fft(accumulated);
+ *     })
+ *     >> BufferOperation::route_to_container(output_stream);
+ *
+ * pipeline->execute_buffer_rate();
+ * ```
+ *
+ * **Real-Time Streaming Modification (STREAMING strategy):**
+ * ```cpp
+ * auto pipeline = BufferPipeline::create(*scheduler, buffer_manager)
+ *     ->with_strategy(ExecutionStrategy::STREAMING);
+ *
+ * *pipeline
+ *     >> BufferOperation::capture_from(audio_buffer).for_cycles(1)
+ *     >> BufferOperation::modify_buffer(audio_buffer, [noise](auto buf) {
+ *         auto& data = buf->get_data();
+ *         for (auto& sample : data) {
+ *             sample *= noise->process_sample();  // Apply effect in-place
+ *         }
+ *     }).as_streaming();  // Processor stays attached across cycles
+ *
+ * pipeline->execute_buffer_rate();  // Runs continuously
+ * ```
+ *
+ * **Circular Buffer for Rolling Analysis:**
+ * ```cpp
+ * *pipeline
+ *     >> BufferOperation::capture_from(input_buffer)
+ *         .for_cycles(100)
+ *         .as_circular(2048)  // Maintains last 2048 samples
+ *     >> BufferOperation::transform([](const auto& data, uint32_t cycle) {
+ *         const auto& history = std::get<std::vector<double>>(data);
+ *         return analyze_recent_trends(history);  // Always sees last 2048 samples
+ *     });
+ * ```
+ *
+ * **Windowed Capture with Overlap:**
+ * ```cpp
+ * *pipeline
+ *     >> BufferOperation::capture_from(input_buffer)
+ *         .for_cycles(50)
+ *         .with_window(1024, 0.5f)  // 1024 samples, 50% overlap
+ *     >> BufferOperation::transform([](const auto& data, uint32_t cycle) {
+ *         const auto& window = std::get<std::vector<double>>(data);
+ *         return apply_hann_window_and_fft(window);
+ *     });
+ * ```
+ *
+ * **Multi-Source Fusion:**
+ * ```cpp
+ * *pipeline
+ *     >> BufferOperation::fuse_data(
+ *         {mic_buffer, synth_buffer, file_buffer},
+ *         [](std::vector<Kakshya::DataVariant>& sources, uint32_t cycle) {
+ *             // Combine three audio sources with custom mixing
+ *             return mix_sources(sources, {0.5, 0.3, 0.2});
+ *         },
+ *         output_buffer);
  * ```
  *
  * **Conditional Branching:**
  * ```cpp
- * pipeline->branch_if([](uint32_t cycle) { return cycle % 10 == 0; },
+ * pipeline->branch_if(
+ *     [](uint32_t cycle) { return cycle % 16 == 0; },  // Every 16 cycles
  *     [](BufferPipeline& branch) {
  *         branch >> BufferOperation::dispatch_to([](const auto& data, uint32_t cycle) {
- *             save_snapshot(data, cycle);
+ *             save_analysis_snapshot(data, cycle);
  *         });
- *     });
+ *     },
+ *     true  // Synchronous - wait for branch to complete
+ * );
  * ```
  *
- * @see BufferOperation For composable operation units
+ * **Per-Iteration Routing (Immediate Routing):**
+ * ```cpp
+ * // ROUTE directly after CAPTURE → routes each iteration immediately
+ * *pipeline
+ *     >> BufferOperation::capture_from(input_buffer).for_cycles(20)
+ *     >> BufferOperation::route_to_container(stream);  // Writes 20 times (streaming output)
+ *
+ * // ROUTE after TRANSFORM → routes accumulated result once
+ * *pipeline
+ *     >> BufferOperation::capture_from(input_buffer).for_cycles(20)
+ *     >> BufferOperation::transform(process_fn)
+ *     >> BufferOperation::route_to_container(stream);  // Writes 1 time (batch output)
+ * ```
+ *
+ * **Lifecycle Callbacks:**
+ * ```cpp
+ * pipeline->with_lifecycle(
+ *     [](uint32_t cycle) { std::cout << "Cycle " << cycle << " start\n"; },
+ *     [](uint32_t cycle) { std::cout << "Cycle " << cycle << " end\n"; }
+ * );
+ * ```
+ *
+ * **Execution Modes:**
+ * - `execute_buffer_rate(N)`: Synchronized to audio buffer boundaries for N cycles
+ * - `execute_continuous()`: Runs indefinitely until stopped
+ * - `execute_for_cycles(N)`: Runs exactly N cycles then stops
+ * - `execute_once()`: Single cycle execution
+ * - `execute_scheduled(N, samples)`: With sample-accurate delays between operations
+ *
+ * **Strategy Selection:**
+ * - **PHASED** (default): Capture phase completes, then process phase runs
+ *   - Best for: batch analysis, accumulation, FFT processing
+ * - **STREAMING**: Operations flow through immediately, minimal latency
+ *   - Best for: real-time effects, low-latency processing, modify_buffer
+ * - **PARALLEL**: Multiple captures run concurrently (TODO)
+ *   - Best for: multi-source synchronized capture
+ * - **REACTIVE**: Data-driven execution when inputs available (TODO)
+ *   - Best for: event-driven workflows, complex dependencies
+ *
+ * @see BufferOperation For operation types and configuration
+ * @see BufferCapture For capture modes and data accumulation strategies
  * @see CycleCoordinator For multi-pipeline synchronization
- * @see Vruta::TaskScheduler For execution scheduling
+ * @see Vruta::TaskScheduler For coroutine scheduling and timing
+ * @see ExecutionStrategy For execution coordination patterns
  */
 class MAYAFLUX_API BufferPipeline : public std::enable_shared_from_this<BufferPipeline> {
 public:
@@ -319,6 +439,10 @@ private:
     static void write_to_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, const Kakshya::DataVariant& data);
     static void write_to_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, const Kakshya::DataVariant& data);
     static Kakshya::DataVariant read_from_container(const std::shared_ptr<Kakshya::DynamicSoundStream>& container, uint64_t start, uint32_t length);
+
+    void capture_operation(BufferOperation& op, uint64_t cycle);
+    void reset_accumulated_data();
+    bool has_immediate_routing(const BufferOperation& op) const;
 
     void process_operation(BufferOperation& op, uint64_t cycle);
     std::shared_ptr<Vruta::SoundRoutine> dispatch_branch_async(BranchInfo& branch, uint64_t cycle);

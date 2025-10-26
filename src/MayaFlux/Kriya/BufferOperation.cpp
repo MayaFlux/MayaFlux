@@ -4,6 +4,8 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Container/FileBridgeBuffer.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kriya {
 
 BufferOperation BufferOperation::capture_input(
@@ -41,7 +43,8 @@ BufferOperation BufferOperation::capture_file(
 {
     auto file_container = MayaFlux::load_audio_file(filepath);
     if (!file_container) {
-        throw std::runtime_error("Failed to load audio file: " + filepath);
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO, std::source_location::current(),
+            "Failed to load audio file: {}", filepath);
     }
 
     auto file_buffer = std::make_shared<Buffers::FileBridgeBuffer>(channel, file_container);
@@ -62,7 +65,8 @@ CaptureBuilder BufferOperation::capture_file_from(
 {
     auto file_container = MayaFlux::load_audio_file(filepath);
     if (!file_container) {
-        throw std::runtime_error("Failed to load audio file: " + filepath);
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO, std::source_location::current(),
+            "Failed to load audio file: {}", filepath);
     }
 
     auto file_buffer = std::make_shared<Buffers::FileBridgeBuffer>(channel, file_container);
@@ -78,7 +82,8 @@ BufferOperation BufferOperation::file_to_stream(
 {
     auto file_container = MayaFlux::load_audio_file(filepath);
     if (!file_container) {
-        throw std::runtime_error("Failed to load audio file: " + filepath);
+        error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO, std::source_location::current(),
+            "Failed to load audio file: {}", filepath);
     }
 
     auto temp_buffer = std::make_shared<Buffers::FileBridgeBuffer>(0, file_container);

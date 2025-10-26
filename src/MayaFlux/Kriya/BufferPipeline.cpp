@@ -290,19 +290,190 @@ Kakshya::DataVariant BufferPipeline::read_from_container(const std::shared_ptr<K
     }
 }
 
+void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
+{
+    bool should_process = op.m_capture.get_processing_control() == BufferCapture::ProcessingControl::ON_CAPTURE;
+    auto buffer_data = extract_buffer_data(op.m_capture.get_buffer(), should_process);
+
+    if (op.m_capture.m_data_ready_callback) {
+        op.m_capture.m_data_ready_callback(buffer_data, cycle);
+    }
+
+    auto capture_mode = op.m_capture.get_mode();
+
+    switch (capture_mode) {
+    case BufferCapture::CaptureMode::TRANSIENT:
+        m_operation_data[&op] = buffer_data;
+        break;
+
+    case BufferCapture::CaptureMode::ACCUMULATE: {
+        auto it = m_operation_data.find(&op);
+        if (it == m_operation_data.end()) {
+            m_operation_data[&op] = buffer_data;
+        } else {
+            try {
+                auto& existing = std::get<std::vector<double>>(it->second);
+                const auto& new_data = std::get<std::vector<double>>(buffer_data);
+                existing.insert(existing.end(), new_data.begin(), new_data.end());
+
+            } catch (const std::bad_variant_access& e) {
+                MF_ERROR(Journal::Component::Kriya,
+                    Journal::Context::CoroutineScheduling,
+                    "Data type mismatch during ACCUMULATE capture: {}",
+                    e.what());
+                m_operation_data[&op] = buffer_data;
+            }
+        }
+        break;
+    }
+    case BufferCapture::CaptureMode::CIRCULAR: {
+        uint32_t circular_size = op.m_capture.get_circular_size();
+        if (circular_size == 0) {
+            circular_size = 4096;
+        }
+
+        auto it = m_operation_data.find(&op);
+        if (it == m_operation_data.end()) {
+            m_operation_data[&op] = buffer_data;
+        } else {
+            try {
+                auto& circular = std::get<std::vector<double>>(it->second);
+                const auto& new_data = std::get<std::vector<double>>(buffer_data);
+
+                circular.insert(circular.end(), new_data.begin(), new_data.end());
+
+                if (circular.size() > circular_size) {
+                    circular.erase(circular.begin(),
+                        circular.begin() + static_cast<int64_t>(circular.size() - circular_size));
+                }
+
+            } catch (const std::bad_variant_access& e) {
+                MF_ERROR(Journal::Component::Kriya,
+                    Journal::Context::CoroutineScheduling,
+                    "Data type mismatch during CIRCULAR capture: {}",
+                    e.what());
+                m_operation_data[&op] = buffer_data;
+            }
+        }
+        break;
+    }
+    case BufferCapture::CaptureMode::WINDOWED: {
+        uint32_t window_size = op.m_capture.get_window_size();
+        float overlap_ratio = op.m_capture.get_overlap_ratio();
+
+        if (window_size == 0) {
+            window_size = 512;
+        }
+
+        auto hop_size = static_cast<uint32_t>((float)window_size * (1.0F - overlap_ratio));
+        if (hop_size == 0)
+            hop_size = 1;
+
+        auto it = m_operation_data.find(&op);
+        if (it == m_operation_data.end()) {
+            m_operation_data[&op] = buffer_data;
+        } else {
+            try {
+                auto& windowed = std::get<std::vector<double>>(it->second);
+                const auto& new_data = std::get<std::vector<double>>(buffer_data);
+
+                auto size_cache = static_cast<int64_t>(windowed.size());
+
+                if (size_cache >= window_size) {
+                    if (hop_size >= windowed.size()) {
+                        windowed = std::get<std::vector<double>>(buffer_data);
+                    } else {
+                        windowed.erase(windowed.begin(),
+                            windowed.begin() + std::min<int64_t>(hop_size, size_cache));
+                        windowed.insert(windowed.end(), new_data.begin(), new_data.end());
+
+                        if (windowed.size() > window_size) {
+                            windowed.erase(windowed.begin(),
+                                windowed.begin() + (size_cache - window_size));
+                        }
+                    }
+                } else {
+                    windowed.insert(windowed.end(), new_data.begin(), new_data.end());
+                }
+
+            } catch (const std::bad_variant_access& e) {
+                MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+                    "Data type mismatch during WINDOWED capture: {}", e.what());
+                m_operation_data[&op] = buffer_data;
+            }
+        }
+        break;
+    }
+
+    case BufferCapture::CaptureMode::TRIGGERED: {
+        if (op.m_capture.m_stop_condition && op.m_capture.m_stop_condition()) {
+            m_operation_data[&op] = buffer_data;
+        }
+        break;
+    }
+
+    default:
+        m_operation_data[&op] = buffer_data;
+        break;
+    }
+
+    m_operation_data[&op] = buffer_data;
+
+    if (has_immediate_routing(op)) {
+        auto current_it = std::ranges::find_if(m_operations,
+            [&op](const BufferOperation& o) { return &o == &op; });
+
+        if (current_it != m_operations.end()) {
+            auto next_it = std::next(current_it);
+            if (next_it != m_operations.end() && next_it->get_type() == BufferOperation::OpType::ROUTE) {
+
+                if (next_it->m_target_buffer) {
+                    write_to_buffer(next_it->m_target_buffer, buffer_data);
+                } else if (next_it->m_target_container) {
+                    write_to_container(next_it->m_target_container, buffer_data);
+                }
+
+                size_t route_index = std::distance(m_operations.begin(), next_it);
+                if (route_index < m_data_states.size()) {
+                    m_data_states[route_index] = DataState::CONSUMED;
+                }
+            }
+        }
+    }
+}
+
+void BufferPipeline::reset_accumulated_data()
+{
+    for (auto& op : m_operations) {
+        if (op.get_type() == BufferOperation::OpType::CAPTURE) {
+            auto mode = op.m_capture.get_mode();
+            if (mode == BufferCapture::CaptureMode::ACCUMULATE || mode == BufferCapture::CaptureMode::CIRCULAR || mode == BufferCapture::CaptureMode::WINDOWED) {
+                m_operation_data.erase(&op);
+            }
+        }
+    }
+}
+
+bool BufferPipeline::has_immediate_routing(const BufferOperation& op) const
+{
+    auto it = std::ranges::find_if(m_operations,
+        [&op](const BufferOperation& o) { return &o == &op; });
+
+    if (it == m_operations.end() || std::next(it) == m_operations.end()) {
+        return false;
+    }
+
+    auto next_op = std::next(it);
+    return next_op->get_type() == BufferOperation::OpType::ROUTE;
+}
+
 void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
 {
     try {
         switch (op.get_type()) {
         case BufferOperation::OpType::CAPTURE: {
-            bool should_process = op.m_capture.get_processing_control() == BufferCapture::ProcessingControl::ON_CAPTURE;
-            auto buffer_data = extract_buffer_data(op.m_capture.get_buffer(), should_process);
+            capture_operation(op, cycle);
 
-            if (op.m_capture.m_data_ready_callback) {
-                op.m_capture.m_data_ready_callback(buffer_data, cycle);
-            }
-
-            m_operation_data[&op] = buffer_data;
             break;
         }
 
@@ -568,6 +739,14 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
             m_cycle_start_callback(m_current_cycle);
         }
 
+        for (auto& state : m_data_states) {
+            if (state != DataState::EMPTY) {
+                state = DataState::EMPTY;
+            }
+        }
+
+        reset_accumulated_data();
+
         // ═══════════════════════════════════════════════════════
         // PHASE 1: CAPTURE - Execute all capture operations
         // ═══════════════════════════════════════════════════════
@@ -620,6 +799,10 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
             auto& op = m_operations[i];
 
             if (!BufferOperation::is_process_phase_operation(op)) {
+                continue;
+            }
+
+            if (m_data_states[i] == DataState::CONSUMED) {
                 continue;
             }
 

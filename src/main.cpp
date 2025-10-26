@@ -8,8 +8,6 @@
 #endif
 #endif
 
-#include "MayaFlux/Core/Engine.hpp"
-
 void initialize()
 {
 #ifdef HAS_USER_PROJECT
@@ -51,12 +49,12 @@ int main()
 
         run();
 
-        std::cout << "Press any key to stop..." << std::endl;
+        std::cout << "Press any key to stop...\n";
         std::cin.get();
         MayaFlux::End();
 
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::flush;
         return 1;
     }
 
