@@ -94,7 +94,7 @@ std::string SystemConfig::find_library(const std::string& library_name)
 }
 std::string SystemConfig::exec_command(const char* cmd)
 {
-    std::array<char, 128> buffer;
+    std::array<char, 128> buffer {};
     std::string result;
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS

@@ -12,7 +12,7 @@ void initialize()
 {
 #ifdef HAS_USER_PROJECT
     try {
-        config();
+        settings();
     } catch (const std::exception& e) {
         MF_ERROR(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Error during user initialization: {}", e.what());
     }
