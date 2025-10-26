@@ -417,8 +417,6 @@ void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
         break;
     }
 
-    m_operation_data[&op] = buffer_data;
-
     if (has_immediate_routing(op)) {
         auto current_it = std::ranges::find_if(m_operations,
             [&op](const BufferOperation& o) { return &o == &op; });
@@ -727,8 +725,6 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
     m_data_states.resize(m_operations.size(), DataState::EMPTY);
     uint32_t cycles_executed = 0;
 
-    // std::cout << "Starting PHASED execution strategy\n";
-
     while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || cycles_executed < max_cycles)) {
 
         if (promise.should_terminate) {
@@ -750,8 +746,6 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
         // ═══════════════════════════════════════════════════════
         // PHASE 1: CAPTURE - Execute all capture operations
         // ═══════════════════════════════════════════════════════
-        // std::cout << "=== CAPTURE PHASE - Cycle " << m_current_cycle << " ===\n";
-
         for (size_t i = 0; i < m_operations.size(); ++i) {
             auto& op = m_operations[i];
 
@@ -772,28 +766,24 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
             uint32_t op_iterations = 1;
             if (op.get_type() == BufferOperation::OpType::CAPTURE) {
                 op_iterations = op.m_capture.get_cycle_count();
-                // std::cout << "  Capture op [" << i << "] will execute "
-                //           << op_iterations << " iterations\n";
             }
 
             for (uint32_t iter = 0; iter < op_iterations; ++iter) {
-                process_operation(op, m_current_cycle + iter);
-
                 if (m_capture_timing == Vruta::DelayContext::BUFFER_BASED) {
+                    process_operation(op, m_current_cycle + iter);
                     co_await BufferDelay { 1 };
                 } else if (m_capture_timing == Vruta::DelayContext::SAMPLE_BASED && samples_per_operation > 0) {
+                    process_operation(op, m_current_cycle + iter);
                     co_await SampleDelay { samples_per_operation };
                 }
             }
 
             m_data_states[i] = DataState::READY;
-            // std::cout << "  Capture op [" << i << "] completed, data READY\n";
         }
 
         // ═══════════════════════════════════════════════════════
         // PHASE 2: PROCESS - Execute all processing operations
         // ═══════════════════════════════════════════════════════
-        // std::cout << "=== PROCESS PHASE - Cycle " << m_current_cycle << " ===\n";
 
         for (size_t i = 0; i < m_operations.size(); ++i) {
             auto& op = m_operations[i];
@@ -816,13 +806,12 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
                 continue;
             }
 
-            // std::cout << "  Processing op [" << i << "] type="
-            //           << static_cast<int>(op.get_type()) << "\n";
-
             process_operation(op, m_current_cycle);
             m_data_states[i] = DataState::READY;
 
-            if (m_process_timing == Vruta::DelayContext::BUFFER_BASED && samples_per_operation > 0) {
+            if (m_process_timing == Vruta::DelayContext::BUFFER_BASED) {
+                co_await BufferDelay { 1 };
+            } else if (m_process_timing == Vruta::DelayContext::SAMPLE_BASED && samples_per_operation > 0) {
                 co_await SampleDelay { samples_per_operation };
             }
         }
@@ -843,9 +832,6 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
         }
 
         if (!current_cycle_sync_tasks.empty()) {
-            // std::cout << "  Waiting for " << current_cycle_sync_tasks.size()
-            //           << " synchronous branches\n";
-
             bool any_active = true;
             while (any_active) {
                 any_active = false;
@@ -877,11 +863,7 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
 
         m_current_cycle++;
         cycles_executed++;
-
-        // std::cout << "Cycle " << (m_current_cycle - 1) << " complete\n\n";
     }
-
-    // std::cout << "Pipeline execution complete. Total cycles: " << cycles_executed << "\n";
 }
 
 Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint64_t samples_per_operation)
@@ -895,8 +877,6 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
     m_data_states.resize(m_operations.size(), DataState::EMPTY);
     uint32_t cycles_executed = 0;
 
-    // std::cout << "Starting STREAMING execution strategy\n";
-
     while ((max_cycles == 0 || cycles_executed < max_cycles) && (m_continuous_execution || cycles_executed < max_cycles)) {
 
         if (promise.should_terminate) {
@@ -907,10 +887,7 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
             m_cycle_start_callback(m_current_cycle);
         }
 
-        // std::cout << "=== STREAMING CYCLE " << m_current_cycle << " ===\n";
-
         for (size_t i = 0; i < m_operations.size(); ++i) {
-            // std::cout << " Checking op [" << i << "]\n";
             auto& op = m_operations[i];
 
             if (op.get_type() == BufferOperation::OpType::CONDITION) {
@@ -929,7 +906,6 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
             }
 
             for (uint32_t iter = 0; iter < op_iterations; ++iter) {
-                // std::cout << "  Op [" << i << "] iteration " << iter << "\n";
 
                 process_operation(op, m_current_cycle + iter);
                 m_data_states[i] = DataState::READY;
@@ -938,7 +914,6 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
                     auto& dependent_op = m_operations[j];
 
                     if (BufferOperation::is_process_phase_operation(dependent_op)) {
-                        // std::cout << "    Streaming to dependent op [" << j << "]\n";
                         process_operation(dependent_op, m_current_cycle + iter);
                         m_data_states[j] = DataState::READY;
                     }
@@ -971,8 +946,6 @@ Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint6
         m_current_cycle++;
         cycles_executed++;
     }
-
-    // std::cout << "Streaming pipeline complete\n";
 }
 
 Vruta::SoundRoutine BufferPipeline::execute_parallel(uint64_t max_cycles, uint64_t samples_per_operation)

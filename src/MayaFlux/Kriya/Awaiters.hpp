@@ -117,6 +117,7 @@ struct MAYAFLUX_API BufferDelay {
     {
         auto& promise = h.promise();
         promise.next_buffer_cycle += num_cycles;
+        promise.delay_amount = num_cycles;
         promise.active_delay_context = Vruta::DelayContext::BUFFER_BASED;
     }
 

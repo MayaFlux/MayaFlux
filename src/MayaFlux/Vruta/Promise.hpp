@@ -120,6 +120,14 @@ struct MAYAFLUX_API routine_promise {
     const bool sync_to_clock = false;
 
     /**
+     * @brief Amount of delay requested by the coroutine
+     *
+     * This value is set when the coroutine co_awaits a delay awaiter (e.g., SampleDelay).
+     * It indicates how many time units the coroutine wishes to wait before resuming.
+     */
+    uint64_t delay_amount = 0;
+
+    /**
      * @brief Stores a value in the state dictionary
      * @param key Name of the state value
      * @param value Value to store
