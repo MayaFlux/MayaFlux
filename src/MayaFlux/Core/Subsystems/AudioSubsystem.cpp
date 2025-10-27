@@ -1,7 +1,5 @@
 #include "AudioSubsystem.hpp"
 
-#include <cstddef>
-
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Core {
@@ -81,6 +79,8 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
 
     std::vector<std::span<const double>> buffer_data(num_channels);
     bool has_underrun = false;
+
+    m_handle->tasks.process_buffer_cycle();
 
     for (uint32_t channel = 0; channel < num_channels; channel++) {
         m_handle->buffers.process_channel(channel, num_frames);

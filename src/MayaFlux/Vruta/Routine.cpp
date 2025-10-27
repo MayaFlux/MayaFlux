@@ -4,7 +4,7 @@ namespace MayaFlux::Vruta {
 
 SoundRoutine audio_promise::get_return_object()
 {
-    return SoundRoutine(std::coroutine_handle<audio_promise>::from_promise(*this));
+    return { std::coroutine_handle<audio_promise>::from_promise(*this) };
 }
 
 SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
@@ -84,6 +84,7 @@ bool SoundRoutine::initialize_state(uint64_t current_sample)
     }
 
     m_handle.promise().next_sample = current_sample;
+    m_handle.promise().next_buffer_cycle = current_sample;
     m_handle.resume();
     return true;
 }
@@ -101,22 +102,70 @@ bool SoundRoutine::requires_clock_sync() const
     return m_handle.promise().sync_to_clock;
 }
 
-bool SoundRoutine::try_resume(uint64_t current_sample)
+bool SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext context)
 {
     if (!is_active())
         return false;
 
     auto& promise_ref = m_handle.promise();
 
-    if (promise_ref.should_terminate) {
+    if (promise_ref.should_terminate || !promise_ref.auto_resume) {
         return false;
     }
 
-    if (promise_ref.auto_resume && current_sample >= promise_ref.next_sample) {
+    if (context != DelayContext::NONE && promise_ref.active_delay_context == DelayContext::AWAIT) {
+        return initialize_state(current_value);
+    }
+
+    if (promise_ref.active_delay_context != DelayContext::NONE && promise_ref.active_delay_context != context) {
+        return false;
+    }
+
+    bool should_resume = false;
+
+    switch (context) {
+    case DelayContext::SAMPLE_BASED:
+        if (promise_ref.active_delay_context == DelayContext::SAMPLE_BASED) {
+            should_resume = (current_value >= promise_ref.next_sample);
+            if (should_resume) {
+                promise_ref.next_sample = current_value + promise_ref.delay_amount;
+            }
+        } else {
+            should_resume = false;
+        }
+        break;
+
+    case DelayContext::BUFFER_BASED:
+        if (promise_ref.active_delay_context == DelayContext::BUFFER_BASED) {
+            should_resume = (current_value >= promise_ref.next_buffer_cycle);
+
+            if (should_resume) {
+                promise_ref.next_buffer_cycle = current_value + promise_ref.delay_amount;
+            }
+        } else {
+            should_resume = false;
+        }
+        break;
+
+    case DelayContext::NONE:
+        should_resume = true;
+        break;
+
+    default:
+        return false;
+    }
+
+    if (should_resume) {
         m_handle.resume();
         return true;
     }
+
     return false;
+}
+
+bool SoundRoutine::try_resume(uint64_t current_context)
+{
+    return try_resume_with_context(current_context, DelayContext::SAMPLE_BASED);
 }
 
 bool SoundRoutine::restart()

@@ -56,6 +56,11 @@ std::vector<std::string> SystemConfig::get_system_includes()
     if (!xcode_includes.empty()) {
         includes.push_back(xcode_includes);
     }
+
+    std::string homebrew_includes = "/opt/homebrew/include";
+    if (fs::exists(homebrew_includes)) {
+        includes.push_back(homebrew_includes);
+    }
 #endif // MAYAFLUX_PLATFORM_MACOS
 
     return includes;
@@ -94,7 +99,7 @@ std::string SystemConfig::find_library(const std::string& library_name)
 }
 std::string SystemConfig::exec_command(const char* cmd)
 {
-    std::array<char, 128> buffer;
+    std::array<char, 128> buffer {};
     std::string result;
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS

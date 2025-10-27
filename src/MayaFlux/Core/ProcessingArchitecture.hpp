@@ -177,6 +177,9 @@ public:
     /** @brief Check if handle is valid */
     [[nodiscard]] bool is_valid() const { return m_scheduler != nullptr; }
 
+    /** @brief Process all tasks scheduled for current buffer cycle */
+    void process_buffer_cycle();
+
 private:
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     Vruta::ProcessingToken m_token;

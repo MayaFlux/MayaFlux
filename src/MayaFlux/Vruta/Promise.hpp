@@ -120,6 +120,14 @@ struct MAYAFLUX_API routine_promise {
     const bool sync_to_clock = false;
 
     /**
+     * @brief Amount of delay requested by the coroutine
+     *
+     * This value is set when the coroutine co_awaits a delay awaiter (e.g., SampleDelay).
+     * It indicates how many time units the coroutine wishes to wait before resuming.
+     */
+    uint64_t delay_amount = 0;
+
+    /**
      * @brief Stores a value in the state dictionary
      * @param key Name of the state value
      * @param value Value to store
@@ -208,6 +216,22 @@ struct audio_promise : public routine_promise<SoundRoutine> {
      * indicate when the coroutine should be resumed next.
      */
     uint64_t next_sample = 0;
+
+    /**
+     * @brief The buffer cycle when this coroutine should next execute
+     * Managed by BufferDelay awaiter. Incremented on each co_await BufferDelay{}.
+     * Starts at 0, incremented to 1 on first await.
+     */
+    uint64_t next_buffer_cycle = 0;
+
+    /**
+     * @brief The active delay context for this coroutine
+     *
+     * This value indicates which type of delay (sample, buffer, event)
+     * is currently being awaited by the coroutine. It helps the scheduler
+     * determine how to manage the coroutine's timing.
+     */
+    DelayContext active_delay_context = DelayContext::NONE;
 };
 
 // TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first

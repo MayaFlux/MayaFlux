@@ -19,8 +19,6 @@
 #ifdef MAYASIMPLE
 #include "MayaFlux/API/Proxy/Creator.hpp"
 
-#include "Kriya/Bridge.hpp"
-
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
 #include "Nodes/Generators/Impulse.hpp"
@@ -39,7 +37,7 @@
 #include "Buffers/Recursive/FeedbackBuffer.hpp"
 
 #include "Kriya/Awaiters.hpp"
-#include "Kriya/Bridge.hpp"
+#include "Kriya/BufferPipeline.hpp"
 #include "Kriya/Chain.hpp"
 #include "Kriya/CycleCoordinator.hpp"
 #include "Kriya/Tasks.hpp"

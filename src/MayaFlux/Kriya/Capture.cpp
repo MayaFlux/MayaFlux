@@ -1,8 +1,6 @@
 #include "Capture.hpp"
 
-#include "MayaFlux/Buffers/AudioBuffer.hpp"
-
-#include "Bridge.hpp"
+#include "BufferOperation.hpp"
 
 namespace MayaFlux::Kriya {
 

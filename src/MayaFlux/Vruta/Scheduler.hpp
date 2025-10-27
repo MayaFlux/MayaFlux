@@ -320,6 +320,26 @@ public:
      */
     inline void set_cleanup_threshold(uint32_t threshold) { m_cleanup_threshold = threshold; }
 
+    /**
+     * @brief Get current buffer cycle for task scheduling
+     * Updated by AudioSubsystem at each buffer boundary
+     */
+    uint64_t get_current_buffer_cycle() const
+    {
+        return m_current_buffer_cycle;
+    }
+
+    /**
+     * @brief Increment buffer cycle counter
+     * Called by AudioSubsystem at start of each buffer processing
+     */
+    void tick_buffer_cycle()
+    {
+        m_current_buffer_cycle++;
+    }
+
+    void process_buffer_cycle_tasks();
+
 private:
     /**
      * @brief Generate automatic name for a routine based on its type
@@ -429,6 +449,8 @@ private:
      * and performance by removing inactive tasks periodically.
      */
     uint32_t m_cleanup_threshold;
+
+    uint64_t m_current_buffer_cycle {};
 };
 
 }
