@@ -31,6 +31,7 @@ enum class DelayContext : uint8_t {
     NONE, ///< No active delay, resume immediately
     SAMPLE_BASED, ///< Sample-accurate delay (audio domain)
     BUFFER_BASED, ///< Buffer-cycle delay (audio hardware boundary)
+    FRAME_BASED, ///< Frame-rate delay (Graphics domain)
     EVENT_BASED, ///< Event-driven delay (user events, etc.)
     AWAIT ///< Awaiter-induced delay (temporary suspension)
 };

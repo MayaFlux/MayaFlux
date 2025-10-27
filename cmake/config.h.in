@@ -92,7 +92,7 @@
 #endif
 
 // C++20 std::format availability detection
-#if MAYAFLUX_PLATFORM_MACOS
+#ifdef MAYAFLUX_PLATFORM_MACOS
 #define MAYAFLUX_USE_FMT 1
 #define MAYAFLUX_USE_STD_FORMAT 0
 #else

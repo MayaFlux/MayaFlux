@@ -234,25 +234,98 @@ struct audio_promise : public routine_promise<SoundRoutine> {
     DelayContext active_delay_context = DelayContext::NONE;
 };
 
-// TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first
-/** * @struct graphics_promise
+/**
+ * @struct graphics_promise
  * @brief Coroutine promise type for graphics processing tasks with frame-accurate timing
+ *
+ * graphics_promise is the frame-domain equivalent of audio_promise. It manages the
+ * state and lifecycle of GraphicsRoutine coroutines, providing frame-accurate timing
+ * and scheduling for visual processing tasks.
+ *
+ * Key Architectural Notes:
+ * - Frame timing is managed by FrameClock (self-driven wall-clock based)
+ * - Unlike audio_promise (driven by RTAudio callbacks), graphics_promise observes
+ *   the FrameClock which ticks independently in the graphics thread loop
+ * - The promise doesn't care HOW timing advances, only that it receives tick updates
+ * - Mirrors audio_promise architecture but for the visual/frame domain
+ *
+ * Timing Flow:
+ * 1. Graphics thread loop: m_frame_clock->tick() (self-driven)
+ * 2. GraphicsSubsystem::process() called
+ * 3. Scheduler::process_frame_coroutines_impl() checks routines
+ * 4. If current_frame >= next_frame, routine->try_resume(current_frame)
+ * 5. Routine updates next_frame based on FrameDelay amount
  */
 struct graphics_promise : public routine_promise<GraphicsRoutine> {
+    /**
+     * @brief Creates the GraphicsRoutine object returned to the caller
+     * @return A new GraphicsRoutine that wraps this promise
+     *
+     * This method is called by the compiler-generated code when a coroutine
+     * function is invoked. It creates the GraphicsRoutine object that will be
+     * returned to the caller and associates it with this promise.
+     */
     GraphicsRoutine get_return_object();
 
+    /**
+     * @brief Processing token indicating frame-accurate scheduling
+     */
     ProcessingToken processing_token { ProcessingToken::FRAME_ACCURATE };
 
+    /**
+     * @brief Whether this routine should synchronize with FrameClock
+     */
     bool sync_to_clock = true;
 
     /**
-     * @brief The frame index when this coroutine should next execute
+     * @brief The frame position when this coroutine should next execute
      *
      * This is the core timing mechanism for frame-accurate scheduling.
      * When a coroutine co_awaits a FrameDelay, this value is updated to
      * indicate when the coroutine should be resumed next.
+     *
+     * Example:
+     * - Current frame: 1000
+     * - co_await FrameDelay{5}
+     * - next_frame becomes: 1005
+     * - Routine resumes when FrameClock reaches frame 1005
      */
     uint64_t next_frame = 0;
+
+    /**
+     * @brief The active delay context for this coroutine
+     *
+     * This value indicates which type of delay (frame, event, etc.)
+     * is currently being awaited by the coroutine. It helps the scheduler
+     * determine how to manage the coroutine's timing and prevents
+     * cross-domain contamination (e.g., audio delays don't affect graphics routines).
+     *
+     * Valid states for graphics routines:
+     * - NONE: No active delay, can resume immediately
+     * - FRAME_BASED: Waiting for a specific frame (FrameDelay)
+     * - EVENT_BASED: Waiting for a window/input event (EventAwaiter)
+     * - AWAIT: Temporary state during GetPromise awaiter
+     */
+    DelayContext active_delay_context = DelayContext::NONE;
+
+    /**
+     * @brief The amount of delay units for incremental delays
+     *
+     * When using delays that accumulate (like BufferDelay for audio),
+     * this stores the increment amount. For graphics, this would be
+     * the frame increment for continuous animations.
+     *
+     * Example:
+     * ```cpp
+     * auto animation = []() -> GraphicsRoutine {
+     *     while (true) {
+     *         render_frame();
+     *         co_await FrameDelay{1};  // delay_amount = 1
+     *     }
+     * };
+     * ```
+     */
+    uint64_t delay_amount = 0;
 };
 
 // TODO: Graphics features are not yet implemented, needs GL/Vulkan integration first
