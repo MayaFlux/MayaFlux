@@ -84,6 +84,7 @@ bool SoundRoutine::initialize_state(uint64_t current_sample)
     }
 
     m_handle.promise().next_sample = current_sample;
+    m_handle.promise().next_buffer_cycle = current_sample;
     m_handle.resume();
     return true;
 }
@@ -113,8 +114,7 @@ bool SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext 
     }
 
     if (context != DelayContext::NONE && promise_ref.active_delay_context == DelayContext::AWAIT) {
-        initialize_state(current_value);
-        return false;
+        return initialize_state(current_value);
     }
 
     if (promise_ref.active_delay_context != DelayContext::NONE && promise_ref.active_delay_context != context) {

@@ -101,11 +101,13 @@ void BufferPipeline::execute_once()
             std::source_location::current(),
             "Pipeline requires scheduler for execution");
     }
+    auto self = shared_from_this();
 
     m_max_cycles = 1;
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(1, 0));
     m_scheduler->add_task(std::move(routine));
+    m_active_self = self;
 }
 
 void BufferPipeline::execute_for_cycles(uint32_t cycles)
@@ -117,10 +119,12 @@ void BufferPipeline::execute_for_cycles(uint32_t cycles)
             "Pipeline requires scheduler for execution");
     }
 
+    auto self = shared_from_this();
     m_max_cycles = cycles;
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(cycles, 0));
     m_scheduler->add_task(std::move(routine));
+    m_active_self = self;
 }
 
 void BufferPipeline::execute_continuous()
@@ -353,6 +357,13 @@ void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
                     "Data type mismatch during CIRCULAR capture: {}",
                     e.what());
                 m_operation_data[&op] = buffer_data;
+            } catch (std::exception& e) {
+                error_rethrow(Journal::Component::Kriya,
+                    Journal::Context::CoroutineScheduling,
+                    std::source_location::current(),
+                    "Error during CIRCULAR capture: {}",
+                    e.what());
+                m_operation_data[&op] = buffer_data;
             }
         }
         break;
@@ -377,23 +388,29 @@ void BufferPipeline::capture_operation(BufferOperation& op, uint64_t cycle)
                 auto& windowed = std::get<std::vector<double>>(it->second);
                 const auto& new_data = std::get<std::vector<double>>(buffer_data);
 
-                auto size_cache = static_cast<int64_t>(windowed.size());
-
-                if (size_cache >= window_size) {
+                if (windowed.size() >= window_size) {
                     if (hop_size >= windowed.size()) {
                         windowed = std::get<std::vector<double>>(buffer_data);
                     } else {
                         windowed.erase(windowed.begin(),
-                            windowed.begin() + std::min<int64_t>(hop_size, size_cache));
+                            windowed.begin() + hop_size);
+
                         windowed.insert(windowed.end(), new_data.begin(), new_data.end());
 
                         if (windowed.size() > window_size) {
+                            size_t excess = windowed.size() - window_size;
                             windowed.erase(windowed.begin(),
-                                windowed.begin() + (size_cache - window_size));
+                                windowed.begin() + excess);
                         }
                     }
                 } else {
                     windowed.insert(windowed.end(), new_data.begin(), new_data.end());
+
+                    if (windowed.size() > window_size) {
+                        size_t excess = windowed.size() - window_size;
+                        windowed.erase(windowed.begin(),
+                            windowed.begin() + excess);
+                    }
                 }
 
             } catch (const std::bad_variant_access& e) {
@@ -614,7 +631,8 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
         default:
             MF_ERROR(Journal::Component::Kriya,
                 Journal::Context::CoroutineScheduling,
-                "Unknown operation type in pipeline");
+                "Unknown operation type in pipeline : {} : {}",
+                Utils::enum_to_string(op.get_type()), std::to_string(static_cast<int>(op.get_type())));
             break;
         }
     } catch (const std::exception& e) {
@@ -769,11 +787,10 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
             }
 
             for (uint32_t iter = 0; iter < op_iterations; ++iter) {
+                process_operation(op, m_current_cycle + iter);
                 if (m_capture_timing == Vruta::DelayContext::BUFFER_BASED) {
-                    process_operation(op, m_current_cycle + iter);
                     co_await BufferDelay { 1 };
                 } else if (m_capture_timing == Vruta::DelayContext::SAMPLE_BASED && samples_per_operation > 0) {
-                    process_operation(op, m_current_cycle + iter);
                     co_await SampleDelay { samples_per_operation };
                 }
             }
