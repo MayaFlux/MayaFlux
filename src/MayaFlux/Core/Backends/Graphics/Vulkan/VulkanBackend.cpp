@@ -1,5 +1,6 @@
 #include "VulkanBackend.hpp"
 
+#include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "VKCommandManager.hpp"
 #include "VKFramebuffer.hpp"
 #include "VKRenderPass.hpp"
@@ -61,7 +62,7 @@ void WindowRenderContext::cleanup(VKContext& context)
 }
 
 VulkanBackend::VulkanBackend()
-    : m_vulkan_context(std::make_unique<VKContext>())
+    : m_context(std::make_unique<VKContext>())
     , m_command_manager(std::make_unique<VKCommandManager>())
 {
 }
@@ -73,15 +74,15 @@ bool VulkanBackend::initialize(const GlobalGraphicsConfig& config)
     if (m_is_initialized) {
         return true;
     }
-    if (!m_vulkan_context->initialize(config, true)) {
+    if (!m_context->initialize(config, true)) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to initialize Vulkan context!");
         return false;
     }
 
     if (!m_command_manager->initialize(
-            m_vulkan_context->get_device(),
-            m_vulkan_context->get_queue_families().graphics_family.value())) {
+            m_context->get_device(),
+            m_context->get_queue_families().graphics_family.value())) {
 
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to initialize command manager!");
@@ -97,10 +98,10 @@ void VulkanBackend::cleanup()
     if (!m_is_initialized) {
         return;
     }
-    m_vulkan_context->wait_idle();
+    m_context->wait_idle();
 
     for (auto& config : m_window_contexts) {
-        config.cleanup(*m_vulkan_context);
+        config.cleanup(*m_context);
     }
     m_window_contexts.clear();
 
@@ -108,7 +109,7 @@ void VulkanBackend::cleanup()
         m_command_manager->cleanup();
     }
 
-    m_vulkan_context->cleanup();
+    m_context->cleanup();
     m_is_initialized = false; // Mark as cleaned up
 }
 
@@ -118,7 +119,7 @@ bool VulkanBackend::register_window(std::shared_ptr<Window> window)
         return false;
     }
 
-    vk::SurfaceKHR surface = m_vulkan_context->create_surface(window);
+    vk::SurfaceKHR surface = m_context->create_surface(window);
     if (!surface) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to create Vulkan surface for window '{}'",
@@ -126,10 +127,10 @@ bool VulkanBackend::register_window(std::shared_ptr<Window> window)
         return false;
     }
 
-    if (!m_vulkan_context->update_present_family(surface)) {
+    if (!m_context->update_present_family(surface)) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "No presentation support for window '{}'", window->get_create_info().title);
-        m_vulkan_context->destroy_surface(surface);
+        m_context->destroy_surface(surface);
         return false;
     }
 
@@ -138,7 +139,7 @@ bool VulkanBackend::register_window(std::shared_ptr<Window> window)
     config.surface = surface;
     config.swapchain = std::make_unique<VKSwapchain>();
 
-    if (!config.swapchain->create(*m_vulkan_context, surface, window->get_create_info())) {
+    if (!config.swapchain->create(*m_context, surface, window->get_create_info())) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to create swapchain for window '{}'", window->get_create_info().title);
         return false;
@@ -149,7 +150,7 @@ bool VulkanBackend::register_window(std::shared_ptr<Window> window)
             "Failed to create sync objects for window '{}'",
             window->get_create_info().title);
         config.swapchain->cleanup();
-        m_vulkan_context->destroy_surface(surface);
+        m_context->destroy_surface(surface);
         return false;
     }
 
@@ -173,7 +174,7 @@ bool VulkanBackend::register_window(std::shared_ptr<Window> window)
 
 bool VulkanBackend::create_sync_objects(WindowRenderContext& config)
 {
-    auto device = m_vulkan_context->get_device();
+    auto device = m_context->get_device();
     uint32_t image_count = config.swapchain->get_image_count();
 
     try {
@@ -234,7 +235,7 @@ bool VulkanBackend::create_sync_objects(WindowRenderContext& config)
 
 void VulkanBackend::recreate_swapchain_for_context(WindowRenderContext& context)
 {
-    m_vulkan_context->wait_idle();
+    m_context->wait_idle();
 
     if (recreate_swapchain_internal(context)) {
         context.needs_recreation = false;
@@ -252,13 +253,13 @@ bool VulkanBackend::recreate_swapchain_internal(WindowRenderContext& context)
 
     for (auto& framebuffer : context.framebuffers) {
         if (framebuffer) {
-            framebuffer->cleanup(m_vulkan_context->get_device());
+            framebuffer->cleanup(m_context->get_device());
         }
     }
     context.framebuffers.clear();
 
     if (context.render_pass) {
-        context.render_pass->cleanup(m_vulkan_context->get_device());
+        context.render_pass->cleanup(m_context->get_device());
         context.render_pass.reset();
     }
 
@@ -271,7 +272,7 @@ bool VulkanBackend::recreate_swapchain_internal(WindowRenderContext& context)
 
     context.render_pass = std::make_unique<VKRenderPass>();
     if (!context.render_pass->create(
-            m_vulkan_context->get_device(),
+            m_context->get_device(),
             context.swapchain->get_image_format())) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to recreate render pass for window '{}'",
@@ -289,7 +290,7 @@ bool VulkanBackend::recreate_swapchain_internal(WindowRenderContext& context)
         std::vector<vk::ImageView> attachments = { image_views[i] };
 
         if (!context.framebuffers[i]->create(
-                m_vulkan_context->get_device(),
+                m_context->get_device(),
                 context.render_pass->get(),
                 attachments,
                 extent.width,
@@ -321,8 +322,8 @@ void VulkanBackend::render_all_windows()
 
 void VulkanBackend::render_window_internal(WindowRenderContext& context)
 {
-    auto device = m_vulkan_context->get_device();
-    auto graphics_queue = m_vulkan_context->get_graphics_queue();
+    auto device = m_context->get_device();
+    auto graphics_queue = m_context->get_graphics_queue();
 
     size_t frame_index = context.current_frame;
     auto& in_flight = context.in_flight[frame_index];
@@ -393,7 +394,7 @@ void VulkanBackend::unregister_window(std::shared_ptr<Window> window)
     auto it = m_window_contexts.begin();
     while (it != m_window_contexts.end()) {
         if (it->window == window) {
-            it->cleanup(*m_vulkan_context);
+            it->cleanup(*m_context);
             MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
                 "Unregistered window '{}'", it->window->get_create_info().title);
             it = m_window_contexts.erase(it);
@@ -412,19 +413,174 @@ void VulkanBackend::handle_window_resize()
     }
 }
 
+void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Attempted to initialize null VulkanBuffer");
+        return;
+    }
+
+    auto buffer_wrapper = std::dynamic_pointer_cast<Buffers::VKBuffer>(buffer);
+    if (!buffer_wrapper) {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Buffer is not a VulkanBuffer, skipping initialization");
+
+        return;
+    }
+
+    if (buffer_wrapper->is_initialized()) {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "VulkanBuffer already initialized, skipping");
+        return;
+    }
+
+    vk::BufferCreateInfo buffer_info {};
+    buffer_info.size = buffer_wrapper->get_size_bytes();
+    buffer_info.usage = static_cast<vk::BufferUsageFlags>(buffer_wrapper->get_vk_usage_flags());
+    buffer_info.sharingMode = vk::SharingMode::eExclusive;
+
+    vk::Buffer vk_buffer;
+    try {
+        vk_buffer = m_context->get_device().createBuffer(buffer_info);
+    } catch (const vk::SystemError& e) {
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to create VkBuffer: " + std::string(e.what()));
+    }
+
+    vk::MemoryRequirements mem_requirements;
+    mem_requirements = m_context->get_device().getBufferMemoryRequirements(vk_buffer);
+
+    vk::MemoryAllocateInfo alloc_info;
+    alloc_info.allocationSize = mem_requirements.size;
+
+    alloc_info.memoryTypeIndex = find_memory_type(
+        mem_requirements.memoryTypeBits,
+        vk::MemoryPropertyFlags(buffer_wrapper->get_vk_memory_properties()));
+
+    vk::DeviceMemory memory;
+    try {
+        memory = m_context->get_device().allocateMemory(alloc_info);
+    } catch (const vk::SystemError& e) {
+        m_context->get_device().destroyBuffer(vk_buffer);
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to allocate VkDeviceMemory: " + std::string(e.what()));
+    }
+
+    try {
+        m_context->get_device().bindBufferMemory(vk_buffer, memory, 0);
+    } catch (const vk::SystemError& e) {
+        m_context->get_device().freeMemory(memory);
+        m_context->get_device().destroyBuffer(vk_buffer);
+
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to bind buffer memory: " + std::string(e.what()));
+    }
+
+    void* mapped_ptr = nullptr;
+    if (buffer_wrapper->should_be_host_visible()) {
+        try {
+            mapped_ptr = m_context->get_device().mapMemory(memory, 0, buffer_wrapper->get_size_bytes());
+        } catch (const vk::SystemError& e) {
+            m_context->get_device().freeMemory(memory);
+            m_context->get_device().destroyBuffer(vk_buffer);
+
+            error_rethrow(
+                Journal::Component::Core,
+                Journal::Context::GraphicsBackend,
+                std::source_location::current(),
+                "Failed to map buffer memory: " + std::string(e.what()));
+        }
+    }
+
+    buffer_wrapper->set_vk_buffer(vk_buffer);
+    buffer_wrapper->set_vk_memory(memory);
+    buffer_wrapper->set_mapped_ptr(mapped_ptr);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "VulkanBuffer initialized: {} bytes, modality: {}, VkBuffer: {:p}",
+        buffer_wrapper->get_size_bytes(),
+        Kakshya::modality_to_string(buffer_wrapper->get_modality()),
+        (void*)buffer_wrapper->get_vk_buffer());
+}
+
+void VulkanBackend::cleanup_buffer(std::shared_ptr<Buffers::Buffer> buffer)
+{
+    auto buffer_wrapper = std::dynamic_pointer_cast<Buffers::VKBuffer>(buffer);
+    if (!buffer_wrapper) {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Buffer is not a VulkanBuffer, skipping initialization");
+
+        return;
+    }
+
+    auto it = m_managed_buffers.find(buffer_wrapper);
+    if (it == m_managed_buffers.end()) {
+        return;
+    }
+
+    auto& [vk_buffer, memory, mapped_ptr] = it->second;
+
+    if (mapped_ptr) {
+        m_context->get_device().unmapMemory(memory);
+    }
+
+    if (vk_buffer) {
+        m_context->get_device().destroyBuffer(vk_buffer);
+    }
+
+    if (memory) {
+        m_context->get_device().freeMemory(memory);
+    }
+
+    m_managed_buffers.erase(it);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "VulkanBuffer cleaned up: {:p}", (void*)vk_buffer);
+}
+
+uint32_t VulkanBackend::find_memory_type(uint32_t type_filter, vk::MemoryPropertyFlags properties) const
+{
+    vk::PhysicalDeviceMemoryProperties mem_properties;
+    mem_properties = m_context->get_physical_device().getMemoryProperties();
+
+    for (uint32_t i = 0; i < mem_properties.memoryTypeCount; i++) {
+        if ((type_filter & (1 << i)) && (mem_properties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    error<std::runtime_error>(
+        Journal::Component::Core,
+        Journal::Context::GraphicsBackend,
+        std::source_location::current(),
+        "Failed to find suitable memory type");
+
+    return 0;
+}
+
 void VulkanBackend::wait_idle()
 {
-    m_vulkan_context->wait_idle();
+    m_context->wait_idle();
 }
 
 void* VulkanBackend::get_native_context()
 {
-    return m_vulkan_context.get();
+    return m_context.get();
 }
 
 const void* VulkanBackend::get_native_context() const
 {
-    return m_vulkan_context.get();
+    return m_context.get();
 }
 
 bool VulkanBackend::is_window_registered(std::shared_ptr<Window> window)

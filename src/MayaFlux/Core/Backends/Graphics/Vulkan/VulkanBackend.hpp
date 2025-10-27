@@ -4,6 +4,10 @@
 
 #include <vulkan/vulkan.hpp>
 
+namespace MayaFlux::Buffers {
+class VKBuffer;
+}
+
 namespace MayaFlux::Core {
 
 class VKContext;
@@ -85,6 +89,10 @@ public:
 
     [[nodiscard]] bool is_window_registered(std::shared_ptr<Window> window) override;
 
+    void initialize_buffer(std::shared_ptr<class Buffers::Buffer> buffer) override;
+
+    void cleanup_buffer(std::shared_ptr<class Buffers::Buffer> buffer) override;
+
     /**
      * @brief Begin rendering frame for the specified window
      * @param window Shared pointer to the window to begin frame for
@@ -132,10 +140,16 @@ public:
     [[nodiscard]] const void* get_native_context() const override;
 
 private:
-    std::unique_ptr<VKContext> m_vulkan_context;
-    std::unique_ptr<VKCommandManager> m_command_manager;
+    struct BufferResources {
+        VkBuffer vk_buffer;
+        VkDeviceMemory memory;
+        void* mapped_ptr;
+    };
 
+    std::unique_ptr<VKContext> m_context;
+    std::unique_ptr<VKCommandManager> m_command_manager;
     std::vector<WindowRenderContext> m_window_contexts;
+    std::unordered_map<std::shared_ptr<Buffers::VKBuffer>, BufferResources> m_managed_buffers;
 
     bool m_is_initialized {};
 
@@ -145,6 +159,14 @@ private:
             [window](const auto& config) { return config.window == window; });
         return it != m_window_contexts.end() ? &(*it) : nullptr;
     }
+
+    /**
+     * @brief Find a suitable memory type for Vulkan buffer allocation
+     * @param type_filter Memory type bits filter
+     * @param properties Desired memory property flags
+     * @return Index of the suitable memory type
+     */
+    uint32_t find_memory_type(uint32_t type_filter, vk::MemoryPropertyFlags properties) const;
 
     /**
      * @brief Create synchronization objects for a window's swapchain

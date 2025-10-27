@@ -58,6 +58,8 @@ public:
         Usage usage,
         Kakshya::DataModality modality);
 
+    VKBuffer() = default;
+
     /**
      * @brief Virtual destructor
      *
@@ -255,17 +257,17 @@ private:
     void* m_mapped_ptr = nullptr;
 
     // Buffer parameters
-    size_t m_size_bytes;
-    Usage m_usage;
+    size_t m_size_bytes {};
+    Usage m_usage {};
 
     // Semantic metadata
     Kakshya::DataModality m_modality;
     std::vector<Kakshya::DataDimension> m_dimensions;
 
     // Buffer interface state
-    bool m_has_data = true;
-    bool m_needs_removal = false;
-    bool m_process_default = true;
+    bool m_has_data { true };
+    bool m_needs_removal {};
+    bool m_process_default { true };
     std::atomic<bool> m_is_processing;
     std::shared_ptr<Buffers::BufferProcessor> m_default_processor;
     std::shared_ptr<Buffers::BufferProcessingChain> m_processing_chain;

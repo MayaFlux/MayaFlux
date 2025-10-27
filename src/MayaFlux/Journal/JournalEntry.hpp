@@ -85,6 +85,7 @@ enum class Context : uint8_t {
 
     NodeProcessing, ///< Node graph processing (Nodes::NodeGraphManager)
     BufferProcessing, ///< Buffer processing (Buffers::BufferManager, processing chains)
+    BufferManagement, ///< Buffer Management (Buffers::BufferManager, creating buffers)
     CoroutineScheduling, ///< Coroutine scheduling and temporal coordination (Vruta::TaskScheduler)
     ContainerProcessing, ///< Container operations (Kakshya - file/stream/region processing)
     ComputeProcessing, ///< Compute operations (Yantra - algorithms, matrices, DSP)

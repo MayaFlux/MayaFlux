@@ -2,6 +2,10 @@
 
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 
+namespace MayaFlux::Buffers {
+class Buffer;
+}
+
 namespace MayaFlux::Core {
 
 class Window;
@@ -49,6 +53,18 @@ public:
     [[nodiscard]]
     virtual bool is_window_registered(std::shared_ptr<Window> window)
         = 0;
+
+    /**
+     * @brief Initialize a buffer for use with the graphics backend
+     * @param buffer Shared pointer to the buffer to initialize
+     */
+    virtual void initialize_buffer(std::shared_ptr<class Buffers::Buffer> buffer) = 0;
+
+    /**
+     * @brief Cleanup a buffer and release its resources from the graphics backend
+     * @param buffer Shared pointer to the buffer to cleanup
+     */
+    virtual void cleanup_buffer(std::shared_ptr<class Buffers::Buffer> buffer) = 0;
 
     /**
      * @brief Begin rendering frame for the specified window
