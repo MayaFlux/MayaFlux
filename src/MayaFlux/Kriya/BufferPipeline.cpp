@@ -120,6 +120,11 @@ void BufferPipeline::execute_for_cycles(uint32_t cycles)
     }
 
     auto self = shared_from_this();
+
+    if (cycles == 0) {
+        cycles = UINT64_MAX;
+        m_continuous_execution = true;
+    }
     m_max_cycles = cycles;
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(cycles, 0));
@@ -129,22 +134,8 @@ void BufferPipeline::execute_for_cycles(uint32_t cycles)
 
 void BufferPipeline::execute_continuous()
 {
-    if (!m_scheduler) {
-        error<std::runtime_error>(Journal::Component::Kriya,
-            Journal::Context::CoroutineScheduling,
-            std::source_location::current(),
-            "Pipeline requires scheduler for execution");
-    }
     m_continuous_execution = true;
-    auto self = shared_from_this();
-
-    m_max_cycles = UINT64_MAX;
-
-    auto routine = std::make_shared<Vruta::SoundRoutine>(
-        execute_internal(0, 0));
-
-    m_scheduler->add_task(std::move(routine));
-    m_active_self = self;
+    execute_for_cycles(0);
 }
 
 void BufferPipeline::execute_scheduled(
@@ -159,6 +150,11 @@ void BufferPipeline::execute_scheduled(
     }
 
     auto self = shared_from_this();
+
+    if (max_cycles == 0) {
+        max_cycles = UINT64_MAX;
+        m_continuous_execution = true;
+    }
 
     m_max_cycles = max_cycles;
 

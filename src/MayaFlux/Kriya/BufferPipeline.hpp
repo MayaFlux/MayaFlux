@@ -293,7 +293,7 @@ public:
      *
      * @note Execution happens asynchronously - this function returns immediately.
      */
-    void execute_for_cycles(uint32_t cycles);
+    void execute_for_cycles(uint32_t cycles = 0);
 
     /**
      * @brief Start continuous execution of the pipeline.
@@ -335,7 +335,7 @@ public:
      *
      * @note Execution is asynchronous. The pipeline keeps itself alive until completion.
      */
-    void execute_scheduled(uint32_t max_cycles, uint64_t samples_per_operation = 1);
+    void execute_scheduled(uint32_t max_cycles = 0, uint64_t samples_per_operation = 1);
 
     /**
      * @brief Execute pipeline with real-time rate control.
@@ -354,7 +354,7 @@ public:
      * pipeline->execute_scheduled_at_rate(10, 0.5);
      * ```
      */
-    void execute_scheduled_at_rate(uint32_t max_cycles, double seconds_per_operation);
+    void execute_scheduled_at_rate(uint32_t max_cycles = 0, double seconds_per_operation = 1);
 
     /**
      * @brief Execute pipeline synchronized to audio hardware cycle boundaries
