@@ -3,9 +3,12 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
 #include "MayaFlux/Buffers/Root/MixProcessor.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
 #include "Input/InputAudioBuffer.hpp"
+
+#include "VKBuffer.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -174,7 +177,7 @@ std::vector<ProcessingToken> BufferManager::get_active_tokens() const
 void BufferManager::register_token_processor(ProcessingToken token, RootProcessingFunction processor)
 {
     auto& unit = get_or_create_unit(token);
-    unit.custom_processor = processor;
+    unit.custom_processor = std::move(processor);
 }
 
 std::shared_ptr<RootAudioBuffer> BufferManager::get_root_audio_buffer(ProcessingToken token, uint32_t channel)
@@ -247,7 +250,7 @@ void BufferManager::remove_audio_buffer(std::shared_ptr<AudioBuffer> buffer, Pro
     if (it == m_audio_units.end() || channel >= it->second.channel_count)
         return;
 
-    it->second.get_buffer(channel)->remove_child_buffer(buffer);
+    it->second.get_buffer(channel)->remove_child_buffer(std::move(buffer));
 }
 
 const std::vector<std::shared_ptr<AudioBuffer>>& BufferManager::get_audio_buffers(ProcessingToken token, uint32_t channel) const
@@ -258,6 +261,40 @@ const std::vector<std::shared_ptr<AudioBuffer>>& BufferManager::get_audio_buffer
         throw std::out_of_range("Token/channel combination out of range");
     }
     return it->second.get_buffer(channel)->get_child_buffers();
+}
+
+void BufferManager::add_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
+{
+    if (!std::dynamic_pointer_cast<VKBuffer>(buffer)) {
+        error<std::invalid_argument>(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
+            "Unsupported graphics buffer type for token {}",
+            static_cast<int>(token));
+    }
+
+    auto hook_it = m_buffer_init_hooks.find(token);
+    if (hook_it != m_buffer_init_hooks.end()) {
+        try {
+            hook_it->second(buffer);
+        } catch (const std::exception& e) {
+            error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
+                "Buffer init hook failed for token {}: {}",
+                static_cast<int>(token), e.what());
+        }
+    }
+}
+
+void BufferManager::remove_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
+{
+    if (!std::dynamic_pointer_cast<VKBuffer>(buffer)) {
+        error<std::invalid_argument>(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
+            "Unsupported graphics buffer type for token {}",
+            static_cast<int>(token));
+    }
+    auto hook_it = m_buffer_cleanup_hooks.find(token);
+    if (hook_it != m_buffer_cleanup_hooks.end()) {
+        hook_it->second(buffer);
+        m_buffer_cleanup_hooks.erase(hook_it);
+    }
 }
 
 std::shared_ptr<BufferProcessingChain> BufferManager::get_processing_chain(ProcessingToken token, uint32_t channel)
@@ -598,6 +635,59 @@ bool BufferManager::remove_supplied_buffer(std::shared_ptr<AudioBuffer> buffer, 
         return mix_processor->remove_source(buffer);
     }
     return false;
+}
+
+void BufferManager::register_buffer_init_hook(ProcessingToken token, const BufferInitCallback& callback)
+{
+    if (!callback) {
+        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Attempted to register null buffer init callback for token {}",
+            static_cast<int>(token));
+        return;
+    }
+
+    m_buffer_init_hooks[token] = callback;
+
+    MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+        "Registered buffer init hook for token {}",
+        static_cast<int>(token));
+}
+
+void BufferManager::register_buffer_cleanup_hook(ProcessingToken token, const BufferInitCallback& callback)
+{
+    if (!callback) {
+        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Attempted to register null buffer init callback for token {}",
+            static_cast<int>(token));
+        return;
+    }
+
+    m_buffer_cleanup_hooks[token] = callback;
+
+    MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+        "Registered buffer init hook for token {}",
+        static_cast<int>(token));
+}
+
+void BufferManager::unregister_buffer_hooks(ProcessingToken token)
+{
+    auto it = m_buffer_init_hooks.find(token);
+    if (it != m_buffer_init_hooks.end()) {
+        m_buffer_init_hooks.erase(it);
+
+        MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Unregistered buffer init hook for token {}",
+            static_cast<int>(token));
+    }
+
+    auto c_it = m_buffer_cleanup_hooks.find(token);
+    if (c_it != m_buffer_cleanup_hooks.end()) {
+        m_buffer_cleanup_hooks.erase(c_it);
+
+        MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Unregistered buffer cleanup hook for token {}",
+            static_cast<int>(token));
+    }
 }
 
 } // namespace MayaFlux::Buffers

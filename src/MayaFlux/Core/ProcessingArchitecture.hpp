@@ -8,6 +8,8 @@ class NodeGraphManager;
 
 namespace MayaFlux::Buffers {
 class BufferManager;
+class Buffer;
+class VKBuffer;
 }
 
 namespace MayaFlux::Vruta {
@@ -83,6 +85,9 @@ struct SubsystemTokens {
  */
 class BufferProcessingHandle {
 public:
+    /** @brief Callback type for buffer initialization */
+    using BufferInitCallback = std::function<void(std::shared_ptr<Buffers::Buffer>)>;
+
     /** @brief Constructs handle for specific buffer manager and token */
     BufferProcessingHandle(
         std::shared_ptr<Buffers::BufferManager> manager,
@@ -117,6 +122,15 @@ public:
 
     /** @brief Configure channel layout for token domain */
     void setup_channels(uint32_t num_channels, uint32_t buffer_size);
+
+    /** @brief Register buffer initialization callback for token domain */
+    void set_registration_callback(Buffers::ProcessingToken token, const BufferInitCallback& callback);
+
+    /** @brief Register buffer cleanup callback for token domain */
+    void set_cleanup_callback(Buffers::ProcessingToken token, const BufferInitCallback& callback);
+
+    /** @brief Unregister buffer initialization callback for token domain */
+    void unregister_callbacks(Buffers::ProcessingToken token);
 
 private:
     void ensure_valid() const;

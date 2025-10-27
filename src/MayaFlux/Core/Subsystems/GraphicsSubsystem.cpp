@@ -1,5 +1,6 @@
 #include "GraphicsSubsystem.hpp"
 
+#include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -58,11 +59,61 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
         m_frame_clock->set_target_fps(m_graphics_config.target_frame_rate);
     }
 
+    m_handle->buffers.set_registration_callback(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND, [this](std::shared_ptr<Buffers::Buffer> buffer) {
+            this->initialize_graphics_buffer(std::move(buffer));
+        });
+
+    m_handle->buffers.set_cleanup_callback(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND, [this](std::shared_ptr<Buffers::Buffer> buffer) {
+            this->cleanup_graphics_buffer(std::move(buffer));
+        });
+
     m_is_ready = true;
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
         "Graphics Subsystem initialized (Target FPS: {})",
         m_frame_clock->frame_rate());
+}
+
+void GraphicsSubsystem::initialize_graphics_buffer(std::shared_ptr<Buffers::Buffer> buffer)
+{
+    if (!m_backend) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsSubsystem,
+            std::source_location::current(),
+            "Cannot cleanup VulkanBuffer: no graphics backend available");
+    }
+
+    try {
+        m_backend->initialize_buffer(std::move(buffer));
+
+    } catch (const std::exception& e) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsSubsystem,
+            std::source_location::current(),
+            "Failed to initialize VulkanBuffer: {}", e.what());
+    }
+}
+
+void GraphicsSubsystem::cleanup_graphics_buffer(std::shared_ptr<Buffers::Buffer> buffer)
+{
+    auto vk_buffer = std::dynamic_pointer_cast<Buffers::VKBuffer>(buffer);
+    if (!vk_buffer || !vk_buffer->is_initialized()) {
+        return;
+    }
+
+    if (!m_backend) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::GraphicsSubsystem,
+            std::source_location::current(),
+            "Cannot cleanup VulkanBuffer: no graphics backend available");
+    }
+
+    m_backend->cleanup_buffer(buffer);
 }
 
 void GraphicsSubsystem::register_frame_processor()
@@ -348,6 +399,7 @@ void GraphicsSubsystem::graphics_thread_loop()
 void GraphicsSubsystem::shutdown()
 {
     stop();
+    m_handle->buffers.unregister_callbacks(Buffers::ProcessingToken::GRAPHICS_BACKEND);
     m_is_ready = false;
 }
 

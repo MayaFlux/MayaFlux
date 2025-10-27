@@ -93,6 +93,24 @@ void NodeProcessingHandle::process(uint32_t num_samples)
     m_manager->process_token(m_token, num_samples);
 }
 
+void BufferProcessingHandle::set_registration_callback(Buffers::ProcessingToken token, const BufferInitCallback& callback)
+{
+    ensure_valid();
+    m_manager->register_buffer_init_hook(token, callback);
+}
+
+void BufferProcessingHandle::set_cleanup_callback(Buffers::ProcessingToken token, const BufferInitCallback& callback)
+{
+    ensure_valid();
+    m_manager->register_buffer_cleanup_hook(token, callback);
+}
+
+void BufferProcessingHandle::unregister_callbacks(Buffers::ProcessingToken token)
+{
+    ensure_valid();
+    m_manager->unregister_buffer_hooks(token);
+}
+
 std::vector<double> NodeProcessingHandle::process_channel(uint32_t channel, uint32_t num_samples)
 {
     return m_manager->process_channel(m_token, channel, num_samples);

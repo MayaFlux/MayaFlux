@@ -194,6 +194,18 @@ private:
     void process_frame_coroutines_impl(const std::vector<std::shared_ptr<Vruta::Routine>>& tasks, uint64_t processing_units);
 
     /**
+     * @brief Initialize resources for a graphics buffer
+     * @param buffer Shared pointer to the buffer to initialize
+     */
+    void initialize_graphics_buffer(std::shared_ptr<Buffers::Buffer> buffer);
+
+    /**
+     * @brief Cleanup resources for a graphics buffer
+     * @param buffer Shared pointer to the buffer to cleanup
+     */
+    void cleanup_graphics_buffer(std::shared_ptr<Buffers::Buffer> buffer);
+
+    /**
      * @brief Cleanup resources for windows that have been closed
      */
     void cleanup_closed_windows();

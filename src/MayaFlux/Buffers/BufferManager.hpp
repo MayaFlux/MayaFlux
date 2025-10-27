@@ -12,6 +12,7 @@ class InputAudioBuffer;
 
 using AudioProcessingFunction = std::function<void(std::shared_ptr<AudioBuffer>)>;
 using RootProcessingFunction = std::function<void(std::vector<std::shared_ptr<RootAudioBuffer>>&, uint32_t)>;
+using BufferInitCallback = std::function<void(std::shared_ptr<Buffer>)>;
 
 struct RootAudioUnit {
     std::vector<std::shared_ptr<RootAudioBuffer>> root_buffers;
@@ -20,12 +21,12 @@ struct RootAudioUnit {
     uint32_t channel_count = 0;
     uint32_t buffer_size = 512;
 
-    std::shared_ptr<RootAudioBuffer> get_buffer(uint32_t channel) const
+    [[nodiscard]] std::shared_ptr<RootAudioBuffer> get_buffer(uint32_t channel) const
     {
         return root_buffers[channel];
     }
 
-    std::shared_ptr<BufferProcessingChain> get_chain(uint32_t channel) const
+    [[nodiscard]] std::shared_ptr<BufferProcessingChain> get_chain(uint32_t channel) const
     {
         return processing_chains[channel];
     }
@@ -186,6 +187,22 @@ public:
      * @return Vector of buffers in that token/channel
      */
     const std::vector<std::shared_ptr<AudioBuffer>>& get_audio_buffers(ProcessingToken token, uint32_t channel) const;
+
+    /**
+     * @brief Registeres and adds a graphics buffer to the specified token/channel
+     * @param buffer Buffer to add
+     * @param token Processing domain
+     *
+     * Using the registration hook provided by GraphicsSubysetem, the appropriate backend buffer is created and attached
+     */
+    void add_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token);
+
+    /**
+     * @brief Removes a graphics buffer from the specified token/channel
+     * @param buffer Buffer to remove
+     * @param token Processing domain
+     */
+    void remove_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token);
 
     /**
      * @brief Creates a specialized buffer and adds it to the specified token/channel
@@ -423,6 +440,26 @@ public:
      */
     bool remove_supplied_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel);
 
+    /**
+     * @brief Registers a buffer initialization callback for a specific processing token
+     * @param token Processing domain
+     * @param callback Callback function to invoke on buffer initialization
+     */
+    void register_buffer_init_hook(ProcessingToken token, const BufferInitCallback& callback);
+
+    /**
+     * @brief Registers a buffer cleanup callback for a specific processing token
+     * @param token Processing domain
+     * @param callback Callback function to invoke on buffer cleanup
+     */
+    void register_buffer_cleanup_hook(ProcessingToken token, const BufferInitCallback& callback);
+
+    /**
+     * @brief Unregisters the buffer init/cleanup callbacks for a specific processing token
+     * @param token Processing domain
+     */
+    void unregister_buffer_hooks(ProcessingToken token);
+
 private:
     /**
      * @brief Gets or creates the root audio unit for a specific processing token
@@ -463,6 +500,9 @@ private:
      * @brief Input buffers for capturing audio input data
      */
     std::vector<std::shared_ptr<InputAudioBuffer>> m_input_buffers;
+
+    std::unordered_map<ProcessingToken, BufferInitCallback> m_buffer_init_hooks;
+    std::unordered_map<ProcessingToken, BufferInitCallback> m_buffer_cleanup_hooks;
 
     /**
      * @brief Global processing chain applied to all tokens
