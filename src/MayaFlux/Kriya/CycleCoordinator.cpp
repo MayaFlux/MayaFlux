@@ -17,7 +17,7 @@ Vruta::SoundRoutine CycleCoordinator::sync_pipelines(
     uint64_t samples_per_cycle)
 {
 
-    auto& promise = co_await GetPromise {};
+    auto& promise = co_await GetAudioPromise {};
     uint32_t cycle = 0;
 
     while (true) {
@@ -59,7 +59,7 @@ Vruta::SoundRoutine CycleCoordinator::manage_transient_data(
     std::function<void(uint32_t)> on_data_expired)
 {
 
-    auto& promise = co_await GetPromise {};
+    auto& promise = co_await GetAudioPromise {};
     uint32_t cycle = 0;
 
     while (true) {

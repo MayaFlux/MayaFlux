@@ -503,7 +503,7 @@ Coroutines can be created directly using the `SoundRoutine` API and managed thro
 ```cpp
 // Create SoundRoutine using API-based awaiters
 auto temporal_pattern = [](Vruta::TaskScheduler& scheduler) -> Vruta::SoundRoutine {
-    auto& promise = co_await Kriya::GetPromise{};
+    auto& promise = co_await Kriya::GetAudioPromise{};
 
     while (true) {
         // Check termination flag set by external control
@@ -539,7 +539,7 @@ The actual awaiter implementations available for coroutine control:
 ```cpp
 // Using pre-built coroutine patterns with API awaiters
 auto metro_routine = [](Vruta::TaskScheduler& scheduler) -> Vruta::SoundRoutine {
-    auto& promise = co_await Kriya::GetPromise{};
+    auto& promise = co_await Kriya::GetAudioPromise{};
     uint64_t interval_samples = scheduler.seconds_to_samples(2.0);
 
     while (true) {
@@ -561,7 +561,7 @@ auto metro_routine = [](Vruta::TaskScheduler& scheduler) -> Vruta::SoundRoutine 
 ```cpp
 // Create routine with state management
 auto stateful_routine = [](Vruta::TaskScheduler& scheduler) -> Vruta::SoundRoutine {
-    auto& promise = co_await Kriya::GetPromise{};
+    auto& promise = co_await Kriya::GetAudioPromise{};
 
     // Initialize state
     promise.set_state("amplitude", 0.8f);
@@ -601,7 +601,7 @@ routine->restart();                   // Restart from beginning
 ```cpp
 // Multi-rate coroutine for cross-domain coordination
 auto sync_routine = [](Vruta::TaskScheduler& scheduler) -> Vruta::ComplexRoutine {
-    auto& promise = co_await Kriya::GetPromise{};
+    auto& promise = co_await Kriya::GetAudioPromise{};
 
     while (true) {
         if (promise.should_terminate) {

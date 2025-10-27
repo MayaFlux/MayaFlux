@@ -730,7 +730,7 @@ Vruta::SoundRoutine BufferPipeline::execute_internal(uint64_t max_cycles, uint64
 
 Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t samples_per_operation)
 {
-    auto& promise = co_await Kriya::GetPromise {};
+    auto& promise = co_await Kriya::GetAudioPromise {};
 
     if (m_operations.empty()) {
         co_return;
@@ -881,7 +881,7 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
 
 Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint64_t samples_per_operation)
 {
-    auto& promise = co_await Kriya::GetPromise {};
+    auto& promise = co_await Kriya::GetAudioPromise {};
 
     if (m_operations.empty()) {
         co_return;

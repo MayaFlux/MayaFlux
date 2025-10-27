@@ -269,8 +269,6 @@ using GetComplexPromise = GetPromiseBase<Vruta::complex_promise>;
  */
 using GetEventPromise = GetPromiseBase<Vruta::event_promise>;
 
-using GetPromise = GetAudioPromise;
-
 /**
  * @class EventAwaiter
  * @brief Awaiter for suspending on window events
