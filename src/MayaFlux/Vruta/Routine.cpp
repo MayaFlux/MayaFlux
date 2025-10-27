@@ -127,6 +127,9 @@ bool SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext 
     case DelayContext::SAMPLE_BASED:
         if (promise_ref.active_delay_context == DelayContext::SAMPLE_BASED) {
             should_resume = (current_value >= promise_ref.next_sample);
+            if (should_resume) {
+                promise_ref.next_sample = current_value + promise_ref.delay_amount;
+            }
         } else {
             should_resume = false;
         }
@@ -134,9 +137,6 @@ bool SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext 
 
     case DelayContext::BUFFER_BASED:
         if (promise_ref.active_delay_context == DelayContext::BUFFER_BASED) {
-            // std::cout << "try_resume: current=" << current_value
-            //           << " next_buffer_cycle=" << promise_ref.next_buffer_cycle
-            //           << " will_resume=" << (current_value >= promise_ref.next_buffer_cycle) << "\n";
             should_resume = (current_value >= promise_ref.next_buffer_cycle);
 
             if (should_resume) {
