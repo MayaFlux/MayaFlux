@@ -7,7 +7,7 @@ CMakeFiles/
 CTestTestfile.cmake
 cmake_install.cmake
 Makefile
-.dependencies
+cmake/dependencies/
 srcipts/temp/
 
 # Clangd and language server files

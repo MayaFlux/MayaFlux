@@ -32,7 +32,7 @@ if(MAYAFLUX_USE_SPIRV_REFLECT)
     if(WIN32 OR APPLE)
         target_include_directories(MayaFluxLib PRIVATE ${Vulkan_INCLUDE_DIRS})
     endif()
-    target_link_libraries(MayaFluxLib PRIVATE mayaflux-spirv-reflect)
+    target_link_libraries(MayaFluxLib PRIVATE spirv-reflect-isolated)
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SPIRV_REFLECT)
 endif()
 

@@ -6,33 +6,11 @@ option(MAYAFLUX_USE_SPIRV_REFLECT "Enable shader reflection via SPIRV-Reflect" O
 option(MAYAFLUX_USE_SHADERC "Enable GLSL compilation via Shaderc" ON)
 
 if(MAYAFLUX_USE_SPIRV_REFLECT)
-    message(STATUS "SPIRV-Reflect: Fetching from GitHub...")
+    message(STATUS "SPIRV-Reflect: Building in isolated subdirectory...")
 
-    include(FetchContent)
-    FetchContent_Declare(
-        spirv_reflect
-        URL https://github.com/KhronosGroup/SPIRV-Reflect/archive/refs/heads/main.zip
-    )
-
-    FetchContent_GetProperties(spirv_reflect)
-    if(NOT spirv_reflect_POPULATED)
-        FetchContent_MakeAvailable(spirv_reflect)
-    endif()
-
-    add_library(mayaflux-spirv-reflect STATIC
-        ${spirv_reflect_SOURCE_DIR}/spirv_reflect.c
-    )
-
-    target_include_directories(mayaflux-spirv-reflect
-        PUBLIC ${spirv_reflect_SOURCE_DIR}
-    )
-
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(mayaflux-spirv-reflect PRIVATE -w)
-    else()
-        target_compile_definitions(mayaflux-spirv-reflect
-            PUBLIC SPIRV_REFLECT_IMPLEMENTATION)
-    endif()
+    add_subdirectory(${CMAKE_SOURCE_DIR}/cmake/spirv_reflect
+                        ${CMAKE_BINARY_DIR}/spirv_reflect_build
+                        EXCLUDE_FROM_ALL)
 
     message(STATUS "SPIRV-Reflect fetched successfully")
     message(STATUS "Shader reflection: ENABLED")
