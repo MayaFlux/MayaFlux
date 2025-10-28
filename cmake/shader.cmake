@@ -6,48 +6,42 @@ option(MAYAFLUX_USE_SPIRV_REFLECT "Enable shader reflection via SPIRV-Reflect" O
 option(MAYAFLUX_USE_SHADERC "Enable GLSL compilation via Shaderc" ON)
 
 if(MAYAFLUX_USE_SPIRV_REFLECT)
-    if(WIN32 OR APPLE)
-        message(STATUS "SPIRV-Reflect: Using Vulkan SDK version")
-    else()
-        message(STATUS "SPIRV-Reflect: Fetching from GitHub...")
+    message(STATUS "SPIRV-Reflect: Fetching from GitHub...")
 
-        include(FetchContent)
-        FetchContent_Declare(
-            spirv_reflect
-            URL https://github.com/KhronosGroup/SPIRV-Reflect/archive/refs/heads/main.zip
-        )
+    include(FetchContent)
+    FetchContent_Declare(
+        spirv_reflect
+        URL https://github.com/KhronosGroup/SPIRV-Reflect/archive/refs/heads/main.zip
+    )
 
-        FetchContent_GetProperties(spirv_reflect)
-        if(NOT spirv_reflect_POPULATED)
-            FetchContent_Populate(spirv_reflect)
-        endif()
-
-        add_library(mayaflux-spirv-reflect STATIC
-            ${spirv_reflect_SOURCE_DIR}/spirv_reflect.c
-        )
-
-        target_include_directories(mayaflux-spirv-reflect
-            PUBLIC ${spirv_reflect_SOURCE_DIR}
-        )
-
-        # target_compile_definitions(mayaflux-spirv-reflect
-        #     PUBLIC SPIRV_REFLECT_IMPLEMENTATION
-        # )
-        if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-            target_compile_options(mayaflux-spirv-reflect PRIVATE -w)
-        endif()
-
-        message(STATUS "SPIRV-Reflect fetched successfully")
+    FetchContent_GetProperties(spirv_reflect)
+    if(NOT spirv_reflect_POPULATED)
+        FetchContent_MakeAvailable(spirv_reflect)
     endif()
+
+    add_library(mayaflux-spirv-reflect STATIC
+        ${spirv_reflect_SOURCE_DIR}/spirv_reflect.c
+    )
+
+    target_include_directories(mayaflux-spirv-reflect
+        PUBLIC ${spirv_reflect_SOURCE_DIR}
+    )
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(mayaflux-spirv-reflect PRIVATE -w)
+    else()
+        target_compile_definitions(mayaflux-spirv-reflect
+            PUBLIC SPIRV_REFLECT_IMPLEMENTATION)
+    endif()
+
+    message(STATUS "SPIRV-Reflect fetched successfully")
     message(STATUS "Shader reflection: ENABLED")
 else()
     message(STATUS "Shader reflection: DISABLED (manual descriptor layouts required)")
 endif()
 
 if(MAYAFLUX_USE_SHADERC)
-    if(WIN32 OR APPLE)
-        message(STATUS "Shaderc: Using Vulkan SDK version")
-    else()
+    if(UNIX)
         find_package(PkgConfig REQUIRED)
         pkg_check_modules(shaderc REQUIRED IMPORTED_TARGET shaderc)
 

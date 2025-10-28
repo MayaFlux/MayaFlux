@@ -14,8 +14,11 @@ add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/.dependencies" CACHE PATH
     "Persistent dependencies directory")
 set(FETCHCONTENT_QUIET OFF CACHE BOOL "Show FetchContent progress")
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 include(FetchContent)
+
+if(WIN32)
+   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
 
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL
     "Don't update dependencies automatically")
