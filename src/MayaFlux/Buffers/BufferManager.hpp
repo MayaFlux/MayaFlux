@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/Root/RootAudioBuffer.hpp"
+#include "MayaFlux/Buffers/Root/RootGraphicsBuffer.hpp"
 
 namespace MayaFlux::Nodes {
 class Node;
@@ -34,6 +35,20 @@ struct RootAudioUnit {
     void resize_channels(uint32_t new_count, uint32_t new_buffer_size, ProcessingToken token);
 
     void resize_buffers(uint32_t new_buffer_size);
+};
+
+struct RootGraphicsUnit {
+    std::shared_ptr<RootGraphicsBuffer> root_buffer;
+    std::shared_ptr<BufferProcessingChain> processing_chain;
+    uint32_t frame_count = 0; // For tracking processed frames
+
+    RootGraphicsUnit();
+
+    void initialize(ProcessingToken token);
+
+    [[nodiscard]] std::shared_ptr<RootGraphicsBuffer> get_buffer() const { return root_buffer; }
+
+    [[nodiscard]] std::shared_ptr<BufferProcessingChain> get_chain() const { return processing_chain; }
 };
 
 /**
@@ -165,6 +180,22 @@ public:
     void resize_root_audio_buffers(ProcessingToken token, uint32_t buffer_size);
 
     /**
+     * @brief Gets the root graphics buffer for a specific token
+     * @param token Processing domain (typically GRAPHICS_BACKEND)
+     * @return Shared pointer to the root graphics buffer
+     */
+    std::shared_ptr<RootGraphicsBuffer> get_root_graphics_buffer(
+        ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND);
+
+    /**
+     * @brief Gets the graphics processing chain for a specific token
+     * @param token Processing domain
+     * @return Shared pointer to the processing chain
+     */
+    std::shared_ptr<BufferProcessingChain> get_graphics_processing_chain(
+        ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND);
+
+    /**
      * @brief Adds a buffer to a specific token and channel
      * @param buffer Buffer to add (must be compatible with the token's root buffer type)
      * @param token Processing domain
@@ -189,20 +220,64 @@ public:
     const std::vector<std::shared_ptr<AudioBuffer>>& get_audio_buffers(ProcessingToken token, uint32_t channel) const;
 
     /**
-     * @brief Registeres and adds a graphics buffer to the specified token/channel
-     * @param buffer Buffer to add
-     * @param token Processing domain
+     * @brief Adds a graphics buffer to the specified token
+     * @param buffer Graphics buffer to add (must be VKBuffer-derived)
+     * @param token Processing domain (default: GRAPHICS_BACKEND)
      *
-     * Using the registration hook provided by GraphicsSubysetem, the appropriate backend buffer is created and attached
+     * This method:
+     * 1. Validates the buffer is a VKBuffer
+     * 2. Calls the init hook to allocate GPU resources
+     * 3. Adds the buffer to the root graphics buffer for the token
+     * 4. Sets up the processing chain for the buffer
      */
     void add_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token);
 
     /**
-     * @brief Removes a graphics buffer from the specified token/channel
-     * @param buffer Buffer to remove
-     * @param token Processing domain
+     * @brief Removes a graphics buffer from the specified token
+     * @param buffer Graphics buffer to remove
+     * @param token Processing domain (default: GRAPHICS_BACKEND)
+     *
+     * This method:
+     * 1. Removes the buffer from the root graphics buffer
+     * 2. Calls the cleanup hook to free GPU resources
+     * 3. Cleans up the buffer's processing chain
      */
     void remove_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token);
+
+    /**
+     * @brief Gets all graphics buffers for a specific token
+     * @param token Processing domain
+     * @return Vector of graphics buffers for that token
+     */
+    const std::vector<std::shared_ptr<VKBuffer>>& get_vulkan_buffers(ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND) const;
+
+    /**
+     * @brief Gets graphics buffers filtered by usage type
+     * @param usage VKBuffer::Usage type to filter by
+     * @param token Processing domain (default: GRAPHICS_BACKEND)
+     * @return Vector of buffers matching the specified usage
+     */
+    std::vector<std::shared_ptr<VKBuffer>> get_vulkan_buffers_by_usage(
+        VKBuffer::Usage usage,
+        ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND) const;
+
+    /**
+     * @brief Adds a processor to the graphics processing chain
+     * @param processor Processor to add
+     * @param token Processing domain (default: GRAPHICS_BACKEND)
+     */
+    void add_graphics_processor(
+        const std::shared_ptr<BufferProcessor>& processor,
+        ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND);
+
+    /**
+     * @brief Removes a processor from the graphics processing chain
+     * @param processor Processor to remove
+     * @param token Processing domain (default: GRAPHICS_BACKEND)
+     */
+    void remove_graphics_processor(
+        const std::shared_ptr<BufferProcessor>& processor,
+        ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND);
 
     /**
      * @brief Creates a specialized buffer and adds it to the specified token/channel
@@ -469,6 +544,21 @@ private:
     RootAudioUnit& get_or_create_unit(ProcessingToken token);
 
     /**
+     * @brief Gets or creates the graphics unit for a specific token
+     * @param token Processing domain
+     * @return Reference to the graphics unit
+     */
+    RootGraphicsUnit& get_or_create_graphics_unit(ProcessingToken token);
+
+    /**
+     * @brief Gets the graphics unit for a specific token (const version)
+     * @param token Processing domain
+     * @return Const reference to the graphics unit
+     * @throws std::out_of_range if token not found
+     */
+    const RootGraphicsUnit& get_graphics_unit(ProcessingToken token) const;
+
+    /**
      * @brief Ensures a token/channel combination exists
      * @param token Processing domain
      * @param channel Channel index
@@ -495,6 +585,11 @@ private:
      * Maps processing domain -> channel -> {root_buffers, processing chains}
      */
     std::unordered_map<ProcessingToken, RootAudioUnit> m_audio_units;
+
+    /**
+     * @brief Token-based map of root graphics units
+     */
+    std::unordered_map<ProcessingToken, RootGraphicsUnit> m_graphics_units;
 
     /**
      * @brief Input buffers for capturing audio input data

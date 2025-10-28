@@ -79,6 +79,22 @@ void RootAudioUnit::resize_buffers(uint32_t new_buffer_size)
     }
 }
 
+RootGraphicsUnit::RootGraphicsUnit()
+    : root_buffer(std::make_shared<RootGraphicsBuffer>())
+    , processing_chain(std::make_shared<BufferProcessingChain>())
+{
+}
+void RootGraphicsUnit::initialize(ProcessingToken token)
+{
+    root_buffer->initialize();
+    root_buffer->set_token_active(true);
+
+    processing_chain->set_preferred_token(token);
+    processing_chain->set_enforcement_strategy(TokenEnforcementStrategy::STRICT);
+
+    root_buffer->set_processing_chain(processing_chain);
+}
+
 BufferManager::BufferManager(uint32_t default_out_channels, uint32_t default_in_channels, uint32_t default_buffer_size, ProcessingToken default_processing_token)
     : m_default_token(default_processing_token)
     , m_global_processing_chain(std::make_shared<BufferProcessingChain>())
@@ -219,6 +235,18 @@ void BufferManager::resize_root_audio_buffers(ProcessingToken token, uint32_t bu
     unit.resize_buffers(buffer_size);
 }
 
+std::shared_ptr<RootGraphicsBuffer> BufferManager::get_root_graphics_buffer(ProcessingToken token)
+{
+    auto& unit = get_or_create_graphics_unit(token);
+    return unit.get_buffer();
+}
+
+std::shared_ptr<BufferProcessingChain> BufferManager::get_graphics_processing_chain(ProcessingToken token)
+{
+    auto& unit = get_or_create_graphics_unit(token);
+    return unit.get_chain();
+}
+
 void BufferManager::add_audio_buffer(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel)
 {
     auto& unit = ensure_and_get_unit(token, channel);
@@ -273,6 +301,17 @@ void BufferManager::add_graphics_buffer(const std::shared_ptr<Buffer>& buffer, P
             static_cast<int>(token));
     }
 
+    auto& unit = get_or_create_graphics_unit(token);
+    auto processing_chain = unit.get_chain();
+
+    if (auto buf_chain = buffer->get_processing_chain()) {
+        if (buf_chain != processing_chain) {
+            processing_chain->merge_chain(buf_chain);
+        }
+    } else {
+        buffer->set_processing_chain(processing_chain);
+    }
+
     auto hook_it = m_buffer_init_hooks.find(token);
 
     if (hook_it != m_buffer_init_hooks.end()) {
@@ -284,20 +323,96 @@ void BufferManager::add_graphics_buffer(const std::shared_ptr<Buffer>& buffer, P
                 static_cast<int>(token), e.what());
         }
     }
+
+    unit.get_buffer()->add_child_buffer(std::dynamic_pointer_cast<VKBuffer>(buffer));
+
+    MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+        "Added graphics buffer to token {} (total: {})",
+        static_cast<int>(token),
+        unit.get_buffer()->get_buffer_count());
 }
 
 void BufferManager::remove_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
 {
+    if (!buffer) {
+        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Attempted to remove null graphics buffer from token {}",
+            static_cast<int>(token));
+        return;
+    }
     if (!std::dynamic_pointer_cast<VKBuffer>(buffer)) {
         error<std::invalid_argument>(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
             "Unsupported graphics buffer type for token {}",
             static_cast<int>(token));
     }
+
+    auto it = m_graphics_units.find(token);
+    if (it == m_graphics_units.end()) {
+        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Token {} not found when removing graphics buffer",
+            static_cast<int>(token));
+    } else {
+        it->second.get_buffer()->remove_child_buffer(std::dynamic_pointer_cast<VKBuffer>(buffer));
+    }
+
     auto hook_it = m_buffer_cleanup_hooks.find(token);
     if (hook_it != m_buffer_cleanup_hooks.end()) {
-        hook_it->second(buffer);
-        m_buffer_cleanup_hooks.erase(hook_it);
+        try {
+            hook_it->second(buffer);
+        } catch (const std::exception& e) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+                "Buffer cleanup hook failed for token {}: {}",
+                static_cast<int>(token), e.what());
+        }
     }
+
+    MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+        "Removed graphics buffer from token {} (remaining: {})",
+        static_cast<int>(token),
+        it->second.get_buffer()->get_buffer_count());
+}
+
+const std::vector<std::shared_ptr<VKBuffer>>& BufferManager::get_vulkan_buffers(ProcessingToken token) const
+{
+    auto it = m_graphics_units.find(token);
+    if (it == m_graphics_units.end()) {
+        throw std::out_of_range("Graphics token not found");
+    }
+    return it->second.get_buffer()->get_child_buffers();
+}
+
+std::vector<std::shared_ptr<VKBuffer>> BufferManager::get_vulkan_buffers_by_usage(
+    VKBuffer::Usage usage,
+    ProcessingToken token) const
+{
+    auto it = m_graphics_units.find(token);
+    if (it == m_graphics_units.end()) {
+        return {};
+    }
+    return it->second.get_buffer()->get_buffers_by_usage(usage);
+}
+
+void BufferManager::add_graphics_processor(
+    const std::shared_ptr<BufferProcessor>& processor,
+    ProcessingToken token)
+{
+    auto& unit = get_or_create_graphics_unit(token);
+    unit.get_chain()->add_processor(processor, unit.get_buffer());
+}
+
+void BufferManager::remove_graphics_processor(
+    const std::shared_ptr<BufferProcessor>& processor,
+    ProcessingToken token)
+{
+    auto it = m_graphics_units.find(token);
+    if (it == m_graphics_units.end()) {
+        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Token {} not found when removing graphics processor",
+            static_cast<int>(token));
+        return;
+    }
+
+    it->second.get_chain()->remove_processor(processor, it->second.get_buffer());
 }
 
 std::shared_ptr<BufferProcessingChain> BufferManager::get_processing_chain(ProcessingToken token, uint32_t channel)
@@ -534,6 +649,33 @@ const RootAudioUnit& BufferManager::get_audio_unit(ProcessingToken token) const
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end()) {
         throw std::out_of_range("Token not found");
+    }
+    return it->second;
+}
+
+RootGraphicsUnit& BufferManager::get_or_create_graphics_unit(ProcessingToken token)
+{
+    auto it = m_graphics_units.find(token);
+    if (it == m_graphics_units.end()) {
+        std::lock_guard<std::mutex> lock(m_manager_mutex);
+
+        auto [inserted_it, success] = m_graphics_units.emplace(token, RootGraphicsUnit {});
+        inserted_it->second.initialize(token);
+
+        MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Created new graphics unit for token {}",
+            static_cast<int>(token));
+
+        return inserted_it->second;
+    }
+    return it->second;
+}
+
+const RootGraphicsUnit& BufferManager::get_graphics_unit(ProcessingToken token) const
+{
+    auto it = m_graphics_units.find(token);
+    if (it == m_graphics_units.end()) {
+        throw std::out_of_range("Graphics token not found");
     }
     return it->second;
 }
