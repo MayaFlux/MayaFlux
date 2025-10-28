@@ -394,7 +394,7 @@ std::vector<std::shared_ptr<VKBuffer>> BufferManager::get_vulkan_buffers_by_usag
     return it->second.get_buffer()->get_buffers_by_usage(usage);
 }
 
-void BufferManager::setup_graphics_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token)
+void BufferManager::register_graphics_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token)
 {
     if (auto ctx = get_graphics_processing_context(token)) {
         try {
@@ -411,7 +411,7 @@ void BufferManager::add_graphics_processor(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token)
 {
-    setup_graphics_processor(processor, token);
+    register_graphics_processor(processor, token);
     auto& unit = get_or_create_graphics_unit(token);
     unit.get_chain()->add_processor(processor, unit.get_buffer());
 }
@@ -421,7 +421,7 @@ void BufferManager::add_graphics_processor(
     const std::shared_ptr<Buffer>& buffer,
     ProcessingToken token)
 {
-    setup_graphics_processor(processor, token);
+    register_graphics_processor(processor, token);
     auto& unit = get_or_create_graphics_unit(token);
     unit.get_chain()->add_processor(processor, buffer);
     buffer->set_processing_chain(unit.get_chain());

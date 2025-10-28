@@ -261,6 +261,13 @@ public:
         ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND) const;
 
     /**
+     * @brief Registers graphics processor with relevant context
+     * @param processor Processor to set up
+     * @param token Processing domain
+     */
+    void register_graphics_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token);
+
+    /**
      * @brief Adds a processor to the graphics processing chain
      * @param processor Processor to add
      * @param token Processing domain (default: GRAPHICS_BACKEND)
@@ -628,13 +635,6 @@ private:
      * @brief Vulkan processing context for graphics buffers
      */
     std::unordered_map<ProcessingToken, std::shared_ptr<VKProcessingContext>> m_graphics_processing_contexts;
-
-    /**
-     * @brief Registers graphics processor with relevant context
-     * @param processor Processor to set up
-     * @param token Processing domain
-     */
-    void setup_graphics_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token);
 };
 
 } // namespace MayaFlux::Buffers
