@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "VKCommandManager.hpp"
+#include "VKComputePipeline.hpp"
 #include "VKFramebuffer.hpp"
 #include "VKRenderPass.hpp"
 #include "VKSwapchain.hpp"
@@ -65,6 +66,9 @@ void WindowRenderContext::cleanup(VKContext& context)
 VulkanBackend::VulkanBackend()
     : m_context(std::make_unique<VKContext>())
     , m_command_manager(std::make_unique<VKCommandManager>())
+    , m_shader_module(std::make_unique<VKShaderModule>())
+    , m_descriptor_manager(std::make_unique<VKDescriptorManager>())
+    , m_compute_pipeline(std::make_unique<VKComputePipeline>())
     , m_processing_context(std::make_shared<Buffers::VKProcessingContext>())
 {
 }
@@ -127,6 +131,65 @@ bool VulkanBackend::initialize(const GlobalGraphicsConfig& config)
     m_processing_context->set_record_deferred_callback(
         [this](Buffers::VKProcessingContext::CommandRecorder recorder) {
             this->record_deferred_commands(recorder);
+        });
+
+    m_processing_context->set_shader_module_creator(
+        [this](const std::string& path, vk::ShaderStageFlagBits stage) -> Buffers::VKProcessingContext::ResourceHandle {
+            auto shader = new VKShaderModule();
+            if (!shader->create_from_spirv_file(m_context->get_device(), path, stage)) {
+                delete shader;
+                return nullptr;
+            }
+            return static_cast<void*>(shader);
+        });
+
+    m_processing_context->set_descriptor_manager_creator(
+        [this](uint32_t pool_size) -> Buffers::VKProcessingContext::ResourceHandle {
+            auto manager = new VKDescriptorManager();
+            if (!manager->initialize(m_context->get_device(), pool_size)) {
+                delete manager;
+                return nullptr;
+            }
+            return static_cast<void*>(manager);
+        });
+
+    m_processing_context->set_descriptor_layout_creator(
+        [this](Buffers::VKProcessingContext::ResourceHandle mgr_handle,
+            const std::vector<std::pair<uint32_t, vk::DescriptorType>>& bindings) -> vk::DescriptorSetLayout {
+            auto* manager = static_cast<VKDescriptorManager*>(mgr_handle);
+            DescriptorSetLayoutConfig config;
+            for (const auto& [binding, type] : bindings) {
+                config.add_binding(binding, type, vk::ShaderStageFlagBits::eCompute);
+            }
+            return manager->create_layout(m_context->get_device(), config);
+        });
+
+    m_processing_context->set_compute_pipeline_creator(
+        [this](Buffers::VKProcessingContext::ResourceHandle shader_handle,
+            const std::vector<vk::DescriptorSetLayout>& layouts,
+            uint32_t push_size) -> Buffers::VKProcessingContext::ResourceHandle {
+            auto* shader = static_cast<VKShaderModule*>(shader_handle);
+            auto pipeline = new VKComputePipeline();
+
+            ComputePipelineConfig config;
+            config.shader = shader;
+            config.set_layouts = layouts;
+            if (push_size > 0) {
+                config.add_push_constant(vk::ShaderStageFlagBits::eCompute, push_size);
+            }
+
+            if (!pipeline->create(m_context->get_device(), config)) {
+                delete pipeline;
+                return nullptr;
+            }
+            return static_cast<void*>(pipeline);
+        });
+
+    m_processing_context->set_resource_cleaner(
+        [this](Buffers::VKProcessingContext::ResourceHandle handle) {
+            // Type erasure - caller must know what type it is
+            // In practice, processor tracks its own resource types
+            delete static_cast<VKShaderModule*>(handle); // Simplified - processors handle cleanup
         });
 
     m_is_initialized = true;

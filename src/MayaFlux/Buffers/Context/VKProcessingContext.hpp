@@ -10,14 +10,35 @@ using BufferRegistrationCallback = std::function<void(std::shared_ptr<VKBuffer>)
 
 /**
  * @class VKProcessingContext
- * @brief Minimal GPU command interface for processors
+ * @brief Pure facade for GPU operations - no direct Vulkan handle exposure
  *
- * Provides command buffer recording without exposing full backend.
- * Passed to processors during processing.
+ * Provides high-level operations for processors without exposing
+ * backend implementation details. All operations delegate to backend
+ * via callbacks.
+ *
+ * Design Philosophy:
+ * - Processors never see vk::Device or backend objects
+ * - All resource creation goes through callbacks
+ * - Backend retains full control of resource lifecycle
+ * - Thread-safe via backend synchronization
  */
 class MAYAFLUX_API VKProcessingContext {
 public:
     using CommandRecorder = std::function<void(vk::CommandBuffer)>;
+    using ResourceHandle = void*;
+
+    using ShaderModuleCreator = std::function<ResourceHandle(
+        const std::string& spirv_path, vk::ShaderStageFlagBits stage)>;
+
+    using DescriptorManagerCreator = std::function<ResourceHandle(uint32_t pool_size)>;
+
+    using DescriptorLayoutCreator = std::function<vk::DescriptorSetLayout(ResourceHandle manager,
+        const std::vector<std::pair<uint32_t, vk::DescriptorType>>& bindings)>;
+
+    using ComputePipelineCreator = std::function<ResourceHandle(ResourceHandle shader,
+        const std::vector<vk::DescriptorSetLayout>& layouts, uint32_t push_constant_size)>;
+
+    using ResourceCleaner = std::function<void(ResourceHandle)>;
 
     VKProcessingContext() = default;
     ~VKProcessingContext() = default;
@@ -58,11 +79,78 @@ public:
      */
     void invalidate_buffer(vk::DeviceMemory memory, size_t offset, size_t size);
 
-    // Backend sets these during initialization
+    /**
+     * @brief Set callback for immediate command execution
+     */
     void set_execute_immediate_callback(std::function<void(CommandRecorder)> callback);
+
+    /**
+     * @brief Set callback for deferred command recording
+     */
     void set_record_deferred_callback(std::function<void(CommandRecorder)> callback);
+
+    /**
+     * @brief Set callback for flushing buffer memory
+     */
     void set_flush_callback(std::function<void(vk::DeviceMemory, size_t, size_t)> callback);
+
+    /**
+     * @brief Set callback for invalidating buffer memory
+     */
     void set_invalidate_callback(std::function<void(vk::DeviceMemory, size_t, size_t)> callback);
+
+    /**
+     * @brief Create a shader module from SPIR-V file
+     */
+    ResourceHandle create_shader_module(const std::string& spirv_path, vk::ShaderStageFlagBits stage);
+
+    /**
+     * @brief Create a descriptor manager with specified pool size
+     */
+    ResourceHandle create_descriptor_manager(uint32_t pool_size = 1024);
+
+    /**
+     * @brief Create a descriptor set layout from bindings
+     */
+    vk::DescriptorSetLayout create_descriptor_layout(ResourceHandle manager,
+        const std::vector<std::pair<uint32_t, vk::DescriptorType>>& bindings);
+
+    /**
+     * @brief Create a compute pipeline from shader and layouts
+     */
+    ResourceHandle create_compute_pipeline(ResourceHandle shader,
+        const std::vector<vk::DescriptorSetLayout>& layouts,
+        uint32_t push_constant_size);
+
+    /**
+     * @brief Cleanup a resource using the registered cleaner callback
+     */
+    void cleanup_resource(ResourceHandle resource);
+
+    /**
+     * @brief Set resource creation callbacks
+     */
+    void set_shader_module_creator(ShaderModuleCreator creator);
+
+    /**
+     * @brief Set resource creation callbacks
+     */
+    void set_descriptor_manager_creator(DescriptorManagerCreator creator);
+
+    /**
+     * @brief Set resource creation callbacks
+     */
+    void set_descriptor_layout_creator(DescriptorLayoutCreator creator);
+
+    /**
+     * @brief Set resource creation callbacks
+     */
+    void set_compute_pipeline_creator(ComputePipelineCreator creator);
+
+    /**
+     * @brief Set resource cleanup callback
+     */
+    void set_resource_cleaner(ResourceCleaner cleaner);
 
     /**
      * @brief Initializes a buffer using the registered initializer callback
@@ -96,6 +184,12 @@ private:
 
     static BufferRegistrationCallback s_buffer_initializer;
     static BufferRegistrationCallback s_buffer_cleaner;
+
+    ShaderModuleCreator m_shader_module_creator;
+    DescriptorManagerCreator m_descriptor_manager_creator;
+    DescriptorLayoutCreator m_descriptor_layout_creator;
+    ComputePipelineCreator m_compute_pipeline_creator;
+    ResourceCleaner m_resource_cleaner;
 };
 
 } // namespace MayaFlux::Buffers

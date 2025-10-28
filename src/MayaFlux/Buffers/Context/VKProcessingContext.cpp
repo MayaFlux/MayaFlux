@@ -90,4 +90,81 @@ void VKProcessingContext::set_cleaner(BufferRegistrationCallback cleaner)
     s_buffer_cleaner = std::move(cleaner);
 }
 
+VKProcessingContext::ResourceHandle VKProcessingContext::create_shader_module(const std::string& spirv_path, vk::ShaderStageFlagBits stage)
+{
+    if (!m_shader_module_creator) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "No shader module creator registered");
+        return nullptr;
+    }
+    return m_shader_module_creator(spirv_path, stage);
+}
+
+VKProcessingContext::ResourceHandle VKProcessingContext::create_descriptor_manager(uint32_t pool_size)
+{
+    if (!m_descriptor_manager_creator) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "No descriptor manager creator registered");
+        return nullptr;
+    }
+    return m_descriptor_manager_creator(pool_size);
+}
+
+vk::DescriptorSetLayout VKProcessingContext::create_descriptor_layout(
+    ResourceHandle manager,
+    const std::vector<std::pair<uint32_t, vk::DescriptorType>>& bindings)
+{
+    if (!m_descriptor_layout_creator) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "No descriptor layout creator registered");
+        return nullptr;
+    }
+    return m_descriptor_layout_creator(manager, bindings);
+}
+
+VKProcessingContext::ResourceHandle VKProcessingContext::create_compute_pipeline(
+    ResourceHandle shader,
+    const std::vector<vk::DescriptorSetLayout>& layouts,
+    uint32_t push_constant_size)
+{
+    if (!m_compute_pipeline_creator) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "No compute pipeline creator registered");
+        return nullptr;
+    }
+    return m_compute_pipeline_creator(shader, layouts, push_constant_size);
+}
+
+void VKProcessingContext::cleanup_resource(ResourceHandle resource)
+{
+    if (m_resource_cleaner && resource) {
+        m_resource_cleaner(resource);
+    }
+}
+
+void VKProcessingContext::set_shader_module_creator(ShaderModuleCreator creator)
+{
+    m_shader_module_creator = std::move(creator);
+}
+
+void VKProcessingContext::set_descriptor_manager_creator(DescriptorManagerCreator creator)
+{
+    m_descriptor_manager_creator = std::move(creator);
+}
+
+void VKProcessingContext::set_descriptor_layout_creator(DescriptorLayoutCreator creator)
+{
+    m_descriptor_layout_creator = std::move(creator);
+}
+
+void VKProcessingContext::set_compute_pipeline_creator(ComputePipelineCreator creator)
+{
+    m_compute_pipeline_creator = std::move(creator);
+}
+
+void VKProcessingContext::set_resource_cleaner(ResourceCleaner cleaner)
+{
+    m_resource_cleaner = std::move(cleaner);
+}
+
 } // namespace MayaFlux::Buffers

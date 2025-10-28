@@ -11,6 +11,9 @@ class VKSwapchain;
 class VKCommandManager;
 class VKRenderPass;
 class VKFramebuffer;
+class VKShaderModule;
+class VKDescriptorManager;
+class VKComputePipeline;
 
 struct WindowRenderContext {
     std::shared_ptr<Window> window;
@@ -167,6 +170,10 @@ private:
     std::unique_ptr<VKCommandManager> m_command_manager;
     std::vector<WindowRenderContext> m_window_contexts;
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
+
+    std::unique_ptr<VKShaderModule> m_shader_module;
+    std::unique_ptr<VKDescriptorManager> m_descriptor_manager;
+    std::unique_ptr<VKComputePipeline> m_compute_pipeline;
 
     bool m_is_initialized {};
 
