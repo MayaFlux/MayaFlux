@@ -437,7 +437,7 @@ void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
 
     vk::BufferCreateInfo buffer_info {};
     buffer_info.size = buffer_wrapper->get_size_bytes();
-    buffer_info.usage = static_cast<vk::BufferUsageFlags>(buffer_wrapper->get_vk_usage_flags());
+    buffer_info.usage = buffer_wrapper->get_usage_flags();
     buffer_info.sharingMode = vk::SharingMode::eExclusive;
 
     vk::Buffer vk_buffer;
@@ -459,7 +459,7 @@ void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
 
     alloc_info.memoryTypeIndex = find_memory_type(
         mem_requirements.memoryTypeBits,
-        vk::MemoryPropertyFlags(buffer_wrapper->get_vk_memory_properties()));
+        vk::MemoryPropertyFlags(buffer_wrapper->get_memory_properties()));
 
     vk::DeviceMemory memory;
     try {
@@ -487,7 +487,7 @@ void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
     }
 
     void* mapped_ptr = nullptr;
-    if (buffer_wrapper->should_be_host_visible()) {
+    if (buffer_wrapper->is_host_visible()) {
         try {
             mapped_ptr = m_context->get_device().mapMemory(memory, 0, buffer_wrapper->get_size_bytes());
         } catch (const vk::SystemError& e) {
@@ -502,9 +502,9 @@ void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
         }
     }
 
-    buffer_wrapper->set_vk_buffer(vk_buffer);
-    buffer_wrapper->set_vk_memory(memory);
-    buffer_wrapper->set_mapped_ptr(mapped_ptr);
+    Buffers::VKBufferResources resources { .buffer = vk_buffer, .memory = memory, .mapped_ptr = mapped_ptr };
+    buffer_wrapper->set_buffer_resources(resources);
+    m_managed_buffers.push_back(buffer_wrapper);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VulkanBuffer initialized: {} bytes, modality: {}, VkBuffer: {:p}",
@@ -523,12 +523,12 @@ void VulkanBackend::cleanup_buffer(std::shared_ptr<Buffers::Buffer> buffer)
         return;
     }
 
-    auto it = m_managed_buffers.find(buffer_wrapper);
+    auto it = std::ranges::find(m_managed_buffers, buffer_wrapper);
     if (it == m_managed_buffers.end()) {
         return;
     }
 
-    auto& [vk_buffer, memory, mapped_ptr] = it->second;
+    auto& [vk_buffer, memory, mapped_ptr] = it->get()->get_buffer_resources();
 
     if (mapped_ptr) {
         m_context->get_device().unmapMemory(memory);
@@ -546,6 +546,40 @@ void VulkanBackend::cleanup_buffer(std::shared_ptr<Buffers::Buffer> buffer)
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VulkanBuffer cleaned up: {:p}", (void*)vk_buffer);
+}
+
+void VulkanBackend::flush_pending_buffer_operations()
+{
+    for (auto& buffer_wrapper : m_managed_buffers) {
+        auto& resources = buffer_wrapper->get_buffer_resources();
+        auto dirty_ranges = buffer_wrapper->get_and_clear_dirty_ranges();
+        if (!dirty_ranges.empty()) {
+            for (auto [offset, size] : dirty_ranges) {
+                vk::MappedMemoryRange range;
+                range.memory = resources.memory;
+                range.offset = offset;
+                range.size = size;
+                m_context->get_device().flushMappedMemoryRanges(1, &range);
+            }
+            MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Flushed {} dirty ranges for buffer {:p}", dirty_ranges.size(),
+                (void*)buffer_wrapper->get_vk_buffer());
+        }
+
+        auto invalid_ranges = buffer_wrapper->get_and_clear_invalid_ranges();
+        if (!invalid_ranges.empty()) {
+            for (auto [offset, size] : invalid_ranges) {
+                vk::MappedMemoryRange range;
+                range.memory = buffer_wrapper->get_buffer_resources().memory;
+                range.offset = offset;
+                range.size = size;
+                m_context->get_device().invalidateMappedMemoryRanges(1, &range);
+            }
+            MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Invalidated {} ranges for buffer {:p}", invalid_ranges.size(),
+                (void*)buffer_wrapper->get_vk_buffer());
+        }
+    }
 }
 
 uint32_t VulkanBackend::find_memory_type(uint32_t type_filter, vk::MemoryPropertyFlags properties) const

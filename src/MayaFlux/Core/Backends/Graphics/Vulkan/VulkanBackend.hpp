@@ -87,11 +87,29 @@ public:
      */
     void unregister_window(std::shared_ptr<Window> window) override;
 
+    /**
+     * @brief Check if a window is registered with the graphics backend
+     * @param window Shared pointer to the window to check
+     * @return True if the window is registered, false otherwise
+     */
     [[nodiscard]] bool is_window_registered(std::shared_ptr<Window> window) override;
 
+    /**
+     * @brief Initialize a buffer for use with the graphics backend
+     * @param buffer Shared pointer to the buffer to initialize
+     */
     void initialize_buffer(std::shared_ptr<class Buffers::Buffer> buffer) override;
 
+    /**
+     * @brief Cleanup a buffer and release associated resources
+     * @param buffer Shared pointer to the buffer to cleanup
+     */
     void cleanup_buffer(std::shared_ptr<class Buffers::Buffer> buffer) override;
+
+    /**
+     * @brief Flush any pending buffer operations (e.g., uploads/downloads)
+     */
+    void flush_pending_buffer_operations();
 
     /**
      * @brief Begin rendering frame for the specified window
@@ -140,16 +158,10 @@ public:
     [[nodiscard]] const void* get_native_context() const override;
 
 private:
-    struct BufferResources {
-        VkBuffer vk_buffer;
-        VkDeviceMemory memory;
-        void* mapped_ptr;
-    };
-
     std::unique_ptr<VKContext> m_context;
     std::unique_ptr<VKCommandManager> m_command_manager;
     std::vector<WindowRenderContext> m_window_contexts;
-    std::unordered_map<std::shared_ptr<Buffers::VKBuffer>, BufferResources> m_managed_buffers;
+    std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
 
     bool m_is_initialized {};
 

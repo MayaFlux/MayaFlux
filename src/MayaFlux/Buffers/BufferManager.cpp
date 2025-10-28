@@ -126,7 +126,7 @@ void BufferManager::process_all_tokens()
 void BufferManager::process_channel(
     ProcessingToken token,
     uint32_t channel,
-    uint32_t processing_units,
+    uint32_t /*processing_units*/,
     const std::vector<double>& node_output_data)
 {
     auto it = m_audio_units.find(token);
@@ -219,7 +219,7 @@ void BufferManager::resize_root_audio_buffers(ProcessingToken token, uint32_t bu
     unit.resize_buffers(buffer_size);
 }
 
-void BufferManager::add_audio_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel)
+void BufferManager::add_audio_buffer(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel)
 {
     auto& unit = ensure_and_get_unit(token, channel);
     auto processing_chain = unit.get_chain(channel);
@@ -235,7 +235,9 @@ void BufferManager::add_audio_buffer(std::shared_ptr<AudioBuffer> buffer, Proces
 
     {
         if (buffer->get_num_samples() != unit.buffer_size) {
-            std::cerr << "BufferManager: Resizing buffer to match unit size: " << unit.buffer_size << std::endl;
+            MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+                "Resizing buffer to match unit size: {} samples", unit.buffer_size);
+
             std::lock_guard<std::mutex> lock(m_manager_mutex);
             buffer->resize(unit.buffer_size);
         }
@@ -244,13 +246,13 @@ void BufferManager::add_audio_buffer(std::shared_ptr<AudioBuffer> buffer, Proces
     unit.get_buffer(channel)->add_child_buffer(buffer);
 }
 
-void BufferManager::remove_audio_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel)
+void BufferManager::remove_audio_buffer(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel)
 {
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end() || channel >= it->second.channel_count)
         return;
 
-    it->second.get_buffer(channel)->remove_child_buffer(std::move(buffer));
+    it->second.get_buffer(channel)->remove_child_buffer(buffer);
 }
 
 const std::vector<std::shared_ptr<AudioBuffer>>& BufferManager::get_audio_buffers(ProcessingToken token, uint32_t channel) const
@@ -272,6 +274,7 @@ void BufferManager::add_graphics_buffer(const std::shared_ptr<Buffer>& buffer, P
     }
 
     auto hook_it = m_buffer_init_hooks.find(token);
+
     if (hook_it != m_buffer_init_hooks.end()) {
         try {
             hook_it->second(buffer);
@@ -303,7 +306,7 @@ std::shared_ptr<BufferProcessingChain> BufferManager::get_processing_chain(Proce
     return unit.get_chain(channel);
 }
 
-void BufferManager::add_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer)
+void BufferManager::add_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<AudioBuffer>& buffer)
 {
     uint32_t channel_id = buffer->get_channel_id();
 
@@ -319,12 +322,12 @@ void BufferManager::add_processor(std::shared_ptr<BufferProcessor> processor, st
     m_global_processing_chain->add_processor(processor, buffer);
 }
 
-void BufferManager::add_processor_to_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, uint32_t channel)
+void BufferManager::add_processor_to_channel(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token, uint32_t channel)
 {
     get_processing_chain(token, channel)->add_processor(processor, get_root_audio_buffer(token, channel));
 }
 
-void BufferManager::add_processor_to_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
+void BufferManager::add_processor_to_token(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token)
 {
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end())
@@ -336,7 +339,7 @@ void BufferManager::add_processor_to_token(std::shared_ptr<BufferProcessor> proc
     }
 }
 
-void BufferManager::remove_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer)
+void BufferManager::remove_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<AudioBuffer>& buffer)
 {
     uint32_t channel_id = buffer->get_channel_id();
 
@@ -353,7 +356,7 @@ void BufferManager::remove_processor(std::shared_ptr<BufferProcessor> processor,
     m_global_processing_chain->remove_processor(processor, buffer);
 }
 
-void BufferManager::remove_processor_from_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, uint32_t channel)
+void BufferManager::remove_processor_from_channel(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token, uint32_t channel)
 {
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end() || channel >= it->second.channel_count) {
@@ -362,7 +365,7 @@ void BufferManager::remove_processor_from_channel(std::shared_ptr<BufferProcesso
     it->second.get_chain(channel)->remove_processor(processor, it->second.get_buffer(channel));
 }
 
-void BufferManager::remove_processor_from_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
+void BufferManager::remove_processor_from_token(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token)
 {
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end()) {
@@ -375,7 +378,7 @@ void BufferManager::remove_processor_from_token(std::shared_ptr<BufferProcessor>
     }
 }
 
-void BufferManager::set_final_processor(std::shared_ptr<BufferProcessor> processor, ProcessingToken token)
+void BufferManager::set_final_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token)
 {
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end())
@@ -387,28 +390,28 @@ void BufferManager::set_final_processor(std::shared_ptr<BufferProcessor> process
     }
 }
 
-std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<AudioBuffer> buffer)
+std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(AudioProcessingFunction processor, const std::shared_ptr<AudioBuffer>& buffer)
 {
-    auto quick_process = std::make_shared<QuickProcess>(processor);
+    auto quick_process = std::make_shared<QuickProcess>(std::move(processor));
     add_processor(quick_process, buffer);
     return quick_process;
 }
 
 std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process_to_channel(AudioProcessingFunction processor, ProcessingToken token, uint32_t channel)
 {
-    auto quick_process = std::make_shared<QuickProcess>(processor);
+    auto quick_process = std::make_shared<QuickProcess>(std::move(processor));
     add_processor_to_channel(quick_process, token, channel);
     return quick_process;
 }
 
 std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process_to_token(AudioProcessingFunction processor, ProcessingToken token)
 {
-    auto quick_process = std::make_shared<QuickProcess>(processor);
+    auto quick_process = std::make_shared<QuickProcess>(std::move(processor));
     add_processor_to_token(quick_process, token);
     return quick_process;
 }
 
-void BufferManager::connect_node_to_channel(std::shared_ptr<Nodes::Node> node, ProcessingToken token, uint32_t channel, float mix, bool clear_before)
+void BufferManager::connect_node_to_channel(const std::shared_ptr<Nodes::Node>& node, ProcessingToken token, uint32_t channel, float mix, bool clear_before)
 {
     // TODO: Implement NodeSourceProcessor for generic Buffer interface
     // For now, placeholder that shows the integration pattern
@@ -422,7 +425,7 @@ void BufferManager::connect_node_to_channel(std::shared_ptr<Nodes::Node> node, P
     add_processor_to_channel(processor, token, channel);
 }
 
-void BufferManager::connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<AudioBuffer> buffer, float mix, bool clear_before)
+void BufferManager::connect_node_to_buffer(const std::shared_ptr<Nodes::Node>& node, const std::shared_ptr<AudioBuffer>& buffer, float mix, bool clear_before)
 {
     // TODO: Implement NodeSourceProcessor for generic Buffer interface
     auto processor = std::make_shared<NodeSourceProcessor>(node, mix, clear_before);
@@ -467,20 +470,23 @@ void BufferManager::fill_interleaved(double* interleaved_data, uint32_t num_fram
     }
 }
 
-void BufferManager::clone_buffer_for_channels(std::shared_ptr<AudioBuffer> buffer, std::vector<uint32_t> channels, ProcessingToken token)
+void BufferManager::clone_buffer_for_channels(const std::shared_ptr<AudioBuffer>& buffer, const std::vector<uint32_t>& channels, ProcessingToken token)
 {
     if (channels.empty()) {
-        std::cerr << "BufferManager: No channels specified for cloning" << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: No channels specified for cloning");
         return;
     }
     if (!buffer) {
-        std::cerr << "BufferManager: Invalid buffer for cloning" << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: Invalid buffer for cloning");
         return;
     }
 
     for (const auto channel : channels) {
         if (channel >= m_audio_units[token].channel_count) {
-            std::cerr << "BufferManager: Channel " << channel << " out of range for cloning" << std::endl;
+            MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+                "BufferManager: Channel {} out of range for cloning", channel);
             return;
         }
 
@@ -496,7 +502,8 @@ void BufferManager::process_input(double* input_data, uint32_t num_channels, uin
     }
 
     if (!input_data) {
-        std::cerr << "BufferManager: Invalid input data pointer" << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: Invalid input data pointer");
         return;
     }
 
@@ -559,10 +566,11 @@ RootAudioUnit& BufferManager::ensure_and_get_unit(ProcessingToken token, uint32_
     return unit;
 }
 
-void BufferManager::register_input_listener(std::shared_ptr<AudioBuffer> buffer, uint32_t channel)
+void BufferManager::register_input_listener(const std::shared_ptr<AudioBuffer>& buffer, uint32_t channel)
 {
     if (channel >= m_input_buffers.size()) {
-        std::cerr << "BufferManager: Input channel " << channel << " out of range" << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: Input channel {} out of range", channel);
         return;
     }
 
@@ -572,7 +580,7 @@ void BufferManager::register_input_listener(std::shared_ptr<AudioBuffer> buffer,
     }
 }
 
-void BufferManager::unregister_input_listener(std::shared_ptr<AudioBuffer> buffer, uint32_t channel)
+void BufferManager::unregister_input_listener(const std::shared_ptr<AudioBuffer>& buffer, uint32_t channel)
 {
     if (channel >= m_input_buffers.size()) {
         return;
@@ -584,21 +592,25 @@ void BufferManager::unregister_input_listener(std::shared_ptr<AudioBuffer> buffe
     }
 }
 
-bool BufferManager::supply_buffer_to(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel, double mix)
+bool BufferManager::supply_buffer_to(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel, double mix)
 {
     if (!buffer) {
-        std::cerr << "BufferManager: Invalid buffer for supplying" << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: Invalid buffer for supplying");
         return false;
     }
 
     if (buffer->get_channel_id() == channel) {
-        std::cerr << "BufferManager: Buffer already has the correct channel ID" << std::endl;
+        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: Buffer already has the correct channel ID {}", channel);
         return false;
     }
 
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end() || channel >= it->second.channel_count) {
-        std::cerr << "BufferManager: Token/channel combination out of range for supplying" << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: Token/channel combination out of range for supplying (token: {}, channel: {})",
+            static_cast<int>(token), channel);
         return false;
     }
 
@@ -615,16 +627,19 @@ bool BufferManager::supply_buffer_to(std::shared_ptr<AudioBuffer> buffer, Proces
     return mix_processor->register_source(buffer, mix, false);
 }
 
-bool BufferManager::remove_supplied_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel)
+bool BufferManager::remove_supplied_buffer(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel)
 {
     if (!buffer) {
-        std::cerr << "BufferManager: Invalid buffer for removal" << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: Invalid buffer for removal");
         return false;
     }
 
     auto it = m_audio_units.find(token);
     if (it == m_audio_units.end() || channel >= it->second.channel_count) {
-        std::cerr << "BufferManager: Token/channel combination out of range for removal" << std::endl;
+        MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
+            "BufferManager: Token/channel combination out of range for removal (token: {}, channel: {})",
+            static_cast<int>(token), channel);
         return false;
     }
 

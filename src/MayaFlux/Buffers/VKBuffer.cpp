@@ -37,8 +37,8 @@ void VKBuffer::clear()
         return;
     }
 
-    if (should_be_host_visible() && m_mapped_ptr) {
-        std::memset(m_mapped_ptr, 0, m_size_bytes);
+    if (is_host_visible() && m_resources.mapped_ptr) {
+        std::memset(m_resources.mapped_ptr, 0, m_size_bytes);
         // Flush handled by backend
     } else {
         // Device-local clear requires command buffer
@@ -61,7 +61,7 @@ void VKBuffer::set_data(const std::vector<Kakshya::DataVariant>& data)
         return;
     }
 
-    if (should_be_host_visible() && m_mapped_ptr) {
+    if (is_host_visible() && m_resources.mapped_ptr) {
         Kakshya::DataAccess accessor(
             const_cast<Kakshya::DataVariant&>(data[0]),
             {},
@@ -78,18 +78,17 @@ void VKBuffer::set_data(const std::vector<Kakshya::DataVariant>& data)
                 bytes, m_size_bytes);
         }
 
-        std::memcpy(m_mapped_ptr, ptr, bytes);
-        // Flush handled by backend
+        std::memcpy(m_resources.mapped_ptr, ptr, bytes);
+        mark_dirty_range(0, m_size_bytes);
 
         infer_dimensions_from_data(bytes);
     } else {
-        // Device-local requires BufferUploadProcessor
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
             "set_data() on device-local buffer requires BufferUploadProcessor in chain");
     }
 }
 
-std::vector<Kakshya::DataVariant> VKBuffer::get_data() const
+std::vector<Kakshya::DataVariant> VKBuffer::get_data()
 {
     if (!is_initialized()) {
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
@@ -97,10 +96,11 @@ std::vector<Kakshya::DataVariant> VKBuffer::get_data() const
         return {};
     }
 
-    if (should_be_host_visible() && m_mapped_ptr) {
-        // Invalidate handled by backend
+    if (is_host_visible() && m_resources.mapped_ptr) {
+        mark_invalid_range(0, m_size_bytes);
+
         std::vector<uint8_t> raw_bytes(m_size_bytes);
-        std::memcpy(raw_bytes.data(), m_mapped_ptr, m_size_bytes);
+        std::memcpy(raw_bytes.data(), m_resources.mapped_ptr, m_size_bytes);
         return { raw_bytes };
     }
 
@@ -118,19 +118,19 @@ void VKBuffer::resize(size_t new_size)
     infer_dimensions_from_data(new_size);
 
     if (is_initialized()) {
-        // Actual resize happens in backend during next registration
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
             "VKBuffer resized to {} bytes - will recreate on next process cycle",
             new_size);
 
-        // Mark for recreation
-        m_vk_buffer = VK_NULL_HANDLE;
-        m_vk_memory = VK_NULL_HANDLE;
-        m_mapped_ptr = nullptr;
+        m_dirty_ranges.clear();
+        m_invalid_ranges.clear();
+        m_resources.buffer = vk::Buffer {};
+        m_resources.memory = vk::DeviceMemory {};
+        m_resources.mapped_ptr = nullptr;
     }
 }
 
-VkFormat VKBuffer::get_format() const
+vk::Format VKBuffer::get_format() const
 {
     using namespace Kakshya;
 
@@ -139,28 +139,28 @@ VkFormat VKBuffer::get_format() const
     case DataModality::VERTEX_NORMALS_3D:
     case DataModality::VERTEX_TANGENTS_3D:
     case DataModality::VERTEX_COLORS_RGB:
-        return VK_FORMAT_R32G32B32_SFLOAT;
+        return vk::Format::eR32G32B32Sfloat;
 
     case DataModality::TEXTURE_COORDS_2D:
-        return VK_FORMAT_R32G32_SFLOAT;
+        return vk::Format::eR32G32Sfloat;
 
     case DataModality::VERTEX_COLORS_RGBA:
-        return VK_FORMAT_R32G32B32A32_SFLOAT;
+        return vk::Format::eR32G32B32A32Sfloat;
 
     case DataModality::AUDIO_1D:
     case DataModality::AUDIO_MULTICHANNEL:
-        return VK_FORMAT_R64_SFLOAT;
+        return vk::Format::eR64Sfloat;
 
     case DataModality::IMAGE_2D:
     case DataModality::IMAGE_COLOR:
     case DataModality::TEXTURE_2D:
-        return VK_FORMAT_R8G8B8A8_UNORM;
+        return vk::Format::eR8G8B8A8Unorm;
 
     case DataModality::SPECTRAL_2D:
-        return VK_FORMAT_R32G32_SFLOAT;
+        return vk::Format::eR32G32Sfloat;
 
     default:
-        return VK_FORMAT_UNDEFINED;
+        return vk::Format::eUndefined;
     }
 }
 
@@ -168,6 +168,72 @@ void VKBuffer::set_modality(Kakshya::DataModality modality)
 {
     m_modality = modality;
     infer_dimensions_from_data(m_size_bytes);
+}
+
+vk::BufferUsageFlags VKBuffer::get_usage_flags() const
+{
+    vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eTransferSrc | vk::BufferUsageFlagBits::eTransferDst;
+
+    switch (m_usage) {
+    case Usage::STAGING:
+        break;
+    case Usage::DEVICE:
+    case Usage::COMPUTE:
+        flags |= vk::BufferUsageFlagBits::eStorageBuffer;
+        break;
+    case Usage::VERTEX:
+        flags |= vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer;
+        break;
+    case Usage::INDEX:
+        flags |= vk::BufferUsageFlagBits::eIndexBuffer;
+        break;
+    case Usage::UNIFORM:
+        flags |= vk::BufferUsageFlagBits::eUniformBuffer;
+        break;
+    }
+
+    return flags;
+}
+
+vk::MemoryPropertyFlags VKBuffer::get_memory_properties() const
+{
+    if (is_host_visible()) {
+        return vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent;
+    }
+    return vk::MemoryPropertyFlagBits::eDeviceLocal;
+}
+
+void VKBuffer::process_default()
+{
+    if (m_process_default && m_default_processor) {
+        m_default_processor->process(shared_from_this());
+    }
+}
+
+void VKBuffer::set_default_processor(std::shared_ptr<Buffers::BufferProcessor> processor)
+{
+    if (m_default_processor) {
+        m_default_processor->on_detach(shared_from_this());
+    }
+    if (processor) {
+        processor->on_attach(shared_from_this());
+    }
+    m_default_processor = processor;
+}
+
+std::shared_ptr<Buffers::BufferProcessor> VKBuffer::get_default_processor() const
+{
+    return m_default_processor;
+}
+
+std::shared_ptr<Buffers::BufferProcessingChain> VKBuffer::get_processing_chain()
+{
+    return m_processing_chain;
+}
+
+void VKBuffer::set_processing_chain(std::shared_ptr<Buffers::BufferProcessingChain> chain)
+{
+    m_processing_chain = chain;
 }
 
 void VKBuffer::infer_dimensions_from_data(size_t byte_count)
@@ -219,70 +285,54 @@ void VKBuffer::infer_dimensions_from_data(size_t byte_count)
     }
 }
 
-VkBufferUsageFlags VKBuffer::get_vk_usage_flags() const
+/* void VKBuffer::flush(size_t offset, size_t size)
 {
-    VkBufferUsageFlags flags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    if (!is_host_visible())
+        return;
 
-    switch (m_usage) {
-    case Usage::STAGING:
-        break;
-    case Usage::DEVICE:
-    case Usage::COMPUTE:
-        flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-        break;
-    case Usage::VERTEX:
-        flags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-        break;
-    case Usage::INDEX:
-        flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-        break;
-    case Usage::UNIFORM:
-        flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        break;
-    }
-
-    return flags;
+    VkMappedMemoryRange range {};
+    range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    range.memory = m_resources.memory;
+    range.offset = offset;
+    range.size = size;
+    vkFlushMappedMemoryRanges(m_context->get_device(), 1, &range);
 }
 
-VkMemoryPropertyFlags VKBuffer::get_vk_memory_properties() const
+void VKBuffer::invalidate(size_t offset, size_t size)
 {
-    if (should_be_host_visible()) {
-        return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    }
-    return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-}
+    if (!is_host_visible())
+        return;
 
-void VKBuffer::process_default()
+    VkMappedMemoryRange range {};
+    range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    range.memory = m_resources.memory;
+    range.offset = offset;
+    range.size = size;
+    vkInvalidateMappedMemoryRanges(m_context.get_device(), 1, &range);
+} */
+
+void VKBuffer::mark_dirty_range(size_t offset, size_t size)
 {
-    if (m_process_default && m_default_processor) {
-        m_default_processor->process(shared_from_this());
+    if (is_host_visible()) {
+        m_dirty_ranges.emplace_back(offset, size);
     }
 }
 
-void VKBuffer::set_default_processor(std::shared_ptr<Buffers::BufferProcessor> processor)
+void VKBuffer::mark_invalid_range(size_t offset, size_t size)
 {
-    if (m_default_processor) {
-        m_default_processor->on_detach(shared_from_this());
+    if (is_host_visible()) {
+        m_invalid_ranges.emplace_back(offset, size);
     }
-    if (processor) {
-        processor->on_attach(shared_from_this());
-    }
-    m_default_processor = processor;
 }
 
-std::shared_ptr<Buffers::BufferProcessor> VKBuffer::get_default_processor() const
+std::vector<std::pair<size_t, size_t>> VKBuffer::get_and_clear_dirty_ranges()
 {
-    return m_default_processor;
+    return std::exchange(m_dirty_ranges, {});
 }
 
-std::shared_ptr<Buffers::BufferProcessingChain> VKBuffer::get_processing_chain()
+std::vector<std::pair<size_t, size_t>> VKBuffer::get_and_clear_invalid_ranges()
 {
-    return m_processing_chain;
-}
-
-void VKBuffer::set_processing_chain(std::shared_ptr<Buffers::BufferProcessingChain> chain)
-{
-    m_processing_chain = chain;
+    return std::exchange(m_invalid_ranges, {});
 }
 
 } // namespace MayaFlux::Buffers::Vulkan

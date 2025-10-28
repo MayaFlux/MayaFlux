@@ -170,7 +170,7 @@ public:
      * @param token Processing domain
      * @param channel Channel index within that domain
      */
-    void add_audio_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel);
+    void add_audio_buffer(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel);
 
     /**
      * @brief Removes a buffer from a specific token and channel
@@ -178,7 +178,7 @@ public:
      * @param token Processing domain
      * @param channel Channel index within that domain
      */
-    void remove_audio_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel);
+    void remove_audio_buffer(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel);
 
     /**
      * @brief Gets all buffers for a specific token and channel
@@ -246,7 +246,7 @@ public:
      * @param processor Processor to add
      * @param buffer Target buffer
      */
-    void add_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer);
+    void add_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
      * @brief Adds a processor to a specific token and channel
@@ -254,21 +254,21 @@ public:
      * @param token Processing domain
      * @param channel Channel index
      */
-    void add_processor_to_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, uint32_t channel);
+    void add_processor_to_channel(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token, uint32_t channel);
 
     /**
      * @brief Adds a processor to all channels in a token domain
      * @param processor Processor to add
      * @param token Processing domain
      */
-    void add_processor_to_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token);
+    void add_processor_to_token(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token);
 
     /**
      * @brief Removes a processor from a specific buffer
      * @param processor Processor to remove
      * @param buffer Target buffer
      */
-    void remove_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<AudioBuffer> buffer);
+    void remove_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
      * @brief Removes a processor from a specific token and channel
@@ -276,21 +276,21 @@ public:
      * @param token Processing domain
      * @param channel Channel index
      */
-    void remove_processor_from_channel(std::shared_ptr<BufferProcessor> processor, ProcessingToken token, uint32_t channel);
+    void remove_processor_from_channel(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token, uint32_t channel);
 
     /**
      * @brief Removes a processor from all channels in a token domain
      * @param processor Processor to remove
      * @param token Processing domain
      */
-    void remove_processor_from_token(std::shared_ptr<BufferProcessor> processor, ProcessingToken token);
+    void remove_processor_from_token(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token);
 
     /**
      * @brief Sets a final processor for all root buffers in a token domain
      * @param processor Final processor to apply
      * @param token Processing domain
      */
-    void set_final_processor(std::shared_ptr<BufferProcessor> processor, ProcessingToken token);
+    void set_final_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token);
 
     /**
      * @brief Creates and attaches a quick processing function to a buffer
@@ -298,7 +298,7 @@ public:
      * @param buffer Target buffer
      * @return Shared pointer to the created processor
      */
-    std::shared_ptr<BufferProcessor> attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<AudioBuffer> buffer);
+    std::shared_ptr<BufferProcessor> attach_quick_process(AudioProcessingFunction processor, const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
      * @brief Creates and attaches a quick processing function to a token/channel
@@ -325,7 +325,7 @@ public:
      * @param mix Mix level (default: 0.5)
      * @param clear_before Whether to clear buffer before adding node output (default: false)
      */
-    void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, ProcessingToken token, uint32_t channel, float mix = 0.5f, bool clear_before = false);
+    void connect_node_to_channel(const std::shared_ptr<Nodes::Node>& node, ProcessingToken token, uint32_t channel, float mix = 0.5F, bool clear_before = false);
 
     /**
      * @brief Connects a node directly to a specific buffer
@@ -334,7 +334,7 @@ public:
      * @param mix Mix level (default: 0.5)
      * @param clear_before Whether to clear buffer before adding node output (default: true)
      */
-    void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<AudioBuffer> buffer, float mix = 0.5f, bool clear_before = true);
+    void connect_node_to_buffer(const std::shared_ptr<Nodes::Node>& node, const std::shared_ptr<AudioBuffer>& buffer, float mix = 0.5F, bool clear_before = true);
 
     /**
      * @brief Fills token channels from interleaved data
@@ -366,7 +366,7 @@ public:
      * This method is a wrapper around AudioBuffer::clone_to() that creates a new buffer
      * but can accomodate multiple channels at once
      */
-    void clone_buffer_for_channels(std::shared_ptr<AudioBuffer> buffer, std::vector<uint32_t> channels,
+    void clone_buffer_for_channels(const std::shared_ptr<AudioBuffer>& buffer, const std::vector<uint32_t>& channels,
         ProcessingToken token = ProcessingToken::AUDIO_BACKEND);
 
     /**
@@ -402,14 +402,14 @@ public:
      * @param buffer Buffer to receive input data
      * @param input_channel Input channel to listen to
      */
-    void register_input_listener(std::shared_ptr<AudioBuffer> buffer, uint32_t channel);
+    void register_input_listener(const std::shared_ptr<AudioBuffer>& buffer, uint32_t channel);
 
     /**
      * @brief Unregisters a listener buffer from input channel
      * @param buffer Buffer to stop receiving input data
      * @param input_channel Input channel to stop listening to
      */
-    void unregister_input_listener(std::shared_ptr<AudioBuffer> buffer, uint32_t input_channel);
+    void unregister_input_listener(const std::shared_ptr<AudioBuffer>& buffer, uint32_t input_channel);
 
     /**
      * @brief Supplies a buffer to a specific token and channel
@@ -426,7 +426,7 @@ public:
      * This is the only continuous way to have same buffer data in multiple channels.
      * Else look into ::clone_buffer_for_channels() for cloning a buffer to multiple channels.
      */
-    bool supply_buffer_to(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel, double mix = 1.);
+    bool supply_buffer_to(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel, double mix = 1.);
 
     /**
      * @brief Removes a supplied buffer from a specific token and channel
@@ -438,7 +438,7 @@ public:
      * This method removes a previously supplied buffer from the specified token and channel.
      * It is useful for cleaning up buffers that are no longer needed.
      */
-    bool remove_supplied_buffer(std::shared_ptr<AudioBuffer> buffer, ProcessingToken token, uint32_t channel);
+    bool remove_supplied_buffer(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel);
 
     /**
      * @brief Registers a buffer initialization callback for a specific processing token

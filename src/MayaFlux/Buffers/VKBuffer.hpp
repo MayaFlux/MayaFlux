@@ -3,10 +3,15 @@
 #include "Buffer.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
-
-#include <vulkan/vulkan.h>
+#include "vulkan/vulkan.hpp"
 
 namespace MayaFlux::Buffers {
+
+struct VKBufferResources {
+    vk::Buffer buffer;
+    vk::DeviceMemory memory;
+    void* mapped_ptr;
+};
 
 /**
  * @class VKBuffer
@@ -87,7 +92,7 @@ public:
      *
      * @return Vector of DataVariant objects representing buffer contents.
      */
-    std::vector<Kakshya::DataVariant> get_data() const;
+    std::vector<Kakshya::DataVariant> get_data();
 
     /**
      * @brief Write data into the buffer
@@ -191,19 +196,19 @@ public:
     }
 
     /** Get VkBuffer handle (VK_NULL_HANDLE if not registered) */
-    VkBuffer get_vk_buffer() const { return m_vk_buffer; }
+    vk::Buffer& get_vk_buffer() { return m_resources.buffer; }
 
     /* Get logical buffer size as VkDeviceSize */
-    VkDeviceSize get_size_bytes() const { return m_size_bytes; }
+    vk::DeviceSize get_size_bytes() const { return m_size_bytes; }
 
     /**
      * @brief Convert modality to a recommended VkFormat
      * @return VkFormat corresponding to the buffer's modality, or VK_FORMAT_UNDEFINED.
      */
-    VkFormat get_format() const;
+    vk::Format get_format() const;
 
     /** Check whether Vulkan handles are present (buffer registered) */
-    bool is_initialized() const { return m_vk_buffer != VK_NULL_HANDLE; }
+    bool is_initialized() const { return m_resources.buffer != VK_NULL_HANDLE; }
 
     /** Get the buffer's semantic modality */
     Kakshya::DataModality get_modality() const { return m_modality; }
@@ -221,19 +226,28 @@ public:
     Usage get_usage() const { return m_usage; }
 
     /** Set VkBuffer handle after backend allocation */
-    void set_vk_buffer(VkBuffer buffer) { m_vk_buffer = buffer; }
+    void set_buffer(vk::Buffer buffer) { m_resources.buffer = buffer; }
 
     /** Set device memory handle after backend allocation */
-    void set_vk_memory(VkDeviceMemory memory) { m_vk_memory = memory; }
+    void set_memory(vk::DeviceMemory memory) { m_resources.memory = memory; }
 
     /** Set mapped host pointer (for host-visible allocations) */
-    void set_mapped_ptr(void* ptr) { m_mapped_ptr = ptr; }
+    void set_mapped_ptr(void* ptr) { m_resources.mapped_ptr = ptr; }
+
+    /** Set all buffer resources at once */
+    inline void set_buffer_resources(const VKBufferResources& resources)
+    {
+        m_resources = resources;
+    }
+
+    /** Get all buffer resources at once */
+    inline const VKBufferResources& get_buffer_resources() { return m_resources; }
 
     /**
      * @brief Whether this VKBuffer should be host-visible
      * @return True for staging or uniform buffers, false for device-local types.
      */
-    bool should_be_host_visible() const
+    bool is_host_visible() const
     {
         return m_usage == Usage::STAGING || m_usage == Usage::UNIFORM;
     }
@@ -242,19 +256,34 @@ public:
      * @brief Get appropriate VkBufferUsageFlags for creation based on Usage
      * @return VkBufferUsageFlags to be used when creating VkBuffer.
      */
-    VkBufferUsageFlags get_vk_usage_flags() const;
+    vk::BufferUsageFlags get_usage_flags() const;
 
     /**
      * @brief Get appropriate VkMemoryPropertyFlags for allocation based on Usage
      * @return VkMemoryPropertyFlags to request during memory allocation.
      */
-    VkMemoryPropertyFlags get_vk_memory_properties() const;
+    vk::MemoryPropertyFlags get_memory_properties() const;
+
+    /** Get mapped host pointer (nullptr if not host-visible or unmapped) */
+    void* get_mapped_ptr() const { return m_resources.mapped_ptr; }
+
+    /** Get device memory handle */
+    void mark_dirty_range(size_t offset, size_t size);
+
+    /** Mark a range as invalid (needs download) */
+    void mark_invalid_range(size_t offset, size_t size);
+
+    /** Retrieve and clear all dirty ranges */
+    std::vector<std::pair<size_t, size_t>> get_and_clear_dirty_ranges();
+
+    /** Retrieve and clear all invalid ranges */
+    std::vector<std::pair<size_t, size_t>> get_and_clear_invalid_ranges();
+
+    // void flush(size_t offset = 0, size_t size = VK_WHOLE_SIZE);
+    // void invalidate(size_t offset, size_t size);
 
 private:
-    // Vulkan handles (set during registration)
-    VkBuffer m_vk_buffer = VK_NULL_HANDLE;
-    VkDeviceMemory m_vk_memory = VK_NULL_HANDLE;
-    void* m_mapped_ptr = nullptr;
+    VKBufferResources m_resources;
 
     // Buffer parameters
     size_t m_size_bytes {};
@@ -272,6 +301,9 @@ private:
     std::shared_ptr<Buffers::BufferProcessor> m_default_processor;
     std::shared_ptr<Buffers::BufferProcessingChain> m_processing_chain;
     ProcessingToken m_processing_token;
+
+    std::vector<std::pair<size_t, size_t>> m_dirty_ranges;
+    std::vector<std::pair<size_t, size_t>> m_invalid_ranges;
 
     /**
      * @brief Infer Kakshya::DataDimension entries from a given byte count
