@@ -13,7 +13,6 @@ class InputAudioBuffer;
 
 using AudioProcessingFunction = std::function<void(std::shared_ptr<AudioBuffer>)>;
 using RootProcessingFunction = std::function<void(std::vector<std::shared_ptr<RootAudioBuffer>>&, uint32_t)>;
-using BufferInitCallback = std::function<void(std::shared_ptr<Buffer>)>;
 
 struct RootAudioUnit {
     std::vector<std::shared_ptr<RootAudioBuffer>> root_buffers;
@@ -271,6 +270,16 @@ public:
         ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND);
 
     /**
+     * @brief Adds a processor to a specific graphics buffer
+     * @param processor Processor to add
+     * @param buffer Target buffer
+     * @param token Processing domain (default: GRAPHICS_BACKEND)
+     */
+    void add_graphics_processor(
+        const std::shared_ptr<BufferProcessor>& processor,
+        const std::shared_ptr<Buffer>& buffer, ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND);
+
+    /**
      * @brief Removes a processor from the graphics processing chain
      * @param processor Processor to remove
      * @param token Processing domain (default: GRAPHICS_BACKEND)
@@ -516,24 +525,28 @@ public:
     bool remove_supplied_buffer(const std::shared_ptr<AudioBuffer>& buffer, ProcessingToken token, uint32_t channel);
 
     /**
-     * @brief Registers a buffer initialization callback for a specific processing token
-     * @param token Processing domain
-     * @param callback Callback function to invoke on buffer initialization
-     */
-    void register_buffer_init_hook(ProcessingToken token, const BufferInitCallback& callback);
-
-    /**
-     * @brief Registers a buffer cleanup callback for a specific processing token
-     * @param token Processing domain
-     * @param callback Callback function to invoke on buffer cleanup
-     */
-    void register_buffer_cleanup_hook(ProcessingToken token, const BufferInitCallback& callback);
-
-    /**
      * @brief Unregisters the buffer init/cleanup callbacks for a specific processing token
      * @param token Processing domain
      */
-    void unregister_buffer_hooks(ProcessingToken token);
+    void unregister_graphics_context(ProcessingToken token);
+
+    /**
+     * @brief Gets the Vulkan processing context for graphics buffers
+     * @return Shared pointer to the VKProcessingContext
+     */
+    inline std::shared_ptr<VKProcessingContext> get_graphics_processing_context(ProcessingToken token)
+    {
+        return m_graphics_processing_contexts[token];
+    }
+
+    /**
+     * @brief Sets the Vulkan processing context for graphics buffers
+     * @param context Shared pointer to the VKProcessingContext
+     */
+    inline void set_graphics_processing_context(const std::shared_ptr<VKProcessingContext>& context, ProcessingToken token)
+    {
+        m_graphics_processing_contexts[token] = context;
+    }
 
 private:
     /**
@@ -573,6 +586,11 @@ private:
      */
     RootAudioUnit& ensure_and_get_unit(ProcessingToken token, uint32_t channel);
 
+    /**
+     * @brief Sets up input audio buffers
+     * @param default_in_channels Number of input channels
+     * @param default_buffer_size Buffer size for input channels
+     */
     void setup_input_buffers(uint32_t default_in_channels, uint32_t default_buffer_size);
 
     /**
@@ -596,9 +614,6 @@ private:
      */
     std::vector<std::shared_ptr<InputAudioBuffer>> m_input_buffers;
 
-    std::unordered_map<ProcessingToken, BufferInitCallback> m_buffer_init_hooks;
-    std::unordered_map<ProcessingToken, BufferInitCallback> m_buffer_cleanup_hooks;
-
     /**
      * @brief Global processing chain applied to all tokens
      */
@@ -608,6 +623,18 @@ private:
      * @brief Mutex for thread-safe access
      */
     mutable std::mutex m_manager_mutex;
+
+    /**
+     * @brief Vulkan processing context for graphics buffers
+     */
+    std::unordered_map<ProcessingToken, std::shared_ptr<VKProcessingContext>> m_graphics_processing_contexts;
+
+    /**
+     * @brief Registers graphics processor with relevant context
+     * @param processor Processor to set up
+     * @param token Processing domain
+     */
+    void setup_graphics_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token);
 };
 
 } // namespace MayaFlux::Buffers

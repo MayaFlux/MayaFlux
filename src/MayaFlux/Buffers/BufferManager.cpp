@@ -1,10 +1,12 @@
 #include "BufferManager.hpp"
 
-#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
-#include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
-#include "MayaFlux/Buffers/Root/MixProcessor.hpp"
+#include "BufferProcessingChain.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
+#include "Node/NodeBuffer.hpp"
+#include "Root/MixProcessor.hpp"
+
+#include "Context/VKProcessingContext.hpp"
 
 #include "Input/InputAudioBuffer.hpp"
 
@@ -295,41 +297,41 @@ const std::vector<std::shared_ptr<AudioBuffer>>& BufferManager::get_audio_buffer
 
 void BufferManager::add_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
 {
-    if (!std::dynamic_pointer_cast<VKBuffer>(buffer)) {
+    if (auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer)) {
+
+        auto& unit = get_or_create_graphics_unit(token);
+        auto processing_chain = unit.get_chain();
+
+        if (auto buf_chain = buffer->get_processing_chain()) {
+            if (buf_chain != processing_chain) {
+                processing_chain->merge_chain(buf_chain);
+            }
+        } else {
+            buffer->set_processing_chain(processing_chain);
+        }
+
+        try {
+            if (!vk_buffer->is_initialized()) {
+                VKProcessingContext::initialize_buffer(vk_buffer);
+            }
+        } catch (const std::exception& e) {
+            error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
+                "Failed to initialize graphics buffer for token {}: {}",
+                static_cast<int>(token), e.what());
+        }
+
+        unit.get_buffer()->add_child_buffer(vk_buffer);
+
+        MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Added graphics buffer to token {} (total: {})",
+            static_cast<int>(token),
+            unit.get_buffer()->get_buffer_count());
+
+    } else {
         error<std::invalid_argument>(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
             "Unsupported graphics buffer type for token {}",
             static_cast<int>(token));
     }
-
-    auto& unit = get_or_create_graphics_unit(token);
-    auto processing_chain = unit.get_chain();
-
-    if (auto buf_chain = buffer->get_processing_chain()) {
-        if (buf_chain != processing_chain) {
-            processing_chain->merge_chain(buf_chain);
-        }
-    } else {
-        buffer->set_processing_chain(processing_chain);
-    }
-
-    auto hook_it = m_buffer_init_hooks.find(token);
-
-    if (hook_it != m_buffer_init_hooks.end()) {
-        try {
-            hook_it->second(buffer);
-        } catch (const std::exception& e) {
-            error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
-                "Buffer init hook failed for token {}: {}",
-                static_cast<int>(token), e.what());
-        }
-    }
-
-    unit.get_buffer()->add_child_buffer(std::dynamic_pointer_cast<VKBuffer>(buffer));
-
-    MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
-        "Added graphics buffer to token {} (total: {})",
-        static_cast<int>(token),
-        unit.get_buffer()->get_buffer_count());
 }
 
 void BufferManager::remove_graphics_buffer(const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
@@ -340,36 +342,36 @@ void BufferManager::remove_graphics_buffer(const std::shared_ptr<Buffer>& buffer
             static_cast<int>(token));
         return;
     }
-    if (!std::dynamic_pointer_cast<VKBuffer>(buffer)) {
+
+    if (auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer)) {
+        auto it = m_graphics_units.find(token);
+        if (it == m_graphics_units.end()) {
+            MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
+                "Token {} not found when removing graphics buffer",
+                static_cast<int>(token));
+        } else {
+            it->second.get_buffer()->remove_child_buffer(vk_buffer);
+        }
+
+        try {
+            if (vk_buffer->is_initialized()) {
+                VKProcessingContext::cleanup_buffer(vk_buffer);
+            }
+        } catch (const std::exception& e) {
+            error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
+                "Failed to cleanup graphics buffer for token {}: {}",
+                static_cast<int>(token), e.what());
+        }
+
+        MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
+            "Removed graphics buffer from token {} (remaining: {})",
+            static_cast<int>(token),
+            it->second.get_buffer()->get_buffer_count());
+    } else {
         error<std::invalid_argument>(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
             "Unsupported graphics buffer type for token {}",
             static_cast<int>(token));
     }
-
-    auto it = m_graphics_units.find(token);
-    if (it == m_graphics_units.end()) {
-        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
-            "Token {} not found when removing graphics buffer",
-            static_cast<int>(token));
-    } else {
-        it->second.get_buffer()->remove_child_buffer(std::dynamic_pointer_cast<VKBuffer>(buffer));
-    }
-
-    auto hook_it = m_buffer_cleanup_hooks.find(token);
-    if (hook_it != m_buffer_cleanup_hooks.end()) {
-        try {
-            hook_it->second(buffer);
-        } catch (const std::exception& e) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
-                "Buffer cleanup hook failed for token {}: {}",
-                static_cast<int>(token), e.what());
-        }
-    }
-
-    MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
-        "Removed graphics buffer from token {} (remaining: {})",
-        static_cast<int>(token),
-        it->second.get_buffer()->get_buffer_count());
 }
 
 const std::vector<std::shared_ptr<VKBuffer>>& BufferManager::get_vulkan_buffers(ProcessingToken token) const
@@ -392,12 +394,37 @@ std::vector<std::shared_ptr<VKBuffer>> BufferManager::get_vulkan_buffers_by_usag
     return it->second.get_buffer()->get_buffers_by_usage(usage);
 }
 
+void BufferManager::setup_graphics_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token)
+{
+    if (auto ctx = get_graphics_processing_context(token)) {
+        try {
+            std::dynamic_pointer_cast<VKBufferProcessor>(processor)->set_processing_context(ctx);
+        } catch (const std::bad_cast& e) {
+            error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
+                "Failed to set graphics processing context for processor on token {}: {}",
+                static_cast<int>(token), e.what());
+        }
+    }
+}
+
 void BufferManager::add_graphics_processor(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token)
 {
+    setup_graphics_processor(processor, token);
     auto& unit = get_or_create_graphics_unit(token);
     unit.get_chain()->add_processor(processor, unit.get_buffer());
+}
+
+void BufferManager::add_graphics_processor(
+    const std::shared_ptr<BufferProcessor>& processor,
+    const std::shared_ptr<Buffer>& buffer,
+    ProcessingToken token)
+{
+    setup_graphics_processor(processor, token);
+    auto& unit = get_or_create_graphics_unit(token);
+    unit.get_chain()->add_processor(processor, buffer);
+    buffer->set_processing_chain(unit.get_chain());
 }
 
 void BufferManager::remove_graphics_processor(
@@ -794,57 +821,9 @@ bool BufferManager::remove_supplied_buffer(const std::shared_ptr<AudioBuffer>& b
     return false;
 }
 
-void BufferManager::register_buffer_init_hook(ProcessingToken token, const BufferInitCallback& callback)
+void BufferManager::unregister_graphics_context(ProcessingToken token)
 {
-    if (!callback) {
-        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
-            "Attempted to register null buffer init callback for token {}",
-            static_cast<int>(token));
-        return;
-    }
-
-    m_buffer_init_hooks[token] = callback;
-
-    MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
-        "Registered buffer init hook for token {}",
-        static_cast<int>(token));
-}
-
-void BufferManager::register_buffer_cleanup_hook(ProcessingToken token, const BufferInitCallback& callback)
-{
-    if (!callback) {
-        MF_WARN(Journal::Component::Core, Journal::Context::BufferManagement,
-            "Attempted to register null buffer init callback for token {}",
-            static_cast<int>(token));
-        return;
-    }
-
-    m_buffer_cleanup_hooks[token] = callback;
-
-    MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
-        "Registered buffer init hook for token {}",
-        static_cast<int>(token));
-}
-
-void BufferManager::unregister_buffer_hooks(ProcessingToken token)
-{
-    auto it = m_buffer_init_hooks.find(token);
-    if (it != m_buffer_init_hooks.end()) {
-        m_buffer_init_hooks.erase(it);
-
-        MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
-            "Unregistered buffer init hook for token {}",
-            static_cast<int>(token));
-    }
-
-    auto c_it = m_buffer_cleanup_hooks.find(token);
-    if (c_it != m_buffer_cleanup_hooks.end()) {
-        m_buffer_cleanup_hooks.erase(c_it);
-
-        MF_INFO(Journal::Component::Core, Journal::Context::BufferManagement,
-            "Unregistered buffer cleanup hook for token {}",
-            static_cast<int>(token));
-    }
+    m_graphics_processing_contexts.erase(token);
 }
 
 } // namespace MayaFlux::Buffers

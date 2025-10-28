@@ -1,11 +1,15 @@
 #pragma once
 
 #include "Buffer.hpp"
+
+#include "MayaFlux/Buffers/BufferProcessor.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace MayaFlux::Buffers {
+
+class VKProcessingContext;
 
 struct VKBufferResources {
     vk::Buffer buffer;
@@ -196,7 +200,7 @@ public:
     }
 
     /** Get VkBuffer handle (VK_NULL_HANDLE if not registered) */
-    vk::Buffer& get_vk_buffer() { return m_resources.buffer; }
+    vk::Buffer& get_buffer() { return m_resources.buffer; }
 
     /* Get logical buffer size as VkDeviceSize */
     vk::DeviceSize get_size_bytes() const { return m_size_bytes; }
@@ -314,6 +318,19 @@ private:
      * @param byte_count Number of bytes of data to infer dimensions from.
      */
     void infer_dimensions_from_data(size_t byte_count);
+};
+
+class VKBufferProcessor : public BufferProcessor {
+public:
+    void set_processing_context(std::shared_ptr<VKProcessingContext> context)
+    {
+        m_processing_context = std::move(context);
+        m_owns_context = true;
+    }
+
+protected:
+    std::shared_ptr<VKProcessingContext> m_processing_context;
+    bool m_owns_context {};
 };
 
 } // namespace MayaFlux::Buffers

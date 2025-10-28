@@ -7,6 +7,7 @@
 #include "VKSwapchain.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Core {
@@ -64,6 +65,7 @@ void WindowRenderContext::cleanup(VKContext& context)
 VulkanBackend::VulkanBackend()
     : m_context(std::make_unique<VKContext>())
     , m_command_manager(std::make_unique<VKCommandManager>())
+    , m_processing_context(std::make_shared<Buffers::VKProcessingContext>())
 {
 }
 
@@ -88,6 +90,44 @@ bool VulkanBackend::initialize(const GlobalGraphicsConfig& config)
             "Failed to initialize command manager!");
         return false;
     }
+
+    Buffers::VKProcessingContext::set_initializer(
+        [this](const std::shared_ptr<Buffers::VKBuffer>& buffer) {
+            this->initialize_buffer(buffer);
+        });
+
+    Buffers::VKProcessingContext::set_cleaner(
+        [this](const std::shared_ptr<Buffers::VKBuffer>& buffer) {
+            this->cleanup_buffer(buffer);
+        });
+
+    m_processing_context->set_flush_callback(
+        [this](vk::DeviceMemory memory, size_t offset, size_t size) {
+            vk::MappedMemoryRange range;
+            range.memory = memory;
+            range.offset = offset;
+            range.size = size;
+            m_context->get_device().flushMappedMemoryRanges(1, &range);
+        });
+
+    m_processing_context->set_invalidate_callback(
+        [this](vk::DeviceMemory memory, size_t offset, size_t size) {
+            vk::MappedMemoryRange range;
+            range.memory = memory;
+            range.offset = offset;
+            range.size = size;
+            m_context->get_device().invalidateMappedMemoryRanges(1, &range);
+        });
+
+    m_processing_context->set_execute_immediate_callback(
+        [this](Buffers::VKProcessingContext::CommandRecorder recorder) {
+            this->execute_immediate_commands(recorder);
+        });
+
+    m_processing_context->set_record_deferred_callback(
+        [this](Buffers::VKProcessingContext::CommandRecorder recorder) {
+            this->record_deferred_commands(recorder);
+        });
 
     m_is_initialized = true;
     return true;
@@ -413,7 +453,7 @@ void VulkanBackend::handle_window_resize()
     }
 }
 
-void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
+void VulkanBackend::initialize_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
 {
     if (!buffer) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -421,23 +461,15 @@ void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
         return;
     }
 
-    auto buffer_wrapper = std::dynamic_pointer_cast<Buffers::VKBuffer>(buffer);
-    if (!buffer_wrapper) {
-        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Buffer is not a VulkanBuffer, skipping initialization");
-
-        return;
-    }
-
-    if (buffer_wrapper->is_initialized()) {
+    if (buffer->is_initialized()) {
         MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "VulkanBuffer already initialized, skipping");
         return;
     }
 
     vk::BufferCreateInfo buffer_info {};
-    buffer_info.size = buffer_wrapper->get_size_bytes();
-    buffer_info.usage = buffer_wrapper->get_usage_flags();
+    buffer_info.size = buffer->get_size_bytes();
+    buffer_info.usage = buffer->get_usage_flags();
     buffer_info.sharingMode = vk::SharingMode::eExclusive;
 
     vk::Buffer vk_buffer;
@@ -459,7 +491,7 @@ void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
 
     alloc_info.memoryTypeIndex = find_memory_type(
         mem_requirements.memoryTypeBits,
-        vk::MemoryPropertyFlags(buffer_wrapper->get_memory_properties()));
+        vk::MemoryPropertyFlags(buffer->get_memory_properties()));
 
     vk::DeviceMemory memory;
     try {
@@ -487,9 +519,9 @@ void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
     }
 
     void* mapped_ptr = nullptr;
-    if (buffer_wrapper->is_host_visible()) {
+    if (buffer->is_host_visible()) {
         try {
-            mapped_ptr = m_context->get_device().mapMemory(memory, 0, buffer_wrapper->get_size_bytes());
+            mapped_ptr = m_context->get_device().mapMemory(memory, 0, buffer->get_size_bytes());
         } catch (const vk::SystemError& e) {
             m_context->get_device().freeMemory(memory);
             m_context->get_device().destroyBuffer(vk_buffer);
@@ -503,27 +535,25 @@ void VulkanBackend::initialize_buffer(std::shared_ptr<Buffers::Buffer> buffer)
     }
 
     Buffers::VKBufferResources resources { .buffer = vk_buffer, .memory = memory, .mapped_ptr = mapped_ptr };
-    buffer_wrapper->set_buffer_resources(resources);
-    m_managed_buffers.push_back(buffer_wrapper);
+    buffer->set_buffer_resources(resources);
+    m_managed_buffers.push_back(buffer);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VulkanBuffer initialized: {} bytes, modality: {}, VkBuffer: {:p}",
-        buffer_wrapper->get_size_bytes(),
-        Kakshya::modality_to_string(buffer_wrapper->get_modality()),
-        (void*)buffer_wrapper->get_vk_buffer());
+        buffer->get_size_bytes(),
+        Kakshya::modality_to_string(buffer->get_modality()),
+        (void*)buffer->get_buffer());
 }
 
-void VulkanBackend::cleanup_buffer(std::shared_ptr<Buffers::Buffer> buffer)
+void VulkanBackend::cleanup_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
 {
-    auto buffer_wrapper = std::dynamic_pointer_cast<Buffers::VKBuffer>(buffer);
-    if (!buffer_wrapper) {
-        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Buffer is not a VulkanBuffer, skipping initialization");
-
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Attempted to cleanup null VulkanBuffer");
         return;
     }
 
-    auto it = std::ranges::find(m_managed_buffers, buffer_wrapper);
+    auto it = std::ranges::find(m_managed_buffers, buffer);
     if (it == m_managed_buffers.end()) {
         return;
     }
@@ -563,7 +593,7 @@ void VulkanBackend::flush_pending_buffer_operations()
             }
             MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Flushed {} dirty ranges for buffer {:p}", dirty_ranges.size(),
-                (void*)buffer_wrapper->get_vk_buffer());
+                (void*)buffer_wrapper->get_buffer());
         }
 
         auto invalid_ranges = buffer_wrapper->get_and_clear_invalid_ranges();
@@ -577,7 +607,7 @@ void VulkanBackend::flush_pending_buffer_operations()
             }
             MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Invalidated {} ranges for buffer {:p}", invalid_ranges.size(),
-                (void*)buffer_wrapper->get_vk_buffer());
+                (void*)buffer_wrapper->get_buffer());
         }
     }
 }
@@ -600,6 +630,22 @@ uint32_t VulkanBackend::find_memory_type(uint32_t type_filter, vk::MemoryPropert
         "Failed to find suitable memory type");
 
     return 0;
+}
+
+void VulkanBackend::execute_immediate_commands(const Buffers::VKProcessingContext::CommandRecorder& recorder)
+{
+    vk::CommandBuffer cmd = m_command_manager->begin_single_time_commands();
+
+    recorder(cmd);
+
+    m_command_manager->end_single_time_commands(cmd, m_context->get_graphics_queue());
+}
+
+void VulkanBackend::record_deferred_commands(const Buffers::VKProcessingContext::CommandRecorder& recorder)
+{
+    // TODO: Batch commands for later submission
+    // For now, just execute immediately
+    execute_immediate_commands(recorder);
 }
 
 void VulkanBackend::wait_idle()

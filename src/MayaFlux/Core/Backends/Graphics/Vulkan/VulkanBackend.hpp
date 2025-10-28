@@ -2,11 +2,7 @@
 
 #include "MayaFlux/Core/Backends/Graphics/GraphicsBackend.hpp"
 
-#include <vulkan/vulkan.hpp>
-
-namespace MayaFlux::Buffers {
-class VKBuffer;
-}
+#include "MayaFlux/Buffers/Context/VKProcessingContext.hpp"
 
 namespace MayaFlux::Core {
 
@@ -98,13 +94,13 @@ public:
      * @brief Initialize a buffer for use with the graphics backend
      * @param buffer Shared pointer to the buffer to initialize
      */
-    void initialize_buffer(std::shared_ptr<class Buffers::Buffer> buffer) override;
+    void initialize_buffer(const std::shared_ptr<class Buffers::VKBuffer>& buffer);
 
     /**
      * @brief Cleanup a buffer and release associated resources
      * @param buffer Shared pointer to the buffer to cleanup
      */
-    void cleanup_buffer(std::shared_ptr<class Buffers::Buffer> buffer) override;
+    void cleanup_buffer(const std::shared_ptr<class Buffers::VKBuffer>& buffer);
 
     /**
      * @brief Flush any pending buffer operations (e.g., uploads/downloads)
@@ -152,6 +148,15 @@ public:
     void handle_window_resize() override;
 
     /**
+     * @brief Get the Vulkan processing context used for buffer operations
+     * @return Shared pointer to the VKProcessingContext
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::VKProcessingContext> get_processing_context() const
+    {
+        return m_processing_context;
+    }
+
+    /**
      * @brief Get context pointer specific to the graphics backend (e.g., OpenGL context, Vulkan instance, etc.)
      */
     [[nodiscard]] void* get_native_context() override;
@@ -178,7 +183,19 @@ private:
      * @param properties Desired memory property flags
      * @return Index of the suitable memory type
      */
-    uint32_t find_memory_type(uint32_t type_filter, vk::MemoryPropertyFlags properties) const;
+    [[nodiscard]] uint32_t find_memory_type(uint32_t type_filter, vk::MemoryPropertyFlags properties) const;
+
+    /**
+     * @brief Execute immediate command recording for buffer operations
+     * @param recorder Command recording function
+     */
+    void execute_immediate_commands(const Buffers::VKProcessingContext::CommandRecorder& recorder);
+
+    /**
+     * @brief Record deferred command recording for buffer operations
+     * @param recorder Command recording function
+     */
+    void record_deferred_commands(const Buffers::VKProcessingContext::CommandRecorder& recorder);
 
     /**
      * @brief Create synchronization objects for a window's swapchain
@@ -205,6 +222,9 @@ private:
      * @return True if recreation succeeded
      */
     bool recreate_swapchain_internal(WindowRenderContext& context);
+
+    // Vulkan processing context for buffer operations
+    std::shared_ptr<Buffers::VKProcessingContext> m_processing_context;
 };
 
 }
