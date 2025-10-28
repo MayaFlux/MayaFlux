@@ -11,11 +11,17 @@ else()
 endif()
 add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 
-if(WIN32)
-    set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/.dependencies" CACHE PATH "Persistent dependencies directory")
-    set(FETCHCONTENT_QUIET OFF CACHE BOOL "Show FetchContent progress")
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-endif()
+set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/.dependencies" CACHE PATH
+    "Persistent dependencies directory")
+set(FETCHCONTENT_QUIET OFF CACHE BOOL "Show FetchContent progress")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+include(FetchContent)
+
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL
+    "Don't update dependencies automatically")
+set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL
+    "Use existing dependencies without network")
+
 
 if(APPLE)
     message(STATUS "Using system Clang on macOS (minimum macOS 14 required for C++23)")

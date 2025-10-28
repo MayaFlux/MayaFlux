@@ -30,6 +30,7 @@ endif()
 
 include(dependencies)
 include(compiler_config)
+include(shader)
 
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.h.in"

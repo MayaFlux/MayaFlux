@@ -26,6 +26,32 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 
+# add_dependencies(MayaFluxLib compile_shaders)
+
+if(MAYAFLUX_USE_SPIRV_REFLECT)
+    if(WIN32 OR APPLE)
+        target_include_directories(MayaFluxLib PRIVATE ${Vulkan_INCLUDE_DIRS})
+        target_compile_definitions(MayaFluxLib PRIVATE
+                                   MAYAFLUX_USE_SPIRV_REFLECT)
+    else()
+        target_link_libraries(MayaFluxLib PRIVATE mayaflux-spirv-reflect)
+        target_compile_definitions( MayaFluxLib PRIVATE
+                                    MAYAFLUX_USE_SPIRV_REFLECT)
+    endif()
+endif()
+
+if(MAYAFLUX_USE_SHADERC)
+    if(WIN32 OR APPLE)
+        target_link_libraries(MayaFluxLib PRIVATE Vulkan::shaderc_combined)
+        target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SHADERC)
+    else()
+        target_link_libraries(MayaFluxLib PRIVATE PkgConfig::shaderc)
+        target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SHADERC)
+    endif()
+endif()
+
+target_include_directories(MayaFluxLib PRIVATE ${CMAKE_BINARY_DIR}/include)
+
 if(WIN32)
     add_compile_definitions(USE_PPL_BACKEND)
 

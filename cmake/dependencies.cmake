@@ -1,9 +1,4 @@
 if(WIN32)
-    include(FetchContent)
-
-    set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL "Don't update dependencies automatically")
-    set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL "Use existing dependencies without network")
-
     # message(STATUS "Fetching GoogleTest via FetchContent...")
     # FetchContent_Declare(
     #     googletest
