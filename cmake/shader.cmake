@@ -29,7 +29,35 @@ if(MAYAFLUX_USE_SHADERC)
             message(WARNING "Shaderc not found. Please install via system package manager:")
             message(WARNING "  Ubuntu/Debian: sudo apt install libshaderc-dev")
             message(WARNING "  Fedora: sudo dnf install shaderc-devel")
+            message(WARNING "  MacOS: Run the provided scripts/setup_macos.sh")
             message(WARNING "  Arch: sudo pacman -S shaderc")
+        endif()
+    elseif(WIN32)
+        find_package(Vulkan REQUIRED)
+        if(TARGET Vulkan::shaderc_combined)
+            message(STATUS "Shaderc: Using Vulkan SDK shaderc_combined")
+        else()
+            find_library(SHADERC_COMBINED_LIB
+                NAMES shaderc_combined
+                PATHS ${Vulkan_LIBRARY_DIR}
+                NO_DEFAULT_PATH
+            )
+            find_path(SHADERC_INCLUDE_DIR
+                NAMES shaderc/shaderc.h
+                PATHS ${Vulkan_INCLUDE_DIR}
+                NO_DEFAULT_PATH
+            )
+            if(SHADERC_COMBINED_LIB AND SHADERC_INCLUDE_DIR)
+                add_library(shaderc_combined STATIC IMPORTED)
+                set_target_properties(shaderc_combined PROPERTIES
+                    IMPORTED_LOCATION ${SHADERC_COMBINED_LIB}
+                    INTERFACE_INCLUDE_DIRECTORIES ${SHADERC_INCLUDE_DIR}
+                )
+                message(STATUS "Shaderc: Found in Vulkan SDK (manual)")
+            else()
+                message(WARNING "Shaderc not found in Vulkan SDK. Runtime GLSL compilation disabled.")
+                set(MAYAFLUX_USE_SHADERC OFF)
+            endif()
         endif()
     endif()
     message(STATUS "GLSL compilation: ENABLED")
@@ -37,7 +65,6 @@ else()
     message(STATUS "GLSL compilation: DISABLED (pre-compiled SPIR-V required)")
 endif()
 
-set(DATA_DIR "${CMAKE_SOURCE_DIR}/data")
 set(SHADERS_DIR "${DATA_DIR}/shaders")
 set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
 file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})

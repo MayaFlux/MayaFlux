@@ -26,7 +26,9 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 
-# add_dependencies(MayaFluxLib compile_shaders)
+if(TARGET compile_shaders)
+    target_include_directories(MayaFluxLib PRIVATE ${SHADER_OUTPUT_DIR})
+endif()
 
 if(MAYAFLUX_USE_SPIRV_REFLECT)
     if(WIN32 OR APPLE)
@@ -38,11 +40,29 @@ endif()
 
 if(MAYAFLUX_USE_SHADERC)
     if(WIN32)
-        # target_link_libraries(MayaFluxLib PRIVATE shaderc_combined)
+        if(TARGET Vulkan::shaderc_combined)
+            target_link_libraries(MayaFluxLib PRIVATE Vulkan::shaderc_combined)
+        elseif(TARGET shaderc_combined)
+            target_link_libraries(MayaFluxLib PRIVATE shaderc_combined)
+        endif()
+
+        if(MSVC)
+            target_compile_options(MayaFluxLib PRIVATE
+                "$<$<CONFIG:Debug>:/MTd>"
+                "$<$<CONFIG:Release>:/MT>"
+                "$<$<CONFIG:RelWithDebInfo>:/MT>"
+                "$<$<CONFIG:MinSizeRel>:/MT>"
+            )
+
+            if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+                target_compile_options(MayaFluxLib PRIVATE "/Zc:externConstexpr-")
+                target_link_options(MayaFluxLib PRIVATE "/IGNORE:4099")
+            endif()
+        endif()
     else()
         target_link_libraries(MayaFluxLib PRIVATE PkgConfig::shaderc)
-        target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SHADERC)
     endif()
+    target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SHADERC)
 endif()
 
 target_include_directories(MayaFluxLib PRIVATE ${CMAKE_BINARY_DIR}/include)

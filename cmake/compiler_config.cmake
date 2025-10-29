@@ -1,3 +1,7 @@
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(MSVC)
     add_compile_options(/W4)
 else()
@@ -15,7 +19,8 @@ else()
         )
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++2b")
 
-        message(STATUS "Applied Apple Clang 15 (macOS 14) compatibility workarounds")
+        message(STATUS
+                "Applied Apple Clang 15 (macOS 14) compatibility workarounds")
     else()
         add_compile_options(
         -Wall

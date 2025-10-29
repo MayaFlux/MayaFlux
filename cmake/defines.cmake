@@ -11,23 +11,31 @@ else()
 endif()
 add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 
-set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/cmake/dependencies" CACHE PATH
-    "Persistent dependencies directory")
-set(FETCHCONTENT_QUIET OFF CACHE BOOL "Show FetchContent progress")
-include(FetchContent)
+if(APPLE)
+    message(STATUS
+            "Using system Clang on macOS (minimum macOS 14 required for C++23)")
+endif()
 
 if(WIN32)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
-set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL
-    "Don't update dependencies automatically")
-set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL
-    "Use existing dependencies without network")
+set(CONFIG_IMPL ${CMAKE_SOURCE_DIR}/cmake/config.cpp)
+set(DATA_DIR "${CMAKE_SOURCE_DIR}/data")
 
-
-if(APPLE)
-    message(STATUS "Using system Clang on macOS (minimum macOS 14 required for C++23)")
+if(WIN32)
+    set(CMAKE_INSTALL_PREFIX "C:/MayaFlux" CACHE PATH "Installation directory"
+        FORCE)
+    message(STATUS "Setting Windows install prefix to: ${CMAKE_INSTALL_PREFIX}")
 endif()
 
-set(CONFIG_IMPL ${CMAKE_SOURCE_DIR}/cmake/config.cpp)
+set(USER_PROJECT_FILE "${CMAKE_SOURCE_DIR}/src/user_project.hpp")
+if(NOT EXISTS ${USER_PROJECT_FILE})
+    message(STATUS "Creating user_project.hpp from template...")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/user_project.hpp.in
+        ${USER_PROJECT_FILE}
+        @ONLY
+    )
+endif()
+set(USER_SOURCES ${USER_PROJECT_FILE})
