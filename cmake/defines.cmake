@@ -20,6 +20,15 @@ if(WIN32)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR
+    ("${CMAKE_CONFIGURATION_TYPES}" MATCHES "Debug" AND NOT CMAKE_BUILD_TYPE ))
+    add_compile_definitions(MAYAFLUX_DEBUG=1)
+    message(STATUS "Debug build detected - MAYAFLUX_DEBUG enabled")
+else()
+    add_compile_definitions(MAYAFLUX_DEBUG=0)
+    message(STATUS "Release build - MAYAFLUX_DEBUG disabled")
+endif()
+
 set(CONFIG_IMPL ${CMAKE_SOURCE_DIR}/cmake/config.cpp)
 set(DATA_DIR "${CMAKE_SOURCE_DIR}/data")
 

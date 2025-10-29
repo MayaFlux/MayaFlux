@@ -1,7 +1,8 @@
 #include "BufferDownloadProcessor.hpp"
 
-#include "MayaFlux/Buffers/Context/VKProcessingContext.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+
+#include "MayaFlux/Registry/Service/BufferService.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -61,7 +62,7 @@ void BufferDownloadProcessor::download_host_visible(const std::shared_ptr<VKBuff
 
     auto invalid_ranges = source->get_and_clear_invalid_ranges();
     for (auto& [offset, size] : invalid_ranges) {
-        m_processing_context->invalidate_buffer(
+        m_buffer_service->invalidate_range(
             source_resources.memory,
             offset,
             size);
@@ -85,13 +86,15 @@ void BufferDownloadProcessor::download_device_local(const std::shared_ptr<VKBuff
 
     auto staging_buffer = m_staging_buffers[source];
 
-    m_processing_context->execute_immediate([&](vk::CommandBuffer cmd) {
+    m_buffer_service->execute_immediate([&](void* ptr) {
         vk::BufferCopy copy_region;
         copy_region.srcOffset = 0;
         copy_region.dstOffset = 0;
         copy_region.size = source->get_size_bytes();
 
-        cmd.copyBuffer(
+        auto cmd = static_cast<vk::CommandBuffer*>(ptr);
+
+        cmd->copyBuffer(
             source->get_buffer(),
             staging_buffer->get_buffer(),
             1, &copy_region);
@@ -102,7 +105,7 @@ void BufferDownloadProcessor::download_device_local(const std::shared_ptr<VKBuff
     auto& staging_resources = staging_buffer->get_buffer_resources();
     auto invalid_ranges = staging_buffer->get_and_clear_invalid_ranges();
     for (auto& [offset, size] : invalid_ranges) {
-        m_processing_context->invalidate_buffer(
+        m_buffer_service->invalidate_range(
             staging_resources.memory,
             offset,
             size);
@@ -135,7 +138,7 @@ void BufferDownloadProcessor::ensure_staging_buffer(const std::shared_ptr<VKBuff
         VKBuffer::Usage::STAGING,
         Kakshya::DataModality::UNKNOWN);
 
-    if (!m_processing_context) {
+    if (!m_buffer_service) {
         error<std::runtime_error>(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
@@ -145,7 +148,7 @@ void BufferDownloadProcessor::ensure_staging_buffer(const std::shared_ptr<VKBuff
 
     if (!staging_buffer->is_initialized()) {
         try {
-            VKProcessingContext::initialize_buffer(staging_buffer);
+            m_buffer_service->initialize_buffer(staging_buffer);
         } catch (const std::exception& e) {
             error_rethrow(
                 Journal::Component::Buffers,
@@ -171,16 +174,12 @@ void BufferDownloadProcessor::on_attach(std::shared_ptr<Buffer> buffer)
             "BufferDownloadProcessor can only be attached to VKBuffer");
     }
 
-    if (!m_owns_context) {
-        if (!m_processing_context) {
-            error<std::runtime_error>(
-                Journal::Component::Buffers,
-                Journal::Context::BufferProcessing,
-                std::source_location::current(),
-                "No processing context available for BufferDownloadProcessor");
-        } else {
-            m_owns_context = true;
-        }
+    if (!m_buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "No processing context available for BufferDownloadProcessor");
     }
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,

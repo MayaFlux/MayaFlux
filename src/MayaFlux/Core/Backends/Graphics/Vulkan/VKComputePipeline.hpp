@@ -37,7 +37,7 @@ struct PushConstantRange {
  * - Specialization constants (compile-time shader parameters)
  */
 struct ComputePipelineConfig {
-    VKShaderModule* shader = nullptr; ///< Compute shader
+    std::shared_ptr<VKShaderModule> shader; ///< Compute shader
     std::vector<vk::DescriptorSetLayout> set_layouts; ///< Descriptor layouts
     std::vector<PushConstantRange> push_constants; ///< Push constant ranges
 

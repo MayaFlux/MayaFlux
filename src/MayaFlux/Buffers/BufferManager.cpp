@@ -6,7 +6,8 @@
 #include "Node/NodeBuffer.hpp"
 #include "Root/MixProcessor.hpp"
 
-#include "Context/VKProcessingContext.hpp"
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/BufferService.hpp"
 
 #include "Input/InputAudioBuffer.hpp"
 
@@ -312,7 +313,7 @@ void BufferManager::add_graphics_buffer(const std::shared_ptr<Buffer>& buffer, P
 
         try {
             if (!vk_buffer->is_initialized()) {
-                VKProcessingContext::initialize_buffer(vk_buffer);
+                m_buffer_service->initialize_buffer(vk_buffer);
             }
         } catch (const std::exception& e) {
             error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
@@ -355,7 +356,7 @@ void BufferManager::remove_graphics_buffer(const std::shared_ptr<Buffer>& buffer
 
         try {
             if (vk_buffer->is_initialized()) {
-                VKProcessingContext::cleanup_buffer(vk_buffer);
+                m_buffer_service->destroy_buffer(vk_buffer);
             }
         } catch (const std::exception& e) {
             error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
@@ -394,24 +395,10 @@ std::vector<std::shared_ptr<VKBuffer>> BufferManager::get_vulkan_buffers_by_usag
     return it->second.get_buffer()->get_buffers_by_usage(usage);
 }
 
-void BufferManager::register_graphics_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token)
-{
-    if (auto ctx = get_graphics_processing_context(token)) {
-        try {
-            std::dynamic_pointer_cast<VKBufferProcessor>(processor)->set_processing_context(ctx);
-        } catch (const std::bad_cast& e) {
-            error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement, std::source_location::current(),
-                "Failed to set graphics processing context for processor on token {}: {}",
-                static_cast<int>(token), e.what());
-        }
-    }
-}
-
 void BufferManager::add_graphics_processor(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token)
 {
-    register_graphics_processor(processor, token);
     auto& unit = get_or_create_graphics_unit(token);
     unit.get_chain()->add_processor(processor, unit.get_buffer());
 }
@@ -421,7 +408,6 @@ void BufferManager::add_graphics_processor(
     const std::shared_ptr<Buffer>& buffer,
     ProcessingToken token)
 {
-    register_graphics_processor(processor, token);
     auto& unit = get_or_create_graphics_unit(token);
     unit.get_chain()->add_processor(processor, buffer);
     buffer->set_processing_chain(unit.get_chain());
@@ -821,9 +807,10 @@ bool BufferManager::remove_supplied_buffer(const std::shared_ptr<AudioBuffer>& b
     return false;
 }
 
-void BufferManager::unregister_graphics_context(ProcessingToken token)
+void BufferManager::initialize_buffer_service()
 {
-    m_graphics_processing_contexts.erase(token);
+    m_buffer_service = Registry::BackendRegistry::instance()
+                           .get_service<Registry::Service::BufferService>();
 }
 
 } // namespace MayaFlux::Buffers

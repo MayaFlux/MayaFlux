@@ -49,6 +49,7 @@ Checks: >
   -cppcoreguidelines-macro-usage,
   -cppcoreguidelines-avoid-c-arrays,
   -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
   -cppcoreguidelines-avoid-const-or-ref-data-members,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -cppcoreguidelines-non-private-member-variables-in-classes,

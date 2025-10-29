@@ -3,6 +3,10 @@
 #include "MayaFlux/Buffers/Root/RootAudioBuffer.hpp"
 #include "MayaFlux/Buffers/Root/RootGraphicsBuffer.hpp"
 
+namespace MayaFlux::Registry::Service {
+struct BufferService;
+}
+
 namespace MayaFlux::Nodes {
 class Node;
 }
@@ -259,13 +263,6 @@ public:
     std::vector<std::shared_ptr<VKBuffer>> get_vulkan_buffers_by_usage(
         VKBuffer::Usage usage,
         ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND) const;
-
-    /**
-     * @brief Registers graphics processor with relevant context
-     * @param processor Processor to set up
-     * @param token Processing domain
-     */
-    void register_graphics_processor(const std::shared_ptr<BufferProcessor>& processor, ProcessingToken token);
 
     /**
      * @brief Adds a processor to the graphics processing chain
@@ -538,22 +535,9 @@ public:
     void unregister_graphics_context(ProcessingToken token);
 
     /**
-     * @brief Gets the Vulkan processing context for graphics buffers
-     * @return Shared pointer to the VKProcessingContext
+     * @brief Sets the Vulkan buffer processing context
      */
-    inline std::shared_ptr<VKProcessingContext> get_graphics_processing_context(ProcessingToken token)
-    {
-        return m_graphics_processing_contexts[token];
-    }
-
-    /**
-     * @brief Sets the Vulkan processing context for graphics buffers
-     * @param context Shared pointer to the VKProcessingContext
-     */
-    inline void set_graphics_processing_context(const std::shared_ptr<VKProcessingContext>& context, ProcessingToken token)
-    {
-        m_graphics_processing_contexts[token] = context;
-    }
+    void initialize_buffer_service();
 
 private:
     /**
@@ -632,9 +616,9 @@ private:
     mutable std::mutex m_manager_mutex;
 
     /**
-     * @brief Vulkan processing context for graphics buffers
+     * @brief Vulkan Buffer processing context
      */
-    std::unordered_map<ProcessingToken, std::shared_ptr<VKProcessingContext>> m_graphics_processing_contexts;
+    Registry::Service::BufferService* m_buffer_service = nullptr;
 };
 
 } // namespace MayaFlux::Buffers

@@ -59,10 +59,6 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
         m_frame_clock->set_target_fps(m_graphics_config.target_frame_rate);
     }
 
-    if (auto vk_backend = dynamic_cast<VulkanBackend*>(m_backend.get())) {
-        m_handle->buffers.set_graphics_processing_context(vk_backend->get_processing_context());
-    }
-
     m_is_ready = true;
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
@@ -353,7 +349,6 @@ void GraphicsSubsystem::graphics_thread_loop()
 void GraphicsSubsystem::shutdown()
 {
     stop();
-    m_handle->buffers.unregister_contexts();
     m_is_ready = false;
 }
 

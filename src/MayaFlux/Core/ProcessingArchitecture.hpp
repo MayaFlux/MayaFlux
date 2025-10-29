@@ -10,7 +10,6 @@ namespace MayaFlux::Buffers {
 class BufferManager;
 class Buffer;
 class VKBuffer;
-class VKProcessingContext;
 }
 
 namespace MayaFlux::Vruta {
@@ -120,12 +119,6 @@ public:
 
     /** @brief Configure channel layout for token domain */
     void setup_channels(uint32_t num_channels, uint32_t buffer_size);
-
-    /** @brief Unregister buffer initialization callback for token domain */
-    void unregister_contexts();
-
-    /** @brief Set Vulkan processing context for graphics buffers */
-    void set_graphics_processing_context(const std::shared_ptr<Buffers::VKProcessingContext>& context);
 
 private:
     void ensure_valid() const;

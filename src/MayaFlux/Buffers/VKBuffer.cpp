@@ -4,6 +4,10 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/BufferService.hpp"
+#include "MayaFlux/Registry/Service/ComputeService.hpp"
+
 namespace MayaFlux::Buffers {
 
 VKBuffer::VKBuffer(
@@ -333,6 +337,18 @@ std::vector<std::pair<size_t, size_t>> VKBuffer::get_and_clear_dirty_ranges()
 std::vector<std::pair<size_t, size_t>> VKBuffer::get_and_clear_invalid_ranges()
 {
     return std::exchange(m_invalid_ranges, {});
+}
+
+void VKBufferProcessor::initialize_buffer_service()
+{
+    m_buffer_service = Registry::BackendRegistry::instance()
+                           .get_service<Registry::Service::BufferService>();
+}
+
+void VKBufferProcessor::initialize_compute_service()
+{
+    m_compute_service = Registry::BackendRegistry::instance()
+                            .get_service<Registry::Service::ComputeService>();
 }
 
 } // namespace MayaFlux::Buffers::Vulkan

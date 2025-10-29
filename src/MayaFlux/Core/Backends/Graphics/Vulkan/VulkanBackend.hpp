@@ -1,8 +1,17 @@
 #pragma once
 
 #include "MayaFlux/Core/Backends/Graphics/GraphicsBackend.hpp"
+#include "vulkan/vulkan.hpp"
 
-#include "MayaFlux/Buffers/Context/VKProcessingContext.hpp"
+namespace MayaFlux::Registry::Service {
+struct BufferService;
+struct ComputeService;
+struct DisplayService;
+}
+
+namespace MayaFlux::Buffers {
+class VKBuffer;
+}
 
 namespace MayaFlux::Core {
 
@@ -151,29 +160,54 @@ public:
     void handle_window_resize() override;
 
     /**
-     * @brief Get the Vulkan processing context used for buffer operations
-     * @return Shared pointer to the VKProcessingContext
-     */
-    [[nodiscard]] std::shared_ptr<Buffers::VKProcessingContext> get_processing_context() const
-    {
-        return m_processing_context;
-    }
-
-    /**
      * @brief Get context pointer specific to the graphics backend (e.g., OpenGL context, Vulkan instance, etc.)
      */
     [[nodiscard]] void* get_native_context() override;
     [[nodiscard]] const void* get_native_context() const override;
+
+    /** @brief Create a shader module from SPIR-V binary
+     * @param spirv_path Path to the SPIR-V binary file
+     * @param stage Shader stage (e.g., vertex, fragment, compute)
+     * @return Shared pointer to the created VKShaderModule
+     */
+    std::shared_ptr<VKShaderModule> create_shader_module(const std::string& spirv_path, uint32_t stage);
+
+    /** @brief Create a descriptor manager for managing descriptor sets
+     * @param pool_size Number of descriptor sets to allocate in the pool
+     * @return Shared pointer to the created VKDescriptorManager
+     */
+    std::shared_ptr<VKDescriptorManager> create_descriptor_manager(uint32_t pool_size);
+
+    /** @brief Create a descriptor set layout
+     * @param manager Descriptor manager to use for allocation
+     * @param bindings Vector of pairs specifying binding index and descriptor type
+     * @return Created vk::DescriptorSetLayout
+     */
+    vk::DescriptorSetLayout create_descriptor_layout(
+        const std::shared_ptr<VKDescriptorManager>& manager,
+        const std::vector<std::pair<uint32_t, uint32_t>>& bindings);
+
+    /** @brief Create a compute pipeline
+     * @param shader Shader module to use for the compute pipeline
+     * @param layouts Vector of descriptor set layouts used by the pipeline
+     * @param push_constant_size Size of push constant range in bytes
+     * @return Shared pointer to the created VKComputePipeline
+     */
+    std::shared_ptr<VKComputePipeline> create_compute_pipeline(
+        const std::shared_ptr<VKShaderModule>& shader,
+        const std::vector<vk::DescriptorSetLayout>& layouts,
+        uint32_t push_constant_size);
+
+    /** @brief Cleanup a compute resource allocated by the backend
+     * @param resource Pointer to the resource to cleanup
+     */
+    void cleanup_compute_resource(void* resource);
 
 private:
     std::unique_ptr<VKContext> m_context;
     std::unique_ptr<VKCommandManager> m_command_manager;
     std::vector<WindowRenderContext> m_window_contexts;
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
-
-    std::unique_ptr<VKShaderModule> m_shader_module;
-    std::unique_ptr<VKDescriptorManager> m_descriptor_manager;
-    std::unique_ptr<VKComputePipeline> m_compute_pipeline;
 
     bool m_is_initialized {};
 
@@ -196,13 +230,13 @@ private:
      * @brief Execute immediate command recording for buffer operations
      * @param recorder Command recording function
      */
-    void execute_immediate_commands(const Buffers::VKProcessingContext::CommandRecorder& recorder);
+    void execute_immediate_commands(const std::function<void(vk::CommandBuffer)>& recorder);
 
     /**
      * @brief Record deferred command recording for buffer operations
      * @param recorder Command recording function
      */
-    void record_deferred_commands(const Buffers::VKProcessingContext::CommandRecorder& recorder);
+    void record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder);
 
     /**
      * @brief Create synchronization objects for a window's swapchain
@@ -230,8 +264,13 @@ private:
      */
     bool recreate_swapchain_internal(WindowRenderContext& context);
 
-    // Vulkan processing context for buffer operations
-    std::shared_ptr<Buffers::VKProcessingContext> m_processing_context;
+    void register_backend_services();
+
+    void unregister_backend_services();
+
+    std::shared_ptr<Registry::Service::BufferService> m_buffer_service;
+    std::shared_ptr<Registry::Service::ComputeService> m_compute_service;
+    std::shared_ptr<Registry::Service::DisplayService> m_display_service;
 };
 
 }

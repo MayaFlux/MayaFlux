@@ -1,10 +1,9 @@
 #include "BufferUploadProcessor.hpp"
 
-#include "MayaFlux/Buffers/Context/VKProcessingContext.hpp"
-
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 
+#include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace MayaFlux::Buffers {
@@ -85,7 +84,7 @@ void BufferUploadProcessor::upload_host_visible(const std::shared_ptr<VKBuffer>&
 
     auto dirty_ranges = target->get_and_clear_dirty_ranges();
     for (auto& [offset, size] : dirty_ranges) {
-        m_processing_context->flush_buffer(
+        m_buffer_service->flush_range(
             target_resources.memory,
             offset,
             size);
@@ -129,19 +128,21 @@ void BufferUploadProcessor::upload_device_local(const std::shared_ptr<VKBuffer>&
 
     auto dirty_ranges = staging_buffer->get_and_clear_dirty_ranges();
     for (auto& [offset, size] : dirty_ranges) {
-        m_processing_context->flush_buffer(
+        m_buffer_service->flush_range(
             staging_resources.memory,
             offset,
             size);
     }
 
-    m_processing_context->execute_immediate([&](vk::CommandBuffer cmd) {
+    m_buffer_service->execute_immediate([&](void* ptr) {
         vk::BufferCopy copy_region;
         copy_region.srcOffset = 0;
         copy_region.dstOffset = 0;
         copy_region.size = bytes;
 
-        cmd.copyBuffer(
+        auto cmd = static_cast<vk::CommandBuffer*>(ptr);
+
+        cmd->copyBuffer(
             staging_buffer->get_buffer(),
             target->get_buffer(),
             1, &copy_region);
@@ -160,7 +161,7 @@ void BufferUploadProcessor::ensure_staging_buffer(const std::shared_ptr<VKBuffer
         VKBuffer::Usage::STAGING,
         Kakshya::DataModality::UNKNOWN);
 
-    if (!m_processing_context) {
+    if (!m_buffer_service) {
         error<std::runtime_error>(
             Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
@@ -170,7 +171,7 @@ void BufferUploadProcessor::ensure_staging_buffer(const std::shared_ptr<VKBuffer
 
     if (!staging_buffer->is_initialized()) {
         try {
-            VKProcessingContext::initialize_buffer(staging_buffer);
+            m_buffer_service->initialize_buffer(staging_buffer);
         } catch (const std::exception& e) {
             error_rethrow(
                 Journal::Component::Buffers,
@@ -196,16 +197,12 @@ void BufferUploadProcessor::on_attach(std::shared_ptr<Buffer> buffer)
             "BufferUploadProcessor can only be attached to VKBuffer");
     }
 
-    if (!m_owns_context) {
-        if (!m_processing_context) {
-            error<std::runtime_error>(
-                Journal::Component::Buffers,
-                Journal::Context::BufferProcessing,
-                std::source_location::current(),
-                "BufferUploadProcessor requires a valid ProcessingContext");
-        } else {
-            m_owns_context = true;
-        }
+    if (!m_buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "BufferUploadProcessor requires a valid buffer service");
     }
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,

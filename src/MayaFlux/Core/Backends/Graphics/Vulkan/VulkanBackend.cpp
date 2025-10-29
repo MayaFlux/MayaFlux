@@ -7,6 +7,11 @@
 #include "VKRenderPass.hpp"
 #include "VKSwapchain.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/BufferService.hpp"
+#include "MayaFlux/Registry/Service/ComputeService.hpp"
+#include "MayaFlux/Registry/Service/DisplayService.hpp"
+
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -66,10 +71,6 @@ void WindowRenderContext::cleanup(VKContext& context)
 VulkanBackend::VulkanBackend()
     : m_context(std::make_unique<VKContext>())
     , m_command_manager(std::make_unique<VKCommandManager>())
-    , m_shader_module(std::make_unique<VKShaderModule>())
-    , m_descriptor_manager(std::make_unique<VKDescriptorManager>())
-    , m_compute_pipeline(std::make_unique<VKComputePipeline>())
-    , m_processing_context(std::make_shared<Buffers::VKProcessingContext>())
 {
 }
 
@@ -95,105 +96,135 @@ bool VulkanBackend::initialize(const GlobalGraphicsConfig& config)
         return false;
     }
 
-    Buffers::VKProcessingContext::set_initializer(
-        [this](const std::shared_ptr<Buffers::VKBuffer>& buffer) {
-            this->initialize_buffer(buffer);
-        });
-
-    Buffers::VKProcessingContext::set_cleaner(
-        [this](const std::shared_ptr<Buffers::VKBuffer>& buffer) {
-            this->cleanup_buffer(buffer);
-        });
-
-    m_processing_context->set_flush_callback(
-        [this](vk::DeviceMemory memory, size_t offset, size_t size) {
-            vk::MappedMemoryRange range;
-            range.memory = memory;
-            range.offset = offset;
-            range.size = size;
-            m_context->get_device().flushMappedMemoryRanges(1, &range);
-        });
-
-    m_processing_context->set_invalidate_callback(
-        [this](vk::DeviceMemory memory, size_t offset, size_t size) {
-            vk::MappedMemoryRange range;
-            range.memory = memory;
-            range.offset = offset;
-            range.size = size;
-            m_context->get_device().invalidateMappedMemoryRanges(1, &range);
-        });
-
-    m_processing_context->set_execute_immediate_callback(
-        [this](Buffers::VKProcessingContext::CommandRecorder recorder) {
-            this->execute_immediate_commands(recorder);
-        });
-
-    m_processing_context->set_record_deferred_callback(
-        [this](Buffers::VKProcessingContext::CommandRecorder recorder) {
-            this->record_deferred_commands(recorder);
-        });
-
-    m_processing_context->set_shader_module_creator(
-        [this](const std::string& path, vk::ShaderStageFlagBits stage) -> Buffers::VKProcessingContext::ResourceHandle {
-            auto shader = new VKShaderModule();
-            if (!shader->create_from_spirv_file(m_context->get_device(), path, stage)) {
-                delete shader;
-                return nullptr;
-            }
-            return static_cast<void*>(shader);
-        });
-
-    m_processing_context->set_descriptor_manager_creator(
-        [this](uint32_t pool_size) -> Buffers::VKProcessingContext::ResourceHandle {
-            auto manager = new VKDescriptorManager();
-            if (!manager->initialize(m_context->get_device(), pool_size)) {
-                delete manager;
-                return nullptr;
-            }
-            return static_cast<void*>(manager);
-        });
-
-    m_processing_context->set_descriptor_layout_creator(
-        [this](Buffers::VKProcessingContext::ResourceHandle mgr_handle,
-            const std::vector<std::pair<uint32_t, vk::DescriptorType>>& bindings) -> vk::DescriptorSetLayout {
-            auto* manager = static_cast<VKDescriptorManager*>(mgr_handle);
-            DescriptorSetLayoutConfig config;
-            for (const auto& [binding, type] : bindings) {
-                config.add_binding(binding, type, vk::ShaderStageFlagBits::eCompute);
-            }
-            return manager->create_layout(m_context->get_device(), config);
-        });
-
-    m_processing_context->set_compute_pipeline_creator(
-        [this](Buffers::VKProcessingContext::ResourceHandle shader_handle,
-            const std::vector<vk::DescriptorSetLayout>& layouts,
-            uint32_t push_size) -> Buffers::VKProcessingContext::ResourceHandle {
-            auto* shader = static_cast<VKShaderModule*>(shader_handle);
-            auto pipeline = new VKComputePipeline();
-
-            ComputePipelineConfig config;
-            config.shader = shader;
-            config.set_layouts = layouts;
-            if (push_size > 0) {
-                config.add_push_constant(vk::ShaderStageFlagBits::eCompute, push_size);
-            }
-
-            if (!pipeline->create(m_context->get_device(), config)) {
-                delete pipeline;
-                return nullptr;
-            }
-            return static_cast<void*>(pipeline);
-        });
-
-    m_processing_context->set_resource_cleaner(
-        [this](Buffers::VKProcessingContext::ResourceHandle handle) {
-            // Type erasure - caller must know what type it is
-            // In practice, processor tracks its own resource types
-            delete static_cast<VKShaderModule*>(handle); // Simplified - processors handle cleanup
-        });
-
     m_is_initialized = true;
     return true;
+}
+
+void VulkanBackend::register_backend_services()
+{
+
+    auto& registry = Registry::BackendRegistry::instance();
+    auto buffer_service = std::make_shared<Registry::Service::BufferService>();
+
+    buffer_service->initialize_buffer = [this](const std::shared_ptr<void>& vk_buf) -> void {
+        auto buffer = std::static_pointer_cast<Buffers::VKBuffer>(vk_buf);
+        this->initialize_buffer(buffer);
+    };
+
+    buffer_service->destroy_buffer = [this](const std::shared_ptr<void>& vk_buf) {
+        auto buffer = std::static_pointer_cast<Buffers::VKBuffer>(vk_buf);
+        this->cleanup_buffer(buffer);
+    };
+
+    buffer_service->execute_immediate = [this](const std::function<void(void*)>& recorder) {
+        this->execute_immediate_commands([recorder](vk::CommandBuffer cmd) {
+            recorder(static_cast<void*>(cmd));
+        });
+    };
+
+    buffer_service->record_deferred = [this](const std::function<void(void*)>& recorder) {
+        this->record_deferred_commands([recorder](vk::CommandBuffer cmd) {
+            recorder(static_cast<void*>(cmd));
+        });
+    };
+
+    buffer_service->flush_range = [this](void* memory, size_t offset, size_t size) {
+        vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
+        vk::MappedMemoryRange range { mem, offset, size == 0 ? VK_WHOLE_SIZE : size };
+        m_context->get_device().flushMappedMemoryRanges(1, &range);
+    };
+
+    buffer_service->invalidate_range = [this](void* memory, size_t offset, size_t size) {
+        vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
+        vk::MappedMemoryRange range { mem, offset, size == 0 ? VK_WHOLE_SIZE : size };
+        m_context->get_device().invalidateMappedMemoryRanges(1, &range);
+    };
+
+    buffer_service->map_buffer = [this](void* memory, size_t offset, size_t size) -> void* {
+        vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
+        return m_context->get_device().mapMemory(mem, offset, size == 0 ? VK_WHOLE_SIZE : size);
+    };
+
+    buffer_service->unmap_buffer = [this](void* memory) {
+        vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
+        m_context->get_device().unmapMemory(mem);
+    };
+
+    m_buffer_service = buffer_service;
+    registry.register_service<Registry::Service::BufferService>([buffer_service]() -> void* {
+        return buffer_service.get();
+    });
+
+    auto compute_service = std::make_shared<Registry::Service::ComputeService>();
+
+    compute_service->create_shader_module = [this](const std::string& path, uint32_t stage) -> std::shared_ptr<void> {
+        return std::static_pointer_cast<void>(this->create_shader_module(path, stage));
+    };
+    compute_service->create_descriptor_manager = [this](uint32_t pool_size) -> std::shared_ptr<void> {
+        return std::static_pointer_cast<void>(this->create_descriptor_manager(pool_size));
+    };
+    compute_service->create_descriptor_layout = [this](const std::shared_ptr<void>& mgr,
+                                                    const std::vector<std::pair<uint32_t, uint32_t>>& bindings) -> void* {
+        auto manager = std::static_pointer_cast<VKDescriptorManager>(mgr);
+        vk::DescriptorSetLayout layout = this->create_descriptor_layout(manager, bindings);
+        return reinterpret_cast<void*>(static_cast<VkDescriptorSetLayout>(layout));
+    };
+    compute_service->create_compute_pipeline = [this](const std::shared_ptr<void>& shdr,
+                                                   const std::vector<void*>& layouts,
+                                                   uint32_t push_size) -> std::shared_ptr<void> {
+        auto shader = std::static_pointer_cast<VKShaderModule>(shdr);
+        std::vector<vk::DescriptorSetLayout> vk_layouts;
+        for (auto* ptr : layouts) {
+            vk_layouts.emplace_back(reinterpret_cast<VkDescriptorSetLayout>(ptr));
+        }
+        return std::static_pointer_cast<void>(this->create_compute_pipeline(shader, vk_layouts, push_size));
+    };
+    compute_service->cleanup_resource = [this](const std::shared_ptr<void>& res) {
+        this->cleanup_compute_resource(res.get());
+    };
+
+    m_compute_service = compute_service;
+    registry.register_service<Registry::Service::ComputeService>([compute_service]() -> void* {
+        return compute_service.get();
+    });
+
+    auto display_service = std::make_shared<Registry::Service::DisplayService>();
+
+    display_service->present_frame = [this](const std::shared_ptr<void>& window_ptr) {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        this->render_window(window);
+    };
+
+    display_service->wait_idle = [this]() {
+        m_context->get_device().waitIdle();
+    };
+
+    display_service->resize_surface = [this](const std::shared_ptr<void>& window_ptr, uint32_t width, uint32_t height) {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        window->set_size(width, height);
+        for (auto& ctx : m_window_contexts) {
+            if (ctx.window == window) {
+                ctx.needs_recreation = true;
+                break;
+            }
+        }
+    };
+
+    display_service->get_swapchain_image_count = [this](const std::shared_ptr<void>& window_ptr) -> uint32_t {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        for (const auto& ctx : m_window_contexts) {
+            if (ctx.window == window) {
+                return static_cast<uint32_t>(ctx.swapchain->get_image_count());
+            }
+        }
+        return 0;
+    };
+
+    m_display_service = display_service;
+
+    registry.register_service<Registry::Service::DisplayService>([display_service]() -> void* {
+        return display_service.get();
+    });
 }
 
 void VulkanBackend::cleanup()
@@ -213,6 +244,15 @@ void VulkanBackend::cleanup()
     }
 
     m_context->cleanup();
+
+    auto& registry = Registry::BackendRegistry::instance();
+    registry.unregister_service<Registry::Service::BufferService>();
+    registry.unregister_service<Registry::Service::ComputeService>();
+    registry.unregister_service<Registry::Service::DisplayService>();
+
+    m_display_service.reset();
+    m_compute_service.reset();
+    m_buffer_service.reset();
     m_is_initialized = false; // Mark as cleaned up
 }
 
@@ -695,18 +735,16 @@ uint32_t VulkanBackend::find_memory_type(uint32_t type_filter, vk::MemoryPropert
     return 0;
 }
 
-void VulkanBackend::execute_immediate_commands(const Buffers::VKProcessingContext::CommandRecorder& recorder)
+void VulkanBackend::execute_immediate_commands(const std::function<void(vk::CommandBuffer)>& recorder)
 {
     vk::CommandBuffer cmd = m_command_manager->begin_single_time_commands();
-
     recorder(cmd);
-
     m_command_manager->end_single_time_commands(cmd, m_context->get_graphics_queue());
 }
 
-void VulkanBackend::record_deferred_commands(const Buffers::VKProcessingContext::CommandRecorder& recorder)
+void VulkanBackend::record_deferred_commands(const std::function<void(vk::CommandBuffer)>& recorder)
 {
-    // TODO: Batch commands for later submission
+    // TODO: batch commands for later submission
     // For now, just execute immediately
     execute_immediate_commands(recorder);
 }
@@ -729,6 +767,56 @@ const void* VulkanBackend::get_native_context() const
 bool VulkanBackend::is_window_registered(std::shared_ptr<Window> window)
 {
     return find_window_context(window) != nullptr;
+}
+
+std::shared_ptr<VKShaderModule> VulkanBackend::create_shader_module(const std::string& spirv_path, uint32_t stage)
+{
+    auto shader = std::make_shared<VKShaderModule>();
+    shader->create_from_spirv_file(m_context->get_device(), spirv_path, vk::ShaderStageFlagBits(stage));
+    return shader;
+}
+
+std::shared_ptr<VKDescriptorManager> VulkanBackend::create_descriptor_manager(uint32_t pool_size)
+{
+    auto manager = std::make_shared<VKDescriptorManager>();
+    manager->initialize(m_context->get_device(), pool_size);
+    return manager;
+}
+
+vk::DescriptorSetLayout VulkanBackend::create_descriptor_layout(
+    const std::shared_ptr<VKDescriptorManager>& manager,
+    const std::vector<std::pair<uint32_t, uint32_t>>& bindings)
+{
+    DescriptorSetLayoutConfig vk_bindings {};
+    for (const auto& [binding, type] : bindings) {
+        vk_bindings.add_binding(binding, vk::DescriptorType(type), vk::ShaderStageFlagBits::eCompute);
+    }
+
+    return manager->create_layout(m_context->get_device(), vk_bindings);
+    ;
+}
+
+std::shared_ptr<VKComputePipeline> VulkanBackend::create_compute_pipeline(
+    const std::shared_ptr<VKShaderModule>& shader,
+    const std::vector<vk::DescriptorSetLayout>& layouts,
+    uint32_t push_constant_size)
+{
+    auto pipeline = std::make_shared<VKComputePipeline>();
+    ComputePipelineConfig config;
+    config.shader = shader;
+    config.set_layouts = layouts;
+    if (push_constant_size > 0) {
+        config.add_push_constant(vk::ShaderStageFlagBits::eCompute, push_constant_size);
+    }
+
+    pipeline->create(m_context->get_device(), config);
+    return pipeline;
+}
+
+void VulkanBackend::cleanup_compute_resource(void* resource)
+{
+    // Resource will be cleaned up via shared_ptr destruction
+    // If you need explicit cleanup, add it here
 }
 
 }

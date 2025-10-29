@@ -7,9 +7,12 @@
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 #include "vulkan/vulkan.hpp"
 
-namespace MayaFlux::Buffers {
+namespace MayaFlux::Registry::Service {
+struct BufferService;
+struct ComputeService;
+}
 
-class VKProcessingContext;
+namespace MayaFlux::Buffers {
 
 struct VKBufferResources {
     vk::Buffer buffer;
@@ -321,16 +324,12 @@ private:
 };
 
 class VKBufferProcessor : public BufferProcessor {
-public:
-    void set_processing_context(std::shared_ptr<VKProcessingContext> context)
-    {
-        m_processing_context = std::move(context);
-        m_owns_context = true;
-    }
-
 protected:
-    std::shared_ptr<VKProcessingContext> m_processing_context;
-    bool m_owns_context {};
+    Registry::Service::BufferService* m_buffer_service = nullptr;
+    Registry::Service::ComputeService* m_compute_service = nullptr;
+
+    void initialize_buffer_service();
+    void initialize_compute_service();
 };
 
 } // namespace MayaFlux::Buffers
