@@ -4,6 +4,7 @@
 #include "VKCommandManager.hpp"
 #include "VKComputePipeline.hpp"
 #include "VKFramebuffer.hpp"
+#include "VKGraphicsPipeline.hpp"
 #include "VKRenderPass.hpp"
 #include "VKSwapchain.hpp"
 
@@ -233,6 +234,13 @@ void VulkanBackend::cleanup()
         return;
     }
     m_context->wait_idle();
+
+    for (auto& [hash, sampler] : m_sampler_cache) {
+        if (sampler) {
+            m_context->get_device().destroySampler(sampler);
+        }
+    }
+    m_sampler_cache.clear();
 
     for (auto& config : m_window_contexts) {
         config.cleanup(*m_context);
@@ -811,6 +819,98 @@ std::shared_ptr<VKComputePipeline> VulkanBackend::create_compute_pipeline(
 
     pipeline->create(m_context->get_device(), config);
     return pipeline;
+}
+
+std::shared_ptr<VKGraphicsPipeline> VulkanBackend::create_graphics_pipeline(
+    const GraphicsPipelineConfig& config)
+{
+    auto pipeline = std::make_shared<VKGraphicsPipeline>();
+
+    if (!pipeline->create(m_context->get_device(), config)) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create graphics pipeline");
+        return nullptr;
+    }
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Created graphics pipeline");
+
+    return pipeline;
+}
+
+vk::Sampler VulkanBackend::create_sampler(
+    vk::Filter filter,
+    vk::SamplerAddressMode address_mode,
+    float max_anisotropy)
+{
+    size_t hash = 0;
+    auto hash_combine = [](size_t& seed, size_t value) {
+        seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    };
+
+    hash_combine(hash, static_cast<size_t>(filter));
+    hash_combine(hash, static_cast<size_t>(address_mode));
+    hash_combine(hash, std::hash<float> {}(max_anisotropy));
+
+    auto it = m_sampler_cache.find(hash);
+    if (it != m_sampler_cache.end()) {
+        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Reusing cached sampler (hash: 0x{:X})", hash);
+        return it->second;
+    }
+
+    vk::SamplerCreateInfo sampler_info;
+    sampler_info.magFilter = filter;
+    sampler_info.minFilter = filter;
+    sampler_info.mipmapMode = vk::SamplerMipmapMode::eLinear;
+    sampler_info.addressModeU = address_mode;
+    sampler_info.addressModeV = address_mode;
+    sampler_info.addressModeW = address_mode;
+    sampler_info.mipLodBias = 0.0F;
+    sampler_info.anisotropyEnable = max_anisotropy > 0.0F;
+    sampler_info.maxAnisotropy = max_anisotropy;
+    sampler_info.compareEnable = VK_FALSE;
+    sampler_info.compareOp = vk::CompareOp::eAlways;
+    sampler_info.minLod = 0.0F;
+    sampler_info.maxLod = VK_LOD_CLAMP_NONE;
+    sampler_info.borderColor = vk::BorderColor::eFloatOpaqueBlack;
+    sampler_info.unnormalizedCoordinates = VK_FALSE;
+
+    vk::Sampler sampler;
+    try {
+        sampler = m_context->get_device().createSampler(sampler_info);
+    } catch (const vk::SystemError& e) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create sampler: {}", e.what());
+        return nullptr;
+    }
+
+    m_sampler_cache[hash] = sampler;
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Created sampler (filter: {}, address: {}, anisotropy: {}, hash: 0x{:X})",
+        vk::to_string(filter), vk::to_string(address_mode), max_anisotropy, hash);
+
+    return sampler;
+}
+
+void VulkanBackend::destroy_sampler(vk::Sampler sampler)
+{
+    if (!sampler) {
+        return;
+    }
+
+    for (auto it = m_sampler_cache.begin(); it != m_sampler_cache.end(); ++it) {
+        if (it->second == sampler) {
+            m_sampler_cache.erase(it);
+            break;
+        }
+    }
+
+    m_context->get_device().destroySampler(sampler);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Destroyed sampler");
 }
 
 void VulkanBackend::cleanup_compute_resource(void* resource)

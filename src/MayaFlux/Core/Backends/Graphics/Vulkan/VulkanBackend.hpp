@@ -23,6 +23,8 @@ class VKFramebuffer;
 class VKShaderModule;
 class VKDescriptorManager;
 class VKComputePipeline;
+class VKGraphicsPipeline;
+struct GraphicsPipelineConfig;
 
 struct WindowRenderContext {
     std::shared_ptr<Window> window;
@@ -198,6 +200,31 @@ public:
         const std::vector<vk::DescriptorSetLayout>& layouts,
         uint32_t push_constant_size);
 
+    /**
+     * @brief Create graphics pipeline
+     * @param config Graphics pipeline configuration
+     * @return Shared pointer to created pipeline, or nullptr on failure
+     */
+    std::shared_ptr<VKGraphicsPipeline> create_graphics_pipeline(
+        const GraphicsPipelineConfig& config);
+
+    /**
+     * @brief Create sampler
+     * @param filter Mag/min filter
+     * @param address_mode Texture address mode (wrap, clamp, etc.)
+     * @param anisotropy Max anisotropy (0 = disabled)
+     * @return Sampler handle
+     */
+    vk::Sampler create_sampler(
+        vk::Filter filter = vk::Filter::eLinear,
+        vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eRepeat,
+        float max_anisotropy = 0.0f);
+
+    /**
+     * @brief Destroy sampler
+     */
+    void destroy_sampler(vk::Sampler sampler);
+
     /** @brief Cleanup a compute resource allocated by the backend
      * @param resource Pointer to the resource to cleanup
      */
@@ -208,6 +235,7 @@ private:
     std::unique_ptr<VKCommandManager> m_command_manager;
     std::vector<WindowRenderContext> m_window_contexts;
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
+    std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
 
     bool m_is_initialized {};
 
