@@ -5,6 +5,7 @@
 #include "VKComputePipeline.hpp"
 #include "VKFramebuffer.hpp"
 #include "VKGraphicsPipeline.hpp"
+#include "VKImage.hpp"
 #include "VKRenderPass.hpp"
 #include "VKSwapchain.hpp"
 
@@ -911,6 +912,287 @@ void VulkanBackend::destroy_sampler(vk::Sampler sampler)
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Destroyed sampler");
+}
+
+void VulkanBackend::initialize_image(const std::shared_ptr<VKImage>& image)
+{
+    if (!image) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Attempted to initialize null VKImage");
+        return;
+    }
+
+    if (image->is_initialized()) {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "VKImage already initialized, skipping");
+        return;
+    }
+
+    // ========================================================================
+    // Step 1: Create VkImage
+    // ========================================================================
+
+    vk::ImageCreateInfo image_info {};
+
+    // Determine image type
+    switch (image->get_type()) {
+    case VKImage::Type::TYPE_1D:
+        image_info.imageType = vk::ImageType::e1D;
+        break;
+    case VKImage::Type::TYPE_2D:
+    case VKImage::Type::TYPE_CUBE:
+        image_info.imageType = vk::ImageType::e2D;
+        break;
+    case VKImage::Type::TYPE_3D:
+        image_info.imageType = vk::ImageType::e3D;
+        break;
+    }
+
+    image_info.extent.width = image->get_width();
+    image_info.extent.height = image->get_height();
+    image_info.extent.depth = image->get_depth();
+    image_info.mipLevels = image->get_mip_levels();
+    image_info.arrayLayers = image->get_array_layers();
+    image_info.format = image->get_format();
+    image_info.tiling = vk::ImageTiling::eOptimal; // Optimal GPU tiling
+    image_info.initialLayout = vk::ImageLayout::eUndefined;
+    image_info.usage = image->get_usage_flags();
+    image_info.sharingMode = vk::SharingMode::eExclusive;
+    image_info.samples = vk::SampleCountFlagBits::e1; // No MSAA for now
+    image_info.flags = (image->get_type() == VKImage::Type::TYPE_CUBE)
+        ? vk::ImageCreateFlagBits::eCubeCompatible
+        : vk::ImageCreateFlags {};
+
+    vk::Image vk_image;
+    try {
+        vk_image = m_context->get_device().createImage(image_info);
+    } catch (const vk::SystemError& e) {
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to create VkImage: " + std::string(e.what()));
+    }
+
+    // ========================================================================
+    // Step 2: Allocate memory
+    // ========================================================================
+
+    vk::MemoryRequirements mem_requirements;
+    mem_requirements = m_context->get_device().getImageMemoryRequirements(vk_image);
+
+    vk::MemoryAllocateInfo alloc_info {};
+    alloc_info.allocationSize = mem_requirements.size;
+    alloc_info.memoryTypeIndex = find_memory_type(
+        mem_requirements.memoryTypeBits,
+        image->get_memory_properties());
+
+    vk::DeviceMemory memory;
+    try {
+        memory = m_context->get_device().allocateMemory(alloc_info);
+    } catch (const vk::SystemError& e) {
+        m_context->get_device().destroyImage(vk_image);
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to allocate VkDeviceMemory for image: " + std::string(e.what()));
+    }
+
+    // ========================================================================
+    // Step 3: Bind memory to image
+    // ========================================================================
+
+    try {
+        m_context->get_device().bindImageMemory(vk_image, memory, 0);
+    } catch (const vk::SystemError& e) {
+        m_context->get_device().freeMemory(memory);
+        m_context->get_device().destroyImage(vk_image);
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to bind memory to VkImage: " + std::string(e.what()));
+    }
+
+    // ========================================================================
+    // Step 4: Create image view
+    // ========================================================================
+
+    vk::ImageViewCreateInfo view_info {};
+
+    // Determine view type
+    switch (image->get_type()) {
+    case VKImage::Type::TYPE_1D:
+        view_info.viewType = (image->get_array_layers() > 1)
+            ? vk::ImageViewType::e1DArray
+            : vk::ImageViewType::e1D;
+        break;
+    case VKImage::Type::TYPE_2D:
+        view_info.viewType = (image->get_array_layers() > 1)
+            ? vk::ImageViewType::e2DArray
+            : vk::ImageViewType::e2D;
+        break;
+    case VKImage::Type::TYPE_3D:
+        view_info.viewType = vk::ImageViewType::e3D;
+        break;
+    case VKImage::Type::TYPE_CUBE:
+        view_info.viewType = vk::ImageViewType::eCube;
+        break;
+    }
+
+    view_info.image = vk_image;
+    view_info.format = image->get_format();
+    view_info.subresourceRange.aspectMask = image->get_aspect_flags();
+    view_info.subresourceRange.baseMipLevel = 0;
+    view_info.subresourceRange.levelCount = image->get_mip_levels();
+    view_info.subresourceRange.baseArrayLayer = 0;
+    view_info.subresourceRange.layerCount = image->get_array_layers();
+
+    // Component swizzle (identity)
+    view_info.components.r = vk::ComponentSwizzle::eIdentity;
+    view_info.components.g = vk::ComponentSwizzle::eIdentity;
+    view_info.components.b = vk::ComponentSwizzle::eIdentity;
+    view_info.components.a = vk::ComponentSwizzle::eIdentity;
+
+    vk::ImageView image_view;
+    try {
+        image_view = m_context->get_device().createImageView(view_info);
+    } catch (const vk::SystemError& e) {
+        m_context->get_device().freeMemory(memory);
+        m_context->get_device().destroyImage(vk_image);
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Failed to create VkImageView: " + std::string(e.what()));
+    }
+
+    // ========================================================================
+    // Step 5: Store handles in VKImage
+    // ========================================================================
+
+    VKImageResources resources {};
+    resources.image = vk_image;
+    resources.image_view = image_view;
+    resources.memory = memory;
+    resources.sampler = nullptr; // Samplers created separately
+
+    image->set_image_resources(resources);
+    image->set_current_layout(vk::ImageLayout::eUndefined);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "VKImage initialized: {}x{}x{}, format: {}, {} mips, {} layers",
+        image->get_width(), image->get_height(), image->get_depth(),
+        vk::to_string(image->get_format()),
+        image->get_mip_levels(), image->get_array_layers());
+}
+
+void VulkanBackend::cleanup_image(const std::shared_ptr<VKImage>& image)
+{
+    if (!image || !image->is_initialized()) {
+        return;
+    }
+
+    const auto& resources = image->get_image_resources();
+
+    // Destroy in reverse order of creation
+    if (resources.image_view) {
+        m_context->get_device().destroyImageView(resources.image_view);
+    }
+
+    if (resources.image) {
+        m_context->get_device().destroyImage(resources.image);
+    }
+
+    if (resources.memory) {
+        m_context->get_device().freeMemory(resources.memory);
+    }
+
+    // Note: Sampler is destroyed separately (may be shared)
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "VKImage cleaned up");
+}
+
+void VulkanBackend::transition_image_layout(
+    vk::Image image,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout,
+    uint32_t mip_levels,
+    uint32_t array_layers,
+    vk::ImageAspectFlags aspect_flags)
+{
+    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+        vk::ImageMemoryBarrier barrier {};
+        barrier.oldLayout = old_layout;
+        barrier.newLayout = new_layout;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image;
+        barrier.subresourceRange.aspectMask = aspect_flags;
+        barrier.subresourceRange.baseMipLevel = 0;
+        barrier.subresourceRange.levelCount = mip_levels;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = array_layers;
+
+        // Determine pipeline stages and access masks based on layouts
+        vk::PipelineStageFlags src_stage;
+        vk::PipelineStageFlags dst_stage;
+
+        if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eTransferDstOptimal) {
+            // Transition for initial upload
+            barrier.srcAccessMask = vk::AccessFlags {};
+            barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eTransfer;
+        } else if (old_layout == vk::ImageLayout::eTransferDstOptimal && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+            // Transition from upload to shader read
+            barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits::eTransfer;
+            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+        } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eColorAttachmentOptimal) {
+            // Transition for render target
+            barrier.srcAccessMask = vk::AccessFlags {};
+            barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+            // Transition for depth buffer
+            barrier.srcAccessMask = vk::AccessFlags {};
+            barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+        } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eGeneral) {
+            // Transition for compute storage
+            barrier.srcAccessMask = vk::AccessFlags {};
+            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eComputeShader;
+        } else {
+            // Generic transition
+            barrier.srcAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
+            barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
+            src_stage = vk::PipelineStageFlagBits::eAllCommands;
+            dst_stage = vk::PipelineStageFlagBits::eAllCommands;
+
+            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Using generic image layout transition");
+        }
+
+        cmd.pipelineBarrier(
+            src_stage, dst_stage,
+            vk::DependencyFlags {},
+            0, nullptr, // Memory barriers
+            0, nullptr, // Buffer barriers
+            1, &barrier // Image barriers
+        );
+    });
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Image layout transitioned: {} -> {}",
+        vk::to_string(old_layout), vk::to_string(new_layout));
 }
 
 void VulkanBackend::cleanup_compute_resource(void* resource)

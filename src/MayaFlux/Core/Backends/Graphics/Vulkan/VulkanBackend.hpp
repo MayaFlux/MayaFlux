@@ -24,6 +24,7 @@ class VKShaderModule;
 class VKDescriptorManager;
 class VKComputePipeline;
 class VKGraphicsPipeline;
+class VKImage;
 struct GraphicsPipelineConfig;
 
 struct WindowRenderContext {
@@ -229,6 +230,44 @@ public:
      * @param resource Pointer to the resource to cleanup
      */
     void cleanup_compute_resource(void* resource);
+
+    /**
+     * @brief Initialize a VKImage (allocate VkImage, memory, and create image view)
+     * @param image VKImage to initialize
+     *
+     * Follows the same pattern as initialize_buffer:
+     * 1. Create VkImage
+     * 2. Allocate VkDeviceMemory
+     * 3. Bind memory to image
+     * 4. Create VkImageView
+     * 5. Store handles in VKImage
+     */
+    void initialize_image(const std::shared_ptr<VKImage>& image);
+
+    /**
+     * @brief Cleanup a VKImage (destroy view, image, and free memory)
+     * @param image VKImage to cleanup
+     */
+    void cleanup_image(const std::shared_ptr<VKImage>& image);
+
+    /**
+     * @brief Transition image layout using a pipeline barrier
+     * @param image VkImage handle
+     * @param old_layout Current layout
+     * @param new_layout Target layout
+     * @param mip_levels Number of mip levels to transition
+     * @param array_layers Number of array layers to transition
+     *
+     * Executes immediately on graphics queue. Use for initial setup and
+     * one-off transitions. For rendering, prefer manual barriers.
+     */
+    void transition_image_layout(
+        vk::Image image,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout,
+        uint32_t mip_levels = 1,
+        uint32_t array_layers = 1,
+        vk::ImageAspectFlags aspect_flags = vk::ImageAspectFlagBits::eColor);
 
 private:
     std::unique_ptr<VKContext> m_context;

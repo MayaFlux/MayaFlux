@@ -137,6 +137,7 @@ struct MAYAFLUX_API DataDimension {
         UV, ///< Texture coordinates
         COLOR, ///< Color data (RGB/RGBA)
         INDEX, ///< Index buffer data
+        MIP_LEVEL, ///< Mipmap levels
         CUSTOM ///< User-defined or application-specific
     };
 
@@ -215,6 +216,31 @@ struct MAYAFLUX_API DataDimension {
     static DataDimension spatial(uint64_t size, char axis, uint64_t stride = 1, std::string name = "spatial");
 
     /**
+     * @brief Convenience constructor for an array dimension.
+     * @param count Number of array elements
+     * @param name Optional name (default: "array")
+     * @return DataDimension representing an array
+     */
+    static DataDimension spatial_1d(uint64_t width);
+
+    /**
+     * @brief Convenience constructor for a 2D spatial dimension.
+     * @param width Width in elements
+     * @param height Height in elements
+     * @return DataDimension representing 2D spatial data
+     */
+    static DataDimension spatial_2d(uint64_t width, uint64_t height);
+
+    /**
+     * @brief Convenience constructor for a 3D spatial dimension.
+     * @param width Width in elements
+     * @param height Height in elements
+     * @param depth Depth in elements
+     * @return DataDimension representing 3D spatial data
+     */
+    static DataDimension spatial_3d(uint64_t width, uint64_t height, uint64_t depth);
+
+    /**
      * @brief Create dimension with component grouping
      * @param name Dimension name
      * @param element_count Number of elements (not components)
@@ -242,6 +268,11 @@ struct MAYAFLUX_API DataDimension {
      * @brief Create dimension for colors (vec3 or vec4)
      */
     static DataDimension vertex_colors(uint64_t count, bool has_alpha = false);
+
+    /**
+     * @brief Create dimension for mipmap levels.
+     */
+    static DataDimension mipmap_levels(uint64_t levels);
 
     /**
      * @brief Data container combining variants and dimensions.
