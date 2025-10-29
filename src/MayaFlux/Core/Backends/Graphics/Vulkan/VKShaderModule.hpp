@@ -5,6 +5,69 @@
 namespace MayaFlux::Core {
 
 /**
+ * @enum ShaderType
+ * @brief High-level shader type enumeration
+ *
+ * Used for specifying shader types in a generic way.
+ */
+enum class Stage : uint8_t {
+    COMPUTE,
+    VERTEX,
+    FRAGMENT,
+    GEOMETRY,
+    TESS_CONTROL,
+    TESS_EVALUATION
+};
+
+struct FragmentOutputState {
+    std::vector<vk::Format> color_formats;
+    vk::Format depth_format;
+    vk::Format stencil_format;
+};
+
+struct VertexInputState {
+    std::vector<vk::VertexInputBindingDescription> bindings;
+    std::vector<vk::VertexInputAttributeDescription> attributes;
+};
+
+struct VertexInputInfo {
+    struct Attribute {
+        uint32_t location; // layout(location = N)
+        vk::Format format; // vec3 -> eR32G32B32Sfloat
+        uint32_t offset; // byte offset in vertex
+        std::string name; // variable name (from reflection)
+    };
+
+    struct Binding {
+        uint32_t binding; // vertex buffer binding point
+        uint32_t stride; // bytes per vertex
+        vk::VertexInputRate rate; // per-vertex or per-instance
+    };
+
+    std::vector<Attribute> attributes;
+    std::vector<Binding> bindings;
+};
+
+struct FragmentOutputInfo {
+    struct Attachment {
+        uint32_t location; // layout(location = N)
+        vk::Format format; // vec4 -> eR32G32B32A32Sfloat
+        std::string name; // output variable name
+    };
+
+    std::vector<Attachment> color_attachments;
+    bool has_depth_output = false;
+    bool has_stencil_output = false;
+};
+
+struct PushConstantInfo {
+    uint32_t offset;
+    uint32_t size;
+    std::string name; // struct name (if any)
+    vk::ShaderStageFlags stages; // which stages use it
+};
+
+/**
  * @struct ShaderReflection
  * @brief Metadata extracted from shader module
  *
@@ -248,6 +311,57 @@ public:
      */
     void set_preserve_spirv(bool preserve) { m_preserve_spirv = preserve; }
 
+    /**
+     * @brief Get shader stage type
+     * @return Stage enum (easier than vk::ShaderStageFlagBits for logic)
+     */
+    [[nodiscard]] Stage get_stage_type() const;
+
+    /**
+     * @brief Get vertex input state (vertex shaders only)
+     * @return Vertex input metadata, empty if not a vertex shader
+     */
+    [[nodiscard]] const VertexInputInfo& get_vertex_input() const
+    {
+        return m_vertex_input;
+    }
+
+    /**
+     * @brief Check if vertex input is available
+     */
+    [[nodiscard]] bool has_vertex_input() const
+    {
+        return !m_vertex_input.attributes.empty();
+    }
+
+    /**
+     * @brief Get fragment output state (fragment shaders only)
+     * @return Fragment output metadata, empty if not a fragment shader
+     */
+    [[nodiscard]] const FragmentOutputInfo& get_fragment_output() const
+    {
+        return m_fragment_output;
+    }
+
+    /**
+     * @brief Get detailed push constant info
+     * @return Push constant metadata (replaces simple PushConstantRange)
+     */
+    [[nodiscard]] const std::vector<PushConstantInfo>& get_push_constants() const
+    {
+        return m_push_constants;
+    }
+
+    // NEW: Workgroup size for compute shaders
+    /**
+     * @brief Get compute workgroup size (compute shaders only)
+     * @return {local_size_x, local_size_y, local_size_z} or nullopt
+     */
+    [[nodiscard]] std::optional<std::array<uint32_t, 3>> get_workgroup_size() const
+    {
+        return m_reflection.workgroup_size;
+    }
+
 private:
     vk::ShaderModule m_module = nullptr;
     vk::ShaderStageFlagBits m_stage = vk::ShaderStageFlagBits::eCompute;
@@ -256,12 +370,16 @@ private:
     ShaderReflection m_reflection;
     std::vector<uint32_t> m_spirv_code; ///< Preserved SPIR-V (if enabled)
 
-    bool m_preserve_spirv = false;
+    bool m_preserve_spirv {};
 
     std::unordered_map<uint32_t, uint32_t> m_specialization_map;
     std::vector<vk::SpecializationMapEntry> m_specialization_entries;
     std::vector<uint32_t> m_specialization_data;
     vk::SpecializationInfo m_specialization_info;
+
+    VertexInputInfo m_vertex_input;
+    FragmentOutputInfo m_fragment_output;
+    std::vector<PushConstantInfo> m_push_constants;
 
     /**
      * @brief Perform reflection on SPIR-V bytecode

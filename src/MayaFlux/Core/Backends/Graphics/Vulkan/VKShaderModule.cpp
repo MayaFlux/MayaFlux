@@ -612,4 +612,26 @@ std::string VKShaderModule::read_text_file(const std::string& filepath)
     return content;
 }
 
+Stage VKShaderModule::get_stage_type() const
+{
+    switch (m_stage) {
+    case vk::ShaderStageFlagBits::eCompute:
+        return Stage::COMPUTE;
+    case vk::ShaderStageFlagBits::eVertex:
+        return Stage::VERTEX;
+    case vk::ShaderStageFlagBits::eFragment:
+        return Stage::FRAGMENT;
+    case vk::ShaderStageFlagBits::eGeometry:
+        return Stage::GEOMETRY;
+    case vk::ShaderStageFlagBits::eTessellationControl:
+        return Stage::TESS_CONTROL;
+    case vk::ShaderStageFlagBits::eTessellationEvaluation:
+        return Stage::TESS_EVALUATION;
+    default:
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Unknown shader stage: {}", vk::to_string(m_stage));
+        return Stage::COMPUTE;
+    }
+}
+
 } // namespace MayaFlux::Core

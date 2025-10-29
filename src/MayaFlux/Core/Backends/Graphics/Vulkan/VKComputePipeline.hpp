@@ -125,12 +125,6 @@ public:
     void cleanup(vk::Device device);
 
     /**
-     * @brief Check if pipeline is valid
-     * @return true if pipeline was successfully created
-     */
-    [[nodiscard]] bool is_valid() const { return m_pipeline != nullptr; }
-
-    /**
      * @brief Get raw Vulkan pipeline handle
      * @return vk::Pipeline handle
      */
@@ -301,9 +295,106 @@ public:
      */
     [[nodiscard]] std::optional<std::array<uint32_t, 3>> get_workgroup_size() const;
 
+    /**
+     * @brief Create pipeline with specialization constants
+     * @param device Logical device
+     * @param config Pipeline configuration
+     * @param specialization_data Map of constant_id -> value
+     * @return true if creation succeeded
+     *
+     * Specialization constants allow compile-time configuration of shaders.
+     * Example: workgroup size, loop unrolling factors, feature toggles.
+     */
+    bool create_specialized(
+        vk::Device device,
+        const ComputePipelineConfig& config,
+        const std::unordered_map<uint32_t, uint32_t>& specialization_data);
+
+    /**
+     * @brief Calculate dispatch size from element count
+     * @param element_count Total number of elements to process
+     * @param workgroup_size Workgroup size (from shader reflection)
+     * @return {dispatch_x, dispatch_y, dispatch_z}
+     *
+     * Utility: rounds up to cover all elements.
+     * Example: 1000 elements, workgroup_size 256 -> dispatch(4, 1, 1)
+     */
+    static std::array<uint32_t, 3> calculate_dispatch_1d(
+        uint32_t element_count,
+        uint32_t workgroup_size);
+
+    /**
+     * @brief Calculate 2D dispatch size
+     */
+    static std::array<uint32_t, 3> calculate_dispatch_2d(
+        uint32_t width, uint32_t height,
+        uint32_t workgroup_x, uint32_t workgroup_y);
+
+    /**
+     * @brief Calculate 3D dispatch size
+     */
+    static std::array<uint32_t, 3> calculate_dispatch_3d(
+        uint32_t width, uint32_t height, uint32_t depth,
+        uint32_t workgroup_x, uint32_t workgroup_y, uint32_t workgroup_z);
+
+    /**
+     * @brief Push constants with type safety
+     * @tparam T Push constant struct type
+     * @param cmd Command buffer
+     * @param data Push constant data
+     */
+    template <typename T>
+    void push_constants_typed(vk::CommandBuffer cmd, const T& data)
+    {
+        static_assert(sizeof(T) <= 128, "Push constants typically limited to 128 bytes");
+        cmd.pushConstants(m_layout, vk::ShaderStageFlagBits::eCompute,
+            0, sizeof(T), &data);
+    }
+
+    // NEW: Indirect dispatch support
+    /**
+     * @brief Dispatch compute shader indirectly from GPU buffer
+     * @param cmd Command buffer
+     * @param buffer Buffer containing vk::DispatchIndirectCommand
+     * @param offset Offset in buffer
+     *
+     * Allows GPU to determine dispatch size (e.g., after a compute culling pass).
+     */
+    void dispatch_indirect(vk::CommandBuffer cmd,
+        vk::Buffer buffer,
+        vk::DeviceSize offset = 0);
+
+    // NEW: Pipeline statistics query support
+    /**
+     * @brief Get pipeline statistics (if available)
+     * @return Pipeline creation statistics
+     */
+    // [[nodiscard]] const vk::PipelineStatisticsCreateInfo& get_statistics() const
+    // {
+    //     return m_statistics;
+    // }
+
+    /**
+     * @brief Check if pipeline was created successfully
+     */
+    [[nodiscard]] bool is_valid() const
+    {
+        return m_pipeline != nullptr && m_layout != nullptr;
+    }
+
+    // NEW: Get shader reflection info
+    /**
+     * @brief Get shader module reflection data
+     * @return Shader reflection (bindings, push constants, workgroup size)
+     */
+    [[nodiscard]] const ShaderReflection& get_shader_reflection() const;
+
 private:
     vk::Pipeline m_pipeline = nullptr;
     vk::PipelineLayout m_layout = nullptr;
+
+    // vk::PipelineStatisticsCreateInfo m_statistics;
+    std::shared_ptr<VKShaderModule> m_shader;
 
     // Cache shader reflection for workgroup size queries
     std::optional<std::array<uint32_t, 3>> m_workgroup_size;

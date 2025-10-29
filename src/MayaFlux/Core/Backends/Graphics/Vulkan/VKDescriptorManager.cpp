@@ -395,6 +395,202 @@ void VKDescriptorManager::update_image(
         binding, vk::to_string(layout));
 }
 
+void VKDescriptorManager::update_sampler(
+    vk::Device device,
+    vk::DescriptorSet set,
+    uint32_t binding,
+    vk::Sampler sampler)
+{
+    if (!set) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot update null descriptor set");
+        return;
+    }
+
+    if (!sampler) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot bind null sampler to descriptor set");
+        return;
+    }
+
+    vk::DescriptorImageInfo image_info;
+    image_info.sampler = sampler;
+    image_info.imageView = nullptr;
+    image_info.imageLayout = vk::ImageLayout::eUndefined;
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eSampler;
+    write.pImageInfo = &image_info;
+
+    device.updateDescriptorSets(1, &write, 0, nullptr);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Updated descriptor set binding {} with sampler", binding);
+}
+
+void VKDescriptorManager::update_combined_image_sampler(
+    vk::Device device,
+    vk::DescriptorSet set,
+    uint32_t binding,
+    vk::ImageView image_view,
+    vk::Sampler sampler,
+    vk::ImageLayout layout)
+{
+    if (!set) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot update null descriptor set");
+        return;
+    }
+
+    if (!image_view || !sampler) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot bind null image view or sampler");
+        return;
+    }
+
+    vk::DescriptorImageInfo image_info;
+    image_info.imageView = image_view;
+    image_info.sampler = sampler;
+    image_info.imageLayout = layout;
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    write.pImageInfo = &image_info;
+
+    device.updateDescriptorSets(1, &write, 0, nullptr);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Updated descriptor set binding {} with combined image sampler", binding);
+}
+
+void VKDescriptorManager::update_input_attachment(
+    vk::Device device,
+    vk::DescriptorSet set,
+    uint32_t binding,
+    vk::ImageView image_view,
+    vk::ImageLayout layout)
+{
+    if (!set) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot update null descriptor set");
+        return;
+    }
+
+    if (!image_view) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot bind null image view to input attachment");
+        return;
+    }
+
+    vk::DescriptorImageInfo image_info;
+    image_info.imageView = image_view;
+    image_info.sampler = nullptr;
+    image_info.imageLayout = layout;
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eInputAttachment;
+    write.pImageInfo = &image_info;
+
+    device.updateDescriptorSets(1, &write, 0, nullptr);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Updated descriptor set binding {} with input attachment", binding);
+}
+
+void VKDescriptorManager::copy_descriptor_set(
+    vk::Device device,
+    vk::DescriptorSet src,
+    vk::DescriptorSet dst,
+    uint32_t copy_count)
+{
+    if (!src || !dst) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot copy null descriptor sets");
+        return;
+    }
+
+    vk::CopyDescriptorSet copy;
+    copy.srcSet = src;
+    copy.srcBinding = 0;
+    copy.srcArrayElement = 0;
+    copy.dstSet = dst;
+    copy.dstBinding = 0;
+    copy.dstArrayElement = 0;
+    copy.descriptorCount = copy_count;
+
+    device.updateDescriptorSets(0, nullptr, 1, &copy);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Copied descriptor set ({} descriptors)", copy_count);
+}
+
+std::vector<vk::DescriptorSet> VKDescriptorManager::allocate_sets(
+    vk::Device device,
+    const std::vector<vk::DescriptorSetLayout>& layouts)
+{
+    if (layouts.empty()) {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Allocating zero descriptor sets");
+        return {};
+    }
+
+    if (m_pools.empty()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "No descriptor pools available - call initialize() first");
+        return {};
+    }
+
+    vk::DescriptorSetAllocateInfo alloc_info;
+    alloc_info.descriptorPool = m_pools[m_current_pool_index];
+    alloc_info.descriptorSetCount = static_cast<uint32_t>(layouts.size());
+    alloc_info.pSetLayouts = layouts.data();
+
+    std::vector<vk::DescriptorSet> sets;
+    try {
+        sets = device.allocateDescriptorSets(alloc_info);
+        m_allocated_count += static_cast<uint32_t>(layouts.size());
+    } catch (const vk::OutOfPoolMemoryError&) {
+        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Descriptor pool {} exhausted, growing...", m_current_pool_index);
+
+        if (!grow_pools(device)) {
+            return {};
+        }
+
+        alloc_info.descriptorPool = m_pools[m_current_pool_index];
+        try {
+            sets = device.allocateDescriptorSets(alloc_info);
+            m_allocated_count += static_cast<uint32_t>(layouts.size());
+        } catch (const vk::SystemError& e) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Failed to allocate descriptor sets after pool growth: {}", e.what());
+            return {};
+        }
+    } catch (const vk::SystemError& e) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to allocate descriptor sets: {}", e.what());
+        return {};
+    }
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Allocated {} descriptor sets (total: {}/{})",
+        layouts.size(), m_allocated_count, m_pool_capacity);
+
+    return sets;
+}
+
 void VKDescriptorManager::batch_update(
     vk::Device device,
     const std::vector<vk::WriteDescriptorSet>& writes)
@@ -436,6 +632,121 @@ void VKDescriptorManager::reset_pools(vk::Device device)
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Reset all descriptor pools");
+}
+
+// ============================================================================
+// DescriptorUpdateBatch Implementation
+// ============================================================================
+
+DescriptorUpdateBatch::DescriptorUpdateBatch(vk::Device device, vk::DescriptorSet set)
+    : m_device(device)
+    , m_set(set)
+{
+}
+
+DescriptorUpdateBatch& DescriptorUpdateBatch::buffer(
+    uint32_t binding,
+    vk::Buffer buffer,
+    vk::DeviceSize offset,
+    vk::DeviceSize range)
+{
+    vk::DescriptorBufferInfo buffer_info;
+    buffer_info.buffer = buffer;
+    buffer_info.offset = offset;
+    buffer_info.range = range;
+    m_buffer_infos.push_back(buffer_info);
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = m_set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eStorageBuffer;
+    write.pBufferInfo = &m_buffer_infos.back();
+    m_writes.push_back(write);
+
+    return *this;
+}
+
+DescriptorUpdateBatch& DescriptorUpdateBatch::storage_image(
+    uint32_t binding,
+    vk::ImageView image_view,
+    vk::ImageLayout layout)
+{
+    vk::DescriptorImageInfo image_info;
+    image_info.imageView = image_view;
+    image_info.sampler = nullptr;
+    image_info.imageLayout = layout;
+    m_image_infos.push_back(image_info);
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = m_set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eStorageImage;
+    write.pImageInfo = &m_image_infos.back();
+    m_writes.push_back(write);
+
+    return *this;
+}
+
+DescriptorUpdateBatch& DescriptorUpdateBatch::combined_image_sampler(
+    uint32_t binding,
+    vk::ImageView image_view,
+    vk::Sampler sampler,
+    vk::ImageLayout layout)
+{
+    vk::DescriptorImageInfo image_info;
+    image_info.imageView = image_view;
+    image_info.sampler = sampler;
+    image_info.imageLayout = layout;
+    m_image_infos.push_back(image_info);
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = m_set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    write.pImageInfo = &m_image_infos.back();
+    m_writes.push_back(write);
+
+    return *this;
+}
+
+DescriptorUpdateBatch& DescriptorUpdateBatch::sampler(
+    uint32_t binding,
+    vk::Sampler sampler)
+{
+    vk::DescriptorImageInfo image_info;
+    image_info.sampler = sampler;
+    image_info.imageView = nullptr;
+    image_info.imageLayout = vk::ImageLayout::eUndefined;
+    m_image_infos.push_back(image_info);
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = m_set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eSampler;
+    write.pImageInfo = &m_image_infos.back();
+    m_writes.push_back(write);
+
+    return *this;
+}
+
+void DescriptorUpdateBatch::submit()
+{
+    if (m_writes.empty()) {
+        return;
+    }
+
+    m_device.updateDescriptorSets(
+        static_cast<uint32_t>(m_writes.size()),
+        m_writes.data(),
+        0, nullptr);
 }
 
 } // namespace MayaFlux::Core

@@ -352,4 +352,79 @@ uint32_t VKComputePipeline::calculate_workgroups(uint32_t element_count, uint32_
     return (element_count + workgroup_size - 1) / workgroup_size;
 }
 
+bool VKComputePipeline::create_specialized(
+    vk::Device device,
+    const ComputePipelineConfig& config,
+    const std::unordered_map<uint32_t, uint32_t>& specialization_data)
+{
+    if (!config.shader) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot create compute pipeline without shader");
+        return false;
+    }
+
+    config.shader->set_specialization_constants(specialization_data);
+    return create(device, config);
+}
+
+std::array<uint32_t, 3> VKComputePipeline::calculate_dispatch_1d(
+    uint32_t element_count,
+    uint32_t workgroup_size)
+{
+    return { calculate_workgroups(element_count, workgroup_size), 1, 1 };
+}
+
+std::array<uint32_t, 3> VKComputePipeline::calculate_dispatch_2d(
+    uint32_t width, uint32_t height,
+    uint32_t workgroup_x, uint32_t workgroup_y)
+{
+    return {
+        calculate_workgroups(width, workgroup_x),
+        calculate_workgroups(height, workgroup_y),
+        1
+    };
+}
+
+std::array<uint32_t, 3> VKComputePipeline::calculate_dispatch_3d(
+    uint32_t width, uint32_t height, uint32_t depth,
+    uint32_t workgroup_x, uint32_t workgroup_y, uint32_t workgroup_z)
+{
+    return {
+        calculate_workgroups(width, workgroup_x),
+        calculate_workgroups(height, workgroup_y),
+        calculate_workgroups(depth, workgroup_z)
+    };
+}
+
+void VKComputePipeline::dispatch_indirect(
+    vk::CommandBuffer cmd,
+    vk::Buffer buffer,
+    vk::DeviceSize offset)
+{
+    if (!m_pipeline) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot dispatch invalid compute pipeline");
+        return;
+    }
+
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot dispatch with null indirect buffer");
+        return;
+    }
+
+    cmd.dispatchIndirect(buffer, offset);
+}
+
+const ShaderReflection& VKComputePipeline::get_shader_reflection() const
+{
+    if (!m_shader) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot get shader reflection - no shader attached");
+        static ShaderReflection empty;
+        return empty;
+    }
+    return m_shader->get_reflection();
+}
+
 } // namespace MayaFlux::Core

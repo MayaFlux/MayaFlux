@@ -68,6 +68,46 @@ struct DescriptorSetLayoutConfig {
 };
 
 /**
+ * @class DescriptorUpdateBatch
+ * @brief Fluent interface for batching descriptor updates
+ *
+ * Usage:
+ *   manager.begin_batch(device, descriptor_set)
+ *       .buffer(0, vk_buffer)
+ *       .image(1, image_view, sampler)
+ *       .buffer(2, another_buffer)
+ *       .submit();
+ */
+class DescriptorUpdateBatch {
+public:
+    DescriptorUpdateBatch(vk::Device device, vk::DescriptorSet set);
+
+    DescriptorUpdateBatch& buffer(uint32_t binding, vk::Buffer buffer,
+        vk::DeviceSize offset = 0,
+        vk::DeviceSize range = VK_WHOLE_SIZE);
+
+    DescriptorUpdateBatch& storage_image(uint32_t binding,
+        vk::ImageView image_view,
+        vk::ImageLayout layout = vk::ImageLayout::eGeneral);
+
+    DescriptorUpdateBatch& combined_image_sampler(uint32_t binding,
+        vk::ImageView image_view,
+        vk::Sampler sampler,
+        vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    DescriptorUpdateBatch& sampler(uint32_t binding, vk::Sampler sampler);
+
+    void submit(); // Actually performs the update
+
+private:
+    vk::Device m_device;
+    vk::DescriptorSet m_set;
+    std::vector<vk::WriteDescriptorSet> m_writes;
+    std::vector<vk::DescriptorBufferInfo> m_buffer_infos;
+    std::vector<vk::DescriptorImageInfo> m_image_infos;
+};
+
+/**
  * @class VKDescriptorManager
  * @brief Manages descriptor pools, layouts, and set allocation
  *
@@ -195,6 +235,91 @@ public:
         vk::ImageView image_view,
         vk::Sampler sampler = nullptr,
         vk::ImageLayout layout = vk::ImageLayout::eGeneral);
+
+    /**
+     * @brief Update descriptor set with sampler binding
+     * @param device Logical device
+     * @param set Descriptor set to update
+     * @param binding Binding index
+     * @param sampler Sampler to bind
+     *
+     * For samplers used independently of images (immutable samplers in layout).
+     */
+    void update_sampler(
+        vk::Device device,
+        vk::DescriptorSet set,
+        uint32_t binding,
+        vk::Sampler sampler);
+
+    /**
+     * @brief Update descriptor set with combined image+sampler
+     * @param device Logical device
+     * @param set Descriptor set to update
+     * @param binding Binding index
+     * @param image_view Image view to bind
+     * @param sampler Sampler to bind
+     * @param layout Image layout (typically eShaderReadOnlyOptimal)
+     *
+     * This is the standard way to bind textures in graphics shaders.
+     */
+    void update_combined_image_sampler(
+        vk::Device device,
+        vk::DescriptorSet set,
+        uint32_t binding,
+        vk::ImageView image_view,
+        vk::Sampler sampler,
+        vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    /**
+     * @brief Update descriptor set with input attachment
+     * @param device Logical device
+     * @param set Descriptor set to update
+     * @param binding Binding index
+     * @param image_view Image view to bind
+     * @param layout Image layout (must be eShaderReadOnlyOptimal or eGeneral)
+     *
+     * For reading from attachments in the same render pass (subpass inputs).
+     */
+    void update_input_attachment(
+        vk::Device device,
+        vk::DescriptorSet set,
+        uint32_t binding,
+        vk::ImageView image_view,
+        vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    /**
+     * @brief Begin a batch descriptor update
+     * @return Batch builder for fluent interface
+     */
+    DescriptorUpdateBatch begin_batch(vk::Device device, vk::DescriptorSet set)
+    {
+        return { device, set };
+    }
+
+    /**
+     * @brief Copy descriptor set contents
+     * @param device Logical device
+     * @param src Source descriptor set
+     * @param dst Destination descriptor set
+     * @param copy_count Number of bindings to copy (0 = all)
+     */
+    void copy_descriptor_set(
+        vk::Device device,
+        vk::DescriptorSet src,
+        vk::DescriptorSet dst,
+        uint32_t copy_count = 0);
+
+    /**
+     * @brief Allocate multiple descriptor sets at once
+     * @param device Logical device
+     * @param layouts Vector of layouts (one per set)
+     * @return Vector of allocated descriptor sets
+     *
+     * More efficient than multiple allocate_set() calls.
+     */
+    std::vector<vk::DescriptorSet> allocate_sets(
+        vk::Device device,
+        const std::vector<vk::DescriptorSetLayout>& layouts);
 
     /**
      * @brief Batch update multiple bindings at once
