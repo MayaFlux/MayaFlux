@@ -42,6 +42,8 @@ enum class Component : uint8_t {
     Vruta, ///< Coroutines, schedulers, clocks, task management
     Yantra, ///< DSP algorithms, computational units, matrix operations, Grammar
     IO, ///< Networking, file handling, streaming
+    Registry, ///< Backend and service registry
+    Portal, ///< High-level user-facing API layer
     USER, ///< User code, scripts, plugins
     Unknown
 };
@@ -89,6 +91,7 @@ enum class Context : uint8_t {
     CoroutineScheduling, ///< Coroutine scheduling and temporal coordination (Vruta::TaskScheduler)
     ContainerProcessing, ///< Container operations (Kakshya - file/stream/region processing)
     ComputeProcessing, ///< Compute operations (Yantra - algorithms, matrices, DSP)
+    ImageProcessing, ///< Image processing tasks (filters, transformations)
 
     // ============================================================================
     // WORKER CONTEXTS
@@ -128,6 +131,7 @@ enum class Context : uint8_t {
 
     Runtime, ///< General runtime operations (default fallback)
     Testing, ///< Testing/benchmarking context
+    API, ///< API calls from external code
     Unknown ///< Unknown or unspecified context
 };
 

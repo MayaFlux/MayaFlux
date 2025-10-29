@@ -176,9 +176,12 @@ void VulkanBackend::register_backend_services()
                                                    uint32_t push_size) -> std::shared_ptr<void> {
         auto shader = std::static_pointer_cast<VKShaderModule>(shdr);
         std::vector<vk::DescriptorSetLayout> vk_layouts;
+
+        vk_layouts.reserve(layouts.size());
         for (auto* ptr : layouts) {
             vk_layouts.emplace_back(reinterpret_cast<VkDescriptorSetLayout>(ptr));
         }
+
         return std::static_pointer_cast<void>(this->create_compute_pipeline(shader, vk_layouts, push_size));
     };
     compute_service->cleanup_resource = [this](const std::shared_ptr<void>& res) {
@@ -934,7 +937,6 @@ void VulkanBackend::initialize_image(const std::shared_ptr<VKImage>& image)
 
     vk::ImageCreateInfo image_info {};
 
-    // Determine image type
     switch (image->get_type()) {
     case VKImage::Type::TYPE_1D:
         image_info.imageType = vk::ImageType::e1D;
@@ -1021,7 +1023,6 @@ void VulkanBackend::initialize_image(const std::shared_ptr<VKImage>& image)
 
     vk::ImageViewCreateInfo view_info {};
 
-    // Determine view type
     switch (image->get_type()) {
     case VKImage::Type::TYPE_1D:
         view_info.viewType = (image->get_array_layers() > 1)
@@ -1049,7 +1050,6 @@ void VulkanBackend::initialize_image(const std::shared_ptr<VKImage>& image)
     view_info.subresourceRange.baseArrayLayer = 0;
     view_info.subresourceRange.layerCount = image->get_array_layers();
 
-    // Component swizzle (identity)
     view_info.components.r = vk::ComponentSwizzle::eIdentity;
     view_info.components.g = vk::ComponentSwizzle::eIdentity;
     view_info.components.b = vk::ComponentSwizzle::eIdentity;
@@ -1076,7 +1076,7 @@ void VulkanBackend::initialize_image(const std::shared_ptr<VKImage>& image)
     resources.image = vk_image;
     resources.image_view = image_view;
     resources.memory = memory;
-    resources.sampler = nullptr; // Samplers created separately
+    resources.sampler = nullptr;
 
     image->set_image_resources(resources);
     image->set_current_layout(vk::ImageLayout::eUndefined);
@@ -1096,7 +1096,6 @@ void VulkanBackend::cleanup_image(const std::shared_ptr<VKImage>& image)
 
     const auto& resources = image->get_image_resources();
 
-    // Destroy in reverse order of creation
     if (resources.image_view) {
         m_context->get_device().destroyImageView(resources.image_view);
     }
@@ -1108,8 +1107,6 @@ void VulkanBackend::cleanup_image(const std::shared_ptr<VKImage>& image)
     if (resources.memory) {
         m_context->get_device().freeMemory(resources.memory);
     }
-
-    // Note: Sampler is destroyed separately (may be shared)
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKImage cleaned up");
@@ -1136,42 +1133,35 @@ void VulkanBackend::transition_image_layout(
         barrier.subresourceRange.baseArrayLayer = 0;
         barrier.subresourceRange.layerCount = array_layers;
 
-        // Determine pipeline stages and access masks based on layouts
         vk::PipelineStageFlags src_stage;
         vk::PipelineStageFlags dst_stage;
 
         if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eTransferDstOptimal) {
-            // Transition for initial upload
             barrier.srcAccessMask = vk::AccessFlags {};
             barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
             src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
             dst_stage = vk::PipelineStageFlagBits::eTransfer;
         } else if (old_layout == vk::ImageLayout::eTransferDstOptimal && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            // Transition from upload to shader read
             barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
             barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
             src_stage = vk::PipelineStageFlagBits::eTransfer;
             dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eColorAttachmentOptimal) {
-            // Transition for render target
             barrier.srcAccessMask = vk::AccessFlags {};
             barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
             src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
             dst_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
-            // Transition for depth buffer
             barrier.srcAccessMask = vk::AccessFlags {};
             barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
             src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
             dst_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eGeneral) {
-            // Transition for compute storage
             barrier.srcAccessMask = vk::AccessFlags {};
             barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
             src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
             dst_stage = vk::PipelineStageFlagBits::eComputeShader;
         } else {
-            // Generic transition
             barrier.srcAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
             barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite;
             src_stage = vk::PipelineStageFlagBits::eAllCommands;

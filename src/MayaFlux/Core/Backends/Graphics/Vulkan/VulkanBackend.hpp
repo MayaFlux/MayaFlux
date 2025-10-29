@@ -219,7 +219,7 @@ public:
     vk::Sampler create_sampler(
         vk::Filter filter = vk::Filter::eLinear,
         vk::SamplerAddressMode address_mode = vk::SamplerAddressMode::eRepeat,
-        float max_anisotropy = 0.0f);
+        float max_anisotropy = 0.0F);
 
     /**
      * @brief Destroy sampler
