@@ -362,7 +362,7 @@ void DynamicSoundStream::set_all_data(const std::vector<DataVariant>& data)
 
 void DynamicSoundStream::set_all_data(const DataVariant& data)
 {
-    set_all_data({ data });
+    set_all_data(std::vector<DataVariant> {data});
 }
 
 void DynamicSoundStream::expand_to(uint64_t target_frames)

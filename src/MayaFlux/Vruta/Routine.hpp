@@ -306,7 +306,7 @@ protected:
  * };
  * ```
  */
-class SoundRoutine : public Routine {
+class MAYAFLUX_API SoundRoutine : public Routine {
 public:
     /**
      * @brief Promise type used by this coroutine
@@ -501,7 +501,7 @@ private:
  * };
  * ```
  */
-class GraphicsRoutine : public Routine {
+class MAYAFLUX_API GraphicsRoutine : public Routine {
 public:
     /**
      * @brief Promise type used by this coroutine
