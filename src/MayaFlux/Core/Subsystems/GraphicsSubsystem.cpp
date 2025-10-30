@@ -8,6 +8,8 @@
 #include "MayaFlux/Vruta/Clock.hpp"
 #include "MayaFlux/Vruta/Routine.hpp"
 
+#include "MayaFlux/Portal/Graphics/Graphics.hpp"
+
 namespace MayaFlux::Core {
 
 std::unique_ptr<IGraphicsBackend> create_graphics_backend(GlobalGraphicsConfig::GraphicsApi api)
@@ -59,11 +61,29 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
         m_frame_clock->set_target_fps(m_graphics_config.target_frame_rate);
     }
 
+    initialize_graphics_portal();
+
     m_is_ready = true;
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
         "Graphics Subsystem initialized (Target FPS: {})",
         m_frame_clock->frame_rate());
+}
+
+void GraphicsSubsystem::initialize_graphics_portal()
+{
+    try {
+        if (auto vulkan_backend = dynamic_cast<VulkanBackend*>(m_backend.get())) {
+            Portal::Graphics::initialize(std::shared_ptr<VulkanBackend>(vulkan_backend, [](VulkanBackend*) { }));
+        }
+    } catch (std::exception& e) {
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsSubsystem,
+            std::source_location::current(),
+            "Failed to initialize Portal::Graphics subsystem: {}",
+            e.what());
+    }
 }
 
 void GraphicsSubsystem::register_frame_processor()
