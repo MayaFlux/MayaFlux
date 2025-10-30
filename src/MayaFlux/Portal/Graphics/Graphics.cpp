@@ -1,7 +1,8 @@
 #include "Graphics.hpp"
 
-#include "SamplerFactory.hpp"
-#include "TextureManager.hpp"
+#include "SamplerForge.hpp"
+#include "ShaderFoundry.hpp"
+#include "TextureLoom.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -28,13 +29,13 @@ bool initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
         "Initializing Portal::Graphics...");
 
-    if (!TextureManager::instance().initialize(backend)) {
+    if (!TextureLoom::instance().initialize(backend)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
-            "Failed to initialize TextureManager");
+            "Failed to initialize TextureLoom");
         return false;
     }
 
-    if (!SamplerFactory::instance().initialize(backend)) {
+    if (!SamplerForge::instance().initialize(backend)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
             "Failed to initialize SamplerFactory");
         return false;
@@ -55,8 +56,8 @@ void shutdown()
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
         "Shutting down Portal::Graphics...");
 
-    TextureManager::instance().shutdown();
-    SamplerFactory::instance().shutdown();
+    TextureLoom::instance().shutdown();
+    SamplerForge::instance().shutdown();
 
     g_initialized = false;
 

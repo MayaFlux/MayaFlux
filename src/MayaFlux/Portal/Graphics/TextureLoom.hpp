@@ -76,10 +76,10 @@ struct SamplerConfig {
 };
 
 /**
- * @class TextureManager
+ * @class TextureLoom
  * @brief Portal-level texture creation and management
  *
- * TextureManager is the primary Portal::Graphics class for creating and
+ * TextureLoom is the primary Portal::Graphics class for creating and
  * managing GPU textures. It bridges between user-friendly Portal API and
  * backend VKImage resources via BufferService registry.
  *
@@ -97,7 +97,7 @@ struct SamplerConfig {
  * - Integrates with BufferService for backend independence
  *
  * Usage:
- *   auto& mgr = Portal::Graphics::TextureManager::instance();
+ *   auto& mgr = Portal::Graphics::TextureLoom::instance();
  *
  *   // Create basic texture
  *   auto texture = mgr.create_2d(512, 512, ImageFormat::RGBA8);
@@ -114,19 +114,19 @@ struct SamplerConfig {
  *   config.mag_filter = FilterMode::LINEAR;
  *   auto sampler = mgr.get_or_create_sampler(config);
  */
-class MAYAFLUX_API TextureManager {
+class MAYAFLUX_API TextureLoom {
 public:
-    static TextureManager& instance()
+    static TextureLoom& instance()
     {
-        static TextureManager manager;
+        static TextureLoom manager;
         return manager;
     }
 
     // Non-copyable, movable
-    TextureManager(const TextureManager&) = delete;
-    TextureManager& operator=(const TextureManager&) = delete;
-    TextureManager(TextureManager&&) noexcept = default;
-    TextureManager& operator=(TextureManager&&) noexcept = default;
+    TextureLoom(const TextureLoom&) = delete;
+    TextureLoom& operator=(const TextureLoom&) = delete;
+    TextureLoom(TextureLoom&&) noexcept = default;
+    TextureLoom& operator=(TextureLoom&&) noexcept = default;
 
     /**
      * @brief Initialize texture manager
@@ -283,7 +283,7 @@ public:
      * @return Vulkan sampler handle (cached)
      *
      * Samplers are cached - identical configs return same sampler.
-     * Managed by TextureManager, destroyed on shutdown.
+     * Managed by TextureLoom, destroyed on shutdown.
      */
     vk::Sampler get_or_create_sampler(const SamplerConfig& config);
 
@@ -321,8 +321,8 @@ public:
         ImageFormat format);
 
 private:
-    TextureManager() = default;
-    ~TextureManager() { shutdown(); }
+    TextureLoom() = default;
+    ~TextureLoom() { shutdown(); }
 
     std::shared_ptr<Core::VulkanBackend> m_backend;
     Core::BackendResourceManager* m_resource_manager = nullptr;
@@ -347,9 +347,9 @@ private:
  * Must call initialize() before first use.
  * Thread-safe after initialization.
  */
-inline MAYAFLUX_API TextureManager& get_texture_manager()
+inline MAYAFLUX_API TextureLoom& get_texture_manager()
 {
-    return TextureManager::instance();
+    return TextureLoom::instance();
 }
 
 } // namespace MayaFlux::Portal::Graphics

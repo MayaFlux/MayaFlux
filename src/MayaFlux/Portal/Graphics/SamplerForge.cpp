@@ -1,41 +1,42 @@
-#include "SamplerFactory.hpp"
+#include "SamplerForge.hpp"
+
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKContext.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "TextureManager.hpp"
+#include "TextureLoom.hpp"
 
 namespace MayaFlux::Portal::Graphics {
 
-bool SamplerFactory::initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
+bool SamplerForge::initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
 {
     if (!backend) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "Cannot initialize SamplerFactory with null backend");
+            "Cannot initialize SamplerForge with null backend");
         return false;
     }
 
     if (m_backend) {
         MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "SamplerFactory already initialized");
+            "SamplerForge already initialized");
         return true;
     }
 
     m_backend = backend;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "SamplerFactory initialized");
+        "SamplerForge initialized");
 
     return true;
 }
 
-void SamplerFactory::shutdown()
+void SamplerForge::shutdown()
 {
     if (!m_backend) {
         return;
     }
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "Shutting down SamplerFactory...");
+        "Shutting down SamplerForge...");
 
     auto device = m_backend->get_context().get_device();
     for (auto& [hash, sampler] : m_sampler_cache) {
@@ -48,14 +49,14 @@ void SamplerFactory::shutdown()
     m_backend = nullptr;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "SamplerFactory shutdown complete");
+        "SamplerForge shutdown complete");
 }
 
-vk::Sampler SamplerFactory::get_or_create(const SamplerConfig& config)
+vk::Sampler SamplerForge::get_or_create(const SamplerConfig& config)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "SamplerFactory not initialized");
+            "SamplerForge not initialized");
         return nullptr;
     }
 
@@ -77,7 +78,7 @@ vk::Sampler SamplerFactory::get_or_create(const SamplerConfig& config)
     return sampler;
 }
 
-vk::Sampler SamplerFactory::get_default_linear()
+vk::Sampler SamplerForge::get_default_linear()
 {
     SamplerConfig config;
     config.mag_filter = FilterMode::LINEAR;
@@ -89,7 +90,7 @@ vk::Sampler SamplerFactory::get_default_linear()
     return get_or_create(config);
 }
 
-vk::Sampler SamplerFactory::get_default_nearest()
+vk::Sampler SamplerForge::get_default_nearest()
 {
     SamplerConfig config;
     config.mag_filter = FilterMode::NEAREST;
@@ -101,7 +102,7 @@ vk::Sampler SamplerFactory::get_default_nearest()
     return get_or_create(config);
 }
 
-vk::Sampler SamplerFactory::get_anisotropic(float max_anisotropy)
+vk::Sampler SamplerForge::get_anisotropic(float max_anisotropy)
 {
     SamplerConfig config;
     config.mag_filter = FilterMode::LINEAR;
@@ -113,7 +114,7 @@ vk::Sampler SamplerFactory::get_anisotropic(float max_anisotropy)
     return get_or_create(config);
 }
 
-void SamplerFactory::destroy_sampler(vk::Sampler sampler)
+void SamplerForge::destroy_sampler(vk::Sampler sampler)
 {
     if (!is_initialized() || !sampler) {
         return;
@@ -131,7 +132,7 @@ void SamplerFactory::destroy_sampler(vk::Sampler sampler)
     }
 }
 
-vk::Sampler SamplerFactory::create_sampler(const SamplerConfig& config)
+vk::Sampler SamplerForge::create_sampler(const SamplerConfig& config)
 {
     auto device = m_backend->get_context().get_device();
     auto physical_device = m_backend->get_context().get_physical_device();
@@ -191,7 +192,7 @@ vk::Sampler SamplerFactory::create_sampler(const SamplerConfig& config)
     }
 }
 
-size_t SamplerFactory::hash_config(const SamplerConfig& config)
+size_t SamplerForge::hash_config(const SamplerConfig& config)
 {
     size_t hash = 0;
     hash ^= std::hash<int> {}(static_cast<int>(config.mag_filter)) << 0;
@@ -204,7 +205,7 @@ size_t SamplerFactory::hash_config(const SamplerConfig& config)
     return hash;
 }
 
-vk::Filter SamplerFactory::to_vk_filter(FilterMode mode)
+vk::Filter SamplerForge::to_vk_filter(FilterMode mode)
 {
     switch (mode) {
     case FilterMode::NEAREST:
@@ -218,7 +219,7 @@ vk::Filter SamplerFactory::to_vk_filter(FilterMode mode)
     }
 }
 
-vk::SamplerAddressMode SamplerFactory::to_vk_address_mode(AddressMode mode)
+vk::SamplerAddressMode SamplerForge::to_vk_address_mode(AddressMode mode)
 {
     switch (mode) {
     case AddressMode::REPEAT:

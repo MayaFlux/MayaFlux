@@ -11,7 +11,7 @@ namespace MayaFlux::Portal::Graphics {
  * @return True if initialization succeeded
  *
  * Initializes all Portal::Graphics managers:
- * - TextureManager
+ * - TextureLoom
  * - SamplerFactory
  * - (Future) ShaderCompiler
  * - (Future) PipelineFactory

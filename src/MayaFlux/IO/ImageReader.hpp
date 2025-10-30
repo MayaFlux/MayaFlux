@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/IO/FileReader.hpp"
-#include "MayaFlux/Portal/Graphics/TextureManager.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::IO {
 

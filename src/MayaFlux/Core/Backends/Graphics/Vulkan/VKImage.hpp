@@ -41,7 +41,7 @@ struct VKImageResources {
  * - Descriptor set binding (that's VKDescriptorManager)
  *
  * Integration points:
- * - Created by Portal::Graphics::TextureManager
+ * - Created by Portal::Graphics::TextureLoom
  * - Allocated by VulkanBackend::initialize_image()
  * - Wrapped by Kakshya::Visual::TextureStream (future)
  * - Used by Yantra::Graphics::RenderPipeline (future)

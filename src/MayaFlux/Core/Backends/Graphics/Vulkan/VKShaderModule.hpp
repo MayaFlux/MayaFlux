@@ -362,6 +362,13 @@ public:
         return m_reflection.workgroup_size;
     }
 
+    /**
+     * @brief Auto-detect shader stage from file extension
+     * @param filepath Path to shader file
+     * @return Detected stage, or nullopt if unknown extension
+     */
+    static std::optional<vk::ShaderStageFlagBits> detect_stage_from_extension(const std::string& filepath);
+
 private:
     vk::ShaderModule m_module = nullptr;
     vk::ShaderStageFlagBits m_stage = vk::ShaderStageFlagBits::eCompute;
@@ -390,13 +397,6 @@ private:
      * workgroup sizes, etc. Falls back to basic parsing if library unavailable.
      */
     bool reflect_spirv(const std::vector<uint32_t>& spirv_code);
-
-    /**
-     * @brief Auto-detect shader stage from file extension
-     * @param filepath Path to shader file
-     * @return Detected stage, or nullopt if unknown extension
-     */
-    static std::optional<vk::ShaderStageFlagBits> detect_stage_from_extension(const std::string& filepath);
 
     /**
      * @brief Compile GLSL to SPIR-V using shaderc

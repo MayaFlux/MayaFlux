@@ -55,8 +55,9 @@
 #include "Core/Windowing/WindowManager.hpp"
 
 #include "Portal/Graphics/Graphics.hpp"
-#include "Portal/Graphics/SamplerFactory.hpp"
-#include "Portal/Graphics/TextureManager.hpp"
+#include "Portal/Graphics/SamplerForge.hpp"
+#include "Portal/Graphics/ShaderFoundry.hpp"
+#include "Portal/Graphics/TextureLoom.hpp"
 
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;

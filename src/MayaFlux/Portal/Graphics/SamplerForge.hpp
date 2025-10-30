@@ -13,7 +13,7 @@ enum class AddressMode : uint8_t;
 struct SamplerConfig;
 
 /**
- * @class SamplerFactory
+ * @class SamplerForge
  * @brief Creates and caches Vulkan samplers (Singleton)
  *
  * Samplers control how textures are filtered and addressed when sampled in shaders.
@@ -27,18 +27,18 @@ struct SamplerConfig;
  *
  * Thread-safe after initialization.
  */
-class MAYAFLUX_API SamplerFactory {
+class MAYAFLUX_API SamplerForge {
 public:
-    static SamplerFactory& instance()
+    static SamplerForge& instance()
     {
-        static SamplerFactory factory;
+        static SamplerForge factory;
         return factory;
     }
 
-    SamplerFactory(const SamplerFactory&) = delete;
-    SamplerFactory& operator=(const SamplerFactory&) = delete;
-    SamplerFactory(SamplerFactory&&) = delete;
-    SamplerFactory& operator=(SamplerFactory&&) = delete;
+    SamplerForge(const SamplerForge&) = delete;
+    SamplerForge& operator=(const SamplerForge&) = delete;
+    SamplerForge(SamplerForge&&) = delete;
+    SamplerForge& operator=(SamplerForge&&) = delete;
 
     /**
      * @brief Initialize with backend reference
@@ -100,8 +100,8 @@ public:
     [[nodiscard]] size_t get_sampler_count() const { return m_sampler_cache.size(); }
 
 private:
-    SamplerFactory() = default;
-    ~SamplerFactory() { shutdown(); }
+    SamplerForge() = default;
+    ~SamplerForge() { shutdown(); }
 
     std::shared_ptr<Core::VulkanBackend> m_backend;
 
@@ -122,11 +122,11 @@ private:
 };
 
 /**
- * @brief Convenience wrapper around SamplerFactory::instance()
+ * @brief Convenience wrapper around SamplerForge::instance()
  */
-inline SamplerFactory& get_sampler_factory()
+inline SamplerForge& get_sampler_factory()
 {
-    return SamplerFactory::instance();
+    return SamplerForge::instance();
 }
 
 } // namespace MayaFlux::Portal::Graphics

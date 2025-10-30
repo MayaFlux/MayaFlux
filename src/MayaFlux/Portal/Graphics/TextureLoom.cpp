@@ -1,4 +1,4 @@
-#include "TextureManager.hpp"
+#include "TextureLoom.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
@@ -7,35 +7,35 @@
 
 namespace MayaFlux::Portal::Graphics {
 
-bool TextureManager::initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
+bool TextureLoom::initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
 {
     if (!backend) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "Cannot initialize TextureManager with null backend");
+            "Cannot initialize TextureLoom with null backend");
         return false;
     }
 
     if (m_backend) {
         MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureManager already initialized");
+            "TextureLoom already initialized");
         return true;
     }
 
     m_backend = backend;
     m_resource_manager = &m_backend->get_resource_manager();
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "TextureManager initialized");
+        "TextureLoom initialized");
     return true;
 }
 
-void TextureManager::shutdown()
+void TextureLoom::shutdown()
 {
     if (!m_backend) {
         return;
     }
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "Shutting down TextureManager...");
+        "Shutting down TextureLoom...");
 
     for (auto& texture : m_textures) {
         if (texture && texture->is_initialized()) {
@@ -48,20 +48,20 @@ void TextureManager::shutdown()
     m_backend = nullptr;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "TextureManager shutdown complete");
+        "TextureLoom shutdown complete");
 }
 
 //==============================================================================
 // Texture Creation
 //==============================================================================
 
-std::shared_ptr<Core::VKImage> TextureManager::create_2d(
+std::shared_ptr<Core::VKImage> TextureLoom::create_2d(
     uint32_t width, uint32_t height,
     ImageFormat format, const void* data, uint32_t mip_levels)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureManager not initialized");
+            "TextureLoom not initialized");
         return nullptr;
     }
 
@@ -100,13 +100,13 @@ std::shared_ptr<Core::VKImage> TextureManager::create_2d(
     return image;
 }
 
-std::shared_ptr<Core::VKImage> TextureManager::create_3d(
+std::shared_ptr<Core::VKImage> TextureLoom::create_3d(
     uint32_t width, uint32_t height, uint32_t depth,
     ImageFormat format, const void* data)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureManager not initialized");
+            "TextureLoom not initialized");
         return nullptr;
     }
 
@@ -144,12 +144,12 @@ std::shared_ptr<Core::VKImage> TextureManager::create_3d(
     return image;
 }
 
-std::shared_ptr<Core::VKImage> TextureManager::create_cubemap(
+std::shared_ptr<Core::VKImage> TextureLoom::create_cubemap(
     uint32_t size, ImageFormat format, const void* data)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureManager not initialized");
+            "TextureLoom not initialized");
         return nullptr;
     }
 
@@ -187,12 +187,12 @@ std::shared_ptr<Core::VKImage> TextureManager::create_cubemap(
     return image;
 }
 
-std::shared_ptr<Core::VKImage> TextureManager::create_render_target(
+std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
     uint32_t width, uint32_t height, ImageFormat format)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureManager not initialized");
+            "TextureLoom not initialized");
         return nullptr;
     }
 
@@ -225,12 +225,12 @@ std::shared_ptr<Core::VKImage> TextureManager::create_render_target(
     return image;
 }
 
-std::shared_ptr<Core::VKImage> TextureManager::create_depth_buffer(
+std::shared_ptr<Core::VKImage> TextureLoom::create_depth_buffer(
     uint32_t width, uint32_t height, bool with_stencil)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureManager not initialized");
+            "TextureLoom not initialized");
         return nullptr;
     }
 
@@ -270,12 +270,12 @@ std::shared_ptr<Core::VKImage> TextureManager::create_depth_buffer(
     return image;
 }
 
-std::shared_ptr<Core::VKImage> TextureManager::create_storage_image(
+std::shared_ptr<Core::VKImage> TextureLoom::create_storage_image(
     uint32_t width, uint32_t height, ImageFormat format)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureManager not initialized");
+            "TextureLoom not initialized");
         return nullptr;
     }
 
@@ -312,7 +312,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_storage_image(
 // Data Upload/Download
 //==============================================================================
 
-void TextureManager::upload_data(
+void TextureLoom::upload_data(
     const std::shared_ptr<Core::VKImage>& image, const void* data, size_t size)
 {
     if (!is_initialized() || !image || !data) {
@@ -324,7 +324,7 @@ void TextureManager::upload_data(
     m_resource_manager->upload_image_data(image, data, size);
 }
 
-void TextureManager::download_data(
+void TextureLoom::download_data(
     const std::shared_ptr<Core::VKImage>& image, void* data, size_t size)
 {
     if (!is_initialized() || !image || !data) {
@@ -340,11 +340,11 @@ void TextureManager::download_data(
 // Sampler Management
 //==============================================================================
 
-vk::Sampler TextureManager::get_or_create_sampler(const SamplerConfig& config)
+vk::Sampler TextureLoom::get_or_create_sampler(const SamplerConfig& config)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
-            "TextureManager not initialized");
+            "TextureLoom not initialized");
         return nullptr;
     }
 
@@ -359,13 +359,13 @@ vk::Sampler TextureManager::get_or_create_sampler(const SamplerConfig& config)
     return sampler;
 }
 
-vk::Sampler TextureManager::get_default_sampler()
+vk::Sampler TextureLoom::get_default_sampler()
 {
     SamplerConfig config;
     return get_or_create_sampler(config);
 }
 
-vk::Sampler TextureManager::get_nearest_sampler()
+vk::Sampler TextureLoom::get_nearest_sampler()
 {
     SamplerConfig config;
     config.mag_filter = FilterMode::NEAREST;
@@ -375,7 +375,7 @@ vk::Sampler TextureManager::get_nearest_sampler()
     return get_or_create_sampler(config);
 }
 
-vk::Sampler TextureManager::create_sampler(const SamplerConfig& config)
+vk::Sampler TextureLoom::create_sampler(const SamplerConfig& config)
 {
     return m_resource_manager->create_sampler(
         static_cast<vk::Filter>(config.mag_filter),
@@ -383,7 +383,7 @@ vk::Sampler TextureManager::create_sampler(const SamplerConfig& config)
         config.max_anisotropy);
 }
 
-size_t TextureManager::hash_sampler_config(const SamplerConfig& config)
+size_t TextureLoom::hash_sampler_config(const SamplerConfig& config)
 {
     size_t hash = 0;
     hash ^= std::hash<int> {}(static_cast<int>(config.mag_filter)) << 0;
@@ -400,7 +400,7 @@ size_t TextureManager::hash_sampler_config(const SamplerConfig& config)
 // Utilities
 //==============================================================================
 
-vk::Format TextureManager::to_vulkan_format(ImageFormat format)
+vk::Format TextureLoom::to_vulkan_format(ImageFormat format)
 {
     switch (format) {
     case ImageFormat::R8:
@@ -438,7 +438,7 @@ vk::Format TextureManager::to_vulkan_format(ImageFormat format)
     }
 }
 
-size_t TextureManager::get_bytes_per_pixel(ImageFormat format)
+size_t TextureLoom::get_bytes_per_pixel(ImageFormat format)
 {
     switch (format) {
     case ImageFormat::R8:
@@ -472,7 +472,7 @@ size_t TextureManager::get_bytes_per_pixel(ImageFormat format)
     }
 }
 
-size_t TextureManager::calculate_image_size(
+size_t TextureLoom::calculate_image_size(
     uint32_t width, uint32_t height, uint32_t depth, ImageFormat format)
 {
     return static_cast<size_t>(width) * height * depth * get_bytes_per_pixel(format);

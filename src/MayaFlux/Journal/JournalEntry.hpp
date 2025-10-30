@@ -92,6 +92,7 @@ enum class Context : uint8_t {
     ContainerProcessing, ///< Container operations (Kakshya - file/stream/region processing)
     ComputeProcessing, ///< Compute operations (Yantra - algorithms, matrices, DSP)
     ImageProcessing, ///< Image processing tasks (filters, transformations)
+    ShaderCompilation, ///< Shader compilation tasks (Portal::Graphics::ShaderCompiler)
 
     // ============================================================================
     // WORKER CONTEXTS
