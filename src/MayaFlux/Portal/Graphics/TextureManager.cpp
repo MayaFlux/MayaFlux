@@ -1,5 +1,7 @@
 #include "TextureManager.hpp"
+
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 

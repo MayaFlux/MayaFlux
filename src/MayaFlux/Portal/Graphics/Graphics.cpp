@@ -1,4 +1,8 @@
 #include "Graphics.hpp"
+
+#include "SamplerFactory.hpp"
+#include "TextureManager.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Graphics {
@@ -30,6 +34,12 @@ bool initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
         return false;
     }
 
+    if (!SamplerFactory::instance().initialize(backend)) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "Failed to initialize SamplerFactory");
+        return false;
+    }
+
     g_initialized = true;
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
         "Portal::Graphics initialized successfully");
@@ -46,6 +56,8 @@ void shutdown()
         "Shutting down Portal::Graphics...");
 
     TextureManager::instance().shutdown();
+    SamplerFactory::instance().shutdown();
+
     g_initialized = false;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::API,

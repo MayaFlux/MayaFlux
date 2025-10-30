@@ -28,6 +28,7 @@
 #include "Nodes/NodeGraphManager.hpp"
 #include "Nodes/NodeStructure.hpp"
 
+#include "Buffers/BufferManager.hpp"
 #include "Buffers/BufferProcessingChain.hpp"
 #include "Buffers/Container/ContainerBuffer.hpp"
 #include "Buffers/Container/StreamWriteProcessor.hpp"
@@ -52,6 +53,10 @@
 #include "Journal/Archivist.hpp"
 
 #include "Core/Windowing/WindowManager.hpp"
+
+#include "Portal/Graphics/Graphics.hpp"
+#include "Portal/Graphics/SamplerFactory.hpp"
+#include "Portal/Graphics/TextureManager.hpp"
 
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;

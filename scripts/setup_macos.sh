@@ -22,13 +22,13 @@ brew install llvm >/dev/null
 # --- 2) LLVM environment configuration ---------------------------------------
 LLVM_PREFIX="$(brew --prefix llvm 2>/dev/null || true)"
 if [ -n "$LLVM_PREFIX" ]; then
-    if ! grep -Fq "$LLVM_PREFIX/bin" ~/.zprofile 2>/dev/null; then
+    if ! grep -Fq "$LLVM_PREFIX/bin" ~/.zshenv 2>/dev/null; then
         {
             echo ''
             echo '# LLVM setup for CMake / llvm-config'
             echo "export PATH=\"$LLVM_PREFIX/bin:\$PATH\""
             echo "export CMAKE_PREFIX_PATH=\"$LLVM_PREFIX/lib/cmake:\$CMAKE_PREFIX_PATH\""
-        } >>~/.zprofile
+        } >>~/.zshenv
     fi
 fi
 
@@ -44,7 +44,6 @@ fi
 
 DEST="$HOME/VulkanSDK/${SDK_VERSION}"
 
-# Check if Vulkan SDK already exists
 if [ -d "$DEST" ]; then
     printf 'Vulkan SDK %s already exists. Skipping download.\n' "$SDK_VERSION" >&3
 else
@@ -60,18 +59,21 @@ else
     mkdir -p "$DEST"
     unzip -q "$SDK_ZIP" -d "$TMPDIR"
 
-    SRC_DIR="$(find "$TMPDIR" -type d -name "$SDK_VERSION" | head -n1 || true)"
-    if [ -z "$SRC_DIR" ]; then
-        err "Could not find extracted SDK folder in $TMPDIR"
+    INSTALLER_APP=$(find "$TMPDIR" -name "*.app" -type d | head -n1)
+
+    if [ -z "$INSTALLER_APP" ]; then
+        err "Could not find the Vulkan SDK installer app in the downloaded zip."
         exit 1
     fi
 
-    rm -rf "$DEST"
-    mv "$SRC_DIR" "$DEST"
+    if ! sudo "$INSTALLER_APP/Contents/MacOS/$(basename "$INSTALLER_APP" .app)" --root "$DEST" --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.core com.lunarg.vulkan.usr; then
+        err "Failed to install the Vulkan SDK."
+        exit 1
+    fi
 fi
 
 # --- 4) Vulkan environment setup ---------------------------------------------
-PROFILE="$HOME/.zprofile"
+PROFILE="$HOME/.zshenv"
 append_if_missing() {
     grep -Fq "$1" "$PROFILE" 2>/dev/null || printf '%s\n' "$1" >>"$PROFILE"
 }
@@ -83,7 +85,7 @@ append_if_missing 'export VK_ICD_FILENAMES="$VULKAN_SDK/etc/vulkan/icd.d/MoltenV
 append_if_missing 'export VK_LAYER_PATH="$VULKAN_SDK/etc/vulkan/explicit_layer.d"'
 
 # --- 5) CMake dependencies ------------------------------------------
-brew install ffmpeg rtaudio glfw glm shaderc eigen fmt magic-enum onedpl >/dev/null || true
+brew install ffmpeg rtaudio glfw glm shaderc eigen fmt magic-enum onedpl
 
 # --- 6) STB Setup (header-only library) --------------------------------------
 printf 'Installing STB headers...\n' >&3
@@ -116,7 +118,6 @@ else
     printf 'STB already installed at %s\n' "$STB_INSTALL_DIR" >&3
 fi
 
-# Add STB to environment
 append_if_missing "export STB_ROOT=\"$STB_INSTALL_DIR\""
 append_if_missing 'export CMAKE_PREFIX_PATH="$STB_ROOT:$CMAKE_PREFIX_PATH"'
 append_if_missing 'export CPATH="$STB_ROOT/include:$CPATH"'
@@ -125,5 +126,5 @@ append_if_missing 'export CPATH="$STB_ROOT/include:$CPATH"'
 exec 1>&3 3>&-
 printf '✅ LLVM installed at %s\n' "$LLVM_PREFIX"
 printf '✅ Vulkan SDK %s installed to %s\n' "$SDK_VERSION" "$DEST"
-printf '✅ Environment updated in ~/.zprofile\n'
-printf 'Run: source ~/.zprofile or restart your shell.\n'
+printf '✅ Environment updated in ~/.zshenv\n'
+printf 'Run: source ~/.zshenv or restart your shell.\n'

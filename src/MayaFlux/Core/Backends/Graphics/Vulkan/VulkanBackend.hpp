@@ -128,7 +128,21 @@ public:
      */
     BackendResourceManager& get_resource_manager() { return *m_resource_manager; }
 
+    /**
+     * @brief Get reference to the backend pipeline manager
+     *
+     * Responsible for managing Vulkan pipelines, descriptor sets, and shader modules.
+     * @return Reference to BackendPipelineManager
+     */
     BackendPipelineManager& get_pipeline_manager() { return *m_pipeline_manager; }
+
+    /**
+     * @brief Get reference to the backend window handler
+     *
+     * Responsible for managing windows, swapchains, framebuffers, and rendering loops.
+     * @return Reference to BackendWindowHandler
+     */
+    VKContext& get_context() { return *m_context; }
 
 private:
     std::unique_ptr<VKContext> m_context;

@@ -51,6 +51,8 @@ bool VulkanBackend::initialize(const GlobalGraphicsConfig& config)
         return false;
     }
 
+    register_backend_services();
+
     m_is_initialized = true;
     return true;
 }

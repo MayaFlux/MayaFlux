@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 
-#define MAX_PENDING 2048
+#define MAX_PENDING_NODES 2048
 
 namespace MayaFlux::Nodes {
 
@@ -160,7 +160,7 @@ private:
          * @brief The node to be registered or unregistered
          */
         std::shared_ptr<Node> node;
-    } m_pending_ops[MAX_PENDING];
+    } m_pending_ops[MAX_PENDING_NODES];
 
     /**
      * @brief Counter tracking the number of pending operations

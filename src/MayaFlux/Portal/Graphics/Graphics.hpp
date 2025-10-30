@@ -1,6 +1,8 @@
 #pragma once
 
-#include "TextureManager.hpp"
+namespace MayaFlux::Core {
+class VulkanBackend;
+}
 
 namespace MayaFlux::Portal::Graphics {
 
@@ -10,9 +12,9 @@ namespace MayaFlux::Portal::Graphics {
  *
  * Initializes all Portal::Graphics managers:
  * - TextureManager
+ * - SamplerFactory
  * - (Future) ShaderCompiler
  * - (Future) PipelineFactory
- * - (Future) SamplerFactory
  *
  * Must be called after backend initialization (VulkanBackend::initialize()).
  *

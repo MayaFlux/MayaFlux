@@ -108,6 +108,8 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
 
     m_subsystem_manager->create_graphics_subsystem(m_graphics_config);
 
+    m_buffer_manager->initialize_buffer_service();
+
     m_is_initialized = true;
 
     MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Audio backend: RtAudio, Sample rate: {}", m_stream_info.sample_rate);

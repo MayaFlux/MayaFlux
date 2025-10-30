@@ -1,9 +1,10 @@
 #pragma once
 
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+#include <vulkan/vulkan.hpp>
 
 namespace MayaFlux::Core {
 class VulkanBackend;
+class VKImage;
 class BackendResourceManager;
 }
 
