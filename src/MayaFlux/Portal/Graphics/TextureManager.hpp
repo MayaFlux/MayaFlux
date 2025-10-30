@@ -4,6 +4,7 @@
 
 namespace MayaFlux::Core {
 class VulkanBackend;
+class BackendResourceManager;
 }
 
 namespace MayaFlux::Portal::Graphics {
@@ -253,7 +254,7 @@ public:
      * Blocks until upload completes.
      */
     void upload_data(
-        std::shared_ptr<Core::VKImage> image,
+        const std::shared_ptr<Core::VKImage>& image,
         const void* data,
         size_t size);
 
@@ -267,7 +268,7 @@ public:
      * Blocks until download completes.
      */
     void download_data(
-        std::shared_ptr<Core::VKImage> image,
+        const std::shared_ptr<Core::VKImage>& image,
         void* data,
         size_t size);
 
@@ -323,6 +324,7 @@ private:
     ~TextureManager() { shutdown(); }
 
     std::shared_ptr<Core::VulkanBackend> m_backend;
+    Core::BackendResourceManager* m_resource_manager = nullptr;
 
     // Managed textures (for cleanup)
     std::vector<std::shared_ptr<Core::VKImage>> m_textures;

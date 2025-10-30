@@ -1,4 +1,5 @@
 #include "TextureManager.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -19,6 +20,7 @@ bool TextureManager::initialize(const std::shared_ptr<Core::VulkanBackend>& back
     }
 
     m_backend = backend;
+    m_resource_manager = &m_backend->get_resource_manager();
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "TextureManager initialized");
     return true;
@@ -35,11 +37,12 @@ void TextureManager::shutdown()
 
     for (auto& texture : m_textures) {
         if (texture && texture->is_initialized()) {
-            m_backend->cleanup_image(texture);
+            m_resource_manager->cleanup_image(texture);
         }
     }
     m_textures.clear();
     m_sampler_cache.clear();
+    m_resource_manager = nullptr;
     m_backend = nullptr;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -68,7 +71,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_2d(
         mip_levels, 1,
         Kakshya::DataModality::IMAGE_COLOR);
 
-    m_backend->initialize_image(image);
+    m_resource_manager->initialize_image(image);
 
     if (!image->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -80,7 +83,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_2d(
         size_t data_size = calculate_image_size(width, height, 1, format);
         upload_data(image, data, data_size);
     } else {
-        m_backend->transition_image_layout(
+        m_resource_manager->transition_image_layout(
             image->get_image(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -112,7 +115,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_3d(
         Core::VKImage::Type::TYPE_3D,
         1, 1, Kakshya::DataModality::VOLUMETRIC_3D);
 
-    m_backend->initialize_image(image);
+    m_resource_manager->initialize_image(image);
 
     if (!image->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -124,7 +127,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_3d(
         size_t data_size = calculate_image_size(width, height, depth, format);
         upload_data(image, data, data_size);
     } else {
-        m_backend->transition_image_layout(
+        m_resource_manager->transition_image_layout(
             image->get_image(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -155,7 +158,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_cubemap(
         Core::VKImage::Type::TYPE_CUBE,
         1, 6, Kakshya::DataModality::IMAGE_COLOR);
 
-    m_backend->initialize_image(image);
+    m_resource_manager->initialize_image(image);
 
     if (!image->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -168,7 +171,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_cubemap(
         size_t total_size = face_size * 6;
         upload_data(image, data, total_size);
     } else {
-        m_backend->transition_image_layout(
+        m_resource_manager->transition_image_layout(
             image->get_image(),
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eShaderReadOnlyOptimal,
@@ -198,7 +201,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_render_target(
         Core::VKImage::Type::TYPE_2D,
         1, 1, Kakshya::DataModality::IMAGE_COLOR);
 
-    m_backend->initialize_image(image);
+    m_resource_manager->initialize_image(image);
 
     if (!image->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -206,7 +209,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_render_target(
         return nullptr;
     }
 
-    m_backend->transition_image_layout(
+    m_resource_manager->transition_image_layout(
         image->get_image(),
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -239,7 +242,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_depth_buffer(
         Core::VKImage::Type::TYPE_2D,
         1, 1, Kakshya::DataModality::IMAGE_2D);
 
-    m_backend->initialize_image(image);
+    m_resource_manager->initialize_image(image);
 
     if (!image->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -251,7 +254,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_depth_buffer(
         ? (vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil)
         : vk::ImageAspectFlagBits::eDepth;
 
-    m_backend->transition_image_layout(
+    m_resource_manager->transition_image_layout(
         image->get_image(),
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthStencilAttachmentOptimal,
@@ -281,7 +284,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_storage_image(
         Core::VKImage::Type::TYPE_2D,
         1, 1, Kakshya::DataModality::IMAGE_COLOR);
 
-    m_backend->initialize_image(image);
+    m_resource_manager->initialize_image(image);
 
     if (!image->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -289,7 +292,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_storage_image(
         return nullptr;
     }
 
-    m_backend->transition_image_layout(
+    m_resource_manager->transition_image_layout(
         image->get_image(),
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eGeneral,
@@ -308,7 +311,7 @@ std::shared_ptr<Core::VKImage> TextureManager::create_storage_image(
 //==============================================================================
 
 void TextureManager::upload_data(
-    std::shared_ptr<Core::VKImage> image, const void* data, size_t size)
+    const std::shared_ptr<Core::VKImage>& image, const void* data, size_t size)
 {
     if (!is_initialized() || !image || !data) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -316,13 +319,11 @@ void TextureManager::upload_data(
         return;
     }
 
-    // TODO: Implement via backend
-    MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "upload_data not yet implemented");
+    m_resource_manager->upload_image_data(image, data, size);
 }
 
 void TextureManager::download_data(
-    std::shared_ptr<Core::VKImage> image, void* data, size_t size)
+    const std::shared_ptr<Core::VKImage>& image, void* data, size_t size)
 {
     if (!is_initialized() || !image || !data) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -330,9 +331,7 @@ void TextureManager::download_data(
         return;
     }
 
-    // TODO: Implement via backend
-    MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "download_data not yet implemented");
+    m_resource_manager->download_image_data(image, data, size);
 }
 
 //==============================================================================
@@ -376,10 +375,10 @@ vk::Sampler TextureManager::get_nearest_sampler()
 
 vk::Sampler TextureManager::create_sampler(const SamplerConfig& config)
 {
-    // TODO: Implement via backend
-    MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "Sampler creation not yet implemented");
-    return nullptr;
+    return m_resource_manager->create_sampler(
+        static_cast<vk::Filter>(config.mag_filter),
+        static_cast<vk::SamplerAddressMode>(config.address_mode_u),
+        config.max_anisotropy);
 }
 
 size_t TextureManager::hash_sampler_config(const SamplerConfig& config)
