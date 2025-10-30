@@ -55,7 +55,7 @@ else
     fi
 fi
 
-for pkg in rtaudio ffmpeg googletest eigen onedpl fmt glfw glm; do
+for pkg in rtaudio ffmpeg googletest shaderc eigen onedpl fmt glfw glm; do
     if ! brew list --formula 2>/dev/null | grep -q "^${pkg}$"; then
         MISSING_DEPS+=("$pkg")
     fi

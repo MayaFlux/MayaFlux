@@ -83,9 +83,45 @@ append_if_missing 'export VK_ICD_FILENAMES="$VULKAN_SDK/etc/vulkan/icd.d/MoltenV
 append_if_missing 'export VK_LAYER_PATH="$VULKAN_SDK/etc/vulkan/explicit_layer.d"'
 
 # --- 5) CMake dependencies ------------------------------------------
-brew install ffmpeg rtaudio glfw glm eigen fmt magic-enum onedpl >/dev/null || true
+brew install ffmpeg rtaudio glfw glm shaderc eigen fmt magic-enum onedpl >/dev/null || true
 
-# --- 6) Finish ---------------------------------------------------------------
+# --- 6) STB Setup (header-only library) --------------------------------------
+printf 'Installing STB headers...\n' >&3
+
+STB_INSTALL_DIR="$HOME/Libraries/stb"
+STB_HEADER_CHECK="$STB_INSTALL_DIR/include/stb_image.h"
+
+if [ ! -f "$STB_HEADER_CHECK" ]; then
+    mkdir -p "$STB_INSTALL_DIR/include"
+
+    STB_HEADERS=(
+        "stb_image.h"
+        "stb_image_write.h"
+        "stb_image_resize.h"
+        "stb_truetype.h"
+        "stb_rect_pack.h"
+    )
+
+    for header in "${STB_HEADERS[@]}"; do
+        header_url="https://raw.githubusercontent.com/nothings/stb/master/$header"
+        header_path="$STB_INSTALL_DIR/include/$header"
+
+        if ! curl -fL "$header_url" -o "$header_path" 2>/dev/null; then
+            err "Failed to download STB header: $header"
+        fi
+    done
+
+    printf 'STB headers installed to %s\n' "$STB_INSTALL_DIR" >&3
+else
+    printf 'STB already installed at %s\n' "$STB_INSTALL_DIR" >&3
+fi
+
+# Add STB to environment
+append_if_missing "export STB_ROOT=\"$STB_INSTALL_DIR\""
+append_if_missing 'export CMAKE_PREFIX_PATH="$STB_ROOT:$CMAKE_PREFIX_PATH"'
+append_if_missing 'export CPATH="$STB_ROOT/include:$CPATH"'
+
+# --- 7) Finish ---------------------------------------------------------------
 exec 1>&3 3>&-
 printf '✅ LLVM installed at %s\n' "$LLVM_PREFIX"
 printf '✅ Vulkan SDK %s installed to %s\n' "$SDK_VERSION" "$DEST"

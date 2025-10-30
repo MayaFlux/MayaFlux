@@ -67,6 +67,10 @@ endif()
 
 target_include_directories(MayaFluxLib PRIVATE ${CMAKE_BINARY_DIR}/include)
 
+if(WIN32 OR APPLE)
+    target_include_directories(MayaFluxLib PRIVATE ${STB_INCLUDE_DIR})
+endif()
+
 if(WIN32)
     add_compile_definitions(USE_PPL_BACKEND)
 

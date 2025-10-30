@@ -358,7 +358,65 @@ if (-not (Test-Path "$vulkanSdkPath\*\Include\vulkan\vulkan.h")) {
     }
 }
 
-# FFmpeg
+# ----------------------------------------------------------------------
+#  STB SETUP (Header-only image library)
+# ----------------------------------------------------------------------
+
+Write-Host -ForegroundColor Cyan "--- STB Image Library Setup ---"
+
+$STB_INSTALL_ROOT = "C:\Program Files\stb"
+$STB_HEADER_CHECK = "$STB_INSTALL_ROOT\include\stb\stb_image.h"
+
+if (-not (Test-Path $STB_HEADER_CHECK)) {
+    Write-Host "STB not found. Installing latest version..."
+    
+    # Clean up any previous attempts
+    if (Test-Path $STB_INSTALL_ROOT) {
+        Remove-Item $STB_INSTALL_ROOT -Recurse -Force
+    }
+    
+    # Create directory structure
+    mkdir "$STB_INSTALL_ROOT\include\stb" -Force | Out-Null
+
+    # Download STB repository
+    $STB_URL = "https://github.com/nothings/stb/archive/master.zip"
+    $STB_ZIP_PATH = "$env:TEMP\stb-master.zip"
+    $STB_EXTRACT_DIR = "$env:TEMP\stb-extract"
+
+    # Clean previous extracts
+    if (Test-Path $STB_EXTRACT_DIR) {
+        Remove-Item $STB_EXTRACT_DIR -Recurse -Force
+    }
+    
+    Write-Host "Downloading STB..."
+    Invoke-WebRequest -Uri $STB_URL -OutFile $STB_ZIP_PATH
+
+    Write-Host "Extracting STB..."
+    Expand-Archive -Path $STB_ZIP_PATH -DestinationPath $STB_EXTRACT_DIR -Force
+
+    # Copy all STB headers to include directory
+    $SrcIncludeDir = Join-Path $STB_EXTRACT_DIR "stb-master"
+    Write-Host "Copying STB headers from $SrcIncludeDir"
+    
+    Copy-Item -Path "$SrcIncludeDir\*.h" -Destination "$STB_INSTALL_ROOT\include\stb\" -Force
+    
+    # Cleanup
+    Remove-Item $STB_ZIP_PATH -ErrorAction SilentlyContinue
+    Remove-Item $STB_EXTRACT_DIR -Recurse -Force
+    
+    Write-Host "STB installed to $STB_INSTALL_ROOT"
+} else {
+    Write-Host "STB already installed at $STB_INSTALL_ROOT"
+}
+
+# Add to environment variables
+[Environment]::SetEnvironmentVariable("STB_ROOT", $STB_INSTALL_ROOT, "Machine")
+$env:STB_ROOT = $STB_INSTALL_ROOT
+Write-Host "Environment variable STB_ROOT set to: $STB_INSTALL_ROOT"
+
+# ----------------------------------------------------------------------
+#  FFMPEG
+# ----------------------------------------------------------------------
 $ffmpegDir = "C:\Program Files\FFmpeg"
 if (-not (Test-Path "$ffmpegDir\bin\ffmpeg.exe")) {
     Write-Output "Installing FFmpeg..."
@@ -760,6 +818,11 @@ if ($vulkanSdkActual -and (Test-Path "$vulkanSdkActual\Include")) {
     $includePaths += "$vulkanSdkActual\Include"
 }
 
+$stbIncludePath = Join-Path $STB_INSTALL_ROOT "include"
+if (Test-Path $stbIncludePath) {
+    $includePaths += $stbIncludePath
+}
+
 $ffmpegIncludePath = Join-Path $ffmpegDir "include"
 if (Test-Path $ffmpegIncludePath) {
     $includePaths += $ffmpegIncludePath
@@ -887,7 +950,9 @@ set(CMAKE_PREFIX_PATH "C:/Program Files/RtAudio/share/rtaudio;C:/Program Files/L
 
 set(GLFW_INCLUDE_DIR "C:/Program Files/GLFW/include" CACHE PATH "" FORCE)
 set(GLFW_LIBRARY "$($glfwLibDir -replace '\\','/')/glfw3dll.lib" CACHE FILEPATH "" FORCE)
-# set(GLFW_DLL "$($glfwLibDir -replace '\\','/')/glfw3.dll" CACHE FILEPATH "" FORCE)
+
+set(STB_ROOT "C:/Program Files/stb" CACHE PATH "" FORCE)
+set(STB_INCLUDE_DIR "C:/Program Files/stb/include" CACHE PATH "" FORCE)
 
 set(AVCODEC_INCLUDE_DIR "C:/Program Files/FFmpeg/include" CACHE PATH "" FORCE)
 set(AVFORMAT_INCLUDE_DIR "C:/Program Files/FFmpeg/include" CACHE PATH "" FORCE)

@@ -98,7 +98,8 @@ enum class Context : uint8_t {
     // ============================================================================
 
     Worker, ///< Background worker thread (non-real-time scheduled tasks)
-    AsyncIO, ///< Async I/O operations (file loading, network, streaming)
+    AsyncIO, ///< Async I/O operations ( network, streaming)
+    FileIO, ///< Filesystem I/O operations
     BackgroundCompile, ///< Background compilation/optimization tasks
 
     // ============================================================================
