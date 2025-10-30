@@ -155,7 +155,7 @@ bool BackendWindowHandler::register_window(const std::shared_ptr<Window>& window
         return false;
     }
 
-    m_window_contexts.push_back(std::move(config));
+    m_window_contexts.emplace_back(std::move(config));
     window->set_graphics_registered(true);
 
     window->set_event_callback([this, window_ptr = window](const WindowEvent& event) {

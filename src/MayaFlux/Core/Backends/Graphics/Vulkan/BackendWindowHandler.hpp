@@ -47,6 +47,12 @@ public:
 
     void setup_backend_service(const std::shared_ptr<Registry::Service::DisplayService>& display_service);
 
+    BackendWindowHandler(const BackendWindowHandler&) = delete;
+    BackendWindowHandler& operator=(const BackendWindowHandler&) = delete;
+
+    BackendWindowHandler(BackendWindowHandler&&) noexcept = default;
+    BackendWindowHandler& operator=(BackendWindowHandler&&) noexcept = default;
+
     // ========================================================================
     // Window management
     // ========================================================================
