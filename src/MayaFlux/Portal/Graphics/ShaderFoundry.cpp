@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKCommandManager.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKComputePipeline.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKContext.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKDescriptorManager.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKShaderModule.hpp"
@@ -29,6 +28,13 @@ bool ShaderFoundry::initialize(
 
     m_backend = backend;
     m_config = config;
+
+    m_global_descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
+    m_global_descriptor_manager->initialize(get_device(), 1024);
+
+    m_graphics_queue = m_backend->get_context().get_graphics_queue();
+    m_compute_queue = m_backend->get_context().get_compute_queue();
+    m_transfer_queue = m_backend->get_context().get_transfer_queue();
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "ShaderFoundry initialized");
@@ -325,18 +331,14 @@ ShaderID ShaderFoundry::load_shader_from_spirv(
 
 ShaderID ShaderFoundry::reload_shader(const std::string& filepath)
 {
-    // Invalidate cache
     invalidate_cache(filepath);
 
-    // Remove from filepath cache
     auto cache_it = m_shader_filepath_cache.find(filepath);
     if (cache_it != m_shader_filepath_cache.end()) {
-        // Destroy old shader state
         destroy_shader(cache_it->second);
         m_shader_filepath_cache.erase(cache_it);
     }
 
-    // Reload
     return load_shader(filepath);
 }
 
@@ -344,18 +346,86 @@ void ShaderFoundry::destroy_shader(ShaderID shader_id)
 {
     auto it = m_shaders.find(shader_id);
     if (it != m_shaders.end()) {
-        // Remove from filepath cache
         if (!it->second.filepath.empty()) {
             m_shader_filepath_cache.erase(it->second.filepath);
         }
 
-        // Remove from shader cache (VKShaderModule cache)
         if (!it->second.filepath.empty()) {
             m_shader_cache.erase(it->second.filepath);
         }
 
         m_shaders.erase(it);
     }
+}
+
+//==============================================================================
+// Shader Introspection
+//==============================================================================
+
+ShaderReflectionInfo ShaderFoundry::get_shader_reflection(ShaderID shader_id)
+{
+    auto it = m_shaders.find(shader_id);
+    if (it == m_shaders.end()) {
+        return {};
+    }
+
+    const auto& reflection = it->second.module->get_reflection();
+
+    ShaderReflectionInfo info;
+    info.stage = it->second.stage;
+    info.entry_point = it->second.entry_point;
+    info.workgroup_size = reflection.workgroup_size;
+
+    for (const auto& binding : reflection.bindings) {
+        DescriptorBindingInfo binding_info;
+        binding_info.set = binding.set;
+        binding_info.binding = binding.binding;
+        binding_info.type = binding.type;
+        binding_info.name = binding.name;
+        info.descriptor_bindings.push_back(binding_info);
+    }
+
+    for (const auto& pc : reflection.push_constants) {
+        PushConstantRangeInfo pc_info;
+        pc_info.offset = pc.offset;
+        pc_info.size = pc.size;
+        info.push_constant_ranges.push_back(pc_info);
+    }
+
+    return info;
+}
+
+ShaderStage ShaderFoundry::get_shader_stage(ShaderID shader_id)
+{
+    auto it = m_shaders.find(shader_id);
+    if (it != m_shaders.end()) {
+        return it->second.stage;
+    }
+    return ShaderStage::COMPUTE;
+}
+
+std::string ShaderFoundry::get_shader_entry_point(ShaderID shader_id)
+{
+    auto it = m_shaders.find(shader_id);
+    if (it != m_shaders.end()) {
+        return it->second.entry_point;
+    }
+    return "main";
+}
+
+bool ShaderFoundry::is_cached(const std::string& cache_key) const
+{
+    return m_shader_cache.find(cache_key) != m_shader_cache.end();
+}
+
+std::vector<std::string> ShaderFoundry::get_cached_keys() const
+{
+    std::vector<std::string> keys;
+    keys.reserve(m_shader_cache.size());
+    for (const auto& [key, _] : m_shader_cache) {
+        keys.push_back(key);
+    }
+    return keys;
 }
 
 //==============================================================================
@@ -407,138 +477,15 @@ void ShaderFoundry::add_define(const std::string& name, const std::string& value
 }
 
 //==============================================================================
-// Introspection
-//==============================================================================
-
-bool ShaderFoundry::is_cached(const std::string& cache_key) const
-{
-    return m_shader_cache.find(cache_key) != m_shader_cache.end();
-}
-
-std::vector<std::string> ShaderFoundry::get_cached_keys() const
-{
-    std::vector<std::string> keys;
-    keys.reserve(m_shader_cache.size());
-    for (const auto& [key, _] : m_shader_cache) {
-        keys.push_back(key);
-    }
-    return keys;
-}
-
-//==============================================================================
-// Pipeline Management
-//==============================================================================
-
-PipelineID ShaderFoundry::create_compute_pipeline(
-    std::shared_ptr<Core::VKShaderModule> shader,
-    const std::vector<std::vector<DescriptorBindingConfig>>& descriptor_sets,
-    size_t push_constant_size)
-{
-    PipelineID id = m_next_pipeline_id++;
-
-    PipelineState& state = m_pipelines[id];
-
-    state.descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
-    state.descriptor_manager->initialize(get_device(), 16);
-
-    for (const auto& set_bindings : descriptor_sets) {
-        Core::DescriptorSetLayoutConfig layout_config;
-
-        for (const auto& binding : set_bindings) {
-            vk::DescriptorType vk_type = binding.type;
-            layout_config.add_binding(
-                binding.binding,
-                vk_type,
-                vk::ShaderStageFlagBits::eCompute,
-                1);
-        }
-
-        state.layouts.push_back(
-            state.descriptor_manager->create_layout(get_device(), layout_config));
-    }
-
-    Core::ComputePipelineConfig config;
-    config.shader = shader;
-    config.set_layouts = state.layouts;
-    if (push_constant_size > 0) {
-        config.add_push_constant(
-            vk::ShaderStageFlagBits::eCompute,
-            static_cast<uint32_t>(push_constant_size));
-    }
-
-    state.pipeline = std::make_shared<Core::VKComputePipeline>();
-    state.pipeline->create(get_device(), config);
-    state.layout = state.pipeline->get_layout();
-
-    return id;
-}
-
-PipelineID ShaderFoundry::create_compute_pipeline(
-    ShaderID shader_id,
-    const std::vector<std::vector<DescriptorBindingConfig>>& descriptor_sets,
-    size_t push_constant_size)
-{
-    auto shader_it = m_shaders.find(shader_id);
-    if (shader_it == m_shaders.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-            "Invalid shader ID: {}", shader_id);
-        return INVALID_PIPELINE;
-    }
-
-    // Convert DescriptorBindingConfig to DescriptorBindingConfig
-    std::vector<std::vector<DescriptorBindingConfig>> core_descriptor_sets;
-    for (const auto& set : descriptor_sets) {
-        std::vector<DescriptorBindingConfig> core_set;
-        for (const auto& binding : set) {
-            DescriptorBindingConfig core_binding;
-            core_binding.set = binding.set;
-            core_binding.binding = binding.binding;
-            core_binding.type = binding.type;
-            core_set.push_back(core_binding);
-        }
-        core_descriptor_sets.push_back(core_set);
-    }
-
-    // Use existing implementation
-    return create_compute_pipeline(
-        shader_it->second.module,
-        core_descriptor_sets,
-        push_constant_size);
-}
-void ShaderFoundry::destroy_pipeline(PipelineID pipeline_id)
-{
-    auto it = m_pipelines.find(pipeline_id);
-    if (it != m_pipelines.end()) {
-        it->second.pipeline->cleanup(get_device());
-        m_pipelines.erase(it);
-    }
-}
-
-//==============================================================================
 // Descriptor Management
 //==============================================================================
 
-DescriptorSetID ShaderFoundry::allocate_descriptor_set(
-    PipelineID pipeline_id,
-    uint32_t set_index)
+DescriptorSetID ShaderFoundry::allocate_descriptor_set(vk::DescriptorSetLayout layout)
 {
-    auto pipeline_it = m_pipelines.find(pipeline_id);
-    if (pipeline_it == m_pipelines.end()) {
-        return INVALID_DESCRIPTOR_SET;
-    }
-
-    PipelineState& pipeline_state = pipeline_it->second;
-    if (set_index >= pipeline_state.layouts.size()) {
-        return INVALID_DESCRIPTOR_SET;
-    }
-
     DescriptorSetID id = m_next_descriptor_set_id++;
 
     DescriptorSetState& state = m_descriptor_sets[id];
-    state.descriptor_set = pipeline_state.descriptor_manager->allocate_set(
-        get_device(),
-        pipeline_state.layouts[set_index]);
-    state.owner_pipeline = pipeline_id;
+    state.descriptor_set = m_global_descriptor_manager->allocate_set(get_device(), layout);
 
     return id;
 }
@@ -546,6 +493,7 @@ DescriptorSetID ShaderFoundry::allocate_descriptor_set(
 void ShaderFoundry::update_descriptor_buffer(
     DescriptorSetID descriptor_set_id,
     uint32_t binding,
+    vk::DescriptorType type,
     vk::Buffer buffer,
     size_t offset,
     size_t size)
@@ -565,123 +513,111 @@ void ShaderFoundry::update_descriptor_buffer(
     write.dstBinding = binding;
     write.dstArrayElement = 0;
     write.descriptorCount = 1;
-    write.descriptorType = vk::DescriptorType::eStorageBuffer;
+    write.descriptorType = type;
     write.pBufferInfo = &buffer_info;
 
     get_device().updateDescriptorSets(1, &write, 0, nullptr);
+}
+
+void ShaderFoundry::update_descriptor_image(
+    DescriptorSetID descriptor_set_id,
+    uint32_t binding,
+    vk::ImageView image_view,
+    vk::Sampler sampler,
+    vk::ImageLayout layout)
+{
+    auto it = m_descriptor_sets.find(descriptor_set_id);
+    if (it == m_descriptor_sets.end()) {
+        return;
+    }
+
+    vk::DescriptorImageInfo image_info;
+    image_info.imageView = image_view;
+    image_info.sampler = sampler;
+    image_info.imageLayout = layout;
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = it->second.descriptor_set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+    write.pImageInfo = &image_info;
+
+    get_device().updateDescriptorSets(1, &write, 0, nullptr);
+}
+
+void ShaderFoundry::update_descriptor_storage_image(
+    DescriptorSetID descriptor_set_id,
+    uint32_t binding,
+    vk::ImageView image_view,
+    vk::ImageLayout layout)
+{
+    auto it = m_descriptor_sets.find(descriptor_set_id);
+    if (it == m_descriptor_sets.end()) {
+        return;
+    }
+
+    vk::DescriptorImageInfo image_info;
+    image_info.imageView = image_view;
+    image_info.imageLayout = layout;
+
+    vk::WriteDescriptorSet write;
+    write.dstSet = it->second.descriptor_set;
+    write.dstBinding = binding;
+    write.dstArrayElement = 0;
+    write.descriptorCount = 1;
+    write.descriptorType = vk::DescriptorType::eStorageImage;
+    write.pImageInfo = &image_info;
+
+    get_device().updateDescriptorSets(1, &write, 0, nullptr);
+}
+
+vk::DescriptorSet ShaderFoundry::get_descriptor_set(DescriptorSetID descriptor_set_id)
+{
+    auto it = m_descriptor_sets.find(descriptor_set_id);
+    if (it == m_descriptor_sets.end()) {
+        error<std::invalid_argument>(
+            Journal::Component::Portal,
+            Journal::Context::ShaderCompilation,
+            std::source_location::current(),
+            "Invalid DescriptorSetID: {}", descriptor_set_id);
+    }
+    return it->second.descriptor_set;
 }
 
 //==============================================================================
 // Command Recording
 //==============================================================================
 
-CommandBufferID ShaderFoundry::begin_compute_commands()
+CommandBufferID ShaderFoundry::begin_commands(CommandBufferType type)
 {
     auto& cmd_manager = m_backend->get_command_manager();
 
-    CommandBufferID id = m_next_command_buffer_id++;
+    CommandBufferID id = m_next_command_id++;
 
     CommandBufferState& state = m_command_buffers[id];
     state.cmd = cmd_manager.begin_single_time_commands();
+    state.type = type;
     state.is_active = true;
 
     return id;
 }
 
-void ShaderFoundry::bind_pipeline(CommandBufferID cmd_id, PipelineID pipeline_id)
-{
-    auto cmd_it = m_command_buffers.find(cmd_id);
-    auto pipeline_it = m_pipelines.find(pipeline_id);
-
-    if (cmd_it == m_command_buffers.end() || pipeline_it == m_pipelines.end()) {
-        return;
-    }
-
-    pipeline_it->second.pipeline->bind(cmd_it->second.cmd);
-}
-
-void ShaderFoundry::bind_descriptor_sets(
-    CommandBufferID cmd_id,
-    PipelineID pipeline_id,
-    const std::vector<DescriptorSetID>& descriptor_set_ids)
-{
-    auto cmd_it = m_command_buffers.find(cmd_id);
-    auto pipeline_it = m_pipelines.find(pipeline_id);
-
-    if (cmd_it == m_command_buffers.end() || pipeline_it == m_pipelines.end()) {
-        return;
-    }
-
-    std::vector<vk::DescriptorSet> vk_sets;
-    for (auto ds_id : descriptor_set_ids) {
-        auto ds_it = m_descriptor_sets.find(ds_id);
-        if (ds_it != m_descriptor_sets.end()) {
-            vk_sets.push_back(ds_it->second.descriptor_set);
-        }
-    }
-
-    pipeline_it->second.pipeline->bind_descriptor_sets(cmd_it->second.cmd, vk_sets);
-}
-
-void ShaderFoundry::push_constants(
-    CommandBufferID cmd_id,
-    PipelineID pipeline_id,
-    const void* data,
-    size_t size)
-{
-    auto cmd_it = m_command_buffers.find(cmd_id);
-    auto pipeline_it = m_pipelines.find(pipeline_id);
-
-    if (cmd_it == m_command_buffers.end() || pipeline_it == m_pipelines.end()) {
-        return;
-    }
-
-    pipeline_it->second.pipeline->push_constants(
-        cmd_it->second.cmd,
-        vk::ShaderStageFlagBits::eCompute,
-        0,
-        static_cast<uint32_t>(size),
-        data);
-}
-
-void ShaderFoundry::dispatch(
-    CommandBufferID cmd_id,
-    uint32_t group_x,
-    uint32_t group_y,
-    uint32_t group_z)
+vk::CommandBuffer ShaderFoundry::get_command_buffer(CommandBufferID cmd_id)
 {
     auto it = m_command_buffers.find(cmd_id);
     if (it != m_command_buffers.end()) {
-        it->second.cmd.dispatch(group_x, group_y, group_z);
+        return it->second.cmd;
     }
+    return nullptr;
 }
 
-void ShaderFoundry::buffer_barrier(CommandBufferID cmd_id, vk::Buffer buffer)
-{
-    auto it = m_command_buffers.find(cmd_id);
-    if (it == m_command_buffers.end()) {
-        return;
-    }
+//==============================================================================
+// Synchronization
+//==============================================================================
 
-    vk::BufferMemoryBarrier barrier;
-    barrier.srcAccessMask = vk::AccessFlagBits::eShaderWrite;
-    barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eTransferRead;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.buffer = buffer;
-    barrier.offset = 0;
-    barrier.size = VK_WHOLE_SIZE;
-
-    it->second.cmd.pipelineBarrier(
-        vk::PipelineStageFlagBits::eComputeShader,
-        vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eTransfer,
-        vk::DependencyFlags {},
-        0, nullptr,
-        1, &barrier,
-        0, nullptr);
-}
-
-void ShaderFoundry::submit_commands(CommandBufferID cmd_id)
+void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
 {
     auto it = m_command_buffers.find(cmd_id);
     if (it == m_command_buffers.end() || !it->second.is_active) {
@@ -696,15 +632,354 @@ void ShaderFoundry::submit_commands(CommandBufferID cmd_id)
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &it->second.cmd;
 
-    vk::Queue compute_queue = m_backend->get_context().get_compute_queue();
+    vk::Queue queue;
+    switch (it->second.type) {
+    case CommandBufferType::GRAPHICS:
+        queue = m_graphics_queue;
+        break;
+    case CommandBufferType::COMPUTE:
+        queue = m_compute_queue;
+        break;
+    case CommandBufferType::TRANSFER:
+        queue = m_transfer_queue;
+        break;
+    }
 
-    compute_queue.submit(1, &submit_info, nullptr);
-    compute_queue.waitIdle(); // Wait for completion
+    queue.submit(1, &submit_info, nullptr);
+    queue.waitIdle();
 
     cmd_manager.free_command_buffer(it->second.cmd);
 
     it->second.is_active = false;
     m_command_buffers.erase(it);
+}
+
+FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
+{
+    auto cmd_it = m_command_buffers.find(cmd_id);
+    if (cmd_it == m_command_buffers.end() || !cmd_it->second.is_active) {
+        return INVALID_FENCE;
+    }
+
+    cmd_it->second.cmd.end();
+
+    FenceID fence_id = m_next_fence_id++;
+
+    vk::FenceCreateInfo fence_info;
+    FenceState& fence_state = m_fences[fence_id];
+    fence_state.fence = get_device().createFence(fence_info);
+    fence_state.signaled = false;
+
+    vk::SubmitInfo submit_info;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &cmd_it->second.cmd;
+
+    vk::Queue queue;
+    switch (cmd_it->second.type) {
+    case CommandBufferType::GRAPHICS:
+        queue = m_graphics_queue;
+        break;
+    case CommandBufferType::COMPUTE:
+        queue = m_compute_queue;
+        break;
+    case CommandBufferType::TRANSFER:
+        queue = m_transfer_queue;
+        break;
+    }
+
+    queue.submit(1, &submit_info, fence_state.fence);
+
+    cmd_it->second.is_active = false;
+
+    return fence_id;
+}
+
+SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
+{
+    auto cmd_it = m_command_buffers.find(cmd_id);
+    if (cmd_it == m_command_buffers.end() || !cmd_it->second.is_active) {
+        return INVALID_SEMAPHORE;
+    }
+
+    cmd_it->second.cmd.end();
+
+    SemaphoreID semaphore_id = m_next_semaphore_id++;
+
+    vk::SemaphoreCreateInfo semaphore_info;
+    SemaphoreState& semaphore_state = m_semaphores[semaphore_id];
+    semaphore_state.semaphore = get_device().createSemaphore(semaphore_info);
+
+    vk::SubmitInfo submit_info;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &cmd_it->second.cmd;
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &semaphore_state.semaphore;
+
+    vk::Queue queue;
+    switch (cmd_it->second.type) {
+    case CommandBufferType::GRAPHICS:
+        queue = m_graphics_queue;
+        break;
+    case CommandBufferType::COMPUTE:
+        queue = m_compute_queue;
+        break;
+    case CommandBufferType::TRANSFER:
+        queue = m_transfer_queue;
+        break;
+    }
+
+    queue.submit(1, &submit_info, nullptr);
+
+    cmd_it->second.is_active = false;
+
+    return semaphore_id;
+}
+
+void ShaderFoundry::wait_for_fence(FenceID fence_id)
+{
+    auto it = m_fences.find(fence_id);
+    if (it == m_fences.end()) {
+        return;
+    }
+
+    get_device().waitForFences(1, &it->second.fence, VK_TRUE, UINT64_MAX);
+    it->second.signaled = true;
+}
+
+void ShaderFoundry::wait_for_fences(const std::vector<FenceID>& fence_ids)
+{
+    std::vector<vk::Fence> fences;
+    for (auto fence_id : fence_ids) {
+        auto it = m_fences.find(fence_id);
+        if (it != m_fences.end()) {
+            fences.push_back(it->second.fence);
+        }
+    }
+
+    if (!fences.empty()) {
+        get_device().waitForFences(static_cast<uint32_t>(fences.size()), fences.data(), VK_TRUE, UINT64_MAX);
+    }
+
+    for (auto fence_id : fence_ids) {
+        auto it = m_fences.find(fence_id);
+        if (it != m_fences.end()) {
+            it->second.signaled = true;
+        }
+    }
+}
+
+bool ShaderFoundry::is_fence_signaled(FenceID fence_id)
+{
+    auto it = m_fences.find(fence_id);
+    if (it == m_fences.end()) {
+        return false;
+    }
+
+    if (it->second.signaled) {
+        return true;
+    }
+
+    auto result = get_device().getFenceStatus(it->second.fence);
+    it->second.signaled = (result == vk::Result::eSuccess);
+    return it->second.signaled;
+}
+
+CommandBufferID ShaderFoundry::begin_commands_with_wait(
+    CommandBufferType type,
+    SemaphoreID wait_semaphore,
+    vk::PipelineStageFlags /*wait_stage*/)
+{
+    auto sem_it = m_semaphores.find(wait_semaphore);
+    if (sem_it == m_semaphores.end()) {
+        return INVALID_COMMAND_BUFFER;
+    }
+
+    return begin_commands(type);
+}
+
+vk::Semaphore ShaderFoundry::get_semaphore_handle(SemaphoreID semaphore_id)
+{
+    auto it = m_semaphores.find(semaphore_id);
+    if (it != m_semaphores.end()) {
+        return it->second.semaphore;
+    }
+    return nullptr;
+}
+
+//==============================================================================
+// Memory Barriers
+//==============================================================================
+
+void ShaderFoundry::buffer_barrier(
+    CommandBufferID cmd_id,
+    vk::Buffer buffer,
+    vk::AccessFlags src_access,
+    vk::AccessFlags dst_access,
+    vk::PipelineStageFlags src_stage,
+    vk::PipelineStageFlags dst_stage)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return;
+    }
+
+    vk::BufferMemoryBarrier barrier;
+    barrier.srcAccessMask = src_access;
+    barrier.dstAccessMask = dst_access;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.buffer = buffer;
+    barrier.offset = 0;
+    barrier.size = VK_WHOLE_SIZE;
+
+    it->second.cmd.pipelineBarrier(
+        src_stage,
+        dst_stage,
+        vk::DependencyFlags {},
+        0, nullptr,
+        1, &barrier,
+        0, nullptr);
+}
+
+void ShaderFoundry::image_barrier(
+    CommandBufferID cmd_id,
+    vk::Image image,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout,
+    vk::AccessFlags src_access,
+    vk::AccessFlags dst_access,
+    vk::PipelineStageFlags src_stage,
+    vk::PipelineStageFlags dst_stage)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return;
+    }
+
+    vk::ImageMemoryBarrier barrier;
+    barrier.srcAccessMask = src_access;
+    barrier.dstAccessMask = dst_access;
+    barrier.oldLayout = old_layout;
+    barrier.newLayout = new_layout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+
+    it->second.cmd.pipelineBarrier(
+        src_stage,
+        dst_stage,
+        vk::DependencyFlags {},
+        0, nullptr,
+        0, nullptr,
+        1, &barrier);
+}
+
+//==============================================================================
+// Queue Management
+//==============================================================================
+
+vk::Queue ShaderFoundry::get_graphics_queue() const { return m_graphics_queue; }
+vk::Queue ShaderFoundry::get_compute_queue() const { return m_compute_queue; }
+vk::Queue ShaderFoundry::get_transfer_queue() const { return m_transfer_queue; }
+
+//==============================================================================
+// Profiling
+//==============================================================================
+
+void ShaderFoundry::begin_timestamp(CommandBufferID cmd_id, const std::string& label)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return;
+    }
+
+    if (!it->second.timestamp_pool) {
+        vk::QueryPoolCreateInfo pool_info;
+        pool_info.queryType = vk::QueryType::eTimestamp;
+        pool_info.queryCount = 128;
+        it->second.timestamp_pool = get_device().createQueryPool(pool_info);
+    }
+
+    auto query_index = static_cast<uint32_t>(it->second.timestamp_queries.size() * 2);
+    it->second.timestamp_queries[label] = query_index;
+
+    it->second.cmd.resetQueryPool(it->second.timestamp_pool, query_index, 2);
+    it->second.cmd.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, it->second.timestamp_pool, query_index);
+}
+
+void ShaderFoundry::end_timestamp(CommandBufferID cmd_id, const std::string& label)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return;
+    }
+
+    auto query_it = it->second.timestamp_queries.find(label);
+    if (query_it == it->second.timestamp_queries.end()) {
+        return;
+    }
+
+    uint32_t query_index = query_it->second;
+    it->second.cmd.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, it->second.timestamp_pool, query_index + 1);
+}
+
+ShaderFoundry::TimestampResult ShaderFoundry::get_timestamp_result(CommandBufferID cmd_id, const std::string& label)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end()) {
+        return { .label = label, .duration_ns = 0, .valid = false };
+    }
+
+    auto query_it = it->second.timestamp_queries.find(label);
+    if (query_it == it->second.timestamp_queries.end()) {
+        return { .label = label, .duration_ns = 0, .valid = false };
+    }
+
+    if (!it->second.timestamp_pool) {
+        return { .label = label, .duration_ns = 0, .valid = false };
+    }
+
+    uint32_t query_index = query_it->second;
+    uint64_t timestamps[2];
+
+    auto result = get_device().getQueryPoolResults(
+        it->second.timestamp_pool,
+        query_index,
+        2,
+        sizeof(timestamps),
+        timestamps,
+        sizeof(uint64_t),
+        vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
+
+    if (result != vk::Result::eSuccess) {
+        return { .label = label, .duration_ns = 0, .valid = false };
+    }
+
+    auto props = m_backend->get_context().get_physical_device().getProperties();
+    float timestamp_period = props.limits.timestampPeriod;
+
+    auto duration_ns = static_cast<uint64_t>((timestamps[1] - timestamps[0]) * timestamp_period);
+
+    return { .label = label, .duration_ns = duration_ns, .valid = true };
+}
+
+//==============================================================================
+// Internal Access
+//==============================================================================
+
+std::shared_ptr<Core::VKShaderModule> ShaderFoundry::get_vk_shader_module(ShaderID shader_id)
+{
+    auto& foundry = ShaderFoundry::instance();
+    auto it = foundry.m_shaders.find(shader_id);
+    if (it != foundry.m_shaders.end()) {
+        return it->second.module;
+    }
+    return nullptr;
 }
 
 //==============================================================================

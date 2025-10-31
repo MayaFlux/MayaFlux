@@ -1,5 +1,6 @@
 #include "Graphics.hpp"
 
+#include "ComputePress.hpp"
 #include "SamplerForge.hpp"
 #include "ShaderFoundry.hpp"
 #include "TextureLoom.hpp"
@@ -38,6 +39,18 @@ bool initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
     if (!SamplerForge::instance().initialize(backend)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
             "Failed to initialize SamplerFactory");
+        return false;
+    }
+
+    if (!ShaderFoundry::instance().initialize(backend)) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "Failed to initialize ShaderFoundry");
+        return false;
+    }
+
+    if (!ComputePress::instance().initialize()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "Failed to initialize ComputePress");
         return false;
     }
 

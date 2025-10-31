@@ -1,10 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <vector>
 #include <vulkan/vulkan.hpp>
 
 namespace MayaFlux::Core {
@@ -16,15 +11,19 @@ class VKDescriptorManager;
 
 namespace MayaFlux::Portal::Graphics {
 
-using PipelineID = uint64_t;
+class ComputePress;
+
+using ShaderID = uint64_t;
 using DescriptorSetID = uint64_t;
 using CommandBufferID = uint64_t;
-using ShaderID = uint64_t;
+using FenceID = uint64_t;
+using SemaphoreID = uint64_t;
 
-constexpr PipelineID INVALID_PIPELINE = 0;
+constexpr ShaderID INVALID_SHADER = 0;
 constexpr DescriptorSetID INVALID_DESCRIPTOR_SET = 0;
 constexpr CommandBufferID INVALID_COMMAND_BUFFER = 0;
-constexpr ShaderID INVALID_SHADER = 0;
+constexpr FenceID INVALID_FENCE = 0;
+constexpr SemaphoreID INVALID_SEMAPHORE = 0;
 
 /**
  * @enum ShaderStage
@@ -83,24 +82,6 @@ struct ShaderSource {
 };
 
 /**
- * @struct DescriptorBindingConfig
- * @brief Portal-level descriptor binding configuration
- */
-struct DescriptorBindingConfig {
-    uint32_t set = 0;
-    uint32_t binding = 0;
-    vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
-
-    DescriptorBindingConfig() = default;
-    DescriptorBindingConfig(uint32_t s, uint32_t b, vk::DescriptorType t = vk::DescriptorType::eStorageBuffer)
-        : set(s)
-        , binding(b)
-        , type(t)
-    {
-    }
-};
-
-/**
  * @struct DescriptorBindingInfo
  * @brief Extracted descriptor binding information from shader reflection
  */
@@ -125,6 +106,8 @@ struct PushConstantRangeInfo {
  * @brief Extracted reflection information from compiled shader
  */
 struct ShaderReflectionInfo {
+    ShaderStage stage;
+    std::string entry_point;
     std::optional<std::array<uint32_t, 3>> workgroup_size;
     std::vector<DescriptorBindingInfo> descriptor_bindings;
     std::vector<PushConstantRangeInfo> push_constant_ranges;
@@ -167,26 +150,36 @@ struct ShaderReflectionInfo {
  */
 class MAYAFLUX_API ShaderFoundry {
 private:
-    struct PipelineState {
-        std::shared_ptr<Core::VKComputePipeline> pipeline;
-        std::shared_ptr<Core::VKDescriptorManager> descriptor_manager;
-        std::vector<vk::DescriptorSetLayout> layouts;
-        vk::PipelineLayout layout;
+    enum class CommandBufferType : uint8_t {
+        GRAPHICS,
+        COMPUTE,
+        TRANSFER
     };
 
     struct DescriptorSetState {
         vk::DescriptorSet descriptor_set;
-        PipelineID owner_pipeline;
     };
 
     struct CommandBufferState {
         vk::CommandBuffer cmd;
+        CommandBufferType type;
         bool is_active;
+        vk::QueryPool timestamp_pool;
+        std::unordered_map<std::string, uint32_t> timestamp_queries;
+    };
+
+    struct FenceState {
+        vk::Fence fence;
+        bool signaled;
+    };
+
+    struct SemaphoreState {
+        vk::Semaphore semaphore;
     };
 
     struct ShaderState {
         std::shared_ptr<Core::VKShaderModule> module;
-        std::string filepath; // For hot-reload
+        std::string filepath;
         ShaderStage stage;
         std::string entry_point;
     };
@@ -327,6 +320,34 @@ public:
     std::shared_ptr<Core::VKShaderModule> compile(const ShaderSource& shader_source);
 
     //==========================================================================
+    // Shader Introspection
+    //==========================================================================
+
+    /**
+     * @brief Get reflection info for compiled shader
+     * @param shader_id ID of compiled shader
+     * @return Reflection information
+     *
+     * Extracted during compilation if enabled in config.
+     * Includes descriptor bindings, push constant ranges, workgroup size, etc.
+     */
+    ShaderReflectionInfo get_shader_reflection(ShaderID shader_id);
+
+    /**
+     * @brief Get shader stage for compiled shader
+     * @param shader_id ID of compiled shader
+     * @return Shader stage (COMPUTE, VERTEX, FRAGMENT, etc.)
+     */
+    ShaderStage get_shader_stage(ShaderID shader_id);
+
+    /**
+     * @brief Get entry point name for compiled shader
+     * @param shader_id ID of compiled shader
+     * @return Entry point function name
+     */
+    std::string get_shader_entry_point(ShaderID shader_id);
+
+    //==========================================================================
     // Hot-Reload Support
     //==========================================================================
 
@@ -413,24 +434,6 @@ public:
     [[nodiscard]] size_t get_cache_size() const { return m_shader_cache.size(); }
 
     //==========================================================================
-    // Pipeline Management - ShaderFoundry stores all state
-    //==========================================================================
-
-    /**
-     * @brief Create compute pipeline from shader ID
-     * @return Pipeline ID for later use
-     */
-    PipelineID create_compute_pipeline(
-        ShaderID shader_id,
-        const std::vector<std::vector<DescriptorBindingConfig>>& descriptor_sets,
-        size_t push_constant_size = 0);
-
-    /**
-     * @brief Destroy pipeline (cleanup internal state)
-     */
-    void destroy_pipeline(PipelineID pipeline_id);
-
-    //==========================================================================
     // Descriptor Set Management - ShaderFoundry allocates and tracks
     //==========================================================================
 
@@ -440,68 +443,210 @@ public:
      * @param set_index Which descriptor set (0, 1, 2...)
      * @return Descriptor set ID
      */
-    DescriptorSetID allocate_descriptor_set(PipelineID pipeline_id, uint32_t set_index);
+    DescriptorSetID allocate_descriptor_set(vk::DescriptorSetLayout layout);
 
     /**
      * @brief Update descriptor set with buffer binding
+     * @param descriptor_set_id ID of descriptor set to update
+     * @param binding Binding index within the descriptor set
+     * @param type Descriptor type (e.g., eStorageBuffer, eUniformBuffer)
+     * @param buffer Vulkan buffer to bind
+     * @param offset Offset within the buffer
+     * @param size Size of the buffer region
      */
     void update_descriptor_buffer(
         DescriptorSetID descriptor_set_id,
         uint32_t binding,
-        vk::Buffer buffer, // VKBuffer exposes this, ok to use
+        vk::DescriptorType type,
+        vk::Buffer buffer,
         size_t offset,
         size_t size);
+
+    /**
+     * @brief Update descriptor set with image binding
+     * @param descriptor_set_id ID of descriptor set to update
+     * @param binding Binding index within the descriptor set
+     * @param image_view Vulkan image view to bind
+     * @param sampler Vulkan sampler to bind
+     * @param layout Image layout (default: eShaderReadOnlyOptimal)
+     */
+    void update_descriptor_image(
+        DescriptorSetID descriptor_set_id,
+        uint32_t binding,
+        vk::ImageView image_view,
+        vk::Sampler sampler,
+        vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    /**
+     * @brief Update descriptor set with storage image binding
+     * @param descriptor_set_id ID of descriptor set to update
+     * @param binding Binding index within the descriptor set
+     * @param image_view Vulkan image view to bind
+     * @param layout Image layout (default: eGeneral)
+     */
+    void update_descriptor_storage_image(
+        DescriptorSetID descriptor_set_id,
+        uint32_t binding,
+        vk::ImageView image_view,
+        vk::ImageLayout layout = vk::ImageLayout::eGeneral);
+
+    /**
+     * @brief Get Vulkan descriptor set handle from DescriptorSetID
+     * @param descriptor_set_id Descriptor set ID
+     * @return Vulkan descriptor set handle
+     */
+    vk::DescriptorSet get_descriptor_set(DescriptorSetID descriptor_set_id);
 
     //==========================================================================
     // Command Recording - ShaderFoundry manages command buffers
     //==========================================================================
 
     /**
-     * @brief Begin recording compute commands
+     * @brief Begin recording command buffer
+     * @param type Command buffer type (GRAPHICS, COMPUTE, TRANSFER)
      * @return Command buffer ID
      */
-    CommandBufferID begin_compute_commands();
+    CommandBufferID begin_commands(CommandBufferType type);
 
     /**
-     * @brief Bind pipeline to active command buffer
+     * @brief Get Vulkan command buffer handle from CommandBufferID
+     * @param cmd_id Command buffer ID
      */
-    void bind_pipeline(CommandBufferID cmd_id, PipelineID pipeline_id);
+    vk::CommandBuffer get_command_buffer(CommandBufferID cmd_id);
+
+    //==========================================================================
+    // Memory Barriers and Synchronization
+    //==========================================================================
 
     /**
-     * @brief Bind descriptor sets to active command buffer
+     * @brief Submit command buffer and wait for completion
+     * @param cmd_id Command buffer ID to submit
      */
-    void bind_descriptor_sets(
-        CommandBufferID cmd_id,
-        PipelineID pipeline_id,
-        const std::vector<DescriptorSetID>& descriptor_set_ids);
+    void submit_and_wait(CommandBufferID cmd_id);
 
     /**
-     * @brief Push constants to active command buffer
+     * @brief Submit command buffer asynchronously, returning a fence
+     * @param cmd_id Command buffer ID to submit
+     * @return Fence ID to wait on later
      */
-    void push_constants(
-        CommandBufferID cmd_id,
-        PipelineID pipeline_id,
-        const void* data,
-        size_t size);
+    FenceID submit_async(CommandBufferID cmd_id);
 
     /**
-     * @brief Dispatch compute workgroups
+     * @brief Submit command buffer asynchronously, returning a semaphore
+     * @param cmd_id Command buffer ID to submit
+     * @return Semaphore ID to wait on later
      */
-    void dispatch(
-        CommandBufferID cmd_id,
-        uint32_t group_x,
-        uint32_t group_y,
-        uint32_t group_z);
+    SemaphoreID submit_with_signal(CommandBufferID cmd_id);
+
+    /**
+     * @brief Wait for fence to be signaled
+     * @param fence_id Fence ID to wait on
+     */
+    void wait_for_fence(FenceID fence_id);
+
+    /**
+     * @brief Wait for multiple fences to be signaled
+     * @param fence_ids Vector of fence IDs to wait on
+     */
+    void wait_for_fences(const std::vector<FenceID>& fence_ids);
+
+    /**
+     * @brief Check if fence is signaled
+     * @param fence_id Fence ID to check
+     * @return True if fence is signaled, false otherwise
+     */
+    bool is_fence_signaled(FenceID fence_id);
+
+    /**
+     * @brief Begin command buffer that waits on a semaphore
+     * @param type Command buffer type (GRAPHICS, COMPUTE, TRANSFER)
+     * @param wait_semaphore Semaphore ID to wait on
+     * @param wait_stage Pipeline stage to wait at
+     * @return Command buffer ID
+     */
+    CommandBufferID begin_commands_with_wait(
+        CommandBufferType type,
+        SemaphoreID wait_semaphore,
+        vk::PipelineStageFlags wait_stage);
+
+    /**
+     * @brief Get Vulkan fence handle from FenceID
+     * @param fence_id Fence ID
+     */
+    vk::Semaphore get_semaphore_handle(SemaphoreID semaphore_id);
 
     /**
      * @brief Insert buffer memory barrier
      */
-    void buffer_barrier(CommandBufferID cmd_id, vk::Buffer buffer);
+    void buffer_barrier(
+        CommandBufferID cmd_id,
+        vk::Buffer buffer,
+        vk::AccessFlags src_access,
+        vk::AccessFlags dst_access,
+        vk::PipelineStageFlags src_stage,
+        vk::PipelineStageFlags dst_stage);
 
     /**
-     * @brief Submit and cleanup command buffer
+     * @brief Insert image memory barrier
      */
-    void submit_commands(CommandBufferID cmd_id);
+    void image_barrier(
+        CommandBufferID cmd_id,
+        vk::Image image,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout,
+        vk::AccessFlags src_access,
+        vk::AccessFlags dst_access,
+        vk::PipelineStageFlags src_stage,
+        vk::PipelineStageFlags dst_stage);
+
+    //==========================================================================
+    // Queue Management
+    //==========================================================================
+
+    /**
+     * @brief Set Vulkan queues for command submission
+     */
+    void set_graphics_queue(vk::Queue queue);
+
+    /**
+     * @brief Set Vulkan queues for command submission
+     */
+    void set_compute_queue(vk::Queue queue);
+
+    /**
+     * @brief Set Vulkan queues for command submission
+     */
+    void set_transfer_queue(vk::Queue queue);
+
+    /**
+     * @brief Get Vulkan graphics queue
+     */
+    [[nodiscard]] vk::Queue get_graphics_queue() const;
+
+    /**
+     * @brief Get Vulkan compute queue
+     */
+    [[nodiscard]] vk::Queue get_compute_queue() const;
+
+    /**
+     * @brief Get Vulkan transfer queue
+     */
+    [[nodiscard]] vk::Queue get_transfer_queue() const;
+
+    //==========================================================================
+    // Profiling
+    //==========================================================================
+
+    void begin_timestamp(CommandBufferID cmd_id, const std::string& label = "");
+    void end_timestamp(CommandBufferID cmd_id, const std::string& label = "");
+
+    struct TimestampResult {
+        std::string label;
+        uint64_t duration_ns;
+        bool valid;
+    };
+
+    TimestampResult get_timestamp_result(CommandBufferID cmd_id, const std::string& label);
 
     //==========================================================================
     // Utilities
@@ -528,26 +673,28 @@ private:
     std::shared_ptr<Core::VulkanBackend> m_backend;
     ShaderCompilerConfig m_config;
 
-    // Shader cache (file path or cache key → shader module)
     std::unordered_map<std::string, std::shared_ptr<Core::VKShaderModule>> m_shader_cache;
-
-    // Internal storage
-    std::unordered_map<PipelineID, PipelineState> m_pipelines;
     std::unordered_map<ShaderID, ShaderState> m_shaders;
-    std::unordered_map<DescriptorSetID, DescriptorSetState> m_descriptor_sets;
-    std::unordered_map<CommandBufferID, CommandBufferState> m_command_buffers;
     std::unordered_map<std::string, ShaderID> m_shader_filepath_cache;
 
-    // ID generation
-    std::atomic<uint64_t> m_next_pipeline_id { 1 };
-    std::atomic<uint64_t> m_next_descriptor_set_id { 1 };
-    std::atomic<uint64_t> m_next_command_buffer_id { 1 };
+    std::shared_ptr<Core::VKDescriptorManager> m_global_descriptor_manager;
+    std::unordered_map<DescriptorSetID, DescriptorSetState> m_descriptor_sets;
+
+    std::unordered_map<CommandBufferID, CommandBufferState> m_command_buffers;
+    std::unordered_map<FenceID, FenceState> m_fences;
+    std::unordered_map<SemaphoreID, SemaphoreState> m_semaphores;
+
+    vk::Queue m_graphics_queue;
+    vk::Queue m_compute_queue;
+    vk::Queue m_transfer_queue;
+
     std::atomic<uint64_t> m_next_shader_id { 1 };
+    std::atomic<uint64_t> m_next_descriptor_set_id { 1 };
+    std::atomic<uint64_t> m_next_command_id { 1 };
+    std::atomic<uint64_t> m_next_fence_id { 1 };
+    std::atomic<uint64_t> m_next_semaphore_id { 1 };
 
-    // Helper: Create shader module with current config
     std::shared_ptr<Core::VKShaderModule> create_shader_module();
-
-    // Helper: Get device handle
     vk::Device get_device() const;
 
     //==========================================================================
@@ -575,10 +722,9 @@ private:
         ShaderStage stage,
         const std::string& entry_point = "main");
 
-    PipelineID create_compute_pipeline(
-        std::shared_ptr<Core::VKShaderModule> shader,
-        const std::vector<std::vector<DescriptorBindingConfig>>& descriptor_sets,
-        size_t push_constant_size = 0);
+    std::shared_ptr<Core::VKShaderModule> get_vk_shader_module(ShaderID shader_id);
+
+    friend class ComputePress;
 };
 
 /**
