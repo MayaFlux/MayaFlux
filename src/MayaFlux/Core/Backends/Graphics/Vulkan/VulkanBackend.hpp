@@ -144,6 +144,14 @@ public:
      */
     VKContext& get_context() { return *m_context; }
 
+    /**
+     * @brief Get reference to the backend command manager
+     *
+     * Responsible for managing Vulkan command pools and command buffers.
+     * @return Reference to VKCommandManager
+     */
+    VKCommandManager& get_command_manager() { return *m_command_manager; }
+
 private:
     std::unique_ptr<VKContext> m_context;
     std::unique_ptr<VKCommandManager> m_command_manager;
