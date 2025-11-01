@@ -98,6 +98,47 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
         return 0;
     };
+
+    display_service->get_current_framebuffer = [this](const std::shared_ptr<void>& window_ptr) -> void* {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* context = find_window_context(window);
+
+        if (!context || context->framebuffers.empty()) {
+            return nullptr;
+        }
+
+        size_t frame_index = context->current_frame % context->framebuffers.size();
+        return static_cast<void*>(context->framebuffers[frame_index]->get());
+    };
+
+    display_service->get_swapchain_extent = [this](
+                                                const std::shared_ptr<void>& window_ptr,
+                                                uint32_t& out_width,
+                                                uint32_t& out_height) {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* context = find_window_context(window);
+
+        if (context && context->swapchain) {
+            auto extent = context->swapchain->get_extent();
+            out_width = extent.width;
+            out_height = extent.height;
+        } else {
+            out_width = 0;
+            out_height = 0;
+        }
+    };
+
+    display_service->get_window_render_pass = [this](const std::shared_ptr<void>& window_ptr) -> void* {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* context = find_window_context(window);
+
+        if (!context || !context->render_pass) {
+            return nullptr;
+        }
+
+        vk::RenderPass rp = context->render_pass->get();
+        return static_cast<void*>(rp);
+    };
 }
 
 WindowRenderContext* BackendWindowHandler::find_window_context(const std::shared_ptr<Window>& window)

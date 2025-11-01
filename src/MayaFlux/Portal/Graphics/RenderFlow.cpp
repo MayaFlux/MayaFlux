@@ -1,9 +1,13 @@
 #include "RenderFlow.hpp"
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-// #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKFramebuffer.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKFramebuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKRenderPass.hpp"
+
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/DisplayService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -25,6 +29,15 @@ bool RenderFlow::initialize()
     if (!m_shader_foundry->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "ShaderFoundry must be initialized before RenderFlow");
+        return false;
+    }
+
+    m_display_service = Registry::BackendRegistry::instance()
+                            .get_service<Registry::Service::DisplayService>();
+
+    if (!m_display_service) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "DisplayService not found in BackendRegistry");
         return false;
     }
 
@@ -490,44 +503,76 @@ void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
 
 void RenderFlow::begin_render_pass(
     CommandBufferID cmd_id,
-    RenderPassID render_pass_id,
-    FramebufferID /*framebuffer*/,
+    const std::shared_ptr<Core::Window>& window,
     const std::array<float, 4>& clear_color)
 {
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "Invalid command buffer ID: {}", cmd_id);
         return;
     }
 
-    auto rp_it = m_render_passes.find(render_pass_id);
-    if (rp_it == m_render_passes.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid render pass ID: {}", render_pass_id);
+    if (!window) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot begin render pass for null window");
         return;
     }
 
-    // TODO: Get actual framebuffer from framebuffer_id
-    // For now, assumption: DisplayService provides framebuffer via swapchain
+    auto assoc_it = m_window_associations.find(window);
+    if (assoc_it == m_window_associations.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Window '{}' not registered for rendering. "
+            "Call register_window_for_rendering() first.",
+            window->get_create_info().title);
+        return;
+    }
+
+    auto rp_it = m_render_passes.find(assoc_it->second.render_pass_id);
+    if (rp_it == m_render_passes.end()) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid render pass ID: {}", assoc_it->second.render_pass_id);
+        return;
+    }
+
+    Core::VKFramebuffer* fb_handle = static_cast<Core::VKFramebuffer*>(m_display_service->get_current_framebuffer(window));
+    if (!fb_handle) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "No framebuffer available for window '{}'. "
+            "Ensure window is registered with GraphicsSubsystem.",
+            window->get_create_info().title);
+        return;
+    }
+
+    uint32_t width = 0, height = 0;
+    m_display_service->get_swapchain_extent(window, width, height);
+
+    if (width == 0 || height == 0) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid swapchain extent for window '{}': {}x{}",
+            window->get_create_info().title, width, height);
+        return;
+    }
 
     vk::RenderPassBeginInfo begin_info;
     begin_info.renderPass = rp_it->second.render_pass->get();
-    // begin_info.framebuffer = ...; // Need framebuffer management
+    begin_info.framebuffer = fb_handle->get();
     begin_info.renderArea.offset = vk::Offset2D { 0, 0 };
-    // begin_info.renderArea.extent = ...; // Need extent from framebuffer
+    begin_info.renderArea.extent = vk::Extent2D { width, height };
 
     std::vector<vk::ClearValue> clear_values(rp_it->second.attachments.size());
     for (auto& clear_value : clear_values) {
         clear_value.color = vk::ClearColorValue(clear_color);
     }
+
     begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
     begin_info.pClearValues = clear_values.data();
 
     cmd.beginRenderPass(begin_info, vk::SubpassContents::eInline);
 
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
-        "Began render pass (ID: {})", render_pass_id);
+    MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
+        "Began render pass for window '{}' ({}x{})",
+        window->get_create_info().title, width, height);
 }
 
 void RenderFlow::end_render_pass(CommandBufferID cmd_id)
@@ -692,6 +737,84 @@ void RenderFlow::draw_indexed(
         vertex_offset, first_instance);
 }
 
+//==========================================================================
+// Window Rendering Registration
+//==========================================================================
+
+void RenderFlow::register_window_for_rendering(
+    const std::shared_ptr<Core::Window>& window,
+    RenderPassID render_pass_id)
+{
+    if (!window) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot register null window");
+        return;
+    }
+
+    // Validate render pass exists
+    auto rp_it = m_render_passes.find(render_pass_id);
+    if (rp_it == m_render_passes.end()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid render pass ID: {}", render_pass_id);
+        return;
+    }
+
+    // Check if window is registered with graphics backend
+    if (!window->is_graphics_registered()) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
+            "Window '{}' not registered with graphics backend yet. "
+            "Ensure GraphicsSubsystem has registered this window.",
+            window->get_create_info().title);
+    }
+
+    WindowRenderAssociation association;
+    association.window = window;
+    association.render_pass_id = render_pass_id;
+
+    m_window_associations[window] = std::move(association);
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
+        "Registered window '{}' for rendering with render pass ID {}",
+        window->get_create_info().title,
+        render_pass_id);
+}
+
+void RenderFlow::unregister_window(const std::shared_ptr<Core::Window>& window)
+{
+    if (!window) {
+        return;
+    }
+
+    auto it = m_window_associations.find(window);
+
+    if (it != m_window_associations.end()) {
+        m_window_associations.erase(it);
+
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
+            "Unregistered window '{}' from rendering",
+            window->get_create_info().title);
+    }
+}
+
+bool RenderFlow::is_window_registered(const std::shared_ptr<Core::Window>& window) const
+{
+    return window && m_window_associations.contains(window);
+}
+
+std::vector<std::shared_ptr<Core::Window>> RenderFlow::get_registered_windows() const
+{
+    std::vector<std::shared_ptr<Core::Window>> windows;
+    windows.reserve(m_window_associations.size());
+
+    for (const auto& [key, association] : m_window_associations) {
+        if (auto window = association.window.lock()) {
+            windows.push_back(window);
+        }
+    }
+
+    return windows;
+}
+
 //==============================================================================
 // Convenience Methods
 //==============================================================================
@@ -722,25 +845,6 @@ std::vector<DescriptorSetID> RenderFlow::allocate_pipeline_descriptors(
         descriptor_set_ids.size(), pipeline_id);
 
     return descriptor_set_ids;
-}
-
-void RenderFlow::begin_swapchain_render_pass(
-    CommandBufferID cmd_id,
-    RenderPassID render_pass_id,
-    const std::array<float, 4>& clear_color)
-{
-    // TODO: Get current swapchain framebuffer from DisplayService
-    // For now, this is a placeholder that delegates to begin_render_pass
-    // In a complete implementation, this would:
-    // 1. Query DisplayService for current swapchain image index
-    // 2. Get corresponding framebuffer
-    // 3. Get swapchain extent for render area
-
-    MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
-        "begin_swapchain_render_pass not fully implemented - needs DisplayService integration");
-
-    // Placeholder: just call regular begin_render_pass
-    begin_render_pass(cmd_id, render_pass_id, 0, clear_color);
 }
 
 } // namespace MayaFlux::Portal::Graphics

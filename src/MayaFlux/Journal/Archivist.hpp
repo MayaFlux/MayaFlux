@@ -392,6 +392,10 @@ inline void error_rethrow(Component component, Context context,
     MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::ERROR, comp, ctx, \
         std::source_location::current(), __VA_ARGS__)
 
+#define MF_RT_DEBUG(comp, ctx, ...)                                             \
+    MayaFlux::Journal::scribe_rt(MayaFlux::Journal::Severity::DEBUG, comp, ctx, \
+        std::source_location::current(), __VA_ARGS__)
+
 // ============================================================================
 // CONVENIENCE MACROS for SIMPLE PRINTING (no source-location)
 // ============================================================================

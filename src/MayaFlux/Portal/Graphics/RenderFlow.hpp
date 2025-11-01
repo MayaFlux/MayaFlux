@@ -2,10 +2,17 @@
 
 #include "ShaderFoundry.hpp"
 
+namespace MayaFlux::Registry::Service {
+struct DisplayService;
+}
+
 namespace MayaFlux::Core {
 class VKGraphicsPipeline;
 class VKRenderPass;
 class VKFramebuffer;
+class Window;
+struct VertexBinding;
+struct VertexAttribute;
 }
 
 namespace MayaFlux::Buffers {
@@ -102,45 +109,6 @@ enum class BlendOp : uint8_t {
 };
 
 /**
- * @struct VertexInputBinding
- * @brief Vertex buffer binding configuration
- */
-struct VertexInputBinding {
-    uint32_t binding = 0;
-    uint32_t stride = 0;
-    bool per_instance = false; ///< True for instanced rendering
-    vk::VertexInputRate input_rate; ///< vk::VertexInputRate
-
-    VertexInputBinding() = default;
-    VertexInputBinding(uint32_t b, uint32_t s, bool instanced = false)
-        : binding(b)
-        , stride(s)
-        , per_instance(instanced)
-    {
-    }
-};
-
-/**
- * @struct VertexInputAttribute
- * @brief Vertex attribute configuration
- */
-struct VertexInputAttribute {
-    uint32_t location = 0;
-    uint32_t binding = 0;
-    vk::Format format = vk::Format::eR32G32B32Sfloat;
-    uint32_t offset = 0;
-
-    VertexInputAttribute() = default;
-    VertexInputAttribute(uint32_t loc, uint32_t bind, vk::Format fmt, uint32_t off)
-        : location(loc)
-        , binding(bind)
-        , format(fmt)
-        , offset(off)
-    {
-    }
-};
-
-/**
  * @struct RasterizationConfig
  * @brief Rasterization state configuration
  */
@@ -209,8 +177,8 @@ struct RenderPipelineConfig {
     ShaderID tess_eval_shader = INVALID_SHADER; ///< Optional
 
     // Vertex input
-    std::vector<VertexInputBinding> vertex_bindings;
-    std::vector<VertexInputAttribute> vertex_attributes;
+    std::vector<Core::VertexBinding> vertex_bindings;
+    std::vector<Core::VertexAttribute> vertex_attributes;
 
     // Input assembly
     PrimitiveTopology topology = PrimitiveTopology::TRIANGLE_LIST;
@@ -368,14 +336,12 @@ public:
     /**
      * @brief Begin render pass
      * @param cmd_id Command buffer ID
-     * @param render_pass Render pass ID
-     * @param framebuffer Framebuffer ID
+     * @param window Target window for rendering
      * @param clear_color Clear color (if load op is clear)
      */
     void begin_render_pass(
         CommandBufferID cmd_id,
-        RenderPassID render_pass,
-        FramebufferID framebuffer,
+        const std::shared_ptr<Core::Window>& window,
         const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
 
     /**
@@ -470,6 +436,42 @@ public:
         uint32_t first_instance = 0);
 
     //==========================================================================
+    // Window Rendering Registration
+    //==========================================================================
+
+    /**
+     * @brief Associate a window with a render pass for rendering
+     * @param window Target window for rendering
+     * @param render_pass_id Render pass to use for this window
+     *
+     * The window must be registered with GraphicsSubsystem first.
+     * RenderFlow will query framebuffer/extent from DisplayService when needed.
+     *
+     * Usage:
+     *   auto rp = flow.create_simple_render_pass();
+     *   flow.register_window_for_rendering(my_window, rp);
+     */
+    void register_window_for_rendering(
+        const std::shared_ptr<Core::Window>& window,
+        RenderPassID render_pass_id);
+
+    /**
+     * @brief Unregister a window from rendering
+     * @param window Window to unregister
+     */
+    void unregister_window(const std::shared_ptr<Core::Window>& window);
+
+    /**
+     * @brief Check if a window is registered for rendering
+     */
+    [[nodiscard]] bool is_window_registered(const std::shared_ptr<Core::Window>& window) const;
+
+    /**
+     * @brief Get all registered windows
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Core::Window>> get_registered_windows() const;
+
+    //==========================================================================
     // Convenience Methods
     //==========================================================================
 
@@ -486,12 +488,17 @@ public:
      * @param render_pass Render pass ID
      * @param clear_color Clear color
      */
-    void begin_swapchain_render_pass(
-        CommandBufferID cmd_id,
-        RenderPassID render_pass,
-        const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
+    // void begin_swapchain_render_pass(
+    //     CommandBufferID cmd_id,
+    //     RenderPassID render_pass,
+    //     const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
 
 private:
+    struct WindowRenderAssociation {
+        std::weak_ptr<Core::Window> window;
+        RenderPassID render_pass_id;
+    };
+
     RenderFlow() = default;
     ~RenderFlow() { shutdown(); }
 
@@ -510,11 +517,13 @@ private:
 
     std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;
     std::unordered_map<RenderPassID, RenderPassState> m_render_passes;
+    std::unordered_map<std::shared_ptr<Core::Window>, WindowRenderAssociation> m_window_associations;
 
     std::atomic<uint64_t> m_next_pipeline_id { 1 };
     std::atomic<uint64_t> m_next_render_pass_id { 1 };
 
     ShaderFoundry* m_shader_foundry = nullptr;
+    Registry::Service::DisplayService* m_display_service = nullptr;
 
     // bool m_initialized {};
 };

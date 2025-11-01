@@ -50,6 +50,39 @@ struct MAYAFLUX_API DisplayService {
      * for double/triple buffering.
      */
     std::function<uint32_t(const std::shared_ptr<void>&)> get_swapchain_image_count;
+
+    /**
+     * @brief Get current framebuffer for a window
+     * @param window_handle Window handle
+     * @return Vulkan framebuffer handle (vk::Framebuffer cast to void*)
+     *
+     * Returns the framebuffer corresponding to the current swapchain image.
+     * Updated internally during frame acquisition. Returns nullptr if window
+     * not registered or no framebuffer available.
+     */
+    std::function<void*(const std::shared_ptr<void>&)> get_current_framebuffer;
+
+    /**
+     * @brief Get swapchain extent for a window
+     * @param window_handle Window handle
+     * @param out_width Output parameter for width
+     * @param out_height Output parameter for height
+     *
+     * Retrieves current swapchain dimensions. Sets out_width and out_height
+     * to 0 if window not registered or swapchain unavailable.
+     */
+    std::function<void(const std::shared_ptr<void>&, uint32_t&, uint32_t&)> get_swapchain_extent;
+
+    /**
+     * @brief Get backend render pass for a window
+     * @param window_handle Window handle
+     * @return Vulkan render pass handle (vk::RenderPass cast to void*)
+     *
+     * Returns the render pass created by the backend for this window's swapchain.
+     * Managed by backend, compatible with window's framebuffers.
+     * Returns nullptr if window not registered.
+     */
+    std::function<void*(const std::shared_ptr<void>&)> get_window_render_pass;
 };
 
 } // namespace MayaFlux::Registry::Services
