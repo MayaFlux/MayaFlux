@@ -149,13 +149,14 @@ struct ShaderReflectionInfo {
  *   my_compute_pipeline->set_shader(shader);
  */
 class MAYAFLUX_API ShaderFoundry {
-private:
+public:
     enum class CommandBufferType : uint8_t {
         GRAPHICS,
         COMPUTE,
         TRANSFER
     };
 
+private:
     struct DescriptorSetState {
         vk::DescriptorSet descriptor_set;
     };

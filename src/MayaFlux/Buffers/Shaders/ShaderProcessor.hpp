@@ -86,6 +86,11 @@ struct ShaderProcessorConfig {
  * - Supports hot-reload via ShaderFoundry caching
  * - Handles push constants and specialization constants
  *
+ * Quality-of-life features:
+ * - **Data movement hints:** Query buffer usage (input/output/in-place) for automation and validation.
+ * - **Binding introspection:** Check if bindings exist, list expected bindings, and validate binding completeness.
+ * - **State queries:** Track last processed buffer and command buffer for chain management and debugging.
+ *
  * Design Philosophy:
  * - **Fully usable as-is**: Not just a base class, but a complete processor
  * - **Inheritance-friendly**: Specialized processors can override behavior
@@ -137,6 +142,22 @@ struct ShaderProcessorConfig {
  */
 class MAYAFLUX_API ShaderProcessor : public VKBufferProcessor {
 public:
+    /**
+     * @brief Get buffer usage characteristics needed for safe data flow
+     *
+     * Returns flags indicating:
+     * - Does compute read from input? (HOST_TO_DEVICE upload needed?)
+     * - Does compute write to output? (DEVICE_TO_HOST readback needed?)
+     *
+     * This lets ComputeProcessingChain auto-determine staging needs.
+     */
+    enum class BufferUsageHint : uint8_t {
+        NONE = 0,
+        INPUT_READ = 1 << 0, ///< Shader reads input
+        OUTPUT_WRITE = 1 << 1, ///< Shader writes output (modifies)
+        BIDIRECTIONAL = INPUT_READ | OUTPUT_WRITE
+    };
+
     /**
      * @brief Construct processor with shader path
      * @param shader_path Path to compute shader (.comp or .spv)
@@ -345,6 +366,45 @@ public:
     void add_binding(const std::string& descriptor_name, const ShaderBinding& binding);
 
     //==========================================================================
+    // Data movement hints
+    //==========================================================================
+
+    /**
+     * @brief Get buffer usage hint for a descriptor
+     * @param descriptor_name Binding name
+     * @return BufferUsageHint flags
+     */
+    [[nodiscard]] virtual BufferUsageHint get_buffer_usage_hint(const std::string& descriptor_name) const;
+
+    /**
+     * @brief Check if shader modifies a specific buffer in-place
+     * @param descriptor_name Binding name
+     * @return True if shader both reads and writes this buffer
+     */
+    [[nodiscard]] virtual bool is_in_place_operation(const std::string& descriptor_name) const;
+
+    /**
+     * @brief Check if a descriptor binding exists
+     * @param descriptor_name Name of the binding (e.g., "input", "output")
+     * @return True if binding is configured
+     */
+    [[nodiscard]] bool has_binding(const std::string& descriptor_name) const;
+
+    /**
+     * @brief Get all configured descriptor names
+     * @return Vector of binding names
+     *
+     * Useful for introspection: which buffers does this shader expect?
+     */
+    [[nodiscard]] std::vector<std::string> get_binding_names() const;
+
+    /**
+     * @brief Check if all required bindings are satisfied
+     * @return True if all configured bindings have buffers bound
+     */
+    [[nodiscard]] bool are_bindings_complete() const;
+
+    //==========================================================================
     // State Queries
     //==========================================================================
 
@@ -367,6 +427,27 @@ public:
      * @brief Get number of bound buffers
      */
     [[nodiscard]] size_t get_bound_buffer_count() const { return m_bound_buffers.size(); }
+
+    /**
+     * @brief Get the output buffer after compute dispatch
+     *
+     * Returns the buffer that was last processed (input/output depends on
+     * shader and binding configuration). Used by ComputeProcessingChain
+     * to determine where compute results ended up.
+     *
+     * Typically the buffer passed to processing_function(), but can be
+     * overridden by subclasses if compute modifies different buffers.
+     */
+    [[nodiscard]] virtual std::shared_ptr<VKBuffer> get_output_buffer() const { return m_last_processed_buffer; }
+
+    /**
+     * @brief Check if compute has been executed at least once
+     * @return True if processing_function() has been called
+     */
+    [[nodiscard]] virtual inline bool has_executed() const
+    {
+        return m_last_command_buffer != Portal::Graphics::INVALID_COMMAND_BUFFER;
+    }
 
 protected:
     //==========================================================================
@@ -456,8 +537,10 @@ protected:
     Portal::Graphics::ShaderID m_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ComputePipelineID m_pipeline_id = Portal::Graphics::INVALID_COMPUTE_PIPELINE;
     std::vector<Portal::Graphics::DescriptorSetID> m_descriptor_set_ids;
+    Portal::Graphics::CommandBufferID m_last_command_buffer = Portal::Graphics::INVALID_COMMAND_BUFFER;
 
     std::unordered_map<std::string, std::shared_ptr<VKBuffer>> m_bound_buffers;
+    std::shared_ptr<VKBuffer> m_last_processed_buffer;
 
     std::vector<uint8_t> m_push_constant_data;
 

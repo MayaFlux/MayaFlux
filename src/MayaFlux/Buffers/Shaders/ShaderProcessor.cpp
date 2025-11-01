@@ -288,6 +288,50 @@ void ShaderProcessor::add_binding(const std::string& descriptor_name, const Shad
     m_needs_descriptor_rebuild = true;
 }
 
+//==========================================================================
+// Data movement Queries
+//==========================================================================
+
+[[nodiscard]] ShaderProcessor::BufferUsageHint ShaderProcessor::get_buffer_usage_hint(const std::string& descriptor_name) const
+{
+    if (descriptor_name == "input")
+        return BufferUsageHint::INPUT_READ;
+    if (descriptor_name == "output")
+        return BufferUsageHint::OUTPUT_WRITE;
+    return BufferUsageHint::NONE;
+}
+
+[[nodiscard]] bool ShaderProcessor::is_in_place_operation(const std::string& descriptor_name) const
+{
+    auto hint = get_buffer_usage_hint(descriptor_name);
+    return hint == BufferUsageHint::BIDIRECTIONAL;
+}
+
+[[nodiscard]] bool ShaderProcessor::has_binding(const std::string& descriptor_name) const
+{
+    return m_config.bindings.find(descriptor_name) != m_config.bindings.end();
+}
+
+[[nodiscard]] std::vector<std::string> ShaderProcessor::get_binding_names() const
+{
+    std::vector<std::string> names;
+    names.reserve(m_config.bindings.size());
+    for (const auto& [name, _] : m_config.bindings) {
+        names.push_back(name);
+    }
+    return names;
+}
+
+[[nodiscard]] bool ShaderProcessor::are_bindings_complete() const
+{
+    for (const auto& [name, _] : m_config.bindings) {
+        if (m_bound_buffers.find(name) == m_bound_buffers.end()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 //==============================================================================
 // Protected Hooks
 //==============================================================================
@@ -479,6 +523,9 @@ void ShaderProcessor::execute_dispatch(const std::shared_ptr<VKBuffer>& buffer)
 
     auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
 
+    m_last_command_buffer = cmd_id;
+    m_last_processed_buffer = buffer;
+
     compute_press.bind_pipeline(cmd_id, m_pipeline_id);
 
     compute_press.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
@@ -528,5 +575,4 @@ void ShaderProcessor::cleanup()
     m_bound_buffers.clear();
     m_initialized = false;
 }
-
 } // namespace MayaFlux::Buffers

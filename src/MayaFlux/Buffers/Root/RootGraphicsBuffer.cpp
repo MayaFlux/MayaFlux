@@ -12,24 +12,39 @@ GraphicsBatchProcessor::GraphicsBatchProcessor(std::shared_ptr<Buffer> root_buff
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
-void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> /* buffer */)
+void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
-    /* auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
+    auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_graphics_buffer || root_graphics_buffer != m_root_buffer) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::BufferProcessing,
+            "GraphicsBatchProcessor can only process its associated RootGraphicsBuffer");
         return;
     }
-    root_graphics_buffer->process_children(1); */
+
+    root_graphics_buffer->process_children(1);
+
+    // if (m_final_processor) {
+    //     m_final_processor->process(shared_from_this());
+    // }
 }
 
 void GraphicsBatchProcessor::on_attach(std::shared_ptr<Buffer> buffer)
 {
     auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_graphics_buffer) {
-        throw std::runtime_error("GraphicsBatchProcessor can only be attached to RootGraphicsBuffer");
+        error<std::invalid_argument>(
+            Journal::Component::Core,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GraphicsBatchProcessor can only be attached to RootGraphicsBuffer");
     }
 
     if (!are_tokens_compatible(ProcessingToken::GRAPHICS_BACKEND, m_processing_token)) {
-        throw std::runtime_error("GraphicsBatchProcessor token incompatible with RootGraphicsBuffer requirements");
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GraphicsBatchProcessor token incompatible with RootGraphicsBuffer requirements");
     }
 }
 
@@ -90,11 +105,7 @@ void RootGraphicsBuffer::process_default()
         this->process_pending_buffer_operations();
     }
 
-    process_children(1);
-
-    if (m_final_processor) {
-        m_final_processor->process(shared_from_this());
-    }
+    get_default_processor()->process(shared_from_this());
 }
 
 void RootGraphicsBuffer::process_buffer(const std::shared_ptr<VKBuffer>& buffer, uint32_t /*processing_units*/)
