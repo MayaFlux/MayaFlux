@@ -62,21 +62,6 @@ public:
     void initialize();
 
     /**
-     * @brief Processes all child buffers in batch
-     * @param processing_units Number of processing units (typically 1 for graphics frames)
-     *
-     * Executes the processing chain for each active child buffer:
-     * 1. Cleans up buffers marked for removal
-     * 2. Processes each buffer's default processor (if enabled)
-     * 3. Executes each buffer's processing chain (upload, compute, etc.)
-     * 4. Handles any errors that occur during processing
-     *
-     * This is the core processing loop for GPU buffers, coordinating operations
-     * like staging buffer uploads, compute shader dispatches, and resource transitions.
-     */
-    void process_children(uint32_t processing_units = 1);
-
-    /**
      * @brief Processes this root buffer using default processing
      *
      * For graphics root buffers, this:
@@ -161,18 +146,6 @@ public:
 
 private:
     /**
-     * @brief Processes a single buffer with error handling
-     * @param buffer Buffer to process
-     * @param processing_units Number of processing units
-     *
-     * Internal helper that executes:
-     * 1. Buffer's default processor
-     * 2. Buffer's processing chain
-     * With proper error handling and logging.
-     */
-    void process_buffer(const std::shared_ptr<VKBuffer>& buffer, uint32_t processing_units);
-
-    /**
      * @brief Creates the default graphics batch processor
      * @return Shared pointer to new GraphicsBatchProcessor
      */
@@ -192,6 +165,8 @@ private:
      * @brief Flag indicating if this buffer is active for token processing
      */
     bool m_token_active {};
+
+    friend class GraphicsBatchProcessor;
 };
 
 /**
@@ -252,6 +227,152 @@ private:
      * @brief Shared pointer to the root buffer this processor manages
      */
     std::shared_ptr<RootGraphicsBuffer> m_root_buffer;
+};
+
+/**
+ * @class RenderProcessor
+ * @brief Final processor that executes render operations after all buffer processing
+ *
+ * RenderProcessor is designed to be set as the final processor of RootGraphicsBuffer.
+ * It's invoked after all child buffer processing chains have completed, making it
+ * the ideal point to:
+ * - Record render commands using processed GPU buffers
+ * - Coordinate rendering operations across multiple buffers
+ * - Submit command buffers to GPU queues
+ * - Present frames to the swapchain
+ *
+ * Design Philosophy:
+ * - Callback-based for maximum flexibility
+ * - Receives RootGraphicsBuffer with all processed child buffers
+ * - No assumptions about rendering strategy (forward, deferred, etc.)
+ * - Can query buffers by usage type for organized rendering
+ *
+ * Usage Pattern:
+ * ```cpp
+ * auto render_proc = std::make_shared<RenderProcessor>(
+ *     [this](RootGraphicsBuffer* root) {
+ *         // All buffers processed, ready for rendering
+ *         auto vertex_bufs = root->get_buffers_by_usage(VKBuffer::Usage::VERTEX);
+ *         auto uniform_bufs = root->get_buffers_by_usage(VKBuffer::Usage::UNIFORM);
+ *
+ *         // Record render commands
+ *         record_render_pass(vertex_bufs, uniform_bufs);
+ *
+ *         // Submit and present
+ *         submit_graphics_queue();
+ *         present_frame();
+ *     }
+ * );
+ *
+ * root_graphics_buffer->set_final_processor(render_proc);
+ * ```
+ *
+ * Token Compatibility:
+ * - Primary Token: GRAPHICS_BACKEND
+ * - Executes at frame rate (after all GPU buffer processing)
+ * - Should NOT perform heavy CPU computations (rendering coordination only)
+ */
+class MAYAFLUX_API RenderProcessor : public BufferProcessor {
+public:
+    /**
+     * @brief Callback signature for render operations
+     * @param root RootGraphicsBuffer with all processed child buffers
+     *
+     * The callback receives the root buffer after all child processing is complete.
+     * Child buffers are accessible via:
+     * - root->get_child_buffers() - all buffers
+     * - root->get_buffers_by_usage(usage) - filtered by usage type
+     */
+    using RenderCallback = std::function<void(const std::shared_ptr<RootGraphicsBuffer>& root)>;
+
+    /**
+     * @brief Creates a render processor with a callback function
+     * @param callback Function to execute for rendering operations
+     *
+     * The callback will be invoked during processing_function() with access
+     * to the RootGraphicsBuffer and all its processed child buffers.
+     */
+    RenderProcessor(RenderCallback callback);
+
+    /**
+     * @brief Default constructor (no callback set)
+     *
+     * Callback can be set later via set_callback().
+     * Processing will be a no-op until callback is configured.
+     */
+    RenderProcessor();
+
+    ~RenderProcessor() override = default;
+
+    /**
+     * @brief Executes the render callback
+     * @param buffer Buffer to process (must be RootGraphicsBuffer)
+     *
+     * Validates buffer type and invokes the render callback.
+     * This is the core rendering coordination point - all child buffers
+     * have been processed by the time this executes.
+     */
+    void processing_function(std::shared_ptr<Buffer> buffer) override;
+
+    /**
+     * @brief Called when processor is attached to a buffer
+     * @param buffer Buffer being attached to
+     *
+     * Validates that the buffer is a RootGraphicsBuffer and ensures
+     * token compatibility for graphics rendering.
+     */
+    void on_attach(std::shared_ptr<Buffer> buffer) override;
+
+    /**
+     * @brief Called when processor is detached from a buffer
+     * @param buffer Buffer being detached from
+     */
+    void on_detach(std::shared_ptr<Buffer> buffer) override;
+
+    /**
+     * @brief Checks compatibility with a specific buffer type
+     * @param buffer Buffer to check compatibility with
+     * @return True if buffer is RootGraphicsBuffer, false otherwise
+     */
+    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+
+    /**
+     * @brief Sets or updates the render callback
+     * @param callback New callback function
+     *
+     * Allows runtime reconfiguration of rendering strategy.
+     * Useful for switching between different rendering modes or techniques.
+     */
+    void set_callback(RenderCallback callback);
+
+    /**
+     * @brief Checks if a callback is configured
+     * @return True if callback is set, false otherwise
+     */
+    [[nodiscard]] bool has_callback() const { return static_cast<bool>(m_callback); }
+
+    /**
+     * @brief Clears the current callback
+     *
+     * After clearing, processing will be a no-op until a new callback is set.
+     */
+    void clear_callback() { m_callback = nullptr; }
+
+private:
+    /**
+     * @brief User-provided render callback
+     */
+    RenderCallback m_callback;
+
+    /**
+     * @brief Reference to root buffer (for validation and callbacks)
+     *
+     * We store a raw pointer to avoid circular references, as the root
+     * buffer owns the shared_ptr to this processor.
+     */
+    std::shared_ptr<RootGraphicsBuffer> m_root_buffer;
+
+    void fallback_renderer(const std::shared_ptr<RootGraphicsBuffer>& root);
 };
 
 } // namespace MayaFlux::Buffers
