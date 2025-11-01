@@ -12,6 +12,7 @@ class VKDescriptorManager;
 namespace MayaFlux::Portal::Graphics {
 
 class ComputePress;
+class RenderFlow;
 
 using ShaderID = uint64_t;
 using DescriptorSetID = uint64_t;
@@ -90,6 +91,24 @@ struct DescriptorBindingInfo {
     uint32_t binding;
     vk::DescriptorType type;
     std::string name;
+};
+
+/**
+ * @struct DescriptorBindingConfig
+ * @brief Portal-level descriptor binding configuration
+ */
+struct DescriptorBindingConfig {
+    uint32_t set = 0;
+    uint32_t binding = 0;
+    vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
+
+    DescriptorBindingConfig() = default;
+    DescriptorBindingConfig(uint32_t s, uint32_t b, vk::DescriptorType t = vk::DescriptorType::eStorageBuffer)
+        : set(s)
+        , binding(b)
+        , type(t)
+    {
+    }
 };
 
 /**
@@ -726,6 +745,7 @@ private:
     std::shared_ptr<Core::VKShaderModule> get_vk_shader_module(ShaderID shader_id);
 
     friend class ComputePress;
+    friend class RenderFlow;
 };
 
 /**

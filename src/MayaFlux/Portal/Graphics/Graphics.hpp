@@ -8,20 +8,17 @@ namespace MayaFlux::Portal::Graphics {
 
 /**
  * @brief Initialize Portal::Graphics Glue Layer
+ * @param backend Initialized Vulkan backend
  * @return True if initialization succeeded
  *
  * Initializes all Portal::Graphics managers:
- * - TextureLoom
- * - SamplerFactory
- * - (Future) ShaderCompiler
- * - (Future) PipelineFactory
+ * - TextureLoom (texture management)
+ * - SamplerForge (sampler creation)
+ * - ShaderFoundry (shader compilation + resources)
+ * - ComputePress (compute pipeline + dispatch)
+ * - RenderFlow (graphics pipeline + rendering)
  *
  * Must be called after backend initialization (VulkanBackend::initialize()).
- *
- * Example:
- *   // In engine initialization
- *   vulkan_backend.initialize();
- *   Portal::Graphics::initialize(vulkan_backend);
  */
 MAYAFLUX_API bool initialize(const std::shared_ptr<Core::VulkanBackend>& backend);
 

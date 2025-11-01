@@ -10,12 +10,12 @@ bool ComputePress::initialize()
 {
     m_shader_foundry = &get_shader_foundry();
     if (!m_shader_foundry->is_initialized()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Cannot initialize ComputePress: ShaderFoundry not initialized");
         return false;
     }
 
-    MF_INFO(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+    MF_INFO(Journal::Component::Portal, Journal::Context::GPUCompute,
         "ComputePress initialized");
     return true;
 }
@@ -30,7 +30,7 @@ void ComputePress::shutdown()
 
     m_pipelines.clear();
 
-    MF_INFO(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+    MF_INFO(Journal::Component::Portal, Journal::Context::GPUCompute,
         "ComputePress shutdown complete");
 }
 
@@ -45,14 +45,14 @@ ComputePipelineID ComputePress::create_pipeline(
 {
     auto shader_module = m_shader_foundry->get_vk_shader_module(shader_id);
     if (!shader_module) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid shader ID: {}", shader_id);
         return INVALID_COMPUTE_PIPELINE;
     }
 
     auto stage = m_shader_foundry->get_shader_stage(shader_id);
     if (stage != ShaderStage::COMPUTE) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Shader is not a compute shader (stage: {})", static_cast<int>(stage));
         return INVALID_COMPUTE_PIPELINE;
     }
@@ -91,7 +91,7 @@ ComputePipelineID ComputePress::create_pipeline(
 
     state.pipeline = std::make_shared<Core::VKComputePipeline>();
     if (!state.pipeline->create(device, pipeline_config)) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Failed to create compute pipeline");
         m_pipelines.erase(id);
         return INVALID_COMPUTE_PIPELINE;
@@ -99,7 +99,7 @@ ComputePipelineID ComputePress::create_pipeline(
 
     state.layout = state.pipeline->get_layout();
 
-    MF_INFO(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+    MF_INFO(Journal::Component::Portal, Journal::Context::GPUCompute,
         "Created compute pipeline (ID: {}, {} descriptor sets, {} bytes push constants)",
         id, state.layouts.size(), push_constant_size);
 
@@ -131,7 +131,7 @@ ComputePipelineID ComputePress::create_pipeline_auto(
         pc_size = reflection.push_constant_ranges[0].size;
     }
 
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
         "Auto-creating pipeline: {} descriptor sets, {} bindings total",
         descriptor_sets.size(), reflection.descriptor_bindings.size());
 
@@ -151,7 +151,7 @@ void ComputePress::destroy_pipeline(ComputePipelineID pipeline_id)
 
     m_pipelines.erase(it);
 
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
         "Destroyed compute pipeline (ID: {})", pipeline_id);
 }
 
@@ -163,14 +163,14 @@ void ComputePress::bind_pipeline(CommandBufferID cmd_id, ComputePipelineID pipel
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid pipeline ID: {}", pipeline_id);
         return;
     }
 
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid command buffer ID: {}", cmd_id);
         return;
     }
@@ -185,14 +185,14 @@ void ComputePress::bind_descriptor_sets(
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid pipeline ID: {}", pipeline_id);
         return;
     }
 
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid command buffer ID: {}", cmd_id);
         return;
     }
@@ -213,14 +213,14 @@ void ComputePress::push_constants(
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid pipeline ID: {}", pipeline_id);
         return;
     }
 
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid command buffer ID: {}", cmd_id);
         return;
     }
@@ -241,14 +241,14 @@ void ComputePress::dispatch(CommandBufferID cmd_id, uint32_t x, uint32_t y, uint
 {
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid command buffer ID: {}", cmd_id);
         return;
     }
 
     cmd.dispatch(x, y, z);
 
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
         "Dispatched compute: {}x{}x{} workgroups", x, y, z);
 }
 
@@ -259,14 +259,14 @@ void ComputePress::dispatch_indirect(
 {
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid command buffer ID: {}", cmd_id);
         return;
     }
 
     cmd.dispatchIndirect(indirect_buffer, offset);
 
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
         "Dispatched compute indirect from buffer");
 }
 
@@ -278,7 +278,7 @@ std::vector<DescriptorSetID> ComputePress::allocate_pipeline_descriptors(Compute
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
     if (pipeline_it == m_pipelines.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Invalid pipeline ID: {}", pipeline_id);
         return {};
     }
@@ -287,14 +287,14 @@ std::vector<DescriptorSetID> ComputePress::allocate_pipeline_descriptors(Compute
     for (const auto& layout : pipeline_it->second.layouts) {
         auto ds_id = m_shader_foundry->allocate_descriptor_set(layout);
         if (ds_id == INVALID_DESCRIPTOR_SET) {
-            MF_ERROR(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+            MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
                 "Failed to allocate descriptor set for pipeline {}", pipeline_id);
             return {};
         }
         descriptor_set_ids.push_back(ds_id);
     }
 
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::ComputeProcessing,
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
         "Allocated {} descriptor sets for pipeline {}",
         descriptor_set_ids.size(), pipeline_id);
 

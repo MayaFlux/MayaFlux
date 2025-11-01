@@ -9,24 +9,6 @@ using ComputePipelineID = uint64_t;
 constexpr ComputePipelineID INVALID_COMPUTE_PIPELINE = 0;
 
 /**
- * @struct DescriptorBindingConfig
- * @brief Portal-level descriptor binding configuration
- */
-struct DescriptorBindingConfig {
-    uint32_t set = 0;
-    uint32_t binding = 0;
-    vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
-
-    DescriptorBindingConfig() = default;
-    DescriptorBindingConfig(uint32_t s, uint32_t b, vk::DescriptorType t = vk::DescriptorType::eStorageBuffer)
-        : set(s)
-        , binding(b)
-        , type(t)
-    {
-    }
-};
-
-/**
  * @class ComputePress
  * @brief Compute-specific pipeline and dispatch orchestration
  *

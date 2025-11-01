@@ -1,8 +1,8 @@
 #include "Graphics.hpp"
 
 #include "ComputePress.hpp"
+#include "RenderFlow.hpp"
 #include "SamplerForge.hpp"
-#include "ShaderFoundry.hpp"
 #include "TextureLoom.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -51,6 +51,12 @@ bool initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
     if (!ComputePress::instance().initialize()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::API,
             "Failed to initialize ComputePress");
+        return false;
+    }
+
+    if (!RenderFlow::instance().initialize()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+            "Failed to initialize RenderFlow");
         return false;
     }
 

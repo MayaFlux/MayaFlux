@@ -73,6 +73,12 @@ enum class Context : uint8_t {
     CustomBackend, ///< Custom user-defined backend
 
     // ============================================================================
+    // GPU CONTEXTS
+    // ============================================================================
+    GPUCompute, ///< GPU compute operations (shaders, GPGPU tasks)
+    Rendering, ///< GPU rendering operations (graphics pipeline, frame rendering)
+
+    // ============================================================================
     // SUBSYSTEM CONTEXTS
     // ============================================================================
 
@@ -90,7 +96,7 @@ enum class Context : uint8_t {
     BufferManagement, ///< Buffer Management (Buffers::BufferManager, creating buffers)
     CoroutineScheduling, ///< Coroutine scheduling and temporal coordination (Vruta::TaskScheduler)
     ContainerProcessing, ///< Container operations (Kakshya - file/stream/region processing)
-    ComputeProcessing, ///< Compute operations (Yantra - algorithms, matrices, DSP)
+    ComputeMatrix, ///< Compute operations (Yantra - algorithms, matrices, DSP)
     ImageProcessing, ///< Image processing tasks (filters, transformations)
     ShaderCompilation, ///< Shader compilation tasks (Portal::Graphics::ShaderCompiler)
 

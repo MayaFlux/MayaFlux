@@ -5,6 +5,49 @@
 
 namespace MayaFlux::Core {
 
+struct VertexBinding {
+    uint32_t binding;
+    uint32_t stride;
+    bool per_instance;
+    vk::VertexInputRate input_rate;
+
+    VertexBinding() = default;
+    VertexBinding(uint32_t b, uint32_t s, bool instanced = false, vk::VertexInputRate rate = vk::VertexInputRate::eVertex)
+        : binding(b)
+        , stride(s)
+        , per_instance(instanced)
+        , input_rate(rate)
+    {
+    }
+};
+
+struct VertexAttribute {
+    uint32_t location;
+    uint32_t binding;
+    vk::Format format;
+    uint32_t offset;
+
+    VertexAttribute() = default;
+    VertexAttribute(uint32_t loc, uint32_t bind, vk::Format fmt, uint32_t off)
+        : location(loc)
+        , binding(bind)
+        , format(fmt)
+        , offset(off)
+    {
+    }
+};
+
+struct ColorBlendAttachment {
+    bool blend_enable = false;
+    vk::BlendFactor src_color_blend_factor = vk::BlendFactor::eSrcAlpha;
+    vk::BlendFactor dst_color_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha;
+    vk::BlendOp color_blend_op = vk::BlendOp::eAdd;
+    vk::BlendFactor src_alpha_blend_factor = vk::BlendFactor::eOne;
+    vk::BlendFactor dst_alpha_blend_factor = vk::BlendFactor::eZero;
+    vk::BlendOp alpha_blend_op = vk::BlendOp::eAdd;
+    vk::ColorComponentFlags color_write_mask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+};
+
 /**
  * @struct GraphicsPipelineConfig
  * @brief Configuration for creating a graphics pipeline
@@ -17,28 +60,15 @@ struct GraphicsPipelineConfig {
     // SHADER STAGES
     //==========================================================================
 
-    VKShaderModule* vertex_shader = nullptr; // Required
-    VKShaderModule* fragment_shader = nullptr; // Optional (depth-only passes)
-    VKShaderModule* geometry_shader = nullptr; // Optional
-    VKShaderModule* tess_control_shader = nullptr; // Optional
-    VKShaderModule* tess_evaluation_shader = nullptr; // Optional
+    std::shared_ptr<VKShaderModule> vertex_shader = nullptr; // Required
+    std::shared_ptr<VKShaderModule> fragment_shader = nullptr; // Optional (depth-only passes)
+    std::shared_ptr<VKShaderModule> geometry_shader = nullptr; // Optional
+    std::shared_ptr<VKShaderModule> tess_control_shader = nullptr; // Optional
+    std::shared_ptr<VKShaderModule> tess_evaluation_shader = nullptr; // Optional
 
     //==========================================================================
     // VERTEX INPUT STATE
     //==========================================================================
-
-    struct VertexBinding {
-        uint32_t binding;
-        uint32_t stride;
-        vk::VertexInputRate input_rate = vk::VertexInputRate::eVertex;
-    };
-
-    struct VertexAttribute {
-        uint32_t location;
-        uint32_t binding;
-        vk::Format format;
-        uint32_t offset;
-    };
 
     std::vector<VertexBinding> vertex_bindings;
     std::vector<VertexAttribute> vertex_attributes;
@@ -117,17 +147,6 @@ struct GraphicsPipelineConfig {
 
     bool logic_op_enable = false;
     vk::LogicOp logic_op = vk::LogicOp::eCopy;
-
-    struct ColorBlendAttachment {
-        bool blend_enable = false;
-        vk::BlendFactor src_color_blend_factor = vk::BlendFactor::eSrcAlpha;
-        vk::BlendFactor dst_color_blend_factor = vk::BlendFactor::eOneMinusSrcAlpha;
-        vk::BlendOp color_blend_op = vk::BlendOp::eAdd;
-        vk::BlendFactor src_alpha_blend_factor = vk::BlendFactor::eOne;
-        vk::BlendFactor dst_alpha_blend_factor = vk::BlendFactor::eZero;
-        vk::BlendOp alpha_blend_op = vk::BlendOp::eAdd;
-        vk::ColorComponentFlags color_write_mask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-    };
 
     std::vector<ColorBlendAttachment> color_blend_attachments;
     std::array<float, 4> blend_constants = { 0.0f, 0.0f, 0.0f, 0.0f };

@@ -18,7 +18,7 @@ GraphicsPipelineConfig GraphicsPipelineConfig::default_3d()
     config.depth_write_enable = true;
     config.depth_compare_op = vk::CompareOp::eLess;
 
-    GraphicsPipelineConfig::ColorBlendAttachment attachment;
+    ColorBlendAttachment attachment;
     attachment.blend_enable = false;
     config.color_blend_attachments.push_back(attachment);
 
@@ -34,7 +34,7 @@ GraphicsPipelineConfig GraphicsPipelineConfig::default_2d()
     config.depth_test_enable = false;
     config.depth_write_enable = false;
 
-    GraphicsPipelineConfig::ColorBlendAttachment attachment;
+    ColorBlendAttachment attachment;
     attachment.blend_enable = false;
     config.color_blend_attachments.push_back(attachment);
 
@@ -449,13 +449,13 @@ vk::PipelineViewportStateCreateInfo VKGraphicsPipeline::build_viewport_state(
     if (!config.dynamic_viewport) {
         viewports.push_back(config.static_viewport);
     } else {
-        viewports.push_back(vk::Viewport {});
+        viewports.emplace_back();
     }
 
     if (!config.dynamic_scissor) {
         scissors.push_back(config.static_scissor);
     } else {
-        scissors.push_back(vk::Rect2D {});
+        scissors.emplace_back();
     }
 
     vk::PipelineViewportStateCreateInfo viewport_state;
