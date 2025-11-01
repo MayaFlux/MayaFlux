@@ -36,6 +36,16 @@ class BufferProcessingChain;
 class MAYAFLUX_API RootGraphicsBuffer : public RootBuffer<VKBuffer> {
 public:
     /**
+     * @brief Information about a buffer that's ready to render
+     */
+    struct RenderableBufferInfo {
+        std::shared_ptr<VKBuffer> buffer;
+        std::shared_ptr<Core::Window> target_window;
+        RenderPipelineID pipeline_id;
+        CommandBufferID command_buffer_id;
+    };
+
+    /**
      * @brief Creates a new root graphics buffer
      *
      * Initializes with GRAPHICS_BACKEND token preference and prepares
@@ -144,12 +154,48 @@ public:
      */
     inline bool is_token_active() const override { return m_token_active; }
 
+    /**
+     * @brief Get list of buffers ready for rendering
+     * @return Vector of renderable buffers with their associated windows and pipelines
+     *
+     * Populated by GraphicsBatchProcessor during batch processing.
+     * Consumed by PresentProcessor to perform actual rendering.
+     */
+    const std::vector<RenderableBufferInfo>& get_renderable_buffers() const
+    {
+        return m_renderable_buffers;
+    }
+
+    /**
+     * @brief Clear the renderable buffers list
+     *
+     * Called after rendering completes to prepare for next frame.
+     */
+    void clear_renderable_buffers()
+    {
+        m_renderable_buffers.clear();
+    }
+
 private:
+    friend class GraphicsBatchProcessor;
+
     /**
      * @brief Creates the default graphics batch processor
      * @return Shared pointer to new GraphicsBatchProcessor
      */
     std::shared_ptr<BufferProcessor> create_default_processor();
+
+    /**
+     * @brief Add a buffer to the renderable list
+     *
+     * Called by GraphicsBatchProcessor during batch processing.
+     */
+    void add_renderable_buffer(const RenderableBufferInfo& info)
+    {
+        m_renderable_buffers.push_back(info);
+    }
+
+    std::vector<RenderableBufferInfo> m_renderable_buffers;
 
     /**
      * @brief Optional final processor (rarely used in graphics)
@@ -165,8 +211,6 @@ private:
      * @brief Flag indicating if this buffer is active for token processing
      */
     bool m_token_active {};
-
-    friend class GraphicsBatchProcessor;
 };
 
 /**
@@ -230,10 +274,10 @@ private:
 };
 
 /**
- * @class RenderProcessor
+ * @class PresentProcessor
  * @brief Final processor that executes render operations after all buffer processing
  *
- * RenderProcessor is designed to be set as the final processor of RootGraphicsBuffer.
+ * PresentProcessor is designed to be set as the final processor of RootGraphicsBuffer.
  * It's invoked after all child buffer processing chains have completed, making it
  * the ideal point to:
  * - Record render commands using processed GPU buffers
@@ -249,7 +293,7 @@ private:
  *
  * Usage Pattern:
  * ```cpp
- * auto render_proc = std::make_shared<RenderProcessor>(
+ * auto render_proc = std::make_shared<PresentProcessor>(
  *     [this](RootGraphicsBuffer* root) {
  *         // All buffers processed, ready for rendering
  *         auto vertex_bufs = root->get_buffers_by_usage(VKBuffer::Usage::VERTEX);
@@ -272,7 +316,7 @@ private:
  * - Executes at frame rate (after all GPU buffer processing)
  * - Should NOT perform heavy CPU computations (rendering coordination only)
  */
-class MAYAFLUX_API RenderProcessor : public BufferProcessor {
+class MAYAFLUX_API PresentProcessor : public BufferProcessor {
 public:
     /**
      * @brief Callback signature for render operations
@@ -292,7 +336,7 @@ public:
      * The callback will be invoked during processing_function() with access
      * to the RootGraphicsBuffer and all its processed child buffers.
      */
-    RenderProcessor(RenderCallback callback);
+    PresentProcessor(RenderCallback callback);
 
     /**
      * @brief Default constructor (no callback set)
@@ -300,9 +344,9 @@ public:
      * Callback can be set later via set_callback().
      * Processing will be a no-op until callback is configured.
      */
-    RenderProcessor();
+    PresentProcessor();
 
-    ~RenderProcessor() override = default;
+    ~PresentProcessor() override = default;
 
     /**
      * @brief Executes the render callback

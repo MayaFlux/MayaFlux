@@ -550,13 +550,15 @@ protected:
 
     size_t m_auto_bind_index {};
 
+protected:
+    virtual void initialize_pipeline();
+
 private:
     //==========================================================================
     // Internal Implementation
     //==========================================================================
 
     void initialize_shader();
-    void initialize_pipeline();
     void initialize_descriptors();
     void update_descriptors();
     void execute_dispatch(const std::shared_ptr<VKBuffer>& buffer);

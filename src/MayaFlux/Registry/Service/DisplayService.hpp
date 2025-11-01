@@ -12,13 +12,13 @@ struct MAYAFLUX_API DisplayService {
     /**
      * @brief Present a rendered frame to window
      * @param window_handle Opaque window/surface handle
+     * @param command_buffer_handle Opaque command buffer handle with rendering commands
      *
      * Submits the current frame for presentation to the display.
      * Blocks until presentation completes or returns immediately
      * depending on vsync settings. Thread-safe.
      */
-    // std::function<void(void*)> present_frame;
-    std::function<void(const std::shared_ptr<void>&)> present_frame;
+    std::function<void(const std::shared_ptr<void>&, void*)> present_frame;
 
     /**
      * @brief Wait for all GPU operations to complete

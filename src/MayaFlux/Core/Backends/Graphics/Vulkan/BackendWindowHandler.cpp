@@ -69,8 +69,15 @@ BackendWindowHandler::BackendWindowHandler(VKContext& context, VKCommandManager&
 
 void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry::Service::DisplayService>& display_service)
 {
-    display_service->present_frame = [this](const std::shared_ptr<void>& window_ptr) {
+    display_service->present_frame = [this](const std::shared_ptr<void>& window_ptr, void* command_buffer_ptr) {
         auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto ctx = find_window_context(window);
+        if (!ctx) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Window '{}' not registered for presentation", window->get_create_info().title);
+            return;
+        }
+        ctx->command_buffer = static_cast<vk::CommandBuffer*>(command_buffer_ptr);
         this->render_window(window);
     };
 
@@ -419,9 +426,56 @@ void BackendWindowHandler::render_window_internal(WindowRenderContext& context)
 void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
 {
     auto* context = find_window_context(window);
-    if (context) {
-        render_window_internal(*context);
+    if (!context) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "No context found for window '{}'",
+            window->get_create_info().title);
+        return;
     }
+
+    auto device = m_context.get_device();
+    auto graphics_queue = m_context.get_graphics_queue();
+
+    size_t frame_index = context->current_frame;
+    auto& in_flight = context->in_flight[frame_index];
+    auto& image_available = context->image_available[frame_index];
+    auto& render_finished = context->render_finished[frame_index];
+
+    device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX);
+
+    auto image_index_opt = context->swapchain->acquire_next_image(image_available);
+    if (!image_index_opt.has_value()) {
+        context->needs_recreation = true;
+        return;
+    }
+    uint32_t image_index = image_index_opt.value();
+
+    device.resetFences(1, &in_flight);
+
+    vk::SubmitInfo submit_info {};
+    vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores = &image_available;
+    submit_info.pWaitDstStageMask = wait_stages;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &(*context->command_buffer);
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &render_finished;
+
+    try {
+        graphics_queue.submit(1, &submit_info, in_flight);
+    } catch (const vk::SystemError& e) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to submit command buffer: {}", e.what());
+        return;
+    }
+
+    bool present_success = context->swapchain->present(image_index, render_finished, graphics_queue);
+    if (!present_success) {
+        context->needs_recreation = true;
+    }
+
+    context->current_frame = (frame_index + 1) % context->in_flight.size();
 }
 
 void BackendWindowHandler::render_all_windows()

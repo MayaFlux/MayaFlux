@@ -12,6 +12,10 @@ struct BufferService;
 struct ComputeService;
 }
 
+namespace MayaFlux::Core {
+class Window;
+}
+
 namespace MayaFlux::Buffers {
 
 struct VKBufferResources {
@@ -19,6 +23,9 @@ struct VKBufferResources {
     vk::DeviceMemory memory;
     void* mapped_ptr;
 };
+
+using RenderPipelineID = uint64_t;
+using CommandBufferID = uint64_t;
 
 /**
  * @class VKBuffer
@@ -286,8 +293,73 @@ public:
     /** Retrieve and clear all invalid ranges */
     std::vector<std::pair<size_t, size_t>> get_and_clear_invalid_ranges();
 
-    // void flush(size_t offset = 0, size_t size = VK_WHOLE_SIZE);
-    // void invalidate(size_t offset, size_t size);
+    /**
+     * @brief Associate this buffer with a window for rendering
+     * @param window Target window for rendering this buffer's content
+     *
+     * When this buffer is processed, its content will be rendered to the associated window.
+     * Currently supports one window per buffer (will be extended to multiple windows).
+     */
+    void set_pipeline_window(RenderPipelineID id, const std::shared_ptr<Core::Window>& window)
+    {
+        m_window_pipelines[id] = window;
+    }
+
+    /**
+     * @brief Get the window associated with this buffer
+     * @return Target window, or nullptr if not set
+     */
+    std::shared_ptr<Core::Window> get_pipeline_window(RenderPipelineID id) const
+    {
+        auto it = m_window_pipelines.find(id);
+        if (it != m_window_pipelines.end()) {
+            return it->second;
+        }
+        return nullptr;
+    }
+
+    /**
+     * @brief Check if this buffer has a rendering pipeline configured
+     */
+    bool has_render_pipeline() const
+    {
+        return !m_window_pipelines.empty();
+    }
+
+    /**
+     * @brief Get all render pipelines associated with this buffer
+     * @return Map of RenderPipelineID to associated windows
+     */
+    std::unordered_map<RenderPipelineID, std::shared_ptr<Core::Window>> get_render_pipelines() const
+    {
+        return m_window_pipelines;
+    }
+
+    /**
+     * @brief Store recorded command buffer for a pipeline
+     */
+    void set_pipeline_command(RenderPipelineID pipeline_id,
+        CommandBufferID cmd_id)
+    {
+        m_pipeline_commands[pipeline_id] = cmd_id;
+    }
+
+    /**
+     * @brief Get recorded command buffer for a pipeline
+     */
+    CommandBufferID get_pipeline_command(RenderPipelineID pipeline_id) const
+    {
+        auto it = m_pipeline_commands.find(pipeline_id);
+        return it != m_pipeline_commands.end() ? it->second : 0;
+    }
+
+    /**
+     * @brief Clear all recorded commands (called after presentation)
+     */
+    void clear_pipeline_commands()
+    {
+        m_pipeline_commands.clear();
+    }
 
 private:
     VKBufferResources m_resources;
@@ -308,6 +380,9 @@ private:
     std::shared_ptr<Buffers::BufferProcessor> m_default_processor;
     std::shared_ptr<Buffers::BufferProcessingChain> m_processing_chain;
     ProcessingToken m_processing_token;
+
+    std::unordered_map<RenderPipelineID, std::shared_ptr<Core::Window>> m_window_pipelines;
+    std::unordered_map<RenderPipelineID, CommandBufferID> m_pipeline_commands;
 
     std::vector<std::pair<size_t, size_t>> m_dirty_ranges;
     std::vector<std::pair<size_t, size_t>> m_invalid_ranges;

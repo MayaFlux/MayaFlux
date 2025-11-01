@@ -21,6 +21,7 @@ struct WindowRenderContext {
     std::unique_ptr<VKSwapchain> swapchain;
     std::unique_ptr<VKRenderPass> render_pass;
     std::vector<std::unique_ptr<VKFramebuffer>> framebuffers;
+    vk::CommandBuffer* command_buffer;
 
     std::vector<vk::Semaphore> image_available;
     std::vector<vk::Semaphore> render_finished;

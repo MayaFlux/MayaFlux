@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -46,6 +47,23 @@ void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> buffer)
                 chain->process(ch_buffer);
             }
 
+            auto vk_buffer = std::dynamic_pointer_cast<Buffers::VKBuffer>(ch_buffer);
+            if (vk_buffer && vk_buffer->has_render_pipeline()) {
+                for (const auto& [id, window] : vk_buffer->get_render_pipelines()) {
+                    RootGraphicsBuffer::RenderableBufferInfo info;
+                    info.buffer = vk_buffer;
+                    info.target_window = window;
+                    info.pipeline_id = id;
+                    info.command_buffer_id = root_buf->get_pipeline_command(id);
+
+                    root_buf->add_renderable_buffer(info);
+
+                    MF_RT_TRACE(Journal::Component::Core, Journal::Context::BufferProcessing,
+                        "Registered buffer for rendering to window '{}'",
+                        window->get_create_info().title);
+                }
+            }
+
         } catch (const std::exception& e) {
             MF_RT_ERROR(Journal::Component::Core, Journal::Context::BufferProcessing,
                 "Error processing graphics buffer: {}", e.what());
@@ -78,21 +96,21 @@ bool GraphicsBatchProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) 
     return std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer) != nullptr;
 }
 
-RenderProcessor::RenderProcessor(RenderCallback callback)
+PresentProcessor::PresentProcessor(RenderCallback callback)
     : m_callback(std::move(callback))
     , m_root_buffer(nullptr)
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
-RenderProcessor::RenderProcessor()
+PresentProcessor::PresentProcessor()
     : m_callback(nullptr)
     , m_root_buffer(nullptr)
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
-void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void PresentProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_graphics_buffer) {
@@ -123,7 +141,7 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void RenderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void PresentProcessor::on_attach(std::shared_ptr<Buffer> buffer)
 {
     auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_graphics_buffer) {
@@ -149,7 +167,7 @@ void RenderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
         has_callback());
 }
 
-void RenderProcessor::on_detach(std::shared_ptr<Buffer> buffer)
+void PresentProcessor::on_detach(std::shared_ptr<Buffer> buffer)
 {
     if (auto root = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer)) {
         if (root == m_root_buffer) {
@@ -161,12 +179,12 @@ void RenderProcessor::on_detach(std::shared_ptr<Buffer> buffer)
         "RenderProcessor detached from RootGraphicsBuffer");
 }
 
-bool RenderProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool PresentProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
 {
     return std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer) != nullptr;
 }
 
-void RenderProcessor::set_callback(RenderCallback callback)
+void PresentProcessor::set_callback(RenderCallback callback)
 {
     m_callback = std::move(callback);
 
@@ -176,22 +194,65 @@ void RenderProcessor::set_callback(RenderCallback callback)
         m_root_buffer != nullptr);
 }
 
-void RenderProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffer>& root)
+void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffer>& root)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
 
-    auto vertex_buffers = root->get_buffers_by_usage(
-        Buffers::VKBuffer::Usage::VERTEX);
+    const auto& renderable_buffers = root->get_renderable_buffers();
 
-    if (vertex_buffers.empty()) {
+    if (renderable_buffers.empty()) {
+        MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "No renderable buffers found in fallback renderer");
         return;
     }
 
-    auto cmd_id = foundry.begin_commands(
-        Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
+    MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "PresentProcessor submitting {} renderable buffers",
+        renderable_buffers.size());
 
-    // TODO: Use proper render pass and framebuffer
+    std::unordered_map<Core::Window*, std::vector<const RootGraphicsBuffer::RenderableBufferInfo*>> buffers_by_window;
+
+    for (const auto& renderable : renderable_buffers) {
+        buffers_by_window[renderable.target_window.get()].push_back(&renderable);
+    }
+
+    for (const auto& [window_ptr, buffer_infos] : buffers_by_window) {
+        auto window = buffer_infos[0]->target_window;
+
+        if (!window) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Skipping present: window no longer valid");
+            continue;
+        }
+
+        try {
+            for (const auto* info : buffer_infos) {
+                if (info->command_buffer_id != Portal::Graphics::INVALID_COMMAND_BUFFER) {
+                    flow.present_rendered_image(
+                        info->command_buffer_id,
+                        window);
+                }
+            }
+
+            MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Presented {} buffers to window '{}'",
+                buffer_infos.size(),
+                window->get_create_info().title);
+
+        } catch (const std::exception& e) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Failed to submit/present for window '{}': {}",
+                window->get_create_info().title,
+                e.what());
+        }
+
+        for (const auto* info : buffer_infos) {
+            info->buffer->clear_pipeline_commands();
+        }
+    }
+
+    root->clear_renderable_buffers();
 }
 
 RootGraphicsBuffer::RootGraphicsBuffer()

@@ -435,6 +435,13 @@ public:
         int32_t vertex_offset = 0,
         uint32_t first_instance = 0);
 
+    /**
+     * @brief Present rendered image to window
+     * @param cmd_id Command buffer ID
+     * @param window Target window for presentation
+     */
+    void present_rendered_image(CommandBufferID cmd_id, const std::shared_ptr<Core::Window>& window);
+
     //==========================================================================
     // Window Rendering Registration
     //==========================================================================

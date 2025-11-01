@@ -737,6 +737,26 @@ void RenderFlow::draw_indexed(
         vertex_offset, first_instance);
 }
 
+void RenderFlow::present_rendered_image(
+    CommandBufferID cmd_id,
+    const std::shared_ptr<Core::Window>& window)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    if (!window) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot present rendered image for null window");
+        return;
+    }
+
+    m_display_service->present_frame(window, cmd);
+}
+
 //==========================================================================
 // Window Rendering Registration
 //==========================================================================
@@ -751,7 +771,6 @@ void RenderFlow::register_window_for_rendering(
         return;
     }
 
-    // Validate render pass exists
     auto rp_it = m_render_passes.find(render_pass_id);
     if (rp_it == m_render_passes.end()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
@@ -759,7 +778,6 @@ void RenderFlow::register_window_for_rendering(
         return;
     }
 
-    // Check if window is registered with graphics backend
     if (!window->is_graphics_registered()) {
         MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
             "Window '{}' not registered with graphics backend yet. "

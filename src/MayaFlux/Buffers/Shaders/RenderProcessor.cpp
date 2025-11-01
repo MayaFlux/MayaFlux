@@ -1,0 +1,159 @@
+#include "RenderProcessor.hpp"
+
+#include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/DisplayService.hpp"
+
+namespace MayaFlux::Buffers {
+
+RenderProcessor::RenderProcessor(const ShaderProcessorConfig& config)
+    : ShaderProcessor(config)
+{
+    m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
+}
+
+void RenderProcessor::set_fragment_shader(const std::string& fragment_path)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    m_fragment_shader_id = foundry.load_shader(fragment_path);
+    m_needs_pipeline_rebuild = true;
+}
+
+void RenderProcessor::set_geometry_shader(const std::string& geometry_path)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    m_geometry_shader_id = foundry.load_shader(geometry_path);
+    m_needs_pipeline_rebuild = true;
+}
+
+void RenderProcessor::set_tess_control_shader(const std::string& tess_control_path)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    m_tess_control_shader_id = foundry.load_shader(tess_control_path);
+    m_needs_pipeline_rebuild = true;
+}
+
+void RenderProcessor::set_tess_eval_shader(const std::string& tess_eval_path)
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    m_tess_eval_shader_id = foundry.load_shader(tess_eval_path);
+    m_needs_pipeline_rebuild = true;
+}
+
+void RenderProcessor::set_render_pass(Portal::Graphics::RenderPassID render_pass_id)
+{
+    m_render_pass_id = render_pass_id;
+    m_needs_pipeline_rebuild = true;
+}
+
+void RenderProcessor::set_target_window(std::shared_ptr<Core::Window> window)
+{
+    m_target_window = std::move(window);
+}
+
+void RenderProcessor::initialize_pipeline()
+{
+    if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Vertex shader not loaded");
+        return;
+    }
+
+    if (m_fragment_shader_id == Portal::Graphics::INVALID_SHADER) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Fragment shader not loaded");
+        return;
+    }
+
+    if (m_render_pass_id == Portal::Graphics::INVALID_RENDER_PASS) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Render pass not set");
+        return;
+    }
+
+    auto& flow = Portal::Graphics::get_render_flow();
+
+    Portal::Graphics::RenderPipelineConfig pipeline_config;
+    pipeline_config.vertex_shader = m_shader_id;
+    pipeline_config.fragment_shader = m_fragment_shader_id;
+    pipeline_config.geometry_shader = m_geometry_shader_id;
+    pipeline_config.tess_control_shader = m_tess_control_shader_id;
+    pipeline_config.tess_eval_shader = m_tess_eval_shader_id;
+    pipeline_config.render_pass = m_render_pass_id;
+
+    pipeline_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+    pipeline_config.rasterization.polygon_mode = Portal::Graphics::PolygonMode::FILL;
+    pipeline_config.rasterization.cull_mode = Portal::Graphics::CullMode::BACK;
+    pipeline_config.rasterization.front_face_ccw = true;
+
+    pipeline_config.depth_stencil.depth_test_enable = true;
+    pipeline_config.depth_stencil.depth_write_enable = true;
+
+    pipeline_config.blend_attachments.emplace_back();
+
+    m_render_pipeline_id = flow.create_pipeline(pipeline_config);
+
+    if (m_render_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Failed to create render pipeline");
+        return;
+    }
+
+    m_needs_pipeline_rebuild = false;
+}
+
+void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+{
+    auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
+    if (!vk_buffer || !m_target_window) {
+        return;
+    }
+
+    if (m_needs_pipeline_rebuild) {
+        initialize_pipeline();
+    }
+
+    if (m_render_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        return;
+    }
+
+    vk_buffer->set_pipeline_window(m_render_pipeline_id, m_target_window);
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& flow = Portal::Graphics::get_render_flow();
+    auto display_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::DisplayService>();
+
+    auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
+
+    flow.begin_render_pass(cmd_id, m_target_window);
+
+    uint32_t width = 0, height = 0;
+    display_service->get_swapchain_extent(m_target_window, width, height);
+
+    if (width > 0 && height > 0) {
+        auto cmd = foundry.get_command_buffer(cmd_id);
+
+        vk::Viewport viewport { 0.0F, 0.0F, static_cast<float>(width), static_cast<float>(height), 0.0F, 1.0F };
+        cmd.setViewport(0, 1, &viewport);
+
+        vk::Rect2D scissor { { 0, 0 }, { width, height } };
+        cmd.setScissor(0, 1, &scissor);
+    }
+
+    flow.bind_pipeline(cmd_id, m_render_pipeline_id);
+
+    flow.bind_vertex_buffers(cmd_id, { vk_buffer });
+
+    uint32_t vertex_count = 3; // TODO: get from buffer metadata
+    flow.draw(cmd_id, vertex_count);
+
+    flow.end_render_pass(cmd_id);
+
+    vk_buffer->set_pipeline_command(m_render_pipeline_id, cmd_id);
+}
+
+} // namespace MayaFlux::Buffers
