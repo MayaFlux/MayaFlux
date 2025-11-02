@@ -4,7 +4,7 @@
 
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
-#include "MayaFlux/Kakshya/NDData/NDData.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 #include "vulkan/vulkan.hpp"
 
 namespace MayaFlux::Registry::Service {
@@ -361,6 +361,35 @@ public:
         m_pipeline_commands.clear();
     }
 
+    /**
+     * @brief Set vertex layout for this buffer
+     *
+     * Required before using buffer with graphics rendering.
+     * Describes how to interpret buffer data as vertices.
+     *
+     * @param layout VertexLayout describing vertex structure
+     */
+    void set_vertex_layout(const Kakshya::VertexLayout& layout);
+
+    /**
+     * @brief Get vertex layout if set
+     * @return Optional containing layout, or empty if not set
+     */
+    std::optional<Kakshya::VertexLayout> get_vertex_layout() const { return m_vertex_layout; }
+
+    /**
+     * @brief Check if this buffer has vertex layout configured
+     */
+    bool has_vertex_layout() const { return m_vertex_layout.has_value(); }
+
+    /**
+     * @brief Clear vertex layout
+     */
+    void clear_vertex_layout()
+    {
+        m_vertex_layout.reset();
+    }
+
 private:
     VKBufferResources m_resources;
 
@@ -371,6 +400,8 @@ private:
     // Semantic metadata
     Kakshya::DataModality m_modality;
     std::vector<Kakshya::DataDimension> m_dimensions;
+
+    std::optional<Kakshya::VertexLayout> m_vertex_layout;
 
     // Buffer interface state
     bool m_has_data { true };

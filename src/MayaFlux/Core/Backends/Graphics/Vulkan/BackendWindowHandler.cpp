@@ -115,7 +115,8 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
 
         size_t frame_index = context->current_frame % context->framebuffers.size();
-        return static_cast<void*>(context->framebuffers[frame_index]->get());
+        auto& handle = *context->framebuffers[frame_index];
+        return static_cast<void*>(&handle);
     };
 
     display_service->get_swapchain_extent = [this](

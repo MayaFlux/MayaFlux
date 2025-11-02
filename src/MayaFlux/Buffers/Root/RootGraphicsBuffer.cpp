@@ -56,7 +56,7 @@ void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> buffer)
                     info.buffer = vk_buffer;
                     info.target_window = window;
                     info.pipeline_id = id;
-                    info.command_buffer_id = root_buf->get_pipeline_command(id);
+                    info.command_buffer_id = vk_buffer->get_pipeline_command(id);
 
                     root_buf->add_renderable_buffer(info);
 

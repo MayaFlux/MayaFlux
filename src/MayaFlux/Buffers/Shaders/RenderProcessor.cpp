@@ -13,6 +13,8 @@ RenderProcessor::RenderProcessor(const ShaderProcessorConfig& config)
     : ShaderProcessor(config)
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
+    m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
+    m_render_pass_id = Portal::Graphics::get_render_flow().create_simple_render_pass();
 }
 
 void RenderProcessor::set_fragment_shader(const std::string& fragment_path)
@@ -52,6 +54,7 @@ void RenderProcessor::set_render_pass(Portal::Graphics::RenderPassID render_pass
 void RenderProcessor::set_target_window(std::shared_ptr<Core::Window> window)
 {
     m_target_window = std::move(window);
+    Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window, m_render_pass_id);
 }
 
 void RenderProcessor::initialize_pipeline()
@@ -94,6 +97,12 @@ void RenderProcessor::initialize_pipeline()
 
     pipeline_config.blend_attachments.emplace_back();
 
+    if (!m_target_window) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Target window not set");
+        return;
+    }
+
     m_render_pipeline_id = flow.create_pipeline(pipeline_config);
 
     if (m_render_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
@@ -117,6 +126,25 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 
     if (m_render_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        return;
+    }
+
+    auto vertex_layout = vk_buffer->get_vertex_layout();
+    if (!vertex_layout.has_value()) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "VKBuffer has no vertex layout set. Use buffer->set_vertex_layout()");
+        return;
+    }
+
+    if (vertex_layout->vertex_count == 0) {
+        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Vertex layout has zero vertices, skipping draw");
+        return;
+    }
+
+    if (vertex_layout->attributes.empty()) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Vertex layout has no attributes");
         return;
     }
 
@@ -148,8 +176,7 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     flow.bind_vertex_buffers(cmd_id, { vk_buffer });
 
-    uint32_t vertex_count = 3; // TODO: get from buffer metadata
-    flow.draw(cmd_id, vertex_count);
+    flow.draw(cmd_id, vertex_layout->vertex_count);
 
     flow.end_render_pass(cmd_id);
 

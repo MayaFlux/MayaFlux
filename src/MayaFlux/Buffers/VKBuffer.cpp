@@ -351,4 +351,11 @@ void VKBufferProcessor::initialize_compute_service()
                             .get_service<Registry::Service::ComputeService>();
 }
 
+void VKBuffer::set_vertex_layout(const Kakshya::VertexLayout& layout)
+{
+    auto computed_layout = layout;
+    computed_layout.compute_stride();
+    m_vertex_layout = computed_layout;
+}
+
 } // namespace MayaFlux::Buffers::Vulkan
