@@ -445,7 +445,7 @@ protected:
     void SetUp() override
     {
         buffer_manager = std::make_shared<Buffers::BufferManager>(2, 0, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
-        root_buffer = buffer_manager->get_root_audio_buffer();
+        root_buffer = buffer_manager->get_root_audio_buffer(Buffers::ProcessingToken::AUDIO_BACKEND, 0);
     }
 
     std::shared_ptr<Buffers::RootAudioBuffer> root_buffer;

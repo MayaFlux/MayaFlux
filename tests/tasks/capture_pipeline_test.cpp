@@ -221,7 +221,7 @@ TEST_F(BufferPipelineTest, StreamingStrategy_ImmediateFlowThrough)
 
 TEST_F(BufferPipelineTest, StreamingStrategy_ModifyBufferContinuous)
 {
-    buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, 0);
+    buffer_manager->add_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, 0);
 
     auto pipeline = Kriya::BufferPipeline::create(*scheduler, buffer_manager);
     std::atomic<int> modify_count { 0 };
@@ -230,11 +230,11 @@ TEST_F(BufferPipelineTest, StreamingStrategy_ModifyBufferContinuous)
 
     pipeline
         >> Kriya::BufferOperation::capture_from(input_buffer).for_cycles(1)
-        >> Kriya::BufferOperation::modify_buffer(input_buffer, [&](auto buf) {
+        >> Kriya::BufferOperation::modify_buffer(input_buffer, [&](const std::shared_ptr<Buffers::AudioBuffer>& buf) {
               modify_count++;
               auto& data = buf->get_data();
               for (auto& sample : data) {
-                  sample *= 0.9; // Simple gain reduction
+                  sample *= 0.9;
               }
           }).as_streaming();
 

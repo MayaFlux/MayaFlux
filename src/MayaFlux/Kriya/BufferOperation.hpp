@@ -2,6 +2,7 @@
 
 #include "Capture.hpp"
 
+#include "MayaFlux/Buffers/BufferSpec.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 
 namespace MayaFlux {
@@ -18,7 +19,6 @@ namespace Kakshya {
 namespace Kriya {
 
     using TransformVectorFunction = std::function<Kakshya::DataVariant(std::vector<Kakshya::DataVariant>&, uint32_t)>;
-    using AudioProcessingFunction = std::function<void(std::shared_ptr<Buffers::AudioBuffer>)>;
 
     /**
      * @enum ExecutionStrategy
@@ -289,7 +289,7 @@ namespace Kriya {
          */
         static BufferOperation modify_buffer(
             std::shared_ptr<Buffers::AudioBuffer> buffer,
-            AudioProcessingFunction modifier);
+            Buffers::BufferProcessingFunction modifier);
 
         /**
          * @brief Create a fusion operation for multiple AudioBuffer sources.
@@ -422,7 +422,7 @@ namespace Kriya {
         bool m_is_streaming {};
 
         TransformationFunction m_transformer;
-        AudioProcessingFunction m_buffer_modifier;
+        Buffers::BufferProcessingFunction m_buffer_modifier;
 
         std::shared_ptr<Buffers::AudioBuffer> m_target_buffer;
         std::shared_ptr<Kakshya::DynamicSoundStream> m_target_container;

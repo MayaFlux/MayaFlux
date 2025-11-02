@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Buffers/BufferSpec.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 
 namespace MayaFlux {
@@ -11,18 +12,14 @@ namespace Nodes {
 }
 
 namespace Buffers {
+    class Buffer;
     class AudioBuffer;
+    class VKBuffer;
     class RootAudioBuffer;
     class BufferManager;
     class BufferProcessor;
     class BufferProcessingChain;
 }
-
-/**
- * @typedef AudioProcessingFunction
- * @brief Function type for audio buffer processing callbacks
- */
-using AudioProcessingFunction = std::function<void(std::shared_ptr<Buffers::AudioBuffer>)>;
 
 //-------------------------------------------------------------------------
 // Node Graph Management
@@ -241,7 +238,7 @@ MAYAFLUX_API void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std:
  *
  * The processor will be called during the default engine's audio processing cycle.
  */
-MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
+MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer);
 
 /**
  * @brief Attaches a processing function to a specific channel
@@ -251,7 +248,7 @@ MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Audi
  * The processor will be called during the default engine's audio processing cycle
  * and will operate on the specified output channel buffer.
  */
-MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channel(AudioProcessingFunction processor, unsigned int channel_id = 0);
+MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, unsigned int channel_id = 0);
 
 /**
  * @brief Attaches a processing function to multiple channels
@@ -261,7 +258,7 @@ MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_a
  * The processor will be called during the default engine's audio processing cycle
  * for each of the specified channel buffers.
  */
-MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels);
+MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(Buffers::BufferProcessingFunction processor, const std::vector<unsigned int> channels);
 
 /**
  * @brief Reads audio data from the default input source into a buffer

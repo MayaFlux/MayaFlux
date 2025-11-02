@@ -44,7 +44,9 @@ void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> buffer)
             }
 
             if (auto chain = ch_buffer->get_processing_chain()) {
-                chain->process(ch_buffer);
+                if (ch_buffer->has_data_for_cycle()) {
+                    chain->process(ch_buffer);
+                }
             }
 
             auto vk_buffer = std::dynamic_pointer_cast<Buffers::VKBuffer>(ch_buffer);

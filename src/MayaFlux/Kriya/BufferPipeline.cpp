@@ -603,7 +603,7 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
             if (!op.m_attached_processor) {
                 op.m_attached_processor = m_buffer_manager->attach_quick_process(
                     op.m_buffer_modifier,
-                    op.m_target_buffer);
+                    op.m_target_buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
                 if (m_max_cycles != 0 && op.is_streaming()) {
                     op.m_modify_cycle_count = m_max_cycles - cycle;
                 }

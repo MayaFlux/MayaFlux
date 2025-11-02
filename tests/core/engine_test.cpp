@@ -112,7 +112,7 @@ TEST_F(EngineTest, InitializationCreatesAndWiresComponents)
 
     EXPECT_EQ(test_engine->get_scheduler()->get_rate(), TestConfig::SAMPLE_RATE);
     EXPECT_EQ(test_engine->get_buffer_manager()->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_root_audio_buffer_size(buf_token), TestConfig::BUFFER_SIZE);
+    EXPECT_EQ(test_engine->get_buffer_manager()->get_buffer_size(buf_token), TestConfig::BUFFER_SIZE);
 
     const auto& stream_info = test_engine->get_stream_info();
     EXPECT_EQ(stream_info.sample_rate, TestConfig::SAMPLE_RATE);
@@ -145,7 +145,7 @@ TEST_F(EngineTest, InitializationWithCustomStreamInfo)
     EXPECT_EQ(applied_config.priority, Core::GlobalStreamInfo::StreamPriority::REALTIME);
 
     EXPECT_EQ(test_engine->get_buffer_manager()->get_num_channels(buf_token), 1);
-    EXPECT_EQ(test_engine->get_buffer_manager()->get_root_audio_buffer_size(buf_token), 256);
+    EXPECT_EQ(test_engine->get_buffer_manager()->get_buffer_size(buf_token), 256);
     EXPECT_EQ(test_engine->get_scheduler()->get_rate(), 44100);
 }
 
@@ -296,7 +296,7 @@ TEST_F(EngineTest, BufferSystemIntegration)
     auto buffer_manager = engine->get_buffer_manager();
     ASSERT_NE(buffer_manager, nullptr);
 
-    EXPECT_EQ(buffer_manager->get_root_audio_buffer_size(buf_token), TestConfig::BUFFER_SIZE);
+    EXPECT_EQ(buffer_manager->get_buffer_size(buf_token), TestConfig::BUFFER_SIZE);
     EXPECT_EQ(buffer_manager->get_num_channels(buf_token), TestConfig::NUM_CHANNELS);
 
     for (unsigned int i = 0; i < TestConfig::NUM_CHANNELS; i++) {
