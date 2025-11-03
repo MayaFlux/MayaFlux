@@ -131,7 +131,7 @@ struct RasterizationConfig {
 struct DepthStencilConfig {
     bool depth_test_enable = true;
     bool depth_write_enable = true;
-    CompareOp depth_compare_op = CompareOp::LESS;
+    CompareOp depth_compare_op = CompareOp::ALWAYS;
     bool stencil_test_enable = false;
 
     DepthStencilConfig() = default;
@@ -496,17 +496,6 @@ public:
      */
     std::vector<DescriptorSetID> allocate_pipeline_descriptors(RenderPipelineID pipeline);
 
-    /**
-     * @brief All-in-one: begin render pass with swapchain framebuffer
-     * @param cmd_id Command buffer ID
-     * @param render_pass Render pass ID
-     * @param clear_color Clear color
-     */
-    // void begin_swapchain_render_pass(
-    //     CommandBufferID cmd_id,
-    //     RenderPassID render_pass,
-    //     const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
-
 private:
     struct WindowRenderAssociation {
         std::weak_ptr<Core::Window> window;
@@ -538,8 +527,6 @@ private:
 
     ShaderFoundry* m_shader_foundry = nullptr;
     Registry::Service::DisplayService* m_display_service = nullptr;
-
-    // bool m_initialized {};
 };
 
 /**

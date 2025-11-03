@@ -274,6 +274,13 @@ RenderPassID RenderFlow::create_render_pass(
     }
     create_info.subpasses.push_back(subpass);
 
+    create_info.dependencies.emplace_back(
+        VK_SUBPASS_EXTERNAL, 0,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::AccessFlagBits::eNone,
+        vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+
     if (!render_pass->create(m_shader_foundry->get_device(), create_info)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "Failed to create VKRenderPass");
@@ -383,6 +390,7 @@ RenderPipelineID RenderFlow::create_pipeline(const RenderPipelineConfig& config)
         vk_config.vertex_bindings = vk_bindings;
         vk_config.vertex_attributes = vk_attributes;
         vk_config.use_vertex_shader_reflection = false;
+
     } else if (!config.vertex_bindings.empty() || !config.vertex_attributes.empty()) {
         MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
             "Pipeline using explicit vertex config ({} bindings, {} attributes)",
@@ -517,7 +525,7 @@ RenderPipelineID RenderFlow::create_simple_pipeline(
     config.rasterization.polygon_mode = PolygonMode::FILL;
     config.rasterization.cull_mode = CullMode::BACK;
     config.rasterization.front_face_ccw = true;
-    config.depth_stencil.depth_test_enable = true;
+    config.depth_stencil.depth_test_enable = false;
     config.depth_stencil.depth_write_enable = true;
 
     config.blend_attachments.emplace_back();
@@ -614,6 +622,7 @@ void RenderFlow::begin_render_pass(
     std::vector<vk::ClearValue> clear_values(rp_it->second.attachments.size());
     for (auto& clear_value : clear_values) {
         clear_value.color = vk::ClearColorValue(clear_color);
+        // clear_value.color = vk::ClearColorValue(std::array<float, 4> { 0.2f, 0.2f, 0.2f, 1.0f }); // Gray
     }
 
     begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
@@ -675,6 +684,24 @@ void RenderFlow::bind_vertex_buffers(
     vk_buffers.reserve(buffers.size());
     for (const auto& buf : buffers) {
         vk_buffers.push_back(buf->get_buffer());
+
+        /* void* mapped = buf->get_mapped_ptr();
+        if (mapped) {
+            float* data = reinterpret_cast<float*>(mapped);
+            MF_PRINT(Journal::Component::Portal, Journal::Context::Rendering,
+                "BIND_VERTEX: All vertex data:");
+            for (int v = 0; v < 3; ++v) {
+                int offset = v * 6; // 24 bytes / 4 bytes per float = 6 floats per vertex
+                MF_PRINT(Journal::Component::Portal, Journal::Context::Rendering,
+                    "  Vertex {}: pos=({}, {}, {}), color=({}, {}, {})",
+                    v,
+                    data[offset], data[offset + 1], data[offset + 2],
+                    data[offset + 3], data[offset + 4], data[offset + 5]);
+            }
+        } else {
+            MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+                "BIND_VERTEX: Buffer not host-mapped!");
+        } */
     }
 
     cmd.bindVertexBuffers(first_binding, vk_buffers, offsets);
@@ -765,6 +792,8 @@ void RenderFlow::draw(
 {
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
         return;
     }
 

@@ -143,6 +143,10 @@ void BufferUploadProcessor::upload_device_local(const std::shared_ptr<VKBuffer>&
 
         vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(ptr));
 
+        // MF_PRINT(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        //     "UPLOAD: target->get_buffer() at copy time: {:p}",
+        //     (void*)(VkBuffer)target->get_buffer());
+
         cmd.copyBuffer(
             staging_buffer->get_buffer(),
             target->get_buffer(),
