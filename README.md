@@ -56,7 +56,7 @@ All components remain **composable and concurrent**. Processing domains are enco
 - C++20 coroutine scheduling infrastructure
 - **Lila JIT compiler**: Live C++ execution with sub-buffer latency (LLVM21-backed)
 - Region-based memory management and NDData containers
-- **120,000+ lines of tested, documented core infrastructure**
+- **100,000+ lines of tested, documented core infrastructure**
 
 ### ✓ Proof-of-Concept (Validated)
 
@@ -116,11 +116,19 @@ int main() {
     MayaFlux::Init();
 
     // Create nodes
-    auto sine = std::make_shared<Sine>(440.0f, 0.1f);
-    auto filter = std::make_shared<LPF>(5000.0f);
+    auto sine = vega.Sine(200)[{0, 1}] | Audio;
+    uint32_t input_samples = 30;
+    uint32_t output_samples = 8;
+    auto filter = vega.IIR(30, 8);
+    sine >> filter;
 
-    // Connect in graph
-    sine | Audio >> filter | Audio >> DAC::instance();
+    auto impulse = vega.Impulse(1)[0] | Graphics;
+    float freq = 200.f;
+    impulse->on_impulse([&freq, sine](auto& ctx){
+        freq+= ctx.value * 10;
+        sine->set_frequence(freq);
+    })
+
 
     // Start processing
     MayaFlux::Start();
@@ -244,25 +252,25 @@ If you're investigating:
 
 - ✓ Validate core audio architecture
 - ✓ Implement live coding (Lila)
-- → Public launch (November 2024)
+- → Public launch (November 2025)
 
-### Phase 2 (Q1 2025)
+### Phase 2 (Q1 2026)
 
 - GPU compute shader integration
 - Advanced visual effect pipelines
 - Academic research publications
 
-### Phase 3 (Q2-Q3 2025)
+### Phase 3 (Q2-Q3 2026)
 
-- Game engine integrations (UE5, Godot bindings)
+- Hardware controllers
 - Network streaming (distributed processing)
 - Advanced scheduling patterns
 
 ### Phase 4+ (TBD)
 
-- Lua live coding (Sol2 integration)
+- OpenCV integration
 - WASM targets (web deployment)
-- Java FFI (cross-language interop)
+- Live hardware controllers with coroutines
 
 ---
 
