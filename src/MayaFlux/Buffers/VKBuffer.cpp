@@ -180,8 +180,6 @@ vk::BufferUsageFlags VKBuffer::get_usage_flags() const
 
     switch (m_usage) {
     case Usage::STAGING:
-        flags |= vk::BufferUsageFlagBits::eVertexBuffer;
-        // TODO:: Revert to only transfer usage
         break;
     case Usage::DEVICE:
     case Usage::COMPUTE:

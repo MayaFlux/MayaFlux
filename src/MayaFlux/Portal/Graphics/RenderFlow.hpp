@@ -131,7 +131,7 @@ struct RasterizationConfig {
 struct DepthStencilConfig {
     bool depth_test_enable = true;
     bool depth_write_enable = true;
-    CompareOp depth_compare_op = CompareOp::ALWAYS;
+    CompareOp depth_compare_op = CompareOp::NEVER;
     bool stencil_test_enable = false;
 
     DepthStencilConfig() = default;
