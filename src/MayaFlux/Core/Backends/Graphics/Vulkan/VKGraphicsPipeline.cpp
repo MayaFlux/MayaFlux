@@ -377,7 +377,35 @@ vk::PipelineVertexInputStateCreateInfo VKGraphicsPipeline::build_vertex_input_st
     std::vector<vk::VertexInputBindingDescription>& bindings,
     std::vector<vk::VertexInputAttributeDescription>& attributes)
 {
-    if (config.use_vertex_shader_reflection && config.vertex_shader && config.vertex_shader->has_vertex_input()) {
+    if (!config.vertex_bindings.empty() || !config.vertex_attributes.empty()) {
+        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Using explicit vertex bindings/attributes from config "
+            "({} bindings, {} attributes)",
+            config.vertex_bindings.size(), config.vertex_attributes.size());
+
+        for (const auto& binding : config.vertex_bindings) {
+            vk::VertexInputBindingDescription vk_binding;
+            vk_binding.binding = binding.binding;
+            vk_binding.stride = binding.stride;
+            vk_binding.inputRate = binding.input_rate;
+            bindings.push_back(vk_binding);
+        }
+
+        for (const auto& attribute : config.vertex_attributes) {
+            vk::VertexInputAttributeDescription vk_attr;
+            vk_attr.location = attribute.location;
+            vk_attr.binding = attribute.binding;
+            vk_attr.format = attribute.format;
+            vk_attr.offset = attribute.offset;
+            attributes.push_back(vk_attr);
+        }
+    } else if (
+        config.use_vertex_shader_reflection
+        && config.vertex_shader
+        && config.vertex_shader->has_vertex_input()) {
+
+        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Using vertex input from shader reflection");
         const auto& vertex_input = config.vertex_shader->get_vertex_input();
 
         for (const auto& binding : vertex_input.bindings) {
@@ -397,22 +425,8 @@ vk::PipelineVertexInputStateCreateInfo VKGraphicsPipeline::build_vertex_input_st
             attributes.push_back(vk_attr);
         }
     } else {
-        for (const auto& binding : config.vertex_bindings) {
-            vk::VertexInputBindingDescription vk_binding;
-            vk_binding.binding = binding.binding;
-            vk_binding.stride = binding.stride;
-            vk_binding.inputRate = binding.input_rate;
-            bindings.push_back(vk_binding);
-        }
-
-        for (const auto& attribute : config.vertex_attributes) {
-            vk::VertexInputAttributeDescription vk_attr;
-            vk_attr.location = attribute.location;
-            vk_attr.binding = attribute.binding;
-            vk_attr.format = attribute.format;
-            vk_attr.offset = attribute.offset;
-            attributes.push_back(vk_attr);
-        }
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "No vertex input: using empty vertex state (full-screen quad or compute)");
     }
 
     vk::PipelineVertexInputStateCreateInfo vertex_input;

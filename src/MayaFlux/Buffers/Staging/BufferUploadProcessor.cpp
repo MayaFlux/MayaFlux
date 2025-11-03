@@ -141,9 +141,9 @@ void BufferUploadProcessor::upload_device_local(const std::shared_ptr<VKBuffer>&
         copy_region.dstOffset = 0;
         copy_region.size = bytes;
 
-        auto cmd = static_cast<vk::CommandBuffer*>(ptr);
+        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(ptr));
 
-        cmd->copyBuffer(
+        cmd.copyBuffer(
             staging_buffer->get_buffer(),
             target->get_buffer(),
             1, &copy_region);

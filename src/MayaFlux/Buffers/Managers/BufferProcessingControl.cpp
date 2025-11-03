@@ -85,7 +85,7 @@ void BufferProcessingControl::add_processor(
             add_audio_processor(processor, audio_buffer);
         }
     } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
-        add_graphics_processor_to_buffer(processor, buffer, token);
+        add_graphics_processor(processor, buffer, token);
     }
 }
 
@@ -339,7 +339,7 @@ void BufferProcessingControl::add_graphics_processor(
     chain->add_processor(processor, root_buffer);
 }
 
-void BufferProcessingControl::add_graphics_processor_to_buffer(
+void BufferProcessingControl::add_graphics_processor(
     const std::shared_ptr<BufferProcessor>& processor,
     const std::shared_ptr<Buffer>& buffer,
     ProcessingToken token)

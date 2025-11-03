@@ -42,6 +42,7 @@ RootGraphicsUnit::RootGraphicsUnit()
     : root_buffer(std::make_shared<RootGraphicsBuffer>())
     , processing_chain(std::make_shared<BufferProcessingChain>())
 {
+    processing_chain->set_preferred_token(ProcessingToken::GRAPHICS_BACKEND);
 }
 
 void RootGraphicsUnit::initialize(ProcessingToken token)

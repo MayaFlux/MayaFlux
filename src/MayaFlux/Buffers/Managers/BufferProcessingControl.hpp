@@ -265,7 +265,7 @@ public:
      * @param buffer Target graphics buffer
      * @param token Processing domain
      */
-    void add_graphics_processor_to_buffer(
+    void add_graphics_processor(
         const std::shared_ptr<BufferProcessor>& processor,
         const std::shared_ptr<class Buffer>& buffer,
         ProcessingToken token);

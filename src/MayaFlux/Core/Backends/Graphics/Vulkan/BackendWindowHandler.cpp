@@ -474,7 +474,6 @@ void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
     submit_info.pSignalSemaphores = &render_finished;
 
     try {
-        std::cout << "Submitting command buffer for window '" << window->get_create_info().title << "'\n";
         graphics_queue.submit(1, &submit_info, in_flight);
     } catch (const std::exception& e) {
         error_rethrow(

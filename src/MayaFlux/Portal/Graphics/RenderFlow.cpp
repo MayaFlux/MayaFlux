@@ -1,5 +1,7 @@
 #include "RenderFlow.hpp"
 
+#include "LayoutTranslator.hpp"
+
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKFramebuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
@@ -12,6 +14,31 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Portal::Graphics {
+
+namespace {
+
+    /**
+     * @brief Translate semantic VertexLayout to Vulkan bindings/attributes
+     * @param layout Semantic vertex layout
+     * @return Tuple of (bindings, attributes)
+     */
+    static std::pair<
+        std::vector<Core::VertexBinding>,
+        std::vector<Core::VertexAttribute>>
+    translate_semantic_layout(const Kakshya::VertexLayout& layout)
+    {
+        using namespace MayaFlux::Portal::Graphics;
+
+        auto [vk_bindings, vk_attributes] = VertexLayoutTranslator::translate_layout(layout);
+
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
+            "Translated semantic vertex layout: {} bindings, {} attributes",
+            vk_bindings.size(), vk_attributes.size());
+
+        return { vk_bindings, vk_attributes };
+    }
+
+} // anonymous namespace
 
 //==============================================================================
 // Initialization
@@ -344,21 +371,45 @@ RenderPipelineID RenderFlow::create_pipeline(const RenderPipelineConfig& config)
         vk_config.tess_evaluation_shader = m_shader_foundry->get_vk_shader_module(config.tess_eval_shader);
     }
 
-    for (const auto& binding : config.vertex_bindings) {
-        Core::VertexBinding vk_binding {};
-        vk_binding.binding = binding.binding;
-        vk_binding.stride = binding.stride;
-        vk_binding.input_rate = binding.per_instance ? vk::VertexInputRate::eInstance : vk::VertexInputRate::eVertex;
-        vk_config.vertex_bindings.push_back(vk_binding);
-    }
+    if (config.semantic_vertex_layout.has_value()) {
+        MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
+            "Pipeline using semantic VertexLayout ({} vertices, {} attributes)",
+            config.semantic_vertex_layout->vertex_count,
+            config.semantic_vertex_layout->attributes.size());
 
-    for (const auto& attr : config.vertex_attributes) {
-        Core::VertexAttribute vk_attr {};
-        vk_attr.location = attr.location;
-        vk_attr.binding = attr.binding;
-        vk_attr.format = attr.format;
-        vk_attr.offset = attr.offset;
-        vk_config.vertex_attributes.push_back(vk_attr);
+        auto [vk_bindings, vk_attributes] = translate_semantic_layout(
+            config.semantic_vertex_layout.value());
+
+        vk_config.vertex_bindings = vk_bindings;
+        vk_config.vertex_attributes = vk_attributes;
+        vk_config.use_vertex_shader_reflection = false;
+    } else if (!config.vertex_bindings.empty() || !config.vertex_attributes.empty()) {
+        MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
+            "Pipeline using explicit vertex config ({} bindings, {} attributes)",
+            config.vertex_bindings.size(), config.vertex_attributes.size());
+
+        for (const auto& binding : config.vertex_bindings) {
+            Core::VertexBinding vk_binding {};
+            vk_binding.binding = binding.binding;
+            vk_binding.stride = binding.stride;
+            vk_binding.input_rate = binding.per_instance ? vk::VertexInputRate::eInstance : vk::VertexInputRate::eVertex;
+            vk_config.vertex_bindings.push_back(vk_binding);
+        }
+
+        for (const auto& attr : config.vertex_attributes) {
+            Core::VertexAttribute vk_attr {};
+            vk_attr.location = attr.location;
+            vk_attr.binding = attr.binding;
+            vk_attr.format = attr.format;
+            vk_attr.offset = attr.offset;
+            vk_config.vertex_attributes.push_back(vk_attr);
+        }
+
+        vk_config.use_vertex_shader_reflection = false;
+    } else {
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
+            "Pipeline will use shader reflection for vertex input");
+        vk_config.use_vertex_shader_reflection = config.use_vertex_shader_reflection;
     }
 
     vk_config.topology = to_vk_topology(config.topology);
@@ -754,7 +805,16 @@ void RenderFlow::present_rendered_image(
         return;
     }
 
-    m_display_service->present_frame(window, cmd);
+    try {
+        cmd.end();
+    } catch (const std::exception& e) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Failed to end command buffer: {}", e.what());
+        return;
+    }
+
+    uint64_t cmd_bits = *reinterpret_cast<uint64_t*>(&cmd);
+    m_display_service->present_frame(window, cmd_bits);
 }
 
 //==========================================================================

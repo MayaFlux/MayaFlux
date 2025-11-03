@@ -235,9 +235,9 @@ std::vector<std::shared_ptr<VKBuffer>> BufferManager::get_buffers_by_usage(
 
 void BufferManager::add_processor(
     const std::shared_ptr<BufferProcessor>& processor,
-    const std::shared_ptr<Buffer>& buffer)
+    const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
 {
-    m_processor_control->add_processor(processor, buffer);
+    m_processor_control->add_processor(processor, buffer, token);
 }
 
 void BufferManager::add_processor_to_channel(

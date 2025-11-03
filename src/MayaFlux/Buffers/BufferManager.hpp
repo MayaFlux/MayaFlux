@@ -291,7 +291,7 @@ public:
      */
     void add_processor(
         const std::shared_ptr<BufferProcessor>& processor,
-        const std::shared_ptr<Buffer>& buffer);
+        const std::shared_ptr<Buffer>& buffer, ProcessingToken token = ProcessingToken::AUDIO_BACKEND);
 
     /**
      * @brief Adds a processor to a token and channel (audio-specific)
