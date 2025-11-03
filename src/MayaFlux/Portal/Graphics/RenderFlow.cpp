@@ -274,12 +274,19 @@ RenderPassID RenderFlow::create_render_pass(
     }
     create_info.subpasses.push_back(subpass);
 
-    create_info.dependencies.emplace_back(
-        VK_SUBPASS_EXTERNAL, 0,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::AccessFlagBits::eNone,
-        vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+    // create_info.dependencies.emplace_back(
+    //     VK_SUBPASS_EXTERNAL, 0,
+    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
+    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
+    //     vk::AccessFlagBits::eColorAttachmentWrite,
+    //     vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+
+    // create_info.dependencies.emplace_back(
+    //     0, VK_SUBPASS_EXTERNAL,
+    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
+    //     vk::PipelineStageFlagBits::eBottomOfPipe,
+    //     vk::AccessFlagBits::eColorAttachmentWrite,
+    //     vk::AccessFlagBits::eMemoryRead);
 
     if (!render_pass->create(m_shader_foundry->get_device(), create_info)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
@@ -872,6 +879,13 @@ void RenderFlow::register_window_for_rendering(
             "Window '{}' not registered with graphics backend yet. "
             "Ensure GraphicsSubsystem has registered this window.",
             window->get_create_info().title);
+    }
+
+    if (!m_display_service->attach_render_pass(window, rp_it->second.render_pass)) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Failed to attach render pass to window '{}'",
+            window->get_create_info().title);
+        return;
     }
 
     WindowRenderAssociation association;

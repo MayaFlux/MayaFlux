@@ -93,6 +93,18 @@ struct MAYAFLUX_API DisplayService {
      * Returns nullptr if window not registered.
      */
     std::function<void*(const std::shared_ptr<void>&)> get_window_render_pass;
+
+    /**
+     * @brief Attach a custom render pass to a window
+     * @param window_handle Window handle
+     * @param render_pass_handle Opaque render pass handle (Core::VKRenderPass cast to shared void*)
+     * @return bool True on success, false on failure
+     * Replaces the backend-managed render pass with a user-provided one.
+     * Recreates framebuffers to be compatible with the new render pass.
+     * Used for advanced rendering techniques requiring custom render passes.
+     * Waits for idle before making changes.
+     */
+    std::function<bool(const std::shared_ptr<void>&, const std::shared_ptr<void>&)> attach_render_pass;
 };
 
 } // namespace MayaFlux::Registry::Services

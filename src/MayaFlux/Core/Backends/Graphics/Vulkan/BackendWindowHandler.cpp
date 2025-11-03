@@ -157,6 +157,14 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         vk::RenderPass rp = context->render_pass->get();
         return static_cast<void*>(rp);
     };
+
+    display_service->attach_render_pass = [this](
+                                              const std::shared_ptr<void>& window_ptr,
+                                              const std::shared_ptr<void>& render_pass_handle) -> bool {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto render_pass = std::static_pointer_cast<Core::VKRenderPass>(render_pass_handle);
+        return this->attach_render_pass(window, render_pass);
+    };
 }
 
 WindowRenderContext* BackendWindowHandler::find_window_context(const std::shared_ptr<Window>& window)
@@ -318,7 +326,7 @@ bool BackendWindowHandler::recreate_swapchain_internal(WindowRenderContext& cont
     }
     context.framebuffers.clear();
 
-    if (context.render_pass) {
+    if (context.render_pass && !context.user_render_pass_attached) {
         context.render_pass->cleanup(m_context.get_device());
         context.render_pass.reset();
     }
@@ -330,14 +338,16 @@ bool BackendWindowHandler::recreate_swapchain_internal(WindowRenderContext& cont
         return false;
     }
 
-    context.render_pass = std::make_unique<VKRenderPass>();
-    if (!context.render_pass->create(
-            m_context.get_device(),
-            context.swapchain->get_image_format())) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "Failed to recreate render pass for window '{}'",
-            context.window->get_create_info().title);
-        return false;
+    if (!context.user_render_pass_attached) {
+        context.render_pass = std::make_unique<VKRenderPass>();
+        if (!context.render_pass->create(
+                m_context.get_device(),
+                context.swapchain->get_image_format())) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Failed to recreate render pass for window '{}'",
+                context.window->get_create_info().title);
+            return false;
+        }
     }
 
     uint32_t image_count = context.swapchain->get_image_count();
@@ -527,6 +537,65 @@ void BackendWindowHandler::handle_window_resize()
             recreate_swapchain_for_context(context);
         }
     }
+}
+
+bool BackendWindowHandler::attach_render_pass(
+    const std::shared_ptr<Window>& window,
+    const std::shared_ptr<Core::VKRenderPass>& render_pass)
+{
+    auto* context = find_window_context(window);
+    if (!context) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Window not registered");
+        return false;
+    }
+
+    if (!render_pass) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Cannot attach null render pass");
+        return false;
+    }
+
+    m_context.wait_idle();
+
+    for (auto& fb : context->framebuffers) {
+        if (fb)
+            fb->cleanup(m_context.get_device());
+    }
+    context->framebuffers.clear();
+
+    if (context->render_pass) {
+        context->render_pass->cleanup(m_context.get_device());
+    }
+    context->render_pass = render_pass;
+    context->user_render_pass_attached = true;
+
+    uint32_t image_count = context->swapchain->get_image_count();
+    context->framebuffers.resize(image_count);
+    auto extent = context->swapchain->get_extent();
+    const auto& image_views = context->swapchain->get_image_views();
+
+    for (uint32_t i = 0; i < image_count; ++i) {
+        context->framebuffers[i] = std::make_unique<VKFramebuffer>();
+        std::vector<vk::ImageView> attachments = { image_views[i] };
+
+        if (!context->framebuffers[i]->create(
+                m_context.get_device(),
+                render_pass->get(),
+                attachments,
+                extent.width,
+                extent.height)) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Failed to create framebuffer {} with user render pass", i);
+            return false;
+        }
+    }
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsCallback,
+        "Attached user render pass to window '{}' - recreated {} framebuffers",
+        window->get_create_info().title, image_count);
+
+    return true;
 }
 
 void BackendWindowHandler::cleanup()

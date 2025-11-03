@@ -105,11 +105,12 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
 
     pipeline_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
     pipeline_config.rasterization.polygon_mode = Portal::Graphics::PolygonMode::FILL;
-    pipeline_config.rasterization.cull_mode = Portal::Graphics::CullMode::BACK;
-    pipeline_config.rasterization.front_face_ccw = true;
+    // pipeline_config.rasterization.cull_mode = Portal::Graphics::CullMode::BACK;
+    pipeline_config.rasterization.cull_mode = Portal::Graphics::CullMode::NONE; // Disable culling
+    pipeline_config.rasterization.front_face_ccw = false;
 
-    pipeline_config.depth_stencil.depth_test_enable = true;
-    pipeline_config.depth_stencil.depth_write_enable = true;
+    pipeline_config.depth_stencil.depth_test_enable = false;
+    pipeline_config.depth_stencil.depth_write_enable = false;
 
     pipeline_config.blend_attachments.emplace_back();
 
