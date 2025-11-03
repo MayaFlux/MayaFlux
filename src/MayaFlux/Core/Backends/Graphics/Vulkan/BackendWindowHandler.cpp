@@ -69,7 +69,7 @@ BackendWindowHandler::BackendWindowHandler(VKContext& context, VKCommandManager&
 
 void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry::Service::DisplayService>& display_service)
 {
-    display_service->present_frame = [this](const std::shared_ptr<void>& window_ptr, void* command_buffer_ptr) {
+    display_service->present_frame = [this](const std::shared_ptr<void>& window_ptr, uint64_t command_buffer_bits) {
         auto window = std::static_pointer_cast<Window>(window_ptr);
         auto ctx = find_window_context(window);
         if (!ctx) {
@@ -77,7 +77,7 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
                 "Window '{}' not registered for presentation", window->get_create_info().title);
             return;
         }
-        ctx->command_buffer = static_cast<vk::CommandBuffer*>(command_buffer_ptr);
+        ctx->command_buffer = *reinterpret_cast<vk::CommandBuffer*>(&command_buffer_bits);
         this->render_window(window);
     };
 
@@ -101,6 +101,16 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         for (const auto& ctx : m_window_contexts) {
             if (ctx.window == window) {
                 return static_cast<uint32_t>(ctx.swapchain->get_image_count());
+            }
+        }
+        return 0;
+    };
+
+    display_service->get_swapchain_format = [this](const std::shared_ptr<void>& window_ptr) -> uint32_t {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        for (const auto& ctx : m_window_contexts) {
+            if (ctx.window == window) {
+                return static_cast<int>(ctx.swapchain->get_image_format());
             }
         }
         return 0;
@@ -459,15 +469,20 @@ void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
     submit_info.pWaitSemaphores = &image_available;
     submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &(*context->command_buffer);
+    submit_info.pCommandBuffers = &(context->command_buffer);
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = &render_finished;
 
     try {
+        std::cout << "Submitting command buffer for window '" << window->get_create_info().title << "'\n";
         graphics_queue.submit(1, &submit_info, in_flight);
-    } catch (const vk::SystemError& e) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to submit command buffer: {}", e.what());
+    } catch (const std::exception& e) {
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsBackend,
+            std::source_location::current(),
+            "Unexpected error during command buffer submission: {}",
+            e.what());
         return;
     }
 

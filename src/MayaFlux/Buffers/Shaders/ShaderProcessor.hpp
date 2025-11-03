@@ -551,7 +551,7 @@ protected:
     size_t m_auto_bind_index {};
 
 protected:
-    virtual void initialize_pipeline();
+    virtual void initialize_pipeline(const std::shared_ptr<Buffer>& buffer);
 
 private:
     //==========================================================================

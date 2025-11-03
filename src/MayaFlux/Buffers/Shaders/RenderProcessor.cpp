@@ -14,7 +14,6 @@ RenderProcessor::RenderProcessor(const ShaderProcessorConfig& config)
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
     m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
-    m_render_pass_id = Portal::Graphics::get_render_flow().create_simple_render_pass();
 }
 
 void RenderProcessor::set_fragment_shader(const std::string& fragment_path)
@@ -54,10 +53,9 @@ void RenderProcessor::set_render_pass(Portal::Graphics::RenderPassID render_pass
 void RenderProcessor::set_target_window(std::shared_ptr<Core::Window> window)
 {
     m_target_window = std::move(window);
-    Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window, m_render_pass_id);
 }
 
-void RenderProcessor::initialize_pipeline()
+void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -71,13 +69,31 @@ void RenderProcessor::initialize_pipeline()
         return;
     }
 
+    auto& flow = Portal::Graphics::get_render_flow();
+
+    if (!m_target_window) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Target window not set");
+        return;
+    }
+
+    vk::Format swapchain_format = vk::Format { m_display_service->get_swapchain_format(m_target_window) };
+    m_render_pass_id = flow.create_simple_render_pass(swapchain_format);
+
     if (m_render_pass_id == Portal::Graphics::INVALID_RENDER_PASS) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Render pass not set");
         return;
     }
 
-    auto& flow = Portal::Graphics::get_render_flow();
+    Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window, m_render_pass_id);
+
+    if (!buffer) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot initialize pipeline: buffer is null");
+        return;
+    }
+    auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
 
     Portal::Graphics::RenderPipelineConfig pipeline_config;
     pipeline_config.vertex_shader = m_shader_id;
@@ -97,10 +113,11 @@ void RenderProcessor::initialize_pipeline()
 
     pipeline_config.blend_attachments.emplace_back();
 
-    if (!m_target_window) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Target window not set");
-        return;
+    auto it = m_buffer_info.find(vk_buffer);
+    if (it != m_buffer_info.end()) {
+        const auto& vertex_info = it->second;
+        pipeline_config.semantic_vertex_layout = vertex_info.semantic_layout;
+        pipeline_config.use_vertex_shader_reflection = vertex_info.use_reflection;
     }
 
     m_render_pipeline_id = flow.create_pipeline(pipeline_config);
@@ -122,7 +139,7 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 
     if (m_needs_pipeline_rebuild) {
-        initialize_pipeline();
+        initialize_pipeline(buffer);
     }
 
     if (m_render_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
@@ -152,15 +169,13 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
-    auto display_service = Registry::BackendRegistry::instance()
-                               .get_service<Registry::Service::DisplayService>();
 
     auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
 
     flow.begin_render_pass(cmd_id, m_target_window);
 
     uint32_t width = 0, height = 0;
-    display_service->get_swapchain_extent(m_target_window, width, height);
+    m_display_service->get_swapchain_extent(m_target_window, width, height);
 
     if (width > 0 && height > 0) {
         auto cmd = foundry.get_command_buffer(cmd_id);
@@ -181,6 +196,31 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     flow.end_render_pass(cmd_id);
 
     vk_buffer->set_pipeline_command(m_render_pipeline_id, cmd_id);
+}
+
+void RenderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+{
+    ShaderProcessor::on_attach(buffer);
+
+    auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
+    if (vk_buffer && vk_buffer->has_vertex_layout()) {
+        auto vertex_layout = vk_buffer->get_vertex_layout();
+        if (vertex_layout.has_value()) {
+            MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "RenderProcessor: Auto-injecting vertex layout "
+                "({} vertices, {} attributes)",
+                vertex_layout->vertex_count,
+                vertex_layout->attributes.size());
+
+            m_needs_pipeline_rebuild = true;
+            m_buffer_info[vk_buffer] = { .semantic_layout = vertex_layout.value(), .use_reflection = false };
+        }
+    }
+
+    if (!m_display_service) {
+        m_display_service = Registry::BackendRegistry::instance()
+                                .get_service<Registry::Service::DisplayService>();
+    }
 }
 
 } // namespace MayaFlux::Buffers

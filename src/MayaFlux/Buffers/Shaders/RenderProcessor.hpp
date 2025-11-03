@@ -26,11 +26,18 @@ public:
 
     Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_render_pipeline_id; }
 
+    void on_attach(std::shared_ptr<Buffer> buffer) override;
+
 protected:
-    void initialize_pipeline() override;
+    void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override;
     void processing_function(std::shared_ptr<Buffer> buffer) override;
 
 private:
+    struct VertexInfo {
+        Kakshya::VertexLayout semantic_layout;
+        bool use_reflection {};
+    };
+
     Portal::Graphics::RenderPipelineID m_render_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
     Portal::Graphics::ShaderID m_geometry_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
@@ -38,6 +45,9 @@ private:
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::RenderPassID m_render_pass_id = Portal::Graphics::INVALID_RENDER_PASS;
     std::shared_ptr<Core::Window> m_target_window;
+
+    std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo> m_buffer_info;
+    Registry::Service::DisplayService* m_display_service = nullptr;
 };
 
 } // namespace MayaFlux::Buffers

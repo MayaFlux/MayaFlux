@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 #include "ShaderFoundry.hpp"
 
 namespace MayaFlux::Registry::Service {
@@ -182,6 +183,12 @@ struct RenderPipelineConfig {
 
     // Input assembly
     PrimitiveTopology topology = PrimitiveTopology::TRIANGLE_LIST;
+
+    // Optional semantic vertex layout
+    std::optional<Kakshya::VertexLayout> semantic_vertex_layout;
+
+    // Use reflection to auto-configure from vertex shader
+    bool use_vertex_shader_reflection = true;
 
     // Rasterization
     RasterizationConfig rasterization;

@@ -3,8 +3,6 @@
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
-#include <vulkan/vulkan.hpp>
-
 namespace MayaFlux::Portal::Graphics {
 
 /**

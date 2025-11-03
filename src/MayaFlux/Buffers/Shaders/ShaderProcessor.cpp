@@ -43,13 +43,13 @@ void ShaderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     if (!m_initialized) {
         initialize_shader();
-        initialize_pipeline();
+        initialize_pipeline(buffer);
         initialize_descriptors();
         m_initialized = true;
     }
 
     if (m_needs_pipeline_rebuild) {
-        initialize_pipeline();
+        initialize_pipeline(buffer);
         m_needs_pipeline_rebuild = false;
     }
 
@@ -408,7 +408,7 @@ void ShaderProcessor::initialize_shader()
         "Shader loaded: {} (ID: {})", m_config.shader_path, m_shader_id);
 }
 
-void ShaderProcessor::initialize_pipeline()
+void ShaderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,

@@ -18,7 +18,7 @@ struct MAYAFLUX_API DisplayService {
      * Blocks until presentation completes or returns immediately
      * depending on vsync settings. Thread-safe.
      */
-    std::function<void(const std::shared_ptr<void>&, void*)> present_frame;
+    std::function<void(const std::shared_ptr<void>&, uint64_t)> present_frame;
 
     /**
      * @brief Wait for all GPU operations to complete
@@ -50,6 +50,16 @@ struct MAYAFLUX_API DisplayService {
      * for double/triple buffering.
      */
     std::function<uint32_t(const std::shared_ptr<void>&)> get_swapchain_image_count;
+
+    /**
+     * @brief Get actual swapchain format for a window
+     * @param window_handle Window handle
+     * @return Vulkan format (vk::Format cast to uint32_t)
+     *
+     * Returns the actual format used by the window's swapchain.
+     * Used to ensure render passes are compatible with framebuffers.
+     */
+    std::function<int(const std::shared_ptr<void>&)> get_swapchain_format;
 
     /**
      * @brief Get current framebuffer for a window

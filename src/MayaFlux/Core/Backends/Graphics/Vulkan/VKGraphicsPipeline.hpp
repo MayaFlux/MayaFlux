@@ -1,7 +1,6 @@
 #pragma once
 
 #include "VKShaderModule.hpp"
-#include <vulkan/vulkan.hpp>
 
 namespace MayaFlux::Core {
 

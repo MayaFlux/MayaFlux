@@ -3,6 +3,7 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "vulkan/vulkan.hpp"
 
@@ -195,6 +196,11 @@ void BufferUploadProcessor::on_attach(std::shared_ptr<Buffer> buffer)
             Journal::Context::BufferProcessing,
             std::source_location::current(),
             "BufferUploadProcessor can only be attached to VKBuffer");
+    }
+
+    if (!m_buffer_service) {
+        m_buffer_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::BufferService>();
     }
 
     if (!m_buffer_service) {
