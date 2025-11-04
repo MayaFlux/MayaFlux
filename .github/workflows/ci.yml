@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -52,6 +52,7 @@ jobs:
             cmake
             rtaudio
             ffmpeg
+            shaderc
             googletest
             pkg-config
             eigen
@@ -63,7 +64,7 @@ jobs:
             llvm
           verbose: true
 
-      - name: Install LLVM via Homebrew
+      - name: Setup LLVM Prefix
         run: |
           LLVM_PREFIX=$(brew --prefix llvm)
           echo "LLVM_PREFIX=$LLVM_PREFIX" >> $GITHUB_ENV
