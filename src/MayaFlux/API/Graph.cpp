@@ -1,5 +1,9 @@
 #include "Graph.hpp"
+
+#include <utility>
+
 #include "Core.hpp"
+#include <utility>
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
@@ -17,7 +21,7 @@ std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager()
     return get_context().get_node_graph_manager();
 }
 
-void register_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel)
+void register_audio_node(const std::shared_ptr<Nodes::Node>& node, uint32_t channel)
 {
     auto manager = get_node_graph_manager();
     if (channel >= manager->get_channel_count(Nodes::ProcessingToken::AUDIO_RATE)) {
@@ -27,14 +31,14 @@ void register_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel)
     manager->add_to_root(node, Nodes::ProcessingToken::AUDIO_RATE, channel);
 }
 
-void register_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<uint32_t> channels)
+void register_audio_node(const std::shared_ptr<Nodes::Node>& node, const std::vector<uint32_t>& channels)
 {
     for (const auto& channel : channels) {
         register_audio_node(node, channel);
     }
 }
 
-void unregister_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel)
+void unregister_audio_node(const std::shared_ptr<Nodes::Node>& node, uint32_t channel)
 {
     auto manager = get_node_graph_manager();
     if (channel >= manager->get_channel_count(Nodes::ProcessingToken::AUDIO_RATE)) {
@@ -44,14 +48,14 @@ void unregister_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel)
     manager->remove_from_root(node, Nodes::ProcessingToken::AUDIO_RATE, channel);
 }
 
-void unregister_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<uint32_t> channels)
+void unregister_audio_node(const std::shared_ptr<Nodes::Node>& node, const std::vector<uint32_t>& channels)
 {
     for (const auto& channel : channels) {
         unregister_audio_node(node, channel);
     }
 }
 
-void unregister_audio_node(std::shared_ptr<Nodes::Node> node, const Nodes::ProcessingToken& token, uint32_t channel)
+void unregister_node(const std::shared_ptr<Nodes::Node>& node, const Nodes::ProcessingToken& token, uint32_t channel)
 {
     auto manager = get_node_graph_manager();
     if (channel >= manager->get_channel_count(token)) {
@@ -80,9 +84,19 @@ std::shared_ptr<Buffers::BufferManager> get_buffer_manager()
     return get_context().get_buffer_manager();
 }
 
-void add_processor_to_buffer(std::shared_ptr<Buffers::BufferProcessor> processor, std::shared_ptr<Buffers::AudioBuffer> buffer)
+void add_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, const std::shared_ptr<Buffers::Buffer>& buffer, Buffers::ProcessingToken token)
 {
-    get_buffer_manager()->add_processor(processor, buffer);
+    get_buffer_manager()->add_processor(processor, buffer, token);
+}
+
+void add_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, Buffers::ProcessingToken token, uint32_t channel)
+{
+    get_buffer_manager()->add_processor(processor, token, channel);
+}
+
+void add_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, Buffers::ProcessingToken token)
+{
+    get_buffer_manager()->add_processor(processor, token);
 }
 
 std::shared_ptr<Buffers::BufferProcessingChain> create_processing_chain()
@@ -95,13 +109,13 @@ Buffers::RootAudioBuffer& get_root_audio_buffer(uint32_t channel)
     return *get_buffer_manager()->get_root_audio_buffer(Buffers::ProcessingToken::AUDIO_BACKEND, channel);
 }
 
-void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, uint32_t channel_index, float mix, bool clear_before)
+void connect_node_to_channel(const std::shared_ptr<Nodes::Node>& node, uint32_t channel_index, float mix, bool clear_before)
 {
     auto token = get_buffer_manager()->get_default_audio_token();
-    get_buffer_manager()->connect_node_to_channel(node, token, 0, mix, clear_before);
+    get_buffer_manager()->connect_node_to_channel(node, token, channel_index, mix, clear_before);
 }
 
-void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<Buffers::AudioBuffer> buffer, float mix, bool clear_before)
+void connect_node_to_buffer(const std::shared_ptr<Nodes::Node>& node, const std::shared_ptr<Buffers::AudioBuffer>& buffer, float mix, bool clear_before)
 {
     get_buffer_manager()->connect_node_to_buffer(node, buffer, mix, clear_before);
 }
@@ -112,37 +126,40 @@ void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<B
 
 std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer)
 {
-    return get_buffer_manager()->attach_quick_process(processor, buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
+    return get_buffer_manager()->attach_quick_process(std::move(processor), buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
 }
 
 std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, unsigned int channel_id)
 {
-    return get_buffer_manager()->attach_quick_process(processor, Buffers::ProcessingToken::AUDIO_BACKEND, channel_id);
+    return get_buffer_manager()->attach_quick_process(std::move(processor), Buffers::ProcessingToken::AUDIO_BACKEND, channel_id);
 }
 
-std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(Buffers::BufferProcessingFunction processor, const std::vector<unsigned int> channels)
-{
-    std::shared_ptr<Buffers::BufferProcessor> quick_processor = nullptr;
-    quick_processor = get_buffer_manager()->attach_quick_process(processor, Buffers::ProcessingToken::AUDIO_BACKEND);
-    return quick_processor;
-}
-
-void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel)
+void register_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel)
 {
     get_buffer_manager()->add_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
 }
 
-void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel)
+void unregister_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel)
 {
     get_buffer_manager()->remove_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
 }
 
-void read_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel)
+void register_graphics_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer, Buffers::ProcessingToken token)
+{
+    get_buffer_manager()->add_buffer(buffer, token);
+}
+
+void unregister_graphics_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    get_buffer_manager()->remove_buffer(buffer, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+}
+
+void read_from_audio_input(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel)
 {
     get_buffer_manager()->register_input_listener(buffer, channel);
 }
 
-void detach_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel)
+void detach_from_audio_input(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel)
 {
     get_buffer_manager()->unregister_input_listener(buffer, channel);
 }
@@ -159,18 +176,18 @@ std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(uint32_t chan
     return buffer;
 }
 
-void clone_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+void clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels)
 {
     get_buffer_manager()->clone_buffer_for_channels(buffer, channels, Buffers::ProcessingToken::AUDIO_BACKEND);
 }
 
-void clone_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer, const std::vector<uint32_t>& channels, const Buffers::ProcessingToken& token)
+void clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer, const std::vector<uint32_t>& channels, const Buffers::ProcessingToken& token)
 {
     get_buffer_manager()->clone_buffer_for_channels(buffer, channels, token);
 }
 
-void supply_buffer_to_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
+void supply_buffer_to_channel(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     uint32_t channel, double mix)
 {
     auto manager = get_buffer_manager();
@@ -179,7 +196,7 @@ void supply_buffer_to_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
     }
 }
 
-void supply_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+void supply_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels,
     double mix)
 {
@@ -188,7 +205,7 @@ void supply_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
     }
 }
 
-void remove_supplied_buffer_from_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
+void remove_supplied_buffer_from_channel(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const uint32_t channel)
 {
     auto manager = get_buffer_manager();
@@ -198,7 +215,7 @@ void remove_supplied_buffer_from_channel(std::shared_ptr<Buffers::AudioBuffer> b
     }
 }
 
-void remove_supplied_buffer_from_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+void remove_supplied_buffer_from_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels)
 {
     for (const auto& channel : channels) {

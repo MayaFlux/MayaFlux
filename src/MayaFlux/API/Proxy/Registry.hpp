@@ -26,6 +26,7 @@ namespace Buffers {
     class NodeBuffer;
     class FeedbackBuffer;
     class ContainerBuffer;
+    class VKBuffer;
 }
 
 namespace Kakshya {
@@ -45,8 +46,9 @@ namespace Kakshya {
     X(IIR, MayaFlux::Nodes::Filters::IIR)                      \
     X(FIR, MayaFlux::Nodes::Filters::FIR)
 
-#define ALL_BUFFER_REGISTRATION                          \
-    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)       \
-    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)         \
-    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer) \
-    B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer)
+#define ALL_BUFFER_REGISTRATION                            \
+    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)         \
+    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)           \
+    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)   \
+    B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer) \
+    B(VKBuffer, MayaFlux::Buffers::VKBuffer)

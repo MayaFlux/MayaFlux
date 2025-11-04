@@ -42,7 +42,7 @@ MAYAFLUX_API std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager();
  * Adds the node as a child of the root node for the specified channel.
  * Uses the default engine's node graph manager.
  */
-MAYAFLUX_API void register_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel = 0);
+MAYAFLUX_API void register_audio_node(const std::shared_ptr<Nodes::Node>& node, uint32_t channel = 0);
 
 /**
  * @brief Adds a node to the root node of specified channels
@@ -52,7 +52,7 @@ MAYAFLUX_API void register_audio_node(std::shared_ptr<Nodes::Node> node, uint32_
  * Adds the node as a child of the root node for the specified channels.
  * Uses the default engine's node graph manager.
  */
-MAYAFLUX_API void register_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<uint32_t> channels);
+MAYAFLUX_API void register_audio_node(const std::shared_ptr<Nodes::Node>& node, const std::vector<uint32_t>& channels);
 
 MAYAFLUX_API void register_node(
     const std::shared_ptr<Nodes::Node>& node,
@@ -67,8 +67,16 @@ MAYAFLUX_API void register_node(
  * Removes the node from being a child of the root node for the specified channel.
  * Uses the default engine's node graph manager.
  */
-MAYAFLUX_API void unregister_audio_node(std::shared_ptr<Nodes::Node> node, uint32_t channel = 0);
+MAYAFLUX_API void unregister_audio_node(const std::shared_ptr<Nodes::Node>& node, uint32_t channel = 0);
 
+/**
+ * @brief Removes a node from the root node of specified channels
+ * @param node Node to remove
+ * @param channels Vector of channel indices
+ *
+ * Removes the node from being a child of the root node for the specified channels.
+ * Uses the default engine's node graph manager.
+ */
 MAYAFLUX_API void unregister_node(
     const std::shared_ptr<Nodes::Node>& node,
     const Nodes::ProcessingToken& token,
@@ -82,7 +90,7 @@ MAYAFLUX_API void unregister_node(
  * Removes the node from being a child of the root node for the list of channels
  * Uses the default engine's node graph manager.
  */
-MAYAFLUX_API void unregister_audio_node(std::shared_ptr<Nodes::Node> node, std::vector<uint32_t> channels);
+MAYAFLUX_API void unregister_audio_node(const std::shared_ptr<Nodes::Node>& node, const std::vector<uint32_t>& channels);
 
 /**
  * @brief Gets the root node for a specific channel
@@ -124,7 +132,29 @@ MAYAFLUX_API std::shared_ptr<Buffers::BufferManager> get_buffer_manager();
  * Adds the processor to the specified buffer's processing chain.
  * Uses the default engine's buffer manager.
  */
-MAYAFLUX_API void add_processor_to_buffer(std::shared_ptr<Buffers::BufferProcessor> processor, std::shared_ptr<Buffers::AudioBuffer> buffer);
+MAYAFLUX_API void add_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, const std::shared_ptr<Buffers::Buffer>& buffer, Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
+
+/**
+ * @brief Adds a processor to all buffers in a specific channel
+ * @param processor Processor to add
+ * @param token Processing domain
+ * @param channel Channel index
+ *
+ * Adds the processor to all buffers associated with the specified channel
+ * in the given processing domain.
+ * Uses the default engine's buffer manager.
+ */
+MAYAFLUX_API void add_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, Buffers::ProcessingToken token, uint32_t channel);
+
+/**
+ * @brief Adds a processor to all buffers in a processing domain
+ * @param processor Processor to add
+ * @param token Processing domain
+ *
+ * Adds the processor to all buffers associated with the given processing domain.
+ * Uses the default engine's buffer manager.
+ */
+MAYAFLUX_API void add_processor(const std::shared_ptr<Buffers::BufferProcessor>& processor, Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
 /**
  * @brief Registers an AudioBuffer with the default engine's buffer manager
@@ -136,7 +166,7 @@ MAYAFLUX_API void add_processor_to_buffer(std::shared_ptr<Buffers::BufferProcess
  * processed during each audio cycle according to its configuration.
  * Multiple buffers can be registered to the same channel for layered processing.
  */
-MAYAFLUX_API void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel = 0);
+MAYAFLUX_API void register_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0);
 
 /**
  * @brief Unregisters an AudioBuffer from the default engine's buffer manager
@@ -148,7 +178,7 @@ MAYAFLUX_API void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> bu
  * This is essential for clean shutdown and preventing processing of
  * destroyed or invalid buffers.
  */
-MAYAFLUX_API void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel = 0);
+MAYAFLUX_API void unregister_audio_buffer(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0);
 
 /**
  * @brief creates a new buffer of the specified type and registers it
@@ -167,6 +197,40 @@ auto create_buffer(uint32_t channel, uint32_t buffer_size, Args&&... args) -> st
 }
 
 /**
+ * @brief Registers a VKBuffer with the default engine's buffer manager
+ * @param buffer VKBuffer to register
+ *
+ * Adds the buffer to the default engine's buffer management system, enabling
+ * it to participate in the graphics processing pipeline.
+ */
+MAYAFLUX_API void register_graphics_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer, Buffers::ProcessingToken token = Buffers::ProcessingToken::GRAPHICS_BACKEND);
+
+/**
+ * @brief Unregisters a VKBuffer from the default engine's buffer manager
+ * @param buffer VKBuffer to unregister
+ *
+ * Removes the buffer from the default engine's buffer management system.
+ * The buffer will no longer participate in graphics processing cycles.
+ */
+MAYAFLUX_API void unregister_graphics_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
+
+/**
+ * @brief creates a new graphics buffer of the specified type and registers it
+ * @tparam BufferType Type of buffer to create (must be derived from VKBuffer)
+ * @tparam Args Constructor argument types
+ * @param args Constructor arguments for the buffer
+ * @return Shared pointer to the created buffer
+ */
+template <typename BufferType, typename... Args>
+    requires std::derived_from<BufferType, Buffers::VKBuffer>
+auto create_buffer(Args&&... args) -> std::shared_ptr<BufferType>
+{
+    auto buffer = std::make_shared<BufferType>(std::forward<Args>(args)...);
+    register_graphics_buffer(buffer);
+    return buffer;
+}
+
+/**
  *  @brief Creates a new processor and adds it to a buffer
  * @tparam ProcessorType Type of processor to create (must be derived from BufferProcessor)
  * @tparam Args Constructor argument types
@@ -179,10 +243,19 @@ auto create_buffer(uint32_t channel, uint32_t buffer_size, Args&&... args) -> st
  */
 template <typename ProcessorType, typename... Args>
     requires std::derived_from<ProcessorType, Buffers::BufferProcessor>
-auto create_processor(std::shared_ptr<Buffers::AudioBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>
+auto create_processor(const std::shared_ptr<Buffers::AudioBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>&
 {
     auto processor = std::make_shared<ProcessorType>(std::forward<Args>(args)...);
-    add_processor_to_buffer(processor, buffer);
+    add_processor(processor, buffer);
+    return processor;
+}
+
+template <typename ProcessorType, typename... Args>
+    requires std::derived_from<ProcessorType, Buffers::BufferProcessor>
+auto create_processor(const std::shared_ptr<Buffers::VKBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>&
+{
+    auto processor = std::make_shared<ProcessorType>(std::forward<Args>(args)...);
+    add_processor(processor, buffer);
     return processor;
 }
 
@@ -214,7 +287,7 @@ MAYAFLUX_API Buffers::RootAudioBuffer& get_root_audio_buffer(uint32_t channel);
  *
  * Uses the default engine's buffer manager and node graph manager.
  */
-MAYAFLUX_API void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, uint32_t channel_index = 0, float mix = 0.5F, bool clear_before = false);
+MAYAFLUX_API void connect_node_to_channel(const std::shared_ptr<Nodes::Node>& node, uint32_t channel_index = 0, float mix = 0.5F, bool clear_before = false);
 
 /**
  * @brief Connects a node to a specific buffer
@@ -225,7 +298,7 @@ MAYAFLUX_API void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, uin
  *
  * Uses the default engine's node graph manager.
  */
-MAYAFLUX_API void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<Buffers::AudioBuffer> buffer, float mix = 0.5F, bool clear_before = true);
+MAYAFLUX_API void connect_node_to_buffer(const std::shared_ptr<Nodes::Node>& node, const std::shared_ptr<Buffers::AudioBuffer>& buffer, float mix = 0.5F, bool clear_before = true);
 
 //-------------------------------------------------------------------------
 // Audio Processing
@@ -251,16 +324,6 @@ MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buff
 MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, unsigned int channel_id = 0);
 
 /**
- * @brief Attaches a processing function to multiple channels
- * @param processor Function to process the buffer
- * @param channels Vector of channel indices to process
- *
- * The processor will be called during the default engine's audio processing cycle
- * for each of the specified channel buffers.
- */
-MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(Buffers::BufferProcessingFunction processor, const std::vector<unsigned int> channels);
-
-/**
  * @brief Reads audio data from the default input source into a buffer
  * @param buffer Buffer to read audio data into
  * @param channel Channel index to read from (default: 0)
@@ -269,14 +332,14 @@ MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_a
  * and fills the provided AudioBuffer with the captured audio samples.
  * This function is typically used to capture live audio input for processing.
  */
-MAYAFLUX_API void read_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel = 0);
+MAYAFLUX_API void read_from_audio_input(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0);
 
 /**
  * @brief Stops reading audio data from the default input source
  * @param buffer Buffer to stop reading audio data from
  * @param channel Channel index to stop reading from (default: 0)
  */
-MAYAFLUX_API void detach_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel = 0);
+MAYAFLUX_API void detach_from_audio_input(const std::shared_ptr<Buffers::AudioBuffer>& buffer, uint32_t channel = 0);
 
 /**
  * @brief Creates a new AudioBuffer for input listening
@@ -300,11 +363,11 @@ MAYAFLUX_API std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(
  * but operates independently on its assigned channel.
  * Uses the default engine's buffer manager.
  */
-MAYAFLUX_API void clone_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+MAYAFLUX_API void clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels);
 
 MAYAFLUX_API void clone_buffer_to_channels(
-    std::shared_ptr<Buffers::AudioBuffer> buffer,
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels,
     const Buffers::ProcessingToken& token);
 /**
@@ -315,7 +378,7 @@ MAYAFLUX_API void clone_buffer_to_channels(
  *
  * Convenience wrapper for single-channel buffer supply operations.
  */
-MAYAFLUX_API void supply_buffer_to_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
+MAYAFLUX_API void supply_buffer_to_channel(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     uint32_t channel,
     double mix = 1.0);
 
@@ -329,7 +392,7 @@ MAYAFLUX_API void supply_buffer_to_channel(std::shared_ptr<Buffers::AudioBuffer>
  * the MixProcessor system. This is ideal for sending the same signal to
  * multiple outputs without duplicating processing.
  */
-MAYAFLUX_API void supply_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+MAYAFLUX_API void supply_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels,
     double mix = 1.0);
 
@@ -340,7 +403,7 @@ MAYAFLUX_API void supply_buffer_to_channels(std::shared_ptr<Buffers::AudioBuffer
  *
  * Efficiently removes a buffer from channel mix processor.
  */
-MAYAFLUX_API void remove_supplied_buffer_from_channel(std::shared_ptr<Buffers::AudioBuffer> buffer,
+MAYAFLUX_API void remove_supplied_buffer_from_channel(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const uint32_t channel);
 
 /**
@@ -350,7 +413,7 @@ MAYAFLUX_API void remove_supplied_buffer_from_channel(std::shared_ptr<Buffers::A
  *
  * Efficiently removes a buffer from multiple channel mix processors.
  */
-MAYAFLUX_API void remove_supplied_buffer_from_channels(std::shared_ptr<Buffers::AudioBuffer> buffer,
+MAYAFLUX_API void remove_supplied_buffer_from_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels);
 
 }

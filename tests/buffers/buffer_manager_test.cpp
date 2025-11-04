@@ -399,7 +399,7 @@ TEST_F(BufferManagerTest, TokenChannelProcessors)
     };
 
     auto channel_processor = std::make_shared<ChannelProcessor>(processor_called);
-    manager->add_processor_to_channel(channel_processor, default_token, 0);
+    manager->add_processor(channel_processor, default_token, 0);
 
     manager->process_channel(default_token, 0, TestConfig::BUFFER_SIZE);
     EXPECT_TRUE(processor_called);
@@ -452,7 +452,7 @@ TEST_F(BufferManagerTest, TokenGlobalProcessors)
 
     auto global_processor = std::make_shared<GlobalProcessor>(processor_called);
 
-    manager->add_processor_to_token(global_processor, default_token);
+    manager->add_processor(global_processor, default_token);
 
     manager->process_channel(default_token, 0, TestConfig::BUFFER_SIZE);
     EXPECT_TRUE(processor_called);

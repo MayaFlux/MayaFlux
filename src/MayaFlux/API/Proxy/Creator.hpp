@@ -114,6 +114,11 @@ private:
                 }
             }
             m_ctx = CreationContext {};
+        } else if (m_ctx.domain) {
+            if constexpr (std::is_base_of_v<Buffers::VKBuffer, T>) {
+                apply_buffer_context();
+                m_ctx = CreationContext {};
+            }
         }
     }
 

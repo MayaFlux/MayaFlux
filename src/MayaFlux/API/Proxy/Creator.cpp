@@ -4,6 +4,7 @@
 #include "MayaFlux/API/Graph.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
 namespace MayaFlux {
@@ -35,6 +36,11 @@ void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const Creat
         } else if (ctx.channels.has_value()) {
             clone_buffer_to_channels(audio_buffer, ctx.channels.value(), token);
         }
+        return;
+    }
+
+    if (auto vk_buffer = std::dynamic_pointer_cast<Buffers::VKBuffer>(buffer)) {
+        register_graphics_buffer(vk_buffer, token);
         return;
     }
 }
