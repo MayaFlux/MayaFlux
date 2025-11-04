@@ -245,7 +245,7 @@ $LIBXML2_DOWNLOAD_PATH = Join-Path $LIBXML2_TEMP_DIR $LIBXML2_TARBALL_NAME
 
 # Calculate final required header file path
 $LIBXML2_INCLUDE_DIR_TOOLCHAIN = "C:/Program Files/LibXml2/include"
-$LIBXML2_LIBRARY_DUMMY_FILE = "C:/Program Files/LibXml2/include/libxml/xmlversion.h" 
+$LIBXML2_LIBRARY_DUMMY_FILE = "C:/Program Files/LibXml2/include/libxml/xmlmodule.h" 
 
 # FIX: Check for the existence of the critical header needed for the dummy path
 if (-not (Test-Path $LIBXML2_LIBRARY_DUMMY_FILE -PathType Leaf)) {

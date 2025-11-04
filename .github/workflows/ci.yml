@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -79,6 +79,42 @@ jobs:
       - name: Verify Vulkan SDK
         run: |
           echo "VULKAN_SDK=$VULKAN_SDK"
+
+      - name: Install STB headers
+        shell: bash
+        run: |
+          echo "Installing STB headers..."
+          
+          STB_INSTALL_DIR="$HOME/Libraries/stb"
+          STB_HEADER_CHECK="$STB_INSTALL_DIR/include/stb_image.h"
+          
+          if [ ! -f "$STB_HEADER_CHECK" ]; then
+              mkdir -p "$STB_INSTALL_DIR/include"
+          
+              STB_HEADERS=(
+                "stb_image.h"
+                "stb_image_write.h"
+                "stb_image_resize.h"
+                "stb_truetype.h"
+                "stb_rect_pack.h"
+              )
+          
+              for header in "${STB_HEADERS[@]}"; do
+                header_url="https://raw.githubusercontent.com/nothings/stb/master/$header"
+                header_path="$STB_INSTALL_DIR/include/$header"
+                echo "Downloading $header..."
+                curl -fL "$header_url" -o "$header_path"
+              done
+          
+              echo "STB headers installed to $STB_INSTALL_DIR"
+          else
+              echo "STB already installed at $STB_INSTALL_DIR"
+          fi
+          
+          # Set environment variables for CMake
+          echo "STB_ROOT=$STB_INSTALL_DIR" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$STB_INSTALL_DIR:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+          echo "CPATH=$STB_INSTALL_DIR/include:$CPATH" >> $GITHUB_ENV
 
       - name: Configure CMake
         shell: bash
