@@ -127,7 +127,7 @@ public:
      * Note: This method does NOT mark the node as processed. That responsibility
      * belongs to the caller, typically a chained parent node or the root node.
      */
-    virtual double process_sample(double input) = 0;
+    virtual double process_sample(double input = 0.) = 0;
 
     /**
      * @brief Processes multiple samples at once

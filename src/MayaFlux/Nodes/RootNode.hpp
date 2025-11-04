@@ -46,7 +46,7 @@ public:
      * method is called, and their outputs will be combined together.
      * If called during processing, the operation is deferred until safe.
      */
-    void register_node(std::shared_ptr<Node> node);
+    void register_node(const std::shared_ptr<Node>& node);
 
     /**
      * @brief Removes a node from this root node
@@ -56,7 +56,7 @@ public:
      * the root node's output. If called during processing, the operation
      * is deferred until safe.
      */
-    void unregister_node(std::shared_ptr<Node> node);
+    void unregister_node(const std::shared_ptr<Node>& node);
 
     /** @brief Checks if the root node can process pending operations
      * @return True if successful
@@ -84,6 +84,15 @@ public:
     double process_sample();
 
     /**
+     * @brief Processes a single frame from all registered nodes
+     *
+     * This method processes each registered node for a single frame.
+     * It is useful in scenarios where frame-based processing is required,
+     * such as visual or animation data processing.
+     */
+    void process_frame();
+
+    /**
      * @brief Processes all registered nodes and combines their outputs
      * @param num_samples Number of samples to process
      * @return Vector containing the combined output samples
@@ -94,7 +103,17 @@ public:
      * If nodes are added or removed during processing, those operations are
      * deferred until after processing completes.
      */
-    std::vector<double> process_batch(unsigned int num_samples);
+    std::vector<double> process_batch(uint32_t num_samples);
+
+    /**
+     * @brief Processes multiple frames from all registered nodes
+     * @param num_frames Number of frames to process
+     *
+     * This method calls process_batch_frame() on each registered node
+     * for the specified number of frames. It is useful for scenarios
+     * requiring batch frame processing.
+     */
+    void process_batch_frame(uint32_t num_frames);
 
     /**
      * @brief Gets the number of nodes registered with this root node

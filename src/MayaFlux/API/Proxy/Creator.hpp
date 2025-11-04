@@ -117,8 +117,13 @@ private:
         } else if (m_ctx.domain) {
             if constexpr (std::is_base_of_v<Buffers::VKBuffer, T>) {
                 apply_buffer_context();
-                m_ctx = CreationContext {};
             }
+            if (m_ctx.domain == Domain::GRAPHICS) {
+                if constexpr (std::is_base_of_v<Nodes::Node, T>) {
+                    apply_node_context();
+                }
+            }
+            m_ctx = CreationContext {};
         }
     }
 

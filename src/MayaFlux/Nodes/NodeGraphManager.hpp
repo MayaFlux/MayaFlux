@@ -55,7 +55,7 @@ public:
      * The node's output will contribute to that token/channel's output.
      * If the node is not already globally registered, it will be registered automatically.
      */
-    void add_to_root(std::shared_ptr<Node> node, ProcessingToken token, unsigned int channel = 0);
+    void add_to_root(const std::shared_ptr<Node>& node, ProcessingToken token, unsigned int channel = 0);
 
     /**
      * @brief Remove node from a specific processing token and channel
@@ -66,7 +66,7 @@ public:
      * Removes the specified node from the root node of the given processing domain and channel.
      * If the node is not found in that root, no action is taken.
      */
-    void remove_from_root(std::shared_ptr<Node> node, ProcessingToken token, unsigned int channel = 0);
+    void remove_from_root(const std::shared_ptr<Node>& node, ProcessingToken token, unsigned int channel = 0);
 
     /**
      * @brief Adds a node to a channel's root node by its identifier
@@ -172,7 +172,7 @@ public:
      * A node is considered registered if it exists in the node registry
      * with any identifier.
      */
-    bool is_node_registered(std::shared_ptr<Node> node);
+    bool is_node_registered(const std::shared_ptr<Node>& node);
 
     /**
      * @brief Process all nodes in a specific token domain
@@ -384,19 +384,29 @@ private:
     void ensure_root_exists(ProcessingToken token, unsigned int channel);
 
     /**
+     * @brief Ensures that a processing token entry exists
+     * @param token Processing domain
+     * @param num_channels Number of channels to initialize (default: 1)
+     *
+     * Creates the necessary data structures for the given processing token
+     * if they do not already exist.
+     */
+    void ensure_token_exists(ProcessingToken token, uint32_t num_channels = 1);
+
+    /**
      * @brief Registers a node globally if not already registered
      * @param node Node to register
      *
      * Assigns a generated identifier if needed and adds the node to the registry.
      */
-    void register_global(std::shared_ptr<Node> node);
+    void register_global(const std::shared_ptr<Node>& node);
 
     /**
      * @brief Adds the specified channel mask to a node's global registration
      * @param node Node to modify
      * @param channel_id Channel mask to set
      */
-    void set_channel_mask(std::shared_ptr<Node> node, uint32_t channel_id);
+    void set_channel_mask(const std::shared_ptr<Node>& node, uint32_t channel_id);
 
     /**
      * @brief Unsets the specified channel mask from a node's global registration
@@ -405,7 +415,7 @@ private:
      *
      * Removes the specified channel mask from the node's global registration.
      */
-    void unset_channel_mask(std::shared_ptr<Node> node, uint32_t channel_id);
+    void unset_channel_mask(const std::shared_ptr<Node>& node, uint32_t channel_id);
 
     /**
      * @brief Unregisters a node globally
@@ -413,7 +423,7 @@ private:
      *
      * Removes the node from the global registry and cleans up any references.
      */
-    void unregister_global(std::shared_ptr<Node> node);
+    void unregister_global(const std::shared_ptr<Node>& node);
 
     /**
      * @brief Normalizes a sample to the range [-1, 1] based on the number of nodes
