@@ -8,6 +8,8 @@ class NodeGraphManager;
 
 namespace MayaFlux::Buffers {
 class BufferManager;
+class Buffer;
+class VKBuffer;
 }
 
 namespace MayaFlux::Vruta {

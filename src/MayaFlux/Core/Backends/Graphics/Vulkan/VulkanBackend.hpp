@@ -2,40 +2,24 @@
 
 #include "MayaFlux/Core/Backends/Graphics/GraphicsBackend.hpp"
 
-#include <vulkan/vulkan.hpp>
+namespace MayaFlux::Registry::Service {
+struct BufferService;
+struct ComputeService;
+struct DisplayService;
+}
+
+namespace MayaFlux::Buffers {
+class VKBuffer;
+}
 
 namespace MayaFlux::Core {
 
 class VKContext;
-class VKSwapchain;
 class VKCommandManager;
-class VKRenderPass;
-class VKFramebuffer;
 
-struct WindowRenderContext {
-    std::shared_ptr<Window> window;
-    vk::SurfaceKHR surface;
-    std::unique_ptr<VKSwapchain> swapchain;
-    std::unique_ptr<VKRenderPass> render_pass;
-    std::vector<std::unique_ptr<VKFramebuffer>> framebuffers;
-
-    std::vector<vk::Semaphore> image_available;
-    std::vector<vk::Semaphore> render_finished;
-    std::vector<vk::Fence> in_flight;
-
-    bool needs_recreation = false;
-    size_t current_frame = 0;
-
-    WindowRenderContext() = default;
-    ~WindowRenderContext() = default;
-
-    WindowRenderContext(WindowRenderContext&&) = default;
-    WindowRenderContext& operator=(WindowRenderContext&&) = default;
-    WindowRenderContext(const WindowRenderContext&) = delete;
-    WindowRenderContext& operator=(const WindowRenderContext&) = delete;
-
-    void cleanup(VKContext& context);
-};
+class BackendResourceManager;
+class BackendPipelineManager;
+class BackendWindowHandler;
 
 /**
  * @class VulkanBackend
@@ -83,6 +67,11 @@ public:
      */
     void unregister_window(std::shared_ptr<Window> window) override;
 
+    /**
+     * @brief Check if a window is registered with the graphics backend
+     * @param window Shared pointer to the window to check
+     * @return True if the window is registered, false otherwise
+     */
     [[nodiscard]] bool is_window_registered(std::shared_ptr<Window> window) override;
 
     /**
@@ -131,46 +120,55 @@ public:
     [[nodiscard]] void* get_native_context() override;
     [[nodiscard]] const void* get_native_context() const override;
 
+    /**
+     * @brief Get reference to the backend resource manager
+     *
+     * Responsible for managing Vulkan resources like buffers, images, samplers, command and memory management.
+     * @return Reference to BackendResourceManager
+     */
+    BackendResourceManager& get_resource_manager() { return *m_resource_manager; }
+
+    /**
+     * @brief Get reference to the backend pipeline manager
+     *
+     * Responsible for managing Vulkan pipelines, descriptor sets, and shader modules.
+     * @return Reference to BackendPipelineManager
+     */
+    BackendPipelineManager& get_pipeline_manager() { return *m_pipeline_manager; }
+
+    /**
+     * @brief Get reference to the backend window handler
+     *
+     * Responsible for managing windows, swapchains, framebuffers, and rendering loops.
+     * @return Reference to BackendWindowHandler
+     */
+    VKContext& get_context() { return *m_context; }
+
+    /**
+     * @brief Get reference to the backend command manager
+     *
+     * Responsible for managing Vulkan command pools and command buffers.
+     * @return Reference to VKCommandManager
+     */
+    VKCommandManager& get_command_manager() { return *m_command_manager; }
+
 private:
-    std::unique_ptr<VKContext> m_vulkan_context;
+    std::unique_ptr<VKContext> m_context;
     std::unique_ptr<VKCommandManager> m_command_manager;
 
-    std::vector<WindowRenderContext> m_window_contexts;
+    std::unique_ptr<BackendResourceManager> m_resource_manager;
+    std::unique_ptr<BackendPipelineManager> m_pipeline_manager;
+    std::unique_ptr<BackendWindowHandler> m_window_handler;
 
     bool m_is_initialized {};
 
-    WindowRenderContext* find_window_context(const std::shared_ptr<Window>& window)
-    {
-        auto it = std::ranges::find_if(m_window_contexts,
-            [window](const auto& config) { return config.window == window; });
-        return it != m_window_contexts.end() ? &(*it) : nullptr;
-    }
+    void register_backend_services();
 
-    /**
-     * @brief Create synchronization objects for a window's swapchain
-     * @param config Window swapchain configuration to populate
-     * @return True if creation succeeded
-     */
-    bool create_sync_objects(WindowRenderContext& config);
+    void unregister_backend_services();
 
-    /**
-     * @brief Internal rendering logic for a window
-     * @param context Window render context
-     */
-    void render_window_internal(WindowRenderContext& context);
-
-    /**
-     * @brief Recreate the swapchain and related resources for a window
-     * @param context Window render context
-     */
-    void recreate_swapchain_for_context(WindowRenderContext& context);
-
-    /**
-     * @brief Internal logic to recreate swapchain and related resources
-     * @param context Window render context
-     * @return True if recreation succeeded
-     */
-    bool recreate_swapchain_internal(WindowRenderContext& context);
+    std::shared_ptr<Registry::Service::BufferService> m_buffer_service;
+    std::shared_ptr<Registry::Service::ComputeService> m_compute_service;
+    std::shared_ptr<Registry::Service::DisplayService> m_display_service;
 };
 
 }

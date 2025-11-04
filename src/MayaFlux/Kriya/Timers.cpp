@@ -22,7 +22,7 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
     m_active = true;
 
     auto routine_func = [](Vruta::TaskScheduler& scheduler, uint64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
-        auto& promise = co_await Kriya::GetPromise {};
+        auto& promise = co_await Kriya::GetAudioPromise {};
         co_await SampleDelay { delay_samples };
 
         if (timer_ptr && timer_ptr->is_active()) {

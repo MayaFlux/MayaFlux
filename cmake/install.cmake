@@ -27,6 +27,11 @@ if(UNIX)
         DESTINATION lib/pkgconfig)
 endif()
 
+install(DIRECTORY ${SHADER_OUTPUT_DIR}
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/mayaflux/
+    FILES_MATCHING PATTERN "*.spv"
+)
+
 install(TARGETS Lila
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib

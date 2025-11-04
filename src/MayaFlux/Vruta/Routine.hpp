@@ -3,6 +3,7 @@
 #include "Promise.hpp"
 
 namespace MayaFlux::Vruta {
+
 /**
  * @class Routine
  * @brief Base class for all coroutine types in the MayaFlux engine
@@ -27,7 +28,7 @@ public:
      * @brief Get the processing token that determines how this routine should be scheduled
      * @return The processing token indicating the scheduling domain
      */
-    virtual ProcessingToken get_processing_token() const = 0;
+    [[nodiscard]] virtual ProcessingToken get_processing_token() const = 0;
 
     /**
      * @brief Initializes the coroutine's state for execution
@@ -38,7 +39,7 @@ public:
      * sample position and other state. This should be called before
      * the first attempt to resume the coroutine.
      */
-    virtual bool initialize_state(uint64_t current_context = 0u) = 0;
+    virtual bool initialize_state(uint64_t current_context = 0U) = 0;
 
     /**
      * @brief Checks if the coroutine is still active
@@ -48,7 +49,7 @@ public:
      * be resumed. Inactive coroutines have either completed or were
      * never properly initialized.
      */
-    virtual bool is_active() const = 0;
+    [[nodiscard]] virtual bool is_active() const = 0;
 
     /**
      * @brief Gets the sample position when this routine should next execute
@@ -58,7 +59,7 @@ public:
      * the exact sample position when the coroutine should be resumed next.
      * The scheduler uses this to determine when to call try_resume().
      */
-    virtual inline uint64_t next_execution() const = 0;
+    [[nodiscard]] virtual inline uint64_t next_execution() const = 0;
 
     /**
      * @brief Attempts to resume the coroutine if it's ready to execute
@@ -87,7 +88,7 @@ public:
      * compatibility. Derived classes can override to implement context-specific
      * resumption logic.
      */
-    virtual bool try_resume_with_context(uint64_t current_value, DelayContext context)
+    virtual bool try_resume_with_context(uint64_t current_value, DelayContext /*context*/)
     {
         return try_resume(current_value);
     }
@@ -96,7 +97,7 @@ public:
      * @brief Check if the routine should synchronize with a clock
      * @return True if the routine requires clock synchronization
      */
-    virtual bool requires_clock_sync() const = 0;
+    [[nodiscard]] virtual bool requires_clock_sync() const = 0;
 
     /**
      * @brief Restarts the coroutine from the beginning
@@ -112,7 +113,7 @@ public:
      * @brief Get auto_resume flag from promise
      * @return True if coroutine should be automatically resumed
      */
-    virtual bool get_auto_resume() const = 0;
+    [[nodiscard]] virtual bool get_auto_resume() const = 0;
 
     /**
      * @brief Set auto_resume flag in promise
@@ -124,7 +125,7 @@ public:
      * @brief Get should_terminate flag from promise
      * @return True if coroutine should be terminated
      */
-    virtual bool get_should_terminate() const = 0;
+    [[nodiscard]] virtual bool get_should_terminate() const = 0;
 
     /**
      * @brief Set should_terminate flag in promise
@@ -136,14 +137,14 @@ public:
      * @brief Get sync_to_clock flag from promise
      * @return True if coroutine should synchronize with clock
      */
-    virtual bool get_sync_to_clock() const = 0;
+    [[nodiscard]] virtual bool get_sync_to_clock() const = 0;
 
     // Domain-specific timing methods (return 0/false for unsupported domains)
     /**
      * @brief Get next sample execution time (audio domain)
      * @return Sample position for next execution, or 0 if not audio domain
      */
-    virtual uint64_t get_next_sample() const = 0;
+    [[nodiscard]] virtual uint64_t get_next_sample() const = 0;
 
     /**
      * @brief Set next sample execution time (audio domain)
@@ -155,7 +156,7 @@ public:
      * @brief Get next frame execution time (graphics domain)
      * @return Frame position for next execution, or 0 if not graphics domain
      */
-    virtual uint64_t get_next_frame() const = 0;
+    [[nodiscard]] virtual uint64_t get_next_frame() const = 0;
 
     /**
      * @brief Set next frame execution time (graphics domain)
@@ -167,13 +168,13 @@ public:
      * @brief Get the active delay context for this routine
      * @return Current delay context, or NONE if not waiting
      */
-    virtual DelayContext get_delay_context() const { return DelayContext::NONE; }
+    [[nodiscard]] virtual DelayContext get_delay_context() const { return DelayContext::NONE; }
 
     /**
      * @brief Set the active delay context for this routine
      * @param context New delay context
      */
-    virtual void set_delay_context(DelayContext context) { /* no-op in base */ }
+    virtual void set_delay_context(DelayContext /* Context */) { /* no-op in base */ }
 
     /**
      * @brief Updates multiple named parameters in the coroutine's state
@@ -305,7 +306,7 @@ protected:
  * };
  * ```
  */
-class SoundRoutine : public Routine {
+class MAYAFLUX_API SoundRoutine : public Routine {
 public:
     /**
      * @brief Promise type used by this coroutine
@@ -319,7 +320,7 @@ public:
      * @brief Get the processing token that determines how this routine should be scheduled
      * @return The processing token indicating the scheduling domain
      */
-    virtual ProcessingToken get_processing_token() const override;
+    [[nodiscard]] ProcessingToken get_processing_token() const override;
 
     /**
      * @brief Constructs a SoundRoutine from a coroutine handle
@@ -372,15 +373,15 @@ public:
 
     ~SoundRoutine() override;
 
-    bool is_active() const override;
+    [[nodiscard]] bool is_active() const override;
 
-    bool initialize_state(uint64_t current_sample = 0u) override;
+    bool initialize_state(uint64_t current_sample = 0U) override;
 
     bool try_resume(uint64_t current_context) override;
 
     bool try_resume_with_context(uint64_t current_value, DelayContext context) override;
 
-    DelayContext get_delay_context() const override
+    [[nodiscard]] DelayContext get_delay_context() const override
     {
         return m_handle.promise().active_delay_context;
     }
@@ -392,11 +393,11 @@ public:
 
     bool restart() override;
 
-    virtual uint64_t next_execution() const override;
+    [[nodiscard]] uint64_t next_execution() const override;
 
-    bool requires_clock_sync() const override;
+    [[nodiscard]] bool requires_clock_sync() const override;
 
-    bool get_auto_resume() const override
+    [[nodiscard]] bool get_auto_resume() const override
     {
         return m_handle.promise().auto_resume;
     }
@@ -406,7 +407,7 @@ public:
         m_handle.promise().auto_resume = auto_resume;
     }
 
-    bool get_should_terminate() const override
+    [[nodiscard]] bool get_should_terminate() const override
     {
         return m_handle.promise().should_terminate;
     }
@@ -416,12 +417,12 @@ public:
         m_handle.promise().should_terminate = should_terminate;
     }
 
-    bool get_sync_to_clock() const override
+    [[nodiscard]] bool get_sync_to_clock() const override
     {
         return m_handle.promise().sync_to_clock;
     }
 
-    uint64_t get_next_sample() const override
+    [[nodiscard]] uint64_t get_next_sample() const override
     {
         return m_handle.promise().next_sample;
     }
@@ -431,7 +432,7 @@ public:
         m_handle.promise().next_sample = next_sample;
     }
 
-    uint64_t get_next_frame() const override
+    [[nodiscard]] uint64_t get_next_frame() const override
     {
         return m_handle.promise().next_buffer_cycle;
     }
@@ -459,44 +460,187 @@ private:
     std::coroutine_handle<promise_type> m_handle;
 };
 
-// TODO: Dummy class, will implement when visual subsystem is ready
-class GraphicalRoutine : public Routine {
+/**
+ * @class GraphicsRoutine
+ * @brief A C++20 coroutine-based graphics processing task with frame-accurate timing
+ *
+ * GraphicsRoutine encapsulates a coroutine that can execute visual processing logic
+ * with frame-accurate timing. It provides the graphics-domain equivalent to SoundRoutine,
+ * enabling time-based visual code that appears sequential but executes asynchronously
+ * in perfect sync with the frame timeline.
+ *
+ * Key architectural differences from SoundRoutine:
+ * - Timing source: FrameClock (self-driven) vs SampleClock (hardware-driven)
+ * - The routine doesn't care HOW the clock advances, only that it gets tick updates
+ * - GraphicsRoutine synchronized to frame positions, not sample positions
+ * - Works with FrameDelay awaiters instead of SampleDelay
+ *
+ * Key features:
+ * - Frame-accurate timing for precise visual scheduling
+ * - State persistence between suspensions and resumptions
+ * - Automatic management of coroutine lifetime
+ * - Ability to restart and reschedule tasks
+ * - Dynamic parameter updates during execution
+ * - Named state storage for flexible data management
+ *
+ * This implementation leverages C++20 coroutines to create a cooperative
+ * multitasking system specifically designed for visual processing. Each routine
+ * can suspend itself at precise frame positions and be resumed exactly when needed,
+ * enabling complex temporal behaviors for animations, visual effects, and
+ * data-driven visuals without blocking the graphics thread.
+ *
+ * Example usage:
+ * ```cpp
+ * auto fade_animation = [](TaskScheduler& scheduler) -> GraphicsRoutine {
+ *     float opacity = 0.0f;
+ *     for (int i = 0; i < 60; i++) {  // 60 frames at 60fps = 1 second
+ *         opacity += 1.0f / 60.0f;
+ *         set_shader_opacity(opacity);
+ *         co_await FrameDelay{1};  // Wait exactly 1 frame
+ *     }
+ * };
+ * ```
+ */
+class MAYAFLUX_API GraphicsRoutine : public Routine {
 public:
-    ProcessingToken get_processing_token() const override
+    /**
+     * @brief Promise type used by this coroutine
+     *
+     * This is the promise type that manages the coroutine state and
+     * provides the co_await, co_yield, and co_return behaviors for
+     * frame-based timing.
+     */
+    using promise_type = MayaFlux::Vruta::graphics_promise;
+
+    /**
+     * @brief Get the processing token that determines how this routine should be scheduled
+     * @return FRAME_ACCURATE token indicating frame-based scheduling
+     */
+    [[nodiscard]] ProcessingToken get_processing_token() const override;
+
+    /**
+     * @brief Constructs a GraphicsRoutine from a coroutine handle
+     * @param h Handle to the coroutine
+     *
+     * Creates a GraphicsRoutine that wraps and manages the given coroutine.
+     * This is typically called by the compiler-generated code when a
+     * coroutine function returns a GraphicsRoutine.
+     */
+    GraphicsRoutine(std::coroutine_handle<promise_type> h);
+
+    /**
+     * @brief Copy constructor
+     * @param other GraphicsRoutine to copy
+     *
+     * Creates a new GraphicsRoutine that shares ownership of the same
+     * underlying coroutine. This allows multiple schedulers or containers
+     * to reference the same task.
+     */
+    GraphicsRoutine(const GraphicsRoutine& other);
+
+    /**
+     * @brief Copy assignment operator
+     * @param other GraphicsRoutine to copy from
+     * @return Reference to this GraphicsRoutine
+     */
+    GraphicsRoutine& operator=(const GraphicsRoutine& other);
+
+    /**
+     * @brief Move constructor
+     * @param other GraphicsRoutine to move from
+     *
+     * Transfers ownership of the coroutine from other to this GraphicsRoutine.
+     * After the move, other no longer references any coroutine.
+     */
+    GraphicsRoutine(GraphicsRoutine&& other) noexcept;
+
+    /**
+     * @brief Move assignment operator
+     * @param other GraphicsRoutine to move from
+     * @return Reference to this GraphicsRoutine
+     *
+     * Transfers ownership of the coroutine from other to this GraphicsRoutine.
+     * After the move, other no longer references any coroutine.
+     */
+    GraphicsRoutine& operator=(GraphicsRoutine&& other) noexcept;
+
+    ~GraphicsRoutine() override;
+
+    [[nodiscard]] bool is_active() const override;
+
+    bool initialize_state(uint64_t current_frame = 0U) override;
+
+    bool try_resume(uint64_t current_context) override;
+
+    bool try_resume_with_context(uint64_t current_value, DelayContext context) override;
+
+    [[nodiscard]] DelayContext get_delay_context() const override
     {
-        return ProcessingToken::FRAME_ACCURATE;
+        return m_handle.promise().active_delay_context;
     }
 
-    bool requires_clock_sync() const override
+    void set_delay_context(DelayContext context) override
     {
-        return true; // Visual routines sync to frame clock
+        m_handle.promise().active_delay_context = context;
     }
 
-    // Promise state access implementations (TODO: implement when graphics promise is ready)
-    bool get_auto_resume() const override { return true; }
-    void set_auto_resume(bool /*auto_resume*/) override { /* TODO */ }
-    bool get_should_terminate() const override { return false; }
-    void set_should_terminate(bool /*should_terminate*/) override { /* TODO */ }
-    bool get_sync_to_clock() const override { return true; }
+    bool restart() override;
 
-    // Graphics domain timing implementations
-    uint64_t get_next_frame() const override { return 0; }
-    void set_next_frame(uint64_t /*next_frame*/) override { /* TODO */ }
+    [[nodiscard]] uint64_t next_execution() const override;
 
-    // Non-graphics domain methods (return defaults)
-    uint64_t get_next_sample() const override { return 0; }
+    [[nodiscard]] bool requires_clock_sync() const override;
+
+    [[nodiscard]] bool get_auto_resume() const override
+    {
+        return m_handle.promise().auto_resume;
+    }
+
+    void set_auto_resume(bool auto_resume) override
+    {
+        m_handle.promise().auto_resume = auto_resume;
+    }
+
+    [[nodiscard]] bool get_should_terminate() const override
+    {
+        return m_handle.promise().should_terminate;
+    }
+
+    void set_should_terminate(bool should_terminate) override
+    {
+        m_handle.promise().should_terminate = should_terminate;
+    }
+
+    [[nodiscard]] bool get_sync_to_clock() const override
+    {
+        return m_handle.promise().sync_to_clock;
+    }
+
+    [[nodiscard]] uint64_t get_next_frame() const override
+    {
+        return m_handle.promise().next_frame;
+    }
+
+    void set_next_frame(uint64_t next_frame) override
+    {
+        m_handle.promise().next_frame = next_frame;
+    }
+
+    // Non-graphics domain methods (return defaults for graphics routines)
+    [[nodiscard]] uint64_t get_next_sample() const override { return 0; }
     void set_next_sample(uint64_t /*next_sample*/) override { /* no-op for graphics */ }
 
-    // TODO: Implement when visual subsystem is ready
-    bool is_active() const override { return false; }
-    bool initialize_state(uint64_t /*current_frame*/ = 0u) override { return false; }
-    bool try_resume(uint64_t /*current_frame*/) override { return false; }
-    bool restart() override { return false; }
-    uint64_t next_execution() const override { return 0; }
-
 protected:
-    void set_state_impl(const std::string& /*key*/, std::any /*value*/) override { }
-    void* get_state_impl_raw(const std::string& /*key*/) override { return nullptr; }
+    void set_state_impl(const std::string& key, std::any value) override;
+    void* get_state_impl_raw(const std::string& key) override;
+
+private:
+    /**
+     * @brief Handle to the underlying coroutine
+     *
+     * This handle provides access to the coroutine frame, allowing
+     * the GraphicsRoutine to resume, suspend, and destroy the coroutine.
+     */
+    std::coroutine_handle<promise_type> m_handle;
 };
 
 /**
@@ -509,38 +653,35 @@ protected:
  */
 class ComplexRoutine : public Routine {
 public:
-    // Will use routine_promise<ComplexRoutine> when implemented
-    // using promise_type = complex_promise;
-
-    ProcessingToken get_processing_token() const override
+    [[nodiscard]] ProcessingToken get_processing_token() const override
     {
         return ProcessingToken::MULTI_RATE;
     }
 
-    bool requires_clock_sync() const override
+    [[nodiscard]] bool requires_clock_sync() const override
     {
         return true; // Complex routines need clock sync for coordination
     }
 
     // Promise state access implementations (TODO: implement when complex promise is ready)
-    bool get_auto_resume() const override { return true; }
+    [[nodiscard]] bool get_auto_resume() const override { return true; }
     void set_auto_resume(bool /*auto_resume*/) override { /* TODO */ }
-    bool get_should_terminate() const override { return false; }
+    [[nodiscard]] bool get_should_terminate() const override { return false; }
     void set_should_terminate(bool /*should_terminate*/) override { /* TODO */ }
-    bool get_sync_to_clock() const override { return true; }
+    [[nodiscard]] bool get_sync_to_clock() const override { return true; }
 
     // Multi-domain timing implementations (supports both audio and graphics)
-    uint64_t get_next_sample() const override { return 0; }
+    [[nodiscard]] uint64_t get_next_sample() const override { return 0; }
     void set_next_sample(uint64_t /*next_sample*/) override { /* TODO */ }
-    uint64_t get_next_frame() const override { return 0; }
+    [[nodiscard]] uint64_t get_next_frame() const override { return 0; }
     void set_next_frame(uint64_t /*next_frame*/) override { /* TODO */ }
 
     // TODO: Implement when multi-domain scheduling is ready
-    bool is_active() const override { return false; }
-    bool initialize_state(uint64_t /*current_context*/ = 0u) override { return false; }
+    [[nodiscard]] bool is_active() const override { return false; }
+    bool initialize_state(uint64_t /*current_context*/ = 0U) override { return false; }
     bool try_resume(uint64_t /*current_context*/) override { return false; }
     bool restart() override { return false; }
-    uint64_t next_execution() const override { return 0; }
+    [[nodiscard]] uint64_t next_execution() const override { return 0; }
 
 protected:
     void set_state_impl(const std::string& /*key*/, std::any /*value*/) override { }

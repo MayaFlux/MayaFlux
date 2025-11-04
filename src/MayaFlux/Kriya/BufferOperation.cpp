@@ -16,7 +16,7 @@ BufferOperation BufferOperation::capture_input(
 {
     auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
     buffer_manager->register_input_listener(input_buffer, input_channel);
-    buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
+    buffer_manager->add_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
 
     BufferCapture capture(input_buffer, mode, cycle_count);
     if (mode == BufferCapture::CaptureMode::ACCUMULATE && cycle_count == 0) {
@@ -32,7 +32,7 @@ CaptureBuilder BufferOperation::capture_input_from(
 {
     auto input_buffer = std::make_shared<Buffers::AudioBuffer>(input_channel);
     buffer_manager->register_input_listener(input_buffer, input_channel);
-    buffer_manager->add_audio_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
+    buffer_manager->add_buffer(input_buffer, Buffers::ProcessingToken::AUDIO_BACKEND, input_channel);
     return CaptureBuilder(input_buffer);
 }
 
@@ -168,7 +168,7 @@ BufferOperation BufferOperation::fuse_containers(std::vector<std::shared_ptr<Kak
 
 BufferOperation BufferOperation::modify_buffer(
     std::shared_ptr<Buffers::AudioBuffer> buffer,
-    AudioProcessingFunction modifier)
+    Buffers::BufferProcessingFunction modifier)
 {
     BufferOperation op(OpType::MODIFY);
     op.m_target_buffer = std::move(buffer);

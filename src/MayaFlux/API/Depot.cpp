@@ -79,7 +79,7 @@ void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFil
     std::cout << "Setting up audio playback for " << num_channels << " channels..." << '\n';
 
     for (uint32_t channel = 0; channel < num_channels; ++channel) {
-        auto container_buffer = buffer_manager->create_buffer<MayaFlux::Buffers::ContainerBuffer>(
+        auto container_buffer = buffer_manager->create_audio_buffer<MayaFlux::Buffers::ContainerBuffer>(
             MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND,
             channel,
             container,

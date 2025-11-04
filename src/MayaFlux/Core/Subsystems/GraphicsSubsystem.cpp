@@ -1,11 +1,14 @@
 #include "GraphicsSubsystem.hpp"
 
+#include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Vruta/Clock.hpp"
 #include "MayaFlux/Vruta/Routine.hpp"
+
+#include "MayaFlux/Portal/Graphics/Graphics.hpp"
 
 namespace MayaFlux::Core {
 
@@ -58,11 +61,29 @@ void GraphicsSubsystem::initialize(SubsystemProcessingHandle& handle)
         m_frame_clock->set_target_fps(m_graphics_config.target_frame_rate);
     }
 
+    initialize_graphics_portal();
+
     m_is_ready = true;
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
         "Graphics Subsystem initialized (Target FPS: {})",
         m_frame_clock->frame_rate());
+}
+
+void GraphicsSubsystem::initialize_graphics_portal()
+{
+    try {
+        if (auto vulkan_backend = dynamic_cast<VulkanBackend*>(m_backend.get())) {
+            Portal::Graphics::initialize(std::shared_ptr<VulkanBackend>(vulkan_backend, [](VulkanBackend*) { }));
+        }
+    } catch (std::exception& e) {
+        error_rethrow(
+            Journal::Component::Core,
+            Journal::Context::GraphicsSubsystem,
+            std::source_location::current(),
+            "Failed to initialize Portal::Graphics subsystem: {}",
+            e.what());
+    }
 }
 
 void GraphicsSubsystem::register_frame_processor()
@@ -269,7 +290,7 @@ void GraphicsSubsystem::process()
     register_windows_for_processing();
     m_backend->handle_window_resize();
 
-    render_all_windows();
+    // render_all_windows();
     m_handle->windows.process();
 
     cleanup_closed_windows();

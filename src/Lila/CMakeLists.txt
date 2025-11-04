@@ -1,4 +1,4 @@
-add_definitions(${CLANG_DEFINITIONS})
+# add_definitions(${CLANG_DEFINITIONS})
 
 set(LILA_SOURCES
     Lila.cpp
@@ -23,6 +23,9 @@ target_sources(Lila PRIVATE ${CONFIG_IMPL})
 
 if(WIN32)
     target_compile_definitions(Lila PRIVATE LILA_EXPORTS)
+    set_target_properties(Lila PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    )
 endif()
 
 target_include_directories(Lila PUBLIC
@@ -34,6 +37,10 @@ target_include_directories(Lila PUBLIC
 target_precompile_headers(Lila PUBLIC ../../cmake/pch.h)
 target_include_directories(Lila PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
+if(CLANG_DEFINITIONS)
+    target_compile_definitions(Lila PRIVATE ${CLANG_DEFINITIONS})
+endif()
+
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 target_compile_definitions(Lila PUBLIC ${LLVM_DEFINITIONS_LIST})
 
@@ -41,12 +48,6 @@ set_target_properties(Lila PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
-
-if(WIN32)
-    set_target_properties(Lila PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-    )
-endif()
 
 if(UNIX)
     execute_process(

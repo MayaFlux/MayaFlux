@@ -1,4 +1,5 @@
 #include "Routine.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Vruta {
 
@@ -7,11 +8,17 @@ SoundRoutine audio_promise::get_return_object()
     return { std::coroutine_handle<audio_promise>::from_promise(*this) };
 }
 
+GraphicsRoutine graphics_promise::get_return_object()
+{
+    return { std::coroutine_handle<graphics_promise>::from_promise(*this) };
+}
+
 SoundRoutine::SoundRoutine(std::coroutine_handle<promise_type> h)
     : m_handle(h)
 {
     if (!m_handle || !m_handle.address()) {
-        throw std::invalid_argument("Invalid coroutine handle");
+        error<std::invalid_argument>(Journal::Component::Vruta, Journal::Context::CoroutineScheduling, std::source_location::current(),
+            "SoundRoutine constructed with invalid coroutine handle");
     }
 }
 
@@ -190,6 +197,173 @@ void SoundRoutine::set_state_impl(const std::string& key, std::any value)
 }
 
 void* SoundRoutine::get_state_impl_raw(const std::string& key)
+{
+    if (!m_handle) {
+        return nullptr;
+    }
+
+    auto& state_map = m_handle.promise().state;
+    auto it = state_map.find(key);
+    if (it != state_map.end()) {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+GraphicsRoutine::GraphicsRoutine(std::coroutine_handle<promise_type> h)
+    : m_handle(h)
+{
+    if (!m_handle || !m_handle.address()) {
+        error<std::invalid_argument>(Journal::Component::Vruta, Journal::Context::CoroutineScheduling, std::source_location::current(),
+            "GraphicsRoutine constructed with invalid coroutine handle");
+    }
+}
+
+GraphicsRoutine::GraphicsRoutine(const GraphicsRoutine& other)
+    : m_handle(other.m_handle)
+{
+}
+
+GraphicsRoutine& GraphicsRoutine::operator=(const GraphicsRoutine& other)
+{
+    if (this != &other) {
+        m_handle = other.m_handle;
+    }
+    return *this;
+}
+
+GraphicsRoutine::GraphicsRoutine(GraphicsRoutine&& other) noexcept
+    : m_handle(std::exchange(other.m_handle, nullptr))
+{
+}
+
+GraphicsRoutine& GraphicsRoutine::operator=(GraphicsRoutine&& other) noexcept
+{
+    if (this != &other) {
+        m_handle = std::exchange(other.m_handle, nullptr);
+    }
+    return *this;
+}
+
+GraphicsRoutine::~GraphicsRoutine()
+{
+    if (m_handle) {
+        m_handle.destroy();
+    }
+}
+
+ProcessingToken GraphicsRoutine::get_processing_token() const
+{
+    return ProcessingToken::FRAME_ACCURATE;
+}
+
+bool GraphicsRoutine::is_active() const
+{
+    return m_handle && !m_handle.done();
+}
+
+bool GraphicsRoutine::initialize_state(uint64_t current_frame)
+{
+    if (!is_active() || !m_handle.address()) {
+        return false;
+    }
+
+    m_handle.promise().next_frame = current_frame;
+    m_handle.resume();
+    return true;
+}
+
+uint64_t GraphicsRoutine::next_execution() const
+{
+    return m_handle ? m_handle.promise().next_frame : UINT64_MAX;
+}
+
+bool GraphicsRoutine::requires_clock_sync() const
+{
+    if (!m_handle) {
+        return false;
+    }
+    return m_handle.promise().sync_to_clock;
+}
+
+bool GraphicsRoutine::try_resume_with_context(uint64_t current_value, DelayContext context)
+{
+    if (!is_active())
+        return false;
+
+    auto& promise_ref = m_handle.promise();
+
+    if (promise_ref.should_terminate || !promise_ref.auto_resume) {
+        return false;
+    }
+
+    if (context != DelayContext::NONE && promise_ref.active_delay_context == DelayContext::AWAIT) {
+        return initialize_state(current_value);
+    }
+
+    if (promise_ref.active_delay_context != DelayContext::NONE && promise_ref.active_delay_context != context) {
+        return false;
+    }
+
+    bool should_resume = false;
+
+    switch (context) {
+    case DelayContext::FRAME_BASED:
+        if (promise_ref.active_delay_context == DelayContext::FRAME_BASED) {
+            should_resume = (current_value >= promise_ref.next_frame);
+            if (should_resume) {
+                promise_ref.next_frame = current_value + promise_ref.delay_amount;
+            }
+        } else {
+            should_resume = false;
+        }
+        break;
+
+    case DelayContext::NONE:
+        should_resume = true;
+        break;
+
+    default:
+        return false;
+    }
+
+    if (should_resume) {
+        m_handle.resume();
+        return true;
+    }
+
+    return false;
+}
+
+bool GraphicsRoutine::try_resume(uint64_t current_context)
+{
+    // Default to FRAME_BASED context for backwards compatibility
+    // Note: You'll need to add FRAME_BASED to the DelayContext enum
+    return try_resume_with_context(current_context, DelayContext::FRAME_BASED);
+}
+
+bool GraphicsRoutine::restart()
+{
+    if (!m_handle)
+        return false;
+
+    set_state<bool>("restart", true);
+    m_handle.promise().auto_resume = true;
+    if (is_active()) {
+        m_handle.resume();
+        return true;
+    }
+    return false;
+}
+
+void GraphicsRoutine::set_state_impl(const std::string& key, std::any value)
+{
+    if (m_handle) {
+        m_handle.promise().state[key] = std::move(value);
+    }
+}
+
+void* GraphicsRoutine::get_state_impl_raw(const std::string& key)
 {
     if (!m_handle) {
         return nullptr;

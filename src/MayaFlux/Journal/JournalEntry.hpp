@@ -42,6 +42,8 @@ enum class Component : uint8_t {
     Vruta, ///< Coroutines, schedulers, clocks, task management
     Yantra, ///< DSP algorithms, computational units, matrix operations, Grammar
     IO, ///< Networking, file handling, streaming
+    Registry, ///< Backend and service registry
+    Portal, ///< High-level user-facing API layer
     USER, ///< User code, scripts, plugins
     Unknown
 };
@@ -71,6 +73,12 @@ enum class Context : uint8_t {
     CustomBackend, ///< Custom user-defined backend
 
     // ============================================================================
+    // GPU CONTEXTS
+    // ============================================================================
+    GPUCompute, ///< GPU compute operations (shaders, GPGPU tasks)
+    Rendering, ///< GPU rendering operations (graphics pipeline, frame rendering)
+
+    // ============================================================================
     // SUBSYSTEM CONTEXTS
     // ============================================================================
 
@@ -85,16 +93,20 @@ enum class Context : uint8_t {
 
     NodeProcessing, ///< Node graph processing (Nodes::NodeGraphManager)
     BufferProcessing, ///< Buffer processing (Buffers::BufferManager, processing chains)
+    BufferManagement, ///< Buffer Management (Buffers::BufferManager, creating buffers)
     CoroutineScheduling, ///< Coroutine scheduling and temporal coordination (Vruta::TaskScheduler)
     ContainerProcessing, ///< Container operations (Kakshya - file/stream/region processing)
-    ComputeProcessing, ///< Compute operations (Yantra - algorithms, matrices, DSP)
+    ComputeMatrix, ///< Compute operations (Yantra - algorithms, matrices, DSP)
+    ImageProcessing, ///< Image processing tasks (filters, transformations)
+    ShaderCompilation, ///< Shader compilation tasks (Portal::Graphics::ShaderCompiler)
 
     // ============================================================================
     // WORKER CONTEXTS
     // ============================================================================
 
     Worker, ///< Background worker thread (non-real-time scheduled tasks)
-    AsyncIO, ///< Async I/O operations (file loading, network, streaming)
+    AsyncIO, ///< Async I/O operations ( network, streaming)
+    FileIO, ///< Filesystem I/O operations
     BackgroundCompile, ///< Background compilation/optimization tasks
 
     // ============================================================================
@@ -127,6 +139,7 @@ enum class Context : uint8_t {
 
     Runtime, ///< General runtime operations (default fallback)
     Testing, ///< Testing/benchmarking context
+    API, ///< API calls from external code
     Unknown ///< Unknown or unspecified context
 };
 

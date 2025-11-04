@@ -160,6 +160,14 @@ private:
     GlobalGraphicsConfig m_graphics_config; ///< Graphics/windowing configuration
 
     /**
+     * @brief Initialize Portal::Graphics subsystem
+     *
+     * Sets up all Portal::Graphics managers and resources.
+     * Must be called after graphics backend initialization.
+     */
+    void initialize_graphics_portal();
+
+    /**
      * @brief Register custom frame processor with scheduler
      *
      * This is the key integration point that makes graphics timing work.

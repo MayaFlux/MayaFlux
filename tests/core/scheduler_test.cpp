@@ -317,7 +317,7 @@ TEST_F(SchedulerTest, CustomTokenProcessing)
         });
 
     auto custom_task = [](Vruta::TaskScheduler&) -> Vruta::SoundRoutine {
-        auto& promise_ref = co_await Kriya::GetPromise {};
+        auto& promise_ref = co_await Kriya::GetAudioPromise {};
         promise_ref.processing_token = Vruta::ProcessingToken::ON_DEMAND;
         co_await Kriya::SampleDelay { 1 };
         co_return;

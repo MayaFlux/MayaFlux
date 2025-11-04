@@ -46,6 +46,26 @@ DataDimension DataDimension::spatial(uint64_t size, char axis, uint64_t stride, 
     return { name, size, stride, r };
 }
 
+DataDimension DataDimension::spatial_1d(uint64_t width)
+{
+    return spatial(width, 'x');
+}
+
+DataDimension DataDimension::spatial_2d(uint64_t width, uint64_t height)
+{
+    return spatial(height, 'y', width * sizeof(float));
+}
+
+DataDimension DataDimension::spatial_3d(uint64_t width, uint64_t height, uint64_t depth)
+{
+    return spatial(depth, 'z', width * height * sizeof(float));
+}
+
+DataDimension DataDimension::mipmap_levels(uint64_t levels)
+{
+    return { "mip_levels", levels, 1, Role::MIP_LEVEL };
+}
+
 DataDimension DataDimension::grouped(
     std::string name,
     uint64_t element_count,

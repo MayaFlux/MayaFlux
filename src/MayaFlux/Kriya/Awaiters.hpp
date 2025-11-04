@@ -10,14 +10,6 @@ class EventSource;
 namespace MayaFlux::Kriya {
 
 /**
- * @brief Type alias for the coroutine promise type
- *
- * This alias simplifies references to the Vruta::promise_type
- * throughout the Kriya namespace.
- */
-using promise_handle = Vruta::audio_promise;
-
-/**
  * @struct SampleDelay
  * @brief Awaitable object for precise sample-accurate timing delays
  *
@@ -41,6 +33,14 @@ using promise_handle = Vruta::audio_promise;
  * (signal processing, visual rendering, data transformation, physical modeling, etc.).
  */
 struct MAYAFLUX_API SampleDelay {
+    /**
+     * @brief Type alias for the coroutine promise type
+     *
+     * This alias simplifies references to the Vruta::promise_type
+     * throughout the Kriya namespace.
+     */
+    using promise_handle = Vruta::audio_promise;
+
     /**
      * @brief Number of time units to wait before resuming the coroutine
      *
@@ -103,6 +103,13 @@ struct MAYAFLUX_API SampleDelay {
  * ```
  */
 struct MAYAFLUX_API BufferDelay {
+    /**
+     * @brief Type alias for the coroutine promise type
+     *
+     * This alias simplifies references to the Vruta::promise_type
+     * throughout the Kriya namespace.
+     */
+    using promise_handle = Vruta::audio_promise;
 
     BufferDelay(uint64_t cycles)
         : num_cycles(cycles)
@@ -132,6 +139,14 @@ struct MAYAFLUX_API BufferDelay {
  * This will work with visual_promise types that have next_frame fields.
  */
 struct MAYAFLUX_API FrameDelay {
+    /**
+     * @brief Type alias for the coroutine promise type
+     *
+     * This alias simplifies references to the Vruta::promise_type
+     * throughout the Kriya namespace.
+     */
+    using promise_handle = Vruta::graphics_promise;
+
     uint32_t frames_to_wait;
 
     [[nodiscard]] constexpr bool await_ready() const noexcept
@@ -145,6 +160,7 @@ struct MAYAFLUX_API FrameDelay {
 };
 
 struct MAYAFLUX_API MultiRateDelay {
+
     uint64_t samples_to_wait;
     uint32_t frames_to_wait;
 
@@ -159,30 +175,19 @@ struct MAYAFLUX_API MultiRateDelay {
 };
 
 /**
- * @struct GetPromise
- * @brief Awaitable object for accessing the coroutine's promise object
+ * @struct GetPromiseBase
+ * @brief Templated awaitable for accessing a coroutine's promise object
  *
- * GetPromise provides a way for a coroutine to access its own promise
- * object, which contains the coroutine's state and control mechanisms.
- * This is particularly useful for computational processes that need to
- * store state between suspensions or configure their own execution behavior.
+ * This template allows coroutines to access their own promise object in a
+ * type-safe, domain-agnostic way. Each domain (audio, graphics, complex, event)
+ * can instantiate this template with their specific promise type.
  *
- * When a coroutine co_awaits GetPromise, it briefly suspends and then
- * immediately resumes with a reference to its promise object. This
- * allows the coroutine to access and modify its own state storage,
- * timing parameters, and control flags.
- *
- * Example usage:
- * ```cpp
- * auto& promise = co_await GetPromise{};
- * promise.set_state("parameter", 0.5f);
- * ```
- *
- * This pattern enables coroutines to be self-configuring and maintain
- * complex internal state without requiring external management, supporting
- * the development of autonomous computational agents within the system.
+ * @tparam PromiseType The promise type to access (audio_promise, graphics_promise, etc.)
  */
-struct MAYAFLUX_API GetPromise {
+template <typename PromiseType>
+struct MAYAFLUX_API GetPromiseBase {
+    using promise_handle = PromiseType;
+
     /**
      * @brief Pointer to store the promise object
      *
@@ -192,41 +197,77 @@ struct MAYAFLUX_API GetPromise {
      */
     promise_handle* promise_ptr = nullptr;
 
-    /**
-     * @brief Default constructor
-     *
-     * Creates a new GetPromise awaitable with a null promise pointer.
-     * The pointer will be set when await_suspend is called.
-     */
-    GetPromise() = default;
+    GetPromiseBase() = default;
 
-    /**
-     * @brief Checks if the awaitable is already complete
-     * @return Always false, as we always need to suspend to get the promise
-     *
-     * This method always returns false to ensure that the coroutine
-     * suspends so that await_suspend can capture the promise pointer.
-     */
-    [[nodiscard]] inline bool await_ready() const noexcept { return false; }
+    [[nodiscard]] inline bool await_ready() const noexcept
+    {
+        return false;
+    }
 
-    /**
-     * @brief Captures the promise object when the coroutine suspends
-     * @param h Handle to the suspended coroutine
-     *
-     * This method is called when the coroutine suspends. It stores
-     * a pointer to the coroutine's promise object for later retrieval.
-     */
-    void await_suspend(std::coroutine_handle<promise_handle> h) noexcept;
+    void await_suspend(std::coroutine_handle<promise_handle> h) noexcept
+    {
+        promise_ptr = &h.promise();
+        h.promise().active_delay_context = Vruta::DelayContext::AWAIT;
+    }
 
-    /**
-     * @brief Returns the captured promise object when the coroutine resumes
-     * @return Reference to the coroutine's promise object
-     *
-     * This method is called when the coroutine resumes. It returns a
-     * reference to the promise object that was captured during suspension.
-     */
-    [[nodiscard]] promise_handle& await_resume() const noexcept;
+    [[nodiscard]] promise_handle& await_resume() const noexcept
+    {
+        return *promise_ptr;
+    }
 };
+
+/**
+ * @brief Audio domain promise accessor
+ *
+ * Usage in SoundRoutine:
+ * ```cpp
+ * auto routine = []() -> SoundRoutine {
+ *     auto& promise = co_await GetPromise{};
+ *     // or explicitly: co_await GetAudioPromise{};
+ *     // promise is audio_promise&
+ * };
+ * ```
+ */
+using GetAudioPromise = GetPromiseBase<Vruta::audio_promise>;
+
+/**
+ * @brief Graphics domain promise accessor
+ *
+ * Usage in GraphicsRoutine:
+ * ```cpp
+ * auto routine = []() -> GraphicsRoutine {
+ *     auto& promise = co_await GetGraphicsPromise{};
+ *     // promise is graphics_promise&
+ * };
+ * ```
+ */
+using GetGraphicsPromise = GetPromiseBase<Vruta::graphics_promise>;
+
+/**
+ * @brief Multi-domain promise accessor
+ *
+ * Usage in ComplexRoutine:
+ * ```cpp
+ * auto routine = []() -> ComplexRoutine {
+ *     auto& promise = co_await GetComplexPromise{};
+ *     // promise is complex_promise&
+ * };
+ * ```
+ */
+using GetComplexPromise = GetPromiseBase<Vruta::complex_promise>;
+
+/**
+ * @brief Event-driven promise accessor
+ *
+ * Usage in Event coroutines:
+ * ```cpp
+ * auto routine = []() -> Event {
+ *     auto& promise = co_await GetEventPromise{};
+ *     // promise is event_promise&
+ * };
+ * ```
+ */
+using GetEventPromise = GetPromiseBase<Vruta::event_promise>;
 
 /**
  * @class EventAwaiter

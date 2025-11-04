@@ -603,7 +603,7 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
             if (!op.m_attached_processor) {
                 op.m_attached_processor = m_buffer_manager->attach_quick_process(
                     op.m_buffer_modifier,
-                    op.m_target_buffer);
+                    op.m_target_buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
                 if (m_max_cycles != 0 && op.is_streaming()) {
                     op.m_modify_cycle_count = m_max_cycles - cycle;
                 }
@@ -730,7 +730,7 @@ Vruta::SoundRoutine BufferPipeline::execute_internal(uint64_t max_cycles, uint64
 
 Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t samples_per_operation)
 {
-    auto& promise = co_await Kriya::GetPromise {};
+    auto& promise = co_await Kriya::GetAudioPromise {};
 
     if (m_operations.empty()) {
         co_return;
@@ -881,7 +881,7 @@ Vruta::SoundRoutine BufferPipeline::execute_phased(uint64_t max_cycles, uint64_t
 
 Vruta::SoundRoutine BufferPipeline::execute_streaming(uint64_t max_cycles, uint64_t samples_per_operation)
 {
-    auto& promise = co_await Kriya::GetPromise {};
+    auto& promise = co_await Kriya::GetAudioPromise {};
 
     if (m_operations.empty()) {
         co_return;

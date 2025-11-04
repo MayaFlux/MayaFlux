@@ -93,6 +93,12 @@ void NodeProcessingHandle::process(uint32_t num_samples)
     m_manager->process_token(m_token, num_samples);
 }
 
+/* void BufferProcessingHandle::unregister_contexts()
+{
+    ensure_valid();
+    m_manager->unregister_graphics_context(m_token);
+} */
+
 std::vector<double> NodeProcessingHandle::process_channel(uint32_t channel, uint32_t num_samples)
 {
     return m_manager->process_channel(m_token, channel, num_samples);

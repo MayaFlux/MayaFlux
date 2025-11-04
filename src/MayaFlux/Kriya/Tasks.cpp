@@ -8,7 +8,7 @@ namespace MayaFlux::Kriya {
 Vruta::SoundRoutine metro(Vruta::TaskScheduler& scheduler, double interval_seconds, std::function<void()> callback)
 {
     uint64_t interval_samples = scheduler.seconds_to_samples(interval_seconds);
-    auto& promise = co_await Kriya::GetPromise {};
+    auto& promise = co_await Kriya::GetAudioPromise {};
 
     while (true) {
         if (promise.should_terminate) {
@@ -30,7 +30,7 @@ Vruta::SoundRoutine sequence(Vruta::TaskScheduler& scheduler, std::vector<std::p
 
 Vruta::SoundRoutine line(Vruta::TaskScheduler& scheduler, float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)
 {
-    auto& promise_ref = co_await GetPromise {};
+    auto& promise_ref = co_await GetAudioPromise {};
 
     promise_ref.set_state("current_value", start_value);
     promise_ref.set_state("end_value", end_value);
@@ -106,7 +106,7 @@ Vruta::SoundRoutine Gate(
     std::shared_ptr<Nodes::Generator::Logic> logic_node,
     bool open)
 {
-    auto& promise_ref = co_await GetPromise {};
+    auto& promise_ref = co_await GetAudioPromise {};
 
     if (!logic_node) {
         logic_node = std::make_shared<Nodes::Generator::Logic>(0.5);
@@ -139,7 +139,7 @@ Vruta::SoundRoutine Trigger(
     std::function<void()> callback,
     std::shared_ptr<Nodes::Generator::Logic> logic_node)
 {
-    auto& promise_ref = co_await GetPromise {};
+    auto& promise_ref = co_await GetAudioPromise {};
 
     if (!logic_node) {
         logic_node = std::make_shared<Nodes::Generator::Logic>(0.5);
@@ -166,7 +166,7 @@ Vruta::SoundRoutine Toggle(
     std::function<void()> callback,
     std::shared_ptr<Nodes::Generator::Logic> logic_node)
 {
-    auto& promise_ref = co_await GetPromise {};
+    auto& promise_ref = co_await GetAudioPromise {};
 
     if (!logic_node) {
         logic_node = std::make_shared<Nodes::Generator::Logic>(0.5);

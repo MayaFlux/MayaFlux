@@ -11,14 +11,40 @@ else()
 endif()
 add_compile_definitions(RTAUDIO_BACKEND GLFW_BACKEND)
 
+if(APPLE)
+    message(STATUS
+            "Using system Clang on macOS (minimum macOS 14 required for C++23)")
+endif()
+
 if(WIN32)
-    set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/.dependencies" CACHE PATH "Persistent dependencies directory")
-    set(FETCHCONTENT_QUIET OFF CACHE BOOL "Show FetchContent progress")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
-if(APPLE)
-    message(STATUS "Using system Clang on macOS (minimum macOS 14 required for C++23)")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR
+    ("${CMAKE_CONFIGURATION_TYPES}" MATCHES "Debug" AND NOT CMAKE_BUILD_TYPE ))
+    add_compile_definitions(MAYAFLUX_DEBUG=1)
+    message(STATUS "Debug build detected - MAYAFLUX_DEBUG enabled")
+else()
+    add_compile_definitions(MAYAFLUX_DEBUG=0)
+    message(STATUS "Release build - MAYAFLUX_DEBUG disabled")
 endif()
 
 set(CONFIG_IMPL ${CMAKE_SOURCE_DIR}/cmake/config.cpp)
+set(DATA_DIR "${CMAKE_SOURCE_DIR}/data")
+
+if(WIN32)
+    set(CMAKE_INSTALL_PREFIX "C:/MayaFlux" CACHE PATH "Installation directory"
+        FORCE)
+    message(STATUS "Setting Windows install prefix to: ${CMAKE_INSTALL_PREFIX}")
+endif()
+
+set(USER_PROJECT_FILE "${CMAKE_SOURCE_DIR}/src/user_project.hpp")
+if(NOT EXISTS ${USER_PROJECT_FILE})
+    message(STATUS "Creating user_project.hpp from template...")
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/user_project.hpp.in
+        ${USER_PROJECT_FILE}
+        @ONLY
+    )
+endif()
+set(USER_SOURCES ${USER_PROJECT_FILE})

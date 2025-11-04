@@ -97,7 +97,7 @@ Buffers::RootAudioBuffer& get_root_audio_buffer(uint32_t channel)
 
 void connect_node_to_channel(std::shared_ptr<Nodes::Node> node, uint32_t channel_index, float mix, bool clear_before)
 {
-    auto token = get_buffer_manager()->get_default_processing_token();
+    auto token = get_buffer_manager()->get_default_audio_token();
     get_buffer_manager()->connect_node_to_channel(node, token, 0, mix, clear_before);
 }
 
@@ -110,31 +110,31 @@ void connect_node_to_buffer(std::shared_ptr<Nodes::Node> node, std::shared_ptr<B
 // Audio Processing
 //-------------------------------------------------------------------------
 
-std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(AudioProcessingFunction processor, std::shared_ptr<Buffers::AudioBuffer> buffer)
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer)
 {
-    return get_buffer_manager()->attach_quick_process(processor, buffer);
+    return get_buffer_manager()->attach_quick_process(processor, buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
 }
 
-std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channel(AudioProcessingFunction processor, unsigned int channel_id)
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, unsigned int channel_id)
 {
-    return get_buffer_manager()->attach_quick_process_to_channel(processor, Buffers::ProcessingToken::AUDIO_BACKEND, channel_id);
+    return get_buffer_manager()->attach_quick_process(processor, Buffers::ProcessingToken::AUDIO_BACKEND, channel_id);
 }
 
-std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(AudioProcessingFunction processor, const std::vector<unsigned int> channels)
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_to_audio_channels(Buffers::BufferProcessingFunction processor, const std::vector<unsigned int> channels)
 {
     std::shared_ptr<Buffers::BufferProcessor> quick_processor = nullptr;
-    quick_processor = get_buffer_manager()->attach_quick_process_to_token(processor, Buffers::ProcessingToken::AUDIO_BACKEND);
+    quick_processor = get_buffer_manager()->attach_quick_process(processor, Buffers::ProcessingToken::AUDIO_BACKEND);
     return quick_processor;
 }
 
 void register_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel)
 {
-    get_buffer_manager()->add_audio_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+    get_buffer_manager()->add_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
 }
 
 void unregister_audio_buffer(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel)
 {
-    get_buffer_manager()->remove_audio_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
+    get_buffer_manager()->remove_buffer(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel);
 }
 
 void read_from_audio_input(std::shared_ptr<Buffers::AudioBuffer> buffer, uint32_t channel)

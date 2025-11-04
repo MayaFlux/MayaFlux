@@ -419,7 +419,7 @@ auto event_chain = MayaFlux::create_event_chain()
 
 // Explicit API
 auto complex_pattern = [](Vruta::TaskScheduler& scheduler) -> Vruta::SoundRoutine {
-    auto& promise = co_await Kriya::GetPromise{};
+    auto& promise = co_await Kriya::GetAudioPromise{};
 
     while (true) {
         // Wait for condition
@@ -452,7 +452,7 @@ co_await MultiRateDelay{samples: 512, frames: 1};  // Cross-domain sync
 
 // Temporal coordination with state memory
 auto evolving_process = [](auto scheduler) -> Vruta::SoundRoutine {
-    auto& promise = co_await Kriya::GetPromise{};
+    auto& promise = co_await Kriya::GetAudioPromise{};
     promise.set_state("phase", 0.0f);
 
     while (!promise.should_terminate) {

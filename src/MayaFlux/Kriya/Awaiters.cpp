@@ -3,17 +3,6 @@
 
 namespace MayaFlux::Kriya {
 
-void GetPromise::await_suspend(std::coroutine_handle<promise_handle> h) noexcept
-{
-    promise_ptr = &h.promise();
-    h.promise().active_delay_context = Vruta::DelayContext::AWAIT;
-}
-
-promise_handle& GetPromise::await_resume() const noexcept
-{
-    return *promise_ptr;
-}
-
 void SampleDelay::await_suspend(std::coroutine_handle<promise_handle> h) noexcept
 {
     if constexpr (std::is_same_v<promise_handle, Vruta::audio_promise>
@@ -32,11 +21,11 @@ void SampleDelay::await_suspend(std::coroutine_handle<promise_handle> h) noexcep
 
 void FrameDelay::await_suspend(std::coroutine_handle<Vruta::graphics_promise> h) noexcept
 {
-    // TODO: Implement when graphics_promise is ready
     if constexpr (std::is_same_v<promise_handle, Vruta::graphics_promise>
         || std::is_same_v<promise_handle, Vruta::complex_promise>) {
         if constexpr (requires { h.promise().next_frame; }) {
             h.promise().next_frame += frames_to_wait;
+            h.promise().active_delay_context = Vruta::DelayContext::FRAME_BASED;
         }
     } else {
         if constexpr (requires { h.promise().domain_mismatch_error("", ""); }) {
