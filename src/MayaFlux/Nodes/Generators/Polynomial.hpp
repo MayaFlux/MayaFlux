@@ -8,7 +8,7 @@ namespace MayaFlux::Nodes::Generator {
  * @enum PolynomialMode
  * @brief Defines how the polynomial function processes input values
  */
-enum class PolynomialMode {
+enum class PolynomialMode : uint8_t {
     DIRECT, ///< Evaluates f(x) where x is the current phase/input
     RECURSIVE, ///< Evaluates using current and previous outputs: y[n] = f(y[n-1], y[n-2], ...)
     FEEDFORWARD ///< Evaluates using current and previous inputs: y[n] = f(x[n], x[n-1], ...)
@@ -159,7 +159,7 @@ public:
      *
      * Computes the next output value based on the polynomial function and current mode.
      */
-    double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples at once

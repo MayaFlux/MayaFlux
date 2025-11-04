@@ -8,7 +8,7 @@ namespace MayaFlux::Nodes::Generator {
  * @enum LogicMode
  * @brief Defines the computational model for digital signal evaluation
  */
-enum class LogicMode {
+enum class LogicMode : uint8_t {
     DIRECT, ///< Stateless evaluation of current input only (combinational logic)
     SEQUENTIAL, ///< State-based evaluation using history of inputs (sequential logic)
     TEMPORAL, ///< Time-dependent evaluation with timing constraints
@@ -19,7 +19,7 @@ enum class LogicMode {
  * @enum LogicOperator
  * @brief Digital operators for boolean computation
  */
-enum class LogicOperator {
+enum class LogicOperator : uint8_t {
     AND, ///< Logical AND - true only when all inputs are true
     OR, ///< Logical OR - true when any input is true
     XOR, ///< Logical XOR - true when odd number of inputs are true
@@ -37,7 +37,7 @@ enum class LogicOperator {
  * @enum EdgeType
  * @brief Digital transition patterns to detect
  */
-enum class EdgeType {
+enum class EdgeType : uint8_t {
     RISING, ///< Low-to-high transition (0→1)
     FALLING, ///< High-to-low transition (1→0)
     BOTH ///< Any state transition
@@ -47,7 +47,7 @@ enum class EdgeType {
  * @enum LogicEventType
  * @brief Events that can trigger callbacks
  */
-enum class LogicEventType {
+enum class LogicEventType : uint8_t {
     TICK, // Every sample
     CHANGE, // Any state change
     TRUE, // Change to true
@@ -230,7 +230,7 @@ public:
      * Evaluates the input according to the configured logic operation
      * and computational model, producing a binary output (0.0 or 1.0).
      */
-    double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples in batch mode

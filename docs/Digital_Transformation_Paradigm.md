@@ -140,14 +140,14 @@ to the exact rhythm of transformation:
 ```cpp
 // Sync external processes to the pulse of transformation
 auto clock = vega.Impulse(4.0) | Audio;
-clock->on_tick([](NodeContext ctx) {
+clock->on_tick([](NodeContext& ctx) {
     // Trigger visual events at 4Hz rhythm
     schedule_visual_pulse(ctx.value, ctx.timestamp);
 });
 
 // React to mathematical conditions becoming true
 auto wave = vega.Sine(0.5f) | Audio;
-wave->on_tick_if([](NodeContext ctx) {
+wave->on_tick_if([](NodeContext& ctx) {
     return ctx.value > 0.8;
 }, [](NodeContext ctx) {
     // Musical events triggered by wave peaks
@@ -156,14 +156,14 @@ wave->on_tick_if([](NodeContext ctx) {
 
 // Logic states create temporal regions for other processes
 auto gate = vega.Logic([](double input) { return input > 0.0; });
-gate->while_true([](NodeContext ctx) {
+gate->while_true([](NodeContext& ctx) {
     // Continuous processes that exist only during "true" time
     modulate_global_clock(ctx.value * 0.7);
 });
 
 // Mathematical relationships become event generators
 auto envelope = vega.Polynomial({1.0, -0.5, 0.1});
-envelope->on_change([](NodeContext ctx) {
+envelope->on_change([](NodeContext& ctx) {
     // React to any change in polynomial output
     update_filter_cutoff(ctx.value * 2000.0 + 200.0);
 });

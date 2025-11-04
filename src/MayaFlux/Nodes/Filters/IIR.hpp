@@ -72,7 +72,7 @@ public:
      * to the filter coefficients. This is the core processing method called
      * for each sample.
      */
-    double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     void save_state() override;
     void restore_state() override;

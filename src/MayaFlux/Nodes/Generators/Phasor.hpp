@@ -95,7 +95,7 @@ public:
      * This method advances the generator's phase and computes the next
      * sample of the phasor ramp, applying any modulation from connected nodes.
      */
-    virtual double process_sample(double input) override;
+    virtual double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples at once

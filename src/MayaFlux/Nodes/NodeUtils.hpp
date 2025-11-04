@@ -17,12 +17,12 @@ class NodeContext;
  *
  * Example:
  * ```cpp
- * node->on_tick([](const NodeContext& ctx) {
+ * node->on_tick([](NodeContext& ctx) {
  *     std::cout << "Node produced value: " << ctx.value << std::endl;
  * });
  * ```
  */
-using NodeHook = std::function<void(const NodeContext&)>;
+using NodeHook = std::function<void(NodeContext&)>;
 
 /**
  * @typedef NodeCondition
@@ -35,12 +35,12 @@ using NodeHook = std::function<void(const NodeContext&)>;
  * Example:
  * ```cpp
  * node->on_tick_if(
- *     [](const NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
- *     [](const NodeContext& ctx) { return ctx.value > 0.8; }
+ *     [](NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
+ *     [](NodeContext& ctx) { return ctx.value > 0.8; }
  * );
  * ```
  */
-using NodeCondition = std::function<bool(const NodeContext&)>;
+using NodeCondition = std::function<bool(NodeContext&)>;
 
 /**
  * @brief Checks if a callback function already exists in a collection

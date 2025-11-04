@@ -154,7 +154,7 @@ public:
      *
      * Example:
      * ```cpp
-     * node->on_tick([](const NodeContext& ctx) {
+     * node->on_tick([](NodeContext& ctx) {
      *     std::cout << "Node produced value: " << ctx.value << std::endl;
      * });
      * ```
@@ -177,8 +177,8 @@ public:
      * Example:
      * ```cpp
      * node->on_tick_if(
-     *     [](const NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
-     *     [](const NodeContext& ctx) { return ctx.value > 0.8; }
+     *     [](NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
+     *     [](NodeContext& ctx) { return ctx.value > 0.8; }
      * );
      * ```
      */

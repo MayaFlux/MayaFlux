@@ -143,7 +143,7 @@ public:
      * distribution settings. The input parameter can be used to modulate
      * or influence the distribution in advanced applications.
      */
-    virtual double process_sample(double input) override;
+    virtual double process_sample(double input = 0.) override;
 
     /**
      * @brief Generates a stochastic value within a specified range

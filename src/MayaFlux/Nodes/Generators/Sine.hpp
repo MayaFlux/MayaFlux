@@ -92,7 +92,7 @@ public:
      * This method advances the oscillator's phase and computes the next
      * sample of the sine wave, applying any modulation from connected nodes.
      */
-    virtual double process_sample(double input) override;
+    virtual double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples at once

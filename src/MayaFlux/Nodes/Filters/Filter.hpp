@@ -351,7 +351,7 @@ public:
      * equation for a single sample. It must be implemented by derived
      * filter classes to define their specific filtering behavior.
      */
-    virtual double process_sample(double input) override = 0;
+    virtual double process_sample(double input = 0.) override = 0;
 
     /**
      * @brief Calculates the phase response at a specific frequency
