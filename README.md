@@ -151,13 +151,19 @@ live_interpreter.initialize();
 live_interpreter.eval(R"(
     auto math = vega.Polynomial([](double x){return x*x*x;});
     auto node_buffer = vega.NodeBuffer(0, 512, math)[0] | Audio;
-    MayaFlux::create_pipeline() >> capture_from(node_buf).for_cycles(5) >> BufferOperations::modify([](auto& buf)
-                {
-                      for (auto& sample : buf->get_data()) {
-                        sample *= get_uniform_random();
-                      }
-                      return buf;
-            }) >> route_to(VKBuffer) >> execute_streamed();
+    auto pipeline = MayaFlux::create_pipeline()
+        ->with_strategy(Kriya::ExecutionStrategy::PHASED);
+    pipeline
+        >> Kriya::BufferOperation::capture_from(node_buffer)
+            .for_cycles(20)
+        >> Kriya::BufferOperation::transform([](Kakshya::DataVariant& data, uint32_t cycle) {
+            const auto& accumulated = std::get<std::vector<double>>(data);
+            accumulated += math->process_sample(get_uniform_random());
+            return process_batch(accumulated);
+        })
+        >> Kriya::BufferOperation::route_to_container(output_stream);
+    pipeline->execute_buffer_rate(10);
+
 )");
 
 // Later: modify while running
