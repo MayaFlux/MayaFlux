@@ -78,26 +78,42 @@ void RenderFlow::shutdown()
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
         "Shutting down RenderFlow...");
 
+    if (!m_shader_foundry || !m_shader_foundry->is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot shutdown RenderFlow: ShaderFoundry not initialized");
+        return;
+    }
+
+    auto device = m_shader_foundry->get_device();
+
+    if (!device) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot shutdown RenderFlow: Vulkan device is null");
+        return;
+    }
+
     for (auto& [id, state] : m_pipelines) {
         if (state.pipeline) {
-            state.pipeline->cleanup(m_shader_foundry->get_device());
+            state.pipeline->cleanup(device);
         }
-        for (auto layout : state.layouts) {
-            if (layout) {
-                m_shader_foundry->get_device().destroyDescriptorSetLayout(layout);
-            }
+
+        if (state.layout) {
+            device.destroyPipelineLayout(state.layout);
         }
     }
     m_pipelines.clear();
 
     for (auto& [id, state] : m_render_passes) {
         if (state.render_pass) {
-            state.render_pass->cleanup(m_shader_foundry->get_device());
+            state.render_pass->cleanup(device);
         }
     }
     m_render_passes.clear();
 
+    m_window_associations.clear();
+
     m_shader_foundry = nullptr;
+    m_display_service = nullptr;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
         "RenderFlow shutdown complete");
@@ -547,13 +563,19 @@ void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
         return;
     }
 
+    auto device = m_shader_foundry->get_device();
+
     if (it->second.pipeline) {
-        it->second.pipeline->cleanup(m_shader_foundry->get_device());
+        it->second.pipeline->cleanup(device);
+    }
+
+    if (it->second.layout) {
+        device.destroyPipelineLayout(it->second.layout);
     }
 
     for (auto layout : it->second.layouts) {
         if (layout) {
-            m_shader_foundry->get_device().destroyDescriptorSetLayout(layout);
+            device.destroyDescriptorSetLayout(layout);
         }
     }
 

@@ -412,6 +412,11 @@ void BufferManager::initialize_buffer_service()
     m_access_control->initialize_buffer_service();
 }
 
+void BufferManager::terminate_active_buffers()
+{
+    m_access_control->terminate_active_buffers();
+}
+
 // ============================================================================
 // Private
 // ============================================================================

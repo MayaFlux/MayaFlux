@@ -14,6 +14,12 @@ BufferUploadProcessor::BufferUploadProcessor()
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
+BufferUploadProcessor::~BufferUploadProcessor()
+{
+    m_staging_buffers.clear();
+    m_source_map.clear();
+}
+
 void BufferUploadProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);

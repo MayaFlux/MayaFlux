@@ -552,6 +552,7 @@ protected:
 
 protected:
     virtual void initialize_pipeline(const std::shared_ptr<Buffer>& buffer);
+    virtual void cleanup();
 
 private:
     //==========================================================================
@@ -562,7 +563,6 @@ private:
     void initialize_descriptors();
     void update_descriptors();
     void execute_dispatch(const std::shared_ptr<VKBuffer>& buffer);
-    void cleanup();
 };
 
 template <typename T>

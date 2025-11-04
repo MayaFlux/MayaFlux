@@ -247,6 +247,11 @@ public:
      */
     void initialize_buffer_service();
 
+    /**
+     * @brief Terminates all active Audio and VK buffers
+     */
+    void terminate_active_buffers();
+
 private:
     /// Reference to the token/unit manager for storage operations
     TokenUnitManager& m_unit_manager;

@@ -15,6 +15,9 @@ bool ComputePress::initialize()
         return false;
     }
 
+    m_descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
+    m_descriptor_manager->initialize(m_shader_foundry->get_device(), 1024);
+
     MF_INFO(Journal::Component::Portal, Journal::Context::GPUCompute,
         "ComputePress initialized");
     return true;
@@ -22,10 +25,33 @@ bool ComputePress::initialize()
 
 void ComputePress::shutdown()
 {
+    if (!m_shader_foundry || !m_shader_foundry->is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Cannot shutdown ComputePress: ShaderFoundry not initialized");
+        return;
+    }
+
+    auto device = m_shader_foundry->get_device();
+
+    if (!device) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "Cannot shutdown ComputePress: Vulkan device is null");
+        return;
+    }
+
     for (auto& [id, state] : m_pipelines) {
         if (state.pipeline) {
-            state.pipeline->cleanup(m_shader_foundry->get_device());
+            state.pipeline->cleanup(device);
         }
+
+        if (state.layout && device) {
+            device.destroyPipelineLayout(state.layout);
+        }
+    }
+
+    if (m_descriptor_manager && device) {
+        m_descriptor_manager->cleanup(device);
+        m_descriptor_manager = nullptr;
     }
 
     m_pipelines.clear();
@@ -62,8 +88,11 @@ ComputePipelineID ComputePress::create_pipeline(
     state.shader_id = shader_id;
 
     auto device = m_shader_foundry->get_device();
-    auto descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
-    descriptor_manager->initialize(device, 16);
+
+    if (!m_descriptor_manager) {
+        m_descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
+        m_descriptor_manager->initialize(device, 1024);
+    }
 
     for (const auto& set_bindings : descriptor_sets) {
         Core::DescriptorSetLayoutConfig layout_config;
@@ -76,7 +105,7 @@ ComputePipelineID ComputePress::create_pipeline(
                 1);
         }
 
-        state.layouts.push_back(descriptor_manager->create_layout(device, layout_config));
+        state.layouts.push_back(m_descriptor_manager->create_layout(device, layout_config));
     }
 
     Core::ComputePipelineConfig pipeline_config;
@@ -122,6 +151,7 @@ ComputePipelineID ComputePress::create_pipeline_auto(
     }
 
     std::vector<std::vector<DescriptorBindingConfig>> descriptor_sets;
+    descriptor_sets.reserve(bindings_by_set.size());
     for (const auto& [set_index, bindings] : bindings_by_set) {
         descriptor_sets.push_back(bindings);
     }
@@ -145,8 +175,14 @@ void ComputePress::destroy_pipeline(ComputePipelineID pipeline_id)
         return;
     }
 
+    auto device = m_shader_foundry->get_device();
+
     if (it->second.pipeline) {
-        it->second.pipeline->cleanup(m_shader_foundry->get_device());
+        it->second.pipeline->cleanup(device);
+    }
+
+    if (it->second.layout) {
+        device.destroyPipelineLayout(it->second.layout);
     }
 
     m_pipelines.erase(it);

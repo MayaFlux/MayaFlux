@@ -1,7 +1,6 @@
 #include "VKCommandManager.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include <algorithm>
 
 namespace MayaFlux::Core {
 

@@ -16,6 +16,11 @@ class MAYAFLUX_API RenderProcessor : public ShaderProcessor {
 public:
     RenderProcessor(const ShaderProcessorConfig& config);
 
+    ~RenderProcessor() override
+    {
+        cleanup();
+    }
+
     void set_geometry_shader(const std::string& geometry_path);
     void set_tess_control_shader(const std::string& tess_control_path);
     void set_tess_eval_shader(const std::string& tess_eval_path);
@@ -31,6 +36,8 @@ public:
 protected:
     void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override;
     void processing_function(std::shared_ptr<Buffer> buffer) override;
+
+    void cleanup() override;
 
 private:
     struct VertexInfo {

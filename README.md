@@ -205,7 +205,7 @@ open docs/html/index.html
 | Graphics (Vulkan)        | ⚙ POC            | Architecture validated, compute shader integration in progress |
 | Grammar-Driven Pipelines | ⚙ In Development | Core framework ready, advanced matching in progress            |
 
-**Development began**: ~8 months ago (2024)  
+**Development began**: ~7 months ago (April 2025)  
 **Current version**: 0.1.0 (alpha)  
 **Trajectory**: Stable core, expanding multimedia capabilities
 

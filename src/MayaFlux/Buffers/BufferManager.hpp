@@ -437,6 +437,11 @@ public:
 
     void initialize_buffer_service();
 
+    /**
+     * @brief Terminates all active buffers, clearing their data
+     */
+    void terminate_active_buffers();
+
 private:
     void process_audio_token_default(ProcessingToken token, uint32_t processing_units);
 

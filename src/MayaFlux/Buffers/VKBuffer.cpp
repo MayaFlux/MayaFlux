@@ -31,6 +31,7 @@ VKBuffer::~VKBuffer()
 {
     // Cleanup happens during unregistration, not here
     // (BufferManager/Backend owns the actual Vulkan resources)
+    clear();
 }
 
 void VKBuffer::clear()

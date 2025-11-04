@@ -50,7 +50,37 @@ void ShaderFoundry::shutdown()
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "Shutting down ShaderFoundry...");
 
+    auto& cmd_manager = m_backend->get_command_manager();
+    auto device = get_device();
+
+    for (auto& [id, state] : m_command_buffers) {
+        if (state.is_active) {
+            cmd_manager.free_command_buffer(state.cmd);
+        }
+        if (state.timestamp_pool) {
+            device.destroyQueryPool(state.timestamp_pool);
+        }
+    }
+    m_command_buffers.clear();
+
+    for (auto& [id, state] : m_fences) {
+        device.destroyFence(state.fence);
+    }
+    m_fences.clear();
+
+    for (auto& [id, state] : m_semaphores) {
+        device.destroySemaphore(state.semaphore);
+    }
+    m_semaphores.clear();
+
+    m_descriptor_sets.clear();
+
+    m_global_descriptor_manager->cleanup(device);
     m_shader_cache.clear();
+    m_shaders.clear();
+    m_shader_filepath_cache.clear();
+    m_descriptor_sets.clear();
+
     m_backend = nullptr;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,

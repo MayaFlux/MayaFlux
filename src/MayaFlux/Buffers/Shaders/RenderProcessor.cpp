@@ -77,13 +77,18 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
-    vk::Format swapchain_format = vk::Format { m_display_service->get_swapchain_format(m_target_window) };
-    m_render_pass_id = flow.create_simple_render_pass(swapchain_format);
+    // vk::Format swapchain_format = vk::Format { m_display_service->get_swapchain_format(m_target_window) };
+    // m_render_pass_id = flow.create_simple_render_pass(swapchain_format);
 
     if (m_render_pass_id == Portal::Graphics::INVALID_RENDER_PASS) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Render pass not set");
-        return;
+        vk::Format swapchain_format = vk::Format { m_display_service->get_swapchain_format(m_target_window) };
+        m_render_pass_id = flow.create_simple_render_pass(swapchain_format);
+
+        if (m_render_pass_id == Portal::Graphics::INVALID_RENDER_PASS) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Render pass not set");
+            return;
+        }
     }
 
     Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window, m_render_pass_id);
@@ -217,6 +222,52 @@ void RenderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
         m_display_service = Registry::BackendRegistry::instance()
                                 .get_service<Registry::Service::DisplayService>();
     }
+}
+
+void RenderProcessor::cleanup()
+{
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& flow = Portal::Graphics::get_render_flow();
+
+    if (m_render_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        flow.destroy_pipeline(m_render_pipeline_id);
+        m_render_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
+    }
+
+    if (m_render_pass_id != Portal::Graphics::INVALID_RENDER_PASS) {
+        flow.destroy_render_pass(m_render_pass_id);
+        m_render_pass_id = Portal::Graphics::INVALID_RENDER_PASS;
+    }
+
+    if (m_geometry_shader_id != Portal::Graphics::INVALID_SHADER) {
+        foundry.destroy_shader(m_geometry_shader_id);
+        m_geometry_shader_id = Portal::Graphics::INVALID_SHADER;
+    }
+
+    if (m_tess_control_shader_id != Portal::Graphics::INVALID_SHADER) {
+        foundry.destroy_shader(m_tess_control_shader_id);
+        m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
+    }
+
+    if (m_tess_eval_shader_id != Portal::Graphics::INVALID_SHADER) {
+        foundry.destroy_shader(m_tess_eval_shader_id);
+        m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
+    }
+
+    if (m_fragment_shader_id != Portal::Graphics::INVALID_SHADER) {
+        foundry.destroy_shader(m_fragment_shader_id);
+        m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
+    }
+
+    if (m_target_window) {
+        flow.unregister_window(m_target_window);
+        m_target_window.reset();
+    }
+
+    ShaderProcessor::cleanup();
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "RenderProcessor cleanup complete");
 }
 
 } // namespace MayaFlux::Buffers

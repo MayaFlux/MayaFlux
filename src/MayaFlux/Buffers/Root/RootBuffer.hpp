@@ -22,11 +22,11 @@ public:
     virtual void add_child_buffer(std::shared_ptr<BufferType> buffer)
     {
         if (this->is_processing()) {
-            for (size_t i = 0; i < MAX_PENDING; ++i) {
+            for (auto& m_pending_op : m_pending_ops) {
                 bool expected = false;
-                if (m_pending_ops[i].active.compare_exchange_strong(expected, true, std::memory_order_acquire, std::memory_order_relaxed)) {
-                    m_pending_ops[i].buffer = buffer;
-                    m_pending_ops[i].is_addition = true;
+                if (m_pending_op.active.compare_exchange_strong(expected, true, std::memory_order_acquire, std::memory_order_relaxed)) {
+                    m_pending_op.buffer = buffer;
+                    m_pending_op.is_addition = true;
                     m_pending_count.fetch_add(1, std::memory_order_relaxed);
                     return;
                 }
@@ -63,11 +63,11 @@ public:
     virtual void remove_child_buffer(std::shared_ptr<BufferType> buffer)
     {
         if (this->is_processing()) {
-            for (size_t i = 0; i < MAX_PENDING; ++i) {
+            for (auto& m_pending_op : m_pending_ops) {
                 bool expected = false;
-                if (m_pending_ops[i].active.compare_exchange_strong(expected, true, std::memory_order_acquire, std::memory_order_relaxed)) {
-                    m_pending_ops[i].buffer = buffer;
-                    m_pending_ops[i].is_addition = false;
+                if (m_pending_op.active.compare_exchange_strong(expected, true, std::memory_order_acquire, std::memory_order_relaxed)) {
+                    m_pending_op.buffer = buffer;
+                    m_pending_op.is_addition = false;
                     m_pending_count.fetch_add(1, std::memory_order_relaxed);
                     return;
                 }
@@ -83,7 +83,7 @@ public:
      * @brief Gets the number of tributary buffers in the aggregation hierarchy
      * @return Number of tributary buffers
      */
-    size_t get_num_children() const { return m_child_buffers.size(); }
+    [[nodiscard]] size_t get_num_children() const { return m_child_buffers.size(); }
 
     /**
      * @brief Gets all tributary buffers in the aggregation hierarchy
@@ -100,7 +100,7 @@ public:
      * Initializes all sample values to zero in this buffer and optionally
      * in all tributary buffers in the aggregation hierarchy.
      */
-    virtual void clear() override
+    void clear() override
     {
         BufferType::clear();
         for (auto& child : m_child_buffers) {
@@ -121,7 +121,7 @@ public:
      * @brief Checks if the buffer is active for its assigned token
      * @return True if the buffer will process when its token is processed
      */
-    virtual bool is_token_active() const = 0;
+    [[nodiscard]] virtual bool is_token_active() const = 0;
 
     /**
      * @brief Sets processing rate hint for the buffer
@@ -136,7 +136,7 @@ public:
      * @brief Gets the processing rate hint
      * @return Expected processing rate in samples/frames per second
      */
-    virtual uint32_t get_processing_rate_hint() const { return m_processing_rate_hint; }
+    [[nodiscard]] virtual uint32_t get_processing_rate_hint() const { return m_processing_rate_hint; }
 
     /**
      * @brief Enables cross-modal data sharing
@@ -151,7 +151,7 @@ public:
      * @brief Checks if cross-modal sharing is enabled
      * @return True if buffer can be shared across processing domains
      */
-    virtual bool is_cross_modal_sharing_enabled() const { return m_cross_modal_sharing; }
+    [[nodiscard]] virtual bool is_cross_modal_sharing_enabled() const { return m_cross_modal_sharing; }
 
     /**
      * @brief Validates if a buffer is acceptable based on current token enforcement strategy
@@ -215,7 +215,7 @@ public:
         return true;
     }
 
-    bool has_pending_operations() const
+    [[nodiscard]] bool has_pending_operations() const
     {
         return m_pending_count.load(std::memory_order_relaxed) > 0;
     }
@@ -248,9 +248,9 @@ protected:
      */
     void process_pending_buffer_operations()
     {
-        for (size_t i = 0; i < MAX_PENDING; ++i) {
-            if (m_pending_ops[i].active.load(std::memory_order_acquire)) {
-                auto& op = m_pending_ops[i];
+        for (auto& m_pending_op : m_pending_ops) {
+            if (m_pending_op.active.load(std::memory_order_acquire)) {
+                auto& op = m_pending_op;
 
                 if (op.is_addition) {
                     add_child_buffer_direct(op.buffer);

@@ -12,6 +12,12 @@ BufferDownloadProcessor::BufferDownloadProcessor()
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
+BufferDownloadProcessor::~BufferDownloadProcessor()
+{
+    m_staging_buffers.clear();
+    m_target_map.clear();
+}
+
 void BufferDownloadProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);

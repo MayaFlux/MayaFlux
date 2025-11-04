@@ -131,6 +131,7 @@ private:
         vk::PipelineLayout layout;
     };
 
+    std::shared_ptr<Core::VKDescriptorManager> m_descriptor_manager;
     std::unordered_map<ComputePipelineID, PipelineState> m_pipelines;
     std::atomic<uint64_t> m_next_pipeline_id { 1 };
     ShaderFoundry* m_shader_foundry = nullptr;

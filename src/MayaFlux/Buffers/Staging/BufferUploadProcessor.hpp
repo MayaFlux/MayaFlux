@@ -25,7 +25,7 @@ namespace MayaFlux::Buffers {
 class MAYAFLUX_API BufferUploadProcessor : public VKBufferProcessor {
 public:
     BufferUploadProcessor();
-    ~BufferUploadProcessor() override = default;
+    ~BufferUploadProcessor() override;
 
     void processing_function(std::shared_ptr<Buffer> buffer) override;
     void on_attach(std::shared_ptr<Buffer> buffer) override;

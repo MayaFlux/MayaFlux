@@ -342,4 +342,28 @@ void BufferAccessControl::initialize_buffer_service()
                            .get_service<Registry::Service::BufferService>();
 }
 
+void BufferAccessControl::terminate_active_buffers()
+{
+    for (const auto& token : m_unit_manager.get_active_audio_tokens()) {
+        auto& unit = m_unit_manager.get_audio_unit_mutable(token);
+        for (uint32_t channel = 0; channel < unit.channel_count; ++channel) {
+            auto root_buffer = unit.get_buffer(channel);
+            root_buffer->clear();
+            for (auto& child : root_buffer->get_child_buffers()) {
+                child->clear();
+            }
+        }
+    }
+
+    for (const auto& token : m_unit_manager.get_active_graphics_tokens()) {
+        auto& unit = m_unit_manager.get_graphics_unit_mutable(token);
+        auto root_buffer = unit.get_buffer();
+        root_buffer->clear();
+        for (auto& child : root_buffer->get_child_buffers()) {
+            remove_graphics_buffer(child, token);
+            child->clear();
+        }
+    }
+}
+
 } // namespace MayaFlux::Buffers
