@@ -322,6 +322,7 @@ public:
      * @brief Get current push constant data
      */
     [[nodiscard]] const std::vector<uint8_t>& get_push_constant_data() const { return m_push_constant_data; }
+    [[nodiscard]] std::vector<uint8_t>& get_push_constant_data() { return m_push_constant_data; }
 
     //==========================================================================
     // Specialization Constants
