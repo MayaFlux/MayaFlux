@@ -10,6 +10,7 @@ Impulse::Impulse(float frequency, double amplitude, float offset)
     , m_impulse_occurred(false)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 

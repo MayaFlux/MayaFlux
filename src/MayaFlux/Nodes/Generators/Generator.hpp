@@ -182,7 +182,7 @@ protected:
     /**
      * @brief Base amplitude of the generator
      */
-    double m_amplitude { 0.5 };
+    double m_amplitude { 1.0 };
 
     /**
      * @brief Base frequency of the generator
