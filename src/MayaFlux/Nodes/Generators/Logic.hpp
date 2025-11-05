@@ -115,6 +115,31 @@ private:
 };
 
 /**
+ * @class LogicContextGpu
+ * @brief GPU-accelerated context for logic node callbacks
+ */
+class MAYAFLUX_API LogicContextGpu
+    : public LogicContext,
+      public GpuVectorData {
+public:
+    LogicContextGpu(
+        double value,
+        LogicMode mode,
+        LogicOperator operator_type,
+        const std::deque<bool>& history,
+        double threshold,
+        bool edge_detected,
+        EdgeType edge_type,
+        const std::vector<double>& inputs,
+        std::span<const float> gpu_data)
+        : LogicContext(value, mode, operator_type, history, threshold, edge_detected, edge_type, inputs)
+        , GpuVectorData(gpu_data)
+    {
+        type_id = typeid(LogicContextGpu).name();
+    }
+};
+
+/**
  * @class Logic
  * @brief Digital signal processor implementing boolean logic operations
  *
@@ -365,7 +390,7 @@ public:
      *
      * Configures the node to receive input from another node
      */
-    inline void set_input_node(std::shared_ptr<Node> input_node) { m_input_node = input_node; }
+    inline void set_input_node(const std::shared_ptr<Node>& input_node) { m_input_node = input_node; }
 
     /**
      * @brief Gets the current computational model
@@ -429,39 +454,39 @@ public:
      * @brief Registers a callback for every generated sample
      * @param callback Function to call when a new sample is generated
      */
-    void on_tick(NodeHook callback) override;
+    void on_tick(const NodeHook& callback) override;
 
     /**
      * @brief Registers a conditional callback for generated samples
      * @param callback Function to call when condition is met
      * @param condition Predicate that determines when callback is triggered
      */
-    void on_tick_if(NodeHook callback, NodeCondition condition) override;
+    void on_tick_if(const NodeHook& callback, const NodeCondition& condition) override;
 
     /**
      * @brief Registers a callback that executes continuously while output is true
      * @param callback Function to call on each tick when output is true (1.0)
      */
-    void while_true(NodeHook callback);
+    void while_true(const NodeHook& callback);
 
     /**
      * @brief Registers a callback that executes continuously while output is false
      * @param callback Function to call on each tick when output is false (0.0)
      */
-    void while_false(NodeHook callback);
+    void while_false(const NodeHook& callback);
 
     /**
      * @brief Registers a callback for when output changes to a specific state
      * @param callback Function to call when state changes to target_state
      * @param target_state The state to detect (true for 1.0, false for 0.0)
      */
-    void on_change_to(NodeHook callback, bool target_state);
+    void on_change_to(const NodeHook& callback, bool target_state);
 
     /**
      * @brief Registers a callback for any state change (true↔false)
      * @param callback Function to call when output changes state
      */
-    void on_change(NodeHook callback);
+    void on_change(const NodeHook& callback);
 
     /**
      * @brief Removes a previously registered callback
@@ -497,10 +522,10 @@ public:
         LogicEventType event_type;
         std::optional<NodeCondition> condition; // Only used for CONDITIONAL type
 
-        LogicCallback(NodeHook cb, LogicEventType type, std::optional<NodeCondition> cond = std::nullopt)
+        LogicCallback(const NodeHook& cb, LogicEventType type, std::optional<NodeCondition> cond = std::nullopt)
             : callback(cb)
             , event_type(type)
-            , condition(cond)
+            , condition(std::move(cond))
         {
         }
     };
@@ -548,7 +573,7 @@ private:
     bool m_hysteresis_state; ///< State for hysteresis operator
     double m_temporal_time; ///< Time tracking for temporal mode
     std::vector<double> m_input_buffer; // Buffer for multi-input mode
-    double m_input; ///< Current input value for multi-input mode
+    double m_input {}; ///< Current input value for multi-input mode
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
 
     // Helper method for multi-input mode
@@ -560,7 +585,7 @@ private:
      * @param type The type of event to trigger the callback
      * @param condition Optional condition for conditional callbacks
      */
-    void add_callback(NodeHook callback, LogicEventType type, std::optional<NodeCondition> condition = std::nullopt)
+    void add_callback(const NodeHook& callback, LogicEventType type, const std::optional<NodeCondition>& condition = std::nullopt)
     {
         m_all_callbacks.emplace_back(callback, type, condition);
     }
@@ -576,10 +601,10 @@ private:
     std::vector<LogicCallback> m_all_callbacks;
 
     std::deque<bool> m_saved_history;
-    bool m_saved_hysteresis_state;
-    bool m_saved_edge_detected;
-    double m_saved_temporal_time;
-    double m_saved_last_output;
+    bool m_saved_hysteresis_state {};
+    bool m_saved_edge_detected {};
+    double m_saved_temporal_time {};
+    double m_saved_last_output {};
     bool m_state_saved {};
 };
 

@@ -48,7 +48,7 @@ namespace internal {
 // Engine Management
 //-------------------------------------------------------------------------
 
-bool is_engine_initialized()
+bool is_initialized()
 {
     return internal::initialized;
 }

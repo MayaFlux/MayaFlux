@@ -79,6 +79,26 @@ public:
 };
 
 /**
+ * @class StochasticContextGpu
+ */
+class MAYAFLUX_API StochasticContextGpu : public StochasticContext, public GpuVectorData {
+public:
+    StochasticContextGpu(
+        double value,
+        Utils::distribution type,
+        double amplitude,
+        double range_start,
+        double range_end,
+        double normal_spread,
+        std::span<const float> gpu_data)
+        : StochasticContext(value, type, amplitude, range_start, range_end, normal_spread)
+        , GpuVectorData(gpu_data)
+    {
+        type_id = typeid(StochasticContextGpu).name();
+    }
+};
+
+/**
  * @class Random
  * @brief Computational stochastic signal generator with multiple probability distributions
  *
@@ -120,7 +140,7 @@ public:
     /**
      * @brief Virtual destructor
      */
-    ~Random() = default;
+    ~Random() override = default;
 
     /**
      * @brief Changes the probability distribution type
@@ -143,7 +163,7 @@ public:
      * distribution settings. The input parameter can be used to modulate
      * or influence the distribution in advanced applications.
      */
-    virtual double process_sample(double input = 0.) override;
+    double process_sample(double input = 0.) override;
 
     /**
      * @brief Generates a stochastic value within a specified range
@@ -164,7 +184,7 @@ public:
      * This method efficiently generates multiple values in a single operation,
      * useful for batch processing or filling buffers.
      */
-    virtual std::vector<double> process_batch(unsigned int num_samples) override;
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Generates an array of stochastic values within a specified range
@@ -184,7 +204,7 @@ public:
      * Outputs a data visualization of the distribution's statistical properties,
      * useful for understanding the mathematical behavior of the generator.
      */
-    virtual void printGraph() override;
+    void printGraph() override;
 
     /**
      * @brief Outputs the current configuration parameters
@@ -192,7 +212,7 @@ public:
      * Displays the current distribution type, scaling factor, and other
      * mathematical parameters of the generator.
      */
-    virtual void printCurrent() override;
+    void printCurrent() override;
 
     /**
      * @brief Sets the variance parameter for normal distribution
@@ -253,7 +273,7 @@ private:
      * Different distributions require different mathematical transformations
      * to properly map their output while preserving their statistical properties.
      */
-    double transform_sample(double sample, double start, double end) const;
+    [[nodiscard]] double transform_sample(double sample, double start, double end) const;
 
     /**
      * @brief Validates that the specified range is mathematically valid

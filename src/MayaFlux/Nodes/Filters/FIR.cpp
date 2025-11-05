@@ -2,12 +2,12 @@
 
 namespace MayaFlux::Nodes::Filters {
 
-FIR::FIR(std::shared_ptr<Node> input, const std::vector<double> coeffs)
-    : Filter(input, std::vector<double> { 1.0f }, coeffs)
+FIR::FIR(const std::shared_ptr<Node>& input, const std::vector<double>& coeffs)
+    : Filter(input, std::vector<double> { 1.0F }, coeffs)
 {
 }
 
-FIR::FIR(std::shared_ptr<Node> input, const std::string& zindex_shifts)
+FIR::FIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
     : Filter(input, zindex_shifts)
 {
 }

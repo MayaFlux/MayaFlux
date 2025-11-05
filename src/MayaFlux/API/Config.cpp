@@ -5,6 +5,13 @@
 #include "MayaFlux/Journal/ConsoleSink.hpp"
 #include "MayaFlux/Journal/FileSink.hpp"
 
+namespace MayaFlux {
+bool is_engine_initialized()
+{
+    return is_initialized();
+}
+}
+
 namespace MayaFlux::Config {
 
 GraphConfig graph_config;

@@ -45,7 +45,7 @@ public:
      * (e.g., "2_2" for a biquad filter). All coefficients are initialized to zero
      * except a[0] which is set to 1.0.
      */
-    IIR(std::shared_ptr<Node> input, const std::string& zindex_shifts);
+    IIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts);
 
     /**
      * @brief Creates an IIR filter with specified coefficients
@@ -60,7 +60,7 @@ public:
      * Note: a[0] is typically normalized to 1.0, and the remaining a coefficients
      * are negated compared to the standard transfer function representation.
      */
-    IIR(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<double> b_coef);
+    IIR(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef);
 
     /**
      * @brief Processes a single sample through the IIR filter

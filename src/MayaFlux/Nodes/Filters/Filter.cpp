@@ -1,5 +1,7 @@
 #include "Filter.hpp"
 
+#include <algorithm>
+
 namespace MayaFlux::Nodes::Filters {
 
 std::pair<int, int> shift_parser(const std::string& str)
@@ -14,7 +16,7 @@ std::pair<int, int> shift_parser(const std::string& str)
     return std::make_pair(inputs, outputs);
 }
 
-Filter::Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts)
+Filter::Filter(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
     : m_input_node(input)
 {
     m_shift_config = shift_parser(zindex_shifts);
@@ -23,7 +25,7 @@ Filter::Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts)
     m_coef_a.resize(m_output_history.size(), 1);
 }
 
-Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<double> b_coef)
+Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef)
     : m_input_node(input)
     , m_coef_a(a_coef)
     , m_coef_b(b_coef)
@@ -33,7 +35,7 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
     if (m_coef_a.empty() || m_coef_b.empty()) {
         throw std::invalid_argument("IIR coefficients cannot be empty");
     }
-    if (m_coef_a[0] == 0.0f) {
+    if (m_coef_a[0] == 0.0F) {
         throw std::invalid_argument("First denominator coefficient (a[0]) cannot be zero");
     }
 
@@ -42,8 +44,8 @@ Filter::Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vec
 
 void Filter::initialize_shift_buffers()
 {
-    m_input_history.resize(m_shift_config.first + 1, 0.0f);
-    m_output_history.resize(m_shift_config.second + 1, 0.0f);
+    m_input_history.resize(m_shift_config.first + 1, 0.0F);
+    m_output_history.resize(m_shift_config.second + 1, 0.0F);
 }
 
 void Filter::set_coefs(const std::vector<double>& new_coefs, coefficients type)
@@ -79,7 +81,7 @@ void Filter::setACoefficients(const std::vector<double>& new_coefs)
     if (new_coefs.empty()) {
         throw std::invalid_argument("Denominator coefficients cannot be empty");
     }
-    if (new_coefs[0] == 0.0f) {
+    if (new_coefs[0] == 0.0F) {
         throw std::invalid_argument("First denominator coefficient (a[0]) cannot be zero");
     }
 
@@ -105,7 +107,7 @@ void Filter::setBCoefficients(const std::vector<double>& new_coefs)
     }
 }
 
-void Filter::update_coefs_from_node(int length, std::shared_ptr<Node> source, coefficients type)
+void Filter::update_coefs_from_node(int length, const std::shared_ptr<Node>& source, coefficients type)
 {
     std::vector<double> samples = source->process_batch(length);
     set_coefs(samples, type);
@@ -124,7 +126,7 @@ void Filter::update_coef_from_input(int length, coefficients type)
 void Filter::add_coef_internal(uint64_t index, double value, std::vector<double>& buffer)
 {
     if (index > buffer.size()) {
-        buffer.resize(index + 1, 1.f);
+        buffer.resize(index + 1, 1.F);
     }
     buffer.at(index) = value;
 }
@@ -147,8 +149,8 @@ void Filter::add_coef(int index, double value, coefficients type)
 
 void Filter::reset()
 {
-    std::fill(m_input_history.begin(), m_input_history.end(), 0.0);
-    std::fill(m_output_history.begin(), m_output_history.end(), 0.0);
+    std::ranges::fill(m_input_history, 0.0);
+    std::ranges::fill(m_output_history, 0.0);
 }
 
 void Filter::normalize_coefficients(coefficients type)
@@ -217,19 +219,23 @@ std::vector<double> Filter::process_batch(unsigned int num_samples)
 
 std::unique_ptr<NodeContext> Filter::create_context(double value)
 {
+    if (m_gpu_compatible) {
+        return std::make_unique<FilterContextGpu>(value, m_input_history, m_output_history, m_coef_a, m_coef_b,
+            get_gpu_data_buffer());
+    }
     return std::make_unique<FilterContext>(value, m_input_history, m_output_history, m_coef_a, m_coef_b);
 }
 
 void Filter::notify_tick(double value)
 {
-    auto context = create_context(value);
+    m_last_context = create_context(value);
 
     for (auto& callback : m_callbacks) {
-        callback(*context);
+        callback(*m_last_context);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*context)) {
-            callback(*context);
+        if (condition(*m_last_context)) {
+            callback(*m_last_context);
         }
     }
 }

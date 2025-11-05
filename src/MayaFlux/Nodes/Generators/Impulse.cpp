@@ -3,10 +3,8 @@
 
 namespace MayaFlux::Nodes::Generator {
 
-Impulse::Impulse(float frequency, double amplitude, float offset, bool bAuto_register)
-    : m_phase(0.0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Impulse::Impulse(float frequency, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
     , m_impulse_occurred(false)
@@ -15,40 +13,37 @@ Impulse::Impulse(float frequency, double amplitude, float offset, bool bAuto_reg
     update_phase_increment(frequency);
 }
 
-Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, float frequency, double amplitude, float offset, bool bAuto_register)
-    : m_phase(0.0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Impulse::Impulse(const std::shared_ptr<Node>& frequency_modulator, float frequency, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
     , m_impulse_occurred(false)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
-Impulse::Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude, float offset, bool bAuto_register)
-    : m_phase(0.0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Impulse::Impulse(float frequency, const std::shared_ptr<Node>& amplitude_modulator, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
     , m_impulse_occurred(false)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
-Impulse::Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-    float frequency, double amplitude, float offset, bool bAuto_register)
-    : m_phase(0.0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Impulse::Impulse(const std::shared_ptr<Node>& frequency_modulator, const std::shared_ptr<Node>& amplitude_modulator,
+    float frequency, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
     , m_impulse_occurred(false)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
@@ -58,17 +53,21 @@ void Impulse::set_frequency(float frequency)
     update_phase_increment(frequency);
 }
 
-void Impulse::update_phase_increment(float frequency)
+void Impulse::update_phase_increment(double frequency)
 {
-    m_phase_inc = frequency / MayaFlux::Config::get_sample_rate();
+    uint64_t s_rate = 48000U;
+    if (MayaFlux::is_engine_initialized()) {
+        s_rate = Config::get_sample_rate();
+    }
+    m_phase_inc = frequency / (double)s_rate;
 }
 
-void Impulse::set_frequency_modulator(std::shared_ptr<Node> modulator)
+void Impulse::set_frequency_modulator(const std::shared_ptr<Node>& modulator)
 {
     m_frequency_modulator = modulator;
 }
 
-void Impulse::set_amplitude_modulator(std::shared_ptr<Node> modulator)
+void Impulse::set_amplitude_modulator(const std::shared_ptr<Node>& modulator)
 {
     m_amplitude_modulator = modulator;
 }
@@ -91,7 +90,7 @@ double Impulse::process_sample(double input)
         if (state & Utils::NodeState::PROCESSED) {
             effective_freq += m_frequency_modulator->get_last_output();
         } else {
-            effective_freq = m_frequency_modulator->process_sample(0.f);
+            effective_freq = m_frequency_modulator->process_sample(0.F);
             atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
         }
 
@@ -116,7 +115,7 @@ double Impulse::process_sample(double input)
         if (state & Utils::NodeState::PROCESSED) {
             current_amplitude += m_amplitude_modulator->get_last_output();
         } else {
-            current_amplitude += m_amplitude_modulator->process_sample(0.f);
+            current_amplitude += m_amplitude_modulator->process_sample(0.F);
             atomic_add_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
         }
     }
@@ -167,7 +166,7 @@ void Impulse::reset(float frequency, float amplitude, float offset)
     m_last_output = 0.0;
 }
 
-void Impulse::on_impulse(NodeHook callback)
+void Impulse::on_impulse(const NodeHook& callback)
 {
     safe_add_callback(m_impulse_callbacks, callback);
 }
@@ -179,26 +178,21 @@ bool Impulse::remove_hook(const NodeHook& callback)
     return removed_from_tick || removed_from_impulse;
 }
 
-std::unique_ptr<NodeContext> Impulse::create_context(double value)
-{
-    return std::make_unique<GeneratorContext>(value, m_frequency, m_amplitude, m_phase);
-}
-
 void Impulse::notify_tick(double value)
 {
-    auto context = create_context(value);
+    m_last_context = create_context(value);
 
     for (auto& callback : m_callbacks) {
-        callback(*context);
+        callback(*m_last_context);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*context)) {
-            callback(*context);
+        if (condition(*m_last_context)) {
+            callback(*m_last_context);
         }
     }
     if (m_impulse_occurred) {
         for (auto& callback : m_impulse_callbacks) {
-            callback(*context);
+            callback(*m_last_context);
         }
     }
 }

@@ -79,6 +79,25 @@ private:
     std::unordered_map<std::string, std::any> m_attributes; ///< Named attributes for callbacks
 };
 
+class MAYAFLUX_API PolynomialContextGpu
+    : public PolynomialContext,
+      public GpuVectorData {
+public:
+    PolynomialContextGpu(
+        double value,
+        PolynomialMode mode,
+        size_t buffer_size,
+        const std::deque<double>& input_buffer,
+        const std::deque<double>& output_buffer,
+        const std::vector<double>& coefficients,
+        std::span<const float> gpu_data)
+        : PolynomialContext(value, mode, buffer_size, input_buffer, output_buffer, coefficients)
+        , GpuVectorData(gpu_data)
+    {
+        type_id = typeid(PolynomialContextGpu).name();
+    }
+};
+
 /**
  * @class Polynomial
  * @brief Generator that produces values based on polynomial functions
@@ -150,7 +169,7 @@ public:
      */
     Polynomial(BufferFunction function, PolynomialMode mode, size_t buffer_size);
 
-    virtual ~Polynomial() = default;
+    ~Polynomial() override = default;
 
     /**
      * @brief Processes a single sample
@@ -169,7 +188,7 @@ public:
      * This method is more efficient than calling process_sample() repeatedly
      * when generating multiple samples at once.
      */
-    virtual std::vector<double> process_batch(unsigned int num_samples) override;
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Resets the generator to its initial state
@@ -231,37 +250,37 @@ public:
      *
      * Configures the node to receive input from another node
      */
-    inline void set_input_node(std::shared_ptr<Node> input_node) { m_input_node = input_node; }
+    inline void set_input_node(const std::shared_ptr<Node>& input_node) { m_input_node = input_node; }
 
     /**
      * @brief Gets the current polynomial mode
      * @return Current polynomial mode
      */
-    PolynomialMode get_mode() const { return m_mode; }
+    [[nodiscard]] PolynomialMode get_mode() const { return m_mode; }
 
     /**
      * @brief Gets the buffer size
      * @return Current buffer size
      */
-    size_t get_buffer_size() const { return m_buffer_size; }
+    [[nodiscard]] size_t get_buffer_size() const { return m_buffer_size; }
 
     /**
      * @brief Gets the polynomial coefficients
      * @return Reference to the coefficient vector
      */
-    const std::vector<double>& get_coefficients() const { return m_coefficients; }
+    [[nodiscard]] const std::vector<double>& get_coefficients() const { return m_coefficients; }
 
     /**
      * @brief Gets the input buffer
      * @return Reference to the input buffer
      */
-    const std::deque<double>& get_input_buffer() const { return m_input_buffer; }
+    [[nodiscard]] const std::deque<double>& get_input_buffer() const { return m_input_buffer; }
 
     /**
      * @brief Gets the output buffer
      * @return Reference to the output buffer
      */
-    const std::deque<double>& get_output_buffer() const { return m_output_buffer; }
+    [[nodiscard]] const std::deque<double>& get_output_buffer() const { return m_output_buffer; }
 
     /**
      * @brief Prints a visual representation of the polynomial function
@@ -289,7 +308,7 @@ public:
      * This method retrieves the scaling factor applied to the output values,
      * which controls the overall amplitude of the generated signal.
      */
-    inline double get_amplitude() const override { return m_scale_factor; }
+    [[nodiscard]] inline double get_amplitude() const override { return m_scale_factor; }
 
     void save_state() override;
     void restore_state() override;
@@ -339,7 +358,7 @@ private:
 
     std::deque<double> m_saved_input_buffer; ///< Buffer of input values for feedforward mode
     std::deque<double> m_saved_output_buffer; ///< Buffer of output values for recursive mode
-    double m_saved_last_output;
+    double m_saved_last_output {};
     bool m_state_saved {};
 };
 

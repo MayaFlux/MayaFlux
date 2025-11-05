@@ -25,7 +25,7 @@ public:
      * @param source The upstream node that processes input first
      * @param target The downstream node that processes the source's output
      */
-    ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target);
+    ChainNode(const std::shared_ptr<Node>& source, const std::shared_ptr<Node>& target);
 
     /**
      * @brief Initializes the chain node
@@ -69,7 +69,7 @@ public:
      * output of the chain rather than intermediate values.
      * The callback receives the context from the target node.
      */
-    inline void on_tick(NodeHook callback) override
+    inline void on_tick(const NodeHook& callback) override
     {
         m_Target->on_tick(callback);
     }
@@ -84,7 +84,7 @@ public:
      * final output of the chain. The callback and condition both
      * receive the context from the target node.
      */
-    inline void on_tick_if(NodeHook callback, NodeCondition condition) override
+    inline void on_tick_if(const NodeHook& callback, const NodeCondition& condition) override
     {
         m_Target->on_tick_if(callback, condition);
     }
@@ -187,15 +187,7 @@ private:
     bool m_state_saved {};
 
 public:
-    inline bool is_initialized() const
-    {
-        auto sState = m_Source->m_state.load();
-        auto tState = m_Target->m_state.load();
-
-        bool is_source_registered = m_Source ? (sState & Utils::NodeState::ACTIVE) : false;
-        bool is_target_registered = m_Target ? (tState & Utils::NodeState::ACTIVE) : false;
-        return !is_source_registered && !is_target_registered && (m_state.load() & Utils::NodeState::ACTIVE);
-    }
+    bool is_initialized() const;
 };
 
 /**
@@ -226,12 +218,7 @@ public:
      * binary operation's current state, including both input values and
      * the resulting output value after combination.
      */
-    BinaryOpContext(double value, double lhs_value, double rhs_value)
-        : NodeContext(value, typeid(BinaryOpContext).name())
-        , lhs_value(lhs_value)
-        , rhs_value(rhs_value)
-    {
-    }
+    BinaryOpContext(double value, double lhs_value, double rhs_value);
 
     /**
      * @brief The value from the left-hand side node
@@ -250,6 +237,26 @@ public:
      * the right node to the final combined output.
      */
     double rhs_value;
+};
+
+/**
+ * @class BinaryOpContextGpu
+ * @brief GPU-compatible context for binary operation callbacks
+ *
+ * BinaryOpContextGpu extends BinaryOpContext and implements GpuVectorData
+ * to provide GPU-compatible data for binary operation callbacks. It includes
+ * the individual values from both the left and right nodes, as well as a
+ * span of float data that can be uploaded to the GPU for efficient processing.
+ *
+ * This context enables GPU-accelerated callbacks to analyze and respond to
+ * binary operations in high-performance scenarios, such as:
+ * - Real-time audio processing on the GPU
+ * - Complex signal interactions in visual effects
+ * - High-throughput data transformations in compute shaders
+ */
+class MAYAFLUX_API BinaryOpContextGpu : public BinaryOpContext, public GpuVectorData {
+public:
+    BinaryOpContextGpu(double value, double lhs_value, double rhs_value, std::span<const float> gpu_data);
 };
 
 /**
@@ -288,7 +295,7 @@ public:
      * - Addition: [](double a, double b) { return a + b; }
      * - Multiplication: [](double a, double b) { return a * b; }
      */
-    BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs, CombineFunc func);
+    BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_ptr<Node>& rhs, CombineFunc func);
 
     /**
      * @brief Initializes the binary operation node
@@ -354,10 +361,7 @@ protected:
      * input nodes, providing callbacks with rich information about
      * the operation's inputs and output.
      */
-    inline std::unique_ptr<NodeContext> create_context(double value) override
-    {
-        return std::make_unique<BinaryOpContext>(value, m_last_lhs_value, m_last_rhs_value);
-    }
+    std::unique_ptr<NodeContext> create_context(double value) override;
 
 private:
     /**
@@ -382,7 +386,7 @@ private:
      * allowing them to access not just the combined result but also
      * the individual contributions from each input node.
      */
-    double m_last_lhs_value = 0.0;
+    double m_last_lhs_value {};
 
     /**
      * @brief The last output value from the right-hand side node
@@ -391,7 +395,7 @@ private:
      * allowing them to access not just the combined result but also
      * the individual contributions from each input node.
      */
-    double m_last_rhs_value = 0.0;
+    double m_last_rhs_value {};
 
     /**
      * @brief Flag indicating whether the binary operator has been properly initialized
@@ -402,20 +406,13 @@ private:
      * components are ready, preventing potential null pointer issues or
      * processing inconsistencies.
      */
-    bool m_is_initialized;
+    bool m_is_initialized {};
 
     bool m_state_saved {};
-    double m_saved_last_lhs_value;
-    double m_saved_last_rhs_value;
+    double m_saved_last_lhs_value {};
+    double m_saved_last_rhs_value {};
 
 public:
-    inline bool is_initialized() const
-    {
-        auto lstate = m_lhs->m_state.load();
-        auto rstate = m_lhs->m_state.load();
-        bool is_lhs_registered = m_lhs ? (lstate & Utils::NodeState::ACTIVE) : false;
-        bool is_rhs_registered = m_rhs ? (rstate & Utils::NodeState::ACTIVE) : false;
-        return !is_lhs_registered && !is_rhs_registered;
-    }
+    bool is_initialized() const;
 };
 }
