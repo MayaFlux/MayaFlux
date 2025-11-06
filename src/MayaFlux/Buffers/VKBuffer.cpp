@@ -1,8 +1,8 @@
 #include "VKBuffer.hpp"
 
 #include "BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
@@ -357,6 +357,48 @@ void VKBuffer::set_vertex_layout(const Kakshya::VertexLayout& layout)
     auto computed_layout = layout;
     computed_layout.compute_stride();
     m_vertex_layout = computed_layout;
+}
+
+std::shared_ptr<Buffers::VKBuffer> VKBuffer::clone_to(Usage usage)
+{
+    auto buffer = std::make_shared<VKBuffer>(m_size_bytes, usage, m_modality);
+
+    if (auto layout = get_vertex_layout(); layout.has_value()) {
+        buffer->set_vertex_layout(layout.value());
+    }
+
+    buffer->set_processing_chain(get_processing_chain());
+    buffer->set_default_processor(get_default_processor());
+
+    if (is_host_visible()) {
+        if (buffer->is_host_visible()) {
+            auto src_ptr = static_cast<uint8_t*>(m_resources.mapped_ptr);
+            buffer->set_data({ std::vector<uint8_t>(src_ptr, src_ptr + m_size_bytes) });
+        } else {
+            download_device_local(
+                std::dynamic_pointer_cast<VKBuffer>(shared_from_this()),
+                buffer,
+                nullptr);
+        }
+    } else {
+        if (buffer->is_host_visible()) {
+            upload_device_local(
+                buffer,
+                std::dynamic_pointer_cast<VKBuffer>(shared_from_this()),
+                get_data()[0]);
+        } else {
+            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
+                "Cloning device-local VKBuffer to another device-local VKBuffer requires external data transfer");
+        }
+    }
+
+    return buffer;
+}
+
+std::shared_ptr<Buffers::Buffer> VKBuffer::clone_to(uint8_t dest_desc)
+{
+    auto usage = static_cast<Usage>(dest_desc);
+    return std::dynamic_pointer_cast<Buffers::Buffer>(clone_to(usage));
 }
 
 } // namespace MayaFlux::Buffers::Vulkan

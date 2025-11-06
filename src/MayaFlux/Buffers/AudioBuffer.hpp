@@ -333,6 +333,8 @@ public:
      */
     virtual std::shared_ptr<AudioBuffer> clone_to(uint32_t channel);
 
+    std::shared_ptr<Buffer> clone_to(uint8_t dest_desc) override;
+
     /**
      * @brief Reads audio data into the buffer from the audio backend
      * @param buffer Shared pointer to the AudioBuffer to read data into

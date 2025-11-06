@@ -1,6 +1,6 @@
 #include "StagingUtils.hpp"
-#include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 
+#include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 
@@ -320,6 +320,64 @@ void download_from_gpu(
     auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
 
     std::memcpy(data, ptr, std::min(size, bytes));
+}
+
+void upload_audio_to_gpu(
+    const std::shared_ptr<AudioBuffer>& audio_buffer,
+    const std::shared_ptr<VKBuffer>& gpu_buffer,
+    const std::shared_ptr<VKBuffer>& staging)
+{
+    if (gpu_buffer->get_format() != vk::Format::eR64Sfloat && gpu_buffer->get_format() != vk::Format::eUndefined) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "GPU buffer format is {} but audio requires R64Sfloat for double precision. "
+            "Create VKBuffer with DataModality::AUDIO_1D or AUDIO_MULTICHANNEL.",
+            vk::to_string(gpu_buffer->get_format()));
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "GPU buffer format mismatch for audio upload");
+    }
+
+    auto& audio_data = audio_buffer->get_data();
+
+    if (audio_data.empty()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "AudioBuffer contains no data to upload");
+        return;
+    }
+
+    const void* data_ptr = audio_data.data();
+    size_t data_bytes = audio_data.size() * sizeof(double);
+
+    upload_to_gpu(data_ptr, data_bytes, gpu_buffer, staging);
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Uploaded {} bytes of double-precision audio to GPU", data_bytes);
+}
+
+void download_audio_from_gpu(
+    const std::shared_ptr<VKBuffer>& gpu_buffer,
+    const std::shared_ptr<AudioBuffer>& audio_buffer,
+    const std::shared_ptr<VKBuffer>& staging)
+{
+    Kakshya::DataVariant downloaded_data;
+
+    auto dimensions = std::vector<Kakshya::DataDimension> {
+        Kakshya::DataDimension::time(
+            gpu_buffer->get_size_bytes() / sizeof(double),
+            "samples")
+    };
+    Kakshya::DataAccess accessor = download_to_view<double>(
+        gpu_buffer, downloaded_data, dimensions,
+        Kakshya::DataModality::AUDIO_1D, staging);
+
+    auto double_view = accessor.view<double>();
+
+    audio_buffer->get_data() = std::vector<double>(double_view.begin(), double_view.end());
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Downloaded {} samples of double-precision audio from GPU", double_view.size());
 }
 
 } // namespace MayaFlux::Buffers

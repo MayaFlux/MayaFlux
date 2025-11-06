@@ -74,6 +74,12 @@ void AudioBuffer::set_default_processor(std::shared_ptr<BufferProcessor> process
     }
 }
 
+std::shared_ptr<Buffer> AudioBuffer::clone_to(uint8_t dest_desc)
+{
+    auto buf = clone_to(static_cast<uint32_t>(dest_desc));
+    return std::dynamic_pointer_cast<Buffer>(buf);
+}
+
 std::shared_ptr<AudioBuffer> AudioBuffer::clone_to(uint32_t channel)
 {
     auto buffer = std::make_shared<AudioBuffer>(channel, m_num_samples);
@@ -88,21 +94,25 @@ bool AudioBuffer::read_once(std::shared_ptr<AudioBuffer> buffer, bool force)
 {
     if (buffer && buffer->get_num_samples() == m_num_samples) {
         if (m_is_processing.load() || buffer->is_processing()) {
-            std::cerr << "Warning: Attempting to read from an audio buffer while it is being processed."
-                      << std::endl;
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "read_once: Attempting to read from an audio buffer while it is being processed.");
 
             if (!force) {
-                std::cerr << "Skipping read due to ongoing processing." << std::endl;
+                MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "read_once: Skipping read due to ongoing processing.");
                 return false;
             }
-            std::cerr << "Copying between buffers that are processing. This can lead to data curroption" << std::endl;
+            MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "read_once: Forcing read despite ongoing processing. This may lead to data corruption.");
         }
         m_data = buffer->get_data();
         m_has_data = true;
         return true;
-    } else {
-        std::cerr << "Error: Buffer read failed due to size mismatch or null buffer." << std::endl;
     }
+
+    MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "read_once: Buffer read failed due to size mismatch or null buffer.");
+
     return false;
 }
 

@@ -5,6 +5,25 @@
 namespace MayaFlux::Kakshya {
 
 /**
+ * @enum GpuDataFormat
+ * @brief GPU data formats with explicit precision levels
+ */
+enum class GpuDataFormat : uint8_t {
+    FLOAT32, // 32-bit float (standard GPU)
+    VEC2_F32, // glm::vec2 (32-bit components)
+    VEC3_F32, // glm::vec3 (32-bit components)
+    VEC4_F32, // glm::vec4 (32-bit components)
+
+    FLOAT64, // 64-bit double (audio precision)
+    VEC2_F64, // glm::dvec2 (64-bit components)
+    VEC3_F64, // glm::dvec3 (64-bit components)
+    VEC4_F64, // glm::dvec4 (64-bit components)
+
+    INT32,
+    UINT32
+};
+
+/**
  * @brief Memory layout for multi-dimensional data.
  *
  * Specifies how multi-dimensional data is mapped to linear memory.

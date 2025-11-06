@@ -390,6 +390,19 @@ public:
         m_vertex_layout.reset();
     }
 
+    std::shared_ptr<Buffer> clone_to(uint8_t dest_desc) override;
+
+    /**
+     * @brief Create a clone of this buffer with the same data and properties
+     * @param usage Usage enum for the cloned buffer
+     * @return Shared pointer to the cloned VKBuffer
+     *
+     * The cloned buffer will have the same size, modality, dimensions,
+     * processing chain and default processor as the original. Changes to
+     * one buffer after cloning do not affect the other.
+     */
+    std::shared_ptr<VKBuffer> clone_to(Usage usage);
+
 private:
     VKBufferResources m_resources;
 
