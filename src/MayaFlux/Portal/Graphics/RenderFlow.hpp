@@ -527,6 +527,8 @@ private:
 
     ShaderFoundry* m_shader_foundry = nullptr;
     Registry::Service::DisplayService* m_display_service = nullptr;
+
+    static bool s_initialized;
 };
 
 /**

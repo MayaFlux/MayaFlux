@@ -7,8 +7,16 @@
 
 namespace MayaFlux::Portal::Graphics {
 
+bool TextureLoom::s_initialized = false;
+
 bool TextureLoom::initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
 {
+    if (s_initialized) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "TextureLoom already initialized (static flag)");
+        return true;
+    }
+
     if (!backend) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
             "Cannot initialize TextureLoom with null backend");
@@ -23,6 +31,8 @@ bool TextureLoom::initialize(const std::shared_ptr<Core::VulkanBackend>& backend
 
     m_backend = backend;
     m_resource_manager = &m_backend->get_resource_manager();
+    s_initialized = true;
+
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "TextureLoom initialized");
     return true;
@@ -30,6 +40,10 @@ bool TextureLoom::initialize(const std::shared_ptr<Core::VulkanBackend>& backend
 
 void TextureLoom::shutdown()
 {
+    if (!s_initialized) {
+        return;
+    }
+
     if (!m_backend) {
         return;
     }
@@ -46,6 +60,8 @@ void TextureLoom::shutdown()
     m_sampler_cache.clear();
     m_resource_manager = nullptr;
     m_backend = nullptr;
+
+    s_initialized = false;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "TextureLoom shutdown complete");

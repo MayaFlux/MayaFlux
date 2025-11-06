@@ -7,8 +7,16 @@
 
 namespace MayaFlux::Portal::Graphics {
 
+bool SamplerForge::s_initialized = false;
+
 bool SamplerForge::initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
 {
+    if (s_initialized) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "SamplerForge already initialized (static flag)");
+        return true;
+    }
+
     if (!backend) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
             "Cannot initialize SamplerForge with null backend");
@@ -23,6 +31,8 @@ bool SamplerForge::initialize(const std::shared_ptr<Core::VulkanBackend>& backen
 
     m_backend = backend;
 
+    s_initialized = true;
+
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "SamplerForge initialized");
 
@@ -31,6 +41,10 @@ bool SamplerForge::initialize(const std::shared_ptr<Core::VulkanBackend>& backen
 
 void SamplerForge::shutdown()
 {
+    if (!s_initialized) {
+        return;
+    }
+
     if (!m_backend) {
         return;
     }
@@ -47,6 +61,8 @@ void SamplerForge::shutdown()
     m_sampler_cache.clear();
 
     m_backend = nullptr;
+
+    s_initialized = false;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "SamplerForge shutdown complete");

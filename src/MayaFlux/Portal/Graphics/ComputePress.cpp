@@ -6,8 +6,16 @@
 
 namespace MayaFlux::Portal::Graphics {
 
+bool ComputePress::s_initialized = false;
+
 bool ComputePress::initialize()
 {
+    if (s_initialized) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::GPUCompute,
+            "ComputePress already initialized (static flag)");
+        return true;
+    }
+
     m_shader_foundry = &get_shader_foundry();
     if (!m_shader_foundry->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
@@ -18,6 +26,8 @@ bool ComputePress::initialize()
     m_descriptor_manager = std::make_shared<Core::VKDescriptorManager>();
     m_descriptor_manager->initialize(m_shader_foundry->get_device(), 1024);
 
+    s_initialized = true;
+
     MF_INFO(Journal::Component::Portal, Journal::Context::GPUCompute,
         "ComputePress initialized");
     return true;
@@ -25,6 +35,10 @@ bool ComputePress::initialize()
 
 void ComputePress::shutdown()
 {
+    if (!s_initialized) {
+        return;
+    }
+
     if (!m_shader_foundry || !m_shader_foundry->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
             "Cannot shutdown ComputePress: ShaderFoundry not initialized");
@@ -55,6 +69,8 @@ void ComputePress::shutdown()
     }
 
     m_pipelines.clear();
+
+    s_initialized = false;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::GPUCompute,
         "ComputePress shutdown complete");
