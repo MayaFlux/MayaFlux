@@ -91,6 +91,21 @@ public:
         vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
 
     /**
+     * @brief Bind structured node (arrays of POD structs) to descriptor
+     * @param name Logical binding name
+     * @param node Node that creates context with GpuStructuredData
+     * @param descriptor_name Name in shader config bindings
+     * @param set Descriptor set index
+     * @param type Typically eStorageBuffer for structured arrays
+     */
+    void bind_structured_node(
+        const std::string& name,
+        const std::shared_ptr<Nodes::Node>& node,
+        const std::string& descriptor_name,
+        uint32_t set,
+        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+
+    /**
      * @brief Remove a binding
      */
     void unbind_node(const std::string& name);
@@ -120,6 +135,16 @@ protected:
 
 private:
     std::unordered_map<std::string, DescriptorBinding> m_bindings;
+
+    /**
+     * @brief Ensure descriptor buffer has sufficient capacity
+     * @param binding Descriptor binding to check
+     * @param required_size Minimum required size in bytes
+     *
+     * If buffer is too small, resizes with 50% over-allocation.
+     * Sets m_needs_descriptor_rebuild flag if resize occurs.
+     */
+    void ensure_buffer_capacity(DescriptorBinding& binding, size_t required_size);
 
     /**
      * @brief Update descriptor from node context

@@ -3,6 +3,7 @@
 #include "BufferProcessingChain.hpp"
 
 #include "MayaFlux/API/Config.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
 

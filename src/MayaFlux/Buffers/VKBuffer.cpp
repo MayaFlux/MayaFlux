@@ -114,25 +114,70 @@ std::vector<Kakshya::DataVariant> VKBuffer::get_data()
     return {};
 }
 
-void VKBuffer::resize(size_t new_size)
+void VKBuffer::resize(size_t new_size, bool preserve_data)
 {
     if (new_size == m_size_bytes)
         return;
 
+    if (!is_initialized()) {
+        m_size_bytes = new_size;
+        infer_dimensions_from_data(new_size);
+
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "Cannot resize uninitialized VKBuffer");
+        return;
+    }
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Cannot resize buffer: BufferService not available");
+    }
+
+    std::vector<uint8_t> old_data;
+    if (preserve_data && is_host_visible() && m_resources.mapped_ptr) {
+        size_t copy_size = std::min(m_size_bytes, new_size);
+        old_data.resize(copy_size);
+        std::memcpy(old_data.data(), m_resources.mapped_ptr, copy_size);
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "Preserved {} bytes of old buffer data", copy_size);
+    }
+
+    buffer_service->destroy_buffer(shared_from_this());
+
+    m_resources.buffer = vk::Buffer {};
+    m_resources.memory = vk::DeviceMemory {};
+    m_resources.mapped_ptr = nullptr;
+
     m_size_bytes = new_size;
     infer_dimensions_from_data(new_size);
 
-    if (is_initialized()) {
-        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
-            "VKBuffer resized to {} bytes - will recreate on next process cycle",
-            new_size);
+    buffer_service->initialize_buffer(shared_from_this());
 
-        m_dirty_ranges.clear();
-        m_invalid_ranges.clear();
-        m_resources.buffer = vk::Buffer {};
-        m_resources.memory = vk::DeviceMemory {};
-        m_resources.mapped_ptr = nullptr;
+    if (!is_initialized()) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferManagement,
+            std::source_location::current(),
+            "Failed to recreate buffer after resize");
     }
+
+    if (preserve_data && !old_data.empty() && is_host_visible() && m_resources.mapped_ptr) {
+        std::memcpy(m_resources.mapped_ptr, old_data.data(), old_data.size());
+        mark_dirty_range(0, old_data.size());
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "Restored {} bytes to resized buffer", old_data.size());
+    }
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::BufferManagement,
+        "VKBuffer resize complete: {} bytes", m_size_bytes);
 }
 
 vk::Format VKBuffer::get_format() const
@@ -289,32 +334,6 @@ void VKBuffer::infer_dimensions_from_data(size_t byte_count)
         break;
     }
 }
-
-/* void VKBuffer::flush(size_t offset, size_t size)
-{
-    if (!is_host_visible())
-        return;
-
-    VkMappedMemoryRange range {};
-    range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-    range.memory = m_resources.memory;
-    range.offset = offset;
-    range.size = size;
-    vkFlushMappedMemoryRanges(m_context->get_device(), 1, &range);
-}
-
-void VKBuffer::invalidate(size_t offset, size_t size)
-{
-    if (!is_host_visible())
-        return;
-
-    VkMappedMemoryRange range {};
-    range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-    range.memory = m_resources.memory;
-    range.offset = offset;
-    range.size = size;
-    vkInvalidateMappedMemoryRanges(m_context.get_device(), 1, &range);
-} */
 
 void VKBuffer::mark_dirty_range(size_t offset, size_t size)
 {

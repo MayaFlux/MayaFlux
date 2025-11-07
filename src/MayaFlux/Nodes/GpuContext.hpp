@@ -53,4 +53,32 @@ public:
     [[nodiscard]] bool has_gpu_data() const { return !m_gpu_data.empty(); }
 };
 
+/**
+ * @class GpuStructuredData
+ * @brief GPU-uploadable structured data (arrays of POD structs)
+ *
+ * Provides raw byte access for arrays of POD structures.
+ * Use for: particle systems, instance data, custom vertex attributes.
+ */
+class MAYAFLUX_API GpuStructuredData {
+protected:
+    std::span<const uint8_t> m_gpu_data;
+    size_t m_element_size = 0;
+    size_t m_element_count = 0;
+
+public:
+    GpuStructuredData() = default;
+    GpuStructuredData(std::span<const uint8_t> data, size_t elem_size, size_t elem_count)
+        : m_gpu_data(data)
+        , m_element_size(elem_size)
+        , m_element_count(elem_count)
+    {
+    }
+
+    std::span<const uint8_t> gpu_data() const { return m_gpu_data; }
+    size_t element_size() const { return m_element_size; }
+    size_t element_count() const { return m_element_count; }
+    bool has_gpu_data() const { return !m_gpu_data.empty(); }
+};
+
 } // namespace MayaFlux::Nodes

@@ -204,6 +204,7 @@ void DescriptorBindingsProcessor::update_descriptor_from_node(DescriptorBinding&
     switch (binding.binding_type) {
     case BindingType::SCALAR: {
         auto value = static_cast<float>(binding.node->get_last_output());
+        ensure_buffer_capacity(binding, sizeof(float));
 
         upload_to_gpu(&value, sizeof(float), binding.gpu_buffer, nullptr);
         break;
@@ -219,15 +220,8 @@ void DescriptorBindingsProcessor::update_descriptor_from_node(DescriptorBinding&
 
         auto data = gpu_vec->gpu_data();
 
-        if (data.size_bytes() > binding.buffer_size) {
-            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Vector data ({} bytes) exceeds buffer size ({} bytes), truncating",
-                data.size_bytes(), binding.buffer_size);
-        }
-
-        size_t write_size = std::min(data.size_bytes(), binding.buffer_size);
-
-        upload_to_gpu(data.data(), write_size, binding.gpu_buffer, nullptr);
+        ensure_buffer_capacity(binding, data.size_bytes());
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
         break;
     }
 
@@ -240,25 +234,88 @@ void DescriptorBindingsProcessor::update_descriptor_from_node(DescriptorBinding&
         }
 
         auto data = gpu_mat->gpu_data();
+        ensure_buffer_capacity(binding, data.size_bytes());
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
+        break;
+    }
 
-        if (data.size_bytes() > binding.buffer_size) {
-            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Matrix data ({} bytes) exceeds buffer size ({} bytes), truncating",
-                data.size_bytes(), binding.buffer_size);
+    case BindingType::STRUCTURED: {
+        auto* gpu_struct = dynamic_cast<Nodes::GpuStructuredData*>(&ctx);
+        if (!gpu_struct || !gpu_struct->has_gpu_data()) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Node context does not provide GpuStructuredData");
+            return;
         }
 
-        size_t write_size = std::min(data.size_bytes(), binding.buffer_size);
-
-        upload_to_gpu(data.data(), write_size, binding.gpu_buffer, nullptr);
+        auto data = gpu_struct->gpu_data();
+        ensure_buffer_capacity(binding, data.size_bytes());
+        upload_to_gpu(data.data(), data.size_bytes(), binding.gpu_buffer, nullptr);
         break;
     }
-
-    case BindingType::STRUCTURED:
-        // TODO: Implement structured data binding when needed
-        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Structured binding not yet implemented");
-        break;
     }
+}
+
+void DescriptorBindingsProcessor::bind_structured_node(
+    const std::string& name,
+    const std::shared_ptr<Nodes::Node>& node,
+    const std::string& descriptor_name,
+    uint32_t set,
+    vk::DescriptorType type)
+{
+    if (!node) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot bind null node '{}'", name);
+        return;
+    }
+
+    if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Descriptor '{}' not found in shader config", descriptor_name);
+        return;
+    }
+
+    const auto& binding_config = m_config.bindings[descriptor_name];
+
+    size_t initial_size = static_cast<long>(1024) * 64;
+    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+
+    m_bindings[name] = DescriptorBinding {
+        .node = node,
+        .descriptor_name = descriptor_name,
+        .set_index = set,
+        .binding_index = binding_config.binding,
+        .type = type,
+        .binding_type = BindingType::STRUCTURED,
+        .gpu_buffer = gpu_buffer,
+        .buffer_offset = 0,
+        .buffer_size = initial_size
+    };
+
+    bind_buffer(descriptor_name, gpu_buffer);
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Bound structured node '{}' to descriptor '{}'", name, descriptor_name);
+}
+
+void DescriptorBindingsProcessor::ensure_buffer_capacity(
+    DescriptorBinding& binding,
+    size_t required_size)
+{
+    if (required_size <= binding.gpu_buffer->get_size_bytes()) {
+        return;
+    }
+
+    size_t new_size = required_size * 3 / 2;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Resizing descriptor buffer '{}': {} → {} bytes",
+        binding.descriptor_name, binding.buffer_size, new_size);
+
+    binding.gpu_buffer->resize(new_size, false);
+
+    binding.buffer_size = new_size;
+
+    m_needs_descriptor_rebuild = true;
 }
 
 std::shared_ptr<VKBuffer> DescriptorBindingsProcessor::create_descriptor_buffer(

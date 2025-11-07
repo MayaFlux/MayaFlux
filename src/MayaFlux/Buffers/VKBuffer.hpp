@@ -120,15 +120,19 @@ public:
     void set_data(const std::vector<Kakshya::DataVariant>& data);
 
     /**
-     * @brief Request a new capacity for the buffer
+     * @brief Resize buffer and recreate GPU resources if needed
+     * @param new_size New size in bytes
+     * @param preserve_data If true, copy existing data to new buffer
      *
-     * Updates the logical size and inferred dimensions. If the buffer is
-     * already registered the actual Vulkan re-creation is deferred to the
-     * backend (BufferManager) and the Vulkan handles are invalidated locally.
+     * If buffer is already initialized (has GPU resources), this will:
+     * 1. Create new GPU buffer with new size
+     * 2. Optionally copy old data
+     * 3. Destroy old GPU buffer
+     * 4. Update buffer resources
      *
-     * @param new_size New buffer size in bytes.
+     * If buffer is not initialized, just updates logical size.
      */
-    void resize(size_t new_size);
+    void resize(size_t new_size, bool preserve_data = false);
 
     /**
      * @brief Get current logical size in bytes
