@@ -50,7 +50,14 @@ MayaFlux includes automated setup scripts that handle all dependencies and build
 #### Linux
 
 Linux users typically manage dependencies through their package manager. Install the standard development tools (cmake, build-essential, pkg-config)
-and audio/multimedia libraries (rtaudio, ffmpeg, eigen3, gtest, magic_enum and glfw) using your distribution's package manager.
+and devel/multimedia libraries (rtaudio, ffmpeg, eigen3, gtest, magic_enum, glfw, vulkan-sdk, glm, stb) using your distribution's package manager.
+
+However, you can also run the provided setup script to automate this process for Debian-based systems, fedora, and Arch Linux:
+
+```bash
+# Run this in any terminal
+./scripts/setup_linux.sh
+```
 
 > **Note**: All setup scripts automatically handle dependency installation and build system configuration. No manual dependency management required.
 
@@ -145,10 +152,98 @@ MayaFlux/
 ├── src/
 │   ├── MayaFlux/           # Core library
 │   └── main.cpp            # Your code entry point
+│   └── user_project.hpp    # Your custom project code
 ├── res/                    # Audio files and resources
+├── data/shaders/           # Shader files for graphics processing
 ├── scripts/                # Platform setup scripts
 ├── build/                  # Generated build files (after setup)
 ```
+
+
+## Philosophy
+
+MayaFlux represents a fundamental shift from analog-inspired audio software toward truly digital paradigms. Instead of simulating vintage hardware, we embrace the computational possibilities that only exist in the digital realm - recursive processing, multi dimensional data handling, generating on the fly grammars and pipelines, data-driven control, cross-modal interaction, and algorithmic composition techniques that treat code as creative material.
+
+Explore the shape of things to come!
+
+## Using This Guide
+
+### For Beginners: Learning Just Enough C++
+
+> **If you’re new to C++**
+>
+> MayaFlux uses modern C++ (C++17/20). You don’t need to be an expert—just comfortable reading and editing small functions.
+> The best way to learn is hands-on:
+>
+> * **The openFrameworks “ofBook”** has an excellent short section on C++ basics that map well to creative coding workflows.
+> * The free [cppreference.com](https://en.cppreference.com/w/) pages on *“Variables,” “Functions,”* and *“Classes”* are reliable quick reads.
+> * If you prefer a creative-coding approach, check out *The openFrameworks C++ Chapter* or *Daniel Shiffman’s “The Nature of Code (C++ port)”* for conceptual grounding.
+>
+> You can safely begin MayaFlux tutorials with only this level of knowledge.
+> The tutorials explain real C++ constructs as they appear—no memorization needed.
+
+---
+
+### Compiling and Running in VS Code
+
+> **Running your first MayaFlux program**
+>
+> 1. Open your project folder in VS Code (`code MayaFlux`).
+> 2. Press **`Ctrl+Shift+B`** (or **`Cmd+Shift+B`** on macOS). This runs the CMake *build* task.
+> 3. When the build finishes, press **`F5`** to *run* the executable.
+> 4. You’ll see output in the **terminal panel** and, if your code plays audio, you’ll hear it immediately.
+>
+> VS Code automatically uses the CMake configuration created by the setup script.
+> You don’t need to run any manual compiler commands—just *build* and *run*.
+
+*(Optional line to add if you want to reinforce the C++ learning mindset)*
+
+> Every time you press **F5**, you’re compiling real C++ and running it live.
+> This is the same pipeline used in professional software development—no “toy” interpreters here.
+
+---
+
+### Understanding Your `user_project.hpp`
+
+> **Your creative workspace lives in `src/user_project.hpp`.**
+>
+> * `settings()` runs once, *before* the engine starts. Use it to set sample rate, buffer size, graphics API, and logging options.
+> * `compose()` runs *after* setup—it’s your canvas for sound, data, graphics and computation.
+> * You can define functions or global variables above `compose()` if you want to reuse them inside it.
+> * This file is never overwritten by MayaFlux updates—you own it.
+>
+> Example:
+>
+> ```cpp
+> void settings() {
+>     auto& stream = MayaFlux::Config::get_global_stream_info();
+>     stream.sample_rate = 48000;
+>     stream.buffer_size = 128;
+> }
+>
+> void compose() {
+>     vega.load("res/audio/track.wav") | Audio;
+> }
+> ```
+
+---
+
+### How to Use the Tutorials
+
+> **MayaFlux tutorials are designed for exploration, not passive reading.**
+>
+> 1. **Run the visible code.**
+>    Copy the non-hidden (top-level) snippets into `compose()` and run them.
+> 2. **Listen or observe what happens.**
+>    Every tutorial produces a real, audible or visual result.
+> 3. **Open the dropdowns (`<details>`).**
+>    These reveal what’s happening under the hood. Read them slowly; come back later as your understanding grows.
+> 4. **Experiment.**
+>    Change numbers, reorder calls, or combine examples. Each tweak teaches you something about the system.
+> 5. **Iterate.**
+>    As you learn, revisit earlier tutorials. MayaFlux rewards depth—you’ll understand new layers every time.
+>
+> The goal is fluency, not memorization. You’re not “following a recipe”—you’re learning how the machinery works so you can build your own.
 
 ## Next Steps
 
@@ -158,17 +253,26 @@ MayaFlux/
 _Advanced_ users can refer to [Advanced Context Control](Advanced_Context_Control.md) that explores architecture and backend level
 customization in `MayaFlux Core`
 
-## Future Roadmap
+## Starting Your First Tutorial
 
-MayaFlux is designed for expansion into a complete digital multimedia ecosystem:
+Now that your environment is set up, you're ready to begin.
 
-- **GL/Vulkan GPU Integration**: Real-time visual processing and compute shaders
-- **Live Coding**: Lua integration via Sol2 and Cling integration
-- **Game Engine Plugins**: UE5 and Godot integration
-- **Cross-Language FFI**:
+**"Sculpting Data"** is the entry tutorial series. It starts with the simplest operation (loading a file) and builds systematically toward complete pipeline architectures.
 
-## Philosophy
+Each section in Sculpting Data teaches one core idea and builds on the previous:
+1. **Section 1: Load** - Understand Containers (how data is organized)
+2. **Section 2: Connect** - Understand Buffers (how data flows)
+3. **Section 2.5: Process** - Understand Processors (how data transforms)
+4. **Section 3: Timing** - Understand timing control (how you schedule)
+5. **Section 4:** (Coming) BufferOperation (how you compose)
 
-MayaFlux represents a fundamental shift from analog-inspired audio software toward truly digital paradigms. Instead of simulating vintage hardware, we embrace the computational possibilities that only exist in the digital realm - recursive processing, multi dimensional data handling, generating on the fly grammars and pipelines, data-driven control, cross-modal interaction, and algorithmic composition techniques that treat code as creative material.
+**Start here:** Open [Sculpting Data](Tutorial/SculptingData.md) and begin with Section 1.
 
-Explore the shape of things to come!
+Each section is designed to be executed immediately:
+- Copy the code examples into your `compose()` function
+- Run with `F5`
+- Listen/observe the result
+- Open the dropdowns to understand why it works
+- Experiment by changing values
+
+You'll have working audio within 5 minutes.

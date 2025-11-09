@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Herald - MayaFlux Linux Setup
+# Weave - MayaFlux Linux Setup
 # Installs dependencies based on detected package manager
 # Supports: Arch (pacman), Fedora (dnf), Ubuntu/Debian (apt), openSUSE (zypper)
 
