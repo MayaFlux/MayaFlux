@@ -31,6 +31,32 @@ Polynomial::Polynomial(BufferFunction function, PolynomialMode mode, size_t buff
     m_output_buffer.resize(buffer_size, 0.0);
 }
 
+std::deque<double> Polynomial::build_processing_buffer(double input, bool use_output_buffer)
+{
+    std::deque<double> buffer;
+
+    if (m_use_external_context && !m_external_buffer_context.empty()) {
+        size_t lookback = std::min(m_current_buffer_position, m_buffer_size - 1);
+
+        if (lookback > 0) {
+            auto start = m_external_buffer_context.begin() + (m_current_buffer_position - lookback);
+            buffer.assign(start, m_external_buffer_context.begin() + m_current_buffer_position);
+        }
+
+        m_current_buffer_position++;
+    } else {
+        auto& internal_buffer = use_output_buffer ? m_output_buffer : m_input_buffer;
+        buffer = internal_buffer;
+    }
+
+    buffer.push_front(input);
+    if (buffer.size() > m_buffer_size) {
+        buffer.resize(m_buffer_size);
+    }
+
+    return buffer;
+}
+
 double Polynomial::process_sample(double input)
 {
     double result = 0.0;
@@ -53,17 +79,17 @@ double Polynomial::process_sample(double input)
 
     case PolynomialMode::RECURSIVE:
         if (m_buffer_size > 0) {
-            m_input_buffer.push_front(input);
-            if (m_output_buffer.size() >= m_buffer_size) {
-                m_output_buffer.pop_back();
+            std::deque<double> combined_buffer = build_processing_buffer(input, true);
+            result = m_buffer_function(combined_buffer);
+
+            if (!m_use_external_context) {
+                m_input_buffer.push_front(input);
+                if (m_output_buffer.size() >= m_buffer_size) {
+                    m_output_buffer.pop_back();
+                }
             }
 
-            std::deque<double> combined_buffer = m_output_buffer;
-            combined_buffer.push_front(input);
-
-            result = m_buffer_function(combined_buffer);
             m_output_buffer.push_front(result);
-
             if (m_input_buffer.size() > m_buffer_size) {
                 m_input_buffer.pop_back();
             }
@@ -72,12 +98,15 @@ double Polynomial::process_sample(double input)
 
     case PolynomialMode::FEEDFORWARD:
         if (m_buffer_size > 0) {
-            m_input_buffer.push_front(input);
-            if (m_input_buffer.size() > m_buffer_size) {
-                m_input_buffer.pop_back();
-            }
+            std::deque<double> input_buffer = build_processing_buffer(input, false);
+            result = m_buffer_function(input_buffer);
 
-            result = m_buffer_function(m_input_buffer);
+            if (!m_use_external_context) {
+                m_input_buffer.push_front(input);
+                if (m_input_buffer.size() > m_buffer_size) {
+                    m_input_buffer.pop_back();
+                }
+            }
 
             m_output_buffer.push_front(result);
             if (m_output_buffer.size() > m_buffer_size) {

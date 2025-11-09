@@ -313,6 +313,34 @@ public:
     void save_state() override;
     void restore_state() override;
 
+    /**
+     * @brief Uses an external buffer context for processing
+     * @param buffer_view Span representing the external buffer
+     *
+     * Configures the generator to use an external buffer context
+     * for its internal processing, allowing integration with
+     * external data sources.
+     */
+    void set_buffer_context(std::span<double> buffer_view)
+    {
+        m_external_buffer_context = buffer_view;
+        m_use_external_context = true;
+    }
+
+    /**
+     * @brief Clear external buffer context, resume internal accumulation
+     */
+    inline void clear_buffer_context()
+    {
+        m_use_external_context = false;
+        m_external_buffer_context = {};
+    }
+
+    [[nodiscard]] inline bool using_external_context() const
+    {
+        return m_use_external_context;
+    }
+
 protected:
     /**
      * @brief Creates a context object for callbacks
@@ -352,14 +380,25 @@ private:
     std::vector<double> m_coefficients; ///< Polynomial coefficients (if using coefficient-based definition)
     std::deque<double> m_input_buffer; ///< Buffer of input values for feedforward mode
     std::deque<double> m_output_buffer; ///< Buffer of output values for recursive mode
+    std::span<double> m_external_buffer_context; // View into external buffer
     size_t m_buffer_size; ///< Maximum size of the buffers
     double m_scale_factor; ///< Scaling factor for output
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
+    size_t m_current_buffer_position {}; // Where we are in the external buffer
 
     std::deque<double> m_saved_input_buffer; ///< Buffer of input values for feedforward mode
     std::deque<double> m_saved_output_buffer; ///< Buffer of output values for recursive mode
     double m_saved_last_output {};
     bool m_state_saved {};
+    bool m_use_external_context {}; // Whether to use it
+
+    /**
+     * @brief Builds buffer from external context or internal accumulation
+     * @param input Current input sample
+     * @param use_output_buffer If true, uses m_output_buffer; else m_input_buffer
+     * @return Buffer ready for m_buffer_function
+     */
+    std::deque<double> build_processing_buffer(double input, bool use_output_buffer);
 };
 
 } // namespace MayaFlux::Nodes::Generator

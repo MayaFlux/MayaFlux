@@ -4,13 +4,12 @@
 namespace MayaFlux::Buffers {
 
 PolynomialProcessor::PolynomialProcessor(
-    std::shared_ptr<Nodes::Generator::Polynomial> polynomial,
+    const std::shared_ptr<Nodes::Generator::Polynomial>& polynomial,
     ProcessMode mode,
     size_t window_size)
     : m_polynomial(polynomial)
     , m_process_mode(mode)
     , m_window_size(window_size)
-    , m_use_internal(false)
 {
 }
 
@@ -20,8 +19,18 @@ void PolynomialProcessor::process_span(std::span<double> data)
         return;
     }
 
-    for (size_t i = 0; i < data.size(); i++) {
-        process_single_sample(data[i]);
+    const auto& state = m_polynomial->m_state.load();
+
+    if (state == Utils::NodeState::INACTIVE) {
+        for (double& i : data) {
+            i = m_polynomial->process_sample(i);
+        }
+    } else {
+        m_polynomial->save_state();
+        for (double& i : data) {
+            i = m_polynomial->process_sample(i);
+        }
+        m_polynomial->restore_state();
     }
 }
 
@@ -61,7 +70,9 @@ void PolynomialProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     switch (m_process_mode) {
     case ProcessMode::SAMPLE_BY_SAMPLE:
-        process_span(std::span<double>(data.data(), data.size()));
+        for (double& sample : data) {
+            process_single_sample(sample);
+        }
         break;
 
     case ProcessMode::BATCH:
@@ -69,17 +80,25 @@ void PolynomialProcessor::processing_function(std::shared_ptr<Buffer> buffer)
         process_span(std::span<double>(data.data(), data.size()));
         break;
 
-    case ProcessMode::WINDOWED:
-        for (size_t window_start = 0; window_start < data.size(); window_start += m_window_size) {
+    case ProcessMode::WINDOWED: {
+        std::span<double> data_span { data };
+        for (size_t window_start = 0; window_start < data_span.size(); window_start += m_window_size) {
             m_polynomial->reset();
-            size_t window_end = std::min(window_start + m_window_size, data.size());
-            process_span(std::span<double>(data.data() + window_start, window_end - window_start));
+            size_t window_size = std::min(m_window_size, data_span.size() - window_start);
+            process_span(data_span.subspan(window_start, window_size));
         }
         break;
     }
+    case ProcessMode::BUFFER_CONTEXT: {
+        m_polynomial->set_buffer_context(std::span<double>(data.data(), data.size()));
+        process_span(std::span<double>(data.data(), data.size()));
+        m_polynomial->clear_buffer_context();
+        break;
+    }
+    }
 }
 
-void PolynomialProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void PolynomialProcessor::on_attach(std::shared_ptr<Buffer> /*buffer*/)
 {
     m_polynomial->reset();
 }

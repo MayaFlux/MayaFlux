@@ -377,7 +377,7 @@ TEST_F(PolynomialProcessorTest, InternalPolynomialConstruction)
 
 TEST_F(PolynomialProcessorTest, InternalPolynomialWithCoefficients)
 {
-    std::vector<double> coefficients = { 2.f, 3.f, 1.f };
+    std::vector<double> coefficients = { 2.F, 3.F, 1.F };
     auto processor = std::make_shared<Buffers::PolynomialProcessor>(
         Buffers::PolynomialProcessor::ProcessMode::SAMPLE_BY_SAMPLE,
         64,
@@ -636,6 +636,89 @@ TEST_F(PolynomialProcessorTest, ForceUseInternalPolynomial)
 
     processor->process(test_buffer);
     EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 8.0); // 2³ = 8
+}
+
+TEST_F(PolynomialProcessorTest, BufferContextModeFeedforward)
+{
+    auto moving_avg = [](const std::deque<double>& buffer) -> double {
+        double sum = 0.0;
+        for (size_t i = 0; i < std::min(buffer.size(), 3UL); ++i) {
+            sum += buffer[i];
+        }
+        return sum / std::min<double>((double)buffer.size(), 3.0);
+    };
+
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::BUFFER_CONTEXT,
+        64,
+        moving_avg,
+        Nodes::Generator::PolynomialMode::FEEDFORWARD,
+        3);
+
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 5);
+    test_buffer->get_data()[0] = 1.0;
+    test_buffer->get_data()[1] = 2.0;
+    test_buffer->get_data()[2] = 3.0;
+    test_buffer->get_data()[3] = 4.0;
+    test_buffer->get_data()[4] = 5.0;
+
+    processor->process(test_buffer);
+
+    // First sample: only current value = 1.0
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0);
+
+    // Second sample: (1.0 + 2.0) / 2 = 1.5
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5);
+
+    // Third sample: (1.0 + 1.5 + 3.0) / 3 = 1.8333... (sees modified buffer!)
+    EXPECT_NEAR(test_buffer->get_data()[2], 1.8333333333333333, 1e-10);
+
+    // Fourth sample: (1.5 + 1.833... + 4.0) / 3 = 2.444...
+    EXPECT_NEAR(test_buffer->get_data()[3], 2.4444444444444442, 1e-10);
+
+    // Fifth sample: (1.833... + 2.444... + 5.0) / 3 = 3.092...
+    EXPECT_NEAR(test_buffer->get_data()[4], 3.0925925925925921, 1e-10);
+}
+
+TEST_F(PolynomialProcessorTest, BufferContextModeRecursive)
+{
+    // Simple recursive filter: y[n] = 0.5 * y[n-1] + x[n]
+    auto recursive_filter = [](const std::deque<double>& buffer) -> double {
+        double input = buffer.empty() ? 0.0 : buffer.front();
+
+        if (buffer.size() < 2) {
+            return input;
+        }
+
+        // buffer[1] is the previous output when in recursive mode
+        return input + 0.5 * buffer[1];
+    };
+
+    auto processor = std::make_shared<Buffers::PolynomialProcessor>(
+        Buffers::PolynomialProcessor::ProcessMode::BUFFER_CONTEXT,
+        64,
+        recursive_filter,
+        Nodes::Generator::PolynomialMode::RECURSIVE,
+        2);
+
+    auto test_buffer = std::make_shared<Buffers::AudioBuffer>(0, 4);
+    for (size_t i = 0; i < test_buffer->get_num_samples(); i++) {
+        test_buffer->get_data()[i] = 1.0;
+    }
+
+    processor->process(test_buffer);
+
+    // First sample: y[0] = 1.0 (no previous output)
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], 1.0);
+
+    // Second sample: y[1] = 1.0 + 0.5*1.0 = 1.5
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[1], 1.5);
+
+    // Third sample: y[2] = 1.0 + 0.5*1.5 = 1.75
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[2], 1.75);
+
+    // Fourth sample: y[3] = 1.0 + 0.5*1.75 = 1.875
+    EXPECT_DOUBLE_EQ(test_buffer->get_data()[3], 1.875);
 }
 
 } // namespace MayaFlux::Test

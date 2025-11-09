@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 #include "MayaFlux/Nodes/Generators/Polynomial.hpp"
-#include <memory>
 
 namespace MayaFlux::Buffers {
 
@@ -20,10 +19,11 @@ public:
     /**
      * @brief Processing mode for the polynomial processor
      */
-    enum class ProcessMode {
+    enum class ProcessMode : uint8_t {
         SAMPLE_BY_SAMPLE, ///< Process each sample individually
         BATCH, ///< Process the entire buffer at once
-        WINDOWED ///< Process using a sliding window
+        WINDOWED, ///< Process using a sliding window
+        BUFFER_CONTEXT ///< Process each sample with access to buffer history
     };
 
     // TODO:: Temporary requirment on windows
@@ -54,7 +54,7 @@ public:
      * NOTE: Using external Polynomial node implies side effects of any progessing chain the node
      * is connected to. This could mean that the buffer data is not used as input when used node's cached value.
      */
-    PolynomialProcessor(std::shared_ptr<Nodes::Generator::Polynomial> polynomial, ProcessMode mode = ProcessMode::SAMPLE_BY_SAMPLE, size_t window_size = 64);
+    PolynomialProcessor(const std::shared_ptr<Nodes::Generator::Polynomial>& polynomial, ProcessMode mode = ProcessMode::SAMPLE_BY_SAMPLE, size_t window_size = 64);
 
     /**
      * @brief Processes an audio buffer using the polynomial function
@@ -87,7 +87,7 @@ public:
      * @brief Gets the current processing mode
      * @return Current processing mode
      */
-    inline ProcessMode get_process_mode() const { return m_process_mode; }
+    [[nodiscard]] inline ProcessMode get_process_mode() const { return m_process_mode; }
 
     /**
      * @brief Sets the window size for windowed processing
@@ -99,13 +99,13 @@ public:
      * @brief Gets the current window size
      * @return Current window size
      */
-    inline size_t get_window_size() const { return m_window_size; }
+    [[nodiscard]] inline size_t get_window_size() const { return m_window_size; }
 
     /**
      * @brief Gets the polynomial node used for processing
      * @return Polynomial node used for processing
      */
-    inline std::shared_ptr<Nodes::Generator::Polynomial> get_polynomial() const { return m_polynomial; }
+    [[nodiscard]] inline std::shared_ptr<Nodes::Generator::Polynomial> get_polynomial() const { return m_polynomial; }
 
     /**
      * @brief Checks if the processor is using the internal polynomial node
@@ -115,7 +115,7 @@ public:
      * and we want to ensure that the processor uses its own internal
      * polynomial node instead of the one provided in the constructor.
      */
-    inline bool is_using_internal() const { return m_use_internal; }
+    [[nodiscard]] inline bool is_using_internal() const { return m_use_internal; }
 
     /**
      * @brief Forces the processor to use the internal polynomial node
@@ -138,17 +138,17 @@ public:
      * NOTE: Using external Polynomial node implies side effects of any progessing chain the node
      * is connected to. This could mean that the buffer data is not used as input when used node's cached value.
      */
-    inline void update_polynomial_node(std::shared_ptr<Nodes::Generator::Polynomial> polynomial)
+    inline void update_polynomial_node(const std::shared_ptr<Nodes::Generator::Polynomial>& polynomial)
     {
         m_pending_polynomial = polynomial;
     }
 
 private:
     std::shared_ptr<Nodes::Generator::Polynomial> m_polynomial; ///< Polynomial node for processing
-    ProcessMode m_process_mode; ///< Current processing mode
-    size_t m_window_size; ///< Window size for windowed processing
+    ProcessMode m_process_mode {}; ///< Current processing mode
+    size_t m_window_size {}; ///< Window size for windowed processing
 
-    bool m_use_internal; ///< Whether to use the buffer's internal previous state
+    bool m_use_internal {}; ///< Whether to use the buffer's internal previous state
     std::shared_ptr<Nodes::Generator::Polynomial> m_pending_polynomial; ///< Internal polynomial node
 
     /**
