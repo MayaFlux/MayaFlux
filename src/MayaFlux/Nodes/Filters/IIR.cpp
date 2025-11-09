@@ -29,6 +29,7 @@ double IIR::process_sample(double input)
             atomic_add_flag(m_input_node->m_state, Utils::NodeState::PROCESSED);
         }
     }
+
     if (m_use_external_input_context) {
         build_input_history(processed_input);
     } else {

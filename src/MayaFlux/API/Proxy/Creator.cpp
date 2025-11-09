@@ -49,7 +49,8 @@ void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& cont
 {
     if (auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(container)) {
         if (domain == Domain::AUDIO) {
-            hook_sound_container_to_buffers(sound_container);
+            s_last_created_container_buffers.clear();
+            s_last_created_container_buffers = hook_sound_container_to_buffers(sound_container);
         }
     }
 }
@@ -57,6 +58,11 @@ void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& cont
 std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_container(const std::string& filepath)
 {
     return load_audio_file(filepath);
+}
+
+std::vector<std::shared_ptr<Buffers::ContainerBuffer>> get_last_created_container_buffers()
+{
+    return s_last_created_container_buffers;
 }
 
 } // namespace MayaFlux

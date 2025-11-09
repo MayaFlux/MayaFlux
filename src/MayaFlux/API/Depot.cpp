@@ -77,10 +77,11 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
     return sound_container;
 }
 
-void hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer>& container)
+std::vector<std::shared_ptr<Buffers::ContainerBuffer>> hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer>& container)
 {
     auto buffer_manager = MayaFlux::get_buffer_manager();
     uint32_t num_channels = container->get_num_channels();
+    std::vector<std::shared_ptr<Buffers::ContainerBuffer>> created_buffers;
 
     MF_TRACE(
         Journal::Component::API,
@@ -97,12 +98,16 @@ void hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::So
 
         container_buffer->initialize();
 
+        created_buffers.push_back(std::move(container_buffer));
+
         MF_INFO(
             Journal::Component::API,
             Journal::Context::BufferManagement,
             "✓ Created buffer for channel {}",
             channel);
     }
+
+    return created_buffers;
 }
 
 }
