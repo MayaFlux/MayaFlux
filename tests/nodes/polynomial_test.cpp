@@ -453,7 +453,7 @@ TEST_F(PolynomialProcessorTest, ExternalPolynomialStateManagement)
     EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], processed_value);
     EXPECT_DOUBLE_EQ(processed_value, expected_value);
 
-    EXPECT_FALSE(external_polynomial->m_state.load() & Utils::NodeState::PROCESSED);
+    EXPECT_TRUE(external_polynomial->m_state.load() & Utils::NodeState::PROCESSED);
 }
 
 TEST_F(PolynomialProcessorTest, SampleByModeInternal)

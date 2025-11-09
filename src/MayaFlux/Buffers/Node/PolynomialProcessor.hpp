@@ -156,12 +156,6 @@ private:
      * @param data Span of data to process
      */
     void process_span(std::span<double> data);
-
-    /**
-     * @brief Processes a single sample using the polynomial function
-     * @param sample Sample to process
-     */
-    void process_single_sample(double& sample);
 };
 
 } // namespace MayaFlux::Buffers

@@ -60,6 +60,22 @@ void Filter::set_coefs(const std::vector<double>& new_coefs, coefficients type)
     }
 }
 
+void Filter::build_input_history(double current_sample)
+{
+    if (m_use_external_input_context && !m_external_input_context.empty()) {
+        size_t available = m_external_input_context.size();
+        size_t lookback = std::min(available, m_input_history.size() - 1);
+
+        m_input_history[0] = current_sample;
+
+        for (size_t i = 0; i < lookback; ++i) {
+            m_input_history[i + 1] = m_external_input_context[available - 1 - i];
+        }
+    } else {
+        update_inputs(current_sample);
+    }
+}
+
 void Filter::update_inputs(double current_sample)
 {
     for (unsigned int i = m_input_history.size() - 1; i > 0; i--) {

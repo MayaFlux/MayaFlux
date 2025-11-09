@@ -34,27 +34,6 @@ void PolynomialProcessor::process_span(std::span<double> data)
     }
 }
 
-void PolynomialProcessor::process_single_sample(double& sample)
-{
-    if (m_use_internal) {
-        sample = m_polynomial->process_sample(sample);
-        return;
-    }
-
-    Nodes::atomic_inc_modulator_count(m_polynomial->m_modulator_count, 1);
-    uint32_t state = m_polynomial->m_state.load();
-
-    if (state & Utils::NodeState::PROCESSED) {
-        sample = m_polynomial->get_last_output();
-    } else {
-        sample = m_polynomial->process_sample(sample);
-        Nodes::atomic_add_flag(m_polynomial->m_state, Utils::NodeState::PROCESSED);
-    }
-
-    Nodes::atomic_dec_modulator_count(m_polynomial->m_modulator_count, 1);
-    Nodes::try_reset_processed_state(m_polynomial);
-}
-
 void PolynomialProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 {
     if (!m_polynomial || !buffer || std::dynamic_pointer_cast<AudioBuffer>(buffer)->get_data().empty()) {
@@ -70,9 +49,7 @@ void PolynomialProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     switch (m_process_mode) {
     case ProcessMode::SAMPLE_BY_SAMPLE:
-        for (double& sample : data) {
-            process_single_sample(sample);
-        }
+        process_span(std::span<double>(data.data(), data.size()));
         break;
 
     case ProcessMode::BATCH:

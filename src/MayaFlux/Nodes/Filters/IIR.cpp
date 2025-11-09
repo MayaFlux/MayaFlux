@@ -29,7 +29,11 @@ double IIR::process_sample(double input)
             atomic_add_flag(m_input_node->m_state, Utils::NodeState::PROCESSED);
         }
     }
-    update_inputs(processed_input);
+    if (m_use_external_input_context) {
+        build_input_history(processed_input);
+    } else {
+        update_inputs(processed_input);
+    }
 
     double output = 0.;
     const size_t num_feedforward = std::min(m_coef_b.size(), m_input_history.size());
