@@ -7,6 +7,8 @@
 #include "MayaFlux/IO/SoundFileReader.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux {
 
 std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std::string& filepath)
@@ -25,21 +27,21 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
 
     IO::FileReadOptions options = IO::FileReadOptions::EXTRACT_METADATA;
     if (!reader->open(filepath, options)) {
-        std::cerr << "Failed to open file: " << reader->get_last_error() << '\n';
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO, "Failed to open file: {}", reader->get_last_error());
         return nullptr;
     }
 
     auto container = reader->create_container();
     auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(container);
     if (!sound_container) {
-        std::cerr << "Failed to create sound container" << '\n';
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime, "Failed to create sound container");
         return nullptr;
     }
 
     sound_container->set_memory_layout(Kakshya::MemoryLayout::ROW_MAJOR);
 
     if (!reader->load_into_container(sound_container)) {
-        std::cerr << "Failed to load audio data: " << reader->get_last_error() << '\n';
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime, "Failed to load audio data: {}", reader->get_last_error());
         return nullptr;
     }
 
@@ -51,9 +53,9 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
         existing_processor->set_output_size(output_shape);
         existing_processor->set_auto_advance(true);
 
-        std::cout << "✓ Configured existing ContiguousAccessProcessor" << '\n';
+        MF_DEBUG(Journal::Component::API, Journal::Context::ContainerProcessing, "Configured existing ContiguousAccessProcessor");
     } else {
-        std::cerr << "Warning: No default processor found, creating a new one" << '\n';
+        MF_TRACE(Journal::Component::API, Journal::Context::ContainerProcessing, "No default processor found, creating a new ContiguousAccessProcessor");
 
         auto processor = std::make_shared<Kakshya::ContiguousAccessProcessor>();
         std::vector<uint64_t> output_shape = { MayaFlux::Config::get_buffer_size(), sound_container->get_num_channels() };
@@ -63,20 +65,28 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
         sound_container->set_default_processor(processor);
     }
 
-    std::cout << "✓ Loaded: " << filepath << '\n';
-    std::cout << "  Channels: " << sound_container->get_num_channels() << '\n';
-    std::cout << "  Frames: " << sound_container->get_num_frames() << '\n';
-    std::cout << "  Sample Rate: " << sound_container->get_sample_rate() << " Hz" << '\n';
+    MF_INFO(
+        Journal::Component::API,
+        Journal::Context::FileIO,
+        "Loaded audio file: {} | Channels: {} | Frames: {} | Sample Rate: {} Hz",
+        filepath,
+        sound_container->get_num_channels(),
+        sound_container->get_num_frames(),
+        sound_container->get_sample_rate());
 
     return sound_container;
 }
 
-void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container)
+void hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer>& container)
 {
     auto buffer_manager = MayaFlux::get_buffer_manager();
     uint32_t num_channels = container->get_num_channels();
 
-    std::cout << "Setting up audio playback for " << num_channels << " channels..." << '\n';
+    MF_TRACE(
+        Journal::Component::API,
+        Journal::Context::BufferManagement,
+        "Setting up audio playback for {} channels...",
+        num_channels);
 
     for (uint32_t channel = 0; channel < num_channels; ++channel) {
         auto container_buffer = buffer_manager->create_audio_buffer<MayaFlux::Buffers::ContainerBuffer>(
@@ -87,7 +97,11 @@ void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFil
 
         container_buffer->initialize();
 
-        std::cout << "✓ Created buffer for channel " << channel << '\n';
+        MF_INFO(
+            Journal::Component::API,
+            Journal::Context::BufferManagement,
+            "✓ Created buffer for channel {}",
+            channel);
     }
 }
 

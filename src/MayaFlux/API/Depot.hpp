@@ -11,8 +11,6 @@
 
 namespace MayaFlux {
 
-class CreationContext;
-
 namespace IO {
     class SoundFileReader;
 }
@@ -42,6 +40,6 @@ MAYAFLUX_API std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_f
  * Creates ContainerBuffer instances for each channel and connects to AUDIO_BACKEND token.
  * Multiple containers can be connected simultaneously for layered playback.
  */
-MAYAFLUX_API void hook_sound_container_to_buffers(std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> container);
+MAYAFLUX_API void hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer>& container);
 
 }
