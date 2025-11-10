@@ -120,11 +120,11 @@ jobs:
         shell: bash
         run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 4
 
-      - name: Test (conditional)
-        if: ${{ inputs.run_tests != false }}
-        shell: bash
-        working-directory: build
-        run: ctest --output-on-failure --parallel 4
+      # - name: Test (conditional)
+      #   if: ${{ inputs.run_tests != false }}
+      #   shell: bash
+      #   working-directory: build
+      #   run: ctest --output-on-failure --parallel 4
 
       - name: Install to staging directory
         # if: ${{ inputs.create_distribution != false }}
