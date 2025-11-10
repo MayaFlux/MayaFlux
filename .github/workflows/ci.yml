@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  # push:
-  #   branches: [main]
+  push:
+    branches: [develop]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -63,6 +63,7 @@ jobs:
             glm
             llvm
           verbose: true
+          cache: true
 
       - name: Setup LLVM Prefix
         run: |
@@ -91,6 +92,7 @@ jobs:
           echo "STB_ROOT=$STB_INSTALL_DIR" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=$STB_INSTALL_DIR:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
           echo "CPATH=$STB_INSTALL_DIR:$CPATH" >> $GITHUB_ENV
+          echo $GITHUB_ENV
 
       - name: Configure CMake
         shell: bash
@@ -114,6 +116,7 @@ jobs:
         if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
+          ls
           mkdir -p dist_staging
           cmake --install build --prefix dist_staging
           echo "Installation completed to dist_staging/"

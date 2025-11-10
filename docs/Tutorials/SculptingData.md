@@ -42,7 +42,7 @@ Run this code. The file is loaded into memory.
 // In your src/user_project.hpp compose() function:
 
 void compose() {
-    auto sound_container = vega.load("path/to/your/file.wav");
+    auto sound_container = vega.read("path/to/your/file.wav");
 }
 ```
 
@@ -73,7 +73,7 @@ The file is loaded. Ready. Waiting.
 <details>
 <parameter name="open">
 
-When you call `vega.load()`, you're not just reading bytes from disk and forgetting them. You're creating a **Container**—a structure that holds:
+When you call `vega.read()`, you're not just reading bytes from disk and forgetting them. You're creating a **Container**—a structure that holds:
 
 - **The audio data itself** (all samples as numbers, deinterleaved and ready to process)
 - **Metadata about the data** (sample rate, channels, duration, number of frames)
@@ -83,7 +83,7 @@ When you call `vega.load()`, you're not just reading bytes from disk and forgett
 The difference: A file is **inert**. A Container is **active creative material**. It knows its own shape.
 It can tell you about regions within itself. It can be queried, transformed, integrated with other Containers.
 
-When `vega.load("file.wav")` runs, MayaFlux:
+When `vega.read("file.wav")` runs, MayaFlux:
 1. Creates a `SoundFileReader` and initializes FFmpeg
 2. Checks if the file is readable
 3. Resamples to your project's sample rate (configurable)
@@ -117,13 +117,13 @@ When the last reference disappears, the memory is freed automatically.
 
 When you write:
 ```cpp
-auto sound_container = vega.load("file.wav");
+auto sound_container = vega.read("file.wav");
 ```
 
 What's actually happening is:
 ```cpp
 std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> sound_container = 
-    /* vega.load() internally creates and returns a shared_ptr */;
+    /* vega.read() internally creates and returns a shared_ptr */;
 ```
 
 You don't see `std::shared_ptr`. You see `auto`. But MayaFlux is using it. This means:
@@ -132,7 +132,7 @@ You don't see `std::shared_ptr`. You see `auto`. But MayaFlux is using it. This 
 - **Multiple parts of your code can reference the same Container** without worrying about who's responsible for cleanup.
 - **When the last reference is gone**, memory is automatically released.
 
-This is why `vega.load()` is safe. The complexity of memory management exists—it's just not your problem.
+This is why `vega.read()` is safe. The complexity of memory management exists—it's just not your problem.
 
 </details>
 
@@ -206,7 +206,7 @@ However, the above code snippet is verbose for something so simple.
 `vega` says: "You just want to load a file? Say so."
 
 ```cpp
-auto sound_container = vega.load("file.wav");
+auto sound_container = vega.read("file.wav");
 ```
 
 Same machinery underneath. Same FFmpeg integration. Same resampling. Same deinterleaving. Same processor setup. Same safety.
@@ -249,7 +249,7 @@ This processor (`ContiguousAccessProcessor`) does crucial work:
 
 When you later connect this Container to buffers (in the next section), the processor is what actually feeds the data—it’s the active mechanism.
 
-`vega.load()` configures this processor automatically:
+`vega.read()` configures this processor automatically:
 - Sets output size to your project's buffer size
 - Enables auto-advance (keeps moving through the file)
 - Registers it with the Container
@@ -261,20 +261,20 @@ with built-in logic for how they should be consumed.
 
 ---
 
-## Expansion 5: What `.load()` Does NOT Do
+## Expansion 5: What `.read()` Does NOT Do
 
 <details>
 <parameter name="open">
 
 This is important:
 
-**`.load()` does NOT:**
+**`.read()` does NOT:**
 - Start playback
 - Create buffers
 - Connect to your audio hardware
 - Route data anywhere
 
-**`.load()` DOES:**
+**`.read()` DOES:**
 - Read file from disk
 - Decode audio (handle any format: WAV, MP3, FLAC, etc. via FFmpeg)
 - Resample to your project's sample rate
@@ -304,7 +304,7 @@ In the next section, we'll connect this Container to buffers and route it to you
 You have a Container loaded. Now you need to send it somewhere.
 
 ```cpp
-auto sound_container = vega.load("path/to/file.wav");
+auto sound_container = vega.read("path/to/file.wav");
 auto buffers = MayaFlux::hook_sound_container_to_buffers(sound_container);
 ```
 
@@ -509,10 +509,10 @@ For now: `AUDIO_BACKEND` means "this buffer is feeding your ears directly. It mu
 <details>
 <summary>Click to expand: What You Can Do With the Buffers</summary>
 
-When you call `vega.load() | Audio`, MayaFlux creates the buffers internally. But now, with the ability to get those buffers back, you have access to them:
+When you call `vega.read() | Audio`, MayaFlux creates the buffers internally. But now, with the ability to get those buffers back, you have access to them:
 
 ```cpp
-auto sound_container = vega.load("path/to/file.wav");
+auto sound_container = vega.read("path/to/file.wav");
 auto buffers = vega.get_last_created_container_buffers();
 
 // Now you have the buffers as a vector:
@@ -539,20 +539,20 @@ This is the foundation for Section 3. You load a file, get the buffers, access t
 
 ### Fluent (What happens behind the scenes)
 ```cpp
-vega.load("path/to/file.wav") | Audio;
+vega.read("path/to/file.wav") | Audio;
 ```
 
 This single line does all of the above: creates a Container, creates per-channel buffers, hooks them to the audio hardware, and starts playback. No file plays until the `| Audio` operator, which is when the connection happens.
 
 ### Explicit (What's actually happening)
 ```cpp
-auto sound_container = vega.load("path/to/file.wav");
+auto sound_container = vega.read("path/to/file.wav");
 auto buffers = vega.get_last_created_container_buffers();
 // File is loaded, buffers exist, but no connection to hardware yet
 // Buffers have chains, but nothing is using them
 
 // To actually play, you'd need to ensure they're registered
-// (vega.load() | Audio does this automatically)
+// (vega.read() | Audio does this automatically)
 ```
 
 **Understanding the difference:**
@@ -566,7 +566,7 @@ auto buffers = vega.get_last_created_container_buffers();
 
 ```cpp
 void compose() {
-    vega.load("path/to/your/file.wav") | Audio;
+    vega.read("path/to/your/file.wav") | Audio;
     
     // File plays
 }
@@ -593,7 +593,7 @@ This is where MayaFlux's power truly shines—transforming passive playback into
 You have buffers. You can modify what flows through them.
 
 ```cpp
-auto sound_container = vega.load("path/to/file.wav");
+auto sound_container = vega.read("path/to/file.wav");
 auto buffers = vega.get_last_created_container_buffers();
 
 auto filter = vega.IIR({0.1, 0.2, 0.1}, {1.0, -0.6});
@@ -830,7 +830,7 @@ Processors are the creative atoms of MayaFlux. Everything builds from them.
 
 ```cpp
 void compose() {
-    auto sound_container = vega.load("path/to/your/file.wav");
+    auto sound_container = vega.read("path/to/your/file.wav");
     auto buffers = vega.get_last_created_container_buffers();
     
     auto filter = vega.IIR({0.1, 0.2, 0.1}, {1.0, -0.6});
@@ -860,17 +860,25 @@ In the next section, we'll interrupt this passive playback. We'll insert a proce
 What you've done so far is simple and powerful:
 
 ```cpp
-auto sound_container = vega.load("path/to/file.wav");
+auto sound_container = vega.read("path/to/file.wav");
 auto buffers = vega.get_last_created_container_buffers();
 auto filter = vega.IIR({0.1, 0.2, 0.1}, {1.0, -0.6});
 auto fp = MayaFlux::create_processor<MayaFlux::Buffers::FilterProcessor>(buffers[0], filter);
 ```
 
-This flow is designed for **full-file playback**. Load the entire file into a Container, route it through buffers, add effects, play to speakers. Clean. Direct. No timing control.
+This flow is designed for **full-file playback**:
+- Load the entire file into a Container
+- route it through buffers
+- add effects (processes, general purpose)
+- play to speakers (RtAudio backend via SubsystemManagers)
+
+Clean. Direct. No timing control.
 
 That's intentional.
 
-There are other features—region looping, seeking, playback control—but they don't fit this flow. This flow is purely for: **file → buffers → output, uninterrupted.**
+There are other features—region looping, seeking, playback control,
+but they don't fit this tutorial. These sections are purely for:
+**file → buffers → output, uninterrupted.**
 
 ---
 
@@ -879,29 +887,40 @@ There are other features—region looping, seeking, playback control—but they 
 Here's what the next section enables:
 
 ```cpp
-auto stream = MayaFlux::create_container<Kakshya::DynamicSoundStream>(48000, 2);
 auto pipeline = MayaFlux::create_buffer_pipeline();
+pipeline->with_strategy(ExecutionStrategy::PHASED); // Execute each phase fully before next op
 
 pipeline
-    >> BufferOperation::file_to_stream("path/to/file.wav", stream, 100)  // Process 100 cycles
+    >> BufferOperation::capture_file_from("path/to/file.wav", 0)  // From channel 0
+    .for_cycles(20)  // Process 20 buffer cycles
     >> BufferOperation::transform([](auto& data, uint32_t cycle) {
-        // Custom transformation on accumulated data
-        // example:
-        MayaFlux::apply_gain(data, 0.5f);
-        MayaFlux::normalize(data);
+        // Data now has 20 buffer cycles of audio from the file
+        // i.e 20 x 512 samples if buffer size is 512
+        auto zero_crossings = MayaFlux::zero_crossings(data);
+
+        std::cout << "Zero crossings at indices:\n";
+        for (const auto& sample : zero_crossings) {
+            std::cout << sample << "\t";
+        }
+        std::cout << "\n";
+
         return data;
     });
 
 pipeline->execute_buffer_rate();  // Schedule and run
 ```
 
-This processes exactly 100 buffer cycles from the file (through any effects you want), accumulates the result in a stream, and executes the pipeline.
+This processes exactly 20 buffer cycles from the file (with any process you want), 
+accumulates the result in a stream, and executes the pipeline.
 
-The file isn't playing to speakers. It's being captured, processed, and stored in the stream. **Timing is under your control.**
+The file isn't playing to speakers. It's being captured, processed, and stored in a stream. 
+**Timing is under your control.**: You decide how many buffer cycles to process.
+This section builds the foundation for buffer pipelines.
+Understanding the architecture below explains why the code snippet works.
 
-This section builds the foundation for that code. Understanding the architecture below explains why the code above works.
-
-In this section, we introduce the machinery for everything beyond simplicity. We're not building runnable code yet. We're establishing the architecture that enables timing control, streaming, capture, and composition.
+In this section, we will introduce the machinery for everything beyond simplicity. 
+We're not building code that has audio yet. We're establishing the architecture 
+that enables timing control, streaming, capture, and composition.
 
 ---
 
@@ -916,9 +935,13 @@ A Container (like SoundFileContainer) holds all data upfront:
 - Processor knows where in the file you are
 - Designed for sequential access—read start, advance, read next chunk, repeat until end
 
-This works perfectly for "play the whole file." But it doesn't work for:
+This works perfectly for "play the whole file".
+It also works for as yet unexpored controls over the same timeline,
+such as looping, seeking positions, jumping to regions, etc.
+
+But it doesn't work for:
 - **Recording**: You don't know the final size upfront
-- **Looping**: You need to manipulate boundaries
+- **Structuring**: You need to manipulate boundaries
 - **Streaming**: Data arrives in chunks; size grows dynamically
 - **Capture**: You want to save specific buffer cycles, not the whole file
 
@@ -933,12 +956,17 @@ For these use cases, you need a different data structure.
 <details>
 <summary>Click to expand: A Container That Grows</summary>
 
-A **DynamicSoundStream** is a Container—it has the same interface as SoundFileContainer (channels, frames, metadata, regions). But it has different semantics:
+A **DynamicSoundStream** is a child class of `SignalSourceContainer` much like
+`SoundFileContainer` that we have been using. It has the same interface 
+as `SoundFileContainer` (channels, frames, metadata, regions). 
+But it has different semantics:
 
 - **Dynamic size**: Starts small, grows as data arrives
 - **Transient modes**: Can operate as a circular buffer (fixed size, overwrites old data)
 - **Sequential writing**: Designed to accept data sequentially from processors
-- **No inherent structure**: Unlike SoundFileContainer (which knows "this is a file with a start and end"), DynamicSoundStream is just a growing reservoir of data
+- **No inherent structure**: Unlike SoundFileContainer 
+        (which knows "this is a file with a start and end"),
+        DynamicSoundStream is just a growing reservoir of data.
 
 Think of it as:
 - **SoundFileContainer**: "I am this exact file, with this exact data"
@@ -950,7 +978,8 @@ DynamicSoundStream has powerful capabilities:
 - **Position tracking**: Knows where reads/writes are in the stream
 - **Capacity pre-allocation**: You can reserve space if you know approximate size
 
-You don't create DynamicSoundStream directly (yet). It's managed implicitly by other systems. But understanding what it is explains everything that follows.
+You don't create DynamicSoundStream directly (yet). It's managed implicitly by other systems.
+But understanding what it is explains everything that follows.
 
 </details>
 
@@ -961,26 +990,28 @@ You don't create DynamicSoundStream directly (yet). It's managed implicitly by o
 <details>
 <summary>Click to expand: Writing Buffer Data to Streams</summary>
 
-You've seen StreamWriteProcessor briefly—it writes buffer data to hardware output.
+You've seen `BufferProcessors` like `FilterProcessor` that transform data in place.
 
-But StreamWriteProcessor is more general. It can write buffer data to **any** DynamicSoundStream, not just hardware.
+But `StreamWriteProcessor` is more general. It can write buffer data to **any** `DynamicSoundStream`, 
+not just locally to attached buffers (or from hardware: hitherto unexplored `InputListenerProcessor`).
 
 When a processor runs each buffer cycle:
 1. Buffer gets filled with 512 samples (from Container or elsewhere)
-2. Processors run (your FilterProcessor, for example)
-3. StreamWriteProcessor writes the (now-processed) samples to a DynamicSoundStream
+2. Processors run (your `FilterProcessor`, for example)
+3. `StreamWriteProcessor` writes the (now-processed) samples to a `DynamicSoundStream`
 
-The DynamicSoundStream accumulates these writes:
+The `DynamicSoundStream` accumulates these writes:
 - Cycle 1: 512 samples written
 - Cycle 2: Next 512 samples written (total: 1024)
 - Cycle 3: Next 512 samples written (total: 1536)
 - ...
 
-After N cycles, the DynamicSoundStream contains N × 512 samples of processed audio.
+After N cycles, the `DynamicSoundStream` contains N × 512 samples of processed audio.
 
-This is how you capture buffer data. Not by sampling the buffer once—by continuously writing it to a stream through a processor.
+This is how you capture buffer data. Not by sampling the buffer once,
+by continuously writing it to a stream through a processor.
 
-StreamWriteProcessor is the bridge between buffers (which live in real-time) and streams (which accumulate).
+`StreamWriteProcessor` is the bridge between buffers (which live in real-time) and streams (which accumulate).
 
 </details>
 
