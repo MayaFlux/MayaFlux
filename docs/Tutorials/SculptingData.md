@@ -355,7 +355,7 @@ Why? Because channels are independent processing domains. A stereo file's left c
 
 - Can be processed differently
 - Can be routed to different outputs
-- Can have different effects chains
+- Can have different process chains
 - Can be analyzed separately
 - Can coordinate with each other without conflict
 
@@ -493,7 +493,7 @@ Notice `ProcessingToken::AUDIO_BACKEND`. This is a **token**—a semantic marker
 Tokens are how MayaFlux coordinates different processing domains without confusion. Later, you might have:
 
 - `AUDIO_BACKEND` buffers - connected to speakers (hardware real-time)
-- `AUDIO_PARALLEL` buffers - internal processing (effects chains, analysis, etc.)
+- `AUDIO_PARALLEL` buffers - internal processing (process chains, analysis, etc.)
 - `GRAPHICS_BACKEND` buffers - visual domain (frame-rate, not sample-rate)
 
 Each token tells the system what timing, synchronization, and backend this buffer belongs to.
@@ -521,14 +521,19 @@ auto buffers = vega.get_last_created_container_buffers();
 // etc.
 ```
 
-Why is this useful? Because buffers own **processing chains**. And processing chains are where you'll insert effects, analysis, transformations—everything that turns passive playback into active processing.
+Why is this useful? Because buffers own **processing chains**. And processing chains are where you'll insert processes, analysis, transformations—everything that turns passive playback into active processing.
 
 Each buffer has a method:
 ```cpp
 auto chain = buffers[0]->get_processing_chain();
 ```
 
-This gives you access to the chain that currently handles that buffer's data. Right now, the chain just reads from the Container and writes to the hardware. But you can modify that chain. Add processors. Insert effects. Analyze data. Route to different destinations.
+This gives you access to the chain that currently handles that buffer's data. 
+Right now, the chain just reads from the Container and writes to the hardware. 
+But you can modify that chain. 
+- Add processors. 
+- Analyze data. 
+- Route to different destinations.
 
 This is the foundation for Section 3. You load a file, get the buffers, access their chains, and inject processing into those chains.
 
@@ -798,18 +803,18 @@ You don't need to write this explicitly—the convenience functions handle it. B
 
 A processor is a building block. Once created, it can be:
 - Added to multiple buffers (same processor, multiple channels)
-- Composed with other processors (insert multiple effects)
+- Composed with other processors (insert multiple processors)
 - Swapped out (remove and replace)
 - Queried (ask for its state, parameters, etc.)
 
-Example—two channels with the same filter:
+Example: two channels with the same filter:
 ```cpp
 auto filter = vega.IIR({0.1, 0.2, 0.1}, {1.0, -0.6});
 auto processor = MayaFlux::create_processor<MayaFlux::Buffers::FilterProcessor>(buffers[0], filter);
 MayaFlux::add_processor(processor, buffers[1]);
 ```
 
-Example—stacking effects (requires understanding of chains, shown later):
+Example: stacking processors (requires understanding of chains, shown later):
 ```cpp
 auto filter1 = vega.IIR(...);
 auto fp1 = MayaFlux::create_processor<MayaFlux::Buffers::FilterProcessor>(buffers[0], filter1);
@@ -869,7 +874,7 @@ auto fp = MayaFlux::create_processor<MayaFlux::Buffers::FilterProcessor>(buffers
 This flow is designed for **full-file playback**:
 - Load the entire file into a Container
 - route it through buffers
-- add effects (processes, general purpose)
+- add general purpose processes
 - play to speakers (RtAudio backend via SubsystemManagers)
 
 Clean. Direct. No timing control.
@@ -1022,7 +1027,8 @@ by continuously writing it to a stream through a processor.
 <details>
 <summary>Click to expand: The Reading-Writing Bridge</summary>
 
-**FileBridgeBuffer** is a specialized buffer that orchestrates reading from a file and writing to a stream, with timing control through buffer cycles.
+**FileBridgeBuffer** is a specialized buffer that orchestrates reading from a file and writing to a stream,
+with timing control through buffer cycles.
 
 Internally, FileBridgeBuffer creates a processing chain:
 
@@ -1031,7 +1037,7 @@ SoundFileContainer (source file)
     ↓
 ContainerToBufferAdapter (reads from file, advances position)
     ↓
-[Your processors here: filters, effects, etc.]
+[Your processors here: filters, etc.]
     ↓
 StreamWriteProcessor (writes to internal DynamicSoundStream)
     ↓
@@ -1043,7 +1049,8 @@ The key difference from your simple load/play flow:
 - You control **how many buffer cycles** run (e.g., "process 10 cycles of this file")
 - After N cycles, the stream holds N × buffer_size samples of the processed result
 
-FileBridgeBuffer represents: **"Read from this file, process through this chain, accumulate result in this stream, for exactly this many cycles."**
+FileBridgeBuffer represents: 
+**"Read from this file, process through this chain, accumulate result in this stream, for exactly this many cycles."**
 
 This gives you timing control. You don't play the whole file. You process exactly N cycles, then stop.
 
@@ -1059,7 +1066,7 @@ This gives you timing control. You don't play the whole file. You process exactl
 The architecture separates concerns:
 
 - **Reading**: Done by ContainerToBufferAdapter (reads from SoundFileContainer in controlled chunks)
-- **Processing**: Done by your custom processors (filters, effects, etc.)
+- **Processing**: Done by your custom processors
 - **Writing**: Done by StreamWriteProcessor (writes results to DynamicSoundStream)
 - **Accumulation**: Done by DynamicSoundStream (holds the result)
 
@@ -1071,7 +1078,8 @@ Each layer is independent:
 
 This is why FileBridgeBuffer is powerful: it composes these layers without forcing you to wire them manually.
 
-And it's why understanding this section matters: **the next tutorial (BufferOperation) builds on top of this composition**, adding temporal coordination and pipeline semantics.
+And it's why understanding this section matters:
+**the next tutorial (BufferOperation) builds on top of this composition**, adding temporal coordination and pipeline semantics.
 
 </details>
 
@@ -1112,11 +1120,12 @@ At this point, understand:
 
 1. **DynamicSoundStream**: A container that grows dynamically, can operate in circular mode, designed to accumulate data from processors
 
-2. **FileBridgeBuffer**: A buffer that creates a chain (reader → your processors → writer), and lets you control how many buffer cycles run
+2. **StreamWriteProcessor**: The processor that writes buffer data sequentially to a DynamicSoundStream
 
-3. **StreamWriteProcessor**: The processor that writes buffer data sequentially to a DynamicSoundStream
+3. **FileBridgeBuffer**: A buffer that creates a chain (reader → your processors → writer), and lets you control how many buffer cycles run
 
-These three concepts enable timing control. You're no longer at the mercy of real-time callbacks. You can process exactly N cycles, accumulate results, and move on.
+These three concepts enable timing control. You're no longer at the mercy of real-time callbacks. 
+You can process exactly N cycles, accumulate results, and move on.
 
 ---
 
@@ -1133,7 +1142,8 @@ The **next tutorial introduces BufferOperation**, which wraps these concepts int
 - `BufferOperation::file_to_stream()` - connect file reading to stream writing, with cycle control
 - `BufferOperation::route_to_container()` - send processor output to a stream
 
-Once you understand FileBridgeBuffer, DynamicSoundStream, and cycle-based timing, BufferOperation will feel natural. It's just syntactic sugar on top of this architecture.
+Once you understand FileBridgeBuffer, DynamicSoundStream, and cycle-based timing, BufferOperation will feel natural.
+It's just syntactic sugar on top of this architecture.
 
 For now: **internalize the architecture. The next section shows how to use it.**
 

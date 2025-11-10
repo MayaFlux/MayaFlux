@@ -7,8 +7,8 @@ on:
         required: false
         default: true
         type: boolean
-  push:
-    branches: [develop]
+  # push:
+  #   branches: [develop]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -16,14 +16,20 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14 # Apple Clang 15 with C++23 support
+          - os: macos-14
             name: "macOS 14 System Clang (Minimum)"
-          - os: macos-latest # Current runner - latest C++23 features
-            name: "macOS Latest System Clang"
 
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name }}
     steps:
+      - name: Install build tools on macOS
+        run: brew install md5sha1sum
+
+      - name: Setup CMake Environment
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.29.x"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -49,7 +55,6 @@ jobs:
         uses: tecolicom/actions-use-homebrew-tools@v1
         with:
           tools: >
-            cmake
             rtaudio
             ffmpeg
             shaderc
@@ -63,10 +68,11 @@ jobs:
             glm
             llvm
           verbose: true
-          cache: true
 
-      - name: Setup LLVM Prefix
+      - name: Homebrew Environment and Setup LLVM
         run: |
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+          echo "Verified PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
           LLVM_PREFIX=$(brew --prefix llvm)
           echo "LLVM_PREFIX=$LLVM_PREFIX" >> $GITHUB_ENV
           echo "PATH=$LLVM_PREFIX/bin:$PATH" >> $GITHUB_ENV
@@ -87,12 +93,12 @@ jobs:
         run: |
           echo "Installing STB headers..."
           STB_INSTALL_DIR="$HOME/Libraries/stb"
-          git clone https://github.com/nothings/stb.git "$STB_INSTALL_DIR"
+          git clone https://github.com/nothings/stb.git "$STB_INSTALL_DIR/stb"
+          ls "$STB_INSTALL_DIR"
 
           echo "STB_ROOT=$STB_INSTALL_DIR" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=$STB_INSTALL_DIR:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
           echo "CPATH=$STB_INSTALL_DIR:$CPATH" >> $GITHUB_ENV
-          echo $GITHUB_ENV
 
       - name: Configure CMake
         shell: bash
@@ -113,7 +119,7 @@ jobs:
         run: ctest --output-on-failure --parallel 4
 
       - name: Install to staging directory
-        if: ${{ inputs.create_distribution != false }}
+        # if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
           ls
@@ -122,7 +128,7 @@ jobs:
           echo "Installation completed to dist_staging/"
 
       - name: Verify installation structure
-        if: ${{ inputs.create_distribution != false }}
+        # if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
           echo "=== MayaFlux Distribution Structure ==="
@@ -144,7 +150,7 @@ jobs:
           find dist_staging/share/lila/runtime -type f | head -5 || echo "No runtime files found"
 
       - name: Create MayaFlux distribution package
-        if: ${{ inputs.create_distribution != false }}
+        # if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
           # Extract version from CMake
@@ -161,26 +167,26 @@ jobs:
 
           Complete MayaFlux platform distribution containing three integrated components:
 
-          ## 🏗️ 1. MayaFluxLib (Core Library)
+          ## 1. MayaFluxLib (Core Library)
           - **Purpose**: Core graphics and computation engine for developers
           - **Location**: 
             - Headers: \`include/MayaFlux/\`
             - Library: \`lib/libMayaFluxLib.dylib\`
           - **Use Case**: Direct integration for applications requiring advanced graphics/compute
 
-          ## ⚡ 2. Lila (JIT Interface) 
+          ## 2. Lila (JIT Interface) 
           - **Purpose**: Just-In-Time compilation interface that binds to MayaFluxLib
           - **Location**:
             - Headers: \`include/Lila/\`
             - Library: \`lib/libLila.dylib\`
           - **Use Case**: Developer tool for dynamic code execution and JIT compilation
 
-          ## 🚀 3. lila_server (User Application)
+          ## 3. lila_server (User Application)
           - **Purpose**: Ready-to-use server application wrapping Lila + MayaFluxLib
           - **Location**: \`bin/lila_server\`
           - **Use Case**: End-user application for interactive development and execution
 
-          ## 🔧 Runtime Dependencies
+          ## Runtime Dependencies
           - **Purpose**: Essential files for Lila JIT context
           - **Location**: \`share/lila/runtime/\`
 
@@ -209,7 +215,7 @@ jobs:
           echo "=== MayaFlux Distribution Verification ==="
           echo ""
 
-          echo "🔍 1. Checking MayaFluxLib (Core Library):"
+          echo "1. Checking MayaFluxLib (Core Library):"
           if find include/MayaFlux -name "*.hpp" | head -1 > /dev/null; then
               echo "   ✅ Headers found: $(find include/MayaFlux -name "*.hpp" | wc -l) files"
           else
@@ -223,7 +229,7 @@ jobs:
           fi
 
           echo ""
-          echo "🔍 2. Checking Lila (JIT Interface):"
+          echo "2. Checking Lila (JIT Interface):"
           if find include/Lila -name "*.hpp" | head -1 > /dev/null; then
               echo "   ✅ Headers found: $(find include/Lila -name "*.hpp" | wc -l) files"
           else
@@ -237,7 +243,7 @@ jobs:
           fi
 
           echo ""
-          echo "🔍 3. Checking lila_server (User Application):"
+          echo "3. Checking lila_server (User Application):"
           if find bin -name "*lila_server*" | head -1 > /dev/null; then
               echo "   ✅ Executable found: $(find bin -name "*lila_server*")"
           else
@@ -245,7 +251,7 @@ jobs:
           fi
 
           echo ""
-          echo "🔍 4. Checking Runtime (JIT Context):"
+          echo "4. Checking Runtime (JIT Context):"
           if find share/lila/runtime -name "*.h" | head -1 > /dev/null; then
               echo "   ✅ Runtime files found: $(find share/lila/runtime -type f | wc -l) files"
           else
@@ -266,25 +272,25 @@ jobs:
           ls -la *.tar.gz *.zip
 
       - name: Upload MayaFlux distribution
-        if: ${{ inputs.create_distribution != false }}
+        # if: ${{ inputs.create_distribution != false }}
         uses: actions/upload-artifact@v4
         with:
-          name: mayaflux-distribution-${{ matrix.os }}
+          name: ${{ env.PACKAGE_NAME }}
           path: |
             ${{ env.PACKAGE_NAME }}.tar.gz
             ${{ env.PACKAGE_NAME }}.zip
           retention-days: 30
 
       - name: Display distribution summary
-        if: ${{ inputs.create_distribution != false }}
+        # if: ${{ inputs.create_distribution != false }}
         run: |
           echo "=== MayaFlux Distribution Created ==="
           echo "📦 Package: ${{ env.PACKAGE_NAME }}"
           echo ""
           echo "Contains three integrated components:"
-          echo "  1. 🏗️  MayaFluxLib - Core graphics/compute engine"
-          echo "  2. ⚡ Lila - JIT interface binding to MayaFluxLib" 
-          echo "  3. 🚀 lila_server - User application wrapping both"
+          echo "  1. MayaFluxLib - Core graphics/compute engine"
+          echo "  2. Lila - JIT interface binding to MayaFluxLib" 
+          echo "  3. lila_server - User application wrapping both"
           echo ""
           echo "Archive includes:"
           echo "  - Headers for MayaFluxLib and Lila"
@@ -303,3 +309,56 @@ jobs:
             build/CMakeFiles/CMakeError.log
             build/Testing/Temporary/LastTest.log
             build/compile_commands.json
+
+  create_release:
+    # This job runs only if the build job on macos-14 matrix entry succeeds.
+    if: success()
+    needs: build
+    runs-on: ubuntu-latest
+    name: "Create GitHub Release"
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Calculate release tag and name
+        id: set_vars
+        run: |
+          PACKAGE_DIR=$(ls artifacts | grep MayaFlux | head -1)
+          VERSION=$(echo $PACKAGE_DIR | sed -E 's/MayaFlux-([0-9.]+)-.*/\1/')
+          OS_INFO=$(echo $PACKAGE_DIR | sed -E 's/.*-(macos-14)-.*/\1/')
+          SHORT_SHA=$(echo $PACKAGE_DIR | sed -E 's/.*-([0-9a-f]{8})/\1/')
+
+          RELEASE_TAG="v${VERSION}-${SHORT_SHA}"
+
+          RELEASE_NAME="MayaFlux Distribution ${VERSION} (${OS_INFO}, Commit: ${SHORT_SHA})"
+
+          echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_OUTPUT
+          echo "RELEASE_NAME=${RELEASE_NAME}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Found Package Dir: $PACKAGE_DIR"
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.set_vars.outputs.RELEASE_TAG }}
+          name: ${{ steps.set_vars.outputs.RELEASE_NAME }}
+          body: |
+            ## 📦 MayaFlux Distribution - macOS 14+
+
+            This is an automated CI build for the **macOS 14 (Sonoma) platform and upwards**.
+
+            **Version**: ${{ steps.set_vars.outputs.VERSION }}
+            **Commit**: ${{ github.sha }}
+
+            The attached assets are:
+            - **.tar.gz**: Standard Unix compressed archive.
+            - **.zip**: Standard archive for macOS users.
+
+            ---
+            *Note: This is a pre-release build and may contain unstable features.*
+          prerelease: true
+          files: artifacts/*/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
