@@ -265,59 +265,84 @@ double peak_channel(const std::vector<Kakshya::DataVariant>& channels, size_t ch
 
 std::vector<size_t> zero_crossings(const std::vector<double>& data, double threshold)
 {
-    auto extractor = std::make_shared<Yantra::StandardEnergyAnalyzer>();
-    extractor->set_energy_method(Yantra::EnergyMethod::ZERO_CROSSING);
-    extractor->set_parameter("threshold", threshold);
-    extractor->set_parameter("min_distance", 1.0);
-    extractor->set_parameter("region_size", 1U);
+    auto analyzer = std::make_shared<Yantra::StandardEnergyAnalyzer>();
+    analyzer->set_energy_method(Yantra::EnergyMethod::ZERO_CROSSING);
 
-    auto result = extractor->analyze_energy({ { data } });
+    auto result = analyzer->analyze_energy({ { data } });
 
-    std::vector<size_t> crossings;
-    auto window_positions_opt = result.channels[0].window_positions;
-    for (const auto& [start, end] : window_positions_opt) {
-        crossings.push_back(start);
+    if (result.channels.empty()) {
+        return {};
     }
 
-    return crossings;
+    const auto& positions = result.channels[0].event_positions;
+
+    if (threshold <= 0.0) {
+        return positions;
+    }
+
+    std::vector<size_t> filtered;
+    for (size_t pos : positions) {
+        if (pos < data.size() && std::abs(data[pos]) >= threshold) {
+            filtered.push_back(pos);
+        }
+    }
+    return filtered;
 }
 
 std::vector<size_t> zero_crossings(const Kakshya::DataVariant& data, double threshold)
 {
-    auto extractor = std::make_shared<Yantra::StandardEnergyAnalyzer>();
-    extractor->set_energy_method(Yantra::EnergyMethod::ZERO_CROSSING);
-    extractor->set_parameter("threshold", threshold);
-    extractor->set_parameter("min_distance", 1.0);
-    extractor->set_parameter("region_size", 1U);
+    auto analyzer = std::make_shared<Yantra::StandardEnergyAnalyzer>();
+    analyzer->set_energy_method(Yantra::EnergyMethod::ZERO_CROSSING);
 
-    auto result = extractor->analyze_energy({ data });
+    auto result = analyzer->analyze_energy({ data });
 
-    std::vector<size_t> crossings;
-    auto window_positions_opt = result.channels[0].window_positions;
-    for (const auto& [start, end] : window_positions_opt) {
-        crossings.push_back(start);
+    if (result.channels.empty()) {
+        return {};
     }
 
-    return crossings;
+    const auto& positions = result.channels[0].event_positions;
+
+    if (threshold <= 0.0) {
+        return positions;
+    }
+
+    auto double_data = std::get<std::vector<double>>(data);
+    std::vector<size_t> filtered;
+    for (size_t pos : positions) {
+        if (pos < double_data.size() && std::abs(double_data[pos]) >= threshold) {
+            filtered.push_back(pos);
+        }
+    }
+    return filtered;
 }
 
 std::vector<std::vector<size_t>> zero_crossings_per_channel(const std::vector<Kakshya::DataVariant>& channels, double threshold)
 {
-    auto extractor = std::make_shared<Yantra::StandardEnergyAnalyzer>();
-    extractor->set_energy_method(Yantra::EnergyMethod::ZERO_CROSSING);
-    extractor->set_parameter("threshold", threshold);
-    extractor->set_parameter("min_distance", 1.0);
-    extractor->set_parameter("region_size", 1U);
-    auto result = extractor->analyze_energy(channels);
+    auto analyzer = std::make_shared<Yantra::StandardEnergyAnalyzer>();
+    analyzer->set_energy_method(Yantra::EnergyMethod::ZERO_CROSSING);
+    auto result = analyzer->analyze_energy(channels);
 
     std::vector<std::vector<size_t>> all_crossings;
-    for (const auto& channel : result.channels) {
-        std::vector<size_t> crossings;
-        for (const auto& [start, end] : channel.window_positions) {
-            crossings.push_back(start);
+    all_crossings.reserve(result.channels.size());
+
+    for (size_t ch = 0; ch < result.channels.size(); ++ch) {
+        const auto& positions = result.channels[ch].event_positions;
+
+        if (threshold <= 0.0) {
+            all_crossings.push_back(positions);
+            continue;
         }
-        all_crossings.push_back(crossings);
+
+        auto double_data = std::get<std::vector<double>>(channels[ch]);
+        std::vector<size_t> filtered;
+        for (size_t pos : positions) {
+            if (pos < double_data.size() && std::abs(double_data[pos]) >= threshold) {
+                filtered.push_back(pos);
+            }
+        }
+        all_crossings.push_back(filtered);
     }
+
     return all_crossings;
 }
 
@@ -393,74 +418,67 @@ std::vector<double> spectral_centroid_per_channel(const std::vector<Kakshya::Dat
 
 std::vector<double> detect_onsets(const std::vector<double>& data, double sample_rate, double threshold)
 {
-    auto extractor = std::make_shared<Yantra::StandardEnergyAnalyzer>(1024, 512);
-    extractor->set_energy_method(Yantra::EnergyMethod::RMS);
-    extractor->enable_classification(true);
-    extractor->set_energy_thresholds(0.01, 0.05, threshold, 0.8);
+    std::span<const double> data_span(data.data(), data.size());
 
-    auto result = extractor->analyze_energy({ Kakshya::DataVariant(data) });
+    auto onset_sample_positions = Yantra::find_onset_positions(
+        data_span,
+        1024,
+        512,
+        threshold);
 
-    std::vector<double> onsets;
-    if (!result.channels.empty()) {
-        const auto& channel = result.channels[0];
-        for (size_t i = 0; i < channel.energy_values.size(); ++i) {
-            if (channel.energy_values[i] > threshold) {
-                if (i < channel.window_positions.size()) {
-                    double onset_time = static_cast<double>(channel.window_positions[i].first) / sample_rate;
-                    onsets.push_back(onset_time);
-                }
-            }
-        }
+    std::vector<double> onset_times;
+    onset_times.reserve(onset_sample_positions.size());
+    for (size_t sample_pos : onset_sample_positions) {
+        onset_times.push_back(static_cast<double>(sample_pos) / sample_rate);
     }
-    return onsets;
+
+    return onset_times;
 }
 
 std::vector<double> detect_onsets(const Kakshya::DataVariant& data, double sample_rate, double threshold)
 {
-    auto extractor = std::make_shared<Yantra::StandardEnergyAnalyzer>(1024, 512);
-    extractor->set_energy_method(Yantra::EnergyMethod::RMS);
-    extractor->enable_classification(true);
-    extractor->set_energy_thresholds(0.01, 0.05, threshold, 0.8);
+    auto double_data = std::get<std::vector<double>>(data);
+    std::span<const double> data_span(double_data.data(), double_data.size());
 
-    auto result = extractor->analyze_energy({ data });
+    auto onset_sample_positions = Yantra::find_onset_positions(
+        data_span,
+        1024,
+        512,
+        threshold);
 
-    std::vector<double> onsets;
-    if (!result.channels.empty()) {
-        const auto& channel = result.channels[0];
-        for (size_t i = 0; i < channel.energy_values.size(); ++i) {
-            if (channel.energy_values[i] > threshold) {
-                if (i < channel.window_positions.size()) {
-                    double onset_time = static_cast<double>(channel.window_positions[i].first) / sample_rate;
-                    onsets.push_back(onset_time);
-                }
-            }
-        }
+    std::vector<double> onset_times;
+    onset_times.reserve(onset_sample_positions.size());
+    for (size_t sample_pos : onset_sample_positions) {
+        onset_times.push_back(static_cast<double>(sample_pos) / sample_rate);
     }
-    return onsets;
+
+    return onset_times;
 }
 
 std::vector<std::vector<double>> detect_onsets_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate, double threshold)
 {
-    auto extractor = std::make_shared<Yantra::StandardEnergyAnalyzer>(1024, 512);
-    extractor->set_energy_method(Yantra::EnergyMethod::RMS);
-    extractor->enable_classification(true);
-    extractor->set_energy_thresholds(0.01, 0.05, threshold, 0.8);
-
-    auto result = extractor->analyze_energy(channels);
-
     std::vector<std::vector<double>> all_onsets;
-    for (const auto& channel : result.channels) {
-        std::vector<double> onsets;
-        for (size_t i = 0; i < channel.energy_values.size(); ++i) {
-            if (channel.energy_values[i] > threshold) {
-                if (i < channel.window_positions.size()) {
-                    double onset_time = static_cast<double>(channel.window_positions[i].first) / sample_rate;
-                    onsets.push_back(onset_time);
-                }
-            }
+    all_onsets.reserve(channels.size());
+
+    for (const auto& channel : channels) {
+        auto double_data = std::get<std::vector<double>>(channel);
+        std::span<const double> data_span(double_data.data(), double_data.size());
+
+        auto onset_sample_positions = Yantra::find_onset_positions(
+            data_span,
+            1024,
+            512,
+            threshold);
+
+        std::vector<double> onset_times;
+        onset_times.reserve(onset_sample_positions.size());
+        for (size_t sample_pos : onset_sample_positions) {
+            onset_times.push_back(static_cast<double>(sample_pos) / sample_rate);
         }
-        all_onsets.push_back(onsets);
+
+        all_onsets.push_back(onset_times);
     }
+
     return all_onsets;
 }
 
@@ -1091,7 +1109,6 @@ std::vector<double> mix_with_gains(const std::vector<Kakshya::DataVariant>& stre
     auto numeric_data = Yantra::OperationHelper::extract_numeric_data(streams);
 
     if (is_same_size(numeric_data)) {
-        // All channels same size - efficient mixing
         size_t channel_length = numeric_data[0].size();
         std::vector<double> result(channel_length, 0.0);
 

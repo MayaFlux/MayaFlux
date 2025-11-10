@@ -125,29 +125,55 @@ std::vector<std::vector<double>> extract_peak_data(
             continue;
         }
 
-        std::vector<size_t> peak_indices;
-        size_t last_peak = 0;
+        try {
+            auto analyzer = std::make_shared<EnergyAnalyzer<std::vector<Kakshya::DataVariant>, Eigen::VectorXd>>(
+                512, 256);
+            analyzer->set_parameter("method", "peak");
+            analyzer->set_parameter("threshold", threshold);
 
-        for (size_t i = 1; i + 1 < channel.size(); ++i) {
-            if (channel[i] > channel[i - 1] && channel[i] > channel[i + 1] && channel[i] > threshold && (i - last_peak) >= static_cast<size_t>(min_distance)) {
-                peak_indices.push_back(i);
-                last_peak = i;
+            std::vector<Kakshya::DataVariant> data_variant {
+                Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) }
+            };
+            EnergyAnalysis energy_result = analyzer->analyze_energy(data_variant);
+
+            if (energy_result.channels.empty()) {
+                result.emplace_back();
+                continue;
             }
-        }
 
-        std::vector<double> extracted_data;
-        for (const auto peak_idx : peak_indices) {
-            const size_t half_region = region_size / 2;
-            const size_t start_idx = (peak_idx >= half_region) ? peak_idx - half_region : 0;
-            const size_t end_idx = std::min(peak_idx + half_region, channel.size());
+            const auto& peak_positions = energy_result.channels[0].event_positions;
 
-            if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
-                std::ranges::copy(channel.subspan(start_idx, end_idx - start_idx),
-                    std::back_inserter(extracted_data));
+            if (peak_positions.empty()) {
+                result.emplace_back();
+                continue;
             }
-        }
 
-        result.push_back(std::move(extracted_data));
+            std::vector<size_t> filtered_positions;
+            size_t last_position = 0;
+
+            for (size_t pos : peak_positions) {
+                if (filtered_positions.empty() || (pos - last_position) >= static_cast<size_t>(min_distance)) {
+                    filtered_positions.push_back(pos);
+                    last_position = pos;
+                }
+            }
+
+            std::vector<double> extracted_data;
+            for (size_t peak_pos : filtered_positions) {
+                const size_t half_region = region_size / 2;
+                const size_t start_idx = (peak_pos >= half_region) ? peak_pos - half_region : 0;
+                const size_t end_idx = std::min(peak_pos + half_region, channel.size());
+
+                if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
+                    std::ranges::copy(channel.subspan(start_idx, end_idx - start_idx),
+                        std::back_inserter(extracted_data));
+                }
+            }
+
+            result.push_back(std::move(extracted_data));
+        } catch (const std::exception&) {
+            result.emplace_back();
+        }
     }
 
     return result;
@@ -468,31 +494,45 @@ std::vector<std::vector<double>> extract_zero_crossing_data(
                 region_size * 2, static_cast<uint32_t>(min_distance));
             analyzer->set_parameter("method", "zero_crossing");
 
-            std::vector<Kakshya::DataVariant> data_variant { Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) } };
+            std::vector<Kakshya::DataVariant> data_variant {
+                Kakshya::DataVariant { std::vector<double>(channel.begin(), channel.end()) }
+            };
             EnergyAnalysis energy_result = analyzer->analyze_energy(data_variant);
 
-            if (energy_result.channels.empty() || energy_result.channels[0].energy_values.empty() || energy_result.channels[0].window_positions.empty()) {
+            if (energy_result.channels.empty()) {
                 result.emplace_back();
                 continue;
             }
 
-            const auto& ch_energy = energy_result.channels[0].energy_values;
-            const auto& ch_windows = energy_result.channels[0].window_positions;
+            const auto& crossing_positions = energy_result.channels[0].event_positions;
 
-            std::vector<size_t> indices;
-            for (size_t idx = 0; idx < ch_energy.size(); ++idx) {
-                if (ch_energy[idx] > threshold)
-                    indices.push_back(idx);
+            if (crossing_positions.empty()) {
+                result.emplace_back();
+                continue;
+            }
+
+            std::vector<size_t> filtered_positions;
+            size_t last_position = 0;
+
+            for (size_t pos : crossing_positions) {
+                if (filtered_positions.empty() || (pos - last_position) >= static_cast<size_t>(min_distance)) {
+                    filtered_positions.push_back(pos);
+                    last_position = pos;
+                }
+            }
+
+            std::vector<size_t> qualified_positions;
+            for (size_t pos : filtered_positions) {
+                if (pos < channel.size() && std::abs(channel[pos]) >= threshold) {
+                    qualified_positions.push_back(pos);
+                }
             }
 
             std::vector<double> extracted_data;
-            for (auto idx : indices) {
-                if (idx >= ch_windows.size())
-                    continue;
-
-                auto [start_idx, end_idx] = ch_windows[idx];
-                auto region_start = start_idx > region_size / 2 ? start_idx - region_size / 2 : size_t { 0 };
-                auto region_end = std::min(start_idx + region_size / 2, channel.size());
+            for (size_t pos : qualified_positions) {
+                const size_t half_region = region_size / 2;
+                const size_t region_start = (pos >= half_region) ? pos - half_region : 0;
+                const size_t region_end = std::min(pos + half_region, channel.size());
 
                 if (region_start < region_end) {
                     auto region = channel.subspan(region_start, region_end - region_start);
@@ -562,6 +602,52 @@ std::vector<std::vector<double>> extract_silence_data(
             for (const auto& [start_idx, end_idx] : merged_regions) {
                 if (start_idx < channel.size() && end_idx <= channel.size() && start_idx < end_idx) {
                     auto region = channel.subspan(start_idx, end_idx - start_idx);
+                    std::ranges::copy(region, std::back_inserter(extracted_data));
+                }
+            }
+
+            result.push_back(std::move(extracted_data));
+        } catch (const std::exception&) {
+            result.emplace_back();
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::vector<double>> extract_onset_data(
+    const std::vector<std::span<const double>>& data,
+    double threshold,
+    uint32_t region_size,
+    uint32_t window_size,
+    uint32_t hop_size)
+{
+    std::vector<std::vector<double>> result;
+    result.reserve(data.size());
+
+    for (const auto& channel : data) {
+        if (channel.empty()) {
+            result.emplace_back();
+            continue;
+        }
+
+        try {
+            std::vector<size_t> onset_positions = find_onset_positions(
+                channel, window_size, hop_size, threshold);
+
+            if (onset_positions.empty()) {
+                result.emplace_back();
+                continue;
+            }
+
+            std::vector<double> extracted_data;
+            for (size_t onset_pos : onset_positions) {
+                const size_t half_region = region_size / 2;
+                const size_t region_start = (onset_pos >= half_region) ? onset_pos - half_region : 0;
+                const size_t region_end = std::min(onset_pos + half_region, channel.size());
+
+                if (region_start < region_end) {
+                    auto region = channel.subspan(region_start, region_end - region_start);
                     std::ranges::copy(region, std::back_inserter(extracted_data));
                 }
             }

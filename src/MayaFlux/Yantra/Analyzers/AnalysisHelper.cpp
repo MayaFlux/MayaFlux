@@ -214,6 +214,127 @@ std::vector<double> compute_harmonic_energy(std::span<const double> data, const 
     return harmonic_energy;
 }
 
+std::vector<size_t> find_zero_crossing_positions(
+    std::span<const double> data,
+    double threshold)
+{
+    std::vector<size_t> positions;
+    positions.reserve(data.size() / 4);
+
+    for (size_t i = 1; i < data.size(); ++i) {
+        bool current_above = (data[i] >= threshold);
+        bool previous_above = (data[i - 1] >= threshold);
+
+        if (current_above != previous_above) {
+            positions.push_back(i);
+        }
+    }
+
+    positions.shrink_to_fit();
+    return positions;
+}
+
+std::vector<size_t> find_peak_positions(
+    std::span<const double> data,
+    double threshold,
+    size_t min_distance)
+{
+    if (data.size() < 3) {
+        return {};
+    }
+
+    std::vector<size_t> positions;
+    positions.reserve(data.size() / 100);
+
+    size_t last_peak = 0;
+
+    for (size_t i = 1; i < data.size() - 1; ++i) {
+        double abs_val = std::abs(data[i]);
+
+        if (abs_val > threshold && abs_val >= std::abs(data[i - 1]) && abs_val >= std::abs(data[i + 1])) {
+
+            if (positions.empty() || (i - last_peak) >= min_distance) {
+                positions.push_back(i);
+                last_peak = i;
+            }
+        }
+    }
+
+    positions.shrink_to_fit();
+    return positions;
+}
+
+std::vector<size_t> find_onset_positions(
+    std::span<const double> data,
+    uint32_t window_size,
+    uint32_t hop_size,
+    double threshold)
+{
+    const size_t num_windows = (data.size() - window_size) / hop_size + 1;
+
+    if (num_windows < 2) {
+        return {};
+    }
+
+    std::vector<double> flux_values(num_windows - 1);
+
+    Eigen::VectorXd hanning_window(window_size);
+    for (uint32_t i = 0; i < window_size; ++i) {
+        hanning_window(i) = 0.5 * (1.0 - std::cos(2.0 * M_PI * i / (window_size - 1)));
+    }
+
+    Eigen::VectorXcd prev_spectrum;
+
+    for (size_t i = 0; i < num_windows; ++i) {
+        const size_t start_idx = i * hop_size;
+        const size_t end_idx = std::min(start_idx + window_size, data.size());
+        auto window = data.subspan(start_idx, end_idx - start_idx);
+
+        Eigen::VectorXd windowed_data = Eigen::VectorXd::Zero(window_size);
+        for (size_t j = 0; j < window.size(); ++j) {
+            windowed_data(j) = window[j] * hanning_window(j);
+        }
+
+        Eigen::FFT<double> fft;
+        Eigen::VectorXcd spectrum;
+        fft.fwd(spectrum, windowed_data);
+
+        if (i > 0) {
+            double flux = 0.0;
+            for (int j = 0; j < spectrum.size(); ++j) {
+                double curr_mag = std::abs(spectrum(j));
+                double prev_mag = std::abs(prev_spectrum(j));
+                double diff = curr_mag - prev_mag;
+                if (diff > 0) {
+                    flux += diff;
+                }
+            }
+            flux_values[i - 1] = flux;
+        }
+
+        prev_spectrum = spectrum;
+    }
+
+    std::vector<size_t> positions;
+
+    double max_flux = *std::max_element(flux_values.begin(), flux_values.end());
+    if (max_flux > 0.0) {
+        for (size_t i = 0; i < flux_values.size(); ++i) {
+            flux_values[i] /= max_flux;
+        }
+    }
+
+    for (size_t i = 1; i < flux_values.size() - 1; ++i) {
+        if (flux_values[i] > threshold && flux_values[i] > flux_values[i - 1] && flux_values[i] >= flux_values[i + 1]) {
+
+            size_t sample_pos = (i + 1) * hop_size;
+            positions.push_back(sample_pos);
+        }
+    }
+
+    return positions;
+}
+
 std::vector<double> compute_mean_statistic(std::span<const double> data, const size_t num_windows, const uint32_t hop_size, const uint32_t window_size)
 {
     std::vector<double> mean_values(num_windows);

@@ -40,6 +40,52 @@ std::vector<double> compute_zero_crossing_energy(
     const uint32_t window_size);
 
 /**
+ * @brief Find actual zero-crossing positions in the signal
+ *
+ * Unlike compute_zero_crossing_energy which returns ZCR per window,
+ * this returns the actual sample indices where zero crossings occur.
+ *
+ * @param data Input data span
+ * @param threshold Threshold value for crossing detection (default: 0.0)
+ * @return Vector of sample positions where crossings occur
+ */
+std::vector<size_t> find_zero_crossing_positions(
+    std::span<const double> data,
+    double threshold = 0.0);
+
+/**
+ * @brief Find actual peak positions in the signal
+ *
+ * Returns sample indices where local maxima occur above a threshold.
+ *
+ * @param data Input data span
+ * @param threshold Minimum absolute value to be considered a peak
+ * @param min_distance Minimum samples between peaks (prevents clustering)
+ * @return Vector of sample positions where peaks occur
+ */
+std::vector<size_t> find_peak_positions(
+    std::span<const double> data,
+    double threshold = 0.0,
+    size_t min_distance = 1);
+
+/**
+ * @brief Find onset positions using spectral flux
+ *
+ * Detects rapid increases in spectral energy (transients/attacks).
+ *
+ * @param data Input data span
+ * @param window_size FFT window size
+ * @param hop_size Hop between analysis frames
+ * @param threshold Flux threshold for onset detection
+ * @return Vector of sample positions where onsets occur
+ */
+std::vector<size_t> find_onset_positions(
+    std::span<const double> data,
+    uint32_t window_size,
+    uint32_t hop_size,
+    double threshold = 0.1);
+
+/**
  * @brief Compute power energy using zero-copy processing
  *
  * This function computes the power energy for a given data span.

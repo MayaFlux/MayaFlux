@@ -175,4 +175,20 @@ std::vector<std::vector<double>> extract_silence_data(
     uint32_t window_size = 512,
     uint32_t hop_size = 256);
 
+/**
+ * @brief Extract data at onset/transient positions using spectral flux
+ * @param data Input data span
+ * @param threshold Onset detection threshold (normalized 0-1)
+ * @param region_size Size of region around each onset to extract
+ * @param window_size FFT window size for spectral analysis
+ * @param hop_size Hop size for spectral analysis
+ * @return Vector containing actual data from onset regions
+ */
+std::vector<std::vector<double>> extract_onset_data(
+    const std::vector<std::span<const double>>& data,
+    double threshold = 0.3,
+    uint32_t region_size = 512,
+    uint32_t window_size = 1024,
+    uint32_t hop_size = 256);
+
 } // namespace MayaFlux::Yantra
