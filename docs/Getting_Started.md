@@ -205,45 +205,45 @@ Explore the shape of things to come!
 
 ### Understanding Your `user_project.hpp`
 
-> **Your creative workspace lives in `src/user_project.hpp`.**
->
-> * `settings()` runs once, *before* the engine starts. Use it to set sample rate, buffer size, graphics API, and logging options.
-> * `compose()` runs *after* setup—it’s your canvas for sound, data, graphics and computation.
-> * You can define functions or global variables above `compose()` if you want to reuse them inside it.
-> * This file is never overwritten by MayaFlux updates—you own it.
->
-> Example:
->
-> ```cpp
-> void settings() {
->     auto& stream = MayaFlux::Config::get_global_stream_info();
->     stream.sample_rate = 48000;
->     stream.buffer_size = 128;
-> }
->
-> void compose() {
->     vega.load("res/audio/track.wav") | Audio;
-> }
-> ```
+ **Your creative workspace lives in `src/user_project.hpp`.**
+
+ * `settings()` runs once, *before* the engine starts. Use it to set sample rate, buffer size, graphics API, and logging options.
+ * `compose()` runs *after* setup—it’s your canvas for sound, data, graphics and computation.
+ * You can define functions or global variables above `compose()` if you want to reuse them inside it.
+ * This file is never overwritten by MayaFlux updates—you own it.
+
+ Example:
+
+ ```cpp
+ void settings() {
+     auto& stream = MayaFlux::Config::get_global_stream_info();
+     stream.sample_rate = 48000;
+     stream.buffer_size = 128;
+ }
+
+ void compose() {
+     vega.load("res/audio/track.wav") | Audio;
+ }
+ ```
 
 ---
 
 ### How to Use the Tutorials
 
-> **MayaFlux tutorials are designed for exploration, not passive reading.**
->
-> 1. **Run the visible code.**
->    Copy the non-hidden (top-level) snippets into `compose()` and run them.
-> 2. **Listen or observe what happens.**
->    Every tutorial produces a real, audible or visual result.
-> 3. **Open the dropdowns (`<details>`).**
->    These reveal what’s happening under the hood. Read them slowly; come back later as your understanding grows.
-> 4. **Experiment.**
->    Change numbers, reorder calls, or combine examples. Each tweak teaches you something about the system.
-> 5. **Iterate.**
->    As you learn, revisit earlier tutorials. MayaFlux rewards depth—you’ll understand new layers every time.
->
-> The goal is fluency, not memorization. You’re not “following a recipe”—you’re learning how the machinery works so you can build your own.
+ **MayaFlux tutorials are designed for exploration, not passive reading.**
+
+ 1. **Run the visible code.**
+    Copy the non-hidden (top-level) snippets into `compose()` and run them.
+ 2. **Listen or observe what happens.**
+    Every tutorial produces a real, audible or visual result.
+ 3. **Open the dropdowns (`<details>`).**
+    These reveal what’s happening under the hood. Read them slowly; come back later as your understanding grows.
+ 4. **Experiment.**
+    Change numbers, reorder calls, or combine examples. Each tweak teaches you something about the system.
+ 5. **Iterate.**
+    As you learn, revisit earlier tutorials. MayaFlux rewards depth—you’ll understand new layers every time.
+
+ The goal is fluency, not memorization. You’re not “following a recipe”—you’re learning how the machinery works so you can build your own.
 
 ## Next Steps
 
@@ -266,7 +266,7 @@ Each section in Sculpting Data teaches one core idea and builds on the previous:
 4. **Section 3: Timing** - Understand timing control (how you schedule)
 5. **Section 4:** (Coming) BufferOperation (how you compose)
 
-**Start here:** Open [Sculpting Data](Tutorial/SculptingData.md) and begin with Section 1.
+**Start here:** Open [Sculpting Data](Tutorials/SculptingData.md) and begin with Section 1.
 
 Each section is designed to be executed immediately:
 - Copy the code examples into your `compose()` function

@@ -21,8 +21,8 @@ namespace MayaFlux::IO {
 enum class AudioReadOptions : uint32_t {
     NONE = 0,
     NORMALIZE = 1 << 0, // Not implemented - would use FFmpeg's volume filter
-    CONVERT_TO_MONO = 1 << 1, // Not implemented - would use FFmpeg's channel mixer
-    DEINTERLEAVE = 1 << 2, // Convert from interleaved to planar layout
+    CONVERT_TO_MONO = 1 << 2, // Not implemented - would use FFmpeg's channel mixer
+    DEINTERLEAVE = 1 << 3, // Convert from interleaved to planar layout
     ALL = 0xFFFFFFFF
 };
 
@@ -35,6 +35,36 @@ inline AudioReadOptions operator&(AudioReadOptions a, AudioReadOptions b)
 {
     return static_cast<AudioReadOptions>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 }
+
+/**
+ * @brief RAII wrapper for FFmpeg contexts with proper cleanup
+ *
+ * This struct holds all FFmpeg-related state and ensures proper cleanup order.
+ * Shared ownership allows safe concurrent access with reader-writer semantics.
+ */
+struct FFmpegContext {
+    AVFormatContext* format_context = nullptr;
+    AVCodecContext* codec_context = nullptr;
+    SwrContext* swr_context = nullptr;
+    int audio_stream_index = -1;
+    uint64_t total_frames = 0;
+    uint32_t sample_rate = 0;
+    uint32_t channels = 0;
+
+    ~FFmpegContext();
+
+    // Non-copyable, non-movable (managed by shared_ptr)
+    FFmpegContext() = default;
+    FFmpegContext(const FFmpegContext&) = delete;
+    FFmpegContext& operator=(const FFmpegContext&) = delete;
+    FFmpegContext(FFmpegContext&&) = delete;
+    FFmpegContext& operator=(FFmpegContext&&) = delete;
+
+    bool is_valid() const
+    {
+        return format_context && codec_context && audio_stream_index >= 0;
+    }
+};
 
 /**
  * @class SoundFileReader
@@ -240,30 +270,11 @@ public:
 private:
     // FFmpeg contexts - let FFmpeg manage these
 
-    /**
-     * @brief FFmpeg format context (demuxer).
-     */
-    AVFormatContext* m_format_context = nullptr;
+    // Shared FFmpeg context - enables safe concurrent access
+    std::shared_ptr<FFmpegContext> m_context;
 
-    /**
-     * @brief FFmpeg codec context (decoder).
-     */
-    AVCodecContext* m_codec_context = nullptr;
-
-    /**
-     * @brief FFmpeg resampler context.
-     */
-    SwrContext* m_swr_context = nullptr;
-
-    /**
-     * @brief Index of the audio stream in the file.
-     */
-    int m_audio_stream_index = -1;
-
-    /**
-     * @brief True if a file is currently open.
-     */
-    std::atomic<bool> m_is_open { false };
+    // Reader-writer lock: multiple readers OR single writer
+    mutable std::shared_mutex m_context_mutex;
 
     /**
      * @brief Path to the currently open file.
@@ -301,11 +312,6 @@ private:
     std::atomic<uint64_t> m_current_frame_position { 0 };
 
     /**
-     * @brief Total number of frames in the file.
-     */
-    uint64_t m_total_frames = 0;
-
-    /**
      * @brief Target sample rate for resampling (0 = use source rate).
      */
     uint32_t m_target_sample_rate = 0;
@@ -314,11 +320,6 @@ private:
      * @brief Target bit depth (ignored, always outputs double).
      */
     uint32_t m_target_bit_depth = 0;
-
-    /**
-     * @brief Mutex for thread-safe reading.
-     */
-    mutable std::mutex m_read_mutex;
 
     /**
      * @brief Mutex for thread-safe metadata access.
@@ -331,45 +332,37 @@ private:
      * @brief Set up the FFmpeg resampler if needed.
      * @return True if setup succeeded.
      */
-    bool setup_resampler();
-
-    /**
-     * @brief Clean up FFmpeg resources.
-     */
-    void cleanup_ffmpeg();
+    bool setup_resampler(const std::shared_ptr<FFmpegContext>& ctx);
 
     /**
      * @brief Extract metadata from the file.
      */
-    void extract_metadata();
+    void extract_metadata(const std::shared_ptr<FFmpegContext>& ctx);
 
     /**
      * @brief Extract region information from the file.
      */
-    void extract_regions();
-
-    /**
-     * @brief Parse ID3 tags (placeholder, handled by FFmpeg).
-     */
-    void parse_id3_tags();
-
-    /**
-     * @brief Parse WAV chunks (placeholder, handled by FFmpeg).
-     */
-    void parse_wav_chunks();
-
-    /**
-     * @brief Parse FLAC comments (placeholder, handled by FFmpeg).
-     */
-    void parse_flac_comments();
+    void extract_regions(const std::shared_ptr<FFmpegContext>& ctx);
 
     /**
      * @brief Decode a specific number of frames from the file.
+     * @param ctx FFmpeg context.
      * @param num_frames Number of frames to decode.
      * @param offset Frame offset from beginning.
      * @return DataVariant containing decoded data.
      */
-    std::vector<Kakshya::DataVariant> decode_frames(uint64_t num_frames, uint64_t offset);
+    std::vector<Kakshya::DataVariant> decode_frames(
+        std::shared_ptr<FFmpegContext> ctx,
+        uint64_t num_frames,
+        uint64_t offset);
+
+    /**
+     * @brief Internal seek implementation.
+     * @param ctx FFmpeg context.
+     * @param frame_position Target frame position.
+     * @return True if seek succeeded.
+     */
+    bool seek_internal(std::shared_ptr<FFmpegContext>& ctx, uint64_t frame_position);
 
     /**
      * @brief Convert interleaved audio data to deinterleaved (planar) format.
