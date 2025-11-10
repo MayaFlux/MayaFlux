@@ -1359,7 +1359,7 @@ If you want to experiment, use a real file path and run it.
 
 But the main point is: **understand what's happening**, not just make it work.
 
-- You're capturing 50 buffer cycles (≈ 500ms of audio at 48 kHz)
+- You're capturing from a file
 - Each cycle, your lambda processes 512 samples
 - Results accumulate in capture_buffer
 - Then capture_buffer plays to hardware
