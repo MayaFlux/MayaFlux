@@ -69,10 +69,15 @@ jobs:
             llvm
           verbose: true
 
-      - name: Homebrew Environment and Setup LLVM
+      - name: Setup Homebrew Environment
         run: |
           eval "$(/opt/homebrew/bin/brew shellenv)"
-          echo "Verified PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+          echo "PATH=$PATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$(brew --prefix)/opt/pkgconfig/lib/pkgconfig:$(brew --prefix)/share/pkgconfig" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix)" >> $GITHUB_ENV
+          echo "CMAKE_INCLUDE_PATH=$(brew --prefix)/include" >> $GITHUB_ENV
+          echo "CMAKE_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+
           LLVM_PREFIX=$(brew --prefix llvm)
           echo "LLVM_PREFIX=$LLVM_PREFIX" >> $GITHUB_ENV
           echo "PATH=$LLVM_PREFIX/bin:$PATH" >> $GITHUB_ENV
@@ -103,10 +108,13 @@ jobs:
       - name: Configure CMake
         shell: bash
         run: |
+          eval "$(/opt/homebrew/bin/brew shellenv)"
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_VERBOSE_MAKEFILE=ON
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DCMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH=ON \
+            -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
 
       - name: Build
         shell: bash

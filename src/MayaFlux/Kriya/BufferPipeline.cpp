@@ -81,9 +81,11 @@ void BufferPipeline::execute_buffer_rate(uint32_t max_cycles)
 
     auto self = shared_from_this();
 
+    if (max_cycles == 0) {
+        max_cycles = UINT64_MAX;
+        m_continuous_execution = true;
+    }
     m_max_cycles = max_cycles;
-
-    // m_continuous_execution = true;
 
     auto routine = std::make_shared<Vruta::SoundRoutine>(
         execute_internal(max_cycles, 0));

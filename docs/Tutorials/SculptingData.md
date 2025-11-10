@@ -293,7 +293,8 @@ or spend the next 20 lines building a complex processing pipeline before ever pl
 
 ---
 
-In the next section, we'll connect this Container to buffers and route it to your speakers. And you'll see why this two-step design—load, then connect—is more powerful than one-step automatic playback.
+In the next section, we'll connect this Container to buffers and route it to your speakers.
+And you'll see why this two-step design—load, then connect—is more powerful than one-step automatic playback.
 
 ---
 
@@ -321,11 +322,13 @@ The Container + the hook call—together they form the path from disk to speaker
 
 A **Buffer** is a temporal accumulator—a space where data gathers until it's ready to be released, then it resets and gathers again.
 
-Buffers don't store your entire file. They store chunks. At your project's sample rate (48 kHz), a typical buffer might hold 512 or 4096 samples—a handful of milliseconds of audio.
+Buffers don't store your entire file. They store chunks. At your project's sample rate (48 kHz),
+a typical buffer might hold 512 or 4096 samples: a handful of milliseconds of audio.
 
 Here's why this matters:
 
-Your audio interface (speakers, headphones) has a fixed callback rate. It says: "Give me 512 samples of audio, and do it every 10 milliseconds. Repeat forever until playback stops."
+Your audio interface (speakers, headphones) has a fixed callback rate. It says:
+"Give me 512 samples of audio, and do it every 10 milliseconds. Repeat forever until playback stops."
 
 Buffers are the industry standard method to meet this demand.
 
@@ -336,7 +339,8 @@ Buffers are the industry standard method to meet this demand.
 
 This cycle repeats thousands of times per minute. Buffers make that possible.
 
-Without buffers, you'd have to manually manage these chunks yourself. With buffers, MayaFlux handles the cycle. Your Container's processor feeds data into them. The buffers exhale it to your ears.
+Without buffers, you'd have to manually manage these chunks yourself. With buffers, MayaFlux handles the cycle. 
+Your Container's processor feeds data into them. The buffers exhale it to your ears.
 
 </details>
 
@@ -417,7 +421,8 @@ Now the buffer manager knows:
 - These buffers should feed the audio hardware
 - These buffers are ready to cycle
 
-When the audio callback fires (every 10ms at 48 kHz), the buffer manager wakes up all its `AUDIO_BACKEND` buffers and says: "Time for the next chunk. Fill yourselves."
+When the audio callback fires (every 10ms at 48 kHz), the buffer manager wakes up 
+all its `AUDIO_BACKEND` buffers and says: "Time for the next chunk. Fill yourselves."
 
 Each buffer asks its Container's processor: "Give me 512 samples from your channel."
 
@@ -521,7 +526,8 @@ auto buffers = vega.get_last_created_container_buffers();
 // etc.
 ```
 
-Why is this useful? Because buffers own **processing chains**. And processing chains are where you'll insert processes, analysis, transformations—everything that turns passive playback into active processing.
+Why is this useful? Because buffers own **processing chains**. And processing chains are where you'll insert 
+processes, analysis, transformations - everything that turns passive playback into active processing.
 
 Each buffer has a method:
 ```cpp
@@ -547,7 +553,8 @@ This is the foundation for Section 3. You load a file, get the buffers, access t
 vega.read("path/to/file.wav") | Audio;
 ```
 
-This single line does all of the above: creates a Container, creates per-channel buffers, hooks them to the audio hardware, and starts playback. No file plays until the `| Audio` operator, which is when the connection happens.
+This single line does all of the above: creates a Container, creates per-channel buffers, hooks them to the audio hardware, 
+and starts playback. No file plays until the `| Audio` operator, which is when the connection happens.
 
 ### Explicit (What's actually happening)
 ```cpp
@@ -856,7 +863,8 @@ Listen again. Different sound. You're sculpting the filter response.
 
 You've just inserted a processor into a buffer's chain and heard the result. That's the foundation for everything that follows.
 
-In the next section, we'll interrupt this passive playback. We'll insert a processing node between the Container and the buffers. And you'll see why this architecture—buffers as relays, not generators—enables powerful real-time transformation.
+In the next section, we'll interrupt this passive playback. We'll insert a processing node between the Container and the buffers. 
+And you'll see why this architecture—buffers as relays, not generators—enables powerful real-time transformation.
 
 # Tutorial: Timing, Streams, and Bridges
 
@@ -1129,9 +1137,10 @@ You can process exactly N cycles, accumulate results, and move on.
 
 ---
 
-## Why This Section Has No Runnable Code
+## Why This Section Has No Audio Code
 
-This is intentional. The concepts here are essential, but they're not meant to be used directly in simple cases.
+This is intentional. The concepts here are essential, and expose the architecture behind everything that follows.
+It is also a hint at the fact that modal output is not the only use case for MayaFlux.
 
 - FileBridgeBuffer is too low-level—you'd create it manually, call setup_chain_and_processor(), manage cycles yourself
 - DynamicSoundStream is too generic—without a driver, you'd just accumulate data with no purpose
@@ -1158,3 +1167,233 @@ For now: **internalize the architecture. The next section shows how to use it.**
 - Timing is expressed in cycles (deterministic, aligned with buffer boundaries, decoupled from real-time)
 
 This is the mental model for everything that follows. Pipelines, capture, routing—they all build on this foundation.
+
+# Tutorial: Buffer Pipelines (Teaser)
+
+## The Next Level
+
+Everything you've learned so far processes data in isolation: load a file, add a processor, output to hardware.
+
+But what if you want to:
+- **Capture** a specific number of buffer cycles from a file
+- **Process** those cycles through custom logic
+- **Route** the result to a buffer for playback
+- **Do all of this in one declarative statement**
+
+That's what buffer pipelines do.
+
+---
+
+## A Taste
+
+```cpp
+void compose() {
+    // Create an empty audio buffer (will hold captured data)
+    auto capture_buffer = vega.AudioBuffer()[1] | Audio;
+    // Create a pipeline
+    auto pipeline = MayaFlux::create_buffer_pipeline();
+    // Set strategy to streaming (process as data arrives)
+    pipeline->with_strategy(ExecutionStrategy::STREAMING);
+    
+    // Declare the flow: 
+    pipeline
+        >> BufferOperation::capture_file_from("path/to/audio/.wav", 0)
+               .for_cycles(1) // Essential for streaming
+        >> BufferOperation::route_to_buffer(capture_buffer) // Route captured data to our buffer
+        >> BufferOperation::modify_buffer(capture_buffer, [](std::shared_ptr<AudioBuffer> buffer) {
+            for (auto& sample : buffer->get_data()) {
+                sample *= MayaFlux::get_uniform_random(-0.5, 0.5); // random "texture" between 0 and 0.5
+            }
+        });
+
+    // Execute: runs continuously at buffer rate
+    pipeline->execute_buffer_rate();
+}
+```
+
+Run this. You'll hear the file play back at with noisy texture.
+But the file never played to speakers directly: 
+it was captured, processed, accumulated, then routed.
+
+---
+
+## Expansion 1: What Is a Pipeline?
+
+<details>
+<summary>Click to expand: Declarative Processing Chains</summary>
+
+A **pipeline** is a declarative sequence of buffer operations that compose to form a complete computational event.
+
+Unlike the previous sections where you manually:
+1. Load a file
+2. Get buffers
+3. Create processors
+4. Add to chains
+
+...a pipeline lets you describe the entire flow in one statement:
+
+```cpp
+pipeline
+    >> Operation1
+    >> Operation2
+    >> Operation3;
+```
+
+The `>>` operator chains operations. The pipeline executes them in order, handling all the machinery (cycles, buffer management, timing) invisibly.
+
+This is why you've been learning the foundation first: **pipelines are just syntactic sugar over FileBridgeBuffer, DynamicSoundStream, StreamWriteProcessor, and buffer cycles.**
+
+Understanding the previous sections makes this section obvious. You're not learning new concepts—you're composing concepts you already understand.
+
+</details>
+
+---
+
+## Expansion 2: BufferOperation Types
+
+<details>
+<summary>Click to expand: What Operations Exist</summary>
+
+BufferOperation is a toolkit. Common operations:
+
+- **capture_file()** - Read N cycles from a file, accumulate in internal stream
+- **modify_buffer()** - Apply custom logic to a specific AudioBuffer
+- **route_to_buffer()** - Send accumulated result to an AudioBuffer for playback
+- **route_to_container()** - Send result to a DynamicSoundStream (for recording, analysis, etc.)
+- **transform()** - Map/reduce on accumulated data (structural transformation)
+- **dispatch()** - Execute arbitrary code with access to the data
+
+Each operation is a building block. Pipeline chains them together.
+
+The full set of operations is the subject of its own tutorial. This section just shows the pattern.
+
+</details>
+
+---
+
+## Expansion 3: The `on_capture_processing` Pattern
+
+<details>
+<summary>Click to expand: Processing Each Cycle</summary>
+
+Notice in the example:
+
+```cpp
+>> BufferOperation::modify([](auto& data, uint32_t cycle) {
+    // Called every cycle as data accumulates
+    for (auto& sample : data) {
+        sample *= 0.5;
+    }
+})
+```
+
+The `modify` operation runs **each cycle**—meaning:
+- Cycle 1: 512 samples captured, modified by your lambda
+- Cycle 2: Next 512 samples captured, modified
+- Cycle 3: And so on
+
+This is `on_capture_processing`: your custom logic runs as data arrives, not automated by external managers.
+
+Automatic mode simply expects buffer manager to handle the processing of attached processors.
+On Demand mode expects users to provide callback timing logic.
+
+For now: understand that pipelines let you hook custom logic into the capture/process/route flow.
+
+</details>
+
+---
+
+## Expansion 4: Why This Matters
+
+<details>
+<summary>Click to expand: Composability and Control</summary>
+
+Before pipelines, your workflow was:
+1. Load file (Container)
+2. Get buffers
+3. Add processors to buffers
+4. Play to hardware
+5. Everything was real-time
+
+With pipelines, your workflow is:
+1. Declare capture (file, cycle count)
+2. Declare processing (what to do each cycle)
+3. Declare output (where result goes)
+4. Execute (all at once, deterministic, no real-time constraints)
+
+The key difference: **determinism**. You know exactly what will happen because you've declared the entire flow.
+
+This is the foundation for everything beyond this tutorial:
+- Recording sessions
+- Batch processing
+- Data analysis pipelines
+- Complex temporal arrangements
+- Multi-file composition
+
+All of it starts with this pattern: **declare → execute → observe**.
+
+</details>
+
+---
+
+## What Happens Next
+
+The full **Buffer Pipelines** tutorial is its own comprehensive guide. It covers:
+- All BufferOperation types
+- Composition patterns (chaining operations)
+- Timing and cycle coordination
+- Error handling and introspection
+- Advanced patterns (branching, conditional operations, etc.)
+
+This section is just the proof-of-concept: "Here's what becomes possible when everything you've learned composes."
+
+---
+
+## Try It (Optional)
+
+The code above will run if you have:
+- A `.wav` file at `"path/to/file.wav"`
+- All the machinery from Sections 1-3 understood
+
+If you want to experiment, use a real file path and run it.
+
+But the main point is: **understand what's happening**, not just make it work.
+
+- You're capturing 50 buffer cycles (≈ 500ms of audio at 48 kHz)
+- Each cycle, your lambda processes 512 samples
+- Results accumulate in capture_buffer
+- Then capture_buffer plays to hardware
+
+This is real composition. Not playback. Not presets. Declarative data transformation.
+
+---
+
+## The Philosophy
+
+You've now seen the complete stack:
+1. **Containers** hold data (load files)
+2. **Buffers** coordinate cycles (chunk processing)
+3. **Processors** transform data (effects, analysis)
+4. **Chains** order processors (sequence operations)
+5. **Pipelines** compose chains (declare complete flows)
+
+Each layer builds on the previous. None is magic. All are composable.
+
+This is how MayaFlux thinks about computation: as layered, declarative, composable building blocks.
+
+Pipelines are where that thinking becomes powerful. They're not a special feature—they're just the final layer of composition.
+
+---
+
+## Next: The Full Pipeline Tutorial
+
+When you're ready, the standalone **"Buffer Pipelines"** tutorial dives deep into:
+- Every BufferOperation type with examples
+- How to compose complex workflows
+- Error handling and debugging
+- Performance considerations
+- Real-world use cases
+
+For now: you've seen the teaser. Everything you've learned so far is the foundation for that depth.
+
+You understand how information flows. Pipelines just let you declare that flow elegantly.
