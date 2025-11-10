@@ -746,6 +746,8 @@ private:
 
     friend class ComputePress;
     friend class RenderFlow;
+
+    static bool s_initialized;
 };
 
 /**

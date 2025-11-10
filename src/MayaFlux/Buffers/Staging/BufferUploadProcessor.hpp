@@ -61,7 +61,6 @@ private:
     std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<VKBuffer>> m_staging_buffers;
 
     void ensure_staging_buffer(const std::shared_ptr<VKBuffer>& target);
-    void upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data);
     void upload_device_local(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data);
 };
 

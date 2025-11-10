@@ -38,8 +38,19 @@ This shift requires new ways of thinking about creative processes.
 Instead of "programming" versus "composing," MayaFlux recognizes that
 data transformation is creative expression. Mathematical relationships
 become creative decisions, temporal coordination becomes compositional
-structure, and multi-dimensional data access becomes creative material
-selection. The architecture emerges from four foundational paradigms
+structure, and multi-dimensional data access becomes creative material selection.
+
+Critically, MayaFlux moves beyond the artificial disciplinary separation of
+audio and visual processing that dominates contemporary creative software. Audio
+samples at 48 kHz, pixels at 60 Hz, and compute results all flow through
+identical transformation primitives—because they are all just data. The only
+meaningful difference is the timing context (domain) in which they're processed.
+A node that transforms one unit at a time operates identically whether that
+unit is a float sample, a pixel, or a compute result. A buffer that accumulates
+moments until release works identically for audio, visual, or spectral data. The
+paradigms that follow are domain-agnostic by design.
+
+The architecture emerges from four foundational paradigms
 that work compositionally rather than separately:
 
 - Nodes: Unit-by-unit transformation moments where information becomes
@@ -51,15 +62,17 @@ that work compositionally rather than separately:
 - Containers: Multi-dimensional data structures that treat information
   as compositional material
 
-Each paradigm operates with computational precision while remaining
-expressively flexible. They compose naturally, creating complex creative
-workflows from simple, well-defined transformation primitives.
+Each paradigm operates with computational precision while remaining expressively
+flexible. They compose naturally across audio, visual, and compute domains,
+creating complex multi-modal creative workflows from simple, well-defined
+transformation primitives.
 
-This document explores each paradigm through practical examples that
-demonstrate both their individual capabilities and their compositional
-relationships. The focus remains on digital thinking—embracing
-computational possibilities that have no analog equivalent rather than
-constraining creativity to familiar metaphors.
+This document explores each paradigm through practical examples that demonstrate
+both their individual capabilities and their compositional relationships across
+computational domains. The focus remains on digital thinking—embracing
+computational possibilities that have no analog equivalent, and treating all data
+(whether it sounds, displays, or computes) through unified transformation
+infrastructure.
 
 # MayaFlux
 
@@ -81,11 +94,12 @@ stochastic patterns, sculpt existing flows through filtering, or
 manifest familiar synthesis paradigms like sine waves, phasors, and
 impulses.
 
-The rate of processing i.e how often do the individual units evaluate
-and transition to next, are governed by the concept of `Domains`. They
-will be covered in _insert link when ready_ but as a quick mention,
-Nodes work with `Audio` (sample rate), `Graphics` (frame<sub>rate</sub>)
-or `Custom` (user defined).
+The rate of processing i.e how often individual units evaluate and transition to the
+next—is governed by the concept of `Domains`. A node can operate in the `Audio`
+domain (processing at sample rate), the `Graphics` domain (processing at frame
+rate), the `Compute` domain (processing at GPU compute rate), or `Custom` domains
+(user-defined rates). The fundamental transformation logic remains identical;
+only the timing context.
 
 ### Definitions
 
@@ -96,6 +110,7 @@ wrappers or via directly creating a modern c++ shared pointers.
 // Fluent
 auto wave = vega.Sine(440.0f).channel(0) | Audio;
 auto noise = vega.Random(GUASSIAN).domain(Audio)[1];
+auto texture_distort = vega.Polynomial({0.1, 0.8, 2.0}) | Graphics;
 auto pulse = vega.Impulse(2.0) | Audio;
 
 // API Wrappers
@@ -117,15 +132,26 @@ get_node_graph_manager()->add_node_to_root(ProcessingToken::AUDIO_RATE, 0);
 ```
 
 Each path serves different creative moments—fluid thinking, structured creation, or precise manipulation.
+precise manipulation. The key insight: the node definition syntax is identical
+across audio, visual, and compute domains; only the semantic content (what the
+node does) changes.
 
 ### Flow logic
 
 Nodes connect through `>>` creating `streams of transformation`. Each
 connection point represents a decision about how information should
-evolve:
+evolve. Critically, these streams work across domains:
+
 
 ```cpp
 phasor >> noise >> (IIR(sine) * 0.5) + noise >> DAC;
+
+// Cross-domain connection: audio drives visual parameters
+auto audio_envelope = vega.Sine(1.0f) | Audio;
+auto visual_scale = vega.Polynomial({0.1, 1.0, 0.5});
+
+// Audio tick fires at sample rate, modulating visual node
+audio_envelope >> (visual_scale * 2.0) >> screen_geometry;
 ```
 
 The flow doesn't just pass data—it creates _relationships_ where each
@@ -140,14 +166,14 @@ to the exact rhythm of transformation:
 ```cpp
 // Sync external processes to the pulse of transformation
 auto clock = vega.Impulse(4.0) | Audio;
-clock->on_tick([](NodeContext ctx) {
+clock->on_tick([](NodeContext& ctx) {
     // Trigger visual events at 4Hz rhythm
     schedule_visual_pulse(ctx.value, ctx.timestamp);
 });
 
 // React to mathematical conditions becoming true
 auto wave = vega.Sine(0.5f) | Audio;
-wave->on_tick_if([](NodeContext ctx) {
+wave->on_tick_if([](NodeContext& ctx) {
     return ctx.value > 0.8;
 }, [](NodeContext ctx) {
     // Musical events triggered by wave peaks
@@ -156,14 +182,14 @@ wave->on_tick_if([](NodeContext ctx) {
 
 // Logic states create temporal regions for other processes
 auto gate = vega.Logic([](double input) { return input > 0.0; });
-gate->while_true([](NodeContext ctx) {
+gate->while_true([](NodeContext& ctx) {
     // Continuous processes that exist only during "true" time
     modulate_global_clock(ctx.value * 0.7);
 });
 
 // Mathematical relationships become event generators
 auto envelope = vega.Polynomial({1.0, -0.5, 0.1});
-envelope->on_change([](NodeContext ctx) {
+envelope->on_change([](NodeContext& ctx) {
     // React to any change in polynomial output
     update_filter_cutoff(ctx.value * 2000.0 + 200.0);
 });
@@ -186,7 +212,9 @@ they have enough information to pass along as a temporal block.
 A buffer's life cycle is simple: gather → release → await → gather. This
 cycle creates the temporal chunking that makes certain kinds of
 transformation possible - operations that need to see patterns across
-time rather than individual moments.
+time rather than individual moments. This lifecycle is identical whether
+the buffer collects audio samples, pixels, or compute results.
+
 
 ### Definitions
 
@@ -204,16 +232,26 @@ multiple ways of creating them.
 ```cpp
 // Fluent
 auto audio_buf = vega.AudioBuffer()[1] | Audio;
+auto vk_buf = vega.VKBUffer(64, ::Usage::VERTEX, 
+                              ::DataModality::VERTEX_COLORS_RGBA) | Graphics;
 
-// Convenience API
+// Convenience API Sound
 auto wave = MayaFlux::create_node<Sine>();
 auto node_buffer = MayaFlux::create_buffer<NodeBuffer>(0, 512, sine);
 MayaFlux::register_audio_buffer(node_buffer, 0);
 
+// Convenience API Graphics
+auto logic = MayaFlux::create_node<Logic>();
+auto update = MayaFlux::create_processor<TextureBindingsProcessor>(vk_buf);
+update->bind_texture_node("toggle_noise_reflection", update, vk_buf);
+
 // Explicit
 auto stream_sources = std::make_shared<MayaFlux::Kakshya::DynamicStreamSource>(48000, 2);
 auto stream_buf = std::make_shared<MayaFlux::Buffers::ContainerBuffer>(0, 512, stream_sources);
-buffer_manager->add_audio_buffer(stream_buf, ProcessingToken::AUDIO_PARALLEL, 0);
+buffer_manager->add_buffer(stream_buf, ProcessingToken::AUDIO_PARALLEL, 0);
+
+auto staging = std::make_shared<MayaFlux::Buffers::VKBuffer>(0, Usage::STAGING, DataModality::UNKNOWN);
+buffer_manager->add_buffer(staging, ProcessingToken::GRAPHICS_BACKEND);
 ```
 
 ### Processing
@@ -273,6 +311,13 @@ chain->add_processor(poly_processor);
 chain->add_processor(feedback);
 
 buffer->set_processing_chain(chain);
+
+// Explicit
+auto upload = std::make_shared<MayaFlux::Buffers::BufferUploadProcessor>();
+upload->configure_source(staging, vk_buf);
+auto g_chain = std::make_shared<MayaFlux::Buffers::BufferProcessingChain>();
+g_chain->add_processor(upload, vk_buf);
+vk_buf->set_processing_chain(g_chain);
 ```
 
 It is important to note that the order of execution of processing chains

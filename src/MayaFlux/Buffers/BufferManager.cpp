@@ -240,19 +240,19 @@ void BufferManager::add_processor(
     m_processor_control->add_processor(processor, buffer, token);
 }
 
-void BufferManager::add_processor_to_channel(
+void BufferManager::add_processor(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token,
     uint32_t channel)
 {
-    m_processor_control->add_processor_to_token(processor, token, channel);
+    m_processor_control->add_processor(processor, token, channel);
 }
 
-void BufferManager::add_processor_to_token(
+void BufferManager::add_processor(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token)
 {
-    m_processor_control->add_processor_to_token(processor, token, 0);
+    m_processor_control->add_processor(processor, token);
 }
 
 void BufferManager::remove_processor(

@@ -13,7 +13,7 @@ RootNode::RootNode(ProcessingToken token, uint32_t channel)
 {
 }
 
-void RootNode::register_node(std::shared_ptr<Node> node)
+void RootNode::register_node(const std::shared_ptr<Node>& node)
 {
     if (m_is_processing.load(std::memory_order_acquire)) {
         if (m_Nodes.end() != std::ranges::find(m_Nodes, node)) {
@@ -49,7 +49,7 @@ void RootNode::register_node(std::shared_ptr<Node> node)
     atomic_add_flag(node->m_state, Utils::NodeState::ACTIVE);
 }
 
-void RootNode::unregister_node(std::shared_ptr<Node> node)
+void RootNode::unregister_node(const std::shared_ptr<Node>& node)
 {
     uint32_t state = node->m_state.load();
     atomic_add_flag(node->m_state, Utils::NodeState::PENDING_REMOVAL);
@@ -121,9 +121,9 @@ double RootNode::process_sample()
         if (!(state & Utils::NodeState::PROCESSED)) {
             auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
             if (generator && generator->should_mock_process()) {
-                generator->process_sample(0.);
+                generator->process_sample();
             } else {
-                sample += node->process_sample(0.);
+                sample += node->process_sample();
             }
             atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
         } else {
@@ -134,6 +134,22 @@ double RootNode::process_sample()
     postprocess();
 
     return sample;
+}
+
+void RootNode::process_frame()
+{
+    if (!preprocess())
+        return;
+
+    for (auto& node : m_Nodes) {
+        uint32_t state = node->m_state.load();
+        if (!(state & Utils::NodeState::PROCESSED)) {
+            node->process_sample();
+            atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
+        }
+    }
+
+    postprocess();
 }
 
 void RootNode::postprocess()
@@ -149,7 +165,7 @@ void RootNode::postprocess()
     m_is_processing.notify_all();
 }
 
-std::vector<double> RootNode::process_batch(unsigned int num_samples)
+std::vector<double> RootNode::process_batch(uint32_t num_samples)
 {
     std::vector<double> output(num_samples);
 
@@ -157,6 +173,13 @@ std::vector<double> RootNode::process_batch(unsigned int num_samples)
         output[i] = process_sample();
     }
     return output;
+}
+
+void RootNode::process_batch_frame(uint32_t num_frames)
+{
+    for (uint32_t i = 0; i < num_frames; i++) {
+        process_frame();
+    }
 }
 
 void RootNode::process_pending_operations()

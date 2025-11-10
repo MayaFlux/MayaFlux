@@ -5,6 +5,8 @@
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 
+#include "StagingUtils.hpp"
+
 namespace MayaFlux::Buffers {
 
 BufferDownloadProcessor::BufferDownloadProcessor()
@@ -55,30 +57,7 @@ void BufferDownloadProcessor::download_host_visible(const std::shared_ptr<VKBuff
     }
     auto target = target_it->second;
 
-    auto& source_resources = source->get_buffer_resources();
-    void* mapped = source_resources.mapped_ptr;
-    if (!mapped) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Host-visible buffer has no mapped pointer");
-    }
-
-    source->mark_invalid_range(0, source->get_size_bytes());
-
-    auto invalid_ranges = source->get_and_clear_invalid_ranges();
-    for (auto& [offset, size] : invalid_ranges) {
-        m_buffer_service->invalidate_range(
-            source_resources.memory,
-            offset,
-            size);
-    }
-
-    std::vector<uint8_t> raw_bytes(source->get_size_bytes());
-    std::memcpy(raw_bytes.data(), mapped, source->get_size_bytes());
-
-    std::dynamic_pointer_cast<VKBuffer>(target)->set_data({ raw_bytes });
+    Buffers::download_host_visible(source, std::dynamic_pointer_cast<VKBuffer>(target));
 }
 
 void BufferDownloadProcessor::download_device_local(const std::shared_ptr<VKBuffer>& source)
@@ -93,44 +72,7 @@ void BufferDownloadProcessor::download_device_local(const std::shared_ptr<VKBuff
 
     auto staging_buffer = m_staging_buffers[source];
 
-    m_buffer_service->execute_immediate([&](void* ptr) {
-        vk::BufferCopy copy_region;
-        copy_region.srcOffset = 0;
-        copy_region.dstOffset = 0;
-        copy_region.size = source->get_size_bytes();
-
-        auto cmd = static_cast<vk::CommandBuffer*>(ptr);
-
-        cmd->copyBuffer(
-            source->get_buffer(),
-            staging_buffer->get_buffer(),
-            1, &copy_region);
-    });
-
-    staging_buffer->mark_invalid_range(0, source->get_size_bytes());
-
-    auto& staging_resources = staging_buffer->get_buffer_resources();
-    auto invalid_ranges = staging_buffer->get_and_clear_invalid_ranges();
-    for (auto& [offset, size] : invalid_ranges) {
-        m_buffer_service->invalidate_range(
-            staging_resources.memory,
-            offset,
-            size);
-    }
-
-    void* staging_mapped = staging_resources.mapped_ptr;
-    if (!staging_mapped) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Staging buffer has no mapped pointer");
-    }
-
-    std::vector<uint8_t> raw_bytes(source->get_size_bytes());
-    std::memcpy(raw_bytes.data(), staging_mapped, source->get_size_bytes());
-
-    std::dynamic_pointer_cast<VKBuffer>(target)->set_data({ raw_bytes });
+    Buffers::download_device_local(source, std::dynamic_pointer_cast<VKBuffer>(target), staging_buffer);
 }
 
 void BufferDownloadProcessor::ensure_staging_buffer(const std::shared_ptr<VKBuffer>& source)

@@ -4,7 +4,7 @@
 
 namespace MayaFlux::Nodes::Filters {
 
-enum coefficients {
+enum coefficients : uint8_t {
     INPUT,
     OUTPUT,
     ALL
@@ -80,6 +80,24 @@ public:
 };
 
 /**
+ * @class FilterContextGpu
+ * @brief GPU-augmented filter context for callbacks
+ *
+ * Extends FilterContext to include GPU-uploadable data, allowing
+ * callbacks to access both CPU-side filter state and GPU-resident
+ * data for advanced processing and visualization.
+ */
+class MAYAFLUX_API FilterContextGpu : public FilterContext, public GpuVectorData {
+public:
+    FilterContextGpu(double value, const std::vector<double>& input_history, const std::vector<double>& output_history,
+        const std::vector<double>& coefs_a, const std::vector<double>& coefs_b, std::span<const float> gpu_data)
+        : FilterContext(value, input_history, output_history, coefs_a, coefs_b)
+        , GpuVectorData(gpu_data)
+    {
+    }
+};
+
+/**
  * @brief Parses a string representation of filter order into input/output shift configuration
  * @param str String in format "N_M" where N is input order and M is output order
  * @return Pair of integers representing input and output shift values
@@ -128,7 +146,7 @@ public:
      * The zindex_shifts parameter provides a simple way to define filter order
      * using a string like "2_2" for a biquad filter.
      */
-    Filter(std::shared_ptr<Node> input, const std::string& zindex_shifts);
+    Filter(const std::shared_ptr<Node>& input, const std::string& zindex_shifts);
 
     /**
      * @brief Constructor using explicit coefficient vectors
@@ -140,12 +158,12 @@ public:
      * This allows direct specification of filter coefficients for precise
      * control over filter behavior.
      */
-    Filter(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<double> b_coef);
+    Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef);
 
     /**
      * @brief Virtual destructor
      */
-    virtual ~Filter() = default;
+    ~Filter() override = default;
 
     /**
      * @brief Gets the current processing latency of the filter
@@ -154,7 +172,7 @@ public:
      * The latency is determined by the maximum of the input and output
      * buffer sizes, representing how many samples of delay the filter introduces.
      */
-    inline int get_current_latency() const
+    [[nodiscard]] inline int get_current_latency() const
     {
         return std::max(m_shift_config.first, m_shift_config.second);
     }
@@ -165,7 +183,7 @@ public:
      *
      * Returns the current configuration for input and output buffer sizes.
      */
-    inline std::pair<int, int> get_current_shift() const
+    [[nodiscard]] inline std::pair<int, int> get_current_shift() const
     {
         return m_shift_config;
     }
@@ -205,7 +223,7 @@ public:
      * the behavior of another - perfect for generative systems where parameters
      * evolve based on the system's own output.
      */
-    void update_coefs_from_node(int lenght, std::shared_ptr<Node> source, coefficients type = coefficients::ALL);
+    void update_coefs_from_node(int length, const std::shared_ptr<Node>& source, coefficients type = coefficients::ALL);
 
     /**
      * @brief Updates coefficients from the filter's own input
@@ -217,7 +235,7 @@ public:
      * emergent behaviors and feedback systems where the signal's own properties
      * determine how it will be processed, leading to evolving, non-linear responses.
      */
-    void update_coef_from_input(int lenght, coefficients type = coefficients::ALL);
+    void update_coef_from_input(int length, coefficients type = coefficients::ALL);
 
     /**
      * @brief Modifies a specific coefficient
@@ -252,7 +270,7 @@ public:
      * @brief Gets the current gain value
      * @return Current gain value
      */
-    inline double get_gain() const { return m_gain; }
+    [[nodiscard]] inline double get_gain() const { return m_gain; }
 
     /**
      * @brief Enables or disables filter bypass
@@ -268,7 +286,7 @@ public:
      * @brief Checks if bypass is currently enabled
      * @return True if bypass is enabled, false otherwise
      */
-    inline bool is_bypass_enabled() const { return m_bypass_enabled; }
+    [[nodiscard]] inline bool is_bypass_enabled() const { return m_bypass_enabled; }
 
     /**
      * @brief Gets the filter's order
@@ -278,7 +296,7 @@ public:
      * coefficient counts minus one, representing the highest power of z⁻¹
      * in the filter's transfer function.
      */
-    inline int get_order() const { return std::max(m_coef_a.size() - 1, m_coef_b.size() - 1); }
+    [[nodiscard]] inline int get_order() const { return std::max(m_coef_a.size() - 1, m_coef_b.size() - 1); }
 
     /**
      * @brief Gets the input history buffer
@@ -287,7 +305,7 @@ public:
      * Provides access to the filter's internal input history buffer,
      * useful for analysis and visualization.
      */
-    inline const std::vector<double>& get_input_history() const { return m_input_history; }
+    [[nodiscard]] inline const std::vector<double>& get_input_history() const { return m_input_history; }
 
     /**
      * @brief Gets the output history buffer
@@ -296,7 +314,7 @@ public:
      * Provides access to the filter's internal output history buffer,
      * useful for analysis and visualization.
      */
-    inline const std::vector<double>& get_output_history() const { return m_output_history; }
+    [[nodiscard]] inline const std::vector<double>& get_output_history() const { return m_output_history; }
 
     /**
      * @brief Normalizes filter coefficients
@@ -318,7 +336,7 @@ public:
      * processing, or to inform cross-domain mappings between audio properties
      * and other computational parameters.
      */
-    std::complex<double> get_frequency_response(double frequency, double sample_rate) const;
+    [[nodiscard]] std::complex<double> get_frequency_response(double frequency, double sample_rate) const;
 
     /**
      * @brief Calculates the magnitude response at a specific frequency
@@ -329,7 +347,7 @@ public:
      * Computes the filter's magnitude response at the specified frequency,
      * representing how much the filter amplifies or attenuates that frequency.
      */
-    double get_magnitude_response(double frequency, double sample_rate) const;
+    [[nodiscard]] double get_magnitude_response(double frequency, double sample_rate) const;
 
     /**
      * @brief Calculates the phase response at a specific frequency
@@ -340,7 +358,7 @@ public:
      * Computes the filter's phase response at the specified frequency,
      * representing the phase shift introduced by the filter at that frequency.
      */
-    double get_phase_response(double frequency, double sample_rate) const;
+    [[nodiscard]] double get_phase_response(double frequency, double sample_rate) const;
 
     /**
      * @brief Processes a single sample through the filter
@@ -351,7 +369,7 @@ public:
      * equation for a single sample. It must be implemented by derived
      * filter classes to define their specific filtering behavior.
      */
-    virtual double process_sample(double input) override = 0;
+    double process_sample(double input = 0.) override = 0;
 
     /**
      * @brief Calculates the phase response at a specific frequency
@@ -371,7 +389,7 @@ public:
      * Connects the filter to a source of input samples, allowing
      * filters to be chained together or connected to generators.
      */
-    inline void set_input_node(std::shared_ptr<Node> input_node) { m_input_node = input_node; }
+    inline void set_input_node(const std::shared_ptr<Node>& input_node) { m_input_node = input_node; }
 
     /**
      * @brief Gets the input node for the filter
@@ -406,7 +424,7 @@ public:
      * Provides access to the filter's feedback coefficients for
      * analysis and visualization.
      */
-    inline const std::vector<double>& getACoefficients() const { return m_coef_a; }
+    [[nodiscard]] inline const std::vector<double>& getACoefficients() const { return m_coef_a; }
 
     /**
      * @brief Gets the feedforward (numerator) coefficients
@@ -415,7 +433,31 @@ public:
      * Provides access to the filter's feedforward coefficients for
      * analysis and visualization.
      */
-    inline const std::vector<double>& getBCoefficients() const { return m_coef_b; }
+    [[nodiscard]] inline const std::vector<double>& getBCoefficients() const { return m_coef_b; }
+
+    /**
+     * @brief Provide external buffer context for input history
+     * @param context View into buffer data to use instead of internal input accumulation
+     */
+    inline void set_input_context(std::span<double> context)
+    {
+        m_external_input_context = context;
+        m_use_external_input_context = true;
+    }
+
+    /**
+     * @brief Clear external input context, resume internal accumulation
+     */
+    inline void clear_input_context()
+    {
+        m_use_external_input_context = false;
+        m_external_input_context = {};
+    }
+
+    [[nodiscard]] inline bool using_external_input_context() const
+    {
+        return m_use_external_input_context;
+    }
 
 protected:
     /**
@@ -492,6 +534,12 @@ protected:
     void notify_tick(double value) override;
 
     /**
+     * @brief Builds input history from external context or internal accumulation
+     * @param current_sample Current input sample being processed
+     */
+    void build_input_history(double current_sample);
+
+    /**
      * @brief The most recent sample value generated by this oscillator
      *
      * This value is updated each time process_sample() is called and can be
@@ -534,6 +582,15 @@ protected:
     std::vector<double> m_output_history;
 
     /**
+     * @brief External input context for input history
+     *
+     * If set, the filter uses this external context for input history
+     * instead of its internal buffer. This allows sharing input history
+     * across multiple filters or nodes or from AudioBuffer sources.
+     */
+    std::span<double> m_external_input_context;
+
+    /**
      * @brief Feedback (denominator) coefficients
      *
      * The 'a' coefficients in the difference equation, applied to
@@ -563,11 +620,13 @@ protected:
      * When enabled, the filter passes input directly to output
      * without applying any filtering.
      */
-    bool m_bypass_enabled = false;
+    bool m_bypass_enabled {};
 
     std::vector<double> m_saved_input_history;
     std::vector<double> m_saved_output_history;
 
     bool m_state_saved {};
+
+    bool m_use_external_input_context {};
 };
 }

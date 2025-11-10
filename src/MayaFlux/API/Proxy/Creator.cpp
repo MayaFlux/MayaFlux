@@ -4,6 +4,7 @@
 #include "MayaFlux/API/Graph.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
+#include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
 namespace MayaFlux {
@@ -37,13 +38,19 @@ void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const Creat
         }
         return;
     }
+
+    if (auto vk_buffer = std::dynamic_pointer_cast<Buffers::VKBuffer>(buffer)) {
+        register_graphics_buffer(vk_buffer, token);
+        return;
+    }
 }
 
 void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& container, const Domain& domain)
 {
     if (auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(container)) {
         if (domain == Domain::AUDIO) {
-            hook_sound_container_to_buffers(sound_container);
+            s_last_created_container_buffers.clear();
+            s_last_created_container_buffers = hook_sound_container_to_buffers(sound_container);
         }
     }
 }
@@ -51,6 +58,11 @@ void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& cont
 std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_container(const std::string& filepath)
 {
     return load_audio_file(filepath);
+}
+
+std::vector<std::shared_ptr<Buffers::ContainerBuffer>> get_last_created_container_buffers()
+{
+    return s_last_created_container_buffers;
 }
 
 } // namespace MayaFlux

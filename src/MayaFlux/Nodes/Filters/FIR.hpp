@@ -43,7 +43,7 @@ public:
      * since there is no feedback path (e.g., "64_0" for a 64-tap FIR).
      * All coefficients are initialized to zero.
      */
-    FIR(std::shared_ptr<Node> input, const std::string& zindex_shifts);
+    FIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts);
 
     /**
      * @brief Creates an FIR filter with specified coefficients
@@ -54,7 +54,7 @@ public:
      * The coefficients directly define the filter's impulse response and
      * frequency response characteristics.
      */
-    FIR(std::shared_ptr<Node> input, const std::vector<double> coeffs);
+    FIR(const std::shared_ptr<Node>& input, const std::vector<double>& coeffs);
 
     /**
      * @brief Processes a single sample through the FIR filter
@@ -65,7 +65,7 @@ public:
      * of the current input and previous inputs according to the filter
      * coefficients. This is the core processing method called for each sample.
      */
-    double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     void save_state() override;
     void restore_state() override;

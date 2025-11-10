@@ -337,7 +337,7 @@ TEST_F(AudioBufferTest, TokenCompatibility)
     EXPECT_TRUE(audio_processor->is_compatible_with(standard_buffer));
 
     auto token = Buffers::ProcessingToken::AUDIO_BACKEND;
-    buffer_manager->add_processor_to_channel(audio_processor, token, 0);
+    buffer_manager->add_processor(audio_processor, token);
 
     auto active_tokens = buffer_manager->get_active_tokens();
     EXPECT_FALSE(active_tokens.empty());

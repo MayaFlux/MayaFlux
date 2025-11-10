@@ -1,4 +1,5 @@
 #include "Logic.hpp"
+
 #include "MayaFlux/API/Config.hpp"
 
 namespace MayaFlux::Nodes::Generator {
@@ -19,7 +20,6 @@ Logic::Logic(double threshold)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.f)
 {
     m_direct_function = [this](double input) {
         return input > m_threshold;
@@ -38,7 +38,6 @@ Logic::Logic(LogicOperator op, double threshold)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.f)
 {
     set_operator(op);
 }
@@ -46,7 +45,7 @@ Logic::Logic(LogicOperator op, double threshold)
 Logic::Logic(DirectFunction function)
     : m_mode(LogicMode::DIRECT)
     , m_operator(LogicOperator::CUSTOM)
-    , m_direct_function(function)
+    , m_direct_function(std::move(function))
     , m_history_size(1)
     , m_input_count(1)
     , m_threshold(0.5)
@@ -56,14 +55,13 @@ Logic::Logic(DirectFunction function)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.f)
 {
 }
 
 Logic::Logic(MultiInputFunction function, size_t input_count)
     : m_mode(LogicMode::MULTI_INPUT)
     , m_operator(LogicOperator::CUSTOM)
-    , m_multi_input_function(function)
+    , m_multi_input_function(std::move(function))
     , m_history_size(1)
     , m_input_count(input_count)
     , m_threshold(0.5)
@@ -73,7 +71,6 @@ Logic::Logic(MultiInputFunction function, size_t input_count)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.f)
 {
     m_input_buffer.resize(input_count, 0.0);
 }
@@ -81,7 +78,7 @@ Logic::Logic(MultiInputFunction function, size_t input_count)
 Logic::Logic(SequentialFunction function, size_t history_size)
     : m_mode(LogicMode::SEQUENTIAL)
     , m_operator(LogicOperator::CUSTOM)
-    , m_sequential_function(function)
+    , m_sequential_function(std::move(function))
     , m_history_size(history_size)
     , m_input_count(1)
     , m_threshold(0.5)
@@ -91,16 +88,14 @@ Logic::Logic(SequentialFunction function, size_t history_size)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.f)
 {
-    // Initialize history buffer with false values
     m_history.assign(history_size, false);
 }
 
 Logic::Logic(TemporalFunction function)
     : m_mode(LogicMode::TEMPORAL)
     , m_operator(LogicOperator::CUSTOM)
-    , m_temporal_function(function)
+    , m_temporal_function(std::move(function))
     , m_history_size(1)
     , m_input_count(1)
     , m_threshold(0.5)
@@ -110,7 +105,6 @@ Logic::Logic(TemporalFunction function)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
-    , m_input(0.f)
 {
 }
 
@@ -434,14 +428,14 @@ void Logic::set_operator(LogicOperator op, bool create_default_direct_function)
 
 void Logic::set_direct_function(DirectFunction function)
 {
-    m_direct_function = function;
+    m_direct_function = std::move(function);
     m_mode = LogicMode::DIRECT;
     m_operator = LogicOperator::CUSTOM;
 }
 
 void Logic::set_multi_input_function(MultiInputFunction function, size_t input_count)
 {
-    m_multi_input_function = function;
+    m_multi_input_function = std::move(function);
     m_mode = LogicMode::MULTI_INPUT;
     m_operator = LogicOperator::CUSTOM;
     m_input_count = input_count;
@@ -454,7 +448,7 @@ void Logic::set_multi_input_function(MultiInputFunction function, size_t input_c
 
 void Logic::set_sequential_function(SequentialFunction function, size_t history_size)
 {
-    m_sequential_function = function;
+    m_sequential_function = std::move(function);
     m_mode = LogicMode::SEQUENTIAL;
     m_operator = LogicOperator::CUSTOM;
 
@@ -467,7 +461,7 @@ void Logic::set_sequential_function(SequentialFunction function, size_t history_
 
 void Logic::set_temporal_function(TemporalFunction function)
 {
-    m_temporal_function = function;
+    m_temporal_function = std::move(function);
     m_mode = LogicMode::TEMPORAL;
     m_operator = LogicOperator::CUSTOM;
     // Reset temporal time when changing function
@@ -491,6 +485,19 @@ void Logic::set_initial_conditions(const std::vector<bool>& initial_values)
 
 std::unique_ptr<NodeContext> Logic::create_context(double value)
 {
+    if (m_gpu_compatible) {
+        return std::make_unique<LogicContextGpu>(
+            value,
+            m_mode,
+            m_operator,
+            m_history,
+            m_threshold,
+            m_edge_detected,
+            m_edge_type,
+            m_input_buffer,
+            get_gpu_data_buffer());
+    }
+
     return std::make_unique<LogicContext>(
         value,
         m_mode,
@@ -504,7 +511,7 @@ std::unique_ptr<NodeContext> Logic::create_context(double value)
 
 void Logic::notify_tick(double value)
 {
-    auto context = create_context(value);
+    m_last_context = create_context(value);
     bool state_changed = (value != m_last_output);
 
     for (const auto& cb : m_all_callbacks) {
@@ -536,42 +543,42 @@ void Logic::notify_tick(double value)
             break;
 
         case LogicEventType::CONDITIONAL:
-            should_call = cb.condition && cb.condition.value()(*context);
+            should_call = cb.condition && cb.condition.value()(*m_last_context);
             break;
         }
 
         if (should_call) {
-            cb.callback(*context);
+            cb.callback(*m_last_context);
         }
     }
 }
 
-void Logic::on_tick(NodeHook callback)
+void Logic::on_tick(const NodeHook& callback)
 {
     add_callback(callback, LogicEventType::TICK);
 }
 
-void Logic::on_tick_if(NodeHook callback, NodeCondition condition)
+void Logic::on_tick_if(const NodeHook& callback, const NodeCondition& condition)
 {
     add_callback(callback, LogicEventType::CONDITIONAL, condition);
 }
 
-void Logic::while_true(NodeHook callback)
+void Logic::while_true(const NodeHook& callback)
 {
     add_callback(callback, LogicEventType::WHILE_TRUE);
 }
 
-void Logic::while_false(NodeHook callback)
+void Logic::while_false(const NodeHook& callback)
 {
     add_callback(callback, LogicEventType::WHILE_FALSE);
 }
 
-void Logic::on_change(NodeHook callback)
+void Logic::on_change(const NodeHook& callback)
 {
     add_callback(callback, LogicEventType::CHANGE);
 }
 
-void Logic::on_change_to(NodeHook callback, bool target_state)
+void Logic::on_change_to(const NodeHook& callback, bool target_state)
 {
     add_callback(callback, target_state ? LogicEventType::TRUE : LogicEventType::FALSE);
 }

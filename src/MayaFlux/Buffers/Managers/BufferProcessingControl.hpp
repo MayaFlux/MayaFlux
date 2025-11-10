@@ -63,10 +63,19 @@ public:
      * @param token Processing domain
      * @param channel Channel index (optional, used for audio tokens)
      */
-    void add_processor_to_token(
+    void add_processor(
         const std::shared_ptr<BufferProcessor>& processor,
         ProcessingToken token,
-        uint32_t channel = 0);
+        uint32_t channel);
+
+    /**
+     * @brief Adds a processor to all channels in a token (dispatches based on token)
+     * @param processor Processor to add
+     * @param token Processing domain
+     */
+    void add_processor(
+        const std::shared_ptr<BufferProcessor>& processor,
+        ProcessingToken token);
 
     /**
      * @brief Removes a processor from a buffer (dispatches based on buffer/token)

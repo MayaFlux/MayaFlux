@@ -15,6 +15,8 @@
 
 namespace MayaFlux::Portal::Graphics {
 
+bool RenderFlow::s_initialized = false;
+
 namespace {
 
     /**
@@ -46,6 +48,12 @@ namespace {
 
 bool RenderFlow::initialize()
 {
+    if (s_initialized) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
+            "RenderFlow already initialized (static flag)");
+        return true;
+    }
+
     if (m_shader_foundry) {
         MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
             "RenderFlow already initialized");
@@ -68,6 +76,8 @@ bool RenderFlow::initialize()
         return false;
     }
 
+    s_initialized = true;
+
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
         "RenderFlow initialized");
     return true;
@@ -75,6 +85,10 @@ bool RenderFlow::initialize()
 
 void RenderFlow::shutdown()
 {
+    if (!s_initialized) {
+        return;
+    }
+
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
         "Shutting down RenderFlow...");
 
@@ -114,6 +128,8 @@ void RenderFlow::shutdown()
 
     m_shader_foundry = nullptr;
     m_display_service = nullptr;
+
+    s_initialized = false;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
         "RenderFlow shutdown complete");

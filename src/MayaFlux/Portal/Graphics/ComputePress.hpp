@@ -135,6 +135,8 @@ private:
     std::unordered_map<ComputePipelineID, PipelineState> m_pipelines;
     std::atomic<uint64_t> m_next_pipeline_id { 1 };
     ShaderFoundry* m_shader_foundry = nullptr;
+
+    static bool s_initialized;
 };
 
 inline MAYAFLUX_API ComputePress& get_compute_press()

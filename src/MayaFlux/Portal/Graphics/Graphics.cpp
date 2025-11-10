@@ -75,8 +75,12 @@ void shutdown()
     MF_INFO(Journal::Component::Portal, Journal::Context::API,
         "Shutting down Portal::Graphics...");
 
-    TextureLoom::instance().shutdown();
+    RenderFlow::instance().shutdown();
+    ComputePress::instance().shutdown();
+    ShaderFoundry::instance().shutdown();
+
     SamplerForge::instance().shutdown();
+    TextureLoom::instance().shutdown();
 
     g_initialized = false;
 

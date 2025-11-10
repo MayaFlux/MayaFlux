@@ -36,6 +36,9 @@
 #include "Buffers/Node/NodeBuffer.hpp"
 #include "Buffers/Node/PolynomialProcessor.hpp"
 #include "Buffers/Recursive/FeedbackBuffer.hpp"
+#include "Buffers/Shaders/RenderProcessor.hpp"
+#include "Buffers/Staging/BufferDownloadProcessor.hpp"
+#include "Buffers/Staging/BufferUploadProcessor.hpp"
 
 #include "Kriya/Awaiters.hpp"
 #include "Kriya/BufferPipeline.hpp"
@@ -53,6 +56,9 @@
 #include "Journal/Archivist.hpp"
 
 #include "Core/Windowing/WindowManager.hpp"
+
+#include "Core/GlobalGraphicsInfo.hpp"
+#include "Core/GlobalStreamInfo.hpp"
 
 #include "Portal/Graphics/Graphics.hpp"
 #include "Portal/Graphics/SamplerForge.hpp"

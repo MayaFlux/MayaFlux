@@ -299,7 +299,7 @@ public:
      * @param token Processing domain
      * @param channel Channel index
      */
-    void add_processor_to_channel(
+    void add_processor(
         const std::shared_ptr<BufferProcessor>& processor,
         ProcessingToken token,
         uint32_t channel);
@@ -309,7 +309,7 @@ public:
      * @param processor Processor to add
      * @param token Processing domain
      */
-    void add_processor_to_token(
+    void add_processor(
         const std::shared_ptr<BufferProcessor>& processor,
         ProcessingToken token);
 

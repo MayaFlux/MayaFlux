@@ -214,6 +214,8 @@ void GraphicsSubsystem::stop()
         m_graphics_thread.join();
     }
 
+    Portal::Graphics::shutdown();
+
     m_backend->cleanup();
 
     for (auto& window : m_registered_windows) {

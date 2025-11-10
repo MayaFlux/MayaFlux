@@ -344,8 +344,7 @@ private:
     std::vector<double> m_logic_data; ///< Stored logic processing results
     bool m_has_generated_data; ///< Whether logic data has been generated
 
-    void process_sample_by_sample(std::span<double> data);
-    void process_single_sample(double& input, double& output);
+    void process_span(std::span<double> data);
 };
 
 } // namespace MayaFlux::Buffers

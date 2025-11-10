@@ -46,7 +46,8 @@ enum class ExtractionMethod : uint8_t {
     ABOVE_MEAN_DATA, ///< Extract data above statistical mean
     OVERLAPPING_WINDOWS, ///< Extract overlapping windowed data
     ZERO_CROSSING_DATA, ///< Extract actual data at zero crossing points
-    SILENCE_DATA ///< Extract actual silent regions
+    SILENCE_DATA, ///< Extract actual silent regions
+    ONSET_DATA ///< Extract actual onset/transient regions
 };
 
 /**
@@ -276,6 +277,13 @@ protected:
                 double silence_threshold = this->template get_parameter_or_default<double>("silence_threshold", 0.01);
                 uint32_t min_duration = this->template get_parameter_or_default<uint32_t>("min_duration", 1024);
                 extracted_data = extract_silence_data(data_span, silence_threshold, min_duration, m_window_size, m_hop_size);
+                break;
+            }
+            case ExtractionMethod::ONSET_DATA: {
+                double threshold = this->template get_parameter_or_default<double>("threshold", 0.3);
+                uint32_t region_size = this->template get_parameter_or_default<uint32_t>("region_size", 512);
+                uint32_t fft_window = this->template get_parameter_or_default<uint32_t>("fft_window_size", 1024);
+                extracted_data = extract_onset_data(data_span, threshold, region_size, fft_window, m_hop_size);
                 break;
             }
             default:

@@ -1,51 +1,47 @@
 #include "Sine.hpp"
 #include "MayaFlux/API/Config.hpp"
-#include "MayaFlux/API/Core.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
 Sine::Sine(float frequency, double amplitude, float offset)
-    : m_phase(0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+    : m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
 {
-
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
+
+    m_last_context = create_context(0.0);
 }
 
-Sine::Sine(std::shared_ptr<Node> frequency_modulator, float frequency, double amplitude, float offset)
-    : m_phase(0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Sine::Sine(const std::shared_ptr<Node>& frequency_modulator, float frequency, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
-Sine::Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude, float offset)
-    : m_phase(0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Sine::Sine(float frequency, const std::shared_ptr<Node>& amplitude_modulator, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
-Sine::Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator, float frequency, double amplitude, float offset)
-    : m_phase(0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Sine::Sine(const std::shared_ptr<Node>& frequency_modulator, const std::shared_ptr<Node>& amplitude_modulator, float frequency, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
@@ -55,21 +51,21 @@ void Sine::set_frequency(float frequency)
     update_phase_increment(frequency);
 }
 
-void Sine::update_phase_increment(float frequency)
+void Sine::update_phase_increment(double frequency)
 {
-    uint64_t s_rate = 48000u;
+    uint64_t s_rate = 48000U;
     if (MayaFlux::is_engine_initialized()) {
-        s_rate = MayaFlux::Config::get_sample_rate();
+        s_rate = Config::get_sample_rate();
     }
-    m_phase_inc = (2 * M_PI * frequency) / s_rate;
+    m_phase_inc = (2 * M_PI * frequency) / (double)s_rate;
 }
 
-void Sine::set_frequency_modulator(std::shared_ptr<Node> modulator)
+void Sine::set_frequency_modulator(const std::shared_ptr<Node>& modulator)
 {
     m_frequency_modulator = modulator;
 }
 
-void Sine::set_amplitude_modulator(std::shared_ptr<Node> modulator)
+void Sine::set_amplitude_modulator(const std::shared_ptr<Node>& modulator)
 {
     m_amplitude_modulator = modulator;
 }
@@ -91,7 +87,7 @@ double Sine::process_sample(double input)
         if (state & Utils::NodeState::PROCESSED) {
             current_freq += m_frequency_modulator->get_last_output();
         } else {
-            current_freq += m_frequency_modulator->process_sample(0.f);
+            current_freq += m_frequency_modulator->process_sample(0.F);
             atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
         }
         update_phase_increment(current_freq);
@@ -106,7 +102,7 @@ double Sine::process_sample(double input)
         m_phase += 2 * M_PI;
     }
 
-    float current_amplitude = m_amplitude;
+    double current_amplitude = m_amplitude;
     if (m_amplitude_modulator) {
         atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
         uint32_t state = m_amplitude_modulator->m_state.load();
@@ -117,15 +113,15 @@ double Sine::process_sample(double input)
                 atomic_remove_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
             }
         } else {
-            current_amplitude += m_amplitude_modulator->process_sample(0.f);
+            current_amplitude += m_amplitude_modulator->process_sample(0.F);
             atomic_add_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
         }
     }
     current_sample *= current_amplitude;
 
-    if (input) {
+    if (input != 0.0) {
         current_sample += input;
-        current_sample *= 0.5f;
+        current_sample *= 0.5F;
     }
 
     m_last_output = current_sample;
@@ -153,7 +149,7 @@ std::vector<double> Sine::process_batch(unsigned int num_samples)
     return output;
 }
 
-void Sine::reset(float frequency, float amplitude, float offset)
+void Sine::reset(float frequency, double amplitude, float offset)
 {
     m_phase = 0;
     m_frequency = frequency;
@@ -162,21 +158,16 @@ void Sine::reset(float frequency, float amplitude, float offset)
     update_phase_increment(frequency);
 }
 
-std::unique_ptr<NodeContext> Sine::create_context(double value)
-{
-    return std::make_unique<GeneratorContext>(value, m_frequency, m_amplitude, m_phase);
-}
-
 void Sine::notify_tick(double value)
 {
-    auto context = create_context(value);
+    m_last_context = create_context(value);
 
     for (auto& callback : m_callbacks) {
-        callback(*context);
+        callback(*m_last_context);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*context)) {
-            callback(*context);
+        if (condition(*m_last_context)) {
+            callback(*m_last_context);
         }
     }
 }

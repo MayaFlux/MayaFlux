@@ -183,9 +183,19 @@ For more examples, see [Getting Started](docs/Getting_Started.md) and [Digital T
 - **[Domain and Control](docs/Domain_and_Control.md)** — Processing tokens, domain composition, cross-modal coordination
 - **[Advanced Context Control](docs/Advanced_Context_Control.md)** — Backend customization and specialized architectures
 
+
+### Tutorials
+
+Explore your first MayaFlux programs:
+- **[Sculpting Data Part I](docs/Tutorials/SculptingData.md)**:
+    This turorials gets you started on the foundational concepts of MayalFlux,
+    i.e Data driven workflow with a teaser towards declarative syntax. 
+    It has simple Runnable code examples with optional compprehensive explanations.
+    The previously linked Getting Started guide is a prerequisite for this tutorial.
+
 ### API Documentation
 
-Auto-generated API docs (updated on every commit):
+Auto-generated API docs (Will be enalbed when the repository goes public):
 
 - **[GitHub Pages](https://mayaflux.github.io/MayaFlux/)**
 - **[GitLab Pages](https://mayaflux.gitlab.io/MayaFlux/)**

@@ -27,32 +27,6 @@ LogicProcessor::LogicProcessor(
     }
 }
 
-void LogicProcessor::process_sample_by_sample(std::span<double> data)
-{
-    for (size_t i = 0; i < data.size(); i++) {
-        process_single_sample(data[i], m_logic_data[i]);
-    }
-}
-
-void LogicProcessor::process_single_sample(double& input, double& output)
-{
-    if (m_use_internal) {
-        output = m_logic->process_sample(input);
-        return;
-    }
-
-    Nodes::atomic_inc_modulator_count(m_logic->m_modulator_count, 1);
-    auto state = m_logic->m_state.load();
-    if (state & Utils::NodeState::PROCESSED) {
-        output = m_logic->get_last_output();
-    } else {
-        output = m_logic->process_sample(input);
-        Nodes::atomic_add_flag(m_logic->m_state, Utils::NodeState::PROCESSED);
-    }
-    Nodes::atomic_dec_modulator_count(m_logic->m_modulator_count, 1);
-    Nodes::try_reset_processed_state(m_logic);
-}
-
 bool LogicProcessor::generate(size_t num_samples, const std::vector<double>& input_data)
 {
     if (!m_logic || input_data.empty()) {
@@ -84,53 +58,110 @@ bool LogicProcessor::generate(size_t num_samples, const std::vector<double>& inp
         m_last_state = false;
     }
 
+    const auto& state = m_logic->m_state.load();
+
     switch (m_process_mode) {
     case ProcessMode::SAMPLE_BY_SAMPLE:
-        process_sample_by_sample(std::span<double>(data.data(), data.size()));
+        if (state == Utils::NodeState::INACTIVE) {
+            for (size_t i = 0; i < data.size(); ++i) {
+                m_logic_data[i] = m_logic->process_sample(data[i]);
+            }
+        } else {
+            m_logic->save_state();
+            for (size_t i = 0; i < data.size(); ++i) {
+                m_logic_data[i] = m_logic->process_sample(data[i]);
+            }
+            m_logic->restore_state();
+        }
         break;
 
     case ProcessMode::THRESHOLD_CROSSING:
-        for (size_t i = 0; i < data.size(); ++i) {
-            bool current_state = data[i] > m_threshold;
+        if (state == Utils::NodeState::INACTIVE) {
+            for (size_t i = 0; i < data.size(); ++i) {
+                bool current_state = data[i] > m_threshold;
 
-            if (current_state != m_last_state) {
-                m_last_state = current_state;
-                // m_logic_data[i] = m_logic->process_sample(data[i]);
-                process_single_sample(data[i], m_logic_data[i]);
-            } else {
-                m_logic_data[i] = m_logic->get_last_output();
+                if (current_state != m_last_state) {
+                    m_last_state = current_state;
+                    m_logic_data[i] = m_logic->process_sample(data[i]);
+                } else {
+                    m_logic_data[i] = m_logic->get_last_output();
+                }
             }
+        } else {
+            m_logic->save_state();
+            for (size_t i = 0; i < data.size(); ++i) {
+                bool current_state = data[i] > m_threshold;
+
+                if (current_state != m_last_state) {
+                    m_last_state = current_state;
+                    m_logic_data[i] = m_logic->process_sample(data[i]);
+                } else {
+                    m_logic_data[i] = m_logic->get_last_output();
+                }
+            }
+            m_logic->restore_state();
         }
         break;
 
     case ProcessMode::EDGE_TRIGGERED:
-        for (size_t i = 0; i < data.size(); ++i) {
-            bool current_state = data[i] > m_threshold;
-            bool edge_detected = false;
+        if (state == Utils::NodeState::INACTIVE) {
+            for (size_t i = 0; i < data.size(); ++i) {
+                bool current_state = data[i] > m_threshold;
+                bool edge_detected = false;
 
-            if (current_state != m_last_state) {
-                switch (m_edge_type) {
-                case Nodes::Generator::EdgeType::RISING:
-                    edge_detected = current_state && !m_last_state;
-                    break;
-                case Nodes::Generator::EdgeType::FALLING:
-                    edge_detected = !current_state && m_last_state;
-                    break;
-                case Nodes::Generator::EdgeType::BOTH:
-                    edge_detected = true;
-                    break;
+                if (current_state != m_last_state) {
+                    switch (m_edge_type) {
+                    case Nodes::Generator::EdgeType::RISING:
+                        edge_detected = current_state && !m_last_state;
+                        break;
+                    case Nodes::Generator::EdgeType::FALLING:
+                        edge_detected = !current_state && m_last_state;
+                        break;
+                    case Nodes::Generator::EdgeType::BOTH:
+                        edge_detected = true;
+                        break;
+                    }
                 }
-            }
 
-            if (edge_detected) {
-                m_logic->set_edge_detection(m_edge_type, m_threshold);
-                // m_logic_data[i] = m_logic->process_sample(data[i]);
-                process_single_sample(data[i], m_logic_data[i]);
-            } else {
-                m_logic_data[i] = m_logic->get_last_output();
-            }
+                if (edge_detected) {
+                    m_logic->set_edge_detection(m_edge_type, m_threshold);
+                    m_logic_data[i] = m_logic->process_sample(data[i]);
+                } else {
+                    m_logic_data[i] = m_logic->get_last_output();
+                }
 
-            m_last_state = current_state;
+                m_last_state = current_state;
+            }
+        } else {
+            m_logic->save_state();
+            for (size_t i = 0; i < data.size(); ++i) {
+                bool current_state = data[i] > m_threshold;
+                bool edge_detected = false;
+
+                if (current_state != m_last_state) {
+                    switch (m_edge_type) {
+                    case Nodes::Generator::EdgeType::RISING:
+                        edge_detected = current_state && !m_last_state;
+                        break;
+                    case Nodes::Generator::EdgeType::FALLING:
+                        edge_detected = !current_state && m_last_state;
+                        break;
+                    case Nodes::Generator::EdgeType::BOTH:
+                        edge_detected = true;
+                        break;
+                    }
+                }
+
+                if (edge_detected) {
+                    m_logic->set_edge_detection(m_edge_type, m_threshold);
+                    m_logic_data[i] = m_logic->process_sample(data[i]);
+                } else {
+                    m_logic_data[i] = m_logic->get_last_output();
+                }
+
+                m_last_state = current_state;
+            }
+            m_logic->restore_state();
         }
         break;
 
@@ -140,24 +171,36 @@ bool LogicProcessor::generate(size_t num_samples, const std::vector<double>& inp
         }
 
         if (m_logic->get_mode() == Nodes::Generator::LogicMode::SEQUENTIAL) {
-            // for (size_t i = 0; i < data.size(); ++i) {
-            //     m_logic_data[i] = m_logic->process_sample(data[i]);
-            // }
-            process_sample_by_sample(std::span<double>(data.data(), data.size()));
+            if (state == Utils::NodeState::INACTIVE) {
+                for (size_t i = 0; i < data.size(); ++i) {
+                    m_logic_data[i] = m_logic->process_sample(data[i]);
+                }
+            } else {
+                m_logic->save_state();
+                for (size_t i = 0; i < data.size(); ++i) {
+                    m_logic_data[i] = m_logic->process_sample(data[i]);
+                }
+                m_logic->restore_state();
+            }
         } else {
             auto history_size = std::min(data.size(), size_t(16));
             m_logic->set_sequential_function(
                 [this, &data](const std::deque<bool>& history) -> bool {
-                    // Process based on the history
-                    // This is a simple example - customize based on application
                     return !history.empty() && history.front();
                 },
                 history_size);
 
-            // for (size_t i = 0; i < data.size(); ++i) {
-            //     m_logic_data[i] = m_logic->process_sample(data[i]);
-            // }
-            process_sample_by_sample(std::span<double>(data.data(), data.size()));
+            if (state == Utils::NodeState::INACTIVE) {
+                for (size_t i = 0; i < data.size(); ++i) {
+                    m_logic_data[i] = m_logic->process_sample(data[i]);
+                }
+            } else {
+                m_logic->save_state();
+                for (size_t i = 0; i < data.size(); ++i) {
+                    m_logic_data[i] = m_logic->process_sample(data[i]);
+                }
+                m_logic->restore_state();
+            }
         }
         break;
     }

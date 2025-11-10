@@ -2,12 +2,12 @@
 
 namespace MayaFlux::Nodes::Filters {
 
-IIR::IIR(std::shared_ptr<Node> input, const std::string& zindex_shifts)
+IIR::IIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
     : Filter(input, zindex_shifts)
 {
 }
 
-IIR::IIR(std::shared_ptr<Node> input, std::vector<double> a_coef, std::vector<double> b_coef)
+IIR::IIR(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef)
     : Filter(input, a_coef, b_coef)
 {
 }
@@ -29,9 +29,14 @@ double IIR::process_sample(double input)
             atomic_add_flag(m_input_node->m_state, Utils::NodeState::PROCESSED);
         }
     }
-    update_inputs(processed_input);
 
-    double output = 0.f;
+    if (m_use_external_input_context) {
+        build_input_history(processed_input);
+    } else {
+        update_inputs(processed_input);
+    }
+
+    double output = 0.;
     const size_t num_feedforward = std::min(m_coef_b.size(), m_input_history.size());
     for (size_t i = 0; i < num_feedforward; ++i) {
         output += m_coef_b[i] * m_input_history[i];

@@ -65,6 +65,9 @@ struct MAYAFLUX_API ChannelEnergy {
     std::vector<EnergyLevel> classifications;
     std::array<int, 5> level_counts {}; // [SILENT, QUIET, MODERATE, LOUD, PEAK]
     std::vector<std::pair<size_t, size_t>> window_positions;
+
+    // Positions of detected energy events (e.g., peaks, zero crossings, flux)
+    std::vector<size_t> event_positions;
 };
 
 /**
@@ -460,6 +463,31 @@ private:
                 const size_t start = i * m_hop_size;
                 const size_t end = std::min(start + m_window_size, data_size);
                 channel_result.window_positions.emplace_back(start, end);
+            }
+
+            if (ch < original_data.size()) {
+                switch (m_method) {
+                case EnergyMethod::ZERO_CROSSING:
+                    channel_result.event_positions = find_zero_crossing_positions(
+                        original_data[ch], 0.0);
+                    break;
+
+                case EnergyMethod::PEAK: {
+                    double peak_threshold = m_classification_enabled ? m_quiet_threshold : 0.01;
+                    channel_result.event_positions = find_peak_positions(
+                        original_data[ch], peak_threshold, m_hop_size / 4);
+                    break;
+                }
+
+                case EnergyMethod::RMS:
+                case EnergyMethod::POWER:
+                case EnergyMethod::SPECTRAL:
+                case EnergyMethod::HARMONIC:
+                case EnergyMethod::DYNAMIC_RANGE:
+                default:
+                    // event_positions remains empty
+                    break;
+                }
             }
 
             if (m_classification_enabled) {

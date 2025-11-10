@@ -48,7 +48,7 @@ namespace internal {
 // Engine Management
 //-------------------------------------------------------------------------
 
-bool is_engine_initialized()
+bool is_initialized()
 {
     return internal::initialized;
 }
@@ -79,6 +79,12 @@ void set_and_transfer_context(Core::Engine instance)
         internal::engine_ref = std::make_unique<Core::Engine>(std::move(instance));
         internal::initialized = true;
     }
+}
+
+void Init()
+{
+    auto& engine = internal::get_or_create_engine();
+    engine.Init();
 }
 
 void Init(uint32_t sample_rate, uint32_t buffer_size, uint32_t num_out_channels, uint32_t num_in_channels)

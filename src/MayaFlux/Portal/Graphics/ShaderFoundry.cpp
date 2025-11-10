@@ -10,10 +10,18 @@
 
 namespace MayaFlux::Portal::Graphics {
 
+bool ShaderFoundry::s_initialized = false;
+
 bool ShaderFoundry::initialize(
     const std::shared_ptr<Core::VulkanBackend>& backend,
     const ShaderCompilerConfig& config)
 {
+    if (s_initialized) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "ShaderFoundry already initialized (static flag)");
+        return true;
+    }
+
     if (!backend) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Cannot initialize ShaderFoundry with null backend");
@@ -36,6 +44,8 @@ bool ShaderFoundry::initialize(
     m_compute_queue = m_backend->get_context().get_compute_queue();
     m_transfer_queue = m_backend->get_context().get_transfer_queue();
 
+    s_initialized = true;
+
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "ShaderFoundry initialized");
     return true;
@@ -43,6 +53,10 @@ bool ShaderFoundry::initialize(
 
 void ShaderFoundry::shutdown()
 {
+    if (!s_initialized) {
+        return;
+    }
+
     if (!m_backend) {
         return;
     }
@@ -82,6 +96,8 @@ void ShaderFoundry::shutdown()
     m_descriptor_sets.clear();
 
     m_backend = nullptr;
+
+    s_initialized = false;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "ShaderFoundry shutdown complete");

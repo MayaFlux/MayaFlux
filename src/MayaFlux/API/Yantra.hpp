@@ -186,38 +186,38 @@ MAYAFLUX_API std::vector<double> zero_crossing_rate_per_channel(const std::vecto
 /**
  * @brief Find spectral centroid (brightness measure) for single-channel data
  * @param data Input signal data
- * @param sample_rate Sample rate for frequency calculation (default: 44100 Hz)
+ * @param sample_rate Sample rate for frequency calculation (default: 48000 Hz)
  * @return Spectral centroid in Hz
  */
-MAYAFLUX_API double spectral_centroid(const std::vector<double>& data, double sample_rate = 44100.0);
-MAYAFLUX_API double spectral_centroid(const Kakshya::DataVariant& data, double sample_rate = 44100.0);
+MAYAFLUX_API double spectral_centroid(const std::vector<double>& data, double sample_rate = 48000.0);
+MAYAFLUX_API double spectral_centroid(const Kakshya::DataVariant& data, double sample_rate = 48000.0);
 
 /**
  * @brief Find spectral centroid per channel for multi-channel data
  * @param channels Vector of channel data
- * @param sample_rate Sample rate for frequency calculation (default: 44100 Hz)
+ * @param sample_rate Sample rate for frequency calculation (default: 48000 Hz)
  * @return Vector of spectral centroids in Hz, one per channel
  */
-MAYAFLUX_API std::vector<double> spectral_centroid_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0);
+MAYAFLUX_API std::vector<double> spectral_centroid_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 48000.0);
 
 /**
  * @brief Detect onset times in single-channel signal
  * @param data Input signal data
- * @param sample_rate Sample rate for time calculation (default: 44100 Hz)
+ * @param sample_rate Sample rate for time calculation (default: 48000 Hz)
  * @param threshold Energy threshold for onset detection (default: 0.1)
  * @return Vector of onset times in seconds
  */
-MAYAFLUX_API std::vector<double> detect_onsets(const std::vector<double>& data, double sample_rate = 44100.0, double threshold = 0.1);
-MAYAFLUX_API std::vector<double> detect_onsets(const Kakshya::DataVariant& data, double sample_rate = 44100.0, double threshold = 0.1);
+MAYAFLUX_API std::vector<double> detect_onsets(const std::vector<double>& data, double sample_rate = 48000.0, double threshold = 0.1);
+MAYAFLUX_API std::vector<double> detect_onsets(const Kakshya::DataVariant& data, double sample_rate = 48000.0, double threshold = 0.1);
 
 /**
  * @brief Detect onset times per channel for multi-channel signal
  * @param channels Vector of channel data
- * @param sample_rate Sample rate for time calculation (default: 44100 Hz)
+ * @param sample_rate Sample rate for time calculation (default: 48000 Hz)
  * @param threshold Energy threshold for onset detection (default: 0.1)
  * @return Vector of onset times for each channel
  */
-MAYAFLUX_API std::vector<std::vector<double>> detect_onsets_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0, double threshold = 0.1);
+MAYAFLUX_API std::vector<std::vector<double>> detect_onsets_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 48000.0, double threshold = 0.1);
 
 //=========================================================================
 // MULTI-CHANNEL SPECIFIC ANALYSIS - Channel relationships
@@ -445,25 +445,25 @@ MAYAFLUX_API std::vector<std::vector<double>> power_spectrum_per_channel(const s
 /**
  * @brief Estimate fundamental frequency using autocorrelation for single-channel data
  * @param data Input signal data
- * @param sample_rate Sample rate (default: 44100 Hz)
+ * @param sample_rate Sample rate (default: 48000 Hz)
  * @param min_freq Minimum expected frequency (default: 80 Hz)
  * @param max_freq Maximum expected frequency (default: 2000 Hz)
  * @return Estimated F0 in Hz (0 if not detected)
  */
-MAYAFLUX_API double estimate_pitch(const std::vector<double>& data, double sample_rate = 44100.0,
+MAYAFLUX_API double estimate_pitch(const std::vector<double>& data, double sample_rate = 48000.0,
     double min_freq = 80.0, double max_freq = 2000.0);
-MAYAFLUX_API double estimate_pitch(const Kakshya::DataVariant& data, double sample_rate = 44100.0,
+MAYAFLUX_API double estimate_pitch(const Kakshya::DataVariant& data, double sample_rate = 48000.0,
     double min_freq = 80.0, double max_freq = 2000.0);
 
 /**
  * @brief Estimate fundamental frequency per channel for multi-channel data
  * @param channels Vector of channel data
- * @param sample_rate Sample rate (default: 44100 Hz)
+ * @param sample_rate Sample rate (default: 48000 Hz)
  * @param min_freq Minimum expected frequency (default: 80 Hz)
  * @param max_freq Maximum expected frequency (default: 2000 Hz)
  * @return Vector of estimated F0 values in Hz, one per channel (0 if not detected)
  */
-MAYAFLUX_API std::vector<double> estimate_pitch_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 44100.0,
+MAYAFLUX_API std::vector<double> estimate_pitch_per_channel(const std::vector<Kakshya::DataVariant>& channels, double sample_rate = 48000.0,
     double min_freq = 80.0, double max_freq = 2000.0);
 
 //=========================================================================

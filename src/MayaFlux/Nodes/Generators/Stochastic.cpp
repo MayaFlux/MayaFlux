@@ -4,9 +4,9 @@ namespace MayaFlux::Nodes::Generator::Stochastics {
 
 Random::Random(Utils::distribution type)
     : m_random_engine(std::random_device {}())
-    , m_current_start(-1.0f)
-    , m_current_end(1.0f)
-    , m_normal_spread(4.0f)
+    , m_current_start(-1.0F)
+    , m_current_end(1.0F)
+    , m_normal_spread(4.0F)
     , m_type(type)
 {
 }
@@ -92,18 +92,28 @@ void Random::validate_range(double start, double end) const
 
 std::unique_ptr<NodeContext> Random::create_context(double value)
 {
+    if (m_gpu_compatible) {
+        return std::make_unique<StochasticContextGpu>(
+            value,
+            m_type,
+            m_amplitude,
+            m_current_start,
+            m_current_end,
+            m_normal_spread,
+            get_gpu_data_buffer());
+    }
     return std::make_unique<StochasticContext>(value, m_type, m_amplitude, m_current_start, m_current_end, m_normal_spread);
 }
 
 void Random::notify_tick(double value)
 {
-    auto context = create_context(value);
+    m_last_context = create_context(value);
     for (auto& callback : m_callbacks) {
-        callback(*context);
+        callback(*m_last_context);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*context)) {
-            callback(*context);
+        if (condition(*m_last_context)) {
+            callback(*m_last_context);
         }
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GpuContext.hpp"
 #include "NodeOperators.hpp"
 
 /**
@@ -127,7 +128,7 @@ public:
      * Note: This method does NOT mark the node as processed. That responsibility
      * belongs to the caller, typically a chained parent node or the root node.
      */
-    virtual double process_sample(double input) = 0;
+    virtual double process_sample(double input = 0.) = 0;
 
     /**
      * @brief Processes multiple samples at once
@@ -154,12 +155,12 @@ public:
      *
      * Example:
      * ```cpp
-     * node->on_tick([](const NodeContext& ctx) {
+     * node->on_tick([](NodeContext& ctx) {
      *     std::cout << "Node produced value: " << ctx.value << std::endl;
      * });
      * ```
      */
-    virtual void on_tick(NodeHook callback);
+    virtual void on_tick(const NodeHook& callback);
 
     /**
      * @brief Registers a conditional callback
@@ -177,12 +178,12 @@ public:
      * Example:
      * ```cpp
      * node->on_tick_if(
-     *     [](const NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
-     *     [](const NodeContext& ctx) { return ctx.value > 0.8; }
+     *     [](NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
+     *     [](NodeContext& ctx) { return ctx.value > 0.8; }
      * );
      * ```
      */
-    virtual void on_tick_if(NodeHook callback, NodeCondition condition);
+    virtual void on_tick_if(const NodeHook& callback, const NodeCondition& condition);
 
     /**
      * @brief Removes a previously registered callback
@@ -294,6 +295,37 @@ public:
      */
     [[nodiscard]] const inline std::atomic<uint32_t>& get_channel_mask() const { return m_active_channels_mask; }
 
+    /**
+     * @brief Retrieves the last created context object
+     * @return Reference to the last NodeContext object
+     *
+     * This method provides access to the most recent NodeContext object
+     * created by the node. This context contains information about the
+     * node's state at the time of the last output generation.
+     */
+    NodeContext& get_last_context() { return *m_last_context; }
+
+    /**
+     * @brief Sets whether the node is compatible with GPU processing
+     * @param compatible True if the node supports GPU processing, false otherwise
+     */
+    void set_gpu_compatible(bool compatible) { m_gpu_compatible = compatible; }
+
+    /**
+     * @brief Checks if the node supports GPU processing
+     * @return True if the node is GPU compatible, false otherwise
+     */
+    [[nodiscard]] bool is_gpu_compatible() const { return m_gpu_compatible; }
+
+    /**
+     * @brief Provides access to the GPU data buffer
+     * @return Span of floats representing the GPU data buffer
+     * This method returns a span of floats that represents the GPU data buffer
+     * associated with this node. The buffer contains data that can be uploaded to the GPU
+     * for processing, enabling efficient execution in GPU-accelerated pipelines.
+     */
+    [[nodiscard]] std::span<const float> get_gpu_data_buffer() const;
+
 protected:
     /**
      * @brief Creates an appropriate context object for this node type
@@ -344,6 +376,34 @@ protected:
      * feedback loops.
      */
     double m_last_output { 0 };
+
+    /**
+     * @brief Flag indicating if the node supports GPU processing
+     * This flag is set by derived classes to indicate whether
+     * the node can be processed on the GPU. Nodes that support GPU
+     * processing can provide GPU-compatible context data for
+     * efficient execution in GPU-accelerated pipelines.
+     */
+    bool m_gpu_compatible {};
+
+    /**
+     * @brief The last context object created for callbacks
+     *
+     * This member stores the most recent NodeContext object created by
+     * create_context(). It can be reused for efficiency, avoiding
+     * unnecessary allocations when notifying callbacks.
+     */
+    std::unique_ptr<NodeContext> m_last_context;
+
+    /**
+     * @brief GPU data buffer for context objects
+     *
+     * This buffer is used to store float data that can be uploaded
+     * to the GPU for nodes that support GPU processing. It provides
+     * a contiguous array of floats that can be bound to GPU descriptors,
+     * enabling efficient data transfer and processing on the GPU.
+     */
+    std::vector<float> m_gpu_data_buffer;
 
     /**
      * @brief Collection of standard callback functions

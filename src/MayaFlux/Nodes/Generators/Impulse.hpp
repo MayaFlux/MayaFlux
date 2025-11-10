@@ -36,11 +36,10 @@ public:
      * @param frequency Impulse repetition rate in Hz (default: 1Hz, one impulse per second)
      * @param amplitude Impulse amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
-     * @param bAuto_register Whether to automatically register with the node graph manager (default: false)
      *
      * Creates an impulse generator with fixed frequency and amplitude.
      */
-    Impulse(float frequency = 1, double amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(float frequency = 1, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with frequency modulation
@@ -48,12 +47,11 @@ public:
      * @param frequency Base frequency in Hz (default: 1Hz)
      * @param amplitude Impulse amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
-     * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
      * Creates an impulse generator with frequency modulation, where the actual frequency
      * is the base frequency plus the output of the modulator node.
      */
-    Impulse(std::shared_ptr<Node> frequency_modulator, float frequency = 1, double amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(const std::shared_ptr<Node>& frequency_modulator, float frequency = 1, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with amplitude modulation
@@ -61,12 +59,11 @@ public:
      * @param amplitude_modulator Node that modulates the amplitude
      * @param amplitude Base amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
-     * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
      * Creates an impulse generator with amplitude modulation, where the actual amplitude
      * is the base amplitude multiplied by the output of the modulator node.
      */
-    Impulse(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude = 1, float offset = 0, bool bAuto_register = false);
+    Impulse(float frequency, const std::shared_ptr<Node>& amplitude_modulator, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with both frequency and amplitude modulation
@@ -75,18 +72,17 @@ public:
      * @param frequency Base frequency in Hz (default: 1Hz)
      * @param amplitude Base amplitude (default: 1.0)
      * @param offset DC offset added to the output (default: 0.0)
-     * @param bAuto_register Whether to automatically register with the node graph manager (default: true)
      *
      * Creates an impulse generator with both frequency and amplitude modulation,
      * enabling complex timing and amplitude control.
      */
-    Impulse(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-        float frequency = 1, double amplitude = 1, float offset = 0, bool bAuto_register = true);
+    Impulse(const std::shared_ptr<Node>& frequency_modulator, const std::shared_ptr<Node>& amplitude_modulator,
+        float frequency = 1, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Virtual destructor
      */
-    virtual ~Impulse() = default;
+    ~Impulse() override = default;
 
     /**
      * @brief Processes a single input sample and generates an impulse sample
@@ -96,7 +92,7 @@ public:
      * This method advances the generator's phase and computes the next
      * sample of the impulse train, applying any modulation from connected nodes.
      */
-    virtual double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples at once
@@ -106,7 +102,7 @@ public:
      * This method is more efficient than calling process_sample() repeatedly
      * when generating multiple samples at once.
      */
-    virtual std::vector<double> process_batch(unsigned int num_samples) override;
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Prints a visual representation of the impulse train
@@ -114,7 +110,7 @@ public:
      * Outputs a text-based graph of the impulse pattern over time,
      * useful for debugging and visualization.
      */
-    inline virtual void printGraph() override { }
+    inline void printGraph() override { }
 
     /**
      * @brief Prints the current parameters of the impulse generator
@@ -122,7 +118,7 @@ public:
      * Outputs the current frequency, amplitude, offset, and modulation
      * settings of the generator.
      */
-    inline virtual void printCurrent() override { }
+    inline void printCurrent() override { }
 
     /**
      * @brief Sets the generator's frequency
@@ -161,7 +157,7 @@ public:
      * The modulator's output is added to the base frequency,
      * enabling dynamic control of impulse timing.
      */
-    void set_frequency_modulator(std::shared_ptr<Node> modulator);
+    void set_frequency_modulator(const std::shared_ptr<Node>& modulator);
 
     /**
      * @brief Sets a node to modulate the generator's amplitude
@@ -170,7 +166,7 @@ public:
      * The modulator's output is multiplied with the base amplitude,
      * enabling dynamic control of impulse height.
      */
-    void set_amplitude_modulator(std::shared_ptr<Node> modulator);
+    void set_amplitude_modulator(const std::shared_ptr<Node>& modulator);
 
     /**
      * @brief Removes all modulation connections
@@ -189,7 +185,7 @@ public:
      * This method resets the generator's internal state and parameters,
      * effectively restarting it from the beginning of its cycle.
      */
-    void reset(float frequency = 1, float amplitude = 1.0f, float offset = 0);
+    void reset(float frequency = 1, float amplitude = 1.0F, float offset = 0);
 
     /**
      * @brief Registers a callback for every impulse
@@ -200,7 +196,7 @@ public:
      * receives a GeneratorContext containing the generated value and
      * generator parameters like frequency, amplitude, and phase.
      */
-    void on_impulse(NodeHook callback);
+    void on_impulse(const NodeHook& callback);
 
     /**
      * @brief Removes a previously registered callback
@@ -232,17 +228,6 @@ public:
 
 protected:
     /**
-     * @brief Creates a context object for callbacks
-     * @param value The current generated sample
-     * @return A unique pointer to a GeneratorContext object
-     *
-     * This method creates a specialized context object containing
-     * the current sample value and all generator parameters, providing
-     * callbacks with rich information about the generator's state.
-     */
-    std::unique_ptr<NodeContext> create_context(double value) override;
-
-    /**
      * @brief Notifies all registered callbacks about a new sample
      * @param value The newly generated sample
      *
@@ -259,20 +244,7 @@ private:
      * This value determines how much the phase advances with each sample,
      * controlling the generator's frequency.
      */
-    double m_phase_inc;
-
-    /**
-     * @brief Current phase of the generator
-     *
-     * The phase represents the current position in the impulse cycle,
-     * ranging from 0 to 1.
-     */
-    double m_phase;
-
-    /**
-     * @brief Base frequency of the generator in Hz
-     */
-    float m_frequency;
+    double m_phase_inc {};
 
     /**
      * @brief DC offset added to the output
@@ -296,7 +268,7 @@ private:
      * This method calculates the phase increment needed to produce
      * impulses at the specified frequency at the current sample rate.
      */
-    void update_phase_increment(float frequency);
+    void update_phase_increment(double frequency);
 
     /**
      * @brief Collection of impulse-specific callback functions
@@ -305,11 +277,11 @@ private:
 
     bool m_impulse_occurred;
 
-    double m_saved_phase;
-    float m_saved_frequency;
-    float m_saved_offset;
-    double m_saved_phase_inc;
-    double m_saved_last_output;
+    double m_saved_phase {};
+    float m_saved_frequency {};
+    float m_saved_offset {};
+    double m_saved_phase_inc {};
+    double m_saved_last_output {};
 
     bool m_state_saved {};
 };

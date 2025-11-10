@@ -34,7 +34,7 @@ namespace Core {
  * @brief Checks if the default engine has been initialized
  * @return true if the engine is initialized, false otherwise
  */
-MAYAFLUX_API bool is_engine_initialized();
+bool is_initialized();
 
 /**
  * @brief Gets the default engine instance
@@ -71,7 +71,14 @@ MAYAFLUX_API void set_and_transfer_context(Core::Engine instance);
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-MAYAFLUX_API void Init(uint32_t sample_rate = 48000, uint32_t buffer_size = 512, uint32_t num_out_channels = 2, uint32_t num_in_channels = 0);
+MAYAFLUX_API void Init(uint32_t sample_rate, uint32_t buffer_size = 512, uint32_t num_out_channels = 2, uint32_t num_in_channels = 0);
+
+/**
+ * @brief Initializes the default engine with default settings
+ *
+ * Convenience wrapper for Engine::Init() on the default engine.
+ */
+MAYAFLUX_API void Init();
 
 /**
  * @brief Initializes the default engine with specified stream info

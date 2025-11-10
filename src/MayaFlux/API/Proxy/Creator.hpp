@@ -114,6 +114,16 @@ private:
                 }
             }
             m_ctx = CreationContext {};
+        } else if (m_ctx.domain) {
+            if constexpr (std::is_base_of_v<Buffers::VKBuffer, T>) {
+                apply_buffer_context();
+            }
+            if (m_ctx.domain == Domain::GRAPHICS) {
+                if constexpr (std::is_base_of_v<Nodes::Node, T>) {
+                    apply_node_context();
+                }
+            }
+            m_ctx = CreationContext {};
         }
     }
 
@@ -216,5 +226,17 @@ static constexpr auto Graphics = Domain::GRAPHICS;
  * ```
  */
 extern MAYAFLUX_API Creator vega;
+
+static std::vector<std::shared_ptr<Buffers::ContainerBuffer>> s_last_created_container_buffers;
+
+/**
+ * @brief Retrieves the last created container buffers from the Creator.
+ * @return Vector of shared pointers to the last created ContainerBuffer instances.
+ *
+ * This function returns the container buffers that were most recently created
+ * by the Creator instance when registering a SoundFileContainer in the AUDIO domain.
+ * It allows access to these buffers for further manipulation or inspection.
+ */
+std::vector<std::shared_ptr<Buffers::ContainerBuffer>> MAYAFLUX_API get_last_created_container_buffers();
 
 } // namespace MayaFlux

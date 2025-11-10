@@ -51,7 +51,7 @@ public:
      * Creates a sine oscillator with frequency modulation, where the actual frequency
      * is the base frequency plus the output of the modulator node.
      */
-    Sine(std::shared_ptr<Node> frequency_modulator, float frequency = 440, double amplitude = 1, float offset = 0);
+    Sine(const std::shared_ptr<Node>& frequency_modulator, float frequency = 440, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with amplitude modulation
@@ -63,7 +63,7 @@ public:
      * Creates a sine oscillator with amplitude modulation, where the actual amplitude
      * is the base amplitude multiplied by the output of the modulator node.
      */
-    Sine(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude = 1, float offset = 0);
+    Sine(float frequency, const std::shared_ptr<Node>& amplitude_modulator, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Constructor with both frequency and amplitude modulation
@@ -76,13 +76,13 @@ public:
      * Creates a sine oscillator with both frequency and amplitude modulation,
      * enabling complex synthesis techniques like FM and AM simultaneously.
      */
-    Sine(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
+    Sine(const std::shared_ptr<Node>& frequency_modulator, const std::shared_ptr<Node>& amplitude_modulator,
         float frequency = 440, double amplitude = 1, float offset = 0);
 
     /**
      * @brief Virtual destructor
      */
-    virtual ~Sine() = default;
+    ~Sine() override = default;
 
     /**
      * @brief Processes a single input sample and generates a sine wave sample
@@ -92,7 +92,7 @@ public:
      * This method advances the oscillator's phase and computes the next
      * sample of the sine wave, applying any modulation from connected nodes.
      */
-    virtual double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples at once
@@ -102,7 +102,7 @@ public:
      * This method is more efficient than calling process_sample() repeatedly
      * when generating multiple samples at once.
      */
-    virtual std::vector<double> process_batch(unsigned int num_samples) override;
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Prints a visual representation of the sine wave
@@ -110,7 +110,7 @@ public:
      * Outputs a text-based graph of the sine wave's shape over time,
      * useful for debugging and visualization.
      */
-    virtual void printGraph() override;
+    void printGraph() override;
 
     /**
      * @brief Prints the current parameters of the sine oscillator
@@ -118,7 +118,7 @@ public:
      * Outputs the current frequency, amplitude, offset, and modulation
      * settings of the oscillator.
      */
-    virtual void printCurrent() override;
+    void printCurrent() override;
 
     /**
      * @brief Sets the oscillator's frequency
@@ -133,7 +133,7 @@ public:
      * @brief Gets the current base frequency
      * @return Current frequency in Hz
      */
-    inline float get_frequency() const { return m_frequency; }
+    [[nodiscard]] inline float get_frequency() const { return m_frequency; }
 
     /**
      * @brief Sets all basic parameters at once
@@ -158,7 +158,7 @@ public:
      * The modulator's output is added to the base frequency,
      * enabling FM synthesis techniques.
      */
-    void set_frequency_modulator(std::shared_ptr<Node> modulator);
+    void set_frequency_modulator(const std::shared_ptr<Node>& modulator);
 
     /**
      * @brief Sets a node to modulate the oscillator's amplitude
@@ -167,7 +167,7 @@ public:
      * The modulator's output is multiplied with the base amplitude,
      * enabling AM synthesis techniques.
      */
-    void set_amplitude_modulator(std::shared_ptr<Node> modulator);
+    void set_amplitude_modulator(const std::shared_ptr<Node>& modulator);
 
     /**
      * @brief Removes all modulation connections
@@ -186,23 +186,12 @@ public:
      * This method resets the oscillator's internal state and parameters,
      * effectively restarting it from the beginning of its cycle.
      */
-    void reset(float frequency = 440, float amplitude = 0.5f, float offset = 0);
+    void reset(float frequency = 440, double amplitude = 0.5, float offset = 0);
 
     void save_state() override;
     void restore_state() override;
 
 protected:
-    /**
-     * @brief Creates a context object for callbacks
-     * @param value The current generated sample
-     * @return A unique pointer to a GeneratorContext object
-     *
-     * This method creates a specialized context object containing
-     * the current sample value and all oscillator parameters, providing
-     * callbacks with rich information about the oscillator's state.
-     */
-    std::unique_ptr<NodeContext> create_context(double value) override;
-
     /**
      * @brief Notifies all registered callbacks about a new sample
      * @param value The newly generated sample
@@ -220,25 +209,12 @@ private:
      * This value determines how much the phase advances with each sample,
      * controlling the oscillator's frequency.
      */
-    double m_phase_inc;
-
-    /**
-     * @brief Current phase of the oscillator
-     *
-     * The phase represents the current position in the sine wave cycle,
-     * ranging from 0 to 2π.
-     */
-    double m_phase;
-
-    /**
-     * @brief Base frequency of the oscillator in Hz
-     */
-    float m_frequency;
+    double m_phase_inc {};
 
     /**
      * @brief DC offset added to the output
      */
-    float m_offset;
+    float m_offset {};
 
     /**
      * @brief Node that modulates the frequency
@@ -257,13 +233,13 @@ private:
      * This method calculates the phase increment needed to produce
      * the specified frequency at the current sample rate.
      */
-    void update_phase_increment(float frequency);
+    void update_phase_increment(double frequency);
 
-    double m_saved_phase;
-    float m_saved_frequency;
-    float m_saved_offset;
-    double m_saved_phase_inc;
-    double m_saved_last_output;
+    double m_saved_phase {};
+    float m_saved_frequency {};
+    float m_saved_offset {};
+    double m_saved_phase_inc {};
+    double m_saved_last_output {};
 
     bool m_state_saved {};
 };

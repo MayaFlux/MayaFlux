@@ -119,6 +119,8 @@ private:
 
     // Helper: Convert AddressMode to Vulkan address mode
     static vk::SamplerAddressMode to_vk_address_mode(AddressMode mode);
+
+    static bool s_initialized;
 };
 
 /**

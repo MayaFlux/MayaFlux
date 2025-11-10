@@ -4,7 +4,7 @@
 
 namespace MayaFlux::Nodes {
 
-ChainNode::ChainNode(std::shared_ptr<Node> source, std::shared_ptr<Node> target)
+ChainNode::ChainNode(const std::shared_ptr<Node>& source, const std::shared_ptr<Node>& target)
     : m_Source(source)
     , m_Target(target)
     , m_is_initialized(false)
@@ -130,11 +130,34 @@ void ChainNode::restore_state()
     m_state_saved = false;
 }
 
-BinaryOpNode::BinaryOpNode(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs, CombineFunc func)
+bool ChainNode::is_initialized() const
+{
+    auto sState = m_Source->m_state.load();
+    auto tState = m_Target->m_state.load();
+
+    bool is_source_registered = m_Source ? (sState & Utils::NodeState::ACTIVE) : false;
+    bool is_target_registered = m_Target ? (tState & Utils::NodeState::ACTIVE) : false;
+    return !is_source_registered && !is_target_registered && (m_state.load() & Utils::NodeState::ACTIVE);
+}
+
+BinaryOpContext::BinaryOpContext(double value, double lhs_value, double rhs_value)
+    : NodeContext(value, typeid(BinaryOpContext).name())
+    , lhs_value(lhs_value)
+    , rhs_value(rhs_value)
+{
+}
+
+BinaryOpContextGpu::BinaryOpContextGpu(double value, double lhs_value, double rhs_value, std::span<const float> gpu_data)
+    : BinaryOpContext(value, lhs_value, rhs_value)
+    , GpuVectorData(gpu_data)
+{
+    type_id = typeid(BinaryOpContextGpu).name();
+}
+
+BinaryOpNode::BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_ptr<Node>& rhs, CombineFunc func)
     : m_lhs(lhs)
     , m_rhs(rhs)
-    , m_func(func)
-    , m_is_initialized(false)
+    , m_func(std::move(func))
 {
 }
 
@@ -229,14 +252,14 @@ std::vector<double> BinaryOpNode::process_batch(unsigned int num_samples)
 
 void BinaryOpNode::notify_tick(double value)
 {
-    auto context = create_context(value);
+    m_last_context = create_context(value);
     for (const auto& callback : m_callbacks) {
-        callback(*context);
+        callback(*m_last_context);
     }
 
     for (const auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*context)) {
-            callback(*context);
+        if (condition(*m_last_context)) {
+            callback(*m_last_context);
         }
     }
 }
@@ -274,5 +297,27 @@ void BinaryOpNode::restore_state()
         m_rhs->restore_state();
 
     m_state_saved = false;
+}
+
+std::unique_ptr<NodeContext> BinaryOpNode::create_context(double value)
+{
+    if (m_gpu_compatible) {
+        return std::make_unique<BinaryOpContextGpu>(
+            value,
+            m_last_lhs_value,
+            m_last_rhs_value,
+            get_gpu_data_buffer());
+    }
+
+    return std::make_unique<BinaryOpContext>(value, m_last_lhs_value, m_last_rhs_value);
+}
+
+bool BinaryOpNode::is_initialized() const
+{
+    auto lstate = m_lhs->m_state.load();
+    auto rstate = m_rhs->m_state.load();
+    bool is_lhs_registered = m_lhs ? (lstate & Utils::NodeState::ACTIVE) : false;
+    bool is_rhs_registered = m_rhs ? (rstate & Utils::NodeState::ACTIVE) : false;
+    return !is_lhs_registered && !is_rhs_registered;
 }
 }

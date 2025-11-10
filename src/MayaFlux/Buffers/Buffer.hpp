@@ -210,6 +210,21 @@ public:
      * its processing backend.
      */
     virtual bool is_processing() const = 0;
+
+    /**
+     * @brief Creates a clone of this buffer for a specific channel or usage enum
+     * @param dest_desc Destination channel identifier or usage descriptor for the cloned buffer
+     * @return Shared pointer to the cloned buffer
+     *
+     * This method creates a new instance of the buffer with the same
+     * data and properties, but assigned to a different channel. The
+     * cloned buffer can be used independently in processing chains.
+     *
+     * NOTE: The moment of cloning is the divergence point between the original
+     * and the cloned. While they both will follow the same processing chain or have the same
+     * default procesor, any changes made to one buffer after cloning will not affect the other.
+     */
+    virtual std::shared_ptr<Buffer> clone_to(uint8_t dest_desc) = 0;
 };
 
 }

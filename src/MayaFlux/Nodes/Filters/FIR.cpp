@@ -2,12 +2,12 @@
 
 namespace MayaFlux::Nodes::Filters {
 
-FIR::FIR(std::shared_ptr<Node> input, const std::vector<double> coeffs)
-    : Filter(input, std::vector<double> { 1.0f }, coeffs)
+FIR::FIR(const std::shared_ptr<Node>& input, const std::vector<double>& coeffs)
+    : Filter(input, std::vector<double> { 1.0F }, coeffs)
 {
 }
 
-FIR::FIR(std::shared_ptr<Node> input, const std::string& zindex_shifts)
+FIR::FIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
     : Filter(input, zindex_shifts)
 {
 }
@@ -30,7 +30,11 @@ double FIR::process_sample(double input)
         }
     }
 
-    update_inputs(processed_input);
+    if (m_use_external_input_context) {
+        build_input_history(processed_input);
+    } else {
+        update_inputs(processed_input);
+    }
 
     double output = 0.0;
     const size_t num_taps = std::min(m_coef_b.size(), m_input_history.size());

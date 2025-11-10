@@ -62,6 +62,21 @@ public:
     double phase;
 };
 
+class MAYAFLUX_API GeneratorContextGpu : public GeneratorContext, public GpuVectorData {
+public:
+    GeneratorContextGpu(
+        double value,
+        double frequency,
+        float amplitude,
+        double phase,
+        std::span<const float> gpu_data)
+        : GeneratorContext(value, frequency, amplitude, phase)
+        , GpuVectorData(gpu_data)
+    {
+        type_id = typeid(GeneratorContextGpu).name();
+    }
+};
+
 /**
  * @class Generator
  * @brief Base class for all signal and pattern generators in Maya Flux
@@ -126,23 +141,13 @@ public:
      * is overkill. This method allows the RootNode to process the Generator without
      * using the processed sample, which is useful for mocking processing.
      */
-    inline virtual void enable_mock_process(bool mock_process)
-    {
-        if (mock_process) {
-            atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        } else {
-            atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
-        }
-    }
+    virtual void enable_mock_process(bool mock_process);
 
     /**
      * @brief Checks if the generator should mock process
      * @return True if the generator should mock process, false otherwise
      */
-    inline virtual bool should_mock_process() const
-    {
-        return m_state.load() & Utils::NodeState::MOCK_PROCESS;
-    }
+    virtual bool should_mock_process() const;
 
     /**
      * @brief Prints a visual representation of the generated pattern
@@ -162,11 +167,32 @@ public:
      */
     virtual void printCurrent() = 0;
 
+    /**
+     * @brief Creates a context object for callbacks
+     * @param value The current generated sample
+     * @return A unique pointer to a GeneratorContext object
+     *
+     * This method creates a specialized context object containing
+     * the current sample value and all oscillator parameters, providing
+     * callbacks with rich information about the oscillator's state.
+     */
+    virtual std::unique_ptr<NodeContext> create_context(double value) override;
+
 protected:
     /**
      * @brief Base amplitude of the generator
      */
-    double m_amplitude { 1.0f };
+    double m_amplitude { 1.0 };
+
+    /**
+     * @brief Base frequency of the generator
+     */
+    float m_frequency { 440.0F };
+
+    /**
+     * @brief Current phase of the generator
+     */
+    double m_phase {};
 };
 
 }

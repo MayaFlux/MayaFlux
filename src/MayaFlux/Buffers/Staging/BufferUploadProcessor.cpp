@@ -1,11 +1,11 @@
 #include "BufferUploadProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include "StagingUtils.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -57,107 +57,11 @@ void BufferUploadProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void BufferUploadProcessor::upload_host_visible(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data)
-{
-    Kakshya::DataAccess accessor(
-        const_cast<Kakshya::DataVariant&>(data),
-        {},
-        target->get_modality());
-
-    auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
-
-    if (bytes > target->get_size_bytes()) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Upload data size {} exceeds buffer capacity {}",
-            bytes, target->get_size_bytes());
-    }
-
-    auto& target_resources = target->get_buffer_resources();
-    void* mapped = target_resources.mapped_ptr;
-    if (!mapped) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Host-visible buffer has no mapped pointer");
-    }
-
-    std::memcpy(mapped, ptr, bytes);
-
-    target->mark_dirty_range(0, bytes);
-
-    auto dirty_ranges = target->get_and_clear_dirty_ranges();
-    for (auto& [offset, size] : dirty_ranges) {
-        m_buffer_service->flush_range(
-            target_resources.memory,
-            offset,
-            size);
-    }
-}
-
 void BufferUploadProcessor::upload_device_local(const std::shared_ptr<VKBuffer>& target, const Kakshya::DataVariant& data)
 {
     ensure_staging_buffer(target);
-
-    Kakshya::DataAccess accessor(
-        const_cast<Kakshya::DataVariant&>(data),
-        {},
-        target->get_modality());
-
-    auto [ptr, bytes, format_hint] = accessor.gpu_buffer();
-
-    if (bytes > target->get_size_bytes()) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Upload data size {} exceeds buffer capacity {}",
-            bytes, target->get_size_bytes());
-    }
-
     auto staging_buffer = m_staging_buffers[target];
-    auto& staging_resources = staging_buffer->get_buffer_resources();
-
-    void* staging_mapped = staging_resources.mapped_ptr;
-    if (!staging_mapped) {
-        error<std::runtime_error>(
-            Journal::Component::Buffers,
-            Journal::Context::BufferProcessing,
-            std::source_location::current(),
-            "Staging buffer has no mapped pointer");
-    }
-
-    std::memcpy(staging_mapped, ptr, bytes);
-    staging_buffer->mark_dirty_range(0, bytes);
-
-    auto dirty_ranges = staging_buffer->get_and_clear_dirty_ranges();
-    for (auto& [offset, size] : dirty_ranges) {
-        m_buffer_service->flush_range(
-            staging_resources.memory,
-            offset,
-            size);
-    }
-
-    m_buffer_service->execute_immediate([&](void* ptr) {
-        vk::BufferCopy copy_region;
-        copy_region.srcOffset = 0;
-        copy_region.dstOffset = 0;
-        copy_region.size = bytes;
-
-        vk::CommandBuffer cmd(static_cast<VkCommandBuffer>(ptr));
-
-        // MF_PRINT(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        //     "UPLOAD: target->get_buffer() at copy time: {:p}",
-        //     (void*)(VkBuffer)target->get_buffer());
-
-        cmd.copyBuffer(
-            staging_buffer->get_buffer(),
-            target->get_buffer(),
-            1, &copy_region);
-    });
+    Buffers::upload_device_local(target, staging_buffer, data);
 }
 
 void BufferUploadProcessor::ensure_staging_buffer(const std::shared_ptr<VKBuffer>& target)

@@ -2,12 +2,12 @@
 
 namespace MayaFlux::Nodes {
 
-void Node::on_tick(NodeHook callback)
+void Node::on_tick(const NodeHook& callback)
 {
     safe_add_callback(m_callbacks, callback);
 }
 
-void Node::on_tick_if(NodeHook callback, NodeCondition condition)
+void Node::on_tick_if(const NodeHook& callback, const NodeCondition& condition)
 {
     safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
 }
@@ -33,7 +33,7 @@ void Node::register_channel_usage(uint32_t channel_id)
     if (channel_id >= 32)
         return;
 
-    uint32_t channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
+    auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
 
     m_active_channels_mask.fetch_or(channel_bit, std::memory_order_acq_rel);
 }
@@ -42,7 +42,7 @@ void Node::unregister_channel_usage(uint32_t channel_id)
 {
     if (channel_id >= 32)
         return;
-    uint32_t channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
+    auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
 
     m_active_channels_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
     m_pending_reset_mask.fetch_and(~channel_bit, std::memory_order_acq_rel);
@@ -53,7 +53,7 @@ bool Node::is_used_by_channel(uint32_t channel_id) const
     if (channel_id >= 32)
         return false;
 
-    uint32_t channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
+    auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
     uint32_t active_mask = m_active_channels_mask.load(std::memory_order_acquire);
     return (active_mask & channel_bit) != 0;
 }
@@ -62,7 +62,7 @@ void Node::request_reset_from_channel(uint32_t channel_id)
 {
     if (channel_id >= 32)
         return;
-    uint32_t channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
+    auto channel_bit = static_cast<uint32_t>((0x0ffffffff) & (1ULL << (uint64_t)channel_id));
     uint32_t old_pending = m_pending_reset_mask.fetch_or(channel_bit, std::memory_order_acq_rel);
     uint32_t new_pending = old_pending | channel_bit;
     uint32_t active_channels = m_active_channels_mask.load(std::memory_order_acquire);
@@ -73,6 +73,11 @@ void Node::request_reset_from_channel(uint32_t channel_id)
             reset_processed_state_internal();
         }
     }
+}
+
+[[nodiscard]] std::span<const float> Node::get_gpu_data_buffer() const
+{
+    return { m_gpu_data_buffer.data(), m_gpu_data_buffer.size() };
 }
 
 void Node::reset_processed_state()

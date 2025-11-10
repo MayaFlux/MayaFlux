@@ -3,36 +3,32 @@
 
 namespace MayaFlux::Nodes::Generator {
 
-Phasor::Phasor(float frequency, double amplitude, float offset, bool bAuto_register)
-    : m_phase(0.0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Phasor::Phasor(float frequency, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(nullptr)
     , m_phase_wrapped(false)
     , m_threshold_crossed(false)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
-Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, float frequency, double amplitude, float offset, bool bAuto_register)
-    : m_phase(0.0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Phasor::Phasor(const std::shared_ptr<Node>& frequency_modulator, float frequency, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(nullptr)
     , m_phase_wrapped(false)
     , m_threshold_crossed(false)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
-Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, double amplitude, float offset, bool bAuto_register)
-    : m_phase(0.0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Phasor::Phasor(float frequency, const std::shared_ptr<Node>& amplitude_modulator, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(nullptr)
     , m_amplitude_modulator(amplitude_modulator)
     , m_phase_wrapped(false)
@@ -42,17 +38,16 @@ Phasor::Phasor(float frequency, std::shared_ptr<Node> amplitude_modulator, doubl
     update_phase_increment(frequency);
 }
 
-Phasor::Phasor(std::shared_ptr<Node> frequency_modulator, std::shared_ptr<Node> amplitude_modulator,
-    float frequency, double amplitude, float offset, bool bAuto_register)
-    : m_phase(0.0)
-    , m_frequency(frequency)
-    , m_offset(offset)
+Phasor::Phasor(const std::shared_ptr<Node>& frequency_modulator, const std::shared_ptr<Node>& amplitude_modulator,
+    float frequency, double amplitude, float offset)
+    : m_offset(offset)
     , m_frequency_modulator(frequency_modulator)
     , m_amplitude_modulator(amplitude_modulator)
     , m_phase_wrapped(false)
     , m_threshold_crossed(false)
 {
     m_amplitude = amplitude;
+    m_frequency = frequency;
     update_phase_increment(frequency);
 }
 
@@ -62,17 +57,21 @@ void Phasor::set_frequency(float frequency)
     update_phase_increment(frequency);
 }
 
-void Phasor::update_phase_increment(float frequency)
+void Phasor::update_phase_increment(double frequency)
 {
-    m_phase_inc = frequency / MayaFlux::Config::get_sample_rate();
+    uint64_t s_rate = 48000U;
+    if (MayaFlux::is_engine_initialized()) {
+        s_rate = Config::get_sample_rate();
+    }
+    m_phase_inc = frequency / (double)s_rate;
 }
 
-void Phasor::set_frequency_modulator(std::shared_ptr<Node> modulator)
+void Phasor::set_frequency_modulator(const std::shared_ptr<Node>& modulator)
 {
     m_frequency_modulator = modulator;
 }
 
-void Phasor::set_amplitude_modulator(std::shared_ptr<Node> modulator)
+void Phasor::set_amplitude_modulator(const std::shared_ptr<Node>& modulator)
 {
     m_amplitude_modulator = modulator;
 }
@@ -95,7 +94,7 @@ double Phasor::process_sample(double input)
         if (state & Utils::NodeState::PROCESSED) {
             effective_freq += m_frequency_modulator->get_last_output();
         } else {
-            effective_freq = m_frequency_modulator->process_sample(0.f);
+            effective_freq = m_frequency_modulator->process_sample(0.F);
             atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
         }
 
@@ -110,7 +109,7 @@ double Phasor::process_sample(double input)
         if (state & Utils::NodeState::PROCESSED) {
             output *= m_amplitude_modulator->get_last_output();
         } else {
-            output *= m_amplitude_modulator->process_sample(0.f);
+            output *= m_amplitude_modulator->process_sample(0.F);
             atomic_add_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
         }
     }
@@ -167,12 +166,12 @@ void Phasor::reset(float frequency, float amplitude, float offset, double phase)
     m_last_output = 0.0;
 }
 
-void Phasor::on_phase_wrap(NodeHook callback)
+void Phasor::on_phase_wrap(const NodeHook& callback)
 {
     safe_add_callback(m_phase_wrap_callbacks, callback);
 }
 
-void Phasor::on_threshold(NodeHook callback, double threshold, bool rising)
+void Phasor::on_threshold(const NodeHook& callback, double threshold, bool /*rising*/)
 {
     std::pair<NodeHook, double> entry = std::make_pair(callback, threshold);
     for (auto& pair : m_threshold_callbacks) {
@@ -202,34 +201,29 @@ bool Phasor::remove_hook(const NodeHook& callback)
     return removed_from_tick || removed_from_phase_wrap || removed_from_threshold;
 }
 
-std::unique_ptr<NodeContext> Phasor::create_context(double value)
-{
-    return std::make_unique<GeneratorContext>(value, m_frequency, m_amplitude, m_phase);
-}
-
 void Phasor::notify_tick(double value)
 {
-    auto context = create_context(value);
+    m_last_context = create_context(value);
 
     for (auto& callback : m_callbacks) {
-        callback(*context);
+        callback(*m_last_context);
     }
 
     if (m_phase_wrapped) {
         for (auto& callback : m_phase_wrap_callbacks) {
-            callback(*context);
+            callback(*m_last_context);
         }
     }
 
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*context)) {
-            callback(*context);
+        if (condition(*m_last_context)) {
+            callback(*m_last_context);
         }
     }
 
     for (auto& [callback, threshold] : m_threshold_callbacks) {
         if (value >= threshold && !m_threshold_crossed) {
-            callback(*context);
+            callback(*m_last_context);
             m_threshold_crossed = true;
         } else if (value < threshold) {
             m_threshold_crossed = false;

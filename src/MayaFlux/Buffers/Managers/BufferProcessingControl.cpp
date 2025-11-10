@@ -89,17 +89,22 @@ void BufferProcessingControl::add_processor(
     }
 }
 
-void BufferProcessingControl::add_processor_to_token(
+void BufferProcessingControl::add_processor(
     const std::shared_ptr<BufferProcessor>& processor,
     ProcessingToken token,
     uint32_t channel)
 {
     if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
-        if (channel == 0) {
-            add_audio_processor_to_token(processor, token);
-        } else {
-            add_audio_processor_to_channel(processor, token, channel);
-        }
+        add_audio_processor_to_channel(processor, token, channel);
+    }
+}
+
+void BufferProcessingControl::add_processor(
+    const std::shared_ptr<BufferProcessor>& processor,
+    ProcessingToken token)
+{
+    if (token == ProcessingToken::AUDIO_BACKEND || token == ProcessingToken::AUDIO_PARALLEL) {
+        add_audio_processor_to_token(processor, token);
     } else if (token == ProcessingToken::GRAPHICS_BACKEND) {
         add_graphics_processor(processor, token);
     }
@@ -293,7 +298,7 @@ std::shared_ptr<BufferProcessor> BufferProcessingControl::attach_quick_process(
     ProcessingToken token)
 {
     auto quick_process = std::make_shared<QuickProcess>(std::move(processor));
-    add_processor_to_token(quick_process, token);
+    add_processor(quick_process, token);
     return quick_process;
 }
 

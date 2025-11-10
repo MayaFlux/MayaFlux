@@ -8,7 +8,7 @@ namespace MayaFlux::Nodes::Generator {
  * @enum PolynomialMode
  * @brief Defines how the polynomial function processes input values
  */
-enum class PolynomialMode {
+enum class PolynomialMode : uint8_t {
     DIRECT, ///< Evaluates f(x) where x is the current phase/input
     RECURSIVE, ///< Evaluates using current and previous outputs: y[n] = f(y[n-1], y[n-2], ...)
     FEEDFORWARD ///< Evaluates using current and previous inputs: y[n] = f(x[n], x[n-1], ...)
@@ -77,6 +77,25 @@ private:
     std::deque<double> m_output_buffer; ///< Copy of output buffer
     std::vector<double> m_coefficients; ///< Copy of polynomial coefficients
     std::unordered_map<std::string, std::any> m_attributes; ///< Named attributes for callbacks
+};
+
+class MAYAFLUX_API PolynomialContextGpu
+    : public PolynomialContext,
+      public GpuVectorData {
+public:
+    PolynomialContextGpu(
+        double value,
+        PolynomialMode mode,
+        size_t buffer_size,
+        const std::deque<double>& input_buffer,
+        const std::deque<double>& output_buffer,
+        const std::vector<double>& coefficients,
+        std::span<const float> gpu_data)
+        : PolynomialContext(value, mode, buffer_size, input_buffer, output_buffer, coefficients)
+        , GpuVectorData(gpu_data)
+    {
+        type_id = typeid(PolynomialContextGpu).name();
+    }
 };
 
 /**
@@ -150,7 +169,7 @@ public:
      */
     Polynomial(BufferFunction function, PolynomialMode mode, size_t buffer_size);
 
-    virtual ~Polynomial() = default;
+    ~Polynomial() override = default;
 
     /**
      * @brief Processes a single sample
@@ -159,7 +178,7 @@ public:
      *
      * Computes the next output value based on the polynomial function and current mode.
      */
-    double process_sample(double input) override;
+    double process_sample(double input = 0.) override;
 
     /**
      * @brief Processes multiple samples at once
@@ -169,7 +188,7 @@ public:
      * This method is more efficient than calling process_sample() repeatedly
      * when generating multiple samples at once.
      */
-    virtual std::vector<double> process_batch(unsigned int num_samples) override;
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Resets the generator to its initial state
@@ -231,37 +250,37 @@ public:
      *
      * Configures the node to receive input from another node
      */
-    inline void set_input_node(std::shared_ptr<Node> input_node) { m_input_node = input_node; }
+    inline void set_input_node(const std::shared_ptr<Node>& input_node) { m_input_node = input_node; }
 
     /**
      * @brief Gets the current polynomial mode
      * @return Current polynomial mode
      */
-    PolynomialMode get_mode() const { return m_mode; }
+    [[nodiscard]] PolynomialMode get_mode() const { return m_mode; }
 
     /**
      * @brief Gets the buffer size
      * @return Current buffer size
      */
-    size_t get_buffer_size() const { return m_buffer_size; }
+    [[nodiscard]] size_t get_buffer_size() const { return m_buffer_size; }
 
     /**
      * @brief Gets the polynomial coefficients
      * @return Reference to the coefficient vector
      */
-    const std::vector<double>& get_coefficients() const { return m_coefficients; }
+    [[nodiscard]] const std::vector<double>& get_coefficients() const { return m_coefficients; }
 
     /**
      * @brief Gets the input buffer
      * @return Reference to the input buffer
      */
-    const std::deque<double>& get_input_buffer() const { return m_input_buffer; }
+    [[nodiscard]] const std::deque<double>& get_input_buffer() const { return m_input_buffer; }
 
     /**
      * @brief Gets the output buffer
      * @return Reference to the output buffer
      */
-    const std::deque<double>& get_output_buffer() const { return m_output_buffer; }
+    [[nodiscard]] const std::deque<double>& get_output_buffer() const { return m_output_buffer; }
 
     /**
      * @brief Prints a visual representation of the polynomial function
@@ -289,10 +308,38 @@ public:
      * This method retrieves the scaling factor applied to the output values,
      * which controls the overall amplitude of the generated signal.
      */
-    inline double get_amplitude() const override { return m_scale_factor; }
+    [[nodiscard]] inline double get_amplitude() const override { return m_scale_factor; }
 
     void save_state() override;
     void restore_state() override;
+
+    /**
+     * @brief Uses an external buffer context for processing
+     * @param buffer_view Span representing the external buffer
+     *
+     * Configures the generator to use an external buffer context
+     * for its internal processing, allowing integration with
+     * external data sources.
+     */
+    void set_buffer_context(std::span<double> buffer_view)
+    {
+        m_external_buffer_context = buffer_view;
+        m_use_external_context = true;
+    }
+
+    /**
+     * @brief Clear external buffer context, resume internal accumulation
+     */
+    inline void clear_buffer_context()
+    {
+        m_use_external_context = false;
+        m_external_buffer_context = {};
+    }
+
+    [[nodiscard]] inline bool using_external_context() const
+    {
+        return m_use_external_context;
+    }
 
 protected:
     /**
@@ -333,14 +380,25 @@ private:
     std::vector<double> m_coefficients; ///< Polynomial coefficients (if using coefficient-based definition)
     std::deque<double> m_input_buffer; ///< Buffer of input values for feedforward mode
     std::deque<double> m_output_buffer; ///< Buffer of output values for recursive mode
+    std::span<double> m_external_buffer_context; // View into external buffer
     size_t m_buffer_size; ///< Maximum size of the buffers
     double m_scale_factor; ///< Scaling factor for output
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
+    size_t m_current_buffer_position {}; // Where we are in the external buffer
 
     std::deque<double> m_saved_input_buffer; ///< Buffer of input values for feedforward mode
     std::deque<double> m_saved_output_buffer; ///< Buffer of output values for recursive mode
-    double m_saved_last_output;
+    double m_saved_last_output {};
     bool m_state_saved {};
+    bool m_use_external_context {}; // Whether to use it
+
+    /**
+     * @brief Builds buffer from external context or internal accumulation
+     * @param input Current input sample
+     * @param use_output_buffer If true, uses m_output_buffer; else m_input_buffer
+     * @return Buffer ready for m_buffer_function
+     */
+    std::deque<double> build_processing_buffer(double input, bool use_output_buffer);
 };
 
 } // namespace MayaFlux::Nodes::Generator

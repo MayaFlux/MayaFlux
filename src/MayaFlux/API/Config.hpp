@@ -9,6 +9,12 @@ namespace Core {
 }
 
 /**
+ * @brief Checks if the default audio engine is initialized
+ * @return True if the engine is initialized, false otherwise
+ */
+MAYAFLUX_API bool is_engine_initialized();
+
+/**
 @brief Globlal configuration for MayaFlux
 *
 * This namespace contains global configuration settings for MayaFlux, including graph and node configurations.

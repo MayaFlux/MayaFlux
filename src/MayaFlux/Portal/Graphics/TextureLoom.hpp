@@ -338,6 +338,8 @@ private:
 
     // Helper: hash sampler config for caching
     static size_t hash_sampler_config(const SamplerConfig& config);
+
+    static bool s_initialized;
 };
 
 /**

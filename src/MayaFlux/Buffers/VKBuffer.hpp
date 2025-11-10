@@ -120,15 +120,19 @@ public:
     void set_data(const std::vector<Kakshya::DataVariant>& data);
 
     /**
-     * @brief Request a new capacity for the buffer
+     * @brief Resize buffer and recreate GPU resources if needed
+     * @param new_size New size in bytes
+     * @param preserve_data If true, copy existing data to new buffer
      *
-     * Updates the logical size and inferred dimensions. If the buffer is
-     * already registered the actual Vulkan re-creation is deferred to the
-     * backend (BufferManager) and the Vulkan handles are invalidated locally.
+     * If buffer is already initialized (has GPU resources), this will:
+     * 1. Create new GPU buffer with new size
+     * 2. Optionally copy old data
+     * 3. Destroy old GPU buffer
+     * 4. Update buffer resources
      *
-     * @param new_size New buffer size in bytes.
+     * If buffer is not initialized, just updates logical size.
      */
-    void resize(size_t new_size);
+    void resize(size_t new_size, bool preserve_data = false);
 
     /**
      * @brief Get current logical size in bytes
@@ -389,6 +393,19 @@ public:
     {
         m_vertex_layout.reset();
     }
+
+    std::shared_ptr<Buffer> clone_to(uint8_t dest_desc) override;
+
+    /**
+     * @brief Create a clone of this buffer with the same data and properties
+     * @param usage Usage enum for the cloned buffer
+     * @return Shared pointer to the cloned VKBuffer
+     *
+     * The cloned buffer will have the same size, modality, dimensions,
+     * processing chain and default processor as the original. Changes to
+     * one buffer after cloning do not affect the other.
+     */
+    std::shared_ptr<VKBuffer> clone_to(Usage usage);
 
 private:
     VKBufferResources m_resources;
