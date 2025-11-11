@@ -34,6 +34,99 @@ You’ll read it, modify it, and run it directly.
 Each step is designed to teach you how the system thinks, so that later, when you invent something new, 
 you can do so fluently without waiting for someone else to provide the building blocks.
 
+- [Tutorial: Sculpting
+  Data](#tutorial-sculpting-data){#toc-tutorial-sculpting-data}
+  - [The Simplest First
+    Step](#the-simplest-first-step){#toc-the-simplest-first-step}
+  - [Expansion 1: What Is a
+    Container?](#expansion-1-what-is-a-container){#toc-expansion-1-what-is-a-container}
+  - [Expansion 2: Memory, Ownership, and Smart
+    Pointers](#expansion-2-memory-ownership-and-smart-pointers){#toc-expansion-2-memory-ownership-and-smart-pointers}
+  - [Expansion 3: What is
+    `vega`?](#expansion-3-what-is-vega){#toc-expansion-3-what-is-vega}
+  - [Expansion 4: The Container's
+    Processor](#expansion-4-the-containers-processor){#toc-expansion-4-the-containers-processor}
+  - [Expansion 5: What `.read()` Does NOT
+    Do](#expansion-5-what-.read-does-not-do){#toc-expansion-5-what-.read-does-not-do}
+- [Tutorial: Connect to
+  Buffers](#tutorial-connect-to-buffers){#toc-tutorial-connect-to-buffers}
+  - [The Next Step](#the-next-step){#toc-the-next-step}
+  - [Expansion 1: What Are
+    Buffers?](#expansion-1-what-are-buffers){#toc-expansion-1-what-are-buffers}
+  - [Expansion 2: Why Per-Channel
+    Buffers?](#expansion-2-why-per-channel-buffers){#toc-expansion-2-why-per-channel-buffers}
+  - [Expansion 3: The Buffer Manager and Buffer
+    Lifecycle](#expansion-3-the-buffer-manager-and-buffer-lifecycle){#toc-expansion-3-the-buffer-manager-and-buffer-lifecycle}
+  - [Expansion 4: ContainerBuffer---The
+    Bridge](#expansion-4-containerbufferthe-bridge){#toc-expansion-4-containerbufferthe-bridge}
+  - [Expansion 5: Processing
+    Token---AUDIO_BACKEND](#expansion-5-processing-tokenaudio_backend){#toc-expansion-5-processing-tokenaudio_backend}
+  - [Expansion 6: Accessing the
+    Buffers](#expansion-6-accessing-the-buffers){#toc-expansion-6-accessing-the-buffers}
+  - [The Fluent vs. Explicit
+    Comparison](#the-fluent-vs.-explicit-comparison){#toc-the-fluent-vs.-explicit-comparison}
+    - [Fluent (What happens behind the
+      scenes)](#fluent-what-happens-behind-the-scenes){#toc-fluent-what-happens-behind-the-scenes}
+    - [Explicit (What's actually
+      happening)](#explicit-whats-actually-happening){#toc-explicit-whats-actually-happening}
+  - [Try It](#try-it){#toc-try-it}
+- [Tutorial: Buffers Own
+  Chains](#tutorial-buffers-own-chains){#toc-tutorial-buffers-own-chains}
+  - [The Simplest Path](#the-simplest-path){#toc-the-simplest-path}
+  - [Expansion 1: What Is
+    `vega.IIR()`?](#expansion-1-what-is-vega.iir){#toc-expansion-1-what-is-vega.iir}
+  - [Expansion 2: What Is
+    `MayaFlux::create_processor()`?](#expansion-2-what-is-mayafluxcreate_processor){#toc-expansion-2-what-is-mayafluxcreate_processor}
+  - [Expansion 3: What Is a Processing
+    Chain?](#expansion-3-what-is-a-processing-chain){#toc-expansion-3-what-is-a-processing-chain}
+  - [Expansion 4: Adding Processor to Another Channel
+    (Optional)](#expansion-4-adding-processor-to-another-channel-optional){#toc-expansion-4-adding-processor-to-another-channel-optional}
+  - [Expansion 5: What Happens
+    Inside](#expansion-5-what-happens-inside){#toc-expansion-5-what-happens-inside}
+  - [Expansion 6: Processors Are Reusable Building
+    Blocks](#expansion-6-processors-are-reusable-building-blocks){#toc-expansion-6-processors-are-reusable-building-blocks}
+  - [Try It](#try-it-1){#toc-try-it-1}
+- [Tutorial: Timing, Streams, and
+  Bridges](#tutorial-timing-streams-and-bridges){#toc-tutorial-timing-streams-and-bridges}
+  - [The Current Continous
+    Flow](#the-current-continous-flow){#toc-the-current-continous-flow}
+  - [Where We're Going](#where-were-going){#toc-where-were-going}
+  - [Expansion 1: The Architecture of
+    Containers](#expansion-1-the-architecture-of-containers){#toc-expansion-1-the-architecture-of-containers}
+  - [Expansion 2: Enter
+    DynamicSoundStream](#expansion-2-enter-dynamicsoundstream){#toc-expansion-2-enter-dynamicsoundstream}
+  - [Expansion 3:
+    StreamWriteProcessor](#expansion-3-streamwriteprocessor){#toc-expansion-3-streamwriteprocessor}
+  - [Expansion 4: FileBridgeBuffer---Controlled
+    Flow](#expansion-4-filebridgebuffercontrolled-flow){#toc-expansion-4-filebridgebuffercontrolled-flow}
+  - [Expansion 5: Why This
+    Architecture?](#expansion-5-why-this-architecture){#toc-expansion-5-why-this-architecture}
+  - [Expansion 6: From File to
+    Cycle](#expansion-6-from-file-to-cycle){#toc-expansion-6-from-file-to-cycle}
+  - [The Three Key
+    Concepts](#the-three-key-concepts){#toc-the-three-key-concepts}
+  - [Why This Section Has No Audio
+    Code](#why-this-section-has-no-audio-code){#toc-why-this-section-has-no-audio-code}
+  - [What You Should
+    Internalize](#what-you-should-internalize){#toc-what-you-should-internalize}
+- [Tutorial: Buffer Pipelines
+  (Teaser)](#tutorial-buffer-pipelines-teaser){#toc-tutorial-buffer-pipelines-teaser}
+  - [The Next Level](#the-next-level){#toc-the-next-level}
+  - [A Taste](#a-taste){#toc-a-taste}
+  - [Expansion 1: What Is a
+    Pipeline?](#expansion-1-what-is-a-pipeline){#toc-expansion-1-what-is-a-pipeline}
+  - [Expansion 2: BufferOperation
+    Types](#expansion-2-bufferoperation-types){#toc-expansion-2-bufferoperation-types}
+  - [Expansion 3: The `on_capture_processing`
+    Pattern](#expansion-3-the-on_capture_processing-pattern){#toc-expansion-3-the-on_capture_processing-pattern}
+  - [Expansion 4: Why This
+    Matters](#expansion-4-why-this-matters){#toc-expansion-4-why-this-matters}
+  - [What Happens Next](#what-happens-next){#toc-what-happens-next}
+  - [Try It (Optional)](#try-it-optional){#toc-try-it-optional}
+  - [The Philosophy](#the-philosophy){#toc-the-philosophy}
+  - [Next: The Full Pipeline
+    Tutorial](#next-the-full-pipeline-tutorial){#toc-next-the-full-pipeline-tutorial}
+
 ## The Simplest First Step
 
 Run this code. The file is loaded into memory.

@@ -107,28 +107,20 @@ For detailed setup, see [Getting Started](docs/Getting_Started.md).
 
 ## Using MayaFlux
 
-### Basic Audio Processing
+### Basic Application Structure
+
+For actual code examples refer to [Getting Started](docs/Getting_Started.md)
+or any of the tutorials linked in them.
 
 ```cpp
 #include "MayaFlux/MayaFlux.hpp"
 
 int main() {
+    // Pre init config goes here.
     MayaFlux::Init();
 
-    // Create nodes
-    auto sine = vega.Sine(200)[{0, 1}] | Audio;
-    uint32_t input_samples = 30;
-    uint32_t output_samples = 8;
-    auto filter = vega.IIR(30, 8);
-    sine >> filter;
-
-    auto impulse = vega.Impulse(1)[0] | Graphics;
-    float freq = 200.f;
-    impulse->on_impulse([&freq, sine](auto& ctx){
-        freq+= ctx.value * 10;
-        sine->set_frequence(freq);
-    })
-
+    // Any post init setup required for starting
+    // subsystems go here.
 
     // Start processing
     MayaFlux::Start();
@@ -138,7 +130,13 @@ int main() {
     MayaFlux::End();
     return 0;
 }
+
 ```
+
+If not building from source, it is recommended to use the auto generated src/user_project.hpp 
+instead of Project main.cpp
+
+---
 
 ### Live Code Modification (Lila)
 
@@ -172,7 +170,7 @@ live_interpreter.eval(R"(
 )");
 ```
 
-For more examples, see [Getting Started](docs/Getting_Started.md) and [Digital Transformation Paradigm](docs/Digital_Transformation_Paradigm.md).
+For contextual overview start with [Digital Transformation Paradigm](docs/Digital_Transformation_Paradigm.md).
 
 ---
 
@@ -188,14 +186,14 @@ For more examples, see [Getting Started](docs/Getting_Started.md) and [Digital T
 
 Explore your first MayaFlux programs:
 - **[Sculpting Data Part I](docs/Tutorials/SculptingData.md)**:
-    This turorials gets you started on the foundational concepts of MayalFlux,
+    This tutorial gets you started on the foundational concepts of MayaFlux,
     i.e Data driven workflow with a teaser towards declarative syntax. 
-    It has simple Runnable code examples with optional compprehensive explanations.
+    It has simple Runnable code examples with optional comprehensive explanations.
     The previously linked Getting Started guide is a prerequisite for this tutorial.
 
 ### API Documentation
 
-Auto-generated API docs (Will be enalbed when the repository goes public):
+Auto-generated API docs (Will be enabled once CI pipelines are set up):
 
 - **[GitHub Pages](https://mayaflux.github.io/MayaFlux/)**
 - **[GitLab Pages](https://mayaflux.gitlab.io/MayaFlux/)**
@@ -221,7 +219,7 @@ open docs/html/index.html
 | Graphics (Vulkan)        | ⚙ POC            | Architecture validated, compute shader integration in progress |
 | Grammar-Driven Pipelines | ⚙ In Development | Core framework ready, advanced matching in progress            |
 
-**Development began**: ~7 months ago (April 2025)  
+**Development began**: Since April 2025
 **Current version**: 0.1.0 (alpha)  
 **Trajectory**: Stable core, expanding multimedia capabilities
 

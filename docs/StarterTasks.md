@@ -155,42 +155,126 @@ Can the caller handle this error?
 
 ## 🗺️ Context Guide
 
-**Choose the context that matches WHERE this code executes:**
+**Choose the context that matches *where* this code executes.**
+Each log message must specify a `Context` to allow real-time safety checks, filtering, and debugging.
 
-| Context               | When to Use                         | Examples                                               |
-| --------------------- | ----------------------------------- | ------------------------------------------------------ |
-| `AudioCallback`       | Inside audio processing callback    | Buffer processing, sample generation                   |
-| `GraphicsCallback`    | Inside rendering callback           | Frame rendering, visual updates                        |
-| `Realtime`            | Any real-time processing context    | Updates to system components via RT scheduled entities |
-| `AudioBackend`        | Audio backend operations            | RtAudio, JACK, ASIO driver calls                       |
-| `GraphicsBackend`     | Graphics backend operations         | Vulkan/OpenGL driver calls                             |
-| `CustomBackend`       | User-defined backend                | Plugin-defined backend                                 |
-| `AudioSubsystem`      | Audio subsystem orchestration       | Device management, stream setup                        |
-| `GraphicsSubsystem`   | Graphics subsystem orchestration    | Rendering pipeline, swapchain setup                    |
-| `WindowingSubsystem`  | Windowing system operations         | GLFW, SDL                                              |
-| `CustomSubsystem`     | User-defined subsystem              | Plugin-defined subsystem                               |
-| `NodeProcessing`      | Node graph operations               | Node creation, evaluation, graph scheduling            |
-| `BufferProcessing`    | Buffer operations                   | Allocation, processing chains                          |
-| `CoroutineScheduling` | Coroutine/task scheduling           | Temporal coordination, `Vruta::TaskScheduler`          |
-| `ContainerProcessing` | Container/file/region operations    | Kakshya file/stream/region processing                  |
-| `ComputeProcessing`   | Compute/DSP/matrix operations       | Yantra algorithms, transforms                          |
-| `Worker`              | Background worker thread tasks      | Non-RT scheduled work                                  |
-| `AsyncIO`             | Asynchronous I/O                    | File loading, network streaming                        |
-| `BackgroundCompile`   | Background compilation/optimization | JIT tasks, preprocessing                               |
-| `Init`                | Engine/subsystem initialization     | Startup routines                                       |
-| `Shutdown`            | Engine/subsystem shutdown           | Cleanup, teardown                                      |
-| `Configuration`       | Parameter/configuration changes     | Buffer size, sample rate, graphics options             |
-| `UI`                  | User interface thread               | UI events, rendering                                   |
-| `UserCode`            | User script/plugin execution        | Scripting environments, dynamic plugins                |
-| `Interactive`         | Interactive shell or REPL           | Live coding, REPL                                      |
-| `CrossSubsystem`      | Cross-subsystem coordination        | Data sharing between audio/graphics                    |
-| `ClockSync`           | Clock synchronization               | SampleClock ↔ FrameClock                              |
-| `EventDispatch`       | Event dispatching and coordination  | System-wide events                                     |
-| `Runtime`             | General runtime operations          | Default catch-all                                      |
-| `Testing`             | Testing/benchmarking                | Unit tests, perf benchmarks                            |
-| `Unknown`             | Unknown or unspecified              | Use only if unclear (add TODO to verify)               |
+---
 
-**When in doubt, use `Context::Runtime`** and comment `// TODO: verify context`
+### Real-Time Contexts
+
+*(Never block, allocate, or throw.)*
+
+| Context            | When to Use                      | Examples                                      |
+| ------------------ | -------------------------------- | --------------------------------------------- |
+| `AudioCallback`    | Inside the audio callback thread | Sample generation, node graph evaluation      |
+| `GraphicsCallback` | Inside the rendering callback    | Frame rendering, visual updates               |
+| `Realtime`         | Generic real-time thread         | RT-safe control updates, timing-sensitive ops |
+
+---
+
+### Backend Contexts
+
+| Context           | When to Use                          | Examples                                  |
+| ----------------- | ------------------------------------ | ----------------------------------------- |
+| `AudioBackend`    | Audio backend driver layer           | RtAudio, JACK, ASIO callbacks             |
+| `GraphicsBackend` | Graphics backend driver layer        | Vulkan, OpenGL, or Metal API interactions |
+| `CustomBackend`   | User-defined or experimental backend | Plugin or external backend integration    |
+
+---
+
+### GPU Contexts
+
+| Context      | When to Use                  | Examples                            |
+| ------------ | ---------------------------- | ----------------------------------- |
+| `GPUCompute` | GPU compute operations       | GPGPU kernels, shader compute tasks |
+| `Rendering`  | Rendering pipeline execution | Frame composition, draw calls       |
+
+---
+
+### Subsystem Contexts
+
+| Context              | When to Use                      | Examples                             |
+| -------------------- | -------------------------------- | ------------------------------------ |
+| `AudioSubsystem`     | Audio subsystem orchestration    | Device enumeration, stream lifecycle |
+| `GraphicsSubsystem`  | Graphics subsystem orchestration | Render pipeline, swapchain setup     |
+| `WindowingSubsystem` | Windowing system integration     | GLFW, SDL, platform UI handling      |
+| `CustomSubsystem`    | Custom or user-defined subsystem | Third-party integrations, plugins    |
+
+---
+
+### Processing Contexts
+
+| Context               | When to Use                     | Examples                                         |
+| --------------------- | ------------------------------- | ------------------------------------------------ |
+| `NodeProcessing`      | Node graph processing           | Node evaluation, dependency resolution           |
+| `BufferProcessing`    | Buffer transformations          | DSP chains, convolution, routing                 |
+| `BufferManagement`    | Buffer allocation and lifecycle | Creation, recycling, metadata updates            |
+| `CoroutineScheduling` | Coroutine or task scheduling    | `Vruta::TaskScheduler`, cooperative multitasking |
+| `ContainerProcessing` | File or region-based data ops   | `Kakshya` file/stream/region parsing             |
+| `ComputeMatrix`       | Mathematical or DSP compute     | `Yantra` operations, transforms, matrix algebra  |
+| `ImageProcessing`     | Image operations                | Filters, frame transforms, texture updates       |
+| `ShaderCompilation`   | GPU shader compilation          | GLSL/SPIR-V compilation, reflection              |
+
+---
+
+### Worker Contexts
+
+| Context             | When to Use                          | Examples                                 |
+| ------------------- | ------------------------------------ | ---------------------------------------- |
+| `Worker`            | Background worker threads            | Deferred non-RT processing               |
+| `AsyncIO`           | Asynchronous I/O operations          | Streaming, networking, background loads  |
+| `FileIO`            | Filesystem read/write                | Project saves, sample loading            |
+| `BackgroundCompile` | Background code or asset compilation | Caching, JIT builds, optimization passes |
+
+---
+
+### Lifecycle Contexts
+
+| Context         | When to Use             | Examples                                    |
+| --------------- | ----------------------- | ------------------------------------------- |
+| `Init`          | Initialization routines | Engine, subsystem, or backend startup       |
+| `Shutdown`      | Cleanup routines        | Graceful teardown, memory cleanup           |
+| `Configuration` | Config/state changes    | Sample rate, buffer size, render resolution |
+
+---
+
+### User Interaction Contexts
+
+| Context       | When to Use                | Examples                        |
+| ------------- | -------------------------- | ------------------------------- |
+| `UI`          | User interface thread      | GUI events, parameter updates   |
+| `UserCode`    | User script or plugin code | Embedded scripts, live patches  |
+| `Interactive` | Interactive shell / REPL   | Live coding, runtime evaluation |
+
+---
+
+### Coordination Contexts
+
+| Context          | When to Use                      | Examples                                 |
+| ---------------- | -------------------------------- | ---------------------------------------- |
+| `CrossSubsystem` | Data coordination across domains | Audio ↔ Graphics sync, shared buffers    |
+| `ClockSync`      | Clock synchronization            | `SampleClock` and `FrameClock` alignment |
+| `EventDispatch`  | System-wide event routing        | Inter-module messaging, async dispatch   |
+
+---
+
+### Special Contexts
+
+| Context   | When to Use                | Examples                                            |
+| --------- | -------------------------- | --------------------------------------------------- |
+| `Runtime` | General runtime            | Default context, fallback case                      |
+| `Testing` | Testing or benchmarking    | Unit tests, performance profiles                    |
+| `API`     | External API entry points  | Public-facing bindings, integrations                |
+| `Unknown` | Unspecified or placeholder | Use only temporarily with `// TODO: verify context` |
+
+---
+
+### Default Choice
+
+ **When in doubt, use `Context::Runtime` and add a comment:**
+ `// TODO: verify context`
+
+This ensures logs remain consistent and searchable while preserving real-time safety.
 
 ## 🧩 Component Guide
 
@@ -204,6 +288,9 @@ Components usually map to namespaces:
 | `Vruta::`           | `Component::Vruta`   |
 | `Kakshya::`         | `Component::Kakshya` |
 | `Yantra::`          | `Component::Yantra`  |
+| `IO::`          | `Component::IO`  |
+| `Registry::`          | `Component::Registry`  |
+| `Portal::`          | `Component::Portal`  |
 | `examples/`         | `Component::USER`    |
 
 ## ✅ Checklist Before Submitting PR

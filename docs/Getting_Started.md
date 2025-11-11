@@ -77,7 +77,7 @@ If you're coming from creative coding environments like p5.js, Processing, or Su
 
 3. **That's it!** VS Code will automatically:
    - Detect the CMake configuration
-   - Set up IntelliSense for code completion
+   - Set up LSP/IntelliSense for code completion
    - Configure build and debug settings
    - Handle compilation when you press `F5`
 
@@ -114,7 +114,7 @@ After running the setup script, you'll find a `user_project.hpp` file in the src
 ```cpp
 // src/user_project.hpp - Your code space (never overwritten by updates)
 #pragma once
-#define MAYASIMPLE;
+#define MAYASIMPLE
 #include "MayaFlux/MayaFlux.hpp"
 
 void compose() {

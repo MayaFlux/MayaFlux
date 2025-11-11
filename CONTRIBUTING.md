@@ -1,67 +1,101 @@
-# Contributor Guidelines
+# Contributing to MayaFlux
 
-Thank you for your interest in contributing to MayaFlux!  
-This project is built on the principles of open knowledge, equitable access, and collaborative development.  
-By participating, you agree to abide by the GPLv3 license and the following contribution guidelines:
-
----
-
-## Contribution Principles
-
-1. **Open Source First**  
-   All contributions must remain open-source and compatible with the GPLv3 license.  
-   Contributions should not be restricted by external proprietary or contractual claims.
-
-2. **Shared Credit**  
-   Contributors will be acknowledged in release notes, `CONTRIBUTORS.md`, and Git history.  
-   Please respect proper attribution for all ideas, code, and documentation.
-
-3. **Public Benefit**  
-   Contributions should align with the project’s mission: building tools that are publicly accessible, technically rigorous, and creatively empowering.
+Thank you for your interest in contributing to **MayaFlux**!
+This project is built on the principles of open knowledge, equitable access, and collaborative development.
+By participating, you agree to abide by the **GPLv3 license** and the guidelines below.
 
 ---
 
-## How to Contribute
+## 🧩 Contribution Philosophy
 
-1. **Fork the repository**
-2. **Make your changes** in a dedicated branch
-3. **Submit a pull request (PR)** with:
-   - A clear description of the changes
-   - Any references (papers, code sources, etc.) if implementing algorithms
-   - Notes on testing or known limitations
+1. **Open Source First**
+   All contributions must remain open and compatible with GPLv3.
+   No proprietary or NDA-bound work can be merged.
 
-PRs will be reviewed for clarity, correctness, and compliance with the contribution principles above.
+2. **Shared Credit**
+   All contributors are acknowledged in release notes, `CONTRIBUTORS.md`, and Git history.
+   Attribution and citation are integral to how MayaFlux recognizes effort.
 
----
+3. **Public Benefit**
+   Contributions should advance the public, creative, or technical potential of digital media systems.
+   This project exists to empower creators, not gatekeep technology.
 
-## Contribution Pathways
-
-Different contributors bring different skills. To make it easier to get started:
-
-- **Starter Contributions**:  
-  See [StarterTasks.md](docs/StarterTasks.md) for approachable first issues like logging migration, context tagging, and cleanup tasks.
-
-- **Documentation & Examples**:  
-  Contributions to documentation, tutorials, or example patches are welcome and valuable.
+4. **Technical Integrity**
+   MayaFlux adheres to real-time safety, cross-platform correctness, and compositional clarity.
+   PRs that violate these principles may be deferred until restructured.
 
 ---
 
-## Requirements for All Contributions
+## 🔧 Contribution Workflow
 
-- Code must compile without errors
-- Include or update documentation when necessary
-- Follow the licensing terms (GPLv3)
-- Keep real-time safety in mind for audio/graphics callbacks
+1. **Fork** the repository.
+2. **Create a branch** for your feature, fix, or document.
+3. **Commit cleanly** — prefer focused commits with descriptive messages.
+4. **Submit a Pull Request (PR)** containing:
+
+   * A summary of what was done and why
+   * Notes on testing (especially for real-time or platform-critical changes)
+   * References to any algorithms, papers, or external code used
+
+PRs are reviewed for technical clarity, conceptual alignment, and code safety.
 
 ---
 
-## Code of Conduct
+## 🚀 Contribution Areas
 
-Please engage respectfully with others. Contributions are welcome regardless of background, affiliation, or expertise level — what matters is alignment with the project’s open ethos and technical goals.
+MayaFlux welcomes contributions across several domains:
+
+| Area                                | Description                                            | Reference                                      |
+| ----------------------------------- | ------------------------------------------------------ | ---------------------------------------------- |
+| **Core Development**                | Engine code, nodes, scheduling, DSP, graphics, runtime | Internal review required                       |
+| **Documentation & Tutorials**       | Guides, concept overviews, teaching materials          | `docs/`                                        |
+| **Starter Tasks**                   | Logging cleanup, context tagging, code modernization   | [`docs/StarterTasks.md`](docs/StarterTasks.md) |
+| **Build Operations & Distribution** | CI/CD, installers, package manager recipes             | [`docs/BuildOps.md`](docs/BuildOps.md)         |
+| **Research & Theory**               | Algorithmic or conceptual proposals                    | Open issue → Discussion thread                 |
 
 ---
 
-## Disclaimer
+**New to MayaFlux?** Start with [Starter Tasks](docs/StarterTasks.md) or [Build Operations](docs/BuildOps.md).
 
-By contributing, you affirm that your contributions are your own to share under GPLv3, without third-party restrictions.  
-This ensures the project remains open, sustainable, and beneficial to everyone.
+---
+
+## 🧱 Requirements for All PRs
+
+* Code must **compile cleanly** on at least one supported platform.
+* Documentation should be updated when behavior changes.
+* Maintain **real-time safety** in audio and rendering contexts.
+* Follow existing code style conventions.
+* Include license headers where appropriate.
+
+---
+
+## 🤝 Communication & Etiquette
+
+* Use Issues or Discussions for questions before starting major work.
+* Be respectful and patient — we aim for rigor, not speed.
+* Engage constructively; critical discourse is encouraged, hostility is not.
+* Contributions are welcome regardless of background or experience.
+
+---
+
+## ⚖️ Legal & Licensing
+
+By contributing, you affirm that:
+
+* You have the right to share your contribution under GPLv3.
+* Your code/documentation is free from third-party restrictions.
+
+This ensures MayaFlux remains open, sustainable, and publicly beneficial.
+
+---
+
+## 🪜 Where to Start
+
+If you’re new, begin with:
+
+* [`docs/StarterTasks.md`](docs/StarterTasks.md) — short, tangible starter issues
+* [`docs/BuildOps.md`](docs/BuildOps.md) — if you’re interested in build systems, CI/CD, or packaging
+
+---
+
+*(For questions or coordination, open an issue with the appropriate label, e.g. `build-ops`, `doc`, `feature`, or `discussion`.)*
