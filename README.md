@@ -7,7 +7,8 @@
 
 > **A unified multimedia processing architecture treating audio, video, and algorithmic composition as interchangeable computational material.**
 
-MayaFlux is not a plugin framework, DAW, or audio library. It's the **computational substrate** that makes new kinds of real-time multimedia systems possible—by asking a fundamental question: _What if audio, visuals, and control data shared the same processing paradigm instead of separate, disconnected domains?_
+MayaFlux is not a plugin framework, DAW, or audio library. It's the **computational substrate** that makes new kinds of real-time multimedia systems possible—by asking a fundamental question:
+_What if audio, visuals, and control data shared the same processing paradigm instead of separate, disconnected domains?_
 
 ---
 
@@ -80,8 +81,8 @@ All components remain **composable and concurrent**. Processing domains are enco
 
 - **Compiler**: C++20 compatible (GCC 12+, Clang 16+, MSVC 2022+)
 - **Build System**: CMake 3.20+
-- **Core Dependencies**: RtAudio, GLFW
-- **Optional**: LLVM 21+ (for Lila live coding), FFmpeg (media I/O), Vulkan SDK (graphics)
+- **Dependencies**: RtAudio, GLFW, FFmpeg, glm, Vulkan SDK, stb
+- **Optional**: LLVM 21+ (for Lila live coding), google-test (unit tests), Eigen (linear algebra)
 
 ### Build
 
@@ -300,11 +301,21 @@ See [LICENSE](LICENSE) for full terms.
 
 MayaFlux welcomes collaboration. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+**New to MayaFlux?** Start with [Starter Tasks](docs/StarterTasks.md) or [Build Operations](docs/BuildOps.md).
+
 All contributors must follow [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ---
 
 ## Authorship & Ethics
+
+**Primary Author and Maintainer:**  
+Ranjith Hegde — independent researcher and developer.
+
+MayaFlux is a project initiated, designed, and developed almost entirely by Ranjith Hegde since March 2025,
+with discussions and early contributions from collaborators (hoping for more in the future).
+The project reflects an ongoing investigation into **digital-first multimedia computation**
+treating sound, image, and data as a unified numerical continuum rather than separate artistic domains.
 
 For authorship, project ownership, and ethical positioning, see [ETHICAL_DECLARATIONS.md](ETHICAL_DECLARATIONS.md).
 
