@@ -92,6 +92,17 @@ jobs:
         run: |
           eval "$(/opt/homebrew/bin/brew shellenv)"
 
+          which cmake
+          cmake --version
+
+          # If wrong cmake, fix it
+          if cmake --version | grep -q "4.1.2"; then
+            echo "ERROR: Wrong CMake detected, fixing PATH"
+            # Remove homebrew cmake from PATH if it exists
+            export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+            # Re-add the cmake from the action (should be in /usr/local/bin or similar)
+          fi
+
           # Re-establish all the paths when cache is hit
           for tool in rtaudio ffmpeg shaderc googletest pkg-config eigen onedpl magic_enum fmt glfw glm llvm; do
             if TOOL_PREFIX=$(brew --prefix $tool 2>/dev/null); then
@@ -101,10 +112,22 @@ jobs:
               if [ -d "$TOOL_PREFIX/lib/cmake" ]; then
                 export CMAKE_PREFIX_PATH="$TOOL_PREFIX/lib/cmake:$CMAKE_PREFIX_PATH"
               fi
+              # Special handling for eigen which uses eigen3 name
+              if [ "$tool" = "eigen" ] && [ -d "$TOOL_PREFIX/share/eigen3/cmake" ]; then
+                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/eigen3/cmake:$CMAKE_PREFIX_PATH"
+              fi
             fi
           done
 
-          # Export all the paths
+          # Eigen special handling - it installs to share/eigen3
+          EIGEN_PREFIX=$(brew --prefix eigen)
+          if [ -d "$EIGEN_PREFIX/share/pkgconfig" ]; then
+            export PKG_CONFIG_PATH="$EIGEN_PREFIX/share/pkgconfig:$PKG_CONFIG_PATH"
+          fi
+
+          # Export all the paths BUT make sure cmake from the action is used
+          ACTIONS_CMAKE_PATH=$(which cmake)
+          echo "CMAKE_COMMAND=$ACTIONS_CMAKE_PATH" >> $GITHUB_ENV
           echo "PATH=$PATH" >> $GITHUB_ENV
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "CMAKE_PREFIX_PATH=$(brew --prefix):$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
@@ -119,10 +142,19 @@ jobs:
           echo "Clang_DIR=$LLVM_PREFIX/lib/cmake/clang" >> $GITHUB_ENV
 
           # Verify the setup worked
+          echo "=== Verifying environment ==="
+          echo "CMAKE command: $(which cmake)"
+          echo "CMAKE version: $(cmake --version | head -1)"
           echo "=== Verifying pkg-config can find packages ==="
           pkg-config --exists rtaudio && echo "✅ rtaudio found" || echo "❌ rtaudio not found"
           pkg-config --exists glfw3 && echo "✅ glfw3 found" || echo "❌ glfw3 not found"
           pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
+
+          # Debug eigen specifically
+          echo "=== Debugging Eigen ==="
+          echo "Eigen prefix: $EIGEN_PREFIX"
+          ls -la $EIGEN_PREFIX/share/pkgconfig/ 2>/dev/null || echo "No pkgconfig dir"
+          ls -la $EIGEN_PREFIX/include/eigen3/ 2>/dev/null | head -5 || echo "No eigen3 headers"
 
       - name: Install Vulkan SDK (LunarG)
         uses: jakoch/install-vulkan-sdk-action@v1
@@ -150,20 +182,27 @@ jobs:
         shell: bash
         run: |
           eval "$(/opt/homebrew/bin/brew shellenv)"
+
+          # Use the cmake from the action explicitly
+          CMAKE_BIN="${CMAKE_COMMAND:-cmake}"
+
           # Ensure all paths are properly set
           export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
           export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
 
           echo "=== Final CMake environment ==="
+          echo "Using CMAKE: $CMAKE_BIN"
+          echo "CMAKE version: $($CMAKE_BIN --version | head -1)"
           echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH"
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
 
-          cmake -B build \
+          $CMAKE_BIN -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_VERBOSE_MAKEFILE=ON
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DCMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}"
 
       - name: Build
         shell: bash
