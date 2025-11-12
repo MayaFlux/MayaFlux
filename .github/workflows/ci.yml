@@ -79,6 +79,7 @@ jobs:
             shaderc
             googletest
             pkg-config
+            cmake
             eigen
             onedpl
             magic_enum
