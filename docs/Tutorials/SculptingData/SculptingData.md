@@ -1,4 +1,4 @@
-# Tutorial: Sculpting Data
+# MayaFlux Tutorial: Sculpting Data Part I
 
 In MayaFlux, data isn’t something you use -> it’s something you shape.
 Sound, light, numbers, all share the same substrate.

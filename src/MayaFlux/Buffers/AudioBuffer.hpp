@@ -184,17 +184,18 @@ public:
      * applied in sequence when the buffer is processed. This enables complex
      * audio processing pipelines for effects, filtering, and analysis.
      */
-    inline virtual std::shared_ptr<BufferProcessingChain> get_processing_chain() override { return m_processing_chain.lock(); }
+    inline virtual std::shared_ptr<BufferProcessingChain> get_processing_chain() override { return m_processing_chain; }
 
     /**
      * @brief Sets the audio transformation chain for this buffer
      * @param chain New audio processing chain for sequential transformations
+     * @param force If true, replaces the existing chain even if one is already set
      *
      * Replaces the current audio processing chain with the provided one.
      * The chain should contain processors compatible with double-precision
      * audio data.
      */
-    inline virtual void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain) override { m_processing_chain = chain; }
+    virtual void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain, bool force = false) override;
 
     /**
      * @brief Gets a reference to a specific audio sample in the buffer
@@ -385,13 +386,11 @@ protected:
     std::shared_ptr<BufferProcessor> m_default_processor;
 
     /**
-     * @brief Weak reference to the audio transformation chain
+     * @brief Audio transformation processing chain for this buffer
      *
-     * Using a weak_ptr prevents circular references between the audio buffer
-     * and its processing chain, while still allowing access to complex
-     * audio processing pipelines.
+     * Contains a sequence of audio processors that will be applied in order
      */
-    std::weak_ptr<BufferProcessingChain> m_processing_chain;
+    std::shared_ptr<BufferProcessingChain> m_processing_chain;
 
     /**
      * @brief Creates a default audio transformation processor for this buffer type

@@ -351,7 +351,7 @@ void BufferProcessingControl::add_graphics_processor(
 {
     auto chain = m_access_control.get_graphics_processing_chain(token);
     chain->add_processor(processor, buffer);
-    buffer->set_processing_chain(chain);
+    buffer->set_processing_chain(chain, false);
 }
 
 void BufferProcessingControl::set_graphics_final_processor(

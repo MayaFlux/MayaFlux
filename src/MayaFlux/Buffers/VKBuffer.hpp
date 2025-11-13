@@ -173,8 +173,9 @@ public:
     /**
      * @brief Replace the buffer's processing chain
      * @param chain New processing chain to assign.
+     * @param force If true, replaces existing chain even if one is set.
      */
-    void set_processing_chain(std::shared_ptr<Buffers::BufferProcessingChain> chain) override;
+    void set_processing_chain(std::shared_ptr<Buffers::BufferProcessingChain> chain, bool force = false) override;
 
     bool has_data_for_cycle() const override { return m_has_data; }
     bool needs_removal() const override { return m_needs_removal; }

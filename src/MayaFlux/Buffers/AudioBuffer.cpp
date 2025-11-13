@@ -117,4 +117,13 @@ bool AudioBuffer::read_once(std::shared_ptr<AudioBuffer> buffer, bool force)
     return false;
 }
 
+void AudioBuffer::set_processing_chain(std::shared_ptr<BufferProcessingChain> chain, bool force)
+{
+    if (m_processing_chain && !force) {
+        m_processing_chain->merge_chain(chain);
+        return;
+    }
+    m_processing_chain = chain;
+}
+
 }
