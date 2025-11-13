@@ -243,7 +243,7 @@ auto create_buffer(Args&&... args) -> std::shared_ptr<BufferType>
  */
 template <typename ProcessorType, typename... Args>
     requires std::derived_from<ProcessorType, Buffers::BufferProcessor>
-auto create_processor(const std::shared_ptr<Buffers::AudioBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>&
+auto create_processor(const std::shared_ptr<Buffers::AudioBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>
 {
     auto processor = std::make_shared<ProcessorType>(std::forward<Args>(args)...);
     add_processor(processor, buffer);
@@ -252,7 +252,7 @@ auto create_processor(const std::shared_ptr<Buffers::AudioBuffer> buffer, Args&&
 
 template <typename ProcessorType, typename... Args>
     requires std::derived_from<ProcessorType, Buffers::BufferProcessor>
-auto create_processor(const std::shared_ptr<Buffers::VKBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>&
+auto create_processor(const std::shared_ptr<Buffers::VKBuffer> buffer, Args&&... args) -> std::shared_ptr<ProcessorType>
 {
     auto processor = std::make_shared<ProcessorType>(std::forward<Args>(args)...);
     add_processor(processor, buffer);
