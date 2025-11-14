@@ -147,6 +147,64 @@
       "dependsOn": ["CMake Clean", "Build MayaFlux (Release)"],
       "group": "build",
       "problemMatcher": []
+    },
+    {
+      "label": "Run project_launcher",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/project_launcher",
+      "windows": {
+        "command": "${workspaceFolder}\\build\\Debug\\project_launcher.exe"
+      },
+      "group": "none",
+      "dependsOn": ["Build MayaFlux (Debug)"],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "Run lila_server",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/lila_server",
+      "windows": {
+        "command": "${workspaceFolder}\\build\\Debug\\lila_server.exe"
+      },
+      "group": "none",
+      "dependsOn": ["Build MayaFlux (Debug)"],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
+      "label": "Run lila_server (with custom port)",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/lila_server",
+      "args": ["-p", "${input:serverPort}"],
+      "windows": {
+        "command": "${workspaceFolder}\\build\\Debug\\lila_server.exe"
+      },
+      "group": "none",
+      "dependsOn": ["Build MayaFlux (Debug)"],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      }
     }
   ],
   "inputs": [
@@ -156,6 +214,12 @@
       "description": "Select the build type",
       "options": ["Debug", "Release"],
       "default": "Debug"
+    },
+    {
+      "id": "serverPort",
+      "type": "promptString",
+      "description": "Enter the port number for the server",
+      "default": "8080"
     }
   ]
 }

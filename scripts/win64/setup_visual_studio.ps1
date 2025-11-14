@@ -1,10 +1,10 @@
-# scripts/setup_visual_studio.ps1 (or generate_vs_solution.ps1)
+# scripts/win64/setup_visual_studio.ps1
 
 Write-Host "MayaFlux Visual Studio Solution Generator" -ForegroundColor Cyan
 Write-Host ""
 
 $SCRIPT_DIR = $PSScriptRoot
-$PROJECT_ROOT = (Get-Item (Join-Path $SCRIPT_DIR "..")).FullName
+$PROJECT_ROOT = Split-Path (Split-Path $SCRIPT_DIR -Parent) -Parent
 
 # Check prerequisites
 $missing = @()
@@ -45,11 +45,21 @@ Write-Host "Visual Studio: $VS_PATH" -ForegroundColor Green
 Write-Host "Generator: $CMakeGenerator" -ForegroundColor Green
 Write-Host ""
 
-# Check if dependencies installed
-$TOOLCHAIN = "C:\MayaFlux\MayaFluxToolchain.cmake"
-if (-not (Test-Path $TOOLCHAIN)) {
+# Check if dependencies installed by verifying key environment variables
+$depsOk = $true
+$requiredEnvVars = @("LLVM_DIR", "VULKAN_SDK", "FFMPEG_ROOT", "GLFW_ROOT")
+
+foreach ($envVar in $requiredEnvVars) {
+    if (-not (Test-Path "env:$envVar")) {
+        Write-Host "Missing environment variable: $envVar" -ForegroundColor Red
+        $depsOk = $false
+    }
+}
+
+if (-not $depsOk) {
+    Write-Host ""
     Write-Host "ERROR: Dependencies not installed" -ForegroundColor Red
-    Write-Host "Run setup_windows_binaries.ps1 first (requires admin)" -ForegroundColor Yellow
+    Write-Host "Run setup_windows.ps1 first (requires admin), then restart terminal" -ForegroundColor Yellow
     exit 1
 }
 
@@ -64,35 +74,27 @@ if (-not (Test-Path $BUILD_DIR)) {
 
 Write-Host "Generating Visual Studio solution..." -ForegroundColor Yellow
 
-Push-Location $PROJECT_ROOT
-
-$BUILD_DIR = "build"
-$CMAKE_SRC_DIR = $PROJECT_ROOT
-
-if (-not (Test-Path $BUILD_DIR)) {
-    mkdir $BUILD_DIR
-}
-
 try {
-    Push-Location $PROJECT_ROOT 
+    Push-Location $PROJECT_ROOT
 
     $cmakeArgs = @(
-        "-B", "$BUILD_DIR",
-        "-S", ".",                      
-        "-G", "$CMakeGenerator",
+        "-B", "build",
+        "-S", ".",
+        "-G", $CMakeGenerator,
         "-A", "x64",
-        "-C", "$TOOLCHAIN",
-        "-DCMAKE_BUILD_TYPE=Release",
-        
-        "-DLLVM_ENABLE_LIBXML2=OFF"
+        "-DCMAKE_BUILD_TYPE=Release"
     )
+
     # Execute CMake
     & cmake @cmakeArgs
+
     if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
         Write-Host "ERROR: CMake generation failed" -ForegroundColor Red
         exit 1
     }
-} finally {
+}
+finally {
     Pop-Location
 }
 
@@ -103,3 +105,9 @@ Write-Host "Solution: build\MayaFlux.sln" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Build from Visual Studio:" -ForegroundColor Yellow
 Write-Host "  1. Open build\MayaFlux.sln"
+Write-Host "  2. Set startup project"
+Write-Host "  3. Build -> Build Solution (or press F7)"
+Write-Host ""
+Write-Host "Or build from command line:" -ForegroundColor Yellow
+Write-Host "  cmake --build build --config Release"
+Write-Host ""
