@@ -32,11 +32,6 @@ jobs:
       - name: Install build tools on macOS
         run: brew install md5sha1sum
 
-      # - name: Setup CMake Environment
-      #   uses: jwlawson/actions-setup-cmake@v2
-      #   with:
-      #     cmake-version: "3.29.x"
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -58,11 +53,11 @@ jobs:
           EOF
           clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
 
-      - name: Cache STB headers
-        uses: actions/cache@v4
-        with:
-          path: ~/Libraries/stb
-          key: stb-headers-${{ runner.os }}
+      # - name: Cache STB headers
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/Libraries/stb
+      #     key: stb-headers-${{ runner.os }}
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -87,14 +82,16 @@ jobs:
             glfw
             glm
             llvm
-          # verbose: true
 
       - name: Setup Homebrew Environment
         run: |
           eval "$(/opt/homebrew/bin/brew shellenv)"
 
+          # Reinstall cmake to ensure post install steps are run
+          brew reinstall cmake
+
           # Re-establish all the paths when cache is hit
-          for tool in cmake rtaudio ffmpeg shaderc googletest pkg-config eigen onedpl magic_enum fmt glfw glm llvm; do
+          for tool in rtaudio ffmpeg shaderc googletest pkg-config eigen onedpl magic_enum fmt glfw glm llvm; do
             if TOOL_PREFIX=$(brew --prefix $tool 2>/dev/null); then
               if [ -d "$TOOL_PREFIX/lib/pkgconfig" ]; then
                 export PKG_CONFIG_PATH="$TOOL_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
@@ -105,6 +102,12 @@ jobs:
               # Special handling for eigen which uses eigen3 name
               if [ "$tool" = "eigen" ] && [ -d "$TOOL_PREFIX/share/eigen3/cmake" ]; then
                 export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/eigen3/cmake:$CMAKE_PREFIX_PATH"
+              fi
+              # magic_enum also uses non standard pkg-config path
+              if [ "$tool" = "magic_enum" ] && [ -d "$TOOL_PREFIX/include" ]; then
+                export CPATH="$TOOL_PREFIX/include:$CPATH"
+                export PKG_CONFIG_PATH="$TOOL_PREFIX/share/pkgconfig:$PKG_CONFIG_PATH"
+                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/cmake:$CMAKE_PREFIX_PATH"
               fi
             fi
           done
@@ -132,11 +135,14 @@ jobs:
           # Verify the setup worked
           echo "=== Verifying environment ==="
           echo "CMAKE command: $(which cmake)"
+          echo "CMAKE_ROOT: $CMAKE_ROOT"
           echo "CMAKE version: $(cmake --version | head -1)"
           echo "=== Verifying pkg-config can find packages ==="
           pkg-config --exists rtaudio && echo "✅ rtaudio found" || echo "❌ rtaudio not found"
           pkg-config --exists glfw3 && echo "✅ glfw3 found" || echo "❌ glfw3 not found"
           pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
+          pkg-config --exists magic_enum && echo "✅ magic_enum found" || echo "❌ magic_enum not found"
+          pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
 
       - name: Install Vulkan SDK (LunarG)
         uses: jakoch/install-vulkan-sdk-action@v1
@@ -433,7 +439,7 @@ jobs:
             *Note: This development build replaces any previous build for version ${{ steps.set_vars.outputs.VERSION }}*
           prerelease: true
           draft: false
-          overwrite: true
+          overwrite_files: true
           files: artifacts/*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
