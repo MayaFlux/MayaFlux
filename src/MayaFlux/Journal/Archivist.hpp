@@ -309,22 +309,29 @@ inline void error_rethrow(Component component, Context context,
     std::source_location location = std::source_location::current(),
     std::string_view additional_context = "")
 {
+    auto ep = std::current_exception();
+    if (!ep) {
+        Archivist::instance().scribe(Severity::ERROR, component, context,
+            "error_rethrow called outside of a catch", location);
+        std::terminate();
+    }
+
     try {
-        throw;
+        std::rethrow_exception(ep);
     } catch (const std::exception& e) {
         std::string msg = std::string(e.what());
         if (!additional_context.empty()) {
             msg = std::string(additional_context) + ": " + msg;
         }
         Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
-        throw;
+        std::rethrow_exception(ep);
     } catch (...) {
         std::string msg = "Unknown exception";
         if (!additional_context.empty()) {
             msg = std::string(additional_context) + ": " + msg;
         }
         Archivist::instance().scribe(Severity::ERROR, component, context, msg, location);
-        throw;
+        std::rethrow_exception(ep);
     }
 }
 

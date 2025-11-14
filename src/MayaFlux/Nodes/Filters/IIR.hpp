@@ -63,6 +63,17 @@ public:
     IIR(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef);
 
     /**
+     * @brief Creates an IIR filter with specified coefficients (no input node)
+     * @param a_coef Feedback (denominator) coefficients
+     * @param b_coef Feedforward (numerator) coefficients
+     *
+     * Creates an IIR filter with the specified coefficient vectors but no input node.
+     * This can be used in scenarios where the input will be set later or through
+     * other means.
+     */
+    IIR(const std::vector<double>& a_coef, const std::vector<double>& b_coef);
+
+    /**
      * @brief Processes a single sample through the IIR filter
      * @param input The input sample
      * @return The filtered output sample
