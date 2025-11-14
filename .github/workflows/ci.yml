@@ -422,7 +422,7 @@ jobs:
 
             This is an automated CI build for the **macOS 14 (Sonoma) platform and upwards**.
 
-            **Version**: ${{ steps.set_vars.outputs.VERSION }}
+            **Latest build for version ${{ steps.set_vars.outputs.VERSION }}**
             **Commit**: ${{ github.sha }}
 
             The attached assets are:
@@ -430,8 +430,10 @@ jobs:
             - **.zip**: Standard archive for macOS users.
 
             ---
-            *Note: This is a pre-release build and may contain unstable features.*
+            *Note: This development build replaces any previous build for version ${{ steps.set_vars.outputs.VERSION }}*
           prerelease: true
+          draft: false
+          overwrite: true
           files: artifacts/*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
