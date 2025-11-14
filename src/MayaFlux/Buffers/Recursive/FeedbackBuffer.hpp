@@ -96,13 +96,6 @@ protected:
      */
     std::shared_ptr<BufferProcessor> create_default_processor() override;
 
-    /**
-     * @brief Default processor for this buffer
-     *
-     * This is a FeedbackProcessor configured with the buffer's feedback coefficient.
-     */
-    std::shared_ptr<BufferProcessor> m_default_processor;
-
 private:
     /**
      * @brief Feedback coefficient (0.0-1.0)

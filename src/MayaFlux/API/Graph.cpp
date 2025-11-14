@@ -176,15 +176,15 @@ std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(uint32_t chan
     return buffer;
 }
 
-void clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
+std::vector<std::shared_ptr<Buffers::AudioBuffer>> clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels)
 {
-    get_buffer_manager()->clone_buffer_for_channels(buffer, channels, Buffers::ProcessingToken::AUDIO_BACKEND);
+    return get_buffer_manager()->clone_buffer_for_channels(buffer, channels, Buffers::ProcessingToken::AUDIO_BACKEND);
 }
 
-void clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer, const std::vector<uint32_t>& channels, const Buffers::ProcessingToken& token)
+std::vector<std::shared_ptr<Buffers::AudioBuffer>> clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer, const std::vector<uint32_t>& channels, const Buffers::ProcessingToken& token)
 {
-    get_buffer_manager()->clone_buffer_for_channels(buffer, channels, token);
+    return get_buffer_manager()->clone_buffer_for_channels(buffer, channels, token);
 }
 
 void supply_buffer_to_channel(const std::shared_ptr<Buffers::AudioBuffer>& buffer,

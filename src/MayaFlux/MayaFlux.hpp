@@ -32,6 +32,7 @@
 #include "Buffers/BufferProcessingChain.hpp"
 #include "Buffers/Container/ContainerBuffer.hpp"
 #include "Buffers/Container/StreamWriteProcessor.hpp"
+#include "Buffers/Node/FilterProcessor.hpp"
 #include "Buffers/Node/LogicProcessor.hpp"
 #include "Buffers/Node/NodeBuffer.hpp"
 #include "Buffers/Node/PolynomialProcessor.hpp"

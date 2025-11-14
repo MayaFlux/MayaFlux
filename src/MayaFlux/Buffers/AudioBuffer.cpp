@@ -86,7 +86,7 @@ std::shared_ptr<AudioBuffer> AudioBuffer::clone_to(uint32_t channel)
     auto buffer = std::make_shared<AudioBuffer>(channel, m_num_samples);
     buffer->get_data() = m_data;
     buffer->set_default_processor(m_default_processor);
-    buffer->set_processing_chain(get_processing_chain());
+    buffer->set_processing_chain(get_processing_chain(), true);
 
     return buffer;
 }

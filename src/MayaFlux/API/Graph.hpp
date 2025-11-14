@@ -363,10 +363,10 @@ MAYAFLUX_API std::shared_ptr<Buffers::AudioBuffer> create_input_listener_buffer(
  * but operates independently on its assigned channel.
  * Uses the default engine's buffer manager.
  */
-MAYAFLUX_API void clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
+MAYAFLUX_API std::vector<std::shared_ptr<Buffers::AudioBuffer>> clone_buffer_to_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels);
 
-MAYAFLUX_API void clone_buffer_to_channels(
+MAYAFLUX_API std::vector<std::shared_ptr<Buffers::AudioBuffer>> clone_buffer_to_channels(
     const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels,
     const Buffers::ProcessingToken& token);
