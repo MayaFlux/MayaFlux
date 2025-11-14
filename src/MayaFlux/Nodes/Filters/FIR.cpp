@@ -12,6 +12,11 @@ FIR::FIR(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
 {
 }
 
+FIR::FIR(const std::vector<double>& coeffs)
+    : FIR(nullptr, coeffs)
+{
+}
+
 double FIR::process_sample(double input)
 {
     if (is_bypass_enabled()) {

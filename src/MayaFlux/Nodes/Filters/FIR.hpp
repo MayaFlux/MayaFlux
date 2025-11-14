@@ -57,6 +57,16 @@ public:
     FIR(const std::shared_ptr<Node>& input, const std::vector<double>& coeffs);
 
     /**
+     * @brief Creates an FIR filter with specified coefficients (no input node)
+     * @param coeffs Vector of filter coefficients
+     *
+     * Creates an FIR filter with the specified coefficients but no input node.
+     * This can be used in scenarios where the filter operates on external data
+     * or is part of a larger processing chain.
+     */
+    FIR(const std::vector<double>& coeffs);
+
+    /**
      * @brief Processes a single sample through the FIR filter
      * @param input The input sample
      * @return The filtered output sample

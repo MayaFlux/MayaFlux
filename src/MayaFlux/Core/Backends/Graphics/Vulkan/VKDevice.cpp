@@ -46,7 +46,7 @@ VKDevice& VKDevice::operator=(VKDevice&& other) noexcept
     return *this;
 }
 
-bool VKDevice::initialize(vk::Instance instance, vk::SurfaceKHR temp_surface, const GraphicsBackendInfo& backend_info)
+bool VKDevice::initialize(vk::Instance instance, vk::SurfaceKHR /*temp_surface*/, const GraphicsBackendInfo& backend_info)
 {
     if (!pick_physical_device(instance, nullptr)) {
         return false;
@@ -69,7 +69,7 @@ void VKDevice::cleanup()
     m_queue_families = {};
 }
 
-bool VKDevice::pick_physical_device(vk::Instance instance, vk::SurfaceKHR temp_surface)
+bool VKDevice::pick_physical_device(vk::Instance instance, vk::SurfaceKHR /*temp_surface*/)
 {
     vk::Instance vk_instance(instance);
     auto devices = vk_instance.enumeratePhysicalDevices();
@@ -197,7 +197,7 @@ void VKDevice::query_supported_extensions()
     MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend, "End of list.");
 }
 
-bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info)
+bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBackendInfo& backend_info)
 {
     if (!m_queue_families.graphics_family.has_value()) {
         error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -246,7 +246,7 @@ bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBacken
     create_info.pEnabledFeatures = &device_features;
     create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
     create_info.ppEnabledExtensionNames = device_extensions.data();
-    create_info.enabledLayerCount = 0;
+    // create_info.enabledLayerCount = 0;
 
     try {
         m_logical_device = m_physical_device.createDevice(create_info);

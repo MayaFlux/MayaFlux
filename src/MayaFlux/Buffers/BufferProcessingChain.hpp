@@ -62,7 +62,7 @@ public:
      * - **Pipeline Optimization**: May reorder or batch processors for improved performance
      * - **Resource Planning**: Allocates necessary resources for the processor's execution
      */
-    bool add_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, std::string* rejection_reason = nullptr);
+    bool add_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, std::string* rejection_reason = nullptr);
 
     /**
      * @brief Removes a processor from the pipeline for a specific buffer
@@ -76,7 +76,7 @@ public:
      * - **Pipeline Reoptimization**: Rebuilds optimization plans without the removed processor
      * - **Backend Restoration**: Restores default backends if the processor was overriding them
      */
-    void remove_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer);
+    void remove_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief Applies the transformation pipeline to a buffer with intelligent execution
@@ -93,7 +93,7 @@ public:
      * This does not include the final processor, which must be applied separately with
      * process_final() to ensure proper pipeline completion.
      */
-    void process(std::shared_ptr<Buffer> buffer);
+    void process(const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief Sets a special processor to be applied after the main pipeline
@@ -105,7 +105,7 @@ public:
      * or validation that must be applied as the last step in a transformation pipeline, regardless
      * of the optimization strategies used for the main processing sequence.
      */
-    void add_final_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer);
+    void add_final_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief Checks if a buffer has any processors in its pipeline
@@ -115,7 +115,7 @@ public:
      * This method enables dynamic pipeline management and optimization decisions
      * based on the presence of processing stages for specific buffers.
      */
-    bool has_processors(std::shared_ptr<Buffer> buffer) const;
+    bool has_processors(const std::shared_ptr<Buffer>& buffer) const;
 
     /**
      * @brief Gets all processors in a buffer's transformation pipeline
@@ -126,7 +126,7 @@ public:
      * access to the processor sequence for analysis, optimization, or debugging
      * purposes while maintaining the integrity of the processing pipeline.
      */
-    const std::vector<std::shared_ptr<BufferProcessor>>& get_processors(std::shared_ptr<Buffer> buffer) const;
+    const std::vector<std::shared_ptr<BufferProcessor>>& get_processors(const std::shared_ptr<Buffer>& buffer) const;
 
     /**
      * @brief Gets the entire transformation pipeline structure
@@ -136,7 +136,7 @@ public:
      * buffer to its sequence of transformation processors. Essential for pipeline
      * analysis, optimization planning, and system introspection capabilities.
      */
-    inline const std::unordered_map<std::shared_ptr<Buffer>, std::vector<std::shared_ptr<BufferProcessor>>> get_chain() const { return m_buffer_processors; }
+    inline std::unordered_map<std::shared_ptr<Buffer>, std::vector<std::shared_ptr<BufferProcessor>>> get_chain() const { return m_buffer_processors; }
 
     /**
      * @brief Combines another processing pipeline into this one with optimization
@@ -151,7 +151,7 @@ public:
      * - **Resource Consolidation**: Optimizes resource usage across the merged processors
      * - **Backend Harmonization**: Resolves any backend conflicts between the chains
      */
-    void merge_chain(const std::shared_ptr<BufferProcessingChain> other);
+    void merge_chain(const std::shared_ptr<BufferProcessingChain>& other);
 
     /**
      * @brief Applies the final processor to a buffer with guaranteed execution
@@ -162,7 +162,7 @@ public:
      * process() to apply final-stage transformations like normalization, boundary enforcement,
      * or format validation that must complete successfully for pipeline integrity.
      */
-    void process_final(std::shared_ptr<Buffer> buffer);
+    void process_final(const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief Sets the preferred processing token for this chain
@@ -224,7 +224,7 @@ public:
      * - **Memory Layout Optimization**: Optimizes data access patterns for cache efficiency
      * - **Resource Balancing**: Balances processor load across available hardware resources
      */
-    void optimize_for_tokens(std::shared_ptr<Buffer> buffer);
+    void optimize_for_tokens(const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief Analyzes token compatibility across all processors in the chain
@@ -273,7 +273,7 @@ public:
      * allowing type-safe access to specialized functionality.
      */
     template <typename T>
-    std::shared_ptr<T> get_processor(std::shared_ptr<Buffer> buffer) const
+    std::shared_ptr<T> get_processor(const std::shared_ptr<Buffer>& buffer) const
     {
         auto processors = get_processors(buffer);
 
@@ -286,8 +286,8 @@ public:
     }
 
 protected:
-    bool add_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, std::string* rejection_reason = nullptr);
-    void remove_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer);
+    bool add_processor_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, std::string* rejection_reason = nullptr);
+    void remove_processor_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
 
 private:
     /**
@@ -299,19 +299,19 @@ private:
      * processing function is called in a thread-safe manner, managing the
      * active processing state to prevent concurrent access issues.
      */
-    void process_non_owning(std::shared_ptr<Buffer> buffer);
+    void process_non_owning(const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief Validates the processing token against the chain's preferred token
      */
-    void cleanup_rejected_processors(std::shared_ptr<Buffer> buffer);
+    void cleanup_rejected_processors(const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief Process pending processor operations
      */
     void process_pending_processor_operations();
 
-    bool queue_pending_processor_op(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, bool is_addition, std::string* rejection_reason = nullptr);
+    bool queue_pending_processor_op(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, bool is_addition, std::string* rejection_reason = nullptr);
 
     /**
      * @brief Map of buffers to their processor sequences

@@ -95,12 +95,14 @@ public:
     /**
      * @brief Sets the transformation chain for this buffer
      * @param chain New processing chain for sequential transformations
+     * @param force If true, forces the replacement of the current chain even if incompatible
      *
-     * Replaces the current processing chain with the provided one.
+     * Replaces the current processing chain with the provided one if force is true.
+     * else merges the new chain only if compatible.
      * The chain should be compatible with the buffer's data type and
      * processing backend.
      */
-    virtual void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain) = 0;
+    virtual void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain, bool force = false) = 0;
 
     /**
      * @brief Checks if the buffer has data for the current processing cycle

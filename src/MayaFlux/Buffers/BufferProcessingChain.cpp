@@ -1,11 +1,12 @@
 #include "BufferProcessingChain.hpp"
 
 #include "Buffer.hpp"
-#include <algorithm>
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
 
-bool BufferProcessingChain::add_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, std::string* rejection_reason)
+bool BufferProcessingChain::add_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, std::string* rejection_reason)
 {
     if (m_is_processing.load(std::memory_order_acquire) || processor->m_active_processing.load(std::memory_order_acquire) > 0) {
         return queue_pending_processor_op(processor, buffer, true, rejection_reason);
@@ -14,7 +15,7 @@ bool BufferProcessingChain::add_processor(std::shared_ptr<BufferProcessor> proce
     return add_processor_direct(processor, buffer, rejection_reason);
 }
 
-bool BufferProcessingChain::add_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, std::string* rejection_reason)
+bool BufferProcessingChain::add_processor_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, std::string* rejection_reason)
 {
     auto processor_token = processor->get_processing_token();
 
@@ -70,7 +71,7 @@ bool BufferProcessingChain::add_processor_direct(std::shared_ptr<BufferProcessor
     return true;
 }
 
-void BufferProcessingChain::remove_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer)
+void BufferProcessingChain::remove_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
 {
     if (m_is_processing.load(std::memory_order_acquire)) {
         queue_pending_processor_op(processor, buffer, false);
@@ -80,7 +81,7 @@ void BufferProcessingChain::remove_processor(std::shared_ptr<BufferProcessor> pr
     remove_processor_direct(processor, buffer);
 }
 
-void BufferProcessingChain::remove_processor_direct(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer)
+void BufferProcessingChain::remove_processor_direct(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
 {
     auto& processors = m_buffer_processors[buffer];
     auto it = std::ranges::find(processors, processor);
@@ -94,7 +95,7 @@ void BufferProcessingChain::remove_processor_direct(std::shared_ptr<BufferProces
     }
 }
 
-void BufferProcessingChain::process_non_owning(std::shared_ptr<Buffer> buffer)
+void BufferProcessingChain::process_non_owning(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_pending_count.load(std::memory_order_relaxed) > 0) {
         process_pending_processor_operations();
@@ -123,7 +124,7 @@ void BufferProcessingChain::process_non_owning(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void BufferProcessingChain::process(std::shared_ptr<Buffer> buffer)
+void BufferProcessingChain::process(const std::shared_ptr<Buffer>& buffer)
 {
     bool expected = false;
     if (!m_is_processing.compare_exchange_strong(expected, true,
@@ -163,9 +164,9 @@ void BufferProcessingChain::process(std::shared_ptr<Buffer> buffer)
 
 void BufferProcessingChain::process_pending_processor_operations()
 {
-    for (size_t i = 0; i < MAX_PENDING_PROCESSORS; ++i) {
-        if (m_pending_ops[i].active.load(std::memory_order_acquire)) {
-            auto& op = m_pending_ops[i];
+    for (auto& m_pending_op : m_pending_ops) {
+        if (m_pending_op.active.load(std::memory_order_acquire)) {
+            auto& op = m_pending_op;
 
             if (op.is_addition) {
                 add_processor_direct(op.processor, op.buffer);
@@ -173,7 +174,6 @@ void BufferProcessingChain::process_pending_processor_operations()
                 remove_processor_direct(op.processor, op.buffer);
             }
 
-            // Clear operation
             op.processor.reset();
             op.buffer.reset();
             op.active.store(false, std::memory_order_release);
@@ -182,19 +182,19 @@ void BufferProcessingChain::process_pending_processor_operations()
     }
 }
 
-void BufferProcessingChain::add_final_processor(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer)
+void BufferProcessingChain::add_final_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
 {
     processor->on_attach(buffer);
     m_final_processors[buffer] = processor;
 }
 
-bool BufferProcessingChain::has_processors(std::shared_ptr<Buffer> buffer) const
+bool BufferProcessingChain::has_processors(const std::shared_ptr<Buffer>& buffer) const
 {
     auto it = m_buffer_processors.find(buffer);
     return it != m_buffer_processors.end() && !it->second.empty();
 }
 
-const std::vector<std::shared_ptr<BufferProcessor>>& BufferProcessingChain::get_processors(std::shared_ptr<Buffer> buffer) const
+const std::vector<std::shared_ptr<BufferProcessor>>& BufferProcessingChain::get_processors(const std::shared_ptr<Buffer>& buffer) const
 {
     static const std::vector<std::shared_ptr<BufferProcessor>> empty_vector;
 
@@ -206,7 +206,7 @@ const std::vector<std::shared_ptr<BufferProcessor>>& BufferProcessingChain::get_
     return empty_vector;
 }
 
-void BufferProcessingChain::process_final(std::shared_ptr<Buffer> buffer)
+void BufferProcessingChain::process_final(const std::shared_ptr<Buffer>& buffer)
 {
     auto final_it = m_final_processors.find(buffer);
     if (final_it != m_final_processors.end()) {
@@ -214,7 +214,7 @@ void BufferProcessingChain::process_final(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void BufferProcessingChain::merge_chain(const std::shared_ptr<BufferProcessingChain> other)
+void BufferProcessingChain::merge_chain(const std::shared_ptr<BufferProcessingChain>& other)
 {
     for (const auto& [buffer, processors] : other->get_chain()) {
         if (!m_buffer_processors.count(buffer)) {
@@ -224,7 +224,7 @@ void BufferProcessingChain::merge_chain(const std::shared_ptr<BufferProcessingCh
             target_processors.reserve(target_processors.size() + processors.size());
 
             for (const auto& processor : processors) {
-                if (std::find(target_processors.begin(), target_processors.end(), processor) == target_processors.end()) {
+                if (std::ranges::find(target_processors, processor) == target_processors.end()) {
                     target_processors.push_back(processor);
                 }
             }
@@ -232,7 +232,7 @@ void BufferProcessingChain::merge_chain(const std::shared_ptr<BufferProcessingCh
     }
 }
 
-void BufferProcessingChain::optimize_for_tokens(std::shared_ptr<Buffer> buffer)
+void BufferProcessingChain::optimize_for_tokens(const std::shared_ptr<Buffer>& buffer)
 {
     auto& processors = m_buffer_processors[buffer];
     if (processors.empty()) {
@@ -260,7 +260,7 @@ void BufferProcessingChain::optimize_for_tokens(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void BufferProcessingChain::cleanup_rejected_processors(std::shared_ptr<Buffer> buffer)
+void BufferProcessingChain::cleanup_rejected_processors(const std::shared_ptr<Buffer>& buffer)
 {
     auto& processors = m_buffer_processors[buffer];
 
@@ -333,15 +333,16 @@ void BufferProcessingChain::enforce_chain_token_on_processors()
                 try {
                     processor->set_processing_token(m_token_filter_mask);
                 } catch (const std::exception& e) {
-                    // Some processors might not support token changes
-                    // This is okay, they'll be handled according to enforcement strategy
+                    error_rethrow(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                        std::source_location::current(),
+                        "Failed to enforce chain token on processor: " + std::string(e.what()));
                 }
             }
         }
     }
 }
 
-bool BufferProcessingChain::queue_pending_processor_op(std::shared_ptr<BufferProcessor> processor, std::shared_ptr<Buffer> buffer, bool is_addition, std::string* rejection_reason)
+bool BufferProcessingChain::queue_pending_processor_op(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer, bool is_addition, std::string* rejection_reason)
 {
     for (auto& m_pending_op : m_pending_ops) {
         bool expected = false;

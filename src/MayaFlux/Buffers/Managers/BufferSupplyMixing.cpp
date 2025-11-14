@@ -142,7 +142,7 @@ void BufferSupplyMixing::fill_audio_interleaved(
 // Buffer Cloning
 // ============================================================================
 
-void BufferSupplyMixing::clone_audio_buffer_for_channels(
+std::vector<std::shared_ptr<AudioBuffer>> BufferSupplyMixing::clone_audio_buffer_for_channels(
     const std::shared_ptr<AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels,
     ProcessingToken token)
@@ -150,32 +150,37 @@ void BufferSupplyMixing::clone_audio_buffer_for_channels(
     if (channels.empty()) {
         MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
             "BufferSupplyMixing: No channels specified for cloning");
-        return;
+        return {};
     }
     if (!buffer) {
         MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
             "BufferSupplyMixing: Invalid buffer for cloning");
-        return;
+        return {};
     }
 
     if (!m_unit_manager.has_audio_unit(token)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
             "BufferSupplyMixing: Token not found for cloning");
-        return;
+        return {};
     }
 
     auto& unit = m_unit_manager.get_audio_unit_mutable(token);
+
+    std::vector<std::shared_ptr<AudioBuffer>> cloned_buffers {};
 
     for (const auto channel : channels) {
         if (channel >= unit.channel_count) {
             MF_ERROR(Journal::Component::Core, Journal::Context::BufferManagement,
                 "BufferSupplyMixing: Channel {} out of range for cloning", channel);
-            return;
+            return cloned_buffers;
         }
 
         auto cloned_buffer = buffer->clone_to(channel);
         m_access_control.add_audio_buffer(cloned_buffer, token, channel);
+        cloned_buffers.push_back(cloned_buffer);
     }
+
+    return cloned_buffers;
 }
 
 } // namespace MayaFlux::Buffers

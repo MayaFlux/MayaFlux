@@ -218,7 +218,7 @@ void BufferAccessControl::add_graphics_buffer(
                 processing_chain->merge_chain(buf_chain);
             }
         } else {
-            buffer->set_processing_chain(processing_chain);
+            buffer->set_processing_chain(processing_chain, false);
         }
 
         try {

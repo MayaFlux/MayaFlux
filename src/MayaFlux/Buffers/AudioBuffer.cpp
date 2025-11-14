@@ -86,7 +86,7 @@ std::shared_ptr<AudioBuffer> AudioBuffer::clone_to(uint32_t channel)
     auto buffer = std::make_shared<AudioBuffer>(channel, m_num_samples);
     buffer->get_data() = m_data;
     buffer->set_default_processor(m_default_processor);
-    buffer->set_processing_chain(get_processing_chain());
+    buffer->set_processing_chain(get_processing_chain(), true);
 
     return buffer;
 }
@@ -115,6 +115,15 @@ bool AudioBuffer::read_once(std::shared_ptr<AudioBuffer> buffer, bool force)
         "read_once: Buffer read failed due to size mismatch or null buffer.");
 
     return false;
+}
+
+void AudioBuffer::set_processing_chain(std::shared_ptr<BufferProcessingChain> chain, bool force)
+{
+    if (m_processing_chain && !force) {
+        m_processing_chain->merge_chain(chain);
+        return;
+    }
+    m_processing_chain = chain;
 }
 
 }

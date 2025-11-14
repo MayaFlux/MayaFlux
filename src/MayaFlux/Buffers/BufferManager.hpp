@@ -401,7 +401,7 @@ public:
         ProcessingToken token,
         uint32_t num_channels) const;
 
-    void clone_buffer_for_channels(
+    std::vector<std::shared_ptr<AudioBuffer>> clone_buffer_for_channels(
         const std::shared_ptr<AudioBuffer>& buffer,
         const std::vector<uint32_t>& channels,
         ProcessingToken token);

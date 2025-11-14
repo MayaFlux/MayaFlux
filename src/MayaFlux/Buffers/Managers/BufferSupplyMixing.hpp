@@ -122,7 +122,7 @@ public:
      * but maintaining independent data. Useful for multi-channel processing
      * where each channel needs its own processing chain.
      */
-    void clone_audio_buffer_for_channels(
+    std::vector<std::shared_ptr<AudioBuffer>> clone_audio_buffer_for_channels(
         const std::shared_ptr<AudioBuffer>& buffer,
         const std::vector<uint32_t>& channels,
         ProcessingToken token);

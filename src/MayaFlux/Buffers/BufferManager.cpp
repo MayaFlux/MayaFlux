@@ -355,12 +355,12 @@ void BufferManager::fill_interleaved(
     m_supply_mixing->fill_audio_interleaved(interleaved_data, num_frames, token, num_channels);
 }
 
-void BufferManager::clone_buffer_for_channels(
+std::vector<std::shared_ptr<AudioBuffer>> BufferManager::clone_buffer_for_channels(
     const std::shared_ptr<AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels,
     ProcessingToken token)
 {
-    m_supply_mixing->clone_audio_buffer_for_channels(buffer, channels, token);
+    return m_supply_mixing->clone_audio_buffer_for_channels(buffer, channels, token);
 }
 
 // ============================================================================

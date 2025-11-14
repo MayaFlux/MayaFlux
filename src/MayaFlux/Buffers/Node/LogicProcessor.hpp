@@ -9,10 +9,17 @@ namespace MayaFlux::Buffers {
  * @class LogicProcessor
  * @brief Digital signal processor that applies boolean logic operations to data streams
  *
- * LogicProcessor implements digital logic processing on data streams, enabling
- * complex decision-making, pattern detection, and signal transformation based on
- * boolean logic principles. It bridges Nodes::Generator::Logic nodes with the buffer
- * processing system to enable sophisticated digital signal manipulation.
+ * LogicProcessor bridges Nodes::Generator::Logic nodes with the buffer processing system,
+ * enabling sophisticated digital signal manipulation through various modulation strategies.
+ *
+ * The processor's job is simple:
+ * 1. Iterate through buffer samples
+ * 2. Generate logic values (0.0 or 1.0) by calling the Logic node
+ * 3. Apply logic to buffer data using a modulation strategy
+ *
+ * All logic computation (threshold detection, edge detection, state machines, etc.)
+ * is handled by the Logic node itself. The processor only manages iteration and
+ * application of results.
  *
  * Use cases include:
  * - Binary pattern detection in data streams
@@ -25,27 +32,26 @@ namespace MayaFlux::Buffers {
 class MAYAFLUX_API LogicProcessor : public BufferProcessor {
 public:
     /**
-     * @enum ProcessMode
-     * @brief Defines the digital processing strategy for data streams
+     * @enum ModulationType
+     * @brief Defines how logic values modulate buffer content
      *
-     * These modes determine how the processor interprets and transforms
-     * continuous data into discrete logical states.
+     * These are readymade strategies for applying binary logic (0.0/1.0) to
+     * continuous audio data, providing common compositional primitives for
+     * logic-based signal processing.
      */
-    enum class ProcessMode {
-        SAMPLE_BY_SAMPLE, ///< Process each sample independently as a discrete event
-        THRESHOLD_CROSSING, ///< Only process when binary state changes occur
-        EDGE_TRIGGERED, ///< Only process on digital transitions (rising/falling edges)
-        STATE_MACHINE ///< Process buffer as a sequence of state transitions
-    };
+    enum class ModulationType : uint8_t {
+        REPLACE, ///< Replace buffer with logic values: out = logic
+        MULTIPLY, ///< Gate/mask buffer: out = logic * buffer (standard audio gate)
+        ADD, ///< Offset buffer: out = logic + buffer
 
-    /**
-     * @brief How the logic signal modulates the audio buffer
-     */
-    enum class ModulationType {
-        REPLACE, ///< Replace buffer contents with logic signal
-        MULTIPLY, ///< Multiply buffer by logic signal (amplitude modulation)
-        ADD, ///< Add logic signal to buffer
-        CUSTOM ///< Use custom modulation function
+        INVERT_ON_TRUE, ///< Invert signal when logic is true: out = logic ? -buffer : buffer
+        HOLD_ON_FALSE, ///< Hold last value when logic is false: out = logic ? buffer : last_value
+        ZERO_ON_FALSE, ///< Silence when logic is false: out = logic ? buffer : 0.0
+        CROSSFADE, ///< Smooth interpolation: out = lerp(0.0, buffer, logic)
+        THRESHOLD_REMAP, ///< Binary value selection: out = logic ? high_val : low_val
+        SAMPLE_AND_HOLD, ///< Sample on logic change: out = logic_changed ? buffer : held_value
+
+        CUSTOM ///< User-defined modulation function
     };
 
     /**
@@ -53,86 +59,66 @@ public:
      * @brief Function type for custom digital signal transformations
      *
      * Defines a transformation that combines a logic value (0.0 or 1.0)
-     * with an input sample to produce a modulated output sample.
+     * with a buffer sample to produce a modulated output sample.
      *
      * Parameters:
      * - double logic_val: The binary logic value (0.0 or 1.0)
-     * - double input_val: The original input sample value
+     * - double buffer_val: The original buffer sample value
      *
      * Returns:
      * - double: The transformed output sample value
      *
-     * This type enables implementation of arbitrary digital transformations
+     * This enables implementation of arbitrary digital transformations
      * based on binary logic states, supporting complex conditional processing,
      * digital filtering, and algorithmic decision trees in signal processing.
      */
     using ModulationFunction = std::function<double(double, double)>;
 
     /**
-     * @brief Constructs a LogicProcessor with the specified processing mode
-     * @param mode The processing mode to use
-     * @param reset_between_buffers Whether to reset logic state between buffer calls
+     * @brief Constructs a LogicProcessor with internal Logic node
      * @param args Arguments to pass to the Logic constructor
      *
-     * Creates a LogicProcessor that applies digital logic processing
-     * to audio buffers according to the specified mode and configuration.
+     * Creates a LogicProcessor that constructs its own Logic node internally.
      */
     template <typename... Args>
         requires std::constructible_from<Nodes::Generator::Logic, Args...>
-    LogicProcessor(ProcessMode mode = ProcessMode::SAMPLE_BY_SAMPLE,
-        bool reset_between_buffers = false,
-        Args&&... args)
+    LogicProcessor(Args&&... args)
         : m_logic(std::make_shared<Nodes::Generator::Logic>(std::forward<Args>(args)...))
-        , m_process_mode(mode)
-        , m_reset_between_buffers(reset_between_buffers)
-        , m_threshold(0.5)
-        , m_edge_type(Nodes::Generator::EdgeType::BOTH)
-        , m_last_value(0.0)
-        , m_last_state(false)
+        , m_reset_between_buffers(false)
         , m_use_internal(true)
         , m_modulation_type(ModulationType::REPLACE)
         , m_has_generated_data(false)
+        , m_high_value(1.0)
+        , m_low_value(0.0)
+        , m_last_held_value(0.0)
+        , m_last_logic_value(0.0)
     {
-        if (m_logic && m_logic->get_operator() == Nodes::Generator::LogicOperator::THRESHOLD) {
-            m_threshold = m_logic->get_threshold();
-        }
-
-        if (m_logic && m_logic->get_operator() == Nodes::Generator::LogicOperator::EDGE) {
-            m_edge_type = m_logic->get_edge_type();
-        }
     }
 
     /**
-     * @brief Constructs a LogicProcessor with the specified logic node
+     * @brief Constructs a LogicProcessor with external Logic node
      * @param logic The logic node to use for processing
-     * @param mode The processing mode to use
      * @param reset_between_buffers Whether to reset logic state between buffer calls
      *
-     * Creates a LogicProcessor that applies digital logic processing
-     * to audio buffers using the provided logic node and configuration.
-     * NOTE: Using external Logic node implies side effects of any progessing chain the node
-     * is connected to. This could mean that the buffer data is not used as input when used node's cached value.
+     * Creates a LogicProcessor that uses an external Logic node.
+     * NOTE: Using external Logic node implies side effects of any processing chain
+     * the node is connected to.
      */
     LogicProcessor(
-        std::shared_ptr<Nodes::Generator::Logic> logic,
-        ProcessMode mode = ProcessMode::SAMPLE_BY_SAMPLE,
+        const std::shared_ptr<Nodes::Generator::Logic>& logic,
         bool reset_between_buffers = false);
 
     /**
      * @brief Processes a buffer through the logic node
      * @param buffer The audio buffer to process
      *
-     * The processing behavior depends on the selected process mode:
-     * - SAMPLE_BY_SAMPLE: Treats each sample as an independent logical input
-     * - THRESHOLD_CROSSING: Detects binary state transitions in the data stream
-     * - EDGE_TRIGGERED: Responds only to specific transition patterns (rising/falling)
-     * - STATE_MACHINE: Processes sequential state transitions with memory of previous states
+     * Processing steps:
+     * 1. Iterates through each sample in the buffer
+     * 2. Calls Logic node's process_sample() for each sample to get logic value
+     * 3. Applies the selected modulation strategy to combine logic with buffer data
      *
-     * Digital processing use cases:
-     * - Binary data extraction from continuous signals
-     * - Pulse detection and generation
-     * - Hysteresis implementation for noisy signals
-     * - Sequential pattern recognition
+     * The Logic node handles all temporal state, callbacks, and logic computation.
+     * The processor only manages iteration and modulation application.
      */
     void processing_function(std::shared_ptr<Buffer> buffer) override;
 
@@ -151,14 +137,14 @@ public:
     /**
      * @brief Generates discrete logic data from input without modifying any buffer
      * @param num_samples Number of samples to generate
-     * @param input_data Optional input data to process (uses zeros if empty)
+     * @param input_data Input data to process through logic node
      * @return Whether generation was successful
      *
      * This method allows for offline processing of data through the logic system,
      * useful for analysis, preprocessing, or generating control signals independently
      * of the main signal path.
      */
-    bool generate(size_t num_samples, const std::vector<double>& input_data = {});
+    bool generate(size_t num_samples, const std::vector<double>& input_data);
 
     /**
      * @brief Applies stored logic data to the given buffer
@@ -172,32 +158,20 @@ public:
      * - Binary masking operations
      * - Custom digital signal processing chains
      */
-    bool apply(std::shared_ptr<Buffer> buffer,
+    bool apply(const std::shared_ptr<Buffer>& buffer,
         ModulationFunction modulation_func = nullptr);
 
     /**
      * @brief Gets the stored logic data
      * @return Reference to the internal logic data vector
      */
-    const std::vector<double>& get_logic_data() const { return m_logic_data; }
+    [[nodiscard]] const std::vector<double>& get_logic_data() const { return m_logic_data; }
 
     /**
      * @brief Checks if logic data has been generated
      * @return True if logic data is available
      */
-    inline bool has_generated_data() const { return m_has_generated_data; }
-
-    /**
-     * @brief Sets the processing mode
-     * @param mode The new processing mode
-     */
-    void set_process_mode(ProcessMode mode);
-
-    /**
-     * @brief Gets the current processing mode
-     * @return The current processing mode
-     */
-    inline ProcessMode get_process_mode() const { return m_process_mode; }
+    [[nodiscard]] inline bool has_generated_data() const { return m_has_generated_data; }
 
     /**
      * @brief Set how logic values modulate buffer content
@@ -207,6 +181,12 @@ public:
      * - REPLACE: Binary substitution of values
      * - MULTIPLY: Binary masking/gating
      * - ADD: Digital offset or bias
+     * - INVERT_ON_TRUE: Phase inversion based on logic state
+     * - HOLD_ON_FALSE: Sample-and-hold behavior
+     * - ZERO_ON_FALSE: Hard gating (silence on false)
+     * - CROSSFADE: Smooth amplitude interpolation
+     * - THRESHOLD_REMAP: Binary value mapping
+     * - SAMPLE_AND_HOLD: Update only on logic changes
      * - CUSTOM: Arbitrary digital transformation
      */
     inline void set_modulation_type(ModulationType type) { m_modulation_type = type; }
@@ -215,14 +195,14 @@ public:
      * @brief Get current modulation type
      * @return Current modulation type
      */
-    inline ModulationType get_modulation_type() const { return m_modulation_type; }
+    [[nodiscard]] inline ModulationType get_modulation_type() const { return m_modulation_type; }
 
     /**
      * @brief Set custom modulation function
      *
      * This sets the ModulationType to CUSTOM and uses the provided
      * function for modulating the buffer. The function takes two
-     * parameters: the logic value and the audio value, and returns
+     * parameters: the logic value and the buffer value, and returns
      * the modulated result.
      *
      * Use cases:
@@ -239,7 +219,30 @@ public:
      * @brief Get current modulation function
      * @return Current modulation function
      */
-    inline const ModulationFunction& get_modulation_function() const { return m_modulation_function; }
+    [[nodiscard]] inline const ModulationFunction& get_modulation_function() const { return m_modulation_function; }
+
+    /**
+     * @brief Sets high and low values for THRESHOLD_REMAP mode
+     * @param high_val Value to use when logic is true (1.0)
+     * @param low_val Value to use when logic is false (0.0)
+     */
+    inline void set_threshold_remap_values(double high_val, double low_val)
+    {
+        m_high_value = high_val;
+        m_low_value = low_val;
+    }
+
+    /**
+     * @brief Gets the high value for THRESHOLD_REMAP mode
+     * @return High value
+     */
+    [[nodiscard]] inline double get_high_value() const { return m_high_value; }
+
+    /**
+     * @brief Gets the low value for THRESHOLD_REMAP mode
+     * @return Low value
+     */
+    [[nodiscard]] inline double get_low_value() const { return m_low_value; }
 
     /**
      * @brief Sets whether to reset logic state between buffer calls
@@ -254,54 +257,20 @@ public:
      * @brief Gets whether logic state is reset between buffer calls
      * @return True if logic state is reset between buffers
      */
-    inline bool get_reset_between_buffers() const { return m_reset_between_buffers; }
-
-    /**
-     * @brief Sets the threshold for binary state determination
-     * @param threshold Threshold value (0.0 to 1.0)
-     *
-     * Defines the decision boundary for converting continuous values to binary states.
-     * Critical for accurate digital interpretation of analog-like signals.
-     */
-    void set_threshold(double threshold);
-
-    /**
-     * @brief Gets the current threshold
-     * @return Current threshold value
-     */
-    inline double get_threshold() const { return m_threshold; }
-
-    /**
-     * @brief Sets edge type for edge-triggered mode
-     * @param type Type of edge to trigger on
-     *
-     * Configures which digital transitions (0→1, 1→0, or both) will trigger processing.
-     * Essential for pulse detection, event triggering, and state change monitoring.
-     */
-    void set_edge_type(Nodes::Generator::EdgeType type);
-
-    /**
-     * @brief Gets the current edge type
-     * @return Current edge type
-     */
-    inline Nodes::Generator::EdgeType get_edge_type() const { return m_edge_type; }
+    [[nodiscard]] inline bool get_reset_between_buffers() const { return m_reset_between_buffers; }
 
     /**
      * @brief Checks if the processor is using the internal logic node
      * @return True if using internal logic node, false otherwise
-     *
-     * This is useful when the logic node is connected to other nodes
-     * and we want to ensure that the processor uses its own internal
-     * logic node instead of the one provided in the constructor.
      */
-    inline bool is_using_internal() const { return m_use_internal; }
+    [[nodiscard]] inline bool is_using_internal() const { return m_use_internal; }
 
     /**
-     * @brief Forces the processor to use the internal logic node
+     * @brief Forces the processor to use a new internal logic node
      *
-     * This is useful when the logic node is connected to other nodes
-     * and we want to ensure that the processor uses its own internal
-     * logic node instead of the one provided in the constructor.
+     * This replaces the current logic node with a new one constructed from the
+     * provided arguments, ensuring the processor uses its own internal logic
+     * instead of an external one.
      */
     template <typename... Args>
         requires std::constructible_from<Nodes::Generator::Logic, Args...>
@@ -314,10 +283,11 @@ public:
      * @brief Updates the logic node used for processing
      * @param logic New logic node to use
      *
-     * NOTE: Using external Logic node implies side effects of any progessing chain the node
-     * is connected to. This could mean that the buffer data is not used as input when used node's cached value.
+     * NOTE: Using external Logic node implies side effects of any processing chain
+     * the node is connected to. This could mean that the buffer data is not used as
+     * input when the node's cached value is used.
      */
-    inline void update_logic_node(std::shared_ptr<Nodes::Generator::Logic> logic)
+    inline void update_logic_node(const std::shared_ptr<Nodes::Generator::Logic>& logic)
     {
         m_pending_logic = logic;
     }
@@ -326,25 +296,24 @@ public:
      * @brief Gets the logic node used for processing
      * @return Logic node used for processing
      */
-    inline std::shared_ptr<Nodes::Generator::Logic> get_logic() const { return m_logic; }
+    [[nodiscard]] inline std::shared_ptr<Nodes::Generator::Logic> get_logic() const { return m_logic; }
 
 private:
     std::shared_ptr<Nodes::Generator::Logic> m_logic; ///< Logic node for processing
-    ProcessMode m_process_mode; ///< Current processing mode
     bool m_reset_between_buffers; ///< Whether to reset logic between buffers
-    double m_threshold; ///< Threshold for binary state determination
-    Nodes::Generator::EdgeType m_edge_type; ///< Edge type for transition detection
-    double m_last_value; ///< Last processed value (for state tracking)
-    bool m_last_state; ///< Last boolean state
-    bool m_use_internal; ///< Whether to use the buffer's internal previous state
+    bool m_use_internal; ///< Whether to use internal logic node
     ModulationType m_modulation_type; ///< How logic values modulate buffer content
-    std::shared_ptr<Nodes::Generator::Logic> m_pending_logic; ///< Internal logic node
+    std::shared_ptr<Nodes::Generator::Logic> m_pending_logic; ///< Pending logic node update
 
     ModulationFunction m_modulation_function; ///< Custom transformation function
     std::vector<double> m_logic_data; ///< Stored logic processing results
     bool m_has_generated_data; ///< Whether logic data has been generated
 
-    void process_span(std::span<double> data);
+    // State for special modulation modes
+    double m_high_value; ///< High value for THRESHOLD_REMAP
+    double m_low_value; ///< Low value for THRESHOLD_REMAP
+    double m_last_held_value; ///< Last held value for HOLD_ON_FALSE and SAMPLE_AND_HOLD
+    double m_last_logic_value; ///< Previous logic value for change detection
 };
 
 } // namespace MayaFlux::Buffers

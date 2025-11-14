@@ -5,10 +5,17 @@ on:
       run_tests:
         description: "Run tests after build"
         required: false
-        default: true
+        default: false
         type: boolean
+      create_distribution:
+        description: "Create MayaFlux distribution package"
+        required: false
+        default: true
+permissions:
+  contents: write
+
   # push:
-  #   branches: [develop]
+  #   branches: [main]
 env:
   BUILD_TYPE: Release
 jobs:
@@ -24,11 +31,6 @@ jobs:
     steps:
       - name: Install build tools on macOS
         run: brew install md5sha1sum
-
-      - name: Setup CMake Environment
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: "3.29.x"
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -51,6 +53,18 @@ jobs:
           EOF
           clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
 
+      # - name: Cache STB headers
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/Libraries/stb
+      #     key: stb-headers-${{ runner.os }}
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-build
+          max-size: "1G"
+
       - name: Install Homebrew tools (cached)
         uses: tecolicom/actions-use-homebrew-tools@v1
         with:
@@ -60,6 +74,7 @@ jobs:
             shaderc
             googletest
             pkg-config
+            cmake
             eigen
             onedpl
             magic_enum
@@ -67,21 +82,67 @@ jobs:
             glfw
             glm
             llvm
-          verbose: true
 
       - name: Setup Homebrew Environment
         run: |
           eval "$(/opt/homebrew/bin/brew shellenv)"
+
+          # Reinstall cmake to ensure post install steps are run
+          brew reinstall cmake
+
+          # Re-establish all the paths when cache is hit
+          for tool in rtaudio ffmpeg shaderc googletest pkg-config eigen onedpl magic_enum fmt glfw glm llvm; do
+            if TOOL_PREFIX=$(brew --prefix $tool 2>/dev/null); then
+              if [ -d "$TOOL_PREFIX/lib/pkgconfig" ]; then
+                export PKG_CONFIG_PATH="$TOOL_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
+              fi
+              if [ -d "$TOOL_PREFIX/lib/cmake" ]; then
+                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/lib/cmake:$CMAKE_PREFIX_PATH"
+              fi
+              # Special handling for eigen which uses eigen3 name
+              if [ "$tool" = "eigen" ] && [ -d "$TOOL_PREFIX/share/eigen3/cmake" ]; then
+                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/eigen3/cmake:$CMAKE_PREFIX_PATH"
+              fi
+              # magic_enum also uses non standard pkg-config path
+              if [ "$tool" = "magic_enum" ] && [ -d "$TOOL_PREFIX/include" ]; then
+                export CPATH="$TOOL_PREFIX/include:$CPATH"
+                export PKG_CONFIG_PATH="$TOOL_PREFIX/share/pkgconfig:$PKG_CONFIG_PATH"
+                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/cmake:$CMAKE_PREFIX_PATH"
+              fi
+            fi
+          done
+
+          # Eigen special handling - it installs to share/eigen3
+          EIGEN_PREFIX=$(brew --prefix eigen)
+          if [ -d "$EIGEN_PREFIX/share/pkgconfig" ]; then
+            export PKG_CONFIG_PATH="$EIGEN_PREFIX/share/pkgconfig:$PKG_CONFIG_PATH"
+          fi
+
+          # Export all the paths
           echo "PATH=$PATH" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$(brew --prefix)/opt/pkgconfig/lib/pkgconfig:$(brew --prefix)/share/pkgconfig" >> $GITHUB_ENV
-          echo "CMAKE_PREFIX_PATH=$(brew --prefix)" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix):$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
           echo "CMAKE_INCLUDE_PATH=$(brew --prefix)/include" >> $GITHUB_ENV
           echo "CMAKE_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
 
+          # LLVM specific (critical for Lila JIT)
           LLVM_PREFIX=$(brew --prefix llvm)
           echo "LLVM_PREFIX=$LLVM_PREFIX" >> $GITHUB_ENV
           echo "PATH=$LLVM_PREFIX/bin:$PATH" >> $GITHUB_ENV
-          echo "CMAKE_PREFIX_PATH=$LLVM_PREFIX/lib/cmake:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+          echo "LLVM_DIR=$LLVM_PREFIX/lib/cmake/llvm" >> $GITHUB_ENV
+          echo "Clang_DIR=$LLVM_PREFIX/lib/cmake/clang" >> $GITHUB_ENV
+
+          # Verify the setup worked
+          echo "=== Verifying environment ==="
+          echo "CMAKE command: $(which cmake)"
+          echo "CMAKE_ROOT: $CMAKE_ROOT"
+          echo "CMAKE version: $(cmake --version | head -1)"
+          echo "=== Verifying pkg-config can find packages ==="
+          pkg-config --exists rtaudio && echo "✅ rtaudio found" || echo "❌ rtaudio not found"
+          pkg-config --exists glfw3 && echo "✅ glfw3 found" || echo "❌ glfw3 not found"
+          pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
+          pkg-config --exists magic_enum && echo "✅ magic_enum found" || echo "❌ magic_enum not found"
+          pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
 
       - name: Install Vulkan SDK (LunarG)
         uses: jakoch/install-vulkan-sdk-action@v1
@@ -102,23 +163,31 @@ jobs:
           ls "$STB_INSTALL_DIR"
 
           echo "STB_ROOT=$STB_INSTALL_DIR" >> $GITHUB_ENV
-          echo "CMAKE_PREFIX_PATH=$STB_INSTALL_DIR:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
           echo "CPATH=$STB_INSTALL_DIR:$CPATH" >> $GITHUB_ENV
 
       - name: Configure CMake
         shell: bash
         run: |
           eval "$(/opt/homebrew/bin/brew shellenv)"
+
+          export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
+          export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
+
+          echo "=== Final CMake environment ==="
+          echo "CMAKE version: $(cmake --version | head -1)"
+          echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH"
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+
           cmake -B build \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_CXX_STANDARD=23 \
-            -DCMAKE_VERBOSE_MAKEFILE=ON \
-            -DCMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH=ON \
-            -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_VERBOSE_MAKEFILE=ON
 
       - name: Build
         shell: bash
-        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel 4
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel $(sysctl -n hw.ncpu)
 
       # - name: Test (conditional)
       #   if: ${{ inputs.run_tests != false }}
@@ -127,7 +196,7 @@ jobs:
       #   run: ctest --output-on-failure --parallel 4
 
       - name: Install to staging directory
-        # if: ${{ inputs.create_distribution != false }}
+        if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
           ls
@@ -136,7 +205,7 @@ jobs:
           echo "Installation completed to dist_staging/"
 
       - name: Verify installation structure
-        # if: ${{ inputs.create_distribution != false }}
+        if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
           echo "=== MayaFlux Distribution Structure ==="
@@ -158,7 +227,7 @@ jobs:
           find dist_staging/share/lila/runtime -type f | head -5 || echo "No runtime files found"
 
       - name: Create MayaFlux distribution package
-        # if: ${{ inputs.create_distribution != false }}
+        if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
           # Extract version from CMake
@@ -280,7 +349,7 @@ jobs:
           ls -la *.tar.gz *.zip
 
       - name: Upload MayaFlux distribution
-        # if: ${{ inputs.create_distribution != false }}
+        if: ${{ inputs.create_distribution != false }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.PACKAGE_NAME }}
@@ -290,7 +359,7 @@ jobs:
           retention-days: 30
 
       - name: Display distribution summary
-        # if: ${{ inputs.create_distribution != false }}
+        if: ${{ inputs.create_distribution != false }}
         run: |
           echo "=== MayaFlux Distribution Created ==="
           echo "📦 Package: ${{ env.PACKAGE_NAME }}"
@@ -320,7 +389,7 @@ jobs:
 
   create_release:
     # This job runs only if the build job on macos-14 matrix entry succeeds.
-    if: success()
+    if: success() && github.event.inputs.create_distribution != 'false'
     needs: build
     runs-on: ubuntu-latest
     name: "Create GitHub Release"
@@ -359,7 +428,7 @@ jobs:
 
             This is an automated CI build for the **macOS 14 (Sonoma) platform and upwards**.
 
-            **Version**: ${{ steps.set_vars.outputs.VERSION }}
+            **Latest build for version ${{ steps.set_vars.outputs.VERSION }}**
             **Commit**: ${{ github.sha }}
 
             The attached assets are:
@@ -367,8 +436,10 @@ jobs:
             - **.zip**: Standard archive for macOS users.
 
             ---
-            *Note: This is a pre-release build and may contain unstable features.*
+            *Note: This development build replaces any previous build for version ${{ steps.set_vars.outputs.VERSION }}*
           prerelease: true
+          draft: false
+          overwrite_files: true
           files: artifacts/*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

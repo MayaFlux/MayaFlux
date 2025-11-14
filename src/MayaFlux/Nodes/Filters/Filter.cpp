@@ -42,6 +42,11 @@ Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_
     initialize_shift_buffers();
 }
 
+Filter::Filter(const std::vector<double>& a_coef, const std::vector<double>& b_coef)
+    : Filter(nullptr, a_coef, b_coef)
+{
+}
+
 void Filter::initialize_shift_buffers()
 {
     m_input_history.resize(m_shift_config.first + 1, 0.0F);

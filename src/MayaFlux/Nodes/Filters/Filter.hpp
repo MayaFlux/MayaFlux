@@ -161,6 +161,17 @@ public:
     Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, const std::vector<double>& b_coef);
 
     /**
+     * @brief Constructor using explicit coefficient vectors (no input node)
+     * @param a_coef Feedback (denominator) coefficients
+     * @param b_coef Feedforward (numerator) coefficients
+     *
+     * Creates a filter with the specified coefficient vectors but no input node.
+     * This can be used in scenarios where the filter operates on external data
+     * or is part of a larger processing chain.
+     */
+    Filter(const std::vector<double>& a_coef, const std::vector<double>& b_coef);
+
+    /**
      * @brief Virtual destructor
      */
     ~Filter() override = default;

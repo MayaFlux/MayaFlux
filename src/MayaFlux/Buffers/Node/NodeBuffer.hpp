@@ -168,14 +168,6 @@ protected:
      */
     std::shared_ptr<BufferProcessor> create_default_processor() override;
 
-    /**
-     * @brief Default processor for this buffer
-     *
-     * This is a NodeSourceProcessor configured to capture output
-     * from the source node.
-     */
-    std::shared_ptr<BufferProcessor> m_default_processor;
-
 private:
     /**
      * @brief Source node that generates sequential data values

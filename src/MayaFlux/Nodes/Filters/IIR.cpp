@@ -12,6 +12,11 @@ IIR::IIR(const std::shared_ptr<Node>& input, const std::vector<double>& a_coef, 
 {
 }
 
+IIR::IIR(const std::vector<double>& a_coef, const std::vector<double>& b_coef)
+    : Filter(a_coef, b_coef)
+{
+}
+
 double IIR::process_sample(double input)
 {
     if (is_bypass_enabled()) {
