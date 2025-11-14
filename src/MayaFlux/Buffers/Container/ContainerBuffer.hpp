@@ -96,6 +96,8 @@ private:
     uint32_t m_num_channels { 1 };
     uint32_t m_reader_id {};
 
+    uint64_t m_consumption_offset {}; // Track position within current production
+
     // Cache for efficiency
     mutable std::vector<double> m_temp_buffer;
 

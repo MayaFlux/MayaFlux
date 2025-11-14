@@ -266,7 +266,7 @@ Each section in Sculpting Data teaches one core idea and builds on the previous:
 4. **Section 3: Timing** - Understand timing control (how you schedule)
 5. **Section 4:** (Coming) BufferOperation (how you compose)
 
-**Start here:** Open [Sculpting Data](Tutorials/SculptingData.md) and begin with Section 1.
+**Start here:** Open [Sculpting Data Part I](Tutorials/SculptingData/SculptingData.md) and begin with Section 1.
 
 Each section is designed to be executed immediately:
 - Copy the code examples into your `compose()` function
@@ -276,3 +276,9 @@ Each section is designed to be executed immediately:
 - Experiment by changing values
 
 You'll have working audio within 5 minutes.
+
+### Procedure
+
+If you have already completed the aforementioned tutorial, proceed to the next tutorial 
+at [Sculpting Data Part II, Processing Expression](Tutorials/SculptingData/ProcessingExpression.md)
+which covers buffers, processors, math as expression, logic as creative decisions and more.

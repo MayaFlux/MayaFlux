@@ -959,6 +959,8 @@ You've just inserted a processor into a buffer's chain and heard the result. Tha
 In the next section, we'll interrupt this passive playback. We'll insert a processing node between the Container and the buffers. 
 And you'll see why this architecture—buffers as relays, not generators—enables powerful real-time transformation.
 
+For a comprehensive tutorial on buffer processors and related concepts, visit the [Buffer Processors Tutorial](./ProcessingExpression.md).
+
 # Tutorial: Timing, Streams, and Bridges
 
 ## The Current Continous Flow
