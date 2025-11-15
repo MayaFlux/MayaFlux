@@ -1,0 +1,346 @@
+@PACKAGE_INIT@
+
+# MayaFlux CMake Config
+# Provides: MayaFlux::MayaFluxLib, MayaFlux::Lila targets
+
+set(MayaFlux_VERSION @PROJECT_VERSION@)
+
+# Version compatibility check
+if(NOT DEFINED MayaFlux_FIND_QUIETLY)
+    message(STATUS "Found MayaFlux ${MayaFlux_VERSION}")
+endif()
+
+if(MayaFlux_FIND_VERSION AND MayaFlux_VERSION VERSION_LESS MayaFlux_FIND_VERSION)
+    if(MayaFlux_FIND_REQUIRED)
+        message(FATAL_ERROR "MayaFlux version ${MayaFlux_FIND_VERSION} or later required, found ${MayaFlux_VERSION}")
+    endif()
+endif()
+
+# ============================================================================
+# Dependency Resolution
+# ============================================================================
+
+# Core dependencies (all platforms)
+find_package(PkgConfig QUIET)
+
+# Windows-specific dependency resolution
+if(WIN32)
+    message(STATUS "=== Windows Dependency Resolution ===")
+    
+    # magic_enum
+    if(NOT TARGET magic_enum)
+        add_library(magic_enum INTERFACE IMPORTED)
+        set_target_properties(magic_enum PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "$ENV{MAGIC_ENUM_INCLUDE_DIR}")
+    endif()
+
+    # Custom Eigen3 from environment
+    if(NOT TARGET Eigen3::Eigen)
+        add_library(Eigen3::Eigen INTERFACE IMPORTED)
+        set_target_properties(Eigen3::Eigen PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "$ENV{EIGEN3_INCLUDE_DIR}")
+    endif()
+
+    # GLFW (vcpkg or environment)
+    find_package(glfw3 CONFIG QUIET)
+    if(NOT glfw3_FOUND AND DEFINED ENV{GLFW_ROOT})
+        if(NOT TARGET glfw)
+            add_library(glfw SHARED IMPORTED GLOBAL)
+            set_target_properties(glfw PROPERTIES
+                IMPORTED_LOCATION "$ENV{GLFW_LIB_DIR}/glfw3.dll"
+                IMPORTED_IMPLIB "$ENV{GLFW_LIB_DIR}/glfw3dll.lib"
+                INTERFACE_INCLUDE_DIRECTORIES "$ENV{GLFW_ROOT}/include")
+        endif()
+    endif()
+
+    find_package(RtAudio REQUIRED HINTS "$ENV{RTAUDIO_ROOT}")
+    find_package(Vulkan REQUIRED)
+    find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
+    find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
+
+    # FFmpeg components
+    if(NOT TARGET FFmpeg::avcodec)
+        foreach(component avcodec avformat avutil swresample swscale)
+            add_library(FFmpeg::${component} UNKNOWN IMPORTED)
+            set_target_properties(FFmpeg::${component} PROPERTIES
+                IMPORTED_LOCATION "$ENV{FFMPEG_ROOT}/lib/${component}.lib"
+                INTERFACE_INCLUDE_DIRECTORIES "$ENV{FFMPEG_ROOT}/include")
+        endforeach()
+    endif()
+
+    # GLM from environment
+    if(NOT TARGET glm::glm)
+        add_library(glm INTERFACE IMPORTED)
+        set_target_properties(glm PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "$ENV{GLM_INCLUDE_DIR}")
+    endif()
+
+    # Shader support
+    set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
+    set(MAYAFLUX_USE_SPIRV_REFLECT @MAYAFLUX_USE_SPIRV_REFLECT@)
+
+else()
+    # Unix-like systems (Linux, macOS) use pkg-config
+    message(STATUS "=== Unix/Linux Dependency Resolution ===")
+
+    find_package(PkgConfig REQUIRED)
+
+    # Shader support  
+    set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
+    set(MAYAFLUX_USE_SPIRV_REFLECT @MAYAFLUX_USE_SPIRV_REFLECT@)
+
+    if(MAYAFLUX_USE_SPIRV_REFLECT)
+        pkg_check_modules(shaderc QUIET IMPORTED_TARGET shaderc)
+    endif()
+
+    # magic_enum
+    pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
+
+    if(APPLE)
+        message(STATUS "=== macOS-specific Dependencies ===")
+        find_package(oneDPL QUIET)
+        find_package(fmt REQUIRED)
+        find_package(Vulkan REQUIRED)
+        set(_MAYAFLUX_THREADING_BACKEND "oneDPL")
+    else()
+        message(STATUS "=== Linux-specific Dependencies ===")
+        pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
+        find_package(TBB REQUIRED)
+        set(_MAYAFLUX_THREADING_BACKEND "TBB")
+    endif()
+
+    find_package(GTest QUIET)
+    find_package(LLVM CONFIG REQUIRED)
+    find_package(Clang CONFIG REQUIRED)
+    find_package(glm REQUIRED)
+
+    pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
+    pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
+    pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
+
+    pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
+    pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
+    pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
+    pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
+    pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
+endif()
+
+# ============================================================================
+# MayaFluxLib Target
+# ============================================================================
+
+if(NOT TARGET MayaFlux::MayaFluxLib)
+    add_library(MayaFlux::MayaFluxLib SHARED IMPORTED)
+
+    set_target_properties(MayaFlux::MayaFluxLib PROPERTIES
+        IMPORTED_LOCATION "@PACKAGE_CMAKE_INSTALL_PREFIX@/lib/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxLib${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES 
+            "@PACKAGE_CMAKE_INSTALL_PREFIX@/include"
+            "$ENV{STB_INCLUDE_DIR}"  # Moved from target_include_directories
+            "$ENV{LIBXML2_INCLUDE_DIR}"
+    )
+
+    # Platform definitions - APPLIED ONLY TO TARGETS LINKING AGAINST MAYAFLUX
+    if(WIN32)
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
+            MAYAFLUX_PLATFORM_WINDOWS 
+            WIN32_LEAN_AND_MEAN 
+            NOMINMAX 
+            _USE_MATH_DEFINES
+            USE_PPL_BACKEND
+        )
+        target_include_directories(MayaFlux::MayaFluxLib INTERFACE
+            "$ENV{STB_INCLUDE_DIR}"
+        )
+    elseif(APPLE)
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
+            MAYAFLUX_PLATFORM_MACOS
+        )
+    elseif(UNIX AND NOT APPLE)
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
+            MAYAFLUX_PLATFORM_LINUX
+            USE_TBB_BACKEND
+        )
+    endif()
+
+    # Core definitions - APPLIED ONLY TO TARGETS LINKING AGAINST MAYAFLUX
+    target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
+        RTAUDIO_BACKEND 
+        GLFW_BACKEND
+    )
+
+    # Debug definition - APPLIED ONLY TO TARGETS LINKING AGAINST MAYAFLUX
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_DEBUG=1)
+    else()
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_DEBUG=0)
+    endif()
+
+    # ========================================================================
+    # Core dependencies (all platforms)
+    # ========================================================================
+    if(WIN32)
+        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE
+            RtAudio::rtaudio
+            Eigen3::Eigen
+            glfw
+            Vulkan::Vulkan
+            FFmpeg::avcodec
+            FFmpeg::avformat
+            FFmpeg::avutil
+            FFmpeg::swresample
+            FFmpeg::swscale
+            magic_enum
+            glm
+            gdi32
+            user32
+            shell32
+            opengl32
+        )
+    else()
+        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE
+            PkgConfig::RtAudio
+            PkgConfig::Eigen
+            PkgConfig::Glfw
+            PkgConfig::LIBAVCODEC
+            PkgConfig::LIBAVFORMAT
+            PkgConfig::LIBAVUTIL
+            PkgConfig::LIBSWRESAMPLE
+            PkgConfig::LIBSWSCALE
+            PkgConfig::magic_enum
+            glm::glm
+        )
+
+        # Unix Vulkan
+        if(APPLE)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::Vulkan)
+        else()
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::Vulkan)
+        endif()
+    endif()
+
+    # ========================================================================
+    # Platform-specific threading backends
+    # ========================================================================
+    if(APPLE)
+        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE oneDPL fmt::fmt)
+    elseif(UNIX AND NOT APPLE)
+        target_link_libraries(MayaFlux::MayaFluxLib INTERFACE TBB::tbb)
+    endif()
+
+    # ========================================================================
+    # Optional shader support
+    # ========================================================================
+    if(MAYAFLUX_USE_SHADERC)
+        if(WIN32)
+            if(TARGET Vulkan::shaderc_combined)
+                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE Vulkan::shaderc_combined)
+            elseif(TARGET shaderc_combined)
+                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE shaderc_combined)
+            endif()
+        elseif(UNIX AND TARGET PkgConfig::shaderc)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::shaderc)
+        endif()
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_USE_SHADERC)
+    endif()
+
+    if(MAYAFLUX_USE_SPIRV_REFLECT)
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_USE_SPIRV_REFLECT)
+    endif()
+
+    set_property(TARGET MayaFlux::MayaFluxLib PROPERTY VERSION ${MayaFlux_VERSION})
+
+    if(NOT MayaFlux_FIND_QUIETLY)
+        message(STATUS "MayaFlux::MayaFluxLib configuration:")
+        if(NOT WIN32)
+            message(STATUS "  Threading backend: ${_MAYAFLUX_THREADING_BACKEND}")
+        else()
+            message(STATUS "  Threading backend: PPL (built-in)")
+        endif()
+        message(STATUS "  Shader compilation: ${MAYAFLUX_USE_SHADERC}")
+        message(STATUS "  Shader reflection: ${MAYAFLUX_USE_SPIRV_REFLECT}")
+    endif()
+endif()
+
+# ============================================================================
+# Lila Target (JIT Live Coding)
+# ============================================================================
+
+set(LLVM_MIN_VERSION 21)
+
+if(NOT TARGET MayaFlux::Lila)
+    add_library(MayaFlux::Lila SHARED IMPORTED)
+
+    set_target_properties(MayaFlux::Lila PROPERTIES
+        IMPORTED_LOCATION "@PACKAGE_CMAKE_INSTALL_PREFIX@/lib/${CMAKE_SHARED_LIBRARY_PREFIX}Lila${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES 
+            "@PACKAGE_CMAKE_INSTALL_PREFIX@/include"
+            "@PACKAGE_CMAKE_INSTALL_PREFIX@/share/lila/runtime"
+    )
+
+    target_link_libraries(MayaFlux::Lila INTERFACE MayaFlux::MayaFluxLib)
+
+    # LLVM/Clang linking (same as before - this part was correct)
+    if(UNIX AND NOT WIN32)
+        execute_process(
+            COMMAND llvm-config --ldflags
+            OUTPUT_VARIABLE LLVM_LDFLAGS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        execute_process(
+            COMMAND llvm-config --libs core orcjit native irreader support
+            OUTPUT_VARIABLE LLVM_LIBS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        execute_process(
+            COMMAND llvm-config --system-libs
+            OUTPUT_VARIABLE LLVM_SYSTEM_LIBS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+        target_link_libraries(MayaFlux::Lila INTERFACE
+            ${LLVM_LDFLAGS}
+            ${LLVM_LIBS}
+            ${LLVM_SYSTEM_LIBS}
+            clang-cpp
+        )
+    else()
+        target_link_libraries(MayaFlux::Lila INTERFACE
+            LLVMSupport
+            LLVMCore
+            LLVMOrcJIT
+            LLVMIRReader
+            LLVMExecutionEngine
+            LLVMRuntimeDyld
+            LLVMTarget
+            LLVMX86CodeGen
+            LLVMMC
+            LLVMBitReader
+            LLVMAsmParser
+            LLVMTransformUtils
+            clangAST
+            clangBasic
+            clangCodeGen
+            clangDriver
+            clangFrontend
+            clangLex
+            clangParse
+            clangSema
+            clangSerialization
+            clangInterpreter
+            ws2_32
+            legacy_stdio_definitions
+        )
+    endif()
+
+    set_property(TARGET MayaFlux::Lila PROPERTY VERSION ${MayaFlux_VERSION})
+endif()
+
+# ============================================================================
+# Package Variables
+# ============================================================================
+
+set(MayaFlux_FOUND TRUE)
+set(MayaFlux_LIBRARIES MayaFlux::MayaFluxLib MayaFlux::Lila)
+set(MayaFlux_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_PREFIX@/include")
+set(MayaFlux_SHADER_DIR "@PACKAGE_CMAKE_INSTALL_PREFIX@/share/mayaflux/shaders")

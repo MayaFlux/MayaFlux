@@ -85,7 +85,7 @@ append_if_missing 'export VK_ICD_FILENAMES="$VULKAN_SDK/etc/vulkan/icd.d/MoltenV
 append_if_missing 'export VK_LAYER_PATH="$VULKAN_SDK/etc/vulkan/explicit_layer.d"'
 
 # --- 5) CMake dependencies ------------------------------------------
-brew install ffmpeg rtaudio glfw glm eigen fmt magic-enum onedpl
+brew install ffmpeg rtaudio glfw glm eigen fmt magic_enum onedpl
 
 # --- 6) STB Setup (header-only library) --------------------------------------
 printf 'Installing STB headers...\n' >&3

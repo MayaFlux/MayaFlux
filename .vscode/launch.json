@@ -144,6 +144,102 @@
       }
     },
     {
+      "name": "Debug project_launcher (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Debug/project_launcher.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build MayaFlux (Debug)"
+    },
+    {
+      "name": "Debug project_launcher (Linux/macOS)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/project_launcher",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build MayaFlux (Debug)",
+      "osx": {
+        "MIMode": "lldb",
+        "program": "${workspaceFolder}/build/project_launcher",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for lldb",
+            "text": "settings set target.inline-breakpoint-strategy always",
+            "ignoreFailures": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Debug lila_server (Windows)",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Debug/lila_server.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build MayaFlux (Debug)"
+    },
+    {
+      "name": "Debug lila_server (Linux/macOS)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/lila_server",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "Build MayaFlux (Debug)",
+      "osx": {
+        "MIMode": "lldb",
+        "program": "${workspaceFolder}/build/lila_server",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for lldb",
+            "text": "settings set target.inline-breakpoint-strategy always",
+            "ignoreFailures": true
+          }
+        ]
+      }
+    },
+    {
       "name": "Attach to Process",
       "type": "cppdbg",
       "request": "attach",

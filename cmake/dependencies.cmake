@@ -9,56 +9,48 @@ set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL
     "Use existing dependencies without network")
 
 if(WIN32)
+    message(STATUS "=== Windows Dependency Detection ===")
+
     add_library(magic_enum INTERFACE IMPORTED)
     set_target_properties(magic_enum PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${MAGIC_ENUM_INCLUDE_DIR}"
-    )
+        INTERFACE_INCLUDE_DIRECTORIES "$ENV{MAGIC_ENUM_INCLUDE_DIR}")
 
     add_library(Eigen3::Eigen INTERFACE IMPORTED)
     set_target_properties(Eigen3::Eigen PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${EIGEN3_INCLUDE_DIR}"
-    )
+        INTERFACE_INCLUDE_DIRECTORIES "$ENV{EIGEN3_INCLUDE_DIR}")
 
-    include_directories(${GLM_INCLUDE_DIR})
+    include_directories($ENV{GLM_INCLUDE_DIR} $ENV{STB_INCLUDE_DIR} $ENV{LIBXML2_INCLUDE_DIR})
 
-    add_library(glfw SHARED IMPORTED)
-    set_target_properties(glfw PROPERTIES
-        IMPORTED_LOCATION "${GLFW_DLL}"
-        IMPORTED_IMPLIB "${GLFW_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${GLFW_INCLUDE_DIR}"
-    )
+    find_package(glfw3 CONFIG QUIET)
+    if(glfw3_FOUND)
+        message(STATUS "Using GLFW from vcpkg")
+    else()
+        if(DEFINED ENV{GLFW_ROOT} AND DEFINED ENV{GLFW_LIB_DIR})
+            add_library(glfw SHARED IMPORTED GLOBAL)
+            set_target_properties(glfw PROPERTIES
+                IMPORTED_LOCATION "$ENV{GLFW_LIB_DIR}/glfw3.dll"
+                IMPORTED_IMPLIB "$ENV{GLFW_LIB_DIR}/glfw3dll.lib"
+                INTERFACE_INCLUDE_DIRECTORIES "$ENV{GLFW_ROOT}/include")
+            message(STATUS "Using GLFW from environment: $ENV{GLFW_ROOT}")
+        else()
+            message(FATAL_ERROR
+                    "GLFW not found via vcpkg or environment variables")
+        endif()
+    endif()
 
-    find_package(RtAudio REQUIRED)
+    find_package(RtAudio REQUIRED HINTS "$ENV{RTAUDIO_ROOT}")
     find_package(Vulkan REQUIRED)
-    find_package(LLVM CONFIG REQUIRED)
-    find_package(Clang CONFIG REQUIRED )
+    find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
+    find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
 
-
-    add_library(FFmpeg::avcodec UNKNOWN IMPORTED)
-    set_target_properties(FFmpeg::avcodec PROPERTIES
-        IMPORTED_LOCATION "${AVCODEC_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${AVCODEC_INCLUDE_DIR}"
-    )
-    add_library(FFmpeg::avformat UNKNOWN IMPORTED)
-    set_target_properties(FFmpeg::avformat PROPERTIES
-        IMPORTED_LOCATION "${AVFORMAT_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${AVFORMAT_INCLUDE_DIR}"
-    )
-    add_library(FFmpeg::avutil UNKNOWN IMPORTED)
-    set_target_properties(FFmpeg::avutil PROPERTIES
-        IMPORTED_LOCATION "${AVUTIL_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${AVUTIL_INCLUDE_DIR}"
-    )
-    add_library(FFmpeg::swresample UNKNOWN IMPORTED)
-    set_target_properties(FFmpeg::swresample PROPERTIES
-        IMPORTED_LOCATION "${SWRESAMPLE_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${SWRESAMPLE_INCLUDE_DIR}"
-    )
-    add_library(FFmpeg::swscale UNKNOWN IMPORTED)
-    set_target_properties(FFmpeg::swscale PROPERTIES
-        IMPORTED_LOCATION "${SWSCALE_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${SWSCALE_INCLUDE_DIR}"
-    )
+    # FFmpeg
+    foreach(component avcodec avformat avutil swresample swscale)
+        string(TOUPPER ${component} comp_upper)
+        add_library(FFmpeg::${component} UNKNOWN IMPORTED)
+        set_target_properties(FFmpeg::${component} PROPERTIES
+            IMPORTED_LOCATION "$ENV{FFMPEG_ROOT}/lib/${component}.lib"
+            INTERFACE_INCLUDE_DIRECTORIES "$ENV{FFMPEG_ROOT}/include")
+    endforeach()
 
 else()
     find_package(PkgConfig REQUIRED)

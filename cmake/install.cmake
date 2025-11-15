@@ -57,8 +57,34 @@ install(FILES
 
 install(TARGETS lila_server RUNTIME DESTINATION bin)
 
+# ============================================================================
+# CMake Config Files
+# ============================================================================
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/MayaFluxConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfig.cmake
+    @ONLY
+)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+if(UNIX)
+    install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfigVersion.cmake
+        DESTINATION lib/cmake/MayaFlux
+    )
+endif()
+
 message(STATUS "Lila (static) installed to:")
 message(STATUS "  - Libraries: ${CMAKE_INSTALL_PREFIX}/lib")
 message(STATUS "  - Headers: ${CMAKE_INSTALL_PREFIX}/include/Lila")
 message(STATUS "  - Runtime data: ${CMAKE_INSTALL_PREFIX}/share/lila/runtime")
 message(STATUS "  - Executables: ${CMAKE_INSTALL_PREFIX}/bin")
+message(STATUS "  - CMake config: ${CMAKE_INSTALL_PREFIX}/lib/cmake/MayaFlux")
