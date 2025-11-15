@@ -1,4 +1,4 @@
-name: MayaFlux CI
+name: MayaFlux MacOS CI
 on:
   workflow_dispatch:
     inputs:

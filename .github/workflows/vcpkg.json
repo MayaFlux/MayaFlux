@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "mayaflux",
+  "version-string": "0.1.0",
+  "description": "MayaFlux CI Dependencies (Windows x64)",
+  "dependencies": [
+    {
+      "name": "rtaudio",
+      "version>=": "6.0.1"
+    },
+    {
+      "name": "glfw3",
+      "version>=": "3.4"
+    },
+    {
+      "name": "eigen3",
+      "version>=": "3.4.0"
+    },
+    {
+      "name": "glm",
+      "version>=": "1.0.0"
+    },
+    {
+      "name": "magic-enum",
+      "version>=": "0.9.5"
+    }
+  ],
+  "builtin-baseline": "master"
+}
