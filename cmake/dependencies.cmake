@@ -21,11 +21,22 @@ if(WIN32)
 
     include_directories($ENV{GLM_INCLUDE_DIR} $ENV{STB_INCLUDE_DIR} $ENV{LIBXML2_INCLUDE_DIR})
 
-    add_library(glfw SHARED IMPORTED)
-    set_target_properties(glfw PROPERTIES
-        IMPORTED_LOCATION "$ENV{GLFW_LIB_DIR}/glfw3.dll"
-        IMPORTED_IMPLIB "$ENV{GLFW_LIB_DIR}/glfw3dll.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "$ENV{GLFW_ROOT}/include")
+    find_package(glfw3 CONFIG QUIET)
+    if(glfw3_FOUND)
+        message(STATUS "Using GLFW from vcpkg")
+    else()
+        if(DEFINED ENV{GLFW_ROOT} AND DEFINED ENV{GLFW_LIB_DIR})
+            add_library(glfw SHARED IMPORTED GLOBAL)
+            set_target_properties(glfw PROPERTIES
+                IMPORTED_LOCATION "$ENV{GLFW_LIB_DIR}/glfw3.dll"
+                IMPORTED_IMPLIB "$ENV{GLFW_LIB_DIR}/glfw3dll.lib"
+                INTERFACE_INCLUDE_DIRECTORIES "$ENV{GLFW_ROOT}/include")
+            message(STATUS "Using GLFW from environment: $ENV{GLFW_ROOT}")
+        else()
+            message(FATAL_ERROR
+                    "GLFW not found via vcpkg or environment variables")
+        endif()
+    endif()
 
     find_package(RtAudio REQUIRED HINTS "$ENV{RTAUDIO_ROOT}")
     find_package(Vulkan REQUIRED)

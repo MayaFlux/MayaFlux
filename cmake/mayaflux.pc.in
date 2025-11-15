@@ -1,11 +1,62 @@
+# ============================================================================
+# mayaflux.pc - MayaFlux Core Library
+# ============================================================================
+# NOTE: This single .pc file represents all platforms.
+# pkg-config will not resolve platform-specific Requires.private correctly,
+# so downstream consumers MUST use CMake's find_package() for proper dependency resolution.
+# This .pc file is provided for compatibility only.
+# ============================================================================
+
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
 libdir=${prefix}/lib
 includedir=${prefix}/include
 
 Name: MayaFlux
-Description: A data-driven digital processing library for audio and graphics
+Description: Data-driven digital multimedia DSP framework (audio, video, control)
 Version: @PROJECT_VERSION@
-Requires: libavcodec libavformat libavutil libswresample libswscale glfw3 rtaudio
-Libs: -L${libdir} -lMayaFluxLib
+URL: https://github.com/MayaFlux/MayaFlux
+
+# Core public dependencies (all platforms)
+Requires: glfw3 >= 3.4 rtaudio libavcodec libavformat libavutil libswresample libswscale
+
+# Vulkan (platform-specific: Windows via Vulkan::Vulkan, Unix via PkgConfig)
+# vulkan package name is portable across systems
+Requires: vulkan
+
+# Eigen3 (platform-specific CMake targets, but package name is standard)
+Requires: eigen3
+
+# Math library
+Requires: glm
+
+# Platform-specific backend (pkg-config cannot express conditionals)
+# - Windows: PPL (built into MSVC runtime, no separate package needed)
+# - macOS: oneDPL (installed via Homebrew as onedpl)
+# - Linux: TBB (installed as tbb)
+# These should be resolved via find_package() in CMake, not pkg-config
+
+# Threading libraries (private, not exposed via .pc but needed at link time)
+# Recommended: Use CMake find_package() instead of pkg-config for MayaFlux
+# to properly resolve platform-specific threading backends
+
+# Compilation flags
 Cflags: -I${includedir}
+
+# Linking flags
+Libs: -L${libdir} -lMayaFluxLib
+
+# ============================================================================
+# IMPORTANT NOTE FOR USERS
+# ============================================================================
+# This .pc file provides basic dependency information but CANNOT express
+# all platform-specific requirements correctly. For proper dependency resolution:
+#
+#   CMAKE (RECOMMENDED):
+#   find_package(MayaFlux REQUIRED)
+#   target_link_libraries(myapp MayaFlux::MayaFluxLib)
+#
+#   PKG-CONFIG (LIMITED):
+#   pkg-config --cflags --libs mayaflux
+#   (Warning: May not resolve threading backends correctly on macOS/Linux)
+# ============================================================================

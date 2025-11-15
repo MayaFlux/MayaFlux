@@ -1,11 +1,50 @@
+# ============================================================================
+# lila.pc - MayaFlux Live Coding Engine
+# ============================================================================
+# CRITICAL: Lila's LLVM/Clang dependencies are PLATFORM-SPECIFIC and COMPLEX
+# ============================================================================
+# 
+# UNIX (macOS/Linux):
+#   - llvm-config tool manages all LLVM linking (ldflags + libs + system-libs)
+#   - Requires: llvm >= 21
+#   - Libs.private: $(llvm-config --ldflags) $(llvm-config --libs core orcjit native irreader support) -lclang-cpp
+#
+# WINDOWS:
+#   - Explicit LLVM component linking required (cannot use llvm-config on Windows)
+#   - 14 LLVM components: LLVMSupport, LLVMCore, LLVMOrcJIT, LLVMIRReader, LLVMExecutionEngine,
+#     LLVMRuntimeDyld, LLVMTarget, LLVMX86CodeGen, LLVMmc, LLVMBitReader, LLVMAsmParser, LLVMTransformUtils
+#   - 6 Clang components: clangAST, clangBasic, clangCodeGen, clangDriver, clangFrontend, clangLex,
+#     clangParse, clangSema, clangSerialization, clangInterpreter
+#   - System libs: ws2_32, legacy_stdio_definitions
+#   - Runtime flags: /DEFAULTLIB:vcruntime.lib /DEFAULTLIB:msvcrt.lib
+#
+# RECOMMENDATION: Use CMake find_package(Lila) instead of pkg-config
+# ============================================================================
+
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
 libdir=${prefix}/lib
 includedir=${prefix}/include
+datadir=${prefix}/share
 
 Name: Lila
-Description: Live coding engine for MayaFlux with Clang interpreter
+Description: Live C++ JIT compilation engine for MayaFlux (requires LLVM 21+)
 Version: @PROJECT_VERSION@
-Requires: MayaFlux clang LLVM
+URL: https://github.com/MayaFlux/MayaFlux
+
+# Lila depends on MayaFlux core
+Requires: MayaFlux
+
+# LLVM requirement (version constraint cannot be expressed precisely in .pc)
+Requires.private: llvm >= 21
+
+# Runtime support directory
+runtimedir=${datadir}/lila/runtime
+
+Cflags: -I${includedir} -I${runtimedir}
+
+# Core library
 Libs: -L${libdir} -lLila
-Cflags: -I${includedir} -I${prefix}/share/lila/runtime
+
+# CRITICAL: LLVM/Clang linking is PLATFORM-SPECIFIC
+# See detailed comments above. Use CMake config for correct dependency resolution.
