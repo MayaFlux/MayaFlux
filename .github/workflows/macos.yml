@@ -226,6 +226,13 @@ jobs:
           echo "Runtime (JIT Context):"
           find dist_staging/share/lila/runtime -type f | head -5 || echo "No runtime files found"
 
+      - name: Copy distribution files
+        shell: bash
+        run: |
+          cp workflows/distribution/macos/README.md dist_staging/
+          cp workflows/distribution/macos/verify_components.sh dist_staging/
+          chmod +x dist_staging/verify_components.sh
+
       - name: Create MayaFlux distribution package
         if: ${{ inputs.create_distribution != false }}
         shell: bash
@@ -238,115 +245,11 @@ jobs:
           # Create descriptive package name
           PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}-${SHORT_SHA}"
 
-          # Create comprehensive README
-          cat > dist_staging/README.md << EOF
-          # MayaFlux Distribution
-
-          Complete MayaFlux platform distribution containing three integrated components:
-
-          ## 1. MayaFluxLib (Core Library)
-          - **Purpose**: Core graphics and computation engine for developers
-          - **Location**: 
-            - Headers: \`include/MayaFlux/\`
-            - Library: \`lib/libMayaFluxLib.dylib\`
-          - **Use Case**: Direct integration for applications requiring advanced graphics/compute
-
-          ## 2. Lila (JIT Interface) 
-          - **Purpose**: Just-In-Time compilation interface that binds to MayaFluxLib
-          - **Location**:
-            - Headers: \`include/Lila/\`
-            - Library: \`lib/libLila.dylib\`
-          - **Use Case**: Developer tool for dynamic code execution and JIT compilation
-
-          ## 3. lila_server (User Application)
-          - **Purpose**: Ready-to-use server application wrapping Lila + MayaFluxLib
-          - **Location**: \`bin/lila_server\`
-          - **Use Case**: End-user application for interactive development and execution
-
-          ## Runtime Dependencies
-          - **Purpose**: Essential files for Lila JIT context
-          - **Location**: \`share/lila/runtime/\`
-
-          ## Quick Start
-          \`\`\`bash
-          # Run the user-facing server
-          ./bin/lila_server
-
-          # Develop against MayaFluxLib
-          #include <MayaFlux/MayaFlux.hpp>
-
-          # Develop against Lila JIT interface  
-          #include <Lila/Lila.hpp>
-          \`\`\`
-
-          Build Details:
-          - Version: ${VERSION}
-          - Platform: ${OS_NAME}
-          - Commit: ${GITHUB_SHA}
-          - Build Date: $(date -u)
-          EOF
-
-          # Create verification script
-          cat > dist_staging/verify_components.sh << 'EOF'
-          #!/bin/bash
-          echo "=== MayaFlux Distribution Verification ==="
-          echo ""
-
-          echo "1. Checking MayaFluxLib (Core Library):"
-          if find include/MayaFlux -name "*.hpp" | head -1 > /dev/null; then
-              echo "   ✅ Headers found: $(find include/MayaFlux -name "*.hpp" | wc -l) files"
-          else
-              echo "   ❌ No MayaFluxLib headers found"
-          fi
-
-          if find lib -name "*MayaFluxLib*" | head -1 > /dev/null; then
-              echo "   ✅ Library found: $(find lib -name "*MayaFluxLib*")"
-          else
-              echo "   ❌ No MayaFluxLib library found"
-          fi
-
-          echo ""
-          echo "2. Checking Lila (JIT Interface):"
-          if find include/Lila -name "*.hpp" | head -1 > /dev/null; then
-              echo "   ✅ Headers found: $(find include/Lila -name "*.hpp" | wc -l) files"
-          else
-              echo "   ❌ No Lila headers found"
-          fi
-
-          if find lib -name "*Lila*" | head -1 > /dev/null; then
-              echo "   ✅ Library found: $(find lib -name "*Lila*")"
-          else
-              echo "   ❌ No Lila library found"
-          fi
-
-          echo ""
-          echo "3. Checking lila_server (User Application):"
-          if find bin -name "*lila_server*" | head -1 > /dev/null; then
-              echo "   ✅ Executable found: $(find bin -name "*lila_server*")"
-          else
-              echo "   ❌ No lila_server executable found"
-          fi
-
-          echo ""
-          echo "4. Checking Runtime (JIT Context):"
-          if find share/lila/runtime -name "*.h" | head -1 > /dev/null; then
-              echo "   ✅ Runtime files found: $(find share/lila/runtime -type f | wc -l) files"
-          else
-              echo "   ❌ No runtime files found"
-          fi
-
-          echo ""
-          echo "=== Verification Complete ==="
-          EOF
-          chmod +x dist_staging/verify_components.sh
-
           # Create packages
           tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
           zip -r "${PACKAGE_NAME}.zip" dist_staging/
 
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
-          echo "Created distribution packages:"
-          ls -la *.tar.gz *.zip
 
       - name: Upload MayaFlux distribution
         if: ${{ inputs.create_distribution != false }}
@@ -388,15 +291,20 @@ jobs:
             build/compile_commands.json
 
   create_release:
-    # This job runs only if the build job on macos-14 matrix entry succeeds.
     if: success() && github.event.inputs.create_distribution != 'false'
     needs: build
     runs-on: ubuntu-latest
     name: "Create GitHub Release"
     permissions:
       contents: write
+
     steps:
-      - name: Download all artifacts
+      - name: Checkout repository (for release template)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/workflows/distribution
+
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -407,36 +315,38 @@ jobs:
           PACKAGE_DIR=$(ls artifacts | grep MayaFlux | head -1)
           VERSION=$(echo $PACKAGE_DIR | sed -E 's/MayaFlux-([0-9.]+)-.*/\1/')
           OS_INFO=$(echo $PACKAGE_DIR | sed -E 's/.*-(macos-14)-.*/\1/')
-          SHORT_SHA=$(echo $PACKAGE_DIR | sed -E 's/.*-([0-9a-f]{8})/\1/')
+          SHORT_SHA=$(echo $PACKAGE_DIR | sed -E 's/.*-([0-9a-f]{8})$/\1/')
 
-          RELEASE_TAG="v${VERSION}-${SHORT_SHA}"
-
-          RELEASE_NAME="MayaFlux Distribution ${VERSION} (${OS_INFO}, Commit: ${SHORT_SHA})"
+          RELEASE_TAG="v${VERSION}-mac-${SHORT_SHA}"
+          RELEASE_NAME="MayaFlux macOS Distribution ${VERSION} (ARM64, Commit: ${SHORT_SHA})"
 
           echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_OUTPUT
           echo "RELEASE_NAME=${RELEASE_NAME}" >> $GITHUB_OUTPUT
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
           echo "Found Package Dir: $PACKAGE_DIR"
+
+      - name: Process release template
+        id: process_template
+        run: |
+          RELEASE_BODY=$(cat workflows/distribution/macos/release_body.md | \
+            sed "s|{{VERSION}}|${{ steps.set_vars.outputs.VERSION }}|g" | \
+            sed "s|{{COMMIT_SHA}}|${{ steps.set_vars.outputs.SHORT_SHA }}|g" | \
+            sed "s|{{REPOSITORY}}|${{ github.repository }}|g")
+
+          echo "$RELEASE_BODY" > processed_release_body.md
+
+          echo "Processed release template with:"
+          echo "  Version: ${{ steps.set_vars.outputs.VERSION }}"
+          echo "  Commit: ${{ steps.set_vars.outputs.SHORT_SHA }}"
+          echo "  Repository: ${{ github.repository }}"
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.set_vars.outputs.RELEASE_TAG }}
           name: ${{ steps.set_vars.outputs.RELEASE_NAME }}
-          body: |
-            ## 📦 MayaFlux Distribution - macOS 14+
-
-            This is an automated CI build for the **macOS 14 (Sonoma) platform and upwards**.
-
-            **Latest build for version ${{ steps.set_vars.outputs.VERSION }}**
-            **Commit**: ${{ github.sha }}
-
-            The attached assets are:
-            - **.tar.gz**: Standard Unix compressed archive.
-            - **.zip**: Standard archive for macOS users.
-
-            ---
-            *Note: This development build replaces any previous build for version ${{ steps.set_vars.outputs.VERSION }}*
+          body_path: processed_release_body.md
           prerelease: true
           draft: false
           overwrite_files: true
