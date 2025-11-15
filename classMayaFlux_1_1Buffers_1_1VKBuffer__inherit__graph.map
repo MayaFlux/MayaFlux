@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::VKBuffer" name="MayaFlux::Buffers::VKBuffer">
+<area shape="rect" id="Node000001" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="16,461,197,976"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="8,1024,205,1681"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="109,990,109,1024,104,1024,104,990"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="15,133,198,413"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,427,109,461,104,461,104,427"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="31,5,183,85"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,99,109,133,104,133,104,99"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer.html" title="Root container for GPU buffer lifecycle management and batch processing." alt="" coords="5,1729,208,2189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="109,1695,109,1729,104,1729,104,1695"/>
+</map>

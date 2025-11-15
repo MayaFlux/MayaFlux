@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::GrammarAwareComputeMatrix" name="MayaFlux::Yantra::GrammarAwareComputeMatrix">
+<area shape="rect" id="Node000001" title="ComputeMatrix extension that integrates grammar&#45;based operation selection." alt="" coords="114,1057,357,1237"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix.html" title="Local execution orchestrator for computational operations." alt="" coords="131,433,340,1008"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,1022,238,1057,233,1057,233,1022"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,148,220,228"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="127,241,172,432,166,434,122,242"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1OperationPool.html" title="Thread&#45;safe pool for managing named operation instances." alt="" coords="245,5,471,371"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="319,372,308,418,303,417,313,370"/>
+</map>

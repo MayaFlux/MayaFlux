@@ -1,0 +1,26 @@
+<map id="MayaFlux::Buffers::VKBuffer::is_host_visible" name="MayaFlux::Buffers::VKBuffer::is_host_visible">
+<area shape="rect" id="Node000001" title="Whether this VKBuffer should be host&#45;visible." alt="" coords="668,205,851,245"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a818e469f4792c407c6ebc6e1112a6121.html#a818e469f4792c407c6ebc6e1112a6121" title="Clear buffer contents." alt="" coords="438,8,586,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="736,195,687,132,654,98,619,69,583,50,586,46,621,64,658,94,691,128,740,192"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae22f33ecea5953e1b819bbd36db3114c.html#ae22f33ecea5953e1b819bbd36db3114c" title="Write data into the buffer." alt="" coords="205,69,353,109"/>
+<area shape="poly" id="edge14_Node000001_Node000003" title=" " alt="" coords="730,197,682,151,652,130,619,113,551,93,480,84,412,81,353,84,353,79,412,76,481,78,552,88,621,108,654,125,685,147,734,193"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_af6dd001810af7fa06b5b2fd83d04303a.html#af6dd001810af7fa06b5b2fd83d04303a" title="Create a clone of this buffer with the same data and properties." alt="" coords="5,317,153,357"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="735,258,686,304,655,326,621,342,559,360,496,372,431,377,367,378,249,370,153,356,154,350,249,365,367,373,431,372,495,366,558,355,619,338,652,321,683,300,731,254"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a382af8166b7e2e54d7336352c261d954.html#a382af8166b7e2e54d7336352c261d954" title="Read buffer contents as Kakshya DataVariant." alt="" coords="205,288,353,328"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="655,240,534,256,405,279,353,290,352,285,403,273,534,251,654,234"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ac9ee9c98c5dc835223b84a1614a28473.html#ac9ee9c98c5dc835223b84a1614a28473" title="Get appropriate VkMemoryPropertyFlags for allocation based on Usage." alt="" coords="427,403,597,458"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="739,258,690,322,657,356,622,386,589,405,587,401,618,382,654,352,686,318,735,255"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ab0bacf7f222829997dbff394d53fc650.html#ab0bacf7f222829997dbff394d53fc650" title="Get device memory handle." alt="" coords="411,123,613,163"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="685,203,572,165,574,160,687,198"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a1c3e0f6c292516efd5f5364ba7a14fa8.html#a1c3e0f6c292516efd5f5364ba7a14fa8" title="Resize buffer and recreate GPU resources if needed." alt="" coords="205,157,353,197"/>
+<area shape="poly" id="edge13_Node000001_Node000009" title=" " alt="" coords="654,218,353,187,353,182,654,212"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_afdc83bf93f468f4c8ca643b4ce040045.html#afdc83bf93f468f4c8ca643b4ce040045" title="Mark a range as invalid (needs download)" alt="" coords="404,288,620,328"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="687,252,574,290,572,285,685,247"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="425,53,354,73,352,67,424,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_afb563bced2a85b0019e571ce0bfa4081.html#afb563bced2a85b0019e571ce0bfa4081" title="Virtual destructor." alt="" coords="201,5,356,45"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="424,30,356,29,356,24,424,24"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="192,323,154,329,153,324,191,318"/>
+<area shape="poly" id="edge10_Node000008_Node000003" title=" " alt="" coords="410,122,352,109,353,104,411,117"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="398,162,353,169,353,164,397,157"/>
+<area shape="poly" id="edge12_Node000010_Node000006" title=" " alt="" coords="390,311,353,311,353,305,390,305"/>
+</map>

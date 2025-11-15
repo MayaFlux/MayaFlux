@@ -1,0 +1,13 @@
+<map id="Root" name="Root">
+<area shape="rect" id="node1" href="dir_4db03ae752bab560007fa5103fb228a6.html" title="Root" alt="" coords="85,52,137,77"/>
+<area shape="rect" id="node2" href="dir_037f3af2a9411e4bf64b79d81d1060f6.html" title="Core" alt="" coords="5,125,57,151"/>
+<area shape="poly" id="edge1" href="dir_000035_000006.html" alt="" coords="100,79,56,118,53,114,97,75"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000035_000006.html" title="1" alt="" coords="59,112,68,127"/>
+<area shape="rect" id="node3" href="dir_7571807f242a2381d2cf58ce0b78549e.html" title="Portal" alt="" coords="81,125,141,151"/>
+<area shape="poly" id="edge2" href="dir_000035_000029.html" alt="" coords="114,78,114,112,109,112,109,78"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000035_000029.html" title="1" alt="" coords="115,100,124,114"/>
+<area shape="rect" id="node4" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="166,125,233,151"/>
+<area shape="poly" id="edge3" href="dir_000035_000019.html" alt="" coords="127,75,176,114,173,119,124,79"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000035_000019.html" title="1" alt="" coords="171,100,181,114"/>
+<area shape="rect" id="clust1" href="dir_64c2d47494cb42df00b60c7e5b15f956.html" title="Buffers" alt="" coords="74,16,149,88"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::smallest_size" name="MayaFlux::Yantra::smallest_size">
+<area shape="rect" id="Node000001" title=" " alt="" coords="260,45,491,70"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_acc2d175726e214298ce1730b44ef1989.html#acc2d175726e214298ce1730b44ef1989" title="Windowing transformation using C++20 ranges (OUT&#45;OF&#45;PLACE)" alt="" coords="5,5,212,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="256,46,212,40,212,35,256,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_ab4003981a6116c8a5264c1343d452671.html#ab4003981a6116c8a5264c1343d452671" title="Windowing transformation using C++20 ranges (IN&#45;PLACE)" alt="" coords="5,69,212,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="256,74,212,80,212,74,256,69"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Journal::Archivist::Impl" name="MayaFlux::Journal::Archivist::Impl">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,669,199,1289"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Journal_1_1RingBuffer.html" title=" " alt="" coords="16,337,188,607"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,607,105,653,99,653,99,607"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Journal_1_1RingBuffer.html" title="Lock&#45;free SPSC (Single Producer Single Consumer) ring buffer." alt="" coords="9,5,195,245"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,259,105,337,99,337,99,259"/>
+</map>

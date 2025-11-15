@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::TextureNode" name="MayaFlux::Nodes::TextureNode">
+<area shape="rect" id="Node000001" title="Base class for texture&#45;generating nodes." alt="" coords="5,623,223,948"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="15,5,213,575"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,588,117,623,111,623,111,588"/>
+</map>

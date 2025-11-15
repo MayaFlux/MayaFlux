@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::add_processor" name="MayaFlux::Buffers::BufferProcessingControl::add_processor">
+<area shape="rect" id="Node000001" title="Adds a processor to a buffer (dispatches based on buffer/token)" alt="" coords="232,45,411,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_adbaea3fff87b7854db00af0f3453b611.html#adbaea3fff87b7854db00af0f3453b611" title="Creates and attaches a quick processing function to buffer." alt="" coords="5,5,184,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,57,184,51,185,46,219,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a6573914938bed22f1d878a30695c4a03.html#a6573914938bed22f1d878a30695c4a03" title="Creates and attaches a quick processing function to all channels in a token." alt="" coords="5,84,184,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="219,93,185,99,184,93,218,88"/>
+</map>

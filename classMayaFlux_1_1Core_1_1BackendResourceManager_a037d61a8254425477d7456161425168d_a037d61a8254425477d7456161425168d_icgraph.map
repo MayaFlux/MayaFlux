@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::BackendResourceManager::download_image_data" name="MayaFlux::Core::BackendResourceManager::download_image_data">
+<area shape="rect" id="Node000001" title="Download data from an image (creates staging buffer internally)" alt="" coords="275,5,521,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6dc90dd9ebbc53518d4b8d7badaed17c.html#a6dc90dd9ebbc53518d4b8d7badaed17c" title="Download pixel data from a texture." alt="" coords="5,5,227,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,28,227,28,227,23,261,23"/>
+</map>

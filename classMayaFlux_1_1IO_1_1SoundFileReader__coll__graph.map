@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SoundFileReader" name="MayaFlux::IO::SoundFileReader">
+<area shape="rect" id="Node000001" title="FFmpeg&#45;based audio file reader for MayaFlux." alt="" coords="5,339,223,1044"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileReader.html" title="Abstract interface for reading various file formats into containers." alt="" coords="25,5,203,291"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,304,117,339,111,339,111,304"/>
+</map>

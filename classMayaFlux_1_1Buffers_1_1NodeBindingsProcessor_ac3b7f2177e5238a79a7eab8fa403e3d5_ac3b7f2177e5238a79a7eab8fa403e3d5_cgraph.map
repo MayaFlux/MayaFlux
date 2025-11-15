@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NodeBindingsProcessor::update_push_constants_from_nodes" name="MayaFlux::Buffers::NodeBindingsProcessor::update_push_constants_from_nodes">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,188,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a08f86ff68a93950b07208ee936badf8e.html#a08f86ff68a93950b07208ee936badf8e" title="Get current push constant data." alt="" coords="236,13,395,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,37,222,37,222,43,188,43"/>
+</map>

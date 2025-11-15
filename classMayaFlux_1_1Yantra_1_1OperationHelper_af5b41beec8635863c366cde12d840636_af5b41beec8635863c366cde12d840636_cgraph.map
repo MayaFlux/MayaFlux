@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::OperationHelper::reconstruct_from_double" name="MayaFlux::Yantra::OperationHelper::reconstruct_from_double">
+<area shape="rect" id="Node000001" title="Reconstruct ComputeData type from double vector and structure info." alt="" coords="5,49,240,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a1299b2cab6169c487b93d1735f8221e9.html#a1299b2cab6169c487b93d1735f8221e9" title="Reconstruct DataVariant from double data and structure info." alt="" coords="295,5,501,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,51,281,45,281,51,240,56"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ac31a4843228ee2de3510e5a36347a5f4.html#ac31a4843228ee2de3510e5a36347a5f4" title="Infer data structure from ComputeData type." alt="" coords="288,85,508,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="240,81,275,86,274,91,240,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_a37ba95c5ed0e1ccd088bf4c825ac6665.html#a37ba95c5ed0e1ccd088bf4c825ac6665" title="Infer data structure from ComputeData type." alt="" coords="556,85,763,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="508,102,542,102,542,107,508,107"/>
+</map>

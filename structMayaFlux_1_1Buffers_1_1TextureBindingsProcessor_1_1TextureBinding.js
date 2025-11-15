@@ -1,0 +1,6 @@
+var structMayaFlux_1_1Buffers_1_1TextureBindingsProcessor_1_1TextureBinding =
+[
+    [ "gpu_texture", "structMayaFlux_1_1Buffers_1_1TextureBindingsProcessor_1_1TextureBinding_ad78a6963ff1070df60f1ab4e5c29f602.html#ad78a6963ff1070df60f1ab4e5c29f602", null ],
+    [ "node", "structMayaFlux_1_1Buffers_1_1TextureBindingsProcessor_1_1TextureBinding_ab8bdef5442affcca831afc13eb7f007c.html#ab8bdef5442affcca831afc13eb7f007c", null ],
+    [ "staging_buffer", "structMayaFlux_1_1Buffers_1_1TextureBindingsProcessor_1_1TextureBinding_a4e43862e74d67c3804283c7887797345.html#a4e43862e74d67c3804283c7887797345", null ]
+];

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Yantra::compute_skewness_statistic" name="MayaFlux::Yantra::compute_skewness_statistic">
+<area shape="rect" id="Node000001" title="Compute skewness statistic using zero&#45;copy processing." alt="" coords="5,29,204,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="64,30,61,20,68,10,82,5,105,3,130,6,144,13,142,18,129,11,105,8,84,10,71,15,66,21,69,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="259,11,390,37"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="204,35,245,30,246,36,205,41"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac5d314d2c7c7550f063afda336d7a5c1.html#ac5d314d2c7c7550f063afda336d7a5c1" title="Calculate standard deviation of single&#45;channel data." alt="" coords="252,61,397,86"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="205,58,239,61,238,67,204,63"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::BufferUploadProcessor" name="MayaFlux::Buffers::BufferUploadProcessor">
+<area shape="rect" id="Node000001" title="Transfers data from CPU source buffer to GPU VKBuffer." alt="" coords="194,492,391,792"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="196,328,389,443"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="295,457,295,492,290,492,290,457"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="5,5,185,265"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="196,259,250,326,245,329,192,262"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Registry_1_1Service_1_1BufferService.html" title="Backend buffer management service interface." alt="" coords="210,25,375,245"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="295,246,295,312,290,312,290,246"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Registry_1_1Service_1_1ComputeService.html" title="Backend compute shader and pipeline service interface." alt="" coords="400,45,607,225"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="476,227,455,268,428,306,404,328,400,324,424,302,451,265,472,224"/>
+</map>

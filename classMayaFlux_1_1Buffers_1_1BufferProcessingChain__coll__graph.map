@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain" name="MayaFlux::Buffers::BufferProcessingChain">
+<area shape="rect" id="Node000001" title="Advanced pipeline manager for multi&#45;stage buffer transformations with backend optimization." alt="" coords="5,223,236,797"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1BufferProcessingChain_1_1PendingProcessorOp.html" title=" " alt="" coords="41,5,201,160"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,160,123,206,118,206,118,160"/>
+</map>

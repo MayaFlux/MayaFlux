@@ -1,0 +1,16 @@
+<map id="Proxy" name="Proxy">
+<area shape="rect" id="node1" href="dir_63af7b4d689fda66cbb570eb2c30e226.html" title="Proxy" alt="" coords="127,52,186,77"/>
+<area shape="rect" id="node2" href="dir_037f3af2a9411e4bf64b79d81d1060f6.html" title="Core" alt="" coords="5,125,57,151"/>
+<area shape="poly" id="edge1" href="dir_000031_000006.html" alt="" coords="138,80,65,121,62,116,135,75"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000031_000006.html" title="2" alt="" coords="67,116,76,131"/>
+<area shape="rect" id="node3" href="dir_3792097c0c2bd0eb167930b710d4307a.html" title="Yantra" alt="" coords="81,125,144,151"/>
+<area shape="poly" id="edge2" href="dir_000031_000052.html" alt="" coords="152,79,129,115,125,112,147,76"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000031_000052.html" title="1" alt="" coords="132,107,141,122"/>
+<area shape="rect" id="node4" href="dir_64c2d47494cb42df00b60c7e5b15f956.html" title="Buffers" alt="" coords="168,125,236,151"/>
+<area shape="poly" id="edge3" href="dir_000031_000004.html" alt="" coords="166,76,190,112,185,115,162,79"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000031_000004.html" title="3" alt="" coords="187,98,197,113"/>
+<area shape="rect" id="node5" href="dir_98903ca72f3f031f88d95d1d2149bfa4.html" title="Kakshya" alt="" coords="260,125,339,151"/>
+<area shape="poly" id="edge4" href="dir_000031_000020.html" alt="" coords="181,75,265,117,263,121,178,80"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000031_000020.html" title="1" alt="" coords="259,102,268,117"/>
+<area shape="rect" id="clust1" href="dir_fd46888d5c51eebd25d679f093d08181.html" title="API" alt="" coords="117,16,197,88"/>
+</map>

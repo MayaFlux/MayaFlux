@@ -1,0 +1,25 @@
+<map id="MayaFlux::Kakshya::SoundFileContainer::setup" name="MayaFlux::Kakshya::SoundFileContainer::setup">
+<area shape="rect" id="Node000001" title="Setup the container with file parameters." alt="" coords="5,57,197,97"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="705,5,912,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,55,245,35,363,22,483,16,692,17,692,22,483,21,364,27,246,40,162,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a46cf2a36bf81975f79bc304b56edc004.html#a46cf2a36bf81975f79bc304b56edc004" title=" " alt="" coords="255,154,427,209"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="149,95,266,146,264,151,147,100"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a5e0c8b987a5e6354c1e4d9c717b92b76.html#a5e0c8b987a5e6354c1e4d9c717b92b76" title="Update the processing state of the container." alt="" coords="245,50,437,105"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="197,75,232,75,232,80,197,80"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ac71c3404aadefac0fe97e641021e1eba.html#ac71c3404aadefac0fe97e641021e1eba" title="Create dimension descriptors for a data modality." alt="" coords="485,174,657,229"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="428,186,472,190,471,195,428,191"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="713,70,904,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="626,172,704,135,721,128,723,133,706,140,628,176"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="717,149,900,189"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="657,187,703,181,704,186,658,192"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="711,213,907,253"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="658,210,697,216,697,221,657,216"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="721,277,896,317"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="627,227,706,263,726,270,724,275,704,268,624,231"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="728,341,889,381"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="597,227,644,278,674,304,707,327,719,334,716,338,704,332,671,309,640,282,593,231"/>
+<area shape="poly" id="edge10_Node000010_Node000002" title=" " alt="" coords="438,64,691,36,692,41,438,69"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a6b017a7f21c67f1c3faa5a30dbdc0750.html#a6b017a7f21c67f1c3faa5a30dbdc0750" title=" " alt="" coords="485,89,657,143"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="438,91,472,97,471,102,437,96"/>
+<area shape="poly" id="edge12_Node000011_Node000002" title=" " alt="" coords="630,86,704,55,726,47,727,52,706,60,632,91"/>
+</map>

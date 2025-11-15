@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::BackendResourceManager::transition_image_layout" name="MayaFlux::Core::BackendResourceManager::transition_image_layout">
+<area shape="rect" id="Node000001" title="Transition image layout using a pipeline barrier." alt="" coords="320,165,567,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aaf5e48e2bb8325c1db70971a89cabec7.html#aaf5e48e2bb8325c1db70971a89cabec7" title="Create a 2D texture." alt="" coords="40,5,237,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="410,158,348,107,310,82,271,60,237,47,238,42,273,55,313,77,351,103,413,154"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7ac47f4e64fd980c46a937ca4c69a1d0.html#a7ac47f4e64fd980c46a937ca4c69a1d0" title="Create a 3D texture (volumetric)" alt="" coords="40,69,237,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="380,163,271,124,228,112,230,107,273,119,382,158"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ad61a4d872b3af82eb1af351bc6118126.html#ad61a4d872b3af82eb1af351bc6118126" title="Create a cubemap texture." alt="" coords="23,133,254,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="306,174,254,168,255,163,306,168"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a0f9e8a0197b21aa472cfc6fb1cd90af5.html#a0f9e8a0197b21aa472cfc6fb1cd90af5" title="Create a depth buffer." alt="" coords="13,197,265,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="306,202,265,207,265,201,306,197"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a09c352fd5b274012bc56cdaa0f805c2a.html#a09c352fd5b274012bc56cdaa0f805c2a" title="Create a render target (color attachment)" alt="" coords="9,261,268,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="382,213,273,252,230,264,228,259,271,247,380,208"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a3a33955c823eb31401a2b5c469071ac2.html#a3a33955c823eb31401a2b5c469071ac2" title="Create a storage image (compute shader read/write)" alt="" coords="5,325,272,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="413,217,351,268,313,294,273,316,242,328,240,323,271,311,310,289,348,263,410,213"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::set_or_update_region_data" name="MayaFlux::Kakshya::set_or_update_region_data">
+<area shape="rect" id="Node000001" title="Write or update a region of data in planar storage." alt="" coords="5,117,204,157"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_af774d3db588195d1a3322e51eebbe243.html#af774d3db588195d1a3322e51eebbe243" title="Get all non&#45;channel dimensions from a list of dimensions." alt="" coords="252,29,467,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="155,115,251,79,275,71,277,76,253,84,157,120"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a2479c7817b562a13275654367e0b7c6b.html#a2479c7817b562a13275654367e0b7c6b" title="Remove the channel dimension from a Region." alt="" coords="257,117,462,157"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="204,135,243,135,243,140,204,140"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_af3d621c76a9ee24e200cf8e2ecabaa61.html#af3d621c76a9ee24e200cf8e2ecabaa61" title="Write or update a region of data in a flat data span (interleaved)." alt="" coords="260,181,459,221"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="186,155,267,175,265,181,184,160"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="316,30,313,20,320,10,336,5,359,3,387,6,402,13,399,18,385,11,359,8,337,10,323,15,318,21,321,28"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="316,118,313,108,320,98,336,93,359,91,387,94,402,101,399,106,385,99,359,96,337,98,323,103,318,109,321,116"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_a11d6fefbc337609345969f80012578d0.html#a11d6fefbc337609345969f80012578d0" title="Convert N&#45;dimensional coordinates to a linear index for interleaved data." alt="" coords="515,181,677,221"/>
+<area shape="poly" id="edge6_Node000004_Node000005" title=" " alt="" coords="459,199,501,199,501,204,459,204"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::SoundRoutine::try_resume_with_context" name="MayaFlux::Vruta::SoundRoutine::try_resume_with_context">
+<area shape="rect" id="Node000001" title="Attempts to resume the coroutine with explicit temporal context." alt="" coords="5,37,232,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_aeda6ab20e0b2cb7e3aad713a192f57c9.html#aeda6ab20e0b2cb7e3aad713a192f57c9" title="Initializes the coroutine&#39;s state for execution." alt="" coords="280,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,41,266,37,267,43,233,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_a2632252e0b740f454ecd97a00007ddfc.html#a2632252e0b740f454ecd97a00007ddfc" title="Checks if the coroutine is still active." alt="" coords="280,69,507,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="233,68,267,72,266,77,232,73"/>
+</map>

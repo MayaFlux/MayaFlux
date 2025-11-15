@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBufferProcessor::initialize_buffer_service" name="MayaFlux::Buffers::VKBufferProcessor::initialize_buffer_service">
+<area shape="rect" id="Node000001" title=" " alt="" coords="300,30,507,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af778bcd2c3d39dee8af08b210d1d81dd.html#af778bcd2c3d39dee8af08b210d1d81dd" title="Construct processor with shader path." alt="" coords="5,5,252,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="286,46,252,42,253,37,287,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a199093f3d4238e1feea8567432c8629f.html#a199093f3d4238e1feea8567432c8629f" title="Construct processor with full configuration." alt="" coords="5,69,252,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="287,74,253,78,252,72,286,68"/>
+</map>

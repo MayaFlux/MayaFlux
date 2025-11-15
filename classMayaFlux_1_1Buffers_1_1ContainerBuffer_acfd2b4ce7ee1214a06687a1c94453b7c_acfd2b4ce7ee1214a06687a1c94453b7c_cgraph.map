@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::ContainerBuffer::initialize" name="MayaFlux::Buffers::ContainerBuffer::initialize">
+<area shape="rect" id="Node000001" title="Initialize the buffer after construction." alt="" coords="5,53,193,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_abebae7bd24eaa7dacbca139802112b04.html#abebae7bd24eaa7dacbca139802112b04" title="Controls whether the audio buffer should use default processing." alt="" coords="253,5,408,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,54,240,46,240,51,194,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_ab3c65ca528a57349fcb6252e9c1e22ba.html#ab3c65ca528a57349fcb6252e9c1e22ba" title="Sets the default audio transformation processor for this buffer." alt="" coords="241,84,420,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="194,86,228,92,227,97,193,91"/>
+</map>

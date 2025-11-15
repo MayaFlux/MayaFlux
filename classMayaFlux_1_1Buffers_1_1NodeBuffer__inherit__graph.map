@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::NodeBuffer" name="MayaFlux::Buffers::NodeBuffer">
+<area shape="rect" id="Node000001" title="Specialized buffer that automatically captures output from computational nodes." alt="" coords="5,969,211,1149"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer.html" title="Concrete audio implementation of the Buffer interface for double&#45;precision audio data." alt="" coords="7,461,209,921"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,935,111,969,105,969,105,935"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="17,133,199,413"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="111,427,111,461,105,461,105,427"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="32,5,184,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="111,99,111,133,105,133,105,99"/>
+</map>

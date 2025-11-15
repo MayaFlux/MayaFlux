@@ -1,0 +1,75 @@
+<map id="MayaFlux::Config::get_sample_rate" name="MayaFlux::Config::get_sample_rate">
+<area shape="rect" id="Node000001" title="Gets the sample rate from the default engine." alt="" coords="843,452,1007,492"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a0139e77016146ec1c255e929b53bd9e9.html#a0139e77016146ec1c255e929b53bd9e9" title="Loads an audio file into a SoundFileContainer with automatic format detection." alt="" coords="575,141,767,166"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="899,443,793,303,682,168,686,165,797,300,903,439"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a4cd7a43ebf1ff5518bf9b006bad898fe.html#a4cd7a43ebf1ff5518bf9b006bad898fe" title="Processes a single input sample through the logic function." alt="" coords="567,313,775,353"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="881,447,793,394,716,356,718,351,796,390,883,442"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1FileBridgeBuffer_a9628aeedc3c9b28328cf693c4ec55d40.html#a9628aeedc3c9b28328cf693c4ec55d40" title=" " alt="" coords="586,405,757,459"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="829,460,757,448,758,443,829,454"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_ab4a54debde1a536e6f7e3d80ed394ed0.html#ab4a54debde1a536e6f7e3d80ed394ed0" title="Updates the phase increment based on a new frequency." alt="" coords="567,483,775,538"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="830,489,776,497,775,492,829,484"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a58e3b2e02dc973a103d22abd90d75e64.html#a58e3b2e02dc973a103d22abd90d75e64" title="Updates the phase increment based on a new frequency." alt="" coords="548,869,795,909"/>
+<area shape="poly" id="edge18_Node000001_Node000019" title=" " alt="" coords="907,505,687,870,683,868,902,502"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a5109ee00efbeeca62a1be0399ce6fec4.html#a5109ee00efbeeca62a1be0399ce6fec4" title="Updates the phase increment based on a new frequency." alt="" coords="556,1317,787,1357"/>
+<area shape="poly" id="edge27_Node000001_Node000028" title=" " alt="" coords="916,506,797,922,681,1318,676,1316,792,921,911,504"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a0f5c0ba5cc0e7bca02da90a3b6062038.html#a0f5c0ba5cc0e7bca02da90a3b6062038" title="Create a file capture operation that reads from file and stores in stream." alt="" coords="261,5,500,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="638,135,575,97,499,60,465,48,467,43,501,55,578,93,641,131"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_ae7457d99167bee8e2b290c9cba5c9dfb.html#ae7457d99167bee8e2b290c9cba5c9dfb" title="Create CaptureBuilder for file with fluent configuration." alt="" coords="261,69,500,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="599,140,471,112,473,107,600,135"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_ab25c315c19da09dd46451cc13027d635.html#ab25c315c19da09dd46451cc13027d635" title="Create operation to route file data to DynamicSoundStream." alt="" coords="261,133,500,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="562,156,500,156,500,151,562,151"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Creator_ac8c01771aeaada8e8218b8a8eb83bbbb.html#ac8c01771aeaada8e8218b8a8eb83bbbb" title=" " alt="" coords="305,197,456,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="600,172,457,203,456,198,599,166"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a99bea86cf7a74676b8a309df546d8007.html#a99bea86cf7a74676b8a309df546d8007" title="Processes multiple samples in batch mode." alt="" coords="277,261,485,301"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="553,315,484,303,485,297,554,310"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a8978112944f7bc234c7ba9986bb243c5.html#a8978112944f7bc234c7ba9986bb243c5" title="Constructor with both frequency and amplitude modulation." alt="" coords="277,325,485,365"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="554,478,546,473,528,449,522,424,515,401,498,379,480,368,483,363,502,375,520,399,527,423,533,446,550,469,557,474"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a21246de238980b6b5ac3d57dd335a8ce.html#a21246de238980b6b5ac3d57dd335a8ce" title="Constructor with frequency modulation." alt="" coords="277,389,485,429"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="565,481,547,473,523,458,499,444,467,432,468,427,501,439,525,454,549,468,567,476"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_ac9ed9f1533e9d1b4242c8cb17708545f.html#ac9ed9f1533e9d1b4242c8cb17708545f" title="Constructor with amplitude modulation." alt="" coords="277,453,485,493"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="554,498,484,489,485,484,554,493"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a500ccf163a3f170b485bdfd183948878.html#a500ccf163a3f170b485bdfd183948878" title="Basic constructor with fixed parameters." alt="" coords="277,517,485,557"/>
+<area shape="poly" id="edge13_Node000010_Node000014" title=" " alt="" coords="554,524,485,530,484,525,554,519"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a871f16ab043c372dedbf9f5c69965960.html#a871f16ab043c372dedbf9f5c69965960" title="Processes a single input sample and generates an impulse sample." alt="" coords="277,581,485,621"/>
+<area shape="poly" id="edge14_Node000010_Node000015" title=" " alt="" coords="582,545,501,572,460,584,458,579,499,567,581,540"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a99beb9d203aece922c37afcc2e05d772.html#a99beb9d203aece922c37afcc2e05d772" title="Sets the generator&#39;s frequency." alt="" coords="277,645,485,685"/>
+<area shape="poly" id="edge16_Node000010_Node000017" title=" " alt="" coords="630,549,571,594,501,636,471,648,469,643,499,631,568,590,627,545"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a5aa86d7acca466adab508d227acd428d.html#a5aa86d7acca466adab508d227acd428d" title="Processes multiple samples at once." alt="" coords="5,581,213,621"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="263,604,214,604,214,599,263,599"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a9ebb052b29b9cb47520b2bf54414ec2d.html#a9ebb052b29b9cb47520b2bf54414ec2d" title="Resets the generator&#39;s phase and parameters." alt="" coords="5,645,213,685"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="263,668,214,668,214,663,263,663"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_af72c9966e0b3d041844dd26b3f596100.html#af72c9966e0b3d041844dd26b3f596100" title="Constructor with both frequency and amplitude modulation." alt="" coords="277,709,485,749"/>
+<area shape="poly" id="edge19_Node000019_Node000020" title=" " alt="" coords="637,862,575,812,538,786,499,764,470,752,472,747,501,759,541,781,579,807,640,858"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a6c9e2bb862ff10620ddb18d01e7b78b2.html#a6c9e2bb862ff10620ddb18d01e7b78b2" title="Constructor with frequency modulation." alt="" coords="277,773,485,813"/>
+<area shape="poly" id="edge20_Node000019_Node000021" title=" " alt="" coords="607,867,499,828,460,816,461,811,501,823,609,862"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a927f3cb34e4c6871d7bd989740d07031.html#a927f3cb34e4c6871d7bd989740d07031" title="Constructor with amplitude modulation." alt="" coords="277,837,485,877"/>
+<area shape="poly" id="edge21_Node000019_Node000022" title=" " alt="" coords="534,877,484,871,485,866,535,872"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_ab02697281fc7b5a89f2742bab0642f9b.html#ab02697281fc7b5a89f2742bab0642f9b" title="Basic constructor with fixed parameters." alt="" coords="277,901,485,941"/>
+<area shape="poly" id="edge22_Node000019_Node000023" title=" " alt="" coords="535,907,485,913,484,907,534,902"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_ab93135693b484d64f98ff479e86c447c.html#ab93135693b484d64f98ff479e86c447c" title="Processes a single input sample and generates a phasor sample." alt="" coords="277,965,485,1005"/>
+<area shape="poly" id="edge23_Node000019_Node000024" title=" " alt="" coords="609,917,501,956,461,968,460,963,499,951,607,912"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a86c6884b2837fc170125759c68f733fe.html#a86c6884b2837fc170125759c68f733fe" title="Resets the generator&#39;s phase and parameters." alt="" coords="277,1029,485,1069"/>
+<area shape="poly" id="edge25_Node000019_Node000026" title=" " alt="" coords="640,921,579,971,541,997,501,1020,472,1032,470,1027,499,1015,538,993,575,967,637,917"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a51e68375cfb8eb255d1bfef4431783fb.html#a51e68375cfb8eb255d1bfef4431783fb" title="Sets the generator&#39;s frequency." alt="" coords="277,1093,485,1133"/>
+<area shape="poly" id="edge26_Node000019_Node000027" title=" " alt="" coords="653,923,627,960,592,1004,549,1047,501,1084,477,1096,475,1091,499,1079,546,1043,588,1000,622,957,648,920"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a565ede5187c3f983665b43006a1b4d18.html#a565ede5187c3f983665b43006a1b4d18" title="Processes multiple samples at once." alt="" coords="5,965,213,1005"/>
+<area shape="poly" id="edge24_Node000024_Node000025" title=" " alt="" coords="263,988,214,988,214,983,263,983"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_af63eeb6345c84fd7e61860b99ca369bb.html#af63eeb6345c84fd7e61860b99ca369bb" title="Processes a single input sample and generates a sine wave sample." alt="" coords="277,1157,485,1197"/>
+<area shape="poly" id="edge28_Node000028_Node000029" title=" " alt="" coords="637,1310,575,1260,538,1234,499,1212,470,1200,472,1195,501,1207,541,1229,579,1255,640,1306"/>
+<area shape="rect" id="Node000031" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a8800fe39cc69656d2dc112dcdfe7e20d.html#a8800fe39cc69656d2dc112dcdfe7e20d" title="Resets the oscillator&#39;s phase and parameters." alt="" coords="277,1221,485,1261"/>
+<area shape="poly" id="edge30_Node000028_Node000031" title=" " alt="" coords="607,1315,499,1276,460,1264,461,1259,501,1271,609,1310"/>
+<area shape="rect" id="Node000033" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a37a1d05e4532fcd80c27022d2f86d363.html#a37a1d05e4532fcd80c27022d2f86d363" title="Sets the oscillator&#39;s frequency." alt="" coords="277,1285,485,1325"/>
+<area shape="poly" id="edge32_Node000028_Node000033" title=" " alt="" coords="542,1326,485,1319,485,1314,543,1321"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_ab008afb4144435db8ffc6cd4fc3c7332.html#ab008afb4144435db8ffc6cd4fc3c7332" title="Constructor with both frequency and amplitude modulation." alt="" coords="277,1349,485,1389"/>
+<area shape="poly" id="edge33_Node000028_Node000034" title=" " alt="" coords="543,1354,485,1361,485,1355,542,1349"/>
+<area shape="rect" id="Node000035" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_ae2b11be43ea03edd785818da36704fa9.html#ae2b11be43ea03edd785818da36704fa9" title="Constructor with frequency modulation." alt="" coords="277,1413,485,1453"/>
+<area shape="poly" id="edge34_Node000028_Node000035" title=" " alt="" coords="609,1365,501,1404,461,1416,460,1411,499,1399,607,1360"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a6bd273ef5644755daec948051a319a5c.html#a6bd273ef5644755daec948051a319a5c" title="Constructor with amplitude modulation." alt="" coords="277,1477,485,1517"/>
+<area shape="poly" id="edge35_Node000028_Node000036" title=" " alt="" coords="640,1369,579,1419,541,1445,501,1468,472,1480,470,1475,499,1463,538,1441,575,1415,637,1365"/>
+<area shape="rect" id="Node000037" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a9e5268ae54b30882db7312cabf44389d.html#a9e5268ae54b30882db7312cabf44389d" title="Basic constructor with fixed parameters." alt="" coords="277,1541,485,1581"/>
+<area shape="poly" id="edge36_Node000028_Node000037" title=" " alt="" coords="653,1371,627,1408,592,1452,549,1495,501,1532,477,1544,475,1539,499,1527,546,1491,588,1448,622,1405,648,1368"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a125814268df2731f1cc48170d935d6c1.html#a125814268df2731f1cc48170d935d6c1" title="Processes multiple samples at once." alt="" coords="5,1157,213,1197"/>
+<area shape="poly" id="edge29_Node000029_Node000030" title=" " alt="" coords="263,1180,214,1180,214,1175,263,1175"/>
+<area shape="rect" id="Node000032" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a5227185d6fbc53492cde42c480f78d03.html#a5227185d6fbc53492cde42c480f78d03" title="Removes all modulation connections." alt="" coords="5,1221,213,1261"/>
+<area shape="poly" id="edge31_Node000031_Node000032" title=" " alt="" coords="263,1244,214,1244,214,1239,263,1239"/>
+</map>

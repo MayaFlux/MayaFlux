@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::print_summary" name="MayaFlux::Nodes::NodeGraphManager::print_summary">
+<area shape="rect" id="Node000001" title="Prints a summary of all tokens, channels, and node counts." alt="" coords="5,69,221,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ae0ea609da65a55001ff6196166cf2af0.html#ae0ea609da65a55001ff6196166cf2af0" title="Gets all currently active processing tokens (domains)" alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,67,281,46,282,51,197,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_af66db24c9857eda35165140aba740eb6.html#af66db24c9857eda35165140aba740eb6" title="Gets all channel indices for a given processing token." alt="" coords="269,69,485,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,87,256,87,256,92,221,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4c85efbaca05ecd53c04561b2e3a4600.html#a4c85efbaca05ecd53c04561b2e3a4600" title="Gets the total number of nodes registered under a given token." alt="" coords="269,133,485,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="197,107,282,128,281,133,196,112"/>
+</map>

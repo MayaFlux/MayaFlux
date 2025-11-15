@@ -1,0 +1,4 @@
+var structMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_1_1DescriptorSetState =
+[
+    [ "descriptor_set", "structMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_1_1DescriptorSetState_a021cad85f2090bb6c38e86d4a8fe83dd.html#a021cad85f2090bb6c38e86d4a8fe83dd", null ]
+];

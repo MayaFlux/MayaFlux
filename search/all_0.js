@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['1_20—_20documentation_20first_20time_20experience_0',['🧭 Phase 1 — Documentation &amp; First-Time Experience',['../md_docs_2BuildOps.html#autotoc_md135',1,'']]],
+  ['1_20clone_20the_20repository_1',['1. Clone the Repository',['../index.html#autotoc_md207',1,'']]],
+  ['1_20now_2',['Phase 1 (Now)',['../md_README.html#autotoc_md65',1,'']]],
+  ['1_20strong_20audio_20stream_20configuration_20strong_20globalstreaminfo_3',['1. &lt;strong&gt;Audio Stream Configuration&lt;/strong&gt; (GlobalStreamInfo)',['../md_docs_2Settings.html#autotoc_md237',1,'']]],
+  ['1_3a_20clone_20vs_20supply_4',['Expansion 1: Clone vs. Supply',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md425',1,'']]],
+  ['1_3a_20pick_20a_20file_5',['Step 1: Pick a File',['../md_docs_2StarterTasks.html#autotoc_md262',1,'']]],
+  ['1_3a_20processing_20chains_20as_20transformation_20pipelines_6',['Expansion 1: Processing Chains as Transformation Pipelines',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md343',1,'']]],
+  ['1_3a_20replace_20tt_20std_3a_3acerr_20tt_20with_20logging_7',['Pattern 1: Replace &lt;tt&gt;std::cerr&lt;/tt&gt; with Logging',['../md_docs_2StarterTasks.html#autotoc_md265',1,'']]],
+  ['1_3a_20simple_20audio_20default_8',['Scenario 1: Simple Audio (Default)',['../md_docs_2Settings.html#autotoc_md246',1,'']]],
+  ['1_3a_20the_20architecture_20of_20containers_9',['Expansion 1: The Architecture of Containers',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md490',1,'']]],
+  ['1_3a_20what_20are_20buffers_10',['Expansion 1: What Are Buffers?',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md452',1,'']]],
+  ['1_3a_20what_20feedbackbuffer_20does_11',['Expansion 1: What FeedbackBuffer Does',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md376',1,'']]],
+  ['1_3a_20what_20is_20a_20container_12',['Expansion 1: What Is a Container?',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md438',1,'']]],
+  ['1_3a_20what_20is_20a_20pipeline_13',['Expansion 1: What Is a Pipeline?',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md512',1,'']]],
+  ['1_3a_20what_20is_20tt_20vega_20iir_20tt_14',['Expansion 1: What Is &lt;tt&gt;vega.IIR()&lt;/tt&gt;?',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md472',1,'']]],
+  ['1_3a_20what_20logic_20does_15',['Expansion 1: What Logic Does',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md330',1,'']]],
+  ['1_3a_20what_20nodebuffer_20does_16',['Expansion 1: What NodeBuffer Does',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md365',1,'']]],
+  ['1_3a_20what_20streamwriteprocessor_20does_17',['Expansion 1: What StreamWriteProcessor Does',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md387',1,'']]],
+  ['1_3a_20what_20supply_20means_18',['Expansion 1: What &quot;Supply&quot; Means',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md414',1,'']]],
+  ['1_3a_20what_20tt_20create_5finput_5flistener_5fbuffer_20tt_20does_19',['Expansion 1: What &lt;tt&gt;create_input_listener_buffer()&lt;/tt&gt; Does',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md403',1,'']]],
+  ['1_3a_20what_20tt_20create_5fprocessor_20tt_20was_20doing_20',['Expansion 1: What &lt;tt&gt;create_processor()&lt;/tt&gt; Was Doing',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md353',1,'']]],
+  ['1_3a_20why_20polynomials_20shape_20sound_21',['Expansion 1: Why Polynomials Shape Sound',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md304',1,'']]],
+  ['1_3a_20why_20this_20is_20a_20filter_22',['Expansion 1: Why This Is a Filter',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md317',1,'']]]
+];

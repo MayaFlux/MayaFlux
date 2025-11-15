@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kriya::CycleCoordinator::sync_pipelines_at_rate" name="MayaFlux::Kriya::CycleCoordinator::sync_pipelines_at_rate">
+<area shape="rect" id="Node000001" title="Create a synchronization routine based on real&#45;time rate." alt="" coords="5,69,253,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a99bd0b1b8f51d07e40aeaf1588342323.html#a99bd0b1b8f51d07e40aeaf1588342323" title="Converts a time in seconds to a number of samples." alt="" coords="310,37,541,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="253,73,296,69,297,74,254,79"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1CycleCoordinator_a4a997a79ad72df2c33ef48fd4de4f810.html#a4a997a79ad72df2c33ef48fd4de4f810" title="Create a synchronization routine for multiple pipelines." alt="" coords="301,101,549,141"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="254,100,288,104,288,109,253,105"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ac441836158c7cf40639d9fec1d942f0a.html#ac441836158c7cf40639d9fec1d942f0a" title="Get processing rate for a domain." alt="" coords="597,5,828,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="541,42,583,37,584,42,541,47"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Utils_acef9b648b97a768e92f99563e8222dc0.html#acef9b648b97a768e92f99563e8222dc0" title="Convert seconds to samples at a given sample rate." alt="" coords="620,69,805,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="541,68,606,75,606,80,541,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="876,5,1107,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="828,23,862,23,862,28,828,28"/>
+</map>
