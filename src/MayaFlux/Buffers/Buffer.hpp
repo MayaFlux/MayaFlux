@@ -236,7 +236,7 @@ public:
      * processing. This is typically used for buffers that are processed
      * entirely within a specific backend or domain (e.g., GPU-only buffers).
      */
-    virtual void mark_internal_only(bool internal) = 0;
+    virtual void force_internal_usage(bool internal) = 0;
 
     /**
      * @brief Checks if the buffer is marked as internal-only

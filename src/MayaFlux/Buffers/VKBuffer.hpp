@@ -409,10 +409,10 @@ public:
     std::shared_ptr<VKBuffer> clone_to(Usage usage);
 
     /** Set whether this buffer is for internal engine usage */
-    void set_internal_usage(bool internal) { m_internal_usage = internal; }
+    void force_internal_usage(bool internal) override { m_internal_usage = internal; }
 
     /** Check whether this buffer is for internal engine usage */
-    bool is_internal_usage() const { return m_internal_usage; }
+    bool is_internal_only() const override { return m_internal_usage; }
 
 private:
     VKBufferResources m_resources;

@@ -115,7 +115,7 @@ DistributionDecision BufferTokenDistributor::decide_audio_buffer(
 
     // Decision 1: AUDIO_PARALLEL (GPU audio) → INTERNAL_ONLY
     if (has_sample_rate(token) && has_gpu(token)) {
-        audio->mark_internal_only(true);
+        audio->force_internal_usage(true);
         return DistributionDecision {
             .result = DistributionResult::INTERNAL_ONLY,
             .transfer_processor = nullptr,
@@ -126,7 +126,7 @@ DistributionDecision BufferTokenDistributor::decide_audio_buffer(
 
     // Decision 2: Normal audio (SAMPLE_RATE + CPU) → DIRECT_ROOT
     if (has_sample_rate(token) && has_cpu(token)) {
-        audio->mark_internal_only(false);
+        audio->force_internal_usage(false);
         return DistributionDecision {
             .result = DistributionResult::DIRECT_ROOT,
             .transfer_processor = nullptr,
@@ -168,7 +168,7 @@ DistributionDecision BufferTokenDistributor::decide_vk_buffer(
 
     // Decision 2: AUDIO_PARALLEL (SAMPLE_RATE + GPU) → TRANSFER_ONLY
     if (has_sample_rate(token) && has_gpu(token)) {
-        vk->mark_internal_only(true);
+        vk->force_internal_usage(true);
         return DistributionDecision {
             .result = DistributionResult::TRANSFER_ONLY,
             .transfer_processor = nullptr,
@@ -296,7 +296,7 @@ DistributionDecision BufferTokenDistributor::decide_transfer(
     }
 
     if (audio_tgt) {
-        audio_tgt->mark_internal_only(false);
+        audio_tgt->force_internal_usage(false);
     }
 
     return DistributionDecision {
