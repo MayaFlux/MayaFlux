@@ -588,7 +588,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           workflow: "win64.yml"
-          name: MayaFlux-*
+          name: "MayaFlux-${{ steps.version.outputs.CLEAN_VERSION }}-windows"
           path: artifacts
           search_artifacts: true
 
