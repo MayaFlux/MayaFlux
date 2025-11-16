@@ -469,8 +469,8 @@ jobs:
         with:
           name: ${{ inputs.artifact_name }}
           path: |
-            MayaFlux-${{ inputs.version }}-${{ inputs.distribution_name }}.zip
-            MayaFlux-${{ inputs.version }}-${{ inputs.distribution_name }}.7z
+            ${{ env.PACKAGE_NAME }}.zip
+            ${{ env.PACKAGE_NAME }}.7z
           retention-days: 30
 
       - name: Display build summary
@@ -478,7 +478,7 @@ jobs:
         run: |
           Write-Host "`n" -ForegroundColor White
           Write-Host "╔═══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-          Write-Host "║         MayaFlux Windows CI Build Complete                   ║" -ForegroundColor Cyan
+          Write-Host "║         MayaFlux Windows CI Build Complete                    ║" -ForegroundColor Cyan
           Write-Host "╚═══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
 
           if (Test-Path "build\CMakeCache.txt") {
