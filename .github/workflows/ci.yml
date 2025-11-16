@@ -1,0 +1,214 @@
+name: MayaFlux CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: "Run tests after build"
+        required: false
+        default: false
+        type: boolean
+      skip_build:
+        description: "Skip build job"
+        required: true
+        default: false
+        type: boolean
+      create_distribution:
+        description: "Create MayaFlux distribution package"
+        required: false
+        default: true
+        type: boolean
+      target_os:
+        description: "Target operating system"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - macos
+          - windows
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  determine_version:
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.ver.outputs.VERSION }}
+      CLEAN_VERSION: ${{ steps.ver.outputs.CLEAN_VERSION }}
+      IS_DEV: ${{ steps.ver.outputs.IS_DEV }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: ver
+        run: |
+          VERSION=$(grep -Eo 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
+          CLEAN_VERSION="$VERSION"
+
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            VERSION="${VERSION}-dev"
+            IS_DEV=1
+          else
+            IS_DEV=0
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+          echo "IS_DEV=$IS_DEV" >> $GITHUB_OUTPUT
+
+  build_macos:
+    needs: determine_version
+    if: ${{ !inputs.skip_build && (inputs.target_os == 'macos' || inputs.target_os == 'all') }}
+    uses: ./.github/workflows/build-macos.yml
+    with:
+      version: ${{ needs.determine_version.outputs.VERSION }}
+      clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
+      is_dev: ${{ needs.determine_version.outputs.IS_DEV }}
+      run_tests: ${{ inputs.run_tests }}
+      create_distribution: ${{ inputs.create_distribution }}
+      artifact_name: mayaflux-macos
+      distribution_name: macos-arm64
+      os_display_name: macOS
+
+  build_windows:
+    needs: determine_version
+    if: ${{ !inputs.skip_build && (inputs.target_os == 'windows' || inputs.target_os == 'all') }}
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      version: ${{ needs.determine_version.outputs.VERSION }}
+      clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
+      is_dev: ${{ needs.determine_version.outputs.IS_DEV }}
+      run_tests: ${{ inputs.run_tests }}
+      create_distribution: ${{ inputs.create_distribution }}
+      artifact_name: mayaflux-windows
+      distribution_name: windows-x64
+      os_display_name: Windows
+
+  create_release:
+    needs: [determine_version, build_macos, build_windows]
+    if: ${{ (success() || inputs.skip_build) && inputs.create_distribution }}
+    runs-on: ubuntu-latest
+    name: "Create Unified Release"
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download artifacts from this run
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: mayaflux-*
+          merge-multiple: true
+        continue-on-error: true
+
+      - name: Check if any artifacts exist
+        id: check_artifacts
+        run: |
+          if [ -d artifacts ] && [ "$(ls -A artifacts)" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fallback download – Windows
+        if: steps.check_artifacts.outputs.found == 'false'
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: "win64.yml"
+          name_is_regexp: true
+          name: "^mayaflux-windows.*"
+          path: artifacts
+          search_artifacts: true
+
+      - name: Fallback download – macOS
+        if: steps.check_artifacts.outputs.found == 'false'
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: "macos.yml"
+          name_is_regexp: true
+          name: "^mayaflux-macos.*"
+          path: artifacts
+          search_artifacts: true
+
+      - name: Calculate release metadata
+        id: release_vars
+        run: |
+          SHORT_SHA=${GITHUB_SHA:0:8}
+
+          PLATFORMS_BUILT=""
+          if [ -d "artifacts/mayaflux-macos" ]; then
+            PLATFORMS_BUILT="${PLATFORMS_BUILT}macOS "
+          fi
+          if [ -d "artifacts/mayaflux-windows" ]; then
+            PLATFORMS_BUILT="${PLATFORMS_BUILT}Windows"
+          fi
+
+          OS_NAME="Multi-Platform ($PLATFORMS_BUILT)"
+
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "OS_NAME=$OS_NAME" >> $GITHUB_OUTPUT
+          echo "PLATFORMS_BUILT=$PLATFORMS_BUILT" >> $GITHUB_OUTPUT
+
+      - name: Process unified release template
+        id: process_template
+        run: |
+          MACOS_SECTION=$(cat .github/workflows/distribution/macos/section.md)
+          WINDOWS_SECTION=$(cat .github/workflows/distribution/windows/section.md)
+
+          awk -v version="${{ needs.determine_version.outputs.VERSION }}" \
+              -v commit_sha="${{ steps.release_vars.outputs.SHORT_SHA }}" \
+              -v repository="${{ github.repository }}" \
+              -v os_name="${{ steps.release_vars.outputs.OS_NAME }}" \
+              -v macos_section="$MACOS_SECTION" \
+              -v windows_section="$WINDOWS_SECTION" \
+          '
+          {
+            gsub("{{VERSION}}", version);
+            gsub("{{COMMIT_SHA}}", commit_sha);
+            gsub("{{REPOSITORY}}", repository);
+            gsub("{{OS_NAME}}", os_name);
+            gsub("{{MACOS_SECTION}}", macos_section);
+            gsub("{{WINDOWS_SECTION}}", windows_section);
+            print
+          }
+          ' .github/workflows/distribution/shared/release_body.md > processed_release_body.md
+
+      - name: Prepare tag for dev builds
+        if: ${{ needs.determine_version.outputs.IS_DEV == '1' }}
+        run: |
+          set -e
+          DEV_TAG="v${{ needs.determine_version.outputs.CLEAN_VERSION }}-dev"
+          echo "Preparing dev tag: $DEV_TAG -> ${GITHUB_SHA}"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          # create or move the dev tag to the commit we built
+          git tag -f "$DEV_TAG" "${GITHUB_SHA}"
+          git push -f origin "$DEV_TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Unified Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.determine_version.outputs.IS_DEV == '1' && format('v{0}-dev', needs.determine_version.outputs.CLEAN_VERSION) || format('v{0}', needs.determine_version.outputs.CLEAN_VERSION) }}
+          name: ${{ needs.determine_version.outputs.IS_DEV == '1' && format('MayaFlux {0}-dev ({1})', needs.determine_version.outputs.CLEAN_VERSION, steps.release_vars.outputs.PLATFORMS_BUILT) || format('MayaFlux {0} ({1})', needs.determine_version.outputs.CLEAN_VERSION, steps.release_vars.outputs.PLATFORMS_BUILT) }}
+          body_path: processed_release_body.md
+          prerelease: ${{ needs.determine_version.outputs.IS_DEV == '1' }}
+          draft: false
+          files: artifacts/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

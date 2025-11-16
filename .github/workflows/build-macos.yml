@@ -1,0 +1,302 @@
+name: "Build macOS Distribution"
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      clean_version:
+        required: true
+        type: string
+      is_dev:
+        required: true
+        type: string
+      run_tests:
+        required: false
+        type: boolean
+        default: false
+      create_distribution:
+        required: false
+        type: boolean
+        default: true
+      artifact_name:
+        required: true
+        type: string
+      distribution_name:
+        required: true
+        type: string
+      os_display_name:
+        required: true
+        type: string
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: macos-14
+    name: "macOS 14 System Clang (Minimum)"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use version
+        run: echo "Version is ${{ inputs.version }}"
+
+      - name: Install build tools on macOS
+        run: brew install md5sha1sum
+
+      - name: Check system Clang C++23 support
+        shell: bash
+        run: |
+          echo "=== System Clang Version ==="
+          clang++ --version
+          echo "=== Testing C++23 standard library support ==="
+          cat > test.cpp << 'EOF'
+          #include <ranges>
+          #include <vector>
+          #include <cstddef>
+          int main() {
+              auto x = 42UZ;
+              auto v = std::views::iota(0, 5) | std::ranges::to<std::vector>();
+              return 0;
+          }
+          EOF
+          clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ runner.os }}-build
+          max-size: "1G"
+
+      - name: Install Homebrew tools (cached)
+        uses: tecolicom/actions-use-homebrew-tools@v1
+        with:
+          tools: >
+            rtaudio
+            ffmpeg
+            shaderc
+            googletest
+            pkg-config
+            cmake
+            eigen
+            onedpl
+            magic_enum
+            fmt
+            glfw
+            glm
+            llvm
+
+      - name: Setup Homebrew Environment
+        run: |
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+
+          # Reinstall cmake to ensure post install steps are run
+          brew reinstall cmake
+
+          # Re-establish all the paths when cache is hit
+          for tool in rtaudio ffmpeg shaderc googletest pkg-config eigen onedpl magic_enum fmt glfw glm llvm; do
+            if TOOL_PREFIX=$(brew --prefix $tool 2>/dev/null); then
+              if [ -d "$TOOL_PREFIX/lib/pkgconfig" ]; then
+                export PKG_CONFIG_PATH="$TOOL_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
+              fi
+              if [ -d "$TOOL_PREFIX/lib/cmake" ]; then
+                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/lib/cmake:$CMAKE_PREFIX_PATH"
+              fi
+              # Special handling for eigen which uses eigen3 name
+              if [ "$tool" = "eigen" ] && [ -d "$TOOL_PREFIX/share/eigen3/cmake" ]; then
+                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/eigen3/cmake:$CMAKE_PREFIX_PATH"
+              fi
+              # magic_enum also uses non standard pkg-config path
+              if [ "$tool" = "magic_enum" ] && [ -d "$TOOL_PREFIX/include" ]; then
+                export CPATH="$TOOL_PREFIX/include:$CPATH"
+                export PKG_CONFIG_PATH="$TOOL_PREFIX/share/pkgconfig:$PKG_CONFIG_PATH"
+                export CMAKE_PREFIX_PATH="$TOOL_PREFIX/share/cmake:$CMAKE_PREFIX_PATH"
+              fi
+            fi
+          done
+
+          # Eigen special handling - it installs to share/eigen3
+          EIGEN_PREFIX=$(brew --prefix eigen)
+          if [ -d "$EIGEN_PREFIX/share/pkgconfig" ]; then
+            export PKG_CONFIG_PATH="$EIGEN_PREFIX/share/pkgconfig:$PKG_CONFIG_PATH"
+          fi
+
+          # Export all the paths
+          echo "PATH=$PATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix):$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+          echo "CMAKE_INCLUDE_PATH=$(brew --prefix)/include" >> $GITHUB_ENV
+          echo "CMAKE_LIBRARY_PATH=$(brew --prefix)/lib" >> $GITHUB_ENV
+
+          # LLVM specific (critical for Lila JIT)
+          LLVM_PREFIX=$(brew --prefix llvm)
+          echo "LLVM_PREFIX=$LLVM_PREFIX" >> $GITHUB_ENV
+          echo "PATH=$LLVM_PREFIX/bin:$PATH" >> $GITHUB_ENV
+          echo "LLVM_DIR=$LLVM_PREFIX/lib/cmake/llvm" >> $GITHUB_ENV
+          echo "Clang_DIR=$LLVM_PREFIX/lib/cmake/clang" >> $GITHUB_ENV
+
+          # Verify the setup worked
+          echo "=== Verifying environment ==="
+          echo "CMAKE command: $(which cmake)"
+          echo "CMAKE_ROOT: $CMAKE_ROOT"
+          echo "CMAKE version: $(cmake --version | head -1)"
+          echo "=== Verifying pkg-config can find packages ==="
+          pkg-config --exists rtaudio && echo "✅ rtaudio found" || echo "❌ rtaudio not found"
+          pkg-config --exists glfw3 && echo "✅ glfw3 found" || echo "❌ glfw3 not found"
+          pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
+          pkg-config --exists magic_enum && echo "✅ magic_enum found" || echo "❌ magic_enum not found"
+          pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
+
+      - name: Install Vulkan SDK (LunarG)
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          cache: true
+          install_runtime: true
+
+      - name: Verify Vulkan SDK
+        run: |
+          echo "VULKAN_SDK=$VULKAN_SDK"
+
+      - name: Install STB headers
+        shell: bash
+        run: |
+          echo "Installing STB headers..."
+          STB_INSTALL_DIR="$HOME/Libraries/stb"
+          git clone https://github.com/nothings/stb.git "$STB_INSTALL_DIR/stb"
+          ls "$STB_INSTALL_DIR"
+
+          echo "STB_ROOT=$STB_INSTALL_DIR" >> $GITHUB_ENV
+          echo "CPATH=$STB_INSTALL_DIR:$CPATH" >> $GITHUB_ENV
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+
+          export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
+          export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
+
+          echo "=== Final CMake environment ==="
+          echo "CMAKE version: $(cmake --version | head -1)"
+          echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH"
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
+
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_VERBOSE_MAKEFILE=ON
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel $(sysctl -n hw.ncpu)
+
+      # - name: Test (conditional)
+      #   if: ${{ inputs.run_tests != false }}
+      #   shell: bash
+      #   working-directory: build
+      #   run: ctest --output-on-failure --parallel 4
+
+      - name: Install to staging directory
+        if: ${{ inputs.create_distribution != false }}
+        shell: bash
+        run: |
+          ls
+          mkdir -p dist_staging
+          cmake --install build --prefix dist_staging
+          echo "Installation completed to dist_staging/"
+
+      - name: Verify installation structure
+        if: ${{ inputs.create_distribution != false }}
+        shell: bash
+        run: |
+          echo "=== MayaFlux Distribution Structure ==="
+          echo "MayaFluxLib (Core Library):"
+          find dist_staging/include/MayaFlux -name "*.hpp" | head -5 || echo "No MayaFlux headers found"
+          find dist_staging/lib -name "*MayaFlux*" | head -5 || echo "No MayaFlux libraries found"
+
+          echo ""
+          echo "Lila (JIT Interface):"
+          find dist_staging/include/Lila -name "*.hpp" | head -5 || echo "No Lila headers found"
+          find dist_staging/lib -name "*Lila*" | head -5 || echo "No Lila libraries found"
+
+          echo ""
+          echo "lila_server (User Executable):"
+          find dist_staging/bin -name "*lila_server*" | head -5 || echo "No lila_server found"
+
+          echo ""
+          echo "Runtime (JIT Context):"
+          find dist_staging/share/lila/runtime -type f | head -5 || echo "No runtime files found"
+
+      - name: Copy distribution files
+        shell: bash
+        run: |
+          cp .github/workflows/distribution/macos/README.md dist_staging/
+          cp .github/workflows/distribution/macos/verify_components.sh dist_staging/
+          chmod +x dist_staging/verify_components.sh
+
+      - name: Create distribution package
+        if: ${{ inputs.create_distribution != false }}
+        shell: bash
+        run: |
+          VERSION="${{ inputs.version }}"
+          SHORT_SHA=${GITHUB_SHA:0:8}
+          OS_NAME="${{ inputs.distribution_name }}"
+
+          PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
+
+          tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
+          zip -r "${PACKAGE_NAME}.zip" dist_staging/
+
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
+
+      - name: Upload MayaFlux distribution
+        if: ${{ inputs.create_distribution != false }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: |
+            ${{ env.PACKAGE_NAME }}.tar.gz
+            ${{ env.PACKAGE_NAME }}.zip
+          retention-days: 30
+
+      - name: Display build summary
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          echo "=== MayaFlux macOS Build Complete ==="
+          echo "📦 Package: ${{ env.PACKAGE_NAME }}"
+          echo "  Platform: ${{ inputs.os_display_name }}"
+          echo "  Compiler: System Clang (Apple)"
+          echo "  C++ Standard: C++23"
+          echo ""
+          echo "Dependencies:"
+          echo "  [Tier 1 - Homebrew Packages]"
+          echo "  ✓ LLVM (Lila JIT - Homebrew)"
+          echo "  ✓ Vulkan SDK (GitHub Action)"
+          echo "  [Tier 2 - Homebrew Libraries]"
+          echo "  ✓ RtAudio, GLFW, FFmpeg"
+          echo "  ✓ Eigen3, GLM, magic_enum, fmt"
+          echo "  [Tier 3 - Header-Only Direct]"
+          echo "  ✓ STB (direct git clone)"
+          echo ""
+          echo "Distribution Package:"
+          echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz"
+          echo "  ✓ ${{ env.PACKAGE_NAME }}.zip"
+          echo "  ✓ Universal macOS ARM64 binaries"
+          echo "  ✓ Ready for standalone deployment"
+
+      - name: Upload build artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-macos
+          path: |
+            build/CMakeFiles/CMakeOutput.log
+            build/CMakeFiles/CMakeError.log
+            build/Testing/Temporary/LastTest.log
+            build/compile_commands.json
