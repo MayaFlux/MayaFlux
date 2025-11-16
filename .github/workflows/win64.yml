@@ -566,10 +566,22 @@ jobs:
       - name: Version
         run: echo "Release version = ${{ needs.determine_version.outputs.VERSION }}"
 
-      - name: Download build artifacts
+      - name: Download artifacts from this run (if any)
+        id: dl_current
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+        continue-on-error: true
+
+      - name: Download artifacts from past runs (same version)
+        if: ${{ steps.dl_current.outcome == 'failure' || !exists('artifacts') }}
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: MayaFlux Windows CI
+          name: MayaFlux-*
+          path: artifacts
+          search_artifacts: true
 
       - name: Calculate release version and metadata
         id: set_vars
