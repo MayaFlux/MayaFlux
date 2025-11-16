@@ -551,14 +551,22 @@ jobs:
       - name: Calculate release version and metadata
         id: set_vars
         run: |
-          PACKAGE_DIR=$(ls artifacts | grep MayaFlux | head -1)
-          VERSION=$(echo $PACKAGE_DIR | sed -E 's/MayaFlux-([0-9.]+).*/\1/')
-          IS_DEV=$(echo $PACKAGE_DIR | grep -c "dev")
+          PACKAGE_DIR=$(find artifacts -maxdepth 2 -type d -name "MayaFlux*" | head -1)
+
+          if [[ -z "$PACKAGE_DIR" ]]; then
+            echo "ERROR: No MayaFlux package directory found under artifacts/"
+            exit 1
+          fi
+
+          BASENAME=$(basename "$PACKAGE_DIR")
+
+          VERSION=$(echo "$BASENAME" | sed -E 's/^MayaFlux-([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          IS_DEV=$(echo "$BASENAME" | grep -c "dev")
           SHORT_SHA=${GITHUB_SHA:0:8}
 
-          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-          echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "IS_DEV=${IS_DEV}" >> $GITHUB_OUTPUT
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "IS_DEV=$IS_DEV" >> $GITHUB_OUTPUT
 
           echo "DEV_TAG=v${VERSION}-dev" >> $GITHUB_OUTPUT
           echo "RELEASE_TAG=v${VERSION}" >> $GITHUB_OUTPUT
