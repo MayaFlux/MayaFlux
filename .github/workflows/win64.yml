@@ -570,9 +570,11 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repository (for release template)
+      - name: Checkout repository (for release template & tag push)
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          persist-credentials: true
           sparse-checkout: .github/workflows/distribution
 
       - name: Download build artifacts
@@ -583,7 +585,7 @@ jobs:
       - name: Calculate release version and metadata
         id: set_vars
         run: |
-          # Find the archive from build job
+          # Find an archive (zip preferred then 7z)
           PACKAGE_FILE=$(find artifacts -maxdepth 3 -type f \( -name "MayaFlux*.zip" -o -name "MayaFlux*.7z" \) | head -1)
           if [[ -z "$PACKAGE_FILE" ]]; then
             echo "ERROR: No MayaFlux package found."
@@ -593,12 +595,15 @@ jobs:
 
           BASENAME=$(basename "$PACKAGE_FILE")
 
-          # Extract version INCLUDING "-dev"
+          # VERSION may be 0.1.0 or 0.1.0-dev
           VERSION=$(echo "$BASENAME" | sed -E 's/^MayaFlux-([0-9]+\.[0-9]+\.[0-9]+(-dev)?)-.*/\1/')
           if [[ -z "$VERSION" ]]; then
             echo "ERROR: Could not parse version from $BASENAME"
             exit 1
           fi
+
+          # CLEAN_VERSION without -dev
+          CLEAN_VERSION=$(echo "$VERSION" | sed 's/-dev//')
 
           # OS name = everything after version, before extension
           OS_NAME=$(echo "$BASENAME" | sed -E 's/^MayaFlux-[0-9]+\.[0-9]+\.[0-9]+(-dev)?-([^.]+)\.(zip|7z)$/\2/')
@@ -607,7 +612,7 @@ jobs:
             exit 1
           fi
 
-          # Dev detection
+          # dev detection
           if [[ "$VERSION" == *"-dev" ]]; then
             IS_DEV=1
           else
@@ -616,53 +621,59 @@ jobs:
 
           SHORT_SHA=${GITHUB_SHA:0:8}
 
+          echo "PACKAGE_FILE=$PACKAGE_FILE"
+          echo "BASENAME=$BASENAME"
+          echo "VERSION=$VERSION"
+          echo "CLEAN_VERSION=$CLEAN_VERSION"
+          echo "OS_NAME=$OS_NAME"
+          echo "IS_DEV=$IS_DEV"
+          echo "SHORT_SHA=$SHORT_SHA"
+
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_OUTPUT
           echo "OS_NAME=$OS_NAME" >> $GITHUB_OUTPUT
           echo "IS_DEV=$IS_DEV" >> $GITHUB_OUTPUT
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
 
-          # Tag is ALWAYS vX.Y.Z (no -dev)
-          CLEAN_VERSION=$(echo "$VERSION" | sed 's/-dev//')
-          echo "TAG=v${CLEAN_VERSION}" >> $GITHUB_OUTPUT
-          DEV_TAG="v${CLEAN_VERSION}-dev"
-          echo "DEV_TAG=$DEV_TAG" >> $GITHUB_OUTPUT
+          # Tags we will use
+          echo "RELEASE_TAG=v${CLEAN_VERSION}" >> $GITHUB_OUTPUT
+          echo "DEV_TAG=v${CLEAN_VERSION}-dev" >> $GITHUB_OUTPUT
 
-          # Names
-          if [[ "$IS_DEV" -eq 1 ]]; then
-            echo "NAME=MayaFlux ${VERSION} (${OS_NAME})" >> $GITHUB_OUTPUT
-            echo "PRERELEASE=true" >> $GITHUB_OUTPUT
-            echo "OVERWRITE=true" >> $GITHUB_OUTPUT
-          else
-            echo "NAME=MayaFlux ${VERSION} (${OS_NAME})" >> $GITHUB_OUTPUT
-            echo "PRERELEASE=false" >> $GITHUB_OUTPUT
-            echo "OVERWRITE=false" >> $GITHUB_OUTPUT
-          fi
+      - name: Prepare tag for dev builds (create/update DEV_TAG -> this commit)
+        if: steps.set_vars.outputs.IS_DEV == '1'
+        run: |
+          set -e
+          DEV_TAG="${{ steps.set_vars.outputs.DEV_TAG }}"
+          echo "Preparing dev tag: $DEV_TAG -> ${GITHUB_SHA}"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          # create or move the dev tag to the commit we built
+          git tag -f "$DEV_TAG" "${GITHUB_SHA}"
+          git push -f origin "$DEV_TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Process release template
+        id: process_template
         run: |
           RELEASE_BODY=$(cat .github/workflows/distribution/windows/release_body.md | \
             sed "s|{{VERSION}}|${{ steps.set_vars.outputs.VERSION }}|g" | \
             sed "s|{{COMMIT_SHA}}|${{ steps.set_vars.outputs.SHORT_SHA }}|g" | \
-            sed "s|{{REPOSITORY}}|${{ github.repository }}|g")
-
+            sed "s|{{REPOSITORY}}|${{ github.repository }}|g" | \
+            sed "s|{{OS}}|${{ steps.set_vars.outputs.OS_NAME }}|g")
           echo "$RELEASE_BODY" > processed_release_body.md
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.set_vars.outputs.TAG }}
-          name: ${{ steps.set_vars.outputs.NAME }}
+          # use DEV_TAG for dev builds (we just pushed it); else use RELEASE_TAG
+          tag_name: ${{ steps.set_vars.outputs.IS_DEV == '1' && steps.set_vars.outputs.DEV_TAG || steps.set_vars.outputs.RELEASE_TAG }}
+          name: ${{ steps.set_vars.outputs.IS_DEV == '1' && format('MayaFlux {0}-dev ({1})', steps.set_vars.outputs.CLEAN_VERSION, steps.set_vars.outputs.OS_NAME) || format('MayaFlux {0} ({1})', steps.set_vars.outputs.CLEAN_VERSION, steps.set_vars.outputs.OS_NAME) }}
           body_path: processed_release_body.md
-          prerelease: ${{ steps.set_vars.outputs.PRERELEASE }}
+          prerelease: ${{ steps.set_vars.outputs.IS_DEV == '1' }}
           draft: false
-          overwrite: ${{ steps.set_vars.outputs.OVERWRITE }}
+          overwrite: ${{ steps.set_vars.outputs.IS_DEV == '1' }}
           files: artifacts/*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Move dev tag forward
-        if: steps.set_vars.outputs.IS_DEV == '1'
-        run: |
-          git fetch --tags
-          git tag -f ${{ steps.set_vars.outputs.DEV_TAG }} ${{ github.sha }}
-          git push -f origin ${{ steps.set_vars.outputs.DEV_TAG }}
