@@ -551,18 +551,34 @@ jobs:
       - name: Calculate release version and metadata
         id: set_vars
         run: |
-          PACKAGE_DIR=$(find artifacts -maxdepth 2 -type d -name "MayaFlux*" | head -1)
+          # Find the first MayaFlux archive file uploaded by the build job (zip preferred, then 7z)
+          PACKAGE_FILE=$(find artifacts -maxdepth 3 -type f \( -name "MayaFlux*.zip" -o -name "MayaFlux*.7z" \) | head -1)
 
-          if [[ -z "$PACKAGE_DIR" ]]; then
-            echo "ERROR: No MayaFlux package directory found under artifacts/"
+          if [[ -z "$PACKAGE_FILE" ]]; then
+            echo "ERROR: No MayaFlux package (.zip or .7z) found under artifacts/"
+            echo "Contents of artifacts/:"
+            ls -R artifacts || true
             exit 1
           fi
 
-          BASENAME=$(basename "$PACKAGE_DIR")
+          BASENAME=$(basename "$PACKAGE_FILE")
 
+          # Parse semantic version (expects form MayaFlux-X.Y.Z[-dev]...)
           VERSION=$(echo "$BASENAME" | sed -E 's/^MayaFlux-([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+
+          if [[ -z "$VERSION" ]]; then
+            echo "ERROR: Could not parse version from package name: $BASENAME"
+            exit 1
+          fi
+
           IS_DEV=$(echo "$BASENAME" | grep -c "dev")
           SHORT_SHA=${GITHUB_SHA:0:8}
+
+          echo "PACKAGE_FILE=$PACKAGE_FILE"
+          echo "BASENAME=$BASENAME"
+          echo "VERSION=$VERSION"
+          echo "IS_DEV=$IS_DEV"
+          echo "SHORT_SHA=$SHORT_SHA"
 
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
