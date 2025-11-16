@@ -348,6 +348,26 @@ public:
      */
     virtual bool read_once(std::shared_ptr<AudioBuffer> buffer, bool force = false);
 
+    /**
+     * @brief Marks the buffer as internal-only, preventing root aggregation
+     * @param internal True to mark as internal-only, false to allow root aggregation
+     *
+     * Internal-only buffers are excluded from root-level aggregation and
+     * processing. This is typically used for buffers that are processed
+     * entirely within a specific backend or domain (e.g., GPU-only buffers).
+     */
+    void force_internal_usage(bool internal) override { m_internal_usage = internal; }
+
+    /**
+     * @brief Checks if the buffer is marked as internal-only
+     * @return True if the buffer is internal-only, false otherwise
+     *
+     * Indicates whether the buffer is excluded from root-level aggregation
+     * and processing. Internal-only buffers are typically processed entirely
+     * within a specific backend or domain.
+     */
+    bool is_internal_only() const override { return m_internal_usage; }
+
 protected:
     /**
      * @brief Audio channel identifier for this buffer
@@ -432,6 +452,8 @@ protected:
 
 private:
     std::atomic<bool> m_is_processing;
+
+    bool m_internal_usage {};
 };
 
 }

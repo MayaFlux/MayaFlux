@@ -408,6 +408,12 @@ public:
      */
     std::shared_ptr<VKBuffer> clone_to(Usage usage);
 
+    /** Set whether this buffer is for internal engine usage */
+    void force_internal_usage(bool internal) override { m_internal_usage = internal; }
+
+    /** Check whether this buffer is for internal engine usage */
+    bool is_internal_only() const override { return m_internal_usage; }
+
 private:
     VKBufferResources m_resources;
 
@@ -425,6 +431,7 @@ private:
     bool m_has_data { true };
     bool m_needs_removal {};
     bool m_process_default { true };
+    bool m_internal_usage { false };
     std::atomic<bool> m_is_processing;
     std::shared_ptr<Buffers::BufferProcessor> m_default_processor;
     std::shared_ptr<Buffers::BufferProcessingChain> m_processing_chain;

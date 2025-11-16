@@ -1,4 +1,5 @@
 name: MayaFlux MacOS CI
+
 on:
   workflow_dispatch:
     inputs:
@@ -7,19 +8,46 @@ on:
         required: false
         default: false
         type: boolean
+      skip_build:
+        description: "Skip build job and only run release stage"
+        required: true
+        default: false
+        type: boolean
       create_distribution:
         description: "Create MayaFlux distribution package"
         required: false
         default: true
-permissions:
-  contents: write
+        type: boolean
 
   # push:
   #   branches: [main]
+
+permissions:
+  contents: write
+
 env:
   BUILD_TYPE: Release
+
 jobs:
+  determine_version:
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.ver.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: ver
+        run: |
+          VERSION=$(grep -Eo 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            VERSION="${VERSION}-dev"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
   build:
+    needs: determine_version
+    if: github.event.inputs.skip_build != 'true'
     strategy:
       matrix:
         include:
@@ -28,7 +56,11 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.name }}
+
     steps:
+      - name: Use version
+        run: echo "Version is ${{ needs.determine_version.outputs.VERSION }}"
+
       - name: Install build tools on macOS
         run: brew install md5sha1sum
 
@@ -52,12 +84,6 @@ jobs:
           }
           EOF
           clang++ -std=c++2b test.cpp -o test && echo "✅ C++23 features work" || (echo "❌ C++23 features failed" && exit 1)
-
-      # - name: Cache STB headers
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/Libraries/stb
-      #     key: stb-headers-${{ runner.os }}
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -229,21 +255,20 @@ jobs:
       - name: Copy distribution files
         shell: bash
         run: |
-          cp workflows/distribution/macos/README.md dist_staging/
-          cp workflows/distribution/macos/verify_components.sh dist_staging/
+          cp .github/workflows/distribution/macos/README.md dist_staging/
+          cp .github/workflows/distribution/macos/verify_components.sh dist_staging/
           chmod +x dist_staging/verify_components.sh
 
-      - name: Create MayaFlux distribution package
+      - name: Create distribution package
         if: ${{ inputs.create_distribution != false }}
         shell: bash
         run: |
-          # Extract version from CMake
-          VERSION=$(grep "project(MayaFlux VERSION" CMakeLists.txt | sed -n 's/.*VERSION \([0-9.]*\).*/\1/p')
+          # Use version from determine_version job
+          VERSION="${{ needs.determine_version.outputs.VERSION }}"
           SHORT_SHA=${GITHUB_SHA:0:8}
-          OS_NAME="${{ matrix.os }}"
+          OS_NAME="macos-arm64"
 
-          # Create descriptive package name
-          PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}-${SHORT_SHA}"
+          PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
 
           # Create packages
           tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
@@ -261,23 +286,33 @@ jobs:
             ${{ env.PACKAGE_NAME }}.zip
           retention-days: 30
 
-      - name: Display distribution summary
+      - name: Display build summary
         if: ${{ inputs.create_distribution != false }}
         run: |
-          echo "=== MayaFlux Distribution Created ==="
+          echo "=== MayaFlux macOS Build Complete ==="
           echo "📦 Package: ${{ env.PACKAGE_NAME }}"
           echo ""
-          echo "Contains three integrated components:"
-          echo "  1. MayaFluxLib - Core graphics/compute engine"
-          echo "  2. Lila - JIT interface binding to MayaFluxLib" 
-          echo "  3. lila_server - User application wrapping both"
+          echo "Key Configuration:"
+          echo "  Platform: ${{ matrix.os }} / ${{ matrix.name }}"
+          echo "  Compiler: System Clang (Apple)"
+          echo "  C++ Standard: C++23"
+          echo "  Build Type: ${{ env.BUILD_TYPE }}"
           echo ""
-          echo "Archive includes:"
-          echo "  - Headers for MayaFluxLib and Lila"
-          echo "  - Shared libraries"
-          echo "  - lila_server executable"
-          echo "  - Runtime files for JIT context"
-          echo "  - Verification scripts and documentation"
+          echo "Dependencies:"
+          echo "  [Tier 1 - Homebrew Packages]"
+          echo "  ✓ LLVM (Lila JIT - Homebrew)"
+          echo "  ✓ Vulkan SDK (GitHub Action)"
+          echo "  [Tier 2 - Homebrew Libraries]"
+          echo "  ✓ RtAudio, GLFW, FFmpeg"
+          echo "  ✓ Eigen3, GLM, magic_enum, fmt"
+          echo "  [Tier 3 - Header-Only Direct]"
+          echo "  ✓ STB (direct git clone)"
+          echo ""
+          echo "Distribution Package:"
+          echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz"
+          echo "  ✓ ${{ env.PACKAGE_NAME }}.zip"
+          echo "  ✓ Universal macOS ARM64 binaries"
+          echo "  ✓ Ready for standalone deployment"
 
       - name: Upload build artifacts (on failure)
         if: failure()
@@ -291,65 +326,166 @@ jobs:
             build/compile_commands.json
 
   create_release:
-    if: success() && github.event.inputs.create_distribution != 'false'
-    needs: build
+    if: (success() || github.event.inputs.skip_build == 'true') && github.event.inputs.create_distribution != 'false'
+    needs: [determine_version, build]
     runs-on: ubuntu-latest
     name: "Create GitHub Release"
     permissions:
       contents: write
 
     steps:
-      - name: Checkout repository (for release template)
+      - name: Checkout repository (for release template & tag push)
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          persist-credentials: true
           sparse-checkout: .github/workflows/distribution
 
-      - name: Download build artifacts
+      - name: Version
+        run: echo "Release version = ${{ needs.determine_version.outputs.VERSION }}"
+
+      - name: Download artifacts from this run (if any)
+        id: dl_current
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+        continue-on-error: true
 
-      - name: Calculate release tag and name
+      - name: Check artifact presence
+        id: check_artifacts
+        run: |
+          if [ -d artifacts ] && [ "$(ls -A artifacts)" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download artifacts from previous runs
+        if: ${{ steps.check_artifacts.outputs.found == 'false' }}
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: "macos.yml"
+          name: "MayaFlux-${{ needs.determine_version.outputs.VERSION }}-macos-arm64"
+          path: artifacts
+          search_artifacts: true
+
+      - name: Calculate release version and metadata
         id: set_vars
         run: |
-          PACKAGE_DIR=$(ls artifacts | grep MayaFlux | head -1)
-          VERSION=$(echo $PACKAGE_DIR | sed -E 's/MayaFlux-([0-9.]+)-.*/\1/')
-          OS_INFO=$(echo $PACKAGE_DIR | sed -E 's/.*-(macos-14)-.*/\1/')
-          SHORT_SHA=$(echo $PACKAGE_DIR | sed -E 's/.*-([0-9a-f]{8})$/\1/')
+          # Find an archive (tar.gz preferred then zip)
+          PACKAGE_FILE=$(find artifacts -maxdepth 3 -type f \( -name "MayaFlux*.tar.gz" -o -name "MayaFlux*.zip" \) | head -1)
+          if [[ -z "$PACKAGE_FILE" ]]; then
+            echo "ERROR: No MayaFlux package found."
+            ls -R artifacts || true
+            exit 1
+          fi
 
-          RELEASE_TAG="v${VERSION}-mac-${SHORT_SHA}"
-          RELEASE_NAME="MayaFlux macOS Distribution ${VERSION} (ARM64, Commit: ${SHORT_SHA})"
+          BASENAME=$(basename "$PACKAGE_FILE")
 
-          echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_OUTPUT
-          echo "RELEASE_NAME=${RELEASE_NAME}" >> $GITHUB_OUTPUT
-          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-          echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "Found Package Dir: $PACKAGE_DIR"
+          # VERSION may be 0.1.0 or 0.1.0-dev
+          VERSION=$(echo "$BASENAME" | sed -E 's/^MayaFlux-([0-9]+\.[0-9]+\.[0-9]+(-dev)?)-.*/\1/')
+          if [[ -z "$VERSION" ]]; then
+            echo "ERROR: Could not parse version from $BASENAME"
+            exit 1
+          fi
 
-      - name: Process release template
+          # CLEAN_VERSION without -dev
+          CLEAN_VERSION=$(echo "$VERSION" | sed 's/-dev//')
+
+          # OS name = everything after version, before extension
+          OS_NAME=$(echo "$BASENAME" | sed -E 's/^MayaFlux-[0-9]+\.[0-9]+\.[0-9]+(-dev)?-([^.]+)\.(tar\.gz|zip)$/\2/')
+          if [[ -z "$OS_NAME" ]]; then
+            echo "ERROR: Could not parse OS name from $BASENAME"
+            exit 1
+          fi
+
+          # dev detection
+          if [[ "$VERSION" == *"-dev" ]]; then
+            IS_DEV=1
+          else
+            IS_DEV=0
+          fi
+
+          SHORT_SHA=${GITHUB_SHA:0:8}
+
+          echo "PACKAGE_FILE=$PACKAGE_FILE"
+          echo "BASENAME=$BASENAME"
+          echo "VERSION=$VERSION"
+          echo "CLEAN_VERSION=$CLEAN_VERSION"
+          echo "OS_NAME=$OS_NAME"
+          echo "IS_DEV=$IS_DEV"
+          echo "SHORT_SHA=$SHORT_SHA"
+
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+          echo "OS_NAME=$OS_NAME" >> $GITHUB_OUTPUT
+          echo "IS_DEV=$IS_DEV" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+          # Tags we will use
+          echo "RELEASE_TAG=v${CLEAN_VERSION}" >> $GITHUB_OUTPUT
+          echo "DEV_TAG=v${CLEAN_VERSION}-dev" >> $GITHUB_OUTPUT
+
+      - name: Prepare tag for dev builds (create/update DEV_TAG -> this commit)
+        if: steps.set_vars.outputs.IS_DEV == '1'
+        run: |
+          set -e
+          DEV_TAG="${{ steps.set_vars.outputs.DEV_TAG }}"
+          echo "Preparing dev tag: $DEV_TAG -> ${GITHUB_SHA}"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          # create or move the dev tag to the commit we built
+          git tag -f "$DEV_TAG" "${GITHUB_SHA}"
+          git push -f origin "$DEV_TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Process unified release template
         id: process_template
         run: |
-          RELEASE_BODY=$(cat workflows/distribution/macos/release_body.md | \
-            sed "s|{{VERSION}}|${{ steps.set_vars.outputs.VERSION }}|g" | \
-            sed "s|{{COMMIT_SHA}}|${{ steps.set_vars.outputs.SHORT_SHA }}|g" | \
-            sed "s|{{REPOSITORY}}|${{ github.repository }}|g")
+          MACOS_SECTION=$(cat .github/workflows/distribution/macos/section.md)
+          WINDOWS_SECTION=$(cat .github/workflows/distribution/windows/section.md)
 
-          echo "$RELEASE_BODY" > processed_release_body.md
+          awk -v version="$VERSION" \
+              -v commit_sha="$SHORT_SHA" \
+              -v repository="${{ github.repository }}" \
+              -v os_name="$OS_NAME" \
+              -v macos_section="$MACOS_SECTION" \
+              -v windows_section="$WINDOWS_SECTION" \
+          '
+          {
+            gsub("{{VERSION}}", version);
+            gsub("{{COMMIT_SHA}}", commit_sha);
+            gsub("{{REPOSITORY}}", repository);
+            gsub("{{OS_NAME}}", os_name);
+            gsub("{{MACOS_SECTION}}", macos_section);
+            gsub("{{WINDOWS_SECTION}}", windows_section);
+            print
+          }
+          ' .github/workflows/distribution/shared/release_body.md > processed_release_body.md
 
-          echo "Processed release template with:"
-          echo "  Version: ${{ steps.set_vars.outputs.VERSION }}"
-          echo "  Commit: ${{ steps.set_vars.outputs.SHORT_SHA }}"
-          echo "  Repository: ${{ github.repository }}"
+      - name: Compute release name
+        id: namefix
+        run: |
+          if [[ "${{ steps.set_vars.outputs.IS_DEV }}" == "1" ]]; then
+            RELEASE_NAME="MayaFlux ${{ steps.set_vars.outputs.CLEAN_VERSION }}-dev (${{ steps.set_vars.outputs.OS_NAME }})"
+          else
+            RELEASE_NAME="MayaFlux ${{ steps.set_vars.outputs.CLEAN_VERSION }} (${{ steps.set_vars.outputs.OS_NAME }})"
+          fi
+          echo "RELEASE_NAME=$RELEASE_NAME"
+          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_OUTPUT
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.set_vars.outputs.RELEASE_TAG }}
-          name: ${{ steps.set_vars.outputs.RELEASE_NAME }}
+          tag_name: ${{ steps.set_vars.outputs.IS_DEV == '1' && steps.set_vars.outputs.DEV_TAG || steps.set_vars.outputs.RELEASE_TAG }}
+          name: ${{ steps.namefix.outputs.RELEASE_NAME }}
           body_path: processed_release_body.md
-          prerelease: true
+          prerelease: ${{ steps.set_vars.outputs.IS_DEV == '1' }}
           draft: false
-          overwrite_files: true
-          files: artifacts/*/*
+          overwrite: ${{ steps.set_vars.outputs.IS_DEV == '1' }}
+          files: artifacts/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

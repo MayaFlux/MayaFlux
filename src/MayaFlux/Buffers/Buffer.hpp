@@ -227,6 +227,26 @@ public:
      * default procesor, any changes made to one buffer after cloning will not affect the other.
      */
     virtual std::shared_ptr<Buffer> clone_to(uint8_t dest_desc) = 0;
+
+    /**
+     * @brief Marks the buffer as internal-only, preventing root aggregation
+     * @param internal True to mark as internal-only, false to allow root aggregation
+     *
+     * Internal-only buffers are excluded from root-level aggregation and
+     * processing. This is typically used for buffers that are processed
+     * entirely within a specific backend or domain (e.g., GPU-only buffers).
+     */
+    virtual void force_internal_usage(bool internal) = 0;
+
+    /**
+     * @brief Checks if the buffer is marked as internal-only
+     * @return True if the buffer is internal-only, false otherwise
+     *
+     * Indicates whether the buffer is excluded from root-level aggregation
+     * and processing. Internal-only buffers are typically processed entirely
+     * within a specific backend or domain.
+     */
+    virtual bool is_internal_only() const = 0;
 };
 
 }

@@ -39,14 +39,14 @@ void ChannelProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     uint32_t active_buffers = 0;
     for (auto& child : m_root_buffer->get_child_buffers()) {
-        if (child->has_data_for_cycle() && !child->needs_removal()) {
+        if (child->has_data_for_cycle() && !child->needs_removal() && !child->is_internal_only()) {
             active_buffers++;
         }
     }
 
     if (active_buffers > 0) {
         for (auto& child : m_root_buffer->get_child_buffers()) {
-            if (child->has_data_for_cycle() && !child->needs_removal()) {
+            if (child->has_data_for_cycle() && !child->needs_removal() && !child->is_internal_only()) {
                 const auto& child_data = child->get_data();
                 for (size_t i = 0; i < std::min(child_data.size(), output_data.size()); i++) {
                     output_data[i] += child_data[i] / active_buffers;
