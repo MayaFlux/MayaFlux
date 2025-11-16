@@ -10,7 +10,7 @@ on:
         type: boolean
       skip_build:
         description: "Skip build job and only run release stage"
-        required: false
+        required: true
         default: false
         type: boolean
       create_distribution:
