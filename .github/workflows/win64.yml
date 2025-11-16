@@ -668,12 +668,18 @@ jobs:
       - name: Process release template
         id: process_template
         run: |
-          RELEASE_BODY=$(cat .github/workflows/distribution/windows/release_body.md | \
-            sed "s|{{VERSION}}|${{ steps.set_vars.outputs.VERSION }}|g" | \
-            sed "s|{{COMMIT_SHA}}|${{ steps.set_vars.outputs.SHORT_SHA }}|g" | \
-            sed "s|{{REPOSITORY}}|${{ github.repository }}|g" | \
-            sed "s|{{OS}}|${{ steps.set_vars.outputs.OS_NAME }}|g")
-          echo "$RELEASE_BODY" > processed_release_body.md
+          MACOS_SECTION=$(cat .github/workflows/distribution/macos/section.md)
+          WINDOWS_SECTION=$(cat .github/workflows/distribution/windows/section.md)
+
+          RELEASE_BODY=$(cat .github/workflows/distribution/shared/release_body.md | \
+              sed "s|{{VERSION}}|$VERSION|g" | \
+              sed "s|{{COMMIT_SHA}}|$SHORT_SHA|g" | \
+              sed "s|{{REPOSITORY}}|${{ github.repository }}|g" | \
+              sed "s|{{OS_NAME}}|$OS_NAME|g" | \
+              sed "s|{{MACOS_SECTION}}|$MACOS_SECTION|g" | \
+              sed "s|{{WINDOWS_SECTION}}|$WINDOWS_SECTION|g")
+            
+            echo "$RELEASE_BODY" > processed_release_body.md
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
