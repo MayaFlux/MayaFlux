@@ -463,7 +463,7 @@ jobs:
         # if: ${{ inputs.create_distribution != false }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PACKAGE_NAME }}
+          name: ${{ steps.mode.outputs.MODE == 'dev' && 'MayaFlux-dev' || env.PACKAGE_NAME }}
           path: |
             ${{ env.PACKAGE_NAME }}.zip
             ${{ env.PACKAGE_NAME }}.7z
@@ -534,6 +534,9 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      CURRENT_BRANCH: ${{ github.ref_name }}
+
     steps:
       - name: Checkout repository (for release template)
         uses: actions/checkout@v4
@@ -545,22 +548,34 @@ jobs:
         with:
           path: artifacts
 
-      - name: Calculate release tag and name
+      - name: Calculate release version and metadata
         id: set_vars
         run: |
           PACKAGE_DIR=$(ls artifacts | grep MayaFlux | head -1)
-          VERSION=$(echo $PACKAGE_DIR | sed -E 's/MayaFlux-([0-9.]+)-.*/\1/')
-          OS_INFO=$(echo $PACKAGE_DIR | sed -E 's/.*-(windows-2022)-.*/\1/')
-          SHORT_SHA=$(echo $PACKAGE_DIR | sed -E 's/.*-([0-9a-f]{8})$/\1/')
+          VERSION=$(echo $PACKAGE_DIR | sed -E 's/MayaFlux-([0-9.]+).*/\1/')
+          IS_DEV=$(echo $PACKAGE_DIR | grep -c "dev")
+          SHORT_SHA=${GITHUB_SHA:0:8}
 
-          RELEASE_TAG="v${VERSION}-win-${SHORT_SHA}"
-          RELEASE_NAME="MayaFlux Windows Distribution ${VERSION} (x64-MSVC, Commit: ${SHORT_SHA})"
-
-          echo "RELEASE_TAG=${RELEASE_TAG}" >> $GITHUB_OUTPUT
-          echo "RELEASE_NAME=${RELEASE_NAME}" >> $GITHUB_OUTPUT
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
           echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "Found Package Dir: $PACKAGE_DIR"
+          echo "IS_DEV=${IS_DEV}" >> $GITHUB_OUTPUT
+
+          echo "DEV_TAG=v${VERSION}-dev" >> $GITHUB_OUTPUT
+          echo "RELEASE_TAG=v${VERSION}" >> $GITHUB_OUTPUT
+          echo "RELEASE_NAME=MayaFlux ${VERSION} (Windows x64)" >> $GITHUB_OUTPUT
+
+      - name: Determine release mode (dev or stable)
+        id: mode
+        run: |
+          if [[ "${{ steps.set_vars.outputs.IS_DEV }}" -eq "1" ]]; then
+            echo "MODE=dev" >> $GITHUB_OUTPUT
+            echo "TAG=${{ steps.set_vars.outputs.DEV_TAG }}" >> $GITHUB_OUTPUT
+            echo "NAME=MayaFlux ${{ steps.set_vars.outputs.VERSION }} Dev Build" >> $GITHUB_OUTPUT
+          else
+            echo "MODE=stable" >> $GITHUB_OUTPUT
+            echo "TAG=${{ steps.set_vars.outputs.RELEASE_TAG }}" >> $GITHUB_OUTPUT
+            echo "NAME=${{ steps.set_vars.outputs.RELEASE_NAME }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Process release template
         id: process_template
@@ -569,24 +584,24 @@ jobs:
             sed "s|{{VERSION}}|${{ steps.set_vars.outputs.VERSION }}|g" | \
             sed "s|{{COMMIT_SHA}}|${{ steps.set_vars.outputs.SHORT_SHA }}|g" | \
             sed "s|{{REPOSITORY}}|${{ github.repository }}|g")
-
-          # Write processed template to file for gh-release action
           echo "$RELEASE_BODY" > processed_release_body.md
-
-          echo "Processed release template with:"
-          echo "  Version: ${{ steps.set_vars.outputs.VERSION }}"
-          echo "  Commit: ${{ steps.set_vars.outputs.SHORT_SHA }}"
-          echo "  Repository: ${{ github.repository }}"
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.set_vars.outputs.RELEASE_TAG }}
-          name: ${{ steps.set_vars.outputs.RELEASE_NAME }}
+          tag_name: ${{ steps.mode.outputs.TAG }}
+          name: ${{ steps.mode.outputs.NAME }}
           body_path: processed_release_body.md
-          prerelease: true
+          prerelease: ${{ steps.mode.outputs.MODE == 'dev' }}
           draft: false
-          overwrite_files: true
+          overwrite: ${{ steps.mode.outputs.MODE == 'dev' }}
           files: artifacts/*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Move dev tag forward
+        if: steps.mode.outputs.MODE == 'dev'
+        run: |
+          git fetch --tags
+          git tag -f ${{ steps.set_vars.outputs.DEV_TAG }} ${{ github.sha }}
+          git push -f origin ${{ steps.set_vars.outputs.DEV_TAG }}
