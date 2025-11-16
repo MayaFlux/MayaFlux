@@ -32,7 +32,23 @@ env:
   LLVM_ROOT: "C:/LLVM_CI"
 
 jobs:
+  determine_version:
+    runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.ver.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: ver
+        run: |
+          VERSION=$(grep -Eo 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            VERSION="${VERSION}-dev"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
   build:
+    if: github.event.inputs.skip_build != 'true'
     strategy:
       matrix:
         include:
@@ -50,24 +66,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Determine version
-        id: ver
-        shell: bash
-        run: |
-          VERSION=$(grep -Eo 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
-          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
-            VERSION="${VERSION}-dev"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Skip build if requested
-        if: ${{ github.event.inputs.skip_build == 'true' }}
-        run: |
-          echo "Skipping build as requested."
-        shell: bash
+      - name: Use version
+        run: echo "Version is ${{ needs.determine_version.outputs.VERSION }}"
 
       - name: Verify system prerequisites
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "=== Verifying System Prerequisites ===" -ForegroundColor Cyan
@@ -110,7 +112,6 @@ jobs:
           }
 
       - name: Setup MSVC environment
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         shell: cmd
         run: |
           echo "Setting up Visual Studio 2022 environment..."
@@ -118,7 +119,6 @@ jobs:
           echo "MSVC environment ready"
 
       - name: Create DIA SDK symlink for LLVM compatibility
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "Creating DIA SDK symlink for LLVM..." -ForegroundColor Yellow
@@ -152,7 +152,6 @@ jobs:
       # PHASE 2: Dependency Management (Parallelizable)
       # ============================================
       - name: Cache vcpkg
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         uses: actions/cache@v4
         id: vcpkg-cache
         with:
@@ -170,7 +169,6 @@ jobs:
           restore-keys: llvm-21.1.3-windows-x64
 
       - name: Cache STB headers
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         uses: actions/cache@v4
         id: stb-cache
         with:
@@ -180,7 +178,6 @@ jobs:
             stb-headers-
 
       - name: Cache FFmpeg
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         uses: actions/cache@v4
         id: ffmpeg-cache
         with:
@@ -194,7 +191,7 @@ jobs:
       # ============================================
 
       - name: Install vcpkg and dependencies
-        if: ${{ github.event.inputs.skip_build != 'true' }} && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing vcpkg and dependencies ===" -ForegroundColor Magenta
@@ -212,7 +209,7 @@ jobs:
           Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
 
       - name: Install LLVM 21 (Lila JIT)
-        if: ${{ github.event.inputs.skip_build != 'true' }} && steps.llvm-cache.outputs.cache-hit != 'true'
+        if: steps.llvm-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing LLVM 21 (Lila JIT Requirement) ===" -ForegroundColor Magenta
@@ -246,7 +243,7 @@ jobs:
           Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
       - name: Install STB headers
-        if: ${{ github.event.inputs.skip_build != 'true' }} && steps.stb-cache.outputs.cache-hit != 'true'
+        if: steps.stb-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing STB headers ===" -ForegroundColor Yellow
@@ -263,7 +260,7 @@ jobs:
           Write-Host "✓ STB installed" -ForegroundColor Green
 
       - name: Install FFmpeg
-        if: ${{ github.event.inputs.skip_build != 'true' }} && steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing FFmpeg ===" -ForegroundColor Yellow
@@ -288,7 +285,6 @@ jobs:
           }
 
       - name: Install Vulkan SDK
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         uses: jakoch/install-vulkan-sdk-action@v1
         with:
           cache: true
@@ -299,7 +295,6 @@ jobs:
       # ============================================
 
       - name: Set environment variables
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "=== Setting Environment Variables ===" -ForegroundColor Cyan
@@ -320,7 +315,6 @@ jobs:
           Write-Host "✓ Environment variables set" -ForegroundColor Green
 
       - name: Configure CMake
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "=== Configuring CMake ===" -ForegroundColor Cyan
@@ -350,7 +344,6 @@ jobs:
       # ============================================
 
       - name: Build
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
@@ -363,7 +356,6 @@ jobs:
       #   run: ctest --output-on-failure --parallel 4
 
       - name: Install to staging directory
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -371,7 +363,6 @@ jobs:
           Write-Host "✓ Installation completed to dist_staging/" -ForegroundColor Green
 
       - name: Bundle runtime DLLs
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -402,7 +393,6 @@ jobs:
           Write-Host "✓ DLLs bundled: $dllCount files" -ForegroundColor Green
 
       - name: Copy distribution assets
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -418,7 +408,6 @@ jobs:
           }
 
       - name: Create distribution package
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -443,7 +432,6 @@ jobs:
           }
 
       - name: Verify installation structure
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -494,7 +482,6 @@ jobs:
           }
 
       - name: Upload MayaFlux distribution
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         uses: actions/upload-artifact@v4
         with:
@@ -505,7 +492,6 @@ jobs:
           retention-days: 30
 
       - name: Display build summary
-        if: ${{ github.event.inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "`n" -ForegroundColor White
@@ -563,7 +549,7 @@ jobs:
 
   create_release:
     if: (success() || github.event.inputs.skip_build == 'true') && github.event.inputs.create_distribution != 'false'
-    needs: build
+    needs: [determine_version, build]
     runs-on: ubuntu-latest
     name: "Create GitHub Release"
     permissions:
@@ -576,6 +562,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
           sparse-checkout: .github/workflows/distribution
+
+      - name: Version
+        run: echo "Release version = ${{ needs.determine_version.outputs.VERSION }}"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
