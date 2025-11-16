@@ -48,6 +48,7 @@ jobs:
           fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
   build:
+    needs: determine_version
     if: github.event.inputs.skip_build != 'true'
     strategy:
       matrix:
