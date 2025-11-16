@@ -162,14 +162,12 @@ jobs:
             vcpkg-${{ runner.os }}-
 
       - name: Cache LLVM
-        if: ${{ inputs.skip_build != 'true' }}
         uses: actions/cache@v4
         id: llvm-cache
         with:
           path: ${{ env.LLVM_ROOT }}
-          key: llvm-21.1.3-windows-x64-${{ hashFiles('CMakeLists.txt') }}
-          restore-keys: |
-            llvm-21.1.3-windows-x64-
+          key: llvm-21.1.3-windows-x64
+          restore-keys: llvm-21.1.3-windows-x64
 
       - name: Cache STB headers
         if: ${{ inputs.skip_build != 'true' }}
@@ -236,8 +234,7 @@ jobs:
 
           # Move to installation directory
           $extracted = Get-ChildItem $tempDir -Directory | Where-Object { $_.Name -match "clang\+llvm" } | Select-Object -First 1
-          Move-Item -Path "$($extracted.FullName)\*" -Destination ${{ env.LLVM_ROOT }} -Force
-
+          Copy-Item -Path "$($extracted.FullName)\*" -Destination ${{ env.LLVM_ROOT }} -Recurse -Force
           # Verify
           if (Test-Path "${{ env.LLVM_ROOT }}\lib\LLVMCore.lib") {
             Write-Host "✓ LLVM 21 installed" -ForegroundColor Green
