@@ -8,6 +8,11 @@ on:
         required: false
         default: false
         type: boolean
+      skip_build:
+        description: "Skip build job and only run release stage"
+        required: false
+        default: false
+        type: boolean
       create_distribution:
         description: "Create MayaFlux distribution package"
         required: false
@@ -45,7 +50,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Determine version
+        id: ver
+        shell: bash
+        run: |
+          VERSION=$(grep -Eo 'VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt | awk '{print $2}')
+          if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
+            VERSION="${VERSION}-dev"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Skip build if requested
+        if: ${{ inputs.skip_build == 'true' }}
+        run: |
+          echo "Skipping build as requested."
+        shell: bash
+
       - name: Verify system prerequisites
+        if: ${{ inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "=== Verifying System Prerequisites ===" -ForegroundColor Cyan
@@ -88,6 +110,7 @@ jobs:
           }
 
       - name: Setup MSVC environment
+        if: ${{ inputs.skip_build != 'true' }}
         shell: cmd
         run: |
           echo "Setting up Visual Studio 2022 environment..."
@@ -95,6 +118,7 @@ jobs:
           echo "MSVC environment ready"
 
       - name: Create DIA SDK symlink for LLVM compatibility
+        if: ${{ inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "Creating DIA SDK symlink for LLVM..." -ForegroundColor Yellow
@@ -128,6 +152,7 @@ jobs:
       # PHASE 2: Dependency Management (Parallelizable)
       # ============================================
       - name: Cache vcpkg
+        if: ${{ inputs.skip_build != 'true' }}
         uses: actions/cache@v4
         id: vcpkg-cache
         with:
@@ -137,6 +162,7 @@ jobs:
             vcpkg-${{ runner.os }}-
 
       - name: Cache LLVM
+        if: ${{ inputs.skip_build != 'true' }}
         uses: actions/cache@v4
         id: llvm-cache
         with:
@@ -146,6 +172,7 @@ jobs:
             llvm-21.1.3-windows-x64-
 
       - name: Cache STB headers
+        if: ${{ inputs.skip_build != 'true' }}
         uses: actions/cache@v4
         id: stb-cache
         with:
@@ -155,6 +182,7 @@ jobs:
             stb-headers-
 
       - name: Cache FFmpeg
+        if: ${{ inputs.skip_build != 'true' }}
         uses: actions/cache@v4
         id: ffmpeg-cache
         with:
@@ -168,7 +196,7 @@ jobs:
       # ============================================
 
       - name: Install vcpkg and dependencies
-        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+        if: ${{ inputs.skip_build != 'true' }} && steps.vcpkg-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing vcpkg and dependencies ===" -ForegroundColor Magenta
@@ -186,7 +214,7 @@ jobs:
           Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
 
       - name: Install LLVM 21 (Lila JIT)
-        if: steps.llvm-cache.outputs.cache-hit != 'true'
+        if: ${{ inputs.skip_build != 'true' }} && steps.llvm-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing LLVM 21 (Lila JIT Requirement) ===" -ForegroundColor Magenta
@@ -221,7 +249,7 @@ jobs:
           Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
       - name: Install STB headers
-        if: steps.stb-cache.outputs.cache-hit != 'true'
+        if: ${{ inputs.skip_build != 'true' }} && steps.stb-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing STB headers ===" -ForegroundColor Yellow
@@ -238,7 +266,7 @@ jobs:
           Write-Host "✓ STB installed" -ForegroundColor Green
 
       - name: Install FFmpeg
-        if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
+        if: ${{ inputs.skip_build != 'true' }} && steps.ffmpeg-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
           Write-Host "=== Installing FFmpeg ===" -ForegroundColor Yellow
@@ -263,6 +291,7 @@ jobs:
           }
 
       - name: Install Vulkan SDK
+        if: ${{ inputs.skip_build != 'true' }}
         uses: jakoch/install-vulkan-sdk-action@v1
         with:
           cache: true
@@ -273,6 +302,7 @@ jobs:
       # ============================================
 
       - name: Set environment variables
+        if: ${{ inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "=== Setting Environment Variables ===" -ForegroundColor Cyan
@@ -293,6 +323,7 @@ jobs:
           Write-Host "✓ Environment variables set" -ForegroundColor Green
 
       - name: Configure CMake
+        if: ${{ inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "=== Configuring CMake ===" -ForegroundColor Cyan
@@ -322,6 +353,7 @@ jobs:
       # ============================================
 
       - name: Build
+        if: ${{ inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
@@ -334,6 +366,7 @@ jobs:
       #   run: ctest --output-on-failure --parallel 4
 
       - name: Install to staging directory
+        if: ${{ inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -341,6 +374,7 @@ jobs:
           Write-Host "✓ Installation completed to dist_staging/" -ForegroundColor Green
 
       - name: Bundle runtime DLLs
+        if: ${{ inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -371,6 +405,7 @@ jobs:
           Write-Host "✓ DLLs bundled: $dllCount files" -ForegroundColor Green
 
       - name: Copy distribution assets
+        if: ${{ inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -386,15 +421,16 @@ jobs:
           }
 
       - name: Create distribution package
+        if: ${{ inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
           Write-Host "=== Creating Distribution Package ===" -ForegroundColor Magenta
 
-          # Extract version from CMakeLists.txt
-          $version = (Select-String -Path "CMakeLists.txt" -Pattern 'project\(MayaFlux VERSION ([0-9.]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+          $version = "${{ steps.ver.outputs.VERSION }}"
           $shortSha = $env:GITHUB_SHA.Substring(0, 8)
-          $packageName = "MayaFlux-${version}-windows-2022-${shortSha}"
+          $osName  = "windows"    # or macos / linux injected per matrix
+          $packageName = "MayaFlux-${version}-${osName}"
 
           # Create packages
           Write-Host "Creating archives..." -ForegroundColor Yellow
@@ -410,6 +446,7 @@ jobs:
           }
 
       - name: Verify installation structure
+        if: ${{ inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh
         run: |
@@ -460,17 +497,18 @@ jobs:
           }
 
       - name: Upload MayaFlux distribution
+        if: ${{ inputs.skip_build != 'true' }}
         # if: ${{ inputs.create_distribution != false }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.mode.outputs.MODE == 'dev' && 'MayaFlux-dev' || env.PACKAGE_NAME }}
+          name: ${{ env.PACKAGE_NAME }}
           path: |
             ${{ env.PACKAGE_NAME }}.zip
             ${{ env.PACKAGE_NAME }}.7z
           retention-days: 30
 
       - name: Display build summary
-        if: always()
+        if: ${{ inputs.skip_build != 'true' }}
         shell: pwsh
         run: |
           Write-Host "`n" -ForegroundColor White
@@ -527,15 +565,12 @@ jobs:
           retention-days: 7
 
   create_release:
-    if: success() && github.event.inputs.create_distribution != 'false'
+    if: (success() || github.event.inputs.skip_build == 'true') && github.event.inputs.create_distribution != 'false'
     needs: build
     runs-on: ubuntu-latest
     name: "Create GitHub Release"
     permissions:
       contents: write
-
-    env:
-      CURRENT_BRANCH: ${{ github.ref_name }}
 
     steps:
       - name: Checkout repository (for release template)
@@ -551,80 +586,85 @@ jobs:
       - name: Calculate release version and metadata
         id: set_vars
         run: |
-          # Find the first MayaFlux archive file uploaded by the build job (zip preferred, then 7z)
+          # Find the archive from build job
           PACKAGE_FILE=$(find artifacts -maxdepth 3 -type f \( -name "MayaFlux*.zip" -o -name "MayaFlux*.7z" \) | head -1)
-
           if [[ -z "$PACKAGE_FILE" ]]; then
-            echo "ERROR: No MayaFlux package (.zip or .7z) found under artifacts/"
-            echo "Contents of artifacts/:"
+            echo "ERROR: No MayaFlux package found."
             ls -R artifacts || true
             exit 1
           fi
 
           BASENAME=$(basename "$PACKAGE_FILE")
 
-          # Parse semantic version (expects form MayaFlux-X.Y.Z[-dev]...)
-          VERSION=$(echo "$BASENAME" | sed -E 's/^MayaFlux-([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-
+          # Extract version INCLUDING "-dev"
+          VERSION=$(echo "$BASENAME" | sed -E 's/^MayaFlux-([0-9]+\.[0-9]+\.[0-9]+(-dev)?)-.*/\1/')
           if [[ -z "$VERSION" ]]; then
-            echo "ERROR: Could not parse version from package name: $BASENAME"
+            echo "ERROR: Could not parse version from $BASENAME"
             exit 1
           fi
 
-          IS_DEV=$(echo "$BASENAME" | grep -c "dev")
+          # OS name = everything after version, before extension
+          OS_NAME=$(echo "$BASENAME" | sed -E 's/^MayaFlux-[0-9]+\.[0-9]+\.[0-9]+(-dev)?-([^.]+)\.(zip|7z)$/\2/')
+          if [[ -z "$OS_NAME" ]]; then
+            echo "ERROR: Could not parse OS name from $BASENAME"
+            exit 1
+          fi
+
+          # Dev detection
+          if [[ "$VERSION" == *"-dev" ]]; then
+            IS_DEV=1
+          else
+            IS_DEV=0
+          fi
+
           SHORT_SHA=${GITHUB_SHA:0:8}
 
-          echo "PACKAGE_FILE=$PACKAGE_FILE"
-          echo "BASENAME=$BASENAME"
-          echo "VERSION=$VERSION"
-          echo "IS_DEV=$IS_DEV"
-          echo "SHORT_SHA=$SHORT_SHA"
-
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "OS_NAME=$OS_NAME" >> $GITHUB_OUTPUT
           echo "IS_DEV=$IS_DEV" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=$SHORT_SHA" >> $GITHUB_OUTPUT
 
-          echo "DEV_TAG=v${VERSION}-dev" >> $GITHUB_OUTPUT
-          echo "RELEASE_TAG=v${VERSION}" >> $GITHUB_OUTPUT
-          echo "RELEASE_NAME=MayaFlux ${VERSION} (Windows x64)" >> $GITHUB_OUTPUT
+          # Tag is ALWAYS vX.Y.Z (no -dev)
+          CLEAN_VERSION=$(echo "$VERSION" | sed 's/-dev//')
+          echo "TAG=v${CLEAN_VERSION}" >> $GITHUB_OUTPUT
+          DEV_TAG="v${CLEAN_VERSION}-dev"
+          echo "DEV_TAG=$DEV_TAG" >> $GITHUB_OUTPUT
 
-      - name: Determine release mode (dev or stable)
-        id: mode
-        run: |
-          if [[ "${{ steps.set_vars.outputs.IS_DEV }}" -eq "1" ]]; then
-            echo "MODE=dev" >> $GITHUB_OUTPUT
-            echo "TAG=${{ steps.set_vars.outputs.DEV_TAG }}" >> $GITHUB_OUTPUT
-            echo "NAME=MayaFlux ${{ steps.set_vars.outputs.VERSION }} Dev Build" >> $GITHUB_OUTPUT
+          # Names
+          if [[ "$IS_DEV" -eq 1 ]]; then
+            echo "NAME=MayaFlux ${VERSION} (${OS_NAME})" >> $GITHUB_OUTPUT
+            echo "PRERELEASE=true" >> $GITHUB_OUTPUT
+            echo "OVERWRITE=true" >> $GITHUB_OUTPUT
           else
-            echo "MODE=stable" >> $GITHUB_OUTPUT
-            echo "TAG=${{ steps.set_vars.outputs.RELEASE_TAG }}" >> $GITHUB_OUTPUT
-            echo "NAME=${{ steps.set_vars.outputs.RELEASE_NAME }}" >> $GITHUB_OUTPUT
+            echo "NAME=MayaFlux ${VERSION} (${OS_NAME})" >> $GITHUB_OUTPUT
+            echo "PRERELEASE=false" >> $GITHUB_OUTPUT
+            echo "OVERWRITE=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Process release template
-        id: process_template
         run: |
           RELEASE_BODY=$(cat .github/workflows/distribution/windows/release_body.md | \
             sed "s|{{VERSION}}|${{ steps.set_vars.outputs.VERSION }}|g" | \
             sed "s|{{COMMIT_SHA}}|${{ steps.set_vars.outputs.SHORT_SHA }}|g" | \
             sed "s|{{REPOSITORY}}|${{ github.repository }}|g")
+
           echo "$RELEASE_BODY" > processed_release_body.md
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.mode.outputs.TAG }}
-          name: ${{ steps.mode.outputs.NAME }}
+          tag_name: ${{ steps.set_vars.outputs.TAG }}
+          name: ${{ steps.set_vars.outputs.NAME }}
           body_path: processed_release_body.md
-          prerelease: ${{ steps.mode.outputs.MODE == 'dev' }}
+          prerelease: ${{ steps.set_vars.outputs.PRERELEASE }}
           draft: false
-          overwrite: ${{ steps.mode.outputs.MODE == 'dev' }}
+          overwrite: ${{ steps.set_vars.outputs.OVERWRITE }}
           files: artifacts/*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Move dev tag forward
-        if: steps.mode.outputs.MODE == 'dev'
+        if: steps.set_vars.outputs.IS_DEV == '1'
         run: |
           git fetch --tags
           git tag -f ${{ steps.set_vars.outputs.DEV_TAG }} ${{ github.sha }}
