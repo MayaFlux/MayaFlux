@@ -665,21 +665,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Process release template
+      - name: Process unified release template
         id: process_template
         run: |
           MACOS_SECTION=$(cat .github/workflows/distribution/macos/section.md)
           WINDOWS_SECTION=$(cat .github/workflows/distribution/windows/section.md)
 
-          RELEASE_BODY=$(cat .github/workflows/distribution/shared/release_body.md | \
-              sed "s|{{VERSION}}|$VERSION|g" | \
-              sed "s|{{COMMIT_SHA}}|$SHORT_SHA|g" | \
-              sed "s|{{REPOSITORY}}|${{ github.repository }}|g" | \
-              sed "s|{{OS_NAME}}|$OS_NAME|g" | \
-              sed "s|{{MACOS_SECTION}}|$MACOS_SECTION|g" | \
-              sed "s|{{WINDOWS_SECTION}}|$WINDOWS_SECTION|g")
-            
-            echo "$RELEASE_BODY" > processed_release_body.md
+          awk -v version="$VERSION" \
+              -v commit_sha="$SHORT_SHA" \
+              -v repository="${{ github.repository }}" \
+              -v os_name="$OS_NAME" \
+              -v macos_section="$MACOS_SECTION" \
+              -v windows_section="$WINDOWS_SECTION" \
+          '
+          {
+            gsub("{{VERSION}}", version);
+            gsub("{{COMMIT_SHA}}", commit_sha);
+            gsub("{{REPOSITORY}}", repository);
+            gsub("{{OS_NAME}}", os_name);
+            gsub("{{MACOS_SECTION}}", macos_section);
+            gsub("{{WINDOWS_SECTION}}", windows_section);
+            print
+          }
+          ' .github/workflows/distribution/shared/release_body.md > processed_release_body.md
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2

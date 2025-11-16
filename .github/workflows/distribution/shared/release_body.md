@@ -1,10 +1,7 @@
 # 🚀 MayaFlux Multi-Platform Distribution
 
-Automated CI build for **{{OS_NAME}}**.
-
 **Version**: {{VERSION}}  
-**Commit**: {{COMMIT_SHA}}  
-**Build Date**: $(date -u +"%Y-%m-%d")
+**Commit**: {{COMMIT_SHA}}
 
 ## 📦 What's Included
 
