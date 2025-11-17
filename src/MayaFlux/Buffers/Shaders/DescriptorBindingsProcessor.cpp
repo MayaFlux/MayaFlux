@@ -7,6 +7,19 @@
 
 namespace MayaFlux::Buffers {
 
+DescriptorBindingsProcessor::DescriptorBindingsProcessor(
+    const std::string& shader_path,
+    uint32_t workgroup_x)
+    : ShaderProcessor(shader_path, workgroup_x)
+{
+}
+
+DescriptorBindingsProcessor::DescriptorBindingsProcessor(
+    ShaderProcessorConfig config)
+    : ShaderProcessor(std::move(config))
+{
+}
+
 //==============================================================================
 // Binding Methods
 //==============================================================================

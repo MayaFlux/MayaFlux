@@ -74,13 +74,13 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
-if(UNIX)
-    install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfigVersion.cmake
-        DESTINATION lib/cmake/MayaFlux
-    )
-endif()
+# if(UNIX)
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/MayaFluxConfigVersion.cmake
+    DESTINATION lib/cmake/MayaFlux
+)
+# endif()
 
 message(STATUS "Lila (static) installed to:")
 message(STATUS "  - Libraries: ${CMAKE_INSTALL_PREFIX}/lib")
