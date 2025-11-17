@@ -51,6 +51,19 @@ public:
     };
 
     /**
+     * @brief Create DescriptorBindingsProcessor with shader path
+     * @param shader_path Path to compute shader
+     * @param workgroup_x Workgroup size in X dimension
+     */
+    DescriptorBindingsProcessor(const std::string& shader_path, uint32_t workgroup_x = 256);
+
+    /**
+     * @brief Create DescriptorBindingsProcessor with shader config
+     * @param config Shader processor configuration
+     */
+    DescriptorBindingsProcessor(ShaderProcessorConfig config);
+
+    /**
      * @brief Bind scalar node output to descriptor
      * @param name Logical binding name
      * @param node Node to read from
