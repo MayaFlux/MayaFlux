@@ -38,7 +38,7 @@ void GeometryBindingsProcessor::bind_geometry_node(
 
     std::shared_ptr<VKBuffer> staging = nullptr;
     if (!vertex_buffer->is_host_visible()) {
-        size_t staging_size = std::max(vertex_buffer->get_size_bytes(), vertex_data_size);
+        size_t staging_size = std::max<size_t>(vertex_buffer->get_size_bytes(), vertex_data_size);
         staging = create_staging_buffer(staging_size);
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -123,7 +123,7 @@ void GeometryBindingsProcessor::processing_function(std::shared_ptr<Buffer> buff
             continue;
         }
 
-        size_t upload_size = std::min(
+        size_t upload_size = std::min<size_t>(
             vertices.size_bytes(),
             binding.gpu_vertex_buffer->get_size_bytes());
 
@@ -169,7 +169,7 @@ void GeometryBindingsProcessor::processing_function(std::shared_ptr<Buffer> buff
         auto vertices = first_binding.node->get_vertex_data();
 
         if (!vertices.empty()) {
-            size_t upload_size = std::min(
+            size_t upload_size = std::min<size_t>(
                 vertices.size_bytes(),
                 vk_buffer->get_size_bytes());
 
