@@ -20,7 +20,6 @@ endif()
 # Dependency Resolution
 # ============================================================================
 
-# Core dependencies (all platforms)
 find_package(PkgConfig QUIET)
 
 # Windows-specific dependency resolution
@@ -126,19 +125,23 @@ else()
 endif()
 
 # ============================================================================
-# MayaFluxLib Target
+# MayaFluxLib Target (Shared Library)
 # ============================================================================
 
 if(NOT TARGET MayaFlux::MayaFluxLib)
     add_library(MayaFlux::MayaFluxLib SHARED IMPORTED)
 
     set_target_properties(MayaFlux::MayaFluxLib PROPERTIES
-        IMPORTED_LOCATION "@PACKAGE_CMAKE_INSTALL_PREFIX@/lib/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxLib${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES 
-            "@PACKAGE_CMAKE_INSTALL_PREFIX@/include"
-            "$ENV{STB_INCLUDE_DIR}"  # Moved from target_include_directories
-            "$ENV{LIBXML2_INCLUDE_DIR}"
+        IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxLib${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/lila/runtime"
     )
+
+    # Platform-specific import lib (Windows only)
+    if(WIN32)
+        set_target_properties(MayaFlux::MayaFluxLib PROPERTIES
+            IMPORTED_IMPLIB "@PACKAGE_CMAKE_INSTALL_PREFIX@/lib/MayaFluxLib.lib"
+        )
+    endif()
 
     # Platform definitions - APPLIED ONLY TO TARGETS LINKING AGAINST MAYAFLUX
     if(WIN32)
@@ -163,14 +166,14 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         )
     endif()
 
-    # Core definitions - APPLIED ONLY TO TARGETS LINKING AGAINST MAYAFLUX
+    # Core definitions
     target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE
         RTAUDIO_BACKEND 
         GLFW_BACKEND
     )
 
-    # Debug definition - APPLIED ONLY TO TARGETS LINKING AGAINST MAYAFLUX
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Debug definition
+    if("@CMAKE_BUILD_TYPE@" STREQUAL "Debug")
         target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_DEBUG=1)
     else()
         target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_DEBUG=0)
@@ -263,7 +266,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 endif()
 
 # ============================================================================
-# Lila Target (JIT Live Coding)
+# Lila Target (JIT Live Coding - Shared Library)
 # ============================================================================
 
 set(LLVM_MIN_VERSION 21)
@@ -272,15 +275,20 @@ if(NOT TARGET MayaFlux::Lila)
     add_library(MayaFlux::Lila SHARED IMPORTED)
 
     set_target_properties(MayaFlux::Lila PROPERTIES
-        IMPORTED_LOCATION "@PACKAGE_CMAKE_INSTALL_PREFIX@/lib/${CMAKE_SHARED_LIBRARY_PREFIX}Lila${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES 
-            "@PACKAGE_CMAKE_INSTALL_PREFIX@/include"
-            "@PACKAGE_CMAKE_INSTALL_PREFIX@/share/lila/runtime"
+        IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}Lila${CMAKE_SHARED_LIBRARY_SUFFIX}"
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include"
     )
+
+    # Platform-specific import lib (Windows only)
+    if(WIN32)
+        set_target_properties(MayaFlux::Lila PROPERTIES
+            IMPORTED_IMPLIB "${PACKAGE_PREFIX_DIR}/lib/Lila.lib"
+        )
+    endif()
 
     target_link_libraries(MayaFlux::Lila INTERFACE MayaFlux::MayaFluxLib)
 
-    # LLVM/Clang linking (same as before - this part was correct)
+    # LLVM/Clang linking
     if(UNIX AND NOT WIN32)
         execute_process(
             COMMAND llvm-config --ldflags
@@ -342,5 +350,6 @@ endif()
 
 set(MayaFlux_FOUND TRUE)
 set(MayaFlux_LIBRARIES MayaFlux::MayaFluxLib MayaFlux::Lila)
-set(MayaFlux_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_PREFIX@/include")
-set(MayaFlux_SHADER_DIR "@PACKAGE_CMAKE_INSTALL_PREFIX@/share/mayaflux/shaders")
+set(MayaFlux_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/include")
+set(MayaFlux_LIB_DIR "${PACKAGE_PREFIX_DIR}/lib")
+set(MayaFlux_SHADER_DIR "${PACKAGE_PREFIX_DIR}/share/mayaflux/shaders")

@@ -25,14 +25,11 @@ PROFILE="${ZDOTDIR:-$HOME}/.zshenv"
 LLVM_PREFIX="$(brew --prefix llvm 2>/dev/null || true)"
 if [ -n "$LLVM_PREFIX" ]; then
     if ! grep -Fq "$LLVM_PREFIX/bin" "$PROFILE" 2>/dev/null; then
-        {
-            echo ''
-            echo '# LLVM setup for CMake / llvm-config'
-            echo "export PATH=\"$LLVM_PREFIX/bin:\$PATH\""
-            echo "export CMAKE_PREFIX_PATH=\"$LLVM_PREFIX/lib/cmake:\$CMAKE_PREFIX_PATH\""
-            echo "export LLVM_DIR=\"$LLVM_PREFIX/lib/cmake/llvm\""
-            echo "export Clang_DIR=\"$LLVM_PREFIX/lib/cmake/clang\""
-        } >>"$PROFILE"
+        append_if_missing "# LLVM setup for CMake / llvm-config"
+        append_if_missing "export PATH=\"$LLVM_PREFIX/bin:\$PATH\""
+        append_if_missing "export CMAKE_PREFIX_PATH=\"$LLVM_PREFIX/lib/cmake:\$CMAKE_PREFIX_PATH\""
+        append_if_missing "export LLVM_DIR=\"$LLVM_PREFIX/lib/cmake/llvm\""
+        append_if_missing "export Clang_DIR=\"$LLVM_PREFIX/lib/cmake/clang\""
     fi
 fi
 
@@ -121,7 +118,7 @@ else
     printf 'STB already installed at %s\n' "$STB_INSTALL_DIR" >&3
 fi
 
-append_if_missing "export STB_ROOT=\"$HOME/Libraries\""
+append_if_missing 'export STB_ROOT="$HOME/Libraries"'
 append_if_missing 'export CMAKE_PREFIX_PATH="$STB_ROOT:$CMAKE_PREFIX_PATH"'
 append_if_missing 'export CPATH="$STB_ROOT/:$CPATH"'
 
