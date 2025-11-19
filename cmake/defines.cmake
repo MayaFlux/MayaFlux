@@ -1,3 +1,5 @@
+add_compile_definitions(MAYAFLUX_DEVELOPMENT)
+
 if(WIN32)
     add_compile_definitions(MAYAFLUX_PLATFORM_WINDOWS)
     add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX)
