@@ -2,7 +2,41 @@
 
 **MayaFlux** is a next-generation digital signal processing framework that embraces true digital paradigms. Moving beyond analog synthesis metaphors, MayaFlux treats audio, video, and all data streams as unified numerical information that can interact, transform, and process together through powerful algorithms, coroutines, and ahead-of-time computation techniques.
 
-## Quick Start
+## Weave (Project Automation)
+
+**Project initialization, dependency management, and installation framework for MayaFlux.**
+
+Weave handles everything needed to get MayaFlux running on your system: downloading the latest framework, installing dependencies, managing environment setup, and providing tools to scaffold new projects.
+
+---
+
+### Overview
+
+Instead of juggling separate downloads, manual dependency installation, and environment configuration, Weave automates the entire setup process while providing both GUI and CLI tools for project creation.
+
+### What Weave Does
+
+- **Downloads and installs MayaFlux** from the latest GitHub release
+- **Manages all dependencies** (build tools, graphics libraries, audio backends, development SDKs)
+- **Configures environment variables** for seamless development
+- **Provides project creation tools** (GUI on both platforms, CLI on macOS) to scaffold new MayaFlux applications
+- **Handles platform-specific setup** with intelligent fallbacks and validation
+
+## Documentation & Downloads
+
+Visit [Weave Repository](https://github.com/MayaFlux/Weave) for full documentation.
+
+The latest version can be downloaded from the [Releases Page](https://github.com/MayaFlux/Weave/releases)
+
+If you wish to develop MayaFlux from source, enter the next section.
+
+Or jumpt to [Working with MayaFlyx](#your-first-mayaflux-program)
+
+
+## Quick Start (Develiopers)
+
+This section guides you through setting up MayaFlux on your development machine
+for building from source.
 
 ### 1. Clone the Repository
 
@@ -109,7 +143,8 @@ Overseer will automatically detect the CMake build system and provide build/run 
 
 ## Your First MayaFlux Program
 
-After running the setup script, you'll find a `user_project.hpp` file in the src/ directory of your project root. This is where all your MayaFlux code goes:
+After creating a project from `Weave` or running the setup script (when building from source),
+you'll find a `user_project.hpp` file in the src/ directory of your project root. This is where all your MayaFlux code goes:
 
 ```cpp
 // src/user_project.hpp - Your code space (never overwritten by updates)

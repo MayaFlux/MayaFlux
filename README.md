@@ -74,8 +74,32 @@ All components remain **composable and concurrent**. Processing domains are enco
 - Advanced coroutine coordination patterns
 
 ---
+## Quick Start(Projects) WEAVE
 
-## Quick Start
+MayaFlux provides a managemnt tool called `Weave`, currently compatible with 
+winodws and mac. 
+It has two disticnt modes:
+
+### Management Mode
+It automates:
+- Downloading and installing MayaFlux
+- Installing all necessary Dependencies for that platform
+- Setting up environment variables
+- Storing templates for new projects.
+
+### Project Creation Mode
+It automates:
+- Createing new C++ projects
+- Setting up CMakeLists.txt with necessary configurations (**DO NOT EDIT if you are unfamiliar with Cmake**)
+- Adding necessary MayaFlux includes and linkages
+- Setting up editor tools
+- Creating templated user_project.hpp
+
+Weave can be found here: [Weave Repository](https://github.com/MayaFlux/Weave) 
+
+## Quick Start (DEVELOPER)
+
+This section is for developers looking to build MayaFlux from source.
 
 ### Requirements
 
