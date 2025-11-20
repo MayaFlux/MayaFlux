@@ -18,6 +18,9 @@ namespace Nodes {
         class IIR;
         class FIR;
     }
+    class ComputeOutNode;
+    class TextureNode;
+    class GeometryWriterNode;
 }
 
 namespace Buffers {
@@ -27,6 +30,8 @@ namespace Buffers {
     class FeedbackBuffer;
     class ContainerBuffer;
     class VKBuffer;
+    class TextureBuffer;
+    class GeometryBuffer;
 }
 
 namespace Kakshya {
@@ -44,11 +49,16 @@ namespace Kakshya {
     X(Polynomial, MayaFlux::Nodes::Generator::Polynomial)      \
     X(Random, MayaFlux::Nodes::Generator::Stochastics::Random) \
     X(IIR, MayaFlux::Nodes::Filters::IIR)                      \
-    X(FIR, MayaFlux::Nodes::Filters::FIR)
+    X(FIR, MayaFlux::Nodes::Filters::FIR)                      \
+    X(ComputeOutNode, MayaFlux::Nodes::ComputeOutNode)         \
+    X(TextureNode, MayaFlux::Nodes::TextureNode)               \
+    X(GeometryWriterNode, MayaFlux::Nodes::GeometryWriterNode)
 
 #define ALL_BUFFER_REGISTRATION                            \
     B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)         \
     B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)           \
     B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)   \
     B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer) \
-    B(VKBuffer, MayaFlux::Buffers::VKBuffer)
+    B(VKBuffer, MayaFlux::Buffers::VKBuffer)               \
+    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)     \
+    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)

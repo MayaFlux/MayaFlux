@@ -31,6 +31,10 @@
 #include "Nodes/Generators/Phasor.hpp"
 #include "Nodes/Generators/Sine.hpp"
 #include "Nodes/Generators/Stochastic.hpp"
+#include "Nodes/Graphics/ComputeOutNode.hpp"
+#include "Nodes/Graphics/GeometryWriterNode.hpp"
+#include "Nodes/Graphics/TextureNode.hpp"
+#include "Nodes/Network/NodeNetwork.hpp"
 #include "Nodes/NodeGraphManager.hpp"
 #include "Nodes/NodeStructure.hpp"
 
@@ -38,6 +42,7 @@
 #include "Buffers/BufferProcessingChain.hpp"
 #include "Buffers/Container/ContainerBuffer.hpp"
 #include "Buffers/Container/StreamWriteProcessor.hpp"
+#include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Node/FilterProcessor.hpp"
 #include "Buffers/Node/LogicProcessor.hpp"
 #include "Buffers/Node/NodeBuffer.hpp"
@@ -46,6 +51,7 @@
 #include "Buffers/Shaders/RenderProcessor.hpp"
 #include "Buffers/Staging/BufferDownloadProcessor.hpp"
 #include "Buffers/Staging/BufferUploadProcessor.hpp"
+#include "Buffers/Textures/TextureBuffer.hpp"
 
 #include "Kriya/Awaiters.hpp"
 #include "Kriya/BufferPipeline.hpp"
@@ -94,4 +100,5 @@ using namespace MayaFlux;
  * its managed components. For custom or non-default components, use their
  * specific handles and methods directly rather than these wrappers.
  */
-namespace MayaFlux {}
+namespace MayaFlux {
+}
