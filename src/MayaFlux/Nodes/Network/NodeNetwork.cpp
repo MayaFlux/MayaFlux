@@ -2,6 +2,60 @@
 
 namespace MayaFlux::Nodes {
 
+void NodeNetwork::ensure_initialized()
+{
+    if (!m_initialized) {
+        initialize();
+        m_initialized = true;
+    }
+}
+
+std::optional<std::vector<double>> NodeNetwork::get_audio_buffer() const
+{
+    if (m_output_mode == OutputMode::AUDIO_SINK && !m_last_audio_buffer.empty()) {
+        return m_last_audio_buffer;
+    }
+    return std::nullopt;
+}
+
+[[nodiscard]] std::unordered_map<std::string, std::string>
+NodeNetwork::get_metadata() const
+{
+    return { { "topology", topology_to_string(m_topology) },
+        { "output_mode", output_mode_to_string(m_output_mode) },
+        { "node_count", std::to_string(get_node_count()) },
+        { "enabled", m_enabled ? "true" : "false" } };
+}
+
+void NodeNetwork::map_parameter(const std::string& param_name,
+    const std::shared_ptr<Node>& source,
+    MappingMode mode)
+{
+    // Default: store mapping, subclass handles in process_batch()
+    m_parameter_mappings.push_back({ param_name, mode, source, nullptr });
+}
+
+void NodeNetwork::map_parameter(const std::string& param_name,
+    const std::shared_ptr<NodeNetwork>& source_network)
+{
+    m_parameter_mappings.push_back(
+        { param_name, MappingMode::ONE_TO_ONE, nullptr, source_network });
+}
+
+void NodeNetwork::unmap_parameter(const std::string& param_name)
+{
+    m_parameter_mappings.erase(
+        std::remove_if(
+            m_parameter_mappings.begin(), m_parameter_mappings.end(),
+            [&](const auto& m) { return m.param_name == param_name; }),
+        m_parameter_mappings.end());
+}
+
+bool NodeNetwork::is_processing() const
+{
+    return m_processing_state.load(std::memory_order_acquire);
+}
+
 void NodeNetwork::register_channel_usage(uint32_t channel_id)
 {
     if (channel_id < 32) {
@@ -87,4 +141,5 @@ std::string NodeNetwork::output_mode_to_string(OutputMode mode)
         return "UNKNOWN";
     }
 }
+
 } // namespace MayaFlux::Nodes
