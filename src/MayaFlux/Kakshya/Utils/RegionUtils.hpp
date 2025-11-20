@@ -67,7 +67,7 @@ template <typename T>
 std::vector<T> extract_region_data(const std::span<const T>& source_data, const Region& region, const std::vector<DataDimension>& dimensions)
 {
     for (size_t i = 0; i < region.start_coordinates.size(); ++i) {
-        if (region.end_coordinates[i] >= dimensions[i].size) {
+        if (region.end_coordinates[i] > 0 && (region.end_coordinates[i] >= dimensions[i].size)) {
             throw std::out_of_range("Requested region is out of bounds for dimension " + std::to_string(i));
         }
     }
