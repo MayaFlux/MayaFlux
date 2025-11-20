@@ -523,6 +523,12 @@ void NodeGraphManager::unregister_network_global(const std::shared_ptr<NodeNetwo
     }
 }
 
+bool NodeGraphManager::is_network_registered(const std::shared_ptr<NodeNetwork>& network)
+{
+    return std::ranges::any_of(m_network_registry,
+        [&network](const auto& pair) { return pair.second == network; });
+}
+
 void NodeGraphManager::reset_audio_network_state(ProcessingToken token)
 {
     auto audio_it = m_audio_networks.find(token);

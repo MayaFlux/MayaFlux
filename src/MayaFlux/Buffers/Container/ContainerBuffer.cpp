@@ -26,6 +26,11 @@ void ContainerToBufferAdapter::processing_function(std::shared_ptr<Buffer> buffe
         return;
     }
 
+    if (m_container->is_at_end()) {
+        buffer->mark_for_removal();
+        return;
+    }
+
     try {
         auto state = m_container->get_processing_state();
 
