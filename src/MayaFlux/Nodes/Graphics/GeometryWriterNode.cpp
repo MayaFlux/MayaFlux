@@ -23,15 +23,15 @@ void GeometryWriterNode::resize_vertex_buffer(uint32_t vertex_count, bool preser
         return;
     }
 
-    size_t new_size_floats = static_cast<size_t>(vertex_count) * m_vertex_stride / sizeof(float);
+    size_t new_size_bytes = static_cast<size_t>(vertex_count) * m_vertex_stride;
 
     if (!preserve_data) {
         m_vertex_buffer.clear();
-        m_vertex_buffer.resize(new_size_floats, 0.0F);
-    } else if (m_vertex_buffer.size() < new_size_floats) {
-        m_vertex_buffer.resize(new_size_floats, 0.0F);
-    } else if (m_vertex_buffer.size() > new_size_floats) {
-        m_vertex_buffer.resize(new_size_floats);
+        m_vertex_buffer.resize(new_size_bytes, 0.0F);
+    } else if (m_vertex_buffer.size() < new_size_bytes) {
+        m_vertex_buffer.resize(new_size_bytes, 0.0F);
+    } else if (m_vertex_buffer.size() > new_size_bytes) {
+        m_vertex_buffer.resize(new_size_bytes);
     }
 
     m_vertex_count = vertex_count;
@@ -40,7 +40,7 @@ void GeometryWriterNode::resize_vertex_buffer(uint32_t vertex_count, bool preser
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "GeometryWriterNode: Resized vertex buffer to {} vertices ({} bytes total)",
-        vertex_count, new_size_floats * sizeof(float));
+        vertex_count, new_size_bytes * sizeof(float));
 }
 
 void GeometryWriterNode::set_vertex_data(const void* data, size_t size_bytes)
@@ -123,7 +123,7 @@ void GeometryWriterNode::set_vertex(uint32_t vertex_index, const void* data, siz
 
 size_t GeometryWriterNode::get_vertex_buffer_size_bytes() const
 {
-    return m_vertex_buffer.size() * sizeof(float);
+    return m_vertex_buffer.size();
 }
 
 void GeometryWriterNode::set_vertex_stride(size_t stride)
