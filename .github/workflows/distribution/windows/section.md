@@ -30,7 +30,7 @@ MayaFlux-{{VERSION}}-macos-arm64/
 │   ├── MayaFlux/
 │   └── Lila/
 ├── share/            # Runtime data
-│   └── lila/runtime/
+│   └── MayaFlux/runtime/
 ├── README.md
 └── verify_components.sh
 ```

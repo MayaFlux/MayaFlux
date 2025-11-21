@@ -60,8 +60,8 @@ fi
 
 echo ""
 echo "[4] Checking Runtime (JIT Context)..."
-if find share/lila/runtime -name "*.h" | head -1 >/dev/null; then
-    RUNTIME_COUNT=$(find share/lila/runtime -type f | wc -l | tr -d ' ')
+if find share/MayaFlux/runtime -name "*.h" | head -1 >/dev/null; then
+    RUNTIME_COUNT=$(find share/MayaFlux/runtime -type f | wc -l | tr -d ' ')
     echo "   ✅ Runtime files: $RUNTIME_COUNT files found"
 else
     echo "   ❌ ERROR: No runtime files found"

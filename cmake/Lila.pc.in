@@ -1,5 +1,5 @@
 # ============================================================================
-# lila.pc - MayaFlux Live Coding Engine
+# Lila.pc - MayaFlux Live Coding Engine
 # ============================================================================
 # CRITICAL: Lila's LLVM/Clang dependencies are PLATFORM-SPECIFIC and COMPLEX
 # ============================================================================
@@ -37,9 +37,6 @@ Requires: MayaFlux
 
 # LLVM requirement (version constraint cannot be expressed precisely in .pc)
 Requires.private: llvm >= 21
-
-# Runtime support directory
-runtimedir=${datadir}/lila/runtime
 
 Cflags: -I${includedir} -I${runtimedir}
 
