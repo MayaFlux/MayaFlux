@@ -3,28 +3,25 @@
 
 namespace MayaFlux::Nodes::GpuSync {
 
-struct PointVertex {
-    glm::vec3 position;
-    glm::vec3 color;
-    float size;
-};
-
 PointNode::PointNode()
-    : PointNode(glm::vec3(0.0F), glm::vec3(1.0F), 10.0F)
+    : PointNode(PointVertex { .position = glm::vec3(0.0F), .color = glm::vec3(1.0F), .size = 10.0F })
 {
 }
 
 PointNode::PointNode(const glm::vec3& position, const glm::vec3& color, float size)
-    : GeometryWriterNode(0)
-    , m_position(position)
-    , m_color(color)
-    , m_size(size)
+    : PointNode(PointVertex { .position = position, .color = color, .size = size })
 {
-    set_vertex_stride(sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(float));
+}
+
+PointNode::PointNode(const PointVertex& point)
+    : GeometryWriterNode(0)
+    , m_point_vertex(point)
+{
+    set_vertex_stride(sizeof(PointVertex));
 
     Kakshya::VertexLayout layout;
     layout.vertex_count = 1;
-    layout.stride_bytes = sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(float);
+    layout.stride_bytes = sizeof(PointVertex);
 
     // Location 0: position
     layout.attributes.push_back(Kakshya::VertexAttributeLayout {
@@ -50,37 +47,36 @@ PointNode::PointNode(const glm::vec3& position, const glm::vec3& color, float si
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Created PointNode at position ({}, {}, {}), color ({}, {}, {}), size {}",
-        m_position.x, m_position.y, m_position.z,
-        m_color.x, m_color.y, m_color.z, m_size);
+        m_point_vertex.position.x, m_point_vertex.position.y, m_point_vertex.position.z,
+        m_point_vertex.color.x, m_point_vertex.color.y, m_point_vertex.color.z, m_point_vertex.size);
 }
 
 void PointNode::set_position(const glm::vec3& position)
 {
-    m_position = position;
+    m_point_vertex.position = position;
     m_vertex_data_dirty = true;
 }
 
 void PointNode::set_color(const glm::vec3& color)
 {
-    m_color = color;
+    m_point_vertex.color = color;
     m_vertex_data_dirty = true;
 }
 
 void PointNode::set_size(float size)
 {
-    m_size = size;
+    m_point_vertex.size = size;
     m_vertex_data_dirty = true;
 }
 
 void PointNode::compute_frame()
 {
-    const PointVertex vertex { .position = m_position, .color = m_color, .size = m_size };
-    set_vertices<PointVertex>(std::span { &vertex, 1 });
+    set_vertices<PointVertex>(std::span { &m_point_vertex, 1 });
 
     MF_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "PointNode: position ({}, {}, {}), color ({}, {}, {}), size {}",
-        m_position.x, m_position.y, m_position.z,
-        m_color.x, m_color.y, m_color.z, m_size);
+        m_point_vertex.position.x, m_point_vertex.position.y, m_point_vertex.position.z,
+        m_point_vertex.color.x, m_point_vertex.color.y, m_point_vertex.color.z, m_point_vertex.size);
 }
 
 } // namespace MayaFlux::Nodes

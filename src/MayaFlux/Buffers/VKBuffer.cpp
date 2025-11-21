@@ -176,6 +176,8 @@ void VKBuffer::resize(size_t new_size, bool preserve_data)
             "Restored {} bytes to resized buffer", old_data.size());
     }
 
+    // clear_pipeline_commands();
+
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferManagement,
         "VKBuffer resize complete: {} bytes", m_size_bytes);
 }

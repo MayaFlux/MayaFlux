@@ -23,6 +23,7 @@ namespace Nodes {
         class TextureNode;
         class GeometryWriterNode;
         class PointNode;
+        class PointCollectionNode;
     }
 }
 
@@ -56,7 +57,8 @@ namespace Kakshya {
     X(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)         \
     X(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)               \
     X(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode) \
-    X(PointNode, MayaFlux::Nodes::GpuSync::PointNode)
+    X(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                   \
+    X(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)
 
 #define ALL_BUFFER_REGISTRATION                            \
     B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)         \

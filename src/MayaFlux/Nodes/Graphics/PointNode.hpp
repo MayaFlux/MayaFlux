@@ -4,6 +4,12 @@
 
 namespace MayaFlux::Nodes::GpuSync {
 
+struct PointVertex {
+    glm::vec3 position;
+    glm::vec3 color = glm::vec3(1.0F);
+    float size = 10.0F;
+};
+
 /**
  * @class PointNode
  * @brief Single 3D point in space
@@ -26,12 +32,18 @@ public:
     PointNode();
 
     /**
+     * @brief Create point from PointVertex
+     * @param point Initial point data
+     */
+    explicit PointNode(const PointVertex& point);
+
+    /**
      * @brief Create point at specific position
      * @param position Initial 3D position
      * @param color Initial color
      * @param size Initial point size
      */
-    explicit PointNode(const glm::vec3& position, const glm::vec3& color = glm::vec3(1.0F), float size = 10.0F);
+    PointNode(const glm::vec3& position, const glm::vec3& color = glm::vec3(1.0F), float size = 10.0F);
 
     /**
      * @brief Set point position
@@ -55,19 +67,19 @@ public:
      * @brief Get current position
      * @return 3D position
      */
-    [[nodiscard]] glm::vec3 get_position() const { return m_position; }
+    [[nodiscard]] glm::vec3 get_position() const { return m_point_vertex.position; }
 
     /**
      * @brief Get current color
      * @return Point color
      */
-    [[nodiscard]] glm::vec3 get_color() const { return m_color; }
+    [[nodiscard]] glm::vec3 get_color() const { return m_point_vertex.color; }
 
     /**
      * @brief Get current size
      * @return Point size
      */
-    [[nodiscard]] float get_size() const { return m_size; }
+    [[nodiscard]] float get_size() const { return m_point_vertex.size; }
 
     /**
      * @brief Compute frame - upload single point to vertex buffer
@@ -75,9 +87,7 @@ public:
     void compute_frame() override;
 
 private:
-    glm::vec3 m_position;
-    glm::vec3 m_color;
-    float m_size { 10.0F };
+    PointVertex m_point_vertex;
 };
 
 } // namespace MayaFlux::Nodes

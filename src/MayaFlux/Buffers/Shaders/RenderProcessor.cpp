@@ -139,6 +139,18 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
         return;
     }
 
+    if (m_buffer_info.find(vk_buffer) == m_buffer_info.end()) {
+        if (vk_buffer->has_vertex_layout()) {
+            auto vertex_layout = vk_buffer->get_vertex_layout();
+            if (vertex_layout.has_value()) {
+                m_buffer_info[vk_buffer] = {
+                    .semantic_layout = vertex_layout.value(),
+                    .use_reflection = false
+                };
+            }
+        }
+    }
+
     if (m_needs_pipeline_rebuild) {
         initialize_pipeline(buffer);
     }
