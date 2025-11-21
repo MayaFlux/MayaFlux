@@ -18,9 +18,12 @@ namespace Nodes {
         class IIR;
         class FIR;
     }
-    class ComputeOutNode;
-    class TextureNode;
-    class GeometryWriterNode;
+    namespace GpuSync {
+        class ComputeOutNode;
+        class TextureNode;
+        class GeometryWriterNode;
+        class PointNode;
+    }
 }
 
 namespace Buffers {
@@ -41,18 +44,19 @@ namespace Kakshya {
 }
 }
 
-#define ALL_NODE_REGISTRATIONS                                 \
-    X(Sine, MayaFlux::Nodes::Generator::Sine)                  \
-    X(Phasor, MayaFlux::Nodes::Generator::Phasor)              \
-    X(Impulse, MayaFlux::Nodes::Generator::Impulse)            \
-    X(Logic, MayaFlux::Nodes::Generator::Logic)                \
-    X(Polynomial, MayaFlux::Nodes::Generator::Polynomial)      \
-    X(Random, MayaFlux::Nodes::Generator::Stochastics::Random) \
-    X(IIR, MayaFlux::Nodes::Filters::IIR)                      \
-    X(FIR, MayaFlux::Nodes::Filters::FIR)                      \
-    X(ComputeOutNode, MayaFlux::Nodes::ComputeOutNode)         \
-    X(TextureNode, MayaFlux::Nodes::TextureNode)               \
-    X(GeometryWriterNode, MayaFlux::Nodes::GeometryWriterNode)
+#define ALL_NODE_REGISTRATIONS                                          \
+    X(Sine, MayaFlux::Nodes::Generator::Sine)                           \
+    X(Phasor, MayaFlux::Nodes::Generator::Phasor)                       \
+    X(Impulse, MayaFlux::Nodes::Generator::Impulse)                     \
+    X(Logic, MayaFlux::Nodes::Generator::Logic)                         \
+    X(Polynomial, MayaFlux::Nodes::Generator::Polynomial)               \
+    X(Random, MayaFlux::Nodes::Generator::Stochastics::Random)          \
+    X(IIR, MayaFlux::Nodes::Filters::IIR)                               \
+    X(FIR, MayaFlux::Nodes::Filters::FIR)                               \
+    X(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)         \
+    X(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)               \
+    X(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode) \
+    X(PointNode, MayaFlux::Nodes::GpuSync::PointNode)
 
 #define ALL_BUFFER_REGISTRATION                            \
     B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)         \

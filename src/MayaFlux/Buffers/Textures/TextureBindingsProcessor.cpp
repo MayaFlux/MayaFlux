@@ -9,7 +9,7 @@ namespace MayaFlux::Buffers {
 
 void TextureBindingsProcessor::bind_texture_node(
     const std::string& name,
-    const std::shared_ptr<Nodes::TextureNode>& node,
+    const std::shared_ptr<Nodes::GpuSync::TextureNode>& node,
     const std::shared_ptr<VKBuffer>& texture)
 {
     if (!node) {
@@ -99,6 +99,12 @@ void TextureBindingsProcessor::processing_function(std::shared_ptr<Buffer> buffe
     bool attached_is_host_visible = vk_buffer->is_host_visible();
 
     for (auto& [name, binding] : m_bindings) {
+        if (!binding.node->needs_gpu_update()) {
+            MF_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Texture '{}' unchanged, skipping upload", name);
+            continue;
+        }
+
         auto pixels = binding.node->get_pixel_buffer();
 
         if (pixels.empty()) {
@@ -112,6 +118,8 @@ void TextureBindingsProcessor::processing_function(std::shared_ptr<Buffer> buffe
             pixels.size_bytes(),
             binding.gpu_texture,
             binding.staging_buffer);
+
+        binding.node->clear_gpu_update_flag();
     }
 
     if (!m_bindings.empty()) {

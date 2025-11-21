@@ -363,18 +363,6 @@ std::vector<std::pair<size_t, size_t>> VKBuffer::get_and_clear_invalid_ranges()
     return std::exchange(m_invalid_ranges, {});
 }
 
-void VKBufferProcessor::initialize_buffer_service()
-{
-    m_buffer_service = Registry::BackendRegistry::instance()
-                           .get_service<Registry::Service::BufferService>();
-}
-
-void VKBufferProcessor::initialize_compute_service()
-{
-    m_compute_service = Registry::BackendRegistry::instance()
-                            .get_service<Registry::Service::ComputeService>();
-}
-
 void VKBuffer::set_vertex_layout(const Kakshya::VertexLayout& layout)
 {
     auto computed_layout = layout;
@@ -422,6 +410,18 @@ std::shared_ptr<Buffers::Buffer> VKBuffer::clone_to(uint8_t dest_desc)
 {
     auto usage = static_cast<Usage>(dest_desc);
     return std::dynamic_pointer_cast<Buffers::Buffer>(clone_to(usage));
+}
+
+void VKBufferProcessor::initialize_buffer_service()
+{
+    m_buffer_service = Registry::BackendRegistry::instance()
+                           .get_service<Registry::Service::BufferService>();
+}
+
+void VKBufferProcessor::initialize_compute_service()
+{
+    m_compute_service = Registry::BackendRegistry::instance()
+                            .get_service<Registry::Service::ComputeService>();
 }
 
 } // namespace MayaFlux::Buffers::Vulkan

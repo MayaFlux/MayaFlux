@@ -33,6 +33,7 @@
 #include "Nodes/Generators/Stochastic.hpp"
 #include "Nodes/Graphics/ComputeOutNode.hpp"
 #include "Nodes/Graphics/GeometryWriterNode.hpp"
+#include "Nodes/Graphics/PointNode.hpp"
 #include "Nodes/Graphics/TextureNode.hpp"
 #include "Nodes/Network/NodeNetwork.hpp"
 #include "Nodes/NodeGraphManager.hpp"

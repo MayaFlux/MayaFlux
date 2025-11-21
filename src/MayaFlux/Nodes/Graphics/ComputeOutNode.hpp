@@ -1,12 +1,12 @@
 #pragma once
 
-#include "MayaFlux/Nodes/Node.hpp"
+#include "GpuSync.hpp"
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
 } // namespace MayaFlux::Buffers
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::GpuSync {
 
 /**
  * @class ComputeOutNode
@@ -24,7 +24,7 @@ namespace MayaFlux::Nodes {
  *   // Node reads collision count from GPU
  *   double collision_count = collision_node->process_sample();
  */
-class MAYAFLUX_API ComputeOutNode : public Node {
+class MAYAFLUX_API ComputeOutNode : public GpuSync {
 public:
     /**
      * @brief Construct with GPU buffer and element count
@@ -33,7 +33,7 @@ public:
      */
     ComputeOutNode(const std::shared_ptr<Buffers::VKBuffer>& buffer, size_t element_count);
 
-    double process_sample(double /*input*/) override;
+    void compute_frame() override;
 
     /**
      * @brief Get full readback array
@@ -59,6 +59,13 @@ public:
      * @return GPU buffer reference
      */
     [[nodiscard]] std::shared_ptr<Buffers::VKBuffer> get_gpu_buffer() const { return m_gpu_buffer; }
+
+    [[nodiscard]] bool needs_gpu_update() const override
+    {
+        return false; // Readback nodes don't trigger GPU updates
+    }
+
+    void clear_gpu_update_flag() override { }
 
 private:
     std::shared_ptr<Buffers::VKBuffer> m_gpu_buffer;

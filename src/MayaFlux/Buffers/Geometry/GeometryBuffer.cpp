@@ -4,7 +4,7 @@
 namespace MayaFlux::Buffers {
 
 GeometryBuffer::GeometryBuffer(
-    std::shared_ptr<Nodes::GeometryWriterNode> node,
+    std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> node,
     const std::string& binding_name,
     float over_allocate_factor)
     : VKBuffer(
@@ -30,11 +30,12 @@ GeometryBuffer::GeometryBuffer(
         m_geometry_node->get_vertex_stride());
 }
 
-void GeometryBuffer::initialize()
+void GeometryBuffer::setup_processors(ProcessingToken token)
 {
     auto self = std::dynamic_pointer_cast<GeometryBuffer>(shared_from_this());
 
     m_bindings_processor = std::make_shared<GeometryBindingsProcessor>();
+    m_bindings_processor->set_processing_token(token);
     m_bindings_processor->bind_geometry_node(
         m_binding_name,
         m_geometry_node,
@@ -44,7 +45,7 @@ void GeometryBuffer::initialize()
 }
 
 size_t GeometryBuffer::calculate_buffer_size(
-    const std::shared_ptr<Nodes::GeometryWriterNode>& node,
+    const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
     float over_allocate_factor)
 {
     if (!node) {

@@ -223,10 +223,24 @@ bool is_device_local(const std::shared_ptr<VKBuffer>& buffer)
 
 std::shared_ptr<VKBuffer> create_staging_buffer(size_t size)
 {
-    return std::make_shared<VKBuffer>(
+    auto buffer = std::make_shared<VKBuffer>(
         size,
         VKBuffer::Usage::STAGING,
         Kakshya::DataModality::UNKNOWN);
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+    if (!buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "create_staging_buffer requires a valid buffer service");
+    }
+
+    buffer_service->initialize_buffer(buffer);
+
+    return buffer;
 }
 
 void upload_to_gpu(

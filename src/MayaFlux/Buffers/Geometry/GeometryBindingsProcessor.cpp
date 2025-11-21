@@ -6,9 +6,15 @@
 
 namespace MayaFlux::Buffers {
 
+GeometryBindingsProcessor::GeometryBindingsProcessor()
+{
+    m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
+    initialize_buffer_service();
+}
+
 void GeometryBindingsProcessor::bind_geometry_node(
     const std::string& name,
-    const std::shared_ptr<Nodes::GeometryWriterNode>& node,
+    const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
     const std::shared_ptr<VKBuffer>& vertex_buffer)
 {
     if (!node) {
@@ -115,6 +121,12 @@ void GeometryBindingsProcessor::processing_function(std::shared_ptr<Buffer> buff
     }
 
     for (auto& [name, binding] : m_bindings) {
+        if (!binding.node->needs_gpu_update()) {
+            MF_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Geometry '{}' unchanged, skipping upload", name);
+            continue;
+        }
+
         auto vertices = binding.node->get_vertex_data();
 
         if (vertices.empty()) {
@@ -154,6 +166,7 @@ void GeometryBindingsProcessor::processing_function(std::shared_ptr<Buffer> buff
                 "RenderProcessor may fail without layout info.",
                 name);
         }
+        binding.node->clear_gpu_update_flag();
     }
 
     bool attached_is_target = false;
@@ -166,25 +179,28 @@ void GeometryBindingsProcessor::processing_function(std::shared_ptr<Buffer> buff
 
     if (!attached_is_target && !m_bindings.empty()) {
         auto& first_binding = m_bindings.begin()->second;
-        auto vertices = first_binding.node->get_vertex_data();
+        if (first_binding.node->needs_gpu_update()) {
+            auto vertices = first_binding.node->get_vertex_data();
 
-        if (!vertices.empty()) {
-            size_t upload_size = std::min<size_t>(
-                vertices.size_bytes(),
-                vk_buffer->get_size_bytes());
+            if (!vertices.empty()) {
+                size_t upload_size = std::min<size_t>(
+                    vertices.size_bytes(),
+                    vk_buffer->get_size_bytes());
 
-            std::shared_ptr<VKBuffer> staging = vk_buffer->is_host_visible() ? nullptr : first_binding.staging_buffer;
+                std::shared_ptr<VKBuffer> staging = vk_buffer->is_host_visible() ? nullptr : first_binding.staging_buffer;
 
-            upload_to_gpu(
-                vertices.data(),
-                upload_size,
-                vk_buffer,
-                staging);
+                upload_to_gpu(
+                    vertices.data(),
+                    upload_size,
+                    vk_buffer,
+                    staging);
 
-            if (first_binding.node->get_vertex_layout()) {
-                vk_buffer->set_vertex_layout(
-                    first_binding.node->get_vertex_layout().value());
+                if (first_binding.node->get_vertex_layout()) {
+                    vk_buffer->set_vertex_layout(
+                        first_binding.node->get_vertex_layout().value());
+                }
             }
+            first_binding.node->clear_gpu_update_flag();
         }
     }
 }

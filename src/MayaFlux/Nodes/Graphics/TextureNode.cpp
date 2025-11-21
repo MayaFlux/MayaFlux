@@ -1,10 +1,8 @@
 #include "TextureNode.hpp"
 
-#include <algorithm>
-
 #include "MayaFlux/Journal/Archivist.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::GpuSync {
 
 TextureNode::TextureNode(uint32_t width, uint32_t height)
     : m_width(width)
@@ -19,6 +17,11 @@ TextureNode::TextureNode(uint32_t width, uint32_t height)
             "Cannot create TextureNode with zero dimensions ({} x {})",
             width, height);
     }
+
+    m_pixel_data_dirty = true;
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "Created TextureNode {}x{}", width, height);
 }
 
 void TextureNode::set_pixel(uint32_t x, uint32_t y, float r, float g, float b, float a)
@@ -32,6 +35,8 @@ void TextureNode::set_pixel(uint32_t x, uint32_t y, float r, float g, float b, f
     m_pixel_buffer[idx + 1] = g;
     m_pixel_buffer[idx + 2] = b;
     m_pixel_buffer[idx + 3] = a;
+
+    m_pixel_data_dirty = true;
 }
 
 [[nodiscard]] std::array<float, 4> TextureNode::get_pixel(uint32_t x, uint32_t y) const
@@ -56,10 +61,13 @@ void TextureNode::fill(float r, float g, float b, float a)
             set_pixel(x, y, r, g, b, a);
         }
     }
+
+    m_pixel_data_dirty = true;
 }
 
 void TextureNode::clear()
 {
     std::ranges::fill(m_pixel_buffer, 0.0F);
+    m_pixel_data_dirty = true;
 }
 } // namespace MayaFlux::Nodes
