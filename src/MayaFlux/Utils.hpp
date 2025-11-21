@@ -2,15 +2,15 @@
 
 namespace MayaFlux::Utils {
 
-enum AudioBackendType {
+enum AudioBackendType : uint8_t {
     RTAUDIO
 };
 
-enum class WindowingBackendType {
+enum class WindowingBackendType : uint8_t {
     GLFW
 };
 
-enum class distribution {
+enum class distribution : uint8_t {
     UNIFORM,
     NORMAL,
     EXPONENTIAL,
@@ -19,7 +19,7 @@ enum class distribution {
     // GENDY
 };
 
-enum ActionType {
+enum ActionType : uint8_t {
     NODE,
     TIME,
     FUNCTION

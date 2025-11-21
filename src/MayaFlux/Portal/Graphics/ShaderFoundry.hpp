@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "GraphicsUtils.hpp"
+
 namespace MayaFlux::Core {
 class VulkanBackend;
 class VKShaderModule;
@@ -25,22 +27,6 @@ constexpr DescriptorSetID INVALID_DESCRIPTOR_SET = 0;
 constexpr CommandBufferID INVALID_COMMAND_BUFFER = 0;
 constexpr FenceID INVALID_FENCE = 0;
 constexpr SemaphoreID INVALID_SEMAPHORE = 0;
-
-/**
- * @enum ShaderStage
- * @brief User-friendly shader stage enum
- *
- * Abstracts vk::ShaderStageFlagBits for Portal API convenience.
- * Maps directly to Vulkan stages internally.
- */
-enum class ShaderStage : uint8_t {
-    COMPUTE,
-    VERTEX,
-    FRAGMENT,
-    GEOMETRY,
-    TESS_CONTROL,
-    TESS_EVALUATION
-};
 
 /**
  * @struct ShaderCompilerConfig

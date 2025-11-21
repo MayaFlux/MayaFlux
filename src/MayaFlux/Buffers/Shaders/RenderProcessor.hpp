@@ -33,6 +33,27 @@ public:
 
     void on_attach(std::shared_ptr<Buffer> buffer) override;
 
+    /// Set primitive topology (e.g., triangle list, line list, point list)
+    inline void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)
+    {
+        m_primitive_topology = topology;
+        m_needs_pipeline_rebuild = true;
+    }
+
+    /// Set polygon mode (e.g., fill, line, point)
+    inline void set_polygon_mode(Portal::Graphics::PolygonMode mode)
+    {
+        m_polygon_mode = mode;
+        m_needs_pipeline_rebuild = true;
+    }
+
+    /// Set cull mode (e.g., none, front, back)
+    inline void set_cull_mode(Portal::Graphics::CullMode mode)
+    {
+        m_cull_mode = mode;
+        m_needs_pipeline_rebuild = true;
+    }
+
 protected:
     void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override;
     void processing_function(std::shared_ptr<Buffer> buffer) override;
@@ -55,6 +76,10 @@ private:
 
     std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo> m_buffer_info;
     Registry::Service::DisplayService* m_display_service = nullptr;
+
+    Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST };
+    Portal::Graphics::PolygonMode m_polygon_mode { Portal::Graphics::PolygonMode::FILL };
+    Portal::Graphics::CullMode m_cull_mode { Portal::Graphics::CullMode::NONE };
 };
 
 } // namespace MayaFlux::Buffers
