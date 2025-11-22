@@ -61,10 +61,10 @@ void TextureBuffer::initialize_quad_vertices()
     };
 
     const std::vector<QuadVertex> quad_vertices = {
-        { { -1.0F, -1.0F, 0.0F }, { 0.0F, 1.0F } }, // Bottom-left
-        { { 1.0F, -1.0F, 0.0F }, { 1.0F, 1.0F } }, // Bottom-right
-        { { 1.0F, 1.0F, 0.0F }, { 1.0F, 0.0F } }, // Top-right
-        { { -1.0F, 1.0F, 0.0F }, { 0.0F, 0.0F } } // Top-left
+        { { -1.0F, -1.0F, 0.0F }, { 0.0F, 1.0F } }, // 0: Bottom-left
+        { { 1.0F, -1.0F, 0.0F }, { 1.0F, 1.0F } }, // 1: Bottom-right
+        { { -1.0F, 1.0F, 0.0F }, { 0.0F, 0.0F } }, // 2: Top-left
+        { { 1.0F, 1.0F, 0.0F }, { 1.0F, 0.0F } } // 3: Top-right
     };
 
     Kakshya::VertexLayout vertex_layout {
@@ -85,7 +85,7 @@ void TextureBuffer::initialize_quad_vertices()
         reinterpret_cast<const uint8_t*>(quad_vertices.data()),
         reinterpret_cast<const uint8_t*>(quad_vertices.data()) + sizeof(QuadVertex) * 4);
 
-    set_data({ vertex_bytes });
+    m_vertex_bytes = std::move(vertex_bytes);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "Initialized fullscreen quad vertices in TextureBuffer");

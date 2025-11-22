@@ -1,5 +1,6 @@
 #include "TextureProcessor.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 #include "TextureBuffer.hpp"
 
@@ -103,6 +104,22 @@ void TextureProcessor::on_attach(std::shared_ptr<Buffer> buffer)
                     Journal::Context::BufferProcessing,
                     std::source_location::current(),
                     "Failed to initialize texture buffer: {}", e.what());
+            }
+        }
+
+        if (!tex_buffer->m_vertex_bytes.empty()) {
+            try {
+                upload_to_gpu(
+                    tex_buffer->m_vertex_bytes.data(),
+                    tex_buffer->m_vertex_bytes.size(),
+                    tex_buffer);
+
+                MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "TextureProcessor uploaded {} bytes of vertex data to GPU",
+                    tex_buffer->m_vertex_bytes.size());
+            } catch (const std::exception& e) {
+                MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Failed to upload vertex data: {}", e.what());
             }
         }
 

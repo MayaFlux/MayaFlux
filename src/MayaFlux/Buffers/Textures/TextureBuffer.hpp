@@ -94,6 +94,8 @@ private:
     // Texture pixel data (separate from VKBuffer vertex data)
     std::vector<uint8_t> m_pixel_data;
 
+    std::vector<uint8_t> m_vertex_bytes;
+
     // GPU texture (managed by TextureProcessor)
     std::shared_ptr<Core::VKImage> m_gpu_texture;
     bool m_texture_dirty = true;
