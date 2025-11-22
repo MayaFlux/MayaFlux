@@ -2,8 +2,10 @@
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/DisplayService.hpp"
 
@@ -53,6 +55,54 @@ void RenderProcessor::set_render_pass(Portal::Graphics::RenderPassID render_pass
 void RenderProcessor::set_target_window(std::shared_ptr<Core::Window> window)
 {
     m_target_window = std::move(window);
+}
+
+void RenderProcessor::bind_texture(
+    uint32_t binding,
+    const std::shared_ptr<Core::VKImage>& texture,
+    vk::Sampler sampler)
+{
+    if (!texture) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot bind null texture to binding {}", binding);
+        return;
+    }
+
+    if (!sampler) {
+        auto& loom = Portal::Graphics::get_texture_manager();
+        sampler = loom.get_default_sampler();
+    }
+
+    m_texture_bindings[binding] = { .texture = texture, .sampler = sampler };
+
+    if (m_render_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE && !m_descriptor_set_ids.empty()) {
+
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        foundry.update_descriptor_image(
+            m_descriptor_set_ids[0],
+            binding,
+            texture->get_image_view(),
+            sampler,
+            vk::ImageLayout::eShaderReadOnlyOptimal);
+    }
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Bound texture to binding {}", binding);
+}
+
+void RenderProcessor::bind_texture(
+    const std::string& descriptor_name,
+    const std::shared_ptr<Core::VKImage>& texture,
+    vk::Sampler sampler)
+{
+    auto binding_it = m_config.bindings.find(descriptor_name);
+    if (binding_it == m_config.bindings.end()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "No binding configured for descriptor '{}'", descriptor_name);
+        return;
+    }
+
+    bind_texture(binding_it->second.binding, texture, sampler);
 }
 
 void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
@@ -121,12 +171,51 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
         pipeline_config.use_vertex_shader_reflection = vertex_info.use_reflection;
     }
 
+    if (!m_config.bindings.empty()) {
+        std::map<uint32_t, std::vector<std::pair<std::string, ShaderBinding>>> bindings_by_set;
+        for (const auto& [name, binding] : m_config.bindings) {
+            bindings_by_set[binding.set].emplace_back(name, binding);
+        }
+
+        for (const auto& [set_index, set_bindings] : bindings_by_set) {
+            std::vector<Portal::Graphics::DescriptorBindingConfig> set_config;
+            for (const auto& [name, binding] : set_bindings) {
+                set_config.emplace_back(binding.set, binding.binding, binding.type);
+            }
+            pipeline_config.descriptor_sets.push_back(set_config);
+        }
+    }
+
     m_render_pipeline_id = flow.create_pipeline(pipeline_config);
 
     if (m_render_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Failed to create render pipeline");
         return;
+    }
+
+    if (!pipeline_config.descriptor_sets.empty() && m_descriptor_set_ids.empty()) {
+        m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_render_pipeline_id);
+
+        if (m_descriptor_set_ids.empty()) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Failed to allocate descriptor sets for pipeline");
+            return;
+        }
+
+        for (const auto& [binding, tex_binding] : m_texture_bindings) {
+            auto& foundry = Portal::Graphics::get_shader_foundry();
+            foundry.update_descriptor_image(
+                m_descriptor_set_ids[0],
+                binding,
+                tex_binding.texture->get_image_view(),
+                tex_binding.sampler,
+                vk::ImageLayout::eShaderReadOnlyOptimal);
+        }
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Allocated {} descriptor sets and updated {} texture bindings",
+            m_descriptor_set_ids.size(), m_texture_bindings.size());
     }
 
     m_needs_pipeline_rebuild = false;
@@ -201,6 +290,10 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 
     flow.bind_pipeline(cmd_id, m_render_pipeline_id);
+
+    if (!m_descriptor_set_ids.empty()) {
+        flow.bind_descriptor_sets(cmd_id, m_render_pipeline_id, m_descriptor_set_ids);
+    }
 
     flow.bind_vertex_buffers(cmd_id, { vk_buffer });
 

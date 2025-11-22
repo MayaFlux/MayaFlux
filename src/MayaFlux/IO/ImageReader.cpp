@@ -2,6 +2,9 @@
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
+#include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+#include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -49,7 +52,10 @@ bool ImageReader::open(const std::string& filepath, FileReadOptions /*options*/)
         return false;
     }
 
-    if (!load(filepath, 4)) { // Force RGBA
+    m_image_data = load(filepath, 4); // Force RGBA
+
+    if (!m_image_data) {
+        m_last_error = "Failed to load image data";
         return false;
     }
 
@@ -369,7 +375,7 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
 
 std::shared_ptr<Core::VKImage> ImageReader::load_texture(const std::string& path)
 {
-    auto image_data = load(path, 4); 
+    auto image_data = load(path, 4);
     if (!image_data) {
         return nullptr;
     }
@@ -392,6 +398,56 @@ std::shared_ptr<Core::VKImage> ImageReader::load_texture(const std::string& path
 std::optional<ImageData> ImageReader::get_image_data() const
 {
     return m_image_data;
+}
+
+std::shared_ptr<Buffers::TextureBuffer> ImageReader::create_texture_buffer()
+{
+    if (!m_is_open || !m_image_data) {
+        m_last_error = "No image open";
+        return nullptr;
+    }
+
+    auto tex_buffer = std::make_shared<Buffers::TextureBuffer>(
+        m_image_data->width,
+        m_image_data->height,
+        m_image_data->format,
+        m_image_data->pixels.data());
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "Created TextureBuffer from image: {}x{} ({} bytes)",
+        m_image_data->width, m_image_data->height, tex_buffer->get_size_bytes());
+
+    return tex_buffer;
+}
+
+bool ImageReader::load_into_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    if (!m_is_open || !m_image_data) {
+        m_last_error = "No image open";
+        return false;
+    }
+
+    if (!buffer || !buffer->is_initialized()) {
+        m_last_error = "Invalid or uninitialized buffer";
+        return false;
+    }
+
+    size_t required_size = m_image_data->pixels.size();
+    if (buffer->get_size_bytes() < required_size) {
+        m_last_error = "Buffer too small for image data";
+        return false;
+    }
+
+    Buffers::upload_to_gpu(
+        m_image_data->pixels.data(),
+        required_size,
+        buffer);
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "Loaded image into VKBuffer: {}x{} ({} bytes)",
+        m_image_data->width, m_image_data->height, required_size);
+
+    return true;
 }
 
 } // namespace MayaFlux::IO

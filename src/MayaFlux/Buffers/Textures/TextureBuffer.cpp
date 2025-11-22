@@ -1,62 +1,94 @@
 #include "TextureBuffer.hpp"
-
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "TextureProcessor.hpp"
 
 namespace MayaFlux::Buffers {
 
 TextureBuffer::TextureBuffer(
-    std::shared_ptr<Nodes::GpuSync::TextureNode> node, std::string binding_name)
+    uint32_t width, uint32_t height,
+    Portal::Graphics::ImageFormat format,
+    const void* initial_pixel_data)
     : VKBuffer(
-          calculate_buffer_size(node),
-          Usage::STAGING,
-          Kakshya::DataModality::IMAGE_COLOR)
-    , m_texture_node(std::move(node))
-    , m_binding_name(std::move(binding_name))
+          calculate_quad_size(),
+          Usage::VERTEX,
+          Kakshya::DataModality::VERTEX_POSITIONS_3D)
+    , m_width(width)
+    , m_height(height)
+    , m_format(format)
 {
-    if (!m_texture_node) {
-        error<std::invalid_argument>(
-            Journal::Component::Buffers,
-            Journal::Context::Init,
-            std::source_location::current(),
-            "Cannot create TextureBuffer with null TextureNode");
+    if (initial_pixel_data) {
+        size_t pixel_bytes = static_cast<size_t>(width) * height * Portal::Graphics::TextureLoom::get_bytes_per_pixel(format);
+        m_pixel_data.resize(pixel_bytes);
+        std::memcpy(m_pixel_data.data(), initial_pixel_data, pixel_bytes);
     }
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
-        "Created TextureBuffer '{}' for {}x{} texture ({} bytes)",
-        m_binding_name,
-        m_texture_node->get_width(),
-        m_texture_node->get_height(),
-        get_size_bytes());
+        "Created TextureBuffer: {}x{} ({} pixel bytes, {} vertex bytes)",
+        m_width, m_height, m_pixel_data.size(), get_size_bytes());
 }
 
-void TextureBuffer::initialize()
+void TextureBuffer::setup_processors(ProcessingToken token)
 {
+    initialize_quad_vertices();
+
     auto self = std::dynamic_pointer_cast<TextureBuffer>(shared_from_this());
 
-    m_bindings_processor = std::make_shared<TextureBindingsProcessor>();
-    m_bindings_processor->bind_texture_node(
-        m_binding_name,
-        m_texture_node,
-        self);
+    m_texture_processor = std::make_shared<TextureProcessor>();
+    m_texture_processor->set_processing_token(token);
+    m_texture_processor->bind_texture_buffer(self);
 
-    set_default_processor(m_bindings_processor);
+    set_default_processor(m_texture_processor);
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
+        "TextureBuffer initialized with TextureProcessor");
 }
 
-size_t TextureBuffer::calculate_buffer_size(const std::shared_ptr<Nodes::GpuSync::TextureNode>& node)
+size_t TextureBuffer::calculate_quad_size()
 {
-    if (!node) {
-        return 0;
-    }
+    // 4 vertices * (3 floats position + 2 floats texcoord)
+    struct QuadVertex {
+        glm::vec3 position;
+        glm::vec2 texcoord;
+    };
+    return 4 * sizeof(QuadVertex);
+}
 
-    size_t size = static_cast<size_t>(node->get_width()) * static_cast<size_t>(node->get_height()) * 4 * sizeof(float);
+void TextureBuffer::initialize_quad_vertices()
+{
+    struct QuadVertex {
+        glm::vec3 position;
+        glm::vec2 texcoord;
+    };
 
-    if (size == 0) {
-        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
-            "TextureNode has zero dimensions. Using minimum buffer size.");
-        return 4096;
-    }
+    const std::vector<QuadVertex> quad_vertices = {
+        { { -1.0F, -1.0F, 0.0F }, { 0.0F, 1.0F } }, // Bottom-left
+        { { 1.0F, -1.0F, 0.0F }, { 1.0F, 1.0F } }, // Bottom-right
+        { { 1.0F, 1.0F, 0.0F }, { 1.0F, 0.0F } }, // Top-right
+        { { -1.0F, 1.0F, 0.0F }, { 0.0F, 0.0F } } // Top-left
+    };
 
-    return size;
+    Kakshya::VertexLayout vertex_layout {
+        .vertex_count = 4,
+        .stride_bytes = sizeof(QuadVertex),
+        .attributes = {
+            { .component_modality = Kakshya::DataModality::VERTEX_POSITIONS_3D,
+                .offset_in_vertex = offsetof(QuadVertex, position),
+                .name = "position" },
+            { .component_modality = Kakshya::DataModality::TEXTURE_COORDS_2D,
+                .offset_in_vertex = offsetof(QuadVertex, texcoord),
+                .name = "texcoord" } }
+    };
+
+    set_vertex_layout(vertex_layout);
+
+    std::vector<uint8_t> vertex_bytes(
+        reinterpret_cast<const uint8_t*>(quad_vertices.data()),
+        reinterpret_cast<const uint8_t*>(quad_vertices.data()) + sizeof(QuadVertex) * 4);
+
+    set_data({ vertex_bytes });
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
+        "Initialized fullscreen quad vertices in TextureBuffer");
 }
 
 } // namespace MayaFlux::Buffers

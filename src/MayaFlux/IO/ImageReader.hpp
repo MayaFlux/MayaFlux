@@ -3,6 +3,11 @@
 #include "MayaFlux/IO/FileReader.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
+namespace MayaFlux::Buffers {
+class VKBuffer;
+class TextureBuffer;
+}
+
 namespace MayaFlux::IO {
 
 /**
@@ -95,6 +100,24 @@ public:
      * @return Image data or nullopt if no file open
      */
     [[nodiscard]] std::optional<ImageData> get_image_data() const;
+
+    /**
+     * @brief Create a VKBuffer containing the loaded image pixel data
+     * @return VKBuffer with pixel data ready for GPU processing
+     *
+     * Creates a buffer suitable for:
+     * - Transfer operations (upload to VKImage)
+     * - Direct compute shader processing
+     * - Buffer processor chains (treat pixels as samples)
+     */
+    std::shared_ptr<Buffers::TextureBuffer> create_texture_buffer();
+
+    /**
+     * @brief Load image directly into an existing VKBuffer
+     * @param buffer Target buffer (must be large enough)
+     * @return True if load succeeded
+     */
+    bool load_into_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
 private:
     std::string m_filepath;
