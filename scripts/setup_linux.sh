@@ -36,7 +36,10 @@ install_arch() {
         "cmake"
         "pkg-config"
         "rtaudio"
-        "glfw-x11"
+        "glfw"
+        "glm"
+        "stb"
+        "eigen"
         "vulkan-devel"
         "ffmpeg"
         "doxygen"
@@ -47,8 +50,8 @@ install_arch() {
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
     
     # magic_enum and eigen are header-only, available via AUR or manual
-    echo -e "${YELLOW}Note: magic_enum and eigen are header-only libraries.${NC}"
-    echo -e "${YELLOW}Install via: yay -S magic-enum eigen${NC}"
+    echo -e "${YELLOW}Note: magic_enum is header-only library.${NC}"
+    echo -e "${YELLOW}Install via: yay -S magic_enum${NC}"
 }
 
 install_fedora() {
