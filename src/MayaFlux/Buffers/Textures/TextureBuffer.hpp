@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/IO/ImageReader.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
@@ -10,37 +9,24 @@ class TextureProcessor;
 
 /**
  * @class TextureBuffer
- * @brief Specialized buffer for image/texture data
+ * @brief A hybrid buffer managing both a textured quad geometry and its pixel data.
  *
- * Stores pixel data in CPU-accessible VKBuffer and manages corresponding
- * GPU VKImage. Designed for both static loaded images and dynamic procedural
- * textures that update per-frame.
+ * TextureBuffer serves a dual purpose:
+ * 1. Geometry: It acts as a VKBuffer containing vertex data for a 2D quad (Position + UVs).
+ *    This geometry can be transformed (translated, scaled, rotated) or customized.
+ * 2. Texture: It manages raw pixel data in system memory and synchronizes it with a
+ *    GPU-resident VKImage via the TextureProcessor.
  *
- * Philosophy:
- * - Images are just pixel buffers - process like audio samples
- * - Automatic CPU→GPU synchronization via TextureProcessor
- * - Static images (loaded once) and dynamic images (update per frame) use same API
+ * Unlike a raw texture resource, this class represents a "renderable sprite" or "surface".
+ * The vertex data is dynamic and updates automatically when transforms change.
+ * The pixel data can be static (loaded once) or dynamic (procedural/video), with
+ * dirty-flag tracking to minimize bus traffic.
  *
- * Usage (Static Image):
- *   auto img_reader = IO::ImageReader();
- *   img_reader.open("texture.png");
- *   auto tex_buffer = img_reader->create_buffer();
- *   register_graphics_buffer(tex_buffer, ProcessingToken::GRAPHICS_BACKEND);
- *
- *   // Bind to shader
- *   render_processor->bind_texture(0, tex_buffer->get_texture());
- *
- * Usage (Dynamic/Procedural):
- *   auto tex = std::make_shared<TextureBuffer>(512, 512, ImageFormat::RGBA8);
- *
- *   // Modify pixels every frame
- *   schedule_metro(0.016, [tex]() {
- *       auto accessor = tex->get_pixel_accessor();
- *       for (int i = 0; i < pixels; i++) {
- *           accessor[i] = compute_procedural_pixel(i);
- *       }
- *       tex->mark_dirty(); // TextureProcessor will re-upload
- *   });
+ * Key Features:
+ * - Automatic quad generation based on dimensions.
+ * - Built-in 2D transform support (Position, Scale, Rotation) affecting vertex positions.
+ * - CPU-side pixel storage with automatic upload to GPU VKImage on change.
+ * - Support for custom vertex geometry (e.g., for non-rectangular sprites).
  */
 class MAYAFLUX_API TextureBuffer : public VKBuffer {
 public:
@@ -64,22 +50,103 @@ public:
 
     void setup_processors(ProcessingToken token) override;
 
-    // === Metadata Access ===
+    // =========================================================================
+    // Texture Metadata
+    // =========================================================================
+
     [[nodiscard]] uint32_t get_width() const { return m_width; }
     [[nodiscard]] uint32_t get_height() const { return m_height; }
     [[nodiscard]] Portal::Graphics::ImageFormat get_format() const { return m_format; }
 
-    // === GPU Texture Access ===
+    // =========================================================================
+    // GPU Texture Access
+    // =========================================================================
+
+    /**
+     * @brief Get GPU texture image
+     * Suitable for binding to shaders via RenderProcessor::bind_texture()
+     */
     [[nodiscard]] std::shared_ptr<Core::VKImage> get_texture() const { return m_gpu_texture; }
     [[nodiscard]] bool has_texture() const { return m_gpu_texture != nullptr; }
-
     // === Processor Access ===
     [[nodiscard]] std::shared_ptr<TextureProcessor> get_texture_processor() const
     {
         return m_texture_processor;
     }
 
-    // === Pixel Data Access ===
+    /**
+     * @brief Replace pixel data
+     * @param data Pointer to pixel data (size must match width*height*channels)
+     * @param size Size in bytes
+     *
+     * Marks texture as dirty. TextureProcessor will re-upload on next frame.
+     */
+    void set_pixel_data(const void* data, size_t size);
+
+    /**
+     * @brief Mark pixel data as changed
+     * Use this if you modify pixel data in-place without calling set_pixel_data()
+     */
+    void mark_pixels_dirty();
+
+    // =========================================================================
+    // Display Transform
+    // =========================================================================
+
+    /**
+     * @brief Set screen position (NDC or pixel coords depending on rendering setup)
+     * @param x X position
+     * @param y Y position
+     *
+     * Marks geometry as dirty. TextureProcessor will recalculate vertices on next frame.
+     */
+    void set_position(float x, float y);
+
+    /**
+     * @brief Set display size
+     * @param width Width in pixels/units
+     * @param height Height in pixels/units
+     *
+     * Marks geometry as dirty.
+     */
+    void set_scale(float width, float height);
+
+    /**
+     * @brief Set rotation around center
+     * @param angle_radians Rotation in radians
+     *
+     * Marks geometry as dirty.
+     */
+    void set_rotation(float angle_radians);
+
+    [[nodiscard]] glm::vec2 get_position() const { return m_position; }
+    [[nodiscard]] glm::vec2 get_scale() const { return m_scale; }
+    [[nodiscard]] float get_rotation() const { return m_rotation; }
+
+    // =========================================================================
+    // Advanced: Custom Geometry
+    // =========================================================================
+
+    /**
+     * @brief Use custom vertex geometry instead of default quad
+     * @param vertices Custom quad vertices (must be 4 vertices with position + texcoord)
+     *
+     * For power users who want non-rectangular meshes or different vertex layouts.
+     * Marks geometry as dirty.
+     */
+    struct QuadVertex {
+        glm::vec3 position;
+        glm::vec2 texcoord;
+    };
+
+    void set_custom_vertices(const std::vector<QuadVertex>& vertices);
+
+    /**
+     * @brief Reset to default fullscreen quad
+     * Uses position and scale to generate quad geometry.
+     */
+    void use_default_quad();
+
     [[nodiscard]] const std::vector<uint8_t>& get_pixel_data() const { return m_pixel_data; }
 
     void mark_texture_dirty() { m_texture_dirty = true; }
@@ -87,35 +154,35 @@ public:
     void clear_dirty_flag() { m_texture_dirty = false; }
 
 private:
+    friend class TextureProcessor;
+
+    // Texture metadata
     uint32_t m_width;
     uint32_t m_height;
     Portal::Graphics::ImageFormat m_format;
 
-    // Texture pixel data (separate from VKBuffer vertex data)
+    // Pixel data
     std::vector<uint8_t> m_pixel_data;
-
-    std::vector<uint8_t> m_vertex_bytes;
-
-    // GPU texture (managed by TextureProcessor)
-    std::shared_ptr<Core::VKImage> m_gpu_texture;
     bool m_texture_dirty = true;
 
+    // Display transform
+    glm::vec2 m_position { 0.0F, 0.0F };
+    glm::vec2 m_scale { 1.0F, 1.0F };
+    float m_rotation { 0.0F };
+    bool m_geometry_dirty = true;
+
+    // Geometry
+    std::vector<uint8_t> m_vertex_bytes;
+    bool m_uses_custom_vertices = false;
+
+    // GPU resources
+    std::shared_ptr<Core::VKImage> m_gpu_texture;
     std::shared_ptr<TextureProcessor> m_texture_processor;
 
-    static size_t calculate_buffer_size(uint32_t width, uint32_t height,
-        Portal::Graphics::ImageFormat format);
-
-    /**
-     * @brief Calculate size for fullscreen quad vertices
-     */
-    static size_t calculate_quad_size();
-
-    /**
-     * @brief Initialize quad vertex data
-     */
-    void initialize_quad_vertices();
-
-    friend class TextureProcessor;
+    // Geometry generation
+    void generate_default_quad();
+    void generate_quad_with_transform();
+    static size_t calculate_quad_vertex_size();
 };
 
 } // namespace MayaFlux::Buffers

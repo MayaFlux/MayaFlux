@@ -4,12 +4,20 @@
 
 namespace MayaFlux::Buffers {
 
+const std::vector<TextureBuffer::QuadVertex> base_quad = {
+    { { -0.5F, -0.5F, 0.0F }, { 0.0F, 1.0F } }, // Bottom-left
+    { { 0.5F, -0.5F, 0.0F }, { 1.0F, 1.0F } }, // Bottom-right
+    { { -0.5F, 0.5F, 0.0F }, { 0.0F, 0.0F } }, // Top-left
+    { { 0.5F, 0.5F, 0.0F }, { 1.0F, 0.0F } } // Top-right
+};
+
 TextureBuffer::TextureBuffer(
-    uint32_t width, uint32_t height,
+    uint32_t width,
+    uint32_t height,
     Portal::Graphics::ImageFormat format,
     const void* initial_pixel_data)
     : VKBuffer(
-          calculate_quad_size(),
+          calculate_quad_vertex_size(),
           Usage::VERTEX,
           Kakshya::DataModality::VERTEX_POSITIONS_3D)
     , m_width(width)
@@ -22,50 +30,134 @@ TextureBuffer::TextureBuffer(
         std::memcpy(m_pixel_data.data(), initial_pixel_data, pixel_bytes);
     }
 
+    generate_default_quad();
+
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
         "Created TextureBuffer: {}x{} ({} pixel bytes, {} vertex bytes)",
-        m_width, m_height, m_pixel_data.size(), get_size_bytes());
+        m_width, m_height, m_pixel_data.size(), m_vertex_bytes.size());
 }
 
 void TextureBuffer::setup_processors(ProcessingToken token)
 {
-    initialize_quad_vertices();
-
     auto self = std::dynamic_pointer_cast<TextureBuffer>(shared_from_this());
 
     m_texture_processor = std::make_shared<TextureProcessor>();
     m_texture_processor->set_processing_token(token);
-    m_texture_processor->bind_texture_buffer(self);
 
     set_default_processor(m_texture_processor);
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
-        "TextureBuffer initialized with TextureProcessor");
+        "TextureBuffer setup_processors: TextureProcessor will be attached on first registration");
 }
 
-size_t TextureBuffer::calculate_quad_size()
+// =========================================================================
+// Pixel Data Management
+// =========================================================================
+
+void TextureBuffer::set_pixel_data(const void* data, size_t size)
 {
-    // 4 vertices * (3 floats position + 2 floats texcoord)
-    struct QuadVertex {
-        glm::vec3 position;
-        glm::vec2 texcoord;
-    };
+    if (!data || size == 0) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_pixel_data called with null or empty data");
+        return;
+    }
+
+    m_pixel_data.resize(size);
+    std::memcpy(m_pixel_data.data(), data, size);
+    m_texture_dirty = true;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "TextureBuffer: pixel data updated ({} bytes, marked dirty)", size);
+}
+
+void TextureBuffer::mark_pixels_dirty()
+{
+    m_texture_dirty = true;
+}
+
+// =========================================================================
+// Display Transform
+// =========================================================================
+
+void TextureBuffer::set_position(float x, float y)
+{
+    if (m_position.x != x || m_position.y != y) {
+        m_position = { x, y };
+        m_geometry_dirty = true;
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureBuffer: position set to ({}, {}), geometry marked dirty", x, y);
+    }
+}
+
+void TextureBuffer::set_scale(float width, float height)
+{
+    if (m_scale.x != width || m_scale.y != height) {
+        m_scale = { width, height };
+        m_geometry_dirty = true;
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureBuffer: scale set to ({}, {}), geometry marked dirty", width, height);
+    }
+}
+
+void TextureBuffer::set_rotation(float angle_radians)
+{
+    if (m_rotation != angle_radians) {
+        m_rotation = angle_radians;
+        m_geometry_dirty = true;
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureBuffer: rotation set to {}, geometry marked dirty", angle_radians);
+    }
+}
+
+// =========================================================================
+// Custom Geometry
+// =========================================================================
+
+void TextureBuffer::set_custom_vertices(const std::vector<QuadVertex>& vertices)
+{
+    if (vertices.size() != 4) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_custom_vertices: must provide exactly 4 vertices, got {}", vertices.size());
+        return;
+    }
+
+    m_vertex_bytes.resize(vertices.size() * sizeof(QuadVertex));
+    std::memcpy(m_vertex_bytes.data(), vertices.data(), m_vertex_bytes.size());
+    m_uses_custom_vertices = true;
+    m_geometry_dirty = true;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "TextureBuffer: custom vertices set, geometry marked dirty");
+}
+
+void TextureBuffer::use_default_quad()
+{
+    if (m_uses_custom_vertices) {
+        m_uses_custom_vertices = false;
+        generate_default_quad();
+        m_geometry_dirty = true;
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureBuffer: reset to default quad, geometry marked dirty");
+    }
+}
+
+// =========================================================================
+// Geometry Generation
+// =========================================================================
+
+size_t TextureBuffer::calculate_quad_vertex_size()
+{
     return 4 * sizeof(QuadVertex);
 }
 
-void TextureBuffer::initialize_quad_vertices()
+void TextureBuffer::generate_default_quad()
 {
-    struct QuadVertex {
-        glm::vec3 position;
-        glm::vec2 texcoord;
-    };
-
-    const std::vector<QuadVertex> quad_vertices = {
-        { { -1.0F, -1.0F, 0.0F }, { 0.0F, 1.0F } }, // 0: Bottom-left
-        { { 1.0F, -1.0F, 0.0F }, { 1.0F, 1.0F } }, // 1: Bottom-right
-        { { -1.0F, 1.0F, 0.0F }, { 0.0F, 0.0F } }, // 2: Top-left
-        { { 1.0F, 1.0F, 0.0F }, { 1.0F, 0.0F } } // 3: Top-right
-    };
+    m_vertex_bytes.resize(base_quad.size() * sizeof(QuadVertex));
+    std::memcpy(m_vertex_bytes.data(), base_quad.data(), m_vertex_bytes.size());
 
     Kakshya::VertexLayout vertex_layout {
         .vertex_count = 4,
@@ -81,14 +173,44 @@ void TextureBuffer::initialize_quad_vertices()
 
     set_vertex_layout(vertex_layout);
 
-    std::vector<uint8_t> vertex_bytes(
-        reinterpret_cast<const uint8_t*>(quad_vertices.data()),
-        reinterpret_cast<const uint8_t*>(quad_vertices.data()) + sizeof(QuadVertex) * 4);
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "TextureBuffer: generated default fullscreen quad");
+}
 
-    m_vertex_bytes = std::move(vertex_bytes);
+void TextureBuffer::generate_quad_with_transform()
+{
+    if (m_uses_custom_vertices) {
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureBuffer: using custom vertices, skipping transform");
+        return;
+    }
 
-    MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
-        "Initialized fullscreen quad vertices in TextureBuffer");
+    float cos_rot = std::cos(m_rotation);
+    float sin_rot = std::sin(m_rotation);
+
+    std::vector<QuadVertex> transformed(4);
+    for (size_t i = 0; i < 4; ++i) {
+        glm::vec3 pos = base_quad[i].position;
+
+        pos.x *= m_scale.x;
+        pos.y *= m_scale.y;
+
+        float rotated_x = pos.x * cos_rot - pos.y * sin_rot;
+        float rotated_y = pos.x * sin_rot + pos.y * cos_rot;
+
+        pos.x = rotated_x + m_position.x;
+        pos.y = rotated_y + m_position.y;
+
+        transformed[i].position = pos;
+        transformed[i].texcoord = base_quad[i].texcoord;
+    }
+
+    m_vertex_bytes.resize(transformed.size() * sizeof(QuadVertex));
+    std::memcpy(m_vertex_bytes.data(), transformed.data(), m_vertex_bytes.size());
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "TextureBuffer: regenerated quad with transform (pos={},{}, scale={},{}, rot={})",
+        m_position.x, m_position.y, m_scale.x, m_scale.y, m_rotation);
 }
 
 } // namespace MayaFlux::Buffers

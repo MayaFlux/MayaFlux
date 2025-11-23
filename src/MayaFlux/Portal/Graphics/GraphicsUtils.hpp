@@ -119,4 +119,59 @@ enum class ShaderStage : uint8_t {
     TESS_EVALUATION
 };
 
+//============================================================================
+// Image Helpers
+//============================================================================
+
+/**
+ * @enum ImageFormat
+ * @brief User-friendly image format enum
+ *
+ * Abstracts Vulkan formats for Portal API convenience.
+ * Maps to vk::Format internally.
+ */
+enum class ImageFormat : uint8_t {
+    // Normalized formats
+    R8, ///< Single channel 8-bit
+    RG8, ///< Two channel 8-bit
+    RGB8, ///< Three channel 8-bit
+    RGBA8, ///< Four channel 8-bit
+    RGBA8_SRGB, ///< Four channel 8-bit sRGB
+
+    // Floating point formats
+    R16F, ///< Single channel 16-bit float
+    RG16F, ///< Two channel 16-bit float
+    RGBA16F, ///< Four channel 16-bit float
+    R32F, ///< Single channel 32-bit float
+    RG32F, ///< Two channel 32-bit float
+    RGBA32F, ///< Four channel 32-bit float
+
+    // Depth/stencil formats
+    DEPTH16, ///< 16-bit depth
+    DEPTH24, ///< 24-bit depth
+    DEPTH32F, ///< 32-bit float depth
+    DEPTH24_STENCIL8 ///< 24-bit depth + 8-bit stencil
+};
+
+/**
+ * @enum FilterMode
+ * @brief Texture filtering mode
+ */
+enum class FilterMode : uint8_t {
+    NEAREST, ///< Nearest neighbor (pixelated)
+    LINEAR, ///< Bilinear filtering (smooth)
+    CUBIC ///< Bicubic filtering (high quality, slower)
+};
+
+/**
+ * @enum AddressMode
+ * @brief Texture addressing mode (wrapping)
+ */
+enum class AddressMode : uint8_t {
+    REPEAT, ///< Repeat texture
+    MIRRORED_REPEAT, ///< Mirror and repeat
+    CLAMP_TO_EDGE, ///< Clamp to edge color
+    CLAMP_TO_BORDER ///< Clamp to border color
+};
+
 }
