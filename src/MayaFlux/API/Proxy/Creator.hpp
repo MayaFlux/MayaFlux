@@ -188,8 +188,15 @@ public:
         return CreationHandle<Kakshya::SoundFileContainer>(container);
     }
 
+    auto read_image(const std::string& filepath) -> CreationHandle<Buffers::TextureBuffer>
+    {
+        auto buffer = load_buffer(filepath);
+        return CreationHandle<Buffers::TextureBuffer>(buffer);
+    }
+
 private:
     std::shared_ptr<Kakshya::SoundFileContainer> load_container(const std::string& filepath);
+    std::shared_ptr<Buffers::TextureBuffer> load_buffer(const std::string& filepath);
 };
 
 template <typename T>

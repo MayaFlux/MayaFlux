@@ -22,6 +22,7 @@ namespace Kakshya {
 
 namespace Buffers {
     class ContainerBuffer;
+    class TextureBuffer;
 }
 
 /**
@@ -61,5 +62,29 @@ auto create_container(Args&&... args) -> std::shared_ptr<ContainerType>
 {
     return std::make_shared<ContainerType>(std::forward<Args>(args)...);
 }
+
+/**
+ * @brief Loads an image file into a TextureBuffer
+ * @param filepath Path to the image file to load
+ * @return Shared pointer to loaded TextureBuffer, or nullptr on failure
+ *
+ * Supports common image formats such as PNG, JPEG, BMP, TGA, PSD, GIF, HDR, PIC, and PNM.
+ * Returns nullptr on failure with error details logged to stderr.
+ */
+MAYAFLUX_API std::shared_ptr<Buffers::TextureBuffer> load_image_file(const std::string& filepath);
+
+/**
+ * @brief Checks if the given file is an audio file based on its extension
+ * @param filepath Path to the file to check
+ * @return true if the file is recognized as an audio file, false otherwise
+ */
+MAYAFLUX_API bool is_audio(const std::filesystem::path& filepath);
+
+/**
+ * @brief Checks if the given file is an image file based on its extension
+ * @param filepath Path to the file to check
+ * @return true if the file is recognized as an image file, false otherwise
+ */
+MAYAFLUX_API bool is_image(const std::filesystem::path& filepath);
 
 }

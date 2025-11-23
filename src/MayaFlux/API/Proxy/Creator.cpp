@@ -86,4 +86,9 @@ std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer
     return buffer;
 }
 
+std::shared_ptr<Buffers::TextureBuffer> Creator::load_buffer(const std::string& filepath)
+{
+    return load_image_file(filepath);
+}
+
 } // namespace MayaFlux
