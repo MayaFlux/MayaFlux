@@ -6,6 +6,7 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
+#include "MayaFlux/Nodes/Node.hpp"
 
 namespace MayaFlux {
 
@@ -20,6 +21,12 @@ void register_node(const std::shared_ptr<Nodes::Node>& node, const CreationConte
     } else if (ctx.channels.has_value()) {
         for (uint32_t ch : ctx.channels.value()) {
             register_node(node, token, ch);
+        }
+    } else if (node->get_channel_mask() != 0) {
+        for (uint32_t ch = 0; ch < 32; ++ch) {
+            if (node->get_channel_mask() & (1 << ch)) {
+                register_node(node, token, ch);
+            }
         }
     } else {
         register_node(node, token, 0);
@@ -63,6 +70,20 @@ std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_container(const std::
 std::vector<std::shared_ptr<Buffers::ContainerBuffer>> get_last_created_container_buffers()
 {
     return s_last_created_container_buffers;
+}
+
+std::shared_ptr<Nodes::Node> operator|(const std::shared_ptr<Nodes::Node>& node, Domain d)
+{
+    CreationContext ctx(d);
+    register_node(node, ctx);
+    return node;
+}
+
+std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer>& buffer, Domain d)
+{
+    CreationContext ctx(d);
+    register_buffer(buffer, ctx);
+    return buffer;
 }
 
 } // namespace MayaFlux
