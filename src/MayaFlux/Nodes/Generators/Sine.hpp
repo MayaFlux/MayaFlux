@@ -127,7 +127,7 @@ public:
      * Updates the oscillator's frequency while maintaining phase continuity
      * to prevent clicks or pops in the audio output.
      */
-    void set_frequency(float frequency);
+    void set_frequency(float frequency) override;
 
     /**
      * @brief Gets the current base frequency

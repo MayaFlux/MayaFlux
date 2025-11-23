@@ -125,7 +125,7 @@ public:
      *
      * Updates the generator's frequency, which controls how fast the phase ramps.
      */
-    void set_frequency(float frequency);
+    void set_frequency(float frequency) override;
 
     /**
      * @brief Gets the current base frequency

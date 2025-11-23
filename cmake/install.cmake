@@ -28,7 +28,7 @@ if(UNIX)
 endif()
 
 install(DIRECTORY ${SHADER_OUTPUT_DIR}
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/mayaflux/
+    DESTINATION share/mayaflux/
     FILES_MATCHING PATTERN "*.spv"
 )
 

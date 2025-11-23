@@ -126,7 +126,7 @@ public:
      *
      * Updates the generator's frequency, which controls how often impulses occur.
      */
-    void set_frequency(float frequency);
+    void set_frequency(float frequency) override;
 
     /**
      * @brief Gets the current base frequency

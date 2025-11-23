@@ -7,6 +7,8 @@ namespace MayaFlux::Nodes {
 using TokenChannelProcessor = std::function<std::vector<double>(RootNode*, uint32_t)>;
 using TokenSampleProcessor = std::function<double(RootNode*, uint32_t)>;
 
+class NodeNetwork;
+
 /**
  * @class NodeGraphManager
  * @brief Central manager for the computational processing node graph
@@ -317,6 +319,62 @@ public:
      */
     void print_summary() const;
 
+    //-------------------------------------------------------------------------
+    // NodeNetwork Management
+    //-------------------------------------------------------------------------
+
+    /**
+     * @brief Add a network to a processing token
+     * @param network Network to add
+     * @param token Processing domain (AUDIO_RATE, VISUAL_RATE, etc.)
+     *
+     * Networks are processed parallel to RootNodes, managing their own
+     * internal node coordination and processing.
+     */
+    void add_network(const std::shared_ptr<NodeNetwork>& network, ProcessingToken token);
+
+    /**
+     * @brief Remove a network from a processing token
+     * @param network Network to remove
+     * @param token Processing domain
+     * @param channel Channel index within that domain, optional
+     */
+    void remove_network(const std::shared_ptr<NodeNetwork>& network, ProcessingToken token);
+
+    /**
+     * @brief Get all networks for a specific token
+     * @param token Processing domain
+     * @return Vector of networks registered to this token
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<NodeNetwork>> get_networks(ProcessingToken token, uint32_t channel = 0) const;
+
+    /**
+     * @brief Get all networks for a specific token across all channels
+     * @param token Processing domain
+     * @return Vector of networks registered to this token
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<NodeNetwork>> get_all_networks(ProcessingToken token) const;
+
+    /**
+     * @brief Get count of networks for a token
+     */
+    [[nodiscard]] size_t get_network_count(ProcessingToken token) const;
+
+    /**
+     * @brief Clear all networks from a token
+     */
+    void clear_networks(ProcessingToken token);
+
+    /**
+     * @brief Register network globally (like nodes)
+     */
+    void register_network_global(const std::shared_ptr<NodeNetwork>& network);
+
+    /**
+     * @brief Unregister network globally
+     */
+    void unregister_network_global(const std::shared_ptr<NodeNetwork>& network);
+
 private:
     /**
      * @brief Map of channel indices to their root nodes (AUDIO_RATE domain)
@@ -373,6 +431,28 @@ private:
      * for low-level sample manipulation and custom processing.
      */
     std::unordered_map<ProcessingToken, TokenSampleProcessor> m_token_sample_processors;
+
+    /**
+     * @brief Global network registry (like m_Node_registry)
+     *
+     * Maps generated IDs to networks for lifecycle management
+     */
+    std::unordered_map<std::string, std::shared_ptr<NodeNetwork>> m_network_registry;
+
+    /**
+     * @brief Audio-sink networks (channel-routed)
+     * Only populated for networks with OutputMode::AUDIO_SINK
+     */
+    std::unordered_map<ProcessingToken,
+        std::unordered_map<unsigned int, std::vector<std::shared_ptr<NodeNetwork>>>>
+        m_audio_networks;
+
+    /**
+     * @brief Non-audio networks (token-level processing)
+     * For NONE, GRAPHICS_BIND, CUSTOM output modes
+     */
+    std::unordered_map<ProcessingToken, std::vector<std::shared_ptr<NodeNetwork>>>
+        m_token_networks;
 
     /**
      * @brief Ensures a root node exists for the given token and channel
@@ -433,6 +513,21 @@ private:
      * Ensures that the sample value is within the valid range for audio processing.
      */
     void normalize_sample(double& sample, uint32_t num_nodes);
+
+    /**
+     * @brief Check if network is registered globally
+     */
+    bool is_network_registered(const std::shared_ptr<NodeNetwork>& network);
+
+    /**
+     * @brief Process all networks for a specific token and channel
+     * @return Aggregated audio output from networks (if AUDIO_SINK mode)
+     */
+    std::vector<double> process_channel_networks(ProcessingToken token,
+        unsigned int channel,
+        unsigned int num_samples);
+
+    void reset_audio_network_state(ProcessingToken token);
 };
 
 }

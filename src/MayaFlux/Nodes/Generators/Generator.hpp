@@ -178,6 +178,15 @@ public:
      */
     virtual std::unique_ptr<NodeContext> create_context(double value) override;
 
+    /**
+     * @brief Sets the generator's frequency
+     * @param frequency New frequency value in Hz
+     *
+     * This method updates the generator's frequency setting,
+     * which controls the rate of oscillation or pattern repetition.
+     */
+    virtual void set_frequency(float frequency) { m_frequency = frequency; }
+
 protected:
     /**
      * @brief Base amplitude of the generator

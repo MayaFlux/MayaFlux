@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ---------------------------------------------
+# Extract version from CMakeLists.txt
+# ---------------------------------------------
+VERSION=$(grep -Po '(?<=VERSION )\d+\.\d+\.\d+' CMakeLists.txt)
+if [[ -z "$VERSION" ]]; then
+    echo "ERROR: Could not extract version from CMakeLists.txt"
+    exit 1
+fi
+
+# ---------------------------------------------
+# Detect current git branch or tag
+# ---------------------------------------------
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# If in detached HEAD (e.g., building from tag), detect tag
+if [[ "$BRANCH" == "HEAD" ]]; then
+    TAG=$(git describe --tags --exact-match 2>/dev/null || true)
+    if [[ -n "$TAG" ]]; then
+        BRANCH="$TAG"
+    fi
+fi
+
+# ---------------------------------------------
+# Append -dev for non-main branches
+# ---------------------------------------------
+if [[ "$BRANCH" == "main" || "$BRANCH" == v* ]]; then
+    # main or a tagged release -> use VERSION as-is
+    FINAL_VERSION="$VERSION"
+else
+    FINAL_VERSION="${VERSION}-dev"
+fi
+
+echo "[INFO] MayaFlux packaging version: $FINAL_VERSION"
+
+# ---------------------------------------------
+# Directories
+# ---------------------------------------------
+PREFIX="package"
+BUILD_DIR="${PREFIX}/build"
+INSTALL_DIR="${PREFIX}/install_root"
+ARCHIVE_ROOT="${PREFIX}/MayaFlux-${FINAL_VERSION}"
+ARCHIVE_NAME="MayaFlux-${FINAL_VERSION}-Linux.tar.gz"
+
+# ---------------------------------------------
+# Clean + prepare
+# ---------------------------------------------
+rm -rf "$BUILD_DIR" "$INSTALL_DIR" "$ARCHIVE_ROOT"
+mkdir -p "$BUILD_DIR" "$INSTALL_DIR"
+
+# ---------------------------------------------
+# Configure & build
+# ---------------------------------------------
+cmake -S . -B "$BUILD_DIR" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR"
+
+cmake --build "$BUILD_DIR" --parallel
+
+# ---------------------------------------------
+# Install to install_root
+# ---------------------------------------------
+cmake --install "$BUILD_DIR"
+
+# Sanity check
+if [[ ! -d "$INSTALL_DIR/bin" ]]; then
+    echo "ERROR: install root missing bin/"
+    exit 1
+fi
+
+# ---------------------------------------------
+# Prepare archive content
+# ---------------------------------------------
+mkdir -p "$ARCHIVE_ROOT"
+cp -r "$INSTALL_DIR"/* "$ARCHIVE_ROOT"/
+cp LICENSE "$ARCHIVE_ROOT" 2>/dev/null || true
+cp README.md "$ARCHIVE_ROOT" 2>/dev/null || true
+
+# ---------------------------------------------
+# Create tarball
+# ---------------------------------------------
+tar -czf "${PREFIX}/${ARCHIVE_NAME}" -C "$PREFIX" "MayaFlux-${FINAL_VERSION}"
+
+echo "[DONE] Created ${PREFIX}/${ARCHIVE_NAME}"
+
+# ---------------------------------------------
+# OPTIONAL: GPG signing
+# ---------------------------------------------
+if [[ "${SIGN:-0}" == "1" ]]; then
+    echo "[INFO] Signing archive using GPG…"
+    gpg --armor --detach-sign "${PREFIX}/${ARCHIVE_NAME}"
+    echo "[DONE] Signature created: ${PREFIX}/${ARCHIVE_NAME}.asc"
+fi

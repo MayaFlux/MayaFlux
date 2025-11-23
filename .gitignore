@@ -1,6 +1,7 @@
 # Build directories and artifacts
 build/
 install/
+package/
 out/
 CMakeCache.txt
 CMakeFiles/
