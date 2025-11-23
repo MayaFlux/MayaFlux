@@ -182,7 +182,7 @@ public:
     ALL_BUFFER_REGISTRATION
 #undef B
 
-    auto read(const std::string& filepath) -> CreationHandle<Kakshya::SoundFileContainer>
+    auto read_audio(const std::string& filepath) -> CreationHandle<Kakshya::SoundFileContainer>
     {
         auto container = load_container(filepath);
         return CreationHandle<Kakshya::SoundFileContainer>(container);

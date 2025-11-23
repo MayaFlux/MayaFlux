@@ -142,7 +142,6 @@ Nodes connect through `>>` creating `streams of transformation`. Each
 connection point represents a decision about how information should
 evolve. Critically, these streams work across domains:
 
-
 ```cpp
 phasor >> noise >> (IIR(sine) * 0.5) + noise >> DAC;
 
@@ -215,7 +214,6 @@ transformation possible - operations that need to see patterns across
 time rather than individual moments. This lifecycle is identical whether
 the buffer collects audio samples, pixels, or compute results.
 
-
 ### Definitions
 
 The _transient collectors_ paradigm of buffers allow them to work with
@@ -232,7 +230,7 @@ multiple ways of creating them.
 ```cpp
 // Fluent
 auto audio_buf = vega.AudioBuffer()[1] | Audio;
-auto vk_buf = vega.VKBUffer(64, ::Usage::VERTEX, 
+auto vk_buf = vega.VKBUffer(64, ::Usage::VERTEX,
                               ::DataModality::VERTEX_COLORS_RGBA) | Graphics;
 
 // Convenience API Sound
@@ -671,7 +669,7 @@ audio file handling:
 
 ```cpp
 // Fluent creation
-auto sound_file = vega.read("sample.wav").channels({0, 1});
+auto sound_file = vega.read_audio("sample.wav").channels({0, 1});
 
 // Convenience API
 auto container = MayaFlux::load_sound_file("sample.wav");

@@ -1,15 +1,16 @@
-Up to this point, you’ve learned how audio flows: 
+Up to this point, you’ve learned how audio flows:
+
 - containers feed buffers
 - buffers run processors
 - processors shape data.
 
-Now we expand the vocabulary of processors themselves. 
+Now we expand the vocabulary of processors themselves.
 In MayaFlux, mathematics, logic, feedback, and generation are not side features,
-they are first-class sculpting tools. This tutorial explores how computational 
+they are first-class sculpting tools. This tutorial explores how computational
 expressions become sound-shaping primitives.
 
-*In MayaFlux, polynomials don't calculate—they sculpt. Logic doesn't branch—it decides. 
-This tutorial shows you how mathematical expressions become sonic transformations.*
+_In MayaFlux, polynomials don't calculate—they sculpt. Logic doesn't branch—it decides.
+This tutorial shows you how mathematical expressions become sonic transformations._
 
 ---
 
@@ -142,7 +143,6 @@ This tutorial shows you how mathematical expressions become sonic transformation
   - [Closing: The Routing
     Ecosystem](#closing-the-routing-ecosystem){#toc-closing-the-routing-ecosystem}
 
-
 ---
 
 # Tutorial: Polynomial Waveshaping
@@ -153,9 +153,9 @@ Run this code. Your file plays with harmonic distortion.
 
 ```cpp
 void compose() {
-    auto sound = vega.read("path/to/file.wav") | Audio;
+    auto sound = vega.read_audio("path/to/file.wav") | Audio;
     auto buffers = MayaFlux::get_last_created_container_buffers();
-    
+
     // Polynomial: x² generates harmonics
     auto poly = vega.Polynomial([](double x) { return x * x; });
     auto processor = MayaFlux::create_processor<PolynomialProcessor>(buffers[0], poly);
@@ -207,11 +207,11 @@ auto processor = MayaFlux::create_processor<PolynomialProcessor>(buffers[0], pol
 **Why this separation?**
 
 - **Node**: The math itself—reusable, chainable, inspectable
-- **Processor**: The attachment mechanism—knows *how* to apply the node to a buffer
+- **Processor**: The attachment mechanism—knows _how_ to apply the node to a buffer
 
 Same node, different processors → different results. You'll see this pattern everywhere in MayaFlux.
 
-The node is the *idea*. The processor is the *application*.
+The node is the _idea_. The processor is the _application_.
 
 </details>
 
@@ -244,6 +244,7 @@ For now: DIRECT mode = instant transformation. No memory. No delay.
 <summary>Click to expand: Attaching to Buffers</summary>
 
 When you call:
+
 ```cpp
 auto processor = MayaFlux::create_processor<PolynomialProcessor>(buffers[0], poly);
 ```
@@ -256,6 +257,7 @@ MayaFlux does this:
 4. Returns the processor handle
 
 The buffer now runs your polynomial on every cycle:
+
 - 512 samples arrive from the Container
 - Your polynomial processes each sample: `y = x * x`
 - Transformed samples continue to speakers
@@ -276,8 +278,8 @@ auto poly = vega.Polynomial([](double x) { return x * x * x; });
 auto poly = vega.Polynomial([](double x) { return 2*x*x - 1; });
 
 // Soft clipping (analog-style limiting)
-auto poly = vega.Polynomial([](double x) { 
-    return x / (1.0 + std::abs(x)); 
+auto poly = vega.Polynomial([](double x) {
+    return x / (1.0 + std::abs(x));
 });
 
 // Extreme fold-back distortion
@@ -300,9 +302,9 @@ You have memoryless waveshaping. Now add memory.
 
 ```cpp
 void compose() {
-    auto sound = vega.read("path/to/file.wav") | Audio;
+    auto sound = vega.read_audio("path/to/file.wav") | Audio;
     auto buffers = MayaFlux::get_last_created_container_buffers();
-    
+
     // Recursive: output depends on previous outputs
     auto recursive = vega.Polynomial(
         [](const std::deque<double>& history) {
@@ -312,7 +314,7 @@ void compose() {
         PolynomialMode::RECURSIVE,
         2  // remember 2 previous outputs
     );
-    
+
     auto processor = MayaFlux::create_processor<PolynomialProcessor>(buffers[0], recursive);
 }
 ```
@@ -327,6 +329,7 @@ Run this. You hear echo/resonance—the signal feeds back into itself.
 <summary>Click to expand: IIR Filters Are Recursive Polynomials</summary>
 
 Classic IIR filter equation:
+
 ```
 y[n] = b0*x[n] + a1*y[n-1] + a2*y[n-2]
 ```
@@ -361,6 +364,7 @@ Polynomials let you design arbitrary recursive functions—not just linear filte
 <summary>Click to expand: How RECURSIVE Mode Works</summary>
 
 When you write:
+
 ```cpp
 PolynomialMode::RECURSIVE, 2
 ```
@@ -373,6 +377,7 @@ history[1] = y[n-2]  (two samples ago)
 ```
 
 Each cycle:
+
 1. Your lambda reads from `history`
 2. Computes new output
 3. Polynomial pushes output into `history` (shifts everything down)
@@ -381,6 +386,7 @@ Each cycle:
 The buffer size determines how far back you can look. Larger buffers = longer memory.
 
 For a 100-sample buffer at 48 kHz:
+
 ```
 100 samples ÷ 48000 Hz ≈ 2 ms of history
 ```
@@ -399,11 +405,13 @@ This is how you build delays, reverbs, resonant filters—anything that needs te
 **Critical rule**: Keep feedback coefficients summing to < 1.0 for guaranteed stability.
 
 **Safe:**
+
 ```cpp
 return 0.6*history[0] + 0.3*history[1];  // sum = 0.9 < 1.0
 ```
 
 **Dangerous:**
+
 ```cpp
 return 1.2*history[0];  // WILL EXPLODE (unbounded growth)
 ```
@@ -440,6 +448,7 @@ recursive->set_initial_conditions({0.5, -0.3, 0.1});
 3. **Warm start**: Resume from previous state instead of cold-starting at zero.
 
 Example (resonant ping):
+
 ```cpp
 auto resonator = vega.Polynomial(
     [](const std::deque<double>& history) {
@@ -499,17 +508,17 @@ Run this code. You'll hear rhythmic pulses.
 ```cpp
 void compose() {
     auto buffer = vega.AudioBuffer()[0] | Audio;
-    
+
     // Logic node: threshold detection
     auto logic = vega.Logic(LogicOperator::THRESHOLD, 0.0);
-    
+
     auto processor = MayaFlux::create_processor<LogicProcessor>(
         buffer,
         logic
     );
-    
+
     processor->set_modulation_type(LogicProcessor::ModulationType::REPLACE);
-    
+
     // Feed a sine wave into the logic node
     auto sine = vega.Sine(2.0);
     logic->set_input_node(sine);
@@ -529,11 +538,12 @@ The sine wave crosses zero twice per cycle. Logic detects the crossings. Output 
 
 `LogicProcessor` makes **binary decisions** about audio.
 
-Every sample asks: *"Is this value TRUE or FALSE?"* (based on threshold)
+Every sample asks: _"Is this value TRUE or FALSE?"_ (based on threshold)
 
 Output: 0.0 or 1.0.
 
 **Uses:**
+
 - **Gate**: Silence audio below threshold (noise reduction)
 - **Trigger**: Fire events when signal crosses boundary (drums, envelopes)
 - **Rhythm**: Convert continuous modulation into discrete beats
@@ -559,7 +569,7 @@ So far, you did not have to manually set inputs because you used
 So, instead of creating an `AudioBuffer`, you can load a file:
 
 ```cpp
-auto sound = vega.read("path/to/file.wav") | Audio;
+auto sound = vega.read_audio("path/to/file.wav") | Audio;
 auto buffers = MayaFlux::get_last_created_container_buffers();
 auto logic = vega.Logic(LogicOperator::THRESHOLD, 0.0);
 
@@ -572,8 +582,8 @@ processor->set_modulation_type(LogicProcessor::ModulationType::REPLACE);
 ```
 
 The audio from the file is automatically fed into the logic node.
-Considering how all previous examples relied on file contents, and the natutre of 
-rhythmic pulses not exploiting the intricacies or richness of audio files, 
+Considering how all previous examples relied on file contents, and the natutre of
+rhythmic pulses not exploiting the intricacies or richness of audio files,
 we are using a sine wave as inputs of the logic node in the main example.
 
 </details>
@@ -596,6 +606,7 @@ we are using a sine wave as inputs of the logic node in the main example.
 Right now you're using THRESHOLD—the simplest test.
 
 Example (hysteresis gate for noisy signals):
+
 ```cpp
 auto gate = vega.Logic(LogicOperator::HYSTERESIS);
 gate->set_hysteresis_thresholds(0.1, 0.3);  // open at 0.3, close at 0.1
@@ -615,11 +626,13 @@ Signal must exceed 0.3 to open, then drops below 0.1 to close. Prevents rapid on
 `ModulationType` provides readymade ways to apply binary logic to audio:
 
 **Basic Operations:**
+
 - **REPLACE**: Audio becomes 0.0 or 1.0 (bit reduction)
 - **MULTIPLY**: Audio × logic (standard gate - preserves timbre)
 - **ADD**: Audio + logic (adds impulse on logic high)
 
 **Creative Operations:**
+
 - **INVERT_ON_TRUE**: Phase flip when logic high (ring mod effect)
 - **HOLD_ON_FALSE**: Freeze audio when logic low (granular stutter)
 - **ZERO_ON_FALSE**: Hard silence when logic low (noise gate)
@@ -629,12 +642,14 @@ Signal must exceed 0.3 to open, then drops below 0.1 to close. Prevents rapid on
 - **CUSTOM**: Your function
 
 Example (granular freeze effect):
+
 ```cpp
 processor->set_modulation_type(LogicProcessor::ModulationType::HOLD_ON_FALSE);
 // Audio freezes whenever logic goes low - creates stuttering repeats
 ```
 
 Example (amplitude tremolo):
+
 ```cpp
 processor->set_modulation_type(LogicProcessor::ModulationType::THRESHOLD_REMAP);
 processor->set_threshold_remap_values(1.0, 0.2); // High = full volume, Low = quiet
@@ -684,9 +699,9 @@ Load a file. Detect transients with logic. Apply polynomial only when transient 
 
 ```cpp
 void compose() {
-    auto sound = vega.read("drums.wav") | Audio;
+    auto sound = vega.read_audio("drums.wav") | Audio;
     auto buffers = MayaFlux::get_last_created_container_buffers();
-    
+
     // Step 1: Detect transients (drum hits)
     auto chain = MayaFlux::create_processing_chain();
 
@@ -720,7 +735,7 @@ void compose() {
 Or if you want direct control without manual processor creation, you can use the fluent API
 
 ```cpp
-    auto sound = vega.read("drums.wav") | Audio;
+    auto sound = vega.read_audio("drums.wav") | Audio;
     auto buffers = MayaFlux::get_last_created_container_buffers();
 
     auto bitcrush = vega.Logic(LogicOperator::THRESHOLD, 0.0);
@@ -758,6 +773,7 @@ bitcrush → freeze → destroy
 Each processor transforms the output of the previous one. This is **compositional signal processing**—you build complex effects by chaining simple operations.
 
 The power comes from **order dependency**:
+
 ```
 gate → distort    // Clean transients, heavy saturation
 distort → gate    // Distorted everything, then choppy
@@ -766,6 +782,7 @@ distort → gate    // Distorted everything, then choppy
 Swap the order = completely different sound.
 
 Extend it:
+
 ```
 detect transients → sample-and-hold → bitcrush → wavefold → compress
 ```
@@ -773,8 +790,9 @@ detect transients → sample-and-hold → bitcrush → wavefold → compress
 Traditional plugins give you "distortion with 3 knobs." You compose the distortion algorithm itself.
 
 **Every processor is a building block.** Chain them to create effects that don't exist as plugins:
+
 - Bitcrush → Freeze → Invert = Glitch stutterer
-- Remap → Fold → Gate = Rhythmic harmonizer  
+- Remap → Fold → Gate = Rhythmic harmonizer
 - Threshold → Hold → Distort = Transient emphasizer
 
 Logic + Polynomial + Chains = **programmable audio transformation system**.
@@ -813,6 +831,7 @@ auto poly_expand = vega.Polynomial([](double x) { return x * 0.5; });
 
 // Route based on logic state (requires custom modulation)
 ```
+
 ---
 
 # Tutorial: Processing Chains and Buffer Architecture
@@ -825,21 +844,21 @@ You've been adding processors one at a time. Now control their order explicitly.
 
 ```cpp
 void compose() {
-    auto sound = vega.read("path/to/file.wav") | Audio;
+    auto sound = vega.read_audio("path/to/file.wav") | Audio;
     auto buffer = MayaFlux::get_last_created_container_buffers()[0];
-    
+
     // Create an empty chain
     auto chain = MayaFlux::create_processing_chain();
-    
+
     // Build the chain: Distortion → Gate → Compression
     auto distortion = vega.Polynomial([](double x) { return std::tanh(x * 2.0); });
     auto gate = vega.Logic(LogicOperator::THRESHOLD, 0.1);
     auto compression = vega.Polynomial([](double x) { return x / (1.0 + std::abs(x)); });
-    
+
     chain->add_processor(std::make_shared<PolynomialProcessor>(distortion), buffer);
     chain->add_processor(std::make_shared<LogicProcessor>(gate), buffer);
     chain->add_processor(std::make_shared<PolynomialProcessor>(compression), buffer);
-    
+
     // Attach the chain to the buffer
     buffer->set_processing_chain(chain);
 }
@@ -848,6 +867,7 @@ void compose() {
 Run this. You hear: clean audio → saturated → gated (silence below threshold) → compressed (controlled peaks).
 
 **Swap the order:**
+
 ```cpp
 chain->add_processor(gate_processor);      // Gate first
 chain->add_processor(distortion_processor); // Then distort
@@ -864,6 +884,7 @@ Different sound. Order matters.
 <summary>Click to expand: Implicit vs. Explicit Chain Management</summary>
 
 Previously, when you wrote:
+
 ```cpp
 auto processor = MayaFlux::create_processor<PolynomialProcessor>(buffer, poly);
 ```
@@ -948,6 +969,7 @@ Each processor sees the **output** of the previous processor.
 Every buffer has two processing stages:
 
 **Stage 1: Default Processor** (runs first, always)
+
 - Defined by buffer type
 - Handles data **acquisition** or **generation**
 - Examples:
@@ -957,11 +979,13 @@ Every buffer has two processing stages:
   - `AudioBuffer`: none (generic accumulator)
 
 **Stage 2: Processing Chain** (runs second)
+
 - Your custom processors
 - Handles data **transformation**
 - Examples: filters, waveshaping, logic, etc.
 
 **Execution flow:**
+
 ```
 1. Buffer's default processor runs (fills buffer with data)
 2. Processing chain runs (transforms that data)
@@ -1013,10 +1037,10 @@ Now: buffers **generate** from nodes.
 void compose() {
     // Create a sine node
     auto sine = vega.Sine(440.0);
-    
+
     // Create a NodeBuffer that captures the sine's output
     auto node_buffer = vega.NodeBuffer(0, 512, sine)[0] | Audio;
-    
+
     // Add processing to the generated audio
     auto distortion = vega.Polynomial([](double x) { return x * x * x; });
     MayaFlux::create_processor<PolynomialProcessor>(node_buffer, distortion);
@@ -1039,6 +1063,7 @@ No file loaded. The buffer **generates** audio by evaluating the node 512 times 
 **Default processor: `NodeSourceProcessor`**
 
 Each cycle:
+
 1. Node is evaluated 512 times: `node->process_sample()`
 2. Results fill the buffer
 3. Processing chain runs (your custom processors)
@@ -1068,9 +1093,11 @@ auto node_buffer = vega.NodeBuffer(0, 512, sine, true);  // Clear first (default
 ```
 
 **true (default)**: Buffer is zeroed, then filled with node output
+
 - Result: pure node output
 
 **false**: Node output is **added** to existing buffer content
+
 - Result: node output + previous buffer state
 
 Why use `false`?
@@ -1080,6 +1107,7 @@ Why use `false`?
 - **Additive synthesis**: Mix multiple generators
 
 Example (layering):
+
 ```cpp
 auto sine = vega.Sine(440.0);
 auto buffer = vega.NodeBuffer(0, 512, sine, true)[0] | Audio;  // First node clears
@@ -1150,7 +1178,7 @@ Buffers that **remember** their previous state.
 void compose() {
     // FeedbackBuffer: 70% feedback, 512 samples delay
     auto feedback_buf = vega.FeedbackBuffer(0, 512, 0.7f, 512)[0] | Audio;
-    
+
     // Feed an impulse into the buffer to kick-start resonance
     auto impulse = vega.Impulse(2.0);  // 2 Hz pulse train
     vega.NodeBuffer(0, 512, impulse, false)[0] | Audio;  // Adds to feedback buffer
@@ -1173,6 +1201,7 @@ The buffer **feeds back into itself**—output becomes input next cycle.
 **Default processor: `FeedbackProcessor`**
 
 Each cycle:
+
 1. Current buffer content: `buffer[n]`
 2. Previous buffer content: `previous_buffer[n-1]`
 3. Output: `buffer[n] + (feedback_amount * previous_buffer[n-1])`
@@ -1181,10 +1210,12 @@ Each cycle:
 This is a **simple delay line** with feedback.
 
 **Parameters:**
+
 - `feedback_amount`: 0.0–1.0 (how much previous state contributes)
 - `feed_samples`: Delay length in samples
 
 Example: `FeedbackBuffer(0, 512, 0.7, 512)` creates:
+
 - 512-sample delay (~10.6 ms at 48 kHz)
 - 70% feedback (echoes decay to 0.7 → 0.49 → 0.343 → ...)
 
@@ -1213,6 +1244,7 @@ Example: `FeedbackBuffer(0, 512, 0.7, 512)` creates:
 `FeedbackBuffer` is a **building block**, not a complete reverb/delay effect.
 
 For complex feedback systems:
+
 - Use `PolynomialProcessor` in `RECURSIVE` mode (per-sample nonlinear feedback)
 - Use `BufferPipeline` to route buffers back to themselves with processing
 - Build custom feedback networks with multiple buffers
@@ -1229,22 +1261,26 @@ For complex feedback systems:
 <summary>Click to expand: Use Cases and Alternatives</summary>
 
 **Use `FeedbackBuffer` when:**
+
 - You need a simple delay line with fixed feedback
 - Building Karplus-Strong string synthesis
 - Creating rhythmic echoes
 - Implementing comb filters
 
 **Use `PolynomialProcessor(RECURSIVE)` when:**
+
 - You need nonlinear feedback (saturation, distortion in loop)
 - Feedback amount varies per sample
 - Building filters with arbitrary feedback functions
 
 **Use `BufferPipeline` when:**
+
 - You need complex routing (buffer A → process → buffer B → back to A)
 - Multi-buffer feedback networks
 - Cross-channel feedback
 
 **Example: Filtered feedback (requires multiple approaches):**
+
 ```cpp
 // FeedbackBuffer can't do this alone:
 // current + lowpass(feedback * previous)
@@ -1294,19 +1330,19 @@ Processors that **write** buffer data somewhere (instead of transforming it).
 
 ```cpp
 void compose() {
-    auto sound = vega.read("path/to/file.wav") | Audio;
+    auto sound = vega.read_audio("path/to/file.wav") | Audio;
     auto buffer = MayaFlux::get_last_created_container_buffers()[0];
-    
+
     // Create a DynamicSoundStream (accumulator for captured audio)
     auto capture_stream = std::make_shared<DynamicSoundStream>(48000, 2);
-    
+
     // Create a processor that writes buffer data to the stream
     auto writer = std::make_shared<StreamWriteProcessor>(capture_stream);
-    
+
     // Add to buffer's processing chain
     auto chain = buffer->get_processing_chain();
     chain->add_processor(writer);
-    
+
     // File plays AND is captured to stream simultaneously
 }
 ```
@@ -1328,6 +1364,7 @@ After playback, `capture_stream` contains a copy of the entire file (processed t
 - **StreamWriteProcessor**: reads from buffer → writes to container (sink)
 
 **Each cycle:**
+
 1. Extract 512 samples from the buffer
 2. Write them to the `DynamicSoundStream` at the current write position
 3. Increment write position by 512
@@ -1335,6 +1372,7 @@ After playback, `capture_stream` contains a copy of the entire file (processed t
 The stream grows dynamically as data arrives. No pre-allocation needed (though you can for performance).
 
 **Use cases:**
+
 - Record processed audio to memory
 - Capture intermediate processing stages for analysis
 - Build delay lines / loopers
@@ -1423,6 +1461,7 @@ auto writer = std::make_shared<StreamWriteProcessor>(stream);
 When write position reaches capacity, it wraps to 0. Old data is overwritten.
 
 **Use cases:**
+
 - **Delay lines**: Fixed-length delays for effects
 - **Loopers**: Record N seconds, then loop
 - **Rolling analysis**: Keep only the most recent N seconds
@@ -1437,7 +1476,7 @@ Without circular mode, the stream grows unbounded—useful for full recording, p
 
 ```cpp
 // Record 5 seconds of audio
-auto sound = vega.read("path/to/file.wav") | Audio;
+auto sound = vega.read_audio("path/to/file.wav") | Audio;
 auto buffer = MayaFlux::get_last_created_container_buffers()[0];
 
 auto stream = std::make_shared<DynamicSoundStream>(48000, 1);
@@ -1466,17 +1505,20 @@ buffer->get_processing_chain()->add_processor(writer, buffer);
 You now understand:
 
 **Buffer Types:**
+
 - `AudioBuffer`: Generic accumulator
 - `ContainerBuffer`: Reads from files/streams (default: `ContainerToBufferAdapter`)
 - `NodeBuffer`: Generates from nodes (default: `NodeSourceProcessor`)
 - `FeedbackBuffer`: Recursive delay (default: `FeedbackProcessor`)
 
 **Processor Types:**
+
 - `PolynomialProcessor`: Waveshaping, filters, recursive math
 - `LogicProcessor`: Decisions, gates, triggers
 - `StreamWriteProcessor`: Capture to containers
 
 **Processing Flow:**
+
 ```
 Default Processor (acquire/generate data)
     ↓
@@ -1507,7 +1549,7 @@ void settings() {
 void compose() {
     // Create a buffer that listens to microphone channel 0
     auto mic_buffer = MayaFlux::create_input_listener_buffer(0, true);
-    
+
     // Add processing to the live input
     auto distortion = vega.Polynomial([](double x) { return std::tanh(x * 3.0); });
     MayaFlux::create_processor<PolynomialProcessor>(mic_buffer, distortion);
@@ -1548,6 +1590,7 @@ When you call `create_input_listener_buffer(channel, add_to_output)`:
 3. If `add_to_output=true`: Also registers it with output channel (so it plays back)
 
 **Each audio cycle:**
+
 - Driver captures microphone data
 - `InputAudioBuffer` receives it
 - `InputAccessProcessor` **copies** data to all registered listeners
@@ -1584,6 +1627,7 @@ MayaFlux::detach_from_audio_input(buffer, 0);
 - You need finer control over buffer lifecycle
 
 **Example: Record button**
+
 ```cpp
 auto recorder = vega.AudioBuffer()[0] | Audio;
 
@@ -1620,6 +1664,7 @@ mic_capture->get_processing_chain()->add_processor(writer);
 **Result:** Microphone data is captured to `stream`, but you don't hear it.
 
 **Use cases:**
+
 - Recording without monitoring
 - Voice analysis (pitch detection, speech recognition)
 - Trigger detection (clap to start/stop)
@@ -1669,7 +1714,7 @@ One buffer, multiple output channels.
 void compose() {
     auto sine = vega.Sine(440.0);
     auto buffer = vega.NodeBuffer(0, 512, sine)[0] | Audio;  // Registered to channel 0
-    
+
     // Supply this buffer to channels 1 and 2 as well
     MayaFlux::supply_buffer_to_channels(buffer, {1, 2}, 0.5);  // 50% mix level
 }
@@ -1687,16 +1732,19 @@ The buffer processes **once**, but outputs to **three channels**.
 <summary>Click to expand: The Difference Between Registration and Supply</summary>
 
 **Registration** (`vega.AudioBuffer()[0] | Audio`):
+
 - Adds buffer as a **child** of `RootAudioBuffer[0]`
 - Buffer processes during channel 0's cycle
 - Output **accumulates** into channel 0
 
 **Supply** (`supply_buffer_to_channels`):
+
 - Adds buffer's **output** to other channels
 - Buffer still processes in its original channel
 - Output is **copied** to supplied channels
 
 **Analogy:**
+
 - Registration = "This buffer lives in channel 0"
 - Supply = "After processing in channel 0, send copies to channels 1 and 2"
 
@@ -1732,6 +1780,7 @@ MayaFlux::supply_buffer_to_channel(buffer, 3, 0.1);  // 10% (quiet)
 ```
 
 **Use case: Stereo width control**
+
 ```cpp
 auto mono_source = vega.Sine(440.0);
 auto buffer = vega.NodeBuffer(0, 512, mono_source)[0] | Audio;
@@ -1742,6 +1791,7 @@ MayaFlux::supply_buffer_to_channel(buffer, 1, 0.5);  // Right (quieter)
 ```
 
 **Use case: Send effects**
+
 ```cpp
 auto dry = vega.NodeBuffer(0, 512, sine)[0] | Audio;  // Dry signal, channel 0
 
@@ -1774,11 +1824,13 @@ MayaFlux::remove_supplied_buffer_from_channels(buffer, {1, 2, 3});
 ```
 
 **Use case: Mute individual sends**
+
 - Buffer still processes
 - Output still goes to its registered channel
 - Supplied channels no longer receive it
 
 **Use case: Dynamic routing matrices**
+
 ```cpp
 if (user_pressed_button_A) {
     MayaFlux::supply_buffer_to_channel(buffer, 1);
@@ -1828,7 +1880,7 @@ One buffer specification, multiple independent instances.
 void compose() {
     auto sine = vega.Sine(440.0);
     auto buffer = vega.NodeBuffer(0, 512, sine);  // Don't register yet
-    
+
     // Clone to channels 0, 1, 2
     MayaFlux::clone_buffer_to_channels(buffer, {0, 1, 2});
 }
@@ -1846,6 +1898,7 @@ Each clone processes **independently**—they don't share data.
 <summary>Click to expand: When to Use Each</summary>
 
 **Supply:**
+
 - One buffer processes **once**
 - Output is **copied** to multiple channels
 - Processing cost: **1× processing**
@@ -1853,6 +1906,7 @@ Each clone processes **independently**—they don't share data.
 - Use when: Same signal needs to go to multiple places
 
 **Clone:**
+
 - Multiple buffers process **independently**
 - Each has its own data, state, processing chain
 - Processing cost: **N× processing** (N = number of clones)
@@ -1860,6 +1914,7 @@ Each clone processes **independently**—they don't share data.
 - Use when: Similar buffers need independent processing
 
 **Example: Supply use case**
+
 ```cpp
 // One reverb output to stereo speakers
 auto reverb = vega.FeedbackBuffer(0, 512, 0.8f, 4800)[0] | Audio;
@@ -1868,6 +1923,7 @@ MayaFlux::supply_buffer_to_channel(reverb, 1);  // Copy to right channel
 ```
 
 **Example: Clone use case**
+
 ```cpp
 // Independent noise generators per channel
 auto noise_template = vega.NodeBuffer(0, 512, vega.Random(-1.0, 1.0));
@@ -1894,6 +1950,7 @@ When you clone a buffer, each clone receives:
 - **Independent state** (feedback buffers have separate history)
 
 **Example: Clone a processed buffer**
+
 ```cpp
 auto sine = vega.Sine(440.0);
 auto buffer = vega.NodeBuffer(0, 512, sine);
@@ -1972,24 +2029,28 @@ MayaFlux::clone_buffer_to_channels(feedback_template, {0, 1, 2, 3});
 You now understand:
 
 **Input Capture:**
+
 - `InputAudioBuffer`: Hardware input hub
 - `InputAccessProcessor`: Dispatches to listeners
 - `create_input_listener_buffer()`: Quick setup
 - `read_from_audio_input()` / `detach_from_audio_input()`: Manual control
 
 **Buffer Supply:**
+
 - `supply_buffer_to_channel()`: Route one buffer to multiple outputs
 - Mix levels: Control send amounts
 - Efficiency: Process once, output many times
 - `remove_supplied_buffer_from_channel()`: Dynamic routing changes
 
 **Buffer Cloning:**
+
 - `clone_buffer_to_channels()`: Create independent copies
 - Preserves structure: Type, processors, chains
 - Independent state: Each clone processes separately
 - Post-clone modification: Differentiate behavior after creation
 
 **Mental Model:**
+
 ```
 Input (Microphone)
     ↓
