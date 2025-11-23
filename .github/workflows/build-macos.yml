@@ -231,7 +231,7 @@ jobs:
 
           echo ""
           echo "Runtime (JIT Context):"
-          find dist_staging/share/lila/runtime -type f | head -5 || echo "No runtime files found"
+          find dist_staging/share/MayaFlux/runtime -type f | head -5 || echo "No runtime files found"
 
       - name: Copy distribution files
         shell: bash

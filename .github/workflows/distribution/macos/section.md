@@ -30,7 +30,7 @@ MayaFlux-{{VERSION}}-windows-x64/
 │   ├── MayaFlux/
 │   └── Lila/
 ├── share/            # Runtime data
-│   └── lila/runtime/
+│   └── MayaFlux/runtime/
 ├── README_Windows.md
 └── verify.bat
 ```

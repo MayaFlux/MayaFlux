@@ -36,6 +36,7 @@ namespace Buffers {
     class VKBuffer;
     class TextureBuffer;
     class GeometryBuffer;
+    class NetworkGeometryBuffer;
 }
 
 namespace Kakshya {
@@ -67,4 +68,5 @@ namespace Kakshya {
     B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer) \
     B(VKBuffer, MayaFlux::Buffers::VKBuffer)               \
     B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)     \
-    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)
+    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)   \
+    B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)

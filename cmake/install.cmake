@@ -9,26 +9,26 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/MayaFlux/
         FILES_MATCHING PATTERN "*.hpp" PATTERN "*.h")
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/mayaflux.pc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mayaflux.pc
+    ${CMAKE_SOURCE_DIR}/cmake/MayaFlux.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/MayaFlux.pc
     @ONLY
 )
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/lila.pc.in
-    ${CMAKE_CURRENT_BINARY_DIR}/lila.pc
+    ${CMAKE_SOURCE_DIR}/cmake/Lila.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/Lila.pc
     @ONLY
 )
 
 if(UNIX)
     install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/mayaflux.pc
-        ${CMAKE_CURRENT_BINARY_DIR}/lila.pc
+        ${CMAKE_CURRENT_BINARY_DIR}/MayaFlux.pc
+        ${CMAKE_CURRENT_BINARY_DIR}/Lila.pc
         DESTINATION lib/pkgconfig)
 endif()
 
 install(DIRECTORY ${SHADER_OUTPUT_DIR}
-    DESTINATION share/mayaflux/
+    DESTINATION share/MayaFlux/
     FILES_MATCHING PATTERN "*.spv"
 )
 
@@ -52,7 +52,7 @@ install(FILES
 install(FILES
     ${CMAKE_SOURCE_DIR}/cmake/pch.h
     ${CMAKE_SOURCE_DIR}/cmake/config.h
-    DESTINATION share/lila/runtime
+    DESTINATION share/MayaFlux/runtime
 )
 
 install(TARGETS lila_server RUNTIME DESTINATION bin)
@@ -84,6 +84,6 @@ install(FILES
 message(STATUS "Lila (static) installed to:")
 message(STATUS "  - Libraries: ${CMAKE_INSTALL_PREFIX}/lib")
 message(STATUS "  - Headers: ${CMAKE_INSTALL_PREFIX}/include/Lila")
-message(STATUS "  - Runtime data: ${CMAKE_INSTALL_PREFIX}/share/lila/runtime")
+message(STATUS "  - Runtime data: ${CMAKE_INSTALL_PREFIX}/share/MayaFlux/runtime")
 message(STATUS "  - Executables: ${CMAKE_INSTALL_PREFIX}/bin")
 message(STATUS "  - CMake config: ${CMAKE_INSTALL_PREFIX}/lib/cmake/MayaFlux")

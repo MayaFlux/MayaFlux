@@ -1,5 +1,5 @@
 # ============================================================================
-# mayaflux.pc - MayaFlux Core Library
+# MayaFlux.pc - MayaFlux Core Library
 # ============================================================================
 # NOTE: This single .pc file represents all platforms.
 # pkg-config will not resolve platform-specific Requires.private correctly,
@@ -45,6 +45,10 @@ Cflags: -I${includedir}
 
 # Linking flags
 Libs: -L${libdir} -lMayaFluxLib
+
+# Runtime support directory
+runtimedir=${datadir}/MayaFlux/runtime
+
 
 # ============================================================================
 # IMPORTANT NOTE FOR USERS

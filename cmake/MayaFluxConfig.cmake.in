@@ -133,7 +133,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
 
     set_target_properties(MayaFlux::MayaFluxLib PROPERTIES
         IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxLib${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/lila/runtime"
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
     )
 
     # Platform-specific import lib (Windows only)
@@ -352,4 +352,4 @@ set(MayaFlux_FOUND TRUE)
 set(MayaFlux_LIBRARIES MayaFlux::MayaFluxLib MayaFlux::Lila)
 set(MayaFlux_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/include")
 set(MayaFlux_LIB_DIR "${PACKAGE_PREFIX_DIR}/lib")
-set(MayaFlux_SHADER_DIR "${PACKAGE_PREFIX_DIR}/share/mayaflux/shaders")
+set(MayaFlux_SHADER_DIR "${PACKAGE_PREFIX_DIR}/share/MayaFlux/shaders")

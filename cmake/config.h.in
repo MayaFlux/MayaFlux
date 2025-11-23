@@ -110,14 +110,14 @@ namespace MayaFlux {
 namespace Config {
     constexpr std::string_view SOURCE_DIR = "@CMAKE_SOURCE_DIR@";
     constexpr std::string_view PCH_SOURCE_PATH = "@CMAKE_SOURCE_DIR@/cmake";
-    constexpr std::string_view RUNTIME_DATA_DIR = "@CMAKE_INSTALL_PREFIX@/share/lila/runtime";
-    constexpr std::string_view PCH_RUNTIME_PATH = "@CMAKE_INSTALL_PREFIX@/share/lila/runtime/pch.h";
+    constexpr std::string_view RUNTIME_DATA_DIR = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/runtime";
+    constexpr std::string_view PCH_RUNTIME_PATH = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/runtime/pch.h";
 }
 
 namespace Core {
     constexpr const char* SHADER_BUILD_OUTPUT_DIR = "@SHADER_OUTPUT_DIR@";
     constexpr const char* SHADER_SOURCE_DIR = "@SHADERS_DIR@";
-    constexpr const char* SHADER_INSTALL_DIR = "@CMAKE_INSTALL_PREFIX@/share/mayaflux/shaders";
+    constexpr const char* SHADER_INSTALL_DIR = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/shaders";
 } // namespace Core
 
 namespace Platform {
