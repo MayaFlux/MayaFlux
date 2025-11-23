@@ -1,0 +1,33 @@
+<map id="LayoutTranslator.cpp" name="LayoutTranslator.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="445,5,601,31"/>
+<area shape="rect" id="Node000002" href="$LayoutTranslator_8hpp.html" title=" " alt="" coords="338,79,495,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="508,33,447,73,444,69,505,28"/>
+<area shape="rect" id="Node000009" href="$Archivist_8hpp.html" title=" " alt="" coords="519,79,743,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="542,28,604,69,601,73,539,33"/>
+<area shape="rect" id="Node000003" href="$VKGraphicsPipeline_8hpp.html" title=" " alt="" coords="5,152,295,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="379,107,228,151,226,146,377,101"/>
+<area shape="rect" id="Node000006" href="$VertexLayout_8hpp.html" title=" " alt="" coords="319,152,520,192"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="420,104,421,138,416,138,414,104"/>
+<area shape="rect" id="Node000004" href="$VKShaderModule_8hpp.html" title=" " alt="" coords="69,240,231,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="153,192,153,226,147,226,147,192"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="80,313,220,339"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="153,266,153,300,147,300,147,266"/>
+<area shape="rect" id="Node000007" href="$NDData_8hpp.html" title=" " alt="" coords="369,240,470,265"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="422,192,422,226,417,226,417,192"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="367,313,471,339"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="422,266,422,300,417,300,417,266"/>
+<area shape="rect" id="Node000010" href="$Format_8hpp.html" title=" " alt="" coords="582,159,678,185"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="634,104,633,146,628,145,628,104"/>
+<area shape="rect" id="Node000011" href="$JournalEntry_8hpp.html" title=" " alt="" coords="703,159,829,185"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="653,102,736,150,733,155,650,106"/>
+<area shape="rect" id="Node000012" href="$EnumUtils_8hpp.html" title=" " alt="" coords="517,240,703,265"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="745,187,646,236,644,232,742,182"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="727,240,794,265"/>
+<area shape="poly" id="edge13_Node000011_Node000014" title=" " alt="" coords="768,185,765,226,760,226,763,185"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="819,240,943,265"/>
+<area shape="poly" id="edge14_Node000011_Node000015" title=" " alt="" coords="784,183,854,230,851,234,781,187"/>
+<area shape="rect" id="Node000016" title=" " alt="" coords="967,240,1064,265"/>
+<area shape="poly" id="edge15_Node000011_Node000016" title=" " alt="" coords="803,182,967,233,965,238,801,187"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="499,313,721,339"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="613,266,613,300,607,300,607,266"/>
+</map>

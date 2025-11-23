@@ -1,0 +1,6 @@
+<map id="MayaFlux::Yantra::transform_wrap" name="MayaFlux::Yantra::transform_wrap">
+<area shape="rect" id="Node000001" title="Wrap transformation (modulo operation) using C++20 ranges (IN&#45;PLACE)" alt="" coords="299,29,544,55"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="474,21,472,16,462,12,421,8,390,10,373,15,369,20,378,27,374,31,364,21,369,11,389,5,421,3,464,7,475,12,479,18"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_af353cb8c2e8c36a11b87ac9d335184f0.html#af353cb8c2e8c36a11b87ac9d335184f0" title="Wrap transformation (modulo operation) using C++20 ranges (OUT&#45;OF&#45;PLACE)" alt="" coords="5,29,251,55"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="285,45,251,45,251,39,285,39"/>
+</map>

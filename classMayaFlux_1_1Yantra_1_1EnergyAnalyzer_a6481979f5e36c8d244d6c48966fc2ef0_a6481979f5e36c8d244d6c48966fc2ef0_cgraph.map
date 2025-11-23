@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::create_analysis_result" name="MayaFlux::Yantra::EnergyAnalyzer::create_analysis_result">
+<area shape="rect" id="Node000001" title="Create comprehensive analysis result from energy computation." alt="" coords="5,110,195,165"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a78650fff957b36197861a07380f66e09.html#a78650fff957b36197861a07380f66e09" title="Find actual peak positions in the signal." alt="" coords="251,29,418,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,107,242,79,261,72,263,77,244,84,170,112"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_ac7bce0558b9ae87839510987603409b3.html#ac7bce0558b9ae87839510987603409b3" title="Find actual zero&#45;crossing positions in the signal." alt="" coords="243,117,427,157"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="195,135,229,135,229,140,195,140"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="269,182,400,207"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="195,158,269,176,268,181,194,163"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="291,30,288,20,295,10,311,5,335,3,362,6,377,13,375,18,361,11,335,8,312,10,298,15,293,21,296,28"/>
+<area shape="poly" id="edge4_Node000003_Node000003" title=" " alt="" coords="291,118,288,108,295,98,311,93,335,91,362,94,377,101,375,106,361,99,335,96,312,98,298,103,293,109,296,116"/>
+</map>

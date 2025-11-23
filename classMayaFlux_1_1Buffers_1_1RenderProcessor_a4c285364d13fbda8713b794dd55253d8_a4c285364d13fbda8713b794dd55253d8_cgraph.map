@@ -1,0 +1,16 @@
+<map id="MayaFlux::Buffers::RenderProcessor::processing_function" name="MayaFlux::Buffers::RenderProcessor::processing_function">
+<area shape="rect" id="Node000001" title="The core processing function that must be implemented by derived classes." alt="" coords="5,61,215,115"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="520,69,717,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,86,506,86,506,92,215,91"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="263,8,460,48"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="214,60,263,49,264,54,216,66"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a075378983552faf881f1b6eebc36dfec.html#a075378983552faf881f1b6eebc36dfec" title=" " alt="" coords="264,126,459,181"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="216,113,251,122,250,127,214,118"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="777,69,975,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="717,87,764,87,764,92,717,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="520,5,717,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="460,24,506,24,506,29,460,30"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="458,127,524,110,525,115,460,132"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ade87585e9e710203e925adc90398ea9b.html#ade87585e9e710203e925adc90398ea9b" title="Associate a window with a render pass for rendering." alt="" coords="508,134,729,189"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="459,154,494,155,494,160,459,159"/>
+</map>

@@ -1,0 +1,23 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::reload_shader" name="MayaFlux::Portal::Graphics::ShaderFoundry::reload_shader">
+<area shape="rect" id="Node000001" title="Hot&#45;reload shader (returns new ID)" alt="" coords="5,153,232,193"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aaa5b76118b6f30e23ae787d901f47255.html#aaa5b76118b6f30e23ae787d901f47255" title="Destroy shader (cleanup internal state)" alt="" coords="285,89,519,129"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,150,299,129,300,134,209,155"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a5461e966f74d328cea7d885a572b1b21.html#a5461e966f74d328cea7d885a572b1b21" title="Invalidate cache for specific shader." alt="" coords="280,153,524,193"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="232,170,267,170,267,175,232,175"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a43593cc7b7d32065c26b3e040a6ab794.html#a43593cc7b7d32065c26b3e040a6ab794" title="Compile shader from file path." alt="" coords="295,217,509,257"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="209,190,300,211,299,216,207,195"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_adfa75c7749cc2487c2fe9f4a714fc698.html#adfa75c7749cc2487c2fe9f4a714fc698" title=" " alt="" coords="572,141,769,196"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="481,214,558,194,559,200,482,219"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a12353054037641e59b9426bba88cc151.html#a12353054037641e59b9426bba88cc151" title="Auto&#45;detect shader stage from file extension." alt="" coords="572,248,769,303"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="509,249,559,257,558,262,508,255"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a4dd0aa12e086b204214f0823ad212d17.html#a4dd0aa12e086b204214f0823ad212d17" title=" " alt="" coords="839,5,1036,60"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="707,139,757,104,816,70,833,63,835,68,819,75,760,108,710,143"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="835,85,1040,125"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="769,142,839,125,840,131,770,148"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aa9c6a8bc1c6cc0082f4519bd71da28c5.html#aa9c6a8bc1c6cc0082f4519bd71da28c5" title="Check if compiler is initialized." alt="" coords="829,149,1045,189"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="770,166,816,166,816,171,770,171"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a7164141bfc6000673da8c39715c4c85e.html#a7164141bfc6000673da8c39715c4c85e" title="Convert Portal ShaderStage to Vulkan ShaderStageFlagBits." alt="" coords="817,213,1057,253"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="770,190,840,207,839,212,769,195"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a34479b0a46b0aa6b144ddcf62a3e38cb.html#a34479b0a46b0aa6b144ddcf62a3e38cb" title="Auto&#45;detect shader stage from file extension." alt="" coords="837,277,1037,332"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="770,284,824,290,823,295,769,289"/>
+</map>

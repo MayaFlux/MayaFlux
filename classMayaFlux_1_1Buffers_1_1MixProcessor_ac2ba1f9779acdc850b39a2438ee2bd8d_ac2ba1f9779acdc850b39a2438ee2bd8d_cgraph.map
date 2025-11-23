@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::MixProcessor::processing_function" name="MayaFlux::Buffers::MixProcessor::processing_function">
+<area shape="rect" id="Node000001" title="the mechanism to mix output from one buffer to another channel" alt="" coords="5,34,192,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1MixProcessor_a52590eb7c09a545c38dab06324bb8f4e.html#a52590eb7c09a545c38dab06324bb8f4e" title=" " alt="" coords="241,5,409,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,44,228,38,228,43,193,49"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1MixProcessor_a7e40413c0fdf50340a1bea8546c3607e.html#a7e40413c0fdf50340a1bea8546c3607e" title=" " alt="" coords="240,70,411,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,74,227,79,226,84,192,79"/>
+</map>

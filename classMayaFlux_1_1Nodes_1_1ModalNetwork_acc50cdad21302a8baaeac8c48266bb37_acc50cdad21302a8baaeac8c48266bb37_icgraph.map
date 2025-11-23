@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::ModalNetwork::update_mapped_parameters" name="MayaFlux::Nodes::ModalNetwork::update_mapped_parameters">
+<area shape="rect" id="Node000001" title="Update mapped parameters before processing." alt="" coords="292,5,531,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1ModalNetwork_a21ed948fb974af78abd75a6123e1be1a.html#a21ed948fb974af78abd75a6123e1be1a" title="Process the network for the given number of samples." alt="" coords="5,5,244,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="278,28,244,28,244,23,278,23"/>
+</map>

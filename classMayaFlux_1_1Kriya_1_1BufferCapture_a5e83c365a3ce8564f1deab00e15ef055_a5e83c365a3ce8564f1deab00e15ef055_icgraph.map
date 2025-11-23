@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kriya::BufferCapture::with_processing_control" name="MayaFlux::Kriya::BufferCapture::with_processing_control">
+<area shape="rect" id="Node000001" title="Set processing control strategy." alt="" coords="565,69,792,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1CaptureBuilder_a1b9681afaced98536a33074de8865fbc.html#a1b9681afaced98536a33074de8865fbc" title="Set processing control to AUTOMATIC mode." alt="" coords="311,5,498,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="579,69,490,48,491,43,580,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1CaptureBuilder_ad268498f1d74761fb73c051f414eab78.html#ad268498f1d74761fb73c051f414eab78" title="Set processing control to MANUAL mode." alt="" coords="303,69,506,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="552,92,506,92,506,87,552,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1CaptureBuilder_a342847a0d0ce6ff90a1c000d04a83928.html#a342847a0d0ce6ff90a1c000d04a83928" title="Set processing control to ON_CAPTURE mode." alt="" coords="292,133,517,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="580,115,491,136,490,131,579,110"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_ae7457d99167bee8e2b290c9cba5c9dfb.html#ae7457d99167bee8e2b290c9cba5c9dfb" title="Create CaptureBuilder for file with fluent configuration." alt="" coords="5,133,244,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="278,156,244,156,244,151,278,151"/>
+</map>

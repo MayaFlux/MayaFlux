@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::VKBuffer" name="MayaFlux::Buffers::VKBuffer">
+<area shape="rect" id="Node000001" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="343,461,524,976"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="8,1024,205,1681"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="336,844,275,931,220,1025,208,1050,203,1047,215,1023,271,928,332,841"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1DescriptorBuffer.html" title="Specialized buffer for shader parameter bindings from nodes." alt="" coords="229,1213,421,1493"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="390,990,352,1213,346,1212,385,989"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer.html" title="Specialized buffer for generative geometry from GeometryWriterNode." alt="" coords="445,1213,637,1493"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="482,989,520,1212,515,1213,477,990"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer.html" title="Specialized buffer for generative texture/pixel data from TextureNode." alt="" coords="661,1213,853,1493"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="535,840,596,928,652,1023,692,1117,724,1211,719,1213,687,1119,647,1025,592,930,530,843"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="342,133,525,413"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="436,427,436,461,431,461,431,427"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="357,5,509,85"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="436,99,436,133,431,133,431,99"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer.html" title="Root container for GPU buffer lifecycle management and batch processing." alt="" coords="5,1729,208,2189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="109,1695,109,1729,104,1729,104,1695"/>
+</map>

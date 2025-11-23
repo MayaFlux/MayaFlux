@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SoundFileReader::setup_resampler" name="MayaFlux::IO::SoundFileReader::setup_resampler">
+<area shape="rect" id="Node000001" title="Set up the FFmpeg resampler if needed." alt="" coords="5,5,231,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a800c7fe05bac701dcfa6a826ad78c22e.html#a800c7fe05bac701dcfa6a826ad78c22e" title="Set the last error message." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,23,265,23,265,28,231,28"/>
+</map>

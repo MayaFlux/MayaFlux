@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['2_20—_20ci_20cd_20binary_20generation_0',['⚙️ Phase 2 — CI/CD &amp; Binary Generation',['../md_docs_2BuildOps.html#autotoc_md147',1,'']]],
+  ['2_20q1_202026_1',['Phase 2 (Q1 2026)',['../md_README.html#autotoc_md76',1,'']]],
+  ['2_20run_20platform_20setup_20script_2',['2. Run Platform Setup Script',['../index.html#autotoc_md223',1,'']]],
+  ['2_20strong_20graphics_20configuration_20strong_20globalgraphicsconfig_3',['2. &lt;strong&gt;Graphics Configuration&lt;/strong&gt; (GlobalGraphicsConfig)',['../md_docs_2Settings.html#autotoc_md254',1,'']]],
+  ['2026_4',['2026',['../md_README.html#autotoc_md76',1,'Phase 2 (Q1 2026)'],['../md_README.html#autotoc_md77',1,'Phase 3 (Q2-Q3 2026)']]],
+  ['2_3a_20bufferoperation_20types_5',['Expansion 2: BufferOperation Types',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md529',1,'']]],
+  ['2_3a_20chain_20execution_20order_6',['Expansion 2: Chain Execution Order',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md370',1,'']]],
+  ['2_3a_20chain_20order_20matters_7',['Expansion 2: Chain Order Matters',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md360',1,'']]],
+  ['2_3a_20channel_20aware_20writing_8',['Expansion 2: Channel-Aware Writing',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md404',1,'']]],
+  ['2_3a_20claim_20your_20file_9',['Step 2: Claim Your File',['../md_docs_2StarterTasks.html#autotoc_md278',1,'']]],
+  ['2_3a_20cloning_20preserves_20structure_10',['Expansion 2: Cloning Preserves Structure',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md442',1,'']]],
+  ['2_3a_20enter_20dynamicsoundstream_11',['Expansion 2: Enter DynamicSoundStream',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md507',1,'']]],
+  ['2_3a_20feedbackbuffer_20limitations_12',['Expansion 2: FeedbackBuffer Limitations',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md393',1,'']]],
+  ['2_3a_20logic_20node_20needs_20an_20input_13',['Expansion 2: Logic node needs an input',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md347',1,'']]],
+  ['2_3a_20low_20latency_20real_20time_20music_20performance_14',['Scenario 2: Low-Latency Real-Time (Music Performance)',['../md_docs_2Settings.html#autotoc_md262',1,'']]],
+  ['2_3a_20manual_20input_20registration_15',['Expansion 2: Manual Input Registration',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md420',1,'']]],
+  ['2_3a_20memory_20ownership_20and_20smart_20pointers_16',['Expansion 2: Memory, Ownership, and Smart Pointers',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md455',1,'']]],
+  ['2_3a_20mix_20levels_17',['Expansion 2: Mix Levels',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md431',1,'']]],
+  ['2_3a_20replace_20tt_20throw_20tt_20with_20tt_20error_20tt_18',['Pattern 2: Replace &lt;tt&gt;throw&lt;/tt&gt; with &lt;tt&gt;error()&lt;/tt&gt;',['../md_docs_2StarterTasks.html#autotoc_md281',1,'']]],
+  ['2_3a_20the_20history_20buffer_19',['Expansion 2: The History Buffer',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md334',1,'']]],
+  ['2_3a_20the_20tt_20clear_5fbefore_5fprocess_20tt_20parameter_20',['Expansion 2: The &lt;tt&gt;clear_before_process&lt;/tt&gt; Parameter',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md382',1,'']]],
+  ['2_3a_20what_20is_20tt_20mayaflux_3a_3acreate_5fprocessor_20tt_21',['Expansion 2: What Is &lt;tt&gt;MayaFlux::create_processor()&lt;/tt&gt;?',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md489',1,'']]],
+  ['2_3a_20what_20tt_20vega_20polynomial_20tt_20creates_22',['Expansion 2: What &lt;tt&gt;vega.Polynomial()&lt;/tt&gt; Creates',['../md_docs_2Tutorials_2SculptingData_2ProcessingExpression.html#autotoc_md321',1,'']]],
+  ['2_3a_20why_20per_20channel_20buffers_23',['Expansion 2: Why Per-Channel Buffers?',['../md_docs_2Tutorials_2SculptingData_2SculptingData.html#autotoc_md469',1,'']]]
+];

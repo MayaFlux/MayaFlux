@@ -1,0 +1,9 @@
+<map id="MayaFlux::IO::FileRegion::to_region" name="MayaFlux::IO::FileRegion::to_region">
+<area shape="rect" id="Node000001" title="Convert this FileRegion to a Region for use in processing." alt="" coords="5,69,189,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1Region_a22e5e7b4feb8bc29ddf2201ff3b246fe.html#a22e5e7b4feb8bc29ddf2201ff3b246fe" title="Set an attribute value by key." alt="" coords="237,5,396,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,67,234,47,235,52,167,72"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1Region_af9de36901f8f5d8a9e579617abe7ed10.html#af9de36901f8f5d8a9e579617abe7ed10" title="Create a Region representing a single time point (e.g., a frame or sample)." alt="" coords="237,69,396,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="190,87,224,87,224,92,190,92"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1Region_a1b041dac695640864ce6456f0815df4c.html#a1b041dac695640864ce6456f0815df4c" title="Create a Region representing a time span (e.g., a segment of frames)." alt="" coords="237,133,396,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="167,107,235,127,234,132,166,112"/>
+</map>

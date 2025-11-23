@@ -1,0 +1,25 @@
+<map id="MayaFlux::Buffers::VKBufferProcessor" name="MayaFlux::Buffers::VKBufferProcessor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="733,313,927,448"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1AggregateBindingsProcessor.html" title="BufferProcessor that aggregates multiple node outputs into GPU buffers." alt="" coords="5,795,231,1055"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="720,392,591,406,450,427,384,441,325,457,277,476,244,498,215,528,192,563,172,600,156,639,135,719,124,795,118,795,130,718,151,637,167,597,187,560,211,525,240,494,275,472,323,452,383,436,450,422,591,400,719,387"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor.html" title="Transfers data from GPU VKBuffer to CPU target buffer." alt="" coords="255,765,472,1085"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="720,394,660,407,598,427,538,457,511,476,487,498,463,526,442,557,410,625,388,696,375,766,370,765,383,695,405,623,438,554,458,523,483,494,508,472,535,452,596,422,659,402,719,389"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferUploadProcessor.html" title="Transfers data from CPU source buffer to GPU VKBuffer." alt="" coords="497,775,694,1075"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="737,460,708,497,674,564,648,636,629,708,615,776,610,775,624,707,643,634,670,562,704,495,733,457"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor.html" title="BufferProcessor that uploads geometry node data to GPU vertex buffers." alt="" coords="719,815,941,1035"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="833,462,833,815,827,815,827,462"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Generic compute shader processor for VKBuffers." alt="" coords="965,496,1164,1355"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="926,456,955,495,968,517,963,520,950,497,921,459"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1TextureBindingsProcessor.html" title="BufferProcessor that uploads multiple texture nodes to GPU." alt="" coords="1189,835,1370,1015"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="941,388,1001,400,1065,421,1125,451,1153,471,1177,494,1207,532,1230,573,1248,618,1262,664,1279,754,1284,835,1279,835,1273,755,1257,665,1243,620,1225,576,1202,535,1173,498,1149,475,1123,456,1063,426,1000,406,940,393"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor.html" title=" " alt="" coords="1395,705,1580,1145"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="941,388,1061,402,1192,424,1253,438,1308,454,1352,473,1384,494,1421,539,1450,591,1469,647,1483,704,1477,706,1464,649,1445,594,1417,542,1380,498,1350,477,1306,459,1252,443,1191,429,1060,407,940,394"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="740,5,920,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="833,279,833,313,827,313,827,279"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor.html" title="ShaderProcessor that uploads node outputs to descriptor sets." alt="" coords="724,1525,949,1880"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="964,1325,955,1355,901,1526,896,1524,950,1354,959,1324"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor.html" title="ShaderProcessor with automatic node&#45;to&#45;push&#45;constant binding." alt="" coords="974,1585,1155,1820"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="1067,1368,1067,1585,1062,1585,1062,1368"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor.html" title=" " alt="" coords="1179,1403,1377,2003"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="1170,1321,1179,1354,1193,1402,1187,1403,1174,1355,1165,1323"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NodeBindingsProcessor::update_push_constants_from_nodes" name="MayaFlux::Buffers::NodeBindingsProcessor::update_push_constants_from_nodes">
+<area shape="rect" id="Node000001" title=" " alt="" coords="228,5,411,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor_a5e34b6d933284a07018cd78e771c0891.html#a5e34b6d933284a07018cd78e771c0891" title="Hook called before shader dispatch Automatically updates push constants from bound nodes." alt="" coords="5,13,180,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,43,180,43,180,37,214,37"/>
+</map>

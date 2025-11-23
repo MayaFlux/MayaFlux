@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::TextureBuffer" name="MayaFlux::Buffers::TextureBuffer">
+<area shape="rect" id="Node000001" title="Specialized buffer for generative texture/pixel data from TextureNode." alt="" coords="139,1041,331,1321"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="145,477,326,992"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,1006,238,1041,233,1041,233,1006"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,135,188,415"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="145,427,160,476,155,478,140,429"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="21,5,173,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="99,99,99,135,94,135,94,99"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Buffers_1_1VKBufferResources.html" title=" " alt="" coords="212,215,352,335"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="279,335,266,461,261,460,273,335"/>
+</map>

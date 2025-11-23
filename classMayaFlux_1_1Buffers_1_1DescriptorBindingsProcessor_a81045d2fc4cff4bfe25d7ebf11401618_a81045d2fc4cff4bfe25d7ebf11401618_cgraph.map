@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::DescriptorBindingsProcessor::bind_matrix_node" name="MayaFlux::Buffers::DescriptorBindingsProcessor::bind_matrix_node">
+<area shape="rect" id="Node000001" title="Bind matrix node (MatrixContext) to descriptor." alt="" coords="5,45,213,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="282,5,449,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,54,268,45,269,50,214,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a8d3ba64c18f7667ade571771cd137ff4.html#a8d3ba64c18f7667ade571771cd137ff4" title="Create GPU buffer for a descriptor binding." alt="" coords="261,84,469,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,86,248,91,247,96,213,91"/>
+</map>

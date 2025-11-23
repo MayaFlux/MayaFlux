@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::VKBuffer::set_default_processor" name="MayaFlux::Buffers::VKBuffer::set_default_processor">
+<area shape="rect" id="Node000001" title="Set the buffer&#39;s default processor." alt="" coords="245,109,405,164"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_ad8b2a9f9180353ed3d46beacd093d276.html#ad8b2a9f9180353ed3d46beacd093d276" title="Initializes the root buffer with default processor." alt="" coords="23,5,179,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,105,196,75,168,63,170,58,198,70,261,101"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DescriptorBuffer_ae44c13ad3687146e09b22b506bfe55fe.html#ae44c13ad3687146e09b22b506bfe55fe" title="Initialize the buffer and its processors." alt="" coords="5,85,197,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,126,197,121,198,116,232,121"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a48b8a9c3a952f211f38c640178e36e35.html#a48b8a9c3a952f211f38c640178e36e35" title="Initialize the buffer and its processors." alt="" coords="15,149,188,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="232,153,189,159,188,154,231,147"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer_a4b3330629d9f0a4866ef5db19e24c7e4.html#a4b3330629d9f0a4866ef5db19e24c7e4" title="Initialize the buffer and its processors." alt="" coords="16,213,187,268"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="261,173,198,203,170,216,168,211,196,198,258,168"/>
+</map>

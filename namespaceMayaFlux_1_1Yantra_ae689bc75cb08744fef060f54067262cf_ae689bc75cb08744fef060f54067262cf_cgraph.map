@@ -1,0 +1,6 @@
+<map id="MayaFlux::Yantra::compute_kurtosis_statistic" name="MayaFlux::Yantra::compute_kurtosis_statistic">
+<area shape="rect" id="Node000001" title="Compute kurtosis statistic using zero&#45;copy processing." alt="" coords="5,29,204,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="65,30,63,20,69,10,83,5,105,3,129,6,143,13,140,18,128,11,105,8,84,10,72,15,68,21,70,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="252,37,383,62"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="204,47,238,47,238,52,204,52"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::ModalNetwork" name="MayaFlux::Nodes::ModalNetwork">
+<area shape="rect" id="Node000001" title="Network of resonant modes for modal synthesis." alt="" coords="5,619,237,1064"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="9,5,233,571"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,584,124,618,119,618,119,584"/>
+</map>

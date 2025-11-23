@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::ModalNetwork::apply_broadcast_parameter" name="MayaFlux::Nodes::ModalNetwork::apply_broadcast_parameter">
+<area shape="rect" id="Node000001" title="Apply broadcast parameter to all modes." alt="" coords="5,5,244,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1ModalNetwork_a98da6415c8a8335d82a590865de320b8.html#a98da6415c8a8335d82a590865de320b8" title="Set base frequency (fundamental)" alt="" coords="292,5,531,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,23,278,23,278,28,244,28"/>
+</map>

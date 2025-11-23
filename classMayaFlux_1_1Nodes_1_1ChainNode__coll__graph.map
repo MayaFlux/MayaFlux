@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::ChainNode" name="MayaFlux::Nodes::ChainNode">
+<area shape="rect" id="Node000001" title="Connects two nodes in series to form a processing chain." alt="" coords="107,623,314,1043"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,5,203,575"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,587,172,622,167,623,160,588"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="227,250,411,330"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="311,344,255,623,250,622,306,343"/>
+</map>

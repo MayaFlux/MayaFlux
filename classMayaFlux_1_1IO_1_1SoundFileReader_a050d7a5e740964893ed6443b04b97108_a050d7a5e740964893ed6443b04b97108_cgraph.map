@@ -1,0 +1,14 @@
+<map id="MayaFlux::IO::SoundFileReader::read_all" name="MayaFlux::IO::SoundFileReader::read_all">
+<area shape="rect" id="Node000001" title="Read the entire audio file into memory." alt="" coords="5,149,231,189"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8bfd1aa043b76cab1172b2d00705066f.html#a8bfd1aa043b76cab1172b2d00705066f" title="Read a specific number of frames from the file." alt="" coords="279,92,504,132"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,147,282,132,283,137,215,152"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a800c7fe05bac701dcfa6a826ad78c22e.html#a800c7fe05bac701dcfa6a826ad78c22e" title="Set the last error message." alt="" coords="825,92,1051,132"/>
+<area shape="poly" id="edge7_Node000001_Node000004" title=" " alt="" coords="231,179,345,188,483,192,630,187,705,180,777,169,832,155,883,135,884,140,834,160,778,175,705,185,631,193,483,197,345,193,231,185"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a6e78174d0462d4ced0d9ad4d87c739c6.html#a6e78174d0462d4ced0d9ad4d87c739c6" title="Decode a specific number of frames from the file." alt="" coords="552,5,777,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="455,89,586,47,588,52,456,94"/>
+<area shape="poly" id="edge6_Node000002_Node000004" title=" " alt="" coords="504,106,552,105,777,105,812,106,812,111,777,111,552,111,504,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a6f482a88a714daebbe9ebf8c66775d2a.html#a6f482a88a714daebbe9ebf8c66775d2a" title="Internal seek implementation." alt="" coords="552,120,777,160"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="505,121,539,124,538,130,504,126"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="730,43,861,85,860,90,728,48"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="777,126,812,122,812,128,778,131"/>
+</map>

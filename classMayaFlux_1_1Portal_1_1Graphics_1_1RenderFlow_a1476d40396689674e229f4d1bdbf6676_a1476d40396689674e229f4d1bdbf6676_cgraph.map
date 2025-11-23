@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::begin_render_pass" name="MayaFlux::Portal::Graphics::RenderFlow::begin_render_pass">
+<area shape="rect" id="Node000001" title="Begin render pass." alt="" coords="5,27,241,67"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKFramebuffer_ac783239e15ae803d05041d0f3003c9ef.html#ac783239e15ae803d05041d0f3003c9ef" title="Get the framebuffer handle." alt="" coords="296,5,555,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="241,33,282,29,282,35,242,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab2be21f08a8e73058950c603e8a77020.html#ab2be21f08a8e73058950c603e8a77020" title="Get Vulkan command buffer handle from CommandBufferID." alt="" coords="289,55,561,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="242,56,276,59,276,64,241,61"/>
+</map>

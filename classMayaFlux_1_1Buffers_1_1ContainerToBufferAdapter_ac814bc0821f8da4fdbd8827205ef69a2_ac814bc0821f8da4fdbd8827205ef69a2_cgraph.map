@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ContainerToBufferAdapter::set_container" name="MayaFlux::Buffers::ContainerToBufferAdapter::set_container">
+<area shape="rect" id="Node000001" title="Set the container to adapt." alt="" coords="5,5,195,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ContainerToBufferAdapter_a1b9f05ef2a5d7289f21bae03687c7bef.html#a1b9f05ef2a5d7289f21bae03687c7bef" title="Respond to container state changes (e.g., READY, PROCESSED, NEEDS_REMOVAL)." alt="" coords="243,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,30,229,30,229,35,195,35"/>
+</map>

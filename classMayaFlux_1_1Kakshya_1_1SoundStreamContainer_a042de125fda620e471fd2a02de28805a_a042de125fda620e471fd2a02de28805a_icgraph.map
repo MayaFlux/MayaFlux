@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::get_data_as_double" name="MayaFlux::Kakshya::SoundStreamContainer::get_data_as_double">
+<area shape="rect" id="Node000001" title="Get the audio data as a specific type." alt="" coords="445,84,617,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ab03f87ed9ae6c628248b8125974e5102.html#ab03f87ed9ae6c628248b8125974e5102" title="Get multiple frames efficiently." alt="" coords="225,5,397,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="440,82,387,63,389,58,442,77"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a434879b574d2efee512dbb277bf691ab.html#a434879b574d2efee512dbb277bf691ab" title="Get a raw pointer to the underlying data storage." alt="" coords="225,84,397,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="431,114,397,114,397,109,431,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2df106c31610185cee99251f3bad8aa7.html#a2df106c31610185cee99251f3bad8aa7" title="Peek at data without advancing the read position." alt="" coords="225,163,397,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="442,146,389,165,387,160,440,141"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa439bfd4e77f899c063e07263effaaa3.html#aa439bfd4e77f899c063e07263effaaa3" title="Read data sequentially from the current position." alt="" coords="5,163,177,217"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="211,193,177,193,177,187,211,187"/>
+</map>

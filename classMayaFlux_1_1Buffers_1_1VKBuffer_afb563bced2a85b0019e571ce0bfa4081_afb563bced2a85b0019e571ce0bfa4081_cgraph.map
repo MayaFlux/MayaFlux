@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::VKBuffer::~VKBuffer" name="MayaFlux::Buffers::VKBuffer::~VKBuffer">
+<area shape="rect" id="Node000001" title="Virtual destructor." alt="" coords="5,37,160,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a818e469f4792c407c6ebc6e1112a6121.html#a818e469f4792c407c6ebc6e1112a6121" title="Clear buffer contents." alt="" coords="208,37,356,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,55,194,55,194,60,160,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_aeed198b7008219af3eea770413f392ba.html#aeed198b7008219af3eea770413f392ba" title="Whether this VKBuffer should be host&#45;visible." alt="" coords="404,5,587,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="356,44,390,38,391,44,357,49"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ab2774aad8e6ca3ee02ff9b31c2f8f6f7.html#ab2774aad8e6ca3ee02ff9b31c2f8f6f7" title="Check whether Vulkan handles are present (buffer registered)" alt="" coords="411,69,580,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="357,66,397,72,397,77,356,71"/>
+</map>

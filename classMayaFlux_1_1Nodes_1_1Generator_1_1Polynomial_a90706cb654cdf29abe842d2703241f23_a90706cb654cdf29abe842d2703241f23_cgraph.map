@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::Polynomial" name="MayaFlux::Nodes::Generator::Polynomial::Polynomial">
+<area shape="rect" id="Node000001" title="Constructs a Polynomial generator in direct mode with coefficient&#45;based definition." alt="" coords="5,13,213,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a11652e5061097b6c78a4c06f1bda6d59.html#a11652e5061097b6c78a4c06f1bda6d59" title="Creates a polynomial function from coefficients." alt="" coords="261,5,493,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,30,248,30,248,35,214,35"/>
+</map>

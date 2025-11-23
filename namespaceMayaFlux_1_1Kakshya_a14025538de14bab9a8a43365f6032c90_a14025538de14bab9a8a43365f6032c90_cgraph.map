@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kakshya::analyze_access_pattern" name="MayaFlux::Kakshya::analyze_access_pattern">
+<area shape="rect" id="Node000001" title="Determine optimal memory access pattern for region." alt="" coords="5,49,184,89"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a6c567931dd1f7b38d1c49d2ea5d30df5.html#a6c567931dd1f7b38d1c49d2ea5d30df5" title="Calculate memory strides for each dimension (row&#45;major order)." alt="" coords="258,5,417,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,51,244,40,245,45,184,56"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a42df3251efebac980b27af8bdea40fcb.html#a42df3251efebac980b27af8bdea40fcb" title="Check if region access will be contiguous in memory." alt="" coords="232,93,443,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="184,83,219,89,218,94,184,88"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="292,94,289,84,297,74,313,69,337,67,366,70,381,77,379,82,364,75,337,72,314,74,300,79,295,85,297,92"/>
+</map>

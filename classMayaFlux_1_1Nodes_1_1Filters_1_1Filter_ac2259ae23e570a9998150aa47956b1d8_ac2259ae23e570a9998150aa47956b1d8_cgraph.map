@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Filters::Filter::notify_tick" name="MayaFlux::Nodes::Filters::Filter::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks with the current filter context." alt="" coords="5,5,188,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a8c43b84355e980580271e995e2e473fa.html#a8c43b84355e980580271e995e2e473fa" title="Creates a filter&#45;specific context object." alt="" coords="236,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,222,23,222,28,188,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node_adecd36f4b9db4faad89b99a2daa77024.html#adecd36f4b9db4faad89b99a2daa77024" title="Provides access to the GPU data buffer." alt="" coords="467,5,644,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="419,23,453,23,453,28,419,28"/>
+</map>

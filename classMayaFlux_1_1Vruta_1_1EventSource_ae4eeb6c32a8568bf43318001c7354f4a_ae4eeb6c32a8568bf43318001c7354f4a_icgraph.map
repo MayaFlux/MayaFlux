@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::EventSource::unregister_waiter" name="MayaFlux::Vruta::EventSource::unregister_waiter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="276,37,495,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter_a020b185fd9d2b58d7338c323130f5a73.html#a020b185fd9d2b58d7338c323130f5a73" title="Called by EventSource when event arrives." alt="" coords="5,5,228,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,45,228,41,229,36,263,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1EventAwaiter_a23f6a7f8ad8a4623a27ecce76cb8e6e9.html#a23f6a7f8ad8a4623a27ecce76cb8e6e9" title=" " alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="263,75,229,79,228,73,262,69"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::RenderProcessor::initialize_pipeline" name="MayaFlux::Buffers::RenderProcessor::initialize_pipeline">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,34,200,89"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="260,5,457,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="200,45,246,38,247,44,201,50"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ade87585e9e710203e925adc90398ea9b.html#ade87585e9e710203e925adc90398ea9b" title="Associate a window with a render pass for rendering." alt="" coords="248,70,469,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="201,72,235,77,234,82,200,78"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="517,5,715,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="457,23,504,23,504,28,457,28"/>
+</map>

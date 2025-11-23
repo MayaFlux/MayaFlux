@@ -1,0 +1,19 @@
+<map id="CycleCoordinator.hpp" name="CycleCoordinator.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="174,5,335,31"/>
+<area shape="rect" id="Node000002" href="$AudioBuffer_8hpp.html" title=" " alt="" coords="5,79,248,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="235,33,161,74,159,69,233,28"/>
+<area shape="rect" id="Node000004" href="$Scheduler_8hpp.html" title=" " alt="" coords="273,79,493,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="277,28,351,69,348,74,274,33"/>
+<area shape="rect" id="Node000003" href="$Buffer_8hpp.html" title=" " alt="" coords="83,152,171,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="129,104,129,138,124,138,124,104"/>
+<area shape="rect" id="Node000005" href="$Clock_8hpp.html" title=" " alt="" coords="281,152,367,177"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="375,106,344,143,340,140,371,103"/>
+<area shape="rect" id="Node000006" href="$Routine_8hpp.html" title=" " alt="" coords="391,152,491,177"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="394,103,425,140,421,143,390,106"/>
+<area shape="rect" id="Node000007" href="$Promise_8hpp.html" title=" " alt="" coords="390,225,493,251"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="444,178,444,212,439,212,439,178"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="319,306,401,331"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="431,253,384,298,380,295,427,249"/>
+<area shape="rect" id="Node000009" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="425,299,620,339"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="455,249,495,287,492,291,451,253"/>
+</map>

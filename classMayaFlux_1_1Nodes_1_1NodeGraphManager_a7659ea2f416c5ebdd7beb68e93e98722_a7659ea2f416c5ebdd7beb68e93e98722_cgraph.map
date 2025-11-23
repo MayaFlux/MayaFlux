@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::register_global" name="MayaFlux::Nodes::NodeGraphManager::register_global">
+<area shape="rect" id="Node000001" title="Registers a node globally if not already registered." alt="" coords="5,5,221,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab960be6ecd39c89e51248962d77f94ab.html#ab960be6ecd39c89e51248962d77f94ab" title="Checks if a node is registered with this manager." alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,23,256,23,256,28,221,28"/>
+</map>

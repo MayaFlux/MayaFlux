@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::EventChain::then" name="MayaFlux::Kriya::EventChain::then">
+<area shape="rect" id="Node000001" title="Adds an event to the chain with a specified delay." alt="" coords="252,5,463,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1Sequence_a1dff76a0a3ca0fc40eaed27f83ad894b.html#a1dff76a0a3ca0fc40eaed27f83ad894b" title="Executes the sequence with explicit managers." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,28,204,28,204,23,238,23"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::VKShaderModule::detect_stage_from_extension" name="MayaFlux::Core::VKShaderModule::detect_stage_from_extension">
+<area shape="rect" id="Node000001" title="Auto&#45;detect shader stage from file extension." alt="" coords="825,34,1025,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKShaderModule_a2ddceda97cc3410a6ff63b5d5356264b.html#a2ddceda97cc3410a6ff63b5d5356264b" title="Create shader module from GLSL file." alt="" coords="563,5,777,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="812,48,777,43,778,38,812,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a12353054037641e59b9426bba88cc151.html#a12353054037641e59b9426bba88cc151" title="Auto&#45;detect shader stage from file extension." alt="" coords="571,70,769,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="812,80,769,86,768,81,811,75"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a43593cc7b7d32065c26b3e040a6ab794.html#a43593cc7b7d32065c26b3e040a6ab794" title="Compile shader from file path." alt="" coords="301,77,515,117"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="558,100,515,100,515,95,558,95"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a2470e6d877935c4ca8a7fa4d1537bf88.html#a2470e6d877935c4ca8a7fa4d1537bf88" title="Hot&#45;reload shader (returns new ID)" alt="" coords="16,45,243,85"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="287,86,243,81,243,76,288,81"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_ae2c927665d9006b2907b175a108c2296.html#ae2c927665d9006b2907b175a108c2296" title=" " alt="" coords="5,109,253,149"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="288,114,254,118,253,112,287,108"/>
+</map>

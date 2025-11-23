@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::add_processor_direct" name="MayaFlux::Buffers::BufferProcessingChain::add_processor_direct">
+<area shape="rect" id="Node000001" title=" " alt="" coords="503,49,671,104"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a8a06f46d7b89b81b87a256f188b53c81.html#a8a06f46d7b89b81b87a256f188b53c81" title="Adds a processor to the transformation pipeline for a specific buffer." alt="" coords="266,5,434,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="489,61,434,51,435,46,490,56"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ab06548041e8f068a9d83945bcac22a90.html#ab06548041e8f068a9d83945bcac22a90" title="Process pending processor operations." alt="" coords="245,85,455,154"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="490,97,455,103,454,98,489,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1FileToStreamChain_a2efd37a8822b76569f7f86a198efa1e6.html#a2efd37a8822b76569f7f86a198efa1e6" title=" " alt="" coords="5,5,197,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="252,35,198,35,198,30,252,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a23d4172a12da9ea88c8487ff720c824d.html#a23d4172a12da9ea88c8487ff720c824d" title="Applies the transformation pipeline to a buffer with intelligent execution." alt="" coords="17,88,185,143"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="231,120,186,119,186,114,232,115"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a59d5a166df6cf4d18c4250548a8f4b81.html#a59d5a166df6cf4d18c4250548a8f4b81" title="Internal processing method for non&#45;owning buffer contexts." alt="" coords="17,167,185,221"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="233,157,186,171,185,166,231,152"/>
+</map>

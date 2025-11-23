@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::VertexLayout::compute_stride" name="MayaFlux::Kakshya::VertexLayout::compute_stride">
+<area shape="rect" id="Node000001" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="209,5,383,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a16b3cbfb638d1ce2063d8b9436faf7ec.html#a16b3cbfb638d1ce2063d8b9436faf7ec" title="Set vertex layout for this buffer." alt="" coords="5,5,161,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,35,162,35,162,30,196,30"/>
+</map>

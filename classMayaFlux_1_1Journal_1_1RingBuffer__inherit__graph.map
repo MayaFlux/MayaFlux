@@ -1,0 +1,5 @@
+<map id="MayaFlux::Journal::RingBuffer&lt; T, Capacity &gt;" name="MayaFlux::Journal::RingBuffer&lt; T, Capacity &gt;">
+<area shape="rect" id="Node000001" title="Lock&#45;free SPSC (Single Producer Single Consumer) ring buffer." alt="" coords="5,5,191,245"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Journal_1_1RingBuffer.html" title=" " alt="" coords="12,337,184,607"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="101,259,101,337,95,337,95,259"/>
+</map>

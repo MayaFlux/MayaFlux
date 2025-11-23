@@ -1,0 +1,23 @@
+<map id="MayaFlux::Nodes::ModalNetwork::ModalNetwork" name="MayaFlux::Nodes::ModalNetwork::ModalNetwork">
+<area shape="rect" id="Node000001" title="Create modal network with predefined spectrum." alt="" coords="5,69,244,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1ModalNetwork_a00b0cd96b0ddc6cdaf79ff9a3a2ba830.html#a00b0cd96b0ddc6cdaf79ff9a3a2ba830" title="Generate frequency ratios for predefined spectra." alt="" coords="292,5,531,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,67,307,46,309,51,216,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1ModalNetwork_ae6bd0e65282824416511edf671ea6769.html#ae6bd0e65282824416511edf671ea6769" title="Initialize modes with given frequency ratios." alt="" coords="292,69,531,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,87,278,87,278,92,244,92"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1NodeNetwork_a2e0a5b742333fa944708d05fbca8555b.html#a2e0a5b742333fa944708d05fbca8555b" title="Set the network&#39;s topology." alt="" coords="295,133,527,173"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="216,107,309,128,307,133,214,112"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Config_ad8c6968db02415b5ba48863063076989.html#ad8c6968db02415b5ba48863063076989" title="Gets the sample rate from the default engine." alt="" coords="579,69,743,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="531,87,565,87,565,92,531,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="793,47,964,73"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="742,76,780,71,780,76,743,81"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1Engine_a02d736c044a7e700855ef3d8587ade79.html#a02d736c044a7e700855ef3d8587ade79" title="Gets the current stream configuration." alt="" coords="791,97,967,137"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="743,97,777,102,777,107,742,102"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="1015,40,1185,80"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="965,57,1001,57,1001,63,965,63"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="1233,40,1377,80"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1186,57,1220,57,1220,63,1186,63"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="1425,40,1576,80"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1378,57,1412,57,1412,63,1378,63"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="1624,40,1771,80"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1576,57,1610,57,1610,63,1576,63"/>
+</map>

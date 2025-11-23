@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::BackendWindowHandler::setup_backend_service" name="MayaFlux::Core::BackendWindowHandler::setup_backend_service">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,101,244,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_ae7f6e227a22265a2f0af6c4fe68479f5.html#ae7f6e227a22265a2f0af6c4fe68479f5" title="Attach a user render pass and recreate sync objects with it Used by Portal when registering a window ..." alt="" coords="292,5,531,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,99,291,55,318,47,319,52,293,60,175,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_ae201b3e2121031059586c9abd5ba8480.html#ae201b3e2121031059586c9abd5ba8480" title=" " alt="" coords="292,69,531,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="244,105,278,101,279,107,245,111"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="311,133,511,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="245,132,298,138,298,143,244,137"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_afce319b3c5aceeba91f0a7c1d11533c3.html#afce319b3c5aceeba91f0a7c1d11533c3" title=" " alt="" coords="292,197,531,237"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="175,139,293,183,319,191,318,196,291,188,173,144"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="579,133,773,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="511,151,565,151,565,156,511,156"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::IO::SoundFileReader::seek" name="MayaFlux::IO::SoundFileReader::seek">
+<area shape="rect" id="Node000001" title="Seek to a specific position in the file." alt="" coords="5,35,231,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a6f482a88a714daebbe9ebf8c66775d2a.html#a6f482a88a714daebbe9ebf8c66775d2a" title="Internal seek implementation." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,40,265,36,266,42,231,45"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a800c7fe05bac701dcfa6a826ad78c22e.html#a800c7fe05bac701dcfa6a826ad78c22e" title="Set the last error message." alt="" coords="552,35,777,75"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="231,54,279,55,504,55,538,54,538,60,504,60,279,60,231,59"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="505,35,539,38,538,44,504,40"/>
+</map>

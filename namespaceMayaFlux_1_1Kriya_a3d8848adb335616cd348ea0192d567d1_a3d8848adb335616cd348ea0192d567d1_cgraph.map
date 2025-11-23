@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kriya::sequence" name="MayaFlux::Kriya::sequence">
+<area shape="rect" id="Node000001" title="Creates a temporal sequence that executes callbacks at specified time offsets." alt="" coords="5,45,204,70"/>
+<area shape="poly" id="edge5_Node000001_Node000001" title=" " alt="" coords="62,46,53,36,58,26,75,20,105,18,142,22,152,27,156,33,151,36,149,31,141,27,105,23,77,25,62,30,59,36,66,43"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a99bd0b1b8f51d07e40aeaf1588342323.html#a99bd0b1b8f51d07e40aeaf1588342323" title="Converts a time in seconds to a number of samples." alt="" coords="252,37,483,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,55,238,55,238,60,204,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ac441836158c7cf40639d9fec1d942f0a.html#ac441836158c7cf40639d9fec1d942f0a" title="Get processing rate for a domain." alt="" coords="531,5,761,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="483,41,517,37,517,43,483,47"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Utils_acef9b648b97a768e92f99563e8222dc0.html#acef9b648b97a768e92f99563e8222dc0" title="Convert seconds to samples at a given sample rate." alt="" coords="553,69,739,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="483,68,540,75,540,80,483,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="809,5,1040,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="762,23,796,23,796,28,762,28"/>
+</map>

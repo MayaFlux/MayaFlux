@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::on_pipeline_created" name="MayaFlux::Buffers::ShaderProcessor::on_pipeline_created">
+<area shape="rect" id="Node000001" title="Called after pipeline is created." alt="" coords="517,45,672,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af23075042b8bb296526aded019a5338e.html#af23075042b8bb296526aded019a5338e" title=" " alt="" coords="268,5,463,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="503,60,462,52,463,47,504,54"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a8635cde0f5937ac7a1bf5050adad8923.html#a8635cde0f5937ac7a1bf5050adad8923" title="Called after pipeline creation &#45; allocates GPU buffers for descriptors." alt="" coords="261,84,469,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="504,91,470,96,469,91,503,85"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a58b760d216dc2625702f79ddeefa55f8.html#a58b760d216dc2625702f79ddeefa55f8" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,213,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="254,35,213,35,213,30,254,30"/>
+</map>
