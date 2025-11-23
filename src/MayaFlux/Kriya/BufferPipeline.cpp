@@ -70,7 +70,7 @@ BufferPipeline& BufferPipeline::with_lifecycle(
     return *this;
 }
 
-void BufferPipeline::execute_buffer_rate(uint32_t max_cycles)
+void BufferPipeline::execute_buffer_rate(uint64_t max_cycles)
 {
     if (!m_scheduler) {
         error<std::runtime_error>(Journal::Component::Kriya,
@@ -112,7 +112,7 @@ void BufferPipeline::execute_once()
     m_active_self = self;
 }
 
-void BufferPipeline::execute_for_cycles(uint32_t cycles)
+void BufferPipeline::execute_for_cycles(uint64_t cycles)
 {
     if (!m_scheduler) {
         error<std::runtime_error>(Journal::Component::Kriya,
@@ -141,7 +141,7 @@ void BufferPipeline::execute_continuous()
 }
 
 void BufferPipeline::execute_scheduled(
-    uint32_t max_cycles,
+    uint64_t max_cycles,
     uint64_t samples_per_operation)
 {
     if (!m_scheduler) {

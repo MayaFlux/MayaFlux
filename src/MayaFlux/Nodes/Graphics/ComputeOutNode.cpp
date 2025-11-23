@@ -3,9 +3,9 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::GpuSync {
 
-MayaFlux::Nodes::ComputeOutNode::ComputeOutNode(const std::shared_ptr<Buffers::VKBuffer>& buffer, size_t element_count)
+ComputeOutNode::ComputeOutNode(const std::shared_ptr<Buffers::VKBuffer>& buffer, size_t element_count)
     : m_gpu_buffer(buffer)
     , m_readback_data(element_count)
     , m_element_count(element_count)
@@ -34,7 +34,7 @@ MayaFlux::Nodes::ComputeOutNode::ComputeOutNode(const std::shared_ptr<Buffers::V
     }
 }
 
-double MayaFlux::Nodes::ComputeOutNode::process_sample(double /*input*/)
+void ComputeOutNode::compute_frame()
 {
     Buffers::download_from_gpu(
         m_gpu_buffer,
@@ -42,10 +42,9 @@ double MayaFlux::Nodes::ComputeOutNode::process_sample(double /*input*/)
         m_readback_data.size() * sizeof(double));
 
     m_last_output = m_readback_data[0];
-    return m_last_output;
 }
 
-[[nodiscard]] double MayaFlux::Nodes::ComputeOutNode::get_element(size_t index) const
+[[nodiscard]] double ComputeOutNode::get_element(size_t index) const
 {
     if (index >= m_readback_data.size()) {
         error<std::out_of_range>(

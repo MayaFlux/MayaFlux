@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
+
 #include "ShaderFoundry.hpp"
 
 namespace MayaFlux::Registry::Service {
@@ -30,84 +31,6 @@ using FramebufferID = uint64_t;
 constexpr RenderPipelineID INVALID_RENDER_PIPELINE = 0;
 constexpr RenderPassID INVALID_RENDER_PASS = 0;
 constexpr FramebufferID INVALID_FRAMEBUFFER = 0;
-
-/**
- * @enum PrimitiveTopology
- * @brief Vertex assembly primitive topology
- */
-enum class PrimitiveTopology : uint8_t {
-    POINT_LIST,
-    LINE_LIST,
-    LINE_STRIP,
-    TRIANGLE_LIST,
-    TRIANGLE_STRIP,
-    TRIANGLE_FAN
-};
-
-/**
- * @enum PolygonMode
- * @brief Rasterization polygon mode
- */
-enum class PolygonMode : uint8_t {
-    FILL,
-    LINE,
-    POINT
-};
-
-/**
- * @enum CullMode
- * @brief Face culling mode
- */
-enum class CullMode : uint8_t {
-    NONE,
-    FRONT,
-    BACK,
-    FRONT_AND_BACK
-};
-
-/**
- * @enum CompareOp
- * @brief Depth/stencil comparison operation
- */
-enum class CompareOp : uint8_t {
-    NEVER,
-    LESS,
-    EQUAL,
-    LESS_OR_EQUAL,
-    GREATER,
-    NOT_EQUAL,
-    GREATER_OR_EQUAL,
-    ALWAYS
-};
-
-/**
- * @enum BlendFactor
- * @brief Blending factor
- */
-enum class BlendFactor : uint8_t {
-    ZERO,
-    ONE,
-    SRC_COLOR,
-    ONE_MINUS_SRC_COLOR,
-    DST_COLOR,
-    ONE_MINUS_DST_COLOR,
-    SRC_ALPHA,
-    ONE_MINUS_SRC_ALPHA,
-    DST_ALPHA,
-    ONE_MINUS_DST_ALPHA
-};
-
-/**
- * @enum BlendOp
- * @brief Blending operation
- */
-enum class BlendOp : uint8_t {
-    ADD,
-    SUBTRACT,
-    REVERSE_SUBTRACT,
-    MIN,
-    MAX
-};
 
 /**
  * @struct RasterizationConfig

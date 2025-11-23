@@ -19,28 +19,28 @@ RenderProcessor::RenderProcessor(const ShaderProcessorConfig& config)
 void RenderProcessor::set_fragment_shader(const std::string& fragment_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    m_fragment_shader_id = foundry.load_shader(fragment_path);
+    m_fragment_shader_id = foundry.load_shader(fragment_path, Portal::Graphics::ShaderStage::FRAGMENT);
     m_needs_pipeline_rebuild = true;
 }
 
 void RenderProcessor::set_geometry_shader(const std::string& geometry_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    m_geometry_shader_id = foundry.load_shader(geometry_path);
+    m_geometry_shader_id = foundry.load_shader(geometry_path, Portal::Graphics::ShaderStage::GEOMETRY);
     m_needs_pipeline_rebuild = true;
 }
 
 void RenderProcessor::set_tess_control_shader(const std::string& tess_control_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    m_tess_control_shader_id = foundry.load_shader(tess_control_path);
+    m_tess_control_shader_id = foundry.load_shader(tess_control_path, Portal::Graphics::ShaderStage::TESS_CONTROL);
     m_needs_pipeline_rebuild = true;
 }
 
 void RenderProcessor::set_tess_eval_shader(const std::string& tess_eval_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    m_tess_eval_shader_id = foundry.load_shader(tess_eval_path);
+    m_tess_eval_shader_id = foundry.load_shader(tess_eval_path, Portal::Graphics::ShaderStage::TESS_EVALUATION);
     m_needs_pipeline_rebuild = true;
 }
 
@@ -108,9 +108,9 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
     pipeline_config.tess_eval_shader = m_tess_eval_shader_id;
     pipeline_config.render_pass = m_render_pass_id;
 
-    pipeline_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
-    pipeline_config.rasterization.polygon_mode = Portal::Graphics::PolygonMode::FILL;
-    pipeline_config.rasterization.cull_mode = Portal::Graphics::CullMode::NONE;
+    pipeline_config.topology = m_primitive_topology;
+    pipeline_config.rasterization.polygon_mode = m_polygon_mode;
+    pipeline_config.rasterization.cull_mode = m_cull_mode;
 
     pipeline_config.blend_attachments.emplace_back();
 
@@ -137,6 +137,18 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer || !m_target_window) {
         return;
+    }
+
+    if (m_buffer_info.find(vk_buffer) == m_buffer_info.end()) {
+        if (vk_buffer->has_vertex_layout()) {
+            auto vertex_layout = vk_buffer->get_vertex_layout();
+            if (vertex_layout.has_value()) {
+                m_buffer_info[vk_buffer] = {
+                    .semantic_layout = vertex_layout.value(),
+                    .use_reflection = false
+                };
+            }
+        }
     }
 
     if (m_needs_pipeline_rebuild) {

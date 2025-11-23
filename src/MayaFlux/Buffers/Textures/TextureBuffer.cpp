@@ -5,7 +5,7 @@
 namespace MayaFlux::Buffers {
 
 TextureBuffer::TextureBuffer(
-    std::shared_ptr<Nodes::TextureNode> node, std::string binding_name)
+    std::shared_ptr<Nodes::GpuSync::TextureNode> node, std::string binding_name)
     : VKBuffer(
           calculate_buffer_size(node),
           Usage::STAGING,
@@ -42,7 +42,7 @@ void TextureBuffer::initialize()
     set_default_processor(m_bindings_processor);
 }
 
-size_t TextureBuffer::calculate_buffer_size(const std::shared_ptr<Nodes::TextureNode>& node)
+size_t TextureBuffer::calculate_buffer_size(const std::shared_ptr<Nodes::GpuSync::TextureNode>& node)
 {
     if (!node) {
         return 0;

@@ -49,7 +49,7 @@ public:
      * width * height * 4 channels * sizeof(float)
      */
     explicit TextureBuffer(
-        std::shared_ptr<Nodes::TextureNode> node,
+        std::shared_ptr<Nodes::GpuSync::TextureNode> node,
         std::string binding_name = "texture");
 
     ~TextureBuffer() override = default;
@@ -62,7 +62,7 @@ public:
     /**
      * @brief Get the texture node driving this buffer
      */
-    [[nodiscard]] std::shared_ptr<Nodes::TextureNode> get_texture_node() const
+    [[nodiscard]] std::shared_ptr<Nodes::GpuSync::TextureNode> get_texture_node() const
     {
         return m_texture_node;
     }
@@ -105,14 +105,14 @@ public:
     }
 
 private:
-    std::shared_ptr<Nodes::TextureNode> m_texture_node;
+    std::shared_ptr<Nodes::GpuSync::TextureNode> m_texture_node;
     std::shared_ptr<TextureBindingsProcessor> m_bindings_processor;
     std::string m_binding_name;
 
     /**
      * @brief Calculate texture buffer size from node dimensions
      */
-    static size_t calculate_buffer_size(const std::shared_ptr<Nodes::TextureNode>& node);
+    static size_t calculate_buffer_size(const std::shared_ptr<Nodes::GpuSync::TextureNode>& node);
 };
 
 } // namespace MayaFlux::Buffers

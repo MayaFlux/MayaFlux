@@ -229,6 +229,15 @@ public:
     /** Check whether Vulkan handles are present (buffer registered) */
     bool is_initialized() const { return m_resources.buffer != VK_NULL_HANDLE; }
 
+    /**
+     * @brief Setup processors with a processing token
+     * @param token ProcessingToken to assign.
+     *
+     * For VKBuffer this is a no-op as processors get the token.
+     * This is meant for derived classes that need to setup default processors
+     */
+    virtual void setup_processors(ProcessingToken token) { }
+
     /** Get the buffer's semantic modality */
     Kakshya::DataModality get_modality() const { return m_modality; }
 

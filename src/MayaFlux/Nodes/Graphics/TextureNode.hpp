@@ -1,8 +1,8 @@
 #pragma once
 
-#include "MayaFlux/Nodes/Node.hpp"
+#include "GpuSync.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::GpuSync {
 
 /**
  * @class TextureNode
@@ -15,28 +15,23 @@ namespace MayaFlux::Nodes {
  * Texture data is stored as a flat array in row-major order:
  * [R0,G0,B0,A0, R1,G1,B1,A1, ..., Rn,Gn,Bn,An]
  */
-class MAYAFLUX_API TextureNode : public Node {
+class MAYAFLUX_API TextureNode : public GpuSync {
 protected:
     uint32_t m_width;
     uint32_t m_height;
     std::vector<float> m_pixel_buffer; // RGBA format
 
+    /**
+     * @brief Flag: pixel data changed since last GPU upload
+     *
+     * Set to true whenever compute_frame() modifies m_pixel_buffer.
+     * Kakshya binding system checks this before staging texture upload.
+     * Cleared by Kakshya after successful GPU transfer.
+     */
+    bool m_pixel_data_dirty { true };
+
 public:
     TextureNode(uint32_t width, uint32_t height);
-
-    /**
-     * @brief Computes the texture frame
-     *
-     * Pure virtual method implemented by derived classes to generate or
-     * update texture data in m_pixel_buffer.
-     */
-    virtual void compute_frame() = 0;
-
-    double process_sample(double /*input*/) override
-    {
-        compute_frame();
-        return 0.;
-    }
 
     /**
      * @brief Get pixel buffer
@@ -63,6 +58,29 @@ public:
     [[nodiscard]] size_t get_buffer_size() const
     {
         return m_pixel_buffer.size() * sizeof(float);
+    }
+
+    /**
+     * @brief Check if pixel data changed since last GPU sync
+     * @return True if m_pixel_buffer has been modified
+     *
+     * For textures, this is simple: did compute_frame() modify pixels?
+     * The binding processor checks this to decide whether to upload to GPU.
+     */
+    [[nodiscard]] bool needs_gpu_update() const override
+    {
+        return m_pixel_data_dirty;
+    }
+
+    /**
+     * @brief Clear the dirty flag after GPU upload completes
+     *
+     * Called by Kakshya's TextureBindingProcessor after it stages the
+     * pixel data into a GPU transfer buffer and submits the command.
+     */
+    void clear_gpu_update_flag() override
+    {
+        m_pixel_data_dirty = false;
     }
 
 protected:

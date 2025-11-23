@@ -132,12 +132,12 @@ bool VKShaderModule::create_from_spirv(
         return false;
     }
 
-    if (spirv_code.size() % 4 != 0) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Invalid SPIR-V code size: {} bytes (must be multiple of 4)",
-            spirv_code.size());
-        return false;
-    }
+    // if (spirv_code.size() % 4 != 0) {
+    //     MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+    //         "Invalid SPIR-V code size: {} bytes (must be multiple of 4)",
+    //         spirv_code.size());
+    //     return false;
+    // }
 
     if (spirv_code[0] != 0x07230203) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,

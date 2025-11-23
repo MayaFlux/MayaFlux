@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::GpuSync {
 class GeometryWriterNode;
 }
 
@@ -36,8 +36,12 @@ namespace MayaFlux::Buffers {
  */
 class MAYAFLUX_API GeometryBindingsProcessor : public VKBufferProcessor {
 public:
+    GeometryBindingsProcessor();
+    /**
+     * @brief Structure representing a geometry binding
+     */
     struct GeometryBinding {
-        std::shared_ptr<Nodes::GeometryWriterNode> node;
+        std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> node;
         std::shared_ptr<VKBuffer> gpu_vertex_buffer; // Target vertex buffer
         std::shared_ptr<VKBuffer> staging_buffer; // Staging (only if device-local)
     };
@@ -53,7 +57,7 @@ public:
      */
     void bind_geometry_node(
         const std::string& name,
-        const std::shared_ptr<Nodes::GeometryWriterNode>& node,
+        const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
         const std::shared_ptr<VKBuffer>& vertex_buffer);
 
     /**

@@ -52,7 +52,7 @@ public:
      * without reallocation.
      */
     explicit GeometryBuffer(
-        std::shared_ptr<Nodes::GeometryWriterNode> node,
+        std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> node,
         const std::string& binding_name = "geometry",
         float over_allocate_factor = 1.5f);
 
@@ -61,12 +61,12 @@ public:
     /**
      * @brief Initialize the buffer and its processors
      */
-    void initialize();
+    void setup_processors(ProcessingToken token) override;
 
     /**
      * @brief Get the geometry node driving this buffer
      */
-    [[nodiscard]] std::shared_ptr<Nodes::GeometryWriterNode> get_geometry_node() const
+    [[nodiscard]] std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> get_geometry_node() const
     {
         return m_geometry_node;
     }
@@ -109,7 +109,7 @@ public:
     }
 
 private:
-    std::shared_ptr<Nodes::GeometryWriterNode> m_geometry_node;
+    std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> m_geometry_node;
     std::shared_ptr<GeometryBindingsProcessor> m_bindings_processor;
     std::string m_binding_name;
 
@@ -117,7 +117,7 @@ private:
      * @brief Calculate initial buffer size with optional over-allocation
      */
     static size_t calculate_buffer_size(
-        const std::shared_ptr<Nodes::GeometryWriterNode>& node,
+        const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
         float over_allocate_factor);
 };
 

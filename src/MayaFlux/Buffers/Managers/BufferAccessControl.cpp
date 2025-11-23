@@ -227,6 +227,7 @@ void BufferAccessControl::add_graphics_buffer(
                     initialize_buffer_service();
                 }
                 m_buffer_service->initialize_buffer(vk_buffer);
+                vk_buffer->setup_processors(token);
             }
         } catch (const std::exception& e) {
             error_rethrow(Journal::Component::Core, Journal::Context::BufferManagement,

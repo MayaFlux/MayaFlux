@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::GpuSync {
 class TextureNode;
 } // namespace MayaFlux::Nodes
 
@@ -32,7 +32,7 @@ namespace MayaFlux::Buffers {
 class MAYAFLUX_API TextureBindingsProcessor : public VKBufferProcessor {
 public:
     struct TextureBinding {
-        std::shared_ptr<Nodes::TextureNode> node;
+        std::shared_ptr<Nodes::GpuSync::TextureNode> node;
         std::shared_ptr<VKBuffer> gpu_texture; // Target texture buffer
         std::shared_ptr<VKBuffer> staging_buffer; // Staging (only if gpu_texture is device-local)
     };
@@ -48,7 +48,7 @@ public:
      */
     void bind_texture_node(
         const std::string& name,
-        const std::shared_ptr<Nodes::TextureNode>& node,
+        const std::shared_ptr<Nodes::GpuSync::TextureNode>& node,
         const std::shared_ptr<VKBuffer>& texture);
 
     /**

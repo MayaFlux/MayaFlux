@@ -264,7 +264,7 @@ public:
      *
      * @param max_cycles Maximum number of audio cycles to process (0 = infinite)
      */
-    void execute_buffer_rate(uint32_t max_cycles = 0);
+    void execute_buffer_rate(uint64_t max_cycles = 0);
 
     /**
      * @brief Execute the pipeline for a single cycle.
@@ -293,7 +293,7 @@ public:
      *
      * @note Execution happens asynchronously - this function returns immediately.
      */
-    void execute_for_cycles(uint32_t cycles = 0);
+    void execute_for_cycles(uint64_t cycles = 0);
 
     /**
      * @brief Start continuous execution of the pipeline.
@@ -335,7 +335,7 @@ public:
      *
      * @note Execution is asynchronous. The pipeline keeps itself alive until completion.
      */
-    void execute_scheduled(uint32_t max_cycles = 0, uint64_t samples_per_operation = 1);
+    void execute_scheduled(uint64_t max_cycles = 0, uint64_t samples_per_operation = 1);
 
     /**
      * @brief Execute pipeline with real-time rate control.

@@ -2,12 +2,12 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::GpuSync {
 
 GeometryWriterNode::GeometryWriterNode(uint32_t initial_capacity)
 {
     if (initial_capacity > 0 && m_vertex_stride == 0) {
-        m_vertex_stride = sizeof(glm::vec3); // 12 bytes
+        m_vertex_stride = sizeof(glm::vec3);
     }
 
     if (initial_capacity > 0) {
@@ -23,23 +23,24 @@ void GeometryWriterNode::resize_vertex_buffer(uint32_t vertex_count, bool preser
         return;
     }
 
-    size_t new_size_floats = static_cast<size_t>(vertex_count) * m_vertex_stride / sizeof(float);
+    size_t new_size_bytes = static_cast<size_t>(vertex_count) * m_vertex_stride;
 
     if (!preserve_data) {
         m_vertex_buffer.clear();
-        m_vertex_buffer.resize(new_size_floats, 0.0F);
-    } else if (m_vertex_buffer.size() < new_size_floats) {
-        m_vertex_buffer.resize(new_size_floats, 0.0F);
-    } else if (m_vertex_buffer.size() > new_size_floats) {
-        m_vertex_buffer.resize(new_size_floats);
+        m_vertex_buffer.resize(new_size_bytes, 0.0F);
+    } else if (m_vertex_buffer.size() < new_size_bytes) {
+        m_vertex_buffer.resize(new_size_bytes, 0.0F);
+    } else if (m_vertex_buffer.size() > new_size_bytes) {
+        m_vertex_buffer.resize(new_size_bytes);
     }
 
     m_vertex_count = vertex_count;
     m_needs_layout_update = true;
+    m_vertex_data_dirty = true;
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "GeometryWriterNode: Resized vertex buffer to {} vertices ({} bytes total)",
-        vertex_count, new_size_floats * sizeof(float));
+        vertex_count, new_size_bytes * sizeof(float));
 }
 
 void GeometryWriterNode::set_vertex_data(const void* data, size_t size_bytes)
@@ -72,6 +73,7 @@ void GeometryWriterNode::set_vertex_data(const void* data, size_t size_bytes)
     std::memcpy(m_vertex_buffer.data(), data, size_bytes);
     m_vertex_count = expected_vertex_count;
     m_needs_layout_update = true;
+    m_vertex_data_dirty = true;
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "GeometryWriterNode: Set vertex data ({} vertices, {} bytes)",
@@ -115,6 +117,19 @@ void GeometryWriterNode::set_vertex(uint32_t vertex_index, const void* data, siz
 
     MF_TRACE(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "GeometryWriterNode: Set vertex {} ({} bytes)", vertex_index, size_bytes);
+
+    m_vertex_data_dirty = true;
+}
+
+size_t GeometryWriterNode::get_vertex_buffer_size_bytes() const
+{
+    return m_vertex_buffer.size();
+}
+
+void GeometryWriterNode::set_vertex_stride(size_t stride)
+{
+    m_vertex_stride = stride;
+    m_needs_layout_update = true;
 }
 
 std::span<const uint8_t> GeometryWriterNode::get_vertex(uint32_t vertex_index) const
@@ -143,11 +158,55 @@ std::span<const uint8_t> GeometryWriterNode::get_vertex(uint32_t vertex_index) c
 void GeometryWriterNode::clear()
 {
     std::ranges::fill(m_vertex_buffer, 0);
+
+    m_vertex_data_dirty = true;
 }
 
 void GeometryWriterNode::clear_and_resize(uint32_t vertex_count)
 {
     resize_vertex_buffer(vertex_count, false);
+}
+
+std::vector<double> GeometryWriterNode::process_batch(unsigned int num_samples)
+{
+    compute_frame();
+
+    return std::vector<double>(num_samples, 0.0);
+}
+
+void GeometryWriterNode::save_state()
+{
+    GeometryState state;
+    state.vertex_buffer = m_vertex_buffer;
+    state.vertex_count = m_vertex_count;
+    state.vertex_stride = m_vertex_stride;
+    state.vertex_layout = m_vertex_layout;
+
+    m_saved_state = std::move(state);
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "GeometryWriterNode: Saved state ({} vertices, {} bytes)",
+        m_vertex_count, m_vertex_buffer.size() * sizeof(uint8_t));
+}
+
+void GeometryWriterNode::restore_state()
+{
+    if (!m_saved_state.has_value()) {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "GeometryWriterNode: No saved state to restore");
+        return;
+    }
+
+    m_vertex_buffer = m_saved_state->vertex_buffer;
+    m_vertex_count = m_saved_state->vertex_count;
+    m_vertex_stride = m_saved_state->vertex_stride;
+    m_vertex_layout = m_saved_state->vertex_layout;
+
+    m_needs_layout_update = true;
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "GeometryWriterNode: Restored state ({} vertices, {} bytes)",
+        m_vertex_count, m_vertex_buffer.size() * sizeof(uint8_t));
 }
 
 } // namespace MayaFlux::Nodes

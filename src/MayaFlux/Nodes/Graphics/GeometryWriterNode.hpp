@@ -1,9 +1,9 @@
 #pragma once
 
+#include "GpuSync.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
-#include "MayaFlux/Nodes/Node.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::GpuSync {
 
 /**
  * @class GeometryWriterNode
@@ -38,7 +38,7 @@ namespace MayaFlux::Nodes {
  * };
  * ```
  */
-class MAYAFLUX_API GeometryWriterNode : public Node {
+class MAYAFLUX_API GeometryWriterNode : public GpuSync {
 protected:
     /// @brief Vertex data buffer (flat array of bytes)
     std::vector<uint8_t> m_vertex_buffer;
@@ -55,6 +55,15 @@ protected:
     /// @brief Flag indicating if layout needs update
     bool m_needs_layout_update {};
 
+    /**
+     * @brief Flag: vertex data or layout changed since last GPU upload
+     *
+     * Set to true whenever compute_frame() modifies vertex buffer or layout.
+     * Checked by GeometryBindingsProcessor before staging GPU transfer.
+     * Cleared by processor after successful upload.
+     */
+    bool m_vertex_data_dirty { true };
+
 public:
     /**
      * @brief Constructor
@@ -65,63 +74,38 @@ public:
     ~GeometryWriterNode() override = default;
 
     /**
-     * @brief Compute and populate vertex data for this frame
+     * @brief Process batch for geometry generation
+     * @param num_samples Number of frames to process
+     * @return Empty vector (geometry nodes don't produce audio output)
      *
-     * Pure virtual method called once per frame at VISUAL_RATE.
-     * Subclasses implement this to generate/update vertex geometry.
-     * Call resize_vertex_buffer(), set_vertex_stride(), and populate m_vertex_buffer.
+     * Calls compute_frame() once per batch.
+     * Subclasses can override for custom batch behavior.
      */
-    virtual void compute_frame() = 0;
-
-    /**
-     * @brief Process sample - calls compute_frame once per tick
-     * @param input Unused for geometry generation
-     * @return Always 0.0
-     *
-     * This is the interface hook that gets called by the node system.
-     * For geometry nodes, we ignore input and just generate geometry.
-     */
-    double process_sample(double /*input*/) override
-    {
-        compute_frame();
-        return 0.0;
-    }
+    std::vector<double> process_batch(unsigned int num_samples) override;
 
     /**
      * @brief Get raw vertex buffer data
      * @return Span of float data (interpreted as bytes, stride-aligned)
      */
-    [[nodiscard]] std::span<const uint8_t> get_vertex_data() const
-    {
-        return m_vertex_buffer;
-    }
+    [[nodiscard]] std::span<const uint8_t> get_vertex_data() const { return m_vertex_buffer; }
 
     /**
      * @brief Get vertex buffer size in bytes
      * @return Total size of vertex data buffer
      */
-    [[nodiscard]] size_t get_vertex_buffer_size_bytes() const
-    {
-        return m_vertex_buffer.size() * sizeof(float);
-    }
+    [[nodiscard]] size_t get_vertex_buffer_size_bytes() const;
 
     /**
      * @brief Get number of vertices
      * @return Current vertex count
      */
-    [[nodiscard]] uint32_t get_vertex_count() const
-    {
-        return m_vertex_count;
-    }
+    [[nodiscard]] uint32_t get_vertex_count() const { return m_vertex_count; }
 
     /**
      * @brief Get stride (bytes per vertex)
      * @return Stride in bytes
      */
-    [[nodiscard]] size_t get_vertex_stride() const
-    {
-        return m_vertex_stride;
-    }
+    [[nodiscard]] size_t get_vertex_stride() const { return m_vertex_stride; }
 
     /**
      * @brief Set vertex stride (bytes per vertex)
@@ -132,11 +116,7 @@ public:
      * - 24 (vec3 positions + vec3 colors)
      * - 32 (vec3 positions + vec3 normals + vec2 texcoords)
      */
-    void set_vertex_stride(size_t stride)
-    {
-        m_vertex_stride = stride;
-        m_needs_layout_update = true;
-    }
+    void set_vertex_stride(size_t stride);
 
     /**
      * @brief Resize vertex buffer to hold specified number of vertices
@@ -191,6 +171,7 @@ public:
             vertices.size() * sizeof(T));
         m_vertex_count = static_cast<uint32_t>(vertices.size());
         m_needs_layout_update = true;
+        m_vertex_data_dirty = true;
     }
 
     /**
@@ -241,36 +222,74 @@ public:
      * Called internally or by GeometryBindingsProcessor to describe
      * the semantic meaning of vertex data (positions, colors, normals, etc.)
      */
-    void set_vertex_layout(const Kakshya::VertexLayout& layout)
-    {
-        m_vertex_layout = layout;
-    }
+    void set_vertex_layout(const Kakshya::VertexLayout& layout) { m_vertex_layout = layout; }
 
     /**
      * @brief Get cached vertex layout
      * @return Optional containing layout if set
      */
-    [[nodiscard]] std::optional<Kakshya::VertexLayout> get_vertex_layout() const
-    {
-        return m_vertex_layout;
-    }
+    [[nodiscard]] std::optional<Kakshya::VertexLayout> get_vertex_layout() const { return m_vertex_layout; }
 
     /**
      * @brief Check if layout needs update
      * @return True if stride or vertex count changed
      */
-    [[nodiscard]] bool needs_layout_update() const
-    {
-        return m_needs_layout_update;
-    }
+    [[nodiscard]] bool needs_layout_update() const { return m_needs_layout_update; }
 
     /**
      * @brief Clear layout update flag
      */
-    void clear_layout_update_flag()
+    void clear_layout_update_flag() { m_needs_layout_update = false; }
+
+    /**
+     * @brief Save current geometry state
+     *
+     * Saves vertex buffer, count, stride, and layout.
+     * Subclasses can override to save additional state.
+     */
+    void save_state() override;
+
+    /**
+     * @brief Restore saved geometry state
+     *
+     * Restores vertex buffer, count, stride, and layout.
+     * Subclasses can override to restore additional state.
+     */
+    void restore_state() override;
+
+    /**
+     * @brief Check if vertex data or layout changed since last GPU sync
+     * @return True if m_vertex_buffer or m_vertex_layout has been modified
+     *
+     * For geometry, this combines data mutation (vertex_buffer changed) and
+     * structural change (stride or layout changed).
+     */
+    [[nodiscard]] bool needs_gpu_update() const override
     {
+        return m_vertex_data_dirty || m_needs_layout_update;
+    }
+
+    /**
+     * @brief Clear the dirty flag after GPU upload completes
+     *
+     * Called by GeometryBindingsProcessor after it stages the vertex data
+     * into a GPU transfer buffer and submits the command.
+     */
+    void clear_gpu_update_flag() override
+    {
+        m_vertex_data_dirty = false;
         m_needs_layout_update = false;
     }
+
+private:
+    struct GeometryState {
+        std::vector<uint8_t> vertex_buffer;
+        uint32_t vertex_count;
+        size_t vertex_stride;
+        std::optional<Kakshya::VertexLayout> vertex_layout;
+    };
+
+    std::optional<GeometryState> m_saved_state;
 };
 
 } // namespace MayaFlux::Nodes
