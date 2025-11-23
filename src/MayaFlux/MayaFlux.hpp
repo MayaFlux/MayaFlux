@@ -54,6 +54,7 @@
 #include "Buffers/Shaders/RenderProcessor.hpp"
 #include "Buffers/Staging/BufferDownloadProcessor.hpp"
 #include "Buffers/Staging/BufferUploadProcessor.hpp"
+#include "Buffers/Textures/TextureBindBuffer.hpp"
 #include "Buffers/Textures/TextureBuffer.hpp"
 
 #include "Kriya/Awaiters.hpp"

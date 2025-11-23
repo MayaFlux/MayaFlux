@@ -3,6 +3,10 @@
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
 #include "ShaderProcessor.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 namespace MayaFlux::Buffers {
 
 /**
@@ -54,6 +58,28 @@ public:
         m_needs_pipeline_rebuild = true;
     }
 
+    /**
+     * @brief Bind a texture to a descriptor binding point
+     * @param binding Binding index (matches shader layout(binding = N))
+     * @param texture VKImage texture to bind
+     * @param sampler Optional sampler (uses default linear if null)
+     */
+    void bind_texture(
+        uint32_t binding,
+        const std::shared_ptr<Core::VKImage>& texture,
+        vk::Sampler sampler = nullptr);
+
+    /**
+     * @brief Bind a texture to a named descriptor
+     * @param descriptor_name Logical name (must be in config.bindings)
+     * @param texture VKImage texture to bind
+     * @param sampler Optional sampler (uses default linear if null)
+     */
+    void bind_texture(
+        const std::string& descriptor_name,
+        const std::shared_ptr<Core::VKImage>& texture,
+        vk::Sampler sampler = nullptr);
+
 protected:
     void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override;
     void processing_function(std::shared_ptr<Buffer> buffer) override;
@@ -80,6 +106,12 @@ private:
     Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST };
     Portal::Graphics::PolygonMode m_polygon_mode { Portal::Graphics::PolygonMode::FILL };
     Portal::Graphics::CullMode m_cull_mode { Portal::Graphics::CullMode::NONE };
+
+    struct TextureBinding {
+        std::shared_ptr<Core::VKImage> texture;
+        vk::Sampler sampler;
+    };
+    std::unordered_map<uint32_t, TextureBinding> m_texture_bindings;
 };
 
 } // namespace MayaFlux::Buffers

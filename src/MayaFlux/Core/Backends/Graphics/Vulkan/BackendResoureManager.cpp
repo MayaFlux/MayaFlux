@@ -585,7 +585,6 @@ void BackendResourceManager::upload_image_data(
     });
 
     image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
-    cleanup_buffer(staging);
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Uploaded {} bytes to image {}x{}",

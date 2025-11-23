@@ -86,10 +86,30 @@ tar -czf "${PREFIX}/${ARCHIVE_NAME}" -C "$PREFIX" "MayaFlux-${FINAL_VERSION}"
 echo "[DONE] Created ${PREFIX}/${ARCHIVE_NAME}"
 
 # ---------------------------------------------
+# Generate SHA256 checksum file
+# ---------------------------------------------
+echo "[INFO] Generating SHA256 checksum..."
+sha256sum "${PREFIX}/${ARCHIVE_NAME}" | cut -d' ' -f1 >"${PREFIX}/${ARCHIVE_NAME}.sha256"
+echo "[DONE] SHA256: $(cat "${PREFIX}/${ARCHIVE_NAME}.sha256")"
+
+# ---------------------------------------------
 # OPTIONAL: GPG signing
 # ---------------------------------------------
 if [[ "${SIGN:-0}" == "1" ]]; then
     echo "[INFO] Signing archive using GPG…"
     gpg --armor --detach-sign "${PREFIX}/${ARCHIVE_NAME}"
     echo "[DONE] Signature created: ${PREFIX}/${ARCHIVE_NAME}.asc"
+fi
+
+# ---------------------------------------------
+# Upload to GitHub (if using gh CLI)
+# ---------------------------------------------
+if [[ "${UPLOAD:-0}" == "1" ]]; then
+    echo "[INFO] Uploading to GitHub releases..."
+    gh release upload "v${FINAL_VERSION}" \
+        "${PREFIX}/${ARCHIVE_NAME}" \
+        "${PREFIX}/${ARCHIVE_NAME}.sha256" \
+        "${PREFIX}/${ARCHIVE_NAME}.asc" \
+        --clobber
+    echo "[DONE] Files uploaded to GitHub release v${FINAL_VERSION}"
 fi

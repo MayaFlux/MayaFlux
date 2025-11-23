@@ -34,6 +34,7 @@ namespace Buffers {
     class FeedbackBuffer;
     class ContainerBuffer;
     class VKBuffer;
+    class TextureBindBuffer;
     class TextureBuffer;
     class GeometryBuffer;
     class NetworkGeometryBuffer;
@@ -61,12 +62,13 @@ namespace Kakshya {
     X(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                   \
     X(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)
 
-#define ALL_BUFFER_REGISTRATION                            \
-    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)         \
-    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)           \
-    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)   \
-    B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer) \
-    B(VKBuffer, MayaFlux::Buffers::VKBuffer)               \
-    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)     \
-    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)   \
+#define ALL_BUFFER_REGISTRATION                                \
+    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)             \
+    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)               \
+    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)       \
+    B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer)     \
+    B(VKBuffer, MayaFlux::Buffers::VKBuffer)                   \
+    B(TextureBindBuffer, MayaFlux::Buffers::TextureBindBuffer) \
+    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)         \
+    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)       \
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)
