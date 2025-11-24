@@ -56,14 +56,14 @@ bool NodeNetwork::is_processing() const
     return m_processing_state.load(std::memory_order_acquire);
 }
 
-void NodeNetwork::register_channel_usage(uint32_t channel_id)
+void NodeNetwork::add_channel_usage(uint32_t channel_id)
 {
     if (channel_id < 32) {
         m_channel_mask |= (1U << channel_id);
     }
 }
 
-void NodeNetwork::unregister_channel_usage(uint32_t channel_id)
+void NodeNetwork::remove_channel_usage(uint32_t channel_id)
 {
     if (channel_id < 32) {
         m_channel_mask &= ~(1U << channel_id);

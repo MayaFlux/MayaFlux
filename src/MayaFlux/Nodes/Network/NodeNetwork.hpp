@@ -283,13 +283,13 @@ public:
      * Networks can be registered to multiple channels like regular nodes.
      * Channel registration determines where network output is routed.
      */
-    void register_channel_usage(uint32_t channel_id);
+    void add_channel_usage(uint32_t channel_id);
 
     /**
      * @brief Unregister network from a specific channel
      * @param channel_id Channel index
      */
-    void unregister_channel_usage(uint32_t channel_id);
+    void remove_channel_usage(uint32_t channel_id);
 
     /**
      * @brief Check if network is registered on a channel

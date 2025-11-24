@@ -443,12 +443,14 @@ void NodeGraphManager::add_network(const std::shared_ptr<NodeNetwork>& network,
 
     register_network_global(network);
 
+    network->set_enabled(true);
+
     if (network->get_output_mode() == NodeNetwork::OutputMode::AUDIO_SINK) {
         uint32_t channel_mask = network->get_channel_mask();
 
         if (channel_mask == 0) {
             channel_mask = 1;
-            network->register_channel_usage(0);
+            network->add_channel_usage(0);
         }
 
         auto channels = network->get_registered_channels();

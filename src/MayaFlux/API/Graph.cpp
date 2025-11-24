@@ -1,14 +1,13 @@
 #include "Graph.hpp"
 
-#include <utility>
-
 #include "Core.hpp"
-#include <utility>
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux {
 
@@ -42,8 +41,8 @@ void unregister_audio_node(const std::shared_ptr<Nodes::Node>& node, uint32_t ch
 {
     auto manager = get_node_graph_manager();
     if (channel >= manager->get_channel_count(Nodes::ProcessingToken::AUDIO_RATE)) {
-        std::out_of_range err("Channel index out of range for audio node registration");
-        std::cerr << err.what() << std::endl;
+        MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
+            "Channel index out of range for audio node registration");
     }
     manager->remove_from_root(node, Nodes::ProcessingToken::AUDIO_RATE, channel);
 }
@@ -59,8 +58,8 @@ void unregister_node(const std::shared_ptr<Nodes::Node>& node, const Nodes::Proc
 {
     auto manager = get_node_graph_manager();
     if (channel >= manager->get_channel_count(token)) {
-        std::out_of_range err("Channel index out of range for audio node registration");
-        std::cerr << err.what() << std::endl;
+        MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
+            "Channel index out of range for audio node registration");
     }
     manager->remove_from_root(node, token, channel);
 }
@@ -118,6 +117,20 @@ void connect_node_to_channel(const std::shared_ptr<Nodes::Node>& node, uint32_t 
 void connect_node_to_buffer(const std::shared_ptr<Nodes::Node>& node, const std::shared_ptr<Buffers::AudioBuffer>& buffer, float mix, bool clear_before)
 {
     get_buffer_manager()->connect_node_to_buffer(node, buffer, mix, clear_before);
+}
+
+//-------------------------------------------------------------------------
+// Node Network Management
+//-------------------------------------------------------------------------
+
+void register_node_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const Nodes::ProcessingToken& token)
+{
+    get_context().get_node_graph_manager()->add_network(network, token);
+}
+
+void unregister_node_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const Nodes::ProcessingToken& token)
+{
+    get_context().get_node_graph_manager()->remove_network(network, token);
 }
 
 //-------------------------------------------------------------------------

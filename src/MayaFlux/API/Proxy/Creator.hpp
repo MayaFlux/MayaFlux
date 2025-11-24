@@ -32,8 +32,10 @@ struct CreationContext {
 
 MAYAFLUX_API std::shared_ptr<Nodes::Node> operator|(const std::shared_ptr<Nodes::Node>& node, Domain d);
 MAYAFLUX_API std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer>& buffer, Domain d);
+MAYAFLUX_API std::shared_ptr<Nodes::NodeNetwork> operator|(const std::shared_ptr<Nodes::NodeNetwork>& network, Domain d);
 
 MAYAFLUX_API void register_node(const std::shared_ptr<Nodes::Node>& node, const CreationContext& ctx);
+MAYAFLUX_API void register_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const CreationContext& ctx);
 MAYAFLUX_API void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const CreationContext& ctx);
 MAYAFLUX_API void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& container, const Domain& domain);
 
@@ -115,6 +117,10 @@ private:
                 if (m_ctx.domain) {
                     apply_buffer_context();
                 }
+            } else if constexpr (std::is_base_of_v<Nodes::NodeNetwork, T>) {
+                if (m_ctx.domain) {
+                    apply_network_context();
+                }
             }
             m_ctx = CreationContext {};
         } else if (m_ctx.domain) {
@@ -124,6 +130,9 @@ private:
             if (m_ctx.domain == Domain::GRAPHICS) {
                 if constexpr (std::is_base_of_v<Nodes::Node, T>) {
                     apply_node_context();
+                }
+                if constexpr (std::is_base_of_v<Nodes::NodeNetwork, T>) {
+                    apply_network_context();
                 }
             }
             m_ctx = CreationContext {};
@@ -137,6 +146,15 @@ private:
 
         std::shared_ptr<Nodes::Node> node = std::static_pointer_cast<Nodes::Node>(*this);
         register_node(node, m_ctx);
+    }
+
+    void apply_network_context()
+    {
+        if (!*this)
+            return;
+
+        std::shared_ptr<Nodes::NodeNetwork> network = std::static_pointer_cast<Nodes::NodeNetwork>(*this);
+        register_network(network, m_ctx);
     }
 
     void apply_buffer_context()
@@ -162,7 +180,7 @@ private:
 
 class MAYAFLUX_API Creator {
 public:
-#define X(method_name, full_type_name)                                            \
+#define N(method_name, full_type_name)                                            \
     template <typename... Args>                                                   \
     auto method_name(Args&&... args) -> CreationHandle<full_type_name>            \
     {                                                                             \
@@ -170,7 +188,17 @@ public:
         return CreationHandle<full_type_name>(obj);                               \
     }
     ALL_NODE_REGISTRATIONS
-#undef X
+#undef N
+
+#define W(method_name, full_type_name)                                            \
+    template <typename... Args>                                                   \
+    auto method_name(Args&&... args) -> CreationHandle<full_type_name>            \
+    {                                                                             \
+        auto obj = std::make_shared<full_type_name>(std::forward<Args>(args)...); \
+        return CreationHandle<full_type_name>(obj);                               \
+    }
+    ALL_NODE_NETWORK_REGISTRATIONS
+#undef W
 
 #define B(method_name, full_type_name)                                            \
     template <typename... Args>                                                   \

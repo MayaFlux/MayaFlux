@@ -15,6 +15,7 @@ ModalNetwork::ModalNetwork(size_t num_modes, double fundamental,
     : m_spectrum(spectrum)
     , m_fundamental(fundamental)
 {
+    set_output_mode(OutputMode::AUDIO_SINK);
     set_topology(Topology::INDEPENDENT);
 
     auto ratios = generate_spectrum_ratios(spectrum, num_modes);
@@ -26,7 +27,9 @@ ModalNetwork::ModalNetwork(const std::vector<double>& frequency_ratios,
     : m_spectrum(Spectrum::CUSTOM)
     , m_fundamental(fundamental)
 {
+    set_output_mode(OutputMode::AUDIO_SINK);
     set_topology(Topology::INDEPENDENT);
+
     initialize_modes(frequency_ratios, base_decay);
 }
 
