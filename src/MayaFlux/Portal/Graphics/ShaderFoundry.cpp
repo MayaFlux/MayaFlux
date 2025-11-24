@@ -263,71 +263,69 @@ std::shared_ptr<Core::VKShaderModule> ShaderFoundry::compile(const ShaderSource&
 }
 
 ShaderID ShaderFoundry::load_shader(
-    const std::string& filepath,
+    const std::string& content,
     std::optional<ShaderStage> stage,
     const std::string& entry_point)
 {
-    auto cache_it = m_shader_filepath_cache.find(filepath);
-    if (cache_it != m_shader_filepath_cache.end()) {
-        MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-            "Using cached shader ID for: {}", filepath);
-        return cache_it->second;
-    }
-
-    auto shader_module = compile_from_file(filepath, stage, entry_point);
-    if (!shader_module) {
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "ShaderFoundry not initialized");
         return INVALID_SHADER;
     }
 
-    ShaderID id = m_next_shader_id++;
+    DetectedSourceType source_type = detect_source_type(content);
 
-    ShaderState& state = m_shaders[id];
-    state.module = shader_module;
-    state.filepath = filepath;
-    state.stage = stage.value_or(
-        detect_stage_from_extension(filepath).value_or(ShaderStage::COMPUTE));
-    state.entry_point = entry_point;
-
-    m_shader_filepath_cache[filepath] = id;
-
-    return id;
-}
-
-ShaderID ShaderFoundry::load_shader_from_source(
-    const std::string& source,
-    ShaderStage stage,
-    const std::string& entry_point)
-{
-    auto shader_module = compile_from_source(source, stage, entry_point);
-    if (!shader_module) {
-        return INVALID_SHADER;
+    std::string cache_key;
+    if (source_type == DetectedSourceType::FILE_GLSL || source_type == DetectedSourceType::FILE_SPIRV) {
+        cache_key = content;
+    } else {
+        cache_key = generate_source_cache_key(content, stage.value_or(ShaderStage::COMPUTE));
     }
 
-    ShaderID id = m_next_shader_id++;
-
-    ShaderState& state = m_shaders[id];
-    state.module = shader_module;
-    state.stage = stage;
-    state.entry_point = entry_point;
-    // No filepath for source-based shaders
-
-    return id;
-}
-
-ShaderID ShaderFoundry::load_shader_from_source_cached(
-    const std::string& source,
-    ShaderStage stage,
-    const std::string& cache_key,
-    const std::string& entry_point)
-{
-    auto cache_it = m_shader_filepath_cache.find(cache_key);
-    if (cache_it != m_shader_filepath_cache.end()) {
+    auto id_it = m_shader_filepath_cache.find(cache_key);
+    if (id_it != m_shader_filepath_cache.end()) {
         MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Using cached shader ID for: {}", cache_key);
-        return cache_it->second;
+        return id_it->second;
     }
 
-    auto shader_module = compile_from_source_cached(source, stage, cache_key, entry_point);
+    if (!stage.has_value()) {
+        if (source_type == DetectedSourceType::FILE_GLSL || source_type == DetectedSourceType::FILE_SPIRV) {
+            if (source_type == DetectedSourceType::FILE_SPIRV) {
+                std::filesystem::path p(content);
+                std::string stem = p.stem().string();
+                stage = detect_stage_from_extension(stem);
+            } else {
+                stage = detect_stage_from_extension(content);
+            }
+        }
+
+        if (!stage.has_value()) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Cannot auto-detect shader stage from '{}' - must specify explicitly",
+                content);
+            return INVALID_SHADER;
+        }
+    }
+
+    std::shared_ptr<Core::VKShaderModule> shader_module;
+
+    switch (source_type) {
+    case DetectedSourceType::FILE_GLSL:
+        shader_module = compile_from_file(content, stage, entry_point);
+        break;
+    case DetectedSourceType::FILE_SPIRV:
+        shader_module = compile_from_spirv(content, *stage, entry_point);
+        break;
+    case DetectedSourceType::SOURCE_STRING:
+        shader_module = compile_from_source(content, *stage, entry_point);
+        break;
+    default:
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Cannot determine shader source type");
+        return INVALID_SHADER;
+    }
+
     if (!shader_module) {
         return INVALID_SHADER;
     }
@@ -336,43 +334,79 @@ ShaderID ShaderFoundry::load_shader_from_source_cached(
 
     ShaderState& state = m_shaders[id];
     state.module = shader_module;
-    state.stage = stage;
+    state.filepath = cache_key;
+    state.stage = *stage;
     state.entry_point = entry_point;
 
     m_shader_filepath_cache[cache_key] = id;
 
+    MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+        "Shader loaded: {} (ID: {}, stage: {})",
+        cache_key, id, static_cast<int>(*stage));
+
     return id;
 }
 
-ShaderID ShaderFoundry::load_shader_from_spirv(
-    const std::string& spirv_path,
-    ShaderStage stage,
-    const std::string& entry_point)
+ShaderID ShaderFoundry::load_shader(const ShaderSource& source)
 {
-    auto cache_it = m_shader_filepath_cache.find(spirv_path);
-    if (cache_it != m_shader_filepath_cache.end()) {
-        MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
-            "Using cached shader ID for: {}", spirv_path);
-        return cache_it->second;
+    return load_shader(source.content, source.stage, source.entry_point);
+}
+
+std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const std::string& filepath) const
+{
+    namespace fs = std::filesystem;
+
+    fs::path path(filepath);
+
+    if (path.is_absolute() || fs::exists(filepath)) {
+        return path;
     }
 
-    auto shader_module = compile_from_spirv(spirv_path, stage, entry_point);
+    std::vector<std::string> search_paths = {
+        Core::SHADER_BUILD_OUTPUT_DIR,
+        Core::SHADER_INSTALL_DIR,
+        Core::SHADER_SOURCE_DIR,
+        "./shaders",
+        "../shaders"
+    };
 
-    if (!shader_module) {
-        return INVALID_SHADER;
+    for (const auto& search_path : search_paths) {
+        fs::path full_path = fs::path(search_path) / filepath;
+        if (fs::exists(full_path)) {
+            return full_path;
+        }
     }
 
-    ShaderID id = m_next_shader_id++;
+    return std::nullopt;
+}
 
-    ShaderState& state = m_shaders[id];
-    state.module = shader_module;
-    state.filepath = spirv_path;
-    state.stage = stage;
-    state.entry_point = entry_point;
+ShaderFoundry::DetectedSourceType ShaderFoundry::detect_source_type(const std::string& content) const
+{
+    auto resolved_path = resolve_shader_path(content);
 
-    m_shader_filepath_cache[spirv_path] = id;
+    if (resolved_path.has_value()) {
+        std::string ext = resolved_path->extension().string();
+        std::ranges::transform(ext, ext.begin(), ::tolower);
 
-    return id;
+        if (ext == ".spv") {
+            return DetectedSourceType::FILE_SPIRV;
+        }
+
+        return DetectedSourceType::FILE_GLSL;
+    }
+
+    if (content.size() > 1024 || content.find('\n') != std::string::npos) {
+        return DetectedSourceType::SOURCE_STRING;
+    }
+
+    return DetectedSourceType::SOURCE_STRING;
+}
+
+std::string ShaderFoundry::generate_source_cache_key(const std::string& source, ShaderStage stage) const
+{
+    std::hash<std::string> hasher;
+    size_t hash = hasher(source + std::to_string(static_cast<int>(stage)));
+    return "source_" + std::to_string(hash);
 }
 
 ShaderID ShaderFoundry::reload_shader(const std::string& filepath)

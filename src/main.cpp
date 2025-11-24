@@ -27,8 +27,6 @@ void run()
     } catch (const std::exception& e) {
         MF_ERROR(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Runtime, "Error running user code: {}", e.what());
     }
-#else
-    auto container = vega.read_audio("res/audio.wav") | Audio;
 #endif
 }
 
@@ -49,7 +47,7 @@ int main()
 
         run();
 
-        std::cout << "Press any key to stop...\n";
+        std::cout << "Press Enter [Return] to stop...\n";
         std::cin.get();
         MayaFlux::End();
 
