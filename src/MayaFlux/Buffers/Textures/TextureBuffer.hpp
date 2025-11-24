@@ -6,6 +6,7 @@
 namespace MayaFlux::Buffers {
 
 class TextureProcessor;
+class RenderProcessor;
 
 /**
  * @class TextureBuffer
@@ -30,6 +31,15 @@ class TextureProcessor;
  */
 class MAYAFLUX_API TextureBuffer : public VKBuffer {
 public:
+    struct RenderConfig {
+        std::shared_ptr<Core::Window> target_window;
+        std::string vertex_shader = "texture.vert";
+        std::string fragment_shader = "texture.frag";
+        std::string default_texture_binding = "texSampler";
+        Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
+        std::optional<std::pair<uint32_t, std::shared_ptr<Core::VKImage>>> additional_texture;
+    };
+
     /**
      * @brief Create texture buffer with dimensions
      * @param width Texture width in pixels
@@ -153,8 +163,21 @@ public:
     [[nodiscard]] bool is_texture_dirty() const { return m_texture_dirty; }
     void clear_dirty_flag() { m_texture_dirty = false; }
 
+    /**
+     * @brief Setup rendering with RenderProcessor
+     * @param config Rendering configuration
+     */
+    void setup_rendering(const RenderConfig& config);
+
+    std::shared_ptr<RenderProcessor> get_render_processor() const
+    {
+        return m_render_processor;
+    }
+
 private:
     friend class TextureProcessor;
+
+    std::shared_ptr<RenderProcessor> m_render_processor;
 
     // Texture metadata
     uint32_t m_width;

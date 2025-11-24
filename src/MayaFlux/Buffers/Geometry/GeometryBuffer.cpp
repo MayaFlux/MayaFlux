@@ -1,4 +1,8 @@
 #include "GeometryBuffer.hpp"
+
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
@@ -42,6 +46,28 @@ void GeometryBuffer::setup_processors(ProcessingToken token)
         self);
 
     set_default_processor(m_bindings_processor);
+
+    auto chain = get_processing_chain();
+    if (!chain) {
+        chain = std::make_shared<BufferProcessingChain>();
+        set_processing_chain(chain);
+    }
+    chain->set_preferred_token(token);
+}
+
+void GeometryBuffer::setup_rendering(const RenderConfig& config)
+{
+    if (!m_render_processor) {
+        m_render_processor = std::make_shared<RenderProcessor>(ShaderProcessorConfig { config.vertex_shader });
+    }
+
+    m_render_processor->set_fragment_shader(config.fragment_shader);
+    m_render_processor->set_target_window(config.target_window);
+    m_render_processor->set_primitive_topology(config.topology);
+    m_render_processor->set_polygon_mode(config.polygon_mode);
+    m_render_processor->set_cull_mode(config.cull_mode);
+
+    get_processing_chain()->add_processor(m_render_processor, shared_from_this());
 }
 
 size_t GeometryBuffer::calculate_buffer_size(
@@ -58,13 +84,13 @@ size_t GeometryBuffer::calculate_buffer_size(
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
             "GeometryWriterNode has zero-size vertex buffer. "
             "Did you forget to call set_vertex_stride() or resize_vertex_buffer()?");
-        return 4096; // Fallback minimum
+        return 4096;
     }
 
-    size_t allocated_size = static_cast<size_t>(
+    auto allocated_size = static_cast<size_t>(
         static_cast<float>(base_size) * over_allocate_factor);
 
-    if (over_allocate_factor > 1.0f) {
+    if (over_allocate_factor > 1.0F) {
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferManagement,
             "Over-allocated geometry buffer: {} → {} bytes ({}x)",
             base_size, allocated_size, over_allocate_factor);
