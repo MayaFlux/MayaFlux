@@ -57,7 +57,7 @@ public:
     /**
      * @brief Initialize the buffer and its processors
      */
-    void initialize();
+    void setup_processors(Buffers::ProcessingToken token) override;
 
     /**
      * @brief Get the texture node driving this buffer

@@ -4,7 +4,11 @@
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "NetworkGeometryProcessor.hpp"
 
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+
 namespace MayaFlux::Buffers {
+
+class RenderProcessor;
 
 /**
  * @class NetworkGeometryBuffer
@@ -43,6 +47,14 @@ namespace MayaFlux::Buffers {
  */
 class MAYAFLUX_API NetworkGeometryBuffer : public VKBuffer {
 public:
+    struct RenderConfig {
+        std::shared_ptr<Core::Window> target_window;
+        std::string vertex_shader = "point.vert";
+        std::string fragment_shader = "point.frag";
+        Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
+        Portal::Graphics::PolygonMode polygon_mode = Portal::Graphics::PolygonMode::FILL;
+        Portal::Graphics::CullMode cull_mode = Portal::Graphics::CullMode::NONE;
+    };
     /**
      * @brief Create geometry buffer from network
      * @param network NodeNetwork containing geometry nodes (e.g., ParticleNetwork)
@@ -55,7 +67,7 @@ public:
     explicit NetworkGeometryBuffer(
         std::shared_ptr<Nodes::NodeNetwork> network,
         const std::string& binding_name = "network_geometry",
-        float over_allocate_factor = 2.0f);
+        float over_allocate_factor = 2.0F);
 
     ~NetworkGeometryBuffer() override = default;
 
@@ -106,10 +118,23 @@ public:
         }
     }
 
+    /**
+     * @brief Setup rendering with RenderProcessor
+     * @param config Rendering configuration
+     */
+    void setup_rendering(const RenderConfig& config);
+
+    std::shared_ptr<RenderProcessor> get_render_processor() const
+    {
+        return m_render_processor;
+    }
+
 private:
     std::shared_ptr<Nodes::NodeNetwork> m_network;
     std::shared_ptr<NetworkGeometryProcessor> m_processor;
     std::string m_binding_name;
+
+    std::shared_ptr<RenderProcessor> m_render_processor;
 
     /**
      * @brief Calculate initial buffer size based on network node count

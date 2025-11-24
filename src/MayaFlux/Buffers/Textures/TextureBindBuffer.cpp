@@ -1,5 +1,8 @@
 #include "TextureBindBuffer.hpp"
 
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
@@ -29,7 +32,7 @@ TextureBindBuffer::TextureBindBuffer(
         get_size_bytes());
 }
 
-void TextureBindBuffer::initialize()
+void TextureBindBuffer::setup_processors(Buffers::ProcessingToken token)
 {
     auto self = std::dynamic_pointer_cast<TextureBindBuffer>(shared_from_this());
 
@@ -40,6 +43,13 @@ void TextureBindBuffer::initialize()
         self);
 
     set_default_processor(m_bindings_processor);
+
+    auto chain = get_processing_chain();
+    if (!chain) {
+        chain = std::make_shared<BufferProcessingChain>();
+        set_processing_chain(chain);
+    }
+    chain->set_preferred_token(token);
 }
 
 size_t TextureBindBuffer::calculate_buffer_size(const std::shared_ptr<Nodes::GpuSync::TextureNode>& node)

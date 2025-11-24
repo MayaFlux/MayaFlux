@@ -1,6 +1,10 @@
 #include "TextureBuffer.hpp"
-#include "MayaFlux/Journal/Archivist.hpp"
+
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "TextureProcessor.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -46,8 +50,44 @@ void TextureBuffer::setup_processors(ProcessingToken token)
 
     set_default_processor(m_texture_processor);
 
+    auto chain = get_processing_chain();
+    if (!chain) {
+        chain = std::make_shared<BufferProcessingChain>();
+        set_processing_chain(chain);
+    }
+    chain->set_preferred_token(token);
+
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
         "TextureBuffer setup_processors: TextureProcessor will be attached on first registration");
+}
+
+void TextureBuffer::setup_rendering(const RenderConfig& config)
+{
+    if (!m_render_processor) {
+        ShaderProcessorConfig shader_config { config.vertex_shader };
+        shader_config.bindings[config.default_texture_binding] = ShaderBinding(
+            0, 0, vk::DescriptorType::eCombinedImageSampler);
+
+        uint32_t binding_index = 1;
+        for (const auto& [name, _] : config.additional_textures) {
+            shader_config.bindings[name] = ShaderBinding(
+                0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
+        }
+
+        m_render_processor = std::make_shared<RenderProcessor>(shader_config);
+    }
+
+    m_render_processor->set_fragment_shader(config.fragment_shader);
+    m_render_processor->set_target_window(config.target_window);
+    m_render_processor->set_primitive_topology(config.topology);
+
+    m_render_processor->bind_texture(config.default_texture_binding, get_texture());
+
+    for (const auto& [name, texture] : config.additional_textures) {
+        m_render_processor->bind_texture(name, texture);
+    }
+
+    get_processing_chain()->add_processor(m_render_processor, shared_from_this());
 }
 
 // =========================================================================

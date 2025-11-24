@@ -4,7 +4,11 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Nodes/Graphics/GeometryWriterNode.hpp"
 
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+
 namespace MayaFlux::Buffers {
+
+class RenderProcessor;
 
 /**
  * @class GeometryBuffer
@@ -41,6 +45,15 @@ namespace MayaFlux::Buffers {
  */
 class MAYAFLUX_API GeometryBuffer : public VKBuffer {
 public:
+    struct RenderConfig {
+        std::shared_ptr<Core::Window> target_window;
+        std::string vertex_shader = "point.vert";
+        std::string fragment_shader = "point.frag";
+        Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
+        Portal::Graphics::PolygonMode polygon_mode = Portal::Graphics::PolygonMode::FILL;
+        Portal::Graphics::CullMode cull_mode = Portal::Graphics::CullMode::NONE;
+    };
+
     /**
      * @brief Create geometry buffer from generative node
      * @param node GeometryWriterNode that generates vertices each frame
@@ -108,10 +121,23 @@ public:
         }
     }
 
+    /**
+     * @brief Setup rendering with RenderProcessor
+     * @param config Rendering configuration
+     */
+    void setup_rendering(const RenderConfig& config);
+
+    std::shared_ptr<RenderProcessor> get_render_processor() const
+    {
+        return m_render_processor;
+    }
+
 private:
     std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> m_geometry_node;
     std::shared_ptr<GeometryBindingsProcessor> m_bindings_processor;
     std::string m_binding_name;
+
+    std::shared_ptr<RenderProcessor> m_render_processor;
 
     /**
      * @brief Calculate initial buffer size with optional over-allocation
