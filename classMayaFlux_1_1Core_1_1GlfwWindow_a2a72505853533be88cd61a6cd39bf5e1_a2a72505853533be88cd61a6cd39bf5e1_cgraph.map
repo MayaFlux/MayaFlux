@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::GlfwWindow::~GlfwWindow" name="MayaFlux::Core::GlfwWindow::~GlfwWindow">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,219,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a2217ef405d878e04e518d7c607a89e31.html#a2217ef405d878e04e518d7c607a89e31" title="Decrements the count of active GLFW windows." alt="" coords="267,5,497,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,42,253,38,253,43,219,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a6ea58a1aa5ef4b29ac6bed2ed9558100.html#a6ea58a1aa5ef4b29ac6bed2ed9558100" title="Terminates the GLFW library if initialized and no windows remain." alt="" coords="267,69,497,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="219,67,253,71,253,77,219,73"/>
+</map>

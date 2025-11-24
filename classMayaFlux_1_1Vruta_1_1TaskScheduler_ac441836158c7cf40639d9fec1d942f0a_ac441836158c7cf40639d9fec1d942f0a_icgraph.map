@@ -1,0 +1,54 @@
+<map id="MayaFlux::Vruta::TaskScheduler::get_rate" name="MayaFlux::Vruta::TaskScheduler::get_rate">
+<area shape="rect" id="Node000001" title="Get processing rate for a domain." alt="" coords="1103,191,1333,231"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kriya_a78bad297d947eafe13416beda84a3044.html#a78bad297d947eafe13416beda84a3044" title="Creates a continuous interpolation generator between two values over time." alt="" coords="859,60,1019,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1163,187,965,88,967,83,1166,183"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a99bd0b1b8f51d07e40aeaf1588342323.html#a99bd0b1b8f51d07e40aeaf1588342323" title="Converts a time in seconds to a number of samples." alt="" coords="824,191,1055,231"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1089,214,1055,214,1055,209,1089,209"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a1799325adcf528acaaff698264a9ac42.html#a1799325adcf528acaaff698264a9ac42" title="Convert seconds to processing units for a specific domain." alt="" coords="824,255,1055,295"/>
+<area shape="poly" id="edge26_Node000001_Node000026" title=" " alt="" coords="1117,237,1028,258,1026,253,1116,232"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a6a9afa59d6d5d235f7d9bf2f1157004c.html#a6a9afa59d6d5d235f7d9bf2f1157004c" title="Creates a line generator that interpolates between values over time." alt="" coords="569,5,735,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="858,60,719,33,720,28,859,55"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a71b338f3d13496168e51bbcad3b7789f.html#a71b338f3d13496168e51bbcad3b7789f" title="Execute pipeline with real&#45;time rate control." alt="" coords="539,55,765,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="900,185,843,146,775,110,743,98,744,93,777,105,846,142,903,181"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kriya_ad9fa9375937ff3bc1891642dbde2633a.html#ad9fa9375937ff3bc1891642dbde2633a" title="Creates a periodic event generator that executes a callback at regular intervals." alt="" coords="565,120,739,145"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="871,189,775,159,726,148,728,143,777,154,872,184"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kriya_a5eb7c9cb29f7a6334d291021cd084fbb.html#a5eb7c9cb29f7a6334d291021cd084fbb" title="Creates a generative algorithm that produces values based on a pattern function." alt="" coords="561,169,743,195"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="810,201,743,194,744,189,811,196"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kriya_1_1Timer_acf410f70434e3f2a2e3ae063f2aab581.html#acf410f70434e3f2a2e3ae063f2aab581" title="Schedules a callback to execute after a delay." alt="" coords="565,219,739,259"/>
+<area shape="poly" id="edge11_Node000004_Node000012" title=" " alt="" coords="811,227,740,234,739,228,810,221"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_1_1Kriya_a3d8848adb335616cd348ea0192d567d1.html#a3d8848adb335616cd348ea0192d567d1" title="Creates a temporal sequence that executes callbacks at specified time offsets." alt="" coords="553,308,751,333"/>
+<area shape="poly" id="edge19_Node000004_Node000020" title=" " alt="" coords="845,238,825,246,801,259,777,274,690,310,688,306,775,269,798,255,823,241,843,233"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Kriya_1_1EventChain_aeda4b3961ff90fdb74445d39f1fbadd1.html#aeda4b3961ff90fdb74445d39f1fbadd1" title="Starts executing the event chain." alt="" coords="547,358,757,398"/>
+<area shape="poly" id="edge23_Node000004_Node000023" title=" " alt="" coords="831,241,826,245,815,257,808,269,803,295,797,321,790,334,778,347,757,360,754,356,774,343,785,331,792,319,797,293,803,267,810,254,822,241,828,237"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Kriya_1_1CycleCoordinator_aa9fca21891187b79038097d41f16b8fb.html#aa9fca21891187b79038097d41f16b8fb" title="Create a synchronization routine based on real&#45;time rate." alt="" coords="528,422,776,462"/>
+<area shape="poly" id="edge25_Node000004_Node000025" title=" " alt="" coords="830,242,826,245,811,265,804,285,803,327,802,369,794,391,778,412,762,424,759,420,774,408,789,388,796,368,798,327,799,284,806,263,822,242,826,238"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a95d5dddcf0ccf005163f77b570c8e7a5.html#a95d5dddcf0ccf005163f77b570c8e7a5" title="Creates a simple task that calls a function at a specified interval." alt="" coords="280,44,461,69"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="566,120,527,110,479,93,414,72,416,67,481,87,529,105,568,115"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a0b2f122006fb411804adab9baa87647d.html#a0b2f122006fb411804adab9baa87647d" title="Creates a metronome task and addes it to the default scheduler list for evaluation." alt="" coords="33,27,185,67"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="266,56,185,53,186,47,267,50"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a42a25c1b0a46849e6804c5c24153fc50.html#a42a25c1b0a46849e6804c5c24153fc50" title="Schedules a pattern generator that produces values based on a pattern function." alt="" coords="276,103,465,128"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="571,169,527,159,479,146,421,131,423,126,481,141,529,154,572,164"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a870a8536c64a612c813800c78068a986.html#a870a8536c64a612c813800c78068a986" title="Schedules a pattern generator that produces values based on a pattern function and addes it to the de..." alt="" coords="33,91,185,131"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="263,116,186,115,186,110,263,111"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Kriya_1_1TimedAction_a18be31dfbea545e0e054c19eea1bd71f.html#a18be31dfbea545e0e054c19eea1bd71f" title="Executes a pair of functions with a time interval between them." alt="" coords="261,155,480,195"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="551,219,459,198,460,193,552,214"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kriya_1_1NodeTimer_aab3a95aa444d53df5b860fda59a22f15.html#aab3a95aa444d53df5b860fda59a22f15" title="Activates a processing node for a specific duration." alt="" coords="267,219,475,259"/>
+<area shape="poly" id="edge13_Node000012_Node000014" title=" " alt="" coords="551,242,475,242,475,237,551,237"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kriya_1_1NodeTimer_a7506cff95200ac79bd4e9c4aca658684.html#a7506cff95200ac79bd4e9c4aca658684" title="Activates a processing node with custom setup and cleanup functions." alt="" coords="267,283,475,323"/>
+<area shape="poly" id="edge16_Node000012_Node000017" title=" " alt="" coords="552,265,460,286,459,281,551,260"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kriya_1_1NodeTimer_ab3167d31ce8ec2e86c1bd5fc64908755.html#ab3167d31ce8ec2e86c1bd5fc64908755" title=" " alt="" coords="5,155,213,195"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="274,219,191,198,192,193,276,213"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kriya_1_1NodeTimer_a416dd77a806c5026aab9318a6ce7a807.html#a416dd77a806c5026aab9318a6ce7a807" title=" " alt="" coords="5,219,213,259"/>
+<area shape="poly" id="edge15_Node000014_Node000016" title=" " alt="" coords="253,242,214,242,214,237,253,237"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kriya_1_1NodeTimer_abb1888aea442a638836c40c80d553366.html#abb1888aea442a638836c40c80d553366" title=" " alt="" coords="5,283,213,323"/>
+<area shape="poly" id="edge17_Node000017_Node000018" title=" " alt="" coords="253,306,214,306,214,301,253,301"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Kriya_1_1NodeTimer_a5d343b310078642f82b60990fe175ea7.html#a5d343b310078642f82b60990fe175ea7" title=" " alt="" coords="5,347,213,387"/>
+<area shape="poly" id="edge18_Node000017_Node000019" title=" " alt="" coords="276,329,192,350,191,345,274,324"/>
+<area shape="poly" id="edge22_Node000020_Node000020" title=" " alt="" coords="702,299,700,295,691,291,652,287,622,289,606,294,602,299,611,306,607,310,597,300,602,290,621,283,652,281,693,286,703,291,707,297"/>
+<area shape="rect" id="Node000021" href="$namespaceMayaFlux_adba3d43ff7eda5bebca4f34e8cad65ad.html#adba3d43ff7eda5bebca4f34e8cad65ad" title="Creates a sequence task that calls functions at specified times." alt="" coords="269,348,473,373"/>
+<area shape="poly" id="edge20_Node000020_Node000021" title=" " alt="" coords="549,338,461,351,460,345,548,333"/>
+<area shape="rect" id="Node000022" href="$namespaceMayaFlux_a44556db6c9a1fd8493244b1e6b30e443.html#a44556db6c9a1fd8493244b1e6b30e443" title="Creates a sequence task that calls functions at specified times and addes it to the default scheduler..." alt="" coords="33,411,185,451"/>
+<area shape="poly" id="edge21_Node000021_Node000022" title=" " alt="" coords="299,379,262,389,175,414,173,409,261,383,298,374"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Kriya_1_1Sequence_a1dff76a0a3ca0fc40eaed27f83ad894b.html#a1dff76a0a3ca0fc40eaed27f83ad894b" title="Executes the sequence with explicit managers." alt="" coords="271,398,470,438"/>
+<area shape="poly" id="edge24_Node000023_Node000024" title=" " alt="" coords="533,398,470,407,470,401,532,392"/>
+</map>

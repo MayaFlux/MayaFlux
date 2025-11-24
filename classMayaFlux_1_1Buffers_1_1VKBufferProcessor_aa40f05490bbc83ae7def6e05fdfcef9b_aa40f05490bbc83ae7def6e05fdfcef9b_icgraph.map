@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::VKBufferProcessor::initialize_buffer_service" name="MayaFlux::Buffers::VKBufferProcessor::initialize_buffer_service">
+<area shape="rect" id="Node000001" title=" " alt="" coords="305,156,512,211"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_ad7fe2cab033061bbcd082997c4833426.html#ad7fe2cab033061bbcd082997c4833426" title=" " alt="" coords="24,5,239,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="365,149,315,110,256,74,231,62,233,58,259,69,318,106,368,145"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_a617e8ba68d2c47d1f24185ba6dc201fc.html#a617e8ba68d2c47d1f24185ba6dc201fc" title=" " alt="" coords="25,84,238,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="291,156,237,141,238,136,293,151"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af778bcd2c3d39dee8af08b210d1d81dd.html#af778bcd2c3d39dee8af08b210d1d81dd" title="Construct processor with shader path." alt="" coords="8,163,255,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="292,186,255,186,255,181,292,181"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a199093f3d4238e1feea8567432c8629f.html#a199093f3d4238e1feea8567432c8629f" title="Construct processor with full configuration." alt="" coords="8,227,255,267"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="293,213,219,230,218,225,291,208"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_afb8d66e97b9ee7ccf639ce60794fe789.html#afb8d66e97b9ee7ccf639ce60794fe789" title=" " alt="" coords="5,291,257,331"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="362,221,313,253,258,282,226,294,224,289,256,277,311,248,359,216"/>
+</map>

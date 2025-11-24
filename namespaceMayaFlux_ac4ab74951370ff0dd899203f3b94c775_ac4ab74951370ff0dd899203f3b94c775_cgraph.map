@@ -1,0 +1,11 @@
+<map id="MayaFlux::get_context" name="MayaFlux::get_context">
+<area shape="rect" id="Node000001" title="Gets the default engine instance." alt="" coords="5,13,176,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="224,5,395,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,23,210,23,210,28,176,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="443,5,587,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="395,23,429,23,429,28,395,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="635,5,785,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="587,23,621,23,621,28,587,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="833,5,980,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="786,23,820,23,820,28,786,28"/>
+</map>

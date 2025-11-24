@@ -1,0 +1,17 @@
+<map id="MayaFlux::Nodes::Generator::Generator" name="MayaFlux::Nodes::Generator::Generator">
+<area shape="rect" id="Node000001" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="583,623,783,903"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse.html" title="Impulse generator node." alt="" coords="5,981,208,1521"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="570,786,485,808,392,842,346,864,301,889,260,919,222,953,197,982,193,979,218,949,256,915,298,885,343,859,390,837,483,803,568,781"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic.html" title="Digital signal processor implementing boolean logic operations." alt="" coords="232,971,432,1531"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="573,834,506,888,474,919,446,952,433,972,428,969,442,949,470,915,502,884,570,830"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor.html" title="Phase ramp generator node." alt="" coords="457,951,674,1551"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="648,917,640,951,635,950,643,915"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial.html" title="Generator that produces values based on polynomial functions." alt="" coords="698,981,902,1521"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="722,916,738,980,732,981,717,917"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine.html" title="Sinusoidal oscillator generator node." alt="" coords="927,1001,1129,1501"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="796,833,860,886,890,916,917,949,948,999,943,1002,912,952,886,920,856,890,792,837"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random.html" title="Computational stochastic signal generator with multiple probability distributions." alt="" coords="1153,1003,1353,1498"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="797,781,882,803,974,837,1020,859,1064,885,1106,915,1143,949,1165,974,1183,1002,1179,1005,1160,977,1139,953,1102,919,1061,890,1017,864,972,842,880,808,796,786"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="584,5,781,575"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="685,589,685,622,680,622,680,589"/>
+</map>

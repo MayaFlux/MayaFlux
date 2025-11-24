@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::create_context" name="MayaFlux::Nodes::Generator::Polynomial::create_context">
+<area shape="rect" id="Node000001" title="Creates a context object for callbacks." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node_adecd36f4b9db4faad89b99a2daa77024.html#adecd36f4b9db4faad89b99a2daa77024" title="Provides access to the GPU data buffer." alt="" coords="261,5,439,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,23,248,23,248,28,214,28"/>
+</map>

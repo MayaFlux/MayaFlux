@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Core_1_1IGraphicsBackend.html" title=" " alt="" coords="5,5,199,45"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Core_1_1VulkanBackend.html" title="Vulkan implementation of the IGraphicsBackend interface." alt="" coords="247,13,477,38"/>
+<area shape="poly" id="edge34_Node000000_Node000001" title=" " alt="" coords="212,23,247,23,247,28,212,28"/>
+</map>

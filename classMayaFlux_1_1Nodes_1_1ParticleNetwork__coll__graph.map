@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::ParticleNetwork" name="MayaFlux::Nodes::ParticleNetwork">
+<area shape="rect" id="Node000001" title="Network of particles with physics simulation." alt="" coords="15,619,220,1319"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="5,5,229,571"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,585,120,618,115,618,115,585"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::set_config" name="MayaFlux::Buffers::ShaderProcessor::set_config">
+<area shape="rect" id="Node000001" title="Update entire configuration." alt="" coords="505,45,664,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af23075042b8bb296526aded019a5338e.html#af23075042b8bb296526aded019a5338e" title=" " alt="" coords="263,5,457,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="491,59,457,53,458,47,492,54"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a075378983552faf881f1b6eebc36dfec.html#a075378983552faf881f1b6eebc36dfec" title=" " alt="" coords="263,84,457,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="492,91,458,97,457,92,491,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a58b760d216dc2625702f79ddeefa55f8.html#a58b760d216dc2625702f79ddeefa55f8" title="The core processing function that must be implemented by derived classes." alt="" coords="6,5,214,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="249,35,214,35,214,30,249,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a4c285364d13fbda8713b794dd55253d8.html#a4c285364d13fbda8713b794dd55253d8" title="The core processing function that must be implemented by derived classes." alt="" coords="5,84,215,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="249,114,215,114,215,109,249,109"/>
+</map>

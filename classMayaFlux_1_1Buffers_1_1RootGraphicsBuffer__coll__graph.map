@@ -1,0 +1,20 @@
+<map id="MayaFlux::Buffers::RootGraphicsBuffer" name="MayaFlux::Buffers::RootGraphicsBuffer">
+<area shape="rect" id="Node000001" title="Root container for GPU buffer lifecycle management and batch processing." alt="" coords="306,1864,509,2324"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="309,1177,506,1815"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="410,1828,410,1864,405,1864,405,1828"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="178,539,359,1053"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="325,1066,347,1177,342,1178,320,1067"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,135,188,415"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="150,427,186,538,181,539,144,429"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="21,5,173,85"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="99,99,99,135,94,135,94,99"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1VKBufferResources.html" title=" " alt="" coords="212,215,352,335"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="283,335,278,522,273,522,278,335"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Buffers_1_1RootBuffer_1_1PendingBufferOp.html" title="Structure for storing pending buffer add/remove operations." alt="" coords="401,207,568,342"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="460,343,438,408,422,478,400,652,389,829,386,1002,389,1161,383,1161,381,1002,384,829,395,651,417,477,433,406,455,341"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="549,477,746,1115"/>
+<area shape="poly" id="edge9_Node000008_Node000007" title=" " alt="" coords="500,342,527,453,546,513,541,515,522,454,495,343"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="547,1098,509,1209,504,1207,542,1097"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="606,242,689,307"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="650,321,650,477,645,477,645,321"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::LogicProcessor::apply" name="MayaFlux::Buffers::LogicProcessor::apply">
+<area shape="rect" id="Node000001" title="Applies stored logic data to the given buffer." alt="" coords="251,13,413,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1LogicProcessor_a18f66e8e935633cb9dcf09174ffe439b.html#a18f66e8e935633cb9dcf09174ffe439b" title="Processes a buffer through the logic node." alt="" coords="5,5,203,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,35,203,35,203,30,237,30"/>
+</map>

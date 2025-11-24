@@ -1,0 +1,766 @@
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp:12: warning: the name 'StatisticalAnalyzer_new.hpp' supplied as the argument in the \file statement is not an input file
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Sorters/SortingHelper.hpp:12: warning: the name 'SortingHelpers.hpp' supplied as the argument in the \file statement is not an input file
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/MathematicalHelper.hpp:7: warning: the name 'MathematicalTransforms.hpp' supplied as the argument in the \file statement is not an input file
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/SpectralHelper.hpp:10: warning: the name 'SpectralTransform.hpp' supplied as the argument in the \file statement is not an input file
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/TemporalHelper.hpp:8: warning: the name 'TemporalSpectralTransforms.hpp' supplied as the argument in the \file statement is not an input file
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/BufferOperation.hpp:105: warning: the name 'intro' supplied as the argument of the \class, \struct, \union, or \include command is not an input file
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/VKShaderModule.hpp:8: warning: Documentation for undefined enum 'ShaderType' found.
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/GlobalGraphicsInfo.hpp:232: warning: Documentation for undefined enum 'VisualApi' found.
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/JournalEntry.hpp:18: warning: Documentation for undefined enum 'Log' found.
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/JournalEntry.hpp:32: warning: Documentation for undefined enum 'Namespace' found.
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Utils.hpp:52: warning: Documentation for undefined enum 'NodeMixSemantics' found.
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Proxy/Creator.hpp:35: warning: no matching file member found for 
+MAYAFLUX_API std::shared_ptr< Nodes::NodeNetwork > MayaFlux::operator|(const std::shared_ptr< MayaFlux::Nodes::NodeNetwork > &network, MayaFlux::Domain d)
+Possible candidates:
+ 'std::shared_ptr< Nodes::Node > operator|(const std::shared_ptr< Nodes::Node > &node, Domain d)' at line 104 of file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Proxy/Creator.cpp
+ 'std::shared_ptr< Nodes::NodeNetwork > operator|(const std::shared_ptr< Nodes::NodeNetwork > &network, Domain d)' at line 111 of file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Proxy/Creator.cpp
+ 'std::shared_ptr< Buffers::Buffer > operator|(const std::shared_ptr< Buffers::Buffer > &buffer, Domain d)' at line 118 of file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Proxy/Creator.cpp
+ 'auto operator|(std::shared_ptr< T > obj, Domain d) -> CreationHandle< T >' at line 231 of file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Proxy/Creator.hpp
+ 'FileReadOptions operator|(FileReadOptions a, FileReadOptions b)' at line 73 of file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/IO/FileReader.hpp
+ 'FileWriteOptions operator|(FileWriteOptions a, FileWriteOptions b)' at line 15 of file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/IO/FileWriter.hpp
+ 'AudioReadOptions operator|(AudioReadOptions a, AudioReadOptions b)' at line 29 of file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/IO/SoundFileReader.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:40: warning: explicit link request to 'include' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/ProcessingArchitecture.hpp:111: warning: Found unknown command '@brienf'
+/home/runner/work/MayaFlux/MayaFlux/src/lila_server.cpp:13: warning: Unsupported xml/html tag <port> found
+/home/runner/work/MayaFlux/MayaFlux/src/lila_server.cpp:15: warning: Unsupported xml/html tag <level> found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Chronie.hpp:59: warning: argument 'name' of command @param is not found in the argument list of MayaFlux::create_sequence(std::vector< std::pair< double, std::function< void()> > > sequence)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Chronie.hpp:59: warning: argument 'name' of command @param is not found in the argument list of MayaFlux::create_sequence(std::vector< std::pair< double, std::function< void()> > > sequence)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Core.hpp:93: warning: argument 'graphics_info' of command @param is not found in the argument list of MayaFlux::Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Core.hpp:93: warning: The following parameter of MayaFlux::Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config) is not documented:
+  parameter 'graphics_config'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Core.hpp:93: warning: argument 'graphics_info' of command @param is not found in the argument list of MayaFlux::Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Core.hpp:93: warning: The following parameter of MayaFlux::Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config) is not documented:
+  parameter 'graphics_config'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:169: warning: The following parameter of MayaFlux::add_processor(const std::shared_ptr< Buffers::BufferProcessor > &processor, const std::shared_ptr< Buffers::Buffer > &buffer, Buffers::ProcessingToken token=Buffers::ProcessingToken::AUDIO_BACKEND) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:241: warning: The following parameter of MayaFlux::register_graphics_buffer(const std::shared_ptr< Buffers::VKBuffer > &buffer, Buffers::ProcessingToken token=Buffers::ProcessingToken::GRAPHICS_BACKEND) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:121: warning: The following parameter of MayaFlux::register_node_network(const std::shared_ptr< Nodes::NodeNetwork > &network, const Nodes::ProcessingToken &token=Nodes::ProcessingToken::AUDIO_RATE) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:441: warning: argument 'channels' of command @param is not found in the argument list of MayaFlux::remove_supplied_buffer_from_channel(const std::shared_ptr< Buffers::AudioBuffer > &buffer, const uint32_t channel)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:441: warning: The following parameter of MayaFlux::remove_supplied_buffer_from_channel(const std::shared_ptr< Buffers::AudioBuffer > &buffer, const uint32_t channel) is not documented:
+  parameter 'channel'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:75: warning: argument 'channels' of command @param is not found in the argument list of MayaFlux::unregister_node(const std::shared_ptr< Nodes::Node > &node, const Nodes::ProcessingToken &token, uint32_t channel=0)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:75: warning: The following parameters of MayaFlux::unregister_node(const std::shared_ptr< Nodes::Node > &node, const Nodes::ProcessingToken &token, uint32_t channel=0) are not documented:
+  parameter 'token'
+  parameter 'channel'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:130: warning: The following parameter of MayaFlux::unregister_node_network(const std::shared_ptr< Nodes::NodeNetwork > &network, const Nodes::ProcessingToken &token=Nodes::ProcessingToken::AUDIO_RATE) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:169: warning: The following parameter of MayaFlux::add_processor(const std::shared_ptr< Buffers::BufferProcessor > &processor, const std::shared_ptr< Buffers::Buffer > &buffer, Buffers::ProcessingToken token=Buffers::ProcessingToken::AUDIO_BACKEND) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:225: warning: The following parameter of MayaFlux::create_buffer(uint32_t channel, uint32_t buffer_size, Args &&... args) -> std::shared_ptr< BufferType > is not documented:
+  parameter 'args'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:241: warning: The following parameter of MayaFlux::register_graphics_buffer(const std::shared_ptr< Buffers::VKBuffer > &buffer, Buffers::ProcessingToken token=Buffers::ProcessingToken::GRAPHICS_BACKEND) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:121: warning: The following parameter of MayaFlux::register_node_network(const std::shared_ptr< Nodes::NodeNetwork > &network, const Nodes::ProcessingToken &token=Nodes::ProcessingToken::AUDIO_RATE) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:441: warning: argument 'channels' of command @param is not found in the argument list of MayaFlux::remove_supplied_buffer_from_channel(const std::shared_ptr< Buffers::AudioBuffer > &buffer, const uint32_t channel)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:441: warning: The following parameter of MayaFlux::remove_supplied_buffer_from_channel(const std::shared_ptr< Buffers::AudioBuffer > &buffer, const uint32_t channel) is not documented:
+  parameter 'channel'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:75: warning: argument 'channels' of command @param is not found in the argument list of MayaFlux::unregister_node(const std::shared_ptr< Nodes::Node > &node, const Nodes::ProcessingToken &token, uint32_t channel=0)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:75: warning: The following parameters of MayaFlux::unregister_node(const std::shared_ptr< Nodes::Node > &node, const Nodes::ProcessingToken &token, uint32_t channel=0) are not documented:
+  parameter 'token'
+  parameter 'channel'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:130: warning: The following parameter of MayaFlux::unregister_node_network(const std::shared_ptr< Nodes::NodeNetwork > &network, const Nodes::ProcessingToken &token=Nodes::ProcessingToken::AUDIO_RATE) is not documented:
+  parameter 'token'
+warning: Included by graph for 'Archivist.hpp' not generated, too many nodes (80), threshold is 50. Consider increasing DOT_GRAPH_MAX_NODES.
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:278: warning: @copybrief or @copydoc target 'error(Component,Context,ExceptionBehavior,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:278: warning: @copydetails or @copydoc target 'error(Component,Context,ExceptionBehavior,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:278: warning: The following parameters of MayaFlux::Journal::error(Component component, Context context, std::source_location location, const char *fmt_str, Args &&... args) are not documented:
+  parameter 'component'
+  parameter 'context'
+  parameter 'location'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:260: warning: The following parameter of MayaFlux::Journal::error(Component component, Context context, std::source_location location, std::string_view message) is not documented:
+  parameter 'component'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:341: warning: @copybrief or @copydoc target 'error_rethrow(Component,Context,std::source_location,std::string_view)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:341: warning: @copydetails or @copydoc target 'error_rethrow(Component,Context,std::source_location,std::string_view)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:341: warning: The following parameters of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location, const char *fmt_str, Args &&... args) are not documented:
+  parameter 'component'
+  parameter 'context'
+  parameter 'location'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:302: warning: argument 'Component' of command @param is not found in the argument list of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location=std::source_location::current(), std::string_view additional_context="")
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:302: warning: argument 'Context' of command @param is not found in the argument list of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location=std::source_location::current(), std::string_view additional_context="")
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:302: warning: The following parameters of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location=std::source_location::current(), std::string_view additional_context="") are not documented:
+  parameter 'component'
+  parameter 'context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:242: warning: @copybrief or @copydoc target 'fatal(Component,Context,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:242: warning: @copydetails or @copydoc target 'fatal(Component,Context,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:242: warning: The following parameters of MayaFlux::Journal::fatal(Component component, Context context, std::source_location location, format_string< Args... > fmt_str, Args &&... args) are not documented:
+  parameter 'component'
+  parameter 'context'
+  parameter 'location'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:206: warning: @copybrief or @copydoc target 'print(Component,Context,std::string_view)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:206: warning: @copydetails or @copydoc target 'print(Component,Context,std::string_view)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:206: warning: The following parameters of MayaFlux::Journal::print(Component component, Context context, const char *msg_or_fmt, Args &&... args) are not documented:
+  parameter 'component'
+  parameter 'context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:130: warning: @copybrief or @copydoc target 'scribe(Severity,Component,Context,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:130: warning: @copydetails or @copydoc target 'scribe(Severity,Component,Context,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:130: warning: The following parameters of MayaFlux::Journal::scribe(Severity severity, Component component, Context context, std::source_location location, const char *msg_or_fmt, Args &&... args) are not documented:
+  parameter 'severity'
+  parameter 'component'
+  parameter 'context'
+  parameter 'location'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:168: warning: @copybrief or @copydoc target 'scribe_rt(Severity,Component,Context,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:168: warning: @copydetails or @copydoc target 'scribe_rt(Severity,Component,Context,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:168: warning: The following parameters of MayaFlux::Journal::scribe_rt(Severity severity, Component component, Context context, std::source_location location, const char *msg_or_fmt, Args &&... args) are not documented:
+  parameter 'severity'
+  parameter 'component'
+  parameter 'context'
+  parameter 'location'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: argument 'loop_start' of command @param is not found in the argument list of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: argument 'loop_end' of command @param is not found in the argument list of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: The following parameter of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled) is not documented:
+  parameter 'loop_region'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: argument 'loop_start' of command @param is not found in the argument list of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: argument 'loop_end' of command @param is not found in the argument list of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: The following parameter of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled) is not documented:
+  parameter 'loop_region'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:330: warning: argument 'dest' of command @param is not found in the argument list of MayaFlux::Kakshya::convert_data(std::span< From > source, std::vector< To > &storage, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:330: warning: The following parameters of MayaFlux::Kakshya::convert_data(std::span< From > source, std::vector< To > &storage, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE) are not documented:
+  parameter 'storage'
+  parameter 'strategy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:360: warning: The following parameter of MayaFlux::Kakshya::convert_variant(DataVariant &variant, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE) is not documented:
+  parameter 'strategy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:421: warning: argument 'variant' of command @param is not found in the argument list of MayaFlux::Kakshya::extract_data(std::span< const From > source, std::vector< To > &destination, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:421: warning: The following parameters of MayaFlux::Kakshya::extract_data(std::span< const From > source, std::vector< To > &destination, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE) are not documented:
+  parameter 'source'
+  parameter 'destination'
+  parameter 'strategy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:456: warning: The following parameters of MayaFlux::Kakshya::extract_from_variant(const DataVariant &variant, std::vector< T > &storage, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE) are not documented:
+  parameter 'storage'
+  parameter 'strategy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/RegionUtils.hpp:101: warning: argument 'source_variants' of command @param is not found in the argument list of MayaFlux::Kakshya::extract_region_data(const std::vector< std::span< const T > > &source_data, const Region &region, const std::vector< DataDimension > &dimensions, bool flatten=false)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/RegionUtils.hpp:101: warning: The following parameter of MayaFlux::Kakshya::extract_region_data(const std::vector< std::span< const T > > &source_data, const Region &region, const std::vector< DataDimension > &dimensions, bool flatten=false) is not documented:
+  parameter 'source_data'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/Operators.hpp:221: warning: argument 'channel' of command @param is not found in the argument list of MayaFlux::Kriya::Time(double seconds, std::vector< uint32_t > channels)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/Operators.hpp:221: warning: argument 'channel' of command @param is not found in the argument list of MayaFlux::Kriya::Time(double seconds, std::vector< uint32_t > channels)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Data/StructureIntrospection.hpp:127: warning: The following parameter of MayaFlux::Yantra::infer_structure(const T &data, const std::shared_ptr< Kakshya::SignalSourceContainer > &container=nullptr) is not documented:
+  parameter 'container'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/ConvolutionHelper.hpp:11: warning: The following parameter of MayaFlux::Yantra::fft_convolve_helper(std::span< const double > data_span, std::span< const double > kernel, OperationFunc &&operation, bool return_full_size=true) is not documented:
+  parameter 'return_full_size'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/MathematicalHelper.hpp:209: warning: argument 'b' from the argument list of MayaFlux::Yantra::transform_exponential has multiple @param documentation sections
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/MathematicalHelper.hpp:209: warning: The following parameter of MayaFlux::Yantra::transform_exponential(DataType &input, double a, double b, std::vector< std::vector< double > > &working_buffer, double base=std::numbers::e) is not documented:
+  parameter 'base'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/MathematicalHelper.hpp:273: warning: The following parameter of MayaFlux::Yantra::transform_logarithmic(DataType &input, double a, double b, double c, std::vector< std::vector< double > > &working_buffer, double base=std::numbers::e) is not documented:
+  parameter 'base'
+/home/runner/work/MayaFlux/MayaFlux/README.md:213: warning: unable to resolve reference to 'docs/Tutorials/SculptingData.md' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/README.md:344: warning: unable to resolve reference to '/home/runner/work/MayaFlux/MayaFlux/ETHICAL_DECLARATIONS.md' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:24: warning: unable to resolve reference to 'processing-handles-token-scoped-system-access' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:25: warning: unable to resolve reference to 'bufferprocessinghandle' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:26: warning: unable to resolve reference to 'direct-handle-creation' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:27: warning: unable to resolve reference to 'nodeprocessinghandle' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:28: warning: unable to resolve reference to 'taskschedulerhandle' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:29: warning: unable to resolve reference to 'subsystemprocessinghandle' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:30: warning: unable to resolve reference to 'handle-composition-and-custom-contexts' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:31: warning: unable to resolve reference to 'why-processing-handles-instead-of-direct-manager-access' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:32: warning: unable to resolve reference to 'handle-performance-characteristics' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:33: warning: unable to resolve reference to 'subsystemmanager-computational-domain-orchestration' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:34: warning: unable to resolve reference to 'subsystem-registration-and-lifecycle' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:35: warning: unable to resolve reference to 'cross-subsystem-data-access-control' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:36: warning: unable to resolve reference to 'processing-hooks-and-custom-integration' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:37: warning: unable to resolve reference to 'direct-subsystemmanager-control' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:38: warning: unable to resolve reference to 'subsystems-computational-domain-implementation' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:39: warning: unable to resolve reference to 'isubsystem-interface-and-implementation-patterns' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:40: warning: unable to resolve reference to 'specialized-subsystem-examples' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:41: warning: unable to resolve reference to 'audiosubsystem' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:42: warning: unable to resolve reference to 'graphicssubsystem' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:43: warning: unable to resolve reference to 'subsystem-communication-and-coordination' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:44: warning: unable to resolve reference to 'direct-subsystem-management' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:45: warning: unable to resolve reference to 'backends-hardware-and-platform-abstraction' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:46: warning: unable to resolve reference to 'audio-backend-architecture' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:47: warning: unable to resolve reference to 'iaudiobackend-interface' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:48: warning: unable to resolve reference to 'backend-factory-expansion' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:49: warning: unable to resolve reference to 'graphics-backend-architecture' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:50: warning: unable to resolve reference to 'igraphicsbackend-interface' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:51: warning: unable to resolve reference to 'custom-rendering-pipeline' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Advanced_Context_Control.md:52: warning: unable to resolve reference to 'network-backend-for-distributed-processing' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/BuildOps.md:48: warning: Unexpected subsubsection command found inside section!
+/home/runner/work/MayaFlux/MayaFlux/docs/BuildOps.md:97: warning: Unexpected subsubsection command found inside section!
+/home/runner/work/MayaFlux/MayaFlux/docs/BuildOps.md:134: warning: Unexpected subsubsection command found inside section!
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:3: warning: unable to resolve reference to 'introduction' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:4: warning: unable to resolve reference to 'mayaflux' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:5: warning: unable to resolve reference to 'nodes' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:6: warning: unable to resolve reference to 'definitions' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:7: warning: unable to resolve reference to 'flow-logic' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:8: warning: unable to resolve reference to 'processing-as-events' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:9: warning: unable to resolve reference to 'buffers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:10: warning: unable to resolve reference to 'definitions-1' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:11: warning: unable to resolve reference to 'processing' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:12: warning: unable to resolve reference to 'processing-chain' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:13: warning: unable to resolve reference to 'custom-processing' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:14: warning: unable to resolve reference to 'coroutines-time-as-a-creative-material' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:15: warning: unable to resolve reference to 'the-temporal-paradigm' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:16: warning: unable to resolve reference to 'definitions-2' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:17: warning: unable to resolve reference to 'temporal-domains-and-coordination' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:18: warning: unable to resolve reference to 'kriya-temporal-patterns' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:19: warning: unable to resolve reference to 'eventchains-and-temporal-composition' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:20: warning: unable to resolve reference to 'buffer-integration-and-capture' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:21: warning: unable to resolve reference to 'containers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:22: warning: unable to resolve reference to 'data-architecture' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:23: warning: unable to resolve reference to 'data-modalities-and-detection' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:24: warning: unable to resolve reference to 'soundfilecontainer-foundational-implementation' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:25: warning: unable to resolve reference to 'region-based-data-access' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:26: warning: unable to resolve reference to 'regiongroups-and-metadata' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Digital_Transformation_Paradigm.md:27: warning: unable to resolve reference to 'digital-data-flow-architecture' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:3: warning: unable to resolve reference to 'domains-and-control-computational-contexts-in-digital-creation' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:4: warning: unable to resolve reference to 'processing-tokens-computational-identity' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:5: warning: unable to resolve reference to 'nodesprocessingtokens' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:6: warning: unable to resolve reference to 'buffersprocessingtokens' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:7: warning: unable to resolve reference to 'vrutaprocessingtokens' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:8: warning: unable to resolve reference to 'domain-composition-unified-computational-environments' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:9: warning: unable to resolve reference to 'engine-control-vs-user-control-computational-autonomy' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:10: warning: unable to resolve reference to 'nodes' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:11: warning: unable to resolve reference to 'nodegraphmanager' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:12: warning: unable to resolve reference to 'explicit-user-control' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:13: warning: unable to resolve reference to 'rootnode' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:14: warning: unable to resolve reference to 'direct-node-management' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:15: warning: unable to resolve reference to 'chaining' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:16: warning: unable to resolve reference to 'buffers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:17: warning: unable to resolve reference to 'buffermanager' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:18: warning: unable to resolve reference to 'rootbuffer' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:19: warning: unable to resolve reference to 'direct-buffer-management-and-processing' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:20: warning: unable to resolve reference to 'coroutines' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:21: warning: unable to resolve reference to 'taskscheduler' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:22: warning: unable to resolve reference to 'kriya' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:23: warning: unable to resolve reference to 'clock-systems' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:24: warning: unable to resolve reference to 'direct-coroutine-management' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:25: warning: unable to resolve reference to 'self-managed-soundroutine-creation' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:26: warning: unable to resolve reference to 'api-based-awaiter-patterns' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:27: warning: unable to resolve reference to 'direct-routine-control-and-state-management' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:28: warning: unable to resolve reference to 'multi-domain-coroutine-coordination' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Domain_and_Control.md:275: warning: explicit link request to 'create' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:17: warning: unable to resolve reference to 'tutorial-polynomial-waveshaping' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:17: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:18: warning: unable to resolve reference to 'the-simplest-path' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:18: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:19: warning: unable to resolve reference to 'expansion-1-why-polynomials-shape-sound' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:19: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:20: warning: unable to resolve reference to 'expansion-2-what-vega.polynomial-creates' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:20: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:21: warning: unable to resolve reference to 'expansion-3-polynomialmodedirect' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:21: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:22: warning: unable to resolve reference to 'expansion-4-what-create_processor-does' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:22: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:23: warning: unable to resolve reference to 'try-it' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:23: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:24: warning: unable to resolve reference to 'tutorial-recursive-polynomials-filters-and-feedback' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:24: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:25: warning: unable to resolve reference to 'the-next-step' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:25: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:26: warning: unable to resolve reference to 'expansion-1-why-this-is-a-filter' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:26: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:27: warning: unable to resolve reference to 'expansion-2-the-history-buffer' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:27: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:28: warning: unable to resolve reference to 'expansion-3-stability-warning' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:28: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:29: warning: unable to resolve reference to 'expansion-4-initial-conditions' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:29: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:30: warning: unable to resolve reference to 'try-it-1' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:30: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:31: warning: unable to resolve reference to 'tutorial-logic-as-decision-maker' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:31: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:32: warning: unable to resolve reference to 'the-simplest-path-1' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:32: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:33: warning: unable to resolve reference to 'expansion-1-what-logic-does' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:33: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:34: warning: unable to resolve reference to 'expansion-2-logic-node-needs-an-input' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:34: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:35: warning: unable to resolve reference to 'expansion-3-logicoperator-types' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:35: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:36: warning: unable to resolve reference to 'expansion-4-modulationtype---readymade-transformations' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:36: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:37: warning: unable to resolve reference to 'try-it-2' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:37: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:38: warning: unable to resolve reference to 'tutorial-combining-polynomial-logic' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:38: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:39: warning: unable to resolve reference to 'the-pattern' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:39: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:40: warning: unable to resolve reference to 'expansion-1-decision-trees-in-audio' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:40: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:41: warning: unable to resolve reference to 'expansion-2-chain-order-matters' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:41: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:42: warning: unable to resolve reference to 'try-it-3' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:42: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:43: warning: unable to resolve reference to 'tutorial-processing-chains-and-buffer-architecture' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:43: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:44: warning: unable to resolve reference to 'tutorial-explicit-chain-building' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:44: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:45: warning: unable to resolve reference to 'the-simplest-path-2' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:45: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:46: warning: unable to resolve reference to 'expansion-1-what-create_processor-was-doing' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:46: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:47: warning: unable to resolve reference to 'expansion-2-chain-execution-order' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:47: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:48: warning: unable to resolve reference to 'expansion-3-default-processors-vs.-chain-processors' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:48: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:49: warning: unable to resolve reference to 'try-it-4' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:49: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:50: warning: unable to resolve reference to 'tutorial-various-buffer-types' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:50: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:51: warning: unable to resolve reference to 'generating-from-nodes-nodebuffer' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:51: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:52: warning: unable to resolve reference to 'the-next-pattern' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:52: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:53: warning: unable to resolve reference to 'expansion-1-what-nodebuffer-does' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:53: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:54: warning: unable to resolve reference to 'expansion-2-the-clear_before_process-parameter' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:54: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:55: warning: unable to resolve reference to 'expansion-3-nodesourceprocessor-mix-parameter' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:55: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:56: warning: unable to resolve reference to 'try-it-5' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:56: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:57: warning: unable to resolve reference to 'feedbackbuffer-recursive-audio' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:57: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:58: warning: unable to resolve reference to 'the-pattern-1' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:58: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:59: warning: unable to resolve reference to 'expansion-1-what-feedbackbuffer-does' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:59: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:60: warning: unable to resolve reference to 'expansion-2-feedbackbuffer-limitations' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:60: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:61: warning: unable to resolve reference to 'expansion-3-when-to-use-feedbackbuffer' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:61: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:62: warning: unable to resolve reference to 'try-it-6' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:62: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:63: warning: unable to resolve reference to 'streamwriteprocessor-capturing-audio' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:63: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:64: warning: unable to resolve reference to 'the-pattern-2' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:64: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:65: warning: unable to resolve reference to 'expansion-1-what-streamwriteprocessor-does' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:65: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:66: warning: unable to resolve reference to 'expansion-2-channel-aware-writing' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:66: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:67: warning: unable to resolve reference to 'expansion-3-position-management' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:67: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:68: warning: unable to resolve reference to 'expansion-4-circular-mode' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:68: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:69: warning: unable to resolve reference to 'try-it-7' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:69: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:70: warning: unable to resolve reference to 'closing-the-buffer-ecosystem' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:70: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:71: warning: unable to resolve reference to 'tutorial-audio-input-routing-and-multi-channel-distribution' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:71: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:72: warning: unable to resolve reference to 'tutorial-capturing-audio-input' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:72: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:73: warning: unable to resolve reference to 'the-simplest-path-3' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:73: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:74: warning: unable to resolve reference to 'expansion-1-what-create_input_listener_buffer-does' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:74: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:75: warning: unable to resolve reference to 'expansion-2-manual-input-registration' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:75: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:76: warning: unable to resolve reference to 'expansion-3-input-without-playback' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:76: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:77: warning: unable to resolve reference to 'try-it-8' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:77: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:78: warning: unable to resolve reference to 'tutorial-buffer-supply-routing-to-multiple-channels' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:78: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:79: warning: unable to resolve reference to 'the-pattern-3' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:79: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:80: warning: unable to resolve reference to 'expansion-1-what-supply-means' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:80: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:81: warning: unable to resolve reference to 'expansion-2-mix-levels' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:81: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:82: warning: unable to resolve reference to 'expansion-3-removing-supply' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:82: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:83: warning: unable to resolve reference to 'try-it-9' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:83: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:84: warning: unable to resolve reference to 'tutorial-buffer-cloning' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:84: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:85: warning: unable to resolve reference to 'the-pattern-4' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:85: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:86: warning: unable to resolve reference to 'expansion-1-clone-vs.-supply' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:86: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:87: warning: unable to resolve reference to 'expansion-2-cloning-preserves-structure' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:87: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:88: warning: unable to resolve reference to 'expansion-3-post-clone-modification' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:88: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:89: warning: unable to resolve reference to 'try-it-10' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:89: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:90: warning: unable to resolve reference to 'closing-the-routing-ecosystem' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/ProcessingExpression.md:90: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:40: warning: unable to resolve reference to 'tutorial-sculpting-data' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:40: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:41: warning: unable to resolve reference to 'the-simplest-first-step' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:41: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:42: warning: unable to resolve reference to 'expansion-1-what-is-a-container' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:42: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:43: warning: unable to resolve reference to 'expansion-2-memory-ownership-and-smart-pointers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:43: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:44: warning: unable to resolve reference to 'expansion-3-what-is-vega' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:44: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:45: warning: unable to resolve reference to 'expansion-4-the-containers-processor' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:45: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:46: warning: unable to resolve reference to 'expansion-5-what-.read_audio-does-not-do' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:46: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:47: warning: unable to resolve reference to 'tutorial-connect-to-buffers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:47: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:48: warning: unable to resolve reference to 'the-next-step' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:48: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:49: warning: unable to resolve reference to 'expansion-1-what-are-buffers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:49: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:50: warning: unable to resolve reference to 'expansion-2-why-per-channel-buffers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:50: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:51: warning: unable to resolve reference to 'expansion-3-the-buffer-manager-and-buffer-lifecycle' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:51: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:52: warning: unable to resolve reference to 'expansion-4-containerbufferthe-bridge' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:52: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:53: warning: unable to resolve reference to 'expansion-5-processing-tokenaudio_backend' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:53: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:54: warning: unable to resolve reference to 'expansion-6-accessing-the-buffers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:54: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:55: warning: unable to resolve reference to 'the-fluent-vs.-explicit-comparison' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:55: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:56: warning: unable to resolve reference to 'fluent-what-happens-behind-the-scenes' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:56: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:57: warning: unable to resolve reference to 'explicit-whats-actually-happening' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:57: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:58: warning: unable to resolve reference to 'try-it' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:58: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:59: warning: unable to resolve reference to 'tutorial-buffers-own-chains' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:59: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:60: warning: unable to resolve reference to 'the-simplest-path' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:60: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:61: warning: unable to resolve reference to 'expansion-1-what-is-vega.iir' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:61: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:62: warning: unable to resolve reference to 'expansion-2-what-is-mayafluxcreate_processor' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:62: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:63: warning: unable to resolve reference to 'expansion-3-what-is-a-processing-chain' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:63: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:64: warning: unable to resolve reference to 'expansion-4-adding-processor-to-another-channel-optional' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:64: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:65: warning: unable to resolve reference to 'expansion-5-what-happens-inside' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:65: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:66: warning: unable to resolve reference to 'expansion-6-processors-are-reusable-building-blocks' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:66: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:67: warning: unable to resolve reference to 'try-it-1' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:67: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:68: warning: unable to resolve reference to 'tutorial-timing-streams-and-bridges' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:68: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:69: warning: unable to resolve reference to 'the-current-continous-flow' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:69: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:70: warning: unable to resolve reference to 'where-were-going' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:70: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:71: warning: unable to resolve reference to 'expansion-1-the-architecture-of-containers' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:71: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:72: warning: unable to resolve reference to 'expansion-2-enter-dynamicsoundstream' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:72: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:73: warning: unable to resolve reference to 'expansion-3-streamwriteprocessor' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:73: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:74: warning: unable to resolve reference to 'expansion-4-filebridgebuffercontrolled-flow' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:74: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:75: warning: unable to resolve reference to 'expansion-5-why-this-architecture' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:75: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:76: warning: unable to resolve reference to 'expansion-6-from-file-to-cycle' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:76: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:77: warning: unable to resolve reference to 'the-three-key-concepts' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:77: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:78: warning: unable to resolve reference to 'why-this-section-has-no-audio-code' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:78: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:79: warning: unable to resolve reference to 'what-you-should-internalize' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:79: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:80: warning: unable to resolve reference to 'tutorial-buffer-pipelines-teaser' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:80: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:81: warning: unable to resolve reference to 'the-next-level' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:81: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:82: warning: unable to resolve reference to 'a-taste' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:82: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:83: warning: unable to resolve reference to 'expansion-1-what-is-a-pipeline' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:83: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:84: warning: unable to resolve reference to 'expansion-2-bufferoperation-types' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:84: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:85: warning: unable to resolve reference to 'expansion-3-the-on_capture_processing-pattern' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:85: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:86: warning: unable to resolve reference to 'expansion-4-why-this-matters' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:86: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:87: warning: unable to resolve reference to 'what-happens-next' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:87: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:88: warning: unable to resolve reference to 'try-it-optional' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:88: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:89: warning: unable to resolve reference to 'the-philosophy' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:89: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:90: warning: unable to resolve reference to 'next-the-full-pipeline-tutorial' for \ref command
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:90: warning: explicit link request to 'toc' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:131: warning: Unsupported xml/html tag <parameter> found
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:164: warning: Unsupported xml/html tag <parameter> found
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:204: warning: Unsupported xml/html tag <parameter> found
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:301: warning: Unsupported xml/html tag <parameter> found
+/home/runner/work/MayaFlux/MayaFlux/docs/Tutorials/SculptingData/SculptingData.md:331: warning: Unsupported xml/html tag <parameter> found
+/home/runner/work/MayaFlux/MayaFlux/src/Lila/Commentator.hpp:234: warning: found documented return type for Lila::Commentator::Commentator that does not return anything
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:169: warning: The following parameter of MayaFlux::add_processor(const std::shared_ptr< Buffers::BufferProcessor > &processor, const std::shared_ptr< Buffers::Buffer > &buffer, Buffers::ProcessingToken token=Buffers::ProcessingToken::AUDIO_BACKEND) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:225: warning: The following parameter of MayaFlux::create_buffer(uint32_t channel, uint32_t buffer_size, Args &&... args) -> std::shared_ptr< BufferType > is not documented:
+  parameter 'args'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Chronie.hpp:59: warning: argument 'name' of command @param is not found in the argument list of MayaFlux::create_sequence(std::vector< std::pair< double, std::function< void()> > > sequence)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Core.hpp:93: warning: argument 'graphics_info' of command @param is not found in the argument list of MayaFlux::Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Core.hpp:93: warning: The following parameter of MayaFlux::Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config) is not documented:
+  parameter 'graphics_config'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:241: warning: The following parameter of MayaFlux::register_graphics_buffer(const std::shared_ptr< Buffers::VKBuffer > &buffer, Buffers::ProcessingToken token=Buffers::ProcessingToken::GRAPHICS_BACKEND) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:121: warning: The following parameter of MayaFlux::register_node_network(const std::shared_ptr< Nodes::NodeNetwork > &network, const Nodes::ProcessingToken &token=Nodes::ProcessingToken::AUDIO_RATE) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:441: warning: argument 'channels' of command @param is not found in the argument list of MayaFlux::remove_supplied_buffer_from_channel(const std::shared_ptr< Buffers::AudioBuffer > &buffer, const uint32_t channel)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:441: warning: The following parameter of MayaFlux::remove_supplied_buffer_from_channel(const std::shared_ptr< Buffers::AudioBuffer > &buffer, const uint32_t channel) is not documented:
+  parameter 'channel'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:75: warning: argument 'channels' of command @param is not found in the argument list of MayaFlux::unregister_node(const std::shared_ptr< Nodes::Node > &node, const Nodes::ProcessingToken &token, uint32_t channel=0)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:75: warning: The following parameters of MayaFlux::unregister_node(const std::shared_ptr< Nodes::Node > &node, const Nodes::ProcessingToken &token, uint32_t channel=0) are not documented:
+  parameter 'token'
+  parameter 'channel'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/API/Graph.hpp:130: warning: The following parameter of MayaFlux::unregister_node_network(const std::shared_ptr< Nodes::NodeNetwork > &network, const Nodes::ProcessingToken &token=Nodes::ProcessingToken::AUDIO_RATE) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Staging/BufferDownloadProcessor.hpp:33: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferDownloadProcessor::is_compatible_with(std::shared_ptr< Buffer >) const inherited from member is_compatible_with at line 172 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Staging/BufferDownloadProcessor.hpp:30: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferDownloadProcessor::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Staging/BufferDownloadProcessor.hpp:31: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferDownloadProcessor::on_detach(std::shared_ptr< Buffer >) inherited from member on_detach at line 124 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferManager.hpp:40: warning: argument 'default_processing_token' of command @param is not found in the argument list of MayaFlux::Buffers::BufferManager::BufferManager(uint32_t default_out_channels=2, uint32_t default_in_channels=0, uint32_t default_buffer_size=512, ProcessingToken default_audio_token=ProcessingToken::AUDIO_BACKEND, ProcessingToken default_graphics_token=ProcessingToken::GRAPHICS_BACKEND)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferManager.hpp:40: warning: The following parameters of MayaFlux::Buffers::BufferManager::BufferManager(uint32_t default_out_channels=2, uint32_t default_in_channels=0, uint32_t default_buffer_size=512, ProcessingToken default_audio_token=ProcessingToken::AUDIO_BACKEND, ProcessingToken default_graphics_token=ProcessingToken::GRAPHICS_BACKEND) are not documented:
+  parameter 'default_audio_token'
+  parameter 'default_graphics_token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferManager.hpp:289: warning: The following parameter of MayaFlux::Buffers::BufferManager::add_processor(const std::shared_ptr< BufferProcessor > &processor, const std::shared_ptr< Buffer > &buffer, ProcessingToken token=ProcessingToken::AUDIO_BACKEND) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Managers/BufferProcessingControl.hpp:192: warning: The following parameter of MayaFlux::Buffers::BufferProcessingControl::attach_quick_process(BufferProcessingFunction processor, const std::shared_ptr< Buffer > &buffer, ProcessingToken token=ProcessingToken::AUDIO_BACKEND) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp:172: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferProcessor::is_compatible_with(std::shared_ptr< Buffer >) const
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp:104: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferProcessor::on_attach(std::shared_ptr< Buffer >)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp:124: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferProcessor::on_detach(std::shared_ptr< Buffer >)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp:142: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferProcessor::set_processing_token(ProcessingToken token)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp:142: warning: The following parameter of MayaFlux::Buffers::BufferProcessor::set_processing_token(ProcessingToken token) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp:142: warning: found documented return type for MayaFlux::Buffers::BufferProcessor::set_processing_token that does not return anything
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Staging/BufferUploadProcessor.hpp:34: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferUploadProcessor::is_compatible_with(std::shared_ptr< Buffer >) const inherited from member is_compatible_with at line 172 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Staging/BufferUploadProcessor.hpp:31: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferUploadProcessor::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Staging/BufferUploadProcessor.hpp:32: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::BufferUploadProcessor::on_detach(std::shared_ptr< Buffer >) inherited from member on_detach at line 124 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Recursive/FeedbackBuffer.hpp:144: warning: The following parameter of MayaFlux::Buffers::FeedbackProcessor::FeedbackProcessor(float feedback=0.5F, uint32_t feed_samples=512) is not documented:
+  parameter 'feed_samples'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Container/FileBridgeBuffer.hpp:57: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::FileBridgeProcessor::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Container/FileBridgeBuffer.hpp:59: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::FileBridgeProcessor::on_detach(std::shared_ptr< Buffer >) inherited from member on_detach at line 124 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Node/FilterProcessor.hpp:57: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::FilterProcessor::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Node/LogicProcessor.hpp:133: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::LogicProcessor::on_detach(std::shared_ptr< Buffer >)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Node/PolynomialProcessor.hpp:76: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::PolynomialProcessor::on_detach(std::shared_ptr< Buffer >)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Managers/BufferProcessingControl.cpp:57: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::QuickProcess::is_compatible_with(std::shared_ptr< Buffer >) const inherited from member is_compatible_with at line 172 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Managers/BufferProcessingControl.cpp:40: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::QuickProcess::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/RenderProcessor.hpp:38: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::RenderProcessor::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Root/RootBuffer.hpp:128: warning: argument 'samples_per_second' of command @param is not found in the argument list of MayaFlux::Buffers::RootBuffer< BufferType >::set_processing_rate_hint(uint32_t tick_rate)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Root/RootBuffer.hpp:128: warning: The following parameter of MayaFlux::Buffers::RootBuffer::set_processing_rate_hint(uint32_t tick_rate) is not documented:
+  parameter 'tick_rate'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:184: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::ShaderProcessor::is_compatible_with(std::shared_ptr< Buffer >) const inherited from member is_compatible_with at line 172 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:515: warning: argument 'cmd' of command @param is not found in the argument list of MayaFlux::Buffers::ShaderProcessor::on_after_dispatch(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr< VKBuffer > &buffer)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:515: warning: The following parameter of MayaFlux::Buffers::ShaderProcessor::on_after_dispatch(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr< VKBuffer > &buffer) is not documented:
+  parameter 'cmd_id'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:181: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::ShaderProcessor::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:506: warning: argument 'cmd' of command @param is not found in the argument list of MayaFlux::Buffers::ShaderProcessor::on_before_dispatch(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr< VKBuffer > &buffer)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:506: warning: The following parameter of MayaFlux::Buffers::ShaderProcessor::on_before_dispatch(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr< VKBuffer > &buffer) is not documented:
+  parameter 'cmd_id'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:476: warning: argument 'config' of command @param is not found in the argument list of MayaFlux::Buffers::ShaderProcessor::on_before_pipeline_create(Portal::Graphics::ComputePipelineID pipeline_id)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:476: warning: The following parameter of MayaFlux::Buffers::ShaderProcessor::on_before_pipeline_create(Portal::Graphics::ComputePipelineID pipeline_id) is not documented:
+  parameter 'pipeline_id'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:182: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::ShaderProcessor::on_detach(std::shared_ptr< Buffer >) inherited from member on_detach at line 124 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:484: warning: argument 'pipeline' of command @param is not found in the argument list of MayaFlux::Buffers::ShaderProcessor::on_pipeline_created(Portal::Graphics::ComputePipelineID pipeline_id)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:484: warning: The following parameter of MayaFlux::Buffers::ShaderProcessor::on_pipeline_created(Portal::Graphics::ComputePipelineID pipeline_id) is not documented:
+  parameter 'pipeline_id'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:468: warning: argument 'shader' of command @param is not found in the argument list of MayaFlux::Buffers::ShaderProcessor::on_shader_loaded(Portal::Graphics::ShaderID shader_id)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Shaders/ShaderProcessor.hpp:468: warning: The following parameter of MayaFlux::Buffers::ShaderProcessor::on_shader_loaded(Portal::Graphics::ShaderID shader_id) is not documented:
+  parameter 'shader_id'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Textures/TextureProcessor.hpp:35: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::TextureProcessor::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Textures/TextureProcessor.hpp:36: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::TextureProcessor::on_detach(std::shared_ptr< Buffer >) inherited from member on_detach at line 124 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Staging/TransferProcessor.hpp:76: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::TransferProcessor::on_attach(std::shared_ptr< Buffer >) inherited from member on_attach at line 104 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/Staging/TransferProcessor.hpp:77: warning: argument 'buffer' of command @param is not found in the argument list of MayaFlux::Buffers::TransferProcessor::on_detach(std::shared_ptr< Buffer >) inherited from member on_detach at line 124 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/BufferProcessor.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Buffers/VKBuffer.hpp:312: warning: The following parameter of MayaFlux::Buffers::VKBuffer::set_pipeline_window(RenderPipelineID id, const std::shared_ptr< Core::Window > &window) is not documented:
+  parameter 'id'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp:121: warning: argument 'anisotropy' of command @param is not found in the argument list of MayaFlux::Core::BackendResourceManager::create_sampler(vk::Filter filter=vk::Filter::eLinear, vk::SamplerAddressMode address_mode=vk::SamplerAddressMode::eRepeat, float max_anisotropy=0.0F)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp:121: warning: The following parameter of MayaFlux::Core::BackendResourceManager::create_sampler(vk::Filter filter=vk::Filter::eLinear, vk::SamplerAddressMode address_mode=vk::SamplerAddressMode::eRepeat, float max_anisotropy=0.0F) is not documented:
+  parameter 'max_anisotropy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp:76: warning: The following parameter of MayaFlux::Core::BackendResourceManager::transition_image_layout(vk::Image image, vk::ImageLayout old_layout, vk::ImageLayout new_layout, uint32_t mip_levels=1, uint32_t array_layers=1, vk::ImageAspectFlags aspect_flags=vk::ImageAspectFlagBits::eColor) is not documented:
+  parameter 'aspect_flags'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/ProcessingArchitecture.hpp:111: warning: Found unknown command '@brienf'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/ProcessingArchitecture.hpp:111: warning: Found unknown command '@brienf'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Engine.hpp:85: warning: MayaFlux::Core::Engine::Engine has @param documentation sections but no arguments
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Engine.hpp:287: warning: argument 'tokens' of command @param is not found in the argument list of MayaFlux::Core::Engine::get_subsystem(SubsystemType type)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Engine.hpp:287: warning: The following parameter of MayaFlux::Core::Engine::get_subsystem(SubsystemType type) is not documented:
+  parameter 'type'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/SubsystemManager.hpp:67: warning: argument 'args' of command @param is not found in the argument list of MayaFlux::Core::SubsystemManager::create_audio_subsystem(GlobalStreamInfo &stream_info, Utils::AudioBackendType backend_type)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/SubsystemManager.hpp:67: warning: The following parameters of MayaFlux::Core::SubsystemManager::create_audio_subsystem(GlobalStreamInfo &stream_info, Utils::AudioBackendType backend_type) are not documented:
+  parameter 'stream_info'
+  parameter 'backend_type'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/SubsystemManager.hpp:168: warning: argument 'secondary_tokens' of command @param is not found in the argument list of MayaFlux::Core::SubsystemManager::execute_with_combined_tokens(SubsystemTokens primary_tokens, SubsystemTokens, Func operation)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/VKComputePipeline.hpp:110: warning: Unsupported symbol &my_shader; found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/VKContext.hpp:23: warning: argument 'global_config' of command @param is not found in the argument list of MayaFlux::Core::VKContext::initialize(const GlobalGraphicsConfig &graphics_config, bool enable_validation=true, const std::vector< const char * > &required_extensions={})
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/VKContext.hpp:23: warning: The following parameter of MayaFlux::Core::VKContext::initialize(const GlobalGraphicsConfig &graphics_config, bool enable_validation=true, const std::vector< const char * > &required_extensions={}) is not documented:
+  parameter 'graphics_config'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/VKShaderModule.hpp:184: warning: explicit link request to 'include' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/VKShaderModule.hpp:207: warning: explicit link request to 'include' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp:79: warning: argument 'window' of command @param is not found in the argument list of MayaFlux::Core::VulkanBackend::begin_frame(std::shared_ptr< Window >)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Core/Backends/Graphics/Vulkan/VulkanBackend.hpp:100: warning: argument 'window' of command @param is not found in the argument list of MayaFlux::Core::VulkanBackend::end_frame(std::shared_ptr< Window >)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:278: warning: @copybrief or @copydoc target 'error(Component,Context,ExceptionBehavior,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:278: warning: @copydetails or @copydoc target 'error(Component,Context,ExceptionBehavior,std::string_view,std::source_location)' not found
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:278: warning: The following parameters of MayaFlux::Journal::error(Component component, Context context, std::source_location location, const char *fmt_str, Args &&... args) are not documented:
+  parameter 'component'
+  parameter 'context'
+  parameter 'location'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:260: warning: The following parameter of MayaFlux::Journal::error(Component component, Context context, std::source_location location, std::string_view message) is not documented:
+  parameter 'component'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:341: warning: argument 'Component' of command @param is not found in the argument list of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location, const char *fmt_str, Args &&... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:341: warning: argument 'Context' of command @param is not found in the argument list of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location, const char *fmt_str, Args &&... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:341: warning: argument 'additional_context' of command @param is not found in the argument list of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location, const char *fmt_str, Args &&... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:341: warning: The following parameters of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location, const char *fmt_str, Args &&... args) are not documented:
+  parameter 'component'
+  parameter 'context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:302: warning: argument 'Component' of command @param is not found in the argument list of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location=std::source_location::current(), std::string_view additional_context="")
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:302: warning: argument 'Context' of command @param is not found in the argument list of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location=std::source_location::current(), std::string_view additional_context="")
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:302: warning: The following parameters of MayaFlux::Journal::error_rethrow(Component component, Context context, std::source_location location=std::source_location::current(), std::string_view additional_context="") are not documented:
+  parameter 'component'
+  parameter 'context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:242: warning: argument 'message' of command @param is not found in the argument list of MayaFlux::Journal::fatal(Component component, Context context, std::source_location location, format_string< Args... > fmt_str, Args &&... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:206: warning: argument 'message' of command @param is not found in the argument list of MayaFlux::Journal::print(Component component, Context context, const char *msg_or_fmt, Args &&... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:130: warning: argument 'message' of command @param is not found in the argument list of MayaFlux::Journal::scribe(Severity severity, Component component, Context context, std::source_location location, const char *msg_or_fmt, Args &&... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Journal/Archivist.hpp:168: warning: argument 'message' of command @param is not found in the argument list of MayaFlux::Journal::scribe_rt(Severity severity, Component component, Context context, std::source_location location, const char *msg_or_fmt, Args &&... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:330: warning: argument 'dest' of command @param is not found in the argument list of MayaFlux::Kakshya::convert_data(std::span< From > source, std::vector< To > &storage, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:330: warning: The following parameters of MayaFlux::Kakshya::convert_data(std::span< From > source, std::vector< To > &storage, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE) are not documented:
+  parameter 'storage'
+  parameter 'strategy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:360: warning: The following parameter of MayaFlux::Kakshya::convert_variant(DataVariant &variant, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE) is not documented:
+  parameter 'strategy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:421: warning: argument 'variant' of command @param is not found in the argument list of MayaFlux::Kakshya::extract_data(std::span< const From > source, std::vector< To > &destination, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:421: warning: The following parameters of MayaFlux::Kakshya::extract_data(std::span< const From > source, std::vector< To > &destination, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE) are not documented:
+  parameter 'source'
+  parameter 'destination'
+  parameter 'strategy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/DataUtils.hpp:456: warning: The following parameters of MayaFlux::Kakshya::extract_from_variant(const DataVariant &variant, std::vector< T > &storage, Utils::ComplexConversionStrategy strategy=Utils::ComplexConversionStrategy::MAGNITUDE) are not documented:
+  parameter 'storage'
+  parameter 'strategy'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/RegionUtils.hpp:101: warning: argument 'source_variants' of command @param is not found in the argument list of MayaFlux::Kakshya::extract_region_data(const std::vector< std::span< const T > > &source_data, const Region &region, const std::vector< DataDimension > &dimensions, bool flatten=false)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/RegionUtils.hpp:101: warning: The following parameter of MayaFlux::Kakshya::extract_region_data(const std::vector< std::span< const T > > &source_data, const Region &region, const std::vector< DataDimension > &dimensions, bool flatten=false) is not documented:
+  parameter 'source_data'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: argument 'loop_start' of command @param is not found in the argument list of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: argument 'loop_end' of command @param is not found in the argument list of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Utils/CoordUtils.hpp:76: warning: The following parameter of MayaFlux::Kakshya::wrap_position_with_loop(const std::vector< uint64_t > &position, const Region &loop_region, bool looping_enabled) is not documented:
+  parameter 'loop_region'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/NDData/NDData.hpp:239: warning: argument 'count' of command @param is not found in the argument list of MayaFlux::Kakshya::DataDimension::spatial_1d(uint64_t width)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/NDData/NDData.hpp:239: warning: argument 'name' of command @param is not found in the argument list of MayaFlux::Kakshya::DataDimension::spatial_1d(uint64_t width)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/NDData/NDData.hpp:239: warning: The following parameter of MayaFlux::Kakshya::DataDimension::spatial_1d(uint64_t width) is not documented:
+  parameter 'width'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/SignalSourceContainer.hpp:271: warning: argument 'channel' of command @param is not found in the argument list of MayaFlux::Kakshya::SignalSourceContainer::channel_data(size_t channel_index)=0
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/SignalSourceContainer.hpp:271: warning: The following parameter of MayaFlux::Kakshya::SignalSourceContainer::channel_data(size_t channel_index)=0 is not documented:
+  parameter 'channel_index'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kakshya/Source/SoundFileContainer.hpp:63: warning: MayaFlux::Kakshya::SoundFileContainer::get_duration_seconds has @param documentation sections but no arguments
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/Operators.hpp:221: warning: argument 'channel' of command @param is not found in the argument list of MayaFlux::Kriya::Time(double seconds, std::vector< uint32_t > channels)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/BufferPipeline.hpp:374: warning: argument 'max_cycles' of command @param is not found in the argument list of MayaFlux::Kriya::BufferPipeline::mark_data_consumed(uint32_t operation_index)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/Timers.hpp:257: warning: argument 'channel' of command @param is not found in the argument list of MayaFlux::Kriya::NodeTimer::play_for(std::shared_ptr< Nodes::Node > node, double duration_seconds, std::vector< uint32_t > channels)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/Timers.hpp:275: warning: argument 'channel' of command @param is not found in the argument list of MayaFlux::Kriya::NodeTimer::play_with_processing(std::shared_ptr< Nodes::Node > node, std::function< void(std::shared_ptr< Nodes::Node >)> setup_func, std::function< void(std::shared_ptr< Nodes::Node >)> cleanup_func, double duration_seconds, std::vector< uint32_t > channels)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/Operators.hpp:201: warning: argument 'node' of command @param is not found in the argument list of MayaFlux::Kriya::NodeTimeSpec::operator>>(std::shared_ptr< Nodes::Node >, const NodeTimeSpec &)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Kriya/Operators.hpp:201: warning: argument 'time_op' of command @param is not found in the argument list of MayaFlux::Kriya::NodeTimeSpec::operator>>(std::shared_ptr< Nodes::Node >, const NodeTimeSpec &)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/NodeStructure.hpp:156: warning: argument 'value' of command @param is not found in the argument list of MayaFlux::Nodes::ChainNode::create_context(double)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/NodeStructure.hpp:146: warning: argument 'value' of command @param is not found in the argument list of MayaFlux::Nodes::ChainNode::notify_tick(double)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/NodeGraphManager.hpp:75: warning: The following parameter of MayaFlux::Nodes::NodeGraphManager::add_to_root(const std::string &node_id, ProcessingToken token=ProcessingToken::AUDIO_RATE, unsigned int channel=0) is not documented:
+  parameter 'token'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/NodeGraphManager.hpp:346: warning: The following parameter of MayaFlux::Nodes::NodeGraphManager::get_networks(ProcessingToken token, uint32_t channel=0) const is not documented:
+  parameter 'channel'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/NodeGraphManager.hpp:338: warning: argument 'channel' of command @param is not found in the argument list of MayaFlux::Nodes::NodeGraphManager::remove_network(const std::shared_ptr< NodeNetwork > &network, ProcessingToken token)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Filters/Filter.hpp:387: warning: argument 'frequency' of command @param is not found in the argument list of MayaFlux::Nodes::Filters::Filter::process_batch(unsigned int num_samples)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Filters/Filter.hpp:387: warning: argument 'sample_rate' of command @param is not found in the argument list of MayaFlux::Nodes::Filters::Filter::process_batch(unsigned int num_samples)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Filters/Filter.hpp:387: warning: The following parameter of MayaFlux::Nodes::Filters::Filter::process_batch(unsigned int num_samples) is not documented:
+  parameter 'num_samples'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Generators/Generator.hpp:134: warning: argument 'bMock_process' of command @param is not found in the argument list of MayaFlux::Nodes::Generator::Generator::enable_mock_process(bool mock_process)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Generators/Generator.hpp:134: warning: The following parameter of MayaFlux::Nodes::Generator::Generator::enable_mock_process(bool mock_process) is not documented:
+  parameter 'mock_process'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/GpuSync.hpp:35: warning: argument 'input' of command @param is not found in the argument list of MayaFlux::Nodes::GpuSync::GpuSync::process_sample(double)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/PointCollectionNode.hpp:32: warning: argument 'position' of command @param is not found in the argument list of MayaFlux::Nodes::GpuSync::PointCollectionNode::add_point(const PointVertex &point)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/PointCollectionNode.hpp:32: warning: The following parameter of MayaFlux::Nodes::GpuSync::PointCollectionNode::add_point(const PointVertex &point) is not documented:
+  parameter 'point'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/PointCollectionNode.hpp:39: warning: argument 'positions' of command @param is not found in the argument list of MayaFlux::Nodes::GpuSync::PointCollectionNode::add_points(const std::vector< PointVertex > &points)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/PointCollectionNode.hpp:39: warning: The following parameter of MayaFlux::Nodes::GpuSync::PointCollectionNode::add_points(const std::vector< PointVertex > &points) is not documented:
+  parameter 'points'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/PointCollectionNode.hpp:45: warning: argument 'positions' of command @param is not found in the argument list of MayaFlux::Nodes::GpuSync::PointCollectionNode::set_points(const std::vector< PointVertex > &points)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/PointCollectionNode.hpp:45: warning: The following parameter of MayaFlux::Nodes::GpuSync::PointCollectionNode::set_points(const std::vector< PointVertex > &points) is not documented:
+  parameter 'points'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/PointCollectionNode.hpp:51: warning: argument 'position' of command @param is not found in the argument list of MayaFlux::Nodes::GpuSync::PointCollectionNode::update_point(size_t index, const PointVertex &point)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Nodes/Graphics/PointCollectionNode.hpp:51: warning: The following parameter of MayaFlux::Nodes::GpuSync::PointCollectionNode::update_point(size_t index, const PointVertex &point) is not documented:
+  parameter 'point'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:40: warning: explicit link request to 'include' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:40: warning: explicit link request to 'include' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:380: warning: explicit link request to 'define' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:371: warning: explicit link request to 'include' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:410: warning: argument 'pipeline_id' of command @param is not found in the argument list of MayaFlux::Portal::Graphics::ShaderFoundry::allocate_descriptor_set(vk::DescriptorSetLayout layout)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:410: warning: argument 'set_index' of command @param is not found in the argument list of MayaFlux::Portal::Graphics::ShaderFoundry::allocate_descriptor_set(vk::DescriptorSetLayout layout)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:410: warning: The following parameter of MayaFlux::Portal::Graphics::ShaderFoundry::allocate_descriptor_set(vk::DescriptorSetLayout layout) is not documented:
+  parameter 'layout'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:542: warning: argument 'fence_id' of command @param is not found in the argument list of MayaFlux::Portal::Graphics::ShaderFoundry::get_semaphore_handle(SemaphoreID semaphore_id)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Portal/Graphics/ShaderFoundry.hpp:542: warning: The following parameter of MayaFlux::Portal::Graphics::ShaderFoundry::get_semaphore_handle(SemaphoreID semaphore_id) is not documented:
+  parameter 'semaphore_id'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:681: warning: argument 'current_sample' of command @param is not found in the argument list of MayaFlux::Vruta::ComplexRoutine::initialize_state(uint64_t current_context=0U) inherited from member initialize_state at line 35 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:35: warning: The following parameter of MayaFlux::Vruta::ComplexRoutine::initialize_state(uint64_t current_context=0U) is not documented:
+  parameter 'current_context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:682: warning: argument 'current_sample' of command @param is not found in the argument list of MayaFlux::Vruta::ComplexRoutine::try_resume(uint64_t current_context) inherited from member try_resume at line 66 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:66: warning: The following parameter of MayaFlux::Vruta::ComplexRoutine::try_resume(uint64_t current_context) is not documented:
+  parameter 'current_context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Event.hpp:207: warning: argument 'promise' of command @param is not found in the argument list of MayaFlux::Vruta::Event::update_params_impl(const std::string &key, T value, Args... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:571: warning: argument 'current_sample' of command @param is not found in the argument list of MayaFlux::Vruta::GraphicsRoutine::initialize_state(uint64_t current_context=0U) inherited from member initialize_state at line 35 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:35: warning: The following parameter of MayaFlux::Vruta::GraphicsRoutine::initialize_state(uint64_t current_context=0U) is not documented:
+  parameter 'current_context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:582: warning: argument 'context' of command @param is not found in the argument list of MayaFlux::Vruta::GraphicsRoutine::set_delay_context(DelayContext) inherited from member set_delay_context at line 175 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:573: warning: argument 'current_sample' of command @param is not found in the argument list of MayaFlux::Vruta::GraphicsRoutine::try_resume(uint64_t current_context) inherited from member try_resume at line 66 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:66: warning: The following parameter of MayaFlux::Vruta::GraphicsRoutine::try_resume(uint64_t current_context) is not documented:
+  parameter 'current_context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:575: warning: argument 'context' of command @param is not found in the argument list of MayaFlux::Vruta::GraphicsRoutine::try_resume_with_context(uint64_t current_value, DelayContext) inherited from member try_resume_with_context at line 78 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:35: warning: argument 'current_sample' of command @param is not found in the argument list of MayaFlux::Vruta::Routine::initialize_state(uint64_t current_context=0U)=0
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:35: warning: The following parameter of MayaFlux::Vruta::Routine::initialize_state(uint64_t current_context=0U)=0 is not documented:
+  parameter 'current_context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:175: warning: argument 'context' of command @param is not found in the argument list of MayaFlux::Vruta::Routine::set_delay_context(DelayContext)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:66: warning: argument 'current_sample' of command @param is not found in the argument list of MayaFlux::Vruta::Routine::try_resume(uint64_t current_context)=0
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:66: warning: The following parameter of MayaFlux::Vruta::Routine::try_resume(uint64_t current_context)=0 is not documented:
+  parameter 'current_context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:78: warning: argument 'context' of command @param is not found in the argument list of MayaFlux::Vruta::Routine::try_resume_with_context(uint64_t current_value, DelayContext)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:257: warning: argument 'promise' of command @param is not found in the argument list of MayaFlux::Vruta::Routine::update_params_impl(const std::string &key, T value, Args... args)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Promise.hpp:87: warning: explicit link request to 'try_resume' could not be resolved
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:378: warning: argument 'current_sample' of command @param is not found in the argument list of MayaFlux::Vruta::SoundRoutine::initialize_state(uint64_t current_context=0U) inherited from member initialize_state at line 35 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:35: warning: The following parameter of MayaFlux::Vruta::SoundRoutine::initialize_state(uint64_t current_context=0U) is not documented:
+  parameter 'current_context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:389: warning: argument 'context' of command @param is not found in the argument list of MayaFlux::Vruta::SoundRoutine::set_delay_context(DelayContext) inherited from member set_delay_context at line 175 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:380: warning: argument 'current_sample' of command @param is not found in the argument list of MayaFlux::Vruta::SoundRoutine::try_resume(uint64_t current_context) inherited from member try_resume at line 66 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:66: warning: The following parameter of MayaFlux::Vruta::SoundRoutine::try_resume(uint64_t current_context) is not documented:
+  parameter 'current_context'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp:382: warning: argument 'context' of command @param is not found in the argument list of MayaFlux::Vruta::SoundRoutine::try_resume_with_context(uint64_t current_value, DelayContext) inherited from member try_resume_with_context at line 78 in file /home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Routine.hpp
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Scheduler.hpp:55: warning: argument 'sample_rate' of command @param is not found in the argument list of MayaFlux::Vruta::TaskScheduler::TaskScheduler(uint32_t default_sample_rate=48000, uint32_t default_frame_rate=60)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Vruta/Scheduler.hpp:55: warning: The following parameters of MayaFlux::Vruta::TaskScheduler::TaskScheduler(uint32_t default_sample_rate=48000, uint32_t default_frame_rate=60) are not documented:
+  parameter 'default_sample_rate'
+  parameter 'default_frame_rate'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/ConvolutionHelper.hpp:11: warning: The following parameter of MayaFlux::Yantra::fft_convolve_helper(std::span< const double > data_span, std::span< const double > kernel, OperationFunc &&operation, bool return_full_size=true) is not documented:
+  parameter 'return_full_size'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Data/StructureIntrospection.hpp:127: warning: The following parameter of MayaFlux::Yantra::infer_structure(const T &data, const std::shared_ptr< Kakshya::SignalSourceContainer > &container=nullptr) is not documented:
+  parameter 'container'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/MathematicalHelper.hpp:209: warning: argument 'b' from the argument list of MayaFlux::Yantra::transform_exponential has multiple @param documentation sections
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/MathematicalHelper.hpp:209: warning: The following parameter of MayaFlux::Yantra::transform_exponential(DataType &input, double a, double b, std::vector< std::vector< double > > &working_buffer, double base=std::numbers::e) is not documented:
+  parameter 'base'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/helpers/MathematicalHelper.hpp:273: warning: The following parameter of MayaFlux::Yantra::transform_logarithmic(DataType &input, double a, double b, double c, std::vector< std::vector< double > > &working_buffer, double base=std::numbers::e) is not documented:
+  parameter 'base'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/ComputeOperation.hpp:118: warning: argument 'input' of command @param is not found in the argument list of MayaFlux::Yantra::ComputeOperation< InputType, OutputType >::validate_input(const input_type &) const
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/ConvolutionTransformer.hpp:204: warning: argument 'data' of command @param is not found in the argument list of MayaFlux::Yantra::ConvolutionTransformer< InputType, OutputType >::create_output(const input_type &input)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/ConvolutionTransformer.hpp:204: warning: The following parameter of MayaFlux::Yantra::ConvolutionTransformer::create_output(const input_type &input) is not documented:
+  parameter 'input'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/MathematicalTransformer.hpp:261: warning: argument 'data' of command @param is not found in the argument list of MayaFlux::Yantra::MathematicalTransformer< InputType, OutputType >::create_output(const input_type &input)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/MathematicalTransformer.hpp:261: warning: The following parameter of MayaFlux::Yantra::MathematicalTransformer::create_output(const input_type &input) is not documented:
+  parameter 'input'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:416: warning: argument 'compute_data' of command @param is not found in the argument list of MayaFlux::Yantra::OperationHelper::create_eigen_matrix(const std::vector< std::vector< T > > &columns)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:416: warning: The following parameter of MayaFlux::Yantra::OperationHelper::create_eigen_matrix(const std::vector< std::vector< T > > &columns) is not documented:
+  parameter 'columns'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:358: warning: argument 'compute_data' of command @param is not found in the argument list of MayaFlux::Yantra::OperationHelper::extract_from_eigen_matrix(const EigenMatrix &matrix)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:358: warning: The following parameter of MayaFlux::Yantra::OperationHelper::extract_from_eigen_matrix(const EigenMatrix &matrix) is not documented:
+  parameter 'matrix'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:91: warning: The following parameter of MayaFlux::Yantra::OperationHelper::extract_numeric_data(const T &compute_data, bool needs_processig=false) is not documented:
+  parameter 'needs_processig'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:486: warning: argument 'compute_data' of command @param is not found in the argument list of MayaFlux::Yantra::OperationHelper::recreate_eigen_matrix(const std::vector< std::span< const double > > &spans, const DataStructureInfo &structure_info)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:486: warning: argument 'container' of command @param is not found in the argument list of MayaFlux::Yantra::OperationHelper::recreate_eigen_matrix(const std::vector< std::span< const double > > &spans, const DataStructureInfo &structure_info)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:486: warning: The following parameters of MayaFlux::Yantra::OperationHelper::recreate_eigen_matrix(const std::vector< std::span< const double > > &spans, const DataStructureInfo &structure_info) are not documented:
+  parameter 'spans'
+  parameter 'structure_info'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:475: warning: argument 'compute_data' of command @param is not found in the argument list of MayaFlux::Yantra::OperationHelper::recreate_eigen_matrix(const std::vector< std::vector< double > > &columns, const DataStructureInfo &structure_info)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:475: warning: argument 'container' of command @param is not found in the argument list of MayaFlux::Yantra::OperationHelper::recreate_eigen_matrix(const std::vector< std::vector< double > > &columns, const DataStructureInfo &structure_info)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/OperationSpec/OperationHelper.hpp:475: warning: The following parameters of MayaFlux::Yantra::OperationHelper::recreate_eigen_matrix(const std::vector< std::vector< double > > &columns, const DataStructureInfo &structure_info) are not documented:
+  parameter 'columns'
+  parameter 'structure_info'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/SpectralTransformer.hpp:293: warning: argument 'data' of command @param is not found in the argument list of MayaFlux::Yantra::SpectralTransformer< InputType, OutputType >::create_output(const input_type &input)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/SpectralTransformer.hpp:293: warning: The following parameter of MayaFlux::Yantra::SpectralTransformer::create_output(const input_type &input) is not documented:
+  parameter 'input'
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Analyzers/StatisticalAnalyzer.hpp:448: warning: argument 'type_info' of command @param is not found in the argument list of MayaFlux::Yantra::StatisticalAnalyzer< InputType, OutputType >::get_methods_for_type_impl(std::type_index) const
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/TemporalTransformer.hpp:231: warning: argument 'data' of command @param is not found in the argument list of MayaFlux::Yantra::TemporalTransformer< InputType, OutputType >::create_output(const input_type &input)
+/home/runner/work/MayaFlux/MayaFlux/src/MayaFlux/Yantra/Transformers/TemporalTransformer.hpp:231: warning: The following parameter of MayaFlux::Yantra::TemporalTransformer::create_output(const input_type &input) is not documented:
+  parameter 'input'
+/home/runner/work/MayaFlux/MayaFlux/docs/Getting_Started.md:33: warning: unable to resolve reference to 'your-first-mayaflux-program' for \ref command

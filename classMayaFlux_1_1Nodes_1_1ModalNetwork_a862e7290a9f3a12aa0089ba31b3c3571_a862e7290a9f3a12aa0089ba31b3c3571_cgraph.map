@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::ModalNetwork::get_metadata" name="MayaFlux::Nodes::ModalNetwork::get_metadata">
+<area shape="rect" id="Node000001" title="Get network metadata for debugging/visualization." alt="" coords="5,69,244,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeNetwork_a6cc210c1dde8c3674605dd0046b4bcfd.html#a6cc210c1dde8c3674605dd0046b4bcfd" title="Get network metadata for debugging/visualization." alt="" coords="292,69,524,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,87,278,87,278,92,244,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeNetwork_ab39be7edc116c8f4b9eb40d4d5792541.html#ab39be7edc116c8f4b9eb40d4d5792541" title="Get the number of nodes in the network." alt="" coords="572,5,804,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="496,67,586,46,587,51,497,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeNetwork_a2a9733933d6c01b16f7f2587368198ea.html#a2a9733933d6c01b16f7f2587368198ea" title=" " alt="" coords="572,69,804,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="524,87,559,87,559,92,524,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeNetwork_aa80b7a4ec5790d97db74d1b0d3d78f5f.html#aa80b7a4ec5790d97db74d1b0d3d78f5f" title=" " alt="" coords="572,133,804,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="497,107,587,128,586,133,496,112"/>
+</map>

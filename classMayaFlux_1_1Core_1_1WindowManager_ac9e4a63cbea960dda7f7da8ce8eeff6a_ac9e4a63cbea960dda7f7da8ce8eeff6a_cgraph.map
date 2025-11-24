@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::WindowManager::destroy_window_by_title" name="MayaFlux::Core::WindowManager::destroy_window_by_title">
+<area shape="rect" id="Node000001" title="Destroys a window by title." alt="" coords="5,37,247,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1WindowManager_a9f9104116a63a87eb8fedab8e6388e7a.html#a9f9104116a63a87eb8fedab8e6388e7a" title="Destroys a window by pointer." alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,41,281,38,281,43,247,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1WindowManager_a686f2d909f8efc8fcee6cf6f3619bbde.html#a686f2d909f8efc8fcee6cf6f3619bbde" title="Finds window by title." alt="" coords="295,69,536,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="247,68,281,72,281,77,247,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1WindowManager_aa656d799b806fb38cac28a02f1048f2c.html#aa656d799b806fb38cac28a02f1048f2c" title="Removes window from lookup table." alt="" coords="584,5,825,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="536,23,570,23,570,28,536,28"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Generator::Stochastics::Random::process_batch" name="MayaFlux::Nodes::Generator::Stochastics::Random::process_batch">
+<area shape="rect" id="Node000001" title="Generates multiple stochastic values at once." alt="" coords="5,85,272,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a4ae02fb01a82e23d598bf81faa63e707.html#a4ae02fb01a82e23d598bf81faa63e707" title="Generates an array of stochastic values within a specified range." alt="" coords="320,85,585,125"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="272,102,306,102,306,107,272,107"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_aba7731abd54502b707e1ab9785da2268.html#aba7731abd54502b707e1ab9785da2268" title="Generates a raw value according to the current distribution." alt="" coords="664,5,896,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="544,82,650,59,651,64,545,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a738597fad3af35f5638b445c35f02920.html#a738597fad3af35f5638b445c35f02920" title="Transforms a raw value to fit within the specified range." alt="" coords="633,85,927,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="586,102,620,102,620,107,586,107"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a34ef13179493d11f9377127672524070.html#a34ef13179493d11f9377127672524070" title="Validates that the specified range is mathematically valid." alt="" coords="645,149,915,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="556,122,664,143,663,149,555,127"/>
+</map>

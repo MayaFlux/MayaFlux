@@ -1,0 +1,26 @@
+<map id="MayaFlux::Buffers::RenderProcessor::processing_function" name="MayaFlux::Buffers::RenderProcessor::processing_function">
+<area shape="rect" id="Node000001" title="The core processing function that must be implemented by derived classes." alt="" coords="5,72,215,127"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="517,80,715,120"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="215,97,504,97,504,102,215,102"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="1020,210,1217,250"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="197,70,349,33,444,17,547,6,655,3,764,10,871,30,923,46,973,65,1016,92,1052,126,1081,163,1102,197,1098,200,1076,167,1048,130,1012,96,971,70,921,51,870,35,763,15,655,8,547,12,445,23,350,39,199,75"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a075378983552faf881f1b6eebc36dfec.html#a075378983552faf881f1b6eebc36dfec" title=" " alt="" coords="263,144,457,199"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="206,125,253,138,251,143,205,130"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="775,80,972,120"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="715,97,761,97,761,102,715,102"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="1265,210,1463,250"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1218,228,1252,228,1252,233,1218,233"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="457,142,531,121,532,126,458,147"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="448,197,506,209,640,224,775,232,900,234,1006,232,1006,238,900,239,775,237,639,230,505,214,446,202"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ade87585e9e710203e925adc90398ea9b.html#ade87585e9e710203e925adc90398ea9b" title="Associate a window with a render pass for rendering." alt="" coords="505,144,727,199"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="457,169,492,169,492,174,457,174"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ab2ce790d909f46c74e1374eea6b916b5.html#ab2ce790d909f46c74e1374eea6b916b5" title="Update entire configuration." alt="" coords="537,275,695,330"/>
+<area shape="poly" id="edge9_Node000006_Node000008" title=" " alt="" coords="407,197,507,253,535,267,533,272,504,258,404,202"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af6abf1b7268faeb627e3554e282bde9f.html#af6abf1b7268faeb627e3554e282bde9f" title=" " alt="" coords="776,275,971,330"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="695,300,762,300,762,305,695,305"/>
+<area shape="poly" id="edge11_Node000009_Node000004" title=" " alt="" coords="966,272,1036,252,1038,257,968,278"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a63a608f39752d50cb266c5b4707df317.html#a63a608f39752d50cb266c5b4707df317" title="Called before shader compilation." alt="" coords="1041,275,1196,330"/>
+<area shape="poly" id="edge12_Node000009_Node000010" title=" " alt="" coords="971,300,1027,300,1027,305,971,305"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9ddf119896e100407b3e33baa7f94985.html#a9ddf119896e100407b3e33baa7f94985" title="Called after shader is loaded." alt="" coords="1041,354,1196,408"/>
+<area shape="poly" id="edge13_Node000009_Node000011" title=" " alt="" coords="960,327,1029,350,1027,355,958,332"/>
+</map>

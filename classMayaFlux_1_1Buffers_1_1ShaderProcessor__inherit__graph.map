@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::ShaderProcessor" name="MayaFlux::Buffers::ShaderProcessor">
+<area shape="rect" id="Node000001" title="Generic compute shader processor for VKBuffers." alt="" coords="247,496,445,1355"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor.html" title="ShaderProcessor that uploads node outputs to descriptor sets." alt="" coords="5,1555,231,1910"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="246,1291,170,1556,165,1555,240,1290"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor.html" title="ShaderProcessor with automatic node&#45;to&#45;push&#45;constant binding." alt="" coords="255,1615,437,1850"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="349,1368,349,1615,343,1615,343,1368"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor.html" title=" " alt="" coords="461,1403,658,2063"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="452,1314,475,1402,470,1403,446,1316"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="249,313,443,448"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="349,462,349,496,343,496,343,462"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="256,5,436,265"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="349,279,349,313,343,313,343,279"/>
+</map>

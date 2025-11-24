@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::get_operation_registry" name="MayaFlux::Yantra::get_operation_registry">
+<area shape="rect" id="Node000001" title="Global operation registry accessor Similar to how Engine provides global access to core systems." alt="" coords="296,5,459,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Yantra_1_1AutoRegisterOperation_aef65ee0f20038c2869f2256dd1c9e8e2.html#aef65ee0f20038c2869f2256dd1c9e8e2" title=" " alt="" coords="5,5,248,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="282,28,248,28,248,23,282,23"/>
+</map>

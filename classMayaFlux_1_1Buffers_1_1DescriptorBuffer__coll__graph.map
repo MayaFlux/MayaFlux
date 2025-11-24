@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::DescriptorBuffer" name="MayaFlux::Buffers::DescriptorBuffer">
+<area shape="rect" id="Node000001" title="Specialized buffer for shader parameter bindings from nodes." alt="" coords="278,1055,470,1315"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="179,477,361,992"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="335,1005,347,1054,341,1055,330,1006"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,135,188,415"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="157,427,182,493,177,495,152,429"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="21,5,173,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="99,99,99,135,94,135,94,99"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Buffers_1_1VKBufferResources.html" title=" " alt="" coords="212,215,352,335"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="283,335,280,461,274,461,278,335"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1ShaderProcessorConfig.html" title="Complete configuration for shader processor." alt="" coords="385,635,574,835"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="459,835,411,1039,406,1038,453,834"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Buffers_1_1ShaderDispatchConfig.html" title="Configuration for compute shader dispatch." alt="" coords="389,165,570,385"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="482,385,482,618,477,618,477,385"/>
+</map>

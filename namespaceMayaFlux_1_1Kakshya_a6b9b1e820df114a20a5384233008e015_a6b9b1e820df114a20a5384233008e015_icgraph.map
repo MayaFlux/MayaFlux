@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::advance_position" name="MayaFlux::Kakshya::advance_position">
+<area shape="rect" id="Node000001" title="Advance current positions by a number of frames, with optional looping." alt="" coords="745,91,904,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a57c8173321d14283714748456d5460c7.html#a57c8173321d14283714748456d5460c7" title="Advance the read position by a specified amount." alt="" coords="506,5,686,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="752,89,675,63,677,58,754,84"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_a401ea23de72a10448f09691c9ffc6c6a.html#a401ea23de72a10448f09691c9ffc6c6a" title="Organize container data into structured regions." alt="" coords="501,84,691,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="731,114,692,114,692,109,731,109"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_ae58dcc5258760b40409f6fb54cd2a640.html#ae58dcc5258760b40409f6fb54cd2a640" title="Process the current region or block of data." alt="" coords="495,163,697,217"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="754,138,677,165,675,160,752,133"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa439bfd4e77f899c063e07263effaaa3.html#aa439bfd4e77f899c063e07263effaaa3" title="Read data sequentially from the current position." alt="" coords="275,5,447,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="492,35,447,35,447,30,492,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_aa52b8e24ac42e634574daa682e480fc4.html#aa52b8e24ac42e634574daa682e480fc4" title="Attach this processor to a signal source container." alt="" coords="279,84,442,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="487,114,442,114,442,109,487,109"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_aff6eb2cd9a9b18163c47d79c8acafa84.html#aff6eb2cd9a9b18163c47d79c8acafa84" title="Construct a region organization processor for a given container." alt="" coords="5,84,227,139"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="265,114,227,114,227,109,265,109"/>
+</map>

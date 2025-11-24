@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::create_simple_render_pass" name="MayaFlux::Portal::Graphics::RenderFlow::create_simple_render_pass">
+<area shape="rect" id="Node000001" title="Create a simple single&#45;color render pass." alt="" coords="5,30,212,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a6e776dc125d8568846864650abef3825.html#a6e776dc125d8568846864650abef3825" title="Create a render pass." alt="" coords="260,37,501,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,55,246,55,246,60,212,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="549,5,755,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="501,40,536,36,536,42,502,46"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ab96b95e3ddf3c74271d493602eb04258.html#ab96b95e3ddf3c74271d493602eb04258" title=" " alt="" coords="553,69,751,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="502,69,540,73,539,79,501,74"/>
+</map>

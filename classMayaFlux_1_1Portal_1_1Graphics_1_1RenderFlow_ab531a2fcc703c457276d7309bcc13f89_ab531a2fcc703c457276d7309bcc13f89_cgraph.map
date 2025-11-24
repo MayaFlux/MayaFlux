@@ -1,0 +1,13 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::create_simple_pipeline" name="MayaFlux::Portal::Graphics::RenderFlow::create_simple_pipeline">
+<area shape="rect" id="Node000001" title="Create simple graphics pipeline (auto&#45;configure most settings)" alt="" coords="5,70,212,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ac3eb72f5141be084316ee9bc0b11852a.html#ac3eb72f5141be084316ee9bc0b11852a" title="Create graphics pipeline with full configuration." alt="" coords="260,77,475,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,95,246,95,246,100,212,100"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="523,5,728,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="439,75,539,47,540,52,441,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a3e37592425a0a5c22f7809f8c19d0af8.html#a3e37592425a0a5c22f7809f8c19d0af8" title=" " alt="" coords="527,70,724,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="475,95,513,95,513,100,475,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ab96b95e3ddf3c74271d493602eb04258.html#ab96b95e3ddf3c74271d493602eb04258" title=" " alt="" coords="527,149,724,189"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="441,115,540,143,539,148,439,120"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="776,77,973,117"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="724,95,762,95,762,100,724,100"/>
+</map>

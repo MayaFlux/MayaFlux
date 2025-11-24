@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::get_shader_reflection" name="MayaFlux::Portal::Graphics::ShaderFoundry::get_shader_reflection">
+<area shape="rect" id="Node000001" title="Get reflection info for compiled shader." alt="" coords="321,5,528,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_ad0f8d812bde066c3f0a74005057322ad.html#ad0f8d812bde066c3f0a74005057322ad" title="Create pipeline with auto&#45;reflection." alt="" coords="5,13,273,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="308,35,274,35,274,30,308,30"/>
+</map>

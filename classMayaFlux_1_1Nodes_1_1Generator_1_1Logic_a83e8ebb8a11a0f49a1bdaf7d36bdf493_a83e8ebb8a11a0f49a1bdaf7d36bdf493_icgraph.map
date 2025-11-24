@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Logic::set_operator" name="MayaFlux::Nodes::Generator::Logic::set_operator">
+<area shape="rect" id="Node000001" title="Sets the boolean operation to perform." alt="" coords="261,5,469,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ae05c029c0820b17b6460eda9f5d3d939.html#ae05c029c0820b17b6460eda9f5d3d939" title="Constructs a Logic node with a specific boolean operator." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,28,213,28,213,23,248,23"/>
+</map>

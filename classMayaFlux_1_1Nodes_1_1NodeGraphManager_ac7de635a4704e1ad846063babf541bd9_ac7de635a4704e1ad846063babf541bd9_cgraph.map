@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::process_token_with_channel_data" name="MayaFlux::Nodes::NodeGraphManager::process_token_with_channel_data">
+<area shape="rect" id="Node000001" title="Process all channels for a token and return channel&#45;separated data." alt="" coords="5,30,221,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_af66db24c9857eda35165140aba740eb6.html#af66db24c9857eda35165140aba740eb6" title="Gets all channel indices for a given processing token." alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,42,255,37,256,43,222,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a8d0b0c63ee8bbfeb21afd9354c6c0cac.html#a8d0b0c63ee8bbfeb21afd9354c6c0cac" title="Process a specific channel within a token domain." alt="" coords="269,69,485,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="222,68,256,72,255,77,221,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="557,5,773,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="467,67,560,46,562,51,469,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4abd4114d034a6b8fd0a0f61c2a18491.html#a4abd4114d034a6b8fd0a0f61c2a18491" title="Normalizes a sample to the range [&#45;1, 1] based on the number of nodes." alt="" coords="557,69,773,109"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="485,87,543,87,543,92,485,92"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a6480c54078bc0477ac6251ed41104d2a.html#a6480c54078bc0477ac6251ed41104d2a" title="Resets the processing state of audio networks for a token and channel." alt="" coords="533,133,796,173"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="469,107,562,128,560,133,467,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="844,5,1060,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="773,23,830,23,830,28,773,28"/>
+</map>

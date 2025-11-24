@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeNetwork::build_grid_2d_neighbors" name="MayaFlux::Nodes::NodeNetwork::build_grid_2d_neighbors">
+<area shape="rect" id="Node000001" title="Build neighbor map for GRID_2D topology." alt="" coords="244,5,476,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1ParticleNetwork_a3d3e03d6c09d6fbe13998dbeec74ac4d.html#a3d3e03d6c09d6fbe13998dbeec74ac4d" title="Called once before first process_batch()" alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

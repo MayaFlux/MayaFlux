@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::get_frame_size" name="MayaFlux::Kakshya::ContainerDataStructure::get_frame_size">
+<area shape="rect" id="Node000001" title="Extract the size of non time dimensions (channel, spatial, frequency)" alt="" coords="536,45,711,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase_aa52b8e24ac42e634574daa682e480fc4.html#aa52b8e24ac42e634574daa682e480fc4" title="Attach this processor to a signal source container." alt="" coords="300,5,463,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="522,59,462,49,463,43,523,53"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_a5c8644fcbc13e04466e766ad06d5f658.html#a5c8644fcbc13e04466e766ad06d5f658" title="Processes audio data according to the current region organization." alt="" coords="275,84,488,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="523,91,489,97,488,92,522,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_aff6eb2cd9a9b18163c47d79c8acafa84.html#aff6eb2cd9a9b18163c47d79c8acafa84" title="Construct a region organization processor for a given container." alt="" coords="5,5,227,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="286,35,227,35,227,30,286,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1DynamicRegionProcessor_ae4c2d10eff4c0045d656df73c87e00a4.html#ae4c2d10eff4c0045d656df73c87e00a4" title="Processes audio, performing reorganization if needed." alt="" coords="22,84,210,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="261,114,210,114,210,109,261,109"/>
+</map>

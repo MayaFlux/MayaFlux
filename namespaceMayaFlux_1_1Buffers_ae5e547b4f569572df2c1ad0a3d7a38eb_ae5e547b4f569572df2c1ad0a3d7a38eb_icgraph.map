@@ -1,0 +1,41 @@
+<map id="MayaFlux::Buffers::upload_to_gpu" name="MayaFlux::Buffers::upload_to_gpu">
+<area shape="rect" id="Node000001" title="Upload raw data to GPU buffer (auto&#45;detects host&#45;visible vs device&#45;local)" alt="" coords="799,471,947,511"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageReader_aa7ed56c040865a1b8461b15d8b5ff0c2.html#aa7ed56c040865a1b8461b15d8b5ff0c2" title="Load image directly into an existing VKBuffer." alt="" coords="537,5,740,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="870,457,866,376,861,325,851,270,836,213,814,157,786,105,749,59,734,48,737,43,753,55,790,102,819,155,841,211,856,269,866,324,872,376,875,457"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1GeometryBindingsProcessor_aba371c5b03f7d15831d0cd1d324cd6df.html#aba371c5b03f7d15831d0cd1d324cd6df" title="BufferProcessor interface &#45; uploads all bound geometries." alt="" coords="535,70,742,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="867,457,858,391,839,305,824,260,804,216,779,175,749,138,735,127,739,123,753,134,784,171,809,213,829,258,844,304,864,390,872,456"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_a1fef1b02b945da68629e65794c848622.html#a1fef1b02b945da68629e65794c848622" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="536,149,741,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="863,458,850,405,829,341,795,274,774,244,749,217,734,206,738,201,752,213,778,240,800,271,833,338,856,404,868,457"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1AggregateBindingsProcessor_a69a812b4fa78b700520e85ccb3055965.html#a69a812b4fa78b700520e85ccb3055965" title="BufferProcessor interface &#45; uploads all aggregates." alt="" coords="535,227,743,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="857,458,840,421,817,377,786,333,749,295,733,284,736,280,752,291,790,330,821,374,845,418,862,456"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1TextureBindingsProcessor_a9c9c03c293b41602b02f5d7fa26f9377.html#a9c9c03c293b41602b02f5d7fa26f9377" title="The core processing function that must be implemented by derived classes." alt="" coords="544,306,733,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="845,462,803,417,749,374,729,363,731,358,752,370,806,413,849,458"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a238425e8a4b5fa24981002245c3b804a.html#a238425e8a4b5fa24981002245c3b804a" title="Update descriptor from node context." alt="" coords="527,385,751,439"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="799,469,720,442,722,437,800,464"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a116a4af555a9e4e12da5a47583d0d683.html#a116a4af555a9e4e12da5a47583d0d683" title="Regenerate quad vertices if transform changed, upload if needed." alt="" coords="545,463,732,518"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="785,493,732,493,732,488,785,488"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Buffers_a256395c86418c75e6873a22e53420ffe.html#a256395c86418c75e6873a22e53420ffe" title="Upload AudioBuffer to GPU (always double precision)" alt="" coords="559,543,719,583"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="797,517,751,532,708,545,707,540,750,527,796,512"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Buffers_ab91dc7fea50f8badadc42ab1cea40a06.html#ab91dc7fea50f8badadc42ab1cea40a06" title="Upload data from DataAccess view to GPU buffer (precision&#45;preserving)" alt="" coords="565,607,713,647"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="845,523,804,561,752,597,714,613,712,608,749,592,800,557,842,519"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_afbede3e8fe823d39af69c4fd0f882788.html#afbede3e8fe823d39af69c4fd0f882788" title="Upload initial quad geometry based on default or custom vertices." alt="" coords="546,671,731,726"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="858,524,816,593,787,629,752,661,732,673,729,669,749,657,783,625,812,590,854,522"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Buffers_a269e2e2fe557f37f522dedeec5837da4.html#a269e2e2fe557f37f522dedeec5837da4" title="Upload structured data with GLM double&#45;precision types." alt="" coords="550,751,727,791"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="867,525,853,573,830,631,797,690,776,717,752,741,729,755,726,751,749,737,772,713,793,687,826,629,848,571,862,523"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_1_1Buffers_a5054fee55663fa2ce0da8f2e1a8b3e68.html#a5054fee55663fa2ce0da8f2e1a8b3e68" title="Upload vector to GPU buffer." alt="" coords="565,815,713,855"/>
+<area shape="poly" id="edge18_Node000001_Node000019" title=" " alt="" coords="871,525,860,585,840,660,824,699,805,738,781,773,752,805,734,817,714,826,712,821,732,813,749,801,777,770,800,735,820,697,835,658,855,584,865,524"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_1_1Buffers_a4b2f475023a8f84a3f134843f8bf4930.html#a4b2f475023a8f84a3f134843f8bf4930" title="Upload typed data to GPU buffer." alt="" coords="565,879,713,919"/>
+<area shape="poly" id="edge19_Node000001_Node000020" title=" " alt="" coords="873,525,867,596,849,688,833,737,813,785,786,829,752,869,734,882,714,891,712,886,732,877,749,865,782,826,808,782,828,735,843,687,862,595,868,524"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a7b5e53ea346e93f5393fdd2d8d6820b7.html#a7b5e53ea346e93f5393fdd2d8d6820b7" title="Called before shader dispatch &#45; updates all descriptors." alt="" coords="269,385,477,439"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="513,415,477,415,477,409,513,409"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_ad9555511344d31283bf5b848f3c1e3a6.html#ad9555511344d31283bf5b848f3c1e3a6" title="The core processing function that must be implemented by derived classes." alt="" coords="268,463,479,518"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="531,493,479,493,479,488,531,488"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_abd021a5d2b3dd5743c4d2a7b2cf89f29.html#abd021a5d2b3dd5743c4d2a7b2cf89f29" title=" " alt="" coords="276,542,471,597"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="545,568,471,570,471,564,545,562"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_a1554701bf80ead4406ea8be208e75015.html#a1554701bf80ead4406ea8be208e75015" title="The core processing function that must be implemented by derived classes." alt="" coords="5,542,220,597"/>
+<area shape="poly" id="edge12_Node000012_Node000013" title=" " alt="" coords="263,572,220,572,220,567,263,567"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a7c8aaf1c16e1ed32a4900fb0e1d10d8f.html#a7c8aaf1c16e1ed32a4900fb0e1d10d8f" title="Initialize all GPU resources:" alt="" coords="275,671,472,726"/>
+<area shape="poly" id="edge15_Node000015_Node000016" title=" " alt="" coords="532,701,472,701,472,696,532,696"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a09eded3658efd6ae8e86333de4205303.html#a09eded3658efd6ae8e86333de4205303" title="Called when this processor is attached to a buffer." alt="" coords="34,671,191,726"/>
+<area shape="poly" id="edge16_Node000016_Node000017" title=" " alt="" coords="261,701,192,701,192,696,261,696"/>
+</map>

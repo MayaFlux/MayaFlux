@@ -1,0 +1,10 @@
+<map id="MayaFlux::Core::BufferProcessingHandle::process_input" name="MayaFlux::Core::BufferProcessingHandle::process_input">
+<area shape="rect" id="Node000001" title="@brienf Process Input from backend into buffer manager" alt="" coords="873,35,1115,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a901fabae6c3bd8f099ab2381ba358ac4.html#a901fabae6c3bd8f099ab2381ba358ac4" title="Processes input data from audio interface." alt="" coords="584,35,825,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="860,57,826,57,826,52,860,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a5d75ecc901d686219b8b39ca4ad68ca4.html#a5d75ecc901d686219b8b39ca4ad68ca4" title="Processes both input and output data in full&#45;duplex mode." alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="570,44,536,40,537,35,571,38"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_aee1e241d09520e5661e05a4b50eead99.html#aee1e241d09520e5661e05a4b50eead99" title="Register audio backend callbacks for real&#45;time processing." alt="" coords="5,35,247,75"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="570,60,536,60,295,60,247,59,247,54,295,55,536,55,570,54"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="281,42,247,45,247,40,281,36"/>
+</map>

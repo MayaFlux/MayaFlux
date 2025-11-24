@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::add_audio_processor_to_channel" name="MayaFlux::Buffers::BufferProcessingControl::add_audio_processor_to_channel">
+<area shape="rect" id="Node000001" title="Adds a processor to a specific audio token and channel." alt="" coords="5,139,192,209"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a7405d31c2a0ced5a344617e84e94f6aa.html#a7405d31c2a0ced5a344617e84e94f6aa" title="Gets the processing chain for an audio token and channel." alt="" coords="240,89,453,144"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,150,226,142,227,147,193,155"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a80913dd63097628c0d5f88de77de55c1.html#a80913dd63097628c0d5f88de77de55c1" title="Gets the root audio buffer for a specific token and channel." alt="" coords="261,185,433,240"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="192,186,247,195,246,200,192,191"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a4bc263b052de827013ed2117e56a58e5.html#a4bc263b052de827013ed2117e56a58e5" title="Ensures minimum number of audio channels exist for a token." alt="" coords="505,5,688,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="428,87,501,62,502,67,430,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ac9fd8c50e96db19443030c7582b9cc20.html#ac9fd8c50e96db19443030c7582b9cc20" title="Gets or creates a root audio unit for the specified token." alt="" coords="983,71,1155,125"/>
+<area shape="poly" id="edge6_Node000002_Node000005" title=" " alt="" coords="453,111,969,98,969,103,453,117"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_adab6da56d6eb5d1fc2606c8c1ab8e01f.html#adab6da56d6eb5d1fc2606c8c1ab8e01f" title=" " alt="" coords="503,135,690,175"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="454,131,490,136,489,141,453,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a07357824fe6b9475bda41f8b45668eb3.html#a07357824fe6b9475bda41f8b45668eb3" title="Ensures an audio unit exists and resizes it to the specified channel count." alt="" coords="740,5,935,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="688,30,726,30,726,35,688,35"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="936,58,970,67,968,73,934,63"/>
+<area shape="poly" id="edge9_Node000007_Node000005" title=" " alt="" coords="433,208,556,200,692,185,838,156,969,123,970,129,839,161,692,190,556,205,433,213"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_ab300ec63a12ad8cde8c5ef4e7092367b.html#ab300ec63a12ad8cde8c5ef4e7092367b" title=" " alt="" coords="501,250,692,290"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="433,230,496,244,495,249,432,235"/>
+</map>

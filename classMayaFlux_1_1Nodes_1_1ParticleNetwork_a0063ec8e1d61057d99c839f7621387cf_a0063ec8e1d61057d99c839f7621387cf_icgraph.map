@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::ParticleNetwork::handle_bounds" name="MayaFlux::Nodes::ParticleNetwork::handle_bounds">
+<area shape="rect" id="Node000001" title="Handle boundary conditions." alt="" coords="244,5,435,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1ParticleNetwork_afc4e25551f48e9cdb9a4de9962766b13.html#afc4e25551f48e9cdb9a4de9962766b13" title="Process the network for the given number of samples." alt="" coords="5,5,196,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,28,196,28,196,23,230,23"/>
+</map>

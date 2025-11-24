@@ -1,0 +1,18 @@
+<map id="Sink.hpp" name="Sink.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="288,5,367,31"/>
+<area shape="rect" id="Node000002" href="$JournalEntry_8hpp.html" title=" " alt="" coords="264,152,391,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="322,32,311,54,302,79,301,95,303,110,315,139,310,141,298,111,295,95,297,78,306,52,318,30"/>
+<area shape="rect" id="Node000008" href="$RealtimeEntry_8hpp.html" title=" " alt="" coords="311,79,453,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="338,29,367,66,363,69,334,33"/>
+<area shape="rect" id="Node000003" href="$EnumUtils_8hpp.html" title=" " alt="" coords="24,225,209,251"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="294,180,164,223,163,218,293,175"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="234,225,301,251"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="319,179,288,217,284,213,315,176"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="325,225,449,251"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="339,176,371,213,367,217,335,179"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="473,225,571,251"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="360,175,478,218,477,223,358,180"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="5,299,228,324"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="119,251,119,285,114,285,114,251"/>
+<area shape="poly" id="edge8_Node000008_Node000002" title=" " alt="" coords="375,106,347,143,342,140,371,103"/>
+</map>

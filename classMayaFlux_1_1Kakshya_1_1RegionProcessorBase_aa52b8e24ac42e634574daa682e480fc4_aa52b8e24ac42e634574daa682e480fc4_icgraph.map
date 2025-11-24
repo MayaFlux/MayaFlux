@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::RegionProcessorBase::on_attach" name="MayaFlux::Kakshya::RegionProcessorBase::on_attach">
+<area shape="rect" id="Node000001" title="Attach this processor to a signal source container." alt="" coords="275,5,437,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor_aff6eb2cd9a9b18163c47d79c8acafa84.html#aff6eb2cd9a9b18163c47d79c8acafa84" title="Construct a region organization processor for a given container." alt="" coords="5,5,227,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="261,35,227,35,227,30,261,30"/>
+</map>

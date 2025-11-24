@@ -1,0 +1,12 @@
+<map id="MayaFlux::Nodes::Filters::Filter::update_coef_from_input" name="MayaFlux::Nodes::Filters::Filter::update_coef_from_input">
+<area shape="rect" id="Node000001" title="Updates coefficients from the filter&#39;s own input." alt="" coords="5,37,235,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a8cd162f87760b9a64c48121254f8bc3a.html#a8cd162f87760b9a64c48121254f8bc3a" title="Updates filter coefficients." alt="" coords="283,37,465,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="235,55,269,55,269,60,235,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_aa87283a1006a9a9a24c0e5cfaa72ec53.html#aa87283a1006a9a9a24c0e5cfaa72ec53" title="Updates the feedback (denominator) coefficients." alt="" coords="513,5,696,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="465,42,499,37,500,43,466,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_ab682c4bdf1bda81b6b1cc94ccfb9c405.html#ab682c4bdf1bda81b6b1cc94ccfb9c405" title="Updates the feedforward (numerator) coefficients." alt="" coords="513,69,696,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="466,67,500,72,499,77,465,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a7d0d8d45b7af55d54c51d3f8ac0d5ad7.html#a7d0d8d45b7af55d54c51d3f8ac0d5ad7" title="Initializes the input and output history buffers." alt="" coords="744,30,927,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="696,35,731,40,730,45,696,41"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="696,74,730,69,731,75,696,79"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain.html" title="Advanced pipeline manager for multi&#45;stage buffer transformations with backend optimization." alt="" coords="5,5,173,45"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Buffers_1_1FileToStreamChain.html" title="A processing chain that reads audio data from a sound file container and writes it to a dynamic sound..." alt="" coords="221,5,369,45"/>
+<area shape="poly" id="edge2_Node000000_Node000001" title=" " alt="" coords="187,23,221,23,221,28,187,28"/>
+</map>

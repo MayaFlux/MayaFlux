@@ -1,0 +1,10 @@
+<map id="MayaFlux::Yantra::generate_span_sort_indices" name="MayaFlux::Yantra::generate_span_sort_indices">
+<area shape="rect" id="Node000001" title="Generate sort indices for a single span." alt="" coords="749,35,949,75"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a2b449852d7c06e6a16d81f3f280e3dee.html#a2b449852d7c06e6a16d81f3f280e3dee" title="Generate sort indices for multiple channels." alt="" coords="501,5,701,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="736,44,701,40,702,35,736,39"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a405dfb0c8d4e4d044d44d50764e2d644.html#a405dfb0c8d4e4d044d44d50764e2d644" title="Generate sort indices for any ComputeData type." alt="" coords="253,35,453,75"/>
+<area shape="poly" id="edge4_Node000001_Node000003" title=" " alt="" coords="736,60,701,60,501,60,454,59,454,54,501,55,701,55,735,54"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="488,41,454,45,453,40,488,36"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StandardSorter_a1187d263424d60d6834853aa7230e081.html#a1187d263424d60d6834853aa7230e081" title="Generate sort indices only." alt="" coords="5,35,205,75"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="240,57,206,57,206,52,240,52"/>
+</map>

@@ -1,0 +1,25 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer::compute_energy_values" name="MayaFlux::Yantra::EnergyAnalyzer::compute_energy_values">
+<area shape="rect" id="Node000001" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="5,262,201,317"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a1894f796be8144357978d9e0f365d588.html#a1894f796be8144357978d9e0f365d588" title="Compute dynamic range energy using zero&#45;copy processing." alt="" coords="249,5,448,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="112,261,131,216,160,161,199,104,222,78,248,55,255,50,258,54,251,59,226,82,203,107,165,164,136,218,117,263"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a4c3043c20a8ec3ac02fe7c3f68cb5bb8.html#a4c3043c20a8ec3ac02fe7c3f68cb5bb8" title="Compute harmonic energy using low&#45;frequency FFT analysis." alt="" coords="249,93,448,133"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="124,260,176,201,210,170,248,143,259,137,262,142,251,148,214,174,180,205,128,263"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_a4cc7ed4141b04f1a7eb54d23dbacbfab.html#a4cc7ed4141b04f1a7eb54d23dbacbfab" title="Compute peak energy using zero&#45;copy processing." alt="" coords="249,181,448,221"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="172,259,248,231,270,223,272,228,250,236,174,264"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_a54199af3fbd9ee9571132478760dcc79.html#a54199af3fbd9ee9571132478760dcc79" title="Compute power energy using zero&#45;copy processing." alt="" coords="249,269,448,309"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="202,287,235,287,235,292,202,292"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_aa266c3f325a499bcb1cf64f0d3821af8.html#aa266c3f325a499bcb1cf64f0d3821af8" title="Compute RMS energy using zero&#45;copy processing." alt="" coords="249,357,448,397"/>
+<area shape="poly" id="edge8_Node000001_Node000006" title=" " alt="" coords="181,314,280,350,278,355,179,319"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_ad149fd37e3a3c2918afa94d8c2eefe88.html#ad149fd37e3a3c2918afa94d8c2eefe88" title="Compute spectral energy using FFT&#45;based analysis." alt="" coords="249,445,448,485"/>
+<area shape="poly" id="edge10_Node000001_Node000007" title=" " alt="" coords="136,315,189,360,251,407,298,436,295,441,248,412,185,364,133,319"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_ac08ce00385b1ee685fdccdafd5c36935.html#ac08ce00385b1ee685fdccdafd5c36935" title="Compute zero&#45;crossing energy using zero&#45;copy processing." alt="" coords="249,533,448,573"/>
+<area shape="poly" id="edge12_Node000001_Node000008" title=" " alt="" coords="121,315,172,401,209,450,251,495,292,524,289,529,248,499,205,454,168,404,116,318"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="303,94,301,84,308,74,324,69,349,67,377,70,392,77,390,82,375,75,349,72,325,74,311,79,306,85,309,92"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="303,182,301,172,308,162,324,157,349,155,377,158,392,165,390,170,375,163,349,160,325,162,311,167,306,173,309,180"/>
+<area shape="poly" id="edge7_Node000005_Node000005" title=" " alt="" coords="303,270,301,260,308,250,324,245,349,243,377,246,392,253,390,258,375,251,349,248,325,250,311,255,306,261,309,268"/>
+<area shape="poly" id="edge9_Node000006_Node000006" title=" " alt="" coords="303,358,301,348,308,338,324,333,349,331,377,334,392,341,390,346,375,339,349,336,325,338,311,343,306,349,309,356"/>
+<area shape="poly" id="edge11_Node000007_Node000007" title=" " alt="" coords="303,446,301,436,308,426,324,421,349,419,377,422,392,429,390,434,375,427,349,424,325,426,311,431,306,437,309,444"/>
+<area shape="poly" id="edge13_Node000008_Node000008" title=" " alt="" coords="303,534,301,524,308,514,324,509,349,507,377,510,392,517,390,522,375,515,349,512,325,514,311,519,306,525,309,532"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_a010207e20743bdaa60868cff23c0a8c5.html#a010207e20743bdaa60868cff23c0a8c5" title="Detect zero crossings in single&#45;channel signal." alt="" coords="496,541,687,566"/>
+<area shape="poly" id="edge14_Node000008_Node000009" title=" " alt="" coords="448,551,482,551,482,556,448,556"/>
+</map>

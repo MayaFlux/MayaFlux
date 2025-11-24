@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::RenderProcessor::initialize_pipeline" name="MayaFlux::Buffers::RenderProcessor::initialize_pipeline">
+<area shape="rect" id="Node000001" title=" " alt="" coords="263,5,457,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a4c285364d13fbda8713b794dd55253d8.html#a4c285364d13fbda8713b794dd55253d8" title="The core processing function that must be implemented by derived classes." alt="" coords="5,5,215,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="249,35,215,35,215,30,249,30"/>
+</map>

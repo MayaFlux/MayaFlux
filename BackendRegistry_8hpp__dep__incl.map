@@ -1,0 +1,21 @@
+<map id="BackendRegistry.hpp" name="BackendRegistry.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="818,5,975,31"/>
+<area shape="rect" id="Node000002" href="$BufferAccessControl_8cpp.html" title=" " alt="" coords="5,79,185,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="805,29,197,81,186,82,185,77,196,76,804,24"/>
+<area shape="rect" id="Node000003" href="$BufferDownloadProcessor_8cpp.html" title=" " alt="" coords="209,79,424,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="805,33,410,81,409,76,804,28"/>
+<area shape="rect" id="Node000004" href="$BufferUploadProcessor_8cpp.html" title=" " alt="" coords="448,79,644,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="828,36,603,81,602,76,827,31"/>
+<area shape="rect" id="Node000005" href="$RenderFlow_8cpp.html" title=" " alt="" coords="669,79,794,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="859,38,759,81,757,76,857,34"/>
+<area shape="rect" id="Node000006" href="$RenderProcessor_8cpp.html" title=" " alt="" coords="818,79,975,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="899,44,899,79,894,79,894,44"/>
+<area shape="rect" id="Node000007" href="$StagingUtils_8cpp.html" title=" " alt="" coords="999,79,1127,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="937,34,1037,76,1035,81,935,38"/>
+<area shape="rect" id="Node000008" href="$TextureProcessor_8cpp.html" title=" " alt="" coords="1152,79,1311,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="964,31,1178,76,1177,81,963,36"/>
+<area shape="rect" id="Node000009" href="$VKBuffer_8cpp.html" title=" " alt="" coords="1335,79,1440,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="989,29,1324,76,1335,78,1334,83,1323,81,989,34"/>
+<area shape="rect" id="Node000010" href="$VulkanBackend_8cpp.html" title=" " alt="" coords="1465,79,1611,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="989,26,1453,76,1465,77,1464,83,1452,81,989,31"/>
+</map>

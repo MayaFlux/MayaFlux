@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_size_bytes" name="MayaFlux::Buffers::VKBuffer::get_size_bytes">
+<area shape="rect" id="Node000001" title=" " alt="" coords="292,121,476,161"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DescriptorBuffer_ac2ea3d55659953ce9d517acbfe41afde.html#ac2ea3d55659953ce9d517acbfe41afde" title="Create descriptor buffer with shader configuration." alt="" coords="23,5,226,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="332,117,243,75,211,63,213,58,245,70,334,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer_ae1e0b67aea7f29812b7bac05b0af81de.html#ae1e0b67aea7f29812b7bac05b0af81de" title="Create geometry buffer from generative node." alt="" coords="5,85,244,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="278,129,244,124,245,119,279,123"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_af09beeee213fee12c2dfb486d2255a94.html#af09beeee213fee12c2dfb486d2255a94" title="Create geometry buffer from network." alt="" coords="30,149,219,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="279,158,220,166,219,161,278,153"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TextureBindBuffer_a988c67232cbe17bc8c926a1c0d69f559.html#a988c67232cbe17bc8c926a1c0d69f559" title="Create texture buffer from generative node." alt="" coords="27,228,222,283"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="339,170,245,218,213,230,211,225,243,213,336,165"/>
+</map>
