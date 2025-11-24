@@ -466,7 +466,7 @@ ShaderReflectionInfo ShaderFoundry::get_shader_reflection(ShaderID shader_id)
     }
 
     for (const auto& pc : reflection.push_constants) {
-        PushConstantRangeInfo pc_info;
+        PushConstantRangeInfo pc_info {};
         pc_info.offset = pc.offset;
         pc_info.size = pc.size;
         info.push_constant_ranges.push_back(pc_info);
@@ -725,7 +725,11 @@ void ShaderFoundry::submit_and_wait(CommandBufferID cmd_id)
         break;
     }
 
-    queue.submit(1, &submit_info, nullptr);
+    if (queue.submit(1, &submit_info, nullptr) != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Failed to submit command buffer");
+        return;
+    }
     queue.waitIdle();
 
     cmd_manager.free_command_buffer(it->second.cmd);
@@ -767,7 +771,11 @@ FenceID ShaderFoundry::submit_async(CommandBufferID cmd_id)
         break;
     }
 
-    queue.submit(1, &submit_info, fence_state.fence);
+    if (queue.submit(1, &submit_info, fence_state.fence) != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Failed to submit command buffer");
+        return INVALID_FENCE;
+    }
 
     cmd_it->second.is_active = false;
 
@@ -808,7 +816,11 @@ SemaphoreID ShaderFoundry::submit_with_signal(CommandBufferID cmd_id)
         break;
     }
 
-    queue.submit(1, &submit_info, nullptr);
+    if (queue.submit(1, &submit_info, nullptr) != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Failed to submit command buffer");
+        return INVALID_SEMAPHORE;
+    }
 
     cmd_it->second.is_active = false;
 
@@ -822,7 +834,11 @@ void ShaderFoundry::wait_for_fence(FenceID fence_id)
         return;
     }
 
-    get_device().waitForFences(1, &it->second.fence, VK_TRUE, UINT64_MAX);
+    if (get_device().waitForFences(1, &it->second.fence, VK_TRUE, UINT64_MAX) != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "Failed to wait for fence: {}", fence_id);
+        return;
+    }
     it->second.signaled = true;
 }
 
@@ -837,7 +853,11 @@ void ShaderFoundry::wait_for_fences(const std::vector<FenceID>& fence_ids)
     }
 
     if (!fences.empty()) {
-        get_device().waitForFences(static_cast<uint32_t>(fences.size()), fences.data(), VK_TRUE, UINT64_MAX);
+        if (get_device().waitForFences(static_cast<uint32_t>(fences.size()), fences.data(), VK_TRUE, UINT64_MAX) != vk::Result::eSuccess) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+                "Failed to wait for fences");
+            return;
+        }
     }
 
     for (auto fence_id : fence_ids) {

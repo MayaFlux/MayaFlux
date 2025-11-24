@@ -416,4 +416,9 @@ void GlfwWindow::glfw_scroll_callback(GLFWwindow* window, double xoffset, double
     }
 }
 
+void GlfwWindow::set_graphics_registered(bool registered)
+{
+    m_graphics_registered.store(registered, std::memory_order_release);
+}
+
 }

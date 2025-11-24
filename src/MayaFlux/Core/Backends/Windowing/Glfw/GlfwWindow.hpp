@@ -78,13 +78,13 @@ public:
     /**
      * @brief Check if window is registered with graphics subsystem
      */
-    [[nodiscard]] bool is_graphics_registered() const override { return m_graphics_registered; }
+    [[nodiscard]] bool is_graphics_registered() const override { return m_graphics_registered.load(); }
 
     /**
      * @brief Mark window as registered/unregistered with graphics
      * Called by GraphicsSubsystem during register/unregister
      */
-    void set_graphics_registered(bool registered) override { m_graphics_registered = registered; }
+    void set_graphics_registered(bool registered) override;
 
 private:
     GLFWwindow* m_window = nullptr;
@@ -93,7 +93,7 @@ private:
     InputConfig m_input_config;
     WindowEventCallback m_event_callback;
 
-    bool m_graphics_registered {};
+    std::atomic<bool> m_graphics_registered { false };
 
     Vruta::EventSource m_event_source;
 
