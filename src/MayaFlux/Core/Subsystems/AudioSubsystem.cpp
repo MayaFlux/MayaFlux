@@ -78,12 +78,15 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
     std::span<double> output_span(output_buffer, total_samples);
 
     std::vector<std::span<const double>> buffer_data(num_channels);
+    std::vector<std::vector<std::vector<double>>> all_network_outputs(num_channels);
     bool has_underrun = false;
 
     m_handle->tasks.process_buffer_cycle();
 
     for (uint32_t channel = 0; channel < num_channels; channel++) {
         m_handle->buffers.process_channel(channel, num_frames);
+        all_network_outputs[channel] = m_handle->nodes.process_audio_networks(num_frames, channel);
+
         auto channel_data = m_handle->buffers.read_channel_data(channel);
 
         if (channel_data.size() < num_frames) {
@@ -106,6 +109,13 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
             }
 
             double sample = m_handle->nodes.process_sample(j) + buffer_sample;
+
+            for (const auto& network_buffer : all_network_outputs[j]) {
+                if (i < network_buffer.size()) {
+                    sample += network_buffer[i];
+                }
+            }
+
             size_t index = i * num_channels + j;
             output_span[index] = std::clamp(sample, -1., 1.);
         }

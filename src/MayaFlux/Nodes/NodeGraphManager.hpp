@@ -375,6 +375,18 @@ public:
      */
     void unregister_network_global(const std::shared_ptr<NodeNetwork>& network);
 
+    /**
+     * @brief Process audio networks for a specific channel
+     * @param token Processing domain (should be AUDIO_RATE)
+     * @param num_samples Number of samples/frames to process
+     * @param channel Channel index within that domain
+     * @return Vector of processed audio data from all networks for that channel
+     *
+     * Processes all audio-sink networks registered to the specified channel
+     * and returns their combined output data.
+     */
+    std::vector<std::vector<double>> process_audio_networks(ProcessingToken token, uint32_t num_samples, uint32_t channel = 0);
+
 private:
     /**
      * @brief Map of channel indices to their root nodes (AUDIO_RATE domain)
@@ -455,6 +467,13 @@ private:
         m_token_networks;
 
     /**
+     * @brief Processing flags for each token's networks
+     *
+     * Used to prevent re-entrant processing of networks within the same cycle.
+     */
+    std::unordered_map<ProcessingToken, std::atomic<bool>> m_token_network_processing;
+
+    /**
      * @brief Ensures a root node exists for the given token and channel
      * @param token Processing domain
      * @param channel Channel index
@@ -520,14 +539,25 @@ private:
     bool is_network_registered(const std::shared_ptr<NodeNetwork>& network);
 
     /**
-     * @brief Process all networks for a specific token and channel
-     * @return Aggregated audio output from networks (if AUDIO_SINK mode)
+     * @brief Resets the processing state of audio networks for a token and channel
+     * @param token Processing domain
+     * @param channel Channel index
      */
-    std::vector<double> process_channel_networks(ProcessingToken token,
-        unsigned int channel,
-        unsigned int num_samples);
+    void reset_audio_network_state(ProcessingToken token, uint32_t channel = 0);
 
-    void reset_audio_network_state(ProcessingToken token);
+    /**
+     * @brief Preprocess networks for a specific token
+     * @param token Processing domain
+     * @return true if preprocessing succeeded, false otherwise
+     */
+    bool preprocess_networks(ProcessingToken token);
+
+    /**
+     * @brief Postprocess networks for a specific token and channel
+     * @param token Processing domain
+     * @param channel Channel index
+     */
+    void postprocess_networks(ProcessingToken token, std::optional<uint32_t> channel);
 };
 
 }
