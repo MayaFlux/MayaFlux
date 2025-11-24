@@ -40,6 +40,9 @@
 #include "Nodes/NodeGraphManager.hpp"
 #include "Nodes/NodeStructure.hpp"
 
+#include "MayaFlux/Nodes/Network/ModalNetwork.hpp"
+#include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
+
 #include "Buffers/BufferManager.hpp"
 #include "Buffers/BufferProcessingChain.hpp"
 #include "Buffers/Container/ContainerBuffer.hpp"

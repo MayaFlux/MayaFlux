@@ -9,6 +9,7 @@ namespace Nodes {
     class Node;
     class NodeGraphManager;
     class RootNode;
+    class NodeNetwork;
 }
 
 namespace Buffers {
@@ -109,6 +110,45 @@ auto create_node(Args&&... args) -> std::shared_ptr<NodeType>
     auto node = std::make_shared<NodeType>(std::forward<Args>(args)...);
     register_audio_node(node);
     return node;
+}
+
+//-------------------------------------------------------------------------
+// Node Network Management
+//-------------------------------------------------------------------------
+
+/**
+ * @brief Registers a node network with the default engine's node graph manager
+ * @param network NodeNetwork to register
+ *
+ * Adds the node network to the default engine's node graph manager.
+ * The network can then be used to manage nodes and their connections.
+ */
+MAYAFLUX_API void register_node_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
+
+/**
+ * @brief Unregisters a node network from the default engine's node graph manager
+ * @param network NodeNetwork to unregister
+ *
+ * Removes the node network from the default engine's node graph manager.
+ * The network will no longer be available for managing nodes and their connections.
+ */
+MAYAFLUX_API void unregister_node_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
+
+/**
+ * @brief Creates a new node network
+ * @return Shared pointer to the created NodeNetwork
+ *
+ * This function creates a new node network that can be used to manage
+ * complex node graphs with multiple channels and processing domains.
+ */
+
+template <typename NodeNetworkType, typename... Args>
+    requires std::derived_from<NodeNetworkType, Nodes::NodeNetwork>
+auto create_node_network(Args&&... args) -> std::shared_ptr<NodeNetworkType>
+{
+    auto network = std::make_shared<NodeNetworkType>(std::forward<Args>(args)...);
+    register_node_network(network);
+    return network;
 }
 
 //-------------------------------------------------------------------------

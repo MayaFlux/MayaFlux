@@ -448,7 +448,7 @@ void NodeGraphManager::add_network(const std::shared_ptr<NodeNetwork>& network,
 
         if (channel_mask == 0) {
             channel_mask = 1;
-            network->register_channel_usage(0);
+            network->add_channel_usage(0);
         }
 
         auto channels = network->get_registered_channels();
