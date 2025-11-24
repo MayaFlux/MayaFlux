@@ -52,6 +52,17 @@ const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& NodeGraphMana
     return audio_roots;
 }
 
+bool NodeGraphManager::preprocess_networks(ProcessingToken token)
+{
+    auto& processing_flag = m_token_network_processing[token];
+
+    bool expected = false;
+    return processing_flag.compare_exchange_strong(
+        expected, true,
+        std::memory_order_acquire,
+        std::memory_order_relaxed);
+}
+
 void NodeGraphManager::process_token(ProcessingToken token, unsigned int num_samples)
 {
     auto roots = get_all_root_nodes(token);
@@ -61,13 +72,27 @@ void NodeGraphManager::process_token(ProcessingToken token, unsigned int num_sam
         return;
     }
 
-    if (auto it = m_token_networks.find(token); it != m_token_networks.end()) {
+    if (!preprocess_networks(token)) {
+        return;
+    }
+
+    auto it = m_token_networks.find(token);
+    if (it != m_token_networks.end()) {
         for (auto& network : it->second) {
-            if (network && network->is_enabled()) {
+            if (!network || !network->is_enabled()) {
+                continue;
+            }
+
+            if (!network->is_processed_this_cycle()) {
+                network->mark_processing(true);
                 network->process_batch(num_samples);
+                network->mark_processing(false);
+                network->mark_processed(true);
             }
         }
     }
+
+    postprocess_networks(token, std::nullopt);
 
     if (token == ProcessingToken::AUDIO_RATE) {
         for (auto* root : roots) {
@@ -76,6 +101,73 @@ void NodeGraphManager::process_token(ProcessingToken token, unsigned int num_sam
     } else if (token == ProcessingToken::VISUAL_RATE) {
         for (auto* root : roots) {
             root->process_batch_frame(num_samples);
+        }
+    }
+}
+
+std::vector<std::vector<double>> NodeGraphManager::process_audio_networks(ProcessingToken token, uint32_t num_samples, uint32_t channel)
+{
+    if (!preprocess_networks(token)) {
+        return {};
+    }
+
+    std::vector<std::vector<double>> all_network_outputs;
+
+    auto audio_it = m_audio_networks.find(token);
+    if (audio_it != m_audio_networks.end()) {
+        auto channel_it = audio_it->second.find(channel);
+        if (channel_it != audio_it->second.end()) {
+            for (auto& network : channel_it->second) {
+                if (!network || !network->is_enabled()) {
+                    continue;
+                }
+
+                if (!network->is_processed_this_cycle()) {
+                    network->mark_processing(true);
+                    network->process_batch(num_samples);
+                    network->mark_processing(false);
+                    network->mark_processed(true);
+                }
+
+                const auto& net_buffer = network->get_audio_buffer();
+                if (net_buffer) {
+                    all_network_outputs.push_back(*net_buffer);
+                }
+            }
+        }
+    }
+
+    postprocess_networks(token, channel);
+    return all_network_outputs;
+}
+
+void NodeGraphManager::postprocess_networks(ProcessingToken token, std::optional<uint32_t> channel)
+{
+    if (token == ProcessingToken::AUDIO_RATE && channel.has_value()) {
+        auto ch = channel.value_or(0U);
+        reset_audio_network_state(token, ch);
+    } else if (auto it = m_token_networks.find(token); it != m_token_networks.end()) {
+        for (auto& network : it->second) {
+            if (network && network->is_enabled()) {
+                network->mark_processed(false);
+            }
+        }
+    }
+
+    m_token_network_processing[token].store(false, std::memory_order_release);
+}
+
+void NodeGraphManager::reset_audio_network_state(ProcessingToken token, uint32_t channel)
+{
+    auto audio_it = m_audio_networks.find(token);
+    if (audio_it != m_audio_networks.end()) {
+        auto channel_it = audio_it->second.find(channel);
+        if (channel_it != audio_it->second.end()) {
+            for (auto& network : channel_it->second) {
+                if (network) {
+                    network->mark_processed(false);
+                }
+            }
         }
     }
 }
@@ -107,39 +199,7 @@ std::vector<double> NodeGraphManager::process_channel(ProcessingToken token,
 
     std::vector<double> samples = root.process_batch(num_samples);
 
-    uint32_t num_networked_buffers {};
-
-    auto audio_it = m_audio_networks.find(token);
-    if (audio_it != m_audio_networks.end()) {
-        auto channel_it = audio_it->second.find(channel);
-        if (channel_it != audio_it->second.end()) {
-            for (auto& network : channel_it->second) {
-                if (!network || !network->is_enabled()) {
-                    continue;
-                }
-
-                if (!network->is_processed_this_cycle()) {
-                    if (network->is_processing()) {
-                        continue;
-                    }
-                    network->mark_processing(true);
-                    network->process_batch(num_samples);
-                    network->mark_processing(false);
-                    network->mark_processed(true);
-                }
-
-                const auto& net_buffer = network->get_audio_buffer();
-                if (net_buffer) {
-                    for (size_t i = 0; i < samples.size() && i < net_buffer->size(); ++i) {
-                        samples[i] += (*net_buffer)[i];
-                    }
-                    ++num_networked_buffers;
-                }
-            }
-        }
-    }
-
-    uint32_t normalize_coef = root.get_node_size() + num_networked_buffers;
+    uint32_t normalize_coef = root.get_node_size();
     for (double& sample : samples) {
         normalize_sample(sample, normalize_coef);
     }
@@ -396,7 +456,7 @@ void NodeGraphManager::add_network(const std::shared_ptr<NodeNetwork>& network,
             ensure_root_exists(token, ch);
             m_audio_networks[token][ch].push_back(network);
 
-            MF_PRINT(Journal::Component::Nodes,
+            MF_INFO(Journal::Component::Nodes,
                 Journal::Context::NodeProcessing,
                 "Added audio network to token {} channel {}: {} nodes",
                 static_cast<int>(token), ch, network->get_node_count());
@@ -405,7 +465,7 @@ void NodeGraphManager::add_network(const std::shared_ptr<NodeNetwork>& network,
     } else {
         m_token_networks[token].push_back(network);
 
-        MF_PRINT(Journal::Component::Nodes,
+        MF_INFO(Journal::Component::Nodes,
             Journal::Context::NodeProcessing,
             "Added network to token {}: {} nodes, mode={}",
             static_cast<int>(token),
@@ -527,20 +587,6 @@ bool NodeGraphManager::is_network_registered(const std::shared_ptr<NodeNetwork>&
 {
     return std::ranges::any_of(m_network_registry,
         [&network](const auto& pair) { return pair.second == network; });
-}
-
-void NodeGraphManager::reset_audio_network_state(ProcessingToken token)
-{
-    auto audio_it = m_audio_networks.find(token);
-    if (audio_it != m_audio_networks.end()) {
-        for (auto& [ch, networks] : audio_it->second) {
-            for (auto& network : networks) {
-                if (network) {
-                    network->mark_processed(false);
-                }
-            }
-        }
-    }
 }
 
 }

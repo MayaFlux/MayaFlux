@@ -150,6 +150,8 @@ public:
 
     double process_sample(uint32_t channel);
 
+    std::vector<std::vector<double>> process_audio_networks(uint32_t num_samples, uint32_t channel = 0);
+
     /** @brief Create node with automatic token assignment */
     template <typename NodeType, typename... Args>
     std::shared_ptr<NodeType> create_node(Args&&... args)

@@ -103,6 +103,11 @@ double NodeProcessingHandle::process_sample(uint32_t channel)
     return m_manager->process_sample(m_token, channel);
 }
 
+std::vector<std::vector<double>> NodeProcessingHandle::process_audio_networks(uint32_t num_samples, uint32_t channel)
+{
+    return m_manager->process_audio_networks(m_token, num_samples, channel);
+}
+
 TaskSchedulerHandle::TaskSchedulerHandle(
     std::shared_ptr<Vruta::TaskScheduler> task_manager,
     Vruta::ProcessingToken token)
