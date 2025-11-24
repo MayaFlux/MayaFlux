@@ -4,10 +4,14 @@
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
+#include "MayaFlux/IO/ImageReader.hpp"
 #include "MayaFlux/IO/SoundFileReader.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+
+namespace fs = std::filesystem;
 
 namespace MayaFlux {
 
@@ -108,6 +112,69 @@ std::vector<std::shared_ptr<Buffers::ContainerBuffer>> hook_sound_container_to_b
     }
 
     return created_buffers;
+}
+
+std::shared_ptr<Buffers::TextureBuffer> load_image_file(const std::string& filepath)
+{
+    IO::ImageReader reader;
+
+    if (!reader.open(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "Failed to open image: {}", filepath);
+        return nullptr;
+    }
+
+    auto texture_buffer = reader.create_texture_buffer();
+
+    if (!texture_buffer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "Failed to create texture buffer from: {}", filepath);
+        return nullptr;
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "Loaded image: {} ({}x{})",
+        fs::path(filepath).filename().string(),
+        texture_buffer->get_width(),
+        texture_buffer->get_height());
+
+    return texture_buffer;
+}
+
+bool is_image(const fs::path& filepath)
+{
+    if (!fs::exists(filepath) || !fs::is_regular_file(filepath)) {
+        return false;
+    }
+
+    auto ext = filepath.extension().string();
+    std::ranges::transform(ext, ext.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    static const std::unordered_set<std::string> image_extensions = {
+        ".png", ".jpg", ".jpeg", ".bmp", ".tga",
+        ".psd", ".gif", ".hdr", ".pic", ".pnm"
+    };
+
+    return image_extensions.contains(ext);
+}
+
+bool is_audio(const fs::path& filepath)
+{
+    if (!fs::exists(filepath) || !fs::is_regular_file(filepath)) {
+        return false;
+    }
+
+    auto ext = filepath.extension().string();
+    std::ranges::transform(ext, ext.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    static const std::unordered_set<std::string> audio_extensions = {
+        ".wav", ".aiff", ".aif", ".flac", ".ogg",
+        ".mp3", ".m4a", ".wma"
+    };
+
+    return audio_extensions.contains(ext);
 }
 
 }
