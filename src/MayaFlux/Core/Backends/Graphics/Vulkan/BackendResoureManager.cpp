@@ -43,13 +43,19 @@ void BackendResourceManager::setup_backend_service(const std::shared_ptr<Registr
     buffer_service->flush_range = [this](void* memory, size_t offset, size_t size) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
         vk::MappedMemoryRange range { mem, offset, size == 0 ? VK_WHOLE_SIZE : size };
-        m_context.get_device().flushMappedMemoryRanges(1, &range);
+        if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Failed to flush mapped memory range: {}", vk::to_string(result));
+        }
     };
 
     buffer_service->invalidate_range = [this](void* memory, size_t offset, size_t size) {
         vk::DeviceMemory mem(reinterpret_cast<VkDeviceMemory>(memory));
         vk::MappedMemoryRange range { mem, offset, size == 0 ? VK_WHOLE_SIZE : size };
-        m_context.get_device().invalidateMappedMemoryRanges(1, &range);
+        if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Failed to invalidate mapped memory range: {}", vk::to_string(result));
+        }
     };
 
     buffer_service->map_buffer = [this](void* memory, size_t offset, size_t size) -> void* {
@@ -199,7 +205,10 @@ void BackendResourceManager::flush_pending_buffer_operations()
                 range.memory = resources.memory;
                 range.offset = offset;
                 range.size = size;
-                m_context.get_device().flushMappedMemoryRanges(1, &range);
+                if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
+                    MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                        "Failed to flush mapped memory range: {}", vk::to_string(result));
+                }
             }
             MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Flushed {} dirty ranges for buffer {:p}", dirty_ranges.size(),
@@ -213,7 +222,10 @@ void BackendResourceManager::flush_pending_buffer_operations()
                 range.memory = buffer_wrapper->get_buffer_resources().memory;
                 range.offset = offset;
                 range.size = size;
-                m_context.get_device().invalidateMappedMemoryRanges(1, &range);
+                if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
+                    MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                        "Failed to invalidate mapped memory range: {}", vk::to_string(result));
+                }
             }
             MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
                 "Invalidated {} ranges for buffer {:p}", invalid_ranges.size(),
@@ -261,7 +273,7 @@ void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& im
     image_info.mipLevels = image->get_mip_levels();
     image_info.arrayLayers = image->get_array_layers();
     image_info.format = image->get_format();
-    image_info.tiling = vk::ImageTiling::eOptimal; // Optimal GPU tiling
+    image_info.tiling = vk::ImageTiling::eOptimal;
     image_info.initialLayout = vk::ImageLayout::eUndefined;
     image_info.usage = image->get_usage_flags();
     image_info.sharingMode = vk::SharingMode::eExclusive;
@@ -501,7 +513,6 @@ void BackendResourceManager::upload_image_data(
         return;
     }
 
-    // Create staging buffer
     auto staging = std::make_shared<Buffers::VKBuffer>(
         size,
         Buffers::VKBuffer::Usage::STAGING,
@@ -509,7 +520,6 @@ void BackendResourceManager::upload_image_data(
 
     initialize_buffer(staging);
 
-    // Copy data to staging buffer
     void* mapped = staging->get_mapped_ptr();
     if (!mapped) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -521,14 +531,15 @@ void BackendResourceManager::upload_image_data(
     std::memcpy(mapped, data, size);
     staging->mark_dirty_range(0, size);
 
-    // Flush staging buffer
     auto& resources = staging->get_buffer_resources();
     vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
-    m_context.get_device().flushMappedMemoryRanges(1, &range);
 
-    // Execute copy command
+    if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to flush mapped memory range: {}", vk::to_string(result));
+    }
+
     execute_immediate_commands([&](vk::CommandBuffer cmd) {
-        // Transition to transfer destination
         vk::ImageMemoryBarrier barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
@@ -549,7 +560,6 @@ void BackendResourceManager::upload_image_data(
             vk::DependencyFlags {},
             0, nullptr, 0, nullptr, 1, &barrier);
 
-        // Copy buffer to image
         vk::BufferImageCopy region {};
         region.bufferOffset = 0;
         region.bufferRowLength = 0;
@@ -571,7 +581,6 @@ void BackendResourceManager::upload_image_data(
             vk::ImageLayout::eTransferDstOptimal,
             1, &region);
 
-        // Transition to shader read
         barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
         barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
         barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
@@ -602,7 +611,6 @@ void BackendResourceManager::download_image_data(
         return;
     }
 
-    // Create staging buffer
     auto staging = std::make_shared<Buffers::VKBuffer>(
         size,
         Buffers::VKBuffer::Usage::STAGING,
@@ -610,9 +618,7 @@ void BackendResourceManager::download_image_data(
 
     initialize_buffer(staging);
 
-    // Execute copy command
     execute_immediate_commands([&](vk::CommandBuffer cmd) {
-        // Transition to transfer source
         vk::ImageMemoryBarrier barrier {};
         barrier.oldLayout = image->get_current_layout();
         barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
@@ -633,7 +639,6 @@ void BackendResourceManager::download_image_data(
             vk::DependencyFlags {},
             0, nullptr, 0, nullptr, 1, &barrier);
 
-        // Copy image to buffer
         vk::BufferImageCopy region {};
         region.bufferOffset = 0;
         region.bufferRowLength = 0;
@@ -655,7 +660,6 @@ void BackendResourceManager::download_image_data(
             staging->get_buffer(),
             1, &region);
 
-        // Transition back to original layout
         barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
         barrier.newLayout = image->get_current_layout();
         barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
@@ -668,11 +672,14 @@ void BackendResourceManager::download_image_data(
             0, nullptr, 0, nullptr, 1, &barrier);
     });
 
-    // Invalidate and copy from staging to host
     staging->mark_invalid_range(0, size);
     auto& resources = staging->get_buffer_resources();
     vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
-    m_context.get_device().invalidateMappedMemoryRanges(1, &range);
+
+    if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to invalidate mapped memory range: {}", vk::to_string(result));
+    }
 
     void* mapped = staging->get_mapped_ptr();
     if (mapped) {

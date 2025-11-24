@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
@@ -238,6 +239,10 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
                 };
             }
         }
+    }
+
+    if (!m_target_window->is_graphics_registered()) {
+        return;
     }
 
     if (m_needs_pipeline_rebuild) {

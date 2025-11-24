@@ -232,11 +232,11 @@ public:
     //==========================================================================
 
     /**
-     * @brief Compile shader from file path
-     * @param filepath Path to shader file (.comp, .vert, .frag, .spv, etc.)
-     * @param stage Optional stage override (auto-detected from extension if omitted)
+     * @brief Universal shader loader - auto-detects source type
+     * @param content File path, GLSL source string, or SPIR-V path
+     * @param stage Optional stage override (auto-detected if omitted)
      * @param entry_point Entry point function name (default: "main")
-     * @return ID of compiled shader module, or INVALID_SHADER on failure
+     * @return ShaderID, or INVALID_SHADER on failure
      *
      * Supports:
      * - GLSL files: .comp, .vert, .frag, .geom, .tesc, .tese
@@ -250,60 +250,22 @@ public:
      *   .tesc → TESS_CONTROL
      *   .tese → TESS_EVALUATION
      *
-     * Caching: If the same file is compiled twice, returns cached version.
-     * Use invalidate_cache() or hot_reload() to force recompilation.
+     * Examples:
+     *   load_shader("shaders/kernel.comp");              // File
+     *   load_shader("shaders/kernel.spv", COMPUTE);      // SPIR-V
+     *   load_shader("#version 450\nvoid main(){}", COMPUTE); // Source
      */
     ShaderID load_shader(
-        const std::string& filepath,
+        const std::string& content,
         std::optional<ShaderStage> stage = std::nullopt,
         const std::string& entry_point = "main");
 
     /**
-     * @brief Compile shader from GLSL source string
-     * @param source GLSL source code
-     * @param stage Shader stage (COMPUTE, VERTEX, FRAGMENT, etc.)
-     * @param entry_point Entry point function name (default: "main")
-     * @return ID of compiled shader module, or INVALID_SHADER on failure
-     *
-     * Does NOT cache by default (source strings are transient).
-     * Use compile_from_source_cached() if you want caching.
+     * @brief Load shader from explicit ShaderSource descriptor
+     * @param source Complete shader source specification
+     * @return ShaderID, or INVALID_SHADER on failure
      */
-    ShaderID load_shader_from_source(
-        const std::string& source,
-        ShaderStage stage,
-        const std::string& entry_point = "main");
-
-    /**
-     * @brief Compile shader from GLSL source with caching
-     * @param source GLSL source code
-     * @param stage Shader stage
-     * @param cache_key Unique key for caching (e.g., "my_kernel_v1")
-     * @param entry_point Entry point function name
-     * @return ID of compiled shader module, or INVALID_SHADER on failure
-     *
-     * Caches compiled shader under cache_key.
-     * Useful for generated shaders or frequently reused inline shaders.
-     */
-    ShaderID load_shader_from_source_cached(
-        const std::string& source,
-        ShaderStage stage,
-        const std::string& cache_key,
-        const std::string& entry_point = "main");
-
-    /**
-     * @brief Compile shader from SPIR-V file
-     * @param spirv_path Path to .spv file
-     * @param stage Shader stage (must specify, cannot auto-detect from SPIR-V)
-     * @param entry_point Entry point function name (default: "main")
-     * @return ID of compiled shader module, or INVALID_SHADER on failure
-     *
-     * For pre-compiled SPIR-V binaries.
-     * Caches by file path like compile_from_file().
-     */
-    ShaderID load_shader_from_spirv(
-        const std::string& spirv_path,
-        ShaderStage stage,
-        const std::string& entry_point = "main");
+    ShaderID load_shader(const ShaderSource& source);
 
     /**
      * @brief Hot-reload shader (returns new ID)
@@ -673,6 +635,17 @@ public:
     static std::optional<ShaderStage> detect_stage_from_extension(const std::string& filepath);
 
 private:
+    /**
+     * @enum DetectedSourceType
+     * @brief Internal enum for source type detection
+     */
+    enum class DetectedSourceType : uint8_t {
+        FILE_GLSL,
+        FILE_SPIRV,
+        SOURCE_STRING,
+        UNKNOWN
+    };
+
     ShaderFoundry() = default;
     ~ShaderFoundry() { shutdown(); }
 
@@ -699,6 +672,10 @@ private:
     std::atomic<uint64_t> m_next_command_id { 1 };
     std::atomic<uint64_t> m_next_fence_id { 1 };
     std::atomic<uint64_t> m_next_semaphore_id { 1 };
+
+    DetectedSourceType detect_source_type(const std::string& content) const;
+    std::optional<std::filesystem::path> resolve_shader_path(const std::string& filepath) const;
+    std::string generate_source_cache_key(const std::string& source, ShaderStage stage) const;
 
     std::shared_ptr<Core::VKShaderModule> create_shader_module();
     vk::Device get_device() const;

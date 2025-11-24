@@ -383,8 +383,18 @@ void BackendWindowHandler::render_window_internal(WindowRenderContext& context)
     size_t frame_index = context.current_frame;
     auto& in_flight = context.in_flight[frame_index];
 
-    device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX);
-    device.resetFences(1, &in_flight);
+    if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
+        MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Skipping frame rendering for window '{}' due to in-flight fence timeout",
+            context.window->get_create_info().title);
+        return;
+    }
+    if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to reset in-flight fence for window '{}'",
+            context.window->get_create_info().title);
+        return;
+    }
 
     auto image_index_opt = context.swapchain->acquire_next_image(context.image_available[frame_index]);
     if (!image_index_opt.has_value()) {
@@ -428,7 +438,7 @@ void BackendWindowHandler::render_window_internal(WindowRenderContext& context)
     submit_info.pSignalSemaphores = &render_finished;
 
     try {
-        graphics_queue.submit(1, &submit_info, in_flight);
+        auto result = graphics_queue.submit(1, &submit_info, in_flight);
     } catch (const vk::SystemError& e) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to submit draw command buffer: {}", e.what());
@@ -462,7 +472,12 @@ void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
     auto& image_available = context->image_available[frame_index];
     auto& render_finished = context->render_finished[frame_index];
 
-    device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX);
+    if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
+        MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Skipping frame rendering for window '{}' due to in-flight fence timeout",
+            context->window->get_create_info().title);
+        return;
+    }
 
     auto image_index_opt = context->swapchain->acquire_next_image(image_available);
     if (!image_index_opt.has_value()) {
@@ -471,7 +486,12 @@ void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
     }
     uint32_t image_index = image_index_opt.value();
 
-    device.resetFences(1, &in_flight);
+    if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to reset in-flight fence for window '{}'",
+            context->window->get_create_info().title);
+        return;
+    }
 
     vk::SubmitInfo submit_info {};
     vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
@@ -484,7 +504,7 @@ void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
     submit_info.pSignalSemaphores = &render_finished;
 
     try {
-        graphics_queue.submit(1, &submit_info, in_flight);
+        auto result = graphics_queue.submit(1, &submit_info, in_flight);
     } catch (const std::exception& e) {
         error_rethrow(
             Journal::Component::Core,
