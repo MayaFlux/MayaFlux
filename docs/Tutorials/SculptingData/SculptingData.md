@@ -8,6 +8,12 @@ The point is not playback. The point is agency over time.
 
 Every example you run produces real sound, but the goal is not sound itself — the goal is to understand the movement of information.
 
+The different "runnable" code in these tutorial are always after
+a heading called `Tutorial:`
+and after explainations, under the heading `Try it`:
+
+If you simply want to run the code, look for `Turorial:` heading and then `Try it` sections.
+
 Each section in this series introduces one idea:
 
 - A way of structuring data
@@ -164,8 +170,6 @@ You have:
 
 The file is loaded. Ready. Waiting.
 
----
-
 ## Expansion 1: What Is a Container?
 
 <details>
@@ -196,8 +200,6 @@ When `vega.read_audio("file.wav")` runs, MayaFlux:
 The Container is now your interface to that audio data. It's ready to be routed, processed, analyzed, transformed.
 
 </details>
-
----
 
 ## Expansion 2: Memory, Ownership, and Smart Pointers
 
@@ -236,8 +238,6 @@ You don't see `std::shared_ptr`. You see `auto`. But MayaFlux is using it. This 
 This is why `vega.read_audio()` is safe. The complexity of memory management exists—it's just not your problem.
 
 </details>
-
----
 
 ## Expansion 3: What is `vega`?
 
@@ -334,8 +334,6 @@ The short syntax is convenience. The long syntax is control. MayaFlux gives you 
 
 Use `vega` because you value fluency, not because you fear the machinery.
 
----
-
 ## Expansion 4: The Container's Processor
 
 <details>
@@ -363,8 +361,6 @@ This is why `StreamContainers` (that `SoundFileContainer` inherits from) are mor
 with built-in logic for how they should be consumed.
 
 </details>
-
----
 
 ## Expansion 5: What `.read_audio()` Does NOT Do
 
@@ -420,8 +416,6 @@ Run this code. Your file plays.
 
 The Container + the hook call—together they form the path from disk to speakers. This section shows you what that connection does.
 
----
-
 ## Expansion 1: What Are Buffers?
 
 <details>
@@ -450,8 +444,6 @@ Without buffers, you'd have to manually manage these chunks yourself. With buffe
 Your Container's processor feeds data into them. The buffers exhale it to your ears.
 
 </details>
-
----
 
 ## Expansion 2: Why Per-Channel Buffers?
 
@@ -487,8 +479,6 @@ Leave channel 1 alone? The second channel plays unprocessed.
 This flexibility is only possible because channels are architecturally separate at the buffer level.
 
 </details>
-
----
 
 ## Expansion 3: The Buffer Manager and Buffer Lifecycle
 
@@ -544,8 +534,6 @@ Repeat forever.
 
 </details>
 
----
-
 ## Expansion 4: ContainerBuffer—The Bridge
 
 <details>
@@ -583,8 +571,6 @@ The buffer still doesn't transform—it still just relays. But what it relays wi
 
 </details>
 
----
-
 ## Expansion 5: Processing Token—AUDIO_BACKEND
 
 <details>
@@ -618,8 +604,6 @@ Each token tells the system what timing, synchronization, and backend this buffe
 For now: `AUDIO_BACKEND` means "this buffer is feeding your ears directly. It must keep real-time pace with the audio interface."
 
 </details>
-
----
 
 ## Expansion 6: Accessing the Buffers
 
@@ -715,6 +699,8 @@ No code running during playback—just the callback cycle doing its work, thousa
 In the next section, we'll modify these buffers' processing chains. We'll insert a filter processor and hear how it changes the sound.
 This is where MayaFlux's power truly shines—transforming passive playback into active, real-time audio processing.
 
+---
+
 # Tutorial: Buffers Own Chains
 
 ## The Simplest Path
@@ -734,8 +720,6 @@ Run this code. Your file plays with a low-pass filter applied.
 The filter smooths the audio—reduces high frequencies. Listen to the difference.
 
 That's it. Three lines of code: load, get buffers, insert filter. The rest of this section shows you what just happened.
-
----
 
 ## Expansion 1: What Is `vega.IIR()`?
 
@@ -771,8 +755,6 @@ Same filter. Same capabilities. Vega just hides the verbosity.
 
 </details>
 
----
-
 ## Expansion 2: What Is `MayaFlux::create_processor()`?
 
 <details>
@@ -804,8 +786,6 @@ The buffer now has this processor in its chain. Each cycle, the buffer runs the 
 
 </details>
 
----
-
 ## Expansion 3: What Is a Processing Chain?
 
 <details>
@@ -834,8 +814,6 @@ Data flows: **Container → [filtered] → Speakers**
 The chain is ordered. Processors run in sequence. Output of one becomes input to next.
 
 </details>
-
----
 
 ## Expansion 4: Adding Processor to Another Channel (Optional)
 
@@ -869,8 +847,6 @@ Both do the same underlying thing—they add the processor to the buffer's chain
 Now both channels are filtered by the same IIR node. Different channel buffers can share the same processor or have independent ones—your choice.
 
 </details>
-
----
 
 ## Expansion 5: What Happens Inside
 
@@ -926,8 +902,6 @@ The machinery is consistent: **processors are added to chains, chains are owned 
 You don't need to write this explicitly—the convenience functions handle it. But this is what's happening.
 
 </details>
-
----
 
 ## Expansion 6: Processors Are Reusable Building Blocks
 
@@ -998,6 +972,8 @@ And you'll see why this architecture—buffers as relays, not generators—enabl
 
 For a comprehensive tutorial on buffer processors and related concepts, visit the [Buffer Processors Tutorial](./ProcessingExpression.md).
 
+---
+
 # Tutorial: Timing, Streams, and Bridges
 
 ## The Current Continous Flow
@@ -1025,8 +1001,6 @@ That's intentional.
 There are other features—region looping, seeking, playback control,
 but they don't fit this tutorial. These sections are purely for:
 **file → buffers → output, uninterrupted.**
-
----
 
 ## Where We're Going
 
@@ -1068,8 +1042,6 @@ In this section, we will introduce the machinery for everything beyond simplicit
 We're not building code that has audio yet. We're establishing the architecture
 that enables timing control, streaming, capture, and composition.
 
----
-
 ## Expansion 1: The Architecture of Containers
 
 <details>
@@ -1096,8 +1068,6 @@ But it doesn't work for:
 For these use cases, you need a different data structure.
 
 </details>
-
----
 
 ## Expansion 2: Enter DynamicSoundStream
 
@@ -1133,8 +1103,6 @@ But understanding what it is explains everything that follows.
 
 </details>
 
----
-
 ## Expansion 3: StreamWriteProcessor
 
 <details>
@@ -1166,8 +1134,6 @@ by continuously writing it to a stream through a processor.
 `StreamWriteProcessor` is the bridge between buffers (which live in real-time) and streams (which accumulate).
 
 </details>
-
----
 
 ## Expansion 4: FileBridgeBuffer—Controlled Flow
 
@@ -1204,8 +1170,6 @@ This gives you timing control. You don't play the whole file. You process exactl
 
 </details>
 
----
-
 ## Expansion 5: Why This Architecture?
 
 <details>
@@ -1231,8 +1195,6 @@ And it's why understanding this section matters:
 **the next tutorial (BufferOperation) builds on top of this composition**, adding temporal coordination and pipeline semantics.
 
 </details>
-
----
 
 ## Expansion 6: From File to Cycle
 
@@ -1264,8 +1226,6 @@ This is the foundation for everything BufferOperation does—it extends this cyc
 
 </details>
 
----
-
 ## The Three Key Concepts
 
 At this point, understand:
@@ -1278,8 +1238,6 @@ At this point, understand:
 
 These three concepts enable timing control. You're no longer at the mercy of real-time callbacks.
 You can process exactly N cycles, accumulate results, and move on.
-
----
 
 ## Why This Section Has No Audio Code
 
@@ -1301,8 +1259,6 @@ It's just syntactic sugar on top of this architecture.
 
 For now: **internalize the architecture. The next section shows how to use it.**
 
----
-
 ## What You Should Internalize
 
 - Containers hold data (SoundFileContainer holds files; DynamicSoundStream holds growing data)
@@ -1312,6 +1268,8 @@ For now: **internalize the architecture. The next section shows how to use it.**
 - Timing is expressed in cycles (deterministic, aligned with buffer boundaries, decoupled from real-time)
 
 This is the mental model for everything that follows. Pipelines, capture, routing—they all build on this foundation.
+
+---
 
 # Tutorial: Buffer Pipelines (Teaser)
 
@@ -1327,8 +1285,6 @@ But what if you want to:
 - **Do all of this in one declarative statement**
 
 That's what buffer pipelines do.
-
----
 
 ## A Taste
 
@@ -1361,8 +1317,6 @@ Run this. You'll hear the file play back at with noisy texture.
 But the file never played to speakers directly:
 it was captured, processed, accumulated, then routed.
 
----
-
 ## Expansion 1: What Is a Pipeline?
 
 <details>
@@ -1394,8 +1348,6 @@ Understanding the previous sections makes this section obvious. You're not learn
 
 </details>
 
----
-
 ## Expansion 2: BufferOperation Types
 
 <details>
@@ -1415,8 +1367,6 @@ Each operation is a building block. Pipeline chains them together.
 The full set of operations is the subject of its own tutorial. This section just shows the pattern.
 
 </details>
-
----
 
 ## Expansion 3: The `on_capture_processing` Pattern
 
@@ -1448,8 +1398,6 @@ On Demand mode expects users to provide callback timing logic.
 For now: understand that pipelines let you hook custom logic into the capture/process/route flow.
 
 </details>
-
----
 
 ## Expansion 4: Why This Matters
 
@@ -1485,8 +1433,6 @@ All of it starts with this pattern: **declare → execute → observe**.
 
 </details>
 
----
-
 ## What Happens Next
 
 The full **Buffer Pipelines** tutorial is its own comprehensive guide. It covers:
@@ -1519,8 +1465,6 @@ But the main point is: **understand what's happening**, not just make it work.
 
 This is real composition. Not playback. Not presets. Declarative data transformation.
 
----
-
 ## The Philosophy
 
 You've now seen the complete stack:
@@ -1536,8 +1480,6 @@ Each layer builds on the previous. None is magic. All are composable.
 This is how MayaFlux thinks about computation: as layered, declarative, composable building blocks.
 
 Pipelines are where that thinking becomes powerful. They're not a special feature—they're just the final layer of composition.
-
----
 
 ## Next: The Full Pipeline Tutorial
 

@@ -1,191 +1,121 @@
 # MayaFlux - Getting Started Guide
 
-**MayaFlux** is a next-generation digital signal processing framework that embraces true digital paradigms. Moving beyond analog synthesis metaphors, MayaFlux treats audio, video, and all data streams as unified numerical information that can interact, transform, and process together through powerful algorithms, coroutines, and ahead-of-time computation techniques.
+**MayaFlux** is a next-generation digital signal processing framework that embraces true digital paradigms.
+Moving beyond analog synthesis metaphors, MayaFlux treats audio, video, and all data streams as unified numerical information
+that can interact, transform, and process together through powerful algorithms, coroutines, and ahead-of-time computation techniques.
 
-## Weave (Project Automation)
+## Weave: The Easy Way (Recommended for Most Users)
 
-**Project initialization, dependency management, and installation framework for MayaFlux.**
-
-Weave handles everything needed to get MayaFlux running on your system: downloading the latest framework, installing dependencies, managing environment setup, and providing tools to scaffold new projects.
-
----
-
-### Overview
-
-Instead of juggling separate downloads, manual dependency installation, and environment configuration, Weave automates the entire setup process while providing both GUI and CLI tools for project creation.
+**Weave is the recommended way to start with MayaFlux**.
+It handles everything from installation to project creation in one tool, available for **Windows, macOS, and Linux**.
 
 ### What Weave Does
 
-- **Downloads and installs MayaFlux** from the latest GitHub release
-- **Manages all dependencies** (build tools, graphics libraries, audio backends, development SDKs)
-- **Configures environment variables** for seamless development
-- **Provides project creation tools** (GUI on both platforms, CLI on macOS) to scaffold new MayaFlux applications
-- **Handles platform-specific setup** with intelligent fallbacks and validation
+- **Downloads & Installs** MayaFlux automatically
+- **Manages Dependencies** (build tools, audio/video libraries, SDKs)
+- **Creates New Projects** with proper configuration
+- **Platform-Specific Setup** with intelligent fallbacks
 
-## Documentation & Downloads
+### Getting Weave
 
-Visit [Weave Repository](https://github.com/MayaFlux/Weave) for full documentation.
+**Download the latest release:** [Weave Releases Page](https://github.com/MayaFlux/Weave/releases)
 
-The latest version can be downloaded from the [Releases Page](https://github.com/MayaFlux/Weave/releases)
+### Using Weave
 
-If you wish to develop MayaFlux from source, enter the next section.
+**Windows & Linux:**
 
-Or jumpt to [Working with MayaFlyx](#your-first-mayaflux-program)
+1. Download Weave and double-click the executable
+2. A GUI opens with two modes:
+   - **Management Mode**: Install MayaFlux and dependencies
+   - **Project Creation Mode**: Create new projects (available after installation)
+3. Follow the intuitive interface - your project is ready in minutes
 
+**macOS:**
 
-## Quick Start (Develiopers)
+1. **Installation**: Run the `.pkg` installer (includes both MayaFlux and dependencies)
+2. **Project Creation**: Find `Weave.app` in your Applications folder for creating new projects
+3. **Architecture Support**: Separate builds available for Intel (x86) and Apple Silicon (ARM)
 
-This section guides you through setting up MayaFlux on your development machine
-for building from source.
+> **Why Use Weave?** You get a properly configured MayaFlux environment without dealing with compilers, CMake, or dependency management.
+> Perfect for artists, educators, and rapid prototyping.
 
-### 1. Clone the Repository
+Jump to [Working with MayaFlux](#your-first-mayaflux-program)
+
+---
+
+## Building from Source (For Developers)
+
+**For developers who want the latest features or need to customize MayaFlux's internals.**
+
+### Prerequisites
+
+**All Platforms:**
+
+- **Compiler**: C++20 compatible (GCC 12+, Clang 16+, MSVC 2022+)
+- **Build System**: CMake 3.20+
+
+**Platform-Specific Requirements:**
+
+- **macOS**: Minimum macOS 14 (Sonoma) with Apple Clang 15+
+- **Windows**: Visual Studio 2022+ or MinGW-w64
+- **Linux**: Standard development tools and multimedia libraries
+
+### Quick Build
 
 ```bash
+# Clone the repository
 git clone https://github.com/MayaFlux/MayaFlux.git
-# or
-git clone https://gitlab.com/MayaFlux/MayaFlux.git
-#or
-git clone https://codeberg.org/MayaFlux/MayaFlux.git
-# and then
 cd MayaFlux
+
+# Run platform setup script
+./scripts/setup_macos.sh       # macOS (brew will ask for sudo )
+./scripts/setup_linux.sh       # Linux (package manager will ask for sudo)
+.\scripts\win64\setup_windows.ps1  # Windows (PowerShell) (run as Administrator to install dependencies)
+
+# Build
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel
 ```
 
-### 2. Run Platform Setup Script
+### IDE-Specific Setup
 
-MayaFlux includes automated setup scripts that handle all dependencies and build system configuration.
+**Visual Studio Code (Recommended):**
 
-#### Windows
+- Open the project folder - VS Code automatically detects the CMake configuration
+- Uses pre-configured `.vscode/` settings for build tasks, debugging, and IntelliSense
+- **Build**: `Ctrl+Shift+B` (Cmd+Shift+B on macOS)
+- **Run**: `F5`
+
+**Xcode (macOS):**
+
+```bash
+./scripts/setup_xcode.sh
+open build/MayaFlux.xcodeproj
+```
+
+**Visual Studio (Windows):**
 
 ```powershell
-# Run in PowerShell (Administrator recommended)
-.\scripts\setup_windows.ps1
-
-# For Visual Studio users
-.\scripts\setup_visual_studio.ps1
+.\scripts\win64\setup_visual_studio.ps1
+# Open build/MayaFlux.sln in Visual Studio
 ```
 
-#### macOS
+**Neovim:**
 
-```bash
-# Run this in any terminal
-./scripts/setup_macos.sh
+- Install [overseer.nvim](https://github.com/stevearc/overseer.nvim) for task management
+- Overseer automatically reads `.vscode/` tasks for seamless build/run/debug workflows
 
-# For XCode users
-./scripts/setup_xcode.sh
-```
+> **Note**: All setup scripts handle dependency installation automatically. No manual package management required.
 
-**System Requirements:**
-- **Minimum**: macOS 14 (Sonoma) with Apple Clang 15+
-- **Recommended**: macOS 15+ (Sequoia)
-- **Academic Users**: macOS 14 provides excellent compatibility for institutional/shared machines
+### Project Structure
 
-> **Note**: macOS 13 and earlier are not supported due to missing modern C++ standard library features.
+```text
 
-#### Linux
-
-Linux users typically manage dependencies through their package manager. Install the standard development tools (cmake, build-essential, pkg-config)
-and devel/multimedia libraries (rtaudio, ffmpeg, eigen3, gtest, magic_enum, glfw, vulkan-sdk, glm, stb) using your distribution's package manager.
-
-However, you can also run the provided setup script to automate this process for Debian-based systems, fedora, and Arch Linux:
-
-```bash
-# Run this in any terminal
-./scripts/setup_linux.sh
-```
-
-> **Note**: All setup scripts automatically handle dependency installation and build system configuration. No manual dependency management required.
-
-## Development Environment Setup
-
-### For VS Code Users (Recommended for New Programmers)
-
-If you're coming from creative coding environments like p5.js, Processing, or SuperCollider, VS Code provides the most approachable transition to C++.
-
-1. **Install VS Code** and the **C/C++ Extension Pack**
-
-2. **Open the Project:**
-
-   ```bash
-   code MayaFlux
-   ```
-
-3. **That's it!** VS Code will automatically:
-   - Detect the CMake configuration
-   - Set up LSP/IntelliSense for code completion
-   - Configure build and debug settings
-   - Handle compilation when you press `F5`
-
-### For Visual Studio Users
-
-After running `setup_visual_studio.ps1`:
-
-1. **Open the solution** file: `build/MayaFlux.sln`
-2. **Set the startup project** in Solution Explorer
-3. **Build and run** using standard Visual Studio workflows
-
-Visual Studio users will find all familiar debugging and profiling tools work seamlessly with MayaFlux.
-
-### For Neovim Users
-
-Install **overseer.nvim** for seamless task management:
-
-```lua
--- Add to your plugin manager
-{
-  'stevearc/overseer.nvim',
-  config = function()
-    require('overseer').setup()
-  end,
-}
-```
-
-Overseer will automatically detect the CMake build system and provide build/run tasks. Advanced users can create custom templates for MayaFlux-specific workflows.
-
-## Your First MayaFlux Program
-
-After creating a project from `Weave` or running the setup script (when building from source),
-you'll find a `user_project.hpp` file in the src/ directory of your project root. This is where all your MayaFlux code goes:
-
-```cpp
-// src/user_project.hpp - Your code space (never overwritten by updates)
-#pragma once
-#define MAYASIMPLE
-#include "MayaFlux/MayaFlux.hpp"
-
-void compose() {
-    // Your MayaFlux code goes here!
-}
-```
-
-The setup script automatically creates this file if it doesn't exist, but will never overwrite your existing code. This means you can safely pull updates to MayaFlux without losing your work.
-
-## Understanding MayaFlux Architecture
-
-### Core Paradigms
-
-MayaFlux is built around four fundamental digital paradigms that replace traditional analog thinking:
-
-- **Nodes**: Unit-by-unit transformation precision
-- **Containers**: Multi-dimensional data as creative material
-- **Coroutines**: Time as compositional material
-- **Buffers**: Temporal gathering spaces for data accumulation
-
-### Digital-First Approach
-
-Unlike traditional audio software that mimics analog hardware, MayaFlux embraces computational possibilities:
-
-- **Data-driven processing**: All streams (audio, video, control) are unified numerical data
-- **Ahead-of-time computation**: Pre-calculate complex transformations
-- **Recursive algorithms**: Process data in ways impossible with analog circuits
-- **Grammar-defined operations**: Use parsing techniques for signal processing
-- **Cross-modal interaction**: Audio parameters control visual processing and vice versa
-
-## Project Structure
-
-```
 MayaFlux/
 ├── src/
 │   ├── MayaFlux/           # Core library
+│   ├── Lila/               # Live coding interface
 │   └── main.cpp            # Your code entry point
 │   └── user_project.hpp    # Your custom project code
 ├── res/                    # Audio files and resources
@@ -194,107 +124,262 @@ MayaFlux/
 ├── build/                  # Generated build files (after setup)
 ```
 
+---
 
-## Philosophy
+## Your First MayaFlux Program
 
-MayaFlux represents a fundamental shift from analog-inspired audio software toward truly digital paradigms. Instead of simulating vintage hardware, we embrace the computational possibilities that only exist in the digital realm - recursive processing, multi dimensional data handling, generating on the fly grammars and pipelines, data-driven control, cross-modal interaction, and algorithmic composition techniques that treat code as creative material.
+Now that your environment is set up, let's create your first MayaFlux application.
+
+### Understanding the Code Structure
+
+MayaFlux projects use a simple but powerful structure:
+
+**`src/user_project.hpp`** - Your creative workspace (never overwritten by updates)
+**`src/main.cpp`** - Engine entry point (don't modify unless you need custom startup)
+
+### The Two Key Functions
+
+**`void settings()` - Configuration (Runs BEFORE engine start)**
+Think of this as your "Preferences" panel - it runs once when the application launches to set up the environment:
+
+```cpp
+void settings() {
+    // Audio settings
+    auto& stream = MayaFlux::Config::get_global_stream_info();
+    stream.sample_rate = 48000;  // Studio quality
+    stream.buffer_size = 128;    // Low latency
+    stream.output.channels = 2;  // Stereo
+
+    // Graphics settings
+    MayaFlux::Config::target_frame_rate = 60;
+
+    // Logging
+    MayaFlux::Journal::set_journal_severity(MayaFlux::Journal::Severity::INFO);
+}
+```
+
+**`void compose()` - Your Creative Canvas (Runs AFTER engine start)**
+This is where your audio, graphics, and algorithms live - it executes continuously while the engine runs:
+
+```cpp
+void compose() {
+    // Load and play an audio file
+    vega.read_audio("res/audio/example.wav") | Audio;
+
+    // Your creative code goes here!
+}
+```
+
+### The Digital Bell: A Cross-Modal Experience
+
+Replace the contents of your `src/user_project.hpp` with this working example
+This example demonstrates the core philosophy of MayaFlux: **unified data transformation across audio, logic, and graphics.**
+
+```cpp
+#pragma once
+#define MAYASIMPLE
+#include "MayaFlux/MayaFlux.hpp"
+
+void settings() {
+    // Low-latency audio setup
+    auto& stream = MayaFlux::Config::get_global_stream_info();
+    stream.sample_rate = 48000;
+}
+
+void compose() {
+
+    // 1. Create the bell
+    auto bell = vega.ModalNetwork(
+                    12,
+                    220.0,
+                    Nodes::ModalNetwork::Spectrum::INHARMONIC)[0]
+        | Audio;
+
+    // 2. Create audio-driven logic
+    auto source_sine = vega.Sine(0.2, 1.0f); // 0.2 Hz slow oscillator
+
+    static double last_input = 0.0;
+    auto logic = vega.Logic([](double input) {
+        // Arhythmic: true when sine crosses zero AND going positive
+        bool crossed_zero = (last_input < 0.0) && (input >= 0.0);
+        last_input = input;
+        return crossed_zero;
+    });
+
+    source_sine >> logic;
+
+    // 3. When logic fires, excite the bell
+    logic->on_change_to([bell](auto& ctx) {
+        if (ctx.value != 0) {
+            bell->excite(get_uniform_random(0.5f, 0.9f));
+            bell->set_fundamental(get_uniform_random(220.0f, 1000.0f));
+        }
+    },
+        true);
+
+    // 4. Graphics (same as before)
+    auto window = MayaFlux::create_window({ "Audio-Driven Bell", 1280, 720 });
+    auto points = vega.PointCollectionNode(500) | Graphics;
+    auto geom = vega.GeometryBuffer(points) | Graphics;
+
+    geom->setup_rendering({ .target_window = window });
+    window->show();
+
+    // 5. Visualize: points grow when bell strikes (when logic fires)
+    MayaFlux::schedule_metro(0.016, [points]() {
+        static float angle = 0.0f;
+        static float radius = 0.0f;
+
+        if (last_input != 0) {
+            angle += 0.5f; // Quick burst on strike
+            radius += 0.002f;
+        } else {
+            angle += 0.01f; // Slow growth otherwise
+            radius += 0.0001f;
+        }
+
+        if (radius > 1.0f) {
+            radius = 0.0f;
+            points->clear_points();
+        }
+
+        float x = std::cos(angle) * radius;
+        float y = std::sin(angle) * radius * (16.0f / 9.0f);
+        float brightness = 1.0f - (radius * 0.7f);
+
+        points->add_point(Nodes::GpuSync::PointVertex {
+            .position = glm::vec3(x, y, 0.0f),
+            .color = glm::vec3(brightness, brightness * 0.8f, 1.0f),
+            .size = 8.0f + radius * 4.0f });
+    });
+}
+```
+
+### What This Demonstrates
+
+**In 50 lines of code, you've created:**
+
+1. **Physical Modeling Synthesis** - A 12-mode modal bell with inharmonic spectrum
+2. **Generative Logic** - Irregular timing using zero-crossing detection
+3. **Cross-Modal Coordination** - Audio events driving visual behavior
+4. **Real-time Graphics** - Dynamic point cloud with audio-reactive growth
+5. **Unified Architecture** - All domains working as one system
+
+### Running Your Program
+
+**VS Code:** Press `F5` to build and run  
+**Terminal:** From your project root:
+
+```bash
+cd build
+cmake --build . --target run
+```
+
+You should hear a bell ringing at irregular intervals while watching a spiral pattern grow and burst in response to each strike!
+
+### Understanding the Structure
+
+- **`settings()`** - One-time audio configuration (low latency)
+- **`compose()`** - Your live coding canvas where everything happens
+- **Audio Domain** (`| Audio`) - Bell synthesis and logic
+- **Graphics Domain** (`| Graphics`) - Window, points, and rendering
+- **Cross-Domain** - Logic events trigger both audio and visual changes
+
+### Key Concepts Introduced
+
+- **Nodes** (`vega.ModalNetwork`, `vega.Sine`, `vega.Logic`) - Unit generators
+- **Containers** (`vega.PointCollectionNode`) - Multi-dimensional data
+- **Coroutines** (`MayaFlux::schedule_metro`) - Temporal coordination
+- **Domain Tokens** (`| Audio`, `| Graphics`) - Processing characteristics
+- **Event Handling** (`on_change_to`) - Reactive programming
+
+> **This is MayaFlux**: Where mathematical relationships become creative decisions, time becomes compositional material, and audio/visual/data streams are unified numerical transformations.
+
+This example perfectly captures the MayaFlux philosophy while being immediately runnable and visually/aurally compelling. It shows rather than tells what makes the framework unique.
+
+---
+
+## MayaFlux Philosophy
+
+### Core Philosophy: Digital-First Multimedia
+
+MayaFlux represents a fundamental shift from analog-inspired tools to true digital paradigms:
+
+Traditional Approach (Analog Simulation):
+
+- Audio, video, and data as separate domains
+- Hardware simulation (knobs, cables, oscilloscopes)
+- Callback-based timing from interrupt models
+- File-based workflows with static resources
+
+MayaFlux Approach (Digital Native):
+
+- Unified data transformation: All streams are numerical data that can interact
+- Coroutine temporal control: Time as creative material, not interrupt callbacks
+- Grammar-defined operations: Declarative computation based on data characteristics
+- Cross-modal coordination: Audio parameters control GPU compute shaders; visual analysis modulates audio filters
+
+### Core Paradigms
+
+MayaFlux is built around five fundamental digital paradigms that replace traditional analog thinking:
+
+- **Nodes**: Unit-by-unit transformation precision
+- **Containers**: Multi-dimensional data as creative material
+- **Coroutines**: Time as compositional material
+- **Buffers**: Temporal gathering spaces for data accumulation
+- **Compute Matrix**: Declarative semantic pipelines
+
+**Deep dive:** Read the [Digital Transformation Paradigm](Digital_Transformation_Paradigm.md) for comprehensive architectural understanding.
 
 Explore the shape of things to come!
 
-## Using This Guide
+---
+
+## Using This Guide & Tutorials
 
 ### For Beginners: Learning Just Enough C++
 
-> **If you’re new to C++**
+> **If you're new to C++**
 >
-> MayaFlux uses modern C++ (C++17/20). You don’t need to be an expert—just comfortable reading and editing small functions.
+> MayaFlux uses modern C++ (C++17/20). You don't need to be an expert—just comfortable reading and editing small functions.
 > The best way to learn is hands-on:
 >
-> * **The openFrameworks “ofBook”** has an excellent short section on C++ basics that map well to creative coding workflows.
-> * The free [cppreference.com](https://en.cppreference.com/w/) pages on *“Variables,” “Functions,”* and *“Classes”* are reliable quick reads.
-> * If you prefer a creative-coding approach, check out *The openFrameworks C++ Chapter* or *Daniel Shiffman’s “The Nature of Code (C++ port)”* for conceptual grounding.
+> - **The openFrameworks "ofBook"** has an excellent short section on C++ basics that map well to creative coding workflows.
+> - The free [cppreference.com](https://en.cppreference.com/w/) pages on _"Variables," "Functions,"_ and _"Classes"_ are reliable quick reads.
+> - If you prefer a creative-coding approach, check out _The openFrameworks C++ Chapter_ or _Daniel Shiffman's "The Nature of Code (C++ port)"_ for conceptual grounding.
 >
-> You can safely begin MayaFlux tutorials with only this level of knowledge.
-> The tutorials explain real C++ constructs as they appear—no memorization needed.
-
----
-
-### Compiling and Running in VS Code
-
-> **Running your first MayaFlux program**
->
-> 1. Open your project folder in VS Code (`code MayaFlux`).
-> 2. Press **`Ctrl+Shift+B`** (or **`Cmd+Shift+B`** on macOS). This runs the CMake *build* task.
-> 3. When the build finishes, press **`F5`** to *run* the executable.
-> 4. You’ll see output in the **terminal panel** and, if your code plays audio, you’ll hear it immediately.
->
-> VS Code automatically uses the CMake configuration created by the setup script.
-> You don’t need to run any manual compiler commands—just *build* and *run*.
-
-*(Optional line to add if you want to reinforce the C++ learning mindset)*
-
-> Every time you press **F5**, you’re compiling real C++ and running it live.
-> This is the same pipeline used in professional software development—no “toy” interpreters here.
-
----
-
-### Understanding Your `user_project.hpp`
-
- **Your creative workspace lives in `src/user_project.hpp`.**
-
- * `settings()` runs once, *before* the engine starts. Use it to set sample rate, buffer size, graphics API, and logging options.
- * `compose()` runs *after* setup—it’s your canvas for sound, data, graphics and computation.
- * You can define functions or global variables above `compose()` if you want to reuse them inside it.
- * This file is never overwritten by MayaFlux updates—you own it.
-
- Example:
-
- ```cpp
- void settings() {
-     auto& stream = MayaFlux::Config::get_global_stream_info();
-     stream.sample_rate = 48000;
-     stream.buffer_size = 128;
- }
-
- void compose() {
-     vega.load("res/audio/track.wav") | Audio;
- }
- ```
-
----
+> You can safely begin MayaFlux tutorials with only this level of knowledge. The tutorials explain real C++ constructs as they appear—no memorization needed.
 
 ### How to Use the Tutorials
 
- **MayaFlux tutorials are designed for exploration, not passive reading.**
+**MayaFlux tutorials are designed for exploration, not passive reading.**
 
- 1. **Run the visible code.**
+1.  **Run the visible code.**
     Copy the non-hidden (top-level) snippets into `compose()` and run them.
- 2. **Listen or observe what happens.**
+
+2.  **Listen or observe what happens.**
     Every tutorial produces a real, audible or visual result.
- 3. **Open the dropdowns (`<details>`).**
-    These reveal what’s happening under the hood. Read them slowly; come back later as your understanding grows.
- 4. **Experiment.**
+
+3.  **Open the dropdowns (`<details>`).**
+    These reveal what's happening under the hood. Read them slowly; come back later as your understanding grows.
+
+4.  **Experiment.**
     Change numbers, reorder calls, or combine examples. Each tweak teaches you something about the system.
- 5. **Iterate.**
-    As you learn, revisit earlier tutorials. MayaFlux rewards depth—you’ll understand new layers every time.
 
- The goal is fluency, not memorization. You’re not “following a recipe”—you’re learning how the machinery works so you can build your own.
+5.  **Iterate.**
+    As you learn, revisit earlier tutorials. MayaFlux rewards depth—you'll understand new layers every time.
 
-## Next Steps
-
-1. **Read the Digital Transformation Paradigm** [documentation](Digital_Transformation_Paradigm.md) for deep architectural understanding
-2. **Explore composing with processing domains and tokens** [documentation](Domain_and_Control.md)
-
-_Advanced_ users can refer to [Advanced Context Control](Advanced_Context_Control.md) that explores architecture and backend level
-customization in `MayaFlux Core`
+The goal is **fluency, not memorization**. You're not "following a recipe"—you're learning how the machinery works so you can build your own.
 
 ## Starting Your First Tutorial
 
 Now that your environment is set up, you're ready to begin.
 
-**"Sculpting Data"** is the entry tutorial series. It starts with the simplest operation (loading a file) and builds systematically toward complete pipeline architectures.
+**"Sculpting Data"** is the entry tutorial series. It starts with the simplest operation
+(loading a file) and builds systematically toward complete pipeline architectures.
 
 Each section in Sculpting Data teaches one core idea and builds on the previous:
+
 1. **Section 1: Load** - Understand Containers (how data is organized)
 2. **Section 2: Connect** - Understand Buffers (how data flows)
 3. **Section 2.5: Process** - Understand Processors (how data transforms)
@@ -304,16 +389,16 @@ Each section in Sculpting Data teaches one core idea and builds on the previous:
 **Start here:** Open [Sculpting Data Part I](Tutorials/SculptingData/SculptingData.md) and begin with Section 1.
 
 Each section is designed to be executed immediately:
-- Copy the code examples into your `compose()` function
-- Run with `F5`
+
+- Copy the code examples into your `compose()` function. This is always after a heading `Tutorial:`
+- Build and run your project
 - Listen/observe the result
 - Open the dropdowns to understand why it works
 - Experiment by changing values
 
 You'll have working audio within 5 minutes.
 
-### Procedure
+### If You've Already Started
 
-If you have already completed the aforementioned tutorial, proceed to the next tutorial 
-at [Sculpting Data Part II, Processing Expression](Tutorials/SculptingData/ProcessingExpression.md)
-which covers buffers, processors, math as expression, logic as creative decisions and more.
+If you have already completed the aforementioned tutorial, proceed to the next tutorial at
+[Sculpting Data Part II, Processing Expression](Tutorials/SculptingData/ProcessingExpression.md) which covers buffers, processors, math as expression, logic as creative decisions and more.

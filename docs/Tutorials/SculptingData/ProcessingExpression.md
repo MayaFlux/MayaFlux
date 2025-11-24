@@ -166,8 +166,6 @@ Replace `"path/to/file.wav"` with an actual path.
 
 The audio sounds richer, warmer—subtle saturation. That's harmonic content added by the squaring function.
 
----
-
 ## Expansion 1: Why Polynomials Shape Sound
 
 <details>
@@ -188,8 +186,6 @@ Polynomials let you design that curve digitally. `x * x` is gentle. `x * x * x` 
 You're sculpting frequency response through function shape.
 
 </details>
-
----
 
 ## Expansion 2: What `vega.Polynomial()` Creates
 
@@ -215,8 +211,6 @@ The node is the _idea_. The processor is the _application_.
 
 </details>
 
----
-
 ## Expansion 3: PolynomialMode::DIRECT
 
 <details>
@@ -235,8 +229,6 @@ Later sections explore time-aware modes. RECURSIVE creates filters and feedback.
 For now: DIRECT mode = instant transformation. No memory. No delay.
 
 </details>
-
----
 
 ## Expansion 4: What `create_processor()` Does
 
@@ -294,9 +286,9 @@ You're not "processing audio"—you're **sculpting the transfer function**.
 
 ---
 
-## Tutorial: Recursive Polynomials (Filters and Feedback)
+# Tutorial: Recursive Polynomials (Filters and Feedback)
 
-### The Next Step
+## The Next Step
 
 You have memoryless waveshaping. Now add memory.
 
@@ -320,8 +312,6 @@ void compose() {
 ```
 
 Run this. You hear echo/resonance—the signal feeds back into itself.
-
----
 
 ## Expansion 1: Why This Is a Filter
 
@@ -355,8 +345,6 @@ Traditional DSP libraries can't do this. Fixed coefficients only.
 Polynomials let you design arbitrary recursive functions—not just linear filters.
 
 </details>
-
----
 
 ## Expansion 2: The History Buffer
 
@@ -395,8 +383,6 @@ This is how you build delays, reverbs, resonant filters—anything that needs te
 
 </details>
 
----
-
 ## Expansion 3: Stability Warning
 
 <details>
@@ -423,8 +409,6 @@ MayaFlux won't stop you—this is a creative tool, not a safety guard. Instabili
 But for stable filters: keep gain < 1.0.
 
 </details>
-
----
 
 ## Expansion 4: Initial Conditions
 
@@ -529,8 +513,6 @@ What you hear: 2 Hz pulse train—beeps every half second.
 
 The sine wave crosses zero twice per cycle. Logic detects the crossings. Output becomes binary: 1.0 (high) or 0.0 (low).
 
----
-
 ## Expansion 1: What Logic Does
 
 <details>
@@ -553,8 +535,6 @@ Example: Feed a slow LFO (0.5 Hz sine) into logic → square wave clock.
 Digital doesn't care what the input "means"—just whether it passes the test.
 
 </details>
-
----
 
 ## Expansion 2: Logic node needs an input
 
@@ -588,8 +568,6 @@ we are using a sine wave as inputs of the logic node in the main example.
 
 </details>
 
----
-
 ## Expansion 3: LogicOperator Types
 
 <details>
@@ -615,8 +593,6 @@ gate->set_hysteresis_thresholds(0.1, 0.3);  // open at 0.3, close at 0.1
 Signal must exceed 0.3 to open, then drops below 0.1 to close. Prevents rapid on/off flickering.
 
 </details>
-
----
 
 ## Expansion 4: ModulationType - Readymade Transformations
 
@@ -757,8 +733,6 @@ Or if you want direct control without manual processor creation, you can use the
 
 ```
 
----
-
 ## Expansion 1: Processing Chains as Transformation Pipelines
 
 <details>
@@ -798,8 +772,6 @@ Traditional plugins give you "distortion with 3 knobs." You compose the distorti
 Logic + Polynomial + Chains = **programmable audio transformation system**.
 
 </details>
-
----
 
 ## Expansion 2: Chain Order Matters
 
@@ -876,8 +848,6 @@ chain->add_processor(compression_processor);
 
 Different sound. Order matters.
 
----
-
 ## Expansion 1: What `create_processor()` Was Doing
 
 <details>
@@ -922,8 +892,6 @@ buffer->set_processing_chain(chain);  // Replace buffer's chain
 
 </details>
 
----
-
 ## Expansion 2: Chain Execution Order
 
 <details>
@@ -958,8 +926,6 @@ Each processor sees the **output** of the previous processor.
 (Parallel routing requires `BufferPipeline`—covered in a later tutorial.)
 
 </details>
-
----
 
 ## Expansion 3: Default Processors vs. Chain Processors
 
@@ -1051,8 +1017,6 @@ Run this. You hear a 440 Hz sine wave with cubic distortion.
 
 No file loaded. The buffer **generates** audio by evaluating the node 512 times per cycle.
 
----
-
 ### Expansion 1: What NodeBuffer Does
 
 <details>
@@ -1078,8 +1042,6 @@ Nodes are mathematical expressions—infinite generators. Buffers are temporal a
 Without `NodeBuffer`, you'd manually call `node->process_sample()` 512 times and copy results into a buffer. `NodeBuffer` automates this.
 
 </details>
-
----
 
 ### Expansion 2: The `clear_before_process` Parameter
 
@@ -1119,8 +1081,6 @@ auto noise_buffer = vega.NodeBuffer(0, 512, noise, false)[0] | Audio;  // Adds t
 Result: sine + noise.
 
 </details>
-
----
 
 ### Expansion 3: NodeSourceProcessor Mix Parameter
 
@@ -1191,8 +1151,6 @@ Run this. You hear: repeating echoes, each 70% of the previous amplitude.
 
 The buffer **feeds back into itself**—output becomes input next cycle.
 
----
-
 ### Expansion 1: What FeedbackBuffer Does
 
 <details>
@@ -1223,8 +1181,6 @@ Example: `FeedbackBuffer(0, 512, 0.7, 512)` creates:
 
 </details>
 
----
-
 ### Expansion 2: FeedbackBuffer Limitations
 
 <details>
@@ -1252,8 +1208,6 @@ For complex feedback systems:
 `FeedbackBuffer` is for **simple echoes and resonances**—quick and efficient.
 
 </details>
-
----
 
 ### Expansion 3: When to Use FeedbackBuffer
 
@@ -1351,8 +1305,6 @@ Run this. The file plays **and** is written to `capture_stream` every cycle.
 
 After playback, `capture_stream` contains a copy of the entire file (processed through any other processors in the chain before the writer).
 
----
-
 ### Expansion 1: What StreamWriteProcessor Does
 
 <details>
@@ -1380,8 +1332,6 @@ The stream grows dynamically as data arrives. No pre-allocation needed (though y
 
 </details>
 
----
-
 ### Expansion 2: Channel-Aware Writing
 
 <details>
@@ -1408,8 +1358,6 @@ Result: Stereo file captured to stereo stream—channels preserved.
 **Critical:** Buffer's `channel_id` determines which stream channel receives data. Mismatch = warning + skip.
 
 </details>
-
----
 
 ### Expansion 3: Position Management
 
@@ -1439,8 +1387,6 @@ double time = writer->get_write_position_time();       // Get current time posit
 Default behavior: append at end. Position auto-increments.
 
 </details>
-
----
 
 ### Expansion 4: Circular Mode
 
@@ -1497,8 +1443,6 @@ buffer->get_processing_chain()->add_processor(writer, buffer);
 
 // Stream now acts as a 1-second tape loop
 ```
-
----
 
 ## Closing: The Buffer Ecosystem
 
@@ -1558,8 +1502,6 @@ void compose() {
 
 Run this. Speak into your microphone. You hear yourself with distortion applied in real-time.
 
----
-
 ## Expansion 1: What `create_input_listener_buffer()` Does
 
 <details>
@@ -1600,8 +1542,6 @@ When you call `create_input_listener_buffer(channel, add_to_output)`:
 
 </details>
 
----
-
 ## Expansion 2: Manual Input Registration
 
 <details>
@@ -1641,8 +1581,6 @@ MayaFlux::detach_from_audio_input(recorder, 0);
 The buffer continues to exist and process, but stops receiving new input.
 
 </details>
-
----
 
 ## Expansion 3: Input Without Playback
 
@@ -1724,8 +1662,6 @@ Run this. You hear the same 440 Hz sine on **all three channels** (left, center,
 
 The buffer processes **once**, but outputs to **three channels**.
 
----
-
 ## Expansion 1: What "Supply" Means
 
 <details>
@@ -1764,8 +1700,6 @@ MixProcessor copies output to RootAudioBuffer[2]
 
 </details>
 
----
-
 ## Expansion 2: Mix Levels
 
 <details>
@@ -1803,8 +1737,6 @@ Mix is **additive**. If channel already has content, supply **adds** to it.
 
 </details>
 
----
-
 ## Expansion 3: Removing Supply
 
 <details>
@@ -1840,8 +1772,6 @@ if (user_pressed_button_A) {
 ```
 
 </details>
-
----
 
 ## Try It
 
@@ -1890,8 +1820,6 @@ Run this. You hear **three independent sine waves** on three channels.
 
 Each clone processes **independently**—they don't share data.
 
----
-
 ## Expansion 1: Clone vs. Supply
 
 <details>
@@ -1934,8 +1862,6 @@ MayaFlux::clone_buffer_to_channels(noise_template, {0, 1, 2, 3});
 
 </details>
 
----
-
 ## Expansion 2: Cloning Preserves Structure
 
 <details>
@@ -1968,8 +1894,6 @@ MayaFlux::clone_buffer_to_channels(buffer, {0, 1, 2});
 Each clone has its own instance of the distortion processor. They don't share state.
 
 </details>
-
----
 
 ## Expansion 3: Post-Clone Modification
 
