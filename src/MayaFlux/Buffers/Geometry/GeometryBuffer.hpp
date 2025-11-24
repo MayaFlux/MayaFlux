@@ -47,8 +47,8 @@ class MAYAFLUX_API GeometryBuffer : public VKBuffer {
 public:
     struct RenderConfig {
         std::shared_ptr<Core::Window> target_window;
-        std::string vertex_shader = "point.vert";
-        std::string fragment_shader = "point.frag";
+        std::string vertex_shader = "point.vert.spv";
+        std::string fragment_shader = "point.frag.spv";
         Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
         Portal::Graphics::PolygonMode polygon_mode = Portal::Graphics::PolygonMode::FILL;
         Portal::Graphics::CullMode cull_mode = Portal::Graphics::CullMode::NONE;

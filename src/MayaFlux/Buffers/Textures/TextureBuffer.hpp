@@ -33,8 +33,8 @@ class MAYAFLUX_API TextureBuffer : public VKBuffer {
 public:
     struct RenderConfig {
         std::shared_ptr<Core::Window> target_window;
-        std::string vertex_shader = "texture.vert";
-        std::string fragment_shader = "texture.frag";
+        std::string vertex_shader = "texture.vert.spv";
+        std::string fragment_shader = "texture.frag.spv";
         std::string default_texture_binding = "texSampler";
         Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
 
