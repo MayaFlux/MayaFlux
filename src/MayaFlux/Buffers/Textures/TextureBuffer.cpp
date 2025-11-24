@@ -68,19 +68,23 @@ void TextureBuffer::setup_rendering(const RenderConfig& config)
         shader_config.bindings[config.default_texture_binding] = ShaderBinding(
             0, 0, vk::DescriptorType::eCombinedImageSampler);
 
+        uint32_t binding_index = 1;
+        for (const auto& [name, _] : config.additional_textures) {
+            shader_config.bindings[name] = ShaderBinding(
+                0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
+        }
+
         m_render_processor = std::make_shared<RenderProcessor>(shader_config);
     }
 
-    m_render_processor->set_shader(config.vertex_shader);
     m_render_processor->set_fragment_shader(config.fragment_shader);
     m_render_processor->set_target_window(config.target_window);
     m_render_processor->set_primitive_topology(config.topology);
-    m_render_processor->bind_texture(config.default_texture_binding, this->get_texture());
 
-    if (config.additional_texture) {
-        m_render_processor->bind_texture(
-            config.additional_texture->first,
-            config.additional_texture->second);
+    m_render_processor->bind_texture(config.default_texture_binding, get_texture());
+
+    for (const auto& [name, texture] : config.additional_textures) {
+        m_render_processor->bind_texture(name, texture);
     }
 
     get_processing_chain()->add_processor(m_render_processor, shared_from_this());

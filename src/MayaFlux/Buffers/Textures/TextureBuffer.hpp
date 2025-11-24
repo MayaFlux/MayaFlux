@@ -37,7 +37,9 @@ public:
         std::string fragment_shader = "texture.frag";
         std::string default_texture_binding = "texSampler";
         Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
-        std::optional<std::pair<uint32_t, std::shared_ptr<Core::VKImage>>> additional_texture;
+
+        // Optional additional texture binding
+        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures;
     };
 
     /**
