@@ -54,10 +54,14 @@ const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& NodeGraphMana
 
 bool NodeGraphManager::preprocess_networks(ProcessingToken token)
 {
-    auto& processing_flag = m_token_network_processing[token];
+    auto& processing_ptr = m_token_network_processing[token];
+
+    if (!processing_ptr) {
+        processing_ptr = std::make_unique<std::atomic<bool>>(false);
+    }
 
     bool expected = false;
-    return processing_flag.compare_exchange_strong(
+    return processing_ptr->compare_exchange_strong(
         expected, true,
         std::memory_order_acquire,
         std::memory_order_relaxed);
@@ -154,7 +158,9 @@ void NodeGraphManager::postprocess_networks(ProcessingToken token, std::optional
         }
     }
 
-    m_token_network_processing[token].store(false, std::memory_order_release);
+    if (auto it = m_token_network_processing.find(token); it != m_token_network_processing.end()) {
+        it->second->store(false, std::memory_order_release);
+    }
 }
 
 void NodeGraphManager::reset_audio_network_state(ProcessingToken token, uint32_t channel)

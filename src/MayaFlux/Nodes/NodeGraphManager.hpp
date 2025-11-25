@@ -473,7 +473,7 @@ private:
      *
      * Used to prevent re-entrant processing of networks within the same cycle.
      */
-    std::unordered_map<ProcessingToken, std::atomic<bool>> m_token_network_processing;
+    std::unordered_map<ProcessingToken, std::unique_ptr<std::atomic<bool>>> m_token_network_processing;
 
     /**
      * @brief Ensures a root node exists for the given token and channel
