@@ -121,13 +121,13 @@ public:
      * This method updates the generator's amplitude setting,
      * which controls the overall scaling of the generated values.
      */
-    inline virtual void set_amplitude(double amplitude) { m_amplitude = amplitude; }
+    virtual void set_amplitude(double amplitude);
 
     /**
      * @brief Gets the current base amplitude
      * @return Current amplitude
      */
-    inline virtual double get_amplitude() const { return m_amplitude; }
+    virtual double get_amplitude() const;
 
     /**
      * @brief Allows RootNode to process the Generator without using the processed sample
@@ -185,7 +185,7 @@ public:
      * This method updates the generator's frequency setting,
      * which controls the rate of oscillation or pattern repetition.
      */
-    virtual void set_frequency(float frequency) { m_frequency = frequency; }
+    virtual void set_frequency(float frequency);
 
 protected:
     /**
