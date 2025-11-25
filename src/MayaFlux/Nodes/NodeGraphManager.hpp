@@ -49,6 +49,12 @@ public:
      */
     NodeGraphManager();
 
+    // NodeGraphManager is non-copyable and non-moveable due to internal atomic state
+    NodeGraphManager(const NodeGraphManager&) = delete;
+    NodeGraphManager& operator=(const NodeGraphManager&) = delete;
+    NodeGraphManager(NodeGraphManager&&) = delete;
+    NodeGraphManager& operator=(NodeGraphManager&&) = delete;
+
     /**
      * @brief Add node to specific processing token and channel
      * @param node Node to add
