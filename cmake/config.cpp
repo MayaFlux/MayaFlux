@@ -83,6 +83,7 @@ std::vector<std::string> SystemConfig::get_system_libraries()
 
     return lib_paths;
 }
+
 std::string SystemConfig::find_library(const std::string& library_name)
 {
     auto lib_paths = get_system_libraries();
@@ -97,15 +98,18 @@ std::string SystemConfig::find_library(const std::string& library_name)
 
     return "";
 }
+
+// NOLINTNEXTLINE(cert-env33-c)
 std::string SystemConfig::exec_command(const char* cmd)
 {
     std::array<char, 128> buffer {};
     std::string result;
 
+    using PipeCloser = int (*)(FILE*);
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
+    std::unique_ptr<FILE, PipeCloser> pipe(_popen(cmd, "r"), _pclose);
 #else
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    std::unique_ptr<FILE, PipeCloser> pipe(popen(cmd, "r"), pclose);
 #endif
 
     if (!pipe)
@@ -116,12 +120,14 @@ std::string SystemConfig::exec_command(const char* cmd)
     }
     return result;
 }
+
 void SystemConfig::trim_output(std::string& str)
 {
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     str.erase(str.find_last_not_of(" \t") + 1);
 }
+
 std::string SystemConfig::format_library_name(const std::string& library_name)
 {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
@@ -135,6 +141,7 @@ std::string SystemConfig::format_library_name(const std::string& library_name)
 #endif
     return library_name;
 }
+
 std::vector<std::string> SystemConfig::get_clang_includes()
 {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
@@ -146,6 +153,7 @@ std::vector<std::string> SystemConfig::get_clang_includes()
     auto clang_output = exec_command(cmd);
     return parse_clang_search_paths(clang_output);
 }
+
 std::vector<std::string> SystemConfig::parse_clang_search_paths(const std::string& output)
 {
     std::vector<std::string> paths;

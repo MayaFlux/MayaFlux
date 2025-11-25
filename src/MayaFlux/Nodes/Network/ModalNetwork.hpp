@@ -2,11 +2,11 @@
 
 #include "NodeNetwork.hpp"
 
-namespace MayaFlux::Nodes {
-
-namespace Generator {
-    class Generator;
+namespace MayaFlux::Nodes::Generator {
+class Generator;
 }
+
+namespace MayaFlux::Nodes::Network {
 
 /**
  * @class ModalNetwork
@@ -261,4 +261,4 @@ private:
         const std::shared_ptr<NodeNetwork>& source);
 };
 
-} // namespace MayaFlux::Nodes
+} // namespace MayaFlux::Nodes::Network

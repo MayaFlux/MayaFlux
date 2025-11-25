@@ -100,6 +100,25 @@ jobs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           echo "MSVC environment ready"
 
+      - name: Optimize build environment for performance
+        shell: pwsh
+        run: |
+          Write-Host "=== Optimizing Build Environment ===" -ForegroundColor Cyan
+
+          # Disable Windows Defender for build directories
+          Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionPath "${{ github.workspace }}" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionPath "${{ env.VCPKG_ROOT }}" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionPath "${{ env.LLVM_ROOT }}" -ErrorAction SilentlyContinue
+
+          # Exclude build tools from scanning
+          Add-MpPreference -ExclusionProcess "cl.exe" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess "link.exe" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess "cmake.exe" -ErrorAction SilentlyContinue
+          Add-MpPreference -ExclusionProcess "7z.exe" -ErrorAction SilentlyContinue
+
+          Write-Host "✓ Build optimizations applied" -ForegroundColor Green
+
       - name: Create DIA SDK symlink for LLVM compatibility
         shell: pwsh
         run: |
@@ -308,6 +327,8 @@ jobs:
             "-DCMAKE_CXX_STANDARD=23",
             "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON",
             "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake"
+            "-DCMAKE_CXX_FLAGS_RELEASE=/O2 /DNDEBUG /Z7",
+            "-DCMAKE_EXE_LINKER_FLAGS=/DEBUG:FASTLINK"
           )
 
           # LLVM configuration
@@ -402,16 +423,12 @@ jobs:
 
           # Create packages
           Write-Host "Creating archives..." -ForegroundColor Yellow
-          Compress-Archive -Path "dist_staging\*" -DestinationPath "${packageName}.zip" -Force
           7z a -mx=9 "${packageName}.7z" "dist_staging\*" | Out-Null
 
           echo "PACKAGE_NAME=$packageName" >> $env:GITHUB_ENV
 
-          Write-Host "✓ Created distribution packages:" -ForegroundColor Green
-          Get-Item "${packageName}.*" | ForEach-Object {
-            $size = [math]::Round($_.Length / 1MB, 2)
-            Write-Host "  - $($_.Name): ${size} MB" -ForegroundColor Green
-          }
+          $size = [math]::Round((Get-Item "${packageName}.7z").Length / 1MB, 2)
+          Write-Host "✓ Created ${packageName}.7z: ${size} MB" -ForegroundColor Green
 
       - name: Verify installation structure
         if: ${{ inputs.create_distribution != false }}
@@ -468,9 +485,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
-          path: |
-            ${{ env.PACKAGE_NAME }}.zip
-            ${{ env.PACKAGE_NAME }}.7z
+          path: ${{ env.PACKAGE_NAME }}.7z
           retention-days: 30
 
       - name: Display build summary
@@ -503,10 +518,10 @@ jobs:
           Write-Host "  [Tier 3 - Header-Only Direct]" -ForegroundColor Cyan
           Write-Host "  ✓ STB (direct git clone)" -ForegroundColor Green
 
-          if (Test-Path "${{ env.PACKAGE_NAME }}.zip") {
-            $zipSize = [math]::Round((Get-Item "${{ env.PACKAGE_NAME }}.zip").Length / 1MB, 2)
+          if (Test-Path "${{ env.PACKAGE_NAME }}.7z") {
+            $size = [math]::Round((Get-Item "${{ env.PACKAGE_NAME }}.7z").Length / 1MB, 2)
             Write-Host "`nDistribution Package:" -ForegroundColor Yellow
-            Write-Host "  ✓ ${{ env.PACKAGE_NAME }}.zip (${zipSize} MB)" -ForegroundColor Green
+            Write-Host "  ✓ ${{ env.PACKAGE_NAME }}.7z (${size} MB)" -ForegroundColor Green
             Write-Host "  ✓ All runtime DLLs bundled in bin/" -ForegroundColor Green
             Write-Host "  ✓ Ready for standalone deployment" -ForegroundColor Green
           }

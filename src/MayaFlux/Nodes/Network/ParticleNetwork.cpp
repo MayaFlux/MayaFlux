@@ -4,7 +4,7 @@
 
 #include "glm/gtc/constants.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::Network {
 
 //-----------------------------------------------------------------------------
 // Construction

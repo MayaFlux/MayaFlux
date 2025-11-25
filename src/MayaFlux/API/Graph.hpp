@@ -9,7 +9,9 @@ namespace Nodes {
     class Node;
     class NodeGraphManager;
     class RootNode;
-    class NodeNetwork;
+    namespace Network {
+        class NodeNetwork;
+    }
 }
 
 namespace Buffers {
@@ -123,7 +125,7 @@ auto create_node(Args&&... args) -> std::shared_ptr<NodeType>
  * Adds the node network to the default engine's node graph manager.
  * The network can then be used to manage nodes and their connections.
  */
-MAYAFLUX_API void register_node_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
+MAYAFLUX_API void register_node_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
 
 /**
  * @brief Unregisters a node network from the default engine's node graph manager
@@ -132,7 +134,7 @@ MAYAFLUX_API void register_node_network(const std::shared_ptr<Nodes::NodeNetwork
  * Removes the node network from the default engine's node graph manager.
  * The network will no longer be available for managing nodes and their connections.
  */
-MAYAFLUX_API void unregister_node_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
+MAYAFLUX_API void unregister_node_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
 
 /**
  * @brief Creates a new node network
@@ -143,7 +145,7 @@ MAYAFLUX_API void unregister_node_network(const std::shared_ptr<Nodes::NodeNetwo
  */
 
 template <typename NodeNetworkType, typename... Args>
-    requires std::derived_from<NodeNetworkType, Nodes::NodeNetwork>
+    requires std::derived_from<NodeNetworkType, Nodes::Network::NodeNetwork>
 auto create_node_network(Args&&... args) -> std::shared_ptr<NodeNetworkType>
 {
     auto network = std::make_shared<NodeNetworkType>(std::forward<Args>(args)...);

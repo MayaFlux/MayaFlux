@@ -34,16 +34,16 @@ void register_node(const std::shared_ptr<Nodes::Node>& node, const CreationConte
     }
 }
 
-void register_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const CreationContext& ctx)
+void register_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const CreationContext& ctx)
 {
     auto token = get_node_token(ctx.domain.value());
 
     if (token == Nodes::ProcessingToken::AUDIO_RATE) {
-        if (network->get_output_mode() != Nodes::NodeNetwork::OutputMode::AUDIO_SINK) {
+        if (network->get_output_mode() != Nodes::Network::NodeNetwork::OutputMode::AUDIO_SINK) {
             MF_WARN(Journal::Component::API,
                 Journal::Context::Init,
                 "Registering audio network in AUDIO_RATE domain without AUDIO_SINK output mode. Forcing AUDIO_SINK mode.");
-            network->set_output_mode(Nodes::NodeNetwork::OutputMode::AUDIO_SINK);
+            network->set_output_mode(Nodes::Network::NodeNetwork::OutputMode::AUDIO_SINK);
         }
         if (ctx.channel.has_value()) {
             network->add_channel_usage(ctx.channel.value());
@@ -52,11 +52,11 @@ void register_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const 
                 network->add_channel_usage(ch);
             }
         }
-    } else if (token == Nodes::ProcessingToken::VISUAL_RATE && network->get_output_mode() != Nodes::NodeNetwork::OutputMode::GRAPHICS_BIND) {
+    } else if (token == Nodes::ProcessingToken::VISUAL_RATE && network->get_output_mode() != Nodes::Network::NodeNetwork::OutputMode::GRAPHICS_BIND) {
         MF_WARN(Journal::Component::API,
             Journal::Context::Init,
             "Registering visual network in VISUAL_RATE domain without GRAPHICS_BIND output mode. Forcing GRAPHICS_BIND mode.");
-        network->set_output_mode(Nodes::NodeNetwork::OutputMode::GRAPHICS_BIND);
+        network->set_output_mode(Nodes::Network::NodeNetwork::OutputMode::GRAPHICS_BIND);
     }
 
     register_node_network(network, token);
@@ -108,7 +108,7 @@ std::shared_ptr<Nodes::Node> operator|(const std::shared_ptr<Nodes::Node>& node,
     return node;
 }
 
-std::shared_ptr<Nodes::NodeNetwork> operator|(const std::shared_ptr<Nodes::NodeNetwork>& network, Domain d)
+std::shared_ptr<Nodes::Network::NodeNetwork> operator|(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, Domain d)
 {
     CreationContext ctx(d);
     register_network(network, ctx);

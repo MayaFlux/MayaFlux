@@ -65,7 +65,7 @@ public:
      * Higher over_allocate_factor recommended for networks that may grow dynamically.
      */
     explicit NetworkGeometryBuffer(
-        std::shared_ptr<Nodes::NodeNetwork> network,
+        std::shared_ptr<Nodes::Network::NodeNetwork> network,
         const std::string& binding_name = "network_geometry",
         float over_allocate_factor = 2.0F);
 
@@ -79,7 +79,7 @@ public:
     /**
      * @brief Get the network driving this buffer
      */
-    [[nodiscard]] std::shared_ptr<Nodes::NodeNetwork> get_network() const
+    [[nodiscard]] std::shared_ptr<Nodes::Network::NodeNetwork> get_network() const
     {
         return m_network;
     }
@@ -130,7 +130,7 @@ public:
     }
 
 private:
-    std::shared_ptr<Nodes::NodeNetwork> m_network;
+    std::shared_ptr<Nodes::Network::NodeNetwork> m_network;
     std::shared_ptr<NetworkGeometryProcessor> m_processor;
     std::string m_binding_name;
 
@@ -140,7 +140,7 @@ private:
      * @brief Calculate initial buffer size based on network node count
      */
     static size_t calculate_buffer_size(
-        const std::shared_ptr<Nodes::NodeNetwork>& network,
+        const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
         float over_allocate_factor);
 };
 

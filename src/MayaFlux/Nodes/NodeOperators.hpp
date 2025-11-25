@@ -20,7 +20,7 @@ namespace MayaFlux::Nodes {
  * The returned node is the right-hand node, allowing for
  * further chaining of operations.
  */
-std::shared_ptr<Node> operator>>(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
+MAYAFLUX_API std::shared_ptr<Node> operator>>(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
 
 /**
  * @brief Combines two nodes in parallel (addition operator)
@@ -38,7 +38,7 @@ std::shared_ptr<Node> operator>>(std::shared_ptr<Node> lhs, std::shared_ptr<Node
  * The resulting node takes an input, passes it to both source nodes,
  * and returns the sum of their outputs.
  */
-std::shared_ptr<Node> operator+(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
+MAYAFLUX_API std::shared_ptr<Node> operator+(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
 
 /**
  * @brief Multiplies the outputs of two nodes (multiplication operator)
@@ -57,7 +57,7 @@ std::shared_ptr<Node> operator+(std::shared_ptr<Node> lhs, std::shared_ptr<Node>
  * The resulting node takes an input, passes it to both source nodes,
  * and returns the product of their outputs.
  */
-std::shared_ptr<Node> operator*(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
+MAYAFLUX_API std::shared_ptr<Node> operator*(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
 
 /**
  * @brief Sets the generator's amplitude
@@ -72,5 +72,5 @@ std::shared_ptr<Node> operator*(std::shared_ptr<Node> lhs, std::shared_ptr<Node>
  * generator * 0.5; // Halves the amplitude
  * ```
  */
-void operator*(std::shared_ptr<Node> node, double value);
+MAYAFLUX_API void operator*(std::shared_ptr<Node> node, double value);
 }

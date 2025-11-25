@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Nodes/Graphics/PointNode.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::Network {
 class NodeNetwork;
 class ParticleNetwork;
 } // namespace MayaFlux::Nodes
@@ -49,7 +49,7 @@ public:
      * @brief Structure representing a network geometry binding
      */
     struct NetworkBinding {
-        std::shared_ptr<Nodes::NodeNetwork> network;
+        std::shared_ptr<Nodes::Network::NodeNetwork> network;
         std::shared_ptr<VKBuffer> gpu_vertex_buffer;
         std::shared_ptr<VKBuffer> staging_buffer;
     };
@@ -64,7 +64,7 @@ public:
      */
     void bind_network(
         const std::string& name,
-        const std::shared_ptr<Nodes::NodeNetwork>& network,
+        const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
         const std::shared_ptr<VKBuffer>& vertex_buffer);
 
     /**
@@ -118,7 +118,7 @@ private:
      * @return Vector of aggregated PointVertex data
      */
     std::vector<Nodes::GpuSync::PointVertex> extract_particle_vertices(
-        const std::shared_ptr<Nodes::ParticleNetwork>& network);
+        const std::shared_ptr<Nodes::Network::ParticleNetwork>& network);
 
     /**
      * @brief Extract vertices from generic NodeNetwork (fallback)
@@ -128,7 +128,7 @@ private:
      * For custom network types, extend this with type-specific logic.
      */
     std::vector<Nodes::GpuSync::PointVertex> extract_network_vertices(
-        const std::shared_ptr<Nodes::NodeNetwork>& network);
+        const std::shared_ptr<Nodes::Network::NodeNetwork>& network);
 };
 
 } // namespace MayaFlux::Buffers

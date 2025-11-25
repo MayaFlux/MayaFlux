@@ -3,7 +3,7 @@
 #include "MayaFlux/Nodes/Graphics/PointNode.hpp"
 #include "NodeNetwork.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::Network {
 
 /**
  * @class ParticleNetwork
@@ -433,4 +433,4 @@ private:
         const std::shared_ptr<NodeNetwork>& source);
 };
 
-} // namespace MayaFlux::Nodes
+} // namespace MayaFlux::Nodes::Network

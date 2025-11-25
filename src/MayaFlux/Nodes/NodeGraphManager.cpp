@@ -54,10 +54,14 @@ const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& NodeGraphMana
 
 bool NodeGraphManager::preprocess_networks(ProcessingToken token)
 {
-    auto& processing_flag = m_token_network_processing[token];
+    auto& processing_ptr = m_token_network_processing[token];
+
+    if (!processing_ptr) {
+        processing_ptr = std::make_unique<std::atomic<bool>>(false);
+    }
 
     bool expected = false;
-    return processing_flag.compare_exchange_strong(
+    return processing_ptr->compare_exchange_strong(
         expected, true,
         std::memory_order_acquire,
         std::memory_order_relaxed);
@@ -154,7 +158,9 @@ void NodeGraphManager::postprocess_networks(ProcessingToken token, std::optional
         }
     }
 
-    m_token_network_processing[token].store(false, std::memory_order_release);
+    if (auto it = m_token_network_processing.find(token); it != m_token_network_processing.end()) {
+        it->second->store(false, std::memory_order_release);
+    }
 }
 
 void NodeGraphManager::reset_audio_network_state(ProcessingToken token, uint32_t channel)
@@ -434,7 +440,7 @@ void NodeGraphManager::connect(const std::string& source_id, const std::string& 
 // NodeNetwork Management
 //-----------------------------------------------------------------------------
 
-void NodeGraphManager::add_network(const std::shared_ptr<NodeNetwork>& network,
+void NodeGraphManager::add_network(const std::shared_ptr<Network::NodeNetwork>& network,
     ProcessingToken token)
 {
     if (!network) {
@@ -445,7 +451,7 @@ void NodeGraphManager::add_network(const std::shared_ptr<NodeNetwork>& network,
 
     network->set_enabled(true);
 
-    if (network->get_output_mode() == NodeNetwork::OutputMode::AUDIO_SINK) {
+    if (network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_SINK) {
         uint32_t channel_mask = network->get_channel_mask();
 
         if (channel_mask == 0) {
@@ -476,14 +482,14 @@ void NodeGraphManager::add_network(const std::shared_ptr<NodeNetwork>& network,
     }
 }
 
-void NodeGraphManager::remove_network(const std::shared_ptr<NodeNetwork>& network,
+void NodeGraphManager::remove_network(const std::shared_ptr<Network::NodeNetwork>& network,
     ProcessingToken token)
 {
     if (!network) {
         return;
     }
 
-    if (network->get_output_mode() == NodeNetwork::OutputMode::AUDIO_SINK) {
+    if (network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_SINK) {
         auto token_it = m_audio_networks.find(token);
         if (token_it != m_audio_networks.end()) {
             for (auto& [channel, networks] : token_it->second) {
@@ -505,7 +511,7 @@ void NodeGraphManager::remove_network(const std::shared_ptr<NodeNetwork>& networ
     unregister_network_global(network);
 }
 
-std::vector<std::shared_ptr<NodeNetwork>>
+std::vector<std::shared_ptr<Network::NodeNetwork>>
 NodeGraphManager::get_networks(ProcessingToken token, unsigned int channel) const
 {
     auto token_it = m_audio_networks.find(token);
@@ -518,10 +524,10 @@ NodeGraphManager::get_networks(ProcessingToken token, unsigned int channel) cons
     return {};
 }
 
-std::vector<std::shared_ptr<NodeNetwork>>
+std::vector<std::shared_ptr<Network::NodeNetwork>>
 NodeGraphManager::get_all_networks(ProcessingToken token) const
 {
-    std::vector<std::shared_ptr<NodeNetwork>> all_networks;
+    std::vector<std::shared_ptr<Network::NodeNetwork>> all_networks;
 
     auto audio_it = m_audio_networks.find(token);
     if (audio_it != m_audio_networks.end()) {
@@ -565,7 +571,7 @@ void NodeGraphManager::clear_networks(ProcessingToken token)
     m_token_networks.erase(token);
 }
 
-void NodeGraphManager::register_network_global(const std::shared_ptr<NodeNetwork>& network)
+void NodeGraphManager::register_network_global(const std::shared_ptr<Network::NodeNetwork>& network)
 {
     if (!is_network_registered(network)) {
         std::stringstream ss;
@@ -575,7 +581,7 @@ void NodeGraphManager::register_network_global(const std::shared_ptr<NodeNetwork
     }
 }
 
-void NodeGraphManager::unregister_network_global(const std::shared_ptr<NodeNetwork>& network)
+void NodeGraphManager::unregister_network_global(const std::shared_ptr<Network::NodeNetwork>& network)
 {
     for (const auto& pair : m_network_registry) {
         if (pair.second == network) {
@@ -585,7 +591,7 @@ void NodeGraphManager::unregister_network_global(const std::shared_ptr<NodeNetwo
     }
 }
 
-bool NodeGraphManager::is_network_registered(const std::shared_ptr<NodeNetwork>& network)
+bool NodeGraphManager::is_network_registered(const std::shared_ptr<Network::NodeNetwork>& network)
 {
     return std::ranges::any_of(m_network_registry,
         [&network](const auto& pair) { return pair.second == network; });

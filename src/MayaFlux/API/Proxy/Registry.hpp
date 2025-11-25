@@ -25,10 +25,12 @@ namespace Nodes {
         class PointNode;
         class PointCollectionNode;
     }
+    namespace Network {
 
-    class NodeNetwork;
-    class ModalNetwork;
-    class ParticleNetwork;
+        class NodeNetwork;
+        class ModalNetwork;
+        class ParticleNetwork;
+    }
 }
 
 namespace Buffers {
@@ -66,9 +68,9 @@ namespace Kakshya {
     N(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                   \
     N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)
 
-#define ALL_NODE_NETWORK_REGISTRATIONS             \
-    W(ModalNetwork, MayaFlux::Nodes::ModalNetwork) \
-    W(ParticleNetwork, MayaFlux::Nodes::ParticleNetwork)
+#define ALL_NODE_NETWORK_REGISTRATIONS                      \
+    W(ModalNetwork, MayaFlux::Nodes::Network::ModalNetwork) \
+    W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)
 
 #define ALL_BUFFER_REGISTRATION                                \
     B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)             \

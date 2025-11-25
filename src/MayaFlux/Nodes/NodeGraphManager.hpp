@@ -7,7 +7,9 @@ namespace MayaFlux::Nodes {
 using TokenChannelProcessor = std::function<std::vector<double>(RootNode*, uint32_t)>;
 using TokenSampleProcessor = std::function<double(RootNode*, uint32_t)>;
 
-class NodeNetwork;
+namespace Network {
+    class NodeNetwork;
+} // namespace Network
 
 /**
  * @class NodeGraphManager
@@ -46,6 +48,12 @@ public:
      * are created on demand when accessed.
      */
     NodeGraphManager();
+
+    // NodeGraphManager is non-copyable and non-moveable due to internal atomic state
+    NodeGraphManager(const NodeGraphManager&) = delete;
+    NodeGraphManager& operator=(const NodeGraphManager&) = delete;
+    NodeGraphManager(NodeGraphManager&&) = delete;
+    NodeGraphManager& operator=(NodeGraphManager&&) = delete;
 
     /**
      * @brief Add node to specific processing token and channel
@@ -331,7 +339,7 @@ public:
      * Networks are processed parallel to RootNodes, managing their own
      * internal node coordination and processing.
      */
-    void add_network(const std::shared_ptr<NodeNetwork>& network, ProcessingToken token);
+    void add_network(const std::shared_ptr<Network::NodeNetwork>& network, ProcessingToken token);
 
     /**
      * @brief Remove a network from a processing token
@@ -339,21 +347,21 @@ public:
      * @param token Processing domain
      * @param channel Channel index within that domain, optional
      */
-    void remove_network(const std::shared_ptr<NodeNetwork>& network, ProcessingToken token);
+    void remove_network(const std::shared_ptr<Network::NodeNetwork>& network, ProcessingToken token);
 
     /**
      * @brief Get all networks for a specific token
      * @param token Processing domain
      * @return Vector of networks registered to this token
      */
-    [[nodiscard]] std::vector<std::shared_ptr<NodeNetwork>> get_networks(ProcessingToken token, uint32_t channel = 0) const;
+    [[nodiscard]] std::vector<std::shared_ptr<Network::NodeNetwork>> get_networks(ProcessingToken token, uint32_t channel = 0) const;
 
     /**
      * @brief Get all networks for a specific token across all channels
      * @param token Processing domain
      * @return Vector of networks registered to this token
      */
-    [[nodiscard]] std::vector<std::shared_ptr<NodeNetwork>> get_all_networks(ProcessingToken token) const;
+    [[nodiscard]] std::vector<std::shared_ptr<Network::NodeNetwork>> get_all_networks(ProcessingToken token) const;
 
     /**
      * @brief Get count of networks for a token
@@ -368,12 +376,12 @@ public:
     /**
      * @brief Register network globally (like nodes)
      */
-    void register_network_global(const std::shared_ptr<NodeNetwork>& network);
+    void register_network_global(const std::shared_ptr<Network::NodeNetwork>& network);
 
     /**
      * @brief Unregister network globally
      */
-    void unregister_network_global(const std::shared_ptr<NodeNetwork>& network);
+    void unregister_network_global(const std::shared_ptr<Network::NodeNetwork>& network);
 
     /**
      * @brief Process audio networks for a specific channel
@@ -449,21 +457,21 @@ private:
      *
      * Maps generated IDs to networks for lifecycle management
      */
-    std::unordered_map<std::string, std::shared_ptr<NodeNetwork>> m_network_registry;
+    std::unordered_map<std::string, std::shared_ptr<Network::NodeNetwork>> m_network_registry;
 
     /**
      * @brief Audio-sink networks (channel-routed)
      * Only populated for networks with OutputMode::AUDIO_SINK
      */
     std::unordered_map<ProcessingToken,
-        std::unordered_map<unsigned int, std::vector<std::shared_ptr<NodeNetwork>>>>
+        std::unordered_map<unsigned int, std::vector<std::shared_ptr<Network::NodeNetwork>>>>
         m_audio_networks;
 
     /**
      * @brief Non-audio networks (token-level processing)
      * For NONE, GRAPHICS_BIND, CUSTOM output modes
      */
-    std::unordered_map<ProcessingToken, std::vector<std::shared_ptr<NodeNetwork>>>
+    std::unordered_map<ProcessingToken, std::vector<std::shared_ptr<Network::NodeNetwork>>>
         m_token_networks;
 
     /**
@@ -471,7 +479,7 @@ private:
      *
      * Used to prevent re-entrant processing of networks within the same cycle.
      */
-    std::unordered_map<ProcessingToken, std::atomic<bool>> m_token_network_processing;
+    std::unordered_map<ProcessingToken, std::unique_ptr<std::atomic<bool>>> m_token_network_processing;
 
     /**
      * @brief Ensures a root node exists for the given token and channel
@@ -536,7 +544,7 @@ private:
     /**
      * @brief Check if network is registered globally
      */
-    bool is_network_registered(const std::shared_ptr<NodeNetwork>& network);
+    bool is_network_registered(const std::shared_ptr<Network::NodeNetwork>& network);
 
     /**
      * @brief Resets the processing state of audio networks for a token and channel
