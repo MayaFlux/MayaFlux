@@ -305,9 +305,15 @@ void Server::handle_client(int client_fd)
         if (m_message_handler) {
             auto response = m_message_handler(*message);
             if (response) {
-                send_message(client_fd, *response);
+                if (!send_message(client_fd, *response)) {
+                    LILA_WARN(Emitter::SERVER, "Failed to send response to client fd " + std::to_string(client_fd));
+                    break;
+                }
             } else {
-                send_message(client_fd, "{\"status\":\"error\",\"message\":\"" + response.error() + "\"}");
+                if (!send_message(client_fd, "{\"status\":\"error\",\"message\":\"" + response.error() + "\"}")) {
+                    LILA_WARN(Emitter::SERVER, "Failed to send error response to client fd " + std::to_string(client_fd));
+                    break;
+                }
             }
         }
     }
@@ -320,11 +326,17 @@ void Server::process_control_message(int client_fd, std::string_view message)
     if (message.starts_with("session ")) {
         std::string session_id(message.substr(8));
         set_client_session(client_fd, session_id);
-        send_message(client_fd, R"({"status":"success","message":"Session ID set"})");
+        if (!send_message(client_fd, R"({"status":"success","message":"Session ID set to ')" + session_id + R"('"})")) {
+            LILA_WARN(Emitter::SERVER, "Failed to send session confirmation to client fd " + std::to_string(client_fd));
+        }
     } else if (message.starts_with("ping")) {
-        send_message(client_fd, R"({"status":"success","message":"pong"})");
+        if (!send_message(client_fd, R"({"status":"success","message":"pong"})")) {
+            LILA_WARN(Emitter::SERVER, "Failed to send pong to client fd " + std::to_string(client_fd));
+        }
     } else {
-        send_message(client_fd, "{\"status\":\"error\",\"message\":\"Unknown command: " + std::string(message) + "\"}");
+        if (!send_message(client_fd, "{\"status\":\"error\",\"message\":\"Unknown command: " + std::string(message) + "\"}")) {
+            LILA_WARN(Emitter::SERVER, "Failed to send unknown command error to client fd " + std::to_string(client_fd));
+        }
     }
 }
 
@@ -431,7 +443,9 @@ void Server::broadcast_event(const StreamEvent& /*event*/, std::optional<std::st
             continue;
         }
 
-        send_message(fd, "TODO: Serialize event to JSON");
+        if (!send_message(fd, R"({"status":"info","message":"Event broadcast not implemented yet"})")) {
+            LILA_WARN(Emitter::SERVER, "Failed to send event to client fd " + std::to_string(fd));
+        }
     }
 }
 
