@@ -5,6 +5,7 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Core/Engine.hpp"
+#include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -123,12 +124,12 @@ void connect_node_to_buffer(const std::shared_ptr<Nodes::Node>& node, const std:
 // Node Network Management
 //-------------------------------------------------------------------------
 
-void register_node_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const Nodes::ProcessingToken& token)
+void register_node_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const Nodes::ProcessingToken& token)
 {
     get_context().get_node_graph_manager()->add_network(network, token);
 }
 
-void unregister_node_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const Nodes::ProcessingToken& token)
+void unregister_node_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const Nodes::ProcessingToken& token)
 {
     get_context().get_node_graph_manager()->remove_network(network, token);
 }

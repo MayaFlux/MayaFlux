@@ -1,6 +1,6 @@
 #include "NodeNetwork.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::Network {
 
 void NodeNetwork::ensure_initialized()
 {
@@ -142,4 +142,4 @@ std::string NodeNetwork::output_mode_to_string(OutputMode mode)
     }
 }
 
-} // namespace MayaFlux::Nodes
+} // namespace MayaFlux::Nodes::Network

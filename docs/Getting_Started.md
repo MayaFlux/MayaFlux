@@ -192,7 +192,7 @@ void compose() {
     auto bell = vega.ModalNetwork(
                     12,
                     220.0,
-                    Nodes::ModalNetwork::Spectrum::INHARMONIC)[0]
+                    ModalNetwork::Spectrum::INHARMONIC)[0]
         | Audio;
 
     // 2. Create audio-driven logic

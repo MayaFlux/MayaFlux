@@ -9,7 +9,7 @@
 namespace MayaFlux::Buffers {
 
 NetworkGeometryBuffer::NetworkGeometryBuffer(
-    std::shared_ptr<Nodes::NodeNetwork> network,
+    std::shared_ptr<Nodes::Network::NodeNetwork> network,
     const std::string& binding_name,
     float over_allocate_factor)
     : VKBuffer(
@@ -83,7 +83,7 @@ uint32_t NetworkGeometryBuffer::get_vertex_count() const
 }
 
 size_t NetworkGeometryBuffer::calculate_buffer_size(
-    const std::shared_ptr<Nodes::NodeNetwork>& network,
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
     float over_allocate_factor)
 {
     if (!network) {

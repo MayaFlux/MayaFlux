@@ -4,7 +4,7 @@
 
 #include "MayaFlux/API/Config.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::Network {
 
 //-----------------------------------------------------------------------------
 // Construction
@@ -341,4 +341,4 @@ ModalNetwork::get_metadata() const
     return std::nullopt; // Default: not supported
 }
 
-} // namespace MayaFlux::Nodes
+} // namespace MayaFlux::Nodes::Network

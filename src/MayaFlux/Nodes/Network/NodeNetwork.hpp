@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Nodes/Node.hpp"
 
-namespace MayaFlux::Nodes {
+namespace MayaFlux::Nodes::Network {
 
 /**
  * @class NodeNetwork
@@ -425,4 +425,4 @@ private:
     static std::string output_mode_to_string(OutputMode mode);
 };
 
-} // namespace MayaFlux::Nodes
+} // namespace MayaFlux::Nodes::Network

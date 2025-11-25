@@ -32,10 +32,10 @@ struct CreationContext {
 
 MAYAFLUX_API std::shared_ptr<Nodes::Node> operator|(const std::shared_ptr<Nodes::Node>& node, Domain d);
 MAYAFLUX_API std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer>& buffer, Domain d);
-MAYAFLUX_API std::shared_ptr<Nodes::NodeNetwork> operator|(const std::shared_ptr<Nodes::NodeNetwork>& network, Domain d);
+MAYAFLUX_API std::shared_ptr<Nodes::Network::NodeNetwork> operator|(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, Domain d);
 
 MAYAFLUX_API void register_node(const std::shared_ptr<Nodes::Node>& node, const CreationContext& ctx);
-MAYAFLUX_API void register_network(const std::shared_ptr<Nodes::NodeNetwork>& network, const CreationContext& ctx);
+MAYAFLUX_API void register_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const CreationContext& ctx);
 MAYAFLUX_API void register_buffer(const std::shared_ptr<Buffers::Buffer>& buffer, const CreationContext& ctx);
 MAYAFLUX_API void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& container, const Domain& domain);
 
@@ -117,7 +117,7 @@ private:
                 if (m_ctx.domain) {
                     apply_buffer_context();
                 }
-            } else if constexpr (std::is_base_of_v<Nodes::NodeNetwork, T>) {
+            } else if constexpr (std::is_base_of_v<Nodes::Network::NodeNetwork, T>) {
                 if (m_ctx.domain) {
                     apply_network_context();
                 }
@@ -131,7 +131,7 @@ private:
                 if constexpr (std::is_base_of_v<Nodes::Node, T>) {
                     apply_node_context();
                 }
-                if constexpr (std::is_base_of_v<Nodes::NodeNetwork, T>) {
+                if constexpr (std::is_base_of_v<Nodes::Network::NodeNetwork, T>) {
                     apply_network_context();
                 }
             }
@@ -153,7 +153,7 @@ private:
         if (!*this)
             return;
 
-        std::shared_ptr<Nodes::NodeNetwork> network = std::static_pointer_cast<Nodes::NodeNetwork>(*this);
+        std::shared_ptr<Nodes::Network::NodeNetwork> network = std::static_pointer_cast<Nodes::Network::NodeNetwork>(*this);
         register_network(network, m_ctx);
     }
 

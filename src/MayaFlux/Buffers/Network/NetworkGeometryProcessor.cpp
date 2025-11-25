@@ -14,7 +14,7 @@ NetworkGeometryProcessor::NetworkGeometryProcessor()
 
 void NetworkGeometryProcessor::bind_network(
     const std::string& name,
-    const std::shared_ptr<Nodes::NodeNetwork>& network,
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
     const std::shared_ptr<VKBuffer>& vertex_buffer)
 {
     if (!network) {
@@ -119,7 +119,7 @@ void NetworkGeometryProcessor::processing_function(std::shared_ptr<Buffer> buffe
 
         std::vector<Nodes::GpuSync::PointVertex> vertices;
 
-        if (auto particle_net = std::dynamic_pointer_cast<Nodes::ParticleNetwork>(binding.network)) {
+        if (auto particle_net = std::dynamic_pointer_cast<Nodes::Network::ParticleNetwork>(binding.network)) {
             vertices = extract_particle_vertices(particle_net);
         } else {
             vertices = extract_network_vertices(binding.network);
@@ -189,7 +189,7 @@ void NetworkGeometryProcessor::processing_function(std::shared_ptr<Buffer> buffe
 
 std::vector<Nodes::GpuSync::PointVertex>
 NetworkGeometryProcessor::extract_particle_vertices(
-    const std::shared_ptr<Nodes::ParticleNetwork>& network)
+    const std::shared_ptr<Nodes::Network::ParticleNetwork>& network)
 {
     std::vector<Nodes::GpuSync::PointVertex> vertices;
 
@@ -207,7 +207,7 @@ NetworkGeometryProcessor::extract_particle_vertices(
 
 std::vector<Nodes::GpuSync::PointVertex>
 NetworkGeometryProcessor::extract_network_vertices(
-    const std::shared_ptr<Nodes::NodeNetwork>& network)
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network)
 {
     std::vector<Nodes::GpuSync::PointVertex> vertices;
 

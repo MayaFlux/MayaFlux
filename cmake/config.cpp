@@ -102,10 +102,11 @@ std::string SystemConfig::exec_command(const char* cmd)
     std::array<char, 128> buffer {};
     std::string result;
 
+    using PipeCloser = int (*)(FILE*);
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd, "r"), _pclose);
+    std::unique_ptr<FILE, PipeCloser> pipe(_popen(cmd, "r"), _pclose);
 #else
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    std::unique_ptr<FILE, PipeCloser> pipe(popen(cmd, "r"), pclose);
 #endif
 
     if (!pipe)
