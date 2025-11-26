@@ -35,6 +35,7 @@
 #include "Nodes/Graphics/GeometryWriterNode.hpp"
 #include "Nodes/Graphics/PointCollectionNode.hpp"
 #include "Nodes/Graphics/PointNode.hpp"
+#include "Nodes/Graphics/ProceduralTextureNode.hpp"
 #include "Nodes/Graphics/TextureNode.hpp"
 #include "Nodes/Network/NodeNetwork.hpp"
 #include "Nodes/NodeGraphManager.hpp"

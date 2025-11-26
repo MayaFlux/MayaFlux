@@ -129,6 +129,18 @@ protected:
 
     std::vector<float> m_saved_pixel_buffer;
     bool m_saved_dirty_flag {};
+
+    /**
+     * @brief Get mutable pixel buffer for direct write access
+     * @return Span of pixel data (RGBA32F format)
+     *
+     * For performance-critical pixel generation.
+     * Remember to call mark_dirty() after writing!
+     */
+    std::span<float> get_pixel_buffer_mutable()
+    {
+        return m_pixel_buffer;
+    }
 };
 
 } // namespace MayaFlux::Nodes
