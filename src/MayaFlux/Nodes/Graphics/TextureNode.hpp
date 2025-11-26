@@ -83,6 +83,16 @@ public:
         m_pixel_data_dirty = false;
     }
 
+    /**
+     * @brief Save current pixel state
+     */
+    void save_state() override;
+
+    /**
+     * @brief Restore saved pixel state
+     */
+    void restore_state() override;
+
 protected:
     /**
      * @brief Set pixel color at (x, y)
@@ -116,6 +126,9 @@ protected:
      * @brief Clear texture to black
      */
     void clear();
+
+    std::vector<float> m_saved_pixel_buffer;
+    bool m_saved_dirty_flag {};
 };
 
 } // namespace MayaFlux::Nodes

@@ -70,4 +70,28 @@ void TextureNode::clear()
     std::ranges::fill(m_pixel_buffer, 0.0F);
     m_pixel_data_dirty = true;
 }
-} // namespace MayaFlux::Nodes
+
+void TextureNode::save_state()
+{
+    m_saved_pixel_buffer = m_pixel_buffer;
+    m_saved_dirty_flag = m_pixel_data_dirty;
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "TextureNode: saved state ({} pixels)", m_pixel_buffer.size());
+}
+
+void TextureNode::restore_state()
+{
+    if (!m_saved_pixel_buffer.empty()) {
+        m_pixel_buffer = m_saved_pixel_buffer;
+        m_pixel_data_dirty = m_saved_dirty_flag;
+
+        MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "TextureNode: restored state ({} pixels)", m_pixel_buffer.size());
+    } else {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "TextureNode: no saved state to restore");
+    }
+}
+
+} // namespace MayaFlux::Nodes::GpuSync
