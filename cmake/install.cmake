@@ -81,6 +81,34 @@ install(FILES
     DESTINATION lib/cmake/MayaFlux
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(PLATFORM_NAME "macOS")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(PLATFORM_NAME "Windows")
+else()
+    set(PLATFORM_NAME "Linux")
+endif()
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64|ARM64")
+    set(ARCH_NAME "ARM64")
+else()
+    set(ARCH_NAME "x64")
+endif()
+
+install(CODE "
+    execute_process(
+        COMMAND ${CMAKE_COMMAND}
+            -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -DOUTPUT_FILE=${CMAKE_INSTALL_PREFIX}/share/MayaFlux/.version
+            -DPROJECT_VERSION=${PROJECT_VERSION}
+            -DPLATFORM=${PLATFORM_NAME}
+            -DARCHITECTURE=${ARCH_NAME}
+            -P ${CMAKE_SOURCE_DIR}/cmake/generate_version_file.cmake
+    )
+")
+
+message(STATUS "Version metadata will be installed to: ${CMAKE_INSTALL_PREFIX}/share/MayaFlux/.version")
+
 message(STATUS "Lila (static) installed to:")
 message(STATUS "  - Libraries: ${CMAKE_INSTALL_PREFIX}/lib")
 message(STATUS "  - Headers: ${CMAKE_INSTALL_PREFIX}/include/Lila")

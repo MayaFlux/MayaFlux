@@ -365,6 +365,16 @@ jobs:
           cmake --install build --prefix dist_staging --config ${{ env.BUILD_TYPE }}
           Write-Host "✓ Installation completed to dist_staging/" -ForegroundColor Green
 
+      - name: Verify version file
+        shell: bash
+        run: |
+          echo "=== Version Metadata ==="
+          if [ -f "dist_staging/share/MayaFlux/.version" ]; then
+            cat dist_staging/share/MayaFlux/.version
+          else
+            echo "WARNING: .version file not generated!"
+          fi
+
       - name: Bundle runtime DLLs
         # if: ${{ inputs.create_distribution != false }}
         shell: pwsh

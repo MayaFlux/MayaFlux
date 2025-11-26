@@ -24,6 +24,7 @@ namespace Nodes {
         class GeometryWriterNode;
         class PointNode;
         class PointCollectionNode;
+        class ProceduralTextureNode;
     }
     namespace Network {
 
@@ -40,7 +41,7 @@ namespace Buffers {
     class FeedbackBuffer;
     class ContainerBuffer;
     class VKBuffer;
-    class TextureBindBuffer;
+    class NodeTextureBuffer;
     class TextureBuffer;
     class GeometryBuffer;
     class NetworkGeometryBuffer;
@@ -53,20 +54,21 @@ namespace Kakshya {
 }
 }
 
-#define ALL_NODE_REGISTRATIONS                                          \
-    N(Sine, MayaFlux::Nodes::Generator::Sine)                           \
-    N(Phasor, MayaFlux::Nodes::Generator::Phasor)                       \
-    N(Impulse, MayaFlux::Nodes::Generator::Impulse)                     \
-    N(Logic, MayaFlux::Nodes::Generator::Logic)                         \
-    N(Polynomial, MayaFlux::Nodes::Generator::Polynomial)               \
-    N(Random, MayaFlux::Nodes::Generator::Stochastics::Random)          \
-    N(IIR, MayaFlux::Nodes::Filters::IIR)                               \
-    N(FIR, MayaFlux::Nodes::Filters::FIR)                               \
-    N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)         \
-    N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)               \
-    N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode) \
-    N(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                   \
-    N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)
+#define ALL_NODE_REGISTRATIONS                                            \
+    N(Sine, MayaFlux::Nodes::Generator::Sine)                             \
+    N(Phasor, MayaFlux::Nodes::Generator::Phasor)                         \
+    N(Impulse, MayaFlux::Nodes::Generator::Impulse)                       \
+    N(Logic, MayaFlux::Nodes::Generator::Logic)                           \
+    N(Polynomial, MayaFlux::Nodes::Generator::Polynomial)                 \
+    N(Random, MayaFlux::Nodes::Generator::Stochastics::Random)            \
+    N(IIR, MayaFlux::Nodes::Filters::IIR)                                 \
+    N(FIR, MayaFlux::Nodes::Filters::FIR)                                 \
+    N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)           \
+    N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)                 \
+    N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode)   \
+    N(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                     \
+    N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode) \
+    N(ProceduralTextureNode, MayaFlux::Nodes::GpuSync::ProceduralTextureNode)
 
 #define ALL_NODE_NETWORK_REGISTRATIONS                      \
     W(ModalNetwork, MayaFlux::Nodes::Network::ModalNetwork) \
@@ -78,7 +80,7 @@ namespace Kakshya {
     B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)       \
     B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer)     \
     B(VKBuffer, MayaFlux::Buffers::VKBuffer)                   \
-    B(TextureBindBuffer, MayaFlux::Buffers::TextureBindBuffer) \
+    B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer) \
     B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)         \
     B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)       \
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)

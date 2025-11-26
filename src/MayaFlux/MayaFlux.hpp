@@ -35,6 +35,7 @@
 #include "Nodes/Graphics/GeometryWriterNode.hpp"
 #include "Nodes/Graphics/PointCollectionNode.hpp"
 #include "Nodes/Graphics/PointNode.hpp"
+#include "Nodes/Graphics/ProceduralTextureNode.hpp"
 #include "Nodes/Graphics/TextureNode.hpp"
 #include "Nodes/Network/NodeNetwork.hpp"
 #include "Nodes/NodeGraphManager.hpp"
@@ -57,7 +58,7 @@
 #include "Buffers/Shaders/RenderProcessor.hpp"
 #include "Buffers/Staging/BufferDownloadProcessor.hpp"
 #include "Buffers/Staging/BufferUploadProcessor.hpp"
-#include "Buffers/Textures/TextureBindBuffer.hpp"
+#include "Buffers/Textures/NodeTextureBuffer.hpp"
 #include "Buffers/Textures/TextureBuffer.hpp"
 
 #include "Kriya/Awaiters.hpp"
