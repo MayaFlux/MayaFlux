@@ -104,6 +104,26 @@ void NodeNetwork::mark_processed(bool processed)
     m_processed_this_cycle.store(processed, std::memory_order_release);
 }
 
+void NodeNetwork::request_reset_from_channel(uint32_t channel_id)
+{
+    if (channel_id >= 32)
+        return;
+
+    auto channel_bit = static_cast<uint32_t>(1ULL << channel_id);
+    uint32_t old_pending = m_pending_reset_mask.fetch_or(channel_bit,
+        std::memory_order_acq_rel);
+    uint32_t new_pending = old_pending | channel_bit;
+    uint32_t active_channels = m_channel_mask.load(std::memory_order_acquire);
+
+    if ((new_pending & active_channels) == active_channels && active_channels != 0) {
+        uint32_t expected = new_pending;
+        if (m_pending_reset_mask.compare_exchange_strong(expected, 0,
+                std::memory_order_acq_rel)) {
+            mark_processed(false);
+        }
+    }
+}
+
 std::string NodeNetwork::topology_to_string(Topology topo)
 {
     switch (topo) {
