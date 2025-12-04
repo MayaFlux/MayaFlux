@@ -48,16 +48,6 @@ jobs:
       - name: Use version
         run: echo "Version is ${{ inputs.version }}"
 
-      - name: Cache DNF packages
-        uses: actions/cache@v4
-        id: dnf-cache
-        with:
-          path: /var/cache/dnf
-          key: dnf-fedora43-${{ hashFiles('.github/workflows/build-linux.yml') }}-v1
-          restore-keys: |
-            dnf-fedora43-
-        continue-on-error: true
-
       - name: Install build dependencies
         run: |
           echo "=== Installing Build Dependencies via DNF ==="
@@ -94,13 +84,6 @@ jobs:
         with:
           key: fedora43-build
           max-size: "1G"
-
-      - name: Save DNF cache
-        uses: actions/cache/save@v4
-        with:
-          path: /var/cache/dnf
-          key: dnf-fedora43-${{ hashFiles('.github/workflows/build-linux.yml') }}-v1-${{ github.run_id }}
-        continue-on-error: true
 
       - name: Configure CMake
         run: |
@@ -165,17 +148,12 @@ jobs:
           OS_NAME="${{ inputs.distribution_name }}"
           PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
 
-          tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
           tar -cJf "${PACKAGE_NAME}.tar.xz" -C dist_staging .
-
-          sha256sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.sha256"
           sha256sum "${PACKAGE_NAME}.tar.xz" > "${PACKAGE_NAME}.tar.xz.sha256"
-          md5sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.md5"
           md5sum "${PACKAGE_NAME}.tar.xz" > "${PACKAGE_NAME}.tar.xz.md5"
 
           echo ""
           echo "SHA256 Checksums:"
-          cat "${PACKAGE_NAME}.tar.gz.sha256"
           cat "${PACKAGE_NAME}.tar.xz.sha256"
 
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
@@ -186,9 +164,6 @@ jobs:
         with:
           name: ${{ inputs.artifact_name }}
           path: |
-            ${{ env.PACKAGE_NAME }}.tar.gz
-            ${{ env.PACKAGE_NAME }}.tar.gz.sha256
-            ${{ env.PACKAGE_NAME }}.tar.gz.md5
             ${{ env.PACKAGE_NAME }}.tar.xz
             ${{ env.PACKAGE_NAME }}.tar.xz.sha256
             ${{ env.PACKAGE_NAME }}.tar.xz.md5
@@ -214,7 +189,6 @@ jobs:
           echo "  ✓ Eigen3, GLM, magic_enum, fmt, TBB, STB"
           echo ""
           echo "Distribution Packages:"
-          echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz (with SHA256/MD5)"
           echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.xz (with SHA256/MD5)"
 
       - name: Upload build artifacts (on failure)

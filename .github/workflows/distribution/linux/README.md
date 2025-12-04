@@ -23,18 +23,30 @@ Complete MayaFlux platform distribution for Linux (x86_64, Fedora 43).
 This distribution is built on **Fedora 43** with modern toolchain (GCC 15, LLVM 21). Required packages:
 
 ```bash
-sudo dnf install -y \
-  llvm-libs \
-  rtaudio \
-  glfw \
-  glm \
-  eigen3 \
-  vulkan-loader \
-  ffmpeg-free-libs \
-  stb \
-  magic_enum \
-  tbb \
-  fmt
+dnf install -y \
+    @development-tools \
+    llvm llvm-devel llvm-libs \
+    clang clang-devel \
+    cmake \
+    pkgconfig \
+    rtaudio-devel \
+    glfw-devel \
+    glm-devel \
+    eigen3-devel \
+    spirv-headers-devel \
+    spirv-tools \
+    vulkan-headers \
+    vulkan-loader \
+    vulkan-loader-devel \
+    vulkan-tools \
+    vulkan-validation-layers \
+    ffmpeg-free-devel \
+    stb-devel \
+    magic_enum-devel \
+    tbb-devel \
+    glslc \
+    libshaderc-devel \
+    wayland-devel
 ```
 
 ## System Requirements
@@ -50,6 +62,7 @@ This distribution targets **modern Linux with Fedora 43 ABI**:
 - ✅ **Fedora 43+**: Direct binary compatibility
 - ✅ **RHEL 10+**: Direct binary compatibility
 - ✅ **Ubuntu 25.04+**: Compatible when released
+- ✅ **Arch linux**: Use AUR package `mayaflux-dev-bin`
 - ⚠️ **Other distros**: Build from source
 
 The binaries are linked against:
@@ -63,7 +76,10 @@ If your distribution has older versions, you must **build MayaFlux from source**
 
 ## Quick Start
 
-### For End Users:
+Use Weave to install dependenceis automatically.
+Weave will also download and install this distribution for you.
+
+### For End Users (Immediate Use):
 
 ```bash
 # Extract distribution
@@ -93,24 +109,12 @@ cd MayaFlux-*-linux-fedora43-x64/
 ./verify_components.sh
 ```
 
-### Manual Dependency Installation:
-
-```bash
-# Fedora 43+
-sudo dnf install -y llvm-libs rtaudio glfw glm eigen3 \
-  vulkan-loader ffmpeg-free-libs stb magic_enum tbb fmt
-
-# RHEL 10+ (when available)
-sudo dnf install -y llvm-libs rtaudio glfw glm eigen3 \
-  vulkan-loader ffmpeg-free-libs stb magic_enum tbb fmt
-```
-
 ## Building from Source (Other Distros)
 
 If your distribution is not compatible, build from source:
 
 ```bash
-git clone https://github.com/your-repo/MayaFlux.git
+git clone https://github.com/MayaFlux/MayaFlux.git
 cd MayaFlux
 mkdir build && cd build
 
