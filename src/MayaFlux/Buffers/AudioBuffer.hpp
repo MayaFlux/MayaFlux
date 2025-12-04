@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Buffer.hpp"
+#include "MayaFlux/Core/ProcessingTokens.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -71,6 +72,16 @@ public:
      * called on uninitialized buffers before use.
      */
     virtual void setup(uint32_t channel, uint32_t num_samples);
+
+    /**
+     * @brief Sets up audio processors for the specified processing token
+     * @param token Processing token indicating the domain
+     *
+     * This is useful to avoid calling shared_from_this() in constructors of
+     * derived classes. Derived audio buffer types can override this method
+     * to attach audio-specific processors based on the processing token.
+     */
+    virtual void setup_processors(ProcessingToken token) { }
 
     /**
      * @brief Adjusts the audio buffer's sample capacity

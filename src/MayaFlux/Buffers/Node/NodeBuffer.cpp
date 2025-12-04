@@ -208,17 +208,16 @@ NodeBuffer::NodeBuffer(uint32_t channel_id, uint32_t num_samples, std::shared_pt
     , m_source_node(std::move(source))
     , m_clear_before_process(clear_before_process)
 {
+}
+
+void NodeBuffer::setup_processors(ProcessingToken /*token*/)
+{
     m_default_processor = create_default_processor();
+    m_default_processor->on_attach(shared_from_this());
 }
 
 void NodeBuffer::process_default()
 {
-    if (!m_attached) {
-        if (m_default_processor) {
-            m_default_processor->on_attach(shared_from_this());
-        }
-        m_attached = true;
-    }
     if (m_clear_before_process) {
         clear();
     }

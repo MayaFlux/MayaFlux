@@ -150,6 +150,7 @@ void BufferAccessControl::add_audio_buffer(
     auto& unit = m_unit_manager.get_or_create_audio_unit(token);
     auto processing_chain = unit.get_chain(channel);
     buffer->set_channel_id(channel);
+    buffer->setup_processors(token);
 
     if (auto buf_chain = buffer->get_processing_chain()) {
         if (buf_chain != processing_chain) {

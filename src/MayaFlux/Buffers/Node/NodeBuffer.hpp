@@ -141,6 +141,8 @@ public:
      */
     NodeBuffer(uint32_t channel_id, uint32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process = true);
 
+    void setup_processors(ProcessingToken token) override;
+
     /**
      * @brief Sets whether to reset the buffer before processing node output
      * @param value true to reset before processing, false to interpolate with existing content
@@ -182,7 +184,6 @@ private:
      * @brief Whether to reset the buffer before adding node output
      */
     bool m_clear_before_process;
-
-    bool m_attached {};
 };
+
 }
