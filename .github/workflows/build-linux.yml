@@ -1,0 +1,229 @@
+name: "Build Linux Distribution"
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      clean_version:
+        required: true
+        type: string
+      is_dev:
+        required: true
+        type: string
+      run_tests:
+        required: false
+        type: boolean
+        default: false
+      create_distribution:
+        required: false
+        type: boolean
+        default: true
+      artifact_name:
+        required: true
+        type: string
+      distribution_name:
+        required: true
+        type: string
+      os_display_name:
+        required: true
+        type: string
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:43
+      options: --privileged
+    name: "Fedora 43 (GCC 15, LLVM 21)"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use version
+        run: echo "Version is ${{ inputs.version }}"
+
+      - name: Cache DNF packages
+        uses: actions/cache@v4
+        id: dnf-cache
+        with:
+          path: /var/cache/dnf
+          key: dnf-fedora43-${{ hashFiles('.github/workflows/build-linux.yml') }}-v1
+          restore-keys: |
+            dnf-fedora43-
+        continue-on-error: true
+
+      - name: Install build dependencies
+        run: |
+          echo "=== Installing Build Dependencies via DNF ==="
+          dnf install -y \
+            @development-tools \
+            llvm llvm-devel llvm-libs \
+            clang clang-devel \
+            cmake \
+            pkgconfig \
+            rtaudio-devel \
+            glfw-devel \
+            glm-devel \
+            eigen3-devel \
+            spirv-headers-devel \
+            spirv-tools \
+            vulkan-headers \
+            vulkan-loader \
+            vulkan-loader-devel \
+            vulkan-tools \
+            vulkan-validation-layers \
+            ffmpeg-free-devel \
+            stb-devel \
+            magic_enum-devel \
+            tbb-devel \
+            gtest \
+            glslc \
+            libshaderc-devel \
+            ninja-build \
+            wayland-devel \
+            ccache
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: fedora43-build
+          max-size: "1G"
+
+      - name: Save DNF cache
+        uses: actions/cache/save@v4
+        with:
+          path: /var/cache/dnf
+          key: dnf-fedora43-${{ hashFiles('.github/workflows/build-linux.yml') }}-v1-${{ github.run_id }}
+        continue-on-error: true
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_STANDARD=23 \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_VERBOSE_MAKEFILE=ON
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel $(nproc)
+
+      - name: Install to staging directory
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          mkdir -p dist_staging
+          cmake --install build --prefix dist_staging
+
+      - name: Verify version file
+        run: |
+          echo "=== Version Metadata ==="
+          if [ -f "dist_staging/share/MayaFlux/.version" ]; then
+            cat dist_staging/share/MayaFlux/.version
+          else
+            echo "WARNING: .version file not generated!"
+          fi
+
+      - name: Verify installation structure
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          echo "=== MayaFlux Distribution Structure ==="
+          echo "MayaFluxLib (Core Library):"
+          find dist_staging/include/MayaFlux -name "*.hpp" | head -5 || echo "No MayaFlux headers found"
+          find dist_staging/lib -name "*MayaFlux*" | head -5 || echo "No MayaFlux libraries found"
+
+          echo ""
+          echo "Lila (JIT Interface):"
+          find dist_staging/include/Lila -name "*.hpp" | head -5 || echo "No Lila headers found"
+          find dist_staging/lib -name "*Lila*" | head -5 || echo "No Lila libraries found"
+
+          echo ""
+          echo "lila_server (User Executable):"
+          find dist_staging/bin -name "*lila_server*" | head -5 || echo "No lila_server found"
+
+          echo ""
+          echo "Runtime (JIT Context):"
+          find dist_staging/share/MayaFlux/runtime -type f | head -5 || echo "No runtime files found"
+
+      - name: Copy distribution files
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          cp .github/workflows/distribution/linux/README.md dist_staging/ || true
+          cp .github/workflows/distribution/linux/verify_components.sh dist_staging/ || true
+          chmod +x dist_staging/verify_components.sh 2>/dev/null || true
+
+      - name: Create distribution packages with checksums
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          SHORT_SHA=${GITHUB_SHA:0:8}
+          OS_NAME="${{ inputs.distribution_name }}"
+          PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
+
+          tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
+          tar -cJf "${PACKAGE_NAME}.tar.xz" -C dist_staging .
+
+          sha256sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.sha256"
+          sha256sum "${PACKAGE_NAME}.tar.xz" > "${PACKAGE_NAME}.tar.xz.sha256"
+          md5sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.md5"
+          md5sum "${PACKAGE_NAME}.tar.xz" > "${PACKAGE_NAME}.tar.xz.md5"
+
+          echo ""
+          echo "SHA256 Checksums:"
+          cat "${PACKAGE_NAME}.tar.gz.sha256"
+          cat "${PACKAGE_NAME}.tar.xz.sha256"
+
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
+
+      - name: Upload MayaFlux distribution
+        if: ${{ inputs.create_distribution != false }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: |
+            ${{ env.PACKAGE_NAME }}.tar.gz
+            ${{ env.PACKAGE_NAME }}.tar.gz.sha256
+            ${{ env.PACKAGE_NAME }}.tar.gz.md5
+            ${{ env.PACKAGE_NAME }}.tar.xz
+            ${{ env.PACKAGE_NAME }}.tar.xz.sha256
+            ${{ env.PACKAGE_NAME }}.tar.xz.md5
+          retention-days: 30
+
+      - name: Display build summary
+        if: ${{ inputs.create_distribution != false }}
+        run: |
+          echo "=== MayaFlux Linux Build Complete ==="
+          echo "📦 Package: ${{ env.PACKAGE_NAME }}"
+          echo "  Platform: ${{ inputs.os_display_name }}"
+          echo "  Base: Fedora 43"
+          echo "  Compiler: GCC $(gcc -dumpversion)"
+          echo "  LLVM: $(llvm-config --version)"
+          echo "  C++ Standard: C++23"
+          echo ""
+          echo "Dependencies:"
+          echo "  ✓ LLVM 21 (Lila JIT)"
+          echo "  ✓ GCC 15 (full C++23)"
+          echo "  ✓ GLFW 3.4 (Wayland)"
+          echo "  ✓ RtAudio, FFmpeg"
+          echo "  ✓ Vulkan SDK, SPIR-V"
+          echo "  ✓ Eigen3, GLM, magic_enum, fmt, TBB, STB"
+          echo ""
+          echo "Distribution Packages:"
+          echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz (with SHA256/MD5)"
+          echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.xz (with SHA256/MD5)"
+
+      - name: Upload build artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-linux
+          path: |
+            build/CMakeFiles/CMakeOutput.log
+            build/CMakeFiles/CMakeError.log
+            build/Testing/Temporary/LastTest.log
+            build/compile_commands.json

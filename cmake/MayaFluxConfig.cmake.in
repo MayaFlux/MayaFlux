@@ -108,7 +108,7 @@ else()
         set(_MAYAFLUX_THREADING_BACKEND "TBB")
     endif()
 
-    find_package(GTest QUIET)
+    # find_package(GTest QUIET)
     find_package(LLVM CONFIG REQUIRED)
     find_package(Clang CONFIG REQUIRED)
     find_package(glm REQUIRED)

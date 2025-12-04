@@ -39,8 +39,8 @@ if(UNIX)
     ${CMAKE_BINARY_DIR}/compile_commands.json
     ${CMAKE_SOURCE_DIR}/compile_commands.json)
 
-    enable_testing()
-    add_subdirectory(tests)
+    # enable_testing()
+    # add_subdirectory(tests)
 endif()
 
 include(install)

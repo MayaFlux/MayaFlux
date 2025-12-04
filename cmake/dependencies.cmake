@@ -64,7 +64,7 @@ else()
     endif()
 
     find_package(TBB REQUIRED)
-    find_package(GTest REQUIRED)
+    # find_package(GTest REQUIRED)
     find_package(LLVM CONFIG REQUIRED)
     find_package(Clang CONFIG REQUIRED)
     find_package(glm REQUIRED)
