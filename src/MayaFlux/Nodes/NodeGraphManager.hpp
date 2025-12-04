@@ -460,11 +460,11 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Network::NodeNetwork>> m_network_registry;
 
     /**
-     * @brief Audio-sink networks (channel-routed)
+     * @brief Audio-sink networks
      * Only populated for networks with OutputMode::AUDIO_SINK
      */
     std::unordered_map<ProcessingToken,
-        std::unordered_map<unsigned int, std::vector<std::shared_ptr<Network::NodeNetwork>>>>
+        std::vector<std::shared_ptr<Network::NodeNetwork>>>
         m_audio_networks;
 
     /**

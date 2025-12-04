@@ -336,6 +336,12 @@ public:
      */
     [[nodiscard]] bool is_processing() const;
 
+    /**
+     * @brief Request a reset from a specific channel
+     * @param channel_id Channel index
+     */
+    void request_reset_from_channel(uint32_t channel_id);
+
 protected:
     //-------------------------------------------------------------------------
     // Protected State (Accessible to subclasses)
@@ -407,6 +413,7 @@ protected:
 
     /// Bitfield of channels this network is registered on
     std::atomic<uint32_t> m_channel_mask { 0 };
+    std::atomic<uint32_t> m_pending_reset_mask { 0 };
 
     /// Per-channel processing state (lock-free atomic flags)
     std::atomic<bool> m_processing_state { false };
