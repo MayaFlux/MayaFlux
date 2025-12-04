@@ -148,13 +148,13 @@ jobs:
           OS_NAME="${{ inputs.distribution_name }}"
           PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
 
-          tar -cJf "${PACKAGE_NAME}.tar.xz" -C dist_staging .
-          sha256sum "${PACKAGE_NAME}.tar.xz" > "${PACKAGE_NAME}.tar.xz.sha256"
-          md5sum "${PACKAGE_NAME}.tar.xz" > "${PACKAGE_NAME}.tar.xz.md5"
+          tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
+          sha256sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.sha256"
+          md5sum "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.tar.gz.md5"
 
           echo ""
           echo "SHA256 Checksums:"
-          cat "${PACKAGE_NAME}.tar.xz.sha256"
+          cat "${PACKAGE_NAME}.tar.gz.sha256"
 
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
@@ -164,9 +164,9 @@ jobs:
         with:
           name: ${{ inputs.artifact_name }}
           path: |
-            ${{ env.PACKAGE_NAME }}.tar.xz
-            ${{ env.PACKAGE_NAME }}.tar.xz.sha256
-            ${{ env.PACKAGE_NAME }}.tar.xz.md5
+            ${{ env.PACKAGE_NAME }}.tar.gz
+            ${{ env.PACKAGE_NAME }}.tar.gz.sha256
+            ${{ env.PACKAGE_NAME }}.tar.gz.md5
           retention-days: 30
 
       - name: Display build summary
@@ -189,7 +189,7 @@ jobs:
           echo "  ✓ Eigen3, GLM, magic_enum, fmt, TBB, STB"
           echo ""
           echo "Distribution Packages:"
-          echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.xz (with SHA256/MD5)"
+          echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz (with SHA256/MD5)"
 
       - name: Upload build artifacts (on failure)
         if: failure()

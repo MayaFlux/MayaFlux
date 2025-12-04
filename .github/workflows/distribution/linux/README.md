@@ -83,7 +83,7 @@ Weave will also download and install this distribution for you.
 
 ```bash
 # Extract distribution
-tar xf MayaFlux-*-linux-fedora43-x64.tar.xz
+tar xf MayaFlux-*-linux-fedora43-x64.tar.gz
 cd MayaFlux-*-linux-fedora43-x64/
 
 # Run interactive development server
