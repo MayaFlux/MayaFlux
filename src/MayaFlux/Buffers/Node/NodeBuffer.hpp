@@ -42,9 +42,7 @@ public:
      * - 0.5: Equal interpolation between existing and incoming values
      * - 1.0: Replace with incoming values (existing data overwritten)
      */
-    NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix = 0.5f, bool clear_before_process = true);
-
-    ~NodeSourceProcessor() override;
+    NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix = 0.5F, bool clear_before_process = true);
 
     /**
      * @brief Captures node computation output into a buffer
@@ -67,7 +65,11 @@ public:
      * @brief Gets the current interpolation coefficient
      * @return Current interpolation coefficient (0.0-1.0)
      */
-    inline float get_mix() const { return m_mix; }
+    [[nodiscard]] inline float get_mix() const { return m_mix; }
+
+    void on_attach(std::shared_ptr<Buffer> buffer) override;
+
+    void on_detach(std::shared_ptr<Buffer> buffer) override;
 
 private:
     /**
@@ -180,5 +182,7 @@ private:
      * @brief Whether to reset the buffer before adding node output
      */
     bool m_clear_before_process;
+
+    bool m_attached {};
 };
 }

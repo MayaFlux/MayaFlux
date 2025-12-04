@@ -137,6 +137,9 @@ bool Node::mark_buffer_processed()
     auto state = m_state.load(std::memory_order_acquire);
 
     if (count >= 1 && state == Utils::NodeState::INACTIVE) {
+        if (count == 1) {
+            return true;
+        }
         bool expected = false;
         if (m_buffer_processed.compare_exchange_strong(expected, true,
                 std::memory_order_acq_rel)) {
@@ -152,7 +155,7 @@ void Node::request_buffer_reset()
     uint32_t reset_count = m_buffer_reset_count.fetch_add(1, std::memory_order_acq_rel);
     uint32_t buffer_count = m_buffer_count.load(std::memory_order_acquire);
 
-    if (reset_count == buffer_count) {
+    if (reset_count + 1 == buffer_count || buffer_count <= 1) {
         m_buffer_processed.store(false, std::memory_order_release);
         m_buffer_reset_count.store(0, std::memory_order_release);
     }
