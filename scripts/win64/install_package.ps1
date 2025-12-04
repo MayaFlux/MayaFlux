@@ -94,7 +94,13 @@ function Expand-ArchiveSafe($archivePath, $destination) {
 function Install-SystemTool($name, $config) {
     Write-Host "`n[$name] Checking system tool..." -ForegroundColor Cyan
 
-    if (& $config.Verify) {
+    $isInstalled = if ($config.Verify -like '*\*' -or $config.Verify -like '*:*') {
+        Test-Path $config.Verify
+    } else {
+        Test-Command $config.Verify
+    }
+
+    if ($isInstalled) {
         Write-Host "  [OK] Already installed" -ForegroundColor Green
         return
     }
@@ -102,7 +108,13 @@ function Install-SystemTool($name, $config) {
     Write-Host "  Installing via winget..." -ForegroundColor Yellow
     winget install --id $config.WingetId -e --accept-package-agreements --accept-source-agreements --silent
 
-    if (-not (& $config.Verify)) {
+    $isInstalled = if ($config.Verify -like '*\*' -or $config.Verify -like '*:*') {
+        Test-Path $config.Verify
+    } else {
+        Test-Command $config.Verify
+    }
+
+    if (-not $isInstalled) {
         throw "Installation verification failed for $name"
     }
     Write-Host "  [OK] Installed successfully" -ForegroundColor Green
@@ -111,7 +123,7 @@ function Install-SystemTool($name, $config) {
 function Install-BinaryPackage($name, $config) {
     Write-Host "`n[$name] Installing binary package..." -ForegroundColor Cyan
 
-    if (& $config.Verify) {
+    if (Test-Path $config.Verify) {
         Write-Host "  [OK] Already installed at $($config.InstallRoot)" -ForegroundColor Green
         return $config.InstallRoot
     }
@@ -134,9 +146,31 @@ function Install-BinaryPackage($name, $config) {
     # Handle installer vs archive
     if ($downloadFile -match "\.exe$" -and $config.InstallArgs) {
         Write-Host "  Running installer..." -ForegroundColor Yellow
-        $installArgs = $config.InstallArgs + @("/D=$($config.InstallRoot)")
+        
+        # Special message for VulkanSDK
+        if ($name -eq "VulkanSDK") {
+            Write-Host ""
+            Write-Host "  ============================================" -ForegroundColor Cyan
+            Write-Host "  Vulkan SDK Installer" -ForegroundColor Cyan
+            Write-Host "  ============================================" -ForegroundColor Cyan
+            Write-Host "  The Vulkan SDK installer will now open." -ForegroundColor Yellow
+            Write-Host "  " -ForegroundColor Yellow
+            Write-Host "  IMPORTANT: Install ALL components" -ForegroundColor Yellow
+            Write-Host "  (SDL2 is optional - install if needed)" -ForegroundColor Yellow
+            Write-Host "  (ARM components are not needed)" -ForegroundColor Yellow
+            Write-Host "  " -ForegroundColor Yellow
+            Write-Host "  The installer will run, please complete it." -ForegroundColor Yellow
+            Write-Host "  ============================================" -ForegroundColor Cyan
+            Write-Host ""
+            Start-Sleep -Seconds 3
+        }
+        
+        $installArgs = @()
+        $installArgs += $config.InstallArgs
+        $installArgs += "/D=$($config.InstallRoot)"
+        
         Start-Process -FilePath $downloadFile -ArgumentList $installArgs -Wait
-    }
+    }    
     else {
         # Extract archive
         Write-Host "  Extracting..." -ForegroundColor Yellow
@@ -152,7 +186,7 @@ function Install-BinaryPackage($name, $config) {
     # Cleanup
     Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
-    if (-not (& $config.Verify)) {
+    if (-not (Test-Path $config.Verify)) {
         throw "Installation verification failed for $name"
     }
 
@@ -162,8 +196,8 @@ function Install-BinaryPackage($name, $config) {
 
 function Install-HeaderOnlyPackage($name, $config) {
     Write-Host "`n[$name] Installing header-only package..." -ForegroundColor Cyan
-
-    if (& $config.Verify) {
+    
+    if (Test-Path $config.Verify) {
         Write-Host "  [OK] Already installed at $($config.InstallRoot)" -ForegroundColor Green
         return
     }
@@ -185,28 +219,44 @@ function Install-HeaderOnlyPackage($name, $config) {
     Write-Host "  Extracting..." -ForegroundColor Yellow
     Expand-ArchiveSafe $downloadFile $tempDir
 
-    # Find extracted directory
-    $extracted = Get-ChildItem $tempDir -Directory | Select-Object -First 1
+    # Find extracted directory (skip hidden directories like .git)
+    $extracted = Get-ChildItem $tempDir -Directory | Where-Object { -not $_.Name.StartsWith('.') }
+    
+    # If there's exactly one non-hidden directory, use it as the base
+    # Otherwise, use tempDir itself (multiple directories = no wrapper)
+    if ($extracted.Count -eq 1) {
+        $baseDir = $extracted[0].FullName
+    } else {
+        $baseDir = $tempDir
+    }
 
     # Copy headers based on config
     if ($config.HeaderSubpath) {
-        $srcDir = Join-Path $extracted.FullName $config.HeaderSubpath
-        $targetDir = if ($config.TargetSubdir) { Join-Path $targetIncludeDir $config.TargetSubdir } else { $targetIncludeDir }
+        $srcDir = Join-Path $baseDir $config.HeaderSubpath
+        $targetDir = if ($config.TargetSubdir) { 
+            Join-Path $targetIncludeDir $config.TargetSubdir 
+        } else { 
+            $targetIncludeDir 
+        }
         New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
         Copy-Item -Path "$srcDir\*" -Destination $targetDir -Recurse -Force
     }
     elseif ($config.HeaderPattern) {
-        $targetDir = if ($config.TargetSubdir) { Join-Path $targetIncludeDir $config.TargetSubdir } else { $targetIncludeDir }
+        $targetDir = if ($config.TargetSubdir) { 
+            Join-Path $targetIncludeDir $config.TargetSubdir 
+        } else { 
+            $targetIncludeDir 
+        }
         New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
-        Get-ChildItem $extracted.FullName -Filter $config.HeaderPattern | Copy-Item -Destination $targetDir -Force
+        Get-ChildItem $baseDir -Filter $config.HeaderPattern | Copy-Item -Destination $targetDir -Force
     }
     else {
-        Copy-Item -Path "$($extracted.FullName)\*" -Destination $config.InstallRoot -Recurse -Force
+        Copy-Item -Path "$baseDir\*" -Destination $config.InstallRoot -Recurse -Force
     }
 
     Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
-    if (-not (& $config.Verify)) {
+    if (-not (Test-Path $config.Verify)) {
         throw "Installation verification failed for $name"
     }
 
@@ -216,7 +266,7 @@ function Install-HeaderOnlyPackage($name, $config) {
 function Install-SourcePackage($name, $config) {
     Write-Host "`n[$name] Building from source..." -ForegroundColor Cyan
 
-    if (& $config.Verify) {
+    if (Test-Path $config.Verify) {
         Write-Host "  [OK] Already installed at $($config.InstallRoot)" -ForegroundColor Green
         return
     }
@@ -231,7 +281,10 @@ function Install-SourcePackage($name, $config) {
     # Get source
     if ($config.GitUrl) {
         Write-Host "  Cloning repository..." -ForegroundColor Yellow
-        git clone --depth 1 --branch $config.GitBranch --quiet $config.GitUrl $srcDir 2>$null
+        git clone --depth 1 --branch $config.GitBranch $config.GitUrl $srcDir
+        if ($LASTEXITCODE -ne 0) {
+            throw "Git clone failed for $name"
+        }
     }
     else {
         Write-Host "  Downloading source..." -ForegroundColor Yellow
@@ -259,18 +312,29 @@ function Install-SourcePackage($name, $config) {
         $cmakeArgs += "-D$($opt.Key)=$($opt.Value)"
     }
 
-    & cmake @cmakeArgs 2>$null | Out-Null
+    & cmake @cmakeArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "CMake configuration failed for $name"
+    }
 
     # Build and install
     Write-Host "  Building..." -ForegroundColor Yellow
-    cmake --build $buildDir --config Release 2>$null | Out-Null
-    cmake --install $buildDir --config Release 2>$null | Out-Null
+    cmake --build $buildDir --config Release
+    if ($LASTEXITCODE -ne 0) {
+        throw "Build failed for $name"
+    }
+    
+    Write-Host "  Installing..." -ForegroundColor Yellow
+    cmake --install $buildDir --config Release
+    if ($LASTEXITCODE -ne 0) {
+        throw "Install failed for $name"
+    }
 
     # Cleanup
     Remove-Item $srcDir -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item $buildDir -Recurse -Force -ErrorAction SilentlyContinue
 
-    if (-not (& $config.Verify)) {
+    if (-not (Test-Path $config.Verify)) {
         throw "Installation verification failed for $name"
     }
 
@@ -297,6 +361,25 @@ function Set-PackageEnvironment($name, $config, $installedPath = $null) {
             if ($value) {
                 [Environment]::SetEnvironmentVariable($var.Key, $value, "Machine")
                 Set-Item -Path "env:$($var.Key)" -Value $value
+            }
+        }
+    }
+
+    # Special handling for VulkanSDK - set version-specific env vars
+    if ($name -eq "VulkanSDK") {
+        $rootPath = if ($installedPath) { $installedPath } else { $config.InstallRoot }
+        # Find the actual version directory
+        $versionDir = Get-ChildItem $rootPath -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($versionDir) {
+            $vulkanSdkFull = $versionDir.FullName
+            [Environment]::SetEnvironmentVariable("VULKAN_SDK", $vulkanSdkFull, "Machine")
+            [Environment]::SetEnvironmentVariable("VK_SDK_PATH", $vulkanSdkFull, "Machine")
+            Write-Host "  + Set VULKAN_SDK=$vulkanSdkFull" -ForegroundColor Green
+            Write-Host "  + Set VK_SDK_PATH=$vulkanSdkFull" -ForegroundColor Green
+            
+            $binPath = Join-Path $vulkanSdkFull "Bin"
+            if (Test-Path $binPath) {
+                Add-ToSystemPath $binPath
             }
         }
     }
@@ -377,7 +460,7 @@ foreach ($tool in $packages.SystemTools.GetEnumerator()) {
 # Check special packages
 Write-Host "`n=== Special Requirements ===" -ForegroundColor Magenta
 foreach ($special in $packages.SpecialPackages.GetEnumerator()) {
-    if (-not (& $special.Value.Verify)) {
+    if (-not (Test-Path $special.Value.Verify)) {
         Write-Warning "$($special.Key): $($special.Value.Message)"
     }
     else {

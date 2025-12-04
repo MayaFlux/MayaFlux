@@ -136,7 +136,7 @@ you can do so fluently without waiting for someone else to provide the building 
   - [Next: The Full Pipeline
     Tutorial](#next-the-full-pipeline-tutorial){#toc-next-the-full-pipeline-tutorial}
 
-## The Simplest First Step
+# Tutorial: The Simplest First Step
 
 Run this code. The file is loaded into memory.
 
