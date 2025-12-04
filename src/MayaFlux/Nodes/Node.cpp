@@ -93,4 +93,69 @@ void Node::reset_processed_state_internal()
     atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
 }
 
+bool Node::try_claim_snapshot_context(uint64_t context_id)
+{
+    uint64_t expected = 0;
+    return m_snapshot_context_id.compare_exchange_strong(
+        expected, context_id,
+        std::memory_order_acq_rel,
+        std::memory_order_acquire);
+}
+
+bool Node::is_in_snapshot_context(uint64_t context_id) const
+{
+    return m_snapshot_context_id.load(std::memory_order_acquire) == context_id;
+}
+
+void Node::release_snapshot_context(uint64_t context_id)
+{
+    uint64_t expected = context_id;
+    m_snapshot_context_id.compare_exchange_strong(
+        expected, 0,
+        std::memory_order_release,
+        std::memory_order_relaxed);
+}
+
+bool Node::has_active_snapshot() const
+{
+    return m_snapshot_context_id.load(std::memory_order_acquire) != 0;
+}
+
+void Node::add_buffer_reference()
+{
+    m_buffer_count.fetch_add(1, std::memory_order_release);
+}
+
+void Node::remove_buffer_reference()
+{
+    m_buffer_count.fetch_sub(1, std::memory_order_release);
+}
+
+bool Node::mark_buffer_processed()
+{
+    uint32_t count = m_buffer_count.load(std::memory_order_acquire);
+    auto state = m_state.load(std::memory_order_acquire);
+
+    if (count >= 1 && state == Utils::NodeState::INACTIVE) {
+        bool expected = false;
+        if (m_buffer_processed.compare_exchange_strong(expected, true,
+                std::memory_order_acq_rel)) {
+            m_buffer_reset_count.fetch_add(1, std::memory_order_release);
+            return true;
+        }
+    }
+    return false;
+}
+
+void Node::request_buffer_reset()
+{
+    uint32_t reset_count = m_buffer_reset_count.fetch_add(1, std::memory_order_acq_rel);
+    uint32_t buffer_count = m_buffer_count.load(std::memory_order_acquire);
+
+    if (reset_count == buffer_count) {
+        m_buffer_processed.store(false, std::memory_order_release);
+        m_buffer_reset_count.store(0, std::memory_order_release);
+    }
+}
+
 }

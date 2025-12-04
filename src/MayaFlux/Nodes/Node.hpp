@@ -476,6 +476,93 @@ public:
      */
     std::atomic<uint32_t> m_modulator_count { 0 };
 
+    /**
+     * @brief Attempt to claim snapshot context for this processing cycle
+     * @param context_id Unique context identifier for this buffer processing
+     * @return true if this caller claimed the context (should call save_state)
+     *
+     * This method enables multiple NodeBuffers referencing the same node to
+     * coordinate save/restore state operations. Only the first caller per
+     * processing context will claim the snapshot, preventing nested state saves.
+     */
+    bool try_claim_snapshot_context(uint64_t context_id);
+
+    /**
+     * @brief Check if currently in a snapshot context
+     * @param context_id Context to check
+     * @return true if this context is active
+     *
+     * Used by secondary callers to detect when the primary snapshot holder
+     * has completed processing and released the context.
+     */
+    [[nodiscard]] bool is_in_snapshot_context(uint64_t context_id) const;
+
+    /**
+     * @brief Release snapshot context
+     * @param context_id Context to release
+     *
+     * Called by the snapshot owner after restore_state() completes,
+     * allowing other buffers to proceed with their own snapshots.
+     */
+    void release_snapshot_context(uint64_t context_id);
+
+    /**
+     * @brief Check if node is currently being snapshotted by any context
+     * @return true if a snapshot is in progress
+     */
+    [[nodiscard]] bool has_active_snapshot() const;
+
+    /**
+     * @brief Get the active snapshot context ID
+     * @return The current active snapshot context ID, or 0 if none
+     */
+    [[nodiscard]] inline uint64_t get_active_snapshot_context() const
+    {
+        return m_snapshot_context_id.load(std::memory_order_acquire);
+    }
+
+    /**
+     * @brief Increments the buffer reference count
+     * This method is called when a new buffer starts using this node
+     * to ensure proper lifecycle management.
+     */
+    void add_buffer_reference();
+
+    /**
+     * @brief Decrements the buffer reference count
+     * This method is called when a buffer stops using this node
+     * to ensure proper lifecycle management.
+     */
+    void remove_buffer_reference();
+
+    /**
+     * @brief Marks the node as having been processed by a buffer
+     * @return true if the buffer was successfully marked as processed
+     *
+     * This method checks if the node can be marked as processed based on
+     * the current buffer count and node state. If conditions are met,
+     * it updates the processed flag and increments the reset counter.
+     */
+    bool mark_buffer_processed();
+
+    /**
+     * @brief Requests a reset of the buffer state
+     *
+     * This method is called to signal that the buffer's processed state
+     * should be reset. It increments the reset counter, which is used to
+     * determine when it's safe to clear the processed state.
+     */
+    void request_buffer_reset();
+
+    /**
+     * @brief Checks if the buffer has been processed
+     * @return true if the buffer is marked as processed
+     */
+    inline bool is_buffer_processed() const
+    {
+        return m_buffer_processed.load(std::memory_order_acquire);
+    }
+
 private:
     /**
      * @brief Bitmask tracking which channels are currently using this node
@@ -490,5 +577,40 @@ private:
      * requested a reset, the node can safely clear its processed state.
      */
     std::atomic<uint32_t> m_pending_reset_mask { 0 };
+
+    /**
+     * @brief Unique identifier for the current snapshot context
+     *
+     * This atomic variable holds the unique identifier of the current
+     * snapshot context that has claimed ownership of this node's state.
+     * It ensures that only one processing context can perform save/restore
+     * operations at a time, preventing nested snapshots and ensuring
+     * consistent state management.
+     */
+    std::atomic<uint64_t> m_snapshot_context_id { 0 };
+
+    /**
+     * @brief Counter tracking how many buffers are using this node
+     * This counter is incremented when a buffer starts using this node
+     * and decremented when the buffer stops using it. It helps manage
+     * the node's lifecycle in relation to buffer usage.
+     */
+    std::atomic<uint32_t> m_buffer_count { 0 };
+
+    /**
+     * @brief Flag indicating whether the buffer has been processed
+     * This atomic flag is set when the buffer has been successfully
+     * processed and is used to prevent redundant processing.
+     */
+    std::atomic<bool> m_buffer_processed { false };
+
+    /**
+     * @brief Counter tracking how many buffers have requested a reset
+     *
+     * When all buffers using this node have requested a reset, the node's
+     * processed state can be safely cleared. This counter helps coordinate
+     * that process.
+     */
+    std::atomic<uint32_t> m_buffer_reset_count { 0 };
 };
 }

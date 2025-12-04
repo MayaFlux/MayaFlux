@@ -105,6 +105,14 @@
 #endif
 #endif
 
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+    #define MF_PAUSE_INSTRUCTION() __builtin_ia32_pause()
+#elif defined(__aarch64__) || defined(_M_ARM64)
+    #define MF_PAUSE_INSTRUCTION() __asm__ __volatile__("yield")
+#else
+    #define MF_PAUSE_INSTRUCTION() ((void)0)
+#endif
+
 namespace MayaFlux {
 
 namespace Config {

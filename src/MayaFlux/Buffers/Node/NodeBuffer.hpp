@@ -44,6 +44,8 @@ public:
      */
     NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix = 0.5f, bool clear_before_process = true);
 
+    ~NodeSourceProcessor() override;
+
     /**
      * @brief Captures node computation output into a buffer
      * @param buffer Buffer to store the processed data
