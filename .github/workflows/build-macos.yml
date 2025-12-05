@@ -89,6 +89,16 @@ jobs:
             glfw
             glm
             llvm
+            vulkan-headers
+            vulkan-loader
+            vulkan-tools
+            vulkan-validationlayers
+            vulkan-utility-libraries
+            spirv-tools
+            spirv-cross
+            shaderc
+            glslang
+            molten-vk
 
       - name: Setup Homebrew Environment
         run: |
@@ -139,6 +149,10 @@ jobs:
           echo "LLVM_DIR=$LLVM_PREFIX/lib/cmake/llvm" >> $GITHUB_ENV
           echo "Clang_DIR=$LLVM_PREFIX/lib/cmake/clang" >> $GITHUB_ENV
 
+          # Vulkan SDK specific
+          MOLTENVK_ICD=$(find $(brew --prefix) -name "MoltenVK_icd.json" | head -1)
+          echo "VK_ICD_FILENAMES=$MOLTENVK_ICD" >> $GITHUB_ENV
+
           # Verify the setup worked
           echo "=== Verifying environment ==="
           echo "CMAKE command: $(which cmake)"
@@ -150,16 +164,6 @@ jobs:
           pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
           pkg-config --exists magic_enum && echo "✅ magic_enum found" || echo "❌ magic_enum not found"
           pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
-
-      - name: Install Vulkan SDK (LunarG)
-        uses: jakoch/install-vulkan-sdk-action@v1
-        with:
-          cache: true
-          install_runtime: true
-
-      - name: Verify Vulkan SDK
-        run: |
-          echo "VULKAN_SDK=$VULKAN_SDK"
 
       - name: Install STB headers
         shell: bash
@@ -287,10 +291,10 @@ jobs:
           echo "Dependencies:"
           echo "  [Tier 1 - Homebrew Packages]"
           echo "  ✓ LLVM (Lila JIT - Homebrew)"
-          echo "  ✓ Vulkan SDK (GitHub Action)"
           echo "  [Tier 2 - Homebrew Libraries]"
           echo "  ✓ RtAudio, GLFW, FFmpeg"
           echo "  ✓ Eigen3, GLM, magic_enum, fmt"
+          echo "  ✓ Vulkan SDK"
           echo "  [Tier 3 - Header-Only Direct]"
           echo "  ✓ STB (direct git clone)"
           echo ""
