@@ -23,6 +23,8 @@
 
 {{WINDOWS_SECTION}}
 
+{{LINUX_SECTION}}
+
 ## 🛠 Quick Start
 
 1. Extract archive to desired location
@@ -34,6 +36,7 @@
 ## 🔧 For Developers
 
 Link against:
+
 - **Headers**: `include/MayaFlux/` and `include/Lila/`
 - **Libraries**: Platform-specific dynamic libraries in `lib/` directory
 - **Application**: `bin/lila_server` ready-to-run executable
@@ -41,6 +44,7 @@ Link against:
 ## 🐛 Troubleshooting
 
 See platform-specific README files for detailed troubleshooting:
+
 - `README.md` (macOS)
 - `README.md` (Windows)
 

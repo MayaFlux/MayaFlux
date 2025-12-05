@@ -38,9 +38,14 @@ if(UNIX)
     COMMAND ${CMAKE_COMMAND} -E create_symlink
     ${CMAKE_BINARY_DIR}/compile_commands.json
     ${CMAKE_SOURCE_DIR}/compile_commands.json)
+endif()
 
+if(MAYAFLUX_BUILD_TESTS)
+    message(STATUS "Building tests (MAYAFLUX_BUILD_TESTS=ON)")
     enable_testing()
     add_subdirectory(tests)
+else()
+    message(STATUS "Tests disabled (use -DMAYAFLUX_BUILD_TESTS=ON to enable)")
 endif()
 
 include(install)

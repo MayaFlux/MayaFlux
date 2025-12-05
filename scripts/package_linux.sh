@@ -42,7 +42,7 @@ PREFIX="package"
 BUILD_DIR="${PREFIX}/build"
 INSTALL_DIR="${PREFIX}/install_root"
 ARCHIVE_ROOT="${PREFIX}/MayaFlux-${FINAL_VERSION}"
-ARCHIVE_NAME="MayaFlux-${FINAL_VERSION}-Linux.tar.gz"
+ARCHIVE_NAME="MayaFlux-${FINAL_VERSION}-linux-arch.tar.gz"
 
 # ---------------------------------------------
 # Clean + prepare
