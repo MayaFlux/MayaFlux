@@ -356,16 +356,24 @@ public:
     // =========================================================================
 
     std::shared_ptr<BufferProcessor> attach_quick_process(
-        BufferProcessingFunction processor,
+        AudioProcessingFunction processor,
         const std::shared_ptr<Buffer>& buffer, ProcessingToken token = ProcessingToken::AUDIO_BACKEND);
 
     std::shared_ptr<BufferProcessor> attach_quick_process(
-        BufferProcessingFunction processor,
+        GraphicsProcessingFunction processor,
+        const std::shared_ptr<Buffer>& buffer, ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND);
+
+    std::shared_ptr<BufferProcessor> attach_quick_process(
+        AudioProcessingFunction processor,
         ProcessingToken token,
         uint32_t channel);
 
     std::shared_ptr<BufferProcessor> attach_quick_process(
-        BufferProcessingFunction processor,
+        AudioProcessingFunction processor,
+        ProcessingToken token);
+
+    std::shared_ptr<BufferProcessor> attach_quick_process(
+        GraphicsProcessingFunction processor,
         ProcessingToken token);
 
     // =========================================================================

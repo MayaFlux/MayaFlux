@@ -324,9 +324,11 @@ jobs:
             "-B", "build",
             "-G", "Visual Studio 17 2022",
             "-A", "x64",
+            "-DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}",
+            "-DCMAKE_CONFIGURATION_TYPES=${{ env.BUILD_TYPE }}",
             "-DCMAKE_CXX_STANDARD=23",
             "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON",
-            "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake"
+            "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake",
             "-DCMAKE_CXX_FLAGS_RELEASE=/O2 /DNDEBUG /Z7",
             "-DCMAKE_EXE_LINKER_FLAGS=/DEBUG:FASTLINK"
           )

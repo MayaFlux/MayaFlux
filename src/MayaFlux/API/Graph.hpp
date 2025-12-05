@@ -24,6 +24,11 @@ namespace Buffers {
     class BufferProcessingChain;
 }
 
+namespace internal {
+    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_audio(Buffers::AudioProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer);
+    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_graphics(Buffers::GraphicsProcessingFunction processor, const std::shared_ptr<Buffers::VKBuffer>& buffer);
+}
+
 //-------------------------------------------------------------------------
 // Node Graph Management
 //-------------------------------------------------------------------------
@@ -347,15 +352,6 @@ MAYAFLUX_API void connect_node_to_buffer(const std::shared_ptr<Nodes::Node>& nod
 //-------------------------------------------------------------------------
 
 /**
- * @brief Attaches a processing function to a specific buffer
- * @param processor Function to process the buffer
- * @param buffer Buffer to process
- *
- * The processor will be called during the default engine's audio processing cycle.
- */
-MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer);
-
-/**
  * @brief Attaches a processing function to a specific channel
  * @param processor Function to process the buffer
  * @param channel_id Channel index to process
@@ -363,7 +359,28 @@ MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buff
  * The processor will be called during the default engine's audio processing cycle
  * and will operate on the specified output channel buffer.
  */
-MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, unsigned int channel_id = 0);
+MAYAFLUX_API std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::AudioProcessingFunction processor, unsigned int channel_id = 0);
+
+// Template overloads for auto lambdas
+template <typename F>
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(
+    F&& processor,
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer)
+{
+    return internal::attach_quick_process_audio(
+        Buffers::AudioProcessingFunction { std::forward<F>(processor) },
+        buffer);
+}
+
+template <typename F>
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(
+    F&& processor,
+    const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    return internal::attach_quick_process_graphics(
+        Buffers::GraphicsProcessingFunction { std::forward<F>(processor) },
+        buffer);
+}
 
 /**
  * @brief Reads audio data from the default input source into a buffer

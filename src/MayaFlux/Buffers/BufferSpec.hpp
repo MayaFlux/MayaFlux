@@ -43,9 +43,4 @@ using AudioProcessingFunction = std::function<void(const std::shared_ptr<AudioBu
  */
 using GraphicsProcessingFunction = std::function<void(const std::shared_ptr<VKBuffer>&)>;
 
-// ============================================================================
-// Variant Type for Unified Dispatcher
-// ============================================================================
-
-using BufferProcessingFunction = std::variant<AudioProcessingFunction, GraphicsProcessingFunction>;
 }

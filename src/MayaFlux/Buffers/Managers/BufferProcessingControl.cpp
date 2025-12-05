@@ -3,9 +3,10 @@
 #include "BufferAccessControl.hpp"
 #include "TokenUnitManager.hpp"
 
+#include "QuickProcess.hpp"
+
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
-#include "MayaFlux/Buffers/BufferProcessor.hpp"
 #include "MayaFlux/Buffers/Node/NodeBuffer.hpp"
 #include "MayaFlux/Buffers/Root/MixProcessor.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
@@ -13,55 +14,6 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
-
-class QuickProcess : public BufferProcessor {
-public:
-    QuickProcess(BufferProcessingFunction function)
-        : m_function(std::move(function))
-    {
-    }
-
-    void processing_function(std::shared_ptr<Buffer> buffer) override
-    {
-        std::visit([buffer](auto& fn) {
-            if constexpr (std::is_same_v<decltype(fn), AudioProcessingFunction&>) {
-                if (auto audio_buf = std::dynamic_pointer_cast<AudioBuffer>(buffer)) {
-                    fn(audio_buf);
-                }
-            } else {
-                if (auto vk_buf = std::dynamic_pointer_cast<VKBuffer>(buffer)) {
-                    fn(vk_buf);
-                }
-            }
-        },
-            m_function);
-    }
-
-    void on_attach(std::shared_ptr<Buffer> buffer) override
-    {
-        if (auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer)) {
-            if (m_processing_token != ProcessingToken::AUDIO_BACKEND || m_processing_token != ProcessingToken::AUDIO_PARALLEL) {
-                m_processing_token = ProcessingToken::AUDIO_BACKEND;
-            }
-        } else if (auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer)) {
-            if (m_processing_token != ProcessingToken::GRAPHICS_BACKEND) {
-                m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
-            }
-        } else {
-            error<std::invalid_argument>(Journal::Component::Core, Journal::Context::BufferManagement,
-                std::source_location::current(),
-                "QuickProcess can only be attached to AudioBuffer or VKBuffer");
-        }
-    }
-
-    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override
-    {
-        return std::dynamic_pointer_cast<AudioBuffer>(buffer) != nullptr || std::dynamic_pointer_cast<VKBuffer>(buffer) != nullptr;
-    }
-
-private:
-    BufferProcessingFunction m_function;
-};
 
 BufferProcessingControl::BufferProcessingControl(
     TokenUnitManager& unit_manager,
@@ -275,29 +227,49 @@ void BufferProcessingControl::set_audio_final_processor(
 // ============================================================================
 
 std::shared_ptr<BufferProcessor> BufferProcessingControl::attach_quick_process(
-    BufferProcessingFunction processor,
-    const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
+    AudioProcessingFunction processor,
+    const std::shared_ptr<Buffer>& buffer,
+    ProcessingToken token)
 {
-    auto quick_process = std::make_shared<QuickProcess>(std::move(processor));
+    auto quick_process = std::make_shared<QuickProcess<AudioProcessingFunction>>(std::move(processor));
     add_processor(quick_process, buffer, token);
     return quick_process;
 }
 
 std::shared_ptr<BufferProcessor> BufferProcessingControl::attach_quick_process(
-    BufferProcessingFunction processor,
+    GraphicsProcessingFunction processor,
+    const std::shared_ptr<Buffer>& buffer,
+    ProcessingToken token)
+{
+    auto quick_process = std::make_shared<QuickProcess<GraphicsProcessingFunction>>(std::move(processor));
+    add_processor(quick_process, buffer, token);
+    return quick_process;
+}
+
+std::shared_ptr<BufferProcessor> BufferProcessingControl::attach_quick_process(
+    AudioProcessingFunction processor,
     ProcessingToken token,
     uint32_t channel)
 {
-    auto quick_process = std::make_shared<QuickProcess>(std::move(processor));
+    auto quick_process = std::make_shared<QuickProcess<AudioProcessingFunction>>(std::move(processor));
     add_audio_processor_to_channel(quick_process, token, channel);
     return quick_process;
 }
 
 std::shared_ptr<BufferProcessor> BufferProcessingControl::attach_quick_process(
-    BufferProcessingFunction processor,
+    AudioProcessingFunction processor,
     ProcessingToken token)
 {
-    auto quick_process = std::make_shared<QuickProcess>(std::move(processor));
+    auto quick_process = std::make_shared<QuickProcess<AudioProcessingFunction>>(std::move(processor));
+    add_processor(quick_process, token);
+    return quick_process;
+}
+
+std::shared_ptr<BufferProcessor> BufferProcessingControl::attach_quick_process(
+    GraphicsProcessingFunction processor,
+    ProcessingToken token)
+{
+    auto quick_process = std::make_shared<QuickProcess<GraphicsProcessingFunction>>(std::move(processor));
     add_processor(quick_process, token);
     return quick_process;
 }

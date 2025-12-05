@@ -12,6 +12,18 @@
 
 namespace MayaFlux {
 
+namespace internal {
+    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_audio(Buffers::AudioProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer)
+    {
+        return get_buffer_manager()->attach_quick_process(std::move(processor), buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
+    }
+
+    std::shared_ptr<Buffers::BufferProcessor> attach_quick_process_graphics(Buffers::GraphicsProcessingFunction processor, const std::shared_ptr<Buffers::VKBuffer>& buffer)
+    {
+        return get_buffer_manager()->attach_quick_process(std::move(processor), buffer, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    }
+}
+
 //-------------------------------------------------------------------------
 // Node Graph Management
 //-------------------------------------------------------------------------
@@ -138,12 +150,7 @@ void unregister_node_network(const std::shared_ptr<Nodes::Network::NodeNetwork>&
 // Audio Processing
 //-------------------------------------------------------------------------
 
-std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, const std::shared_ptr<Buffers::AudioBuffer>& buffer)
-{
-    return get_buffer_manager()->attach_quick_process(std::move(processor), buffer, Buffers::ProcessingToken::AUDIO_BACKEND);
-}
-
-std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::BufferProcessingFunction processor, unsigned int channel_id)
+std::shared_ptr<Buffers::BufferProcessor> attach_quick_process(Buffers::AudioProcessingFunction processor, unsigned int channel_id)
 {
     return get_buffer_manager()->attach_quick_process(std::move(processor), Buffers::ProcessingToken::AUDIO_BACKEND, channel_id);
 }

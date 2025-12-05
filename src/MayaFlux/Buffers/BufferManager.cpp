@@ -289,14 +289,21 @@ void BufferManager::set_final_processor(
 // ============================================================================
 
 std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(
-    BufferProcessingFunction processor,
+    AudioProcessingFunction processor,
     const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
 {
     return m_processor_control->attach_quick_process(std::move(processor), buffer, token);
 }
 
 std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(
-    BufferProcessingFunction processor,
+    GraphicsProcessingFunction processor,
+    const std::shared_ptr<Buffer>& buffer, ProcessingToken token)
+{
+    return m_processor_control->attach_quick_process(std::move(processor), buffer, token);
+}
+
+std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(
+    AudioProcessingFunction processor,
     ProcessingToken token,
     uint32_t channel)
 {
@@ -304,7 +311,14 @@ std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(
 }
 
 std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(
-    BufferProcessingFunction processor,
+    AudioProcessingFunction processor,
+    ProcessingToken token)
+{
+    return m_processor_control->attach_quick_process(std::move(processor), token);
+}
+
+std::shared_ptr<BufferProcessor> BufferManager::attach_quick_process(
+    GraphicsProcessingFunction processor,
     ProcessingToken token)
 {
     return m_processor_control->attach_quick_process(std::move(processor), token);

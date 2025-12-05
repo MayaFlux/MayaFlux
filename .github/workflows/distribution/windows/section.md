@@ -1,53 +1,55 @@
-## 🍎 macOS Specific
+## 🪟 Windows Specific
 
 ### System Requirements
-- **OS**: macOS 14 (Sonoma) or later
-- **Architecture**: ARM64 (Apple Silicon)
-- **Dependencies**: Homebrew (for runtime dependencies)
+- **OS**: Windows 10/11 64-bit
+- **Architecture**: x86_64
+- **Dependencies**: Visual Studio 2022 Build Tools
 
 ### Installation & Dependencies
-```bash
-brew install rtaudio ffmpeg shaderc googletest pkg-config cmake \
-             eigen onedpl magic_enum fmt glfw glm llvm vulkan-sdk
-```
+- **Package Manager**: vcpkg (automatically managed)
+- **Required**: Visual Studio 2022 Build Tools
+- **Optional**: Vulkan SDK for development
 
 ### Technical Details
-- **Build**: System Clang (Apple Clang) with C++23 support
-- **Architecture**: ARM64 (Apple Silicon optimized)
-- **LLVM**: Homebrew LLVM for JIT compilation
-- **Vulkan**: MoltenVK (Vulkan over Metal) for graphics
-- **Audio**: RtAudio with CoreAudio backend
+- **Build**: MSVC 2022 with C++23 support
+- **Architecture**: x64
+- **LLVM**: Pre-built LLVM 21.1.3 for JIT compilation
+- **Vulkan**: Vulkan SDK with Windows drivers
+- **Audio**: RtAudio with WASAPI backend
 
 ### Distribution Contents
 ```
-MayaFlux-{{VERSION}}-macos-arm64/
-├── bin/              # Executables
-│   └── lila_server
-├── lib/              # Dynamic libraries
-│   ├── libMayaFluxLib.dylib
-│   └── libLila.dylib
+MayaFlux-{{VERSION}}-windows-x64/
+├── bin/              # Executables & DLLs
+│   ├── lila_server.exe
+│   └── [runtime DLLs]
+├── lib/              # Import libraries
+│   ├── MayaFluxLib.lib
+│   └── Lila.lib
 ├── include/          # Headers
 │   ├── MayaFlux/
 │   └── Lila/
 ├── share/            # Runtime data
 │   └── MayaFlux/runtime/
-├── README.md
-└── verify_components.sh
+├── README_Windows.md
+└── verify.bat
 ```
 
-### Common macOS Issues
-**"Library not found" errors**
-- Verify all Homebrew dependencies are installed
-- Run `brew doctor` to check for issues
-- Ensure DYLD_LIBRARY_PATH includes library locations
+### Common Windows Issues
+**"DLL not found" errors**
+- Ensure all required Visual C++ Redistributables are installed
+- Check that all DLLs are present in the `bin/` directory
+- Verify PATH includes the directory containing the DLLs
 
 **Lila JIT compilation failures**
-- Ensure Homebrew LLVM is installed and in PATH
-- Verify no conflicting LLVM installations
-- Check system integrity with `codesign` verification
+- Verify LLVM is properly installed and in PATH
+- Check that the DIA SDK is available (should be with Visual Studio)
 
 **GPU initialization errors**
-- Update macOS to latest version
-- Verify Metal support: `system_profiler SPDisplaysDataType`
-- Check Vulkan SDK installation
+- Update graphics drivers
+- Verify Vulkan SDK installation
+
+**Application won't start**
+- Check Windows Event Viewer for error details
+- Ensure all runtime dependencies are available
 
