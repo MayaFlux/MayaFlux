@@ -50,3 +50,5 @@ if(NOT EXISTS ${USER_PROJECT_FILE})
     )
 endif()
 set(USER_SOURCES ${USER_PROJECT_FILE})
+
+option(MAYAFLUX_BUILD_TESTS "Build MayaFlux test suite" OFF)
