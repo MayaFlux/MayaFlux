@@ -196,8 +196,12 @@ public:
      * Quick processes are simple lambda-based processors for one-off transformations.
      */
     std::shared_ptr<BufferProcessor> attach_quick_process(
-        BufferProcessingFunction processor,
+        AudioProcessingFunction processor,
         const std::shared_ptr<Buffer>& buffer, ProcessingToken token = ProcessingToken::AUDIO_BACKEND);
+
+    std::shared_ptr<BufferProcessor> attach_quick_process(
+        GraphicsProcessingFunction processor,
+        const std::shared_ptr<Buffer>& buffer, ProcessingToken token = ProcessingToken::GRAPHICS_BACKEND);
 
     /**
      * @brief Creates and attaches a quick processing function to an audio token/channel
@@ -207,7 +211,7 @@ public:
      * @return Shared pointer to the created processor
      */
     std::shared_ptr<BufferProcessor> attach_quick_process(
-        BufferProcessingFunction processor,
+        AudioProcessingFunction processor,
         ProcessingToken token,
         uint32_t channel);
 
@@ -218,7 +222,11 @@ public:
      * @return Shared pointer to the created processor
      */
     std::shared_ptr<BufferProcessor> attach_quick_process(
-        BufferProcessingFunction processor,
+        AudioProcessingFunction processor,
+        ProcessingToken token);
+
+    std::shared_ptr<BufferProcessor> attach_quick_process(
+        GraphicsProcessingFunction processor,
         ProcessingToken token);
 
     // =========================================================================

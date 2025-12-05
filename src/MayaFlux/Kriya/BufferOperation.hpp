@@ -289,7 +289,7 @@ namespace Kriya {
          */
         static BufferOperation modify_buffer(
             std::shared_ptr<Buffers::AudioBuffer> buffer,
-            Buffers::BufferProcessingFunction modifier);
+            Buffers::AudioProcessingFunction modifier);
 
         /**
          * @brief Create a fusion operation for multiple AudioBuffer sources.
@@ -422,7 +422,7 @@ namespace Kriya {
         bool m_is_streaming {};
 
         TransformationFunction m_transformer;
-        Buffers::BufferProcessingFunction m_buffer_modifier;
+        Buffers::AudioProcessingFunction m_buffer_modifier;
 
         std::shared_ptr<Buffers::AudioBuffer> m_target_buffer;
         std::shared_ptr<Kakshya::DynamicSoundStream> m_target_container;

@@ -168,7 +168,7 @@ BufferOperation BufferOperation::fuse_containers(std::vector<std::shared_ptr<Kak
 
 BufferOperation BufferOperation::modify_buffer(
     std::shared_ptr<Buffers::AudioBuffer> buffer,
-    Buffers::BufferProcessingFunction modifier)
+    Buffers::AudioProcessingFunction modifier)
 {
     BufferOperation op(OpType::MODIFY);
     op.m_target_buffer = std::move(buffer);
