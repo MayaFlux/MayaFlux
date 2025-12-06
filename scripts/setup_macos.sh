@@ -9,6 +9,12 @@ exec 3>&1 1>/dev/null
 
 err() { printf '%s\n' "$*" >&2; }
 
+PROFILE="${ZDOTDIR:-$HOME}/.zshenv"
+
+append_if_missing() {
+    grep -Fq "$1" "$PROFILE" 2>/dev/null || printf '%s\n' "$1" >>"$PROFILE"
+}
+
 # --- 1) Homebrew setup --------------------------------------------------------
 if ! command -v brew >/dev/null 2>&1; then
     printf 'Installing Homebrew...\n' >&3
@@ -18,8 +24,6 @@ fi
 brew update >/dev/null
 brew install cmake pkg-config git wget curl >/dev/null
 brew install llvm >/dev/null
-
-PROFILE="${ZDOTDIR:-$HOME}/.zshenv"
 
 # --- 2) LLVM environment configuration ---------------------------------------
 LLVM_PREFIX="$(brew --prefix llvm 2>/dev/null || true)"
@@ -33,61 +37,29 @@ if [ -n "$LLVM_PREFIX" ]; then
     fi
 fi
 
-# --- 3) Vulkan SDK setup (official LunarG API) --------------------------------
-TMPDIR="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR"' EXIT
-
-SDK_VERSION="$(curl -fsSL https://vulkan.lunarg.com/sdk/latest/mac.txt || true)"
-if [ -z "$SDK_VERSION" ]; then
-    err "Failed to fetch latest Vulkan SDK version for macOS"
-    exit 1
-fi
-
-DEST="$HOME/VulkanSDK/${SDK_VERSION}"
-
-if [ -d "$DEST" ]; then
-    printf 'Vulkan SDK %s already exists. Skipping download.\n' "$SDK_VERSION" >&3
-else
-    printf 'Downloading Vulkan SDK %s...\n' "$SDK_VERSION" >&3
-    SDK_URL="https://sdk.lunarg.com/sdk/download/${SDK_VERSION}/mac/vulkan_sdk.zip"
-    SDK_ZIP="$TMPDIR/vulkan_sdk_${SDK_VERSION}.zip"
-
-    if ! curl -fL "$SDK_URL" -o "$SDK_ZIP"; then
-        err "Failed to download Vulkan SDK from $SDK_URL"
-        exit 1
-    fi
-
-    mkdir -p "$DEST"
-    unzip -q "$SDK_ZIP" -d "$TMPDIR"
-
-    INSTALLER_APP=$(find "$TMPDIR" -name "*.app" -type d | head -n1)
-
-    if [ -z "$INSTALLER_APP" ]; then
-        err "Could not find the Vulkan SDK installer app in the downloaded zip."
-        exit 1
-    fi
-
-    if ! sudo "$INSTALLER_APP/Contents/MacOS/$(basename "$INSTALLER_APP" .app)" --root "$DEST" --accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.core com.lunarg.vulkan.usr; then
-        err "Failed to install the Vulkan SDK."
-        exit 1
-    fi
-fi
+# --- 3) Dependencies ------------------------------------------
+brew install ffmpeg rtaudio glfw glm eigen fmt magic_enum onedpl googletest vulkan-headers vulkan-loader vulkan-tools vulkan-validationlayers vulkan-utility-libraries spirv-tools spirv-cross shaderc glslang molten-vk
 
 # --- 4) Vulkan environment setup ---------------------------------------------
-append_if_missing() {
-    grep -Fq "$1" "$PROFILE" 2>/dev/null || printf '%s\n' "$1" >>"$PROFILE"
-}
 
-append_if_missing "export VULKAN_SDK=\"$DEST/macOS\""
-append_if_missing 'export PATH="$VULKAN_SDK/bin:$PATH"'
-append_if_missing 'export DYLD_LIBRARY_PATH="$VULKAN_SDK/lib:$DYLD_LIBRARY_PATH"'
-append_if_missing 'export VK_ICD_FILENAMES="$VULKAN_SDK/etc/vulkan/icd.d/MoltenVK_icd.json"'
-append_if_missing 'export VK_LAYER_PATH="$VULKAN_SDK/etc/vulkan/explicit_layer.d"'
+# Homebrew molten-vk installs to specific location
+HOMEBREW_PREFIX=$(brew --prefix)
+MOLTENVK_PREFIX="$HOMEBREW_PREFIX/opt/molten-vk"
 
-# --- 5) CMake dependencies ------------------------------------------
-brew install ffmpeg rtaudio glfw glm eigen fmt magic_enum onedpl googletest
+if [ -d "$MOLTENVK_PREFIX" ]; then
+    # Check both possible ICD locations
+    if [ -f "$MOLTENVK_PREFIX/share/vulkan/icd.d/MoltenVK_icd.json" ]; then
+        MOLTENVK_ICD="$MOLTENVK_PREFIX/share/vulkan/icd.d/MoltenVK_icd.json"
+    elif [ -f "$MOLTENVK_PREFIX/etc/vulkan/icd.d/MoltenVK_icd.json" ]; then
+        MOLTENVK_ICD="$MOLTENVK_PREFIX/etc/vulkan/icd.d/MoltenVK_icd.json"
+    fi
+fi
 
-# --- 6) STB Setup (header-only library) --------------------------------------
+if [ -n "$MOLTENVK_ICD" ]; then
+    append_if_missing "export VK_ICD_FILENAMES=\"$MOLTENVK_ICD\""
+fi
+
+# --- 5) STB Setup (header-only library) --------------------------------------
 printf 'Installing STB headers...\n' >&3
 
 STB_INSTALL_DIR="$HOME/Libraries/stb"
@@ -99,7 +71,7 @@ if [ ! -f "$STB_HEADER_CHECK" ]; then
     STB_HEADERS=(
         "stb_image.h"
         "stb_image_write.h"
-        "stb_image_resize.h"
+        "stb_image_resize2.h"
         "stb_truetype.h"
         "stb_rect_pack.h"
     )
@@ -122,7 +94,7 @@ append_if_missing 'export STB_ROOT="$HOME/Libraries"'
 append_if_missing 'export CMAKE_PREFIX_PATH="$STB_ROOT:$CMAKE_PREFIX_PATH"'
 append_if_missing 'export CPATH="$STB_ROOT/:$CPATH"'
 
-# --- 7) Finish ---------------------------------------------------------------
+# --- 6) Finish ---------------------------------------------------------------
 exec 1>&3 3>&-
 printf '✅ LLVM installed at %s\n' "$LLVM_PREFIX"
 printf '✅ Vulkan SDK %s installed to %s\n' "$SDK_VERSION" "$DEST"
