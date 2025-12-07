@@ -72,9 +72,6 @@ jobs:
       is_dev: ${{ needs.determine_version.outputs.IS_DEV }}
       run_tests: ${{ inputs.run_tests }}
       create_distribution: ${{ inputs.create_distribution }}
-      artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-macos-arm64
-      distribution_name: macos-arm64
-      os_display_name: macOS
 
   build_linux:
     needs: determine_version

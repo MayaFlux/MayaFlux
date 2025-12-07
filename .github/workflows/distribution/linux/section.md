@@ -1,5 +1,8 @@
 ## 🐧 Linux Specific
 
+<details>
+<summary>Click to expand</summary>
+
 ### System Requirements
 
 - **Distribution**: Fedora 43+, RHEL 10+, or compatible
@@ -90,3 +93,5 @@ ldconfig -p | grep -E "MayaFlux|Lila"
 - GLFW 3.4 supports both natively
 - Force X11 if needed: `export GDK_BACKEND=x11`
 - Check session: `echo $XDG_SESSION_TYPE`
+
+</details>

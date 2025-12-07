@@ -20,23 +20,23 @@ on:
         required: false
         type: boolean
         default: true
-      artifact_name:
-        required: true
-        type: string
-      distribution_name:
-        required: true
-        type: string
-      os_display_name:
-        required: true
-        type: string
 
 env:
   BUILD_TYPE: Release
 
 jobs:
   build:
-    runs-on: macos-14
-    name: "macOS 14 System Clang (Minimum)"
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            name: "macOS 14+ ARM64 (Apple Silicon)"
+            arch: arm64
+          - os: macos-15-intel
+            name: "macOS 15 x86_64 (Intel)"
+            arch: x64
 
     steps:
       - name: Checkout code
@@ -89,6 +89,16 @@ jobs:
             glfw
             glm
             llvm
+            vulkan-headers
+            vulkan-loader
+            vulkan-tools
+            vulkan-validationlayers
+            vulkan-utility-libraries
+            spirv-tools
+            spirv-cross
+            shaderc
+            glslang
+            molten-vk
 
       - name: Setup Homebrew Environment
         run: |
@@ -139,6 +149,10 @@ jobs:
           echo "LLVM_DIR=$LLVM_PREFIX/lib/cmake/llvm" >> $GITHUB_ENV
           echo "Clang_DIR=$LLVM_PREFIX/lib/cmake/clang" >> $GITHUB_ENV
 
+          # Vulkan SDK specific
+          MOLTENVK_ICD=$(find $(brew --prefix) -name "MoltenVK_icd.json" | head -1)
+          echo "VK_ICD_FILENAMES=$MOLTENVK_ICD" >> $GITHUB_ENV
+
           # Verify the setup worked
           echo "=== Verifying environment ==="
           echo "CMAKE command: $(which cmake)"
@@ -150,16 +164,6 @@ jobs:
           pkg-config --exists eigen3 && echo "✅ eigen3 found" || echo "❌ eigen3 not found"
           pkg-config --exists magic_enum && echo "✅ magic_enum found" || echo "❌ magic_enum not found"
           pkg-config --exists glm && echo "✅ glm found" || echo "❌ glm not found"
-
-      - name: Install Vulkan SDK (LunarG)
-        uses: jakoch/install-vulkan-sdk-action@v1
-        with:
-          cache: true
-          install_runtime: true
-
-      - name: Verify Vulkan SDK
-        run: |
-          echo "VULKAN_SDK=$VULKAN_SDK"
 
       - name: Install STB headers
         shell: bash
@@ -256,23 +260,20 @@ jobs:
         run: |
           VERSION="${{ inputs.version }}"
           SHORT_SHA=${GITHUB_SHA:0:8}
-          OS_NAME="${{ inputs.distribution_name }}"
+          OS_NAME="macos-${{ matrix.arch }}"
 
           PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
 
           tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
-          zip -r "${PACKAGE_NAME}.zip" dist_staging/
-
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
       - name: Upload MayaFlux distribution
         if: ${{ inputs.create_distribution != false }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.artifact_name }}
+          name: MayaFlux-${{ inputs.version }}-macos-${{ matrix.arch }}
           path: |
             ${{ env.PACKAGE_NAME }}.tar.gz
-            ${{ env.PACKAGE_NAME }}.zip
           retention-days: 30
 
       - name: Display build summary
@@ -287,16 +288,15 @@ jobs:
           echo "Dependencies:"
           echo "  [Tier 1 - Homebrew Packages]"
           echo "  ✓ LLVM (Lila JIT - Homebrew)"
-          echo "  ✓ Vulkan SDK (GitHub Action)"
           echo "  [Tier 2 - Homebrew Libraries]"
           echo "  ✓ RtAudio, GLFW, FFmpeg"
           echo "  ✓ Eigen3, GLM, magic_enum, fmt"
+          echo "  ✓ Vulkan SDK"
           echo "  [Tier 3 - Header-Only Direct]"
           echo "  ✓ STB (direct git clone)"
           echo ""
           echo "Distribution Package:"
           echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz"
-          echo "  ✓ ${{ env.PACKAGE_NAME }}.zip"
           echo "  ✓ Universal macOS ARM64 binaries"
           echo "  ✓ Ready for standalone deployment"
 

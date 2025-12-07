@@ -74,28 +74,33 @@ All components remain **composable and concurrent**. Processing domains are enco
 - Advanced coroutine coordination patterns
 
 ---
+
 ## Quick Start(Projects) WEAVE
 
-MayaFlux provides a managemnt tool called `Weave`, currently compatible with 
-winodws and mac. 
+MayaFlux provides a managemnt tool called `Weave`, currently compatible with
+winodws and mac.
 It has two disticnt modes:
 
 ### Management Mode
+
 It automates:
+
 - Downloading and installing MayaFlux
 - Installing all necessary Dependencies for that platform
 - Setting up environment variables
 - Storing templates for new projects.
 
 ### Project Creation Mode
+
 It automates:
+
 - Createing new C++ projects
 - Setting up CMakeLists.txt with necessary configurations (**DO NOT EDIT if you are unfamiliar with Cmake**)
 - Adding necessary MayaFlux includes and linkages
 - Setting up editor tools
 - Creating templated user_project.hpp
 
-Weave can be found here: [Weave Repository](https://github.com/MayaFlux/Weave) 
+Weave can be found here: [Weave Repository](https://github.com/MayaFlux/Weave)
 
 ## Quick Start (DEVELOPER)
 
@@ -107,6 +112,16 @@ This section is for developers looking to build MayaFlux from source.
 - **Build System**: CMake 3.20+
 - **Dependencies**: RtAudio, GLFW, FFmpeg, glm, Vulkan SDK, stb
 - **Optional**: LLVM 21+ (for Lila live coding), google-test (unit tests), Eigen (linear algebra)
+
+### macOS Requirements
+
+| Aspect                   | Requirement                     | Notes                                                |
+| ------------------------ | ------------------------------- | ---------------------------------------------------- |
+| **OS Version**           | macOS 14+ (ARM64) / 15+ (Intel) | Earlier versions lack required C++20 stdlib features |
+| **Binary Distributions** | ARM64 and x86_64                | Pre-built binaries available for both architectures  |
+| **Building from Source** | ARM64 or x86_64                 | Both architectures fully supported                   |
+
+**Intel Mac Users**: Pre-built binaries require macOS 15+. For older Intel Macs (pre-15), build from source following [Building from Source](docs/Getting_Started.md#building-from-source).
 
 ### Build
 
@@ -158,7 +173,7 @@ int main() {
 
 ```
 
-If not building from source, it is recommended to use the auto generated src/user_project.hpp 
+If not building from source, it is recommended to use the auto generated src/user_project.hpp
 instead of Project main.cpp
 
 ---
@@ -206,15 +221,15 @@ For contextual overview start with [Digital Transformation Paradigm](docs/Digita
 - **[Domain and Control](docs/Domain_and_Control.md)** — Processing tokens, domain composition, cross-modal coordination
 - **[Advanced Context Control](docs/Advanced_Context_Control.md)** — Backend customization and specialized architectures
 
-
 ### Tutorials
 
 Explore your first MayaFlux programs:
+
 - **[Sculpting Data Part I](docs/Tutorials/SculptingData.md)**:
-    This tutorial gets you started on the foundational concepts of MayaFlux,
-    i.e Data driven workflow with a teaser towards declarative syntax. 
-    It has simple Runnable code examples with optional comprehensive explanations.
-    The previously linked Getting Started guide is a prerequisite for this tutorial.
+  This tutorial gets you started on the foundational concepts of MayaFlux,
+  i.e Data driven workflow with a teaser towards declarative syntax.
+  It has simple Runnable code examples with optional comprehensive explanations.
+  The previously linked Getting Started guide is a prerequisite for this tutorial.
 
 ### API Documentation
 
@@ -235,12 +250,12 @@ open docs/html/index.html
 
 ## Project Maturity
 
-| Area                     | Status            | Notes                                                          |
-| ------------------------ | ----------------- | -------------------------------------------------------------- |
-| Core DSP Architecture    | ✓ Stable          | 700+ tests, production use ready                               |
-| Audio Backend            | ✓ Stable          | Sample-accurate I/O via RtAudio                                |
-| Live Coding (Lila)       | ✓ Functional      | Sub-buffer JIT compilation working                             |
-| Node Graphs              | ✓ Mature          | Lock-free, concurrent, well-tested                             |
+| Area                     | Status           | Notes                                                          |
+| ------------------------ | ---------------- | -------------------------------------------------------------- |
+| Core DSP Architecture    | ✓ Stable         | 700+ tests, production use ready                               |
+| Audio Backend            | ✓ Stable         | Sample-accurate I/O via RtAudio                                |
+| Live Coding (Lila)       | ✓ Functional     | Sub-buffer JIT compilation working                             |
+| Node Graphs              | ✓ Mature         | Lock-free, concurrent, well-tested                             |
 | Graphics (Vulkan)        | ⚙ POC            | Architecture validated, compute shader integration in progress |
 | Grammar-Driven Pipelines | ⚙ In Development | Core framework ready, advanced matching in progress            |
 

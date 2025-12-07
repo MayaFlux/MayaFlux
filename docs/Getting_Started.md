@@ -78,6 +78,30 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --parallel
 ```
 
+#### macOS clarifications
+
+**System Requirements:**
+
+- **ARM64 (Apple Silicon)**: macOS 14 (Sonoma) or later
+- **x86_64 (Intel)**: macOS 15 (Sequoia) or later
+- **Binary distributions**: Available for both ARM64 and x86_64
+- **Building from source**: Supported on macOS 14+ (ARM64) or 15+ (Intel)
+
+**Apple Silicon Users**: All automated setup and distribution channels work seamlessly.
+
+**Intel Mac Users (macOS 15+)**: Pre-built binaries available via releases.
+
+**Intel Mac Users (pre-macOS 15)**: Requires manual source build:
+
+```bash
+# Standard CMake build (source build only)
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build . --parallel $(sysctl -n hw.ncpu)
+```
+
+See [Building on Intel Macs](#building-on-intel-macs) for detailed instructions.
+
 ### IDE-Specific Setup
 
 **Visual Studio Code (Recommended):**
@@ -122,6 +146,64 @@ MayaFlux/
 ├── data/shaders/           # Shader files for graphics processing
 ├── scripts/                # Platform setup scripts
 ├── build/                  # Generated build files (after setup)
+```
+
+---
+
+## Building on Intel Macs
+
+MayaFlux provides pre-built x86_64 (Intel) binaries for macOS 15+. For older Intel Macs (pre-macOS 15), you'll need to build from source.
+
+### Prerequisites
+
+1. **macOS 14+** with Xcode Command Line Tools
+2. **Homebrew** (for dependency management)
+3. Manual dependency installation
+
+### Build Process
+
+```bash
+# 1. Verify LLVM installation (critical for Lila JIT)
+brew list llvm  # Should show installed
+llvm-config --version  # Should print version
+
+# 2. Clone MayaFlux
+git clone https://github.com/MayaFlux/MayaFlux.git
+
+# 3. Install dependencies manually
+./scripts/setup_macos.sh
+
+# 4. Build MayaFlux
+cd MayaFlux
+mkdir build && cd build
+
+cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang++
+
+cmake --build . --parallel $(sysctl -n hw.ncpu)
+```
+
+### Known Considerations
+
+- **Xcode's system Clang**: May not have full C++23 support. Use Homebrew LLVM above.
+- **Vulkan on Intel**: MoltenVK layer used; performance acceptable for development.
+- **LLVM JIT (Lila)**: Ensure Homebrew LLVM is installed, not system Clang.
+
+### Troubleshooting
+
+**"llvm-config not found"**
+
+```bash
+export LLVM_DIR=$(brew --prefix llvm)/lib/cmake/llvm
+# Then retry cmake
+```
+
+**"Clang version too old"**
+
+```bash
+# Use Homebrew's Clang
+cmake .. -DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang++
 ```
 
 ---
@@ -402,3 +484,22 @@ You'll have working audio within 5 minutes.
 
 If you have already completed the aforementioned tutorial, proceed to the next tutorial at
 [Sculpting Data Part II, Processing Expression](Tutorials/SculptingData/ProcessingExpression.md) which covers buffers, processors, math as expression, logic as creative decisions and more.
+
+## FAQ (MacOS)
+
+### Q: I have an Intel Mac. Can I use MayaFlux?
+
+**A**: Yes, fully!
+
+- **macOS 15+**: Pre-built binaries available via GitHub releases
+- **Pre-macOS 15**: Build from source following the [Building on Intel Macs](#building-on-intel-macs) guide (~10-15 minutes)
+
+Intel Macs have identical functionality to Apple Silicon.
+
+### Q: Why is macOS 15 minimum for Intel binaries?
+
+**A**: Our CI/CD uses GitHub's `macos-15` runners for Intel builds. For older Intel systems, source builds are fully supported and well-documented. If you need binaries for specific older versions, open an issue to discuss.
+
+### Q: Performance difference between ARM64 and x86_64?
+
+**A**: No meaningful difference for MayaFlux. Both are fully optimized. Vulkan performance may vary slightly due to MoltenVK translation layer, but both work well.
