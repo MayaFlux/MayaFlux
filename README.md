@@ -115,13 +115,13 @@ This section is for developers looking to build MayaFlux from source.
 
 ### macOS Requirements
 
-| Aspect                   | Requirement        | Notes                                                                    |
-| ------------------------ | ------------------ | ------------------------------------------------------------------------ |
-| **OS Version**           | macOS 14+ (Sonoma) | Earlier versions lack required C++20 stdlib features                     |
-| **Binary Distributions** | ARM64 only         | Homebrew, Weave, and pre-built binaries target Apple Silicon exclusively |
-| **Building from Source** | ARM64 or x86_64    | Both architectures fully supported; requires manual build setup          |
+| Aspect                   | Requirement                     | Notes                                                |
+| ------------------------ | ------------------------------- | ---------------------------------------------------- |
+| **OS Version**           | macOS 14+ (ARM64) / 15+ (Intel) | Earlier versions lack required C++20 stdlib features |
+| **Binary Distributions** | ARM64 and x86_64                | Pre-built binaries available for both architectures  |
+| **Building from Source** | ARM64 or x86_64                 | Both architectures fully supported                   |
 
-**If you have an Intel Mac**: You can build MayaFlux from source but cannot use Homebrew/Weave distributions. See [Building on Intel Macs](/docs/Getting_Started.md#building-on-intel-macs) for instructions.
+**Intel Mac Users**: Pre-built binaries require macOS 15+. For older Intel Macs (pre-15), build from source following [Building from Source](docs/Getting_Started.md#building-from-source).
 
 ### Build
 

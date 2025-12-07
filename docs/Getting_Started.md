@@ -82,13 +82,16 @@ cmake --build . --parallel
 
 **System Requirements:**
 
-- **Minimum OS**: macOS 14 (Sonoma)
-- **Binary distributions** (Homebrew/Weave): ARM64 only
-- **Building from source**: macOS 14+ on ARM64 or x86_64 (Intel)
+- **ARM64 (Apple Silicon)**: macOS 14 (Sonoma) or later
+- **x86_64 (Intel)**: macOS 15 (Sequoia) or later
+- **Binary distributions**: Available for both ARM64 and x86_64
+- **Building from source**: Supported on macOS 14+ (ARM64) or 15+ (Intel)
 
 **Apple Silicon Users**: All automated setup and distribution channels work seamlessly.
 
-**Intel Mac Users**: Your machine is fully supported for development, but requires manual source build:
+**Intel Mac Users (macOS 15+)**: Pre-built binaries available via releases.
+
+**Intel Mac Users (pre-macOS 15)**: Requires manual source build:
 
 ```bash
 # Standard CMake build (source build only)
@@ -149,7 +152,7 @@ MayaFlux/
 
 ## Building on Intel Macs
 
-MayaFlux supports x86_64 (Intel) architecture when built from source, though pre-built binaries and automated setup tools (Homebrew, Weave) are ARM64-only.
+MayaFlux provides pre-built x86_64 (Intel) binaries for macOS 15+. For older Intel Macs (pre-macOS 15), you'll need to build from source.
 
 ### Prerequisites
 
@@ -486,13 +489,16 @@ If you have already completed the aforementioned tutorial, proceed to the next t
 
 ### Q: I have an Intel Mac. Can I use MayaFlux?
 
-**A**: Yes, fully! You'll need to build from source since our distributions (Homebrew, Weave) only support ARM64. Follow the [Building on Intel Macs](#building-on-intel-macs) guide. It takes ~10-15 minutes.
+**A**: Yes, fully!
 
-Intel Macs have identical functionality to Apple Silicon. The only difference is build method.
+- **macOS 15+**: Pre-built binaries available via GitHub releases
+- **Pre-macOS 15**: Build from source following the [Building on Intel Macs](#building-on-intel-macs) guide (~10-15 minutes)
 
-### Q: Why aren't there Intel binary distributions?
+Intel Macs have identical functionality to Apple Silicon.
 
-**A**: Resource allocation. Our small team focuses CI/CD on the most common target (ARM64). Intel support is not dropped. It works perfectly from source. If you're blocked by this, open an issue and we can discuss priorities.
+### Q: Why is macOS 15 minimum for Intel binaries?
+
+**A**: Our CI/CD uses GitHub's `macos-15` runners for Intel builds. For older Intel systems, source builds are fully supported and well-documented. If you need binaries for specific older versions, open an issue to discuss.
 
 ### Q: Performance difference between ARM64 and x86_64?
 
