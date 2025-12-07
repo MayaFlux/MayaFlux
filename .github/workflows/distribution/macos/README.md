@@ -48,34 +48,32 @@ Required Homebrew packages (automatically managed):
 
 ## Architecture Support
 
-### Pre-Built Binaries (ARM64 Only)
+### Pre-Built Binaries
 
-This distribution includes binaries exclusively for ARM64 (Apple Silicon: M1, M2, M3, M4, M5).
+This distribution includes binaries for:
 
-- **Homebrew packages**: ARM64 only
-- **Weave tool**: ARM64 only (uses Homebrew)
-- **Pre-compiled libraries**: ARM64 only
+- **ARM64** (Apple Silicon: M1, M2, M3, M4, M5) - macOS 14+
+- **x86_64** (Intel) - macOS 15+
 
-### Intel Macs (x86_64)
+### System Requirements by Architecture
 
-MayaFlux fully supports Intel architecture when **built from source**. However:
+- **ARM64**: macOS 14 (Sonoma) or later
+- **Intel**: macOS 15 (Sequoia) or later
 
-- Pre-built binaries are not available
-- Homebrew does not provide Intel bottles
-- Weave automation is not configured for Intel targets
+### Building from Source
 
-**If you have an Intel Mac**, follow the [developer build instructions](../Getting_Started.md#building-from-source) to compile from source.
+For older Intel Macs (pre-macOS 15), MayaFlux can be built from source following the [developer build instructions](../Getting_Started.md#building-from-source).
 
-### Why ARM64-Only Distributions?
+### Why These Minimums?
 
-1. **CI/CD targeting**: GitHub Actions workflow configured for `macos-latest` (ARM64 runners)
-2. **Homebrew economics**: Maintaining Intel bottles requires additional CI resources and storage
-3. **Future roadmap**: Intel support deprioritized in favor of cross-platform expansion (Windows, Linux, WebAssembly)
+1. **ARM64 (macOS 14+)**: Primary development target
+2. **Intel (macOS 15+)**: CI/CD uses GitHub's `macos-15` runners for Intel builds
+3. **Older Intel Macs**: Source builds supported, but no pre-built binaries provided
 
-**This is not a technical limitation**—it's a resource allocation decision. If you need Intel binaries, either:
+**If you need binaries for older Intel systems**, either:
 
 - Build from source (fully supported, well-documented)
-- Open an issue requesting pre-built Intel support
+- Open an issue requesting specific version support
 
 ## Quick Start
 
