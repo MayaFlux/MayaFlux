@@ -7,6 +7,7 @@ set(CRITICAL_CMAKE_FILES
     pch.h
     compiler_config.cmake
     defines.cmake
+    rpath.cmake
     dependencies.cmake
     shader.cmake
 )
@@ -22,6 +23,7 @@ include(compiler_config)
 project(MayaFlux VERSION 0.1.0)
 
 include(defines)
+include(rpath)
 include(dependencies)
 include(shader)
 

@@ -352,3 +352,11 @@ set(MayaFlux_LIBRARIES MayaFlux::MayaFluxLib MayaFlux::Lila)
 set(MayaFlux_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/include")
 set(MayaFlux_LIB_DIR "${PACKAGE_PREFIX_DIR}/lib")
 set(MayaFlux_SHADER_DIR "${PACKAGE_PREFIX_DIR}/share/MayaFlux/shaders")
+
+if(APPLE)
+    # RPATH hints for user projects to find MayaFlux libraries
+    set(MayaFlux_RPATH_HINTS 
+        "@loader_path/../lib"    # Relative to user's executable
+        "${MayaFlux_LIB_DIR}"    # MayaFlux installation location
+    )
+endif()

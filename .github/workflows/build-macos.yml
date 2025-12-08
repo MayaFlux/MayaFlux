@@ -194,7 +194,8 @@ jobs:
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_VERBOSE_MAKEFILE=ON
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DMAYAFLUX_PORTABLE=ON
 
       - name: Build
         shell: bash
