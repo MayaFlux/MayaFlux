@@ -53,3 +53,11 @@ set(USER_SOURCES ${USER_PROJECT_FILE})
 
 option(MAYAFLUX_BUILD_TESTS "Build MayaFlux test suite" OFF)
 option(MAYAFLUX_PORTABLE "Build portable binaries with RPATH" OFF)
+option(MAYAFLUX_DEV "Build MayaFlux for development with debug symobls, rpath and tests" OFF)
+
+if(MAYAFLUX_DEV)
+    message(STATUS "Development mode enabled")
+    set(MAYAFLUX_BUILD_TESTS ON CACHE BOOL "" FORCE)
+    set(MAYAFLUX_PORTABLE ON CACHE BOOL "" FORCE)
+    set(CMAKE_BUILD_TYPE DEBUG)
+endif()

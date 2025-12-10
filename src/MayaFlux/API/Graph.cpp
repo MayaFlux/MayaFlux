@@ -36,6 +36,11 @@ std::shared_ptr<Nodes::NodeGraphManager> get_node_graph_manager()
 void register_audio_node(const std::shared_ptr<Nodes::Node>& node, uint32_t channel)
 {
     auto manager = get_node_graph_manager();
+    if (!manager) {
+        MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
+            "Node graph manager not initialized - cannot register audio node");
+        return;
+    }
     if (channel >= manager->get_channel_count(Nodes::ProcessingToken::AUDIO_RATE)) {
         std::out_of_range err("Channel index out of range for audio node registration");
         std::cerr << err.what() << '\n';
@@ -53,6 +58,12 @@ void register_audio_node(const std::shared_ptr<Nodes::Node>& node, const std::ve
 void unregister_audio_node(const std::shared_ptr<Nodes::Node>& node, uint32_t channel)
 {
     auto manager = get_node_graph_manager();
+    if (!manager) {
+        MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
+            "Node graph manager not initialized - cannot unregister audio node");
+        return;
+    }
+
     if (channel >= manager->get_channel_count(Nodes::ProcessingToken::AUDIO_RATE)) {
         MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
             "Channel index out of range for audio node registration");
@@ -70,6 +81,12 @@ void unregister_audio_node(const std::shared_ptr<Nodes::Node>& node, const std::
 void unregister_node(const std::shared_ptr<Nodes::Node>& node, const Nodes::ProcessingToken& token, uint32_t channel)
 {
     auto manager = get_node_graph_manager();
+    if (!manager) {
+        MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
+            "Node graph manager not initialized - cannot register node");
+        return;
+    }
+
     if (channel >= manager->get_channel_count(token)) {
         MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
             "Channel index out of range for audio node registration");
@@ -212,6 +229,11 @@ void supply_buffer_to_channel(const std::shared_ptr<Buffers::AudioBuffer>& buffe
     uint32_t channel, double mix)
 {
     auto manager = get_buffer_manager();
+    if (!manager) {
+        MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
+            "Buffer manager not initialized - cannot perform supply_buffer_to_channel");
+        return;
+    }
     if (channel < manager->get_num_channels(Buffers::ProcessingToken::AUDIO_BACKEND)) {
         manager->supply_buffer_to(buffer, Buffers::ProcessingToken::AUDIO_BACKEND, channel, mix);
     }
