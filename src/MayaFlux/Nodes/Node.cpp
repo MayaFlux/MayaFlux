@@ -7,7 +7,7 @@ void Node::on_tick(const NodeHook& callback)
     safe_add_callback(m_callbacks, callback);
 }
 
-void Node::on_tick_if(const NodeHook& callback, const NodeCondition& condition)
+void Node::on_tick_if(const NodeCondition& condition, const NodeHook& callback)
 {
     safe_add_conditional_callback(m_conditional_callbacks, callback, condition);
 }

@@ -35,8 +35,8 @@ using NodeHook = std::function<void(NodeContext&)>;
  * Example:
  * ```cpp
  * node->on_tick_if(
- *     [](NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
- *     [](NodeContext& ctx) { return ctx.value > 0.8; }
+ *     [](NodeContext& ctx) { return ctx.value > 0.8; },
+ *     [](NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; }
  * );
  * ```
  */

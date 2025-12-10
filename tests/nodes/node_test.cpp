@@ -528,12 +528,12 @@ TEST_F(NodeCallbackTest, ConditionalTickCallback)
     double callback_value = 0.0;
 
     sine->on_tick_if(
+        [](const Nodes::NodeContext& context) {
+            return context.value > 0.0;
+        },
         [&callback_called, &callback_value](const Nodes::NodeContext& context) {
             callback_called = true;
             callback_value = context.value;
-        },
-        [](const Nodes::NodeContext& context) {
-            return context.value > 0.0;
         });
 
     bool positive_found = false;
@@ -610,11 +610,11 @@ TEST_F(NodeCallbackTest, ConditionalNoiseCallbacks)
     });
 
     noise->on_tick_if(
-        [&conditional_count](const Nodes::NodeContext&) {
-            conditional_count++;
-        },
         [](const Nodes::NodeContext& context) {
             return context.value > 0.5;
+        },
+        [&conditional_count](const Nodes::NodeContext&) {
+            conditional_count++;
         });
 
     const int num_samples = 1000;
@@ -722,7 +722,7 @@ TEST_F(NodeCallbackTest, RemoveConditionalHooks)
         conditional_count++;
     };
 
-    sine->on_tick_if(callback, condition);
+    sine->on_tick_if(condition, callback);
 
     for (int i = 0; i < 20; i++) {
         sine->process_sample(0.0);

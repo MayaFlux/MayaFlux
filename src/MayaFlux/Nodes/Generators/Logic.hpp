@@ -461,7 +461,7 @@ public:
      * @param callback Function to call when condition is met
      * @param condition Predicate that determines when callback is triggered
      */
-    void on_tick_if(const NodeHook& callback, const NodeCondition& condition) override;
+    void on_tick_if(const NodeCondition& condition, const NodeHook& callback) override;
 
     /**
      * @brief Registers a callback that executes continuously while output is true
@@ -477,10 +477,10 @@ public:
 
     /**
      * @brief Registers a callback for when output changes to a specific state
-     * @param callback Function to call when state changes to target_state
      * @param target_state The state to detect (true for 1.0, false for 0.0)
+     * @param callback Function to call when state changes to target_state
      */
-    void on_change_to(const NodeHook& callback, bool target_state);
+    void on_change_to(bool target_state, const NodeHook& callback);
 
     /**
      * @brief Registers a callback for any state change (true↔false)
