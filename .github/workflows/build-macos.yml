@@ -194,7 +194,8 @@ jobs:
             -DCMAKE_CXX_STANDARD=23 \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_VERBOSE_MAKEFILE=ON
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DMAYAFLUX_PORTABLE=ON
 
       - name: Build
         shell: bash
@@ -265,6 +266,7 @@ jobs:
           PACKAGE_NAME="MayaFlux-${VERSION}-${OS_NAME}"
 
           tar -czf "${PACKAGE_NAME}.tar.gz" -C dist_staging .
+          shasum -a 256 "${PACKAGE_NAME}.tar.gz" | awk '{print $1}' > "${PACKAGE_NAME}.tar.gz.sha256"
           echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
       - name: Upload MayaFlux distribution
@@ -274,6 +276,7 @@ jobs:
           name: MayaFlux-${{ inputs.version }}-macos-${{ matrix.arch }}
           path: |
             ${{ env.PACKAGE_NAME }}.tar.gz
+            ${{ env.PACKAGE_NAME }}.tar.gz.sha256
           retention-days: 30
 
       - name: Display build summary

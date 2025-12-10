@@ -558,7 +558,7 @@ void Logic::on_tick(const NodeHook& callback)
     add_callback(callback, LogicEventType::TICK);
 }
 
-void Logic::on_tick_if(const NodeHook& callback, const NodeCondition& condition)
+void Logic::on_tick_if(const NodeCondition& condition, const NodeHook& callback)
 {
     add_callback(callback, LogicEventType::CONDITIONAL, condition);
 }
@@ -578,7 +578,7 @@ void Logic::on_change(const NodeHook& callback)
     add_callback(callback, LogicEventType::CHANGE);
 }
 
-void Logic::on_change_to(const NodeHook& callback, bool target_state)
+void Logic::on_change_to(bool target_state, const NodeHook& callback)
 {
     add_callback(callback, target_state ? LogicEventType::TRUE : LogicEventType::FALSE);
 }

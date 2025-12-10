@@ -164,8 +164,8 @@ public:
 
     /**
      * @brief Registers a conditional callback
-     * @param callback Function to call when condition is met
      * @param condition Predicate that determines when callback should be triggered
+     * @param callback Function to call when condition is met
      *
      * Registers a callback function that will be called only when the specified
      * condition is met. The condition is evaluated each time the node produces
@@ -178,12 +178,12 @@ public:
      * Example:
      * ```cpp
      * node->on_tick_if(
-     *     [](NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; },
-     *     [](NodeContext& ctx) { return ctx.value > 0.8; }
+     *     [](NodeContext& ctx) { return ctx.value > 0.8; },
+     *     [](NodeContext& ctx) { std::cout << "Threshold exceeded!" << std::endl; }
      * );
      * ```
      */
-    virtual void on_tick_if(const NodeHook& callback, const NodeCondition& condition);
+    virtual void on_tick_if(const NodeCondition& condition, const NodeHook& callback);
 
     /**
      * @brief Removes a previously registered callback

@@ -84,9 +84,9 @@ public:
      * final output of the chain. The callback and condition both
      * receive the context from the target node.
      */
-    inline void on_tick_if(const NodeHook& callback, const NodeCondition& condition) override
+    inline void on_tick_if(const NodeCondition& condition, const NodeHook& callback) override
     {
-        m_Target->on_tick_if(callback, condition);
+        m_Target->on_tick_if(condition, callback);
     }
 
     /**

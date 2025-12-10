@@ -145,10 +145,10 @@ Vruta::SoundRoutine Trigger(
         logic_node = std::make_shared<Nodes::Generator::Logic>(0.5);
     }
 
-    logic_node->on_change_to([callback](const Nodes::NodeContext& ctx) {
-        callback();
-    },
-        target_state);
+    logic_node->on_change_to(target_state,
+        [callback](const Nodes::NodeContext& ctx) {
+            callback();
+        });
 
     while (true) {
         if (promise_ref.should_terminate) {

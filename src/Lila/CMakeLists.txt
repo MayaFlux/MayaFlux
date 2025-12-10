@@ -107,5 +107,9 @@ else()
     )
 endif()
 
+if(UNIX AND NOT APPLE)
+    target_compile_options(Lila PRIVATE -mcmodel=large)
+endif()
+
 target_link_libraries(Lila PUBLIC MayaFluxLib)
 

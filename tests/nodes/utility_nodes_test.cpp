@@ -65,11 +65,11 @@ TEST_F(ImpulseTest, ConditionalCallback)
     int conditional_callback_count = 0;
 
     impulse->on_tick_if(
-        [&conditional_callback_count](const Nodes::NodeContext&) {
-            conditional_callback_count++;
-        },
         [](const Nodes::NodeContext& ctx) {
             return ctx.value > 0.5;
+        },
+        [&conditional_callback_count](const Nodes::NodeContext&) {
+            conditional_callback_count++;
         });
 
     impulse->set_amplitude(1.0);
