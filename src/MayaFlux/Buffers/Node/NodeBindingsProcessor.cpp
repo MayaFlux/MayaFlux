@@ -60,16 +60,8 @@ void NodeBindingsProcessor::update_push_constants_from_nodes()
                 "Node binding '{}' has null node", name);
             continue;
         }
-        double value {};
-        uint32_t state = binding.node->m_state.load();
 
-        if (state == Utils::NodeState::INACTIVE) {
-            value = binding.node->process_sample();
-        } else {
-            binding.node->save_state();
-            value = binding.node->process_sample();
-            binding.node->restore_state();
-        }
+        double value = Buffers::extract_single_sample(binding.node);
 
         if (binding.size == sizeof(float)) {
             auto float_val = static_cast<float>(value);
