@@ -207,7 +207,6 @@ std::vector<double> extract_multiple_samples(
         return output;
     }
 
-    // Try to claim snapshot
     bool claimed = node->try_claim_snapshot_context(my_context_id);
 
     if (claimed) {
@@ -270,7 +269,6 @@ void update_buffer_with_node_data(
 
     const auto state = node->m_state.load(std::memory_order_acquire);
 
-    // Fast path: inactive node
     if (state == Utils::NodeState::INACTIVE && !node->is_buffer_processed()) {
         for (double& sample : buffer) {
             sample += node->process_sample(0.F) * mix;
@@ -279,7 +277,6 @@ void update_buffer_with_node_data(
         return;
     }
 
-    // Try to claim snapshot
     bool claimed = node->try_claim_snapshot_context(my_context_id);
 
     if (claimed) {

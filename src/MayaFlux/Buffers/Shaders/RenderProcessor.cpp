@@ -15,7 +15,6 @@ namespace MayaFlux::Buffers {
 RenderProcessor::RenderProcessor(const ShaderProcessorConfig& config)
     : ShaderProcessor(config)
 {
-    m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
     m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
 }
 

@@ -180,7 +180,7 @@ std::vector<std::string> DescriptorBindingsProcessor::get_binding_names() const
 // Protected Hooks
 //==============================================================================
 
-void DescriptorBindingsProcessor::on_before_dispatch(
+void DescriptorBindingsProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID cmd_id,
     const std::shared_ptr<VKBuffer>& buffer)
 {
@@ -188,7 +188,7 @@ void DescriptorBindingsProcessor::on_before_dispatch(
         update_descriptor_from_node(binding);
     }
 
-    ShaderProcessor::on_before_dispatch(cmd_id, buffer);
+    ShaderProcessor::on_before_execute(cmd_id, buffer);
 }
 
 void DescriptorBindingsProcessor::on_pipeline_created(Portal::Graphics::ComputePipelineID pipeline_id)

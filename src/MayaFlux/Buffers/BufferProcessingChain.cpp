@@ -115,7 +115,7 @@ void BufferProcessingChain::process_non_owning(const std::shared_ptr<Buffer>& bu
         }
 
         if (should_process) {
-            processor->process_non_owning(buffer); // non-owning calls non-owning
+            processor->process_non_owning(buffer);
         }
     }
 
@@ -329,7 +329,6 @@ void BufferProcessingChain::enforce_chain_token_on_processors()
             auto processor_token = processor->get_processing_token();
             if (processor_token != m_token_filter_mask && are_tokens_compatible(m_token_filter_mask, processor_token)) {
 
-                // Try to set the processor to the chain's preferred token
                 try {
                     processor->set_processing_token(m_token_filter_mask);
                 } catch (const std::exception& e) {
@@ -359,7 +358,6 @@ bool BufferProcessingChain::queue_pending_processor_op(const std::shared_ptr<Buf
         }
     }
 
-    // Queue full - drop operation (true lock-free behavior)
     if (rejection_reason && is_addition) {
         *rejection_reason = "Processor operation queue full";
     }

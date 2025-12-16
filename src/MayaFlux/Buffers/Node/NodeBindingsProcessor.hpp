@@ -75,7 +75,7 @@ protected:
      * @brief Hook called before shader dispatch
      * Automatically updates push constants from bound nodes
      */
-    void on_before_dispatch(
+    void on_before_execute(
         Portal::Graphics::CommandBufferID cmd_id,
         const std::shared_ptr<VKBuffer>& buffer) override;
 

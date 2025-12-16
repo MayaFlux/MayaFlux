@@ -11,6 +11,7 @@ namespace MayaFlux::Buffers {
 ShaderProcessor::ShaderProcessor(const std::string& shader_path, uint32_t workgroup_x)
     : m_config(shader_path)
 {
+    m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
     m_config.dispatch.workgroup_x = workgroup_x;
     initialize_buffer_service();
     initialize_compute_service();
@@ -19,6 +20,7 @@ ShaderProcessor::ShaderProcessor(const std::string& shader_path, uint32_t workgr
 ShaderProcessor::ShaderProcessor(ShaderProcessorConfig config)
     : m_config(std::move(config))
 {
+    m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
     initialize_buffer_service();
     initialize_compute_service();
 }
@@ -543,7 +545,7 @@ void ShaderProcessor::execute_dispatch(const std::shared_ptr<VKBuffer>& buffer)
     auto dispatch_size = calculate_dispatch_size(buffer);
     compute_press.dispatch(cmd_id, dispatch_size[0], dispatch_size[1], dispatch_size[2]);
 
-    on_after_dispatch(cmd_id, buffer);
+    on_after_execute(cmd_id, buffer);
 
     foundry.buffer_barrier(
         cmd_id,

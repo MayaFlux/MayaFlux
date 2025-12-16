@@ -502,22 +502,22 @@ protected:
     virtual void on_descriptors_created();
 
     /**
-     * @brief Called before each dispatch
+     * @brief Called before each process callback
      * @param cmd Command buffer
      * @param buffer Currently processing buffer
      *
      * Override to update push constants or dynamic descriptors.
      */
-    virtual void on_before_dispatch(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
+    virtual void on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
     /**
-     * @brief Called after each dispatch
+     * @brief Called after each process callback
      * @param cmd Command buffer
      * @param buffer Currently processed buffer
      *
      * Override for post-dispatch synchronization or state updates.
      */
-    virtual void on_after_dispatch(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
+    virtual void on_after_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
     /**
      * @brief Calculate dispatch size from buffer

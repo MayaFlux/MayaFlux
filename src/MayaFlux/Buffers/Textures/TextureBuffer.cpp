@@ -87,7 +87,7 @@ void TextureBuffer::setup_rendering(const RenderConfig& config)
         m_render_processor->bind_texture(name, texture);
     }
 
-    get_processing_chain()->add_processor(m_render_processor, shared_from_this());
+    get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 }
 
 // =========================================================================

@@ -137,7 +137,7 @@ protected:
     /**
      * @brief Called before shader dispatch - updates all descriptors
      */
-    void on_before_dispatch(
+    void on_before_execute(
         Portal::Graphics::CommandBufferID cmd_id,
         const std::shared_ptr<VKBuffer>& buffer) override;
 

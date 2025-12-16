@@ -34,13 +34,13 @@ std::vector<std::string> NodeBindingsProcessor::get_binding_names() const
     return names;
 }
 
-void NodeBindingsProcessor::on_before_dispatch(
+void NodeBindingsProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID cmd_id,
     const std::shared_ptr<VKBuffer>& buffer)
 {
     update_push_constants_from_nodes();
 
-    ShaderProcessor::on_before_dispatch(cmd_id, buffer);
+    ShaderProcessor::on_before_execute(cmd_id, buffer);
 }
 
 void NodeBindingsProcessor::update_push_constants_from_nodes()
