@@ -85,7 +85,7 @@ void NodeTextureBuffer::setup_processors(ProcessingToken token)
 void NodeTextureBuffer::setup_rendering(const RenderConfig& config)
 {
     if (!m_render_processor) {
-        ShaderProcessorConfig shader_config { config.vertex_shader };
+        ShaderConfig shader_config { config.vertex_shader };
         shader_config.bindings[config.default_texture_binding] = ShaderBinding(
             0, 0, vk::DescriptorType::eCombinedImageSampler);
 

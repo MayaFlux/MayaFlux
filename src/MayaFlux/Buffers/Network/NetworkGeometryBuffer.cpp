@@ -63,7 +63,7 @@ void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
 {
     if (!m_render_processor) {
         m_render_processor = std::make_shared<RenderProcessor>(
-            ShaderProcessorConfig { config.vertex_shader });
+            ShaderConfig { config.vertex_shader });
     }
 
     m_render_processor->set_fragment_shader(config.fragment_shader);

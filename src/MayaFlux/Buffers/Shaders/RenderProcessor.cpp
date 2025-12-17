@@ -12,7 +12,7 @@
 
 namespace MayaFlux::Buffers {
 
-RenderProcessor::RenderProcessor(const ShaderProcessorConfig& config)
+RenderProcessor::RenderProcessor(const ShaderConfig& config)
     : ShaderProcessor(config)
 {
     m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
@@ -75,7 +75,7 @@ void RenderProcessor::bind_texture(
 
     m_texture_bindings[binding] = { .texture = texture, .sampler = sampler };
 
-    if (m_render_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE && !m_descriptor_set_ids.empty()) {
+    if (m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE && !m_descriptor_set_ids.empty()) {
 
         auto& foundry = Portal::Graphics::get_shader_foundry();
         foundry.update_descriptor_image(
@@ -164,6 +164,8 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
 
     pipeline_config.blend_attachments.emplace_back();
 
+    pipeline_config.push_constant_size = vk_buffer->get_pipeline_context().push_constant_staging.size();
+
     auto it = m_buffer_info.find(vk_buffer);
     if (it != m_buffer_info.end()) {
         const auto& vertex_info = it->second;
@@ -186,16 +188,16 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
         }
     }
 
-    m_render_pipeline_id = flow.create_pipeline(pipeline_config);
+    m_pipeline_id = flow.create_pipeline(pipeline_config);
 
-    if (m_render_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Failed to create render pipeline");
         return;
     }
 
     if (!pipeline_config.descriptor_sets.empty() && m_descriptor_set_ids.empty()) {
-        m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_render_pipeline_id);
+        m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_pipeline_id);
 
         if (m_descriptor_set_ids.empty()) {
             MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -221,18 +223,40 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& buffer)
     m_needs_pipeline_rebuild = false;
 }
 
-void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void RenderProcessor::initialize_descriptors()
 {
-    auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
-    if (!vk_buffer || !m_target_window) {
+    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot allocate descriptor sets without pipeline");
         return;
     }
 
-    if (m_buffer_info.find(vk_buffer) == m_buffer_info.end()) {
-        if (vk_buffer->has_vertex_layout()) {
-            auto vertex_layout = vk_buffer->get_vertex_layout();
+    on_before_descriptors_create();
+
+    auto& flow = Portal::Graphics::get_render_flow();
+
+    m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_pipeline_id);
+
+    if (m_descriptor_set_ids.empty()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Failed to allocate descriptor sets");
+        return;
+    }
+
+    update_descriptors();
+    on_descriptors_created();
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Descriptor sets initialized: {} sets", m_descriptor_set_ids.size());
+}
+
+void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (m_buffer_info.find(buffer) == m_buffer_info.end()) {
+        if (buffer->has_vertex_layout()) {
+            auto vertex_layout = buffer->get_vertex_layout();
             if (vertex_layout.has_value()) {
-                m_buffer_info[vk_buffer] = {
+                m_buffer_info[buffer] = {
                     .semantic_layout = vertex_layout.value(),
                     .use_reflection = false
                 };
@@ -248,11 +272,11 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
         initialize_pipeline(buffer);
     }
 
-    if (m_render_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         return;
     }
 
-    auto vertex_layout = vk_buffer->get_vertex_layout();
+    auto vertex_layout = buffer->get_vertex_layout();
     if (!vertex_layout.has_value()) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "VKBuffer has no vertex layout set. Use buffer->set_vertex_layout()");
@@ -271,7 +295,7 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
         return;
     }
 
-    vk_buffer->set_pipeline_window(m_render_pipeline_id, m_target_window);
+    buffer->set_pipeline_window(m_pipeline_id, m_target_window);
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
@@ -293,19 +317,40 @@ void RenderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
         cmd.setScissor(0, 1, &scissor);
     }
 
-    flow.bind_pipeline(cmd_id, m_render_pipeline_id);
+    flow.bind_pipeline(cmd_id, m_pipeline_id);
 
     if (!m_descriptor_set_ids.empty()) {
-        flow.bind_descriptor_sets(cmd_id, m_render_pipeline_id, m_descriptor_set_ids);
+        flow.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
     }
 
-    flow.bind_vertex_buffers(cmd_id, { vk_buffer });
+    const auto& staging = buffer->get_pipeline_context();
+    if (!staging.push_constant_staging.empty()) {
+        for (const auto& byte : staging.push_constant_staging) {
+            std::cout << std::hex << static_cast<int>(byte) << " ";
+        }
+
+        flow.push_constants(
+            cmd_id,
+            m_pipeline_id,
+            staging.push_constant_staging.data(),
+            staging.push_constant_staging.size());
+    } else if (!m_push_constant_data.empty()) {
+        flow.push_constants(
+            cmd_id,
+            m_pipeline_id,
+            m_push_constant_data.data(),
+            m_push_constant_data.size());
+    }
+
+    on_before_execute(cmd_id, buffer);
+
+    flow.bind_vertex_buffers(cmd_id, { buffer });
 
     flow.draw(cmd_id, vertex_layout->vertex_count);
 
     flow.end_render_pass(cmd_id);
 
-    vk_buffer->set_pipeline_command(m_render_pipeline_id, cmd_id);
+    buffer->set_pipeline_command(m_pipeline_id, cmd_id);
 }
 
 void RenderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
@@ -338,9 +383,9 @@ void RenderProcessor::cleanup()
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
 
-    if (m_render_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE) {
-        flow.destroy_pipeline(m_render_pipeline_id);
-        m_render_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
+    if (m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        flow.destroy_pipeline(m_pipeline_id);
+        m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
     }
 
     if (m_render_pass_id != Portal::Graphics::INVALID_RENDER_PASS) {

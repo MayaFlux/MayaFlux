@@ -18,7 +18,7 @@ namespace MayaFlux::Buffers {
  */
 class MAYAFLUX_API RenderProcessor : public ShaderProcessor {
 public:
-    RenderProcessor(const ShaderProcessorConfig& config);
+    RenderProcessor(const ShaderConfig& config);
 
     ~RenderProcessor() override
     {
@@ -33,7 +33,7 @@ public:
     void set_render_pass(Portal::Graphics::RenderPassID render_pass_id);
     void set_target_window(std::shared_ptr<Core::Window> window);
 
-    Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_render_pipeline_id; }
+    Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_pipeline_id; }
 
     void on_attach(std::shared_ptr<Buffer> buffer) override;
 
@@ -80,9 +80,15 @@ public:
         const std::shared_ptr<Core::VKImage>& texture,
         vk::Sampler sampler = nullptr);
 
+    /**
+     * @brief Check if pipeline is created
+     */
+    bool is_pipeline_ready() const { return m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE; }
+
 protected:
     void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override;
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
+    void initialize_descriptors() override;
 
     void cleanup() override;
 
@@ -92,7 +98,7 @@ private:
         bool use_reflection {};
     };
 
-    Portal::Graphics::RenderPipelineID m_render_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
+    Portal::Graphics::RenderPipelineID m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
     Portal::Graphics::ShaderID m_geometry_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;

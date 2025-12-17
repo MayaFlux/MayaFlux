@@ -4,7 +4,7 @@
 namespace MayaFlux::Buffers {
 
 DescriptorBuffer::DescriptorBuffer(
-    const ShaderProcessorConfig& config,
+    const ShaderConfig& config,
     size_t initial_size)
     : VKBuffer(
           initial_size,

@@ -24,42 +24,13 @@ struct ShaderBinding {
 };
 
 /**
- * @struct ShaderDispatchConfig
- * @brief Configuration for compute shader dispatch
- */
-struct ShaderDispatchConfig {
-    uint32_t workgroup_x = 256; ///< Workgroup size X (should match shader)
-    uint32_t workgroup_y = 1;
-    uint32_t workgroup_z = 1;
-
-    enum class DispatchMode : uint8_t {
-        ELEMENT_COUNT, ///< Calculate from buffer element count
-        MANUAL, ///< Use explicit group counts
-        BUFFER_SIZE, ///< Calculate from buffer byte size
-        CUSTOM ///< User-provided calculation function
-    } mode
-        = DispatchMode::ELEMENT_COUNT;
-
-    // Manual dispatch (MANUAL mode)
-    uint32_t group_count_x = 1;
-    uint32_t group_count_y = 1;
-    uint32_t group_count_z = 1;
-
-    std::function<std::array<uint32_t, 3>(const std::shared_ptr<VKBuffer>&)> custom_calculator;
-
-    ShaderDispatchConfig() = default;
-};
-
-/**
  * @struct ShaderProcessorConfig
  * @brief Complete configuration for shader processor
  */
-struct ShaderProcessorConfig {
+struct ShaderConfig {
     std::string shader_path; ///< Path to shader file
     Portal::Graphics::ShaderStage stage = Portal::Graphics::ShaderStage::COMPUTE;
     std::string entry_point = "main";
-
-    ShaderDispatchConfig dispatch;
 
     std::unordered_map<std::string, ShaderBinding> bindings;
 
@@ -67,8 +38,8 @@ struct ShaderProcessorConfig {
 
     std::unordered_map<uint32_t, uint32_t> specialization_constants;
 
-    ShaderProcessorConfig() = default;
-    ShaderProcessorConfig(std::string path)
+    ShaderConfig() = default;
+    ShaderConfig(std::string path)
         : shader_path(std::move(path))
     {
     }
@@ -76,69 +47,45 @@ struct ShaderProcessorConfig {
 
 /**
  * @class ShaderProcessor
- * @brief Generic compute shader processor for VKBuffers
+ * @brief Abstract base class for shader-based buffer processing
  *
- * ShaderProcessor is a fully functional base class that:
- * - Loads compute shaders via Portal::Graphics::ShaderFoundry
- * - Automatically creates compute pipelines and descriptor sets
- * - Binds VKBuffers to shader descriptors with configurable mappings
- * - Dispatches compute shaders with flexible workgroup calculation
- * - Supports hot-reload via ShaderFoundry caching
- * - Handles push constants and specialization constants
+ * ShaderProcessor provides the foundational infrastructure for managing shader resources,
+ * descriptor sets, and buffer bindings. It is designed to be stage-agnostic, serving as
+ * the common parent for specialized processors like ComputeProcessor and RenderProcessor.
+ *
+ * Core Responsibilities:
+ * - **Shader Management:** Loads and manages shader modules via Portal::Graphics::ShaderFoundry.
+ * - **Descriptor Management:** Handles descriptor set allocation, updates, and binding.
+ * - **Buffer Binding:** Maps logical names (e.g., "input", "output") to physical VKBuffers.
+ * - **Constants:** Manages push constants and specialization constants.
+ * - **Hot-Reload:** Supports runtime shader reloading and pipeline invalidation.
+ *
+ * It does NOT define specific pipeline creation or execution logic (e.g., dispatch vs draw),
+ * leaving those details to derived classes (ComputeProcessor, RenderProcessor).
  *
  * Quality-of-life features:
- * - **Data movement hints:** Query buffer usage (input/output/in-place) for automation and validation.
- * - **Binding introspection:** Check if bindings exist, list expected bindings, and validate binding completeness.
- * - **State queries:** Track last processed buffer and command buffer for chain management and debugging.
+ * - **Data movement hints:** Query buffer usage (input/output/in-place) for automation.
+ * - **Binding introspection:** Validate if required bindings are satisfied.
+ * - **State queries:** Track processing state for chain management.
  *
  * Design Philosophy:
- * - **Fully usable as-is**: Not just a base class, but a complete processor
- * - **Inheritance-friendly**: Specialized processors can override behavior
- * - **Buffer-agnostic**: Works with any VKBuffer modality/usage
- * - **Flexible binding**: Map buffers to shader descriptors by name
- * - **GPU-efficient**: Uses device-local buffers and staging where needed
+ * - **Inheritance-focused**: Provides the "plumbing" for shader processors without dictating the pipeline type.
+ * - **Buffer-agnostic**: Works with any VKBuffer modality/usage.
+ * - **Flexible binding**: Decouples logical shader parameters from physical buffers.
  *
  * Integration:
- * - Uses Portal::Graphics::ShaderFoundry for shader compilation
- * - Leverages VKComputePipeline for execution
- * - Works with existing BufferManager/ProcessingChain architecture
- * - Compatible with all VKBuffer usage types (COMPUTE, STORAGE, etc.)
+ * - Base class for `ComputeProcessor` (Compute Pipelines)
+ * - Base class for `RenderProcessor` (Graphics Pipelines)
+ * - Base class for `NodeBindingsProcessor` (Node-driven parameters)
  *
- * Usage:
- *   // Simple usage - single buffer processor
- *   auto processor = std::make_shared<ShaderProcessor>("shaders/kernel.comp");
- *   processor->bind_buffer("input_buffer", my_buffer);
- *   my_buffer->set_default_processor(processor);
+ * Usage (via derived classes):
+ *   // Compute example
+ *   auto compute = std::make_shared<ComputeProcessor>("shaders/kernel.comp");
+ *   compute->bind_buffer("data", buffer);
  *
- *   // Advanced - multi-buffer with explicit bindings
- *   ShaderProcessorConfig config("shaders/complex.comp");
- *   config.bindings["input"] = ShaderBinding(0, 0);
- *   config.bindings["output"] = ShaderBinding(0, 1);
- *   config.dispatch.workgroup_x = 512;
- *
- *   auto processor = std::make_shared<ShaderProcessor>(config);
- *   processor->bind_buffer("input", input_buffer);
- *   processor->bind_buffer("output", output_buffer);
- *
- *   chain->add_processor(processor, input_buffer);
- *   chain->add_processor(processor, output_buffer);
- *
- *   // With push constants
- *   struct Params { float scale; uint32_t iterations; };
- *   processor->set_push_constant_size<Params>();
- *   processor->set_push_constant_data(Params{2.0f, 100});
- *
- * Specialized Processors:
- *   class FFTProcessor : public ShaderProcessor {
- *       FFTProcessor() : ShaderProcessor("shaders/fft.comp") {
- *           configure_fft_bindings();
- *       }
- *
- *       void on_attach(std::shared_ptr<Buffer> buffer) override {
- *           ShaderProcessor::on_attach(buffer);
- *           // FFT-specific setup
- *       }
- *   };
+ *   // Graphics example
+ *   auto render = std::make_shared<RenderProcessor>(config);
+ *   render->bind_buffer("vertices", vertex_buffer);
  */
 class MAYAFLUX_API ShaderProcessor : public VKBufferProcessor {
 public:
@@ -160,16 +107,15 @@ public:
 
     /**
      * @brief Construct processor with shader path
-     * @param shader_path Path to compute shader (.comp or .spv)
-     * @param workgroup_x Workgroup size X (default 256)
+     * @param shader_path Path to shader file (e.g., .comp, .vert, .frag, .spv)
      */
-    explicit ShaderProcessor(const std::string& shader_path, uint32_t workgroup_x = 256);
+    explicit ShaderProcessor(const std::string& shader_path);
 
     /**
      * @brief Construct processor with full configuration
      * @param config Complete shader processor configuration
      */
-    explicit ShaderProcessor(ShaderProcessorConfig config);
+    explicit ShaderProcessor(ShaderConfig config);
 
     ~ShaderProcessor() override;
 
@@ -245,43 +191,6 @@ public:
     [[nodiscard]] const std::string& get_shader_path() const { return m_config.shader_path; }
 
     //==========================================================================
-    // Dispatch Configuration
-    //==========================================================================
-
-    /**
-     * @brief Set workgroup size (should match shader local_size)
-     * @param x Workgroup size X
-     * @param y Workgroup size Y (default 1)
-     * @param z Workgroup size Z (default 1)
-     */
-    void set_workgroup_size(uint32_t x, uint32_t y = 1, uint32_t z = 1);
-
-    /**
-     * @brief Set dispatch mode
-     * @param mode Dispatch calculation mode
-     */
-    void set_dispatch_mode(ShaderDispatchConfig::DispatchMode mode);
-
-    /**
-     * @brief Set manual dispatch group counts
-     * @param x Group count X
-     * @param y Group count Y (default 1)
-     * @param z Group count Z (default 1)
-     */
-    void set_manual_dispatch(uint32_t x, uint32_t y = 1, uint32_t z = 1);
-
-    /**
-     * @brief Set custom dispatch calculator
-     * @param calculator Function that calculates dispatch from buffer
-     */
-    void set_custom_dispatch(std::function<std::array<uint32_t, 3>(const std::shared_ptr<VKBuffer>&)> calculator);
-
-    /**
-     * @brief Get current dispatch configuration
-     */
-    [[nodiscard]] const ShaderDispatchConfig& get_dispatch_config() const { return m_config.dispatch; }
-
-    //==========================================================================
     // Push Constants
     //==========================================================================
 
@@ -352,12 +261,12 @@ public:
      *
      * Triggers pipeline recreation.
      */
-    void set_config(const ShaderProcessorConfig& config);
+    void set_config(const ShaderConfig& config);
 
     /**
      * @brief Get current configuration
      */
-    [[nodiscard]] const ShaderProcessorConfig& get_config() const { return m_config; }
+    [[nodiscard]] const ShaderConfig& get_config() const { return m_config; }
 
     /**
      * @brief Add descriptor binding configuration
@@ -413,11 +322,6 @@ public:
      * @brief Check if shader is loaded
      */
     [[nodiscard]] bool is_shader_loaded() const { return m_shader_id != Portal::Graphics::INVALID_SHADER; }
-
-    /**
-     * @brief Check if pipeline is created
-     */
-    [[nodiscard]] bool is_pipeline_ready() const { return m_pipeline_id != Portal::Graphics::INVALID_COMPUTE_PIPELINE; }
 
     /**
      * @brief Check if descriptors are initialized
@@ -519,24 +423,13 @@ protected:
      */
     virtual void on_after_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
-    /**
-     * @brief Calculate dispatch size from buffer
-     * @param buffer Buffer to process
-     * @return {group_count_x, group_count_y, group_count_z}
-     *
-     * Override for custom dispatch calculation logic.
-     * Default implementation uses m_config.dispatch settings.
-     */
-    virtual std::array<uint32_t, 3> calculate_dispatch_size(const std::shared_ptr<VKBuffer>& buffer);
-
     //==========================================================================
     // Protected State - Available to Subclasses
     //==========================================================================
 
-    ShaderProcessorConfig m_config;
+    ShaderConfig m_config;
 
     Portal::Graphics::ShaderID m_shader_id = Portal::Graphics::INVALID_SHADER;
-    Portal::Graphics::ComputePipelineID m_pipeline_id = Portal::Graphics::INVALID_COMPUTE_PIPELINE;
     std::vector<Portal::Graphics::DescriptorSetID> m_descriptor_set_ids;
     Portal::Graphics::CommandBufferID m_last_command_buffer = Portal::Graphics::INVALID_COMMAND_BUFFER;
 
@@ -552,8 +445,12 @@ protected:
     size_t m_auto_bind_index {};
 
 protected:
-    virtual void initialize_pipeline(const std::shared_ptr<Buffer>& buffer);
+    virtual void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) = 0;
+    virtual void initialize_descriptors() = 0;
+    virtual void execute_shader(const std::shared_ptr<VKBuffer>& buffer) = 0;
+
     virtual void cleanup();
+    virtual void update_descriptors();
 
 private:
     //==========================================================================
@@ -561,9 +458,6 @@ private:
     //==========================================================================
 
     void initialize_shader();
-    void initialize_descriptors();
-    void update_descriptors();
-    void execute_dispatch(const std::shared_ptr<VKBuffer>& buffer);
 };
 
 template <typename T>
