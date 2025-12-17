@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::WindowManager::destroy_closed_windows" name="MayaFlux::Core::WindowManager::destroy_closed_windows">
+<area shape="rect" id="Node000001" title="Destroys all windows that should close." alt="" coords="5,5,247,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1WindowManager_a9f9104116a63a87eb8fedab8e6388e7a.html#a9f9104116a63a87eb8fedab8e6388e7a" title="Destroys a window by pointer." alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,23,281,23,281,28,247,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1WindowManager_aa656d799b806fb38cac28a02f1048f2c.html#aa656d799b806fb38cac28a02f1048f2c" title="Removes window from lookup table." alt="" coords="584,5,825,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="536,23,570,23,570,28,536,28"/>
+</map>

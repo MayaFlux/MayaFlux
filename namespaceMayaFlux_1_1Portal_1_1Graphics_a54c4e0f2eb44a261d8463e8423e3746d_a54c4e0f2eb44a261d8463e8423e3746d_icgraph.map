@@ -1,0 +1,16 @@
+<map id="MayaFlux::Portal::Graphics::get_render_flow" name="MayaFlux::Portal::Graphics::get_render_flow">
+<area shape="rect" id="Node000001" title="Get the global render flow instance." alt="" coords="508,143,705,183"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a3498377e5d02f243e29f4b28e358733c.html#a3498377e5d02f243e29f4b28e358733c" title=" " alt="" coords="267,5,458,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="570,136,519,97,459,60,432,48,434,43,461,55,522,93,573,132"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acd3ee18a43b25af2aa06f17efacd6c5f.html#acd3ee18a43b25af2aa06f17efacd6c5f" title=" " alt="" coords="16,214,207,269"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="494,167,383,175,266,192,182,216,180,211,265,187,383,169,494,162"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a6212541d4b11fad6638fe5117e8361c5.html#a6212541d4b11fad6638fe5117e8361c5" title=" " alt="" coords="265,70,460,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="517,141,460,126,461,121,518,136"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a890135d823fb945281a666474fa18c6b.html#a890135d823fb945281a666474fa18c6b" title=" " alt="" coords="265,201,460,255"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="518,189,461,204,460,199,517,184"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a8dffa1bdec232f8a9c7b39ce9a9f78bb.html#a8dffa1bdec232f8a9c7b39ce9a9f78bb" title=" " alt="" coords="265,279,460,334"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="572,194,521,232,461,270,439,282,437,277,459,266,518,228,569,189"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a3d715e54f076fefbfc33dd6553d92216.html#a3d715e54f076fefbfc33dd6553d92216" title="Executes the render callback." alt="" coords="5,70,217,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="252,100,218,100,218,95,252,95"/>
+<area shape="poly" id="edge7_Node000007_Node000003" title=" " alt="" coords="251,281,206,269,208,264,253,275"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::OperationHelper::recreate_eigen_matrix" name="MayaFlux::Yantra::OperationHelper::recreate_eigen_matrix">
+<area shape="rect" id="Node000001" title="Infer data structure from ComputeData type." alt="" coords="288,5,508,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_af5b41beec8635863c366cde12d840636.html#af5b41beec8635863c366cde12d840636" title="Reconstruct ComputeData type from double vector and structure info." alt="" coords="5,5,240,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="274,28,240,28,240,23,274,23"/>
+</map>

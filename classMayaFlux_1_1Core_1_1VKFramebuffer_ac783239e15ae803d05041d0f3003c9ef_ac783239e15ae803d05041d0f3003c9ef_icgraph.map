@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKFramebuffer::get" name="MayaFlux::Core::VKFramebuffer::get">
+<area shape="rect" id="Node000001" title="Get the framebuffer handle." alt="" coords="289,13,548,38"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a1476d40396689674e229f4d1bdbf6676.html#a1476d40396689674e229f4d1bdbf6676" title="Begin render pass." alt="" coords="5,5,241,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="276,28,241,28,241,23,276,23"/>
+</map>

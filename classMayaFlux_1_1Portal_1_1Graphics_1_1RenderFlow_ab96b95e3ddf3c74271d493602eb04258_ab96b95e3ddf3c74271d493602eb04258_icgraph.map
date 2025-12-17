@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::is_initialized" name="MayaFlux::Portal::Graphics::RenderFlow::is_initialized">
+<area shape="rect" id="Node000001" title=" " alt="" coords="549,53,747,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ac3eb72f5141be084316ee9bc0b11852a.html#ac3eb72f5141be084316ee9bc0b11852a" title="Create graphics pipeline with full configuration." alt="" coords="273,17,488,57"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="535,60,488,54,488,48,536,55"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a6e776dc125d8568846864650abef3825.html#a6e776dc125d8568846864650abef3825" title="Create a render pass." alt="" coords="260,85,501,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="536,89,502,93,501,88,535,83"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ab531a2fcc703c457276d7309bcc13f89.html#ab531a2fcc703c457276d7309bcc13f89" title="Create simple graphics pipeline (auto&#45;configure most settings)" alt="" coords="5,5,212,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="260,38,212,37,212,32,260,32"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a4af7449e60895622964f70d0c7c4e93d.html#a4af7449e60895622964f70d0c7c4e93d" title="Create a simple single&#45;color render pass." alt="" coords="5,84,212,139"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="246,111,212,111,212,106,246,105"/>
+</map>

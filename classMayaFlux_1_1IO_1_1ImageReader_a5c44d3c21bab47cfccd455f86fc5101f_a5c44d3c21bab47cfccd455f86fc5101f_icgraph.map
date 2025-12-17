@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::ImageReader::create_texture_buffer" name="MayaFlux::IO::ImageReader::create_texture_buffer">
+<area shape="rect" id="Node000001" title="Create a VKBuffer containing the loaded image pixel data." alt="" coords="449,5,652,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a85ad9cceab7b34f8f0d1d425baa0e4ca.html#a85ad9cceab7b34f8f0d1d425baa0e4ca" title="Loads an image file into a TextureBuffer." alt="" coords="204,13,401,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="436,28,401,28,401,23,436,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Creator_aa2e11e8495a68e8f168b49d86af99430.html#aa2e11e8495a68e8f168b49d86af99430" title=" " alt="" coords="5,5,156,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="190,28,156,28,156,23,190,23"/>
+</map>

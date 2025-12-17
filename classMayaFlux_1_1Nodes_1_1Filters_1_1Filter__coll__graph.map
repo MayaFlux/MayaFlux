@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Filters::Filter" name="MayaFlux::Nodes::Filters::Filter">
+<area shape="rect" id="Node000001" title="Base class for computational signal transformers implementing difference equations." alt="" coords="5,703,208,1377"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="8,5,205,655"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,668,109,703,104,703,104,668"/>
+</map>

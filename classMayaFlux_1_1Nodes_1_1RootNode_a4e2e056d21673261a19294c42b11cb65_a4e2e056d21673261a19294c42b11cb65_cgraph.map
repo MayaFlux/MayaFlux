@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::RootNode::process_frame" name="MayaFlux::Nodes::RootNode::process_frame">
+<area shape="rect" id="Node000001" title="Processes a single frame from all registered nodes." alt="" coords="5,69,212,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a4b8a7b5921b7d9b7ffb1e2f0e596e9a2.html#a4b8a7b5921b7d9b7ffb1e2f0e596e9a2" title="Atomically adds a flag to a node state." alt="" coords="269,5,457,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,67,269,46,271,51,190,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1RootNode_acec33201d108cfd668b329d7dc75f6f4.html#acec33201d108cfd668b329d7dc75f6f4" title="Performs post&#45;processing after all nodes have been processed." alt="" coords="260,69,467,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="212,87,246,87,246,92,212,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1RootNode_a54874a3f0e12685053005d562588f7cc.html#a54874a3f0e12685053005d562588f7cc" title="Checks if the root node can process pending operations." alt="" coords="260,133,467,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="190,107,271,127,269,133,188,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1RootNode_a1a20847a779ea2b4d3f22f3b50e8dbc5.html#a1a20847a779ea2b4d3f22f3b50e8dbc5" title="Processes any pending node registration/unregistration operations." alt="" coords="515,133,729,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="467,151,501,151,501,156,467,156"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Nodes_aac8fa369e6002717f3fb801d65288cf7.html#aac8fa369e6002717f3fb801d65288cf7" title="Atomically sets a node state flag to a specific value." alt="" coords="777,133,965,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="729,151,764,151,764,156,729,156"/>
+</map>

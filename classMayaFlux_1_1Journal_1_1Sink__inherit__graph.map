@@ -1,0 +1,7 @@
+<map id="MayaFlux::Journal::Sink" name="MayaFlux::Journal::Sink">
+<area shape="rect" id="Node000001" title=" " alt="" coords="78,5,245,151"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Journal_1_1ConsoleSink.html" title=" " alt="" coords="5,199,152,419"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="133,164,121,199,116,198,128,163"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Journal_1_1FileSink.html" title=" " alt="" coords="176,209,315,409"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="195,163,211,208,206,209,190,164"/>
+</map>

@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::wait_for_snapshot_completion" name="MayaFlux::Buffers::wait_for_snapshot_completion">
+<area shape="rect" id="Node000001" title="Wait for an active snapshot context to complete using exponential backoff." alt="" coords="729,99,951,139"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a10f96d6572122cf5ec2922a9c3c76321.html#a10f96d6572122cf5ec2922a9c3c76321" title="Extract multiple samples from a node into a vector." alt="" coords="475,25,665,65"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="753,98,642,67,644,62,755,93"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Buffers_a982f4ec490b359e813ad8eb63bcfab37.html#a982f4ec490b359e813ad8eb63bcfab37" title="Extract a single sample from a node with proper snapshot management." alt="" coords="485,99,655,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="716,122,655,122,655,117,716,117"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Buffers_aaa0a91ed33cd8bedc7d3b7b3c0b8c28e.html#aaa0a91ed33cd8bedc7d3b7b3c0b8c28e" title="Apply node output to an existing buffer with mixing." alt="" coords="459,174,681,214"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="755,146,644,177,642,171,753,140"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1NodeSourceProcessor_abefe4bc1e3c19335b91708c2d4deec41.html#abefe4bc1e3c19335b91708c2d4deec41" title="Gets a batch of data from the node." alt="" coords="238,5,401,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="461,42,401,39,401,34,461,37"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor_ac3b7f2177e5238a79a7eab8fa403e3d5.html#ac3b7f2177e5238a79a7eab8fa403e3d5" title=" " alt="" coords="228,85,411,154"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="471,122,411,122,411,117,471,117"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor_a9e34683edc8a22b84caa07129b961dd2.html#a9e34683edc8a22b84caa07129b961dd2" title=" " alt="" coords="5,92,180,147"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="214,122,180,122,180,117,214,117"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1NodeSourceProcessor_af8a19065d200ecb109217cf9426eeaf1.html#af8a19065d200ecb109217cf9426eeaf1" title="Captures node computation output into a buffer." alt="" coords="238,179,401,233"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="445,203,401,205,401,199,445,197"/>
+</map>

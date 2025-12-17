@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::TransferProcessor::TransferProcessor" name="MayaFlux::Buffers::TransferProcessor::TransferProcessor">
+<area shape="rect" id="Node000001" title="Create transfer from audio to GPU." alt="" coords="5,5,203,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_a4e0c89c41495d26d4e539da7ca8dae1c.html#a4e0c89c41495d26d4e539da7ca8dae1c" title="Configure audio→GPU transfer." alt="" coords="251,5,447,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,30,237,30,237,35,203,35"/>
+</map>

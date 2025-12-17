@@ -1,0 +1,26 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::set_memory_layout" name="MayaFlux::Kakshya::SoundStreamContainer::set_memory_layout">
+<area shape="rect" id="Node000001" title="Set the memory layout for this container." alt="" coords="5,74,177,129"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="225,9,432,49"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,73,248,51,249,56,178,78"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a5a5f738d4e843355ce805d7891bf018b.html#a5a5f738d4e843355ce805d7891bf018b" title=" " alt="" coords="237,74,420,129"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,99,224,99,224,104,177,104"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a46cf2a36bf81975f79bc304b56edc004.html#a46cf2a36bf81975f79bc304b56edc004" title=" " alt="" coords="483,149,655,203"/>
+<area shape="poly" id="edge12_Node000001_Node000006" title=" " alt="" coords="175,126,226,139,353,158,470,168,470,174,352,163,225,144,174,131"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_aabeece17084e84e555c71c127aa66eb2.html#aabeece17084e84e555c71c127aa66eb2" title="Interleave multiple channels of data into a single vector." alt="" coords="490,5,649,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="415,71,492,47,493,52,417,76"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a93e6f9e5095df9ea658c152a67e5dd96.html#a93e6f9e5095df9ea658c152a67e5dd96" title="Invalidate the span cache when data or layout changes." alt="" coords="480,70,659,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="420,97,466,96,466,102,420,102"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="418,126,471,143,469,148,416,131"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ac71c3404aadefac0fe97e641021e1eba.html#ac71c3404aadefac0fe97e641021e1eba" title="Create dimension descriptors for a data modality." alt="" coords="707,149,879,203"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="655,173,693,173,693,179,655,179"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="929,13,1120,67"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="826,146,872,112,925,78,938,71,941,76,928,82,875,116,829,151"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="933,92,1116,132"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="878,150,937,133,939,138,879,155"/>
+<area shape="rect" id="Node000010" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="927,156,1123,196"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="879,173,913,173,913,179,879,179"/>
+<area shape="rect" id="Node000011" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="937,220,1112,260"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="879,197,939,214,937,219,878,202"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="944,284,1105,324"/>
+<area shape="poly" id="edge11_Node000007_Node000012" title=" " alt="" coords="828,201,874,236,928,270,943,276,940,281,925,274,871,241,824,206"/>
+</map>

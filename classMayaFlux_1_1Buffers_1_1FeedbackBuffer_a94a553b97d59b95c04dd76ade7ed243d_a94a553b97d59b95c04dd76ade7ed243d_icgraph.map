@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::FeedbackBuffer::create_default_processor" name="MayaFlux::Buffers::FeedbackBuffer::create_default_processor">
+<area shape="rect" id="Node000001" title="Creates the default processor for this buffer type." alt="" coords="285,5,457,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1FeedbackBuffer_a4b8c2c6d77c40c6c8a154e398ebcb2d7.html#a4b8c2c6d77c40c6c8a154e398ebcb2d7" title="Creates a new feedback buffer." alt="" coords="5,13,237,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="272,35,237,35,237,30,272,30"/>
+</map>

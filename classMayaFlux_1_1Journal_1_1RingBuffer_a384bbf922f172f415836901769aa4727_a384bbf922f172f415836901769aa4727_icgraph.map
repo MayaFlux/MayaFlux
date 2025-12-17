@@ -1,0 +1,7 @@
+<map id="MayaFlux::Journal::RingBuffer::increment" name="MayaFlux::Journal::RingBuffer::increment">
+<area shape="rect" id="Node000001" title=" " alt="" coords="208,37,372,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Journal_1_1RingBuffer_a9e489c01ab43d0142159cd9973e93918.html#a9e489c01ab43d0142159cd9973e93918" title="Attempt to read an element." alt="" coords="9,5,156,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,45,156,39,157,34,195,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Journal_1_1RingBuffer_a888a328a7f8dded525049d71d990ec2b.html#a888a328a7f8dded525049d71d990ec2b" title="Attempt to write an element (wait&#45;free)" alt="" coords="5,69,160,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="195,75,161,80,160,75,194,69"/>
+</map>

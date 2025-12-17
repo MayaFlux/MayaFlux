@@ -1,0 +1,15 @@
+<map id="MayaFlux::Yantra::EnergyAnalyzer&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::EnergyAnalyzer&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="High&#45;performance energy analyzer with zero&#45;copy processing." alt="" coords="129,1609,375,2309"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer.html" title="Template&#45;flexible analyzer base with instance&#45;defined I/O types." alt="" coords="129,1000,375,1560"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="255,1574,255,1609,249,1609,249,1574"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,448,259,937"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="187,951,197,999,192,1000,182,952"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1ExecutionContext.html" title="Context information for operation execution." alt="" coords="33,78,231,298"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="135,298,135,431,129,431,129,298"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Yantra_1_1IO.html" title=" " alt="" coords="283,505,464,880"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="337,881,316,985,311,984,332,880"/>
+<area shape="rect" id="Node000006" href="$classT.html" title=" " alt="" coords="349,155,371,221"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="363,221,371,489,365,489,358,221"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Yantra_1_1IO.html" title="Input/Output container for computation pipeline data flow with structure preservation." alt="" coords="396,5,583,371"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="447,385,419,506,414,505,442,384"/>
+</map>

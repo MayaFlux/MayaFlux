@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::RtAudioDevice::RtAudioDevice" name="MayaFlux::Core::RtAudioDevice::RtAudioDevice">
+<area shape="rect" id="Node000001" title="Initializes the device manager with an RtAudio context." alt="" coords="5,5,233,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Core_a133ce155821da146bbc8f75e898e8b71.html#a133ce155821da146bbc8f75e898e8b71" title="Converts RtAudio&#45;specific device information to the engine&#39;s device model." alt="" coords="281,5,463,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,23,268,23,268,28,234,28"/>
+</map>

@@ -1,0 +1,38 @@
+<map id="MayaFlux::Portal::Graphics::SamplerForge::~SamplerForge" name="MayaFlux::Portal::Graphics::SamplerForge::~SamplerForge">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,293,235,333"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a3889f398a94af104f9e3d00b1d059006.html#a3889f398a94af104f9e3d00b1d059006" title="Shutdown Portal::Graphics subsystem." alt="" coords="283,293,480,333"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="235,311,269,311,269,316,235,316"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="528,5,725,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="386,292,403,244,432,180,472,114,498,82,526,55,533,50,536,55,530,59,502,86,477,117,436,183,408,246,391,294"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="528,69,725,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="390,292,411,255,441,209,480,161,526,119,535,113,538,118,530,123,484,164,445,212,415,258,395,295"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a880d0694e043c227ecf475a1beb906cb.html#a880d0694e043c227ecf475a1beb906cb" title=" " alt="" coords="528,133,725,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="399,291,453,238,488,209,527,183,539,176,542,181,529,188,491,213,456,242,402,295"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="528,197,725,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="424,291,527,247,547,239,549,244,529,252,427,296"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="528,261,725,301"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="480,298,514,293,515,299,481,303"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a6948fbfdc469b8371205414a311c02a7.html#a6948fbfdc469b8371205414a311c02a7" title=" " alt="" coords="528,389,725,429"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="427,331,529,375,549,382,547,387,527,380,424,336"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_abcf02a1cf894859ebc06d61963b54da5.html#abcf02a1cf894859ebc06d61963b54da5" title=" " alt="" coords="528,453,725,493"/>
+<area shape="poly" id="edge10_Node000002_Node000011" title=" " alt="" coords="402,332,456,385,491,414,529,439,542,446,539,450,527,444,488,418,453,389,399,335"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_acc55d7263cab1f2e742b78bff02500ac.html#acc55d7263cab1f2e742b78bff02500ac" title="Shutdown and cleanup all samplers." alt="" coords="528,517,725,557"/>
+<area shape="poly" id="edge13_Node000002_Node000012" title=" " alt="" coords="395,332,415,369,445,415,484,462,530,503,538,509,535,513,526,507,480,466,441,418,411,371,390,335"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a152810902f8bea3d18b29debf3a6670f.html#a152810902f8bea3d18b29debf3a6670f" title="Shutdown and cleanup." alt="" coords="528,325,725,365"/>
+<area shape="poly" id="edge14_Node000002_Node000013" title=" " alt="" coords="481,324,515,328,514,333,480,329"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a912ecedf34625883158c33adddcf7726.html#a912ecedf34625883158c33adddcf7726" title="Shutdown and cleanup all textures." alt="" coords="528,581,725,621"/>
+<area shape="poly" id="edge16_Node000002_Node000014" title=" " alt="" coords="391,333,408,381,436,444,477,510,502,541,530,567,536,572,533,576,526,571,498,544,472,513,432,446,403,383,386,334"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="794,389,999,429"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="726,407,780,407,780,412,726,412"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aa9c6a8bc1c6cc0082f4519bd71da28c5.html#aa9c6a8bc1c6cc0082f4519bd71da28c5" title="Check if compiler is initialized." alt="" coords="789,453,1005,493"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="712,427,799,448,798,453,711,432"/>
+<area shape="poly" id="edge11_Node000011_Node000009" title=" " alt="" coords="711,451,798,430,799,435,712,456"/>
+<area shape="poly" id="edge12_Node000011_Node000010" title=" " alt="" coords="726,471,775,471,775,476,726,476"/>
+<area shape="poly" id="edge15_Node000013_Node000009" title=" " alt="" coords="712,363,799,384,798,389,711,368"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a0d36804c3058228b8958634d74a89902.html#a0d36804c3058228b8958634d74a89902" title="Cleanup a VKImage (destroy view, image, and free memory)" alt="" coords="773,581,1020,621"/>
+<area shape="poly" id="edge17_Node000014_Node000015" title=" " alt="" coords="726,599,760,599,760,604,726,604"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="1068,581,1268,621"/>
+<area shape="poly" id="edge18_Node000015_Node000016" title=" " alt="" coords="1020,599,1054,599,1054,604,1020,604"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="1316,581,1511,621"/>
+<area shape="poly" id="edge19_Node000016_Node000017" title=" " alt="" coords="1268,599,1302,599,1302,604,1268,604"/>
+</map>

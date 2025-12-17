@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::VKBuffer::is_initialized" name="MayaFlux::Buffers::VKBuffer::is_initialized">
+<area shape="rect" id="Node000001" title="Check whether Vulkan handles are present (buffer registered)" alt="" coords="453,101,623,141"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a818e469f4792c407c6ebc6e1112a6121.html#a818e469f4792c407c6ebc6e1112a6121" title="Clear buffer contents." alt="" coords="257,69,405,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="439,109,406,103,406,98,440,104"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae22f33ecea5953e1b819bbd36db3114c.html#ae22f33ecea5953e1b819bbd36db3114c" title="Write data into the buffer." alt="" coords="33,5,181,45"/>
+<area shape="poly" id="edge8_Node000001_Node000003" title=" " alt="" coords="490,97,449,77,405,60,347,46,288,37,181,29,182,24,289,32,348,41,406,55,452,72,493,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a382af8166b7e2e54d7336352c261d954.html#a382af8166b7e2e54d7336352c261d954" title="Read buffer contents as Kakshya DataVariant." alt="" coords="257,133,405,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="440,139,406,144,406,139,439,134"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a1c3e0f6c292516efd5f5364ba7a14fa8.html#a1c3e0f6c292516efd5f5364ba7a14fa8" title="Resize buffer and recreate GPU resources if needed." alt="" coords="257,197,405,237"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="486,150,406,188,380,200,378,195,404,183,483,145"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="247,68,177,48,179,43,248,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_afb563bced2a85b0019e571ce0bfa4081.html#afb563bced2a85b0019e571ce0bfa4081" title="Virtual destructor." alt="" coords="30,69,185,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="243,92,185,92,185,87,243,87"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_af6dd001810af7fa06b5b2fd83d04303a.html#af6dd001810af7fa06b5b2fd83d04303a" title="Create a clone of this buffer with the same data and properties." alt="" coords="33,133,181,173"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="243,156,182,156,182,151,243,151"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab" title="Create texture buffer with dimensions." alt="" coords="5,197,209,237"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="244,220,210,220,210,215,244,215"/>
+</map>

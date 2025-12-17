@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::TaskScheduler::process_default" name="MayaFlux::Vruta::TaskScheduler::process_default">
+<area shape="rect" id="Node000001" title="Process tasks in a specific domain with default algorithm." alt="" coords="5,5,236,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aa1e9585cf32c6b11e54b763c48c1398e.html#aa1e9585cf32c6b11e54b763c48c1398e" title="Get all tasks for a specific processing domain." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,23,270,23,270,28,236,28"/>
+</map>

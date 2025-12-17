@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::TokenUnitManager::get_audio_channel_count" name="MayaFlux::Buffers::TokenUnitManager::get_audio_channel_count">
+<area shape="rect" id="Node000001" title="Gets the number of channels in an audio unit." alt="" coords="276,92,448,147"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a3c050311e7b1c6e3c429c35077792324.html#a3c050311e7b1c6e3c429c35077792324" title="Gets the number of channels for an audio token." alt="" coords="5,5,228,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,90,194,63,196,58,272,85"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a5577aee089471fda06decd224c337ada.html#a5577aee089471fda06decd224c337ada" title="Removes a previously supplied buffer from a token and channel." alt="" coords="28,85,205,154"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="262,122,206,122,206,117,262,117"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a2b509601b7218863702678b0d1092243.html#a2b509601b7218863702678b0d1092243" title="Supplies an external audio buffer to a specific token and channel." alt="" coords="30,179,203,233"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="272,154,196,181,194,176,270,149"/>
+</map>

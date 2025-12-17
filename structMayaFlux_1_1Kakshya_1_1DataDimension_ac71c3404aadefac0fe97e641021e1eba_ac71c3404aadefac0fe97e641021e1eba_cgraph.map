@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kakshya::DataDimension::create_dimensions" name="MayaFlux::Kakshya::DataDimension::create_dimensions">
+<area shape="rect" id="Node000001" title="Create dimension descriptors for a data modality." alt="" coords="5,141,177,196"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="228,5,419,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="125,139,171,104,224,70,237,64,239,68,227,75,174,109,128,143"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="232,85,415,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,142,236,126,238,131,178,148"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="225,149,421,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="177,166,212,166,212,171,177,171"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="236,213,411,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="178,190,238,206,236,211,177,195"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="243,277,404,317"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="126,194,172,229,227,262,241,269,239,274,224,267,169,233,123,198"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::RegionGroup::sort_by_attribute" name="MayaFlux::Kakshya::RegionGroup::sort_by_attribute">
+<area shape="rect" id="Node000001" title="Sort regions by a specific attribute (numeric)." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1Region_a86ab8b71d580d67f6c46525eed760bab.html#a86ab8b71d580d67f6c46525eed760bab" title="Get an attribute value by key, with type conversion support." alt="" coords="216,13,375,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,30,202,30,202,35,168,35"/>
+</map>

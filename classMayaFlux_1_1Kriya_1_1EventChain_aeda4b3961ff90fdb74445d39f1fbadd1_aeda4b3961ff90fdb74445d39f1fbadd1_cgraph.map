@@ -1,0 +1,26 @@
+<map id="MayaFlux::Kriya::EventChain::start" name="MayaFlux::Kriya::EventChain::start">
+<area shape="rect" id="Node000001" title="Starts executing the event chain." alt="" coords="5,252,216,292"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a3bbdbe399b3965e46556f568de2021c4.html#a3bbdbe399b3965e46556f568de2021c4" title="Add a routine to the scheduler based on its processing token." alt="" coords="264,163,495,203"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,249,305,205,306,210,173,254"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a99bd0b1b8f51d07e40aeaf1588342323.html#a99bd0b1b8f51d07e40aeaf1588342323" title="Converts a time in seconds to a number of samples." alt="" coords="264,312,495,352"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="202,289,277,306,275,312,200,295"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ac25ca182642ae621095f9f9ecb51c440.html#ac25ca182642ae621095f9f9ecb51c440" title="Generate automatic name for a routine based on its type." alt="" coords="543,5,773,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="400,160,460,108,500,80,541,55,557,48,560,53,544,60,502,84,464,112,403,164"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a81c68c47d8ac2ce8f736f8d35f4fe20c.html#a81c68c47d8ac2ce8f736f8d35f4fe20c" title="Initialize a processing domain if it doesn&#39;t exist." alt="" coords="543,69,773,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="429,160,542,119,568,111,569,116,544,124,431,165"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a6cab5fd4999392badaec656a94ab3d16.html#a6cab5fd4999392badaec656a94ab3d16" title="Find task entry by name." alt="" coords="543,133,773,173"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="495,168,529,164,529,170,495,173"/>
+<area shape="rect" id="Node000008" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="619,198,697,223"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="495,192,605,203,604,208,495,197"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a69aa9210925f6d7a5d075e5887f4faaa.html#a69aa9210925f6d7a5d075e5887f4faaa" title="Initialize a routine&#39;s state for a specific domain." alt="" coords="543,248,773,288"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="443,200,543,232,574,241,573,247,542,237,441,205"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a8c97edc92dee77f6fc9b6030a14637e7.html#a8c97edc92dee77f6fc9b6030a14637e7" title="Generates a unique task ID for new tasks." alt="" coords="821,5,1052,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="774,23,808,23,808,28,774,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="821,191,1052,231"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="741,107,774,119,838,149,894,181,891,186,836,154,772,124,739,112"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_ac441836158c7cf40639d9fec1d942f0a.html#ac441836158c7cf40639d9fec1d942f0a" title="Get processing rate for a domain." alt="" coords="543,312,773,352"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="495,329,529,329,529,335,495,335"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Utils_acef9b648b97a768e92f99563e8222dc0.html#acef9b648b97a768e92f99563e8222dc0" title="Convert seconds to samples at a given sample rate." alt="" coords="565,376,751,416"/>
+<area shape="poly" id="edge12_Node000010_Node000012" title=" " alt="" coords="468,349,558,370,556,376,467,355"/>
+<area shape="poly" id="edge11_Node000011_Node000006" title=" " alt="" coords="739,309,772,298,836,267,891,235,894,240,838,272,774,302,741,314"/>
+</map>

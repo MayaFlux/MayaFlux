@@ -1,0 +1,28 @@
+var MathematicalHelper_8hpp =
+[
+    [ "interpolate", "MathematicalHelper_8hpp.html#a169ceff435409b3a603896d1d4965ed0", null ],
+    [ "interpolate_cubic", "MathematicalHelper_8hpp.html#a1f7e7992f50e0beffa19b55efba92245", null ],
+    [ "interpolate_cubic", "MathematicalHelper_8hpp.html#a9f99ebd356065ba6d5471cbcdff57fe1", null ],
+    [ "interpolate_linear", "MathematicalHelper_8hpp.html#a284b33b59ee513dd94e489b8335c2031", null ],
+    [ "interpolate_linear", "MathematicalHelper_8hpp.html#a80ea80bf8f91c7fd78a4d0a3d11875ec", null ],
+    [ "transform_clamp", "MathematicalHelper_8hpp.html#a7c8b6560008accda9d9a1eb0743259fe", null ],
+    [ "transform_clamp", "MathematicalHelper_8hpp.html#ae2ec9e1d2352fb26b8c1eda27f6b150a", null ],
+    [ "transform_exponential", "MathematicalHelper_8hpp.html#a6f87b936d520b8f27a7ed13d2c2dea79", null ],
+    [ "transform_exponential", "MathematicalHelper_8hpp.html#a0b777379cfaa76e8bfc8208d564122f6", null ],
+    [ "transform_linear", "MathematicalHelper_8hpp.html#a4778511625d80eaac31c9c4255573cf1", null ],
+    [ "transform_linear", "MathematicalHelper_8hpp.html#aaa215c394b5ca3f8dad82df329f68a6e", null ],
+    [ "transform_logarithmic", "MathematicalHelper_8hpp.html#a1586463a10a247f19d67b63f00589308", null ],
+    [ "transform_logarithmic", "MathematicalHelper_8hpp.html#a50a7b0497afc12954f2878941875681b", null ],
+    [ "transform_normalize", "MathematicalHelper_8hpp.html#a59ce65a7171ef949cd6942ede1cff8a2", null ],
+    [ "transform_normalize", "MathematicalHelper_8hpp.html#a5609676ef8cb8e9a437a23876a46c9e9", null ],
+    [ "transform_polynomial", "MathematicalHelper_8hpp.html#a35518297df4846fab6f17e1719b4871c", null ],
+    [ "transform_polynomial", "MathematicalHelper_8hpp.html#ad24e6f405102277cf7fef7d823405ff6", null ],
+    [ "transform_power", "MathematicalHelper_8hpp.html#a70a9fbf62d7d24bb02b436bea94b381b", null ],
+    [ "transform_power", "MathematicalHelper_8hpp.html#a7efa0cc99e5c84356cb2ccce77f6e9da", null ],
+    [ "transform_quantize", "MathematicalHelper_8hpp.html#a759cd7a0810a130243378ede0fedd96c", null ],
+    [ "transform_quantize", "MathematicalHelper_8hpp.html#a2a014c17ff56420d38bd2af866829749", null ],
+    [ "transform_trigonometric", "MathematicalHelper_8hpp.html#a31cd318e70c12c8db4f0e0f98a47e18a", null ],
+    [ "transform_trigonometric", "MathematicalHelper_8hpp.html#ab1bf6577512e3d305cc26dd85639f1bb", null ],
+    [ "transform_wrap", "MathematicalHelper_8hpp.html#a1cf83fd9c0bbb724e518648213caab6e", null ],
+    [ "transform_wrap", "MathematicalHelper_8hpp.html#af353cb8c2e8c36a11b87ac9d335184f0", null ]
+];

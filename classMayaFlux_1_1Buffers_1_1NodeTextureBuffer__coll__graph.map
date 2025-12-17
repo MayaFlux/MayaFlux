@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::NodeTextureBuffer" name="MayaFlux::Buffers::NodeTextureBuffer">
+<area shape="rect" id="Node000001" title="Staging buffer for uploading TextureNode pixel data to GPU textures." alt="" coords="190,1041,374,1511"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="191,477,373,992"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="285,1006,285,1041,279,1041,279,1006"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,135,188,415"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="161,426,194,508,189,510,156,428"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="21,5,173,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="99,99,99,135,94,135,94,99"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Buffers_1_1VKBufferResources.html" title=" " alt="" coords="212,215,352,335"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="285,335,285,461,279,461,279,335"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1VKBuffer_1_1PipelineContext.html" title="Context shared with BufferProcessors during pipeline execution." alt="" coords="376,215,577,335"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="454,336,382,506,377,504,449,334"/>
+</map>

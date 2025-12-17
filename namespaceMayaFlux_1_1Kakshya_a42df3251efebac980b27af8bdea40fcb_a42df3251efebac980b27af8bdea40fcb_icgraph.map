@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kakshya::is_region_access_contiguous" name="MayaFlux::Kakshya::is_region_access_contiguous">
+<area shape="rect" id="Node000001" title="Check if region access will be contiguous in memory." alt="" coords="232,29,443,69"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="379,18,364,11,337,8,314,10,300,15,295,21,297,28,292,30,289,20,297,10,313,5,337,3,366,6,381,13"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a14025538de14bab9a8a43365f6032c90.html#a14025538de14bab9a8a43365f6032c90" title="Determine optimal memory access pattern for region." alt="" coords="5,29,184,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,52,184,52,184,47,218,47"/>
+</map>

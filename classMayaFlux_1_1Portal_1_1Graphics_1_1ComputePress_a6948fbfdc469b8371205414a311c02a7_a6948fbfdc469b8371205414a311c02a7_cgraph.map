@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::shutdown" name="MayaFlux::Portal::Graphics::ComputePress::shutdown">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,203,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="256,5,461,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,42,242,37,243,43,203,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aa9c6a8bc1c6cc0082f4519bd71da28c5.html#aa9c6a8bc1c6cc0082f4519bd71da28c5" title="Check if compiler is initialized." alt="" coords="251,69,467,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,67,237,71,237,77,202,72"/>
+</map>
