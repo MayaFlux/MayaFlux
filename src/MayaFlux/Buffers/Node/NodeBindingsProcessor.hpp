@@ -71,13 +71,11 @@ public:
     std::vector<std::string> get_binding_names() const;
 
 protected:
-    /**
-     * @brief Hook called before shader dispatch
-     * Automatically updates push constants from bound nodes
-     */
-    void on_before_dispatch(
-        Portal::Graphics::CommandBufferID cmd_id,
-        const std::shared_ptr<VKBuffer>& buffer) override;
+    void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
+
+    void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override { }
+
+    void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override { }
 
 private:
     void update_push_constants_from_nodes();

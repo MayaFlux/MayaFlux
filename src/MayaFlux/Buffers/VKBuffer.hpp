@@ -12,6 +12,10 @@ struct BufferService;
 struct ComputeService;
 }
 
+namespace MayaFlux::Portal::Graphics {
+struct DescriptorBindingInfo;
+}
+
 namespace MayaFlux::Core {
 class Window;
 }
@@ -58,6 +62,20 @@ public:
         VERTEX, ///< Vertex buffer
         INDEX, ///< Index buffer
         UNIFORM ///< Uniform buffer (host-visible when requested)
+    };
+
+    /**
+     * @brief Context shared with BufferProcessors during pipeline execution
+     *
+     * Processors can use this struct to share data (e.g., push constant staging)
+     * and metadata during processing of this buffer in a chain.
+     */
+    struct PipelineContext {
+        std::vector<uint8_t> push_constant_staging;
+
+        std::vector<Portal::Graphics::DescriptorBindingInfo> descriptor_buffer_bindings;
+
+        std::unordered_map<std::string, std::any> metadata;
     };
 
     /**
@@ -423,6 +441,12 @@ public:
     /** Check whether this buffer is for internal engine usage */
     bool is_internal_only() const override { return m_internal_usage; }
 
+    /** Access the pipeline context for custom metadata (non-const) */
+    PipelineContext& get_pipeline_context() { return m_pipeline_context; }
+
+    /** Access the pipeline context for custom metadata (const) */
+    const PipelineContext& get_pipeline_context() const { return m_pipeline_context; }
+
 private:
     VKBufferResources m_resources;
 
@@ -445,6 +469,7 @@ private:
     std::shared_ptr<Buffers::BufferProcessor> m_default_processor;
     std::shared_ptr<Buffers::BufferProcessingChain> m_processing_chain;
     ProcessingToken m_processing_token;
+    PipelineContext m_pipeline_context;
 
     std::unordered_map<RenderPipelineID, std::shared_ptr<Core::Window>> m_window_pipelines;
     std::unordered_map<RenderPipelineID, CommandBufferID> m_pipeline_commands;

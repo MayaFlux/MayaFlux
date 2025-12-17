@@ -457,12 +457,10 @@ ShaderReflectionInfo ShaderFoundry::get_shader_reflection(ShaderID shader_id)
     info.workgroup_size = reflection.workgroup_size;
 
     for (const auto& binding : reflection.bindings) {
-        DescriptorBindingInfo binding_info;
-        binding_info.set = binding.set;
-        binding_info.binding = binding.binding;
-        binding_info.type = binding.type;
-        binding_info.name = binding.name;
-        info.descriptor_bindings.push_back(binding_info);
+        info.descriptor_bindings.push_back({ .set = binding.set,
+            .binding = binding.binding,
+            .type = binding.type,
+            .name = binding.name });
     }
 
     for (const auto& pc : reflection.push_constants) {

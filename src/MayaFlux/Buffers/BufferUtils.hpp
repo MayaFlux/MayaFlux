@@ -2,6 +2,10 @@
 
 #include "MayaFlux/Core/ProcessingTokens.hpp"
 
+namespace MayaFlux::Nodes {
+class Node;
+}
+
 namespace MayaFlux::Buffers {
 
 /**
@@ -16,7 +20,7 @@ namespace MayaFlux::Buffers {
  * tokens, ranging from strict validation to complete flexibility. This enables different operational
  * modes for development, production, and specialized processing scenarios.
  */
-enum class TokenEnforcementStrategy {
+enum class TokenEnforcementStrategy : uint8_t {
     /**
      * @brief Strictly enforces token assignment with no cross-token sharing
      *
@@ -91,20 +95,7 @@ enum class TokenEnforcementStrategy {
  * This validation is essential for maintaining system stability and ensuring that
  * processing tokens represent achievable execution configurations.
  */
-inline void validate_token(ProcessingToken token)
-{
-    if ((token & SAMPLE_RATE) && (token & FRAME_RATE)) {
-        throw std::invalid_argument("SAMPLE_RATE and FRAME_RATE are mutually exclusive.");
-    }
-
-    if ((token & CPU_PROCESS) && (token & GPU_PPOCESS)) {
-        throw std::invalid_argument("CPU_PROCESS and GPU_PROCESS are mutually exclusive.");
-    }
-
-    if ((token & SEQUENTIAL) && (token & PARALLEL)) {
-        throw std::invalid_argument("SEQUENTIAL and PARALLEL are mutually exclusive.");
-    }
-}
+void validate_token(ProcessingToken token);
 
 /**
  * @brief Determines if two processing tokens are compatible for joint execution
@@ -136,55 +127,7 @@ inline void validate_token(ProcessingToken token)
  * processors to share execution contexts while preventing configurations that would result
  * in poor performance or execution failures.
  */
-inline bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken current)
-{
-    bool preferred_sample = preferred & SAMPLE_RATE;
-    bool preferred_frame = preferred & FRAME_RATE;
-    bool current_sample = current & SAMPLE_RATE;
-    bool current_frame = current & FRAME_RATE;
-
-    // If preferred is FRAME_RATE, only FRAME_RATE is compatible
-    if (preferred_frame && !current_frame)
-        return false;
-    // If preferred is SAMPLE_RATE, FRAME_RATE can be compatible (sample can "delay" to frame)
-    if (preferred_sample && current_frame)
-        return true;
-    // If both are SAMPLE_RATE or both are FRAME_RATE, compatible
-    if ((preferred_sample && current_sample) || (preferred_frame && current_frame))
-        return true;
-
-    // Device compatibility: SAMPLE_RATE can't run on GPU, but FRAME_RATE can run on CPU
-    bool preferred_cpu = preferred & CPU_PROCESS;
-    bool preferred_gpu = preferred & GPU_PPOCESS;
-    bool current_cpu = current & CPU_PROCESS;
-    bool current_gpu = current & GPU_PPOCESS;
-
-    if (preferred_sample && current_gpu)
-        return false; // Can't run sample rate on GPU
-    if (preferred_gpu && current_cpu)
-        return false; // If preferred is GPU, but current is CPU, not compatible
-    // If preferred is CPU, but current is GPU, allow only for FRAME_RATE
-    if (preferred_cpu && current_gpu && !current_frame)
-        return false;
-
-    // Sequential/Parallel compatibility: allow if rates align
-    bool preferred_seq = preferred & SEQUENTIAL;
-    bool preferred_par = preferred & PARALLEL;
-    bool current_seq = current & SEQUENTIAL;
-    bool current_par = current & PARALLEL;
-
-    if ((preferred_seq && current_par) || (preferred_par && current_seq)) {
-        // Allow if rates align (already checked above)
-        if ((preferred_sample && current_sample) || (preferred_frame && current_frame))
-            return true;
-        // If preferred is SAMPLE_RATE and current is FRAME_RATE, already handled above
-        // Otherwise, not compatible
-        return false;
-    }
-
-    // If all checks pass, compatible
-    return true;
-}
+bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken current);
 
 /**
  * @brief Gets the optimal processing token for a given buffer type and system configuration
@@ -202,19 +145,41 @@ inline bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken cur
  * The recommendations help achieve optimal performance by matching processing
  * requirements with available system capabilities.
  */
-inline ProcessingToken get_optimal_token(const std::string& buffer_type, uint32_t system_capabilities)
-{
-    // Implementation would analyze buffer type and system capabilities
-    // This is a placeholder for the actual optimization logic
-    if (buffer_type == "audio") {
-        return (system_capabilities & 0x1) ? AUDIO_PARALLEL : AUDIO_BACKEND;
-    } else if (buffer_type == "video" || buffer_type == "texture") {
-        return GRAPHICS_BACKEND;
-    }
-    return AUDIO_BACKEND; // Safe default
-}
+ProcessingToken get_optimal_token(const std::string& buffer_type, uint32_t system_capabilities);
 
-}
+constexpr int MAX_SPINS = 1000;
+
+/**
+ * @brief Wait for an active snapshot context to complete using exponential backoff
+ * @return true if completed, false if timeout
+ */
+bool wait_for_snapshot_completion(
+    const std::shared_ptr<Nodes::Node>& node,
+    uint64_t active_context_id,
+    int max_spins = MAX_SPINS);
+
+/**
+ * @brief Extract a single sample from a node with proper snapshot management
+ * @return Extracted sample value
+ */
+double extract_single_sample(const std::shared_ptr<Nodes::Node>& node);
+
+/**
+ * @brief Extract multiple samples from a node into a vector
+ */
+std::vector<double> extract_multiple_samples(
+    const std::shared_ptr<Nodes::Node>& node,
+    size_t num_samples);
+
+/**
+ * @brief Apply node output to an existing buffer with mixing
+ */
+void update_buffer_with_node_data(
+    const std::shared_ptr<Nodes::Node>& node,
+    std::span<double> buffer,
+    double mix = 1.0);
+
+} // namespace MayaFlux::Buffers
 
 namespace std {
 template <>

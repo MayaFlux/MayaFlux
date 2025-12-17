@@ -8,17 +8,18 @@ namespace MayaFlux::Buffers {
 // Construction
 //==============================================================================
 
-ShaderProcessor::ShaderProcessor(const std::string& shader_path, uint32_t workgroup_x)
-    : m_config(shader_path)
+ShaderProcessor::ShaderProcessor(const std::string& shader_path)
+    : m_config({ shader_path })
 {
-    m_config.dispatch.workgroup_x = workgroup_x;
+    m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
     initialize_buffer_service();
     initialize_compute_service();
 }
 
-ShaderProcessor::ShaderProcessor(ShaderProcessorConfig config)
+ShaderProcessor::ShaderProcessor(ShaderConfig config)
     : m_config(std::move(config))
 {
+    m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
     initialize_buffer_service();
     initialize_compute_service();
 }
@@ -43,23 +44,25 @@ void ShaderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     if (!m_initialized) {
         initialize_shader();
-        initialize_pipeline(buffer);
-        initialize_descriptors();
+        initialize_pipeline(vk_buffer);
         m_initialized = true;
+        m_needs_descriptor_rebuild = true;
     }
 
     if (m_needs_pipeline_rebuild) {
-        initialize_pipeline(buffer);
+        initialize_pipeline(vk_buffer);
         m_needs_pipeline_rebuild = false;
+        m_needs_descriptor_rebuild = true;
     }
 
     if (m_needs_descriptor_rebuild) {
-        initialize_descriptors();
+        initialize_descriptors(vk_buffer);
         m_needs_descriptor_rebuild = false;
+    } else {
+        update_descriptors(vk_buffer);
     }
 
-    update_descriptors();
-    execute_dispatch(vk_buffer);
+    execute_shader(vk_buffer);
 }
 
 void ShaderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
@@ -200,37 +203,6 @@ void ShaderProcessor::set_shader(const std::string& shader_path)
 }
 
 //==============================================================================
-// Dispatch Configuration
-//==============================================================================
-
-void ShaderProcessor::set_workgroup_size(uint32_t x, uint32_t y, uint32_t z)
-{
-    m_config.dispatch.workgroup_x = x;
-    m_config.dispatch.workgroup_y = y;
-    m_config.dispatch.workgroup_z = z;
-}
-
-void ShaderProcessor::set_dispatch_mode(ShaderDispatchConfig::DispatchMode mode)
-{
-    m_config.dispatch.mode = mode;
-}
-
-void ShaderProcessor::set_manual_dispatch(uint32_t x, uint32_t y, uint32_t z)
-{
-    m_config.dispatch.mode = ShaderDispatchConfig::DispatchMode::MANUAL;
-    m_config.dispatch.group_count_x = x;
-    m_config.dispatch.group_count_y = y;
-    m_config.dispatch.group_count_z = z;
-}
-
-void ShaderProcessor::set_custom_dispatch(
-    std::function<std::array<uint32_t, 3>(const std::shared_ptr<VKBuffer>&)> calculator)
-{
-    m_config.dispatch.mode = ShaderDispatchConfig::DispatchMode::CUSTOM;
-    m_config.dispatch.custom_calculator = std::move(calculator);
-}
-
-//==============================================================================
 // Push Constants
 //==============================================================================
 
@@ -274,7 +246,7 @@ void ShaderProcessor::clear_specialization_constants()
 // Configuration
 //==============================================================================
 
-void ShaderProcessor::set_config(const ShaderProcessorConfig& config)
+void ShaderProcessor::set_config(const ShaderConfig& config)
 {
     m_config = config;
     m_needs_pipeline_rebuild = true;
@@ -341,49 +313,8 @@ void ShaderProcessor::on_shader_loaded(Portal::Graphics::ShaderID) { }
 void ShaderProcessor::on_pipeline_created(Portal::Graphics::ComputePipelineID) { }
 void ShaderProcessor::on_before_descriptors_create() { }
 void ShaderProcessor::on_descriptors_created() { }
-void ShaderProcessor::on_before_dispatch(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { }
-void ShaderProcessor::on_after_dispatch(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { }
-
-std::array<uint32_t, 3> ShaderProcessor::calculate_dispatch_size(const std::shared_ptr<VKBuffer>& buffer)
-{
-    using DispatchMode = ShaderDispatchConfig::DispatchMode;
-
-    switch (m_config.dispatch.mode) {
-    case DispatchMode::MANUAL:
-        return { m_config.dispatch.group_count_x, m_config.dispatch.group_count_y, m_config.dispatch.group_count_z };
-
-    case DispatchMode::ELEMENT_COUNT: {
-        uint64_t element_count = 0;
-        const auto& dimensions = buffer->get_dimensions();
-
-        if (!dimensions.empty()) {
-            element_count = dimensions[0].size;
-        } else {
-            element_count = buffer->get_size_bytes() / sizeof(float);
-        }
-
-        auto groups_x = static_cast<uint32_t>(
-            (element_count + m_config.dispatch.workgroup_x - 1) / m_config.dispatch.workgroup_x);
-        return { groups_x, 1, 1 };
-    }
-
-    case DispatchMode::BUFFER_SIZE: {
-        uint64_t size_bytes = buffer->get_size_bytes();
-        auto groups_x = static_cast<uint32_t>(
-            (size_bytes + m_config.dispatch.workgroup_x - 1) / m_config.dispatch.workgroup_x);
-        return { groups_x, 1, 1 };
-    }
-
-    case DispatchMode::CUSTOM:
-        if (m_config.dispatch.custom_calculator) {
-            return m_config.dispatch.custom_calculator(buffer);
-        }
-        return { 1, 1, 1 };
-
-    default:
-        return { 1, 1, 1 };
-    }
-}
+void ShaderProcessor::on_before_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { }
+void ShaderProcessor::on_after_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { }
 
 //==============================================================================
 // Private Implementation
@@ -408,82 +339,34 @@ void ShaderProcessor::initialize_shader()
         "Shader loaded: {} (ID: {})", m_config.shader_path, m_shader_id);
 }
 
-void ShaderProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& /*buffer*/)
-{
-    if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Cannot create pipeline without shader");
-        return;
-    }
-
-    auto& compute_press = Portal::Graphics::get_compute_press();
-
-    std::map<uint32_t, std::vector<std::pair<std::string, ShaderBinding>>> bindings_by_set;
-    for (const auto& [name, binding] : m_config.bindings) {
-        bindings_by_set[binding.set].emplace_back(name, binding);
-    }
-
-    std::vector<std::vector<Portal::Graphics::DescriptorBindingConfig>> descriptor_sets;
-    for (const auto& [set_index, set_bindings] : bindings_by_set) {
-        std::vector<Portal::Graphics::DescriptorBindingConfig> set_config;
-        for (const auto& [name, binding] : set_bindings) {
-            set_config.emplace_back(binding.set, binding.binding, binding.type);
-        }
-        descriptor_sets.push_back(set_config);
-    }
-
-    m_pipeline_id = compute_press.create_pipeline(
-        m_shader_id,
-        descriptor_sets,
-        m_config.push_constant_size);
-
-    if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Failed to create compute pipeline");
-        return;
-    }
-
-    on_pipeline_created(m_pipeline_id);
-
-    MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Compute pipeline created (ID: {}, {} descriptor sets, {} bytes push constants)",
-        m_pipeline_id, descriptor_sets.size(), m_config.push_constant_size);
-}
-
-void ShaderProcessor::initialize_descriptors()
-{
-    if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Cannot allocate descriptor sets without pipeline");
-        return;
-    }
-
-    on_before_descriptors_create();
-
-    auto& compute_press = Portal::Graphics::get_compute_press();
-
-    m_descriptor_set_ids = compute_press.allocate_pipeline_descriptors(m_pipeline_id);
-
-    if (m_descriptor_set_ids.empty()) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Failed to allocate descriptor sets");
-        return;
-    }
-
-    update_descriptors();
-    on_descriptors_created();
-
-    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Descriptor sets initialized: {} sets", m_descriptor_set_ids.size());
-}
-
-void ShaderProcessor::update_descriptors()
+void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_descriptor_set_ids.empty()) {
         return;
     }
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
+
+    std::set<std::pair<uint32_t, uint32_t>> updated_pairs;
+
+    for (const auto& binding : descriptor_bindings) {
+        if (binding.set >= m_descriptor_set_ids.size()) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Descriptor set index {} out of range", binding.set);
+            continue;
+        }
+
+        foundry.update_descriptor_buffer(
+            m_descriptor_set_ids[binding.set],
+            binding.binding,
+            binding.type,
+            binding.buffer_info.buffer,
+            binding.buffer_info.offset,
+            binding.buffer_info.range);
+
+        updated_pairs.emplace(binding.set, binding.binding);
+    }
 
     for (const auto& [descriptor_name, buffer] : m_bound_buffers) {
         auto binding_it = m_config.bindings.find(descriptor_name);
@@ -492,6 +375,11 @@ void ShaderProcessor::update_descriptors()
         }
 
         const auto& binding = binding_it->second;
+        auto key = std::make_pair(binding.set, binding.binding);
+
+        if (updated_pairs.count(key)) {
+            continue;
+        }
 
         if (binding.set >= m_descriptor_set_ids.size()) {
             MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -510,64 +398,13 @@ void ShaderProcessor::update_descriptors()
     }
 }
 
-void ShaderProcessor::execute_dispatch(const std::shared_ptr<VKBuffer>& buffer)
-{
-    if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE || m_descriptor_set_ids.empty()) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Cannot dispatch without pipeline and descriptors");
-        return;
-    }
-
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& compute_press = Portal::Graphics::get_compute_press();
-
-    auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::COMPUTE);
-
-    m_last_command_buffer = cmd_id;
-    m_last_processed_buffer = buffer;
-
-    compute_press.bind_pipeline(cmd_id, m_pipeline_id);
-
-    compute_press.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
-
-    if (!m_push_constant_data.empty()) {
-        compute_press.push_constants(
-            cmd_id,
-            m_pipeline_id,
-            m_push_constant_data.data(),
-            m_push_constant_data.size());
-    }
-
-    on_before_dispatch(cmd_id, buffer);
-
-    auto dispatch_size = calculate_dispatch_size(buffer);
-    compute_press.dispatch(cmd_id, dispatch_size[0], dispatch_size[1], dispatch_size[2]);
-
-    on_after_dispatch(cmd_id, buffer);
-
-    foundry.buffer_barrier(
-        cmd_id,
-        buffer->get_buffer(),
-        vk::AccessFlagBits::eShaderWrite,
-        vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eTransferRead,
-        vk::PipelineStageFlagBits::eComputeShader,
-        vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eTransfer);
-
-    foundry.submit_and_wait(cmd_id);
-}
-
 void ShaderProcessor::cleanup()
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& compute_press = Portal::Graphics::get_compute_press();
 
-    if (m_pipeline_id != Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
-        compute_press.destroy_pipeline(m_pipeline_id); // ← ComputePress
-        m_pipeline_id = Portal::Graphics::INVALID_COMPUTE_PIPELINE;
-    }
-
     if (m_shader_id != Portal::Graphics::INVALID_SHADER) {
-        foundry.destroy_shader(m_shader_id); // ← ShaderFoundry
+        foundry.destroy_shader(m_shader_id);
         m_shader_id = Portal::Graphics::INVALID_SHADER;
     }
 
@@ -575,4 +412,5 @@ void ShaderProcessor::cleanup()
     m_bound_buffers.clear();
     m_initialized = false;
 }
+
 } // namespace MayaFlux::Buffers

@@ -6,8 +6,6 @@
 
 namespace MayaFlux::Buffers {
 
-constexpr int MAX_SPINS = 1000;
-
 NodeSourceProcessor::NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, float mix, bool clear_before_process)
     : m_node(std::move(node))
     , m_mix(mix)
@@ -48,7 +46,7 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
             buffer->clear();
         }
 
-        update_buffer(buffer_data);
+        Buffers::update_buffer_with_node_data(m_node, buffer_data, m_mix);
 
     } catch (const std::exception& e) {
         error_rethrow(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(), "Error processing node: {}", e.what());
@@ -57,150 +55,7 @@ void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
 std::vector<double> NodeSourceProcessor::get_node_data(uint32_t num_samples)
 {
-    std::vector<double> output(num_samples);
-
-    static std::atomic<uint64_t> s_context_counter { 1 };
-    uint64_t my_context_id = s_context_counter.fetch_add(1, std::memory_order_relaxed);
-
-    const auto& state = m_node->m_state.load();
-    if (state == Utils::NodeState::INACTIVE && !m_node->is_buffer_processed()) {
-        for (size_t i = 0; i < num_samples; i++) {
-            output[i] = m_node->process_sample(0.F);
-        }
-        m_node->mark_buffer_processed();
-        return output;
-    }
-
-    bool claimed_snapshot = m_node->try_claim_snapshot_context(my_context_id);
-
-    if (claimed_snapshot) {
-
-        try {
-            m_node->save_state();
-
-            for (size_t i = 0; i < num_samples; i++) {
-                output[i] = m_node->process_sample(0.F);
-            }
-
-            m_node->restore_state();
-        } catch (const std::exception& e) {
-            m_node->release_snapshot_context(my_context_id);
-            error_rethrow(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(), "Error processing node: {}", e.what());
-        }
-
-        if (m_node->is_buffer_processed()) {
-            m_node->request_buffer_reset();
-        }
-        m_node->release_snapshot_context(my_context_id);
-
-    } else {
-        uint64_t active_context = m_node->get_active_snapshot_context();
-
-        int spin_count = 0;
-
-        while (m_node->is_in_snapshot_context(active_context) && spin_count < MAX_SPINS) {
-            if (spin_count < 10) {
-                for (int i = 0; i < (1 << spin_count); ++i) {
-                    MF_PAUSE_INSTRUCTION();
-                }
-            } else {
-                std::this_thread::yield();
-            }
-            ++spin_count;
-        }
-
-        if (spin_count >= MAX_SPINS) {
-            MF_RT_ERROR(Journal::Component::Buffers,
-                Journal::Context::BufferProcessing,
-                "Timeout waiting for node snapshot to complete. "
-                "Possible deadlock or very long processing time.");
-            return output;
-        }
-
-        m_node->save_state();
-        for (size_t i = 0; i < num_samples; i++) {
-            output[i] = m_node->process_sample(0.F);
-        }
-        m_node->restore_state();
-
-        if (m_node->is_buffer_processed()) {
-            m_node->request_buffer_reset();
-        }
-    }
-
-    return output;
-}
-
-void NodeSourceProcessor::update_buffer(std::vector<double>& buffer_data)
-{
-    static std::atomic<uint64_t> s_context_counter { 1 };
-    uint64_t my_context_id = s_context_counter.fetch_add(1, std::memory_order_relaxed);
-    const auto& state = m_node->m_state.load();
-
-    if (state == Utils::NodeState::INACTIVE && !m_node->is_buffer_processed()) {
-        for (double& i : buffer_data) {
-            i += m_node->process_sample(0.F) * m_mix;
-        }
-        m_node->mark_buffer_processed();
-        return;
-    }
-
-    bool claimed_snapshot = m_node->try_claim_snapshot_context(my_context_id);
-
-    if (claimed_snapshot) {
-        try {
-            m_node->save_state();
-
-            for (double& sample : buffer_data) {
-                sample += m_node->process_sample(0.F) * m_mix;
-            }
-
-            m_node->restore_state();
-
-        } catch (const std::exception& e) {
-            m_node->release_snapshot_context(my_context_id);
-            error_rethrow(Journal::Component::Buffers, Journal::Context::BufferProcessing, std::source_location::current(), "Error processing node: {}", e.what());
-        }
-
-        if (m_node->is_buffer_processed()) {
-            m_node->request_buffer_reset();
-        }
-
-        m_node->release_snapshot_context(my_context_id);
-
-    } else {
-        uint64_t active_context = m_node->get_active_snapshot_context();
-
-        int spin_count = 0;
-
-        while (m_node->is_in_snapshot_context(active_context) && spin_count < MAX_SPINS) {
-            if (spin_count < 10) {
-                for (int i = 0; i < (1 << spin_count); ++i) {
-                    MF_PAUSE_INSTRUCTION();
-                }
-            } else {
-                std::this_thread::yield();
-            }
-            ++spin_count;
-        }
-
-        if (spin_count >= MAX_SPINS) {
-            MF_RT_ERROR(Journal::Component::Buffers,
-                Journal::Context::BufferProcessing,
-                "Timeout waiting for node snapshot to complete");
-            return;
-        }
-
-        m_node->save_state();
-        for (double& sample : buffer_data) {
-            sample += m_node->process_sample(0.F) * m_mix;
-        }
-        m_node->restore_state();
-
-        if (m_node->is_buffer_processed()) {
-            m_node->request_buffer_reset();
-        }
-    }
+    return Buffers::extract_multiple_samples(m_node, num_samples);
 }
 
 NodeBuffer::NodeBuffer(uint32_t channel_id, uint32_t num_samples, std::shared_ptr<Nodes::Node> source, bool clear_before_process)

@@ -46,7 +46,7 @@ public:
      */
     ComputePipelineID create_pipeline(
         ShaderID shader_id,
-        const std::vector<std::vector<DescriptorBindingConfig>>& descriptor_sets = {},
+        const std::vector<std::vector<DescriptorBindingInfo>>& descriptor_sets = {},
         size_t push_constant_size = 0);
 
     /**

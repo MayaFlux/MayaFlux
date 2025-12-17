@@ -58,7 +58,7 @@ void GeometryBuffer::setup_processors(ProcessingToken token)
 void GeometryBuffer::setup_rendering(const RenderConfig& config)
 {
     if (!m_render_processor) {
-        m_render_processor = std::make_shared<RenderProcessor>(ShaderProcessorConfig { config.vertex_shader });
+        m_render_processor = std::make_shared<RenderProcessor>(ShaderConfig { config.vertex_shader });
     }
 
     m_render_processor->set_fragment_shader(config.fragment_shader);
@@ -67,7 +67,7 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
     m_render_processor->set_polygon_mode(config.polygon_mode);
     m_render_processor->set_cull_mode(config.cull_mode);
 
-    get_processing_chain()->add_processor(m_render_processor, shared_from_this());
+    get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
 }
 
 size_t GeometryBuffer::calculate_buffer_size(

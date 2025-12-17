@@ -34,13 +34,28 @@ std::vector<std::string> NodeBindingsProcessor::get_binding_names() const
     return names;
 }
 
-void NodeBindingsProcessor::on_before_dispatch(
-    Portal::Graphics::CommandBufferID cmd_id,
-    const std::shared_ptr<VKBuffer>& buffer)
+void NodeBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
     update_push_constants_from_nodes();
 
-    ShaderProcessor::on_before_dispatch(cmd_id, buffer);
+    auto& staging = buffer->get_pipeline_context().push_constant_staging;
+
+    for (const auto& [name, binding] : m_bindings) {
+        size_t end_offset = binding.push_constant_offset + binding.size;
+
+        if (staging.size() < end_offset) {
+            staging.resize(end_offset);
+        }
+
+        std::memcpy(
+            staging.data() + binding.push_constant_offset,
+            m_push_constant_data.data() + binding.push_constant_offset,
+            binding.size);
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "NodeBindingsProcessor: Merged binding '{}' at offset {} ({} bytes)",
+            name, binding.push_constant_offset, binding.size);
+    }
 }
 
 void NodeBindingsProcessor::update_push_constants_from_nodes()
@@ -54,22 +69,18 @@ void NodeBindingsProcessor::update_push_constants_from_nodes()
     auto& pc_data = get_push_constant_data();
 
     for (auto& [name, binding] : m_bindings) {
+        size_t required_size = binding.push_constant_offset + binding.size;
+        if (pc_data.size() < required_size) {
+            pc_data.resize(required_size);
+        }
 
         if (!binding.node) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Node binding '{}' has null node", name);
             continue;
         }
-        double value {};
-        uint32_t state = binding.node->m_state.load();
 
-        if (state == Utils::NodeState::INACTIVE) {
-            value = binding.node->process_sample();
-        } else {
-            binding.node->save_state();
-            value = binding.node->process_sample();
-            binding.node->restore_state();
-        }
+        double value = Buffers::extract_single_sample(binding.node);
 
         if (binding.size == sizeof(float)) {
             auto float_val = static_cast<float>(value);

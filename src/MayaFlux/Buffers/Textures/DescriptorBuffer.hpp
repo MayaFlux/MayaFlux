@@ -40,9 +40,7 @@ public:
      * @param config Shader processor configuration with binding definitions
      * @param initial_size Initial buffer size (will grow as needed)
      */
-    explicit DescriptorBuffer(
-        const ShaderProcessorConfig& config,
-        size_t initial_size = 4096);
+    explicit DescriptorBuffer(const ShaderConfig& config, size_t initial_size = 4096);
 
     ~DescriptorBuffer() override = default;
 
@@ -123,7 +121,7 @@ public:
 
 private:
     std::shared_ptr<DescriptorBindingsProcessor> m_bindings_processor;
-    ShaderProcessorConfig m_config;
+    ShaderConfig m_config;
 };
 
 } // namespace MayaFlux::Buffers
