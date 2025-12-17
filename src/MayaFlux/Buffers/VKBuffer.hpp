@@ -4,16 +4,12 @@
 
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 #include "MayaFlux/Core/ProcessingTokens.hpp"
-#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
-#include "vulkan/vulkan.hpp"
+
+#include "MayaFlux/Portal/Graphics/ShaderUtils.hpp"
 
 namespace MayaFlux::Registry::Service {
 struct BufferService;
 struct ComputeService;
-}
-
-namespace MayaFlux::Portal::Graphics {
-struct DescriptorBindingInfo;
 }
 
 namespace MayaFlux::Core {

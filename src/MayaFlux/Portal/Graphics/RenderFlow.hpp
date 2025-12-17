@@ -1,7 +1,5 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
-
 #include "ShaderFoundry.hpp"
 
 namespace MayaFlux::Registry::Service {
@@ -13,8 +11,6 @@ class VKGraphicsPipeline;
 class VKRenderPass;
 class VKFramebuffer;
 class Window;
-struct VertexBinding;
-struct VertexAttribute;
 }
 
 namespace MayaFlux::Buffers {
@@ -23,132 +19,6 @@ class VKBuffer;
 }
 
 namespace MayaFlux::Portal::Graphics {
-
-using RenderPipelineID = uint64_t;
-using RenderPassID = uint64_t;
-using FramebufferID = uint64_t;
-
-constexpr RenderPipelineID INVALID_RENDER_PIPELINE = 0;
-constexpr RenderPassID INVALID_RENDER_PASS = 0;
-constexpr FramebufferID INVALID_FRAMEBUFFER = 0;
-
-/**
- * @struct RasterizationConfig
- * @brief Rasterization state configuration
- */
-struct RasterizationConfig {
-    PolygonMode polygon_mode = PolygonMode::FILL;
-    CullMode cull_mode = CullMode::BACK;
-    bool front_face_ccw = true;
-    float line_width = 1.0F;
-    bool depth_clamp = false;
-    bool depth_bias = false;
-
-    RasterizationConfig() = default;
-};
-
-/**
- * @struct DepthStencilConfig
- * @brief Depth and stencil test configuration
- */
-struct DepthStencilConfig {
-    bool depth_test_enable = true;
-    bool depth_write_enable = true;
-    CompareOp depth_compare_op = CompareOp::NEVER;
-    bool stencil_test_enable = false;
-
-    DepthStencilConfig() = default;
-};
-
-/**
- * @struct BlendAttachmentConfig
- * @brief Per-attachment blend configuration
- */
-struct BlendAttachmentConfig {
-    bool blend_enable = false;
-    BlendFactor src_color_factor = BlendFactor::ONE;
-    BlendFactor dst_color_factor = BlendFactor::ZERO;
-    BlendOp color_blend_op = BlendOp::ADD;
-    BlendFactor src_alpha_factor = BlendFactor::ONE;
-    BlendFactor dst_alpha_factor = BlendFactor::ZERO;
-    BlendOp alpha_blend_op = BlendOp::ADD;
-
-    BlendAttachmentConfig() = default;
-
-    /// @brief Create standard alpha blending configuration
-    static BlendAttachmentConfig alpha_blend()
-    {
-        BlendAttachmentConfig config;
-        config.blend_enable = true;
-        config.src_color_factor = BlendFactor::SRC_ALPHA;
-        config.dst_color_factor = BlendFactor::ONE_MINUS_SRC_ALPHA;
-        config.src_alpha_factor = BlendFactor::ONE;
-        config.dst_alpha_factor = BlendFactor::ZERO;
-        return config;
-    }
-};
-
-/**
- * @struct RenderPipelineConfig
- * @brief Complete render pipeline configuration
- */
-struct RenderPipelineConfig {
-    // Shader stages
-    ShaderID vertex_shader = INVALID_SHADER;
-    ShaderID fragment_shader = INVALID_SHADER;
-    ShaderID geometry_shader = INVALID_SHADER; ///< Optional
-    ShaderID tess_control_shader = INVALID_SHADER; ///< Optional
-    ShaderID tess_eval_shader = INVALID_SHADER; ///< Optional
-
-    // Vertex input
-    std::vector<Core::VertexBinding> vertex_bindings;
-    std::vector<Core::VertexAttribute> vertex_attributes;
-
-    // Input assembly
-    PrimitiveTopology topology = PrimitiveTopology::TRIANGLE_LIST;
-
-    // Optional semantic vertex layout
-    std::optional<Kakshya::VertexLayout> semantic_vertex_layout;
-
-    // Use reflection to auto-configure from vertex shader
-    bool use_vertex_shader_reflection = true;
-
-    // Rasterization
-    RasterizationConfig rasterization;
-
-    // Depth/stencil
-    DepthStencilConfig depth_stencil;
-
-    // Blend
-    std::vector<BlendAttachmentConfig> blend_attachments;
-
-    // Descriptor sets (similar to compute)
-    std::vector<std::vector<DescriptorBindingInfo>> descriptor_sets;
-
-    // Push constants
-    size_t push_constant_size = 0;
-
-    // Render pass compatibility
-    RenderPassID render_pass = INVALID_RENDER_PASS;
-    uint32_t subpass = 0;
-
-    RenderPipelineConfig() = default;
-};
-
-/**
- * @struct RenderPassAttachment
- * @brief Render pass attachment configuration
- */
-struct RenderPassAttachment {
-    vk::Format format = vk::Format::eB8G8R8A8Unorm;
-    vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1;
-    vk::AttachmentLoadOp load_op = vk::AttachmentLoadOp::eClear;
-    vk::AttachmentStoreOp store_op = vk::AttachmentStoreOp::eStore;
-    vk::ImageLayout initial_layout = vk::ImageLayout::eUndefined;
-    vk::ImageLayout final_layout = vk::ImageLayout::ePresentSrcKHR;
-
-    RenderPassAttachment() = default;
-};
 
 /**
  * @class RenderFlow
