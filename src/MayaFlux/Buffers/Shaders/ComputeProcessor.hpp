@@ -147,9 +147,9 @@ protected:
      */
     virtual std::array<uint32_t, 3> calculate_dispatch_size(const std::shared_ptr<VKBuffer>& buffer);
 
-    void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override;
+    void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
 
-    void initialize_descriptors() override;
+    void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override;
 
     void cleanup() override;
 

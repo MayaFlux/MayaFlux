@@ -46,7 +46,7 @@ public:
         vk::DescriptorType type; ///< UBO or SSBO
         BindingType binding_type;
         std::shared_ptr<VKBuffer> gpu_buffer; ///< UBO/SSBO backing storage
-        size_t buffer_offset; ///< Offset within buffer (for packed UBOs)
+        size_t buffer_offset {}; ///< Offset within buffer (for packed UBOs)
         size_t buffer_size; ///< Size to write
     };
 
@@ -134,22 +134,15 @@ public:
 
 protected:
     /**
-     * @brief Called before shader dispatch - updates all descriptors
-     */
-    void on_before_execute(
-        Portal::Graphics::CommandBufferID cmd_id,
-        const std::shared_ptr<VKBuffer>& buffer) override;
-
-    /**
      * @brief Called after pipeline creation - allocates GPU buffers for descriptors
      */
     void on_pipeline_created(Portal::Graphics::ComputePipelineID pipeline_id) override;
 
-    void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override { }
+    void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
 
-    void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override { }
+    void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override { }
 
-    void initialize_descriptors() override { }
+    void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override { }
 
 private:
     std::unordered_map<std::string, DescriptorBinding> m_bindings;

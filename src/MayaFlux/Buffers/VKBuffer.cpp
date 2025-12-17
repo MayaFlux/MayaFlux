@@ -2,11 +2,13 @@
 
 #include "BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
-#include "MayaFlux/Journal/Archivist.hpp"
 
+#include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 #include "MayaFlux/Registry/Service/ComputeService.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
 

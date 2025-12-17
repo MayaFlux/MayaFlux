@@ -73,9 +73,9 @@ public:
 protected:
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
 
-    void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override { }
+    void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override { }
 
-    void initialize_descriptors() override { }
+    void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override { }
 
 private:
     void update_push_constants_from_nodes();

@@ -69,32 +69,15 @@ struct ShaderSource {
 };
 
 /**
- * @struct DescriptorBindingInfo
- * @brief Extracted descriptor binding information from shader reflection
- */
-struct DescriptorBindingInfo {
-    uint32_t set;
-    uint32_t binding;
-    vk::DescriptorType type;
-    std::string name;
-};
-
-/**
  * @struct DescriptorBindingConfig
  * @brief Portal-level descriptor binding configuration
  */
-struct DescriptorBindingConfig {
-    uint32_t set = 0;
-    uint32_t binding = 0;
+struct DescriptorBindingInfo {
+    uint32_t set {};
+    uint32_t binding {};
     vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
-
-    DescriptorBindingConfig() = default;
-    DescriptorBindingConfig(uint32_t s, uint32_t b, vk::DescriptorType t = vk::DescriptorType::eStorageBuffer)
-        : set(s)
-        , binding(b)
-        , type(t)
-    {
-    }
+    vk::DescriptorBufferInfo buffer_info;
+    std::string name;
 };
 
 /**

@@ -44,22 +44,22 @@ void ShaderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
     if (!m_initialized) {
         initialize_shader();
-        initialize_pipeline(buffer);
+        initialize_pipeline(vk_buffer);
         m_initialized = true;
         m_needs_descriptor_rebuild = true;
     }
 
     if (m_needs_pipeline_rebuild) {
-        initialize_pipeline(buffer);
+        initialize_pipeline(vk_buffer);
         m_needs_pipeline_rebuild = false;
         m_needs_descriptor_rebuild = true;
     }
 
     if (m_needs_descriptor_rebuild) {
-        initialize_descriptors();
+        initialize_descriptors(vk_buffer);
         m_needs_descriptor_rebuild = false;
     } else {
-        update_descriptors();
+        update_descriptors(vk_buffer);
     }
 
     execute_shader(vk_buffer);
@@ -339,13 +339,34 @@ void ShaderProcessor::initialize_shader()
         "Shader loaded: {} (ID: {})", m_config.shader_path, m_shader_id);
 }
 
-void ShaderProcessor::update_descriptors()
+void ShaderProcessor::update_descriptors(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_descriptor_set_ids.empty()) {
         return;
     }
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
+
+    std::set<std::pair<uint32_t, uint32_t>> updated_pairs;
+
+    for (const auto& binding : descriptor_bindings) {
+        if (binding.set >= m_descriptor_set_ids.size()) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Descriptor set index {} out of range", binding.set);
+            continue;
+        }
+
+        foundry.update_descriptor_buffer(
+            m_descriptor_set_ids[binding.set],
+            binding.binding,
+            binding.type,
+            binding.buffer_info.buffer,
+            binding.buffer_info.offset,
+            binding.buffer_info.range);
+
+        updated_pairs.emplace(binding.set, binding.binding);
+    }
 
     for (const auto& [descriptor_name, buffer] : m_bound_buffers) {
         auto binding_it = m_config.bindings.find(descriptor_name);
@@ -354,6 +375,11 @@ void ShaderProcessor::update_descriptors()
         }
 
         const auto& binding = binding_it->second;
+        auto key = std::make_pair(binding.set, binding.binding);
+
+        if (updated_pairs.count(key)) {
+            continue;
+        }
 
         if (binding.set >= m_descriptor_set_ids.size()) {
             MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,

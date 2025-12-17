@@ -445,12 +445,12 @@ protected:
     size_t m_auto_bind_index {};
 
 protected:
-    virtual void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) = 0;
-    virtual void initialize_descriptors() = 0;
+    virtual void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) = 0;
+    virtual void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) = 0;
     virtual void execute_shader(const std::shared_ptr<VKBuffer>& buffer) = 0;
 
+    virtual void update_descriptors(const std::shared_ptr<VKBuffer>& buffer);
     virtual void cleanup();
-    virtual void update_descriptors();
 
 private:
     //==========================================================================

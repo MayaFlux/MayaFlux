@@ -86,9 +86,9 @@ public:
     bool is_pipeline_ready() const { return m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE; }
 
 protected:
-    void initialize_pipeline(const std::shared_ptr<Buffer>& buffer) override;
+    void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
-    void initialize_descriptors() override;
+    void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override;
 
     void cleanup() override;
 

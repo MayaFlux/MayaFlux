@@ -15,7 +15,7 @@ ComputeProcessor::ComputeProcessor(const std::string& shader_path, uint32_t work
     m_dispatch_config.workgroup_x = workgroup_x;
 }
 
-void ComputeProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& /*buffer*/)
+void ComputeProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_shader_id == Portal::Graphics::INVALID_SHADER) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -25,18 +25,34 @@ void ComputeProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& /*buff
 
     auto& compute_press = Portal::Graphics::get_compute_press();
 
-    std::map<uint32_t, std::vector<std::pair<std::string, ShaderBinding>>> bindings_by_set;
-    for (const auto& [name, binding] : m_config.bindings) {
-        bindings_by_set[binding.set].emplace_back(name, binding);
+    std::map<std::pair<uint32_t, uint32_t>, Portal::Graphics::DescriptorBindingInfo> unified_bindings;
+
+    const auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
+    for (const auto& binding : descriptor_bindings) {
+        unified_bindings[{ binding.set, binding.binding }] = binding;
     }
 
-    std::vector<std::vector<Portal::Graphics::DescriptorBindingConfig>> descriptor_sets;
-    for (const auto& [set_index, set_bindings] : bindings_by_set) {
-        std::vector<Portal::Graphics::DescriptorBindingConfig> set_config;
-        for (const auto& [name, binding] : set_bindings) {
-            set_config.emplace_back(binding.set, binding.binding, binding.type);
+    for (const auto& [name, binding] : m_config.bindings) {
+        auto key = std::make_pair(binding.set, binding.binding);
+        if (unified_bindings.find(key) == unified_bindings.end()) {
+            unified_bindings[key] = Portal::Graphics::DescriptorBindingInfo {
+                .set = binding.set,
+                .binding = binding.binding,
+                .type = binding.type,
+                .buffer_info = {},
+                .name = name
+            };
         }
-        descriptor_sets.push_back(set_config);
+    }
+
+    std::map<uint32_t, std::vector<Portal::Graphics::DescriptorBindingInfo>> bindings_by_set;
+    for (const auto& [key, binding] : unified_bindings) {
+        bindings_by_set[binding.set].push_back(binding);
+    }
+
+    std::vector<std::vector<Portal::Graphics::DescriptorBindingInfo>> descriptor_sets;
+    for (const auto& [set_index, set_bindings] : bindings_by_set) {
+        descriptor_sets.push_back(set_bindings);
     }
 
     m_pipeline_id = compute_press.create_pipeline(
@@ -57,7 +73,7 @@ void ComputeProcessor::initialize_pipeline(const std::shared_ptr<Buffer>& /*buff
         m_pipeline_id, descriptor_sets.size(), m_config.push_constant_size);
 }
 
-void ComputeProcessor::initialize_descriptors()
+void ComputeProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer)
 {
     if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -77,7 +93,7 @@ void ComputeProcessor::initialize_descriptors()
         return;
     }
 
-    update_descriptors();
+    update_descriptors(buffer);
     on_descriptors_created();
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -179,7 +195,29 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     m_last_processed_buffer = buffer;
 
     compute_press.bind_pipeline(cmd_id, m_pipeline_id);
-    compute_press.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
+
+    auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
+    if (!descriptor_bindings.empty()) {
+        for (const auto& binding : descriptor_bindings) {
+            if (binding.set >= m_descriptor_set_ids.size()) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Descriptor set index {} out of range", binding.set);
+                continue;
+            }
+
+            foundry.update_descriptor_buffer(
+                m_descriptor_set_ids[binding.set],
+                binding.binding,
+                binding.type,
+                binding.buffer_info.buffer,
+                binding.buffer_info.offset,
+                binding.buffer_info.range);
+        }
+    }
+
+    if (!m_descriptor_set_ids.empty()) {
+        compute_press.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
+    }
 
     const auto& staging = buffer->get_pipeline_context();
     if (!staging.push_constant_staging.empty()) {

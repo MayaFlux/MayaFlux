@@ -14,6 +14,7 @@
 #include "numeric"
 #include "optional"
 #include "ranges"
+#include "set"
 #include "shared_mutex"
 #include "span"
 #include "thread"

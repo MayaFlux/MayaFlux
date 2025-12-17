@@ -1,9 +1,12 @@
 #include "DescriptorBindingsProcessor.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+#include "MayaFlux/Nodes/Node.hpp"
+
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/BufferService.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Nodes/Node.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -58,6 +61,8 @@ void DescriptorBindingsProcessor::bind_scalar_node(
 
     bind_buffer(descriptor_name, gpu_buffer);
 
+    m_needs_descriptor_rebuild = true;
+
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "Bound scalar node '{}' to descriptor '{}'", name, descriptor_name);
 }
@@ -99,6 +104,8 @@ void DescriptorBindingsProcessor::bind_vector_node(
     };
 
     bind_buffer(descriptor_name, gpu_buffer);
+
+    m_needs_descriptor_rebuild = true;
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "Bound vector node '{}' to descriptor '{}'", name, descriptor_name);
@@ -142,6 +149,8 @@ void DescriptorBindingsProcessor::bind_matrix_node(
 
     bind_buffer(descriptor_name, gpu_buffer);
 
+    m_needs_descriptor_rebuild = true;
+
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "Bound matrix node '{}' to descriptor '{}'", name, descriptor_name);
 }
@@ -152,6 +161,8 @@ void DescriptorBindingsProcessor::unbind_node(const std::string& name)
     if (it != m_bindings.end()) {
         unbind_buffer(it->second.descriptor_name);
         m_bindings.erase(it);
+
+        m_needs_descriptor_rebuild = true;
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Unbound node '{}'", name);
@@ -177,15 +188,34 @@ std::vector<std::string> DescriptorBindingsProcessor::get_binding_names() const
 // Protected Hooks
 //==============================================================================
 
-void DescriptorBindingsProcessor::on_before_execute(
-    Portal::Graphics::CommandBufferID cmd_id,
-    const std::shared_ptr<VKBuffer>& buffer)
+void DescriptorBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
+    auto& bindings_list = buffer->get_pipeline_context().descriptor_buffer_bindings;
+
     for (auto& [name, binding] : m_bindings) {
         update_descriptor_from_node(binding);
-    }
 
-    ShaderProcessor::on_before_execute(cmd_id, buffer);
+        bool found = false;
+        for (auto& existing_binding : bindings_list) {
+            if (existing_binding.set == binding.set_index && existing_binding.binding == binding.binding_index) {
+                existing_binding.buffer_info.buffer = binding.gpu_buffer->get_buffer();
+                existing_binding.buffer_info.offset = binding.buffer_offset;
+                existing_binding.buffer_info.range = binding.buffer_size;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            bindings_list.push_back({ .set = binding.set_index,
+                .binding = binding.binding_index,
+                .type = binding.type,
+                .buffer_info = vk::DescriptorBufferInfo {
+                    binding.gpu_buffer->get_buffer(),
+                    binding.buffer_offset,
+                    binding.buffer_size } });
+        }
+    }
 }
 
 void DescriptorBindingsProcessor::on_pipeline_created(Portal::Graphics::ComputePipelineID pipeline_id)
@@ -340,10 +370,25 @@ std::shared_ptr<VKBuffer> DescriptorBindingsProcessor::create_descriptor_buffer(
         usage = VKBuffer::Usage::COMPUTE;
     }
 
-    return std::make_shared<VKBuffer>(
+    auto buffer = std::make_shared<VKBuffer>(
         size,
         usage,
         Kakshya::DataModality::UNKNOWN);
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "create_descriptor_buffer requires a valid BufferService");
+    }
+
+    buffer_service->initialize_buffer(buffer);
+
+    return buffer;
 }
 
 } // namespace MayaFlux::Buffers

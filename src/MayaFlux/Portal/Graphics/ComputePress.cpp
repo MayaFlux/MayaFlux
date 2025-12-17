@@ -82,7 +82,7 @@ void ComputePress::shutdown()
 
 ComputePipelineID ComputePress::create_pipeline(
     ShaderID shader_id,
-    const std::vector<std::vector<DescriptorBindingConfig>>& descriptor_sets,
+    const std::vector<std::vector<DescriptorBindingInfo>>& descriptor_sets,
     size_t push_constant_size)
 {
     auto shader_module = m_shader_foundry->get_vk_shader_module(shader_id);
@@ -157,16 +157,16 @@ ComputePipelineID ComputePress::create_pipeline_auto(
 {
     auto reflection = m_shader_foundry->get_shader_reflection(shader_id);
 
-    std::map<uint32_t, std::vector<DescriptorBindingConfig>> bindings_by_set;
+    std::map<uint32_t, std::vector<DescriptorBindingInfo>> bindings_by_set;
     for (const auto& binding : reflection.descriptor_bindings) {
-        DescriptorBindingConfig config;
+        DescriptorBindingInfo config;
         config.set = binding.set;
         config.binding = binding.binding;
         config.type = binding.type;
         bindings_by_set[binding.set].push_back(config);
     }
 
-    std::vector<std::vector<DescriptorBindingConfig>> descriptor_sets;
+    std::vector<std::vector<DescriptorBindingInfo>> descriptor_sets;
     descriptor_sets.reserve(bindings_by_set.size());
     for (const auto& [set_index, bindings] : bindings_by_set) {
         descriptor_sets.push_back(bindings);

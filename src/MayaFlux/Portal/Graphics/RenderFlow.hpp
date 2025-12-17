@@ -123,7 +123,7 @@ struct RenderPipelineConfig {
     std::vector<BlendAttachmentConfig> blend_attachments;
 
     // Descriptor sets (similar to compute)
-    std::vector<std::vector<DescriptorBindingConfig>> descriptor_sets;
+    std::vector<std::vector<DescriptorBindingInfo>> descriptor_sets;
 
     // Push constants
     size_t push_constant_size = 0;

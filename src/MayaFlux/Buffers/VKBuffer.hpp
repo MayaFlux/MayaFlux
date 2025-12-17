@@ -12,6 +12,10 @@ struct BufferService;
 struct ComputeService;
 }
 
+namespace MayaFlux::Portal::Graphics {
+struct DescriptorBindingInfo;
+}
+
 namespace MayaFlux::Core {
 class Window;
 }
@@ -68,6 +72,9 @@ public:
      */
     struct PipelineContext {
         std::vector<uint8_t> push_constant_staging;
+
+        std::vector<Portal::Graphics::DescriptorBindingInfo> descriptor_buffer_bindings;
+
         std::unordered_map<std::string, std::any> metadata;
     };
 
