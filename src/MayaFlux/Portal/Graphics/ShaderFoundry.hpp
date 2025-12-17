@@ -1,8 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.hpp>
-
-#include "GraphicsUtils.hpp"
+#include "ShaderUtils.hpp"
 
 namespace MayaFlux::Core {
 class VulkanBackend;
@@ -15,91 +13,6 @@ namespace MayaFlux::Portal::Graphics {
 
 class ComputePress;
 class RenderFlow;
-
-using ShaderID = uint64_t;
-using DescriptorSetID = uint64_t;
-using CommandBufferID = uint64_t;
-using FenceID = uint64_t;
-using SemaphoreID = uint64_t;
-
-constexpr ShaderID INVALID_SHADER = 0;
-constexpr DescriptorSetID INVALID_DESCRIPTOR_SET = 0;
-constexpr CommandBufferID INVALID_COMMAND_BUFFER = 0;
-constexpr FenceID INVALID_FENCE = 0;
-constexpr SemaphoreID INVALID_SEMAPHORE = 0;
-
-/**
- * @struct ShaderCompilerConfig
- * @brief Configuration for shader compilation
- */
-struct ShaderCompilerConfig {
-    bool enable_optimization = true;
-    bool enable_debug_info = false; ///< Include debug symbols (line numbers, variable names)
-    bool enable_reflection = true; ///< Extract descriptor bindings and metadata
-    bool enable_validation = true; ///< Validate SPIR-V after compilation
-    std::vector<std::string> include_directories; ///< Paths for #include resolution
-    std::unordered_map<std::string, std::string> defines; ///< Preprocessor macros
-
-    ShaderCompilerConfig() = default;
-};
-
-/**
- * @struct ShaderSource
- * @brief Shader source descriptor for compilation
- */
-struct ShaderSource {
-    std::string content; ///< Shader source code or SPIR-V path
-    ShaderStage stage;
-    std::string entry_point = "main";
-
-    enum class SourceType : uint8_t {
-        GLSL_STRING, ///< In-memory GLSL source
-        GLSL_FILE, ///< Path to .comp/.vert/.frag/etc
-        SPIRV_FILE ///< Path to .spv file
-    } type
-        = SourceType::GLSL_FILE;
-
-    ShaderSource() = default;
-    ShaderSource(std::string content_, ShaderStage stage_, SourceType type_)
-        : content(std::move(content_))
-        , stage(stage_)
-        , type(type_)
-    {
-    }
-};
-
-/**
- * @struct DescriptorBindingConfig
- * @brief Portal-level descriptor binding configuration
- */
-struct DescriptorBindingInfo {
-    uint32_t set {};
-    uint32_t binding {};
-    vk::DescriptorType type = vk::DescriptorType::eStorageBuffer;
-    vk::DescriptorBufferInfo buffer_info;
-    std::string name;
-};
-
-/**
- * @struct PushConstantRangeInfo
- * @brief Extracted push constant range from shader reflection
- */
-struct PushConstantRangeInfo {
-    uint32_t offset;
-    uint32_t size;
-};
-
-/**
- * @struct ShaderReflectionInfo
- * @brief Extracted reflection information from compiled shader
- */
-struct ShaderReflectionInfo {
-    ShaderStage stage;
-    std::string entry_point;
-    std::optional<std::array<uint32_t, 3>> workgroup_size;
-    std::vector<DescriptorBindingInfo> descriptor_bindings;
-    std::vector<PushConstantRangeInfo> push_constant_ranges;
-};
 
 /**
  * @class ShaderFoundry
