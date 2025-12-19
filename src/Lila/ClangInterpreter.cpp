@@ -58,6 +58,12 @@ bool ClangInterpreter::initialize()
     m_impl->compile_flags.emplace_back("-std=c++23");
     m_impl->compile_flags.emplace_back("-DMAYASIMPLE");
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    m_impl->compile_flags.emplace_back("-mcmodel=large");
+    m_impl->compile_flags.emplace_back("-fPIC");
+    m_impl->compile_flags.emplace_back("-fPIE");
+#endif
+
     std::string pch_dir;
     if (std::filesystem::exists(MayaFlux::Config::PCH_RUNTIME_PATH)) {
         pch_dir = MayaFlux::Config::RUNTIME_DATA_DIR;
@@ -83,9 +89,9 @@ bool ClangInterpreter::initialize()
         LILA_DEBUG(Emitter::INTERPRETER,
             std::string("Using clang resource dir: ") + resource_dir);
     } else {
-        m_impl->compile_flags.emplace_back("-resource-dir=/usr/lib/clang/20");
+        m_impl->compile_flags.emplace_back("-resource-dir=/usr/lib/clang/21");
         LILA_WARN(Emitter::INTERPRETER,
-            "Using default clang resource dir: /usr/lib/clang/20");
+            "Using default clang resource dir: /usr/lib/clang/21");
     }
 
     auto system_includes = MayaFlux::Platform::SystemConfig::get_system_includes();

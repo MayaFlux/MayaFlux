@@ -38,45 +38,62 @@ install_arch() {
         "rtaudio"
         "glfw"
         "glm"
-        "stb"
         "eigen"
-        "vulkan-devel"
+        "spirv-headers"
+        "spirv-tools"
+        "vulkan-headers"
+        "vulkan-icd-loader"
+        "vulkan-tools"
+        "vulkan-utility-libraries"
+        "vulkan-validation-layers"
         "ffmpeg"
-        "doxygen"
-        "git"
+        "stb"
     )
-    
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
     
     # magic_enum and eigen are header-only, available via AUR or manual
     echo -e "${YELLOW}Note: magic_enum is header-only library.${NC}"
     echo -e "${YELLOW}Install via: yay -S magic_enum${NC}"
+    echo -e "${YELLOW}Or via: paru -S magic_enum${NC}"
 }
 
 install_fedora() {
     echo -e "${BLUE}Installing dependencies for Fedora...${NC}"
     
     PACKAGES=(
-        "llvm-devel"
-        "llvm-libs"
-        "clang"
-        "clang-tools-extra"
-        "cmake"
-        "pkg-config"
+        "gcc-c++" 
+        "clang" 
+        "llvm" 
+        "llvm-devel" 
+        "llvm-libs" 
+        "clang-devel" 
+        "cmake" 
+        "ninja-build"
+        "pkgconfig"
         "rtaudio-devel"
-        "glfw-devel"
-        "vulkan-devel"
-        "ffmpeg-devel"
-        "doxygen"
+        "glfw-devel" 
+        "glm-devel"
+        "eigen3-devel"
+        "spirv-headers-devel"
+        "spirv-tools"
+        "vulkan-headers"
+        "vulkan-loader"
+        "vulkan-loader-devel"
+        "vulkan-tools"
+        "vulkan-validation-layers"
+        "ffmpeg-free-devel"
+        "stb-devel"
+        "magic_enum-devel"
+        "tbb-devel"
+        "gtest-devel"
+        "libshaderc-devel"
+        "wayland-devel"
         "git"
     )
     
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo dnf install -y "${PACKAGES[@]}"
-    
-    echo -e "${YELLOW}Installing magic_enum and eigen (header-only)...${NC}"
-    sudo dnf install -y magic_enum-devel eigen3-devel
 }
 
 install_ubuntu() {
@@ -86,28 +103,39 @@ install_ubuntu() {
     sudo apt-get update
     
     PACKAGES=(
-        "llvm"
-        "llvm-dev"
-        "clang"
-        "clang-tools"
         "cmake"
-        "pkg-config"
-        "librtaudio-dev"
-        "libglfw3-dev"
-        "vulkan-tools"
-        "libvulkan-dev"
-        "libvulkan1"
-        "ffmpeg"
-        "libffmpeg-ocaml-dev"
-        "doxygen"
         "git"
+        "gcc"
+        "g++"
+        "pkg-config"
+        "llvm-21"
+        "llvm-21-dev"
+        "clang-21"
+        "libclang-21-dev"
+        "libtbb-dev"
+        "vulkan-validationlayers"
+        "vulkan-tools"
+        "vulkan-utility-libraries-dev"
+        "libvulkan-dev"
+        "libvulkan1" 
+        "wayland-protocols"
+        "libglfw3-dev"
+        "libglfw3-wayland"
+        "glslc"
+        "libshaderc-dev"
+        "libglm-dev"
+        "libeigen3-dev"
+        "libmagicenum-dev"
+        "libstb-dev"
+        "librtaudio-dev"
+        "ffmpeg"
+        "libavcodec-dev"
+        "libavformat-dev"
+        "libswscale-dev"
     )
     
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo apt-get install -y "${PACKAGES[@]}"
-    
-    echo -e "${YELLOW}Installing magic_enum and eigen (header-only)...${NC}"
-    sudo apt-get install -y libmagic-enum-dev libeigen3-dev
 }
 
 install_opensuse() {

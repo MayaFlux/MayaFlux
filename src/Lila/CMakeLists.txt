@@ -29,7 +29,7 @@ if(WIN32)
 endif()
 
 target_include_directories(Lila PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/..  # For #include "Lila/..."
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
     ${LLVM_INCLUDE_DIRS}
     ${CLANG_INCLUDE_DIRS}
 )
@@ -107,9 +107,12 @@ else()
     )
 endif()
 
-if(UNIX AND NOT APPLE)
-    target_compile_options(Lila PRIVATE -mcmodel=large)
+if (UNIX AND NOT APPLE)
+    target_link_libraries(Lila PUBLIC
+        -Wl,--no-as-needed
+        MayaFluxLib
+        -Wl,--as-needed
+    )
+else()
+    target_link_libraries(Lila PUBLIC MayaFluxLib)
 endif()
-
-target_link_libraries(Lila PUBLIC MayaFluxLib)
-
