@@ -22,11 +22,6 @@ else()
     )
 endif()
 
-if(UNIX AND NOT APPLE)
-    target_link_options(lila_server PRIVATE -no-pie)
-    target_compile_options(lila_server PRIVATE -fno-pie -mcmodel=large)
-endif()
-
 add_executable(project_launcher main.cpp ${HEADERS} ${USER_SOURCES})
 set_target_properties(project_launcher PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
