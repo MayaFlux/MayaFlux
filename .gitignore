@@ -131,7 +131,7 @@ Icon?
 # Package managers
 # vcpkg
 vcpkg_installed/
-packages/
+packaging/arch_linux
 
 # Conan
 conandata.yml

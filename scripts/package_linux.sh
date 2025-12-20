@@ -38,7 +38,7 @@ echo "[INFO] MayaFlux packaging version: $FINAL_VERSION"
 # ---------------------------------------------
 # Directories
 # ---------------------------------------------
-PREFIX="package"
+PREFIX="packaging/arch_linux"
 BUILD_DIR="${PREFIX}/build"
 INSTALL_DIR="${PREFIX}/install_root"
 ARCHIVE_ROOT="${PREFIX}/MayaFlux-${FINAL_VERSION}"

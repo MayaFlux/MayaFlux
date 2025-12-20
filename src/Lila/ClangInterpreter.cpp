@@ -58,7 +58,7 @@ bool ClangInterpreter::initialize()
     m_impl->compile_flags.emplace_back("-std=c++23");
     m_impl->compile_flags.emplace_back("-DMAYASIMPLE");
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#ifdef MAYAFLUX_PLATFORM_LINUX
     m_impl->compile_flags.emplace_back("-mcmodel=large");
     m_impl->compile_flags.emplace_back("-fPIC");
     m_impl->compile_flags.emplace_back("-fPIE");
