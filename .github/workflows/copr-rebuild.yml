@@ -1,0 +1,33 @@
+name: Trigger COPR Build
+on:
+  push:
+    branches: [main]
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install copr-cli
+        run: |
+          python3 -m pip install --user copr-cli
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Trigger COPR Build
+        run: |
+          mkdir -p ~/.config
+          cat <<'EOF' > ~/.config/copr
+          [copr-cli]
+          login = ${{ secrets.COPR_LOGIN }}
+          username = ${{ secrets.COPR_USERNAME }}
+          token = ${{ secrets.COPR_TOKEN }}
+          copr_url = https://copr.fedorainfracloud.org
+          EOF
+
+          ~/.local/bin/copr-cli \
+            --config ~/.config/copr \
+            buildscm \
+            --project ranjithshegde/mayaflux-dev \
+            --clone-url https://github.com/MayaFlux/MayaFlux \
+            --commit main \
+            --spec packaging/fedora/mayaflux-dev.spec \
+            --method rpkg
