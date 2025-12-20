@@ -25,7 +25,7 @@ jobs:
 
           ~/.local/bin/copr-cli \
             --config ~/.config/copr \
-            buildscm ranjithshegde/mayaflux-dev \
+            build-package ranjithshegde/mayaflux-dev \
             --name mayaflux-dev \
             --clone-url https://github.com/MayaFlux/MayaFlux \
             --commit main \
