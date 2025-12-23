@@ -1,22 +1,73 @@
 # =============================================================================
-# Shader Dependencies (SPIRV-Reflect and Shaderc)
+# Shader Dependencies (SPIRV-Cross and Shaderc)
 # =============================================================================
 
-option(MAYAFLUX_USE_SPIRV_REFLECT "Enable shader reflection via SPIRV-Reflect" ON)
 option(MAYAFLUX_USE_SHADERC "Enable GLSL compilation via Shaderc" ON)
 
-if(MAYAFLUX_USE_SPIRV_REFLECT)
-    message(STATUS "SPIRV-Reflect: Building in isolated subdirectory...")
+if(WIN32)
+    find_package(Vulkan REQUIRED)
+    find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core 
+        PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
+    find_library(SPIRV_CROSS_CPP_LIB NAMES spirv-cross-cpp 
+        PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
+    find_path(SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp 
+        PATHS "$ENV{VULKAN_SDK}/Include" REQUIRED NO_DEFAULT_PATH)
+    
+    add_library(spirv-cross-core STATIC IMPORTED)
+    set_target_properties(spirv-cross-core PROPERTIES
+        IMPORTED_LOCATION_DEBUG ${SPIRV_CROSS_CORE_LIB}
+        IMPORTED_LOCATION_RELEASE ${SPIRV_CROSS_CORE_LIB}
+        IMPORTED_LOCATION_RELWITHDEBINFO ${SPIRV_CROSS_CORE_LIB}
+        IMPORTED_LOCATION_MINSIZEREL ${SPIRV_CROSS_CORE_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+    )
+    
+    add_library(spirv-cross-cpp STATIC IMPORTED)
+    set_target_properties(spirv-cross-cpp PROPERTIES
+        IMPORTED_LOCATION_DEBUG ${SPIRV_CROSS_CPP_LIB}
+        IMPORTED_LOCATION_RELEASE ${SPIRV_CROSS_CPP_LIB}
+        IMPORTED_LOCATION_RELWITHDEBINFO ${SPIRV_CROSS_CPP_LIB}
+        IMPORTED_LOCATION_MINSIZEREL ${SPIRV_CROSS_CPP_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+    )
+    
+    set(SPIRV_CROSS_LIBRARIES
+        spirv-cross-core
+        spirv-cross-cpp
+    )
+    
+    message(STATUS "SPIRV-Cross: Found in Vulkan SDK (Windows)")
+    message(WARNING "SPIRV-Cross: Using Release libraries for all configurations (Vulkan SDK has no Debug builds)")
 
-    add_subdirectory(${CMAKE_SOURCE_DIR}/cmake/spirv_reflect
-                        ${CMAKE_BINARY_DIR}/spirv_reflect_build
-                        EXCLUDE_FROM_ALL)
-
-    message(STATUS "SPIRV-Reflect fetched successfully")
-    message(STATUS "Shader reflection: ENABLED")
 else()
-    message(STATUS "Shader reflection: DISABLED (manual descriptor layouts required)")
+    find_package(PkgConfig REQUIRED)
+
+    find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core REQUIRED)
+    find_library(SPIRV_CROSS_CPP_LIB NAMES spirv-cross-cpp REQUIRED)
+    find_path(SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp REQUIRED)
+
+    add_library(spirv-cross-core SHARED IMPORTED)
+    set_target_properties(spirv-cross-core PROPERTIES
+        IMPORTED_LOCATION ${SPIRV_CROSS_CORE_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+    )
+
+    add_library(spirv-cross-cpp SHARED IMPORTED)
+    set_target_properties(spirv-cross-cpp PROPERTIES
+        IMPORTED_LOCATION ${SPIRV_CROSS_CPP_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+    )
+
+    set(SPIRV_CROSS_LIBRARIES
+        spirv-cross-core
+        spirv-cross-cpp
+    )
+
+    message(STATUS "SPIRV-Cross: Found C++ libraries")
+    message(STATUS "SPIRV-Cross: Found libraries at ${SPIRV_CROSS_CORE_LIB}")
 endif()
+
+message(STATUS "Shader reflection: ENABLED (SPIRV-Cross)")
 
 if(MAYAFLUX_USE_SHADERC)
     if(UNIX)

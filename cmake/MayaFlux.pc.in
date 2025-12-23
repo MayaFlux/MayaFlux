@@ -40,6 +40,10 @@ Requires: glm
 # Recommended: Use CMake find_package() instead of pkg-config for MayaFlux
 # to properly resolve platform-specific threading backends
 
+# SPIRV-Cross for shader reflection (mandatory, bundled with Vulkan SDK on Windows)
+# Linux/macOS: spirv-cross-core, spirv-cross-cpp (install via package manager)
+# This dependency MUST be resolved via CMake find_package() - no .pc file available
+
 # Compilation flags
 Cflags: -I${includedir}
 

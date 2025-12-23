@@ -1,13 +1,3 @@
-set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/cmake/dependencies" CACHE PATH
-    "Persistent dependencies directory")
-set(FETCHCONTENT_QUIET OFF CACHE BOOL "Show FetchContent progress")
-include(FetchContent)
-
-set(FETCHCONTENT_UPDATES_DISCONNECTED ON CACHE BOOL
-    "Don't update dependencies automatically")
-set(FETCHCONTENT_FULLY_DISCONNECTED ON CACHE BOOL
-    "Use existing dependencies without network")
-
 if(WIN32)
     message(STATUS "=== Windows Dependency Detection ===")
 
