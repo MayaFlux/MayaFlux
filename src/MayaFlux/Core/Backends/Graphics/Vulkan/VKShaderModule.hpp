@@ -2,6 +2,11 @@
 
 #include <vulkan/vulkan.hpp>
 
+namespace spirv_cross {
+class Compiler;
+struct SPIRType;
+}
+
 namespace MayaFlux::Core {
 
 /**
@@ -72,7 +77,7 @@ struct PushConstantInfo {
  * @brief Metadata extracted from shader module
  *
  * Contains information about shader resources for descriptor set layout creation
- * and pipeline configuration. Extracted via SPIRV-Reflect or manual parsing.
+ * and pipeline configuration. Extracted via SPIRV-Cross or manual parsing.
  */
 struct ShaderReflection {
     struct DescriptorBinding {
@@ -393,7 +398,7 @@ private:
      * @param spirv_code SPIR-V bytecode
      * @return true if reflection succeeded
      *
-     * Uses SPIRV-Reflect library to extract bindings, push constants,
+     * Uses SPIRV-Cross library to extract bindings, push constants,
      * workgroup sizes, etc. Falls back to basic parsing if library unavailable.
      */
     bool reflect_spirv(const std::vector<uint32_t>& spirv_code);
@@ -431,6 +436,13 @@ private:
      * Called before get_stage_create_info() to ensure fresh data
      */
     void update_specialization_info();
+
+    /**
+     * @brief Convert SPIRV-Cross type to Vulkan vertex attribute format
+     * @param type SPIR-V type information
+     * @return Corresponding Vulkan format
+     */
+    static vk::Format spirv_type_to_vk_format(const spirv_cross::SPIRType& type);
 };
 
 } // namespace MayaFlux::Core
