@@ -42,11 +42,16 @@ void ShaderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
         return;
     }
 
+    if (!on_before_execute(m_last_command_buffer, vk_buffer)) {
+        MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "on_before_execute() reported failure, skipping shader execution");
+        return;
+    }
+
     if (!m_initialized) {
         initialize_shader();
         initialize_pipeline(vk_buffer);
         m_initialized = true;
-        m_needs_descriptor_rebuild = true;
     }
 
     if (m_needs_pipeline_rebuild) {
@@ -313,7 +318,7 @@ void ShaderProcessor::on_shader_loaded(Portal::Graphics::ShaderID) { }
 void ShaderProcessor::on_pipeline_created(Portal::Graphics::ComputePipelineID) { }
 void ShaderProcessor::on_before_descriptors_create() { }
 void ShaderProcessor::on_descriptors_created() { }
-void ShaderProcessor::on_before_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { }
+bool ShaderProcessor::on_before_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { return true; }
 void ShaderProcessor::on_after_execute(Portal::Graphics::CommandBufferID, const std::shared_ptr<VKBuffer>&) { }
 
 //==============================================================================

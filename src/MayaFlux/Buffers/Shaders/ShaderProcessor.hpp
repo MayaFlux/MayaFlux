@@ -409,10 +409,11 @@ protected:
      * @brief Called before each process callback
      * @param cmd Command buffer
      * @param buffer Currently processing buffer
+     * @return True to proceed with execution, false to skip
      *
      * Override to update push constants or dynamic descriptors.
      */
-    virtual void on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
+    virtual bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
     /**
      * @brief Called after each process callback
