@@ -121,13 +121,13 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         return;
     }
 
-    auto& flow = Portal::Graphics::get_render_flow();
-
     if (!m_target_window) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Target window not set");
         return;
     }
+
+    auto& flow = Portal::Graphics::get_render_flow();
 
     if (m_render_pass_id == Portal::Graphics::INVALID_RENDER_PASS) {
         vk::Format swapchain_format = vk::Format { m_display_service->get_swapchain_format(m_target_window) };
@@ -156,14 +156,24 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     pipeline_config.blend_attachments.emplace_back();
 
-    pipeline_config.push_constant_size = buffer->get_pipeline_context().push_constant_staging.size();
-
-    auto it = m_buffer_info.find(buffer);
-    if (it != m_buffer_info.end()) {
-        const auto& vertex_info = it->second;
+    if (m_buffer_info.find(buffer) == m_buffer_info.end()) {
+        if (buffer->has_vertex_layout()) {
+            auto vertex_layout = buffer->get_vertex_layout();
+            if (vertex_layout.has_value()) {
+                m_buffer_info[buffer] = {
+                    .semantic_layout = vertex_layout.value(),
+                    .use_reflection = false
+                };
+            }
+        }
+    }
+    if (m_buffer_info.find(buffer) != m_buffer_info.end()) {
+        const auto& vertex_info = m_buffer_info.find(buffer)->second;
         pipeline_config.semantic_vertex_layout = vertex_info.semantic_layout;
         pipeline_config.use_vertex_shader_reflection = vertex_info.use_reflection;
     }
+
+    pipeline_config.push_constant_size = buffer->get_pipeline_context().push_constant_staging.size();
 
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     std::map<std::pair<uint32_t, uint32_t>, Portal::Graphics::DescriptorBindingInfo> unified_bindings;
@@ -202,49 +212,10 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         return;
     }
 
-    if (!pipeline_config.descriptor_sets.empty() && m_descriptor_set_ids.empty()) {
-        m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_pipeline_id);
-
-        if (m_descriptor_set_ids.empty()) {
-            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Failed to allocate descriptor sets for pipeline");
-            return;
-        }
-
-        for (const auto& [binding, tex_binding] : m_texture_bindings) {
-            auto config_it = std::ranges::find_if(m_config.bindings,
-                [binding](const auto& pair) {
-                    return pair.second.binding == binding;
-                });
-
-            if (config_it == m_config.bindings.end()) {
-                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "No config for binding {}", binding);
-                continue;
-            }
-            uint32_t set_index = config_it->second.set;
-
-            if (set_index >= m_descriptor_set_ids.size()) {
-                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Descriptor set index {} out of range", binding);
-                continue;
-            }
-
-            auto& foundry = Portal::Graphics::get_shader_foundry();
-            foundry.update_descriptor_image(
-                m_descriptor_set_ids[set_index],
-                config_it->second.binding,
-                tex_binding.texture->get_image_view(),
-                tex_binding.sampler,
-                vk::ImageLayout::eShaderReadOnlyOptimal);
-        }
-
-        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Allocated {} descriptor sets and updated {} texture bindings",
-            m_descriptor_set_ids.size(), m_texture_bindings.size());
-    }
-
+    m_needs_descriptor_rebuild = !pipeline_config.descriptor_sets.empty() && m_descriptor_set_ids.empty();
     m_needs_pipeline_rebuild = false;
+
+    on_pipeline_created(m_pipeline_id);
 }
 
 void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer)
@@ -263,15 +234,54 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
 
     if (m_descriptor_set_ids.empty()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Failed to allocate descriptor sets");
+            "Failed to allocate descriptor sets for pipeline");
         return;
     }
 
-    update_descriptors(buffer);
-    on_descriptors_created();
+    for (const auto& [binding, tex_binding] : m_texture_bindings) {
+        auto config_it = std::ranges::find_if(m_config.bindings,
+            [binding](const auto& pair) {
+                return pair.second.binding == binding;
+            });
+
+        if (config_it == m_config.bindings.end()) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "No config for binding {}", binding);
+            continue;
+        }
+        uint32_t set_index = config_it->second.set;
+
+        if (set_index >= m_descriptor_set_ids.size()) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Descriptor set index {} out of range", binding);
+            continue;
+        }
+
+        auto& foundry = Portal::Graphics::get_shader_foundry();
+        foundry.update_descriptor_image(
+            m_descriptor_set_ids[set_index],
+            config_it->second.binding,
+            tex_binding.texture->get_image_view(),
+            tex_binding.sampler,
+            vk::ImageLayout::eShaderReadOnlyOptimal);
+    }
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Descriptor sets initialized: {} sets", m_descriptor_set_ids.size());
+        "Allocated {} descriptor sets and updated {} texture bindings",
+        m_descriptor_set_ids.size(), m_texture_bindings.size());
+
+    update_descriptors(buffer);
+    on_descriptors_created();
+}
+
+bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_id*/, const std::shared_ptr<VKBuffer>& /*buffer*/)
+{
+    if (!m_target_window) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Target window not set");
+        return false;
+    }
+    return m_target_window->is_graphics_registered();
 }
 
 void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
@@ -290,10 +300,6 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     if (!m_target_window->is_graphics_registered()) {
         return;
-    }
-
-    if (m_needs_pipeline_rebuild) {
-        initialize_pipeline(buffer);
     }
 
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
@@ -368,10 +374,6 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     const auto& staging = buffer->get_pipeline_context();
     if (!staging.push_constant_staging.empty()) {
-        for (const auto& byte : staging.push_constant_staging) {
-            std::cout << std::hex << static_cast<int>(byte) << " ";
-        }
-
         flow.push_constants(
             cmd_id,
             m_pipeline_id,

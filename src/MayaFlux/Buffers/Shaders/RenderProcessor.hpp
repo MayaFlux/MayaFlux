@@ -90,6 +90,8 @@ protected:
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
     void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) override;
 
+    bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
+
     void cleanup() override;
 
 private:
