@@ -14,3 +14,4 @@ usr/include/Lila/*
 
 # Runtime data (Shaders, .version file, and PCH headers)
 usr/share/MayaFlux/*
+usr/share/MayaFlux/.version

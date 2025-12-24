@@ -99,7 +99,7 @@ install(CODE "
     execute_process(
         COMMAND ${CMAKE_COMMAND}
             -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
-            -DOUTPUT_FILE=\${CMAKE_INSTALL_PREFIX}/share/MayaFlux/.version
+            -DOUTPUT_FILE=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/share/MayaFlux/.version
             -DPROJECT_VERSION=${PROJECT_VERSION}
             -DPLATFORM=${PLATFORM_NAME}
             -DARCHITECTURE=${ARCH_NAME}
