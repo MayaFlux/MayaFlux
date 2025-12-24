@@ -8,9 +8,7 @@
 #include <shaderc/shaderc.hpp>
 #endif
 
-#ifdef MAYAFLUX_USE_SPIRV_REFLECT
-#include <spirv_reflect.h>
-#endif
+#include <spirv_cross/spirv_cross.hpp>
 
 namespace MayaFlux::Core {
 
@@ -44,6 +42,28 @@ namespace {
         }
 
         return filename;
+    }
+
+    vk::DescriptorType spirv_to_vk_descriptor_type(spirv_cross::SPIRType::BaseType base_type,
+        const spirv_cross::SPIRType& type,
+        bool is_storage)
+    {
+        if (type.image.dim != spv::DimMax) {
+            if (type.image.sampled == 2) {
+                return vk::DescriptorType::eStorageImage;
+            }
+
+            if (type.image.sampled == 1) {
+                return is_storage ? vk::DescriptorType::eSampledImage
+                                  : vk::DescriptorType::eCombinedImageSampler;
+            }
+        }
+
+        if (is_storage) {
+            return vk::DescriptorType::eStorageBuffer;
+        }
+
+        return vk::DescriptorType::eUniformBuffer;
     }
 }
 
@@ -131,13 +151,6 @@ bool VKShaderModule::create_from_spirv(
             "Cannot create shader module from empty SPIR-V code");
         return false;
     }
-
-    // if (spirv_code.size() % 4 != 0) {
-    //     MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-    //         "Invalid SPIR-V code size: {} bytes (must be multiple of 4)",
-    //         spirv_code.size());
-    //     return false;
-    // }
 
     if (spirv_code[0] != 0x07230203) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -342,107 +355,194 @@ void VKShaderModule::update_specialization_info()
 
 bool VKShaderModule::reflect_spirv(const std::vector<uint32_t>& spirv_code)
 {
-#ifdef MAYAFLUX_USE_SPIRV_REFLECT
-    SpvReflectShaderModule module;
-    SpvReflectResult result = spvReflectCreateShaderModule(
-        spirv_code.size() * sizeof(uint32_t),
-        spirv_code.data(),
-        &module);
+    try {
+        spirv_cross::Compiler compiler(spirv_code);
+        spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
-    if (result != SPV_REFLECT_RESULT_SUCCESS) {
-        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "SPIRV-Reflect failed: {}", static_cast<int>(result));
-        return false;
-    }
+        auto reflect_resources = [&](const spirv_cross::SmallVector<spirv_cross::Resource>& res_vec,
+                                     bool is_storage = false) {
+            for (const auto& resource : res_vec) {
+                ShaderReflection::DescriptorBinding desc;
+                desc.set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+                desc.binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+                desc.stage = m_stage;
+                desc.name = resource.name;
 
-    uint32_t binding_count = 0;
-    result = spvReflectEnumerateDescriptorBindings(&module, &binding_count, nullptr);
-    if (result == SPV_REFLECT_RESULT_SUCCESS && binding_count > 0) {
-        std::vector<SpvReflectDescriptorBinding*> bindings(binding_count);
-        spvReflectEnumerateDescriptorBindings(&module, &binding_count, bindings.data());
+                const auto& type = compiler.get_type(resource.type_id);
+                desc.count = type.array.empty() ? 1 : type.array[0];
+                desc.type = spirv_to_vk_descriptor_type(type.basetype, type, is_storage);
 
-        for (const auto* binding : bindings) {
-            ShaderReflection::DescriptorBinding desc;
-            desc.set = binding->set;
-            desc.binding = binding->binding;
-            desc.type = static_cast<vk::DescriptorType>(binding->descriptor_type);
-            desc.stage = m_stage;
-            desc.count = binding->count;
-            desc.name = binding->name ? binding->name : "";
+                m_reflection.bindings.push_back(desc);
+            }
+        };
 
-            m_reflection.bindings.push_back(desc);
+        reflect_resources(resources.uniform_buffers, false);
+
+        reflect_resources(resources.storage_buffers, true);
+
+        reflect_resources(resources.sampled_images, false);
+
+        reflect_resources(resources.storage_images, true);
+
+        reflect_resources(resources.separate_images, false);
+        reflect_resources(resources.separate_samplers, false);
+
+        if (!m_reflection.bindings.empty()) {
+            MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Reflected {} descriptor bindings", m_reflection.bindings.size());
         }
 
-        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Reflected {} descriptor bindings", binding_count);
-    }
+        for (const auto& pc_buffer : resources.push_constant_buffers) {
+            const auto& type = compiler.get_type(pc_buffer.type_id);
 
-    uint32_t push_constant_count = 0;
-    result = spvReflectEnumeratePushConstantBlocks(&module, &push_constant_count, nullptr);
-    if (result == SPV_REFLECT_RESULT_SUCCESS && push_constant_count > 0) {
-        std::vector<SpvReflectBlockVariable*> push_constants(push_constant_count);
-        spvReflectEnumeratePushConstantBlocks(&module, &push_constant_count, push_constants.data());
-
-        for (const auto* block : push_constants) {
             ShaderReflection::PushConstantRange range;
             range.stage = m_stage;
-            range.offset = block->offset;
-            range.size = block->size;
+            range.offset = 0;
+            range.size = static_cast<uint32_t>(compiler.get_declared_struct_size(type));
 
             m_reflection.push_constants.push_back(range);
         }
 
-        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Reflected {} push constant blocks", push_constant_count);
-    }
+        if (!m_reflection.push_constants.empty()) {
+            MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Reflected {} push constant blocks", m_reflection.push_constants.size());
+        }
 
-    if (m_stage == vk::ShaderStageFlagBits::eCompute) {
-        m_reflection.workgroup_size = std::array<uint32_t, 3> {
-            module.entry_points[0].local_size.x,
-            module.entry_points[0].local_size.y,
-            module.entry_points[0].local_size.z
-        };
+        auto spec_constants = compiler.get_specialization_constants();
+        for (const auto& spec : spec_constants) {
+            ShaderReflection::SpecializationConstant sc;
+            sc.constant_id = spec.constant_id;
+            sc.name = compiler.get_name(spec.id);
 
-        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Compute shader workgroup size: [{}, {}, {}]",
-            (*m_reflection.workgroup_size)[0],
-            (*m_reflection.workgroup_size)[1],
-            (*m_reflection.workgroup_size)[2]);
-    }
+            const auto& type = compiler.get_type(compiler.get_constant(spec.id).constant_type);
+            sc.size = static_cast<uint32_t>(compiler.get_declared_struct_size(type));
 
-    spvReflectDestroyShaderModule(&module);
-    return true;
+            m_reflection.specialization_constants.push_back(sc);
+        }
 
-#else
-    MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "SPIRV-Reflect not available - shader reflection disabled");
+        if (!m_reflection.specialization_constants.empty()) {
+            MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Reflected {} specialization constants",
+                m_reflection.specialization_constants.size());
+        }
 
-    if (m_stage == vk::ShaderStageFlagBits::eCompute) {
-        // SPIR-V OpExecutionMode LocalSize pattern
-        // This is a simplified parser - production code should use SPIRV-Reflect
-        for (size_t i = 0; i < spirv_code.size() - 4; ++i) {
-            if ((spirv_code[i] & 0xFFFF) == 17) {
-                uint32_t mode = spirv_code[i + 2];
-                if (mode == 17) {
-                    m_reflection.workgroup_size = std::array<uint32_t, 3> {
-                        spirv_code[i + 3],
-                        spirv_code[i + 4],
-                        spirv_code[i + 5]
+        if (m_stage == vk::ShaderStageFlagBits::eCompute) {
+            auto entry_points = compiler.get_entry_points_and_stages();
+
+            for (const auto& ep : entry_points) {
+                if (ep.name == m_entry_point && ep.execution_model == spv::ExecutionModelGLCompute) {
+
+                    std::array<uint32_t, 3> workgroup_size {
+                        compiler.get_execution_mode_argument(spv::ExecutionModeLocalSize, 0),
+                        compiler.get_execution_mode_argument(spv::ExecutionModeLocalSize, 1),
+                        compiler.get_execution_mode_argument(spv::ExecutionModeLocalSize, 2)
                     };
 
-                    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                        "Extracted compute workgroup size: [{}, {}, {}]",
-                        (*m_reflection.workgroup_size)[0],
-                        (*m_reflection.workgroup_size)[1],
-                        (*m_reflection.workgroup_size)[2]);
+                    if (!workgroup_size.empty() && workgroup_size.size() >= 3) {
+                        m_reflection.workgroup_size = std::array<uint32_t, 3> {
+                            workgroup_size[0],
+                            workgroup_size[1],
+                            workgroup_size[2]
+                        };
+
+                        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                            "Compute shader workgroup size: [{}, {}, {}]",
+                            workgroup_size[0], workgroup_size[1], workgroup_size[2]);
+                    }
                     break;
                 }
             }
         }
+
+        if (m_stage == vk::ShaderStageFlagBits::eVertex) {
+            for (const auto& input : resources.stage_inputs) {
+                uint32_t location = compiler.get_decoration(input.id, spv::DecorationLocation);
+                const auto& type = compiler.get_type(input.type_id);
+
+                vk::VertexInputAttributeDescription attr;
+                attr.location = location;
+                attr.binding = 0;
+                attr.format = spirv_type_to_vk_format(type);
+                attr.offset = 0;
+
+                m_reflection.vertex_attributes.push_back(attr);
+            }
+
+            if (!m_reflection.vertex_attributes.empty()) {
+                MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                    "Reflected {} vertex input attributes",
+                    m_reflection.vertex_attributes.size());
+            }
+        }
+
+        return true;
+
+    } catch (const spirv_cross::CompilerError& e) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "SPIRV-Cross reflection failed: {}", e.what());
+        return false;
+    }
+}
+
+vk::Format VKShaderModule::spirv_type_to_vk_format(const spirv_cross::SPIRType& type)
+{
+    using BaseType = spirv_cross::SPIRType::BaseType;
+
+    if (type.columns > 1) {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Matrix types are not valid vertex attributes (columns={})",
+            type.columns);
+        return vk::Format::eUndefined;
     }
 
-    return false; // Reflection incomplete without SPIRV-Reflect
-#endif
+    if (type.width != 32) {
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Unsupported SPIR-V vertex attribute width {} (only 32-bit supported)",
+            type.width);
+        return vk::Format::eUndefined;
+    }
+
+    const uint32_t vec_size = type.vecsize;
+    if (type.basetype == BaseType::Float) {
+        switch (vec_size) {
+        case 1:
+            return vk::Format::eR32Sfloat;
+        case 2:
+            return vk::Format::eR32G32Sfloat;
+        case 3:
+            return vk::Format::eR32G32B32Sfloat;
+        case 4:
+            return vk::Format::eR32G32B32A32Sfloat;
+        }
+    } else if (type.basetype == BaseType::Int) {
+        switch (vec_size) {
+        case 1:
+            return vk::Format::eR32Sint;
+        case 2:
+            return vk::Format::eR32G32Sint;
+        case 3:
+            return vk::Format::eR32G32B32Sint;
+        case 4:
+            return vk::Format::eR32G32B32A32Sint;
+        }
+    } else if (type.basetype == BaseType::UInt) {
+        switch (vec_size) {
+        case 1:
+            return vk::Format::eR32Uint;
+        case 2:
+            return vk::Format::eR32G32Uint;
+        case 3:
+            return vk::Format::eR32G32B32Uint;
+        case 4:
+            return vk::Format::eR32G32B32A32Uint;
+        }
+    }
+
+    MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Unsupported SPIR-V vertex attribute type (basetype={}, vecsize={})",
+        static_cast<int>(type.basetype), vec_size);
+
+    return vk::Format::eUndefined;
 }
 
 // ============================================================================

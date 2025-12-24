@@ -48,6 +48,11 @@ jobs:
       - name: Use version
         run: echo "Version is ${{ inputs.version }}"
 
+      - name: Enable copr
+        run: |
+          dnf install -y dnf-plugins-core
+          dnf copr enable -y ranjithshegde/spirv-cross
+
       - name: Install build dependencies
         run: |
           echo "=== Installing Build Dependencies via DNF ==="
@@ -62,6 +67,7 @@ jobs:
             glm-devel \
             eigen3-devel \
             spirv-headers-devel \
+            spirv-cross-devel \
             spirv-tools \
             vulkan-headers \
             vulkan-loader \

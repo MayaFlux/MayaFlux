@@ -57,6 +57,35 @@ if(WIN32)
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
 
+    find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core 
+        PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
+    find_library(SPIRV_CROSS_CPP_LIB NAMES spirv-cross-cpp 
+        PATHS "$ENV{VULKAN_SDK}/Lib" REQUIRED NO_DEFAULT_PATH)
+    find_path(SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp 
+        PATHS "$ENV{VULKAN_SDK}/Include" REQUIRED NO_DEFAULT_PATH)
+
+    if(NOT TARGET spirv-cross-core)
+        add_library(spirv-cross-core STATIC IMPORTED)
+        set_target_properties(spirv-cross-core PROPERTIES
+            IMPORTED_LOCATION_DEBUG ${SPIRV_CROSS_CORE_LIB}
+            IMPORTED_LOCATION_RELEASE ${SPIRV_CROSS_CORE_LIB}
+            IMPORTED_LOCATION_RELWITHDEBINFO ${SPIRV_CROSS_CORE_LIB}
+            IMPORTED_LOCATION_MINSIZEREL ${SPIRV_CROSS_CORE_LIB}
+            INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+        )
+    endif()
+
+    if(NOT TARGET spirv-cross-cpp)
+        add_library(spirv-cross-cpp STATIC IMPORTED)
+        set_target_properties(spirv-cross-cpp PROPERTIES
+            IMPORTED_LOCATION_DEBUG ${SPIRV_CROSS_CPP_LIB}
+            IMPORTED_LOCATION_RELEASE ${SPIRV_CROSS_CPP_LIB}
+            IMPORTED_LOCATION_RELWITHDEBINFO ${SPIRV_CROSS_CPP_LIB}
+            IMPORTED_LOCATION_MINSIZEREL ${SPIRV_CROSS_CPP_LIB}
+            INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+        )
+    endif()
+
     # FFmpeg components
     if(NOT TARGET FFmpeg::avcodec)
         foreach(component avcodec avformat avutil swresample swscale)
@@ -76,7 +105,6 @@ if(WIN32)
 
     # Shader support
     set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
-    set(MAYAFLUX_USE_SPIRV_REFLECT @MAYAFLUX_USE_SPIRV_REFLECT@)
 
 else()
     # Unix-like systems (Linux, macOS) use pkg-config
@@ -86,9 +114,8 @@ else()
 
     # Shader support  
     set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
-    set(MAYAFLUX_USE_SPIRV_REFLECT @MAYAFLUX_USE_SPIRV_REFLECT@)
 
-    if(MAYAFLUX_USE_SPIRV_REFLECT)
+    if(MAYAFLUX_USE_SHADERC)
         pkg_check_modules(shaderc QUIET IMPORTED_TARGET shaderc)
     endif()
 
@@ -106,6 +133,26 @@ else()
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
         find_package(TBB REQUIRED)
         set(_MAYAFLUX_THREADING_BACKEND "TBB")
+    endif()
+
+    find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core REQUIRED)
+    find_library(SPIRV_CROSS_CPP_LIB NAMES spirv-cross-cpp REQUIRED)
+    find_path(SPIRV_CROSS_INCLUDE_DIR spirv_cross/spirv_cross.hpp REQUIRED)
+
+    if(NOT TARGET spirv-cross-core)
+        add_library(spirv-cross-core SHARED IMPORTED)
+        set_target_properties(spirv-cross-core PROPERTIES
+            IMPORTED_LOCATION ${SPIRV_CROSS_CORE_LIB}
+            INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+        )
+    endif()
+
+    if(NOT TARGET spirv-cross-cpp)
+        add_library(spirv-cross-cpp SHARED IMPORTED)
+        set_target_properties(spirv-cross-cpp PROPERTIES
+            IMPORTED_LOCATION ${SPIRV_CROSS_CPP_LIB}
+            INTERFACE_INCLUDE_DIRECTORIES ${SPIRV_CROSS_INCLUDE_DIR}
+        )
     endif()
 
     find_package(LLVM CONFIG REQUIRED)
@@ -198,6 +245,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             user32
             shell32
             opengl32
+            spirv-cross-core
+            spirv-cross-cpp
         )
     else()
         target_link_libraries(MayaFlux::MayaFluxLib INTERFACE
@@ -211,6 +260,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::LIBSWSCALE
             PkgConfig::magic_enum
             glm::glm
+            spirv-cross-core
+            spirv-cross-cpp
         )
 
         # Unix Vulkan
@@ -244,10 +295,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::shaderc)
         endif()
         target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_USE_SHADERC)
-    endif()
-
-    if(MAYAFLUX_USE_SPIRV_REFLECT)
-        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_USE_SPIRV_REFLECT)
     endif()
 
     set_property(TARGET MayaFlux::MayaFluxLib PROPERTY VERSION ${MayaFlux_VERSION})

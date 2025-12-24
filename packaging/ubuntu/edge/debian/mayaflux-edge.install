@@ -1,0 +1,17 @@
+# Binaries (lila_server and any others)
+usr/bin/*
+
+# Libraries (MayaFluxLib and Lila)
+usr/lib/*.so*
+
+# Pkg-config and CMake configuration files
+usr/lib/pkgconfig/*.pc
+usr/lib/cmake/MayaFlux/*
+
+# Headers (MayaFlux and Lila)
+usr/include/MayaFlux/*
+usr/include/Lila/*
+
+# Runtime data (Shaders, .version file, and PCH headers)
+usr/share/MayaFlux/*
+usr/share/MayaFlux/.version

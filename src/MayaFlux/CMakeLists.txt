@@ -9,6 +9,14 @@ target_sources(MayaFluxLib PRIVATE ${CONFIG_IMPL})
 
 if(WIN32)
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_EXPORTS)
+    if(MSVC)
+        target_compile_options(MayaFluxLib PRIVATE /MD)
+        
+        if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+            target_compile_options(MayaFluxLib PRIVATE "/Zc:externConstexpr-")
+            target_link_options(MayaFluxLib PRIVATE "/IGNORE:4099")
+        endif()
+    endif()
 endif()
 
 set_target_properties(MayaFluxLib PROPERTIES
@@ -30,13 +38,13 @@ if(TARGET compile_shaders)
     target_include_directories(MayaFluxLib PRIVATE ${SHADER_OUTPUT_DIR})
 endif()
 
-if(MAYAFLUX_USE_SPIRV_REFLECT)
-    if(WIN32 OR APPLE)
-        target_include_directories(MayaFluxLib PRIVATE ${Vulkan_INCLUDE_DIRS})
-    endif()
-    target_link_libraries(MayaFluxLib PRIVATE spirv-reflect-isolated)
-    target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SPIRV_REFLECT)
+if(WIN32)
+    target_include_directories(MayaFluxLib PRIVATE ${Vulkan_INCLUDE_DIRS})
 endif()
+target_link_libraries(MayaFluxLib PRIVATE ${SPIRV_CROSS_LIBRARIES})
+target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SPIRV_CROSS)
+message(STATUS "Core: Linked with SPIRV-Cross")
+
 
 if(MAYAFLUX_USE_SHADERC)
     if(WIN32)
@@ -45,20 +53,7 @@ if(MAYAFLUX_USE_SHADERC)
         elseif(TARGET shaderc_combined)
             target_link_libraries(MayaFluxLib PRIVATE shaderc_combined)
         endif()
-
-        if(MSVC)
-            target_compile_options(MayaFluxLib PRIVATE
-                "$<$<CONFIG:Debug>:/MTd>"
-                "$<$<CONFIG:Release>:/MT>"
-                "$<$<CONFIG:RelWithDebInfo>:/MT>"
-                "$<$<CONFIG:MinSizeRel>:/MT>"
-            )
-
-            if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-                target_compile_options(MayaFluxLib PRIVATE "/Zc:externConstexpr-")
-                target_link_options(MayaFluxLib PRIVATE "/IGNORE:4099")
-            endif()
-        endif()
+        
     else()
         target_link_libraries(MayaFluxLib PRIVATE PkgConfig::shaderc)
     endif()
