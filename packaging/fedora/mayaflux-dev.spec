@@ -28,6 +28,7 @@ BuildRequires:  glfw-devel >= 3.4
 BuildRequires:  glm-devel
 BuildRequires:  eigen3-devel
 BuildRequires:  spirv-headers-devel
+BuildRequires:  spirv-cross-devel
 BuildRequires:  spirv-tools
 BuildRequires:  vulkan-headers
 BuildRequires:  vulkan-loader
@@ -58,6 +59,7 @@ Requires:       glfw-devel >= 3.4
 Requires:       glm-devel
 Requires:       eigen3-devel
 Requires:       spirv-headers-devel
+Requires:       spirv-cross-devel
 Requires:       spirv-tools
 Requires:       vulkan-headers
 Requires:       vulkan-loader
@@ -145,7 +147,7 @@ EOF
 %postun -p /sbin/ldconfig
 
 %changelog
-* Fri Dec 19 2025 MayaFlux Collective <mayafluxcollective@proton.me> - 0.1.0-1.dev
+* Wed Dec 24 2025 MayaFlux Collective <mayafluxcollective@proton.me> - 0.1.0-1.dev
 - Initial development package
 - Full source build with C++23 support
 - All development dependencies included for JIT/live coding
