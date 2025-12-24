@@ -55,22 +55,22 @@ All components remain **composable and concurrent**. Processing domains are enco
 - Lock-free audio node graphs (sample-accurate, 700+ tests)
 - Comprehensive audio backend (RtAudio, sample-accurate I/O)
 - C++20 coroutine scheduling infrastructure
+- Vulkan graphics pipeline (CPU → GPU unified data flow)
+- Cross-domain node synchronization
 - **Lila JIT compiler**: Live C++ execution with sub-buffer latency (LLVM21-backed)
 - Region-based memory management and NDData containers
 - **100,000+ lines of tested, documented core infrastructure**
 
 ### ✓ Proof-of-Concept (Validated)
 
-- Vulkan graphics pipeline (CPU → GPU unified data flow)
-- Cross-domain node synchronization
-- GPU rendering from NDData containers
+- Full audio-visual feedback loops
 - Demonstrates architecture scales across modalities
+- GPU compute shader integration
 
 ### → In Active Development
 
-- GPU compute shader integration
+- GPU rendering from NDData containers
 - Complex visual effect pipelines
-- Full audio-visual feedback loops
 - Advanced coroutine coordination patterns
 
 ---
