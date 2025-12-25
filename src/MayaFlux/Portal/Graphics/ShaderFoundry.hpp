@@ -57,6 +57,11 @@ public:
         TRANSFER
     };
 
+    enum class CommandBufferLevel : uint8_t {
+        PRIMARY,
+        SECONDARY
+    };
+
 private:
     struct DescriptorSetState {
         vk::DescriptorSet descriptor_set;
@@ -65,6 +70,7 @@ private:
     struct CommandBufferState {
         vk::CommandBuffer cmd;
         CommandBufferType type;
+        CommandBufferLevel level { CommandBufferLevel::PRIMARY };
         bool is_active;
         vk::QueryPool timestamp_pool;
         std::unordered_map<std::string, uint32_t> timestamp_queries;
@@ -371,6 +377,19 @@ public:
      * @return Command buffer ID
      */
     CommandBufferID begin_commands(CommandBufferType type);
+
+    /**
+     * @brief Begin recording a secondary command buffer
+     * @param render_pass Render pass this secondary buffer will be executed within
+     * @param subpass Subpass index (default: 0)
+     * @return Command buffer ID
+     *
+     * Secondary command buffers can be executed within a primary command buffer's render pass.
+     * They inherit render pass state and allow batching draw commands efficiently.
+     */
+    CommandBufferID begin_secondary_commands(
+        vk::RenderPass render_pass,
+        uint32_t subpass = 0);
 
     /**
      * @brief Get Vulkan command buffer handle from CommandBufferID

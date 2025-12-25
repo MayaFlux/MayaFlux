@@ -682,6 +682,36 @@ CommandBufferID ShaderFoundry::begin_commands(CommandBufferType type)
     return id;
 }
 
+CommandBufferID ShaderFoundry::begin_secondary_commands(
+    vk::RenderPass render_pass,
+    uint32_t subpass)
+{
+    auto& cmd_manager = m_backend->get_command_manager();
+
+    CommandBufferID id = m_next_command_id++;
+
+    vk::CommandBuffer cmd = cmd_manager.allocate_command_buffer(vk::CommandBufferLevel::eSecondary);
+
+    vk::CommandBufferInheritanceInfo inheritance_info;
+    inheritance_info.renderPass = render_pass;
+    inheritance_info.subpass = subpass;
+    inheritance_info.framebuffer = nullptr;
+
+    vk::CommandBufferBeginInfo begin_info;
+    begin_info.flags = vk::CommandBufferUsageFlagBits::eRenderPassContinue | vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+    begin_info.pInheritanceInfo = &inheritance_info;
+
+    cmd.begin(begin_info);
+
+    CommandBufferState& state = m_command_buffers[id];
+    state.cmd = cmd;
+    state.type = CommandBufferType::GRAPHICS;
+    state.level = CommandBufferLevel::SECONDARY;
+    state.is_active = true;
+
+    return id;
+}
+
 vk::CommandBuffer ShaderFoundry::get_command_buffer(CommandBufferID cmd_id)
 {
     auto it = m_command_buffers.find(cmd_id);
