@@ -120,7 +120,7 @@ void GlfwWindow::set_title(const std::string& title)
     }
 }
 
-void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api) const
+void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& /*surface_info*/, GlobalGraphicsConfig::GraphicsApi api) const
 {
     glfwDefaultWindowHints();
 
@@ -319,7 +319,7 @@ void GlfwWindow::glfw_key_callback(GLFWwindow* window, int key, int scancode, in
     if (!win)
         return;
 
-    WindowEventType type;
+    WindowEventType type {};
     switch (action) {
     case GLFW_PRESS:
         type = WindowEventType::KEY_PRESSED;
@@ -419,6 +419,72 @@ void GlfwWindow::glfw_scroll_callback(GLFWwindow* window, double xoffset, double
 void GlfwWindow::set_graphics_registered(bool registered)
 {
     m_graphics_registered.store(registered, std::memory_order_release);
+}
+
+void GlfwWindow::register_rendering_buffer(std::shared_ptr<Buffers::VKBuffer> buffer)
+{
+    for (const auto& weak_buf : m_rendering_buffers) {
+        if (auto buf = weak_buf.lock()) {
+            if (buf == buffer) {
+                return;
+            }
+        }
+    }
+
+    std::lock_guard lock(m_render_tracking_mutex);
+    m_rendering_buffers.push_back(buffer);
+
+    MF_RT_DEBUG(Journal::Component::Core, Journal::Context::GraphicsCallback,
+        "Window '{}': registered VKBuffer for rendering (total: {})",
+        m_create_info.title, m_rendering_buffers.size());
+}
+
+void GlfwWindow::unregister_rendering_buffer(std::shared_ptr<Buffers::VKBuffer> buffer)
+{
+    auto it = std::ranges::find_if(m_rendering_buffers,
+        [&buffer](const std::weak_ptr<Buffers::VKBuffer>& weak_buf) {
+            auto buf = weak_buf.lock();
+            return buf == buffer;
+        });
+
+    if (it != m_rendering_buffers.end()) {
+        std::lock_guard lock(m_render_tracking_mutex);
+        m_rendering_buffers.erase(it);
+    }
+}
+
+void GlfwWindow::track_frame_command(uint64_t cmd_id)
+{
+    std::lock_guard lock(m_render_tracking_mutex);
+    m_frame_commands.push_back(cmd_id);
+
+    MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
+        "Window '{}': tracked command buffer {} (total this frame: {})",
+        m_create_info.title, cmd_id, m_frame_commands.size());
+}
+
+const std::vector<uint64_t>& GlfwWindow::get_frame_commands() const
+{
+    return m_frame_commands;
+}
+
+void GlfwWindow::clear_frame_commands()
+{
+    std::lock_guard lock(m_render_tracking_mutex);
+    m_frame_commands.clear();
+}
+
+std::vector<std::shared_ptr<Buffers::VKBuffer>> GlfwWindow::get_rendering_buffers() const
+{
+    std::lock_guard lock(m_render_tracking_mutex);
+
+    std::vector<std::shared_ptr<Buffers::VKBuffer>> buffers;
+    for (const auto& weak_buf : m_rendering_buffers) {
+        if (auto buf = weak_buf.lock()) {
+            buffers.push_back(buf);
+        }
+    }
+    return buffers;
 }
 
 }

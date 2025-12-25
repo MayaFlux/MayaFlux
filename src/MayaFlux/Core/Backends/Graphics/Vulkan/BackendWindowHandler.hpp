@@ -123,6 +123,17 @@ private:
 
     // Event handling
     // void on_window_event(const WindowEvent& event, std::shared_ptr<Window> window);
+
+    /**
+     * @brief Submit multiple command buffers for a single frame
+     * @param window Target window
+     * @param command_buffers All command buffers to submit
+     *
+     * Acquires swapchain image once, submits all buffers, presents.
+     */
+    void submit_batched_frame(
+        const std::shared_ptr<Window>& window,
+        const std::vector<vk::CommandBuffer>& command_buffers);
 };
 
 }

@@ -81,6 +81,18 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         this->render_window(window);
     };
 
+    display_service->present_frame_batch = [this](
+                                               const std::shared_ptr<void>& window_ptr,
+                                               std::vector<uint64_t> command_buffers) {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        std::vector<vk::CommandBuffer> vk_command_buffers(command_buffers.size());
+        for (size_t i = 0; i < command_buffers.size(); ++i) {
+            vk_command_buffers[i] = *reinterpret_cast<vk::CommandBuffer*>(&command_buffers[i]);
+        }
+
+        submit_batched_frame(window, vk_command_buffers);
+    };
+
     display_service->wait_idle = [this]() {
         m_context.get_device().waitIdle();
     };
@@ -616,6 +628,95 @@ bool BackendWindowHandler::attach_render_pass(
         window->get_create_info().title, image_count);
 
     return true;
+}
+
+void BackendWindowHandler::submit_batched_frame(
+    const std::shared_ptr<Window>& window,
+    const std::vector<vk::CommandBuffer>& command_buffers)
+{
+    auto* context = find_window_context(window);
+    if (!context) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Window '{}' not registered for presentation",
+            window->get_create_info().title);
+        return;
+    }
+
+    if (command_buffers.empty()) {
+        MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "No command buffers to submit for window '{}'",
+            window->get_create_info().title);
+        return;
+    }
+
+    auto device = m_context.get_device();
+    auto graphics_queue = m_context.get_graphics_queue();
+
+    size_t frame_index = context->current_frame;
+    auto& in_flight = context->in_flight[frame_index];
+    auto& image_available = context->image_available[frame_index];
+    auto& render_finished = context->render_finished[frame_index];
+
+    if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
+        MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Skipping batched frame submission for window '{}' due to in-flight fence timeout",
+            window->get_create_info().title);
+        return;
+    }
+
+    auto image_index_opt = context->swapchain->acquire_next_image(image_available);
+    if (!image_index_opt.has_value()) {
+        context->needs_recreation = true;
+        return;
+    }
+    uint32_t image_index = image_index_opt.value();
+
+    if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to reset in-flight fence for window '{}'",
+            window->get_create_info().title);
+        return;
+    }
+
+    vk::SubmitInfo submit_info {};
+    vk::PipelineStageFlags wait_stages[] = {
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    };
+
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores = &image_available;
+    submit_info.pWaitDstStageMask = wait_stages;
+    submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
+    submit_info.pCommandBuffers = command_buffers.data();
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &render_finished;
+
+    MF_RT_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Window '{}': submitting {} command buffers to swapchain image {}",
+        window->get_create_info().title,
+        command_buffers.size(),
+        image_index);
+
+    try {
+        auto result = graphics_queue.submit(1, &submit_info, in_flight);
+    } catch (const std::exception& e) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to submit batched frame: {}", e.what());
+        return;
+    }
+
+    bool present_success = context->swapchain->present(
+        image_index, render_finished, graphics_queue);
+
+    if (!present_success) {
+        context->needs_recreation = true;
+    }
+
+    context->current_frame = (frame_index + 1) % context->in_flight.size();
+
+    MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Window '{}': frame presented successfully",
+        window->get_create_info().title);
 }
 
 void BackendWindowHandler::cleanup()

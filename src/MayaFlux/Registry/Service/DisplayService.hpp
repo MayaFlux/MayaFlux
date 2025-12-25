@@ -21,6 +21,18 @@ struct MAYAFLUX_API DisplayService {
     std::function<void(const std::shared_ptr<void>&, uint64_t)> present_frame;
 
     /**
+     * @brief Present a complete frame with multiple command buffers (RECOMMENDED)
+     * @param window_handle Opaque window/surface handle
+     * @param command_buffers Vector of Vulkan command buffers to submit together
+     *
+     * Batches multiple command buffers into a single frame submission.
+     * Acquires swapchain image once, submits all command buffers, then presents.
+     * This is the correct method when multiple VKBuffers render to the same window.
+     */
+    std::function<void(const std::shared_ptr<void>&, std::vector<uint64_t>)>
+        present_frame_batch;
+
+    /**
      * @brief Wait for all GPU operations to complete
      *
      * Blocks until all submitted command buffers have finished execution.

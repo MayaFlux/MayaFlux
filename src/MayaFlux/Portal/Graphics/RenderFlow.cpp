@@ -974,6 +974,21 @@ std::vector<std::shared_ptr<Core::Window>> RenderFlow::get_registered_windows() 
     return windows;
 }
 
+vk::RenderPass RenderFlow::get_window_render_pass(const std::shared_ptr<Core::Window>& window) const
+{
+    auto assoc_it = m_window_associations.find(window);
+    if (assoc_it == m_window_associations.end()) {
+        return nullptr;
+    }
+
+    auto rp_it = m_render_passes.find(assoc_it->second.render_pass_id);
+    if (rp_it == m_render_passes.end()) {
+        return nullptr;
+    }
+
+    return rp_it->second.render_pass->get();
+}
+
 //==============================================================================
 // Convenience Methods
 //==============================================================================

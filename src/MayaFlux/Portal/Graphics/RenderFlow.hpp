@@ -278,6 +278,15 @@ public:
      */
     [[nodiscard]] std::vector<std::shared_ptr<Core::Window>> get_registered_windows() const;
 
+    /**
+     * @brief Get Vulkan render pass handle for window
+     * @param window Target window
+     * @return vk::RenderPass handle or nullptr if not registered
+     *
+     * Used by RenderProcessor to create secondary command buffers.
+     */
+    vk::RenderPass get_window_render_pass(const std::shared_ptr<Core::Window>& window) const;
+
     //==========================================================================
     // Convenience Methods
     //==========================================================================
