@@ -96,6 +96,16 @@ struct MAYAFLUX_API DisplayService {
     std::function<void(const std::shared_ptr<void>&, uint32_t&, uint32_t&)> get_swapchain_extent;
 
     /**
+     * @brief Get current swapchain image view for rendering
+     * @param window_handle Window handle
+     * @return vk::ImageView cast to void*
+     *
+     * Returns the image view for the currently acquired swapchain image.
+     * Used with dynamic rendering.
+     */
+    std::function<void*(const std::shared_ptr<void>&)> get_current_image_view;
+
+    /**
      * @brief Get backend render pass for a window
      * @param window_handle Window handle
      * @return Vulkan render pass handle (vk::RenderPass cast to void*)

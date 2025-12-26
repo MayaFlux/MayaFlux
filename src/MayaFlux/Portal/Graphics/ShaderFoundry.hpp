@@ -379,17 +379,14 @@ public:
     CommandBufferID begin_commands(CommandBufferType type);
 
     /**
-     * @brief Begin recording a secondary command buffer
-     * @param render_pass Render pass this secondary buffer will be executed within
-     * @param subpass Subpass index (default: 0)
+     * @brief Begin recording a secondary command buffer for dynamic rendering
+     * @param color_format Format of the color attachment (from swapchain)
      * @return Command buffer ID
      *
-     * Secondary command buffers can be executed within a primary command buffer's render pass.
-     * They inherit render pass state and allow batching draw commands efficiently.
+     * With dynamic rendering, secondary buffers don't need render pass objects.
+     * They only need to know the attachment formats they'll render to.
      */
-    CommandBufferID begin_secondary_commands(
-        vk::RenderPass render_pass,
-        uint32_t subpass = 0);
+    CommandBufferID begin_secondary_commands(vk::Format color_format);
 
     /**
      * @brief Get Vulkan command buffer handle from CommandBufferID

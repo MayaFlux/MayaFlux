@@ -682,9 +682,7 @@ CommandBufferID ShaderFoundry::begin_commands(CommandBufferType type)
     return id;
 }
 
-CommandBufferID ShaderFoundry::begin_secondary_commands(
-    vk::RenderPass render_pass,
-    uint32_t subpass)
+CommandBufferID ShaderFoundry::begin_secondary_commands(vk::Format color_format)
 {
     auto& cmd_manager = m_backend->get_command_manager();
 
@@ -692,10 +690,13 @@ CommandBufferID ShaderFoundry::begin_secondary_commands(
 
     vk::CommandBuffer cmd = cmd_manager.allocate_command_buffer(vk::CommandBufferLevel::eSecondary);
 
+    vk::CommandBufferInheritanceRenderingInfo inheritance_rendering;
+    inheritance_rendering.colorAttachmentCount = 1;
+    inheritance_rendering.pColorAttachmentFormats = &color_format;
+    inheritance_rendering.rasterizationSamples = vk::SampleCountFlagBits::e1;
+
     vk::CommandBufferInheritanceInfo inheritance_info;
-    inheritance_info.renderPass = render_pass;
-    inheritance_info.subpass = subpass;
-    inheritance_info.framebuffer = nullptr;
+    inheritance_info.pNext = &inheritance_rendering;
 
     vk::CommandBufferBeginInfo begin_info;
     begin_info.flags = vk::CommandBufferUsageFlagBits::eRenderPassContinue | vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -708,6 +709,9 @@ CommandBufferID ShaderFoundry::begin_secondary_commands(
     state.type = CommandBufferType::GRAPHICS;
     state.level = CommandBufferLevel::SECONDARY;
     state.is_active = true;
+
+    MF_RT_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
+        "Began secondary command buffer (ID: {}) for dynamic rendering", id);
 
     return id;
 }

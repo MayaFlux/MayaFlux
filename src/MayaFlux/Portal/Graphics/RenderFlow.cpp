@@ -306,20 +306,6 @@ RenderPassID RenderFlow::create_render_pass(
     }
     create_info.subpasses.push_back(subpass);
 
-    // create_info.dependencies.emplace_back(
-    //     VK_SUBPASS_EXTERNAL, 0,
-    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //     vk::AccessFlagBits::eColorAttachmentWrite,
-    //     vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
-
-    // create_info.dependencies.emplace_back(
-    //     0, VK_SUBPASS_EXTERNAL,
-    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //     vk::PipelineStageFlagBits::eBottomOfPipe,
-    //     vk::AccessFlagBits::eColorAttachmentWrite,
-    //     vk::AccessFlagBits::eMemoryRead);
-
     if (!render_pass->create(m_shader_foundry->get_device(), create_info)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
             "Failed to create VKRenderPass");
@@ -599,6 +585,79 @@ void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
         "Destroyed graphics pipeline (ID: {})", pipeline_id);
+}
+
+//==============================================================================
+// Dynamic Rendering
+//==============================================================================
+
+void RenderFlow::begin_rendering(
+    CommandBufferID cmd_id,
+    const std::shared_ptr<Core::Window>& window,
+    const std::array<float, 4>& clear_color)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    if (!window) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot begin rendering for null window");
+        return;
+    }
+
+    uint32_t width = 0, height = 0;
+    m_display_service->get_swapchain_extent(window, width, height);
+
+    if (width == 0 || height == 0) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid swapchain extent for window '{}': {}x{}",
+            window->get_create_info().title, width, height);
+        return;
+    }
+
+    vk::ImageView image_view = get_current_image_view(window);
+    if (!image_view) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Failed to get image view for window '{}'",
+            window->get_create_info().title);
+        return;
+    }
+
+    vk::RenderingAttachmentInfo color_attachment;
+    color_attachment.imageView = image_view;
+    color_attachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    color_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+    color_attachment.storeOp = vk::AttachmentStoreOp::eStore;
+    color_attachment.clearValue.color = vk::ClearColorValue(clear_color);
+
+    vk::RenderingInfo rendering_info;
+    rendering_info.renderArea.offset = vk::Offset2D { 0, 0 };
+    rendering_info.renderArea.extent = vk::Extent2D { width, height };
+    rendering_info.layerCount = 1;
+    rendering_info.colorAttachmentCount = 1;
+    rendering_info.pColorAttachments = &color_attachment;
+
+    cmd.beginRendering(rendering_info);
+
+    MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
+        "Began dynamic rendering for window '{}' ({}x{})",
+        window->get_create_info().title, width, height);
+}
+
+void RenderFlow::end_rendering(CommandBufferID cmd_id)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    cmd.endRendering();
 }
 
 //==============================================================================
@@ -987,6 +1046,15 @@ vk::RenderPass RenderFlow::get_window_render_pass(const std::shared_ptr<Core::Wi
     }
 
     return rp_it->second.render_pass->get();
+}
+
+vk::ImageView RenderFlow::get_current_image_view(const std::shared_ptr<Core::Window>& window)
+{
+    auto view_ptr = m_display_service->get_current_image_view(window);
+    if (!view_ptr) {
+        return nullptr;
+    }
+    return *static_cast<vk::ImageView*>(view_ptr);
 }
 
 //==============================================================================

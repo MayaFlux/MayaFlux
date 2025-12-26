@@ -130,6 +130,29 @@ public:
     void destroy_pipeline(RenderPipelineID pipeline_id);
 
     //==========================================================================
+    // Dynamic Rendering
+    //==========================================================================
+
+    /**
+     * @brief Begin dynamic rendering to a window
+     * @param cmd_id Command buffer ID
+     * @param window Target window
+     * @param clear_color Clear color (RGBA)
+     *
+     * Uses vkCmdBeginRendering - no render pass objects needed.
+     */
+    void begin_rendering(
+        CommandBufferID cmd_id,
+        const std::shared_ptr<Core::Window>& window,
+        const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
+
+    /**
+     * @brief End dynamic rendering
+     * @param cmd_id Command buffer ID
+     */
+    void end_rendering(CommandBufferID cmd_id);
+
+    //==========================================================================
     // Command Recording
     //==========================================================================
 
@@ -304,9 +327,6 @@ private:
         RenderPassID render_pass_id;
     };
 
-    RenderFlow() = default;
-    ~RenderFlow() { shutdown(); }
-
     struct PipelineState {
         std::vector<ShaderID> shader_ids;
         std::shared_ptr<Core::VKGraphicsPipeline> pipeline;
@@ -331,6 +351,16 @@ private:
     Registry::Service::DisplayService* m_display_service = nullptr;
 
     static bool s_initialized;
+
+    RenderFlow() = default;
+    ~RenderFlow() { shutdown(); }
+
+    /**
+     * @brief Get current image view for window
+     * @param window Target window
+     * @return vk::ImageView of current swapchain image
+     */
+    vk::ImageView get_current_image_view(const std::shared_ptr<Core::Window>& window);
 };
 
 /**

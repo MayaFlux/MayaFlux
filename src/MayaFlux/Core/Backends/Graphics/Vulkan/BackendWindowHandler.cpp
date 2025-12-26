@@ -158,6 +158,24 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
     };
 
+    display_service->get_current_image_view = [this](const std::shared_ptr<void>& window_ptr) -> void* {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* context = find_window_context(window);
+
+        if (!context || !context->swapchain) {
+            return nullptr;
+        }
+
+        const auto& image_views = context->swapchain->get_image_views();
+        if (context->current_image_index >= image_views.size()) {
+            return nullptr;
+        }
+
+        static thread_local vk::ImageView view;
+        view = image_views[context->current_image_index];
+        return static_cast<void*>(&view);
+    };
+
     display_service->get_window_render_pass = [this](const std::shared_ptr<void>& window_ptr) -> void* {
         auto window = std::static_pointer_cast<Window>(window_ptr);
         auto* context = find_window_context(window);
@@ -670,6 +688,8 @@ void BackendWindowHandler::submit_batched_frame(
         return;
     }
     uint32_t image_index = image_index_opt.value();
+
+    context->current_image_index = image_index;
 
     if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,

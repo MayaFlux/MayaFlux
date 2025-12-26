@@ -31,6 +31,7 @@ struct WindowRenderContext {
     bool needs_recreation {};
     bool user_render_pass_attached {};
     size_t current_frame {};
+    uint32_t current_image_index {};
 
     WindowRenderContext() = default;
     ~WindowRenderContext() = default;
