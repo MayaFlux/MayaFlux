@@ -259,6 +259,19 @@ public:
         uint32_t first_instance = 0);
 
     /**
+     * @brief Present a complete frame for a window with multiple command buffers
+     * @param window Target window for presentation
+     * @param command_buffer_ids All command buffers to submit for this frame
+     *
+     * Batches multiple command buffers together for a single frame presentation.
+     * All command buffers are submitted together, then the frame is presented.
+     * This is the preferred method when multiple VKBuffers render to the same window.
+     */
+    void present_window_frame(
+        const std::shared_ptr<Core::Window>& window,
+        const std::vector<CommandBufferID>& command_buffer_ids);
+
+    /**
      * @brief Present rendered image to window
      * @param cmd_id Command buffer ID
      * @param window Target window for presentation

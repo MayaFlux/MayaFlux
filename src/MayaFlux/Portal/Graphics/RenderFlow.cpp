@@ -921,6 +921,63 @@ void RenderFlow::draw_indexed(
         vertex_offset, first_instance);
 }
 
+void RenderFlow::present_window_frame(
+    const std::shared_ptr<Core::Window>& window,
+    const std::vector<CommandBufferID>& command_buffer_ids)
+{
+    if (!window) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot present frame for null window");
+        return;
+    }
+
+    if (command_buffer_ids.empty()) {
+        MF_RT_WARN(Journal::Component::Portal, Journal::Context::Rendering,
+            "No command buffers provided for window '{}'",
+            window->get_create_info().title);
+        return;
+    }
+
+    std::vector<vk::CommandBuffer> vk_cmds;
+    vk_cmds.reserve(command_buffer_ids.size());
+
+    for (const auto& cmd_id : command_buffer_ids) {
+        auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+        if (!cmd) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+                "Invalid command buffer ID: {}", cmd_id);
+            continue;
+        }
+
+        try {
+            cmd.end();
+            vk_cmds.push_back(cmd);
+        } catch (const std::exception& e) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+                "Failed to end command buffer: {}", e.what());
+        }
+    }
+
+    if (vk_cmds.empty()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "No valid command buffers to present for window '{}'",
+            window->get_create_info().title);
+        return;
+    }
+
+    MF_RT_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
+        "Batching {} command buffers for window '{}'",
+        vk_cmds.size(), window->get_create_info().title);
+
+    std::vector<uint64_t> cmd_bits;
+    cmd_bits.reserve(vk_cmds.size());
+    for (const auto& cmd : vk_cmds) {
+        cmd_bits.push_back(*reinterpret_cast<const uint64_t*>(&cmd));
+    }
+
+    m_display_service->present_frame_batch(window, cmd_bits);
+}
+
 void RenderFlow::present_rendered_image(
     CommandBufferID cmd_id,
     const std::shared_ptr<Core::Window>& window)
