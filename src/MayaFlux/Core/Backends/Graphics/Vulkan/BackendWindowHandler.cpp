@@ -81,6 +81,15 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         this->render_window(window);
     };
 
+    display_service->submit_and_present = [this](
+                                              const std::shared_ptr<void>& window_ptr,
+                                              uint64_t primary_cmd_bits) {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        vk::CommandBuffer primary_cmd = *reinterpret_cast<vk::CommandBuffer*>(&primary_cmd_bits);
+
+        this->submit_and_present(window, primary_cmd);
+    };
+
     display_service->present_frame_batch = [this](
                                                const std::shared_ptr<void>& window_ptr,
                                                std::vector<uint64_t> command_buffers) {
@@ -90,7 +99,7 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             vk_command_buffers[i] = *reinterpret_cast<vk::CommandBuffer*>(&command_buffers[i]);
         }
 
-        submit_batched_frame(window, vk_command_buffers);
+        this->submit_batched_frame(window, vk_command_buffers);
     };
 
     display_service->wait_idle = [this]() {
@@ -158,6 +167,48 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
     };
 
+    display_service->acquire_next_swapchain_image = [this](const std::shared_ptr<void>& window_ptr) -> uint64_t {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* ctx = find_window_context(window);
+        if (!ctx) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Window '{}' not registered for swapchain acquisition",
+                window->get_create_info().title);
+            return 0;
+        }
+
+        auto device = m_context.get_device();
+        size_t frame_index = ctx->current_frame;
+        auto& in_flight = ctx->in_flight[frame_index];
+        auto& image_available = ctx->image_available[frame_index];
+
+        if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
+            MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Fence timeout during swapchain acquisition for window '{}'",
+                window->get_create_info().title);
+            return 0;
+        }
+
+        auto image_index_opt = ctx->swapchain->acquire_next_image(image_available);
+        if (!image_index_opt.has_value()) {
+            ctx->needs_recreation = true;
+            return 0;
+        }
+
+        ctx->current_image_index = image_index_opt.value();
+
+        if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Failed to reset fence for window '{}'",
+                window->get_create_info().title);
+            return 0;
+        }
+
+        const auto& images = ctx->swapchain->get_images();
+        VkImage raw = images[ctx->current_image_index];
+        return reinterpret_cast<uint64_t>(raw);
+    };
+
     display_service->get_current_image_view = [this](const std::shared_ptr<void>& window_ptr) -> void* {
         auto window = std::static_pointer_cast<Window>(window_ptr);
         auto* context = find_window_context(window);
@@ -168,6 +219,11 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
 
         const auto& image_views = context->swapchain->get_image_views();
         if (context->current_image_index >= image_views.size()) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Invalid current_image_index {} for window '{}' (swapchain has {} images)",
+                context->current_image_index,
+                window->get_create_info().title,
+                image_views.size());
             return nullptr;
         }
 
@@ -558,6 +614,56 @@ void BackendWindowHandler::render_all_windows()
     for (auto& context : m_window_contexts) {
         render_window_internal(context);
     }
+}
+
+void BackendWindowHandler::submit_and_present(
+    const std::shared_ptr<Window>& window,
+    const vk::CommandBuffer& command_buffer)
+{
+    auto* ctx = find_window_context(window);
+    if (!ctx) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Window not registered for submit_and_present");
+        return;
+    }
+
+    auto graphics_queue = m_context.get_graphics_queue();
+
+    size_t frame_index = ctx->current_frame;
+    auto& in_flight = ctx->in_flight[frame_index];
+    auto& image_available = ctx->image_available[frame_index];
+    auto& render_finished = ctx->render_finished[frame_index];
+
+    vk::SubmitInfo submit_info {};
+    vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+    submit_info.waitSemaphoreCount = 1;
+    submit_info.pWaitSemaphores = &image_available;
+    submit_info.pWaitDstStageMask = wait_stages;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &command_buffer;
+    submit_info.signalSemaphoreCount = 1;
+    submit_info.pSignalSemaphores = &render_finished;
+
+    try {
+        auto result = graphics_queue.submit(1, &submit_info, in_flight);
+    } catch (const vk::SystemError& e) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Failed to submit primary command buffer: {}", e.what());
+        return;
+    }
+
+    bool present_success = ctx->swapchain->present(
+        ctx->current_image_index, render_finished, graphics_queue);
+
+    if (!present_success) {
+        ctx->needs_recreation = true;
+    }
+
+    ctx->current_frame = (frame_index + 1) % ctx->in_flight.size();
+
+    MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
+        "Window '{}': frame submitted and presented",
+        window->get_create_info().title);
 }
 
 bool BackendWindowHandler::is_window_registered(const std::shared_ptr<Window>& window) const

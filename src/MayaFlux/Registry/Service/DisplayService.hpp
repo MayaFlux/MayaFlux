@@ -33,6 +33,16 @@ struct MAYAFLUX_API DisplayService {
         present_frame_batch;
 
     /**
+     * @brief Submit a primary command buffer and present the frame
+     * @param window_handle Window handle
+     * @param primary_command_buffer The primary command buffer (uint64_t bits of vk::CommandBuffer)
+     *
+     * Handles semaphore choreography: waits on image_available, signals render_finished,
+     * then presents. Must be called after acquire_next_swapchain_image().
+     */
+    std::function<void(const std::shared_ptr<void>&, uint64_t)> submit_and_present;
+
+    /**
      * @brief Wait for all GPU operations to complete
      *
      * Blocks until all submitted command buffers have finished execution.
@@ -62,6 +72,16 @@ struct MAYAFLUX_API DisplayService {
      * for double/triple buffering.
      */
     std::function<uint32_t(const std::shared_ptr<void>&)> get_swapchain_image_count;
+
+    /**
+     * @brief Acquire the next swapchain image for a window
+     * @param window_handle Window handle
+     * @return Index of the acquired swapchain image
+     *
+     * Must be called before get_current_image_view() for dynamic rendering.
+     * Stores the acquired image index internally for subsequent calls.
+     */
+    std::function<uint64_t(const std::shared_ptr<void>&)> acquire_next_swapchain_image;
 
     /**
      * @brief Get actual swapchain format for a window

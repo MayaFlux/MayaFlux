@@ -725,6 +725,18 @@ vk::CommandBuffer ShaderFoundry::get_command_buffer(CommandBufferID cmd_id)
     return nullptr;
 }
 
+bool ShaderFoundry::end_commands(CommandBufferID cmd_id)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end() || !it->second.is_active) {
+        return false;
+    }
+
+    it->second.cmd.end();
+    it->second.is_active = false;
+    return true;
+}
+
 //==============================================================================
 // Synchronization
 //==============================================================================

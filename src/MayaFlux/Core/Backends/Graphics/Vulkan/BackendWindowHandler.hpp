@@ -79,6 +79,10 @@ public:
     void render_all_windows();
     void handle_window_resize();
 
+    void submit_and_present(
+        const std::shared_ptr<Window>& window,
+        const vk::CommandBuffer& command_buffer);
+
     // ========================================================================
     // Access control
     // ========================================================================

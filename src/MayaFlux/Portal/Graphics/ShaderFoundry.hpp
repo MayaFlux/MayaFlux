@@ -394,6 +394,13 @@ public:
      */
     vk::CommandBuffer get_command_buffer(CommandBufferID cmd_id);
 
+    /**
+     * @brief End recording command buffer
+     * @param cmd_id Command buffer ID to end
+     * @return True if successful, false if invalid ID or not active
+     */
+    bool end_commands(CommandBufferID cmd_id);
+
     //==========================================================================
     // Memory Barriers and Synchronization
     //==========================================================================
