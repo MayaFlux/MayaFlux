@@ -23,7 +23,7 @@ class BufferProcessingChain;
  *
  * Key Differences from RootAudioBuffer:
  * - No data accumulation or mixing (each buffer is independent)
- * - No "final output" concept (buffers are consumed by shaders/render passes)
+ * - No "final output" concept (buffers are consumed by shaders/dynamic rendering)
  * - Focuses on resource management and batch coordination
  * - Processing means executing BufferProcessor chains (uploads, compute, etc.)
  *

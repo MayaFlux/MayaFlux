@@ -278,7 +278,7 @@ public:
      * @param image_view Image view to bind
      * @param layout Image layout (must be eShaderReadOnlyOptimal or eGeneral)
      *
-     * For reading from attachments in the same render pass (subpass inputs).
+     * TODO: Future - deferred rendering support
      */
     void update_input_attachment(
         vk::Device device,

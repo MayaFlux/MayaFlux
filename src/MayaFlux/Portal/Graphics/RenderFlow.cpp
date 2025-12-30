@@ -396,7 +396,6 @@ RenderPipelineID RenderFlow::create_pipeline(
 
     vk_config.color_attachment_formats = color_formats;
     vk_config.depth_attachment_format = depth_format;
-    vk_config.render_pass = nullptr;
 
     vk_config.dynamic_states = {
         vk::DynamicState::eViewport,

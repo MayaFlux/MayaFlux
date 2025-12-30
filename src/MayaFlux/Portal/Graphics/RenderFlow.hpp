@@ -20,16 +20,15 @@ namespace MayaFlux::Portal::Graphics {
 
 /**
  * @class RenderFlow
- * @brief Graphics pipeline and render pass orchestration
+ * @brief Graphics pipeline orchestration for dynamic rendering
  *
  * RenderFlow is the rendering counterpart to ComputePress.
- * It manages graphics pipelines, render passes, and draw command recording.
+ * It manages graphics pipelines and draw command recording using Vulkan 1.3 dynamic rendering.
  *
  * Responsibilities:
- * - Create graphics pipelines
- * - Create render passes
- * - Record render commands
- * - Manage rendering state
+ * - Create graphics pipelines for dynamic rendering
+ * - Record render commands to secondary command buffers
+ * - Manage dynamic rendering state (begin/end rendering)
  * - Coordinate with ShaderFoundry for resources
  *
  * Design Philosophy (parallel to ComputePress):
@@ -37,27 +36,33 @@ namespace MayaFlux::Portal::Graphics {
  * - Provides high-level rendering API
  * - Backend-agnostic interface
  * - Integrates with RootGraphicsBuffer
+ * - No render pass objects - uses vkCmdBeginRendering/vkCmdEndRendering
  *
  * Usage Pattern:
  * ```cpp
  * auto& flow = Portal::Graphics::get_render_flow();
+ * auto& foundry = Portal::Graphics::get_shader_foundry();
  *
- * // Create pipeline
+ * // Create pipeline for dynamic rendering
  * RenderPipelineConfig config;
  * config.vertex_shader = vertex_id;
  * config.fragment_shader = fragment_id;
- * config.vertex_bindings = {{0, sizeof(Vertex)}};
- * config.vertex_attributes = {{0, 0, vk::Format::eR32G32B32Sfloat, 0}};
- * auto pipeline_id = flow.create_pipeline(config);
+ * config.semantic_vertex_layout = buffer->get_vertex_layout();
+ * auto pipeline_id = flow.create_pipeline(config, { swapchain_format });
  *
- * // In RenderProcessor callback:
- * auto cmd_id = foundry.begin_commands(CommandBufferType::GRAPHICS);
- * flow.begin_render_pass(cmd_id, render_pass_id, framebuffer_id);
+ * // In RenderProcessor - record secondary command buffer:
+ * auto cmd_id = foundry.begin_secondary_commands(swapchain_format);
  * flow.bind_pipeline(cmd_id, pipeline_id);
- * flow.bind_vertex_buffers(cmd_id, {vertex_buffer});
+ * flow.bind_vertex_buffers(cmd_id, {buffer});
  * flow.draw(cmd_id, vertex_count);
- * flow.end_render_pass(cmd_id);
- * foundry.submit_and_present(cmd_id);
+ * foundry.end_commands(cmd_id);
+ *
+ * // In PresentProcessor - execute secondaries in primary:
+ * auto primary_id = foundry.begin_commands(CommandBufferType::GRAPHICS);
+ * flow.begin_rendering(primary_id, window, swapchain_image);
+ * primary_cmd.executeCommands(secondary_buffers);
+ * flow.end_rendering(primary_id, window);
+ * display_service->submit_and_present(window, primary_cmd);
  * ```
  */
 class MAYAFLUX_API RenderFlow {
@@ -220,18 +225,16 @@ public:
     //==========================================================================
 
     /**
-     * @brief Associate a window with a render pass for rendering
+     * @brief Register a window for dynamic rendering
      * @param window Target window for rendering
      *
-     * The window must be registered with GraphicsSubsystem first.
-     * RenderFlow will query framebuffer/extent from DisplayService when needed.
+     * The window must be registered with GraphicsSubsystem first
+     * (i.e., window->is_graphics_registered() must be true).
      *
-     * Usage:
-     *   auto rp = flow.create_simple_render_pass();
-     *   flow.register_window_for_rendering(my_window, rp);
+     * This associates the window with RenderFlow for tracking.
+     * No render pass attachment - dynamic rendering handles this per-frame.
      */
-    void register_window_for_rendering(
-        const std::shared_ptr<Core::Window>& window);
+    void register_window_for_rendering(const std::shared_ptr<Core::Window>& window);
 
     /**
      * @brief Unregister a window from rendering

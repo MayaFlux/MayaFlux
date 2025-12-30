@@ -67,7 +67,7 @@ struct MAYAFLUX_API DisplayService {
      * @return Vulkan format (vk::Format cast to uint32_t)
      *
      * Returns the actual format used by the window's swapchain.
-     * Used to ensure render passes are compatible with framebuffers.
+     * Used to ensure multiple dynamic render calls are compatible
      */
     std::function<int(const std::shared_ptr<void>&)> get_swapchain_format;
 

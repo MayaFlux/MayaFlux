@@ -159,21 +159,6 @@ struct BlendAttachmentConfig {
 };
 
 /**
- * @struct RenderPassAttachment
- * @brief Render pass attachment configuration
- */
-struct RenderPassAttachment {
-    vk::Format format = vk::Format::eB8G8R8A8Unorm;
-    vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1;
-    vk::AttachmentLoadOp load_op = vk::AttachmentLoadOp::eClear;
-    vk::AttachmentStoreOp store_op = vk::AttachmentStoreOp::eStore;
-    vk::ImageLayout initial_layout = vk::ImageLayout::eUndefined;
-    vk::ImageLayout final_layout = vk::ImageLayout::ePresentSrcKHR;
-
-    RenderPassAttachment() = default;
-};
-
-/**
  * @struct RenderPipelineConfig
  * @brief Complete render pipeline configuration
  */
