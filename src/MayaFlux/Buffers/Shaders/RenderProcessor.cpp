@@ -48,12 +48,6 @@ void RenderProcessor::set_tess_eval_shader(const std::string& tess_eval_path)
     m_needs_pipeline_rebuild = true;
 }
 
-void RenderProcessor::set_render_pass(Portal::Graphics::RenderPassID render_pass_id)
-{
-    m_render_pass_id = render_pass_id;
-    m_needs_pipeline_rebuild = true;
-}
-
 void RenderProcessor::set_target_window(std::shared_ptr<Core::Window> window)
 {
     m_target_window = std::move(window);
@@ -429,11 +423,6 @@ void RenderProcessor::cleanup()
     if (m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE) {
         flow.destroy_pipeline(m_pipeline_id);
         m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
-    }
-
-    if (m_render_pass_id != Portal::Graphics::INVALID_RENDER_PASS) {
-        flow.destroy_render_pass(m_render_pass_id);
-        m_render_pass_id = Portal::Graphics::INVALID_RENDER_PASS;
     }
 
     if (m_geometry_shader_id != Portal::Graphics::INVALID_SHADER) {

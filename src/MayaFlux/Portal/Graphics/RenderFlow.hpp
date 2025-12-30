@@ -8,8 +8,6 @@ struct DisplayService;
 
 namespace MayaFlux::Core {
 class VKGraphicsPipeline;
-class VKRenderPass;
-class VKFramebuffer;
 class Window;
 }
 
@@ -81,30 +79,6 @@ public:
     [[nodiscard]] bool is_initialized() const { return m_shader_foundry != nullptr; }
 
     //==========================================================================
-    // Render Pass Management
-    //==========================================================================
-
-    /**
-     * @brief Create a render pass
-     * @param attachments Attachment descriptions
-     * @return Render pass ID
-     */
-    RenderPassID create_render_pass(
-        const std::vector<RenderPassAttachment>& attachments);
-
-    /**
-     * @brief Create a simple single-color render pass
-     * @param format Color attachment format
-     * @param load_clear Whether to clear on load
-     * @return Render pass ID
-     */
-    RenderPassID create_simple_render_pass(
-        vk::Format format = vk::Format::eB8G8R8A8Unorm,
-        bool load_clear = true);
-
-    void destroy_render_pass(RenderPassID render_pass_id);
-
-    //==========================================================================
     // Pipeline Creation
     //==========================================================================
 
@@ -155,23 +129,6 @@ public:
     //==========================================================================
     // Command Recording
     //==========================================================================
-
-    /**
-     * @brief Begin render pass
-     * @param cmd_id Command buffer ID
-     * @param window Target window for rendering
-     * @param clear_color Clear color (if load op is clear)
-     */
-    void begin_render_pass(
-        CommandBufferID cmd_id,
-        const std::shared_ptr<Core::Window>& window,
-        const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
-
-    /**
-     * @brief End current render pass
-     * @param cmd_id Command buffer ID
-     */
-    void end_render_pass(CommandBufferID cmd_id);
 
     /**
      * @brief Bind graphics pipeline
@@ -258,26 +215,6 @@ public:
         int32_t vertex_offset = 0,
         uint32_t first_instance = 0);
 
-    /**
-     * @brief Present a complete frame for a window with multiple command buffers
-     * @param window Target window for presentation
-     * @param command_buffer_ids All command buffers to submit for this frame
-     *
-     * Batches multiple command buffers together for a single frame presentation.
-     * All command buffers are submitted together, then the frame is presented.
-     * This is the preferred method when multiple VKBuffers render to the same window.
-     */
-    void present_window_frame(
-        const std::shared_ptr<Core::Window>& window,
-        const std::vector<CommandBufferID>& command_buffer_ids);
-
-    /**
-     * @brief Present rendered image to window
-     * @param cmd_id Command buffer ID
-     * @param window Target window for presentation
-     */
-    void present_rendered_image(CommandBufferID cmd_id, const std::shared_ptr<Core::Window>& window);
-
     //==========================================================================
     // Window Rendering Registration
     //==========================================================================
@@ -312,15 +249,6 @@ public:
      */
     [[nodiscard]] std::vector<std::shared_ptr<Core::Window>> get_registered_windows() const;
 
-    /**
-     * @brief Get Vulkan render pass handle for window
-     * @param window Target window
-     * @return vk::RenderPass handle or nullptr if not registered
-     *
-     * Used by RenderProcessor to create secondary command buffers.
-     */
-    // vk::RenderPass get_window_render_pass(const std::shared_ptr<Core::Window>& window) const;
-
     //==========================================================================
     // Convenience Methods
     //==========================================================================
@@ -343,20 +271,12 @@ private:
         std::shared_ptr<Core::VKGraphicsPipeline> pipeline;
         std::vector<vk::DescriptorSetLayout> layouts;
         vk::PipelineLayout layout;
-        RenderPassID render_pass;
-    };
-
-    struct RenderPassState {
-        std::shared_ptr<Core::VKRenderPass> render_pass;
-        std::vector<RenderPassAttachment> attachments;
     };
 
     std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;
-    std::unordered_map<RenderPassID, RenderPassState> m_render_passes;
     std::unordered_map<std::shared_ptr<Core::Window>, WindowRenderAssociation> m_window_associations;
 
     std::atomic<uint64_t> m_next_pipeline_id { 1 };
-    std::atomic<uint64_t> m_next_render_pass_id { 1 };
 
     ShaderFoundry* m_shader_foundry = nullptr;
     Registry::Service::DisplayService* m_display_service = nullptr;

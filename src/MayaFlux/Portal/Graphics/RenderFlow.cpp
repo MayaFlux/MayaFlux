@@ -3,9 +3,7 @@
 #include "LayoutTranslator.hpp"
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKFramebuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKRenderPass.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -116,13 +114,6 @@ void RenderFlow::shutdown()
         }
     }
     m_pipelines.clear();
-
-    for (auto& [id, state] : m_render_passes) {
-        if (state.render_pass) {
-            state.render_pass->cleanup(device);
-        }
-    }
-    m_render_passes.clear();
 
     m_window_associations.clear();
 
@@ -261,100 +252,6 @@ namespace {
         }
     }
 } // anonymous namespace
-
-//==============================================================================
-// Render Pass Management
-//==============================================================================
-
-RenderPassID RenderFlow::create_render_pass(
-    const std::vector<RenderPassAttachment>& attachments)
-{
-    if (!is_initialized()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "RenderFlow not initialized");
-        return INVALID_RENDER_PASS;
-    }
-
-    if (attachments.empty()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Cannot create render pass with no attachments");
-        return INVALID_RENDER_PASS;
-    }
-
-    auto render_pass = std::make_shared<Core::VKRenderPass>();
-
-    Core::RenderPassCreateInfo create_info {};
-
-    for (const auto& att : attachments) {
-        Core::AttachmentDescription desc;
-        desc.format = att.format;
-        desc.samples = att.samples;
-        desc.load_op = att.load_op;
-        desc.store_op = att.store_op;
-        desc.initial_layout = att.initial_layout;
-        desc.final_layout = att.final_layout;
-        create_info.attachments.push_back(desc);
-    }
-
-    Core::SubpassDescription subpass;
-    subpass.bind_point = vk::PipelineBindPoint::eGraphics;
-    for (uint32_t i = 0; i < attachments.size(); ++i) {
-        vk::AttachmentReference ref;
-        ref.attachment = i;
-        ref.layout = vk::ImageLayout::eColorAttachmentOptimal;
-        subpass.color_attachments.push_back(ref);
-    }
-    create_info.subpasses.push_back(subpass);
-
-    if (!render_pass->create(m_shader_foundry->get_device(), create_info)) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Failed to create VKRenderPass");
-        return INVALID_RENDER_PASS;
-    }
-
-    auto render_pass_id = m_next_render_pass_id.fetch_add(1);
-    RenderPassState state;
-    state.render_pass = render_pass;
-    state.attachments = attachments;
-    m_render_passes[render_pass_id] = std::move(state);
-
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
-        "Render pass created (ID: {}, {} attachments)",
-        render_pass_id, attachments.size());
-
-    return render_pass_id;
-}
-
-RenderPassID RenderFlow::create_simple_render_pass(
-    vk::Format format,
-    bool load_clear)
-{
-    RenderPassAttachment color_attachment;
-    color_attachment.format = format;
-    color_attachment.load_op = load_clear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad;
-    color_attachment.store_op = vk::AttachmentStoreOp::eStore;
-    color_attachment.initial_layout = vk::ImageLayout::eUndefined;
-    color_attachment.final_layout = vk::ImageLayout::ePresentSrcKHR;
-
-    return create_render_pass({ color_attachment });
-}
-
-void RenderFlow::destroy_render_pass(RenderPassID render_pass_id)
-{
-    auto it = m_render_passes.find(render_pass_id);
-    if (it == m_render_passes.end()) {
-        return;
-    }
-
-    if (it->second.render_pass) {
-        it->second.render_pass->cleanup(m_shader_foundry->get_device());
-    }
-
-    m_render_passes.erase(it);
-
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
-        "Destroyed render pass (ID: {})", render_pass_id);
-}
 
 //==============================================================================
 // Pipeline Creation
@@ -523,7 +420,6 @@ RenderPipelineID RenderFlow::create_pipeline(
     state.pipeline = pipeline;
     state.layouts = layouts;
     state.layout = pipeline->get_layout();
-    state.render_pass = INVALID_RENDER_PASS;
     m_pipelines[pipeline_id] = std::move(state);
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
@@ -727,93 +623,6 @@ void RenderFlow::end_rendering(
 // Command Recording
 //==============================================================================
 
-void RenderFlow::begin_render_pass(
-    CommandBufferID cmd_id,
-    const std::shared_ptr<Core::Window>& window,
-    const std::array<float, 4>& clear_color)
-{
-    /* auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
-    if (!cmd) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid command buffer ID: {}", cmd_id);
-        return;
-    }
-
-    if (!window) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Cannot begin render pass for null window");
-        return;
-    }
-
-    auto assoc_it = m_window_associations.find(window);
-    if (assoc_it == m_window_associations.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Window '{}' not registered for rendering. "
-            "Call register_window_for_rendering() first.",
-            window->get_create_info().title);
-        return;
-    }
-
-    auto rp_it = m_render_passes.find(assoc_it->second.render_pass_id);
-    if (rp_it == m_render_passes.end()) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid render pass ID: {}", assoc_it->second.render_pass_id);
-        return;
-    }
-
-    Core::VKFramebuffer* fb_handle = static_cast<Core::VKFramebuffer*>(m_display_service->get_current_framebuffer(window));
-    if (!fb_handle) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "No framebuffer available for window '{}'. "
-            "Ensure window is registered with GraphicsSubsystem.",
-            window->get_create_info().title);
-        return;
-    }
-
-    uint32_t width = 0, height = 0;
-    m_display_service->get_swapchain_extent(window, width, height);
-
-    if (width == 0 || height == 0) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid swapchain extent for window '{}': {}x{}",
-            window->get_create_info().title, width, height);
-        return;
-    }
-
-    vk::RenderPassBeginInfo begin_info;
-    begin_info.renderPass = rp_it->second.render_pass->get();
-    begin_info.framebuffer = fb_handle->get();
-    begin_info.renderArea.offset = vk::Offset2D { 0, 0 };
-    begin_info.renderArea.extent = vk::Extent2D { width, height };
-
-    std::vector<vk::ClearValue> clear_values(rp_it->second.attachments.size());
-    for (auto& clear_value : clear_values) {
-        clear_value.color = vk::ClearColorValue(clear_color);
-        // clear_value.color = vk::ClearColorValue(std::array<float, 4> { 0.2f, 0.2f, 0.2f, 1.0f }); // Gray
-    }
-
-    begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
-    begin_info.pClearValues = clear_values.data();
-
-    cmd.beginRenderPass(begin_info, vk::SubpassContents::eInline);
-
-    MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
-        "Began render pass for window '{}' ({}x{})",
-        window->get_create_info().title, width, height); */
-}
-
-void RenderFlow::end_render_pass(CommandBufferID cmd_id)
-{
-    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
-    if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid command buffer ID: {}", cmd_id);
-        return;
-    }
-
-    cmd.endRenderPass();
-}
-
 void RenderFlow::bind_pipeline(CommandBufferID cmd_id, RenderPipelineID pipeline_id)
 {
     auto pipeline_it = m_pipelines.find(pipeline_id);
@@ -984,92 +793,6 @@ void RenderFlow::draw_indexed(
         vertex_offset, first_instance);
 }
 
-void RenderFlow::present_window_frame(
-    const std::shared_ptr<Core::Window>& window,
-    const std::vector<CommandBufferID>& command_buffer_ids)
-{
-    if (!window) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Cannot present frame for null window");
-        return;
-    }
-
-    if (command_buffer_ids.empty()) {
-        MF_RT_WARN(Journal::Component::Portal, Journal::Context::Rendering,
-            "No command buffers provided for window '{}'",
-            window->get_create_info().title);
-        return;
-    }
-
-    std::vector<vk::CommandBuffer> vk_cmds;
-    vk_cmds.reserve(command_buffer_ids.size());
-
-    for (const auto& cmd_id : command_buffer_ids) {
-        auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
-        if (!cmd) {
-            MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-                "Invalid command buffer ID: {}", cmd_id);
-            continue;
-        }
-
-        try {
-            cmd.end();
-            vk_cmds.push_back(cmd);
-        } catch (const std::exception& e) {
-            MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-                "Failed to end command buffer: {}", e.what());
-        }
-    }
-
-    if (vk_cmds.empty()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "No valid command buffers to present for window '{}'",
-            window->get_create_info().title);
-        return;
-    }
-
-    MF_RT_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
-        "Batching {} command buffers for window '{}'",
-        vk_cmds.size(), window->get_create_info().title);
-
-    std::vector<uint64_t> cmd_bits;
-    cmd_bits.reserve(vk_cmds.size());
-    for (const auto& cmd : vk_cmds) {
-        cmd_bits.push_back(*reinterpret_cast<const uint64_t*>(&cmd));
-    }
-
-    m_display_service->present_frame_batch(window, cmd_bits);
-}
-
-void RenderFlow::present_rendered_image(
-    CommandBufferID cmd_id,
-    const std::shared_ptr<Core::Window>& window)
-{
-    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
-    if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid command buffer ID: {}", cmd_id);
-        return;
-    }
-
-    if (!window) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Cannot present rendered image for null window");
-        return;
-    }
-
-    try {
-        cmd.end();
-    } catch (const std::exception& e) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Failed to end command buffer: {}", e.what());
-        return;
-    }
-
-    uint64_t cmd_bits = *reinterpret_cast<uint64_t*>(&cmd);
-    m_display_service->present_frame(window, cmd_bits);
-}
-
 //==========================================================================
 // Window Rendering Registration
 //==========================================================================
@@ -1134,21 +857,6 @@ std::vector<std::shared_ptr<Core::Window>> RenderFlow::get_registered_windows() 
 
     return windows;
 }
-
-/* vk::RenderPass RenderFlow::get_window_render_pass(const std::shared_ptr<Core::Window>& window) const
-{
-    auto assoc_it = m_window_associations.find(window);
-    if (assoc_it == m_window_associations.end()) {
-        return nullptr;
-    }
-
-    auto rp_it = m_render_passes.find(assoc_it->second.render_pass_id);
-    if (rp_it == m_render_passes.end()) {
-        return nullptr;
-    }
-
-    return rp_it->second.render_pass->get();
-} */
 
 vk::ImageView RenderFlow::get_current_image_view(const std::shared_ptr<Core::Window>& window)
 {

@@ -11,25 +11,18 @@ namespace MayaFlux::Core {
 class VKContext;
 class VKSwapchain;
 class VKCommandManager;
-class VKRenderPass;
-class VKFramebuffer;
 class Window;
 
 struct WindowRenderContext {
     std::shared_ptr<Window> window;
     vk::SurfaceKHR surface;
     std::unique_ptr<VKSwapchain> swapchain;
-    // std::unique_ptr<VKRenderPass> render_pass;
-    std::shared_ptr<VKRenderPass> render_pass;
-    std::vector<std::unique_ptr<VKFramebuffer>> framebuffers;
-    vk::CommandBuffer command_buffer;
 
     std::vector<vk::Semaphore> image_available;
     std::vector<vk::Semaphore> render_finished;
     std::vector<vk::Fence> in_flight;
 
     bool needs_recreation {};
-    bool user_render_pass_attached {};
     size_t current_frame {};
     uint32_t current_image_index {};
 
@@ -63,14 +56,6 @@ public:
     bool register_window(const std::shared_ptr<Window>& window);
     void unregister_window(const std::shared_ptr<Window>& window);
     [[nodiscard]] bool is_window_registered(const std::shared_ptr<Window>& window) const;
-
-    /**
-     * @brief Attach a user render pass and recreate sync objects with it
-     * Used by Portal when registering a window for rendering
-     */
-    bool attach_render_pass(
-        const std::shared_ptr<Window>& window,
-        const std::shared_ptr<Core::VKRenderPass>& render_pass);
 
     // ========================================================================
     // Rendering
@@ -108,12 +93,6 @@ private:
     bool create_sync_objects(WindowRenderContext& config);
 
     /**
-     * @brief Internal rendering logic for a window
-     * @param context Window render context
-     */
-    void render_window_internal(WindowRenderContext& context);
-
-    /**
      * @brief Recreate the swapchain and related resources for a window
      * @param context Window render context
      */
@@ -128,17 +107,6 @@ private:
 
     // Event handling
     // void on_window_event(const WindowEvent& event, std::shared_ptr<Window> window);
-
-    /**
-     * @brief Submit multiple command buffers for a single frame
-     * @param window Target window
-     * @param command_buffers All command buffers to submit
-     *
-     * Acquires swapchain image once, submits all buffers, presents.
-     */
-    void submit_batched_frame(
-        const std::shared_ptr<Window>& window,
-        const std::vector<vk::CommandBuffer>& command_buffers);
 };
 
 }
