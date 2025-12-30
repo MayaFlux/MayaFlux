@@ -86,6 +86,50 @@ public:
      */
     void set_graphics_registered(bool registered) override;
 
+    /**
+     * @brief Register a VKBuffer as rendering to this window
+     * @param buffer Buffer that will render to this window
+     *
+     * Used for tracking and queries. Does not affect rendering directly.
+     */
+    void register_rendering_buffer(std::shared_ptr<Buffers::VKBuffer> buffer) override;
+
+    /**
+     * @brief Unregister a VKBuffer from this window
+     * @param buffer Buffer to unregister
+     */
+    void unregister_rendering_buffer(std::shared_ptr<Buffers::VKBuffer> buffer) override;
+
+    /**
+     * @brief Track a secondary command buffer for this frame
+     * @param cmd_id Command buffer ID that contains draw commands for this window
+     *
+     * Called by RenderProcessor after recording. PresentProcessor queries these
+     * to know which secondary buffers to execute.
+     */
+    void track_frame_command(uint64_t cmd_id) override;
+
+    /**
+     * @brief Get all command buffers recorded for this frame
+     * @return Vector of command buffer IDs
+     *
+     * Called by PresentProcessor to collect secondary buffers for execution.
+     */
+    [[nodiscard]] const std::vector<uint64_t>& get_frame_commands() const override;
+
+    /**
+     * @brief Clear tracked commands for this frame
+     *
+     * Called after presenting to reset for next frame.
+     */
+    void clear_frame_commands() override;
+
+    /**
+     * @brief Get all VKBuffers currently rendering to this window
+     * @return Vector of buffers (weak_ptr to avoid ownership issues)
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Buffers::VKBuffer>> get_rendering_buffers() const override;
+
 private:
     GLFWwindow* m_window = nullptr;
     WindowCreateInfo m_create_info;
@@ -96,6 +140,10 @@ private:
     std::atomic<bool> m_graphics_registered { false };
 
     Vruta::EventSource m_event_source;
+
+    std::vector<std::weak_ptr<Buffers::VKBuffer>> m_rendering_buffers;
+    std::vector<uint64_t> m_frame_commands;
+    mutable std::mutex m_render_tracking_mutex;
 
     void configure_window_hints(const GraphicsSurfaceInfo& surface_info, GlobalGraphicsConfig::GraphicsApi api) const;
     void setup_callbacks();

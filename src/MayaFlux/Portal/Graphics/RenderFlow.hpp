@@ -8,8 +8,6 @@ struct DisplayService;
 
 namespace MayaFlux::Core {
 class VKGraphicsPipeline;
-class VKRenderPass;
-class VKFramebuffer;
 class Window;
 }
 
@@ -22,16 +20,15 @@ namespace MayaFlux::Portal::Graphics {
 
 /**
  * @class RenderFlow
- * @brief Graphics pipeline and render pass orchestration
+ * @brief Graphics pipeline orchestration for dynamic rendering
  *
  * RenderFlow is the rendering counterpart to ComputePress.
- * It manages graphics pipelines, render passes, and draw command recording.
+ * It manages graphics pipelines and draw command recording using Vulkan 1.3 dynamic rendering.
  *
  * Responsibilities:
- * - Create graphics pipelines
- * - Create render passes
- * - Record render commands
- * - Manage rendering state
+ * - Create graphics pipelines for dynamic rendering
+ * - Record render commands to secondary command buffers
+ * - Manage dynamic rendering state (begin/end rendering)
  * - Coordinate with ShaderFoundry for resources
  *
  * Design Philosophy (parallel to ComputePress):
@@ -39,27 +36,33 @@ namespace MayaFlux::Portal::Graphics {
  * - Provides high-level rendering API
  * - Backend-agnostic interface
  * - Integrates with RootGraphicsBuffer
+ * - No render pass objects - uses vkCmdBeginRendering/vkCmdEndRendering
  *
  * Usage Pattern:
  * ```cpp
  * auto& flow = Portal::Graphics::get_render_flow();
+ * auto& foundry = Portal::Graphics::get_shader_foundry();
  *
- * // Create pipeline
+ * // Create pipeline for dynamic rendering
  * RenderPipelineConfig config;
  * config.vertex_shader = vertex_id;
  * config.fragment_shader = fragment_id;
- * config.vertex_bindings = {{0, sizeof(Vertex)}};
- * config.vertex_attributes = {{0, 0, vk::Format::eR32G32B32Sfloat, 0}};
- * auto pipeline_id = flow.create_pipeline(config);
+ * config.semantic_vertex_layout = buffer->get_vertex_layout();
+ * auto pipeline_id = flow.create_pipeline(config, { swapchain_format });
  *
- * // In RenderProcessor callback:
- * auto cmd_id = foundry.begin_commands(CommandBufferType::GRAPHICS);
- * flow.begin_render_pass(cmd_id, render_pass_id, framebuffer_id);
+ * // In RenderProcessor - record secondary command buffer:
+ * auto cmd_id = foundry.begin_secondary_commands(swapchain_format);
  * flow.bind_pipeline(cmd_id, pipeline_id);
- * flow.bind_vertex_buffers(cmd_id, {vertex_buffer});
+ * flow.bind_vertex_buffers(cmd_id, {buffer});
  * flow.draw(cmd_id, vertex_count);
- * flow.end_render_pass(cmd_id);
- * foundry.submit_and_present(cmd_id);
+ * foundry.end_commands(cmd_id);
+ *
+ * // In PresentProcessor - execute secondaries in primary:
+ * auto primary_id = foundry.begin_commands(CommandBufferType::GRAPHICS);
+ * flow.begin_rendering(primary_id, window, swapchain_image);
+ * primary_cmd.executeCommands(secondary_buffers);
+ * flow.end_rendering(primary_id, window);
+ * display_service->submit_and_present(window, primary_cmd);
  * ```
  */
 class MAYAFLUX_API RenderFlow {
@@ -81,74 +84,56 @@ public:
     [[nodiscard]] bool is_initialized() const { return m_shader_foundry != nullptr; }
 
     //==========================================================================
-    // Render Pass Management
-    //==========================================================================
-
-    /**
-     * @brief Create a render pass
-     * @param attachments Attachment descriptions
-     * @return Render pass ID
-     */
-    RenderPassID create_render_pass(
-        const std::vector<RenderPassAttachment>& attachments);
-
-    /**
-     * @brief Create a simple single-color render pass
-     * @param format Color attachment format
-     * @param load_clear Whether to clear on load
-     * @return Render pass ID
-     */
-    RenderPassID create_simple_render_pass(
-        vk::Format format = vk::Format::eB8G8R8A8Unorm,
-        bool load_clear = true);
-
-    void destroy_render_pass(RenderPassID render_pass_id);
-
-    //==========================================================================
     // Pipeline Creation
     //==========================================================================
 
     /**
-     * @brief Create graphics pipeline with full configuration
-     * @param config Complete pipeline configuration
+     * @brief Create graphics pipeline for dynamic rendering (no render pass object)
+     * @param config Pipeline configuration
+     * @param color_formats Color attachment formats for dynamic rendering
+     * @param depth_format Depth attachment format
      * @return Pipeline ID or INVALID_RENDER_PIPELINE on error
      */
-    RenderPipelineID create_pipeline(const RenderPipelineConfig& config);
+    RenderPipelineID create_pipeline(
+        const RenderPipelineConfig& config,
+        const std::vector<vk::Format>& color_formats,
+        vk::Format depth_format = vk::Format::eUndefined);
 
     /**
-     * @brief Create simple graphics pipeline (auto-configure most settings)
-     * @param vertex_shader Vertex shader ID
-     * @param fragment_shader Fragment shader ID
-     * @param render_pass Render pass ID
-     * @return Pipeline ID or INVALID_RENDER_PIPELINE on error
+     * @brief Destroy a graphics pipeline
+     * @param pipeline_id Pipeline ID to destroy
      */
-    RenderPipelineID create_simple_pipeline(
-        ShaderID vertex_shader,
-        ShaderID fragment_shader,
-        RenderPassID render_pass);
-
     void destroy_pipeline(RenderPipelineID pipeline_id);
+
+    //==========================================================================
+    // Dynamic Rendering
+    //==========================================================================
+
+    /**
+     * @brief Begin dynamic rendering to a window
+     * @param cmd_id Command buffer ID
+     * @param window Target window
+     * @param swapchain_image Swapchain image to render to
+     * @param clear_color Clear color (RGBA)
+     *
+     * Uses vkCmdBeginRendering - no render pass objects needed.
+     */
+    void begin_rendering(
+        CommandBufferID cmd_id,
+        const std::shared_ptr<Core::Window>& window,
+        vk::Image swapchain_image,
+        const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
+
+    /**
+     * @brief End dynamic rendering
+     * @param cmd_id Command buffer ID
+     * @param window Target window
+     */
+    void end_rendering(CommandBufferID cmd_id, const std::shared_ptr<Core::Window>& window);
 
     //==========================================================================
     // Command Recording
     //==========================================================================
-
-    /**
-     * @brief Begin render pass
-     * @param cmd_id Command buffer ID
-     * @param window Target window for rendering
-     * @param clear_color Clear color (if load op is clear)
-     */
-    void begin_render_pass(
-        CommandBufferID cmd_id,
-        const std::shared_ptr<Core::Window>& window,
-        const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
-
-    /**
-     * @brief End current render pass
-     * @param cmd_id Command buffer ID
-     */
-    void end_render_pass(CommandBufferID cmd_id);
 
     /**
      * @brief Bind graphics pipeline
@@ -235,32 +220,21 @@ public:
         int32_t vertex_offset = 0,
         uint32_t first_instance = 0);
 
-    /**
-     * @brief Present rendered image to window
-     * @param cmd_id Command buffer ID
-     * @param window Target window for presentation
-     */
-    void present_rendered_image(CommandBufferID cmd_id, const std::shared_ptr<Core::Window>& window);
-
     //==========================================================================
     // Window Rendering Registration
     //==========================================================================
 
     /**
-     * @brief Associate a window with a render pass for rendering
+     * @brief Register a window for dynamic rendering
      * @param window Target window for rendering
-     * @param render_pass_id Render pass to use for this window
      *
-     * The window must be registered with GraphicsSubsystem first.
-     * RenderFlow will query framebuffer/extent from DisplayService when needed.
+     * The window must be registered with GraphicsSubsystem first
+     * (i.e., window->is_graphics_registered() must be true).
      *
-     * Usage:
-     *   auto rp = flow.create_simple_render_pass();
-     *   flow.register_window_for_rendering(my_window, rp);
+     * This associates the window with RenderFlow for tracking.
+     * No render pass attachment - dynamic rendering handles this per-frame.
      */
-    void register_window_for_rendering(
-        const std::shared_ptr<Core::Window>& window,
-        RenderPassID render_pass_id);
+    void register_window_for_rendering(const std::shared_ptr<Core::Window>& window);
 
     /**
      * @brief Unregister a window from rendering
@@ -292,36 +266,35 @@ public:
 private:
     struct WindowRenderAssociation {
         std::weak_ptr<Core::Window> window;
-        RenderPassID render_pass_id;
+        vk::Image swapchain_image {};
     };
-
-    RenderFlow() = default;
-    ~RenderFlow() { shutdown(); }
 
     struct PipelineState {
         std::vector<ShaderID> shader_ids;
         std::shared_ptr<Core::VKGraphicsPipeline> pipeline;
         std::vector<vk::DescriptorSetLayout> layouts;
         vk::PipelineLayout layout;
-        RenderPassID render_pass;
-    };
-
-    struct RenderPassState {
-        std::shared_ptr<Core::VKRenderPass> render_pass;
-        std::vector<RenderPassAttachment> attachments;
     };
 
     std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;
-    std::unordered_map<RenderPassID, RenderPassState> m_render_passes;
     std::unordered_map<std::shared_ptr<Core::Window>, WindowRenderAssociation> m_window_associations;
 
     std::atomic<uint64_t> m_next_pipeline_id { 1 };
-    std::atomic<uint64_t> m_next_render_pass_id { 1 };
 
     ShaderFoundry* m_shader_foundry = nullptr;
     Registry::Service::DisplayService* m_display_service = nullptr;
 
     static bool s_initialized;
+
+    RenderFlow() = default;
+    ~RenderFlow() { shutdown(); }
+
+    /**
+     * @brief Get current image view for window
+     * @param window Target window
+     * @return vk::ImageView of current swapchain image
+     */
+    vk::ImageView get_current_image_view(const std::shared_ptr<Core::Window>& window);
 };
 
 /**

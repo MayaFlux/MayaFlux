@@ -234,8 +234,16 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     device_features.multiViewport = backend_info.required_features.multi_viewport;
     device_features.fillModeNonSolid = backend_info.required_features.fill_mode_non_solid;
 
-    std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    vk::PhysicalDeviceFeatures2 features2 {};
+    features2.features = device_features;
 
+    vk::PhysicalDeviceVulkan13Features vulkan_13_features {};
+    vulkan_13_features.dynamicRendering = VK_TRUE;
+    vulkan_13_features.synchronization2 = VK_TRUE;
+
+    features2.pNext = &vulkan_13_features;
+
+    std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
     for (const auto& ext : backend_info.required_extensions) {
         device_extensions.push_back(ext.c_str());
     }
@@ -243,7 +251,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     vk::DeviceCreateInfo create_info {};
     create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
     create_info.pQueueCreateInfos = queue_create_infos.data();
-    create_info.pEnabledFeatures = &device_features;
+    create_info.pNext = &features2;
     create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
     create_info.ppEnabledExtensionNames = device_extensions.data();
     // create_info.enabledLayerCount = 0;

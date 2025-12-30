@@ -9,16 +9,16 @@ namespace MayaFlux::Registry::Service {
  * Handles window resize events and ensures proper surface recreation.
  */
 struct MAYAFLUX_API DisplayService {
+
     /**
-     * @brief Present a rendered frame to window
-     * @param window_handle Opaque window/surface handle
-     * @param command_buffer_handle Opaque command buffer handle with rendering commands
+     * @brief Submit a primary command buffer and present the frame
+     * @param window_handle Window handle
+     * @param primary_command_buffer The primary command buffer (uint64_t bits of vk::CommandBuffer)
      *
-     * Submits the current frame for presentation to the display.
-     * Blocks until presentation completes or returns immediately
-     * depending on vsync settings. Thread-safe.
+     * Handles semaphore choreography: waits on image_available, signals render_finished,
+     * then presents. Must be called after acquire_next_swapchain_image().
      */
-    std::function<void(const std::shared_ptr<void>&, uint64_t)> present_frame;
+    std::function<void(const std::shared_ptr<void>&, uint64_t)> submit_and_present;
 
     /**
      * @brief Wait for all GPU operations to complete
@@ -52,25 +52,24 @@ struct MAYAFLUX_API DisplayService {
     std::function<uint32_t(const std::shared_ptr<void>&)> get_swapchain_image_count;
 
     /**
+     * @brief Acquire the next swapchain image for a window
+     * @param window_handle Window handle
+     * @return Index of the acquired swapchain image
+     *
+     * Must be called before get_current_image_view() for dynamic rendering.
+     * Stores the acquired image index internally for subsequent calls.
+     */
+    std::function<uint64_t(const std::shared_ptr<void>&)> acquire_next_swapchain_image;
+
+    /**
      * @brief Get actual swapchain format for a window
      * @param window_handle Window handle
      * @return Vulkan format (vk::Format cast to uint32_t)
      *
      * Returns the actual format used by the window's swapchain.
-     * Used to ensure render passes are compatible with framebuffers.
+     * Used to ensure multiple dynamic render calls are compatible
      */
     std::function<int(const std::shared_ptr<void>&)> get_swapchain_format;
-
-    /**
-     * @brief Get current framebuffer for a window
-     * @param window_handle Window handle
-     * @return Vulkan framebuffer handle (vk::Framebuffer cast to void*)
-     *
-     * Returns the framebuffer corresponding to the current swapchain image.
-     * Updated internally during frame acquisition. Returns nullptr if window
-     * not registered or no framebuffer available.
-     */
-    std::function<void*(const std::shared_ptr<void>&)> get_current_framebuffer;
 
     /**
      * @brief Get swapchain extent for a window
@@ -84,27 +83,14 @@ struct MAYAFLUX_API DisplayService {
     std::function<void(const std::shared_ptr<void>&, uint32_t&, uint32_t&)> get_swapchain_extent;
 
     /**
-     * @brief Get backend render pass for a window
+     * @brief Get current swapchain image view for rendering
      * @param window_handle Window handle
-     * @return Vulkan render pass handle (vk::RenderPass cast to void*)
+     * @return vk::ImageView cast to void*
      *
-     * Returns the render pass created by the backend for this window's swapchain.
-     * Managed by backend, compatible with window's framebuffers.
-     * Returns nullptr if window not registered.
+     * Returns the image view for the currently acquired swapchain image.
+     * Used with dynamic rendering.
      */
-    std::function<void*(const std::shared_ptr<void>&)> get_window_render_pass;
-
-    /**
-     * @brief Attach a custom render pass to a window
-     * @param window_handle Window handle
-     * @param render_pass_handle Opaque render pass handle (Core::VKRenderPass cast to shared void*)
-     * @return bool True on success, false on failure
-     * Replaces the backend-managed render pass with a user-provided one.
-     * Recreates framebuffers to be compatible with the new render pass.
-     * Used for advanced rendering techniques requiring custom render passes.
-     * Waits for idle before making changes.
-     */
-    std::function<bool(const std::shared_ptr<void>&, const std::shared_ptr<void>&)> attach_render_pass;
+    std::function<void*(const std::shared_ptr<void>&)> get_current_image_view;
 };
 
 } // namespace MayaFlux::Registry::Services

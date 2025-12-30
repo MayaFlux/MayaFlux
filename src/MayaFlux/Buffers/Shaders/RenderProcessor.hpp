@@ -29,8 +29,6 @@ public:
     void set_tess_control_shader(const std::string& tess_control_path);
     void set_tess_eval_shader(const std::string& tess_eval_path);
     void set_fragment_shader(const std::string& fragment_path);
-
-    void set_render_pass(Portal::Graphics::RenderPassID render_pass_id);
     void set_target_window(std::shared_ptr<Core::Window> window);
 
     Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_pipeline_id; }
@@ -105,7 +103,6 @@ private:
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
-    Portal::Graphics::RenderPassID m_render_pass_id = Portal::Graphics::INVALID_RENDER_PASS;
     std::shared_ptr<Core::Window> m_target_window;
 
     std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo> m_buffer_info;

@@ -56,6 +56,7 @@ All components remain **composable and concurrent**. Processing domains are enco
 - Comprehensive audio backend (RtAudio, sample-accurate I/O)
 - C++20 coroutine scheduling infrastructure
 - Vulkan graphics pipeline (CPU → GPU unified data flow)
+- Vulkan dynamic rendering framework (no render pass or framebuffer setup)
 - Cross-domain node synchronization
 - **Lila JIT compiler**: Live C++ execution with sub-buffer latency (LLVM21-backed)
 - Region-based memory management and NDData containers

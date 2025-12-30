@@ -3,9 +3,7 @@
 #include "LayoutTranslator.hpp"
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKFramebuffer.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKGraphicsPipeline.hpp"
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKRenderPass.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -116,13 +114,6 @@ void RenderFlow::shutdown()
         }
     }
     m_pipelines.clear();
-
-    for (auto& [id, state] : m_render_passes) {
-        if (state.render_pass) {
-            state.render_pass->cleanup(device);
-        }
-    }
-    m_render_passes.clear();
 
     m_window_associations.clear();
 
@@ -263,118 +254,13 @@ namespace {
 } // anonymous namespace
 
 //==============================================================================
-// Render Pass Management
-//==============================================================================
-
-RenderPassID RenderFlow::create_render_pass(
-    const std::vector<RenderPassAttachment>& attachments)
-{
-    if (!is_initialized()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "RenderFlow not initialized");
-        return INVALID_RENDER_PASS;
-    }
-
-    if (attachments.empty()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Cannot create render pass with no attachments");
-        return INVALID_RENDER_PASS;
-    }
-
-    auto render_pass = std::make_shared<Core::VKRenderPass>();
-
-    Core::RenderPassCreateInfo create_info {};
-
-    for (const auto& att : attachments) {
-        Core::AttachmentDescription desc;
-        desc.format = att.format;
-        desc.samples = att.samples;
-        desc.load_op = att.load_op;
-        desc.store_op = att.store_op;
-        desc.initial_layout = att.initial_layout;
-        desc.final_layout = att.final_layout;
-        create_info.attachments.push_back(desc);
-    }
-
-    Core::SubpassDescription subpass;
-    subpass.bind_point = vk::PipelineBindPoint::eGraphics;
-    for (uint32_t i = 0; i < attachments.size(); ++i) {
-        vk::AttachmentReference ref;
-        ref.attachment = i;
-        ref.layout = vk::ImageLayout::eColorAttachmentOptimal;
-        subpass.color_attachments.push_back(ref);
-    }
-    create_info.subpasses.push_back(subpass);
-
-    // create_info.dependencies.emplace_back(
-    //     VK_SUBPASS_EXTERNAL, 0,
-    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //     vk::AccessFlagBits::eColorAttachmentWrite,
-    //     vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
-
-    // create_info.dependencies.emplace_back(
-    //     0, VK_SUBPASS_EXTERNAL,
-    //     vk::PipelineStageFlagBits::eColorAttachmentOutput,
-    //     vk::PipelineStageFlagBits::eBottomOfPipe,
-    //     vk::AccessFlagBits::eColorAttachmentWrite,
-    //     vk::AccessFlagBits::eMemoryRead);
-
-    if (!render_pass->create(m_shader_foundry->get_device(), create_info)) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Failed to create VKRenderPass");
-        return INVALID_RENDER_PASS;
-    }
-
-    auto render_pass_id = m_next_render_pass_id.fetch_add(1);
-    RenderPassState state;
-    state.render_pass = render_pass;
-    state.attachments = attachments;
-    m_render_passes[render_pass_id] = std::move(state);
-
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
-        "Render pass created (ID: {}, {} attachments)",
-        render_pass_id, attachments.size());
-
-    return render_pass_id;
-}
-
-RenderPassID RenderFlow::create_simple_render_pass(
-    vk::Format format,
-    bool load_clear)
-{
-    RenderPassAttachment color_attachment;
-    color_attachment.format = format;
-    color_attachment.load_op = load_clear ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad;
-    color_attachment.store_op = vk::AttachmentStoreOp::eStore;
-    color_attachment.initial_layout = vk::ImageLayout::eUndefined;
-    color_attachment.final_layout = vk::ImageLayout::ePresentSrcKHR;
-
-    return create_render_pass({ color_attachment });
-}
-
-void RenderFlow::destroy_render_pass(RenderPassID render_pass_id)
-{
-    auto it = m_render_passes.find(render_pass_id);
-    if (it == m_render_passes.end()) {
-        return;
-    }
-
-    if (it->second.render_pass) {
-        it->second.render_pass->cleanup(m_shader_foundry->get_device());
-    }
-
-    m_render_passes.erase(it);
-
-    MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
-        "Destroyed render pass (ID: {})", render_pass_id);
-}
-
-//==============================================================================
 // Pipeline Creation
 //==============================================================================
 
-RenderPipelineID RenderFlow::create_pipeline(const RenderPipelineConfig& config)
+RenderPipelineID RenderFlow::create_pipeline(
+    const RenderPipelineConfig& config,
+    const std::vector<vk::Format>& color_formats,
+    vk::Format depth_format)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
@@ -388,16 +274,9 @@ RenderPipelineID RenderFlow::create_pipeline(const RenderPipelineConfig& config)
         return INVALID_RENDER_PIPELINE;
     }
 
-    if (config.render_pass == INVALID_RENDER_PASS) {
+    if (color_formats.empty()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Render pass required for graphics pipeline");
-        return INVALID_RENDER_PASS;
-    }
-
-    auto rp_it = m_render_passes.find(config.render_pass);
-    if (rp_it == m_render_passes.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid render pass ID: {}", config.render_pass);
+            "At least one color format required for dynamic rendering pipeline");
         return INVALID_RENDER_PIPELINE;
     }
 
@@ -515,8 +394,8 @@ RenderPipelineID RenderFlow::create_pipeline(const RenderPipelineConfig& config)
         vk_config.push_constant_ranges.push_back(range);
     }
 
-    vk_config.render_pass = rp_it->second.render_pass->get();
-    vk_config.subpass = config.subpass;
+    vk_config.color_attachment_formats = color_formats;
+    vk_config.depth_attachment_format = depth_format;
 
     vk_config.dynamic_states = {
         vk::DynamicState::eViewport,
@@ -526,7 +405,7 @@ RenderPipelineID RenderFlow::create_pipeline(const RenderPipelineConfig& config)
     auto pipeline = std::make_shared<Core::VKGraphicsPipeline>();
     if (!pipeline->create(m_shader_foundry->get_device(), vk_config)) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Failed to create VKGraphicsPipeline");
+            "Failed to create VKGraphicsPipeline for dynamic rendering");
 
         for (auto layout : layouts) {
             m_shader_foundry->get_device().destroyDescriptorSetLayout(layout);
@@ -540,36 +419,13 @@ RenderPipelineID RenderFlow::create_pipeline(const RenderPipelineConfig& config)
     state.pipeline = pipeline;
     state.layouts = layouts;
     state.layout = pipeline->get_layout();
-    state.render_pass = config.render_pass;
     m_pipelines[pipeline_id] = std::move(state);
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
-        "Graphics pipeline created (ID: {}, {} descriptor sets)",
-        pipeline_id, layouts.size());
+        "Dynamic rendering pipeline created (ID: {}, {} color attachments)",
+        pipeline_id, color_formats.size());
 
     return pipeline_id;
-}
-
-RenderPipelineID RenderFlow::create_simple_pipeline(
-    ShaderID vertex_shader,
-    ShaderID fragment_shader,
-    RenderPassID render_pass)
-{
-    RenderPipelineConfig config;
-    config.vertex_shader = vertex_shader;
-    config.fragment_shader = fragment_shader;
-    config.render_pass = render_pass;
-
-    config.topology = PrimitiveTopology::TRIANGLE_LIST;
-    config.rasterization.polygon_mode = PolygonMode::FILL;
-    config.rasterization.cull_mode = CullMode::BACK;
-    config.rasterization.front_face_ccw = true;
-    config.depth_stencil.depth_test_enable = false;
-    config.depth_stencil.depth_write_enable = true;
-
-    config.blend_attachments.emplace_back();
-
-    return create_pipeline(config);
 }
 
 void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
@@ -602,12 +458,13 @@ void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
 }
 
 //==============================================================================
-// Command Recording
+// Dynamic Rendering
 //==============================================================================
 
-void RenderFlow::begin_render_pass(
+void RenderFlow::begin_rendering(
     CommandBufferID cmd_id,
     const std::shared_ptr<Core::Window>& window,
+    vk::Image swapchain_image,
     const std::array<float, 4>& clear_color)
 {
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
@@ -619,33 +476,25 @@ void RenderFlow::begin_render_pass(
 
     if (!window) {
         MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Cannot begin render pass for null window");
+            "Cannot begin rendering for null window");
         return;
     }
 
-    auto assoc_it = m_window_associations.find(window);
-    if (assoc_it == m_window_associations.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+    if (!swapchain_image) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot begin rendering with null swapchain image");
+        return;
+    }
+
+    auto it = m_window_associations.find(window);
+    if (it == m_window_associations.end()) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
             "Window '{}' not registered for rendering. "
             "Call register_window_for_rendering() first.",
             window->get_create_info().title);
-        return;
-    }
-
-    auto rp_it = m_render_passes.find(assoc_it->second.render_pass_id);
-    if (rp_it == m_render_passes.end()) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid render pass ID: {}", assoc_it->second.render_pass_id);
-        return;
-    }
-
-    Core::VKFramebuffer* fb_handle = static_cast<Core::VKFramebuffer*>(m_display_service->get_current_framebuffer(window));
-    if (!fb_handle) {
-        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "No framebuffer available for window '{}'. "
-            "Ensure window is registered with GraphicsSubsystem.",
-            window->get_create_info().title);
-        return;
+        m_window_associations.emplace(window, WindowRenderAssociation { .window = window, .swapchain_image = swapchain_image });
+    } else {
+        it->second.swapchain_image = swapchain_image;
     }
 
     uint32_t width = 0, height = 0;
@@ -658,29 +507,70 @@ void RenderFlow::begin_render_pass(
         return;
     }
 
-    vk::RenderPassBeginInfo begin_info;
-    begin_info.renderPass = rp_it->second.render_pass->get();
-    begin_info.framebuffer = fb_handle->get();
-    begin_info.renderArea.offset = vk::Offset2D { 0, 0 };
-    begin_info.renderArea.extent = vk::Extent2D { width, height };
-
-    std::vector<vk::ClearValue> clear_values(rp_it->second.attachments.size());
-    for (auto& clear_value : clear_values) {
-        clear_value.color = vk::ClearColorValue(clear_color);
-        // clear_value.color = vk::ClearColorValue(std::array<float, 4> { 0.2f, 0.2f, 0.2f, 1.0f }); // Gray
+    vk::ImageView image_view = get_current_image_view(window);
+    if (!image_view) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Failed to get image view for window '{}'",
+            window->get_create_info().title);
+        return;
     }
 
-    begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
-    begin_info.pClearValues = clear_values.data();
+    vk::ImageMemoryBarrier pre_barrier {};
+    pre_barrier.oldLayout = vk::ImageLayout::eUndefined;
+    pre_barrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    pre_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    pre_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    pre_barrier.image = swapchain_image;
+    pre_barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    pre_barrier.subresourceRange.baseMipLevel = 0;
+    pre_barrier.subresourceRange.levelCount = 1;
+    pre_barrier.subresourceRange.baseArrayLayer = 0;
+    pre_barrier.subresourceRange.layerCount = 1;
+    pre_barrier.srcAccessMask = vk::AccessFlagBits::eNone;
+    pre_barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
 
-    cmd.beginRenderPass(begin_info, vk::SubpassContents::eInline);
+    cmd.pipelineBarrier(
+        vk::PipelineStageFlagBits::eTopOfPipe,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::DependencyFlags {},
+        0, nullptr,
+        0, nullptr,
+        1, &pre_barrier);
+
+    vk::RenderingAttachmentInfo color_attachment {};
+    color_attachment.sType = vk::StructureType::eRenderingAttachmentInfo;
+    color_attachment.pNext = nullptr;
+    color_attachment.imageView = image_view;
+    color_attachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    color_attachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+    color_attachment.resolveImageView = nullptr;
+    color_attachment.resolveImageLayout = vk::ImageLayout::eUndefined;
+    color_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+    color_attachment.storeOp = vk::AttachmentStoreOp::eStore;
+    color_attachment.clearValue.color = vk::ClearColorValue(clear_color);
+
+    vk::RenderingInfo rendering_info {};
+    rendering_info.sType = vk::StructureType::eRenderingInfo;
+    rendering_info.pNext = nullptr;
+    rendering_info.flags = {};
+    rendering_info.renderArea.offset = vk::Offset2D { 0, 0 };
+    rendering_info.renderArea.extent = vk::Extent2D { width, height };
+    rendering_info.layerCount = 1;
+    rendering_info.colorAttachmentCount = 1;
+    rendering_info.pColorAttachments = &color_attachment;
+    rendering_info.pDepthAttachment = nullptr;
+    rendering_info.pStencilAttachment = nullptr;
+
+    cmd.beginRendering(rendering_info);
 
     MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
-        "Began render pass for window '{}' ({}x{})",
+        "Began dynamic rendering for window '{}' ({}x{})",
         window->get_create_info().title, width, height);
 }
 
-void RenderFlow::end_render_pass(CommandBufferID cmd_id)
+void RenderFlow::end_rendering(
+    CommandBufferID cmd_id,
+    const std::shared_ptr<Core::Window>& window)
 {
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
@@ -689,8 +579,48 @@ void RenderFlow::end_render_pass(CommandBufferID cmd_id)
         return;
     }
 
-    cmd.endRenderPass();
+    cmd.endRendering();
+
+    auto it = m_window_associations.find(window);
+    if (it == m_window_associations.end() || !it->second.swapchain_image) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "No swapchain image tracked for window '{}'",
+            window->get_create_info().title);
+        return;
+    }
+
+    vk::ImageMemoryBarrier post_barrier {};
+    post_barrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    post_barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
+    post_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    post_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    post_barrier.image = it->second.swapchain_image;
+    post_barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+    post_barrier.subresourceRange.baseMipLevel = 0;
+    post_barrier.subresourceRange.levelCount = 1;
+    post_barrier.subresourceRange.baseArrayLayer = 0;
+    post_barrier.subresourceRange.layerCount = 1;
+    post_barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+    post_barrier.dstAccessMask = vk::AccessFlagBits::eNone;
+
+    cmd.pipelineBarrier(
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eBottomOfPipe,
+        vk::DependencyFlags {},
+        0, nullptr,
+        0, nullptr,
+        1, &post_barrier);
+
+    it->second.swapchain_image = nullptr;
+
+    MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
+        "Ended dynamic rendering for window '{}'",
+        window->get_create_info().title);
 }
+
+//==============================================================================
+// Command Recording
+//==============================================================================
 
 void RenderFlow::bind_pipeline(CommandBufferID cmd_id, RenderPipelineID pipeline_id)
 {
@@ -862,42 +792,11 @@ void RenderFlow::draw_indexed(
         vertex_offset, first_instance);
 }
 
-void RenderFlow::present_rendered_image(
-    CommandBufferID cmd_id,
-    const std::shared_ptr<Core::Window>& window)
-{
-    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
-    if (!cmd) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid command buffer ID: {}", cmd_id);
-        return;
-    }
-
-    if (!window) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Cannot present rendered image for null window");
-        return;
-    }
-
-    try {
-        cmd.end();
-    } catch (const std::exception& e) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Failed to end command buffer: {}", e.what());
-        return;
-    }
-
-    uint64_t cmd_bits = *reinterpret_cast<uint64_t*>(&cmd);
-    m_display_service->present_frame(window, cmd_bits);
-}
-
 //==========================================================================
 // Window Rendering Registration
 //==========================================================================
 
-void RenderFlow::register_window_for_rendering(
-    const std::shared_ptr<Core::Window>& window,
-    RenderPassID render_pass_id)
+void RenderFlow::register_window_for_rendering(const std::shared_ptr<Core::Window>& window)
 {
     if (!window) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
@@ -905,37 +804,21 @@ void RenderFlow::register_window_for_rendering(
         return;
     }
 
-    auto rp_it = m_render_passes.find(render_pass_id);
-    if (rp_it == m_render_passes.end()) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Invalid render pass ID: {}", render_pass_id);
-        return;
-    }
-
     if (!window->is_graphics_registered()) {
         MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
-            "Window '{}' not registered with graphics backend yet. "
-            "Ensure GraphicsSubsystem has registered this window.",
+            "Window '{}' not registered with graphics backend yet.",
             window->get_create_info().title);
     }
 
-    if (!m_display_service->attach_render_pass(window, rp_it->second.render_pass)) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Failed to attach render pass to window '{}'",
+    if (!m_window_associations.contains(window)) {
+        WindowRenderAssociation association;
+        association.window = window;
+        m_window_associations[window] = std::move(association);
+
+        MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
+            "Registered window '{}' for dynamic rendering",
             window->get_create_info().title);
-        return;
     }
-
-    WindowRenderAssociation association;
-    association.window = window;
-    association.render_pass_id = render_pass_id;
-
-    m_window_associations[window] = std::move(association);
-
-    MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
-        "Registered window '{}' for rendering with render pass ID {}",
-        window->get_create_info().title,
-        render_pass_id);
 }
 
 void RenderFlow::unregister_window(const std::shared_ptr<Core::Window>& window)
@@ -972,6 +855,15 @@ std::vector<std::shared_ptr<Core::Window>> RenderFlow::get_registered_windows() 
     }
 
     return windows;
+}
+
+vk::ImageView RenderFlow::get_current_image_view(const std::shared_ptr<Core::Window>& window)
+{
+    auto view_ptr = m_display_service->get_current_image_view(window);
+    if (!view_ptr) {
+        return nullptr;
+    }
+    return *static_cast<vk::ImageView*>(view_ptr);
 }
 
 //==============================================================================

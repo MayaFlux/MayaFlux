@@ -6,6 +6,10 @@ namespace MayaFlux::Vruta {
 class EventSource;
 }
 
+namespace MayaFlux::Buffers {
+class VKBuffer;
+}
+
 namespace MayaFlux::Core {
 
 /**
@@ -110,5 +114,49 @@ public:
      * Called by GraphicsSubsystem during register/unregister
      */
     virtual void set_graphics_registered(bool registered) = 0;
+
+    /**
+     * @brief Register a VKBuffer as rendering to this window
+     * @param buffer Buffer that will render to this window
+     *
+     * Used for tracking and queries. Does not affect rendering directly.
+     */
+    virtual void register_rendering_buffer(std::shared_ptr<Buffers::VKBuffer> buffer) = 0;
+
+    /**
+     * @brief Unregister a VKBuffer from this window
+     * @param buffer Buffer to unregister
+     */
+    virtual void unregister_rendering_buffer(std::shared_ptr<Buffers::VKBuffer> buffer) = 0;
+
+    /**
+     * @brief Track a secondary command buffer for this frame
+     * @param cmd_id Command buffer ID that contains draw commands for this window
+     *
+     * Called by RenderProcessor after recording. PresentProcessor queries these
+     * to know which secondary buffers to execute.
+     */
+    virtual void track_frame_command(uint64_t cmd_id) = 0;
+
+    /**
+     * @brief Get all command buffers recorded for this frame
+     * @return Vector of command buffer IDs
+     *
+     * Called by PresentProcessor to collect secondary buffers for execution.
+     */
+    [[nodiscard]] virtual const std::vector<uint64_t>& get_frame_commands() const = 0;
+
+    /**
+     * @brief Clear tracked commands for this frame
+     *
+     * Called after presenting to reset for next frame.
+     */
+    virtual void clear_frame_commands() = 0;
+
+    /**
+     * @brief Get all VKBuffers currently rendering to this window
+     * @return Vector of buffers (weak_ptr to avoid ownership issues)
+     */
+    [[nodiscard]] virtual std::vector<std::shared_ptr<Buffers::VKBuffer>> get_rendering_buffers() const = 0;
 };
 }

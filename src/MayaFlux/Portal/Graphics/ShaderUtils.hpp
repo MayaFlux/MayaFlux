@@ -19,7 +19,6 @@ using CommandBufferID = uint64_t;
 using FenceID = uint64_t;
 using SemaphoreID = uint64_t;
 using RenderPipelineID = uint64_t;
-using RenderPassID = uint64_t;
 using FramebufferID = uint64_t;
 
 constexpr ShaderID INVALID_SHADER = 0;
@@ -28,7 +27,6 @@ constexpr CommandBufferID INVALID_COMMAND_BUFFER = 0;
 constexpr FenceID INVALID_FENCE = 0;
 constexpr SemaphoreID INVALID_SEMAPHORE = 0;
 constexpr RenderPipelineID INVALID_RENDER_PIPELINE = 0;
-constexpr RenderPassID INVALID_RENDER_PASS = 0;
 constexpr FramebufferID INVALID_FRAMEBUFFER = 0;
 
 /**
@@ -161,21 +159,6 @@ struct BlendAttachmentConfig {
 };
 
 /**
- * @struct RenderPassAttachment
- * @brief Render pass attachment configuration
- */
-struct RenderPassAttachment {
-    vk::Format format = vk::Format::eB8G8R8A8Unorm;
-    vk::SampleCountFlagBits samples = vk::SampleCountFlagBits::e1;
-    vk::AttachmentLoadOp load_op = vk::AttachmentLoadOp::eClear;
-    vk::AttachmentStoreOp store_op = vk::AttachmentStoreOp::eStore;
-    vk::ImageLayout initial_layout = vk::ImageLayout::eUndefined;
-    vk::ImageLayout final_layout = vk::ImageLayout::ePresentSrcKHR;
-
-    RenderPassAttachment() = default;
-};
-
-/**
  * @struct RenderPipelineConfig
  * @brief Complete render pipeline configuration
  */
@@ -213,11 +196,7 @@ struct RenderPipelineConfig {
     std::vector<std::vector<DescriptorBindingInfo>> descriptor_sets;
 
     // Push constants
-    size_t push_constant_size = 0;
-
-    // Render pass compatibility
-    RenderPassID render_pass = INVALID_RENDER_PASS;
-    uint32_t subpass = 0;
+    size_t push_constant_size {};
 
     RenderPipelineConfig() = default;
 };

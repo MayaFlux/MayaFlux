@@ -2,6 +2,9 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/DisplayService.hpp"
+
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
 
@@ -199,49 +202,89 @@ void PresentProcessor::set_callback(RenderCallback callback)
 
 void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffer>& root)
 {
-    auto& foundry = Portal::Graphics::get_shader_foundry();
-    auto& flow = Portal::Graphics::get_render_flow();
-
     const auto& renderable_buffers = root->get_renderable_buffers();
-
     if (renderable_buffers.empty()) {
         MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "No renderable buffers found in fallback renderer");
         return;
     }
 
-    MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "PresentProcessor submitting {} renderable buffers",
-        renderable_buffers.size());
-
     std::unordered_map<Core::Window*, std::vector<const RootGraphicsBuffer::RenderableBufferInfo*>> buffers_by_window;
-
     for (const auto& renderable : renderable_buffers) {
-        buffers_by_window[renderable.target_window.get()].push_back(&renderable);
+        if (renderable.target_window && renderable.target_window->is_graphics_registered()
+            && renderable.command_buffer_id != Portal::Graphics::INVALID_COMMAND_BUFFER) {
+            buffers_by_window[renderable.target_window.get()].push_back(&renderable);
+        }
+    }
+
+    if (buffers_by_window.empty()) {
+        root->clear_renderable_buffers();
+        return;
+    }
+
+    MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "PresentProcessor submitting to {} windows", buffers_by_window.size());
+
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    auto& flow = Portal::Graphics::get_render_flow();
+    auto display_service = Registry::BackendRegistry::instance()
+                               .get_service<Registry::Service::DisplayService>();
+
+    if (!display_service) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "DisplayService not available for dynamic rendering");
+        return;
     }
 
     for (const auto& [window_ptr, buffer_infos] : buffers_by_window) {
         auto window = buffer_infos[0]->target_window;
 
-        if (!window) {
+        uint64_t image_bits = display_service->acquire_next_swapchain_image(window);
+        if (image_bits == 0) {
             MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Skipping present: window no longer valid");
+                "Failed to acquire swapchain image for window '{}'",
+                window->get_create_info().title);
+            continue;
+        }
+        vk::Image swapchain_image { reinterpret_cast<VkImage>(image_bits) };
+
+        auto primary_cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
+        auto primary_cmd = foundry.get_command_buffer(primary_cmd_id);
+
+        if (!primary_cmd) {
+            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Failed to create primary command buffer for window '{}'",
+                window->get_create_info().title);
+            for (const auto* info : buffer_infos) {
+                info->buffer->clear_pipeline_commands();
+            }
             continue;
         }
 
         try {
+            flow.begin_rendering(primary_cmd_id, window, swapchain_image);
+
+            std::vector<vk::CommandBuffer> secondary_buffers;
             for (const auto* info : buffer_infos) {
-                if (info->command_buffer_id != Portal::Graphics::INVALID_COMMAND_BUFFER) {
-                    flow.present_rendered_image(
-                        info->command_buffer_id,
-                        window);
+                auto secondary = foundry.get_command_buffer(info->command_buffer_id);
+                if (secondary) {
+                    secondary_buffers.push_back(secondary);
                 }
             }
 
+            if (!secondary_buffers.empty()) {
+                primary_cmd.executeCommands(secondary_buffers);
+            }
+
+            flow.end_rendering(primary_cmd_id, window);
+
+            foundry.end_commands(primary_cmd_id);
+            uint64_t primary_bits = *reinterpret_cast<uint64_t*>(&primary_cmd);
+            display_service->submit_and_present(window, primary_bits);
+
             MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Presented {} buffers to window '{}'",
-                buffer_infos.size(),
-                window->get_create_info().title);
+                secondary_buffers.size(), window->get_create_info().title);
 
         } catch (const std::exception& e) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,

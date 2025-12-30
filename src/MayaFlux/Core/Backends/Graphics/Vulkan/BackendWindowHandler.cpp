@@ -1,8 +1,6 @@
 #include "BackendWindowHandler.hpp"
 
 #include "VKCommandManager.hpp"
-#include "VKFramebuffer.hpp"
-#include "VKRenderPass.hpp"
 #include "VKSwapchain.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
@@ -14,18 +12,6 @@ namespace MayaFlux::Core {
 void WindowRenderContext::cleanup(VKContext& context)
 {
     vk::Device device = context.get_device();
-
-    for (auto& framebuffer : framebuffers) {
-        if (framebuffer) {
-            framebuffer->cleanup(device);
-        }
-    }
-    framebuffers.clear();
-
-    if (render_pass) {
-        render_pass->cleanup(device);
-        render_pass.reset();
-    }
 
     for (auto& img : image_available) {
         if (img) {
@@ -69,16 +55,13 @@ BackendWindowHandler::BackendWindowHandler(VKContext& context, VKCommandManager&
 
 void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry::Service::DisplayService>& display_service)
 {
-    display_service->present_frame = [this](const std::shared_ptr<void>& window_ptr, uint64_t command_buffer_bits) {
+    display_service->submit_and_present = [this](
+                                              const std::shared_ptr<void>& window_ptr,
+                                              uint64_t primary_cmd_bits) {
         auto window = std::static_pointer_cast<Window>(window_ptr);
-        auto ctx = find_window_context(window);
-        if (!ctx) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Window '{}' not registered for presentation", window->get_create_info().title);
-            return;
-        }
-        ctx->command_buffer = *reinterpret_cast<vk::CommandBuffer*>(&command_buffer_bits);
-        this->render_window(window);
+        vk::CommandBuffer primary_cmd = *reinterpret_cast<vk::CommandBuffer*>(&primary_cmd_bits);
+
+        this->submit_and_present(window, primary_cmd);
     };
 
     display_service->wait_idle = [this]() {
@@ -116,19 +99,6 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         return 0;
     };
 
-    display_service->get_current_framebuffer = [this](const std::shared_ptr<void>& window_ptr) -> void* {
-        auto window = std::static_pointer_cast<Window>(window_ptr);
-        auto* context = find_window_context(window);
-
-        if (!context || context->framebuffers.empty()) {
-            return nullptr;
-        }
-
-        size_t frame_index = context->current_frame % context->framebuffers.size();
-        auto& handle = *context->framebuffers[frame_index];
-        return static_cast<void*>(&handle);
-    };
-
     display_service->get_swapchain_extent = [this](
                                                 const std::shared_ptr<void>& window_ptr,
                                                 uint32_t& out_width,
@@ -146,24 +116,69 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
     };
 
-    display_service->get_window_render_pass = [this](const std::shared_ptr<void>& window_ptr) -> void* {
+    display_service->acquire_next_swapchain_image = [this](const std::shared_ptr<void>& window_ptr) -> uint64_t {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* ctx = find_window_context(window);
+        if (!ctx) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Window '{}' not registered for swapchain acquisition",
+                window->get_create_info().title);
+            return 0;
+        }
+
+        auto device = m_context.get_device();
+        size_t frame_index = ctx->current_frame;
+        auto& in_flight = ctx->in_flight[frame_index];
+        auto& image_available = ctx->image_available[frame_index];
+
+        if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
+            MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Fence timeout during swapchain acquisition for window '{}'",
+                window->get_create_info().title);
+            return 0;
+        }
+
+        auto image_index_opt = ctx->swapchain->acquire_next_image(image_available);
+        if (!image_index_opt.has_value()) {
+            ctx->needs_recreation = true;
+            return 0;
+        }
+
+        ctx->current_image_index = image_index_opt.value();
+
+        if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Failed to reset fence for window '{}'",
+                window->get_create_info().title);
+            return 0;
+        }
+
+        const auto& images = ctx->swapchain->get_images();
+        VkImage raw = images[ctx->current_image_index];
+        return reinterpret_cast<uint64_t>(raw);
+    };
+
+    display_service->get_current_image_view = [this](const std::shared_ptr<void>& window_ptr) -> void* {
         auto window = std::static_pointer_cast<Window>(window_ptr);
         auto* context = find_window_context(window);
 
-        if (!context || !context->render_pass) {
+        if (!context || !context->swapchain) {
             return nullptr;
         }
 
-        vk::RenderPass rp = context->render_pass->get();
-        return static_cast<void*>(rp);
-    };
+        const auto& image_views = context->swapchain->get_image_views();
+        if (context->current_image_index >= image_views.size()) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Invalid current_image_index {} for window '{}' (swapchain has {} images)",
+                context->current_image_index,
+                window->get_create_info().title,
+                image_views.size());
+            return nullptr;
+        }
 
-    display_service->attach_render_pass = [this](
-                                              const std::shared_ptr<void>& window_ptr,
-                                              const std::shared_ptr<void>& render_pass_handle) -> bool {
-        auto window = std::static_pointer_cast<Window>(window_ptr);
-        auto render_pass = std::static_pointer_cast<Core::VKRenderPass>(render_pass_handle);
-        return this->attach_render_pass(window, render_pass);
+        static thread_local vk::ImageView view;
+        view = image_views[context->current_image_index];
+        return static_cast<void*>(&view);
     };
 }
 
@@ -265,34 +280,6 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
 
         config.current_frame = 0;
 
-        config.render_pass = std::make_unique<VKRenderPass>();
-        if (!config.render_pass->create(device, config.swapchain->get_image_format())) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to create render pass");
-            return false;
-        }
-
-        config.framebuffers.resize(image_count);
-        auto extent = config.swapchain->get_extent();
-        const auto& image_views = config.swapchain->get_image_views();
-
-        for (uint32_t i = 0; i < image_count; ++i) {
-            config.framebuffers[i] = std::make_unique<VKFramebuffer>();
-
-            std::vector<vk::ImageView> attachments = { image_views[i] };
-
-            if (!config.framebuffers[i]->create(
-                    device,
-                    config.render_pass->get(),
-                    attachments,
-                    extent.width,
-                    extent.height)) {
-                MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                    "Failed to create framebuffer {}", i);
-                return false;
-            }
-        }
-
         return true;
     } catch (const vk::SystemError& e) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
@@ -319,18 +306,6 @@ bool BackendWindowHandler::recreate_swapchain_internal(WindowRenderContext& cont
 {
     const auto& state = context.window->get_state();
 
-    for (auto& framebuffer : context.framebuffers) {
-        if (framebuffer) {
-            framebuffer->cleanup(m_context.get_device());
-        }
-    }
-    context.framebuffers.clear();
-
-    if (context.render_pass && !context.user_render_pass_attached) {
-        context.render_pass->cleanup(m_context.get_device());
-        context.render_pass.reset();
-    }
-
     if (!context.swapchain->recreate(state.current_width, state.current_height)) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
             "Failed to recreate swapchain for window '{}'",
@@ -338,94 +313,38 @@ bool BackendWindowHandler::recreate_swapchain_internal(WindowRenderContext& cont
         return false;
     }
 
-    if (!context.user_render_pass_attached) {
-        context.render_pass = std::make_unique<VKRenderPass>();
-        if (!context.render_pass->create(
-                m_context.get_device(),
-                context.swapchain->get_image_format())) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to recreate render pass for window '{}'",
-                context.window->get_create_info().title);
-            return false;
-        }
-    }
-
-    uint32_t image_count = context.swapchain->get_image_count();
-    context.framebuffers.resize(image_count);
-    auto extent = context.swapchain->get_extent();
-    const auto& image_views = context.swapchain->get_image_views();
-
-    for (uint32_t i = 0; i < image_count; ++i) {
-        context.framebuffers[i] = std::make_unique<VKFramebuffer>();
-        std::vector<vk::ImageView> attachments = { image_views[i] };
-
-        if (!context.framebuffers[i]->create(
-                m_context.get_device(),
-                context.render_pass->get(),
-                attachments,
-                extent.width,
-                extent.height)) {
-            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to recreate framebuffer {} for window '{}'",
-                i, context.window->get_create_info().title);
-            return false;
-        }
-    }
-
     return true;
 }
 
-void BackendWindowHandler::render_window_internal(WindowRenderContext& context)
+void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
 {
-    auto device = m_context.get_device();
+    MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "render_window() is not implemented in BackendWindowHandler. Dynamic rendering is expected to be handled externally.");
+}
+
+void BackendWindowHandler::render_all_windows()
+{
+    MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "render_all_windows() is not implemented in BackendWindowHandler. Dynamic rendering is expected to be handled externally.");
+}
+
+void BackendWindowHandler::submit_and_present(
+    const std::shared_ptr<Window>& window,
+    const vk::CommandBuffer& command_buffer)
+{
+    auto* ctx = find_window_context(window);
+    if (!ctx) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Window not registered for submit_and_present");
+        return;
+    }
+
     auto graphics_queue = m_context.get_graphics_queue();
 
-    size_t frame_index = context.current_frame;
-    auto& in_flight = context.in_flight[frame_index];
-
-    if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
-        MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Skipping frame rendering for window '{}' due to in-flight fence timeout",
-            context.window->get_create_info().title);
-        return;
-    }
-    if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to reset in-flight fence for window '{}'",
-            context.window->get_create_info().title);
-        return;
-    }
-
-    auto image_index_opt = context.swapchain->acquire_next_image(context.image_available[frame_index]);
-    if (!image_index_opt.has_value()) {
-        context.needs_recreation = true;
-        return;
-    }
-    uint32_t image_index = image_index_opt.value();
-
-    auto& image_available = context.image_available[frame_index];
-    auto& render_finished = context.render_finished[frame_index];
-
-    vk::CommandBuffer cmd = m_command_manager.allocate_command_buffer();
-    vk::CommandBufferBeginInfo begin_info {};
-    begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-    cmd.begin(begin_info);
-
-    vk::RenderPassBeginInfo render_pass_info {};
-    render_pass_info.renderPass = context.render_pass->get();
-    render_pass_info.framebuffer = context.framebuffers[image_index]->get();
-    render_pass_info.renderArea.offset = vk::Offset2D { 0, 0 };
-    render_pass_info.renderArea.extent = context.swapchain->get_extent();
-
-    vk::ClearValue clear_color {};
-    clear_color.color = vk::ClearColorValue(std::array<float, 4> { 0.0F, 0.1F, 0.2F, 1.0F });
-    render_pass_info.clearValueCount = 1;
-    render_pass_info.pClearValues = &clear_color;
-
-    cmd.beginRenderPass(render_pass_info, vk::SubpassContents::eInline);
-    cmd.endRenderPass();
-
-    cmd.end();
+    size_t frame_index = ctx->current_frame;
+    auto& in_flight = ctx->in_flight[frame_index];
+    auto& image_available = ctx->image_available[frame_index];
+    auto& render_finished = ctx->render_finished[frame_index];
 
     vk::SubmitInfo submit_info {};
     vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
@@ -433,101 +352,30 @@ void BackendWindowHandler::render_window_internal(WindowRenderContext& context)
     submit_info.pWaitSemaphores = &image_available;
     submit_info.pWaitDstStageMask = wait_stages;
     submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &cmd;
+    submit_info.pCommandBuffers = &command_buffer;
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = &render_finished;
 
     try {
         auto result = graphics_queue.submit(1, &submit_info, in_flight);
     } catch (const vk::SystemError& e) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to submit draw command buffer: {}", e.what());
-        m_command_manager.free_command_buffer(cmd);
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Failed to submit primary command buffer: {}", e.what());
         return;
     }
 
-    bool present_success = context.swapchain->present(image_index, render_finished, graphics_queue);
+    bool present_success = ctx->swapchain->present(
+        ctx->current_image_index, render_finished, graphics_queue);
+
     if (!present_success) {
-        context.needs_recreation = true;
+        ctx->needs_recreation = true;
     }
 
-    context.current_frame = (frame_index + 1) % context.in_flight.size();
-}
+    ctx->current_frame = (frame_index + 1) % ctx->in_flight.size();
 
-void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
-{
-    auto* context = find_window_context(window);
-    if (!context) {
-        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "No context found for window '{}'",
-            window->get_create_info().title);
-        return;
-    }
-
-    auto device = m_context.get_device();
-    auto graphics_queue = m_context.get_graphics_queue();
-
-    size_t frame_index = context->current_frame;
-    auto& in_flight = context->in_flight[frame_index];
-    auto& image_available = context->image_available[frame_index];
-    auto& render_finished = context->render_finished[frame_index];
-
-    if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
-        MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Skipping frame rendering for window '{}' due to in-flight fence timeout",
-            context->window->get_create_info().title);
-        return;
-    }
-
-    auto image_index_opt = context->swapchain->acquire_next_image(image_available);
-    if (!image_index_opt.has_value()) {
-        context->needs_recreation = true;
-        return;
-    }
-    uint32_t image_index = image_index_opt.value();
-
-    if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Failed to reset in-flight fence for window '{}'",
-            context->window->get_create_info().title);
-        return;
-    }
-
-    vk::SubmitInfo submit_info {};
-    vk::PipelineStageFlags wait_stages[] = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-    submit_info.waitSemaphoreCount = 1;
-    submit_info.pWaitSemaphores = &image_available;
-    submit_info.pWaitDstStageMask = wait_stages;
-    submit_info.commandBufferCount = 1;
-    submit_info.pCommandBuffers = &(context->command_buffer);
-    submit_info.signalSemaphoreCount = 1;
-    submit_info.pSignalSemaphores = &render_finished;
-
-    try {
-        auto result = graphics_queue.submit(1, &submit_info, in_flight);
-    } catch (const std::exception& e) {
-        error_rethrow(
-            Journal::Component::Core,
-            Journal::Context::GraphicsBackend,
-            std::source_location::current(),
-            "Unexpected error during command buffer submission: {}",
-            e.what());
-        return;
-    }
-
-    bool present_success = context->swapchain->present(image_index, render_finished, graphics_queue);
-    if (!present_success) {
-        context->needs_recreation = true;
-    }
-
-    context->current_frame = (frame_index + 1) % context->in_flight.size();
-}
-
-void BackendWindowHandler::render_all_windows()
-{
-    for (auto& context : m_window_contexts) {
-        render_window_internal(context);
-    }
+    MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsCallback,
+        "Window '{}': frame submitted and presented",
+        window->get_create_info().title);
 }
 
 bool BackendWindowHandler::is_window_registered(const std::shared_ptr<Window>& window) const
@@ -557,65 +405,6 @@ void BackendWindowHandler::handle_window_resize()
             recreate_swapchain_for_context(context);
         }
     }
-}
-
-bool BackendWindowHandler::attach_render_pass(
-    const std::shared_ptr<Window>& window,
-    const std::shared_ptr<Core::VKRenderPass>& render_pass)
-{
-    auto* context = find_window_context(window);
-    if (!context) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "Window not registered");
-        return false;
-    }
-
-    if (!render_pass) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-            "Cannot attach null render pass");
-        return false;
-    }
-
-    m_context.wait_idle();
-
-    for (auto& fb : context->framebuffers) {
-        if (fb)
-            fb->cleanup(m_context.get_device());
-    }
-    context->framebuffers.clear();
-
-    if (context->render_pass) {
-        context->render_pass->cleanup(m_context.get_device());
-    }
-    context->render_pass = render_pass;
-    context->user_render_pass_attached = true;
-
-    uint32_t image_count = context->swapchain->get_image_count();
-    context->framebuffers.resize(image_count);
-    auto extent = context->swapchain->get_extent();
-    const auto& image_views = context->swapchain->get_image_views();
-
-    for (uint32_t i = 0; i < image_count; ++i) {
-        context->framebuffers[i] = std::make_unique<VKFramebuffer>();
-        std::vector<vk::ImageView> attachments = { image_views[i] };
-
-        if (!context->framebuffers[i]->create(
-                m_context.get_device(),
-                render_pass->get(),
-                attachments,
-                extent.width,
-                extent.height)) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
-                "Failed to create framebuffer {} with user render pass", i);
-            return false;
-        }
-    }
-
-    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsCallback,
-        "Attached user render pass to window '{}' - recreated {} framebuffers",
-        window->get_create_info().title, image_count);
-
-    return true;
 }
 
 void BackendWindowHandler::cleanup()

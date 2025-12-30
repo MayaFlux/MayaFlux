@@ -30,10 +30,12 @@ public:
     void cleanup();
 
     /**
-     * @brief Allocate a command buffer from the pool
-     * @return Command buffer handle
+     * @brief Allocate a command buffer with specified level
+     * @param level Primary or secondary
+     * @return Allocated command buffer
      */
-    vk::CommandBuffer allocate_command_buffer();
+    vk::CommandBuffer allocate_command_buffer(
+        vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 
     /**
      * @brief Free a command buffer back to the pool

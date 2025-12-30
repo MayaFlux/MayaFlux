@@ -45,22 +45,33 @@ void VKCommandManager::cleanup()
     }
 }
 
-vk::CommandBuffer VKCommandManager::allocate_command_buffer()
+vk::CommandBuffer VKCommandManager::allocate_command_buffer(vk::CommandBufferLevel level)
 {
     vk::CommandBufferAllocateInfo alloc_info {};
     alloc_info.commandPool = m_command_pool;
-    alloc_info.level = vk::CommandBufferLevel::ePrimary;
+    alloc_info.level = level;
     alloc_info.commandBufferCount = 1;
 
+    vk::CommandBuffer cmd_buffer;
     try {
-        auto buffers = m_device.allocateCommandBuffers(alloc_info);
-        m_allocated_buffers.push_back(buffers[0]);
-        return buffers[0];
+        auto result = m_device.allocateCommandBuffers(&alloc_info, &cmd_buffer);
+        if (result != vk::Result::eSuccess) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Failed to allocate command buffer");
+            return nullptr;
+        }
+        m_allocated_buffers.push_back(cmd_buffer);
     } catch (const vk::SystemError& e) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to allocate command buffer: {}", e.what());
         return nullptr;
     }
+
+    MF_RT_TRACE(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Allocated {} command buffer",
+        level == vk::CommandBufferLevel::ePrimary ? "primary" : "secondary");
+
+    return cmd_buffer;
 }
 
 void VKCommandManager::free_command_buffer(vk::CommandBuffer command_buffer)

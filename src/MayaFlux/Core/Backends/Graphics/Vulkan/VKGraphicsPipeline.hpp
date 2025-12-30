@@ -167,13 +167,9 @@ struct GraphicsPipelineConfig {
     std::vector<vk::PushConstantRange> push_constant_ranges;
 
     //==========================================================================
-    // RENDER PASS / DYNAMIC RENDERING
+    // DYNAMIC RENDERING
     //==========================================================================
 
-    vk::RenderPass render_pass = nullptr;
-    uint32_t subpass = 0;
-
-    bool use_dynamic_rendering = false;
     std::vector<vk::Format> color_attachment_formats;
     vk::Format depth_attachment_format = vk::Format::eUndefined;
     vk::Format stencil_attachment_format = vk::Format::eUndefined;

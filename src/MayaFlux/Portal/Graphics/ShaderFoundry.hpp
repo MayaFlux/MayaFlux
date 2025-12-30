@@ -57,6 +57,11 @@ public:
         TRANSFER
     };
 
+    enum class CommandBufferLevel : uint8_t {
+        PRIMARY,
+        SECONDARY
+    };
+
 private:
     struct DescriptorSetState {
         vk::DescriptorSet descriptor_set;
@@ -65,6 +70,7 @@ private:
     struct CommandBufferState {
         vk::CommandBuffer cmd;
         CommandBufferType type;
+        CommandBufferLevel level { CommandBufferLevel::PRIMARY };
         bool is_active;
         vk::QueryPool timestamp_pool;
         std::unordered_map<std::string, uint32_t> timestamp_queries;
@@ -373,10 +379,27 @@ public:
     CommandBufferID begin_commands(CommandBufferType type);
 
     /**
+     * @brief Begin recording a secondary command buffer for dynamic rendering
+     * @param color_format Format of the color attachment (from swapchain)
+     * @return Command buffer ID
+     *
+     * With dynamic rendering, secondary buffers don't need render pass objects.
+     * They only need to know the attachment formats they'll render to.
+     */
+    CommandBufferID begin_secondary_commands(vk::Format color_format);
+
+    /**
      * @brief Get Vulkan command buffer handle from CommandBufferID
      * @param cmd_id Command buffer ID
      */
     vk::CommandBuffer get_command_buffer(CommandBufferID cmd_id);
+
+    /**
+     * @brief End recording command buffer
+     * @param cmd_id Command buffer ID to end
+     * @return True if successful, false if invalid ID or not active
+     */
+    bool end_commands(CommandBufferID cmd_id);
 
     //==========================================================================
     // Memory Barriers and Synchronization
