@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Stochastics::Random::notify_tick" name="MayaFlux::Nodes::Generator::Stochastics::Random::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks about a new value." alt="" coords="332,5,575,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_afea805d9c9a427905fdb47dcd50c8c46.html#afea805d9c9a427905fdb47dcd50c8c46" title="Generates a single stochastic value." alt="" coords="5,5,284,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="318,28,284,28,284,23,318,23"/>
+</map>

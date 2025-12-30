@@ -1,0 +1,7 @@
+<map id="MayaFlux::decompose_domain" name="MayaFlux::decompose_domain">
+<area shape="rect" id="Node000001" title="Decomposes a Domain enum into its constituent ProcessingTokens." alt="" coords="216,37,385,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a0618d5268f408977e83f347f31cb1422.html#a0618d5268f408977e83f347f31cb1422" title="Gets a human&#45;readable string representation of a domain." alt="" coords="5,5,168,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,45,168,40,169,35,203,40"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a5cc265bf20e69f724523bc4955aeb017.html#a5cc265bf20e69f724523bc4955aeb017" title="Checks if a domain is valid (all constituent tokens are compatible)" alt="" coords="6,69,167,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,75,168,80,167,75,202,69"/>
+</map>

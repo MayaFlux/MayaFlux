@@ -1,0 +1,28 @@
+<map id="MayaFlux::Buffers::VKBuffer::is_host_visible" name="MayaFlux::Buffers::VKBuffer::is_host_visible">
+<area shape="rect" id="Node000001" title="Whether this VKBuffer should be host&#45;visible." alt="" coords="724,205,907,245"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a818e469f4792c407c6ebc6e1112a6121.html#a818e469f4792c407c6ebc6e1112a6121" title="Clear buffer contents." alt="" coords="494,8,642,48"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="792,195,743,132,710,98,675,69,639,50,642,46,677,64,714,94,747,128,796,192"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae22f33ecea5953e1b819bbd36db3114c.html#ae22f33ecea5953e1b819bbd36db3114c" title="Write data into the buffer." alt="" coords="261,69,409,109"/>
+<area shape="poly" id="edge15_Node000001_Node000003" title=" " alt="" coords="786,197,738,151,708,130,675,113,607,93,536,84,468,81,409,84,409,79,468,76,537,78,608,88,677,108,710,125,741,147,790,193"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_af6dd001810af7fa06b5b2fd83d04303a.html#af6dd001810af7fa06b5b2fd83d04303a" title="Create a clone of this buffer with the same data and properties." alt="" coords="33,316,181,356"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="791,258,742,304,711,326,677,342,612,361,544,373,475,379,407,379,282,370,181,355,182,350,282,365,407,374,475,373,543,368,610,356,675,338,708,321,739,300,787,254"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a382af8166b7e2e54d7336352c261d954.html#a382af8166b7e2e54d7336352c261d954" title="Read buffer contents as Kakshya DataVariant." alt="" coords="261,288,409,328"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="711,240,590,256,461,279,409,290,408,285,459,273,590,251,710,234"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ac9ee9c98c5dc835223b84a1614a28473.html#ac9ee9c98c5dc835223b84a1614a28473" title="Get appropriate VkMemoryPropertyFlags for allocation based on Usage." alt="" coords="483,403,653,458"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="795,258,746,322,713,356,678,386,645,405,643,401,674,382,710,352,742,318,791,255"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ab0bacf7f222829997dbff394d53fc650.html#ab0bacf7f222829997dbff394d53fc650" title="Get device memory handle." alt="" coords="467,123,669,163"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="741,203,628,165,630,160,743,198"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a1c3e0f6c292516efd5f5364ba7a14fa8.html#a1c3e0f6c292516efd5f5364ba7a14fa8" title="Resize buffer and recreate GPU resources if needed." alt="" coords="261,157,409,197"/>
+<area shape="poly" id="edge14_Node000001_Node000009" title=" " alt="" coords="710,218,409,187,409,182,710,212"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_afdc83bf93f468f4c8ca643b4ce040045.html#afdc83bf93f468f4c8ca643b4ce040045" title="Mark a range as invalid (needs download)" alt="" coords="460,288,676,328"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="743,252,630,290,628,285,741,247"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="481,53,410,73,408,67,480,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_afb563bced2a85b0019e571ce0bfa4081.html#afb563bced2a85b0019e571ce0bfa4081" title="Virtual destructor." alt="" coords="257,5,412,45"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="480,30,412,29,412,24,480,24"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="247,321,182,330,181,324,247,316"/>
+<area shape="poly" id="edge11_Node000008_Node000003" title=" " alt="" coords="466,122,408,109,409,104,467,117"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="454,162,409,169,409,164,453,157"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab" title="Create texture buffer with dimensions." alt="" coords="5,157,209,197"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="247,180,209,180,209,175,247,175"/>
+<area shape="poly" id="edge13_Node000011_Node000006" title=" " alt="" coords="446,311,409,311,409,305,446,305"/>
+</map>

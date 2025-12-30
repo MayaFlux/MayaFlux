@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::read_sequential" name="MayaFlux::Kakshya::SoundStreamContainer::read_sequential">
+<area shape="rect" id="Node000001" title="Read data sequentially from the current position." alt="" coords="5,137,177,192"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a57c8173321d14283714748456d5460c7.html#a57c8173321d14283714748456d5460c7" title="Advance the read position by a specified amount." alt="" coords="225,93,405,148"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,145,211,138,212,144,178,150"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2df106c31610185cee99251f3bad8aa7.html#a2df106c31610185cee99251f3bad8aa7" title="Peek at data without advancing the read position." alt="" coords="229,176,401,231"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="178,177,217,184,216,189,177,182"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a6b9b1e820df114a20a5384233008e015.html#a6b9b1e820df114a20a5384233008e015" title="Advance current positions by a number of frames, with optional looping." alt="" coords="460,99,619,139"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="405,117,447,117,447,123,405,123"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="678,5,853,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="592,97,680,62,682,67,593,102"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="673,85,857,154"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="619,117,660,117,660,122,619,122"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a042de125fda620e471fd2a02de28805a.html#a042de125fda620e471fd2a02de28805a" title="Get the audio data as a specific type." alt="" coords="453,179,625,233"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="402,202,440,202,440,207,402,207"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2321cbc62aa5f61be7f780c2c8735fcc.html#a2321cbc62aa5f61be7f780c2c8735fcc" title="Get the cached spans for each channel, recomputing if dirty." alt="" coords="679,179,851,233"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="626,203,665,203,665,209,626,209"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kakshya_aabeece17084e84e555c71c127aa66eb2.html#aabeece17084e84e555c71c127aa66eb2" title="Interleave multiple channels of data into a single vector." alt="" coords="686,258,845,298"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="627,231,690,251,688,256,625,236"/>
+</map>

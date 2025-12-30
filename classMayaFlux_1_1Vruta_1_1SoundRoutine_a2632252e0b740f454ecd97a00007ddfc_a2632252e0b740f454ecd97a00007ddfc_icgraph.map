@@ -1,0 +1,11 @@
+<map id="MayaFlux::Vruta::SoundRoutine::is_active" name="MayaFlux::Vruta::SoundRoutine::is_active">
+<area shape="rect" id="Node000001" title="Checks if the coroutine is still active." alt="" coords="555,69,781,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_a7ddfb09bc6f2d7638b13027ecb7a6738.html#a7ddfb09bc6f2d7638b13027ecb7a6738" title="Gets the sample position when this routine should next execute." alt="" coords="280,5,507,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="568,69,479,48,480,43,569,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_adc6115b080837da5c2ac50d7aa784dbf.html#adc6115b080837da5c2ac50d7aa784dbf" title="Restarts the coroutine from the beginning." alt="" coords="280,69,507,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="541,92,507,92,507,87,541,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_a6936d0555115de0ddde7aa770a6674c0.html#a6936d0555115de0ddde7aa770a6674c0" title="Attempts to resume the coroutine with explicit temporal context." alt="" coords="280,133,507,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="569,115,480,136,479,131,568,110"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1SoundRoutine_a95a75cccc20a0811d93a5c30a87d93e8.html#a95a75cccc20a0811d93a5c30a87d93e8" title="Attempts to resume the coroutine if it&#39;s ready to execute." alt="" coords="5,133,232,173"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="266,156,232,156,232,151,266,151"/>
+</map>

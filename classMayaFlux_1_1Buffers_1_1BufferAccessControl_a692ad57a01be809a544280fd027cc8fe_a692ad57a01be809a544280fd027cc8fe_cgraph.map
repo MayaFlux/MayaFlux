@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::get_graphics_buffers" name="MayaFlux::Buffers::BufferAccessControl::get_graphics_buffers">
+<area shape="rect" id="Node000001" title="Gets all graphics buffers for a token." alt="" coords="5,45,171,100"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1RootGraphicsUnit_a48b9b18d980ae62892623cfa96dbee07.html#a48b9b18d980ae62892623cfa96dbee07" title=" " alt="" coords="222,5,387,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="170,55,208,48,209,53,171,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ac67f221d25b3aff5146283dc5c78f20f.html#ac67f221d25b3aff5146283dc5c78f20f" title="Gets an existing graphics unit without creating if missing." alt="" coords="219,84,391,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="171,85,206,91,205,96,170,90"/>
+</map>

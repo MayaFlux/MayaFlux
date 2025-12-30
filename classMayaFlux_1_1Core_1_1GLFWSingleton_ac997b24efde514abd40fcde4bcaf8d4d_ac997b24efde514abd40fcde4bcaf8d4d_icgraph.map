@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::GLFWSingleton::enumerate_monitors" name="MayaFlux::Core::GLFWSingleton::enumerate_monitors">
+<area shape="rect" id="Node000001" title="Enumerates all connected monitors and their information." alt="" coords="284,37,515,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a91a276b067c7ae268416a23926ac4d49.html#a91a276b067c7ae268416a23926ac4d49" title="Retrieves information about a specific monitor by ID." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,45,236,41,236,36,271,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_ac704bbf291f32e073ec849fd37fc404a.html#ac704bbf291f32e073ec849fd37fc404a" title="Retrieves information about the primary monitor." alt="" coords="5,69,236,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="271,75,236,79,236,73,270,69"/>
+</map>

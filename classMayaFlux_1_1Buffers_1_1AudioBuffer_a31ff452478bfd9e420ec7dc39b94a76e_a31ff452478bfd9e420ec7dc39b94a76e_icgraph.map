@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::AudioBuffer::clear" name="MayaFlux::Buffers::AudioBuffer::clear">
+<area shape="rect" id="Node000001" title="Resets all audio samples in the buffer to silence." alt="" coords="207,13,355,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NodeBuffer_ae7384d59429917161a69deaeb7dac90e.html#ae7384d59429917161a69deaeb7dac90e" title="Processes this buffer using its default processor." alt="" coords="5,5,159,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,35,159,35,159,30,193,30"/>
+</map>

@@ -1,0 +1,25 @@
+<map id="MayaFlux::Core::BackendResourceManager::cleanup_image" name="MayaFlux::Core::BackendResourceManager::cleanup_image">
+<area shape="rect" id="Node000001" title="Cleanup a VKImage (destroy view, image, and free memory)" alt="" coords="1077,197,1324,237"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a912ecedf34625883158c33adddcf7726.html#a912ecedf34625883158c33adddcf7726" title="Shutdown and cleanup all textures." alt="" coords="832,197,1029,237"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1064,220,1029,220,1029,215,1064,215"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a3889f398a94af104f9e3d00b1d059006.html#a3889f398a94af104f9e3d00b1d059006" title="Shutdown Portal::Graphics subsystem." alt="" coords="587,197,784,237"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="818,220,784,220,784,215,818,215"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_af1da4de248505d3a97ea2acc2c79402a.html#af1da4de248505d3a97ea2acc2c79402a" title=" " alt="" coords="319,5,516,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="662,187,610,122,576,88,537,60,513,48,516,43,540,55,579,84,614,119,666,184"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_acc5c12947dbc44adb045c15c8471cb12.html#acc5c12947dbc44adb045c15c8471cb12" title="Stop the subsystem&#39;s processing/event loops." alt="" coords="323,69,512,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="647,191,596,156,538,124,506,112,508,107,540,119,599,152,650,187"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a99caf073b7498d9e65afbc64e2e7e63f.html#a99caf073b7498d9e65afbc64e2e7e63f" title=" " alt="" coords="299,133,536,173"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="587,197,501,176,502,171,588,191"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_acf220481570311029824bedf79be9dbe.html#acf220481570311029824bedf79be9dbe" title=" " alt="" coords="316,197,519,237"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="573,220,519,220,519,215,573,215"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_aaa8ef6a3548a2f19b374a05309844760.html#aaa8ef6a3548a2f19b374a05309844760" title=" " alt="" coords="303,261,532,301"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="588,243,502,264,501,259,587,238"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ac2a823c7787484ea47fe26650c632202.html#ac2a823c7787484ea47fe26650c632202" title=" " alt="" coords="296,325,539,365"/>
+<area shape="poly" id="edge10_Node000003_Node000011" title=" " alt="" coords="650,248,599,283,540,316,508,328,506,323,538,311,596,278,647,243"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ac5e1ee8ca32707cc9150992a2ce16ad1.html#ac5e1ee8ca32707cc9150992a2ce16ad1" title=" " alt="" coords="309,389,526,429"/>
+<area shape="poly" id="edge11_Node000003_Node000012" title=" " alt="" coords="666,250,614,316,579,350,540,380,516,392,513,387,537,375,576,346,610,313,662,247"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_add3c53f617b297ce6b56ee3109fb931e.html#add3c53f617b297ce6b56ee3109fb931e" title="Shutdown and cleanup subsystem resources." alt="" coords="32,37,221,77"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="309,80,221,70,222,65,309,75"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a8edbb4e731ea5677f47b9de8cc583bcb.html#a8edbb4e731ea5677f47b9de8cc583bcb" title=" " alt="" coords="5,101,248,141"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="309,104,249,111,248,105,309,99"/>
+</map>

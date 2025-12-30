@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::Region::get_span" name="MayaFlux::Kakshya::Region::get_span">
+<area shape="rect" id="Node000001" title="Get the span (length) of the region along a dimension." alt="" coords="289,5,448,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1RegionSegment_afd895f6ab5d011977a29ccab0e3171ab.html#afd895f6ab5d011977a29ccab0e3171ab" title="Construct a segment from a region (full region)." alt="" coords="5,5,241,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="276,28,242,28,242,23,276,23"/>
+</map>

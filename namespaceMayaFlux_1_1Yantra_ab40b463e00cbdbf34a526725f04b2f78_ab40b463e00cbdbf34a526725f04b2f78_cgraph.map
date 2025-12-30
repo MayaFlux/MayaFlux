@@ -1,0 +1,23 @@
+<map id="MayaFlux::Yantra::infer_from_region" name="MayaFlux::Yantra::infer_from_region">
+<area shape="rect" id="Node000001" title="Infer structure from Region (placeholder since regions are markers)" alt="" coords="5,246,177,286"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_ac71c3404aadefac0fe97e641021e1eba.html#ac71c3404aadefac0fe97e641021e1eba" title="Create dimension descriptors for a data modality." alt="" coords="225,143,397,197"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="137,243,234,201,236,205,139,248"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aab0cac54b47602cb00e2fd99b50839c3.html#aab0cac54b47602cb00e2fd99b50839c3" title="Convenience constructor for a temporal (time) dimension." alt="" coords="463,277,624,317"/>
+<area shape="poly" id="edge11_Node000001_Node000007" title=" " alt="" coords="178,256,283,253,398,259,460,271,459,276,397,265,283,259,178,262"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Kakshya_1_1Region_a86ab8b71d580d67f6c46525eed760bab.html#a86ab8b71d580d67f6c46525eed760bab" title="Get an attribute value by key, with type conversion support." alt="" coords="232,274,391,314"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="178,274,219,280,218,285,178,280"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_a35bfca0f707fb3377c6f26456ed32470.html#a35bfca0f707fb3377c6f26456ed32470" title="Infer structure from SignalSourceContainer." alt="" coords="225,338,397,378"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="136,284,226,324,243,330,241,335,224,328,134,289"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_aafb5f78e7e3682f8785ef62f77e5d77a.html#aafb5f78e7e3682f8785ef62f77e5d77a" title="Calculate memory strides based on shape and layout." alt="" coords="448,5,639,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="344,140,390,105,444,70,457,64,459,68,447,75,393,110,347,145"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_afae79b6c7314e95d426e396efe81787a.html#afae79b6c7314e95d426e396efe81787a" title="Convenience constructor for a channel dimension." alt="" coords="452,85,635,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="397,143,458,126,459,131,398,148"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a6a1656bc7eafe4add39ec634481345a7.html#a6a1656bc7eafe4add39ec634481345a7" title="Convenience constructor for a frequency dimension." alt="" coords="445,149,641,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="397,167,432,167,432,172,397,172"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataDimension_a54ded63656235da79ab98ef3a576d3d2.html#a54ded63656235da79ab98ef3a576d3d2" title="Convenience constructor for a spatial dimension." alt="" coords="456,213,631,253"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="398,191,456,206,455,212,397,196"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="367,195,399,216,423,240,432,251,447,262,458,269,456,273,444,267,429,255,419,244,396,220,364,200"/>
+<area shape="poly" id="edge10_Node000009_Node000007" title=" " alt="" coords="387,335,453,318,454,323,388,340"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kakshya_a88dd3a8013f6e990f4593616f261bc76.html#a88dd3a8013f6e990f4593616f261bc76" title="Detects data modality from dimension information." alt="" coords="461,341,625,381"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="397,356,447,357,447,362,397,362"/>
+</map>

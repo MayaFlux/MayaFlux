@@ -1,0 +1,16 @@
+<map id="InputAudioBuffer.cpp" name="InputAudioBuffer.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="188,5,345,31"/>
+<area shape="rect" id="Node000002" href="$InputAudioBuffer_8hpp.html" title=" " alt="" coords="187,79,346,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="269,31,269,65,264,65,264,31"/>
+<area shape="rect" id="Node000003" href="$AudioBuffer_8hpp.html" title=" " alt="" coords="5,152,248,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="245,106,163,148,160,143,243,102"/>
+<area shape="rect" id="Node000006" href="$BufferProcessor_8hpp.html" title=" " alt="" coords="272,152,541,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="290,102,373,143,371,148,288,106"/>
+<area shape="rect" id="Node000004" href="$Buffer_8hpp.html" title=" " alt="" coords="83,225,171,251"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="129,178,129,212,124,212,124,178"/>
+<area shape="rect" id="Node000005" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="209,299,404,339"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="142,175,275,288,272,292,138,179"/>
+<area shape="rect" id="Node000007" href="$BufferUtils_8hpp.html" title=" " alt="" coords="322,225,441,251"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="405,179,392,213,387,212,400,177"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="372,253,336,290,332,287,368,249"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::GLFWSingleton::terminate" name="MayaFlux::Core::GLFWSingleton::terminate">
+<area shape="rect" id="Node000001" title="Terminates the GLFW library if initialized and no windows remain." alt="" coords="295,37,525,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GlfwWindow_a2a72505853533be88cd61a6cd39bf5e1.html#a2a72505853533be88cd61a6cd39bf5e1" title=" " alt="" coords="19,5,233,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="281,45,233,40,233,35,281,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1WindowManager_a6adf8120f8407fab46f3faca18e10eab.html#a6adf8120f8407fab46f3faca18e10eab" title=" " alt="" coords="5,69,247,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="282,74,247,78,247,73,281,69"/>
+</map>

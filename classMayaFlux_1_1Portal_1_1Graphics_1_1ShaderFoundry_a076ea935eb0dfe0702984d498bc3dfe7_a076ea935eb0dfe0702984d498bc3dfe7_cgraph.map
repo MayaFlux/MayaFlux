@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::wait_for_fences" name="MayaFlux::Portal::Graphics::ShaderFoundry::wait_for_fences">
+<area shape="rect" id="Node000001" title="Wait for multiple fences to be signaled." alt="" coords="5,5,243,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="291,5,496,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,23,277,23,277,28,243,28"/>
+</map>

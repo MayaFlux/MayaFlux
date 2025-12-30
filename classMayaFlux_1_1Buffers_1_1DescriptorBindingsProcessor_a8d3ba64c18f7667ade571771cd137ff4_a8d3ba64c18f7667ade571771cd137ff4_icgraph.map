@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::DescriptorBindingsProcessor::create_descriptor_buffer" name="MayaFlux::Buffers::DescriptorBindingsProcessor::create_descriptor_buffer">
+<area shape="rect" id="Node000001" title="Create GPU buffer for a descriptor binding." alt="" coords="261,124,469,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a81045d2fc4cff4bfe25d7ebf11401618.html#a81045d2fc4cff4bfe25d7ebf11401618" title="Bind matrix node (MatrixContext) to descriptor." alt="" coords="5,5,213,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="303,120,212,74,186,63,188,58,214,69,306,115"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a559e3cb686abf151932caace01ab4e3f.html#a559e3cb686abf151932caace01ab4e3f" title="Bind scalar node output to descriptor." alt="" coords="5,84,213,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="248,136,213,130,214,125,248,130"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_ab357d2b48929274a8dfdc9d829ff2bd1.html#ab357d2b48929274a8dfdc9d829ff2bd1" title="Bind structured node (arrays of POD structs) to descriptor." alt="" coords="5,163,213,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="248,172,214,177,213,172,248,166"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_ac12406b87a123beff5ca8bc1a030f2df.html#ac12406b87a123beff5ca8bc1a030f2df" title="Bind vector node (VectorContext) to descriptor." alt="" coords="5,241,213,296"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="303,187,214,231,185,244,183,239,212,226,301,183"/>
+</map>

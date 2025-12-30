@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::ParticleNetwork::ParticleNetwork" name="MayaFlux::Nodes::Network::ParticleNetwork::ParticleNetwork">
+<area shape="rect" id="Node000001" title="Create particle network with spatial bounds." alt="" coords="5,37,249,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_afb34b572315180e465878f1de6f5bb1b.html#afb34b572315180e465878f1de6f5bb1b" title="Set the network&#39;s output routing mode." alt="" coords="297,5,537,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="249,41,283,37,284,43,250,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a0b04d8fe8a24f123c447709eed72a152.html#a0b04d8fe8a24f123c447709eed72a152" title="Set the network&#39;s topology." alt="" coords="312,69,523,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="250,68,299,74,298,79,249,73"/>
+</map>

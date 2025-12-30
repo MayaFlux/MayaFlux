@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Stochastics::Random::notify_tick" name="MayaFlux::Nodes::Generator::Stochastics::Random::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks about a new value." alt="" coords="5,13,248,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a840353c6fc977f12d3a3d5e72c86558d.html#a840353c6fc977f12d3a3d5e72c86558d" title="Creates a context object for callbacks." alt="" coords="296,5,511,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,30,282,30,282,35,248,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node_adecd36f4b9db4faad89b99a2daa77024.html#adecd36f4b9db4faad89b99a2daa77024" title="Provides access to the GPU data buffer." alt="" coords="559,13,736,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="511,30,545,30,545,35,511,35"/>
+</map>
