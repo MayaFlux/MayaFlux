@@ -129,18 +129,7 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     auto& flow = Portal::Graphics::get_render_flow();
 
-    if (m_render_pass_id == Portal::Graphics::INVALID_RENDER_PASS) {
-        vk::Format swapchain_format = vk::Format { m_display_service->get_swapchain_format(m_target_window) };
-        m_render_pass_id = flow.create_simple_render_pass(swapchain_format);
-
-        if (m_render_pass_id == Portal::Graphics::INVALID_RENDER_PASS) {
-            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Render pass not set");
-            return;
-        }
-    }
-
-    Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window, m_render_pass_id);
+    Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window);
 
     Portal::Graphics::RenderPipelineConfig pipeline_config;
     pipeline_config.vertex_shader = m_shader_id;
@@ -148,7 +137,6 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     pipeline_config.geometry_shader = m_geometry_shader_id;
     pipeline_config.tess_control_shader = m_tess_control_shader_id;
     pipeline_config.tess_eval_shader = m_tess_eval_shader_id;
-    pipeline_config.render_pass = m_render_pass_id;
 
     pipeline_config.topology = m_primitive_topology;
     pipeline_config.rasterization.polygon_mode = m_polygon_mode;
@@ -204,7 +192,10 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         pipeline_config.descriptor_sets.push_back(set_bindings);
     }
 
-    m_pipeline_id = flow.create_pipeline(pipeline_config);
+    vk::Format swapchain_format = static_cast<vk::Format>(
+        m_display_service->get_swapchain_format(m_target_window));
+
+    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format });
 
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -330,9 +321,11 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
 
-    auto cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
+    vk::Format color_format = static_cast<vk::Format>(
+        m_display_service->get_swapchain_format(m_target_window));
 
-    flow.begin_render_pass(cmd_id, m_target_window);
+    auto cmd_id = foundry.begin_secondary_commands(color_format);
+    auto cmd = foundry.get_command_buffer(cmd_id);
 
     uint32_t width = 0, height = 0;
     m_display_service->get_swapchain_extent(m_target_window, width, height);
@@ -393,9 +386,14 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     flow.draw(cmd_id, vertex_layout->vertex_count);
 
-    flow.end_render_pass(cmd_id);
+    foundry.end_commands(cmd_id);
 
     buffer->set_pipeline_command(m_pipeline_id, cmd_id);
+    m_target_window->track_frame_command(cmd_id);
+
+    MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Recorded secondary command buffer {} for window '{}'",
+        cmd_id, m_target_window->get_create_info().title);
 }
 
 void RenderProcessor::on_attach(std::shared_ptr<Buffer> buffer)

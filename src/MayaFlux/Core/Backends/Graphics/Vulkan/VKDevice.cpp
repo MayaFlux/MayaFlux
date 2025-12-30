@@ -243,11 +243,7 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
 
     features2.pNext = &vulkan_13_features;
 
-    std::vector<const char*> device_extensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-        VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME
-    };
+    std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
     for (const auto& ext : backend_info.required_extensions) {
         device_extensions.push_back(ext.c_str());
     }

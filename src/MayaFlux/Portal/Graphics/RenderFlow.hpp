@@ -109,24 +109,21 @@ public:
     //==========================================================================
 
     /**
-     * @brief Create graphics pipeline with full configuration
-     * @param config Complete pipeline configuration
+     * @brief Create graphics pipeline for dynamic rendering (no render pass object)
+     * @param config Pipeline configuration
+     * @param color_formats Color attachment formats for dynamic rendering
+     * @param depth_format Depth attachment format
      * @return Pipeline ID or INVALID_RENDER_PIPELINE on error
      */
-    RenderPipelineID create_pipeline(const RenderPipelineConfig& config);
+    RenderPipelineID create_pipeline(
+        const RenderPipelineConfig& config,
+        const std::vector<vk::Format>& color_formats,
+        vk::Format depth_format = vk::Format::eUndefined);
 
     /**
-     * @brief Create simple graphics pipeline (auto-configure most settings)
-     * @param vertex_shader Vertex shader ID
-     * @param fragment_shader Fragment shader ID
-     * @param render_pass Render pass ID
-     * @return Pipeline ID or INVALID_RENDER_PIPELINE on error
+     * @brief Destroy a graphics pipeline
+     * @param pipeline_id Pipeline ID to destroy
      */
-    RenderPipelineID create_simple_pipeline(
-        ShaderID vertex_shader,
-        ShaderID fragment_shader,
-        RenderPassID render_pass);
-
     void destroy_pipeline(RenderPipelineID pipeline_id);
 
     //==========================================================================
@@ -137,6 +134,7 @@ public:
      * @brief Begin dynamic rendering to a window
      * @param cmd_id Command buffer ID
      * @param window Target window
+     * @param swapchain_image Swapchain image to render to
      * @param clear_color Clear color (RGBA)
      *
      * Uses vkCmdBeginRendering - no render pass objects needed.
@@ -144,13 +142,15 @@ public:
     void begin_rendering(
         CommandBufferID cmd_id,
         const std::shared_ptr<Core::Window>& window,
+        vk::Image swapchain_image,
         const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
 
     /**
      * @brief End dynamic rendering
      * @param cmd_id Command buffer ID
+     * @param window Target window
      */
-    void end_rendering(CommandBufferID cmd_id);
+    void end_rendering(CommandBufferID cmd_id, const std::shared_ptr<Core::Window>& window);
 
     //==========================================================================
     // Command Recording
@@ -285,7 +285,6 @@ public:
     /**
      * @brief Associate a window with a render pass for rendering
      * @param window Target window for rendering
-     * @param render_pass_id Render pass to use for this window
      *
      * The window must be registered with GraphicsSubsystem first.
      * RenderFlow will query framebuffer/extent from DisplayService when needed.
@@ -295,8 +294,7 @@ public:
      *   flow.register_window_for_rendering(my_window, rp);
      */
     void register_window_for_rendering(
-        const std::shared_ptr<Core::Window>& window,
-        RenderPassID render_pass_id);
+        const std::shared_ptr<Core::Window>& window);
 
     /**
      * @brief Unregister a window from rendering
@@ -321,7 +319,7 @@ public:
      *
      * Used by RenderProcessor to create secondary command buffers.
      */
-    vk::RenderPass get_window_render_pass(const std::shared_ptr<Core::Window>& window) const;
+    // vk::RenderPass get_window_render_pass(const std::shared_ptr<Core::Window>& window) const;
 
     //==========================================================================
     // Convenience Methods
@@ -337,7 +335,7 @@ public:
 private:
     struct WindowRenderAssociation {
         std::weak_ptr<Core::Window> window;
-        RenderPassID render_pass_id;
+        vk::Image swapchain_image {};
     };
 
     struct PipelineState {

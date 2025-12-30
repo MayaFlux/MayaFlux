@@ -269,29 +269,22 @@ bool VKGraphicsPipeline::create(vk::Device device, const GraphicsPipelineConfig&
     pipeline_info.pColorBlendState = &color_blend_state;
     pipeline_info.pDynamicState = config.dynamic_states.empty() ? nullptr : &dynamic_state;
     pipeline_info.layout = m_layout;
-    pipeline_info.renderPass = config.render_pass;
-    pipeline_info.subpass = config.subpass;
     pipeline_info.basePipelineHandle = nullptr;
     pipeline_info.basePipelineIndex = -1;
 
     vk::PipelineRenderingCreateInfo rendering_create_info;
-    if (config.use_dynamic_rendering) {
-        rendering_create_info.colorAttachmentCount = static_cast<uint32_t>(config.color_attachment_formats.size());
-        rendering_create_info.pColorAttachmentFormats = config.color_attachment_formats.data();
-        rendering_create_info.depthAttachmentFormat = config.depth_attachment_format;
-        rendering_create_info.stencilAttachmentFormat = config.stencil_attachment_format;
+    rendering_create_info.colorAttachmentCount = static_cast<uint32_t>(config.color_attachment_formats.size());
+    rendering_create_info.pColorAttachmentFormats = config.color_attachment_formats.data();
+    rendering_create_info.depthAttachmentFormat = config.depth_attachment_format;
+    rendering_create_info.stencilAttachmentFormat = config.stencil_attachment_format;
 
-        pipeline_info.pNext = &rendering_create_info;
-        pipeline_info.renderPass = nullptr;
-        pipeline_info.subpass = 0;
+    pipeline_info.pNext = &rendering_create_info;
+    pipeline_info.renderPass = nullptr;
+    pipeline_info.subpass = 0;
 
-        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Creating pipeline for dynamic rendering ({} color attachments)",
-            config.color_attachment_formats.size());
-    } else {
-        pipeline_info.renderPass = config.render_pass;
-        pipeline_info.subpass = config.subpass;
-    }
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Creating pipeline for dynamic rendering ({} color attachments)",
+        config.color_attachment_formats.size());
 
     try {
         auto result = device.createGraphicsPipeline(config.cache, pipeline_info);
