@@ -291,7 +291,7 @@ void compose() {
     source_sine >> logic;
 
     // 3. When logic fires, excite the bell
-    logic->on_change_to([bell](auto& ctx) {true,
+    logic->on_change_to(true, [bell](auto& ctx) {
         if (ctx.value != 0) {
             bell->excite(get_uniform_random(0.5f, 0.9f));
             bell->set_fundamental(get_uniform_random(220.0f, 1000.0f));
@@ -483,6 +483,8 @@ You'll have working audio within 5 minutes.
 
 If you have already completed the aforementioned tutorial, proceed to the next tutorial at
 [Sculpting Data Part II, Processing Expression](Tutorials/SculptingData/ProcessingExpression.md) which covers buffers, processors, math as expression, logic as creative decisions and more.
+
+For graphics starting points, check out [Graphics Basics](/docs/Tutorials/SculptingData/VisualMateriality.md)
 
 ## FAQ (MacOS)
 

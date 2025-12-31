@@ -7,8 +7,10 @@
 
 > **A unified multimedia processing architecture treating audio, video, and algorithmic composition as interchangeable computational material.**
 
-MayaFlux is not a plugin framework, DAW, or audio library. It's the **computational substrate** that makes new kinds of real-time multimedia systems possible—by asking a fundamental question:
+MayaFlux is not a plugin framework, DAW, or audio library. It's the **computational substrate** that makes new kinds of real-time multimedia systems possible by asking a fundamental question:
 _What if audio, visuals, and control data shared the same processing paradigm instead of separate, disconnected domains?_
+
+For comprehensive onboarding/transittion guide, tutorials, design context, and philosophy, visit [the website](https://mayaflux.org)
 
 ---
 
@@ -18,11 +20,11 @@ Existing tools force a choice: real-time audio precision **or** flexible visual 
 
 **MayaFlux eliminates this false choice.**
 
-### What Becomes Possible
+### New Possibilities
 
 - **Direct cross-modal data flow**: Audio features flow to GPU compute shaders without translation layers or callback hell
 - **Live algorithmic authorship**: Modify audio and visual algorithms while they execute, sub-buffer latency (~1ms)
-- **Recursive composition**: Treat time as creative material via C++20 coroutines—enabling temporal structures impossible in traditional DSP
+- **Recursive composition**: Treat time as creative material via C++20 coroutines enabling temporal structures impossible in traditional DSP
 - **Sample-accurate coordination**: Audio processing at sample rate, graphics at frame rate, both within unified scheduling
 - **Adaptive pipelines**: Algorithms self-configure based on data characteristics at runtime via grammar-driven matching
 
@@ -32,7 +34,7 @@ This isn't incremental improvement on existing paradigms. It's a different compu
 
 ## Architecture
 
-Four composable paradigms form the foundation:
+Five composable paradigms form the foundation:
 
 | Component               | What It Does                                                                                  |
 | ----------------------- | --------------------------------------------------------------------------------------------- |
@@ -78,9 +80,9 @@ All components remain **composable and concurrent**. Processing domains are enco
 
 ## Quick Start(Projects) WEAVE
 
-MayaFlux provides a managemnt tool called `Weave`, currently compatible with
-winodws and mac.
-It has two disticnt modes:
+MayaFlux provides a management tool called `Weave`, currently compatible with
+windows and mac.
+It has two distinct modes:
 
 ### Management Mode
 
@@ -95,7 +97,7 @@ It automates:
 
 It automates:
 
-- Createing new C++ projects
+- Creating new C++ projects
 - Setting up CMakeLists.txt with necessary configurations (**DO NOT EDIT if you are unfamiliar with Cmake**)
 - Adding necessary MayaFlux includes and linkages
 - Setting up editor tools
@@ -307,7 +309,9 @@ If you're investigating:
 
 - ✓ Validate core audio architecture
 - ✓ Implement live coding (Lila)
-- → Public launch (November 2025)
+- ✓ Public availability
+- ✓ Vulkan graphics pipeline (basic CPU → GPU data flow)
+- ✓ Cross-domain synchronization
 
 ### Phase 2 (Q1 2026)
 

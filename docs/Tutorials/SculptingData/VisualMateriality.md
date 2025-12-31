@@ -8,8 +8,6 @@ This tutorial shows you the smallest visual gesture: a single point._
 
 # **Tutorial: Points in Space**
 
-## The Simplest Path
-
 ```cpp
 void compose() {
     auto window = MayaFlux::create_window({ "Visual", 800, 600 });
@@ -35,7 +33,7 @@ Change `0.5f` to `-0.5f`. The point moves to the lower half. Try `0.0f, 0.0f, 0.
 <details>
 <summary>Click to expand: Points Are Vertex Data</summary>
 
-`PointNode` is a **GeometryWriterNode**—a node that generates vertex data each frame.
+`PointNode` is a **GeometryWriterNode**, a node that generates vertex data each frame.
 
 ```cpp
 struct PointVertex {
@@ -195,7 +193,7 @@ Creates a **GLFW window** (cross-platform windowing library) with:
 - Vulkan surface attached automatically
 - Event handling registered with MayaFlux's event system
 
-**WindowManager** handles GLFW event polling in the graphics thread. You don't call `glfwPollEvents()` yourself—it's handled by the subsystem's `process()` cycle.
+**WindowManager** handles GLFW event polling in the graphics thread. You don't call `glfwPollEvents()` yourself. It's handled by the subsystem's `process()` cycle.
 
 ```cpp
 window->show();
@@ -320,7 +318,7 @@ You now understand the complete graphics stack:
 **Tokens:** `| Graphics` registers components with visual-rate scheduler  
 **No draw loop:** Subsystem handles timing, you declare structure
 
-**Next:** Section 2 will show you `PointCollectionNode` for rendering many points efficiently, and Section 3 will drive point positions from audio nodes—finally crossing the audio/visual boundary.
+**Next:** Section 2 will show you `PointCollectionNode` for rendering many points efficiently, and Section 3 will drive point positions from audio nodes, finally crossing the audio/visual boundary.
 
 ---
 
@@ -331,8 +329,6 @@ Now: render many points with one buffer, one upload, one draw call.
 This is how you work with data at scale: aggregation, not repetition._
 
 ---
-
-## The Simplest Path
 
 ```cpp
 void compose() {
@@ -419,7 +415,7 @@ void PointCollectionNode::compute_frame() {
 
 Points have no relationships. They're just a list of positions. No topology, no connectivity, no physics.
 
-For particle systems with relationships (springs, forces, neighborhoods), use `ParticleNetwork` instead—that's covered in a future tutorial.
+For particle systems with relationships (springs, forces, neighborhoods), use `ParticleNetwork` instead (covered in a future tutorial).
 
 **When to use PointCollectionNode:**
 
@@ -505,7 +501,7 @@ It uploads the entire vertex array as a contiguous block. GPU reads it sequentia
 <details>
 <summary>Click to expand: How Rendering Actually Happens</summary>
 
-You've been working with `GeometryBuffer`—a specialized buffer for vertex data. But there's a hidden orchestrator: **RootGraphicsBuffer**.
+You've been working with `GeometryBuffer`, a specialized buffer for vertex data. But there's a hidden orchestrator: **RootGraphicsBuffer**.
 
 **The Graphics Subsystem runs its own thread:**
 
@@ -633,7 +629,7 @@ void PresentProcessor::fallback_renderer(RootGraphicsBuffer* root) {
 <details>
 <summary>Click to expand: No Render Passes, Just Begin/End Rendering</summary>
 
-MayaFlux uses **Vulkan 1.3 dynamic rendering**—this means no `VkRenderPass` objects.
+MayaFlux uses **Vulkan 1.3 dynamic rendering**, which means no `VkRenderPass` objects.
 
 **Traditional Vulkan (pre-1.3):**
 
@@ -684,7 +680,7 @@ void RenderFlow::begin_rendering(
 
 **Why this matters:**
 
-- Post-processing chains: Render to texture A, then B, then screen—no pipeline recreation
+- Post-processing chains: Render to texture A, then B, then screen (no pipeline recreation)
 - Multi-pass rendering: Different attachments per pass without render pass combinatorial explosion
 - Flexibility: Attachments decided at runtime, not compile time
 
@@ -745,26 +741,24 @@ void compose() {
 ## What You've Learned
 
 **PointCollectionNode:** Aggregate many vertices in one node  
-**Batching:** One buffer, one upload, one draw call—critical for performance  
+**Batching:** One buffer, one upload, one draw call - critical for performance  
 **RootGraphicsBuffer:** Hidden orchestrator managing all graphics buffers  
 **GraphicsBatchProcessor:** Default processor coordinating child buffer processing  
 **PresentProcessor:** Final processor grouping buffers by window and presenting frames  
 **Graphics Subsystem Thread:** Self-driven loop running at 60 FPS, no manual event loops  
 **Dynamic Rendering:** Vulkan 1.3 approach with `vkCmdBeginRendering`, no render pass objects
 
-**Next:** Section 3 crosses domains. We'll drive point positions from audio nodes—live audio analysis moving visual data. Finally: numbers are just numbers.
+**Next:** Section 3 crosses domains. We'll drive point positions from audio nodesfor live audio analysis moving visual data. Finally: numbers are just numbers.
 
 ---
 
 # **Tutorial: Time and Updates**
 
-_In the previous sections, geometry was static—created once in `compose()`.  
+_In the previous sections, geometry was static, created once in `compose()`.  
 Now: geometry that evolves. Points that grow, move, disappear.  
 This is where MayaFlux's architecture reveals its power: no draw loop, updates on your terms._
 
 ---
-
-## The Simplest Path
 
 ```cpp
 void compose() {
@@ -813,7 +807,7 @@ Run this. The spiral grows from center, fades as it expands, then resets and rep
 
 ---
 
-## Expansion 1: No Draw Loop—`compose()` Runs Once
+## Expansion 1: No Draw Loop, `compose()` Runs Once
 
 <details>
 <summary>Click to expand: Why This Is Different</summary>
@@ -955,7 +949,7 @@ MayaFlux: just create another window, point a buffer at it. Done.
 
 ---
 
-## Expansion 3: Update Timing—Three Approaches
+## Expansion 3: Update Timing: Three Approaches
 
 <details>
 <summary>Click to expand: Metro Tasks, Coroutines, and Node Ticks</summary>
@@ -1251,11 +1245,9 @@ void compose() {
 **Multiple windows:** Separate content, separate targets, no offsets  
 **Dirty flags:** Geometry uploads only when changed
 
-**Next:** Section 4 crosses domains. Audio nodes drive point positions—live audio analysis controlling visual data. Numbers driving numbers, no artificial boundaries.
+**Next:** Section 4 crosses domains. Audio nodes drive point positions, i.e live audio analysis controlling visual data. Numbers driving numbers, no artificial boundaries.
 
 # **Tutorial: Audio → Geometry**
-
-## The Simplest Path
 
 ```cpp
 void settings() {
@@ -1304,7 +1296,7 @@ void compose() {
 
 Run this. You hear a slowly pulsing drone. Particles fall heavily when the sound swells, float when it recedes. The same envelope shapes both audio amplitude and gravitational force.
 
-That's the paradigm shift. One node—one stream of numbers—simultaneously controls audio loudness and particle physics. Not because we "routed" audio to visuals. Because they were never separate.
+That's the paradigm shift. One node (one stream of numbers) simultaneously controls audio loudness and particle physics. Not because we "routed" audio to visuals. Because they were never separate.
 
 ---
 
@@ -1313,7 +1305,7 @@ That's the paradigm shift. One node—one stream of numbers—simultaneously con
 <details>
 <summary>Click to expand: Many Nodes, One Structure</summary>
 
-You've worked with individual **Nodes**—sample-by-sample processors. **NodeNetworks** coordinate _many_ nodes with relationships between them.
+You've worked with individual **Nodes** i.e sample-by-sample processors. **NodeNetworks** coordinate _many_ nodes with relationships between them.
 
 | Aspect        | Node                 | NodeNetwork                             |
 | ------------- | -------------------- | --------------------------------------- |
@@ -1368,7 +1360,7 @@ void ParticleNetwork::update_mapped_parameters() {
 }
 ```
 
-**The key**: Nodes have `get_last_output()`—a single queryable value from their most recent sample. The particle network runs at visual rate (60Hz), the node runs at audio rate (48kHz). The network simply reads whatever value the node last computed.
+**The key**: Nodes have `get_last_output()`, a single queryable value from their most recent sample. The particle network runs at visual rate (60Hz), the node runs at audio rate (48kHz). The network simply reads whatever value the node last computed.
 
 **No conversion, no special routing**. The node doesn't know it's controlling particles. The particles don't know the value came from audio synthesis. Numbers flow through the same substrate.
 
@@ -1456,8 +1448,6 @@ Sound and stillness invert. The drone grows loud, particles settle into structur
 
 # **Tutorial: Logic Events → Visual Impulse**
 
-## The Simplest Path
-
 ```cpp
 void compose() {
     auto window = MayaFlux::create_window({ "Event Reactive", 1920, 1080 });
@@ -1513,7 +1503,7 @@ void compose() {
 }
 ```
 
-Run this. Stochastic events emerge from filtered noise—unpredictable but not random. Each event triggers a click and a radial breath. The sphere pulses with emergent rhythm, not metronomic time.
+Run this. Stochastic events emerge from filtered noise which is unpredictable but fully random. Each event triggers a click and a radial breath. The sphere pulses with emergent rhythm, not metronomic time.
 
 The chain detects change in the noise contour, not amplitude. Slow drifts pass silently. Sharp inflections trigger events. The same logic detection pattern from the original, but driven by generative source rather than external input.
 
@@ -1702,8 +1692,6 @@ Bass makes the form sway side to side. Treble makes it bounce up and down. Spect
 
 # **Tutorial: Topology and Emergent Form**
 
-## The Simplest Path
-
 ```cpp
 void compose() {
     auto window = MayaFlux::create_window({ "Emergent", 1920, 1080 });
@@ -1759,7 +1747,7 @@ void compose() {
 }
 ```
 
-Run this. The grid receives periodic disturbances. When you're silent, particles flow fluidly—springs are weak. When you speak, the structure rigidifies—springs tighten. Sound becomes material property.
+Run this. The grid receives periodic disturbances. When you're silent, particles flow fluidly, springs are weak. When you speak, the structure rigidifies, springs tighten. Sound becomes material property.
 
 ---
 
@@ -1788,7 +1776,7 @@ Run this. The grid receives periodic disturbances. When you're silent, particles
 ## Expansion 2: Material Properties as Audio Targets
 
 <details>
-<summary>Click to expand: Beyond Position—Mapping to Structure</summary>
+<summary>Click to expand: Beyond Position: Mapping to Structure</summary>
 
 Most audio-reactive systems map amplitude → position/size/color. That's valid but limited. MayaFlux lets you map to _material properties_:
 
@@ -1860,7 +1848,7 @@ In MayaFlux, there is no boundary. A node that shapes amplitude can shape gravit
 
 This isn't a "feature." It's the consequence of treating all creative data as what it actually is: numbers flowing through transformations.
 
-The particle systems you've built here demonstrate the principle—cross-domain data flow, but they're still working with pre-built physics simulations. The GPU does what `ParticleNetwork` tells it to do.
+The particle systems you've built here demonstrate the principle cross-domain data flow, but they're still working with pre-built physics simulations. The GPU does what `ParticleNetwork` tells it to do.
 
 ---
 
