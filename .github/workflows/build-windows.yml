@@ -31,7 +31,7 @@ on:
         type: string
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: RelWithDebInfo
   VCVARS_PATH: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   LLVM_ROOT: "C:/LLVM_CI"

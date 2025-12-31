@@ -8,6 +8,7 @@ export CXX=g++-15
 
 override_dh_auto_configure:
 	dh_auto_configure -- \
+	  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
 	  -DCMAKE_CXX_STANDARD=23 \
 	  -DMAYAFLUX_BUILD_TESTS=OFF
 
