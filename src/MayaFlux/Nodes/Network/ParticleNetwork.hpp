@@ -165,6 +165,11 @@ public:
         return m_particles;
     }
 
+    [[nodiscard]] std::vector<ParticleNode>& get_particles()
+    {
+        return m_particles;
+    }
+
     /**
      * @brief Get specific particle
      */

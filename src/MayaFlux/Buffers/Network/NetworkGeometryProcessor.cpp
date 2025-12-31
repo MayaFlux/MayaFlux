@@ -126,7 +126,9 @@ void NetworkGeometryProcessor::processing_function(std::shared_ptr<Buffer> buffe
         }
 
         if (vertices.empty()) {
-            binding.gpu_vertex_buffer->clear();
+            if (binding.gpu_vertex_buffer->is_host_visible()) {
+                binding.gpu_vertex_buffer->clear();
+            }
             MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Network '{}' has no vertices, cleared buffer", name);
             continue;

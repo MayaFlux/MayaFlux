@@ -30,8 +30,6 @@ VKBuffer::VKBuffer(
 
 VKBuffer::~VKBuffer()
 {
-    // Cleanup happens during unregistration, not here
-    // (BufferManager/Backend owns the actual Vulkan resources)
     clear();
 }
 
@@ -45,10 +43,7 @@ void VKBuffer::clear()
 
     if (is_host_visible() && m_resources.mapped_ptr) {
         std::memset(m_resources.mapped_ptr, 0, m_size_bytes);
-        // Flush handled by backend
     } else {
-        // Device-local clear requires command buffer
-        // Backend/processor handles this
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
             "clear() on device-local buffer requires ClearBufferProcessor");
     }
