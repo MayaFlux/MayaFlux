@@ -17,7 +17,7 @@ override_dh_auto_build:
 	doxygen doxyconf || true
 
 override_dh_shlibdeps:
-	dh_shlibdeps -XlibMayaFluxLib.so -XlibLila.so
+	dh_shlibdeps -l$(CURDIR)/debian/mayaflux-edge/usr/lib -- -xmayaflux-edge
 
 override_dh_auto_install:
 	dh_auto_install
