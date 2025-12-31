@@ -198,6 +198,22 @@ void ParticleNetwork::apply_broadcast_parameter(const std::string& param, double
         }
     } else if (param == "attraction") {
         m_attraction_strength = static_cast<float>(value);
+    } else if (param == "spring_stiffness") {
+        m_spring_stiffness = glm::max(0.0F, static_cast<float>(value));
+    } else if (param == "repulsion_strength") {
+        m_repulsion_strength = glm::max(0.0F, static_cast<float>(value));
+    } else if (param == "force_x") {
+        for (auto& particle : m_particles) {
+            particle.force.x += static_cast<float>(value);
+        }
+    } else if (param == "force_y") {
+        for (auto& particle : m_particles) {
+            particle.force.y += static_cast<float>(value);
+        }
+    } else if (param == "force_z") {
+        for (auto& particle : m_particles) {
+            particle.force.z += static_cast<float>(value);
+        }
     }
 }
 

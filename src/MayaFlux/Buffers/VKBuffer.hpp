@@ -460,7 +460,7 @@ private:
     bool m_has_data { true };
     bool m_needs_removal {};
     bool m_process_default { true };
-    bool m_internal_usage { false };
+    bool m_internal_usage {};
     std::atomic<bool> m_is_processing;
     std::shared_ptr<Buffers::BufferProcessor> m_default_processor;
     std::shared_ptr<Buffers::BufferProcessingChain> m_processing_chain;

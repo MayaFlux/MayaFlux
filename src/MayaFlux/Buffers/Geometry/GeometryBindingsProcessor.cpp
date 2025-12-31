@@ -130,7 +130,9 @@ void GeometryBindingsProcessor::processing_function(std::shared_ptr<Buffer> buff
         auto vertices = binding.node->get_vertex_data();
 
         if (vertices.empty()) {
-            binding.gpu_vertex_buffer->clear();
+            if (binding.gpu_vertex_buffer->is_host_visible()) {
+                binding.gpu_vertex_buffer->clear();
+            }
 
             if (binding.node->get_vertex_layout()) {
                 binding.gpu_vertex_buffer->set_vertex_layout(
