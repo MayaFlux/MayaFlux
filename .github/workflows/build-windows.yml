@@ -197,14 +197,13 @@ jobs:
         run: |
           Write-Host "=== Installing vcpkg and dependencies ===" -ForegroundColor Magenta
 
-          # Clone and bootstrap vcpkg
           git clone https://github.com/Microsoft/vcpkg.git ${{ env.VCPKG_ROOT }}
           & "${{ env.VCPKG_ROOT }}\bootstrap-vcpkg.bat"
 
-          # Install dependencies
+          cd ${{ github.workspace }}/.github/workflows
           & "${{ env.VCPKG_ROOT }}\vcpkg.exe" install `
-            rtaudio glfw3 eigen3 glm magic-enum `
             --triplet x64-windows `
+            --x-install-root=${{ env.VCPKG_ROOT }}/installed `
             --clean-buildtrees-after-build
 
           Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
