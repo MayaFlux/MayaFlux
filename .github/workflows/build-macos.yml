@@ -22,7 +22,7 @@ on:
         default: true
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: RelWithDebInfo
 
 jobs:
   build:

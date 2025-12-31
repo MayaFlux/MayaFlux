@@ -31,7 +31,7 @@ on:
         type: string
 
 env:
-  BUILD_TYPE: Release
+  BUILD_TYPE: RelWithDebInfo
 
 jobs:
   build:

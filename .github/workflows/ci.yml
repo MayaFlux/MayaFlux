@@ -18,6 +18,11 @@ on:
         required: false
         default: true
         type: boolean
+      force_release:
+        description: "Force recreate release (deletes existing)"
+        required: false
+        default: false
+        type: boolean
       target_os:
         description: "Target operating system"
         required: false
@@ -183,6 +188,15 @@ jobs:
           }
           ' .github/workflows/distribution/shared/release_body.md > processed_release_body.md
 
+      - name: Delete existing release for retry
+        if: ${{ inputs.force_release && needs.determine_version.outputs.IS_DEV == '0' }}
+        run: |
+          STABLE_TAG="v${{ needs.determine_version.outputs.CLEAN_VERSION }}"
+          gh release delete "$STABLE_TAG" --yes || true
+          git push --delete origin "$STABLE_TAG" || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Prepare tag for dev builds
         if: ${{ needs.determine_version.outputs.IS_DEV == '1' }}
         run: |
@@ -191,10 +205,34 @@ jobs:
           echo "Preparing dev tag: $DEV_TAG -> ${GITHUB_SHA}"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-
-          # create or move the dev tag to the commit we built
           git tag -f "$DEV_TAG" "${GITHUB_SHA}"
           git push -f origin "$DEV_TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare tag for stable builds
+        if: ${{ needs.determine_version.outputs.IS_DEV == '0' }}
+        run: |
+          set -e
+          STABLE_TAG="v${{ needs.determine_version.outputs.CLEAN_VERSION }}"
+          echo "Preparing stable tag: $STABLE_TAG -> ${GITHUB_SHA}"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          if git rev-parse "$STABLE_TAG" >/dev/null 2>&1; then
+            echo "Tag $STABLE_TAG already exists"
+            EXISTING_SHA=$(git rev-parse "$STABLE_TAG")
+            if [ "$EXISTING_SHA" != "${GITHUB_SHA}" ]; then
+              echo "WARNING: Existing tag points to different commit!"
+              echo "Existing: $EXISTING_SHA"
+              echo "Current:  ${GITHUB_SHA}"
+              echo "Delete the tag manually if you want to retag."
+              exit 1
+            fi
+          else
+            git tag "$STABLE_TAG" "${GITHUB_SHA}"
+            git push origin "$STABLE_TAG"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

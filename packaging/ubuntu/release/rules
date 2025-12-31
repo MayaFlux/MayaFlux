@@ -1,0 +1,35 @@
+#!/usr/bin/make -f
+
+export CC=gcc-15
+export CXX=g++-15
+
+%:
+	dh $@ --buildsystem=cmake --parallel
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+	  -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+	  -DCMAKE_CXX_STANDARD=23 \
+	  -DMAYAFLUX_BUILD_TESTS=OFF
+
+override_dh_auto_build:
+	dh_auto_build
+	doxygen doxyconf || true
+
+override_dh_shlibdeps:
+	dh_shlibdeps -XlibMayaFluxLib.so -XlibLila.so
+
+override_dh_auto_install:
+	dh_auto_install
+	install -d debian/mayaflux/etc/profile.d
+	printf '#!/bin/sh\nexport MAYAFLUX_ROOT="/usr"\nexport CMAKE_PREFIX_PATH="/usr:$${CMAKE_PREFIX_PATH}"\nexport PATH="/usr/lib/llvm-21/bin:$${PATH}"\n' > debian/mayaflux/etc/profile.d/mayaflux.sh
+	chmod 755 debian/mayaflux/etc/profile.d/mayaflux.sh
+
+	install -d debian/mayaflux-doc/usr/share/doc/mayaflux/html
+	if [ -d docs/html ]; then \
+	  cp -r docs/html/* debian/mayaflux-doc/usr/share/doc/mayaflux/html/; \
+	fi
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf docs/html

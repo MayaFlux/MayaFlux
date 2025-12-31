@@ -1,0 +1,92 @@
+Source: mayaflux
+Section: devel
+Priority: optional
+Maintainer: MayaFlux Collective <mayafluxcollective@proton.me>
+Build-Depends:
+    debhelper-compat (= 13),
+    cmake (>= 3.28),
+    ninja-build,
+    pkg-config,
+    g++-15,
+    clang-21,
+    llvm-21,
+    llvm-21-dev,
+    libclang-21-dev,
+    libtbb-dev,
+    vulkan-validationlayers,
+    vulkan-tools,
+    vulkan-utility-libraries-dev,
+    libspirv-cross-c-shared-dev,
+    libvulkan-dev,
+    libvulkan1,
+    wayland-protocols,
+    libwayland-dev,
+    libglfw3-dev (>= 3.4),
+    libglfw3-wayland,
+    glslc,
+    libshaderc-dev,
+    libglm-dev,
+    libeigen3-dev,
+    libmagicenum-dev,
+    libstb-dev,
+    librtaudio-dev,
+    ffmpeg,
+    libavcodec-dev,
+    libavformat-dev,
+    libswscale-dev,
+    git
+Standards-Version: 4.7.0
+Homepage: https://mayaflux.org
+Vcs-Browser: https://github.com/MayaFlux/MayaFlux
+Vcs-Git: https://github.com/MayaFlux/MayaFlux.git
+
+Package: mayaflux
+Architecture: any
+Depends:
+    ${shlibs:Depends},
+    ${misc:Depends},
+    cmake (>= 3.28),
+    ninja-build,
+    pkg-config,
+    g++-15,
+    clang-21,
+    llvm-21,
+    llvm-21-dev,
+    libclang-21-dev,
+    libtbb-dev,
+    vulkan-validationlayers,
+    vulkan-tools,
+    vulkan-utility-libraries-dev,
+    libspirv-cross-c-shared-dev,
+    libvulkan-dev,
+    libvulkan1,
+    wayland-protocols,
+    libwayland-dev,
+    libglfw3-dev (>= 3.4),
+    libglfw3-wayland,
+    glslc,
+    libshaderc-dev,
+    libglm-dev,
+    libeigen3-dev,
+    libmagicenum-dev,
+    libstb-dev,
+    librtaudio-dev,
+    libavcodec-dev,
+    libavformat-dev,
+    libswscale-dev
+Suggests:
+    mayaflux-doc
+Description: Modern C++ framework for real-time graphics and audio with JIT
+ MayaFlux is a modern C++23 framework for real-time graphics and audio
+ processing with JIT compilation and live coding capabilities.
+ .
+ This package includes the full development and header stack required
+ at runtime for JIT compilation and live C++ coding features.
+
+Package: mayaflux-doc
+Architecture: all
+Section: doc
+Depends: ${misc:Depends}
+Description: Documentation for MayaFlux development framework
+ This package contains the Doxygen-generated API reference and 
+ documentation for the MayaFlux framework.
