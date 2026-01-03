@@ -286,7 +286,7 @@ open docs/html/index.html
 | Grammar-Driven Pipelines | ⚙ In Development | Core framework ready, advanced matching in progress            |
 
 **Development began**: Since April 2025
-**Current version**: 0.1.0 (alpha)  
+**Current version**: 0.1.1 (alpha)  
 **Trajectory**: Stable core, expanding multimedia capabilities
 
 ---

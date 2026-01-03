@@ -1,7 +1,7 @@
 %global gitrev %{?COPR_GIT_COMMIT}
 
 Name:           mayaflux-dev
-Version:        0.1.0
+Version:        0.1.1
 Release:        1.dev.git%{gitrev}%{?dist}
 Summary:        Modern C++ framework for real-time graphics and audio with JIT compilation (Development Build)
 
@@ -147,7 +147,7 @@ EOF
 %postun -p /sbin/ldconfig
 
 %changelog
-* Wed Dec 24 2025 MayaFlux Collective <mayafluxcollective@proton.me> - 0.1.0-1.dev
+* Sat Jan 03 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.1.1-0.dev
 - Initial development package
 - Full source build with C++23 support
 - All development dependencies included for JIT/live coding

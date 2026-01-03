@@ -34,7 +34,7 @@ int main()
 {
     try {
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Creative Coding Framework ===");
-        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Version: {}", "0.1.0");
+        MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "Version: {}", "0.1.1");
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "");
 
         initialize();
