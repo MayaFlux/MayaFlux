@@ -244,6 +244,19 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     features2.pNext = &vulkan_13_features;
 
     std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    auto available_exts = m_physical_device.enumerateDeviceExtensionProperties();
+    bool has_portability = std::ranges::any_of(available_exts,
+        [](const auto& ext) {
+            return strcmp(ext.extensionName, "VK_KHR_portability_subset") == 0;
+        });
+
+    if (has_portability) {
+        device_extensions.push_back("VK_KHR_portability_subset");
+    }
+#endif
+
     for (const auto& ext : backend_info.required_extensions) {
         device_extensions.push_back(ext.c_str());
     }
