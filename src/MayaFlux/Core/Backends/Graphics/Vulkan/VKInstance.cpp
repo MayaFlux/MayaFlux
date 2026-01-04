@@ -57,6 +57,12 @@ bool VKInstance::initialize(bool enable_validation,
     create_info.pApplicationInfo = &app_info;
 
     std::vector<const char*> extensions = required_extensions;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    create_info.flags = vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+#endif
+
     if (m_validation_enabled) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
