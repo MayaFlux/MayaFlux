@@ -130,6 +130,33 @@ void Resume()
     }
 }
 
+void Await()
+{
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    // macOS: GLFW requires main thread, spawn input thread instead
+    std::atomic<bool> should_quit { false };
+
+    std::thread input_thread([&should_quit]() {
+        std::cin.get();
+        should_quit.store(true, std::memory_order_release);
+    });
+
+    // Keep main thread alive for dispatch_sync calls from graphics thread
+    // glfwPollEvents() is already running there via WindowManager
+    while (!should_quit.load(std::memory_order_acquire)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    }
+
+    input_thread.join();
+
+#else
+    std::cin.get();
+#endif
+
+    MF_PRINT(Journal::Component::API, Journal::Context::Runtime,
+        "Input received - shutting down");
+}
+
 void End()
 {
     if (internal::initialized) {
