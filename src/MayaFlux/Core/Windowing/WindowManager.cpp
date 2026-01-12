@@ -177,7 +177,7 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 bool WindowManager::process()
 {
 #ifdef MAYAFLUX_PLATFORM_MACOS
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
         glfwPollEvents();
     });
 #else

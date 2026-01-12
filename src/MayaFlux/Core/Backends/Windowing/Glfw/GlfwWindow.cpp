@@ -124,7 +124,12 @@ void GlfwWindow::configure_window_hints(const GraphicsSurfaceInfo& /*surface_inf
 {
     glfwDefaultWindowHints();
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+#else
     glfwWindowHint(GLFW_RESIZABLE, m_create_info.resizable ? GLFW_TRUE : GLFW_FALSE);
+#endif // MAYAFLUX_PLATFORM_MACOS
+
     glfwWindowHint(GLFW_DECORATED, m_create_info.decorated ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_FLOATING, m_create_info.floating ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, m_create_info.transparent ? GLFW_TRUE : GLFW_FALSE);
