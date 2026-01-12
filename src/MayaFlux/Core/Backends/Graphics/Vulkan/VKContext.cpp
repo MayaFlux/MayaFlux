@@ -7,9 +7,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include <dispatch/dispatch.h>
-#endif
+#include "MayaFlux/Parallel.hpp"
 
 namespace MayaFlux::Core {
 
@@ -79,25 +77,14 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
         return nullptr;
     }
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    __block VkSurfaceKHR c_surface;
-    __block VkResult result;
-    dispatch_sync(dispatch_get_main_queue(), ^{
-        result = glfwCreateWindowSurface(
+    VkSurfaceKHR c_surface;
+    VkResult result = Parallel::dispatch_main_sync([&]() {
+        return glfwCreateWindowSurface(
             static_cast<VkInstance>(m_instance.get_instance()),
             glfw_handle,
             nullptr,
             &c_surface);
-        std::cout << "Created surface\n";
     });
-#else
-    VkSurfaceKHR c_surface;
-    VkResult result = glfwCreateWindowSurface(
-        static_cast<VkInstance>(m_instance.get_instance()),
-        glfw_handle,
-        nullptr,
-        &c_surface);
-#endif // MAYAFLUX_PLATFORM_MACOS
 
     if (result != VK_SUCCESS) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,

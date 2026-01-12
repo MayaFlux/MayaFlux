@@ -4,9 +4,7 @@
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-#include <dispatch/dispatch.h>
-#endif
+#include "MayaFlux/Parallel.hpp"
 
 namespace MayaFlux::Core {
 
@@ -176,13 +174,9 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 
 bool WindowManager::process()
 {
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    dispatch_async(dispatch_get_main_queue(), ^{
+    Parallel::dispatch_main_sync([]() {
         glfwPollEvents();
     });
-#else
-    glfwPollEvents();
-#endif
 
     {
         std::lock_guard<std::mutex> lock(m_hooks_mutex);
