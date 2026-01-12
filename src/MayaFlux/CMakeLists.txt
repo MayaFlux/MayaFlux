@@ -92,6 +92,7 @@ else()
         message(STATUS "MayaFlux Journal: Using fmt library on macOS")
 
         target_link_libraries(MayaFluxLib PUBLIC Vulkan::Vulkan)
+        target_link_libraries(MayaFluxLib PRIVATE "-framework CoreFoundation")
     else()
         add_compile_definitions(USE_TBB_BACKEND)
         target_link_libraries(MayaFluxLib PUBLIC PkgConfig::Vulkan)
