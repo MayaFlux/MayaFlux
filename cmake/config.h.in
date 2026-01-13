@@ -125,14 +125,23 @@ namespace MayaFlux {
 namespace Config {
     constexpr std::string_view SOURCE_DIR = "@CMAKE_SOURCE_DIR@";
     constexpr std::string_view PCH_SOURCE_PATH = "@CMAKE_SOURCE_DIR@/cmake";
+#if defined(MAYAFLUX_PLATFORM_MACOS) && (defined(__aarch64__) || defined(_M_ARM64))
+    constexpr std::string_view RUNTIME_DATA_DIR = "/opt/homebrew/share/MayaFlux/runtime";
+    constexpr std::string_view PCH_RUNTIME_PATH = "/opt/homebrew/share/MayaFlux/runtime/pch.h";
+#else
     constexpr std::string_view RUNTIME_DATA_DIR = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/runtime";
     constexpr std::string_view PCH_RUNTIME_PATH = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/runtime/pch.h";
+#endif
 }
 
 namespace Core {
     constexpr const char* SHADER_BUILD_OUTPUT_DIR = "@SHADER_OUTPUT_DIR@";
     constexpr const char* SHADER_SOURCE_DIR = "@SHADERS_DIR@";
+#if defined(MAYAFLUX_PLATFORM_MACOS) && (defined(__aarch64__) || defined(_M_ARM64))
+    constexpr const char* SHADER_INSTALL_DIR = "/opt/homebrew/share/MayaFlux/shaders";
+#else
     constexpr const char* SHADER_INSTALL_DIR = "@CMAKE_INSTALL_PREFIX@/share/MayaFlux/shaders";
+#endif
 } // namespace Core
 
 namespace Platform {
