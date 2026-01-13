@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-# Quiet setup for macOS: LLVM (via Homebrew) + Vulkan SDK (via LunarG API)
+# Quiet setup for macOS: via Homebrew
 # Only errors printed. Safe for CI and users.
 set -euo pipefail
 
@@ -22,10 +22,9 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 
 brew update >/dev/null
-brew install cmake pkg-config git wget curl >/dev/null
-brew install llvm >/dev/null
+brew install cmake pkg-config git wget curl llvm >/dev/null
 
-# --- 2) LLVM environment configuration ---------------------------------------
+# --- 2) LLVM configuration ---------------------------------------
 LLVM_PREFIX="$(brew --prefix llvm 2>/dev/null || true)"
 if [ -n "$LLVM_PREFIX" ]; then
     if ! grep -Fq "$LLVM_PREFIX/bin" "$PROFILE" 2>/dev/null; then
@@ -37,62 +36,44 @@ if [ -n "$LLVM_PREFIX" ]; then
     fi
 fi
 
-# --- 3) Dependencies ------------------------------------------
-brew install ffmpeg rtaudio glfw glm eigen fmt magic_enum onedpl googletest vulkan-headers vulkan-loader vulkan-tools vulkan-validationlayers vulkan-utility-libraries spirv-tools spirv-cross shaderc glslang molten-vk
+# --- 3) Install All Dependencies ---------------------------------
+printf 'Installing dependencies via Homebrew...\n' >&3
 
-# --- 4) Vulkan environment setup ---------------------------------------------
+brew tap mayaflux/mayaflux >/dev/null
 
-# Homebrew molten-vk installs to specific location
-HOMEBREW_PREFIX=$(brew --prefix)
-MOLTENVK_PREFIX="$HOMEBREW_PREFIX/opt/molten-vk"
+brew install \
+    ffmpeg rtaudio glfw glm eigen fmt magic_enum onedpl googletest \
+    vulkan-headers vulkan-loader vulkan-tools vulkan-validationlayers \
+    vulkan-utility-libraries vulkan-extensionlayer spirv-tools spirv-cross \
+    spirv-headers shaderc glslang molten-vk mayaflux/mayaflux/stb >/dev/null
 
-if [ -d "$MOLTENVK_PREFIX" ]; then
-    # Check both possible ICD locations
-    if [ -f "$MOLTENVK_PREFIX/share/vulkan/icd.d/MoltenVK_icd.json" ]; then
-        MOLTENVK_ICD="$MOLTENVK_PREFIX/share/vulkan/icd.d/MoltenVK_icd.json"
-    elif [ -f "$MOLTENVK_PREFIX/etc/vulkan/icd.d/MoltenVK_icd.json" ]; then
-        MOLTENVK_ICD="$MOLTENVK_PREFIX/etc/vulkan/icd.d/MoltenVK_icd.json"
-    fi
+# --- 4) Vulkan Environment (Ported from Ruby Formula) ------------------------
+MOLTENVK_PREFIX="$(brew --prefix molten-vk)"
+VULKAN_LOADER_PREFIX="$(brew --prefix vulkan-loader)"
+VULKAN_LAYERS_PREFIX="$(brew --prefix vulkan-validationlayers)"
+
+append_if_missing "# Vulkan & MoltenVK Environment"
+
+# ICD Selection logic
+if [ -f "$MOLTENVK_PREFIX/share/vulkan/icd.d/MoltenVK_icd.json" ]; then
+    append_if_missing "export VK_ICD_FILENAMES=\"$MOLTENVK_PREFIX/share/vulkan/icd.d/MoltenVK_icd.json\""
+elif [ -f "$MOLTENVK_PREFIX/etc/vulkan/icd.d/MoltenVK_icd.json" ]; then
+    append_if_missing "export VK_ICD_FILENAMES=\"$MOLTENVK_PREFIX/etc/vulkan/icd.d/MoltenVK_icd.json\""
 fi
 
-if [ -n "$MOLTENVK_ICD" ]; then
-    append_if_missing "export VK_ICD_FILENAMES=\"$MOLTENVK_ICD\""
-fi
+# Library Paths
+append_if_missing "export DYLD_LIBRARY_PATH=\"$MOLTENVK_PREFIX/lib:\$DYLD_LIBRARY_PATH\""
+append_if_missing "export DYLD_LIBRARY_PATH=\"$VULKAN_LOADER_PREFIX/lib:\$DYLD_LIBRARY_PATH\""
+
+# Explicit Layers
+append_if_missing "export VK_LAYER_PATH=\"$VULKAN_LAYERS_PREFIX/share/vulkan/explicit_layer.d\""
 
 # --- 5) STB Setup (header-only library) --------------------------------------
-printf 'Installing STB headers...\n' >&3
+STB_PATH="$(brew --prefix stb)/include/stb"
 
-STB_INSTALL_DIR="$HOME/Libraries/stb"
-STB_HEADER_CHECK="$STB_INSTALL_DIR/stb_image.h"
-
-if [ ! -f "$STB_HEADER_CHECK" ]; then
-    mkdir -p "$STB_INSTALL_DIR"
-
-    STB_HEADERS=(
-        "stb_image.h"
-        "stb_image_write.h"
-        "stb_image_resize2.h"
-        "stb_truetype.h"
-        "stb_rect_pack.h"
-    )
-
-    for header in "${STB_HEADERS[@]}"; do
-        header_url="https://raw.githubusercontent.com/nothings/stb/master/$header"
-        header_path="$STB_INSTALL_DIR/$header"
-
-        if ! curl -fL "$header_url" -o "$header_path" 2>/dev/null; then
-            err "Failed to download STB header: $header"
-        fi
-    done
-
-    printf 'STB headers installed to %s\n' "$STB_INSTALL_DIR" >&3
-else
-    printf 'STB already installed at %s\n' "$STB_INSTALL_DIR" >&3
-fi
-
-append_if_missing 'export STB_ROOT="$HOME/Libraries"'
-append_if_missing 'export CMAKE_PREFIX_PATH="$STB_ROOT:$CMAKE_PREFIX_PATH"'
-append_if_missing 'export CPATH="$STB_ROOT/:$CPATH"'
+append_if_missing "# STB Header-only Library"
+append_if_missing "export STB_ROOT=\"$STB_PATH\""
+append_if_missing "export CPATH=\"\$STB_ROOT:\$CPATH\""
 
 # --- 6) Finish ---------------------------------------------------------------
 exec 1>&3 3>&-
