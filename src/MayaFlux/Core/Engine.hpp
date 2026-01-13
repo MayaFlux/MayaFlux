@@ -293,6 +293,31 @@ public:
         return m_subsystem_manager->get_subsystem(type);
     }
 
+    /**
+     * @brief Blocks until shutdown is requested (main thread event loop)
+     *
+     * Pumps platform-specific events on the main thread and waits for shutdown.
+     * On macOS: Runs CFRunLoop to process dispatch queue (required for GLFW)
+     * On other platforms: Simple blocking wait for user input
+     *
+     * Should be called on the main thread after Start().
+     */
+    void await_shutdown();
+
+    /**
+     * @brief Request shutdown from any thread
+     *
+     * Signals the event loop to exit. Thread-safe.
+     * Call this to gracefully terminate await_shutdown().
+     */
+    void request_shutdown();
+
+    /**
+     * @brief Check if shutdown has been requested
+     * @return true if shutdown was requested
+     */
+    bool is_shutdown_requested() const;
+
 private:
     //-------------------------------------------------------------------------
     // System Components
@@ -317,6 +342,10 @@ private:
     std::shared_ptr<WindowManager> m_window_manager; ///< Window manager (Windowing subsystem)
     std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager (currently only glfw events)
     std::unique_ptr<Nodes::Generator::Stochastics::Random> m_rng; ///< Stochastic signal generator
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    void run_macos_event_loop();
+#endif
 };
 
 } // namespace MayaFlux::Core
