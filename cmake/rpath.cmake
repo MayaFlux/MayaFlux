@@ -6,8 +6,10 @@ else()
     set(CMAKE_SKIP_INSTALL_RPATH OFF)
 
     if(APPLE)
-        set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/../lib")
-        set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+        if(NOT MAYAFLUX_DEV)
+            set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/../lib")
+            set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+        endif()
 
     elseif(UNIX AND NOT APPLE)
 

@@ -119,6 +119,25 @@ MAYAFLUX_API void Pause();
 MAYAFLUX_API void Resume();
 
 /**
+ * @brief Blocks launcher until user input (optional convenience function)
+ *
+ * Use this only in launcher applications that need to block the main
+ * thread until shutdown is requested.
+ *
+ * On macOS: Spawns input thread and allow GLFW to run on main thread
+ * On Linux/Windows: Simple blocking cin.get()
+ *
+ * Usage (optional):
+ * ```cpp
+ * engine->start_graphics();
+ * std::cout << "Press Enter to stop...\n";
+ * MayaFlux::Await();  // Blocks here (optional)
+ * engine->stop_graphics();
+ * ```
+ */
+MAYAFLUX_API void Await();
+
+/**
  * @brief Stops and cleans up the default engine
  *
  * Convenience wrapper for Engine::End() on the default engine.

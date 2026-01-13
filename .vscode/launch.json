@@ -5,7 +5,7 @@
       "name": "Debug MayaFlux (Linux/macOS)",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/MayaFlux",
+      "program": "${workspaceFolder}/build/project_launcher",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
@@ -27,7 +27,7 @@
       "preLaunchTask": "Build MayaFlux (Debug)",
       "osx": {
         "MIMode": "lldb",
-        "program": "${workspaceFolder}/build/MayaFlux",
+        "program": "${workspaceFolder}/build/project_launcher",
         "setupCommands": [
           {
             "description": "Enable pretty-printing for lldb",

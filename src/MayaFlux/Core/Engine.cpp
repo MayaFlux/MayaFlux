@@ -9,6 +9,11 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+#include <CoreFoundation/CoreFoundation.h>
+#include <unistd.h>
+#endif
+
 namespace MayaFlux::Core {
 
 //-------------------------------------------------------------------------
@@ -193,5 +198,73 @@ bool Engine::is_running() const
     }
     return false;
 }
+
+void Engine::await_shutdown()
+{
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    run_macos_event_loop();
+#else
+    // Simple blocking wait on other platforms
+    std::cin.get();
+#endif
+
+    m_should_shutdown.store(true, std::memory_order_release);
+
+    MF_PRINT(Journal::Component::Core, Journal::Context::Runtime,
+        "Shutdown requested, awaiting all subsystem termination ......");
+}
+
+void Engine::request_shutdown()
+{
+    m_should_shutdown.store(true, std::memory_order_release);
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    CFRunLoopStop(CFRunLoopGetMain());
+#endif
+}
+
+bool Engine::is_shutdown_requested() const
+{
+    return m_should_shutdown.load(std::memory_order_acquire);
+}
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+void Engine::run_macos_event_loop()
+{
+    CFRunLoopRef runLoop = CFRunLoopGetMain();
+
+    dispatch_source_t stdinSource = dispatch_source_create(
+        DISPATCH_SOURCE_TYPE_READ,
+        STDIN_FILENO,
+        0,
+        dispatch_get_main_queue());
+
+    dispatch_source_set_event_handler(stdinSource, ^{
+        char buf[1024];
+        ssize_t bytes_read = read(STDIN_FILENO, buf, sizeof(buf));
+        if (bytes_read > 0) {
+            request_shutdown();
+        }
+    });
+
+    dispatch_resume(stdinSource);
+
+    double timeout_seconds = 1.0 / static_cast<double>(m_graphics_config.target_frame_rate);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::Runtime,
+        "Main thread event loop running (polling at {}fps)",
+        m_graphics_config.target_frame_rate);
+
+    while (!is_shutdown_requested()) {
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, timeout_seconds, false);
+    }
+
+    dispatch_source_cancel(stdinSource);
+    dispatch_release(stdinSource);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::Runtime,
+        "Main thread event loop exiting");
+}
+#endif
 
 } // namespace MayaFlux::Core

@@ -5,7 +5,7 @@
       "label": "CMake Configure (Debug)",
       "type": "shell",
       "command": "cmake",
-      "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Debug"],
+      "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Debug", "-DMAYAFLUX_PORTABLE=ON"],
       "group": "build",
       "problemMatcher": {
         "owner": "cpp",
@@ -32,7 +32,7 @@
       "label": "CMake Configure (Release)",
       "type": "shell",
       "command": "cmake",
-      "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Release"],
+      "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Release", "-DMAYAFLUX_PORTABLE=ON"],
       "group": "build",
       "problemMatcher": {
         "owner": "cpp",

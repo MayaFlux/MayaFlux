@@ -7,6 +7,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "MayaFlux/Parallel.hpp"
+
 namespace MayaFlux::Core {
 
 bool VKContext::initialize(const GlobalGraphicsConfig& graphics_config, bool enable_validation,
@@ -76,11 +78,13 @@ vk::SurfaceKHR VKContext::create_surface(std::shared_ptr<Window> window)
     }
 
     VkSurfaceKHR c_surface;
-    VkResult result = glfwCreateWindowSurface(
-        static_cast<VkInstance>(m_instance.get_instance()),
-        glfw_handle,
-        nullptr,
-        &c_surface);
+    VkResult result = Parallel::dispatch_main_sync([&]() {
+        return glfwCreateWindowSurface(
+            static_cast<VkInstance>(m_instance.get_instance()),
+            glfw_handle,
+            nullptr,
+            &c_surface);
+    });
 
     if (result != VK_SUCCESS) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,

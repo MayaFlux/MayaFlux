@@ -463,6 +463,11 @@ void BackendResourceManager::transition_image_layout(
             barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
             src_stage = vk::PipelineStageFlagBits::eTransfer;
             dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
+        } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+            barrier.srcAccessMask = vk::AccessFlags {};
+            barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+            src_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+            dst_stage = vk::PipelineStageFlagBits::eFragmentShader;
         } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eColorAttachmentOptimal) {
             barrier.srcAccessMask = vk::AccessFlags {};
             barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;

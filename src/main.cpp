@@ -48,7 +48,8 @@ int main()
         run();
 
         std::cout << "Press Enter [Return] to stop...\n";
-        std::cin.get();
+        MayaFlux::Await();
+
         MayaFlux::End();
 
     } catch (const std::exception& e) {

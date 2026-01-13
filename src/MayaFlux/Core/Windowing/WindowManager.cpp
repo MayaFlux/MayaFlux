@@ -4,6 +4,8 @@
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include "MayaFlux/Parallel.hpp"
+
 namespace MayaFlux::Core {
 
 WindowManager::WindowManager(const GlobalGraphicsConfig& config)
@@ -172,7 +174,9 @@ void WindowManager::remove_from_lookup(const std::shared_ptr<Window>& window)
 
 bool WindowManager::process()
 {
-    glfwPollEvents();
+    Parallel::dispatch_main_sync([]() {
+        glfwPollEvents();
+    });
 
     {
         std::lock_guard<std::mutex> lock(m_hooks_mutex);

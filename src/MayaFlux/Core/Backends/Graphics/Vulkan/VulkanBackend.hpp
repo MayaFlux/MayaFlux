@@ -139,6 +139,14 @@ public:
     /**
      * @brief Get reference to the backend window handler
      *
+     * Responsible for managing window registration, swapchain creation and rendering
+     * @return Reference to BackendWindowHandler
+     */
+    BackendWindowHandler& get_window_handler() { return *m_window_handler.get(); }
+
+    /**
+     * @brief Get reference to the backend window handler
+     *
      * Responsible for managing windows, swapchains, framebuffers, and rendering loops.
      * @return Reference to BackendWindowHandler
      */

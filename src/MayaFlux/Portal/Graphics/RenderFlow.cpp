@@ -552,7 +552,7 @@ void RenderFlow::begin_rendering(
     vk::RenderingInfo rendering_info {};
     rendering_info.sType = vk::StructureType::eRenderingInfo;
     rendering_info.pNext = nullptr;
-    rendering_info.flags = {};
+    rendering_info.flags = vk::RenderingFlagBits::eContentsSecondaryCommandBuffers;
     rendering_info.renderArea.offset = vk::Offset2D { 0, 0 };
     rendering_info.renderArea.extent = vk::Extent2D { width, height };
     rendering_info.layerCount = 1;

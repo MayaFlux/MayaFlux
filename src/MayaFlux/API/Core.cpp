@@ -130,6 +130,13 @@ void Resume()
     }
 }
 
+void Await()
+{
+    if (internal::initialized) {
+        get_context().await_shutdown();
+    }
+}
+
 void End()
 {
     if (internal::initialized) {
