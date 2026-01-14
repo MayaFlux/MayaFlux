@@ -120,8 +120,10 @@ double Polynomial::process_sample(double input)
 
     m_last_output = result;
 
-    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+    if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        && !m_networked_node) {
         notify_tick(result);
+    }
 
     if (m_input_node) {
         atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);

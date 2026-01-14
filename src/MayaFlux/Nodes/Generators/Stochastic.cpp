@@ -13,8 +13,10 @@ Random::Random(Utils::distribution type)
 
 double Random::process_sample(double input)
 {
-    m_last_output = input + random_sample(m_current_start, m_current_end);
-    notify_tick(m_last_output);
+    if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        && !m_networked_node) {
+        notify_tick(input);
+    }
     return m_last_output;
 }
 

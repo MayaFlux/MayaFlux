@@ -425,6 +425,19 @@ protected:
      */
     std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
 
+    /**
+     * @brief Flag indicating if the node is part of a NodeNetwork
+     * This flag is used to disable event firing when the node is
+     * managed within a NodeNetwork, preventing redundant or conflicting
+     * event notifications.
+     */
+    bool m_networked_node {};
+
+    /**
+    @brief tracks if the node's state has been saved by a snapshot operation
+    */
+    bool m_state_saved {};
+
 public:
     /**
      * @brief Saves the node's current state for later restoration
@@ -562,6 +575,26 @@ public:
     {
         return m_buffer_processed.load(std::memory_order_acquire);
     }
+
+    /**
+     * @brief Sets whether the node is part of a NodeNetwork
+     * @param networked True if the node is managed within a NodeNetwork
+     *
+     * This method sets a flag indicating whether the node is part of a
+     * NodeNetwork. When set, certain behaviors such as event firing
+     * may be disabled to prevent redundant or conflicting notifications.
+     */
+    [[nodiscard]] inline bool is_in_network() const { return m_networked_node; }
+
+    /**
+     * @brief Marks the node as being part of a NodeNetwork
+     * @param networked True if the node is managed within a NodeNetwork
+     *
+     * This method sets a flag indicating whether the node is part of a
+     * NodeNetwork. When set, certain behaviors such as event firing
+     * may be disabled to prevent redundant or conflicting notifications.
+     */
+    void set_in_network(bool networked) { m_networked_node = networked; }
 
 private:
     /**

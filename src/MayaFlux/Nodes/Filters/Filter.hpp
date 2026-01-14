@@ -636,8 +636,6 @@ protected:
     std::vector<double> m_saved_input_history;
     std::vector<double> m_saved_output_history;
 
-    bool m_state_saved {};
-
     bool m_use_external_input_context {};
 };
 }

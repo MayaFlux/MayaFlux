@@ -132,8 +132,10 @@ double Impulse::process_sample(double input)
 
     m_last_output = output;
 
-    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+    if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        && !m_networked_node) {
         notify_tick(output);
+    }
 
     if (m_frequency_modulator) {
         atomic_dec_modulator_count(m_frequency_modulator->m_modulator_count, 1);

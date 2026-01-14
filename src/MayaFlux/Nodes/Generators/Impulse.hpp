@@ -282,7 +282,5 @@ private:
     float m_saved_offset {};
     double m_saved_phase_inc {};
     double m_saved_last_output {};
-
-    bool m_state_saved {};
 };
 }

@@ -389,7 +389,6 @@ private:
     std::deque<double> m_saved_input_buffer; ///< Buffer of input values for feedforward mode
     std::deque<double> m_saved_output_buffer; ///< Buffer of output values for recursive mode
     double m_saved_last_output {};
-    bool m_state_saved {};
     bool m_use_external_context {}; // Whether to use it
 
     /**

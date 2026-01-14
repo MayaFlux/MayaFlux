@@ -28,6 +28,7 @@ ParticleNetwork::ParticleNetwork(
         ParticleNode particle;
         particle.index = i;
         particle.point = std::make_shared<GpuSync::PointNode>();
+        particle.point->set_in_network(true);
         particle.mass = 1.0F;
         particle.velocity = glm::vec3(0.0F);
         particle.acceleration = glm::vec3(0.0F);

@@ -225,8 +225,10 @@ double Logic::process_sample(double input)
     m_input = input;
     auto current = result ? 1.0 : 0.0;
 
-    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+    if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        && !m_networked_node) {
         notify_tick(current);
+    }
 
     if (m_input_node) {
         atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);
