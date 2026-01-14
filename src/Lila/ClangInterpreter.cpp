@@ -12,6 +12,10 @@
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Interpreter/Interpreter.h>
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+#include <dispatch/dispatch.h>
+#endif
+
 namespace Lila {
 
 struct ClangInterpreter::Impl {
@@ -166,7 +170,11 @@ bool ClangInterpreter::initialize()
 
 ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 {
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    __block EvalResult result;
+#else
     EvalResult result;
+#endif
 
     if (!m_impl->interpreter) {
         result.error = "Interpreter not initialized";
@@ -176,6 +184,20 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
 
     LILA_DEBUG(Emitter::INTERPRETER, "Evaluating code...");
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        auto eval_result = m_impl->interpreter->ParseAndExecute(code);
+
+        if (!eval_result) {
+            result.success = true;
+            LILA_DEBUG(Emitter::INTERPRETER, "Code evaluation succeeded");
+        } else {
+            result.success = false;
+            result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
+            LILA_ERROR(Emitter::INTERPRETER, result.error);
+        }
+    });
+#else
     auto eval_result = m_impl->interpreter->ParseAndExecute(code);
 
     if (!eval_result) {
@@ -186,6 +208,7 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
         result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
         LILA_ERROR(Emitter::INTERPRETER, result.error);
     }
+#endif
 
     m_impl->eval_counter++;
     return result;

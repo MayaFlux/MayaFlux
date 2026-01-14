@@ -422,6 +422,9 @@ std::vector<std::string> SystemConfig::get_unix_library_paths()
     }
 
     std::vector<std::string> default_paths = {
+#if defined(MAYAFLUX_PLATFORM_MACOS) && (defined(__aarch64__) || defined(_M_ARM64))
+        "/opt/homebrew/lib",
+#endif
         "/usr/local/lib",
         "/usr/lib",
         "/lib",

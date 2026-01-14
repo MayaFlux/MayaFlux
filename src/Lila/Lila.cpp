@@ -5,11 +5,16 @@
 
 #include "Commentator.hpp"
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 namespace Lila {
 
 Lila::Lila()
     : m_interpreter(std::make_unique<ClangInterpreter>())
     , m_current_mode(OperationMode::Direct)
+    , server_loop_rate(0.1F)
 {
     LILA_DEBUG(Emitter::SYSTEM, "Lila instance created");
 }
@@ -207,6 +212,40 @@ std::string Lila::get_last_error() const
 OperationMode Lila::get_current_mode() const
 {
     return m_current_mode;
+}
+
+void Lila::await_shutdown(const std::atomic<bool>* external_flag)
+{
+    LILA_INFO(Emitter::SYSTEM, "Entering main event loop");
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    while (!m_shutdown_requested.load(std::memory_order_acquire) && (!external_flag || external_flag->load(std::memory_order_acquire))) {
+        if (!is_server_running()) {
+            LILA_ERROR(Emitter::SYSTEM, "Server stopped unexpectedly");
+            break;
+        }
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, server_loop_rate, false);
+    }
+#else
+    while (!m_shutdown_requested.load(std::memory_order_acquire) && (!external_flag || external_flag->load(std::memory_order_acquire))) {
+        if (!is_server_running()) {
+            LILA_ERROR(Emitter::SYSTEM, "Server stopped unexpectedly");
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(server_loop_rate * 1000)));
+    }
+#endif
+
+    LILA_INFO(Emitter::SYSTEM, "Exiting main event loop");
+}
+
+void Lila::request_shutdown()
+{
+    m_shutdown_requested.store(true, std::memory_order_release);
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    CFRunLoopStop(CFRunLoopGetMain());
+#endif
 }
 
 std::string Lila::escape_json(const std::string& str)
