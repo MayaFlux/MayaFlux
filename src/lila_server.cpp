@@ -210,13 +210,7 @@ int main(int argc, char** argv)
 
     LILA_INFO(Lila::Emitter::SYSTEM, "Server running. Press Ctrl+C to stop.");
 
-    while (g_running) {
-        if (!playground.is_server_running()) {
-            LILA_ERROR(Lila::Emitter::SYSTEM, "Server stopped unexpectedly");
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    playground.await_shutdown(&g_running);
 
     LILA_INFO(Lila::Emitter::SYSTEM, "Shutting down...");
     playground.stop_server();

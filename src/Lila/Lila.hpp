@@ -150,6 +150,25 @@ public:
     void on_server_started(std::function<void()> callback);
 
     /**
+     * @brief Blocks until server shutdown (main thread event loop)
+     * @param external_flag std::atomic<bool> Whether to force shutdown externally
+     *
+     * On macOS: Runs CFRunLoop to process main queue (required for JIT GLFW)
+     * On other platforms: Simple blocking wait
+     *
+     * Should be called on main thread after initialize() in Server mode.
+     * Returns when stop_server() is called or server fails.
+     */
+    void await_shutdown(const std::atomic<bool>* external_flag);
+
+    /**
+     * @brief Request shutdown from any thread
+     *
+     * Signals await_shutdown() to return. Thread-safe.
+     */
+    void request_shutdown();
+
+    /**
      * @brief Gets the last error message
      * @return String containing the last error
      */
@@ -161,6 +180,22 @@ public:
      */
     [[nodiscard]] OperationMode get_current_mode() const;
 
+    /**
+     * @brief Sets the server loop rate in seconds
+     * @param rate_seconds Loop rate in seconds
+     */
+    void set_server_loop_rate(float rate_seconds) { server_loop_rate = rate_seconds; }
+
+    /**
+     * @brief Gets the server loop rate in seconds
+     * @return Loop rate in seconds
+     */
+    [[nodiscard]]
+    float get_server_loop_rate() const
+    {
+        return server_loop_rate;
+    }
+
 private:
     std::unique_ptr<ClangInterpreter> m_interpreter; ///< Embedded Clang interpreter
     std::unique_ptr<Server> m_server; ///< TCP server for live coding
@@ -171,6 +206,9 @@ private:
 
     bool initialize_interpreter();
     bool initialize_server(int port);
+    std::atomic<bool> m_shutdown_requested { false };
+
+    float server_loop_rate; ///< Server loop rate in seconds
 
     std::expected<std::string, std::string> handle_server_message(std::string_view message);
 
