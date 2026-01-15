@@ -94,4 +94,17 @@ void TextureNode::restore_state()
     }
 }
 
+void TextureNode::update_context(double value)
+{
+    m_context.value = value;
+    m_context.width = m_width;
+    m_context.height = m_height;
+    m_context.m_gpu_data = std::span<const float>(m_pixel_buffer.data(), m_pixel_buffer.size());
+}
+
+NodeContext& TextureNode::get_last_context()
+{
+    return m_context;
+}
+
 } // namespace MayaFlux::Nodes::GpuSync

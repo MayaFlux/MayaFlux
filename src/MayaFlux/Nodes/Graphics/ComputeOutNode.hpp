@@ -9,6 +9,25 @@ class VKBuffer;
 namespace MayaFlux::Nodes::GpuSync {
 
 /**
+ * @class ComputeOutContext
+ * @brief Context for ComputeOutNode - provides readback buffer access
+ */
+class MAYAFLUX_API ComputeOutContext : public NodeContext, public GpuVectorData {
+public:
+    ComputeOutContext(double value, std::span<const float> readback_data, size_t element_count)
+        : NodeContext(value, typeid(ComputeOutContext).name())
+        , GpuVectorData(readback_data)
+        , element_count(element_count)
+    {
+    }
+
+    size_t element_count;
+
+protected:
+    friend class ComputeOutNode;
+};
+
+/**
  * @class ComputeOutNode
  * @brief Node that reads back data from GPU buffer to CPU
  *
@@ -66,6 +85,22 @@ public:
     }
 
     void clear_gpu_update_flag() override { }
+
+    /**
+     * @brief Update context with current readback data
+     * @param value Current sample value
+     */
+    void update_context(double value) override;
+
+    /**
+     * @brief Get last created context object
+     * @return Reference to last ComputeOutContext
+     */
+    NodeContext& get_last_context() override { return m_context; }
+
+protected:
+    mutable std::vector<float> m_readback_float_buffer;
+    ComputeOutContext m_context { 0.0, {}, 0 };
 
 private:
     std::shared_ptr<Buffers::VKBuffer> m_gpu_buffer;

@@ -5,6 +5,27 @@
 namespace MayaFlux::Nodes::GpuSync {
 
 /**
+ * @class TextureContext
+ * @brief Context for TextureNode - provides pixel buffer access
+ */
+class MAYAFLUX_API TextureContext : public NodeContext, public GpuVectorData {
+public:
+    TextureContext(double value, uint32_t width, uint32_t height, std::span<const float> pixel_data)
+        : NodeContext(value, typeid(TextureContext).name())
+        , GpuVectorData(pixel_data)
+        , width(width)
+        , height(height)
+    {
+    }
+
+    uint32_t width;
+    uint32_t height;
+
+protected:
+    friend class TextureNode;
+};
+
+/**
  * @class TextureNode
  * @brief Base class for texture-generating nodes
  *
@@ -93,6 +114,22 @@ public:
      */
     void restore_state() override;
 
+    /**
+     * @brief Get the last created context object
+     * @return Reference to the last TextureContext object
+     *
+     * This method provides access to the most recent TextureContext object
+     * created by the texture node. This context contains information about
+     * the node's state at the time of the last output generation.
+     */
+    NodeContext& get_last_context() override;
+
+    /**
+     * @brief Updates the context object with the current node state
+     * @param value The current sample value
+     */
+    void update_context(double value) override;
+
 protected:
     /**
      * @brief Set pixel color at (x, y)
@@ -129,6 +166,7 @@ protected:
 
     std::vector<float> m_saved_pixel_buffer;
     bool m_saved_dirty_flag {};
+    TextureContext m_context { 0.0, 0, 0, {} };
 
     /**
      * @brief Get mutable pixel buffer for direct write access
