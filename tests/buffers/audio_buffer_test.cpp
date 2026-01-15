@@ -208,7 +208,7 @@ TEST_F(AudioBufferTest, ProcessorManagement)
 TEST_F(AudioBufferTest, ProcessingChain)
 {
     auto chain = std::make_shared<Buffers::BufferProcessingChain>();
-    standard_buffer->set_processing_chain(chain);
+    standard_buffer->set_processing_chain(chain, true);
     EXPECT_EQ(standard_buffer->get_processing_chain(), chain);
 
     bool processor1_called = false;
@@ -424,6 +424,8 @@ TEST_F(NodeBufferTest, NodeProcessing)
     for (const auto& sample : node_buffer->get_data()) {
         EXPECT_DOUBLE_EQ(sample, 0.0);
     }
+
+    node_buffer->setup_processors(Buffers::ProcessingToken::AUDIO_BACKEND);
 
     node_buffer->process_default();
 

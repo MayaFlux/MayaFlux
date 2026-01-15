@@ -216,8 +216,8 @@ void BufferProcessingControl::set_audio_final_processor(
 
     auto& unit = m_unit_manager.get_audio_unit_mutable(token);
     for (uint32_t i = 0; i < unit.channel_count; ++i) {
-        auto chain = unit.get_chain(i);
         auto root_buffer = unit.get_buffer(i);
+        auto chain = root_buffer->get_processing_chain();
         chain->add_final_processor(processor, root_buffer);
     }
 }

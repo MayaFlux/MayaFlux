@@ -99,6 +99,7 @@ void BufferManager::process_channel(
                 processing_chain->process(child);
             }
         }
+        unit.get_chain(channel)->process(child);
     }
 
     root_buffer->process_default();

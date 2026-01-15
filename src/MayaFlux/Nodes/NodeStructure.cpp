@@ -11,6 +11,12 @@ ChainNode::ChainNode(const std::shared_ptr<Node>& source, const std::shared_ptr<
     , m_Target(target)
     , m_is_initialized(false)
 {
+    if (!m_Source || !m_Target) {
+        error<std::invalid_argument>(
+            Journal::Component::Nodes, Journal::Context::Init,
+            std::source_location::current(),
+            "ChainNode requires both source and target nodes to be non-null");
+    }
 }
 
 void ChainNode::initialize()
@@ -174,6 +180,12 @@ BinaryOpNode::BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_p
     , m_context(0.0, 0.0, 0.0)
     , m_context_gpu(0.0, 0.0, 0.0, get_gpu_data_buffer())
 {
+    if (!m_lhs || !m_rhs) {
+        error<std::invalid_argument>(
+            Journal::Component::Nodes, Journal::Context::Init,
+            std::source_location::current(),
+            "BinaryOpNode requires both lhs and rhs nodes to be non-null");
+    }
 }
 
 void BinaryOpNode::initialize()
