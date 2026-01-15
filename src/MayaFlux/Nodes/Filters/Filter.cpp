@@ -18,6 +18,8 @@ std::pair<int, int> shift_parser(const std::string& str)
 
 Filter::Filter(const std::shared_ptr<Node>& input, const std::string& zindex_shifts)
     : m_input_node(input)
+    , m_context(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b)
+    , m_context_gpu(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b, get_gpu_data_buffer())
 {
     m_shift_config = shift_parser(zindex_shifts);
     initialize_shift_buffers();
@@ -29,6 +31,8 @@ Filter::Filter(const std::shared_ptr<Node>& input, const std::vector<double>& a_
     : m_input_node(input)
     , m_coef_a(a_coef)
     , m_coef_b(b_coef)
+    , m_context(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b)
+    , m_context_gpu(0.0, m_input_history, m_output_history, m_coef_a, m_coef_b, get_gpu_data_buffer())
 {
     m_shift_config = shift_parser(std::to_string(b_coef.size() - 1) + "_" + std::to_string(a_coef.size() - 1));
 
@@ -238,27 +242,36 @@ std::vector<double> Filter::process_batch(unsigned int num_samples)
     return output;
 }
 
-std::unique_ptr<NodeContext> Filter::create_context(double value)
+void Filter::update_context(double value)
 {
     if (m_gpu_compatible) {
-        return std::make_unique<FilterContextGpu>(value, m_input_history, m_output_history, m_coef_a, m_coef_b,
-            get_gpu_data_buffer());
+        m_context_gpu.value = value;
+    } else {
+        m_context.value = value;
     }
-    return std::make_unique<FilterContext>(value, m_input_history, m_output_history, m_coef_a, m_coef_b);
 }
 
 void Filter::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
+    auto& ctx = get_last_context();
 
     for (auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
+}
+
+NodeContext& Filter::get_last_context()
+{
+    if (m_gpu_compatible) {
+        return m_context_gpu;
+    }
+    return m_context;
 }
 
 }

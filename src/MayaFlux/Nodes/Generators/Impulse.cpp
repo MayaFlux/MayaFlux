@@ -183,19 +183,20 @@ bool Impulse::remove_hook(const NodeHook& callback)
 
 void Impulse::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
+    auto& ctx = get_last_context();
 
     for (auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
     if (m_impulse_occurred) {
         for (auto& callback : m_impulse_callbacks) {
-            callback(*m_last_context);
+            callback(ctx);
         }
     }
 }

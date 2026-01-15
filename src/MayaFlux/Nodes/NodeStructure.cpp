@@ -2,6 +2,8 @@
 #include "MayaFlux/API/Config.hpp"
 #include "MayaFlux/API/Graph.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Nodes {
 
 ChainNode::ChainNode(const std::shared_ptr<Node>& source, const std::shared_ptr<Node>& target)
@@ -140,6 +142,17 @@ bool ChainNode::is_initialized() const
     return !is_source_registered && !is_target_registered && (m_state.load() & Utils::NodeState::ACTIVE);
 }
 
+NodeContext& ChainNode::get_last_context()
+{
+    if (!m_Target) {
+        error<std::runtime_error>(
+            Journal::Component::Nodes, Journal::Context::Runtime,
+            std::source_location::current(),
+            "ChainNode target node is null when retrieving last context");
+    }
+    return m_Target->get_last_context();
+}
+
 BinaryOpContext::BinaryOpContext(double value, double lhs_value, double rhs_value)
     : NodeContext(value, typeid(BinaryOpContext).name())
     , lhs_value(lhs_value)
@@ -158,6 +171,8 @@ BinaryOpNode::BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_p
     : m_lhs(lhs)
     , m_rhs(rhs)
     , m_func(std::move(func))
+    , m_context(0.0, 0.0, 0.0)
+    , m_context_gpu(0.0, 0.0, 0.0, get_gpu_data_buffer())
 {
 }
 
@@ -252,14 +267,16 @@ std::vector<double> BinaryOpNode::process_batch(unsigned int num_samples)
 
 void BinaryOpNode::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
+    auto& ctx = get_last_context();
+
     for (const auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
 
     for (const auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
 }
@@ -299,17 +316,25 @@ void BinaryOpNode::restore_state()
     m_state_saved = false;
 }
 
-std::unique_ptr<NodeContext> BinaryOpNode::create_context(double value)
+void BinaryOpNode::update_context(double /*value*/)
 {
     if (m_gpu_compatible) {
-        return std::make_unique<BinaryOpContextGpu>(
-            value,
-            m_last_lhs_value,
-            m_last_rhs_value,
-            get_gpu_data_buffer());
+        m_context_gpu.value = m_last_output;
+        m_context_gpu.lhs_value = m_last_lhs_value;
+        m_context_gpu.rhs_value = m_last_rhs_value;
+    } else {
+        m_context.value = m_last_output;
+        m_context.lhs_value = m_last_lhs_value;
+        m_context.rhs_value = m_last_rhs_value;
     }
+}
 
-    return std::make_unique<BinaryOpContext>(value, m_last_lhs_value, m_last_rhs_value);
+NodeContext& BinaryOpNode::get_last_context()
+{
+    if (m_gpu_compatible) {
+        return m_context_gpu;
+    }
+    return m_context;
 }
 
 bool BinaryOpNode::is_initialized() const
@@ -320,4 +345,5 @@ bool BinaryOpNode::is_initialized() const
     bool is_rhs_registered = m_rhs ? (rstate & Utils::NodeState::ACTIVE) : false;
     return !is_lhs_registered && !is_rhs_registered;
 }
-}
+
+} // namespace MayaFlux::Nodes

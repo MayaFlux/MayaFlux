@@ -40,8 +40,11 @@ public:
      * filter's current state, including its most recent output value,
      * history buffers, and coefficient vectors.
      */
-    FilterContext(double value, const std::vector<double>& input_history, const std::vector<double>& output_history,
-        const std::vector<double>& coefs_a, const std::vector<double>& coefs_b)
+    FilterContext(double value,
+        const std::vector<double>& input_history,
+        const std::vector<double>& output_history,
+        const std::vector<double>& coefs_a,
+        const std::vector<double>& coefs_b)
         : NodeContext(value, typeid(FilterContext).name())
         , input_history(input_history)
         , output_history(output_history)
@@ -89,8 +92,12 @@ public:
  */
 class MAYAFLUX_API FilterContextGpu : public FilterContext, public GpuVectorData {
 public:
-    FilterContextGpu(double value, const std::vector<double>& input_history, const std::vector<double>& output_history,
-        const std::vector<double>& coefs_a, const std::vector<double>& coefs_b, std::span<const float> gpu_data)
+    FilterContextGpu(double value,
+        const std::vector<double>& input_history,
+        const std::vector<double>& output_history,
+        const std::vector<double>& coefs_a,
+        const std::vector<double>& coefs_b,
+        std::span<const float> gpu_data)
         : FilterContext(value, input_history, output_history, coefs_a, coefs_b)
         , GpuVectorData(gpu_data)
     {
@@ -470,6 +477,12 @@ public:
         return m_use_external_input_context;
     }
 
+    /**
+     * @brief Gets the last created context object
+     * @return Reference to the last FilterContext object
+     */
+    NodeContext& get_last_context() override;
+
 protected:
     /**
      * @brief Modifies a specific coefficient in a coefficient buffer
@@ -512,11 +525,10 @@ protected:
     virtual void update_outputs(double current_sample);
 
     /**
-     * @brief Creates a filter-specific context object
+     * @brief Updates filter-specific context object
      * @param value The current output sample value
-     * @return A unique pointer to a FilterContext object
      *
-     * Creates a FilterContext object that contains information about the filter's
+     * Updates FilterContext object that contains information about the filter's
      * current state, including the current sample value, input/output history buffers,
      * and coefficients. This context is passed to callbacks and conditions to provide
      * them with the information they need to execute properly.
@@ -525,7 +537,7 @@ protected:
      * beyond just the current sample value, enabling more sophisticated monitoring
      * and analysis of filter behavior.
      */
-    std::unique_ptr<NodeContext> create_context(double value) override;
+    void update_context(double value) override;
 
     /**
      * @brief Notifies all registered callbacks with the current filter context
@@ -637,5 +649,8 @@ protected:
     std::vector<double> m_saved_output_history;
 
     bool m_use_external_input_context {};
+
+    FilterContext m_context;
+    FilterContextGpu m_context_gpu;
 };
 }

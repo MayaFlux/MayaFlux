@@ -205,27 +205,28 @@ bool Phasor::remove_hook(const NodeHook& callback)
 
 void Phasor::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
 
+    auto& ctx = get_last_context();
     for (auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
 
     if (m_phase_wrapped) {
         for (auto& callback : m_phase_wrap_callbacks) {
-            callback(*m_last_context);
+            callback(ctx);
         }
     }
 
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
 
     for (auto& [callback, threshold] : m_threshold_callbacks) {
         if (value >= threshold && !m_threshold_crossed) {
-            callback(*m_last_context);
+            callback(ctx);
             m_threshold_crossed = true;
         } else if (value < threshold) {
             m_threshold_crossed = false;

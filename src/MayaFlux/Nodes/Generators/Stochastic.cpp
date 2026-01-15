@@ -8,6 +8,8 @@ Random::Random(Utils::distribution type)
     , m_current_end(1.0F)
     , m_normal_spread(4.0F)
     , m_type(type)
+    , m_context(0.0, type, 1.0, m_current_start, m_current_end, m_normal_spread)
+    , m_context_gpu(0.0, type, 1.0, m_current_start, m_current_end, m_normal_spread, get_gpu_data_buffer())
 {
 }
 
@@ -92,32 +94,46 @@ void Random::validate_range(double start, double end) const
     }
 }
 
-std::unique_ptr<NodeContext> Random::create_context(double value)
+void Random::update_context(double value)
 {
     if (m_gpu_compatible) {
-        return std::make_unique<StochasticContextGpu>(
-            value,
-            m_type,
-            m_amplitude,
-            m_current_start,
-            m_current_end,
-            m_normal_spread,
-            get_gpu_data_buffer());
+        m_context_gpu.value = value;
+        m_context_gpu.distribution_type = m_type;
+        m_context_gpu.amplitude = m_amplitude;
+        m_context_gpu.range_start = m_current_start;
+        m_context_gpu.range_end = m_current_end;
+        m_context_gpu.normal_spread = m_normal_spread;
+    } else {
+        m_context.value = value;
+        m_context.distribution_type = m_type;
+        m_context.amplitude = m_amplitude;
+        m_context.range_start = m_current_start;
+        m_context.range_end = m_current_end;
+        m_context.normal_spread = m_normal_spread;
     }
-    return std::make_unique<StochasticContext>(value, m_type, m_amplitude, m_current_start, m_current_end, m_normal_spread);
 }
 
 void Random::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
+    auto& ctx = get_last_context();
+
     for (auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
+}
+
+NodeContext& Random::get_last_context()
+{
+    if (m_gpu_compatible) {
+        return m_context_gpu;
+    }
+    return m_context;
 }
 
 void Random::printGraph()

@@ -34,7 +34,7 @@ public:
      * generator's current state, including its most recent output value
      * and all parameters that define its oscillation behavior.
      */
-    GeneratorContext(double value, double frequency, float amplitude, double phase)
+    GeneratorContext(double value, float frequency, double amplitude, double phase)
         : NodeContext(value, typeid(GeneratorContext).name())
         , frequency(frequency)
         , amplitude(amplitude)
@@ -49,12 +49,12 @@ public:
      * This parameter determines the pitch or periodicity of the
      * generated signal.
      */
-    double frequency;
+    float frequency;
 
     /**
      * @brief Current amplitude of the generator
      */
-    float amplitude;
+    double amplitude;
 
     /**
      * @brief Current phase of the generator
@@ -66,8 +66,8 @@ class MAYAFLUX_API GeneratorContextGpu : public GeneratorContext, public GpuVect
 public:
     GeneratorContextGpu(
         double value,
-        double frequency,
-        float amplitude,
+        float frequency,
+        double amplitude,
         double phase,
         std::span<const float> gpu_data)
         : GeneratorContext(value, frequency, amplitude, phase)
@@ -127,7 +127,7 @@ public:
      * @brief Gets the current base amplitude
      * @return Current amplitude
      */
-    virtual double get_amplitude() const;
+    [[nodiscard]] virtual double get_amplitude() const;
 
     /**
      * @brief Allows RootNode to process the Generator without using the processed sample
@@ -147,7 +147,7 @@ public:
      * @brief Checks if the generator should mock process
      * @return True if the generator should mock process, false otherwise
      */
-    virtual bool should_mock_process() const;
+    [[nodiscard]] virtual bool should_mock_process() const;
 
     /**
      * @brief Prints a visual representation of the generated pattern
@@ -168,15 +168,14 @@ public:
     virtual void printCurrent() = 0;
 
     /**
-     * @brief Creates a context object for callbacks
+     * @brief Updates the context object for callbacks
      * @param value The current generated sample
-     * @return A unique pointer to a GeneratorContext object
      *
      * This method creates a specialized context object containing
      * the current sample value and all oscillator parameters, providing
      * callbacks with rich information about the oscillator's state.
      */
-    virtual std::unique_ptr<NodeContext> create_context(double value) override;
+    virtual void update_context(double value) override;
 
     /**
      * @brief Sets the generator's frequency
@@ -186,6 +185,12 @@ public:
      * which controls the rate of oscillation or pattern repetition.
      */
     virtual void set_frequency(float frequency);
+
+    /**
+     * @brief Gets the last created context object
+     * @return Reference to the last GeneratorContext object
+     */
+    NodeContext& get_last_context() override;
 
 protected:
     /**
@@ -202,6 +207,9 @@ protected:
      * @brief Current phase of the generator
      */
     double m_phase {};
+
+    GeneratorContext m_context { 0., m_frequency, m_amplitude, m_phase };
+    GeneratorContextGpu m_context_gpu { 0., m_frequency, m_amplitude, m_phase, get_gpu_data_buffer() };
 };
 
 }

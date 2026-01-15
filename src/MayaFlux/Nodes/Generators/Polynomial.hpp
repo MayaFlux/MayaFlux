@@ -44,39 +44,40 @@ public:
      * @brief Gets the current polynomial mode
      * @return Current polynomial mode
      */
-    PolynomialMode get_mode() const { return m_mode; }
+    [[nodiscard]] PolynomialMode get_mode() const { return m_mode; }
 
     /**
      * @brief Gets the buffer size
      * @return Current buffer size
      */
-    size_t get_buffer_size() const { return m_buffer_size; }
+    [[nodiscard]] size_t get_buffer_size() const { return m_buffer_size; }
 
     /**
      * @brief Gets the input buffer
      * @return Reference to the input buffer
      */
-    const std::deque<double>& get_input_buffer() const { return m_input_buffer; }
+    [[nodiscard]] const std::deque<double>& get_input_buffer() const { return m_input_buffer; }
 
     /**
      * @brief Gets the output buffer
      * @return Reference to the output buffer
      */
-    const std::deque<double>& get_output_buffer() const { return m_output_buffer; }
+    [[nodiscard]] const std::deque<double>& get_output_buffer() const { return m_output_buffer; }
 
     /**
      * @brief Gets the polynomial coefficients
      * @return Reference to the coefficient vector
      */
-    const std::vector<double>& get_coefficients() const { return m_coefficients; }
+    [[nodiscard]] const std::vector<double>& get_coefficients() const { return m_coefficients; }
 
 private:
     PolynomialMode m_mode; ///< Current processing mode
     size_t m_buffer_size; ///< Size of the buffers
-    std::deque<double> m_input_buffer; ///< Copy of input buffer
-    std::deque<double> m_output_buffer; ///< Copy of output buffer
-    std::vector<double> m_coefficients; ///< Copy of polynomial coefficients
-    std::unordered_map<std::string, std::any> m_attributes; ///< Named attributes for callbacks
+    const std::deque<double>& m_input_buffer; ///< Copy of input buffer
+    const std::deque<double>& m_output_buffer; ///< Copy of output buffer
+    const std::vector<double>& m_coefficients; ///< Copy of polynomial coefficients
+
+    friend class Polynomial;
 };
 
 class MAYAFLUX_API PolynomialContextGpu
@@ -341,17 +342,22 @@ public:
         return m_use_external_context;
     }
 
+    /**
+     * @brief Retrieves the last created context object
+     * @return Reference to the last PolynomialContext object
+     *
+     * This method provides access to the most recent PolynomialContext object
+     * created by the polynomial generator. This context contains information
+     * about the generator's state at the time of the last output generation.
+     */
+    NodeContext& get_last_context() override;
+
 protected:
     /**
-     * @brief Creates a context object for callbacks
-     * @param value The current generated sample
-     * @return A unique pointer to a GeneratorContext object
-     *
-     * This method creates a specialized context object containing
-     * the current sample value and all oscillator parameters, providing
-     * callbacks with rich information about the oscillator's state.
+     * @brief Updates the context object with the current node state
+     * @param value The current sample value
      */
-    std::unique_ptr<NodeContext> create_context(double value) override;
+    void update_context(double value) override;
 
     /**
      * @brief Notifies all registered callbacks about a new sample
@@ -390,6 +396,9 @@ private:
     std::deque<double> m_saved_output_buffer; ///< Buffer of output values for recursive mode
     double m_saved_last_output {};
     bool m_use_external_context {}; // Whether to use it
+
+    PolynomialContext m_context;
+    PolynomialContextGpu m_context_gpu;
 
     /**
      * @brief Builds buffer from external context or internal accumulation

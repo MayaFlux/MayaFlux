@@ -11,8 +11,6 @@ Sine::Sine(float frequency, double amplitude, float offset)
     m_amplitude = amplitude;
     m_frequency = frequency;
     update_phase_increment(frequency);
-
-    m_last_context = create_context(0.0);
 }
 
 Sine::Sine(const std::shared_ptr<Node>& frequency_modulator, float frequency, double amplitude, float offset)
@@ -162,14 +160,15 @@ void Sine::reset(float frequency, double amplitude, float offset)
 
 void Sine::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
+    auto& ctx = get_last_context();
 
     for (auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
 }

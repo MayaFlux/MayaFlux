@@ -1050,17 +1050,18 @@ points->on_tick([points](const Nodes::NodeContext& ctx) {
 ```cpp
 // Inside PointCollectionNode::compute_frame() or process_sample():
 void notify_tick(double value) override {
-    m_last_context = create_context(value);
+    update_context(value);
+    auto& ctx = get_last_context();
 
     // Unconditional callbacks
     for (auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
 
     // Conditional callbacks
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
 }

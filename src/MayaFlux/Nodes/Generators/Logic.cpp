@@ -20,6 +20,8 @@ Logic::Logic(double threshold)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
+    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
 {
     m_direct_function = [this](double input) {
         return input > m_threshold;
@@ -37,6 +39,8 @@ Logic::Logic(LogicOperator op, double threshold)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
+    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
     , m_temporal_time(0.0)
 {
     set_operator(op);
@@ -54,6 +58,8 @@ Logic::Logic(DirectFunction function)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
+    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
     , m_temporal_time(0.0)
 {
 }
@@ -70,6 +76,8 @@ Logic::Logic(MultiInputFunction function, size_t input_count)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
+    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
     , m_temporal_time(0.0)
 {
     m_input_buffer.resize(input_count, 0.0);
@@ -87,6 +95,8 @@ Logic::Logic(SequentialFunction function, size_t history_size)
     , m_edge_type(EdgeType::BOTH)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
+    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
     , m_temporal_time(0.0)
 {
     m_history.assign(history_size, false);
@@ -105,6 +115,8 @@ Logic::Logic(TemporalFunction function)
     , m_edge_detected(false)
     , m_hysteresis_state(false)
     , m_temporal_time(0.0)
+    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
 {
 }
 
@@ -485,36 +497,30 @@ void Logic::set_initial_conditions(const std::vector<bool>& initial_values)
     }
 }
 
-std::unique_ptr<NodeContext> Logic::create_context(double value)
+void Logic::update_context(double value)
 {
     if (m_gpu_compatible) {
-        return std::make_unique<LogicContextGpu>(
-            value,
-            m_mode,
-            m_operator,
-            m_history,
-            m_threshold,
-            m_edge_detected,
-            m_edge_type,
-            m_input_buffer,
-            get_gpu_data_buffer());
+        m_context_gpu.value = value;
+        m_context_gpu.m_mode = m_mode;
+        m_context_gpu.m_operator = m_operator;
+        m_context_gpu.m_threshold = m_threshold;
+        m_context_gpu.m_edge_detected = m_edge_detected;
+        m_context_gpu.m_edge_type = m_edge_type;
+    } else {
+        m_context.value = value;
+        m_context.m_mode = m_mode;
+        m_context.m_operator = m_operator;
+        m_context.m_threshold = m_threshold;
+        m_context.m_edge_detected = m_edge_detected;
+        m_context.m_edge_type = m_edge_type;
     }
-
-    return std::make_unique<LogicContext>(
-        value,
-        m_mode,
-        m_operator,
-        m_history,
-        m_threshold,
-        m_edge_detected,
-        m_edge_type,
-        m_input_buffer);
 }
 
 void Logic::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
     bool state_changed = (value != m_last_output);
+    auto& ctx = get_last_context();
 
     for (const auto& cb : m_all_callbacks) {
         bool should_call = false;
@@ -545,14 +551,22 @@ void Logic::notify_tick(double value)
             break;
 
         case LogicEventType::CONDITIONAL:
-            should_call = cb.condition && cb.condition.value()(*m_last_context);
+            should_call = cb.condition && cb.condition.value()(ctx);
             break;
         }
 
         if (should_call) {
-            cb.callback(*m_last_context);
+            cb.callback(ctx);
         }
     }
+}
+
+NodeContext& Logic::get_last_context()
+{
+    if (m_gpu_compatible) {
+        return m_context_gpu;
+    }
+    return m_context;
 }
 
 void Logic::on_tick(const NodeHook& callback)
@@ -649,5 +663,4 @@ void Logic::restore_state()
 
     m_state_saved = false;
 }
-
 }
