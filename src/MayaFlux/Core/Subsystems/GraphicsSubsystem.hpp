@@ -205,5 +205,10 @@ private:
      * @brief Cleanup resources for windows that have been closed
      */
     void cleanup_closed_windows();
+
+    /**
+     * @brief Teardown all window resources during shutdown
+     */
+    void teardown_windows();
 };
 }

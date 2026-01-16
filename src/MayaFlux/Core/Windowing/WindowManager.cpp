@@ -74,6 +74,7 @@ void WindowManager::destroy_window(const std::shared_ptr<Window>& window)
         MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
             "Destroyed window '{}' - remaining: {}", title, m_windows.size());
     }
+    window->destroy();
 }
 
 bool WindowManager::destroy_window_by_title(const std::string& title)

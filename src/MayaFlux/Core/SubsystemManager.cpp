@@ -146,10 +146,19 @@ std::unordered_map<SubsystemType, std::pair<bool, bool>> SubsystemManager::query
     return statuses;
 }
 
-void SubsystemManager::shutdown()
+void SubsystemManager::stop()
 {
     for (auto& [token, subsystem] : m_subsystems) {
         if (subsystem && subsystem->is_running()) {
+            subsystem->stop();
+        }
+    }
+}
+
+void SubsystemManager::shutdown()
+{
+    for (auto& [token, subsystem] : m_subsystems) {
+        if (subsystem && subsystem->is_ready()) {
             subsystem->shutdown();
         }
     }

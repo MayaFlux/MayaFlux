@@ -79,6 +79,7 @@ public:
     RenderFlow& operator=(RenderFlow&&) noexcept = delete;
 
     bool initialize();
+    void stop();
     void shutdown();
 
     [[nodiscard]] bool is_initialized() const { return m_shader_foundry != nullptr; }
@@ -288,6 +289,7 @@ private:
 
     RenderFlow() = default;
     ~RenderFlow() { shutdown(); }
+    void cleanup_pipelines();
 
     /**
      * @brief Get current image view for window

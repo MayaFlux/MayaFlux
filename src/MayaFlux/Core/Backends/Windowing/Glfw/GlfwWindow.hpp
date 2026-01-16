@@ -36,6 +36,8 @@ public:
 
     void hide() override;
 
+    void destroy() override;
+
     [[nodiscard]] bool should_close() const override;
 
     [[nodiscard]] inline const WindowState& get_state() const override

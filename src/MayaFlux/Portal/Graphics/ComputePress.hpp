@@ -35,6 +35,7 @@ public:
     ComputePress& operator=(ComputePress&&) noexcept = delete;
 
     bool initialize();
+    void stop();
     void shutdown();
 
     //==========================================================================
@@ -123,6 +124,7 @@ public:
 private:
     ComputePress() = default;
     ~ComputePress() { shutdown(); }
+    void cleanup_pipelines();
 
     struct PipelineState {
         ShaderID shader_id;

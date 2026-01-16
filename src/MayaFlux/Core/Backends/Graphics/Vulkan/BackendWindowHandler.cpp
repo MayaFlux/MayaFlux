@@ -13,6 +13,8 @@ void WindowRenderContext::cleanup(VKContext& context)
 {
     vk::Device device = context.get_device();
 
+    device.waitIdle();
+
     for (auto& img : image_available) {
         if (img) {
             device.destroySemaphore(img);

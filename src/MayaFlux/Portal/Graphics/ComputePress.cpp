@@ -33,11 +33,24 @@ bool ComputePress::initialize()
     return true;
 }
 
+void ComputePress::stop()
+{
+    if (!s_initialized) {
+        return;
+    }
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
+        "ComputePress stopped");
+}
+
 void ComputePress::shutdown()
 {
     if (!s_initialized) {
         return;
     }
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::GPUCompute,
+        "Shutting down ComputePress...");
 
     if (!m_shader_foundry || !m_shader_foundry->is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::GPUCompute,
@@ -53,22 +66,15 @@ void ComputePress::shutdown()
         return;
     }
 
-    for (auto& [id, state] : m_pipelines) {
-        if (state.pipeline) {
-            state.pipeline->cleanup(device);
-        }
-
-        if (state.layout && device) {
-            device.destroyPipelineLayout(state.layout);
-        }
-    }
+    cleanup_pipelines();
 
     if (m_descriptor_manager && device) {
         m_descriptor_manager->cleanup(device);
-        m_descriptor_manager = nullptr;
+        m_descriptor_manager.reset();
     }
 
     m_pipelines.clear();
+    m_shader_foundry = nullptr;
 
     s_initialized = false;
 
@@ -205,6 +211,24 @@ void ComputePress::destroy_pipeline(ComputePipelineID pipeline_id)
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
         "Destroyed compute pipeline (ID: {})", pipeline_id);
+}
+
+void ComputePress::cleanup_pipelines()
+{
+    auto device = m_shader_foundry->get_device();
+
+    for (auto& [id, state] : m_pipelines) {
+        if (state.pipeline) {
+            state.pipeline->cleanup(device);
+        }
+
+        if (state.layout) {
+            device.destroyPipelineLayout(state.layout);
+        }
+    }
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::GPUCompute,
+        "Cleaned up all compute pipelines");
 }
 
 //==============================================================================

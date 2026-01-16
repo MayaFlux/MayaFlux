@@ -195,6 +195,9 @@ public:
         operation(temp_handle);
     }
 
+    /** @brief Stop all subsystems */
+    void stop();
+
     /** @brief Shutdown all subsystems in proper order */
     void shutdown();
 

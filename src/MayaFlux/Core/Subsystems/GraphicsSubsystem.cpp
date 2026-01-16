@@ -214,14 +214,15 @@ void GraphicsSubsystem::stop()
         m_graphics_thread.join();
     }
 
-    Portal::Graphics::shutdown();
+    m_backend->wait_idle();
 
-    m_backend->cleanup();
+    if (Portal::Graphics::is_initialized()) {
+        Portal::Graphics::stop();
+    }
 
     for (auto& window : m_registered_windows) {
         window->set_graphics_registered(false);
     }
-    m_registered_windows.clear();
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
         "Graphics Subsystem stopped.");
@@ -335,6 +336,16 @@ void GraphicsSubsystem::cleanup_closed_windows()
         m_registered_windows.end());
 }
 
+void GraphicsSubsystem::teardown_windows()
+{
+    for (auto& window : m_registered_windows) {
+        m_backend->unregister_window(window);
+        window->set_graphics_registered(false);
+    }
+
+    m_registered_windows.clear();
+}
+
 void GraphicsSubsystem::render_all_windows()
 {
     for (auto& window : m_registered_windows) {
@@ -370,7 +381,17 @@ void GraphicsSubsystem::graphics_thread_loop()
 void GraphicsSubsystem::shutdown()
 {
     stop();
+
+    teardown_windows();
+
+    Portal::Graphics::shutdown();
+
+    m_backend->cleanup();
+
     m_is_ready = false;
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
+        "Graphics Subsystem shutdown complete.");
 }
 
 }
