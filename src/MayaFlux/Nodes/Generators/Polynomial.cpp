@@ -1,7 +1,5 @@
 #include "Polynomial.hpp"
 
-#include <ranges>
-
 namespace MayaFlux::Nodes::Generator {
 
 Polynomial::Polynomial(const std::vector<double>& coefficients)
@@ -9,6 +7,8 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
     , m_coefficients(coefficients)
     , m_buffer_size(0)
     , m_scale_factor(1.F)
+    , m_context(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients)
+    , m_context_gpu(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients, get_gpu_data_buffer())
 {
     m_direct_function = create_polynomial_function(coefficients);
 }
@@ -18,6 +18,8 @@ Polynomial::Polynomial(DirectFunction function)
     , m_direct_function(std::move(function))
     , m_buffer_size(0)
     , m_scale_factor(1.F)
+    , m_context(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients)
+    , m_context_gpu(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients, get_gpu_data_buffer())
 {
 }
 
@@ -26,6 +28,8 @@ Polynomial::Polynomial(BufferFunction function, PolynomialMode mode, size_t buff
     , m_buffer_function(std::move(function))
     , m_buffer_size(buffer_size)
     , m_scale_factor(1.F)
+    , m_context(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients)
+    , m_context_gpu(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients, get_gpu_data_buffer())
 {
     m_input_buffer.resize(buffer_size, 0.0);
     m_output_buffer.resize(buffer_size, 0.0);
@@ -120,8 +124,10 @@ double Polynomial::process_sample(double input)
 
     m_last_output = result;
 
-    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+    if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        && !m_networked_node) {
         notify_tick(result);
+    }
 
     if (m_input_node) {
         atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);
@@ -209,34 +215,40 @@ Polynomial::DirectFunction Polynomial::create_polynomial_function(const std::vec
     };
 }
 
-std::unique_ptr<NodeContext> Polynomial::create_context(double value)
+void Polynomial::update_context(double value)
 {
     if (m_gpu_compatible) {
-        return std::make_unique<PolynomialContextGpu>(
-            value,
-            m_mode,
-            m_buffer_size,
-            m_input_buffer,
-            m_output_buffer,
-            m_coefficients,
-            get_gpu_data_buffer());
+        m_context_gpu.value = value;
+        m_context_gpu.m_mode = m_mode;
+        m_context_gpu.m_buffer_size = m_buffer_size;
+    } else {
+        m_context.value = value;
+        m_context.m_mode = m_mode;
+        m_context.m_buffer_size = m_buffer_size;
     }
-
-    return std::make_unique<PolynomialContext>(value, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients);
 }
 
 void Polynomial::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
+    auto& ctx = get_last_context();
 
     for (auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
+}
+
+NodeContext& Polynomial::get_last_context()
+{
+    if (m_gpu_compatible) {
+        return m_context_gpu;
+    }
+    return m_context;
 }
 
 void Polynomial::save_state()

@@ -137,6 +137,7 @@ public:
      */
     void reset_processed_state() override;
 
+    NodeContext& get_last_context() override;
     void save_state() override;
     void restore_state() override;
 
@@ -152,15 +153,14 @@ protected:
     inline void notify_tick(double) override { }
 
     /**
-     * @brief Empty implementation of create_context
+     * @brief Empty implementation of update_context
      * @param value The output value
-     * @return nullptr as this node doesn't create contexts
      *
      * ChainNode doesn't create its own contexts for callbacks,
      * instead relying on the target node to provide appropriate contexts.
      * This method is a placeholder to satisfy the Node interface.
      */
-    inline std::unique_ptr<NodeContext> create_context(double) override { return nullptr; }
+    inline void update_context(double /*value*/) override { }
 
 private:
     /**
@@ -352,16 +352,25 @@ protected:
     void notify_tick(double value) override;
 
     /**
-     * @brief Creates a context object for callbacks
+     * @brief updates context object for callbacks
      * @param value The current combined output value
-     * @return A unique pointer to a BinaryOpContext object
      *
-     * This method creates a specialized context object containing
+     * This method updates the specialized context object containing
      * the combined output value and the individual values from both
      * input nodes, providing callbacks with rich information about
      * the operation's inputs and output.
      */
-    std::unique_ptr<NodeContext> create_context(double value) override;
+    void update_context(double value) override;
+
+    /**
+     * @brief Retrieves the last created context object
+     * @return Reference to the last BinaryOpContext object
+     *
+     * This method provides access to the most recent BinaryOpContext object
+     * created by the binary operation node. This context contains information
+     * about both input values and the combined output value.
+     */
+    NodeContext& get_last_context() override;
 
 private:
     /**
@@ -411,6 +420,9 @@ private:
     bool m_state_saved {};
     double m_saved_last_lhs_value {};
     double m_saved_last_rhs_value {};
+
+    BinaryOpContext m_context;
+    BinaryOpContextGpu m_context_gpu;
 
 public:
     bool is_initialized() const;

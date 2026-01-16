@@ -57,4 +57,16 @@ void ComputeOutNode::compute_frame()
     return m_readback_data[index];
 }
 
+void ComputeOutNode::update_context(double value)
+{
+    m_readback_float_buffer.resize(m_readback_data.size());
+
+    std::ranges::transform(m_readback_data,
+        m_readback_float_buffer.begin(),
+        [](double d) { return static_cast<float>(d); });
+
+    m_context.value = value;
+    m_context.element_count = m_element_count;
+    m_context.m_gpu_data = m_readback_float_buffer;
+}
 } // namespace MayaFlux::Nodes

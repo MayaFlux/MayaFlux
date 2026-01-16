@@ -82,9 +82,9 @@ protected:
      * This constructor is protected to ensure that only derived classes
      * can create context objects, with proper type identification.
      */
-    NodeContext(double value, const std::string& type)
+    NodeContext(double value, std::string type)
         : value(value)
-        , type_id(type)
+        , type_id(std::move(type))
     {
     }
 };
@@ -271,7 +271,7 @@ public:
      * @brief Checks if the node is currently used by a specific channel
      * @param channel_id The ID of the channel to check
      */
-    bool is_used_by_channel(uint32_t channel_id) const;
+    [[nodiscard]] bool is_used_by_channel(uint32_t channel_id) const;
 
     /**
      * @brief Requests a reset of the processed state from a specific channel
@@ -296,6 +296,17 @@ public:
     [[nodiscard]] const inline std::atomic<uint32_t>& get_channel_mask() const { return m_active_channels_mask; }
 
     /**
+     * @brief Updates the context object with the current node state
+     * @param value The current sample value
+     *
+     * This method is responsible for updating the NodeContext object
+     * with the latest state information from the node. It is called
+     * internally whenever a new output value is produced, ensuring that
+     * the context reflects the current state of the node for use in callbacks.
+     */
+    virtual void update_context(double value) = 0;
+
+    /**
      * @brief Retrieves the last created context object
      * @return Reference to the last NodeContext object
      *
@@ -303,7 +314,7 @@ public:
      * created by the node. This context contains information about the
      * node's state at the time of the last output generation.
      */
-    NodeContext& get_last_context() { return *m_last_context; }
+    virtual NodeContext& get_last_context() = 0;
 
     /**
      * @brief Sets whether the node is compatible with GPU processing
@@ -327,21 +338,6 @@ public:
     [[nodiscard]] std::span<const float> get_gpu_data_buffer() const;
 
 protected:
-    /**
-     * @brief Creates an appropriate context object for this node type
-     * @param value The current sample value
-     * @return A context object containing node-specific information
-     *
-     * This method is responsible for creating a NodeContext object (or a derived
-     * class) that contains information about the node's current state. The context
-     * object is passed to callbacks and conditions to provide them with the
-     * information they need to execute properly.
-     *
-     * Node implementations should override this method to create a context object
-     * that includes all relevant node-specific information.
-     */
-    virtual std::unique_ptr<NodeContext> create_context(double value) = 0;
-
     /**
      * @brief Notifies all registered callbacks with the current context
      * @param value The current sample value
@@ -387,15 +383,6 @@ protected:
     bool m_gpu_compatible {};
 
     /**
-     * @brief The last context object created for callbacks
-     *
-     * This member stores the most recent NodeContext object created by
-     * create_context(). It can be reused for efficiency, avoiding
-     * unnecessary allocations when notifying callbacks.
-     */
-    std::unique_ptr<NodeContext> m_last_context;
-
-    /**
      * @brief GPU data buffer for context objects
      *
      * This buffer is used to store float data that can be uploaded
@@ -424,6 +411,19 @@ protected:
      * conditions or patterns in the combined signal.
      */
     std::vector<std::pair<NodeHook, NodeCondition>> m_conditional_callbacks;
+
+    /**
+     * @brief Flag indicating if the node is part of a NodeNetwork
+     * This flag is used to disable event firing when the node is
+     * managed within a NodeNetwork, preventing redundant or conflicting
+     * event notifications.
+     */
+    bool m_networked_node {};
+
+    /**
+    @brief tracks if the node's state has been saved by a snapshot operation
+    */
+    bool m_state_saved {};
 
 public:
     /**
@@ -558,10 +558,30 @@ public:
      * @brief Checks if the buffer has been processed
      * @return true if the buffer is marked as processed
      */
-    inline bool is_buffer_processed() const
+    [[nodiscard]] inline bool is_buffer_processed() const
     {
         return m_buffer_processed.load(std::memory_order_acquire);
     }
+
+    /**
+     * @brief Sets whether the node is part of a NodeNetwork
+     * @param networked True if the node is managed within a NodeNetwork
+     *
+     * This method sets a flag indicating whether the node is part of a
+     * NodeNetwork. When set, certain behaviors such as event firing
+     * may be disabled to prevent redundant or conflicting notifications.
+     */
+    [[nodiscard]] inline bool is_in_network() const { return m_networked_node; }
+
+    /**
+     * @brief Marks the node as being part of a NodeNetwork
+     * @param networked True if the node is managed within a NodeNetwork
+     *
+     * This method sets a flag indicating whether the node is part of a
+     * NodeNetwork. When set, certain behaviors such as event firing
+     * may be disabled to prevent redundant or conflicting notifications.
+     */
+    void set_in_network(bool networked) { m_networked_node = networked; }
 
 private:
     /**

@@ -56,8 +56,10 @@ double IIR::process_sample(double input)
 
     update_outputs(output);
 
-    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+    if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        && !m_networked_node) {
         notify_tick(output);
+    }
 
     if (m_input_node) {
         atomic_dec_modulator_count(m_input_node->m_modulator_count, 1);

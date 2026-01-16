@@ -233,15 +233,15 @@ public:
 
 protected:
     /**
-     * @brief Creates a context object for callbacks
-     * @param value The current generated value
-     * @return A unique pointer to a StochasticContext object
+     * @brief Updates the context object with the current node state
+     * @param value The current sample value
      *
-     * This method creates a specialized context object containing
-     * the current value and all distribution parameters, providing
-     * callbacks with rich information about the generator's state.
+     * This method is responsible for updating the NodeContext object
+     * with the latest state information from the node. It is called
+     * internally whenever a new output value is produced, ensuring that
+     * the context reflects the current state of the node for use in callbacks.
      */
-    std::unique_ptr<NodeContext> create_context(double value) override;
+    void update_context(double value) override;
 
     /**
      * @brief Notifies all registered callbacks about a new value
@@ -252,6 +252,8 @@ protected:
      * that should receive notification about this value.
      */
     void notify_tick(double value) override;
+
+    NodeContext& get_last_context() override;
 
 private:
     /**
@@ -316,5 +318,8 @@ private:
      * Higher values increase entropy and distribution width.
      */
     double m_normal_spread;
+
+    StochasticContext m_context;
+    StochasticContextGpu m_context_gpu;
 };
 }

@@ -67,14 +67,6 @@ public:
 
 protected:
     /**
-     * @brief GPU sync nodes don't produce scalar contexts
-     */
-    std::unique_ptr<NodeContext> create_context(double /*value*/) override
-    {
-        return nullptr;
-    }
-
-    /**
      * @brief GPU sync nodes don't emit tick callbacks
      */
     void notify_tick(double /*value*/) override { }

@@ -6,6 +6,30 @@
 namespace MayaFlux::Nodes::GpuSync {
 
 /**
+ * @class GeometryContext
+ * @brief Context for GeometryWriterNode - provides vertex buffer access
+ */
+class MAYAFLUX_API GeometryContext : public NodeContext, public GpuStructuredData {
+public:
+    GeometryContext(double value,
+        std::span<const uint8_t> vertex_data,
+        size_t vertex_stride,
+        uint32_t vertex_count)
+        : NodeContext(value, typeid(GeometryContext).name())
+        , GpuStructuredData(vertex_data, vertex_stride, vertex_count)
+        , vertex_count(vertex_count)
+        , vertex_stride(vertex_stride)
+    {
+    }
+
+    uint32_t vertex_count;
+    size_t vertex_stride;
+
+protected:
+    friend class GeometryWriterNode;
+};
+
+/**
  * @class GeometryWriterNode
  * @brief Base class for nodes that generate 3D geometry data
  *
@@ -280,6 +304,25 @@ public:
         m_vertex_data_dirty = false;
         m_needs_layout_update = false;
     }
+
+    /**
+     * @brief Retrieves the last created context object
+     * @return Reference to the last GeometryContext object
+     *
+     * This method provides access to the most recent GeometryContext object
+     * created by the geometry writer node. This context contains information
+     * about the node's state at the time of the last output generation.
+     */
+    NodeContext& get_last_context() override;
+
+    /**
+     * @brief Updates the context object with the current node state
+     * @param value The current sample value
+     */
+    void update_context(double value) override;
+
+protected:
+    GeometryContext m_context { 0.0, {}, 0, 0 };
 
 private:
     struct GeometryState {

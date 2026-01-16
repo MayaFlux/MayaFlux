@@ -109,6 +109,7 @@ void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
         mode.amplitude = 0.0;
 
         mode.oscillator = std::make_shared<Generator::Sine>(mode.current_frequency);
+        mode.oscillator->set_in_network(true);
 
         mode.decay_coefficient = std::exp(-1.0 / (base_decay * Config::get_sample_rate()));
 

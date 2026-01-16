@@ -11,8 +11,6 @@ Sine::Sine(float frequency, double amplitude, float offset)
     m_amplitude = amplitude;
     m_frequency = frequency;
     update_phase_increment(frequency);
-
-    m_last_context = create_context(0.0);
 }
 
 Sine::Sine(const std::shared_ptr<Node>& frequency_modulator, float frequency, double amplitude, float offset)
@@ -126,8 +124,10 @@ double Sine::process_sample(double input)
 
     m_last_output = current_sample;
 
-    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+    if ((!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        && !m_networked_node) {
         notify_tick(current_sample);
+    }
 
     if (m_frequency_modulator) {
         atomic_dec_modulator_count(m_frequency_modulator->m_modulator_count, 1);
@@ -160,14 +160,15 @@ void Sine::reset(float frequency, double amplitude, float offset)
 
 void Sine::notify_tick(double value)
 {
-    m_last_context = create_context(value);
+    update_context(value);
+    auto& ctx = get_last_context();
 
     for (auto& callback : m_callbacks) {
-        callback(*m_last_context);
+        callback(ctx);
     }
     for (auto& [callback, condition] : m_conditional_callbacks) {
-        if (condition(*m_last_context)) {
-            callback(*m_last_context);
+        if (condition(ctx)) {
+            callback(ctx);
         }
     }
 }

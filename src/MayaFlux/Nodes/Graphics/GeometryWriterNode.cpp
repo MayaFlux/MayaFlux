@@ -209,4 +209,19 @@ void GeometryWriterNode::restore_state()
         m_vertex_count, m_vertex_buffer.size() * sizeof(uint8_t));
 }
 
+void GeometryWriterNode::update_context(double value)
+{
+    m_context.value = value;
+    m_context.vertex_count = m_vertex_count;
+    m_context.vertex_stride = m_vertex_stride;
+    m_context.m_gpu_data = std::span<const uint8_t>(m_vertex_buffer.data(), m_vertex_buffer.size());
+    m_context.m_element_size = m_vertex_stride;
+    m_context.m_element_count = m_vertex_count;
+}
+
+NodeContext& GeometryWriterNode::get_last_context()
+{
+    return m_context;
+}
+
 } // namespace MayaFlux::Nodes

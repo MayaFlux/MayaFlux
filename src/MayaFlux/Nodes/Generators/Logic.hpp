@@ -106,12 +106,14 @@ public:
 private:
     LogicMode m_mode; ///< Current computational model
     LogicOperator m_operator; ///< Current boolean operator
-    std::deque<bool> m_history; ///< History of boolean states
+    const std::deque<bool>& m_history; ///< History of boolean states
     double m_threshold; ///< Decision boundary for binary quantization
     bool m_edge_detected; ///< Whether a state transition was detected
     EdgeType m_edge_type; ///< Type of transition being monitored
-    std::vector<double> m_inputs; ///< Current input values (for multi-input mode)
+    const std::vector<double>& m_inputs; ///< Current input values (for multi-input mode)
     double m_input; ///< Current input value for multi-input mode
+
+    friend class Logic;
 };
 
 /**
@@ -533,17 +535,22 @@ public:
     void save_state() override;
     void restore_state() override;
 
+    /**
+     * @brief Retrieves the last created context object
+     * @return Reference to the last LogicContext object
+     *
+     * This method provides access to the most recent LogicContext object
+     * created by the logic node. This context contains information about
+     * the node's state at the time of the last output generation.
+     */
+    NodeContext& get_last_context() override;
+
 protected:
     /**
-     * @brief Creates a context object for callbacks
+     * @brief Updates the context with the latest sample value
      * @param value The current generated sample
-     * @return A unique pointer to a GeneratorContext object
-     *
-     * This method creates a specialized context object containing
-     * the current sample value and all oscillator parameters, providing
-     * callbacks with rich information about the oscillator's state.
      */
-    std::unique_ptr<NodeContext> create_context(double value) override;
+    void update_context(double value) override;
 
     /**
      * @brief Notifies all registered callbacks about a new sample
@@ -605,7 +612,8 @@ private:
     bool m_saved_edge_detected {};
     double m_saved_temporal_time {};
     double m_saved_last_output {};
-    bool m_state_saved {};
+    LogicContext m_context;
+    LogicContextGpu m_context_gpu;
 };
 
 } // namespace MayaFlux::Nodes::Generator
