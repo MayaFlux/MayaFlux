@@ -49,6 +49,13 @@ public:
      */
     NodeGraphManager();
 
+    /**
+     * @brief Destroys the NodeGraphManager
+     *
+     * Cleans up all registered nodes and networks.
+     */
+    ~NodeGraphManager();
+
     // NodeGraphManager is non-copyable and non-moveable due to internal atomic state
     NodeGraphManager(const NodeGraphManager&) = delete;
     NodeGraphManager& operator=(const NodeGraphManager&) = delete;
@@ -394,6 +401,14 @@ public:
      * and returns their combined output data.
      */
     std::vector<std::vector<double>> process_audio_networks(ProcessingToken token, uint32_t num_samples, uint32_t channel = 0);
+
+    /**
+     * @brief Terminates all active processing across all tokens and channels
+     *
+     * This method stops all active processing contexts in all root nodes
+     * and networks, ensuring a clean shutdown of processing activities.
+     */
+    void terminate_active_processing();
 
 private:
     /**

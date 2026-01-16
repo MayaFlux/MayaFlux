@@ -67,6 +67,14 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         return 1;
     }
 
+    if (!m_is_running) {
+        if (output_buffer) {
+            size_t total_samples = num_frames * m_stream_info.output.channels;
+            std::memset(output_buffer, 0, total_samples * sizeof(double));
+        }
+        return 0;
+    }
+
     if (m_handle == nullptr) {
         MF_RT_ERROR(Journal::Component::Core, Journal::Context::AudioCallback,
             "Invalid processing handle");
@@ -163,10 +171,22 @@ void AudioSubsystem::start()
 
 void AudioSubsystem::stop()
 {
+    if (!m_is_running) {
+        return;
+    }
+
+    MF_INFO(Journal::Component::Core, Journal::Context::AudioSubsystem,
+        "Stopping AudioSubsystem...");
+    m_is_running = false;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
     if (m_audio_stream && m_audio_stream->is_running()) {
         m_audio_stream->stop();
-        m_is_running = false;
     }
+
+    MF_INFO(Journal::Component::Core, Journal::Context::AudioSubsystem,
+        "AudioSubsystem stopped");
 }
 
 void AudioSubsystem::pause()
@@ -189,10 +209,12 @@ void AudioSubsystem::shutdown()
 {
     stop();
     if (m_audio_stream) {
-        m_audio_stream.reset();
+        m_audio_stream->close();
     }
+    m_audio_stream.reset();
     m_audio_device.reset();
     m_audiobackend.reset();
     m_is_ready = false;
 }
+
 }

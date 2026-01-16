@@ -141,6 +141,14 @@ public:
      */
     inline ProcessingToken get_token() { return m_token; }
 
+    /**
+     * @brief Terminates all nodes registered with this root node
+     *
+     * This method unregisters all node processing and stops
+     * active processing contexts but does not clear nodes
+     */
+    void terminate_all_nodes();
+
 private:
     /**
      * @brief Collection of nodes registered with this root node
@@ -160,6 +168,14 @@ private:
      * during audio processing.
      */
     std::atomic<bool> m_is_processing;
+
+    /**
+     * @brief Flag to request termination of processing
+     *
+     * When set to true, this flag indicates that all processing
+     * should be terminated cleanly.
+     */
+    std::atomic<bool> m_request_terminate { false };
 
     /**
      * @brief Structure for storing pending node registration/unregistration operations

@@ -155,6 +155,20 @@ void SubsystemManager::stop()
     }
 }
 
+void SubsystemManager::stop_audio_subsystem()
+{
+    if (auto audio = get_audio_subsystem()) {
+        audio->stop();
+    }
+}
+
+void SubsystemManager::stop_graphics_subsystem()
+{
+    if (auto graphics = get_graphics_subsystem()) {
+        graphics->stop();
+    }
+}
+
 void SubsystemManager::shutdown()
 {
     for (auto& [token, subsystem] : m_subsystems) {
@@ -257,4 +271,5 @@ bool SubsystemManager::has_process_hook(SubsystemType type, const std::string& n
 
     return handle->pre_process_hooks.contains(name) || handle->post_process_hooks.contains(name);
 }
+
 }

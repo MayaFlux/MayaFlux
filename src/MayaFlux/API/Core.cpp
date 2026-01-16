@@ -20,9 +20,6 @@ namespace internal {
         std::lock_guard<std::recursive_mutex> lock(engine_mutex);
         if (engine_ref) {
             if (initialized) {
-                if (engine_ref->is_running()) {
-                    engine_ref->Pause();
-                }
                 engine_ref->End();
                 Journal::Archivist::shutdown();
             }

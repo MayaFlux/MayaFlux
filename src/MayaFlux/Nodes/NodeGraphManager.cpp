@@ -597,4 +597,41 @@ bool NodeGraphManager::is_network_registered(const std::shared_ptr<Network::Node
         [&network](const auto& pair) { return pair.second == network; });
 }
 
+void NodeGraphManager::terminate_active_processing()
+{
+    for (auto& [token, networks] : m_audio_networks) {
+        for (auto& network : networks) {
+            if (network) {
+                unregister_network_global(network);
+            }
+        }
+    }
+
+    for (auto& [token, networks] : m_token_networks) {
+        for (auto& network : networks) {
+            if (network) {
+                unregister_network_global(network);
+            }
+        }
+    }
+
+    for (auto token : get_active_tokens()) {
+        auto roots = get_all_root_nodes(token);
+        for (auto* root : roots) {
+            root->terminate_all_nodes();
+        }
+    }
+}
+
+NodeGraphManager::~NodeGraphManager()
+{
+    terminate_active_processing();
+    m_token_roots.clear();
+    m_audio_networks.clear();
+    m_token_networks.clear();
+
+    m_Node_registry.clear();
+    m_network_registry.clear();
+}
+
 }
