@@ -13,6 +13,7 @@ namespace internal {
 
     std::unique_ptr<Core::Engine> engine_ref;
     bool initialized = false;
+    bool terminating = false;
     std::recursive_mutex engine_mutex;
 
     void cleanup_engine()
@@ -47,6 +48,9 @@ namespace internal {
 
 bool is_initialized()
 {
+    if (internal::terminating) {
+        return false;
+    }
     return internal::initialized;
 }
 
@@ -136,6 +140,7 @@ void Await()
 
 void End()
 {
+    internal::terminating = true;
     if (internal::initialized) {
         internal::cleanup_engine();
     }

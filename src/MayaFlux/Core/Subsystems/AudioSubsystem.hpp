@@ -49,7 +49,7 @@ public:
     inline bool is_ready() const override { return m_is_ready; }
 
     /** @brief Check if audio subsystem is currently running */
-    inline bool is_running() const override { return m_is_running; }
+    inline bool is_running() const override { return m_is_running.load(); }
 
     /** @brief Get access to the underlying audio backend */
     inline IAudioBackend* get_audio_backend() { return m_audiobackend.get(); }
@@ -123,8 +123,10 @@ private:
     SubsystemProcessingHandle* m_handle; ///< Reference to processing handle
 
     bool m_is_ready {}; ///< Subsystem ready state
-    bool m_is_running {}; ///< Subsystem running state
     bool m_is_paused {}; ///< Subsystem paused state
+
+    std::atomic<bool> m_is_running { false }; ///< Subsystem running state
+    std::atomic<int> m_callback_active { 0 }; ///< Active callback counter
 
     static const SubsystemType m_type = SubsystemType::AUDIO;
 };

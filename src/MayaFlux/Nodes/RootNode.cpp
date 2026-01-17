@@ -99,6 +99,10 @@ bool RootNode::preprocess()
         return true;
 
     bool expected = false;
+    if (m_request_terminate.load(std::memory_order_acquire)) {
+        return false;
+    }
+
     if (!m_is_processing.compare_exchange_strong(expected, true,
             std::memory_order_acquire, std::memory_order_relaxed)) {
         return false;
@@ -232,6 +236,8 @@ void RootNode::process_pending_operations()
 void RootNode::terminate_all_nodes()
 {
     m_request_terminate.store(true, std::memory_order_release);
+
+    m_is_processing.store(false, std::memory_order_release);
 
     for (auto& node : m_Nodes) {
         unregister_node(node);

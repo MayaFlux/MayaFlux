@@ -244,15 +244,11 @@ void Engine::End()
     }
 
     if (m_subsystem_manager) {
-        m_subsystem_manager->stop_audio_subsystem();
+        m_subsystem_manager->stop();
     }
 
     if (m_scheduler) {
         m_scheduler->terminate_all_tasks();
-    }
-
-    if (m_subsystem_manager) {
-        m_subsystem_manager->stop_graphics_subsystem();
     }
 
     if (m_buffer_manager) {

@@ -54,9 +54,6 @@ const std::unordered_map<unsigned int, std::shared_ptr<RootNode>>& NodeGraphMana
 
 bool NodeGraphManager::preprocess_networks(ProcessingToken token)
 {
-    if (m_terminate_requested.load())
-        return false;
-
     auto& processing_ptr = m_token_network_processing[token];
 
     if (!processing_ptr) {
