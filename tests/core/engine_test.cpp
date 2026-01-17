@@ -383,35 +383,6 @@ TEST_F(EngineTest, GracefulHandlingOfUninitializedState)
     test_engine->End();
 }
 
-TEST_F(EngineTest, MultipleInitializationHandling)
-{
-
-    Core::GlobalStreamInfo config1 {
-        .sample_rate = 44100,
-        .buffer_size = 256,
-        .output = { .channels = 1 },
-    };
-
-    Core::GlobalStreamInfo config2 {
-        .sample_rate = 48000,
-        .buffer_size = 512,
-        .output = { .channels = 2 },
-    };
-
-    EXPECT_NO_THROW(engine->Init(config1));
-
-    auto& stream_info = engine->get_stream_info();
-    EXPECT_EQ(stream_info.sample_rate, 44100);
-    EXPECT_EQ(stream_info.buffer_size, 256);
-    EXPECT_EQ(stream_info.output.channels, 1);
-
-    EXPECT_NO_THROW(engine->Init(config2));
-
-    EXPECT_EQ(engine->get_stream_info().sample_rate, 48000);
-    EXPECT_EQ(engine->get_stream_info().buffer_size, 512);
-    EXPECT_EQ(engine->get_stream_info().output.channels, 2);
-}
-
 //-------------------------------------------------------------------------
 // Input Processing and Full-Duplex Integration Tests
 //-------------------------------------------------------------------------

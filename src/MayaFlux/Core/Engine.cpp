@@ -239,6 +239,10 @@ void Engine::End()
     if (!m_is_initialized)
         return;
 
+    if (m_node_graph_manager) {
+        m_node_graph_manager->terminate_active_processing();
+    }
+
     if (m_subsystem_manager) {
         m_subsystem_manager->stop_audio_subsystem();
     }
@@ -265,7 +269,6 @@ void Engine::End()
     }
 
     if (m_node_graph_manager) {
-        m_node_graph_manager->terminate_active_processing();
         m_node_graph_manager.reset();
     }
 

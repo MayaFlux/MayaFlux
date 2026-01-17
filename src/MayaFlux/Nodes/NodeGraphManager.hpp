@@ -496,6 +496,8 @@ private:
      */
     std::unordered_map<ProcessingToken, std::unique_ptr<std::atomic<bool>>> m_token_network_processing;
 
+    std::atomic<bool> m_terminate_requested { false }; ///< Global termination flag
+
     /**
      * @brief Ensures a root node exists for the given token and channel
      * @param token Processing domain

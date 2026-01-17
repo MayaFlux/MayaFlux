@@ -94,6 +94,13 @@ public:
     }
 
     /**
+     * @brief Force resume the coroutine, bypassing all checks
+     * Used only during shutdown to push coroutines to final_suspend
+     * @return True if coroutine was resumed, false if already done
+     */
+    virtual bool force_resume() = 0;
+
+    /**
      * @brief Check if the routine should synchronize with a clock
      * @return True if the routine requires clock synchronization
      */
@@ -381,6 +388,8 @@ public:
 
     bool try_resume_with_context(uint64_t current_value, DelayContext context) override;
 
+    bool force_resume() override;
+
     [[nodiscard]] DelayContext get_delay_context() const override
     {
         return m_handle.promise().active_delay_context;
@@ -574,6 +583,8 @@ public:
 
     bool try_resume_with_context(uint64_t current_value, DelayContext context) override;
 
+    bool force_resume() override;
+
     [[nodiscard]] DelayContext get_delay_context() const override
     {
         return m_handle.promise().active_delay_context;
@@ -665,6 +676,7 @@ public:
 
     // Promise state access implementations (TODO: implement when complex promise is ready)
     [[nodiscard]] bool get_auto_resume() const override { return true; }
+    bool force_resume() override { return false; }
     void set_auto_resume(bool /*auto_resume*/) override { /* TODO */ }
     [[nodiscard]] bool get_should_terminate() const override { return false; }
     void set_should_terminate(bool /*should_terminate*/) override { /* TODO */ }
