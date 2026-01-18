@@ -30,4 +30,4 @@ jobs:
             --clone-url https://github.com/MayaFlux/MayaFlux \
             --commit main \
             --spec packaging/fedora/mayaflux-dev.spec \
-            --method rpkg
+            --method rpkg --nowait

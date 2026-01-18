@@ -5,7 +5,10 @@
       "label": "CMake Configure (Debug)",
       "type": "shell",
       "command": "cmake",
-      "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Debug", "-DMAYAFLUX_PORTABLE=ON"],
+      "args": ["-B", "build", "-S", ".", "-DMAYAFLUX_DEV=ON"],
+      "windows": {
+        "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Debug"]
+      },
       "group": "build",
       "problemMatcher": {
         "owner": "cpp",
@@ -32,7 +35,17 @@
       "label": "CMake Configure (Release)",
       "type": "shell",
       "command": "cmake",
-      "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Release", "-DMAYAFLUX_PORTABLE=ON"],
+      "args": [
+        "-B",
+        "build",
+        "-S",
+        ".",
+        "-DMAYAFLUX_DEV=ON",
+        "-DCMAKE_BUILD_TYPE=Release"
+      ],
+      "windows": {
+        "args": ["-B", "build", "-S", ".", "-DCMAKE_BUILD_TYPE=Release"]
+      },
       "group": "build",
       "problemMatcher": {
         "owner": "cpp",
@@ -156,7 +169,6 @@
         "command": "${workspaceFolder}\\build\\Debug\\project_launcher.exe"
       },
       "group": "none",
-      "dependsOn": ["Build MayaFlux (Debug)"],
       "problemMatcher": [],
       "presentation": {
         "echo": true,
@@ -175,7 +187,6 @@
         "command": "${workspaceFolder}\\build\\Debug\\lila_server.exe"
       },
       "group": "none",
-      "dependsOn": ["Build MayaFlux (Debug)"],
       "problemMatcher": [],
       "presentation": {
         "echo": true,
