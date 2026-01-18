@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::set_audio_final_processor" name="MayaFlux::Buffers::BufferProcessingControl::set_audio_final_processor">
+<area shape="rect" id="Node000001" title="Sets a final processor for an audio token (applied to all channels)" alt="" coords="5,77,204,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4d8b6658b8ba5a37086de5f4ddc07f88.html#a4d8b6658b8ba5a37086de5f4ddc07f88" title="Gets an existing audio unit without creating if missing (mutable)" alt="" coords="261,5,433,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,75,247,60,249,65,198,80"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_ab300ec63a12ad8cde8c5ef4e7092367b.html#ab300ec63a12ad8cde8c5ef4e7092367b" title=" " alt="" coords="252,85,443,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,102,238,102,238,107,204,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4531a511fff4b519167f92818c4e6ed6.html#a4531a511fff4b519167f92818c4e6ed6" title="Checks if an audio unit exists for the given token." alt="" coords="260,149,435,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="198,130,248,144,246,150,197,135"/>
+</map>

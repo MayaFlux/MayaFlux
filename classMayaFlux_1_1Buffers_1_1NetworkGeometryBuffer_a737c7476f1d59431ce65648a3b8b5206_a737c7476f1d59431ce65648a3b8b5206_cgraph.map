@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NetworkGeometryBuffer::setup_rendering" name="MayaFlux::Buffers::NetworkGeometryBuffer::setup_rendering">
+<area shape="rect" id="Node000001" title="Setup rendering with RenderProcessor." alt="" coords="5,5,187,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a6cf409969c192851ab2cf7f0315d2a49.html#a6cf409969c192851ab2cf7f0315d2a49" title="Access the buffer&#39;s processing chain." alt="" coords="235,13,461,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,30,221,30,221,35,187,35"/>
+</map>

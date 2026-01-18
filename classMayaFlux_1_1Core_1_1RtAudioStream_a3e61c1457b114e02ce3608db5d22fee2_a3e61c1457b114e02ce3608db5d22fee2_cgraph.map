@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::RtAudioStream::start" name="MayaFlux::Core::RtAudioStream::start">
+<area shape="rect" id="Node000001" title="Activates the audio stream and begins data transfer." alt="" coords="5,37,236,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a90b65b7aca61c04ab1ced9cff8c87c8c.html#a90b65b7aca61c04ab1ced9cff8c87c8c" title="Checks if the stream is initialized and ready for activation." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,41,270,37,271,43,237,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1RtAudioStream_aff267acf58b495025612c82b2889dccb.html#aff267acf58b495025612c82b2889dccb" title="Checks if the stream is actively processing audio data." alt="" coords="284,69,515,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="237,68,271,72,270,77,236,73"/>
+</map>

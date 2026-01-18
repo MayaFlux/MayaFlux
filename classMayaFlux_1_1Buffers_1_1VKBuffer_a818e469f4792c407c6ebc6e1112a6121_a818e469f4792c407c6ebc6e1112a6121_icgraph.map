@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBuffer::clear" name="MayaFlux::Buffers::VKBuffer::clear">
+<area shape="rect" id="Node000001" title="Clear buffer contents." alt="" coords="208,37,356,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae22f33ecea5953e1b819bbd36db3114c.html#ae22f33ecea5953e1b819bbd36db3114c" title="Write data into the buffer." alt="" coords="9,5,157,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,46,157,40,157,35,195,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_afb563bced2a85b0019e571ce0bfa4081.html#afb563bced2a85b0019e571ce0bfa4081" title="Virtual destructor." alt="" coords="5,69,160,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="195,74,161,80,160,74,194,69"/>
+</map>

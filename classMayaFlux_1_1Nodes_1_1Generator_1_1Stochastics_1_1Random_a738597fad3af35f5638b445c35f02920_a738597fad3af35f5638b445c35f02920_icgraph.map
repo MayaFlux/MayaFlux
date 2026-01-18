@@ -1,0 +1,19 @@
+<map id="MayaFlux::Nodes::Generator::Stochastics::Random::transform_sample" name="MayaFlux::Nodes::Generator::Stochastics::Random::transform_sample">
+<area shape="rect" id="Node000001" title="Transforms a raw value to fit within the specified range." alt="" coords="659,133,952,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a4ae02fb01a82e23d598bf81faa63e707.html#a4ae02fb01a82e23d598bf81faa63e707" title="Generates an array of stochastic values within a specified range." alt="" coords="339,53,604,93"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="707,133,555,96,557,91,708,127"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_abd2c62014e6399b45f66de70724462e0.html#abd2c62014e6399b45f66de70724462e0" title="Generates a stochastic value within a specified range." alt="" coords="332,165,611,205"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="645,171,611,175,611,169,644,166"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a42192084e481b63ff83afa9be5046dc3.html#a42192084e481b63ff83afa9be5046dc3" title="Generates multiple stochastic values at once." alt="" coords="11,5,278,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="324,54,278,48,279,42,325,49"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_ab3f5eda72cdff8f36ecfbdd9afad0e75.html#ab3f5eda72cdff8f36ecfbdd9afad0e75" title="Generates an exponential random number." alt="" coords="45,69,244,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="403,163,283,124,238,112,239,107,285,119,405,158"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a2aa8cde8e8a40fea6a82c65356fa50fb.html#a2aa8cde8e8a40fea6a82c65356fa50fb" title="Generates a gaussian (normal) random number." alt="" coords="55,133,235,173"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="318,173,234,165,235,159,318,168"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a6d76c1657f091b72fe62aebe02ca575d.html#a6d76c1657f091b72fe62aebe02ca575d" title="Generates a poisson random number." alt="" coords="59,197,231,237"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="319,203,231,212,231,206,318,198"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a8969856c48c84fe3db8145c202328672.html#a8969856c48c84fe3db8145c202328672" title="Generates a uniform random number." alt="" coords="58,261,231,301"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="405,213,285,252,232,266,231,260,283,247,403,207"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_afea805d9c9a427905fdb47dcd50c8c46.html#afea805d9c9a427905fdb47dcd50c8c46" title="Generates a single stochastic value." alt="" coords="5,325,284,365"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="438,216,370,267,329,294,285,316,252,328,250,323,283,311,326,289,367,263,435,212"/>
+</map>

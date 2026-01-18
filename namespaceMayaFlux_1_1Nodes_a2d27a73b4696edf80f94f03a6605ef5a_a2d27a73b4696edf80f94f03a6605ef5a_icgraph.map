@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::callback_exists" name="MayaFlux::Nodes::callback_exists">
+<area shape="rect" id="Node000001" title="Checks if a callback function already exists in a collection." alt="" coords="480,69,677,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a4cc726e3c21a41cdf05c43b6ab318057.html#a4cc726e3c21a41cdf05c43b6ab318057" title="Safely adds a callback to a collection if it doesn&#39;t already exist." alt="" coords="261,69,432,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="466,92,432,92,432,87,466,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_abb241c1f6e91247ca3250689a771bb4c.html#abb241c1f6e91247ca3250689a771bb4c" title="Registers a callback for every impulse." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="258,68,183,48,185,43,259,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_adbf31c1c81c5542059609b8e227408d6.html#adbf31c1c81c5542059609b8e227408d6" title="Registers a callback for every phase wrap." alt="" coords="5,69,213,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="248,92,213,92,213,87,248,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Node_af1a1e001468fe515fa86db3682b4ccb6.html#af1a1e001468fe515fa86db3682b4ccb6" title="Registers a callback to be called on each tick." alt="" coords="21,133,198,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="259,116,185,136,183,131,258,110"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::DynamicSoundStream::get_channel_frames" name="MayaFlux::Kakshya::DynamicSoundStream::get_channel_frames">
+<area shape="rect" id="Node000001" title="Get the fixed capacity of the circular buffer if enabled." alt="" coords="5,84,180,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa86bcecbdd57f904ad41197fe8b2b780.html#aa86bcecbdd57f904ad41197fe8b2b780" title="Get channel data with semantic interpretation." alt="" coords="245,5,417,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,81,234,62,236,67,177,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa614dad97adb83d9b5e5b10e839e033c.html#aa614dad97adb83d9b5e5b10e839e033c" title=" " alt="" coords="245,84,417,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="180,109,232,109,232,114,180,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="228,163,435,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="181,135,252,157,250,162,179,140"/>
+</map>

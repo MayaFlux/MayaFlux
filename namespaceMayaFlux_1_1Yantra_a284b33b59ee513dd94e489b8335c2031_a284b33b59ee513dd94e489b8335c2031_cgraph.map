@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::interpolate_linear" name="MayaFlux::Yantra::interpolate_linear">
+<area shape="rect" id="Node000001" title="Linear interpolation between data points using C++20 ranges (IN&#45;PLACE)" alt="" coords="5,29,219,69"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="64,30,61,20,68,10,86,5,112,3,142,6,159,13,157,18,141,11,112,8,87,10,71,15,66,21,69,28"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a169ceff435409b3a603896d1d4965ed0.html#a169ceff435409b3a603896d1d4965ed0" title=" " alt="" coords="267,37,480,62"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="219,47,253,47,253,52,219,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="331,38,322,28,327,18,344,12,373,10,411,14,421,19,425,25,420,28,417,23,409,19,373,15,345,17,330,22,327,28,335,35"/>
+</map>

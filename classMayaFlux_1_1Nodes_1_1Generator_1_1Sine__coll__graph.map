@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nodes::Generator::Sine" name="MayaFlux::Nodes::Generator::Sine">
+<area shape="rect" id="Node000001" title="Sinusoidal oscillator generator node." alt="" coords="225,1436,428,1916"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="227,1087,427,1387"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="329,1401,329,1436,324,1436,324,1401"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,375,203,1024"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="210,1007,217,1023,246,1085,241,1087,212,1025,205,1009"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="375,193,575,313"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="487,313,502,450,507,539,509,638,506,744,497,852,479,960,451,1064,437,1096,432,1094,445,1062,473,959,491,851,501,744,504,638,502,539,496,450,481,313"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="227,659,427,739"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="453,327,342,660,337,658,448,325"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="365,5,585,131"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="477,145,477,192,472,192,472,145"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="329,740,329,1070,324,1070,324,740"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="117,180,350,325"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="254,338,321,659,316,660,248,339"/>
+</map>

@@ -1,0 +1,3 @@
+<map id="MayaFlux::Core::VKCommandManager" name="MayaFlux::Core::VKCommandManager">
+<area shape="rect" id="Node000001" title="Manages Vulkan command pools and command buffers." alt="" coords="5,5,243,325"/>
+</map>

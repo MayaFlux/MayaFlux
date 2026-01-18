@@ -1,0 +1,23 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::process_batch" name="MayaFlux::Nodes::Generator::Polynomial::process_batch">
+<area shape="rect" id="Node000001" title="Processes multiple samples at once." alt="" coords="5,197,213,237"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a6c5eaaf26f00522a8ee26bf0cd38c1e9.html#a6c5eaaf26f00522a8ee26bf0cd38c1e9" title="Processes a single sample." alt="" coords="261,165,477,205"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,202,247,198,248,203,214,207"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_ab139c28c463a0d4d40ea6bf863d1d6c4.html#ab139c28c463a0d4d40ea6bf863d1d6c4" title="Resets the generator to its initial state." alt="" coords="265,229,473,269"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="214,227,252,232,251,237,213,233"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a4b8a7b5921b7d9b7ffb1e2f0e596e9a2.html#a4b8a7b5921b7d9b7ffb1e2f0e596e9a2" title="Atomically adds a flag to a node state." alt="" coords="564,5,752,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="387,163,445,109,483,80,524,55,550,44,552,49,527,60,486,84,448,113,391,167"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_aa4e4a2ece2a22b6774a5978e557ea25e.html#aa4e4a2ece2a22b6774a5978e557ea25e" title="Atomically decrements the modulator count by a specified amount." alt="" coords="564,69,752,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="413,163,524,119,553,110,554,115,526,124,415,168"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_a7d0374eb13e0238f520338b13823a627.html#a7d0374eb13e0238f520338b13823a627" title="Atomically increments the modulator count by a specified amount." alt="" coords="564,133,752,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="477,171,550,163,550,168,478,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a909515df56a6d57e7e7332c14f0efe63.html#a909515df56a6d57e7e7332c14f0efe63" title="Builds buffer from external context or internal accumulation." alt="" coords="525,197,791,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="478,195,512,198,511,204,477,200"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a78f2f499d75866e25ba584c19622a21f.html#a78f2f499d75866e25ba584c19622a21f" title="Notifies all registered callbacks about a new sample." alt="" coords="554,261,762,301"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="448,203,479,215,503,231,527,247,546,254,544,259,524,252,500,236,476,220,446,208"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Nodes_a7c82f258078606084a01f72dfba3bb92.html#a7c82f258078606084a01f72dfba3bb92" title="Attempts to reset the processed state of a node." alt="" coords="571,325,745,365"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="461,203,479,215,491,227,497,240,504,265,510,289,516,300,527,311,559,329,556,334,524,315,512,304,505,291,498,266,493,242,486,231,476,219,458,208"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_ad90842fc652a81bbad736ae05f96d959.html#ad90842fc652a81bbad736ae05f96d959" title="Retrieves the last created context object." alt="" coords="839,229,1057,269"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="762,267,825,260,825,266,763,273"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a49ff94fa54ebf11a338b01956d66fab2.html#a49ff94fa54ebf11a338b01956d66fab2" title="Updates the context object with the current node state." alt="" coords="842,293,1054,333"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="763,290,828,297,828,303,762,295"/>
+</map>

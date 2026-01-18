@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ContainerBuffer::set_container" name="MayaFlux::Buffers::ContainerBuffer::set_container">
+<area shape="rect" id="Node000001" title="Update the container reference." alt="" coords="5,5,157,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ContainerBuffer_ae6a459f8386ac0fef65d143a528ea781.html#ae6a459f8386ac0fef65d143a528ea781" title="Attempt to enable zero&#45;copy operation if container layout allows." alt="" coords="205,5,377,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="158,30,192,30,192,35,158,35"/>
+</map>

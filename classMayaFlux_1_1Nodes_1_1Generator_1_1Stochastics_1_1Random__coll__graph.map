@@ -1,0 +1,23 @@
+<map id="MayaFlux::Nodes::Generator::Stochastics::Random" name="MayaFlux::Nodes::Generator::Stochastics::Random">
+<area shape="rect" id="Node000001" title="Computational stochastic signal generator with multiple probability distributions." alt="" coords="608,1451,808,1965"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="215,1101,415,1401"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="426,1377,610,1589,606,1593,422,1380"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,389,203,1039"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="210,1015,234,1076,245,1100,240,1102,230,1078,205,1017"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="213,200,413,320"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="287,321,274,355,265,390,238,570,232,644,232,713,243,856,265,1038,273,1085,268,1086,260,1039,238,856,227,713,227,644,232,570,260,389,269,353,282,320"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="360,674,560,754"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="339,333,450,673,445,674,334,334"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="449,5,669,131"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="470,141,391,202,388,198,467,137"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1StochasticContext.html" title="Specialized context for stochastic generator callbacks." alt="" coords="695,180,918,340"/>
+<area shape="poly" id="edge9_Node000008_Node000005" title=" " alt="" coords="652,137,705,178,702,182,648,141"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="452,755,362,1087,357,1085,447,754"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="438,187,671,333"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="539,347,471,674,466,673,534,346"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1StochasticContextGpu.html" title=" " alt="" coords="584,674,832,754"/>
+<area shape="poly" id="edge12_Node000009_Node000007" title=" " alt="" coords="586,345,697,673,692,674,581,347"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="836,340,847,389,883,673,892,789,895,897,890,1005,877,1121,856,1250,825,1402,815,1444,810,1442,820,1401,850,1249,872,1120,885,1005,890,897,887,789,878,674,841,390,831,341"/>
+<area shape="poly" id="edge11_Node000009_Node000008" title=" " alt="" coords="789,355,719,674,714,673,784,353"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="711,754,711,1434,705,1434,705,754"/>
+</map>

@@ -1,0 +1,41 @@
+<map id="MayaFlux::Nodes::Node" name="MayaFlux::Nodes::Node">
+<area shape="rect" id="Node000001" title="Base interface for all computational processing nodes." alt="" coords="493,5,691,655"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode.html" title="Combines the outputs of two nodes using a binary operation." alt="" coords="5,817,235,1283"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="485,428,426,486,363,553,302,627,249,704,219,759,193,818,188,816,214,757,244,701,298,623,359,550,422,482,481,424"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1ChainNode.html" title="Connects two nodes in series to form a processing chain." alt="" coords="259,830,466,1270"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="492,654,435,830,430,829,487,652"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter.html" title="Base class for computational signal transformers implementing difference equations." alt="" coords="491,703,693,1397"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="595,668,595,702,589,702,589,668"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="947,880,1147,1220"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="700,497,949,889,944,892,696,500"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="1967,950,2159,1150"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="704,383,1967,999,1965,1004,702,388"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FIR.html" title="Finite Impulse Response filter implementation." alt="" coords="34,1653,238,1818"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="483,1396,479,1399,450,1419,421,1427,393,1428,364,1425,337,1422,309,1422,281,1429,252,1447,231,1468,213,1492,183,1545,163,1600,150,1653,145,1651,158,1599,178,1542,208,1489,227,1465,249,1443,279,1425,308,1417,337,1416,365,1420,393,1423,420,1422,448,1414,476,1395,479,1392"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1IIR.html" title="Infinite Impulse Response filter implementation." alt="" coords="263,1653,463,1818"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="489,1372,480,1398,393,1653,388,1652,475,1396,484,1370"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse.html" title="Impulse generator node." alt="" coords="487,1475,689,1995"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="939,1158,880,1220,818,1290,757,1367,704,1447,687,1477,682,1474,699,1444,753,1364,814,1287,876,1216,935,1154"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic.html" title="Digital signal processor implementing boolean logic operations." alt="" coords="713,1455,913,2015"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="987,1234,911,1456,906,1454,982,1232"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor.html" title="Phase ramp generator node." alt="" coords="938,1445,1155,2025"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="1049,1234,1049,1445,1044,1445,1044,1234"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial.html" title="Generator that produces values based on polynomial functions." alt="" coords="1179,1465,1383,2005"/>
+<area shape="poly" id="edge10_Node000007_Node000011" title=" " alt="" coords="1112,1232,1191,1464,1186,1466,1107,1234"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine.html" title="Sinusoidal oscillator generator node." alt="" coords="1408,1495,1611,1975"/>
+<area shape="poly" id="edge11_Node000007_Node000012" title=" " alt="" coords="1158,1153,1218,1215,1281,1286,1342,1363,1397,1444,1425,1494,1420,1497,1392,1447,1338,1366,1276,1289,1214,1218,1154,1157"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random.html" title="Computational stochastic signal generator with multiple probability distributions." alt="" coords="1635,1458,1835,2013"/>
+<area shape="poly" id="edge12_Node000007_Node000013" title=" " alt="" coords="1160,1100,1269,1158,1393,1236,1456,1281,1517,1331,1574,1386,1625,1444,1637,1460,1632,1463,1621,1447,1570,1389,1513,1335,1453,1286,1390,1240,1267,1163,1158,1105"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ComputeOutNode.html" title="Node that reads back data from GPU buffer to CPU." alt="" coords="1859,1565,2051,1905"/>
+<area shape="poly" id="edge14_Node000014_Node000015" title=" " alt="" coords="2048,1164,1984,1565,1979,1565,2042,1163"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode.html" title="Base class for nodes that generate 3D geometry data." alt="" coords="2075,1518,2267,1953"/>
+<area shape="poly" id="edge15_Node000014_Node000016" title=" " alt="" coords="2083,1163,2139,1517,2134,1518,2078,1164"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TextureNode.html" title="Base class for texture&#45;generating nodes." alt="" coords="2291,1475,2495,1995"/>
+<area shape="poly" id="edge18_Node000014_Node000019" title=" " alt="" coords="2131,1161,2205,1295,2281,1444,2295,1474,2290,1476,2276,1446,2201,1298,2126,1163"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode.html" title="Unstructured collection of 3D points for visualization." alt="" coords="1863,2073,2055,2353"/>
+<area shape="poly" id="edge16_Node000016_Node000017" title=" " alt="" coords="2091,1967,2065,2026,2041,2074,2037,2072,2060,2024,2086,1965"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointNode.html" title="Single 3D point in space." alt="" coords="2079,2083,2271,2343"/>
+<area shape="poly" id="edge17_Node000016_Node000018" title=" " alt="" coords="2175,1966,2176,2083,2171,2083,2170,1966"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ProceduralTextureNode.html" title="Pixels generated by arbitrary functions." alt="" coords="2297,2143,2489,2283"/>
+<area shape="poly" id="edge19_Node000019_Node000020" title=" " alt="" coords="2396,2009,2396,2143,2391,2143,2391,2009"/>
+</map>

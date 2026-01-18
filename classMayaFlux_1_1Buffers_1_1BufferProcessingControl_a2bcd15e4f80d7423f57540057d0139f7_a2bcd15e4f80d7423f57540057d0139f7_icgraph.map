@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::add_audio_processor_to_token" name="MayaFlux::Buffers::BufferProcessingControl::add_audio_processor_to_token">
+<area shape="rect" id="Node000001" title="Adds a processor to all channels in an audio token." alt="" coords="232,5,463,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_ae54ce8efcb9f6c4901ad29135fd5a43d.html#ae54ce8efcb9f6c4901ad29135fd5a43d" title="Adds a processor to all channels in a token (dispatches based on token)" alt="" coords="5,5,184,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="218,35,184,35,184,30,218,30"/>
+</map>

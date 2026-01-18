@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::SubsystemManager::has_subsystem" name="MayaFlux::Core::SubsystemManager::has_subsystem">
+<area shape="rect" id="Node000001" title="Check if a subsystem type exists." alt="" coords="837,41,1041,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a91312240ebdc99232e28a80ea5cd1f51.html#a91312240ebdc99232e28a80ea5cd1f51" title="Get access to a specific subsystem by type." alt="" coords="585,41,789,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="824,64,790,64,790,59,824,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a746de994c9b4ea71b4a9b6f7552022db.html#a746de994c9b4ea71b4a9b6f7552022db" title="Get typed access to the audio subsystem." alt="" coords="299,8,528,48"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="571,50,528,45,528,39,572,45"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1SubsystemManager_ae1bba18e8d4bdf50cfdd0bc6f6f7a855.html#ae1bba18e8d4bdf50cfdd0bc6f6f7a855" title="Get typed access to the graphics subsystem." alt="" coords="289,73,537,113"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="572,78,538,82,537,76,571,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1SubsystemManager_abb674931c6f304f4ebead1d77f2fb4d0.html#abb674931c6f304f4ebead1d77f2fb4d0" title="Stop the audio subsystem." alt="" coords="5,5,241,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="285,29,242,29,242,24,285,24"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a853a093ef4e7c5b11eff549ca074d78a.html#a853a093ef4e7c5b11eff549ca074d78a" title="Stop the graphics subsystem." alt="" coords="21,70,225,125"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="276,98,226,99,226,93,276,93"/>
+</map>

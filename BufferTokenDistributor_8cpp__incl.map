@@ -1,0 +1,37 @@
+<map id="BufferTokenDistributor.cpp" name="BufferTokenDistributor.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="283,5,477,31"/>
+<area shape="rect" id="Node000002" href="$BufferTokenDistributor_8hpp.html" title=" " alt="" coords="5,167,200,192"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="361,33,136,162,133,158,359,28"/>
+<area shape="rect" id="Node000005" href="$AudioBuffer_8hpp.html" title=" " alt="" coords="224,167,467,192"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="380,31,353,154,348,153,375,30"/>
+<area shape="rect" id="Node000006" href="$TransferProcessor_8hpp.html" title=" " alt="" coords="499,79,688,119"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="412,28,530,71,528,76,410,33"/>
+<area shape="rect" id="Node000007" href="$VKBuffer_8hpp.html" title=" " alt="" coords="491,167,715,192"/>
+<area shape="poly" id="edge20_Node000001_Node000007" title=" " alt="" coords="392,29,432,70,488,116,526,140,564,159,562,163,524,144,485,121,429,74,388,33"/>
+<area shape="rect" id="Node000003" href="$Buffer_8hpp.html" title=" " alt="" coords="121,247,327,273"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="122,190,196,238,193,242,119,194"/>
+<area shape="rect" id="Node000004" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="317,416,512,456"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="102,192,98,233,101,257,110,279,129,303,152,326,203,362,260,390,315,410,313,415,258,395,201,367,148,330,125,307,106,281,96,258,93,233,97,192"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="329,194,255,242,252,238,326,190"/>
+<area shape="poly" id="edge6_Node000005_Node000004" title=" " alt="" coords="351,192,409,402,403,403,346,193"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="598,119,602,152,597,153,593,119"/>
+<area shape="poly" id="edge9_Node000007_Node000003" title=" " alt="" coords="548,195,293,247,292,242,547,189"/>
+<area shape="poly" id="edge13_Node000007_Node000004" title=" " alt="" coords="631,190,661,209,675,223,686,239,693,260,686,281,671,306,653,329,607,366,557,394,506,414,504,409,554,389,604,361,649,325,667,303,682,279,687,260,682,241,671,226,658,213,628,194"/>
+<area shape="rect" id="Node000008" href="$BufferProcessor_8hpp.html" title=" " alt="" coords="403,247,672,273"/>
+<area shape="poly" id="edge10_Node000007_Node000008" title=" " alt="" coords="595,194,558,238,554,235,591,190"/>
+<area shape="rect" id="Node000010" href="$ShaderUtils_8hpp.html" title=" " alt="" coords="816,240,1005,280"/>
+<area shape="poly" id="edge14_Node000007_Node000010" title=" " alt="" coords="648,189,824,234,823,239,647,195"/>
+<area shape="rect" id="Node000009" href="$BufferUtils_8hpp.html" title=" " alt="" coords="441,335,559,361"/>
+<area shape="poly" id="edge11_Node000008_Node000009" title=" " alt="" coords="535,274,513,324,508,321,530,272"/>
+<area shape="poly" id="edge12_Node000009_Node000004" title=" " alt="" coords="490,363,445,408,442,404,487,359"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="747,335,887,361"/>
+<area shape="poly" id="edge15_Node000010_Node000011" title=" " alt="" coords="892,282,842,328,839,324,888,278"/>
+<area shape="rect" id="Node000012" href="$GraphicsUtils_8hpp.html" title=" " alt="" coords="911,335,1049,361"/>
+<area shape="poly" id="edge16_Node000010_Node000012" title=" " alt="" coords="928,279,964,323,960,326,924,282"/>
+<area shape="rect" id="Node000013" href="$VertexLayout_8hpp.html" title=" " alt="" coords="1073,328,1274,368"/>
+<area shape="poly" id="edge17_Node000010_Node000013" title=" " alt="" coords="969,278,1104,321,1102,326,967,283"/>
+<area shape="rect" id="Node000014" href="$NDData_8hpp.html" title=" " alt="" coords="1123,423,1224,449"/>
+<area shape="poly" id="edge18_Node000013_Node000014" title=" " alt="" coords="1176,368,1176,409,1171,409,1171,368"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="1121,504,1225,529"/>
+<area shape="poly" id="edge19_Node000014_Node000015" title=" " alt="" coords="1176,449,1176,490,1171,490,1171,449"/>
+</map>
