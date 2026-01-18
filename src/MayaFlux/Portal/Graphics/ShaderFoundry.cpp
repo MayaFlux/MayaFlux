@@ -51,6 +51,25 @@ bool ShaderFoundry::initialize(
     return true;
 }
 
+void ShaderFoundry::stop()
+{
+    if (!s_initialized || !m_backend) {
+        return;
+    }
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+        "Stopping ShaderFoundry - freeing command buffers...");
+
+    auto device = get_device();
+
+    device.waitIdle();
+
+    free_all_command_buffers();
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+        "ShaderFoundry stopped - command buffers freed");
+}
+
 void ShaderFoundry::shutdown()
 {
     if (!s_initialized) {
@@ -64,39 +83,20 @@ void ShaderFoundry::shutdown()
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
         "Shutting down ShaderFoundry...");
 
-    auto& cmd_manager = m_backend->get_command_manager();
-    auto device = get_device();
-
-    for (auto& [id, state] : m_command_buffers) {
-        if (state.is_active) {
-            cmd_manager.free_command_buffer(state.cmd);
-        }
-        if (state.timestamp_pool) {
-            device.destroyQueryPool(state.timestamp_pool);
-        }
+    if (!m_command_buffers.empty()) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+            "{} command buffers still exist during shutdown - freeing now",
+            m_command_buffers.size());
+        free_all_command_buffers();
     }
-    m_command_buffers.clear();
 
-    for (auto& [id, state] : m_fences) {
-        device.destroyFence(state.fence);
-    }
-    m_fences.clear();
+    cleanup_sync_objects();
 
-    for (auto& [id, state] : m_semaphores) {
-        device.destroySemaphore(state.semaphore);
-    }
-    m_semaphores.clear();
+    cleanup_descriptor_resources();
 
-    m_descriptor_sets.clear();
-
-    m_global_descriptor_manager->cleanup(device);
-    m_shader_cache.clear();
-    m_shaders.clear();
-    m_shader_filepath_cache.clear();
-    m_descriptor_sets.clear();
+    cleanup_shader_modules();
 
     m_backend = nullptr;
-
     s_initialized = false;
 
     MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
@@ -506,6 +506,24 @@ std::vector<std::string> ShaderFoundry::get_cached_keys() const
     return keys;
 }
 
+void ShaderFoundry::cleanup_shader_modules()
+{
+    auto device = get_device();
+
+    for (auto& [key, shader_module] : m_shader_cache) {
+        if (shader_module) {
+            shader_module->cleanup(device);
+        }
+    }
+
+    m_shader_cache.clear();
+    m_shaders.clear();
+    m_shader_filepath_cache.clear();
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+        "Cleaned up shader modules");
+}
+
 //==============================================================================
 // Hot-Reload Support
 //==============================================================================
@@ -664,6 +682,21 @@ vk::DescriptorSet ShaderFoundry::get_descriptor_set(DescriptorSetID descriptor_s
     return it->second.descriptor_set;
 }
 
+void ShaderFoundry::cleanup_descriptor_resources()
+{
+    auto device = get_device();
+
+    m_descriptor_sets.clear();
+
+    if (m_global_descriptor_manager) {
+        m_global_descriptor_manager->cleanup(device);
+        m_global_descriptor_manager.reset();
+    }
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+        "Cleaned up descriptor resources");
+}
+
 //==============================================================================
 // Command Recording
 //==============================================================================
@@ -735,6 +768,30 @@ bool ShaderFoundry::end_commands(CommandBufferID cmd_id)
     it->second.cmd.end();
     it->second.is_active = false;
     return true;
+}
+
+void ShaderFoundry::free_all_command_buffers()
+{
+    if (!m_backend || !s_initialized) {
+        return;
+    }
+
+    auto& cmd_manager = m_backend->get_command_manager();
+    auto device = get_device();
+    device.waitIdle();
+
+    for (auto& [id, state] : m_command_buffers) {
+        if (state.is_active) {
+            cmd_manager.free_command_buffer(state.cmd);
+        }
+        if (state.timestamp_pool) {
+            device.destroyQueryPool(state.timestamp_pool);
+        }
+    }
+    m_command_buffers.clear();
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+        "Freed all command buffers");
 }
 
 //==============================================================================
@@ -948,6 +1005,28 @@ vk::Semaphore ShaderFoundry::get_semaphore_handle(SemaphoreID semaphore_id)
         return it->second.semaphore;
     }
     return nullptr;
+}
+
+void ShaderFoundry::cleanup_sync_objects()
+{
+    auto device = get_device();
+
+    for (auto& [id, state] : m_fences) {
+        if (state.fence) {
+            device.destroyFence(state.fence);
+        }
+    }
+    m_fences.clear();
+
+    for (auto& [id, state] : m_semaphores) {
+        if (state.semaphore) {
+            device.destroySemaphore(state.semaphore);
+        }
+    }
+    m_semaphores.clear();
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
+        "Cleaned up sync objects");
 }
 
 //==============================================================================

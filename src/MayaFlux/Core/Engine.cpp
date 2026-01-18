@@ -148,39 +148,6 @@ void Engine::Resume()
     m_is_paused = false;
 }
 
-void Engine::End()
-{
-    if (m_subsystem_manager) {
-        m_subsystem_manager->shutdown();
-    }
-
-    m_is_initialized = false;
-    m_is_paused = false;
-
-    if (m_buffer_manager) {
-        m_buffer_manager->terminate_active_buffers();
-        m_buffer_manager.reset();
-    }
-
-    if (m_node_graph_manager) {
-        for (auto token : m_node_graph_manager->get_active_tokens()) {
-            for (auto root : m_node_graph_manager->get_all_root_nodes(token)) {
-                if (root != nullptr) {
-                    root->clear_all_nodes();
-                }
-            }
-        }
-    }
-
-    if (m_window_manager) {
-        auto windows = m_window_manager->get_windows();
-        for (auto& window : windows) {
-            m_window_manager->destroy_window(window);
-        }
-        m_window_manager.reset();
-    }
-}
-
 bool Engine::is_running() const
 {
     if (!m_is_initialized || m_is_paused) {
@@ -266,5 +233,48 @@ void Engine::run_macos_event_loop()
         "Main thread event loop exiting");
 }
 #endif
+
+void Engine::End()
+{
+    if (!m_is_initialized)
+        return;
+
+    if (m_node_graph_manager) {
+        m_node_graph_manager->terminate_active_processing();
+    }
+
+    if (m_subsystem_manager) {
+        m_subsystem_manager->stop();
+    }
+
+    if (m_scheduler) {
+        m_scheduler->terminate_all_tasks();
+    }
+
+    if (m_buffer_manager) {
+        m_buffer_manager->terminate_active_buffers();
+        m_buffer_manager.reset();
+    }
+
+    if (m_window_manager) {
+        m_window_manager->set_terminate();
+        auto windows = m_window_manager->get_windows();
+        for (auto& window : windows) {
+            m_window_manager->destroy_window(window, true);
+        }
+        m_window_manager.reset();
+    }
+
+    if (m_node_graph_manager) {
+        m_node_graph_manager.reset();
+    }
+
+    if (m_subsystem_manager) {
+        m_subsystem_manager->shutdown();
+    }
+
+    m_is_initialized = false;
+    m_is_paused = false;
+}
 
 } // namespace MayaFlux::Core

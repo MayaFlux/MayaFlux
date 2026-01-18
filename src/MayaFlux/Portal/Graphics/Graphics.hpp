@@ -23,10 +23,18 @@ namespace MayaFlux::Portal::Graphics {
 MAYAFLUX_API bool initialize(const std::shared_ptr<Core::VulkanBackend>& backend);
 
 /**
+ * @brief Stop all Portal::Graphics operations
+ *
+ * Frees command buffers and stops active rendering.
+ * Call this AFTER graphics thread stops, BEFORE destroying resources.
+ */
+MAYAFLUX_API void stop();
+
+/**
  * @brief Shutdown Portal::Graphics subsystem
  *
- * Cleans up all managers in reverse order.
- * Safe to call multiple times.
+ * Destroys all pipelines, shaders, and resources.
+ * Must be called AFTER stop().
  */
 MAYAFLUX_API void shutdown();
 

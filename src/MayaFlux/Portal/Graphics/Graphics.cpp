@@ -66,6 +66,24 @@ bool initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
     return true;
 }
 
+void stop()
+{
+    if (!g_initialized) {
+        return;
+    }
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::API,
+        "Stopping Portal::Graphics...");
+
+    ShaderFoundry::instance().stop();
+
+    RenderFlow::instance().stop();
+    ComputePress::instance().stop();
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::API,
+        "Portal::Graphics stopped");
+}
+
 void shutdown()
 {
     if (!g_initialized) {

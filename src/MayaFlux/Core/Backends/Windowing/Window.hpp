@@ -34,6 +34,11 @@ public:
     virtual void hide() = 0;
 
     /**
+     * @brief Destroy the window and release resources
+     */
+    virtual void destroy() = 0;
+
+    /**
      * @brief Poll for window events (non-blocking)
      */
     [[nodiscard]] virtual bool should_close() const = 0;

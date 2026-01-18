@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Utils.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Vruta {
 
 TaskScheduler::TaskScheduler(uint32_t default_sample_rate, uint32_t default_frame_rate)
@@ -341,11 +343,49 @@ void TaskScheduler::terminate_all_tasks()
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
             entry.routine->set_should_terminate(true);
-            entry.routine->set_auto_resume(true);
         }
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    for (auto& entry : m_tasks) {
+        if (entry.routine && entry.routine->is_active()) {
+            entry.routine->force_resume();
+        }
+    }
+
+    constexpr int MAX_ATTEMPTS = 3;
+    for (int attempt = 0; attempt < MAX_ATTEMPTS; ++attempt) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+        bool any_active = false;
+        for (auto& entry : m_tasks) {
+            if (entry.routine && entry.routine->is_active()) {
+                any_active = true;
+                entry.routine->force_resume();
+            }
+        }
+
+        if (!any_active) {
+            break;
+        }
+    }
+
+    bool all_done = true;
+    for (const auto& entry : m_tasks) {
+        if (entry.routine && entry.routine->is_active()) {
+            all_done = false;
+            MF_WARN(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+                "Coroutine '{}' stuck after {} attempts - forcing destruction",
+                entry.name, MAX_ATTEMPTS);
+        }
+    }
+
+    if (!all_done) {
+        MF_WARN(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "Some coroutines did not complete - forcing destruction");
+    } else {
+        MF_PRINT(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "All coroutines terminated successfully");
+    }
 
     m_tasks.clear();
 }

@@ -39,8 +39,9 @@ public:
     /**
      * @brief Destroys a window by pointer
      * @param window Pointer to window to destroy
+     * @param cleanup_backend If true, also cleans up backend resources
      */
-    void destroy_window(const std::shared_ptr<Window>& window);
+    void destroy_window(const std::shared_ptr<Window>& window, bool cleanup_backend = false);
 
     /**
      * @brief Destroys a window by title
@@ -120,6 +121,14 @@ public:
      */
     std::vector<std::shared_ptr<Window>> get_processing_windows() const { return m_processing_windows; }
 
+    /**
+     * @brief Set terminate flag to stop event loop thread
+     *
+     * This flag is also checked during destroy closed windows to check
+     * if backend resources should be released.
+     */
+    void set_terminate() { m_terminate.store(true); }
+
 private:
     GlobalGraphicsConfig m_config;
     std::vector<std::shared_ptr<Window>> m_windows;
@@ -147,6 +156,8 @@ private:
     mutable std::mutex m_hooks_mutex;
 
     std::vector<std::shared_ptr<Window>> m_processing_windows;
+
+    std::atomic<bool> m_terminate { false };
 };
 
 } // namespace MayaFlux::Core

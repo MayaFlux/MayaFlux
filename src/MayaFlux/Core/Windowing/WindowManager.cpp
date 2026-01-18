@@ -55,7 +55,7 @@ std::shared_ptr<Window> WindowManager::create_window(const WindowCreateInfo& cre
     return window;
 }
 
-void WindowManager::destroy_window(const std::shared_ptr<Window>& window)
+void WindowManager::destroy_window(const std::shared_ptr<Window>& window, bool cleanup_backend)
 {
     if (!window)
         return;
@@ -74,6 +74,20 @@ void WindowManager::destroy_window(const std::shared_ptr<Window>& window)
         MF_INFO(Journal::Component::Core, Journal::Context::WindowingSubsystem,
             "Destroyed window '{}' - remaining: {}", title, m_windows.size());
     }
+
+    if (!cleanup_backend) {
+        return;
+    }
+
+    if (m_terminate.load()) {
+        window->destroy();
+    } else {
+        Parallel::dispatch_main_sync([&]() {
+            window->destroy();
+        });
+    }
+    MF_DEBUG(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+        "Backend resources for window '{}' cleaned up", title);
 }
 
 bool WindowManager::destroy_window_by_title(const std::string& title)

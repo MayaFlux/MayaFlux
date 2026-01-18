@@ -49,6 +49,13 @@ public:
      */
     NodeGraphManager();
 
+    /**
+     * @brief Destroys the NodeGraphManager
+     *
+     * Cleans up all registered nodes and networks.
+     */
+    ~NodeGraphManager();
+
     // NodeGraphManager is non-copyable and non-moveable due to internal atomic state
     NodeGraphManager(const NodeGraphManager&) = delete;
     NodeGraphManager& operator=(const NodeGraphManager&) = delete;
@@ -395,6 +402,14 @@ public:
      */
     std::vector<std::vector<double>> process_audio_networks(ProcessingToken token, uint32_t num_samples, uint32_t channel = 0);
 
+    /**
+     * @brief Terminates all active processing across all tokens and channels
+     *
+     * This method stops all active processing contexts in all root nodes
+     * and networks, ensuring a clean shutdown of processing activities.
+     */
+    void terminate_active_processing();
+
 private:
     /**
      * @brief Map of channel indices to their root nodes (AUDIO_RATE domain)
@@ -480,6 +495,8 @@ private:
      * Used to prevent re-entrant processing of networks within the same cycle.
      */
     std::unordered_map<ProcessingToken, std::unique_ptr<std::atomic<bool>>> m_token_network_processing;
+
+    std::atomic<bool> m_terminate_requested { false }; ///< Global termination flag
 
     /**
      * @brief Ensures a root node exists for the given token and channel

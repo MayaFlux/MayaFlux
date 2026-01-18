@@ -117,10 +117,19 @@ public:
         const ShaderCompilerConfig& config = {});
 
     /**
-     * @brief Shutdown and cleanup
+     * @brief Stop active command recording and free command buffers
      *
-     * Destroys all cached shader modules.
-     * Safe to call multiple times.
+     * Frees all command buffers back to pool and destroys query pools.
+     * Call this BEFORE destroying pipelines/resources that command buffers reference.
+     * Does NOT destroy the command pool itself - that happens in shutdown().
+     */
+    void stop();
+
+    /**
+     * @brief Shutdown and cleanup all ShaderFoundry resources
+     *
+     * Destroys sync objects, descriptor resources, and shader modules.
+     * Must be called AFTER stop() and AFTER pipeline consumers (RenderFlow/ComputePress) shutdown.
      */
     void shutdown();
 
@@ -401,6 +410,11 @@ public:
      */
     bool end_commands(CommandBufferID cmd_id);
 
+    /**
+     * @brief Free all allocated command buffers
+     */
+    void free_all_command_buffers();
+
     //==========================================================================
     // Memory Barriers and Synchronization
     //==========================================================================
@@ -598,6 +612,10 @@ private:
 
     std::shared_ptr<Core::VKShaderModule> create_shader_module();
     vk::Device get_device() const;
+
+    void cleanup_sync_objects();
+    void cleanup_descriptor_resources();
+    void cleanup_shader_modules();
 
     //==========================================================================
     // INTERNAL Shader Compilation Methods

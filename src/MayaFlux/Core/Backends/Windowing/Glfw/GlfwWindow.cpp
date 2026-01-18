@@ -70,10 +70,15 @@ GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
 
 GlfwWindow::~GlfwWindow()
 {
+    destroy();
+}
+
+void GlfwWindow::destroy()
+{
     if (m_window) {
         glfwDestroyWindow(m_window);
         GLFWSingleton::mark_window_destroyed();
-        GLFWSingleton::terminate();
+        m_window = nullptr;
     }
 }
 

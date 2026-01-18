@@ -195,6 +195,9 @@ public:
         operation(temp_handle);
     }
 
+    /** @brief Stop all subsystems */
+    void stop();
+
     /** @brief Shutdown all subsystems in proper order */
     void shutdown();
 
@@ -260,6 +263,12 @@ public:
      * @return Valid handle or nullptr if validation fails
      */
     SubsystemProcessingHandle* get_validated_handle(SubsystemType type) const;
+
+    /** @brief Stop the audio subsystem */
+    void stop_audio_subsystem();
+
+    /** @brief Stop the graphics subsystem */
+    void stop_graphics_subsystem();
 
 private:
     bool is_cross_access_allowed(SubsystemType from, SubsystemType to) const;

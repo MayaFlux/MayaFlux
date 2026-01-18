@@ -175,6 +175,15 @@ bool SoundRoutine::try_resume(uint64_t current_context)
     return try_resume_with_context(current_context, DelayContext::SAMPLE_BASED);
 }
 
+bool SoundRoutine::force_resume()
+{
+    if (!m_handle || m_handle.done()) {
+        return false;
+    }
+    m_handle.resume();
+    return true;
+}
+
 bool SoundRoutine::restart()
 {
     if (!m_handle)
@@ -340,6 +349,15 @@ bool GraphicsRoutine::try_resume(uint64_t current_context)
     // Default to FRAME_BASED context for backwards compatibility
     // Note: You'll need to add FRAME_BASED to the DelayContext enum
     return try_resume_with_context(current_context, DelayContext::FRAME_BASED);
+}
+
+bool GraphicsRoutine::force_resume()
+{
+    if (!m_handle || m_handle.done()) {
+        return false;
+    }
+    m_handle.resume();
+    return true;
 }
 
 bool GraphicsRoutine::restart()

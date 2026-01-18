@@ -352,8 +352,10 @@ void BufferAccessControl::terminate_active_buffers()
             auto root_buffer = unit.get_buffer(channel);
             root_buffer->clear();
             for (auto& child : root_buffer->get_child_buffers()) {
-                child->clear();
+                if (child)
+                    child->clear();
             }
+            unit.root_buffers[channel].reset();
         }
     }
 
@@ -362,9 +364,12 @@ void BufferAccessControl::terminate_active_buffers()
         auto root_buffer = unit.get_buffer();
         root_buffer->clear();
         for (auto& child : root_buffer->get_child_buffers()) {
-            remove_graphics_buffer(child, token);
-            child->clear();
+            if (child) {
+                remove_graphics_buffer(child, token);
+                child->clear();
+            }
         }
+        unit.root_buffer.reset();
     }
 }
 

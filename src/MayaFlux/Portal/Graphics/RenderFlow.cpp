@@ -81,6 +81,16 @@ bool RenderFlow::initialize()
     return true;
 }
 
+void RenderFlow::stop()
+{
+    if (!s_initialized) {
+        return;
+    }
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
+        "RenderFlow stopped");
+}
+
 void RenderFlow::shutdown()
 {
     if (!s_initialized) {
@@ -104,16 +114,7 @@ void RenderFlow::shutdown()
         return;
     }
 
-    for (auto& [id, state] : m_pipelines) {
-        if (state.pipeline) {
-            state.pipeline->cleanup(device);
-        }
-
-        if (state.layout) {
-            device.destroyPipelineLayout(state.layout);
-        }
-    }
-    m_pipelines.clear();
+    cleanup_pipelines();
 
     m_window_associations.clear();
 
@@ -455,6 +456,27 @@ void RenderFlow::destroy_pipeline(RenderPipelineID pipeline_id)
 
     MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
         "Destroyed graphics pipeline (ID: {})", pipeline_id);
+}
+
+void RenderFlow::cleanup_pipelines()
+{
+    auto device = m_shader_foundry->get_device();
+
+    for (auto& [id, state] : m_pipelines) {
+        if (state.pipeline) {
+            state.pipeline->cleanup(device);
+        }
+
+        for (auto layout : state.layouts) {
+            if (layout) {
+                device.destroyDescriptorSetLayout(layout);
+            }
+        }
+    }
+    m_pipelines.clear();
+
+    MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
+        "Cleaned up all graphics pipelines");
 }
 
 //==============================================================================

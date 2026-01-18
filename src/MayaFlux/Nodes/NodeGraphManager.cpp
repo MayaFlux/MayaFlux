@@ -69,6 +69,9 @@ bool NodeGraphManager::preprocess_networks(ProcessingToken token)
 
 void NodeGraphManager::process_token(ProcessingToken token, unsigned int num_samples)
 {
+    if (m_terminate_requested.load())
+        return;
+
     auto roots = get_all_root_nodes(token);
 
     if (auto it = m_token_processors.find(token); it != m_token_processors.end()) {
@@ -214,6 +217,9 @@ std::vector<double> NodeGraphManager::process_channel(ProcessingToken token,
 
 double NodeGraphManager::process_sample(ProcessingToken token, uint32_t channel)
 {
+    if (m_terminate_requested.load())
+        return 0.0;
+
     auto& root = get_root_node(token, channel);
 
     if (auto it = m_token_sample_processors.find(token); it != m_token_sample_processors.end()) {
@@ -595,6 +601,48 @@ bool NodeGraphManager::is_network_registered(const std::shared_ptr<Network::Node
 {
     return std::ranges::any_of(m_network_registry,
         [&network](const auto& pair) { return pair.second == network; });
+}
+
+void NodeGraphManager::terminate_active_processing()
+{
+    if (m_terminate_requested.load())
+        return;
+
+    for (auto& [token, networks] : m_audio_networks) {
+        for (auto& network : networks) {
+            if (network) {
+                unregister_network_global(network);
+            }
+        }
+    }
+
+    for (auto& [token, networks] : m_token_networks) {
+        for (auto& network : networks) {
+            if (network) {
+                unregister_network_global(network);
+            }
+        }
+    }
+
+    m_terminate_requested.store(true);
+
+    for (auto token : get_active_tokens()) {
+        auto roots = get_all_root_nodes(token);
+        for (auto* root : roots) {
+            root->terminate_all_nodes();
+        }
+    }
+}
+
+NodeGraphManager::~NodeGraphManager()
+{
+    terminate_active_processing();
+    m_token_roots.clear();
+    m_audio_networks.clear();
+    m_token_networks.clear();
+
+    m_Node_registry.clear();
+    m_network_registry.clear();
 }
 
 }

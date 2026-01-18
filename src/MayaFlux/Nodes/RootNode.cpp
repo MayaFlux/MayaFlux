@@ -51,6 +51,9 @@ void RootNode::register_node(const std::shared_ptr<Node>& node)
 
 void RootNode::unregister_node(const std::shared_ptr<Node>& node)
 {
+    if (!node)
+        return;
+
     uint32_t state = node->m_state.load();
     atomic_add_flag(node->m_state, Utils::NodeState::PENDING_REMOVAL);
 
@@ -96,6 +99,10 @@ bool RootNode::preprocess()
         return true;
 
     bool expected = false;
+    if (m_request_terminate.load(std::memory_order_acquire)) {
+        return false;
+    }
+
     if (!m_is_processing.compare_exchange_strong(expected, true,
             std::memory_order_acquire, std::memory_order_relaxed)) {
         return false;
@@ -116,6 +123,8 @@ double RootNode::process_sample()
     auto sample = 0.;
 
     for (auto& node : m_Nodes) {
+        if (!node)
+            continue;
 
         uint32_t state = node->m_state.load();
         if (!(state & Utils::NodeState::PROCESSED)) {
@@ -163,6 +172,10 @@ void RootNode::postprocess()
 
     m_is_processing.store(false, std::memory_order_release);
     m_is_processing.notify_all();
+
+    if (m_request_terminate.load(std::memory_order_acquire)) {
+        process_pending_operations();
+    }
 }
 
 std::vector<double> RootNode::process_batch(uint32_t num_samples)
@@ -219,4 +232,18 @@ void RootNode::process_pending_operations()
         }
     }
 }
+
+void RootNode::terminate_all_nodes()
+{
+    m_request_terminate.store(true, std::memory_order_release);
+
+    m_is_processing.store(false, std::memory_order_release);
+
+    for (auto& node : m_Nodes) {
+        unregister_node(node);
+    }
+
+    process_pending_operations();
+}
+
 }
