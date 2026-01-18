@@ -166,7 +166,7 @@ int AudioSubsystem::process_input(double* input_buffer, unsigned int num_frames)
 
     if (!m_is_running.load(std::memory_order_acquire)) {
         if (input_buffer) {
-            auto total_samples = static_cast<uint32_t>(num_frames * m_stream_info.output.channels);
+            auto total_samples = static_cast<uint32_t>(num_frames * m_stream_info.input.channels);
             std::memset(input_buffer, 0, total_samples * sizeof(double));
         }
         m_callback_active.fetch_sub(1, std::memory_order_release);
