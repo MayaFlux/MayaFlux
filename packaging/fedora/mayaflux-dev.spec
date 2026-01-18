@@ -1,8 +1,8 @@
-%global gitrev %{?COPR_GIT_COMMIT}
+%global builddate %(date -u +'%%Y%%m%%d%%H%%M%%S')
 
 Name:           mayaflux-dev
 Version:        0.1.1
-Release:        1.dev.git%{gitrev}%{?dist}
+Release:        dev.%{builddate}%{?dist}
 Summary:        Modern C++ framework for real-time graphics and audio with JIT compilation (Development Build)
 
 License:        GPLv3
@@ -80,7 +80,7 @@ Conflicts:      mayaflux
 
 %description
 MayaFlux is a modern C++23 framework for real-time graphics and audio processing.
-This is a DEVELOPMENT BUILD from the main branch.
+This is a DEVELOPMENT BUILD from the main branch (built on %(date -d '@%{builddate}' +'%Y-%m-%d %H:%M:%S UTC')).
 
 MayaFlux reimagines digital creative computing by moving beyond analog hardware 
 metaphors toward truly digital-first paradigms. It treats audio, visual, and 

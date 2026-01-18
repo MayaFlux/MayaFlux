@@ -95,17 +95,25 @@ else()
     set(ARCH_NAME "x64")
 endif()
 
-install(CODE "
-    execute_process(
-        COMMAND ${CMAKE_COMMAND}
-            -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
-            -DOUTPUT_FILE=\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/share/MayaFlux/.version
-            -DPROJECT_VERSION=${PROJECT_VERSION}
-            -DPLATFORM=${PLATFORM_NAME}
-            -DARCHITECTURE=${ARCH_NAME}
-            -P ${CMAKE_SOURCE_DIR}/cmake/generate_version_file.cmake
-    )
-")
+execute_process(
+    COMMAND ${CMAKE_COMMAND}
+        -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
+        -DOUTPUT_FILE=${CMAKE_BINARY_DIR}/generated_version.json
+        -DPROJECT_VERSION=${PROJECT_VERSION}
+        -DPLATFORM=${PLATFORM_NAME}
+        -DARCHITECTURE=${ARCH_NAME}
+        -P ${CMAKE_SOURCE_DIR}/cmake/generate_version_file.cmake
+    RESULT_VARIABLE VERSION_RESULT
+)
+
+if(NOT VERSION_RESULT EQUAL 0)
+    message(WARNING "Failed to generate version file during configuration")
+endif()
+
+install(FILES ${CMAKE_BINARY_DIR}/generated_version.json
+    DESTINATION share/MayaFlux
+    RENAME .version
+)
 
 message(STATUS "Version metadata will be installed to: ${CMAKE_INSTALL_PREFIX}/share/MayaFlux/.version")
 
