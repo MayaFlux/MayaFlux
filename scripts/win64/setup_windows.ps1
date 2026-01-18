@@ -19,6 +19,55 @@ Write-Host @"
 
 Write-Host ""
 
+# Helper function to append to environment variables without duplicates
+function Add-EnvPath {
+    param(
+        [string]$Name,
+        [string]$Value,
+        [string]$Scope = 'Machine'
+    )
+    
+    if (-not (Test-Path $Value)) {
+        Write-Warning "Path does not exist: $Value"
+        return
+    }
+    
+    $currentValue = [Environment]::GetEnvironmentVariable($Name, $Scope)
+    if ($currentValue) {
+        $paths = $currentValue -split ';'
+        if ($paths -notcontains $Value) {
+            $newValue = "$Value;$currentValue"
+            [Environment]::SetEnvironmentVariable($Name, $newValue, $Scope)
+            Write-Host "[ENV] Added $Value to $Name" -ForegroundColor Green
+        } else {
+            Write-Host "[ENV] $Value already in $Name" -ForegroundColor Yellow
+        }
+    } else {
+        [Environment]::SetEnvironmentVariable($Name, $Value, $Scope)
+        Write-Host "[ENV] Set $Name = $Value" -ForegroundColor Green
+    }
+}
+
+# Helper function to add include directories
+function Add-IncludeDirectory {
+    param(
+        [string]$Path,
+        [string]$Scope = 'Machine'
+    )
+    
+    Add-EnvPath -Name "CPATH" -Value $Path -Scope $Scope
+}
+
+# Helper function to add library directories
+function Add-LibraryDirectory {
+    param(
+        [string]$Path,
+        [string]$Scope = 'Machine'
+    )
+    
+    Add-EnvPath -Name "LIBRARY_PATH" -Value $Path -Scope $Scope
+}
+
 # Load files
 $packagesFile = Join-Path $SCRIPT_DIR "packages.psd1"
 $installerScript = Join-Path $SCRIPT_DIR "install_package.ps1"
@@ -85,10 +134,33 @@ if (Test-Path $vulkanBase) {
         [Environment]::SetEnvironmentVariable("VULKAN_SDK", $vulkanPath, "Machine")
         [Environment]::SetEnvironmentVariable("VK_SDK_PATH", $vulkanPath, "Machine")
         Write-Host "[Vulkan] SDK: $vulkanPath" -ForegroundColor Green
+        
+        # Add include directory
+        $vulkanInclude = Join-Path $vulkanPath "Include"
+        if (Test-Path $vulkanInclude) {
+            Add-IncludeDirectory -Path $vulkanInclude
+        }
+        
+        # Add library directory
+        $vulkanLib = Join-Path $vulkanPath "Lib"
+        if (Test-Path $vulkanLib) {
+            Add-LibraryDirectory -Path $vulkanLib
+        }
+        
+        # Add bin directory to PATH
+        $vulkanBin = Join-Path $vulkanPath "Bin"
+        if (Test-Path $vulkanBin) {
+            Add-EnvPath -Name "PATH" -Value $vulkanBin
+        }
+    } else {
+        Write-Warning "No Vulkan SDK version found in $vulkanBase"
     }
+} else {
+    Write-Warning "Vulkan SDK not found at $vulkanBase"
 }
 
 # GLFW - detect lib directory
+Write-Host "`n[Configuring GLFW]" -ForegroundColor Cyan
 $glfwRoot = "C:\Program Files\GLFW"
 if (Test-Path $glfwRoot) {
     $glfwLibDir = $null
@@ -104,7 +176,17 @@ if (Test-Path $glfwRoot) {
         [Environment]::SetEnvironmentVariable("GLFW_ROOT", $glfwRoot, "Machine")
         [Environment]::SetEnvironmentVariable("GLFW_LIB_DIR", $glfwLibDir, "Machine")
         Write-Host "[GLFW] Library: $glfwLibDir" -ForegroundColor Green
+        
+        # Add include directory
+        $glfwInclude = Join-Path $glfwRoot "include"
+        if (Test-Path $glfwInclude) {
+            Add-IncludeDirectory -Path $glfwInclude
+        }
+    } else {
+        Write-Warning "GLFW library directory not found"
     }
+} else {
+    Write-Warning "GLFW not found at $glfwRoot"
 }
 
 # FFmpeg
@@ -130,17 +212,33 @@ $headerLibs = @{
     "LIBXML2_INCLUDE_DIR"    = "C:\Program Files\LibXml2\include"
 }
 
+$foundCount = 0
+$totalCount = $headerLibs.Count
+
 foreach ($envVar in $headerLibs.GetEnumerator()) {
     if (Test-Path $envVar.Value) {
         [Environment]::SetEnvironmentVariable($envVar.Key, $envVar.Value, "Machine")
+        Add-IncludeDirectory -Path $envVar.Value
         Write-Host "[$($envVar.Key)] $($envVar.Value)" -ForegroundColor Green
+        $foundCount++
     }
+}
+
+Write-Host "Header libraries configured: $foundCount/$totalCount" -ForegroundColor Green
+if ($foundCount -lt $totalCount) {
+    Write-Warning "Some header libraries not found - builds may fail"
 }
 
 Write-Host "`n=== Setup Complete ===" -ForegroundColor Green
 Write-Host ""
+Write-Host "Environment variables configured for:" -ForegroundColor Yellow
+Write-Host "  • INCLUDE, CPATH: Header search paths" -ForegroundColor Yellow
+Write-Host "  • LIB, LIBRARY_PATH: Library search paths" -ForegroundColor Yellow
+Write-Host "  • PATH: Executable search paths" -ForegroundColor Yellow
+Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  1. Restart your terminal"
-Write-Host "  2. cmake -B build -S ."
-Write-Host "  3. cmake --build build --config Release"
+Write-Host "  1. RESTART your terminal/PowerShell/VS Code" -ForegroundColor Red
+Write-Host "  2. Verify: `$env:MAYAFLUX_ROOT" -ForegroundColor Yellow
+Write-Host "  3. cmake -B build -S ." -ForegroundColor Yellow
+Write-Host "  4. cmake --build build --config Release" -ForegroundColor Yellow
 Write-Host ""
