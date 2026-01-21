@@ -193,6 +193,8 @@ int main() {
 
     // ... your application
 
+    MayaFlux::Await(); // Press [Return] to exit
+
     MayaFlux::End();
     return 0;
 }

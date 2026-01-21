@@ -55,10 +55,19 @@ void ComputeProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buff
         descriptor_sets.push_back(set_bindings);
     }
 
+    const auto& staging = buffer->get_pipeline_context().push_constant_staging;
+    size_t push_constant_size = 0;
+
+    if (!staging.empty()) {
+        push_constant_size = staging.size();
+    } else {
+        push_constant_size = std::max(m_config.push_constant_size, m_push_constant_data.size());
+    }
+
     m_pipeline_id = compute_press.create_pipeline(
         m_shader_id,
         descriptor_sets,
-        m_config.push_constant_size);
+        push_constant_size);
 
     if (m_pipeline_id == Portal::Graphics::INVALID_COMPUTE_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
