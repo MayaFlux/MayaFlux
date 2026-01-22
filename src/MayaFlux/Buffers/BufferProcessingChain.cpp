@@ -162,6 +162,14 @@ void BufferProcessingChain::process(const std::shared_ptr<Buffer>& buffer)
     m_is_processing.store(false, std::memory_order_release);
 }
 
+void BufferProcessingChain::process_complete(const std::shared_ptr<Buffer>& buffer)
+{
+    preprocess(buffer);
+    process(buffer);
+    postprocess(buffer);
+    process_final(buffer);
+}
+
 void BufferProcessingChain::process_pending_processor_operations()
 {
     for (auto& m_pending_op : m_pending_ops) {
@@ -180,6 +188,18 @@ void BufferProcessingChain::process_pending_processor_operations()
             m_pending_count.fetch_sub(1, std::memory_order_relaxed);
         }
     }
+}
+
+void BufferProcessingChain::add_preprocessor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
+{
+    processor->on_attach(buffer);
+    m_preprocessors[buffer] = processor;
+}
+
+void BufferProcessingChain::add_postprocessor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
+{
+    processor->on_attach(buffer);
+    m_postprocessors[buffer] = processor;
 }
 
 void BufferProcessingChain::add_final_processor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer)
@@ -204,6 +224,22 @@ const std::vector<std::shared_ptr<BufferProcessor>>& BufferProcessingChain::get_
     }
 
     return empty_vector;
+}
+
+void BufferProcessingChain::preprocess(const std::shared_ptr<Buffer>& buffer)
+{
+    auto pre_it = m_preprocessors.find(buffer);
+    if (pre_it != m_preprocessors.end()) {
+        pre_it->second->process(buffer);
+    }
+}
+
+void BufferProcessingChain::postprocess(const std::shared_ptr<Buffer>& buffer)
+{
+    auto post_it = m_postprocessors.find(buffer);
+    if (post_it != m_postprocessors.end()) {
+        post_it->second->process(buffer);
+    }
 }
 
 void BufferProcessingChain::process_final(const std::shared_ptr<Buffer>& buffer)

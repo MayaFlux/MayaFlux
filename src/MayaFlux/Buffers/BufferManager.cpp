@@ -96,10 +96,10 @@ void BufferManager::process_channel(
 
         if (auto processing_chain = child->get_processing_chain()) {
             if (child->has_data_for_cycle()) {
-                processing_chain->process(child);
+                processing_chain->process_complete(child);
             }
         }
-        unit.get_chain(channel)->process(child);
+        unit.get_chain(channel)->process_complete(child);
     }
 
     root_buffer->process_default();

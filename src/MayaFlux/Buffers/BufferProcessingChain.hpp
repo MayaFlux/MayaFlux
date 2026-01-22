@@ -96,6 +96,44 @@ public:
     void process(const std::shared_ptr<Buffer>& buffer);
 
     /**
+     * @brief Applies preprocessors, processing chain, post processors and final processors sequentially to a buffer
+     * @param buffer Buffer to transform
+     *
+     * Use this when explicit control of order is not needed, and you want to ensure that all stages
+     * of the processing pipeline are applied in a strict sequence. This method guarantees that
+     * preprocessors, main processors, postprocessors, and final processors are executed one after
+     * the other, maintaining the exact order of operations as defined in the chain.
+     */
+    void process_complete(const std::shared_ptr<Buffer>& buffer);
+
+    /**
+     * @brief Sets a preprocessor to be applied before the main pipeline
+     * @param processor Preprocessor to add
+     * @param buffer Buffer to associate with this preprocessor
+     *
+     * The preprocessor is applied before all regular processors when process() is called.
+     * This is useful for initial data preparation steps that must occur prior to the
+     * main transformation sequence, such as format conversion, normalization, or validation.
+     * NOTE: This runs after the buffer's own default processor. If you wish this to be the
+     * preprocessor, remove the default processor first.
+     * This is done to allow buffers to configure their own default processing behavior.
+     * i.e NodeBuffer WILL acquire node data using its default processor before any processing chain preprocessor.
+     */
+    void add_preprocessor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
+
+    /**
+     * @brief Sets a postprocessor to be applied after the main pipeline
+     * @param processor Postprocessor to add
+     * @param buffer Buffer to associate with this postprocessor
+     *
+     * The postprocessor is applied after all regular processors when process() is called.
+     * This is useful for final data adjustments that must occur immediately after the
+     * main transformation sequence, such as clamping values, applying effects, or cleanup.
+     * NOTE: This is different from the final processor, and runs before it.
+     */
+    void add_postprocessor(const std::shared_ptr<BufferProcessor>& processor, const std::shared_ptr<Buffer>& buffer);
+
+    /**
      * @brief Sets a special processor to be applied after the main pipeline
      * @param processor Final processor to add
      * @param buffer Buffer to associate with this final processor
@@ -152,6 +190,26 @@ public:
      * - **Backend Harmonization**: Resolves any backend conflicts between the chains
      */
     void merge_chain(const std::shared_ptr<BufferProcessingChain>& other);
+
+    /**
+     * @brief Applies the preprocessor to a buffer
+     * @param buffer Buffer to preprocess
+     *
+     * If the buffer has a preprocessor, it is applied before the main processing sequence.
+     * This is useful for initial data preparation steps that must occur prior to the
+     * main transformation sequence, such as format conversion, normalization, or validation.
+     */
+    void preprocess(const std::shared_ptr<Buffer>& buffer);
+
+    /**
+     * @brief Applies the postprocessor to a buffer
+     * @param buffer Buffer to postprocess
+     *
+     * If the buffer has a postprocessor, it is applied after the main processing sequence.
+     * This is useful for final data adjustments that must occur immediately after the
+     * main transformation sequence, such as clamping values, applying effects, or cleanup.
+     */
+    void postprocess(const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief Applies the final processor to a buffer with guaranteed execution
@@ -331,6 +389,22 @@ private:
      * @brief Map of buffers to processors pending removal
      */
     std::unordered_map<std::shared_ptr<Buffer>, std::unordered_set<std::shared_ptr<BufferProcessor>>> m_pending_removal;
+
+    /**
+     * @brief Map of buffers to their preprocessors
+     *
+     * Each buffer can have one preprocessor that is applied before the main
+     * processing sequence to prepare the data.
+     */
+    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<BufferProcessor>> m_preprocessors;
+
+    /**
+     * @brief Map of buffers to their postprocessors
+     *
+     * Each buffer can have one postprocessor that is applied after the main
+     * processing sequence to finalize the data.
+     */
+    std::unordered_map<std::shared_ptr<Buffer>, std::shared_ptr<BufferProcessor>> m_postprocessors;
 
     /**
      * @brief Map of buffers to their final processors

@@ -48,8 +48,7 @@ void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> buffer)
 
             if (auto chain = ch_buffer->get_processing_chain()) {
                 if (ch_buffer->has_data_for_cycle()) {
-                    chain->process(ch_buffer);
-                    chain->process_final(ch_buffer);
+                    chain->process_complete(ch_buffer);
                 }
             }
 

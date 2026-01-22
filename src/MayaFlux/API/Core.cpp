@@ -36,6 +36,7 @@ namespace internal {
             engine_ref = std::make_unique<Core::Engine>();
             std::atexit(cleanup_engine);
         }
+        terminating = false;
         initialized = true;
         return *engine_ref;
     }
