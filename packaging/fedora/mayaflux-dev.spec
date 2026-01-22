@@ -1,7 +1,7 @@
 %global builddate %(date -u +'%%Y%%m%%d%%H%%M%%S')
 
 Name:           mayaflux-dev
-Version:        0.1.1
+Version:        0.1.2
 Release:        dev.%{builddate}%{?dist}
 Summary:        Modern C++ framework for real-time graphics and audio with JIT compilation (Development Build)
 
@@ -147,7 +147,7 @@ EOF
 %postun -p /sbin/ldconfig
 
 %changelog
-* Sat Jan 03 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.1.1-0.dev
+* Sat Jan 03 2026 MayaFlux Collective <mayafluxcollective@proton.me> - 0.1.2-0.dev
 - Initial development package
 - Full source build with C++23 support
 - All development dependencies included for JIT/live coding

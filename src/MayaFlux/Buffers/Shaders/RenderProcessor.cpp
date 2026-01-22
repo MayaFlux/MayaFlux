@@ -155,7 +155,12 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         pipeline_config.use_vertex_shader_reflection = vertex_info.use_reflection;
     }
 
-    pipeline_config.push_constant_size = buffer->get_pipeline_context().push_constant_staging.size();
+    const auto& staging = buffer->get_pipeline_context().push_constant_staging;
+    if (!staging.empty()) {
+        pipeline_config.push_constant_size = staging.size();
+    } else {
+        pipeline_config.push_constant_size = std::max(m_config.push_constant_size, m_push_constant_data.size());
+    }
 
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     std::map<std::pair<uint32_t, uint32_t>, Portal::Graphics::DescriptorBindingInfo> unified_bindings;

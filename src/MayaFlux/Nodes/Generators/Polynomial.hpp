@@ -28,8 +28,8 @@ public:
     PolynomialContext(double value,
         PolynomialMode mode,
         size_t buffer_size,
-        const std::deque<double>& input_buffer,
-        const std::deque<double>& output_buffer,
+        std::span<double> input_buffer,
+        std::span<double> output_buffer,
         const std::vector<double>& coefficients)
         : NodeContext(value, typeid(PolynomialContext).name())
         , m_mode(mode)
@@ -56,13 +56,13 @@ public:
      * @brief Gets the input buffer
      * @return Reference to the input buffer
      */
-    [[nodiscard]] const std::deque<double>& get_input_buffer() const { return m_input_buffer; }
+    [[nodiscard]] std::span<double> get_input_buffer() const { return m_input_buffer; }
 
     /**
      * @brief Gets the output buffer
      * @return Reference to the output buffer
      */
-    [[nodiscard]] const std::deque<double>& get_output_buffer() const { return m_output_buffer; }
+    [[nodiscard]] std::span<double> get_output_buffer() const { return m_output_buffer; }
 
     /**
      * @brief Gets the polynomial coefficients
@@ -73,8 +73,8 @@ public:
 private:
     PolynomialMode m_mode; ///< Current processing mode
     size_t m_buffer_size; ///< Size of the buffers
-    const std::deque<double>& m_input_buffer; ///< Copy of input buffer
-    const std::deque<double>& m_output_buffer; ///< Copy of output buffer
+    std::span<double> m_input_buffer; ///< Copy of input buffer
+    std::span<double> m_output_buffer; ///< Copy of output buffer
     const std::vector<double>& m_coefficients; ///< Copy of polynomial coefficients
 
     friend class Polynomial;
@@ -88,8 +88,8 @@ public:
         double value,
         PolynomialMode mode,
         size_t buffer_size,
-        const std::deque<double>& input_buffer,
-        const std::deque<double>& output_buffer,
+        std::span<double> input_buffer,
+        std::span<double> output_buffer,
         const std::vector<double>& coefficients,
         std::span<const float> gpu_data)
         : PolynomialContext(value, mode, buffer_size, input_buffer, output_buffer, coefficients)
@@ -128,7 +128,7 @@ public:
      * For recursive mode, the buffer contains previous outputs.
      * For feedforward mode, the buffer contains current and previous inputs.
      */
-    using BufferFunction = std::function<double(const std::deque<double>&)>;
+    using BufferFunction = std::function<double(std::span<double>)>;
 
     /**
      * @class PolynomialContext
@@ -275,13 +275,13 @@ public:
      * @brief Gets the input buffer
      * @return Reference to the input buffer
      */
-    [[nodiscard]] const std::deque<double>& get_input_buffer() const { return m_input_buffer; }
+    [[nodiscard]] std::span<double> get_input_buffer() { return { m_linear_view.data(), m_ring_count }; }
 
     /**
      * @brief Gets the output buffer
      * @return Reference to the output buffer
      */
-    [[nodiscard]] const std::deque<double>& get_output_buffer() const { return m_output_buffer; }
+    [[nodiscard]] std::span<double> get_output_buffer() { return { m_linear_view.data(), m_ring_count }; }
 
     /**
      * @brief Prints a visual representation of the polynomial function
@@ -384,29 +384,34 @@ private:
     DirectFunction m_direct_function; ///< Function for direct mode
     BufferFunction m_buffer_function; ///< Function for recursive/feedforward mode
     std::vector<double> m_coefficients; ///< Polynomial coefficients (if using coefficient-based definition)
-    std::deque<double> m_input_buffer; ///< Buffer of input values for feedforward mode
-    std::deque<double> m_output_buffer; ///< Buffer of output values for recursive mode
     std::span<double> m_external_buffer_context; // View into external buffer
-    size_t m_buffer_size; ///< Maximum size of the buffers
+
+    std::vector<double> m_ring_data;
+    std::vector<double> m_linear_view;
+    size_t m_ring_head {};
+    size_t m_ring_count {};
+
+    std::vector<double> m_saved_ring_data;
+    size_t m_saved_ring_head {};
+    size_t m_saved_ring_count {};
+    size_t m_buffer_size {}; ///< Maximum size of the buffers
     double m_scale_factor; ///< Scaling factor for output
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
     size_t m_current_buffer_position {}; // Where we are in the external buffer
 
-    std::deque<double> m_saved_input_buffer; ///< Buffer of input values for feedforward mode
-    std::deque<double> m_saved_output_buffer; ///< Buffer of output values for recursive mode
     double m_saved_last_output {};
     bool m_use_external_context {}; // Whether to use it
 
     PolynomialContext m_context;
     PolynomialContextGpu m_context_gpu;
 
-    /**
-     * @brief Builds buffer from external context or internal accumulation
-     * @param input Current input sample
-     * @param use_output_buffer If true, uses m_output_buffer; else m_input_buffer
-     * @return Buffer ready for m_buffer_function
-     */
-    std::deque<double> build_processing_buffer(double input, bool use_output_buffer);
+    void ring_push(double val);
+
+    double ring_at(size_t i);
+
+    std::span<double> linearized_view();
+
+    std::span<double> external_context_view(double input);
 };
 
 } // namespace MayaFlux::Nodes::Generator

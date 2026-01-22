@@ -223,10 +223,7 @@ public:
      * with more values in the extremes, while lower values concentrate
      * values toward the center of the distribution.
      */
-    inline void set_normal_spread(double spread)
-    {
-        m_normal_spread = spread;
-    }
+    void set_normal_spread(double spread);
 
     void save_state() override { }
     void restore_state() override { }
@@ -289,6 +286,32 @@ private:
     void validate_range(double start, double end) const;
 
     /**
+     * @brief Fast uniform random number generator using xorshift algorithm
+     * @return Pseudo-random double in the range [0.0, 1.0)
+     *
+     * This method implements a simple and efficient xorshift algorithm
+     * to produce uniform random numbers quickly, suitable for high-performance
+     * applications where speed is critical.
+     */
+    [[nodiscard]] inline double fast_uniform() noexcept
+    {
+        m_xorshift_state ^= m_xorshift_state >> 12;
+        m_xorshift_state ^= m_xorshift_state << 25;
+        m_xorshift_state ^= m_xorshift_state >> 27;
+        return static_cast<double>(m_xorshift_state * 0x2545F4914F6CDD1DULL)
+            * (1.0 / 18446744073709551616.0);
+    }
+
+    /**
+     * @brief Rebuilds distribution objects if parameters have changed
+     *
+     * This method checks if any distribution parameters have been modified
+     * since the last generation and rebuilds the internal distribution
+     * objects accordingly to ensure accurate statistical behavior.
+     */
+    void rebuild_distributions_if_needed() noexcept;
+
+    /**
      * @brief Mersenne Twister entropy generator
      *
      * A high-quality pseudo-random number algorithm that provides
@@ -319,7 +342,21 @@ private:
      */
     double m_normal_spread;
 
+    /** @brief Normal distribution with mean 0 and standard deviation 1 */
+    std::normal_distribution<double> m_normal_dist { 0.0, 1.0 };
+
+    /** @brief Exponential distribution with lambda = 1 */
+    std::exponential_distribution<double> m_exponential_dist { 1.0 };
+
+    /** @brief Internal state for xorshift random number generation */
+    uint64_t m_xorshift_state;
+
     StochasticContext m_context;
     StochasticContextGpu m_context_gpu;
+
+    double m_cached_start = -1.0;
+    double m_cached_end = 1.0;
+    double m_cached_spread = 4.0;
+    bool m_dist_dirty = true;
 };
 }

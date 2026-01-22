@@ -464,8 +464,13 @@ private:
 template <typename T>
 void ShaderProcessor::set_push_constant_data(const T& data)
 {
-    static_assert(sizeof(T) <= 128, "Push constants typically limited to 128 bytes");
-    m_push_constant_data.resize(sizeof(T));
-    std::memcpy(m_push_constant_data.data(), &data, sizeof(T));
+    const auto size = sizeof(T);
+    static_assert(size <= 128, "Push constants typically limited to 128 bytes");
+    if (m_push_constant_data.size() < size) {
+        set_push_constant_size(size);
+    }
+
+    std::memcpy(m_push_constant_data.data(), &data, size);
 }
+
 } // namespace MayaFlux::Buffers

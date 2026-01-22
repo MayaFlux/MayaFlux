@@ -158,12 +158,12 @@ Tagged releases (e.g., `v0.1.0`, `v0.2.0`) available on the [Releases page](http
 
 ### Development Builds
 
-Rolling builds tagged as `x.x.x-dev` (e.g., `0.1.1-dev`, `0.2.0-dev`). These tags are reused—each push overwrites the previous build. Useful for testing recent changes, but may be unstable or incomplete.
+Rolling builds tagged as `x.x.x-dev` (e.g., `0.1.2-dev`, `0.2.0-dev`). These tags are reused—each push overwrites the previous build. Useful for testing recent changes, but may be unstable or incomplete.
 
 | Channel         | Tag Example | Stability | Use Case                           |
 | --------------- | ----------- | --------- | ---------------------------------- |
 | **Stable**      | `v0.1.1`    | Tested    | Production, learning, projects     |
-| **Development** | `0.1.1-dev` | Unstable  | Testing new features, contributing |
+| **Development** | `0.1.2-dev` | Unstable  | Testing new features, contributing |
 
 **Weave users**: Weave defaults to stable releases. Development builds require manual download from the releases page.
 
@@ -192,6 +192,8 @@ int main() {
     MayaFlux::Start();
 
     // ... your application
+
+    MayaFlux::Await(); // Press [Return] to exit
 
     MayaFlux::End();
     return 0;

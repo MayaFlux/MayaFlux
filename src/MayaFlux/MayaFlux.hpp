@@ -54,6 +54,7 @@
 #include "Buffers/Node/LogicProcessor.hpp"
 #include "Buffers/Node/NodeBuffer.hpp"
 #include "Buffers/Node/PolynomialProcessor.hpp"
+#include "Buffers/Node/NodeBindingsProcessor.hpp"
 #include "Buffers/Recursive/FeedbackBuffer.hpp"
 #include "Buffers/Shaders/RenderProcessor.hpp"
 #include "Buffers/Staging/BufferDownloadProcessor.hpp"

@@ -73,7 +73,7 @@ public:
     LogicContext(double value,
         LogicMode mode,
         LogicOperator operator_type,
-        const std::deque<bool>& history,
+        std::span<bool> history,
         double threshold,
         bool edge_detected = false,
         EdgeType edge_type = EdgeType::BOTH,
@@ -93,7 +93,7 @@ public:
     // Getters for context properties
     LogicMode get_mode() const { return m_mode; }
     LogicOperator get_operator() const { return m_operator; }
-    const std::deque<bool>& get_history() const { return m_history; }
+    std::span<bool> get_history() const { return m_history; }
     double get_threshold() const { return m_threshold; }
     bool is_edge_detected() const { return m_edge_detected; }
     EdgeType get_edge_type() const { return m_edge_type; }
@@ -106,7 +106,7 @@ public:
 private:
     LogicMode m_mode; ///< Current computational model
     LogicOperator m_operator; ///< Current boolean operator
-    const std::deque<bool>& m_history; ///< History of boolean states
+    std::span<bool> m_history; ///< History of boolean states
     double m_threshold; ///< Decision boundary for binary quantization
     bool m_edge_detected; ///< Whether a state transition was detected
     EdgeType m_edge_type; ///< Type of transition being monitored
@@ -128,7 +128,7 @@ public:
         double value,
         LogicMode mode,
         LogicOperator operator_type,
-        const std::deque<bool>& history,
+        std::span<bool> history,
         double threshold,
         bool edge_detected,
         EdgeType edge_type,
@@ -176,7 +176,7 @@ public:
     /**
      * @brief Function type for state-based evaluation
      */
-    using SequentialFunction = std::function<bool(const std::deque<bool>&)>;
+    using SequentialFunction = std::function<bool(std::span<bool>)>;
 
     /**
      * @brief Function type for time-dependent evaluation
@@ -422,7 +422,7 @@ public:
      * @brief Gets the current state history
      * @return Reference to the history buffer
      */
-    const std::deque<bool>& get_history() const { return m_history; }
+    std::span<bool> get_history();
 
     /**
      * @brief Gets the number of parallel inputs expected
@@ -569,19 +569,22 @@ private:
     MultiInputFunction m_multi_input_function; ///< Function for recursive/feedforward mode
     SequentialFunction m_sequential_function; ///< Function for sequential mode
     TemporalFunction m_temporal_function; ///< Function for temporal mode
-    std::deque<bool> m_history; ///< Buffer of input values for feedforward mode
+    size_t m_history_head {}; ///< Head index for the history ring buffer
+    size_t m_history_count {}; ///< Number of valid entries in the history buffer
     size_t m_history_size; ///< Maximum size of the history buffer
     size_t m_input_count; ///< Expected number of inputs for multi-input mode
     double m_threshold; ///< Threshold for boolean conversion
     double m_low_threshold; ///< Low threshold for hysteresis
     double m_high_threshold; ///< High threshold for hysteresis
     EdgeType m_edge_type; ///< Type of edge to detect
-    bool m_edge_detected; ///< Whether an edge was detected in the last processing
-    bool m_hysteresis_state; ///< State for hysteresis operator
-    double m_temporal_time; ///< Time tracking for temporal mode
-    std::vector<double> m_input_buffer; // Buffer for multi-input mode
+    bool m_edge_detected {}; ///< Whether an edge was detected in the last processing
+    bool m_hysteresis_state {}; ///< State for hysteresis operator
+    double m_temporal_time {}; ///< Time tracking for temporal mode
     double m_input {}; ///< Current input value for multi-input mode
+    std::vector<double> m_input_buffer; // Buffer for multi-input mode
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
+    std::vector<uint8_t> m_history_ring; ///< Ring buffer for history storage
+    std::vector<uint8_t> m_history_linear; ///< Linear view of history for easy access
 
     // Helper method for multi-input mode
     void add_input(double input, size_t index);
@@ -597,6 +600,12 @@ private:
         m_all_callbacks.emplace_back(callback, type, condition);
     }
 
+    void history_push(bool val);
+
+    std::span<bool> history_linearized_view();
+
+    std::span<double> external_context_view(double input);
+
     /**
      * @brief Collection of all callback functions
      *
@@ -607,7 +616,10 @@ private:
      */
     std::vector<LogicCallback> m_all_callbacks;
 
-    std::deque<bool> m_saved_history;
+    std::vector<uint8_t> m_saved_history_ring;
+    size_t m_saved_history_head {};
+    size_t m_saved_history_count {};
+
     bool m_saved_hysteresis_state {};
     bool m_saved_edge_detected {};
     double m_saved_temporal_time {};

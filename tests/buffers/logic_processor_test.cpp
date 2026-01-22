@@ -339,7 +339,7 @@ TEST_F(LogicProcessorTest, ModulationType_AllTypesWithGenerateApply)
 TEST_F(LogicProcessorTest, ResetBetweenBuffers_Enabled)
 {
     auto logic = std::make_shared<Nodes::Generator::Logic>(
-        [](const std::deque<bool>& history) -> bool {
+        [](std::span<bool> history) -> bool {
             return history.size() >= 2 && std::all_of(history.begin(), history.end(), [](bool b) { return b; });
         },
         2); // Sequential logic with history
