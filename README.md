@@ -162,7 +162,7 @@ Rolling builds tagged as `x.x.x-dev` (e.g., `0.1.2-dev`, `0.2.0-dev`). These tag
 
 | Channel         | Tag Example | Stability | Use Case                           |
 | --------------- | ----------- | --------- | ---------------------------------- |
-| **Stable**      | `v0.1.1`    | Tested    | Production, learning, projects     |
+| **Stable**      | `v0.1.2`    | Tested    | Production, learning, projects     |
 | **Development** | `0.1.2-dev` | Unstable  | Testing new features, contributing |
 
 **Weave users**: Weave defaults to stable releases. Development builds require manual download from the releases page.
@@ -288,7 +288,7 @@ open docs/html/index.html
 | Grammar-Driven Pipelines | ⚙ In Development | Core framework ready, advanced matching in progress            |
 
 **Development began**: Since April 2025
-**Current version**: 0.1.1 (alpha)  
+**Current version**: 0.1.2 (alpha)  
 **Trajectory**: Stable core, expanding multimedia capabilities
 
 ---
