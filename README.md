@@ -163,7 +163,7 @@ Rolling builds tagged as `x.x.x-dev` (e.g., `0.1.2-dev`, `0.2.0-dev`). These tag
 | Channel         | Tag Example | Stability | Use Case                           |
 | --------------- | ----------- | --------- | ---------------------------------- |
 | **Stable**      | `v0.1.2`    | Tested    | Production, learning, projects     |
-| **Development** | `0.1.2-dev` | Unstable  | Testing new features, contributing |
+| **Development** | `0.2.0-dev` | Unstable  | Testing new features, contributing |
 
 **Weave users**: Weave defaults to stable releases. Development builds require manual download from the releases page.
 

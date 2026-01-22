@@ -146,7 +146,6 @@ jobs:
           fi
 
           cat > processed_release_body.md <<EOF
-          # MayaFlux ${{ needs.determine_version.outputs.VERSION }} (Development Build)
 
           ${CHANGELOG_HEADER}
 

@@ -2,7 +2,7 @@
 PROJECT_NAME           = "MayaFlux"
 -PROJECT_BRIEF         = "Audio Engine"
 +PROJECT_BRIEF         = "Digital-First Multimedia Processing Framework"
-PROJECT_NUMBER        = "0.1.2"
+PROJECT_NUMBER        = "0.2.0"
 OUTPUT_DIRECTORY      = docs
 
 # HTML settings for better Pages deployment
