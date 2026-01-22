@@ -5,10 +5,9 @@ namespace MayaFlux::Nodes::Generator {
 Polynomial::Polynomial(const std::vector<double>& coefficients)
     : m_mode(PolynomialMode::DIRECT)
     , m_coefficients(coefficients)
-    , m_buffer_size(0)
     , m_scale_factor(1.F)
-    , m_context(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients)
-    , m_context_gpu(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients, get_gpu_data_buffer())
+    , m_context(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients)
+    , m_context_gpu(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients, get_gpu_data_buffer())
 {
     m_direct_function = create_polynomial_function(coefficients);
 }
@@ -16,49 +15,23 @@ Polynomial::Polynomial(const std::vector<double>& coefficients)
 Polynomial::Polynomial(DirectFunction function)
     : m_mode(PolynomialMode::DIRECT)
     , m_direct_function(std::move(function))
-    , m_buffer_size(0)
     , m_scale_factor(1.F)
-    , m_context(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients)
-    , m_context_gpu(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients, get_gpu_data_buffer())
+    , m_context(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients)
+    , m_context_gpu(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients, get_gpu_data_buffer())
 {
 }
 
 Polynomial::Polynomial(BufferFunction function, PolynomialMode mode, size_t buffer_size)
     : m_mode(mode)
     , m_buffer_function(std::move(function))
+    , m_ring_count(buffer_size)
     , m_buffer_size(buffer_size)
+    , m_ring_data(buffer_size, 0.0)
+    , m_linear_view(buffer_size, 0.0)
     , m_scale_factor(1.F)
-    , m_context(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients)
-    , m_context_gpu(0.0, m_mode, m_buffer_size, m_input_buffer, m_output_buffer, m_coefficients, get_gpu_data_buffer())
+    , m_context(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients)
+    , m_context_gpu(0.0, m_mode, m_buffer_size, {}, {}, m_coefficients, get_gpu_data_buffer())
 {
-    m_input_buffer.resize(buffer_size, 0.0);
-    m_output_buffer.resize(buffer_size, 0.0);
-}
-
-std::deque<double> Polynomial::build_processing_buffer(double input, bool use_output_buffer)
-{
-    std::deque<double> buffer;
-
-    if (m_use_external_context && !m_external_buffer_context.empty()) {
-        size_t lookback = std::min(m_current_buffer_position, m_buffer_size - 1);
-
-        if (lookback > 0) {
-            auto start = m_external_buffer_context.begin() + (m_current_buffer_position - lookback);
-            buffer.assign(start, m_external_buffer_context.begin() + m_current_buffer_position);
-        }
-
-        m_current_buffer_position++;
-    } else {
-        auto& internal_buffer = use_output_buffer ? m_output_buffer : m_input_buffer;
-        buffer = internal_buffer;
-    }
-
-    buffer.push_front(input);
-    if (buffer.size() > m_buffer_size) {
-        buffer.resize(m_buffer_size);
-    }
-
-    return buffer;
 }
 
 double Polynomial::process_sample(double input)
@@ -83,39 +56,33 @@ double Polynomial::process_sample(double input)
 
     case PolynomialMode::RECURSIVE:
         if (m_buffer_size > 0) {
-            std::deque<double> combined_buffer = build_processing_buffer(input, true);
-            result = m_buffer_function(combined_buffer);
+            std::span<double> view;
 
-            if (!m_use_external_context) {
-                m_input_buffer.push_front(input);
-                if (m_output_buffer.size() >= m_buffer_size) {
-                    m_output_buffer.pop_back();
-                }
+            if (m_use_external_context && !m_external_buffer_context.empty()) {
+                view = external_context_view(input);
+            } else {
+                ring_push(input);
+                view = linearized_view();
             }
 
-            m_output_buffer.push_front(result);
-            if (m_input_buffer.size() > m_buffer_size) {
-                m_input_buffer.pop_back();
-            }
+            result = m_buffer_function(view);
+
+            m_ring_data[m_ring_head] = result;
         }
         break;
 
     case PolynomialMode::FEEDFORWARD:
         if (m_buffer_size > 0) {
-            std::deque<double> input_buffer = build_processing_buffer(input, false);
-            result = m_buffer_function(input_buffer);
+            std::span<double> view;
 
-            if (!m_use_external_context) {
-                m_input_buffer.push_front(input);
-                if (m_input_buffer.size() > m_buffer_size) {
-                    m_input_buffer.pop_back();
-                }
+            if (m_use_external_context && !m_external_buffer_context.empty()) {
+                view = external_context_view(input);
+            } else {
+                ring_push(input);
+                view = linearized_view();
             }
 
-            m_output_buffer.push_front(result);
-            if (m_output_buffer.size() > m_buffer_size) {
-                m_output_buffer.pop_back();
-            }
+            result = m_buffer_function(view);
         }
         break;
     }
@@ -152,19 +119,15 @@ std::vector<double> Polynomial::process_batch(unsigned int num_samples)
 
 void Polynomial::reset()
 {
-    m_input_buffer.clear();
-    m_output_buffer.clear();
-
-    m_input_buffer.resize(m_buffer_size, 0.0);
-    m_output_buffer.resize(m_buffer_size, 0.0);
-
+    std::ranges::fill(m_ring_data, 0.0);
+    m_ring_head = 0;
+    m_ring_count = m_buffer_size;
     m_last_output = 0.0;
 }
 
 void Polynomial::set_coefficients(const std::vector<double>& coefficients)
 {
     m_coefficients = coefficients;
-    // m_direct_function = create_polynomial_function(coefficients);
 }
 
 void Polynomial::set_direct_function(DirectFunction function)
@@ -180,24 +143,57 @@ void Polynomial::set_buffer_function(BufferFunction function, PolynomialMode mod
 
     if (buffer_size != m_buffer_size) {
         m_buffer_size = buffer_size;
-        m_input_buffer.resize(buffer_size, 0.0);
-        m_output_buffer.resize(buffer_size, 0.0);
+        m_ring_data.resize(buffer_size, 0.0);
+        m_linear_view.resize(buffer_size, 0.0);
+        m_ring_head = 0;
+        m_ring_count = 0;
     }
 }
 
 void Polynomial::set_initial_conditions(const std::vector<double>& initial_values)
 {
-    m_output_buffer.clear();
+    std::ranges::fill(m_ring_data, 0.0);
 
-    for (const auto& value : initial_values) {
-        m_output_buffer.push_back(value);
+    size_t count = std::min(initial_values.size(), m_buffer_size);
+    for (size_t i = 0; i < count; ++i) {
+        m_ring_data[i] = initial_values[i];
     }
 
-    if (m_output_buffer.size() < m_buffer_size) {
-        m_output_buffer.resize(m_buffer_size, 0.0);
-    } else if (m_output_buffer.size() > m_buffer_size) {
-        m_output_buffer.resize(m_buffer_size);
+    m_ring_head = 0;
+    m_ring_count = m_buffer_size;
+}
+
+void Polynomial::ring_push(double val)
+{
+    if (m_buffer_size == 0)
+        return;
+    m_ring_head = (m_ring_head == 0 ? m_buffer_size : m_ring_head) - 1;
+    m_ring_data[m_ring_head] = val;
+    if (m_ring_count < m_buffer_size)
+        ++m_ring_count;
+}
+
+std::span<double> Polynomial::linearized_view()
+{
+    for (size_t i = 0; i < m_ring_count; ++i) {
+        m_linear_view[i] = m_ring_data[(m_ring_head + i) % m_buffer_size];
     }
+    return { m_linear_view.data(), m_ring_count };
+}
+
+std::span<double> Polynomial::external_context_view(double input)
+{
+    size_t lookback = std::min(m_current_buffer_position, m_buffer_size - 1);
+    size_t view_size = std::min(lookback + 1, m_buffer_size);
+
+    m_linear_view[0] = input;
+
+    for (size_t i = 1; i < view_size && i <= lookback; ++i) {
+        m_linear_view[i] = m_external_buffer_context[m_current_buffer_position - i];
+    }
+
+    m_current_buffer_position++;
+    return { m_linear_view.data(), view_size };
 }
 
 Polynomial::DirectFunction Polynomial::create_polynomial_function(const std::vector<double>& coefficients)
@@ -217,14 +213,20 @@ Polynomial::DirectFunction Polynomial::create_polynomial_function(const std::vec
 
 void Polynomial::update_context(double value)
 {
+    auto view = linearized_view();
+
     if (m_gpu_compatible) {
         m_context_gpu.value = value;
         m_context_gpu.m_mode = m_mode;
         m_context_gpu.m_buffer_size = m_buffer_size;
+        m_context_gpu.m_input_buffer = view;
+        m_context_gpu.m_output_buffer = view;
     } else {
         m_context.value = value;
         m_context.m_mode = m_mode;
         m_context.m_buffer_size = m_buffer_size;
+        m_context.m_input_buffer = view;
+        m_context.m_output_buffer = view;
     }
 }
 
@@ -253,8 +255,9 @@ NodeContext& Polynomial::get_last_context()
 
 void Polynomial::save_state()
 {
-    m_saved_input_buffer = m_input_buffer;
-    m_saved_output_buffer = m_output_buffer;
+    m_saved_ring_data = m_ring_data;
+    m_saved_ring_head = m_ring_head;
+    m_saved_ring_count = m_ring_count;
     m_saved_last_output = m_last_output;
 
     if (m_input_node)
@@ -265,8 +268,9 @@ void Polynomial::save_state()
 
 void Polynomial::restore_state()
 {
-    m_input_buffer = m_saved_input_buffer;
-    m_output_buffer = m_saved_output_buffer;
+    m_ring_data = m_saved_ring_data;
+    m_ring_head = m_saved_ring_head;
+    m_ring_count = m_saved_ring_count;
     m_last_output = m_saved_last_output;
 
     if (m_input_node)

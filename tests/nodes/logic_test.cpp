@@ -133,7 +133,7 @@ TEST_F(LogicTest, EdgeDetection)
 TEST_F(LogicTest, SequentialMode)
 {
     // Create sequential logic that detects a specific pattern: true->false->true
-    auto pattern_detector = [](const std::deque<bool>& history) -> bool {
+    auto pattern_detector = [](std::span<bool> history) -> bool {
         if (history.size() < 3) {
             return false;
         }
@@ -231,7 +231,7 @@ TEST_F(LogicTest, Reset)
 {
     // Create sequential logic with state
     auto sequential_logic = std::make_shared<Nodes::Generator::Logic>(
-        [](const std::deque<bool>& history) -> bool {
+        [](std::span<bool> history) -> bool {
             // Return true if all values in history are true
             for (const auto& value : history) {
                 if (!value) {

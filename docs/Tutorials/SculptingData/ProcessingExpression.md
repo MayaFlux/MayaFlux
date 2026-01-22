@@ -299,7 +299,7 @@ void compose() {
 
     // Recursive: output depends on previous outputs
     auto recursive = vega.Polynomial(
-        [](const std::deque<double>& history) {
+        [](std::span<double> history) {
             // history[0] = previous output, history[1] = two samples ago
             return 0.5 * history[0] + 0.3 * history[1];
         },
@@ -327,7 +327,7 @@ y[n] = b0*x[n] + a1*y[n-1] + a2*y[n-2]
 Your recursive polynomial **is** that filter—just written as a lambda:
 
 ```cpp
-[](const std::deque<double>& history) {
+[](std::span<double> history) {
     return 0.5 * history[0] + 0.3 * history[1];
 }
 ```
@@ -335,7 +335,7 @@ Your recursive polynomial **is** that filter—just written as a lambda:
 Difference: You can write **nonlinear** feedback:
 
 ```cpp
-[](const std::deque<double>& history) {
+[](std::span<double> history) {
     return history[0] * std::sin(history[1]);  // nonlinear!
 }
 ```
@@ -435,7 +435,7 @@ Example (resonant ping):
 
 ```cpp
 auto resonator = vega.Polynomial(
-    [](const std::deque<double>& history) {
+    [](std::span<double> history) {
         return 0.99 * history[0] - 0.5 * history[1];
     },
     PolynomialMode::RECURSIVE,
@@ -453,7 +453,7 @@ resonator->set_initial_conditions({1.0, 0.0});  // kick-start the resonance
 ```cpp
 // Karplus-Strong string synthesis (plucked string)
 auto string = vega.Polynomial(
-    [](const std::deque<double>& history) {
+    [](std::span<double> history) {
         return 0.996 * (history[0] + history[1]) / 2.0;  // lowpass + feedback
     },
     PolynomialMode::RECURSIVE,
@@ -463,7 +463,7 @@ string->set_initial_conditions(std::vector<double>(100, vega.Random(-1.0, 1.0)))
 
 // Nonlinear resonator (saturating feedback)
 auto nonlinear = vega.Polynomial(
-    [](const std::deque<double>& history) {
+    [](std::span<double> history) {
         double fb = 0.8 * history[0];
         return std::tanh(fb * 3.0);  // soft saturation in loop
     },
@@ -473,7 +473,7 @@ auto nonlinear = vega.Polynomial(
 
 // Comb filter (delay-based coloration)
 auto comb = vega.Polynomial(
-    [](const std::deque<double>& history) {
+    [](std::span<double> history) {
         return history[0] + 0.5 * history[50];  // 50-sample delay
     },
     PolynomialMode::RECURSIVE,
@@ -1241,7 +1241,7 @@ For complex feedback systems:
 
 // Solution: Use PolynomialProcessor RECURSIVE mode with filtering
 auto filtered_feedback = vega.Polynomial(
-    [](const std::deque<double>& history) {
+    [](std::span<double> history) {
         double fb = 0.7 * history[0];
         return fb * 0.5 + history[1] * 0.5;  // Simple lowpass
     },

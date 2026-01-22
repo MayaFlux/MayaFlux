@@ -1,5 +1,7 @@
 #include "Logic.hpp"
 
+#include <algorithm>
+
 #include "MayaFlux/API/Config.hpp"
 
 namespace MayaFlux::Nodes::Generator {
@@ -17,11 +19,8 @@ Logic::Logic(double threshold)
     , m_low_threshold(threshold * 0.9)
     , m_high_threshold(threshold)
     , m_edge_type(EdgeType::BOTH)
-    , m_edge_detected(false)
-    , m_hysteresis_state(false)
-    , m_temporal_time(0.0)
-    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
-    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
+    , m_context(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
 {
     m_direct_function = [this](double input) {
         return input > m_threshold;
@@ -37,11 +36,8 @@ Logic::Logic(LogicOperator op, double threshold)
     , m_low_threshold(threshold * 0.9)
     , m_high_threshold(threshold)
     , m_edge_type(EdgeType::BOTH)
-    , m_edge_detected(false)
-    , m_hysteresis_state(false)
-    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
-    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
-    , m_temporal_time(0.0)
+    , m_context(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
 {
     set_operator(op);
 }
@@ -56,11 +52,8 @@ Logic::Logic(DirectFunction function)
     , m_low_threshold(0.45)
     , m_high_threshold(0.5)
     , m_edge_type(EdgeType::BOTH)
-    , m_edge_detected(false)
-    , m_hysteresis_state(false)
-    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
-    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
-    , m_temporal_time(0.0)
+    , m_context(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
 {
 }
 
@@ -74,11 +67,8 @@ Logic::Logic(MultiInputFunction function, size_t input_count)
     , m_low_threshold(0.45)
     , m_high_threshold(0.5)
     , m_edge_type(EdgeType::BOTH)
-    , m_edge_detected(false)
-    , m_hysteresis_state(false)
-    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
-    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
-    , m_temporal_time(0.0)
+    , m_context(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
 {
     m_input_buffer.resize(input_count, 0.0);
 }
@@ -93,13 +83,11 @@ Logic::Logic(SequentialFunction function, size_t history_size)
     , m_low_threshold(0.45)
     , m_high_threshold(0.5)
     , m_edge_type(EdgeType::BOTH)
-    , m_edge_detected(false)
-    , m_hysteresis_state(false)
-    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
-    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
-    , m_temporal_time(0.0)
+    , m_history_ring(history_size, false)
+    , m_history_linear(history_size, false)
+    , m_context(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
 {
-    m_history.assign(history_size, false);
 }
 
 Logic::Logic(TemporalFunction function)
@@ -112,11 +100,8 @@ Logic::Logic(TemporalFunction function)
     , m_low_threshold(0.45)
     , m_high_threshold(0.5)
     , m_edge_type(EdgeType::BOTH)
-    , m_edge_detected(false)
-    , m_hysteresis_state(false)
-    , m_temporal_time(0.0)
-    , m_context(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
-    , m_context_gpu(0.0, m_mode, m_operator, m_history, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
+    , m_context(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer)
+    , m_context_gpu(0.0, m_mode, m_operator, {}, m_threshold, m_edge_detected, m_edge_type, m_input_buffer, get_gpu_data_buffer())
 {
 }
 
@@ -213,11 +198,9 @@ double Logic::process_sample(double input)
 
     case LogicMode::SEQUENTIAL: {
         bool current_bool = input > m_threshold;
-        m_history.push_front(current_bool);
-        if (m_history.size() > m_history_size) {
-            m_history.pop_back();
-        }
-        result = m_sequential_function(m_history);
+        history_push(current_bool);
+        auto view = history_linearized_view();
+        result = m_sequential_function(view);
         break;
     }
 
@@ -313,8 +296,9 @@ void Logic::add_input(double input, size_t index)
 
 void Logic::reset()
 {
-    m_history.clear();
-    m_history.assign(m_history_size, false);
+    std::ranges::fill(m_history_ring, false);
+    m_history_head = 0;
+    m_history_count = m_history_size;
     m_edge_detected = false;
     m_last_output = 0.0;
     m_hysteresis_state = false;
@@ -431,8 +415,6 @@ void Logic::set_operator(LogicOperator op, bool create_default_direct_function)
 
         case LogicOperator::EDGE:
             // Edge detection is handled in process_sample
-            break;
-
         case LogicOperator::CUSTOM:
             // Custom function should be set directly
             break;
@@ -468,8 +450,10 @@ void Logic::set_sequential_function(SequentialFunction function, size_t history_
 
     if (history_size != m_history_size) {
         m_history_size = history_size;
-        m_history.clear();
-        m_history.assign(history_size, false);
+        m_history_ring.resize(history_size, false);
+        m_history_linear.resize(history_size, false);
+        m_history_head = 0;
+        m_history_count = 0;
     }
 }
 
@@ -478,31 +462,28 @@ void Logic::set_temporal_function(TemporalFunction function)
     m_temporal_function = std::move(function);
     m_mode = LogicMode::TEMPORAL;
     m_operator = LogicOperator::CUSTOM;
-    // Reset temporal time when changing function
     m_temporal_time = 0.0;
 }
 
 void Logic::set_initial_conditions(const std::vector<bool>& initial_values)
 {
-    m_history.clear();
+    m_history_head = 0;
+    m_history_count = std::min(initial_values.size(), m_history_size);
 
-    for (const auto& value : initial_values) {
-        m_history.push_back(value);
-    }
-
-    if (m_history.size() < m_history_size) {
-        m_history.resize(m_history_size, false);
-    } else if (m_history.size() > m_history_size) {
-        m_history.resize(m_history_size);
+    for (size_t i = 0; i < m_history_count; ++i) {
+        m_history_ring[i] = initial_values[i];
     }
 }
 
 void Logic::update_context(double value)
 {
+    auto view = history_linearized_view();
+
     if (m_gpu_compatible) {
         m_context_gpu.value = value;
         m_context_gpu.m_mode = m_mode;
         m_context_gpu.m_operator = m_operator;
+        m_context_gpu.m_history = view;
         m_context_gpu.m_threshold = m_threshold;
         m_context_gpu.m_edge_detected = m_edge_detected;
         m_context_gpu.m_edge_type = m_edge_type;
@@ -510,6 +491,7 @@ void Logic::update_context(double value)
         m_context.value = value;
         m_context.m_mode = m_mode;
         m_context.m_operator = m_operator;
+        m_context.m_history = view;
         m_context.m_threshold = m_threshold;
         m_context.m_edge_detected = m_edge_detected;
         m_context.m_edge_type = m_edge_type;
@@ -531,7 +513,7 @@ void Logic::notify_tick(double value)
             break;
 
         case LogicEventType::WHILE_TRUE:
-            should_call = value;
+            should_call = (bool)value;
             break;
 
         case LogicEventType::WHILE_FALSE:
@@ -543,7 +525,7 @@ void Logic::notify_tick(double value)
             break;
 
         case LogicEventType::TRUE:
-            should_call = state_changed && value;
+            should_call = state_changed && (bool)value;
             break;
 
         case LogicEventType::FALSE:
@@ -567,6 +549,11 @@ NodeContext& Logic::get_last_context()
         return m_context_gpu;
     }
     return m_context;
+}
+
+std::span<bool> Logic::get_history()
+{
+    return { reinterpret_cast<bool*>(m_history_linear.data()), m_history_count };
 }
 
 void Logic::on_tick(const NodeHook& callback)
@@ -636,9 +623,29 @@ void Logic::remove_hooks_of_type(LogicEventType type)
     m_all_callbacks.erase(it, m_all_callbacks.end());
 }
 
+void Logic::history_push(bool val)
+{
+    if (m_history_size == 0)
+        return;
+    m_history_head = (m_history_head == 0 ? m_history_size : m_history_head) - 1;
+    m_history_ring[m_history_head] = val;
+    if (m_history_count < m_history_size)
+        ++m_history_count;
+}
+
+std::span<bool> Logic::history_linearized_view()
+{
+    for (size_t i = 0; i < m_history_count; ++i) {
+        m_history_linear[i] = m_history_ring[(m_history_head + i) % m_history_size] ? 1 : 0;
+    }
+    return { reinterpret_cast<bool*>(m_history_linear.data()), m_history_count };
+}
+
 void Logic::save_state()
 {
-    m_saved_history = m_history;
+    m_saved_history_ring = m_history_ring;
+    m_saved_history_head = m_history_head;
+    m_saved_history_count = m_history_count;
     m_saved_hysteresis_state = m_hysteresis_state;
     m_saved_edge_detected = m_edge_detected;
     m_saved_temporal_time = m_temporal_time;
@@ -652,7 +659,9 @@ void Logic::save_state()
 
 void Logic::restore_state()
 {
-    m_history = m_saved_history;
+    m_history_ring = m_saved_history_ring;
+    m_history_head = m_saved_history_head;
+    m_history_count = m_saved_history_count;
     m_hysteresis_state = m_saved_hysteresis_state;
     m_edge_detected = m_saved_edge_detected;
     m_temporal_time = m_saved_temporal_time;
@@ -663,4 +672,5 @@ void Logic::restore_state()
 
     m_state_saved = false;
 }
+
 }

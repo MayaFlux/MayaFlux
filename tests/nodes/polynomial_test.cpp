@@ -38,7 +38,7 @@ TEST_F(PolynomialTest, BasicProperties)
 TEST_F(PolynomialTest, RecursiveMode)
 {
     // Create a recursive polynomial: y[n] = 0.5*y[n-1] + 0.2*y[n-2] + x[n]
-    auto recursive_func = [](const std::deque<double>& buffer) -> double {
+    auto recursive_func = [](std::span<double> buffer) -> double {
         // Get the input value (the newest value in the buffer)
         double input = buffer.empty() ? 0.0 : buffer.front();
 
@@ -77,7 +77,7 @@ TEST_F(PolynomialTest, RecursiveMode)
 TEST_F(PolynomialTest, FeedforwardMode)
 {
     // Create a feedforward polynomial: y[n] = 0.7*x[n] + 0.3*x[n-1]
-    auto feedforward_func = [](const std::deque<double>& buffer) -> double {
+    auto feedforward_func = [](std::span<double> buffer) -> double {
         if (buffer.size() < 2)
             return 0.7 * buffer[0];
         return 0.7 * buffer[0] + 0.3 * buffer[1];
@@ -105,7 +105,7 @@ TEST_F(PolynomialTest, FeedforwardMode)
 TEST_F(PolynomialTest, Reset)
 {
     // Create a recursive polynomial with state
-    auto recursive_func = [](const std::deque<double>& buffer) -> double {
+    auto recursive_func = [](std::span<double> buffer) -> double {
         double input = buffer[0]; // Current input
 
         if (buffer.size() < 2) {
@@ -223,7 +223,7 @@ TEST_F(PolynomialProcessorTest, SampleByMode)
 TEST_F(PolynomialProcessorTest, BatchMode)
 {
     // y[n] = x[n] + 0.5*y[n-1] + 0.2*y[n-2]
-    auto recursive_func = [](const std::deque<double>& buffer) -> double {
+    auto recursive_func = [](std::span<double> buffer) -> double {
         double input = buffer[0];
 
         if (buffer.size() <= 1) {
@@ -269,7 +269,7 @@ TEST_F(PolynomialProcessorTest, BatchMode)
 TEST_F(PolynomialProcessorTest, WindowedMode)
 {
     // y[n] = x[n] + 0.5*y[n-1] + 0.2*y[n-2]
-    auto recursive_func = [](const std::deque<double>& buffer) -> double {
+    auto recursive_func = [](std::span<double> buffer) -> double {
         double input = buffer[0];
 
         if (buffer.size() <= 1) {
@@ -478,7 +478,7 @@ TEST_F(PolynomialProcessorTest, BatchModeInternal)
     auto processor = std::make_shared<Buffers::PolynomialProcessor>(
         Buffers::PolynomialProcessor::ProcessMode::BATCH,
         64,
-        [](const std::deque<double>& buffer) -> double {
+        [](std::span<double> buffer) -> double {
             double input = buffer[0];
             if (buffer.size() <= 1)
                 return input;
@@ -506,7 +506,7 @@ TEST_F(PolynomialProcessorTest, WindowedModeInternal)
     auto processor = std::make_shared<Buffers::PolynomialProcessor>(
         Buffers::PolynomialProcessor::ProcessMode::WINDOWED,
         5,
-        [](const std::deque<double>& buffer) -> double {
+        [](std::span<double> buffer) -> double {
             double input = buffer[0];
             if (buffer.size() <= 1)
                 return input;
@@ -640,7 +640,7 @@ TEST_F(PolynomialProcessorTest, ForceUseInternalPolynomial)
 
 TEST_F(PolynomialProcessorTest, BufferContextModeFeedforward)
 {
-    auto moving_avg = [](const std::deque<double>& buffer) -> double {
+    auto moving_avg = [](std::span<double> buffer) -> double {
         double sum = 0.0;
         for (size_t i = 0; i < std::min(buffer.size(), 3UL); ++i) {
             sum += buffer[i];
@@ -683,7 +683,7 @@ TEST_F(PolynomialProcessorTest, BufferContextModeFeedforward)
 TEST_F(PolynomialProcessorTest, BufferContextModeRecursive)
 {
     // Simple recursive filter: y[n] = 0.5 * y[n-1] + x[n]
-    auto recursive_filter = [](const std::deque<double>& buffer) -> double {
+    auto recursive_filter = [](std::span<double> buffer) -> double {
         double input = buffer.empty() ? 0.0 : buffer.front();
 
         if (buffer.size() < 2) {
