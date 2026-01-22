@@ -431,6 +431,21 @@ private:
      */
     static std::string read_text_file(const std::string& filepath);
 
+#ifndef MAYAFLUX_USE_SHADERC
+    /*
+     * @brief Compile GLSL to SPIR-V using external compiler
+     * @param glsl_source GLSL source code
+     * @param stage Shader stage (affects compiler settings)
+     * @param include_directories Include paths
+     * @param defines Preprocessor macros
+    */
+    static std::vector<uint32_t> compile_glsl_to_spirv_external(
+        const std::string& glsl_source,
+        vk::ShaderStageFlagBits stage,
+        const std::vector<std::string>& include_directories = {},
+        const std::unordered_map<std::string, std::string>& defines = {});
+#endif
+
     /**
      * @brief Update specialization info from current map
      * Called before get_stage_create_info() to ensure fresh data

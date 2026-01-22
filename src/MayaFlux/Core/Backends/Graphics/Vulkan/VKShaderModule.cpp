@@ -649,9 +649,7 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv(
     return spirv;
 
 #else
-    MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "GLSL compilation requested but shaderc not available - use pre-compiled SPIR-V");
-    return {};
+    return compile_glsl_to_spirv_external(glsl_source, stage, include_directories, defines);
 #endif
 }
 
@@ -711,6 +709,124 @@ std::string VKShaderModule::read_text_file(const std::string& filepath)
 
     return content;
 }
+
+#ifndef MAYAFLUX_USE_SHADERC
+namespace {
+    bool is_command_available(const std::string& command)
+    {
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+        std::string check_cmd = "where " + command + " >nul 2>&1";
+#else
+        std::string check_cmd = "command -v " + command + " >/dev/null 2>&1";
+#endif
+        return std::system(check_cmd.c_str()) == 0;
+    }
+
+    std::string get_null_device()
+    {
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+        return "nul";
+#else
+        return "/dev/null";
+#endif
+    }
+}
+
+std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv_external(
+    const std::string& glsl_source,
+    vk::ShaderStageFlagBits stage,
+    const std::vector<std::string>& include_directories,
+    const std::unordered_map<std::string, std::string>& defines)
+{
+    namespace fs = std::filesystem;
+
+    if (!is_command_available("glslc")) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "glslc compiler not found in PATH. Install Vulkan SDK or enable MAYAFLUX_USE_SHADERC");
+        return {};
+    }
+
+    fs::path temp_dir = fs::temp_directory_path();
+    fs::path glsl_temp = temp_dir / "mayaflux_shader_temp.glsl";
+    fs::path spirv_temp = temp_dir / "mayaflux_shader_temp.spv";
+
+    {
+        std::ofstream out(glsl_temp);
+        if (!out.is_open()) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Failed to create temporary GLSL file: '{}'", glsl_temp.string());
+            return {};
+        }
+        out << glsl_source;
+    }
+
+    std::string stage_flag;
+    switch (stage) {
+    case vk::ShaderStageFlagBits::eVertex: stage_flag = "-fshader-stage=vertex"; break;
+    case vk::ShaderStageFlagBits::eFragment: stage_flag = "-fshader-stage=fragment"; break;
+    case vk::ShaderStageFlagBits::eCompute: stage_flag = "-fshader-stage=compute"; break;
+    case vk::ShaderStageFlagBits::eGeometry: stage_flag = "-fshader-stage=geometry"; break;
+    case vk::ShaderStageFlagBits::eTessellationControl: stage_flag = "-fshader-stage=tesscontrol"; break;
+    case vk::ShaderStageFlagBits::eTessellationEvaluation: stage_flag = "-fshader-stage=tesseval"; break;
+    default:
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Unsupported shader stage for external compilation: {}", vk::to_string(stage));
+        fs::remove(glsl_temp);
+        return {};
+    }
+
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+    std::string cmd = "glslc " + stage_flag + " \"" + glsl_temp.string() + "\" -o \"" + spirv_temp.string() + "\"";
+#else
+    std::string cmd = "glslc " + stage_flag + " '" + glsl_temp.string() + "' -o '" + spirv_temp.string() + "'";
+#endif
+
+    for (const auto& dir : include_directories) {
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+        cmd += " -I\"" + dir + "\"";
+#else
+        cmd += " -I'" + dir + "'";
+#endif
+    }
+
+    for (const auto& [name, value] : defines) {
+        cmd += " -D" + name;
+        if (!value.empty()) {
+            cmd += "=" + value;
+        }
+    }
+
+    std::string null_device = get_null_device();
+    
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Invoking external glslc : {}", cmd);
+
+    int result = std::system(cmd.c_str());
+
+    fs::remove(glsl_temp);
+
+    if (result != 0) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "External glslc compilation failed (exit code: {})", result);
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Make sure Vulkan SDK is installed or enable MAYAFLUX_USE_SHADERC for runtime compilation");
+        fs::remove(spirv_temp);
+        return {};
+    }
+
+    auto spirv_code = read_spirv_file(spirv_temp.string());
+
+    fs::remove(spirv_temp);
+
+    if (!spirv_code.empty()) {
+        MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Compiled GLSL ({} stage) via external glslc -> {} bytes SPIR-V",
+            vk::to_string(stage), spirv_code.size() * 4);
+    }
+
+    return spirv_code;
+}
+#endif
 
 Stage VKShaderModule::get_stage_type() const
 {
