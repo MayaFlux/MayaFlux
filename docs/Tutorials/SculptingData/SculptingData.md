@@ -106,7 +106,7 @@ you can do so fluently without waiting for someone else to provide the building 
     DynamicSoundStream](#expansion-2-enter-dynamicsoundstream){#toc-expansion-2-enter-dynamicsoundstream}
   - [Expansion 3:
     SoundStreamWriter](#expansion-3-streamwriteprocessor){#toc-expansion-3-streamwriteprocessor}
-  - [Expansion 4: FileBridgeBuffer---Controlled
+  - [Expansion 4: SoundFileBridge---Controlled
     Flow](#expansion-4-filebridgebuffercontrolled-flow){#toc-expansion-4-filebridgebuffercontrolled-flow}
   - [Expansion 5: Why This
     Architecture?](#expansion-5-why-this-architecture){#toc-expansion-5-why-this-architecture}
@@ -1135,15 +1135,15 @@ by continuously writing it to a stream through a processor.
 
 </details>
 
-## Expansion 4: FileBridgeBuffer—Controlled Flow
+## Expansion 4: SoundFileBridge—Controlled Flow
 
 <details>
 <summary>Click to expand: The Reading-Writing Bridge</summary>
 
-**FileBridgeBuffer** is a specialized buffer that orchestrates reading from a file and writing to a stream,
+**SoundFileBridge** is a specialized buffer that orchestrates reading from a file and writing to a stream,
 with timing control through buffer cycles.
 
-Internally, FileBridgeBuffer creates a processing chain:
+Internally, SoundFileBridge creates a processing chain:
 
 ```
 SoundFileContainer (source file)
@@ -1163,7 +1163,7 @@ The key difference from your simple load/play flow:
 - You control **how many buffer cycles** run (e.g., "process 10 cycles of this file")
 - After N cycles, the stream holds N × buffer_size samples of the processed result
 
-FileBridgeBuffer represents:
+SoundFileBridge represents:
 **"Read from this file, process through this chain, accumulate result in this stream, for exactly this many cycles."**
 
 This gives you timing control. You don't play the whole file. You process exactly N cycles, then stop.
@@ -1189,7 +1189,7 @@ Each layer is independent:
 - You can swap the writer (write to hardware, to disk, to memory, to GPU)
 - The stream is just a data holder—it doesn't care what filled it
 
-This is why FileBridgeBuffer is powerful: it composes these layers without forcing you to wire them manually.
+This is why SoundFileBridge is powerful: it composes these layers without forcing you to wire them manually.
 
 And it's why understanding this section matters:
 **the next tutorial (BufferOperation) builds on top of this composition**, adding temporal coordination and pipeline semantics.
@@ -1220,7 +1220,7 @@ Timing control is expressed in **cycles**, not time. This is intentional:
 - Cycles are aligned with buffer boundaries (no partial processing)
 - Cycles decouple from hardware timing (no real-time constraints)
 
-FileBridgeBuffer lets you say: "Process this file for exactly N cycles," then accumulate the result in a stream.
+SoundFileBridge lets you say: "Process this file for exactly N cycles," then accumulate the result in a stream.
 
 This is the foundation for everything BufferOperation does—it extends this cycle-based thinking to composition and coordination.
 
@@ -1234,7 +1234,7 @@ At this point, understand:
 
 2. **SoundStreamWriter**: The processor that writes buffer data sequentially to a DynamicSoundStream
 
-3. **FileBridgeBuffer**: A buffer that creates a chain (reader → your processors → writer), and lets you control how many buffer cycles run
+3. **SoundFileBridge**: A buffer that creates a chain (reader → your processors → writer), and lets you control how many buffer cycles run
 
 These three concepts enable timing control. You're no longer at the mercy of real-time callbacks.
 You can process exactly N cycles, accumulate results, and move on.
@@ -1244,17 +1244,17 @@ You can process exactly N cycles, accumulate results, and move on.
 This is intentional. The concepts here are essential, and expose the architecture behind everything that follows.
 It is also a hint at the fact that modal output is not the only use case for MayaFlux.
 
-- FileBridgeBuffer is too low-level—you'd create it manually, call setup_chain_and_processor(), manage cycles yourself
+- SoundFileBridge is too low-level—you'd create it manually, call setup_chain_and_processor(), manage cycles yourself
 - DynamicSoundStream is too generic—without a driver, you'd just accumulate data with no purpose
 - SoundStreamWriter is just a piece—alone, it doesn't tell you how many cycles to run
 
 The **next tutorial introduces BufferOperation**, which wraps these concepts into high-level, composable patterns:
 
-- `BufferOperation::capture_file()` - wrap FileBridgeBuffer, accumulate N cycles, return the stream
+- `BufferOperation::capture_file()` - wrap SoundFileBridge, accumulate N cycles, return the stream
 - `BufferOperation::file_to_stream()` - connect file reading to stream writing, with cycle control
 - `BufferOperation::route_to_container()` - send processor output to a stream
 
-Once you understand FileBridgeBuffer, DynamicSoundStream, and cycle-based timing, BufferOperation will feel natural.
+Once you understand SoundFileBridge, DynamicSoundStream, and cycle-based timing, BufferOperation will feel natural.
 It's just syntactic sugar on top of this architecture.
 
 For now: **internalize the architecture. The next section shows how to use it.**
@@ -1342,7 +1342,7 @@ pipeline
 
 The `>>` operator chains operations. The pipeline executes them in order, handling all the machinery (cycles, buffer management, timing) invisibly.
 
-This is why you've been learning the foundation first: **pipelines are just syntactic sugar over FileBridgeBuffer, DynamicSoundStream, SoundStreamWriter, and buffer cycles.**
+This is why you've been learning the foundation first: **pipelines are just syntactic sugar over SoundFileBridge, DynamicSoundStream, SoundStreamWriter, and buffer cycles.**
 
 Understanding the previous sections makes this section obvious. You're not learning new concepts—you're composing concepts you already understand.
 

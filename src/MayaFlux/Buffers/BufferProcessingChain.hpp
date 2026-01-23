@@ -447,7 +447,5 @@ private:
     PendingProcessorOp m_pending_ops[MAX_PENDING_PROCESSORS];
 
     std::atomic<uint32_t> m_pending_count { 0 };
-
-    friend class FileBridgeProcessor;
 };
 }
