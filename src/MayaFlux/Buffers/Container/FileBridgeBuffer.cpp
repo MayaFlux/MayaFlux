@@ -22,7 +22,7 @@ FileToStreamChain::FileToStreamChain(std::shared_ptr<Kakshya::SoundFileContainer
 
 void FileToStreamChain::setup_processors()
 {
-    m_container_adapter = std::make_shared<ContainerToBufferAdapter>(
+    m_container_adapter = std::make_shared<SoundStreamReader>(
         std::dynamic_pointer_cast<Kakshya::StreamContainer>(m_file_container));
     m_stream_writer = std::make_shared<SoundStreamWriter>(m_capture_stream);
 }

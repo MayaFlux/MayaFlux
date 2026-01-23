@@ -1451,7 +1451,7 @@ You now understand:
 **Buffer Types:**
 
 - `AudioBuffer`: Generic accumulator
-- `ContainerBuffer`: Reads from files/streams (default: `ContainerToBufferAdapter`)
+- `ContainerBuffer`: Reads from files/streams (default: `SoundStreamReader`)
 - `NodeBuffer`: Generates from nodes (default: `NodeSourceProcessor`)
 - `FeedbackBuffer`: Recursive delay (default: `FeedbackProcessor`)
 

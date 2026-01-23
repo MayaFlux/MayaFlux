@@ -11,7 +11,7 @@ class DynamicSoundStream;
 namespace MayaFlux::Buffers {
 
 class SoundStreamWriter;
-class ContainerToBufferAdapter;
+class SoundStreamReader;
 
 /**
  * @brief A processing chain that reads audio data from a sound file container and writes it to a dynamic sound stream.
@@ -37,7 +37,7 @@ private:
 
     std::shared_ptr<Kakshya::SoundFileContainer> m_file_container;
     std::shared_ptr<Kakshya::DynamicSoundStream> m_capture_stream;
-    std::shared_ptr<ContainerToBufferAdapter> m_container_adapter;
+    std::shared_ptr<SoundStreamReader> m_container_adapter;
     std::shared_ptr<SoundStreamWriter> m_stream_writer;
     uint32_t m_source_channel;
 };

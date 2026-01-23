@@ -6,7 +6,7 @@
 
 namespace MayaFlux::Buffers {
 
-ContainerToBufferAdapter::ContainerToBufferAdapter(std::shared_ptr<Kakshya::StreamContainer> container)
+SoundStreamReader::SoundStreamReader(std::shared_ptr<Kakshya::StreamContainer> container)
     : m_container(container)
 {
     if (container) {
@@ -20,7 +20,7 @@ ContainerToBufferAdapter::ContainerToBufferAdapter(std::shared_ptr<Kakshya::Stre
     }
 }
 
-void ContainerToBufferAdapter::processing_function(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::processing_function(std::shared_ptr<Buffer> buffer)
 {
     if (!m_container || !buffer) {
         return;
@@ -81,11 +81,11 @@ void ContainerToBufferAdapter::processing_function(std::shared_ptr<Buffer> buffe
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "Error in ContainerToBufferAdapter::process: " << e.what() << '\n';
+        std::cerr << "Error in SoundStreamReader::process: " << e.what() << '\n';
     }
 }
 
-void ContainerToBufferAdapter::extract_channel_data(std::span<double> output)
+void SoundStreamReader::extract_channel_data(std::span<double> output)
 {
     if (!m_container) {
         std::ranges::fill(output, 0.0);
@@ -141,7 +141,7 @@ void ContainerToBufferAdapter::extract_channel_data(std::span<double> output)
     }
 }
 
-void ContainerToBufferAdapter::on_attach(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::on_attach(std::shared_ptr<Buffer> buffer)
 {
     if (!m_container || !buffer) {
         return;
@@ -168,7 +168,7 @@ void ContainerToBufferAdapter::on_attach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void ContainerToBufferAdapter::on_detach(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::on_detach(std::shared_ptr<Buffer> buffer)
 {
     if (m_container) {
         m_container->unregister_state_change_callback();
@@ -176,7 +176,7 @@ void ContainerToBufferAdapter::on_detach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void ContainerToBufferAdapter::set_source_channel(uint32_t channel_index)
+void SoundStreamReader::set_source_channel(uint32_t channel_index)
 {
     if (channel_index >= m_num_channels) {
         throw std::out_of_range("Channel index exceeds container channel count");
@@ -184,7 +184,7 @@ void ContainerToBufferAdapter::set_source_channel(uint32_t channel_index)
     m_source_channel = channel_index;
 }
 
-void ContainerToBufferAdapter::set_container(std::shared_ptr<Kakshya::StreamContainer> container)
+void SoundStreamReader::set_container(std::shared_ptr<Kakshya::StreamContainer> container)
 {
     if (m_container) {
         m_container->unregister_state_change_callback();
@@ -203,7 +203,7 @@ void ContainerToBufferAdapter::set_container(std::shared_ptr<Kakshya::StreamCont
     }
 }
 
-void ContainerToBufferAdapter::on_container_state_change(
+void SoundStreamReader::on_container_state_change(
     std::shared_ptr<Kakshya::SignalSourceContainer> container,
     Kakshya::ProcessingState state)
 {
@@ -231,8 +231,8 @@ ContainerBuffer::ContainerBuffer(uint32_t channel_id, uint32_t num_samples,
         throw std::invalid_argument("ContainerBuffer: container must not be null");
     }
 
-    m_pending_adapter = std::make_shared<ContainerToBufferAdapter>(m_container);
-    std::dynamic_pointer_cast<ContainerToBufferAdapter>(m_pending_adapter)->set_source_channel(m_source_channel);
+    m_pending_adapter = std::make_shared<SoundStreamReader>(m_container);
+    std::dynamic_pointer_cast<SoundStreamReader>(m_pending_adapter)->set_source_channel(m_source_channel);
 
     setup_zero_copy_if_possible();
 }
@@ -250,7 +250,7 @@ void ContainerBuffer::set_container(std::shared_ptr<Kakshya::StreamContainer> co
 {
     m_container = container;
 
-    if (auto adapter = std::dynamic_pointer_cast<ContainerToBufferAdapter>(m_default_processor)) {
+    if (auto adapter = std::dynamic_pointer_cast<SoundStreamReader>(m_default_processor)) {
         adapter->set_container(container);
     }
 
@@ -285,7 +285,7 @@ std::shared_ptr<BufferProcessor> ContainerBuffer::create_default_processor()
         return m_pending_adapter;
     }
 
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(m_container);
+    auto adapter = std::make_shared<SoundStreamReader>(m_container);
     adapter->set_source_channel(m_source_channel);
     return adapter;
 }

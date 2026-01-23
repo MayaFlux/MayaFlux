@@ -7,10 +7,10 @@
 namespace MayaFlux::Buffers {
 
 /**
- * @class ContainerToBufferAdapter
+ * @class SoundStreamReader
  * @brief Adapter for bridging N-dimensional containers and AudioBuffer interface.
  *
- * ContainerToBufferAdapter enables seamless integration between N-dimensional
+ * SoundStreamReader enables seamless integration between N-dimensional
  * data containers (such as Kakshya::StreamContainer or SoundFileContainer) and the AudioBuffer
  * processing system. It extracts audio data from containers and presents it as a standard
  * AudioBuffer for use in block-based DSP, node networks, and hardware output.
@@ -29,9 +29,9 @@ namespace MayaFlux::Buffers {
  *
  * @see ContainerBuffer, StreamContainer, SoundFileContainer, ContiguousAccessProcessor
  */
-class MAYAFLUX_API ContainerToBufferAdapter : public BufferProcessor {
+class MAYAFLUX_API SoundStreamReader : public BufferProcessor {
 public:
-    explicit ContainerToBufferAdapter(std::shared_ptr<Kakshya::StreamContainer> container);
+    explicit SoundStreamReader(std::shared_ptr<Kakshya::StreamContainer> container);
 
     /**
      * @brief Extracts and processes data from the container into the target AudioBuffer.
@@ -135,13 +135,13 @@ private:
  * - Maintains a reference to the backing StreamContainer and source channel.
  * - Supports zero-copy operation when container memory layout matches buffer needs.
  * - Falls back to cached extraction when zero-copy is not possible.
- * - Integrates with ContainerToBufferAdapter for data extraction and state management.
+ * - Integrates with SoundStreamReader for data extraction and state management.
  * - Can be initialized and reconfigured at runtime for flexible routing.
  *
  * While currently focused on audio, this pattern can be extended to other data types
  * as more container reader processors are implemented.
  *
- * @see ContainerToBufferAdapter, StreamContainer, SoundFileContainer
+ * @see SoundStreamReader, StreamContainer, SoundFileContainer
  */
 class MAYAFLUX_API ContainerBuffer : public AudioBuffer {
 public:
@@ -187,7 +187,7 @@ public:
 
 protected:
     /**
-     * @brief Create the default processor (ContainerToBufferAdapter) for this buffer.
+     * @brief Create the default processor (SoundStreamReader) for this buffer.
      * @return Shared pointer to the created processor.
      */
     std::shared_ptr<BufferProcessor> create_default_processor() override;

@@ -9,9 +9,9 @@ using namespace MayaFlux::Kakshya;
 
 namespace MayaFlux::Test {
 
-class TestContainerToBufferAdapter : public ContainerToBufferAdapter {
+class TestSoundStreamReader : public SoundStreamReader {
 public:
-    using ContainerToBufferAdapter::ContainerToBufferAdapter;
+    using SoundStreamReader::SoundStreamReader;
 };
 
 class ContainerBufferTest : public ::testing::Test {
@@ -44,7 +44,7 @@ protected:
 
 TEST_F(ContainerBufferTest, AttachAndDetachDoesNotThrow)
 {
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(container);
+    auto adapter = std::make_shared<SoundStreamReader>(container);
     EXPECT_NO_THROW(adapter->on_attach(buffer));
     EXPECT_NO_THROW(adapter->on_detach(buffer));
 }
@@ -53,7 +53,7 @@ TEST_F(ContainerBufferTest, ProcessFillsBufferWithCorrectChannel)
 {
     container->set_read_position({ 0, 0 });
 
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(container);
+    auto adapter = std::make_shared<SoundStreamReader>(container);
     adapter->set_source_channel(0);
     adapter->set_auto_advance(false);
     adapter->on_attach(buffer);
@@ -72,7 +72,7 @@ TEST_F(ContainerBufferTest, ProcessFillsBufferWithOtherChannel)
 {
     container->set_read_position({ 0, 0 });
 
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(container);
+    auto adapter = std::make_shared<SoundStreamReader>(container);
     adapter->set_source_channel(1);
     adapter->set_auto_advance(false);
     adapter->on_attach(buffer);
@@ -89,7 +89,7 @@ TEST_F(ContainerBufferTest, ProcessFillsBufferWithOtherChannel)
 
 TEST_F(ContainerBufferTest, ThrowsOnInvalidChannel)
 {
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(container);
+    auto adapter = std::make_shared<SoundStreamReader>(container);
     EXPECT_THROW(adapter->set_source_channel(2), std::out_of_range);
 }
 
@@ -102,8 +102,8 @@ TEST_F(ContainerBufferTest, AutoAdvanceAdvancesReadPosition)
 {
     container->set_read_position({ 0, 0 });
 
-    auto adapter = std::dynamic_pointer_cast<ContainerToBufferAdapter>(buffer->get_default_processor());
-    ASSERT_NE(adapter, nullptr) << "Buffer should have a ContainerToBufferAdapter as default processor";
+    auto adapter = std::dynamic_pointer_cast<SoundStreamReader>(buffer->get_default_processor());
+    ASSERT_NE(adapter, nullptr) << "Buffer should have a SoundStreamReader as default processor";
 
     adapter->set_auto_advance(true);
 
@@ -134,7 +134,7 @@ TEST_F(ContainerBufferTest, MultipleSequentialProcessCallsAreConsistent)
 {
     container->set_read_position({ 0, 0 });
 
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(container);
+    auto adapter = std::make_shared<SoundStreamReader>(container);
     adapter->set_source_channel(0);
     adapter->set_auto_advance(false);
     adapter->on_attach(buffer);
@@ -162,7 +162,7 @@ TEST_F(ContainerBufferTest, BufferWrapsCorrectlyWithLooping)
     container->set_loop_region(Region(std::vector<uint64_t>({ 0, 0 }), std::vector<uint64_t>({ 3, 1 })));
     container->set_read_position({ 0, 0 });
 
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(container);
+    auto adapter = std::make_shared<SoundStreamReader>(container);
     adapter->set_source_channel(0);
     adapter->set_auto_advance(true);
     adapter->on_attach(buffer);
@@ -201,7 +201,7 @@ TEST_F(ContainerBufferTest, PartialBufferAtEndDoesNotCrash)
     container->set_read_position({ 0, 0 });
     buffer = std::make_shared<ContainerBuffer>(0, 10, container, 0);
     buffer->initialize();
-    auto adapter = std::make_shared<ContainerToBufferAdapter>(container);
+    auto adapter = std::make_shared<SoundStreamReader>(container);
     adapter->set_source_channel(0);
     adapter->set_auto_advance(false);
     adapter->on_attach(buffer);

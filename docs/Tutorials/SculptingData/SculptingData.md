@@ -795,11 +795,11 @@ Each buffer owns a **processing chain**—an ordered sequence of processors that
 
 Your buffer's default processor was:
 
-- **ContainerToBufferAdapter** - reads from the Container, fills the buffer
+- **SoundStreamReader** - reads from the Container, fills the buffer
 
 When `create_processor()` adds your FilterProcessor, the chain becomes:
 
-1. Default processor: ContainerToBufferAdapter (reads from Container)
+1. Default processor: SoundStreamReader (reads from Container)
 2. **FilterProcessor** (applies your filter) ← You just added this
 3. Other processors you might add later (e.g., Writer to send to hardware)
 
@@ -1148,7 +1148,7 @@ Internally, FileBridgeBuffer creates a processing chain:
 ```
 SoundFileContainer (source file)
     ↓
-ContainerToBufferAdapter (reads from file, advances position)
+SoundStreamReader (reads from file, advances position)
     ↓
 [Your processors here: filters, etc.]
     ↓
@@ -1177,7 +1177,7 @@ This gives you timing control. You don't play the whole file. You process exactl
 
 The architecture separates concerns:
 
-- **Reading**: Done by ContainerToBufferAdapter (reads from SoundFileContainer in controlled chunks)
+- **Reading**: Done by SoundStreamReader (reads from SoundFileContainer in controlled chunks)
 - **Processing**: Done by your custom processors
 - **Writing**: Done by SoundStreamWriter (writes results to DynamicSoundStream)
 - **Accumulation**: Done by DynamicSoundStream (holds the result)
