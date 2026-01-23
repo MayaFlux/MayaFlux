@@ -5,7 +5,7 @@
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
-#include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
+#include "MayaFlux/Buffers/Container/SoundContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Container/SoundStreamWriter.hpp"
 
 namespace MayaFlux::Buffers {

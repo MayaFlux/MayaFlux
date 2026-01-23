@@ -1,12 +1,14 @@
-#include "ContainerBuffer.hpp"
+#include "SoundContainerBuffer.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Buffers {
 
-SoundStreamReader::SoundStreamReader(std::shared_ptr<Kakshya::StreamContainer> container)
+SoundStreamReader::SoundStreamReader(const std::shared_ptr<Kakshya::StreamContainer>& container)
     : m_container(container)
 {
     if (container) {
@@ -81,7 +83,8 @@ void SoundStreamReader::processing_function(std::shared_ptr<Buffer> buffer)
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "Error in SoundStreamReader::process: " << e.what() << '\n';
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "SoundStreamReader: Error during processing: {}", e.what());
     }
 }
 
@@ -150,7 +153,9 @@ void SoundStreamReader::on_attach(std::shared_ptr<Buffer> buffer)
     m_reader_id = m_container->register_dimension_reader(m_source_channel);
 
     if (!m_container->is_ready_for_processing()) {
-        throw std::runtime_error("Container not ready for processing");
+        error<std::runtime_error>(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "SoundStreamReader: Container not ready for processing");
     }
 
     try {
@@ -164,7 +169,8 @@ void SoundStreamReader::on_attach(std::shared_ptr<Buffer> buffer)
         }
 
     } catch (const std::exception& e) {
-        std::cerr << "Error pre-filling buffer: " << e.what() << '\n';
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "SoundStreamReader: Error pre-filling buffer: {}", e.what());
     }
 }
 
@@ -179,12 +185,15 @@ void SoundStreamReader::on_detach(std::shared_ptr<Buffer> buffer)
 void SoundStreamReader::set_source_channel(uint32_t channel_index)
 {
     if (channel_index >= m_num_channels) {
-        throw std::out_of_range("Channel index exceeds container channel count");
+        error<std::out_of_range>(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "SoundStreamReader: Channel index {} exceeds container channel count {}",
+            channel_index, m_num_channels);
     }
     m_source_channel = channel_index;
 }
 
-void SoundStreamReader::set_container(std::shared_ptr<Kakshya::StreamContainer> container)
+void SoundStreamReader::set_container(const std::shared_ptr<Kakshya::StreamContainer>& container)
 {
     if (m_container) {
         m_container->unregister_state_change_callback();
@@ -204,7 +213,7 @@ void SoundStreamReader::set_container(std::shared_ptr<Kakshya::StreamContainer> 
 }
 
 void SoundStreamReader::on_container_state_change(
-    std::shared_ptr<Kakshya::SignalSourceContainer> container,
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
     Kakshya::ProcessingState state)
 {
     switch (state) {
@@ -212,7 +221,8 @@ void SoundStreamReader::on_container_state_change(
         break;
 
     case Kakshya::ProcessingState::ERROR:
-        std::cerr << "Container entered error state" << '\n';
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "SoundStreamReader: Container entered ERROR state");
         break;
 
     default:
@@ -220,15 +230,17 @@ void SoundStreamReader::on_container_state_change(
     }
 }
 
-ContainerBuffer::ContainerBuffer(uint32_t channel_id, uint32_t num_samples,
-    std::shared_ptr<Kakshya::StreamContainer> container,
+SoundContainerBuffer::SoundContainerBuffer(uint32_t channel_id, uint32_t num_samples,
+    const std::shared_ptr<Kakshya::StreamContainer>& container,
     uint32_t source_channel)
     : AudioBuffer(channel_id, num_samples)
     , m_container(container)
     , m_source_channel(source_channel)
 {
     if (!m_container) {
-        throw std::invalid_argument("ContainerBuffer: container must not be null");
+        error<std::invalid_argument>(Journal::Component::Buffers, Journal::Context::Init,
+            std::source_location::current(),
+            "SoundContainerBuffer: container must not be null");
     }
 
     m_pending_adapter = std::make_shared<SoundStreamReader>(m_container);
@@ -237,7 +249,7 @@ ContainerBuffer::ContainerBuffer(uint32_t channel_id, uint32_t num_samples,
     setup_zero_copy_if_possible();
 }
 
-void ContainerBuffer::initialize()
+void SoundContainerBuffer::initialize()
 {
     if (m_pending_adapter) {
         set_default_processor(m_pending_adapter);
@@ -246,7 +258,7 @@ void ContainerBuffer::initialize()
     }
 }
 
-void ContainerBuffer::set_container(std::shared_ptr<Kakshya::StreamContainer> container)
+void SoundContainerBuffer::set_container(const std::shared_ptr<Kakshya::StreamContainer>& container)
 {
     m_container = container;
 
@@ -257,7 +269,7 @@ void ContainerBuffer::set_container(std::shared_ptr<Kakshya::StreamContainer> co
     setup_zero_copy_if_possible();
 }
 
-void ContainerBuffer::setup_zero_copy_if_possible()
+void SoundContainerBuffer::setup_zero_copy_if_possible()
 {
     // Check if we can use zero-copy mode
     // This would be possible if:
@@ -273,13 +285,12 @@ void ContainerBuffer::setup_zero_copy_if_possible()
     auto dimensions = m_container->get_dimensions();
     auto layout = m_container->get_memory_layout();
 
-    // For now, disable zero-copy until we have direct memory access APIs
     m_zero_copy_mode = false;
 
     // TODO: Implement zero-copy when container provides direct memory access
 }
 
-std::shared_ptr<BufferProcessor> ContainerBuffer::create_default_processor()
+std::shared_ptr<BufferProcessor> SoundContainerBuffer::create_default_processor()
 {
     if (m_pending_adapter) {
         return m_pending_adapter;

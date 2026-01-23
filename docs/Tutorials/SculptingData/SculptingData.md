@@ -66,7 +66,7 @@ you can do so fluently without waiting for someone else to provide the building 
     Buffers?](#expansion-2-why-per-channel-buffers){#toc-expansion-2-why-per-channel-buffers}
   - [Expansion 3: The Buffer Manager and Buffer
     Lifecycle](#expansion-3-the-buffer-manager-and-buffer-lifecycle){#toc-expansion-3-the-buffer-manager-and-buffer-lifecycle}
-  - [Expansion 4: ContainerBuffer---The
+  - [Expansion 4: SoundContainerBuffer---The
     Bridge](#expansion-4-containerbufferthe-bridge){#toc-expansion-4-containerbufferthe-bridge}
   - [Expansion 5: Processing
     Token---AUDIO_BACKEND](#expansion-5-processing-tokenaudio_backend){#toc-expansion-5-processing-tokenaudio_backend}
@@ -494,7 +494,7 @@ auto buffer_manager = MayaFlux::get_buffer_manager();
 uint32_t num_channels = container->get_num_channels();
 
 for (uint32_t channel = 0; channel < num_channels; ++channel) {
-    auto container_buffer = buffer_manager->create_audio_buffer<ContainerBuffer>(
+    auto container_buffer = buffer_manager->create_audio_buffer<SoundContainerBuffer>(
         ProcessingToken::AUDIO_BACKEND,
         channel,
         container,
@@ -508,7 +508,7 @@ Step by step:
 1. **Get the buffer manager** - a global system that owns all buffers
 2. **Ask the Container: how many channels?** - determines the loop count
 3. **For each channel:**
-   - Create an audio buffer of type `ContainerBuffer` (a buffer that reads from a Container)
+   - Create an audio buffer of type `SoundContainerBuffer` (a buffer that reads from a Container)
    - Tag it with `AUDIO_BACKEND` (more on this in Expansion 5)
    - Tell it which channel matrix the buffer should belongs to
    - Tell it which channel in the Container to read from
@@ -534,22 +534,22 @@ Repeat forever.
 
 </details>
 
-## Expansion 4: ContainerBuffer—The Bridge
+## Expansion 4: SoundContainerBuffer—The Bridge
 
 <details>
 <summary>Click to expand: How Buffers Know Their Source</summary>
 
-You created a `ContainerBuffer`, not just a generic `Buffer`. Why the distinction?
+You created a `SoundContainerBuffer`, not just a generic `Buffer`. Why the distinction?
 
 A **Buffer** is abstract—it's a temporal accumulator. But abstract things don't know where their data comes from.
 
-A **ContainerBuffer** is specific—it's a buffer that knows:
+A **SoundContainerBuffer** is specific—it's a buffer that knows:
 
 - "My data comes from a Container"
 - "My Container has a processor that chunks data"
 - "I ask that processor for samples from a specific channel"
 
-When the callback fires, the ContainerBuffer doesn't generate samples.
+When the callback fires, the SoundContainerBuffer doesn't generate samples.
 It asks: "Container, give me the next 512 samples from your channel 0."
 
 The Container's processor (remember `ContiguousAccessProcessor` from Section 1?) handles this. It:
@@ -560,7 +560,7 @@ The Container's processor (remember `ContiguousAccessProcessor` from Section 1?)
 - Auto-advances (moves the position forward)
 - Returns the chunk
 
-The ContainerBuffer receives it. Done.
+The SoundContainerBuffer receives it. Done.
 
 This is the architecture: **Buffers don't generate or transform. They request and relay.**
 The Container's processor does the work. The buffer coordinates timing with hardware.
@@ -579,7 +579,7 @@ The buffer still doesn't transform—it still just relays. But what it relays wi
 In the buffer creation code:
 
 ```cpp
-auto container_buffer = buffer_manager->create_audio_buffer<ContainerBuffer>(
+auto container_buffer = buffer_manager->create_audio_buffer<SoundContainerBuffer>(
     ProcessingToken::AUDIO_BACKEND,
     channel,
     container,

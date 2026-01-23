@@ -3,6 +3,8 @@
 
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Buffers {
 
 void SoundStreamWriter::processing_function(std::shared_ptr<Buffer> buffer)
@@ -19,9 +21,9 @@ void SoundStreamWriter::processing_function(std::shared_ptr<Buffer> buffer)
     uint32_t channel_id = audio_buffer->get_channel_id();
 
     if (channel_id >= m_container->get_num_channels()) {
-        std::cerr << "Warning: AudioBuffer channel " << channel_id
-                  << " exceeds container channels (" << m_container->get_num_channels()
-                  << "). Skipping write." << '\n';
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "SoundStreamWriter: AudioBuffer channel {} exceeds container channels ({}). Skipping write.",
+            channel_id, m_container->get_num_channels());
         return;
     }
 

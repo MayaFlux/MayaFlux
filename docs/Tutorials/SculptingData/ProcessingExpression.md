@@ -544,7 +544,7 @@ Digital doesn't care what the input "means"—just whether it passes the test.
 `Logic` nodes need an input signal to evaluate.
 This is also true for other nodes like `Polynomial`.
 So far, you did not have to manually set inputs because you used
-`ContainerBuffer` which automatically feeds audio into processors.
+`SoundContainerBuffer` which automatically feeds audio into processors.
 
 So, instead of creating an `AudioBuffer`, you can load a file:
 
@@ -939,7 +939,7 @@ Every buffer has two processing stages:
 - Defined by buffer type
 - Handles data **acquisition** or **generation**
 - Examples:
-  - `ContainerBuffer`: reads from file/stream
+  - `SoundContainerBuffer`: reads from file/stream
   - `NodeBuffer`: evaluates a node
   - `FeedbackBuffer`: mixes current + previous buffer
   - `AudioBuffer`: none (generic accumulator)
@@ -1310,9 +1310,9 @@ After playback, `capture_stream` contains a copy of the entire file (processed t
 <details>
 <summary>Click to expand: Buffers → Containers Bridge</summary>
 
-`SoundStreamWriter` is the **inverse** of `ContainerBuffer`:
+`SoundStreamWriter` is the **inverse** of `SoundContainerBuffer`:
 
-- **ContainerBuffer**: reads from container → fills buffer (source)
+- **SoundContainerBuffer**: reads from container → fills buffer (source)
 - **SoundStreamWriter**: reads from buffer → writes to container (sink)
 
 **Each cycle:**
@@ -1451,7 +1451,7 @@ You now understand:
 **Buffer Types:**
 
 - `AudioBuffer`: Generic accumulator
-- `ContainerBuffer`: Reads from files/streams (default: `SoundStreamReader`)
+- `SoundContainerBuffer`: Reads from files/streams (default: `SoundStreamReader`)
 - `NodeBuffer`: Generates from nodes (default: `NodeSourceProcessor`)
 - `FeedbackBuffer`: Recursive delay (default: `FeedbackProcessor`)
 

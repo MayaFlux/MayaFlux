@@ -46,7 +46,7 @@
 
 #include "Buffers/BufferManager.hpp"
 #include "Buffers/BufferProcessingChain.hpp"
-#include "Buffers/Container/ContainerBuffer.hpp"
+#include "Buffers/Container/SoundContainerBuffer.hpp"
 #include "Buffers/Container/SoundStreamWriter.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Network/NetworkGeometryBuffer.hpp"

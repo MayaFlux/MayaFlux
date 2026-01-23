@@ -21,7 +21,7 @@ namespace Kakshya {
 }
 
 namespace Buffers {
-    class ContainerBuffer;
+    class SoundContainerBuffer;
     class TextureBuffer;
 }
 
@@ -40,14 +40,14 @@ MAYAFLUX_API std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_f
 /**
  * @brief Connects a SoundFileContainer to the buffer system for immediate playback
  * @param container SoundFileContainer to connect to buffers
- * @return Vector of shared pointers to created ContainerBuffer instances
+ * @return Vector of shared pointers to created SoundContainerBuffer instances
  *
  * Establishes connection between loaded audio container and engine's buffer system,
  * enabling immediate audio playback through the standard processing pipeline.
- * Creates ContainerBuffer instances for each channel and connects to AUDIO_BACKEND token.
+ * Creates SoundContainerBuffer instances for each channel and connects to AUDIO_BACKEND token.
  * Multiple containers can be connected simultaneously for layered playback.
  */
-MAYAFLUX_API std::vector<std::shared_ptr<Buffers::ContainerBuffer>> hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer>& container);
+MAYAFLUX_API std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer>& container);
 
 /**
  * @brief creates a new container of the specified type

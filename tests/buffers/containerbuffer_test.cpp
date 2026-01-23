@@ -1,6 +1,6 @@
 #include "../test_config.h"
 
-#include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
+#include "MayaFlux/Buffers/Container/SoundContainerBuffer.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
@@ -14,10 +14,10 @@ public:
     using SoundStreamReader::SoundStreamReader;
 };
 
-class ContainerBufferTest : public ::testing::Test {
+class SoundContainerBufferTest : public ::testing::Test {
 protected:
     std::shared_ptr<SoundFileContainer> container;
-    std::shared_ptr<ContainerBuffer> buffer;
+    std::shared_ptr<SoundContainerBuffer> buffer;
 
     void SetUp() override
     {
@@ -37,19 +37,19 @@ protected:
         container->set_read_position({ 0, 0 });
         processor->set_output_size(shape);
 
-        buffer = std::make_shared<ContainerBuffer>(0, 4, container, 0);
+        buffer = std::make_shared<SoundContainerBuffer>(0, 4, container, 0);
         buffer->initialize();
     }
 };
 
-TEST_F(ContainerBufferTest, AttachAndDetachDoesNotThrow)
+TEST_F(SoundContainerBufferTest, AttachAndDetachDoesNotThrow)
 {
     auto adapter = std::make_shared<SoundStreamReader>(container);
     EXPECT_NO_THROW(adapter->on_attach(buffer));
     EXPECT_NO_THROW(adapter->on_detach(buffer));
 }
 
-TEST_F(ContainerBufferTest, ProcessFillsBufferWithCorrectChannel)
+TEST_F(SoundContainerBufferTest, ProcessFillsBufferWithCorrectChannel)
 {
     container->set_read_position({ 0, 0 });
 
@@ -68,7 +68,7 @@ TEST_F(ContainerBufferTest, ProcessFillsBufferWithCorrectChannel)
     EXPECT_DOUBLE_EQ(data[3], 0.7);
 }
 
-TEST_F(ContainerBufferTest, ProcessFillsBufferWithOtherChannel)
+TEST_F(SoundContainerBufferTest, ProcessFillsBufferWithOtherChannel)
 {
     container->set_read_position({ 0, 0 });
 
@@ -87,18 +87,18 @@ TEST_F(ContainerBufferTest, ProcessFillsBufferWithOtherChannel)
     EXPECT_DOUBLE_EQ(data[3], 0.8);
 }
 
-TEST_F(ContainerBufferTest, ThrowsOnInvalidChannel)
+TEST_F(SoundContainerBufferTest, ThrowsOnInvalidChannel)
 {
     auto adapter = std::make_shared<SoundStreamReader>(container);
     EXPECT_THROW(adapter->set_source_channel(2), std::out_of_range);
 }
 
-TEST_F(ContainerBufferTest, ZeroCopyModeIsFalseByDefault)
+TEST_F(SoundContainerBufferTest, ZeroCopyModeIsFalseByDefault)
 {
     EXPECT_FALSE(buffer->is_zero_copy());
 }
 
-TEST_F(ContainerBufferTest, AutoAdvanceAdvancesReadPosition)
+TEST_F(SoundContainerBufferTest, AutoAdvanceAdvancesReadPosition)
 {
     container->set_read_position({ 0, 0 });
 
@@ -130,7 +130,7 @@ TEST_F(ContainerBufferTest, AutoAdvanceAdvancesReadPosition)
     EXPECT_GT(pos_after[0], pos_before[0]) << "Position should advance from " << pos_before[0] << " to " << pos_after[0];
 }
 
-TEST_F(ContainerBufferTest, MultipleSequentialProcessCallsAreConsistent)
+TEST_F(SoundContainerBufferTest, MultipleSequentialProcessCallsAreConsistent)
 {
     container->set_read_position({ 0, 0 });
 
@@ -156,7 +156,7 @@ TEST_F(ContainerBufferTest, MultipleSequentialProcessCallsAreConsistent)
     EXPECT_DOUBLE_EQ(results[1][3], 0.7);
 }
 
-TEST_F(ContainerBufferTest, BufferWrapsCorrectlyWithLooping)
+TEST_F(SoundContainerBufferTest, BufferWrapsCorrectlyWithLooping)
 {
     container->set_looping(true);
     container->set_loop_region(Region(std::vector<uint64_t>({ 0, 0 }), std::vector<uint64_t>({ 3, 1 })));
@@ -196,10 +196,10 @@ TEST_F(ContainerBufferTest, BufferWrapsCorrectlyWithLooping)
     }
 }
 
-TEST_F(ContainerBufferTest, PartialBufferAtEndDoesNotCrash)
+TEST_F(SoundContainerBufferTest, PartialBufferAtEndDoesNotCrash)
 {
     container->set_read_position({ 0, 0 });
-    buffer = std::make_shared<ContainerBuffer>(0, 10, container, 0);
+    buffer = std::make_shared<SoundContainerBuffer>(0, 10, container, 0);
     buffer->initialize();
     auto adapter = std::make_shared<SoundStreamReader>(container);
     adapter->set_source_channel(0);
