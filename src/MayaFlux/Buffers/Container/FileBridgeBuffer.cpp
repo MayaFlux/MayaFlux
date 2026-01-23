@@ -6,7 +6,7 @@
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
 #include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
-#include "MayaFlux/Buffers/Container/StreamWriteProcessor.hpp"
+#include "MayaFlux/Buffers/Container/SoundStreamWriter.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -24,7 +24,7 @@ void FileToStreamChain::setup_processors()
 {
     m_container_adapter = std::make_shared<ContainerToBufferAdapter>(
         std::dynamic_pointer_cast<Kakshya::StreamContainer>(m_file_container));
-    m_stream_writer = std::make_shared<StreamWriteProcessor>(m_capture_stream);
+    m_stream_writer = std::make_shared<SoundStreamWriter>(m_capture_stream);
 }
 
 void FileToStreamChain::attach_to_buffer(std::shared_ptr<Buffer> buffer)

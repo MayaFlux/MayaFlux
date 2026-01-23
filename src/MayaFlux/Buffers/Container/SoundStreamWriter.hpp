@@ -9,10 +9,10 @@ class DynamicSoundStream;
 namespace MayaFlux::Buffers {
 
 /**
- * @class StreamWriteProcessor
+ * @class SoundStreamWriter
  * @brief Channel-aware processor that writes AudioBuffer data to DynamicSoundStream containers.
  *
- * StreamWriteProcessor provides a bridge between the AudioBuffer processing system
+ * SoundStreamWriter provides a bridge between the AudioBuffer processing system
  * and DynamicSoundStream containers for real-time recording and data capture scenarios.
  * It extracts audio data from buffers and streams it directly to the appropriate channel
  * in the container with automatic capacity management and channel mapping.
@@ -40,14 +40,14 @@ namespace MayaFlux::Buffers {
  * @note For real-time use cases, consider pre-allocating container capacity or
  *       enabling circular mode to avoid dynamic allocations during processing.
  */
-class MAYAFLUX_API StreamWriteProcessor : public BufferProcessor {
+class MAYAFLUX_API SoundStreamWriter : public BufferProcessor {
 public:
     /**
      * @brief Construct processor with target DynamicSoundStream container.
      * @param container Target container for writing audio data
      * @param start_position Initial write position in frames (default: 0)
      */
-    explicit StreamWriteProcessor(std::shared_ptr<Kakshya::DynamicSoundStream> container,
+    explicit SoundStreamWriter(std::shared_ptr<Kakshya::DynamicSoundStream> container,
         uint64_t start_position = 0)
         : m_container(container)
         , m_write_position(start_position)

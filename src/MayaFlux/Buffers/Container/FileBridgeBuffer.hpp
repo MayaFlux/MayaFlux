@@ -10,7 +10,7 @@ class DynamicSoundStream;
 
 namespace MayaFlux::Buffers {
 
-class StreamWriteProcessor;
+class SoundStreamWriter;
 class ContainerToBufferAdapter;
 
 /**
@@ -38,7 +38,7 @@ private:
     std::shared_ptr<Kakshya::SoundFileContainer> m_file_container;
     std::shared_ptr<Kakshya::DynamicSoundStream> m_capture_stream;
     std::shared_ptr<ContainerToBufferAdapter> m_container_adapter;
-    std::shared_ptr<StreamWriteProcessor> m_stream_writer;
+    std::shared_ptr<SoundStreamWriter> m_stream_writer;
     uint32_t m_source_channel;
 };
 

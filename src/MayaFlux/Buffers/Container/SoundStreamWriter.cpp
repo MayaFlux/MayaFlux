@@ -1,11 +1,11 @@
-#include "StreamWriteProcessor.hpp"
+#include "SoundStreamWriter.hpp"
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
 namespace MayaFlux::Buffers {
 
-void StreamWriteProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void SoundStreamWriter::processing_function(std::shared_ptr<Buffer> buffer)
 {
     auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio_buffer || !m_container)
@@ -36,14 +36,14 @@ void StreamWriteProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void StreamWriteProcessor::set_write_position_time(double time_seconds)
+void SoundStreamWriter::set_write_position_time(double time_seconds)
 {
     if (m_container) {
         m_write_position = m_container->time_to_position(time_seconds);
     }
 }
 
-double StreamWriteProcessor::get_write_position_time() const
+double SoundStreamWriter::get_write_position_time() const
 {
     if (m_container) {
         return m_container->position_to_time(m_write_position);

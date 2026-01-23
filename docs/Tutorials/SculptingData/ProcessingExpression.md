@@ -93,10 +93,10 @@ This tutorial shows you how mathematical expressions become sonic transformation
     - [Expansion 3: When to Use
       FeedbackBuffer](#expansion-3-when-to-use-feedbackbuffer){#toc-expansion-3-when-to-use-feedbackbuffer}
     - [Try It](#try-it-6){#toc-try-it-6}
-  - [StreamWriteProcessor (Capturing
+  - [SoundStreamWriter (Capturing
     Audio)](#streamwriteprocessor-capturing-audio){#toc-streamwriteprocessor-capturing-audio}
     - [The Pattern](#the-pattern-2){#toc-the-pattern-2}
-    - [Expansion 1: What StreamWriteProcessor
+    - [Expansion 1: What SoundStreamWriter
       Does](#expansion-1-what-streamwriteprocessor-does){#toc-expansion-1-what-streamwriteprocessor-does}
     - [Expansion 2: Channel-Aware
       Writing](#expansion-2-channel-aware-writing){#toc-expansion-2-channel-aware-writing}
@@ -1276,7 +1276,7 @@ vega.NodeBuffer(0, 512, input, false)[1] | Audio;
 
 ---
 
-## StreamWriteProcessor (Capturing Audio)
+## SoundStreamWriter (Capturing Audio)
 
 ### The Pattern
 
@@ -1291,7 +1291,7 @@ void compose() {
     auto capture_stream = std::make_shared<DynamicSoundStream>(48000, 2);
 
     // Create a processor that writes buffer data to the stream
-    auto writer = std::make_shared<StreamWriteProcessor>(capture_stream);
+    auto writer = std::make_shared<SoundStreamWriter>(capture_stream);
 
     // Add to buffer's processing chain
     auto chain = buffer->get_processing_chain();
@@ -1305,15 +1305,15 @@ Run this. The file plays **and** is written to `capture_stream` every cycle.
 
 After playback, `capture_stream` contains a copy of the entire file (processed through any other processors in the chain before the writer).
 
-### Expansion 1: What StreamWriteProcessor Does
+### Expansion 1: What SoundStreamWriter Does
 
 <details>
 <summary>Click to expand: Buffers → Containers Bridge</summary>
 
-`StreamWriteProcessor` is the **inverse** of `ContainerBuffer`:
+`SoundStreamWriter` is the **inverse** of `ContainerBuffer`:
 
 - **ContainerBuffer**: reads from container → fills buffer (source)
-- **StreamWriteProcessor**: reads from buffer → writes to container (sink)
+- **SoundStreamWriter**: reads from buffer → writes to container (sink)
 
 **Each cycle:**
 
@@ -1337,7 +1337,7 @@ The stream grows dynamically as data arrives. No pre-allocation needed (though y
 <details>
 <summary>Click to expand: Multi-Channel Capture</summary>
 
-`StreamWriteProcessor` respects buffer channel IDs:
+`SoundStreamWriter` respects buffer channel IDs:
 
 ```cpp
 auto left_buffer = buffers[0];   // channel 0
@@ -1345,8 +1345,8 @@ auto right_buffer = buffers[1];  // channel 1
 
 auto stream = std::make_shared<DynamicSoundStream>(48000, 2);  // stereo
 
-auto writer_L = std::make_shared<StreamWriteProcessor>(stream);
-auto writer_R = std::make_shared<StreamWriteProcessor>(stream);
+auto writer_L = std::make_shared<SoundStreamWriter>(stream);
+auto writer_R = std::make_shared<SoundStreamWriter>(stream);
 
 // Add to respective buffers
 left_buffer->get_processing_chain()->add_processor(writer_L);
@@ -1364,7 +1364,7 @@ Result: Stereo file captured to stereo stream—channels preserved.
 <details>
 <summary>Click to expand: Write Position Control</summary>
 
-`StreamWriteProcessor` tracks where it's writing:
+`SoundStreamWriter` tracks where it's writing:
 
 ```cpp
 writer->set_write_position(0);        // Write from start
@@ -1399,7 +1399,7 @@ Default behavior: append at end. Position auto-increments.
 auto stream = std::make_shared<DynamicSoundStream>(48000, 2);
 stream->enable_circular_buffer(48000);  // 1 second capacity
 
-auto writer = std::make_shared<StreamWriteProcessor>(stream);
+auto writer = std::make_shared<SoundStreamWriter>(stream);
 ```
 
 **Behavior:**
@@ -1428,7 +1428,7 @@ auto buffer = MayaFlux::get_last_created_container_buffers()[0];
 auto stream = std::make_shared<DynamicSoundStream>(48000, 1);
 stream->ensure_capacity(48000 * 5);  // Pre-allocate 5 seconds
 
-auto writer = std::make_shared<StreamWriteProcessor>(stream);
+auto writer = std::make_shared<SoundStreamWriter>(stream);
 buffer->get_processing_chain()->add_processor(writer, buffer);
 
 // After playback, stream contains the audio
@@ -1438,7 +1438,7 @@ buffer->get_processing_chain()->add_processor(writer, buffer);
 auto stream2 = std::make_shared<DynamicSoundStream>(48000, 1);
 stream2->enable_circular_buffer(48000);  // Loop after 1 second
 
-auto writer2 = std::make_shared<StreamWriteProcessor>(stream);
+auto writer2 = std::make_shared<SoundStreamWriter>(stream);
 buffer->get_processing_chain()->add_processor(writer, buffer);
 
 // Stream now acts as a 1-second tape loop
@@ -1459,7 +1459,7 @@ You now understand:
 
 - `PolynomialProcessor`: Waveshaping, filters, recursive math
 - `LogicProcessor`: Decisions, gates, triggers
-- `StreamWriteProcessor`: Capture to containers
+- `SoundStreamWriter`: Capture to containers
 
 **Processing Flow:**
 
@@ -1595,7 +1595,7 @@ auto mic_capture = MayaFlux::create_input_listener_buffer(0, false);  // false =
 
 // Capture to a stream for analysis
 auto stream = std::make_shared<DynamicSoundStream>(48000, 1);
-auto writer = std::make_shared<StreamWriteProcessor>(stream);
+auto writer = std::make_shared<SoundStreamWriter>(stream);
 mic_capture->get_processing_chain()->add_processor(writer);
 ```
 
@@ -1627,7 +1627,7 @@ MayaFlux::create_processor<LogicProcessor>(mic, gate);
 
 // Record to disk simultaneously
 auto stream = std::make_shared<DynamicSoundStream>(48000, 1);
-auto writer = std::make_shared<StreamWriteProcessor>(stream);
+auto writer = std::make_shared<SoundStreamWriter>(stream);
 mic->get_processing_chain()->add_processor(writer, mic);
 // After session: save 'stream' to file
 

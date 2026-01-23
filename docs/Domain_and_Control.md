@@ -265,7 +265,7 @@ auto feedback_buffer = vega.FeedbackBuffer(0.7f).domain(Audio).channel(0);   // 
 
 auto wave = vega.Sine();
 auto Node_buffer = MayaFlux::create_buffer<Buffers::NodeBuffer>(0, 512, wave); // Implicitly added to engine audio domain
-auto proc = MayaFlux::create_processor<Buffers::StreamWriteProcessor>(temporal_buffer); // Automatic process registration
+auto proc = MayaFlux::create_processor<Buffers::SoundStreamWriter>(temporal_buffer); // Automatic process registration
 get_buffer_manger()->supply_buffer_to(temporal_buffer, 1); // Automatically send buffer output to channel 1 of audio domain
 
 ```

@@ -105,7 +105,7 @@ you can do so fluently without waiting for someone else to provide the building 
   - [Expansion 2: Enter
     DynamicSoundStream](#expansion-2-enter-dynamicsoundstream){#toc-expansion-2-enter-dynamicsoundstream}
   - [Expansion 3:
-    StreamWriteProcessor](#expansion-3-streamwriteprocessor){#toc-expansion-3-streamwriteprocessor}
+    SoundStreamWriter](#expansion-3-streamwriteprocessor){#toc-expansion-3-streamwriteprocessor}
   - [Expansion 4: FileBridgeBuffer---Controlled
     Flow](#expansion-4-filebridgebuffercontrolled-flow){#toc-expansion-4-filebridgebuffercontrolled-flow}
   - [Expansion 5: Why This
@@ -1103,21 +1103,21 @@ But understanding what it is explains everything that follows.
 
 </details>
 
-## Expansion 3: StreamWriteProcessor
+## Expansion 3: SoundStreamWriter
 
 <details>
 <summary>Click to expand: Writing Buffer Data to Streams</summary>
 
 You've seen `BufferProcessors` like `FilterProcessor` that transform data in place.
 
-But `StreamWriteProcessor` is more general. It can write buffer data to **any** `DynamicSoundStream`,
+But `SoundStreamWriter` is more general. It can write buffer data to **any** `DynamicSoundStream`,
 not just locally to attached buffers (or from hardware: hitherto unexplored `InputListenerProcessor`).
 
 When a processor runs each buffer cycle:
 
 1. Buffer gets filled with 512 samples (from Container or elsewhere)
 2. Processors run (your `FilterProcessor`, for example)
-3. `StreamWriteProcessor` writes the (now-processed) samples to a `DynamicSoundStream`
+3. `SoundStreamWriter` writes the (now-processed) samples to a `DynamicSoundStream`
 
 The `DynamicSoundStream` accumulates these writes:
 
@@ -1131,7 +1131,7 @@ After N cycles, the `DynamicSoundStream` contains N × 512 samples of processed 
 This is how you capture buffer data. Not by sampling the buffer once,
 by continuously writing it to a stream through a processor.
 
-`StreamWriteProcessor` is the bridge between buffers (which live in real-time) and streams (which accumulate).
+`SoundStreamWriter` is the bridge between buffers (which live in real-time) and streams (which accumulate).
 
 </details>
 
@@ -1152,7 +1152,7 @@ ContainerToBufferAdapter (reads from file, advances position)
     ↓
 [Your processors here: filters, etc.]
     ↓
-StreamWriteProcessor (writes to internal DynamicSoundStream)
+SoundStreamWriter (writes to internal DynamicSoundStream)
     ↓
 DynamicSoundStream (accumulates output)
 ```
@@ -1179,7 +1179,7 @@ The architecture separates concerns:
 
 - **Reading**: Done by ContainerToBufferAdapter (reads from SoundFileContainer in controlled chunks)
 - **Processing**: Done by your custom processors
-- **Writing**: Done by StreamWriteProcessor (writes results to DynamicSoundStream)
+- **Writing**: Done by SoundStreamWriter (writes results to DynamicSoundStream)
 - **Accumulation**: Done by DynamicSoundStream (holds the result)
 
 Each layer is independent:
@@ -1232,7 +1232,7 @@ At this point, understand:
 
 1. **DynamicSoundStream**: A container that grows dynamically, can operate in circular mode, designed to accumulate data from processors
 
-2. **StreamWriteProcessor**: The processor that writes buffer data sequentially to a DynamicSoundStream
+2. **SoundStreamWriter**: The processor that writes buffer data sequentially to a DynamicSoundStream
 
 3. **FileBridgeBuffer**: A buffer that creates a chain (reader → your processors → writer), and lets you control how many buffer cycles run
 
@@ -1246,7 +1246,7 @@ It is also a hint at the fact that modal output is not the only use case for May
 
 - FileBridgeBuffer is too low-level—you'd create it manually, call setup_chain_and_processor(), manage cycles yourself
 - DynamicSoundStream is too generic—without a driver, you'd just accumulate data with no purpose
-- StreamWriteProcessor is just a piece—alone, it doesn't tell you how many cycles to run
+- SoundStreamWriter is just a piece—alone, it doesn't tell you how many cycles to run
 
 The **next tutorial introduces BufferOperation**, which wraps these concepts into high-level, composable patterns:
 
@@ -1262,7 +1262,7 @@ For now: **internalize the architecture. The next section shows how to use it.**
 ## What You Should Internalize
 
 - Containers hold data (SoundFileContainer holds files; DynamicSoundStream holds growing data)
-- Processors transform data (your FilterProcessor, StreamWriteProcessor, etc.)
+- Processors transform data (your FilterProcessor, SoundStreamWriter, etc.)
 - Buffers orchestrate cycles (read N cycles, run processors, write results)
 - Streams accumulate (DynamicSoundStream holds results after cycles complete)
 - Timing is expressed in cycles (deterministic, aligned with buffer boundaries, decoupled from real-time)
@@ -1342,7 +1342,7 @@ pipeline
 
 The `>>` operator chains operations. The pipeline executes them in order, handling all the machinery (cycles, buffer management, timing) invisibly.
 
-This is why you've been learning the foundation first: **pipelines are just syntactic sugar over FileBridgeBuffer, DynamicSoundStream, StreamWriteProcessor, and buffer cycles.**
+This is why you've been learning the foundation first: **pipelines are just syntactic sugar over FileBridgeBuffer, DynamicSoundStream, SoundStreamWriter, and buffer cycles.**
 
 Understanding the previous sections makes this section obvious. You're not learning new concepts—you're composing concepts you already understand.
 
