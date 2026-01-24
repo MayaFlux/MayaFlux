@@ -46,7 +46,7 @@ public:
      *
      * Processors are appended to the end of the container's processing sequence by default.
      */
-    void add_processor(std::shared_ptr<DataProcessor> processor, std::shared_ptr<SignalSourceContainer> container, const std::string& tag = "");
+    void add_processor(const std::shared_ptr<DataProcessor>& processor, const std::shared_ptr<SignalSourceContainer>& container, const std::string& tag = "");
 
     /**
      * @brief Adds a processor at a specific position in the chain.
@@ -56,8 +56,8 @@ public:
      *
      * Enables precise control over processing order for advanced workflows.
      */
-    void add_processor_at(std::shared_ptr<DataProcessor> processor,
-        std::shared_ptr<SignalSourceContainer> container,
+    void add_processor_at(const std::shared_ptr<DataProcessor>& processor,
+        const std::shared_ptr<SignalSourceContainer>& container,
         size_t position);
 
     /**
@@ -67,7 +67,7 @@ public:
      *
      * Supports dynamic reconfiguration and resource management.
      */
-    void remove_processor(std::shared_ptr<DataProcessor> processor, std::shared_ptr<SignalSourceContainer> container);
+    void remove_processor(const std::shared_ptr<DataProcessor>& processor, const std::shared_ptr<SignalSourceContainer>& container);
 
     /**
      * @brief Processes a container with all its associated processors, in sequence.
@@ -76,7 +76,7 @@ public:
      * Applies each processor in the container's chain, enabling multi-stage transformation,
      * analysis, or feature extraction.
      */
-    void process(std::shared_ptr<SignalSourceContainer> container);
+    void process(const std::shared_ptr<SignalSourceContainer>& container);
 
     /**
      * @brief Processes a container with processors of a specific type.
@@ -87,7 +87,7 @@ public:
      * data transformations or analysis paths.
      */
     template <typename ProcessorType>
-    inline void process_typed(std::shared_ptr<SignalSourceContainer> container)
+    inline void process_typed(const std::shared_ptr<SignalSourceContainer>& container)
     {
         auto it = m_container_processors.find(container);
         if (it != m_container_processors.end()) {
@@ -107,8 +107,8 @@ public:
      * Enables dynamic, runtime filtering of processors based on arbitrary criteria,
      * such as processor state, metadata, or external conditions.
      */
-    void process_filtered(std::shared_ptr<SignalSourceContainer> container,
-        std::function<bool(std::shared_ptr<DataProcessor>)> filter);
+    void process_filtered(const std::shared_ptr<SignalSourceContainer>& container,
+        const std::function<bool(const std::shared_ptr<DataProcessor>&)>& filter);
 
     /**
      * @brief Processes a container with processors that have a specific tag.
@@ -118,7 +118,7 @@ public:
      * Allows for logical grouping and selective application of processors, supporting
      * scenarios like feature extraction, effect routing, or conditional processing.
      */
-    void process_tagged(std::shared_ptr<SignalSourceContainer> container, const std::string& tag);
+    void process_tagged(const std::shared_ptr<SignalSourceContainer>& container, const std::string& tag);
 
 private:
     /**
