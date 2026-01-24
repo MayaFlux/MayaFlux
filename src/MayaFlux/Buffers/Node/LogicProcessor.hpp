@@ -120,7 +120,7 @@ public:
      * The Logic node handles all temporal state, callbacks, and logic computation.
      * The processor only manages iteration and modulation application.
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when the processor is attached to a buffer

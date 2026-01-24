@@ -90,7 +90,7 @@ public:
         m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
     }
 
-    void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
+    void processing_function(const std::shared_ptr<Buffers::Buffer>&) override { }
 
     bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
     {
@@ -112,7 +112,7 @@ TEST_F(BufferManagerTest, CloneBufferForChannels)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
+        void processing_function(const std::shared_ptr<Buffers::Buffer>&) override { }
 
         bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
@@ -320,7 +320,7 @@ TEST_F(BufferManagerTest, ProcessorManagement)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             called_flag = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -378,7 +378,7 @@ TEST_F(BufferManagerTest, TokenChannelProcessors)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             called_flag = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -430,7 +430,7 @@ TEST_F(BufferManagerTest, TokenGlobalProcessors)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             called_flag = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);

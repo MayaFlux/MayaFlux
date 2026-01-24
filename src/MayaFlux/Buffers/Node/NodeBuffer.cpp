@@ -27,7 +27,7 @@ void NodeSourceProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
     }
 }
 
-void NodeSourceProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void NodeSourceProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (!m_node) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing, "NodeSourceProcessor has null node. Skipping processing.");

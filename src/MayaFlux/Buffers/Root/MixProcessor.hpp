@@ -69,7 +69,7 @@ public:
     bool register_source(std::shared_ptr<AudioBuffer> source, double mix_level = 1.0, bool once = false);
 
     /** @brief the mechanism to mix output from one buffer to another channel */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Removes a source buffer from the mix

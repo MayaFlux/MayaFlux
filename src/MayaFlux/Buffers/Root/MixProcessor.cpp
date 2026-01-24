@@ -50,7 +50,7 @@ bool MixProcessor::register_source(std::shared_ptr<AudioBuffer> source, double m
     return true;
 }
 
-void MixProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void MixProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_sources.empty()) {
         return;

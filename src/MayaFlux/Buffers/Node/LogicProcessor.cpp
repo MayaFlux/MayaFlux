@@ -167,7 +167,7 @@ bool LogicProcessor::apply(const std::shared_ptr<Buffer>& buffer, ModulationFunc
     return true;
 }
 
-void LogicProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void LogicProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (!m_logic || !buffer) {
         return;

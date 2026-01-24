@@ -63,7 +63,7 @@ void TextureProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
     m_texture_buffer.reset();
 }
 
-void TextureProcessor::processing_function(std::shared_ptr<Buffer> /*buffer*/)
+void TextureProcessor::processing_function(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (!m_texture_buffer) {
         return;

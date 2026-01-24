@@ -85,7 +85,7 @@ NodeTextureProcessor::get_binding(const std::string& name) const
     return std::nullopt;
 }
 
-void NodeTextureProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void NodeTextureProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_bindings.empty()) {
         return;

@@ -107,7 +107,7 @@ TEST_F(AudioBufferTest, CloneTo)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
+        void processing_function(const std::shared_ptr<Buffers::Buffer>&) override { }
 
         bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
@@ -148,7 +148,7 @@ TEST_F(AudioBufferTest, ProcessorManagement)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             process_called = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -221,7 +221,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             called_flag = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -249,7 +249,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             called_flag = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -319,7 +319,7 @@ TEST_F(AudioBufferTest, TokenCompatibility)
             m_processing_token = token;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer>) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>&) override
         {
             // Test processing implementation
         }

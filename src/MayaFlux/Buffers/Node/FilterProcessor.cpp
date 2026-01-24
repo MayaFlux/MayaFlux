@@ -26,7 +26,7 @@ void FilterProcessor::process_single_sample(double& sample)
     Nodes::try_reset_processed_state(m_filter);
 }
 
-void FilterProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void FilterProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (!m_filter || !buffer)
         return;

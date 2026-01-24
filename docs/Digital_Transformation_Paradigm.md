@@ -330,7 +330,7 @@ to create your own processors.
 class my_processor : public BufferProcessor {
 public:
     // Processing function is what gets evaluated each buffer cycle
-    void processing_function(std::shared_ptr<Buffer> buffer) override
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override
     {
         auto& data = buffer->get_data();
         // do something here to data;

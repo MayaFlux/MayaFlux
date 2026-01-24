@@ -107,7 +107,7 @@ GeometryBindingsProcessor::get_binding(const std::string& name) const
     return std::nullopt;
 }
 
-void GeometryBindingsProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void GeometryBindingsProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_bindings.empty()) {
         return;

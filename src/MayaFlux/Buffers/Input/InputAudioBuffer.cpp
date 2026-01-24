@@ -54,7 +54,7 @@ void InputAudioBuffer::clear_listeners()
     }
 }
 
-void InputAccessProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void InputAccessProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto input_buffer = std::dynamic_pointer_cast<InputAudioBuffer>(buffer);
     if (!input_buffer)

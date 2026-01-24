@@ -97,7 +97,7 @@ public:
      *
      * Derived classes must override this method to provide specific processing behavior.
      */
-    virtual void processing_function(std::shared_ptr<Buffer> buffer) = 0;
+    virtual void processing_function(const std::shared_ptr<Buffer>& buffer) = 0;
 
     /**
      * @brief Called when this processor is attached to a buffer

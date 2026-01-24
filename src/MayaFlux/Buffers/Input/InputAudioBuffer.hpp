@@ -79,7 +79,7 @@ public:
      * @brief Main processing function - dispatches data to listeners
      * @param buffer Input buffer to process
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer

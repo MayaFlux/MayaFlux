@@ -248,7 +248,7 @@ public:
      * 3. Runs each buffer's processing chain
      * 4. Handles synchronization and error cases
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer
@@ -356,7 +356,7 @@ public:
      * This is the core rendering coordination point - all child buffers
      * have been processed by the time this executes.
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer

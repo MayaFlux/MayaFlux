@@ -13,7 +13,7 @@ public:
     {
     }
 
-    void processing_function(std::shared_ptr<Buffer> buffer) override
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override
     {
         if constexpr (std::is_same_v<FuncType, AudioProcessingFunction>) {
             if (auto audio_buf = std::dynamic_pointer_cast<AudioBuffer>(buffer)) {

@@ -22,7 +22,7 @@ SoundStreamReader::SoundStreamReader(const std::shared_ptr<Kakshya::StreamContai
     }
 }
 
-void SoundStreamReader::processing_function(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (!m_container || !buffer) {
         return;

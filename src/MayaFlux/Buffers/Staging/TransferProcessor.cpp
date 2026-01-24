@@ -160,7 +160,7 @@ void TransferProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
     }
 }
 
-void TransferProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void TransferProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_direction == TransferDirection::AUDIO_TO_GPU) {
         process_audio_to_gpu(buffer);

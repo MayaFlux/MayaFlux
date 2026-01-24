@@ -18,7 +18,7 @@ GraphicsBatchProcessor::GraphicsBatchProcessor(std::shared_ptr<Buffer> root_buff
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
-void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void GraphicsBatchProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_buf = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_buf || root_buf != m_root_buffer) {
@@ -115,7 +115,7 @@ PresentProcessor::PresentProcessor()
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
-void PresentProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void PresentProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_graphics_buffer) {

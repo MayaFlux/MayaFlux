@@ -35,7 +35,7 @@ FeedbackProcessor::FeedbackProcessor(float feedback, uint32_t feed_samples)
 {
 }
 
-void FeedbackProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void FeedbackProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio_buffer)

@@ -123,7 +123,7 @@ public:
     // BufferProcessor Interface
     //==========================================================================
 
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 

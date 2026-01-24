@@ -97,7 +97,7 @@ NetworkGeometryProcessor::get_binding(const std::string& name) const
     return std::nullopt;
 }
 
-void NetworkGeometryProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_bindings.empty()) {
         return;

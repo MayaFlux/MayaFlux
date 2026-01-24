@@ -60,7 +60,7 @@ public:
      * corresponding to the AudioBuffer's channel ID.
      * @param buffer AudioBuffer containing data to write
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Get the target DynamicSoundStream container.

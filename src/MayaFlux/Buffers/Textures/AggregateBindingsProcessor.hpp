@@ -109,7 +109,7 @@ public:
      * @brief BufferProcessor interface - uploads all aggregates
      * @param buffer The buffer this processor is attached to
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     std::unordered_map<std::string, AggregateBinding> m_aggregates;

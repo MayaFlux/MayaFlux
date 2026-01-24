@@ -20,7 +20,7 @@ BufferDownloadProcessor::~BufferDownloadProcessor()
     m_target_map.clear();
 }
 
-void BufferDownloadProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void BufferDownloadProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer) {
