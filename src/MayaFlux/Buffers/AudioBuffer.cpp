@@ -61,7 +61,7 @@ void AudioBuffer::process_default()
     }
 }
 
-void AudioBuffer::set_default_processor(std::shared_ptr<BufferProcessor> processor)
+void AudioBuffer::set_default_processor(const std::shared_ptr<BufferProcessor>& processor)
 {
     try {
         if (m_default_processor) {
@@ -120,7 +120,7 @@ bool AudioBuffer::read_once(const std::shared_ptr<AudioBuffer>& buffer, bool for
     return false;
 }
 
-void AudioBuffer::set_processing_chain(std::shared_ptr<BufferProcessingChain> chain, bool force)
+void AudioBuffer::set_processing_chain(const std::shared_ptr<BufferProcessingChain>& chain, bool force)
 {
     if (m_processing_chain && !force) {
         m_processing_chain->merge_chain(chain);

@@ -176,7 +176,7 @@ public:
      * process_default() is called. The processor should be compatible
      * with double-precision audio data processing.
      */
-    virtual void set_default_processor(std::shared_ptr<BufferProcessor> processor) override;
+    virtual void set_default_processor(const std::shared_ptr<BufferProcessor>& processor) override;
 
     /**
      * @brief Gets the current default audio transformation processor
@@ -206,7 +206,7 @@ public:
      * The chain should contain processors compatible with double-precision
      * audio data.
      */
-    virtual void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain, bool force = false) override;
+    virtual void set_processing_chain(const std::shared_ptr<BufferProcessingChain>& chain, bool force = false) override;
 
     /**
      * @brief Gets a reference to a specific audio sample in the buffer

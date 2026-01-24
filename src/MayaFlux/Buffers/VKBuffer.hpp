@@ -170,7 +170,7 @@ public:
      *
      * @param processor Shared pointer to a BufferProcessor or nullptr to clear.
      */
-    void set_default_processor(std::shared_ptr<Buffers::BufferProcessor> processor) override;
+    void set_default_processor(const std::shared_ptr<BufferProcessor>& processor) override;
 
     /**
      * @brief Get the currently attached default processor
@@ -189,7 +189,7 @@ public:
      * @param chain New processing chain to assign.
      * @param force If true, replaces existing chain even if one is set.
      */
-    void set_processing_chain(std::shared_ptr<Buffers::BufferProcessingChain> chain, bool force = false) override;
+    void set_processing_chain(const std::shared_ptr<BufferProcessingChain>& chain, bool force = false) override;
 
     bool has_data_for_cycle() const override { return m_has_data; }
     bool needs_removal() const override { return m_needs_removal; }
