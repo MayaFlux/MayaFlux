@@ -245,7 +245,7 @@ update->bind_texture_node("toggle_noise_reflection", update, vk_buf);
 
 // Explicit
 auto stream_sources = std::make_shared<MayaFlux::Kakshya::DynamicStreamSource>(48000, 2);
-auto stream_buf = std::make_shared<MayaFlux::Buffers::ContainerBuffer>(0, 512, stream_sources);
+auto stream_buf = std::make_shared<MayaFlux::Buffers::SoundContainerBuffer>(0, 512, stream_sources);
 buffer_manager->add_buffer(stream_buf, ProcessingToken::AUDIO_PARALLEL, 0);
 
 auto staging = std::make_shared<MayaFlux::Buffers::VKBuffer>(0, Usage::STAGING, DataModality::UNKNOWN);

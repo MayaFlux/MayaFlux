@@ -66,7 +66,7 @@ you can do so fluently without waiting for someone else to provide the building 
     Buffers?](#expansion-2-why-per-channel-buffers){#toc-expansion-2-why-per-channel-buffers}
   - [Expansion 3: The Buffer Manager and Buffer
     Lifecycle](#expansion-3-the-buffer-manager-and-buffer-lifecycle){#toc-expansion-3-the-buffer-manager-and-buffer-lifecycle}
-  - [Expansion 4: ContainerBuffer---The
+  - [Expansion 4: SoundContainerBuffer---The
     Bridge](#expansion-4-containerbufferthe-bridge){#toc-expansion-4-containerbufferthe-bridge}
   - [Expansion 5: Processing
     Token---AUDIO_BACKEND](#expansion-5-processing-tokenaudio_backend){#toc-expansion-5-processing-tokenaudio_backend}
@@ -105,8 +105,8 @@ you can do so fluently without waiting for someone else to provide the building 
   - [Expansion 2: Enter
     DynamicSoundStream](#expansion-2-enter-dynamicsoundstream){#toc-expansion-2-enter-dynamicsoundstream}
   - [Expansion 3:
-    StreamWriteProcessor](#expansion-3-streamwriteprocessor){#toc-expansion-3-streamwriteprocessor}
-  - [Expansion 4: FileBridgeBuffer---Controlled
+    SoundStreamWriter](#expansion-3-streamwriteprocessor){#toc-expansion-3-streamwriteprocessor}
+  - [Expansion 4: SoundFileBridge---Controlled
     Flow](#expansion-4-filebridgebuffercontrolled-flow){#toc-expansion-4-filebridgebuffercontrolled-flow}
   - [Expansion 5: Why This
     Architecture?](#expansion-5-why-this-architecture){#toc-expansion-5-why-this-architecture}
@@ -494,7 +494,7 @@ auto buffer_manager = MayaFlux::get_buffer_manager();
 uint32_t num_channels = container->get_num_channels();
 
 for (uint32_t channel = 0; channel < num_channels; ++channel) {
-    auto container_buffer = buffer_manager->create_audio_buffer<ContainerBuffer>(
+    auto container_buffer = buffer_manager->create_audio_buffer<SoundContainerBuffer>(
         ProcessingToken::AUDIO_BACKEND,
         channel,
         container,
@@ -508,7 +508,7 @@ Step by step:
 1. **Get the buffer manager** - a global system that owns all buffers
 2. **Ask the Container: how many channels?** - determines the loop count
 3. **For each channel:**
-   - Create an audio buffer of type `ContainerBuffer` (a buffer that reads from a Container)
+   - Create an audio buffer of type `SoundContainerBuffer` (a buffer that reads from a Container)
    - Tag it with `AUDIO_BACKEND` (more on this in Expansion 5)
    - Tell it which channel matrix the buffer should belongs to
    - Tell it which channel in the Container to read from
@@ -534,22 +534,22 @@ Repeat forever.
 
 </details>
 
-## Expansion 4: ContainerBuffer—The Bridge
+## Expansion 4: SoundContainerBuffer—The Bridge
 
 <details>
 <summary>Click to expand: How Buffers Know Their Source</summary>
 
-You created a `ContainerBuffer`, not just a generic `Buffer`. Why the distinction?
+You created a `SoundContainerBuffer`, not just a generic `Buffer`. Why the distinction?
 
 A **Buffer** is abstract—it's a temporal accumulator. But abstract things don't know where their data comes from.
 
-A **ContainerBuffer** is specific—it's a buffer that knows:
+A **SoundContainerBuffer** is specific—it's a buffer that knows:
 
 - "My data comes from a Container"
 - "My Container has a processor that chunks data"
 - "I ask that processor for samples from a specific channel"
 
-When the callback fires, the ContainerBuffer doesn't generate samples.
+When the callback fires, the SoundContainerBuffer doesn't generate samples.
 It asks: "Container, give me the next 512 samples from your channel 0."
 
 The Container's processor (remember `ContiguousAccessProcessor` from Section 1?) handles this. It:
@@ -560,7 +560,7 @@ The Container's processor (remember `ContiguousAccessProcessor` from Section 1?)
 - Auto-advances (moves the position forward)
 - Returns the chunk
 
-The ContainerBuffer receives it. Done.
+The SoundContainerBuffer receives it. Done.
 
 This is the architecture: **Buffers don't generate or transform. They request and relay.**
 The Container's processor does the work. The buffer coordinates timing with hardware.
@@ -579,7 +579,7 @@ The buffer still doesn't transform—it still just relays. But what it relays wi
 In the buffer creation code:
 
 ```cpp
-auto container_buffer = buffer_manager->create_audio_buffer<ContainerBuffer>(
+auto container_buffer = buffer_manager->create_audio_buffer<SoundContainerBuffer>(
     ProcessingToken::AUDIO_BACKEND,
     channel,
     container,
@@ -795,11 +795,11 @@ Each buffer owns a **processing chain**—an ordered sequence of processors that
 
 Your buffer's default processor was:
 
-- **ContainerToBufferAdapter** - reads from the Container, fills the buffer
+- **SoundStreamReader** - reads from the Container, fills the buffer
 
 When `create_processor()` adds your FilterProcessor, the chain becomes:
 
-1. Default processor: ContainerToBufferAdapter (reads from Container)
+1. Default processor: SoundStreamReader (reads from Container)
 2. **FilterProcessor** (applies your filter) ← You just added this
 3. Other processors you might add later (e.g., Writer to send to hardware)
 
@@ -1103,21 +1103,21 @@ But understanding what it is explains everything that follows.
 
 </details>
 
-## Expansion 3: StreamWriteProcessor
+## Expansion 3: SoundStreamWriter
 
 <details>
 <summary>Click to expand: Writing Buffer Data to Streams</summary>
 
 You've seen `BufferProcessors` like `FilterProcessor` that transform data in place.
 
-But `StreamWriteProcessor` is more general. It can write buffer data to **any** `DynamicSoundStream`,
+But `SoundStreamWriter` is more general. It can write buffer data to **any** `DynamicSoundStream`,
 not just locally to attached buffers (or from hardware: hitherto unexplored `InputListenerProcessor`).
 
 When a processor runs each buffer cycle:
 
 1. Buffer gets filled with 512 samples (from Container or elsewhere)
 2. Processors run (your `FilterProcessor`, for example)
-3. `StreamWriteProcessor` writes the (now-processed) samples to a `DynamicSoundStream`
+3. `SoundStreamWriter` writes the (now-processed) samples to a `DynamicSoundStream`
 
 The `DynamicSoundStream` accumulates these writes:
 
@@ -1131,28 +1131,28 @@ After N cycles, the `DynamicSoundStream` contains N × 512 samples of processed 
 This is how you capture buffer data. Not by sampling the buffer once,
 by continuously writing it to a stream through a processor.
 
-`StreamWriteProcessor` is the bridge between buffers (which live in real-time) and streams (which accumulate).
+`SoundStreamWriter` is the bridge between buffers (which live in real-time) and streams (which accumulate).
 
 </details>
 
-## Expansion 4: FileBridgeBuffer—Controlled Flow
+## Expansion 4: SoundFileBridge—Controlled Flow
 
 <details>
 <summary>Click to expand: The Reading-Writing Bridge</summary>
 
-**FileBridgeBuffer** is a specialized buffer that orchestrates reading from a file and writing to a stream,
+**SoundFileBridge** is a specialized buffer that orchestrates reading from a file and writing to a stream,
 with timing control through buffer cycles.
 
-Internally, FileBridgeBuffer creates a processing chain:
+Internally, SoundFileBridge creates a processing chain:
 
 ```
 SoundFileContainer (source file)
     ↓
-ContainerToBufferAdapter (reads from file, advances position)
+SoundStreamReader (reads from file, advances position)
     ↓
 [Your processors here: filters, etc.]
     ↓
-StreamWriteProcessor (writes to internal DynamicSoundStream)
+SoundStreamWriter (writes to internal DynamicSoundStream)
     ↓
 DynamicSoundStream (accumulates output)
 ```
@@ -1163,7 +1163,7 @@ The key difference from your simple load/play flow:
 - You control **how many buffer cycles** run (e.g., "process 10 cycles of this file")
 - After N cycles, the stream holds N × buffer_size samples of the processed result
 
-FileBridgeBuffer represents:
+SoundFileBridge represents:
 **"Read from this file, process through this chain, accumulate result in this stream, for exactly this many cycles."**
 
 This gives you timing control. You don't play the whole file. You process exactly N cycles, then stop.
@@ -1177,9 +1177,9 @@ This gives you timing control. You don't play the whole file. You process exactl
 
 The architecture separates concerns:
 
-- **Reading**: Done by ContainerToBufferAdapter (reads from SoundFileContainer in controlled chunks)
+- **Reading**: Done by SoundStreamReader (reads from SoundFileContainer in controlled chunks)
 - **Processing**: Done by your custom processors
-- **Writing**: Done by StreamWriteProcessor (writes results to DynamicSoundStream)
+- **Writing**: Done by SoundStreamWriter (writes results to DynamicSoundStream)
 - **Accumulation**: Done by DynamicSoundStream (holds the result)
 
 Each layer is independent:
@@ -1189,7 +1189,7 @@ Each layer is independent:
 - You can swap the writer (write to hardware, to disk, to memory, to GPU)
 - The stream is just a data holder—it doesn't care what filled it
 
-This is why FileBridgeBuffer is powerful: it composes these layers without forcing you to wire them manually.
+This is why SoundFileBridge is powerful: it composes these layers without forcing you to wire them manually.
 
 And it's why understanding this section matters:
 **the next tutorial (BufferOperation) builds on top of this composition**, adding temporal coordination and pipeline semantics.
@@ -1220,7 +1220,7 @@ Timing control is expressed in **cycles**, not time. This is intentional:
 - Cycles are aligned with buffer boundaries (no partial processing)
 - Cycles decouple from hardware timing (no real-time constraints)
 
-FileBridgeBuffer lets you say: "Process this file for exactly N cycles," then accumulate the result in a stream.
+SoundFileBridge lets you say: "Process this file for exactly N cycles," then accumulate the result in a stream.
 
 This is the foundation for everything BufferOperation does—it extends this cycle-based thinking to composition and coordination.
 
@@ -1232,9 +1232,9 @@ At this point, understand:
 
 1. **DynamicSoundStream**: A container that grows dynamically, can operate in circular mode, designed to accumulate data from processors
 
-2. **StreamWriteProcessor**: The processor that writes buffer data sequentially to a DynamicSoundStream
+2. **SoundStreamWriter**: The processor that writes buffer data sequentially to a DynamicSoundStream
 
-3. **FileBridgeBuffer**: A buffer that creates a chain (reader → your processors → writer), and lets you control how many buffer cycles run
+3. **SoundFileBridge**: A buffer that creates a chain (reader → your processors → writer), and lets you control how many buffer cycles run
 
 These three concepts enable timing control. You're no longer at the mercy of real-time callbacks.
 You can process exactly N cycles, accumulate results, and move on.
@@ -1244,17 +1244,17 @@ You can process exactly N cycles, accumulate results, and move on.
 This is intentional. The concepts here are essential, and expose the architecture behind everything that follows.
 It is also a hint at the fact that modal output is not the only use case for MayaFlux.
 
-- FileBridgeBuffer is too low-level—you'd create it manually, call setup_chain_and_processor(), manage cycles yourself
+- SoundFileBridge is too low-level—you'd create it manually, call setup_chain_and_processor(), manage cycles yourself
 - DynamicSoundStream is too generic—without a driver, you'd just accumulate data with no purpose
-- StreamWriteProcessor is just a piece—alone, it doesn't tell you how many cycles to run
+- SoundStreamWriter is just a piece—alone, it doesn't tell you how many cycles to run
 
 The **next tutorial introduces BufferOperation**, which wraps these concepts into high-level, composable patterns:
 
-- `BufferOperation::capture_file()` - wrap FileBridgeBuffer, accumulate N cycles, return the stream
+- `BufferOperation::capture_file()` - wrap SoundFileBridge, accumulate N cycles, return the stream
 - `BufferOperation::file_to_stream()` - connect file reading to stream writing, with cycle control
 - `BufferOperation::route_to_container()` - send processor output to a stream
 
-Once you understand FileBridgeBuffer, DynamicSoundStream, and cycle-based timing, BufferOperation will feel natural.
+Once you understand SoundFileBridge, DynamicSoundStream, and cycle-based timing, BufferOperation will feel natural.
 It's just syntactic sugar on top of this architecture.
 
 For now: **internalize the architecture. The next section shows how to use it.**
@@ -1262,7 +1262,7 @@ For now: **internalize the architecture. The next section shows how to use it.**
 ## What You Should Internalize
 
 - Containers hold data (SoundFileContainer holds files; DynamicSoundStream holds growing data)
-- Processors transform data (your FilterProcessor, StreamWriteProcessor, etc.)
+- Processors transform data (your FilterProcessor, SoundStreamWriter, etc.)
 - Buffers orchestrate cycles (read N cycles, run processors, write results)
 - Streams accumulate (DynamicSoundStream holds results after cycles complete)
 - Timing is expressed in cycles (deterministic, aligned with buffer boundaries, decoupled from real-time)
@@ -1342,7 +1342,7 @@ pipeline
 
 The `>>` operator chains operations. The pipeline executes them in order, handling all the machinery (cycles, buffer management, timing) invisibly.
 
-This is why you've been learning the foundation first: **pipelines are just syntactic sugar over FileBridgeBuffer, DynamicSoundStream, StreamWriteProcessor, and buffer cycles.**
+This is why you've been learning the foundation first: **pipelines are just syntactic sugar over SoundFileBridge, DynamicSoundStream, SoundStreamWriter, and buffer cycles.**
 
 Understanding the previous sections makes this section obvious. You're not learning new concepts—you're composing concepts you already understand.
 

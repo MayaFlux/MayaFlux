@@ -1,7 +1,7 @@
 #include "../test_config.h"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
-#include "MayaFlux/Buffers/Container/StreamWriteProcessor.hpp"
+#include "MayaFlux/Buffers/Container/SoundStreamWriter.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
@@ -228,20 +228,20 @@ TEST_F(DynamicSoundStreamTest, PlanarOrganizationTest)
 }
 
 // ============================================================================
-// StreamWriteProcessor Tests
+// SoundStreamWriter Tests
 // ============================================================================
 
-class StreamWriteProcessorTest : public ::testing::Test {
+class SoundStreamWriterTest : public ::testing::Test {
 protected:
     std::shared_ptr<DynamicSoundStream> container;
     std::shared_ptr<AudioBuffer> buffer;
-    std::shared_ptr<StreamWriteProcessor> processor;
+    std::shared_ptr<SoundStreamWriter> processor;
 
     void SetUp() override
     {
         container = std::make_shared<DynamicSoundStream>(48000, 2);
         buffer = std::make_shared<AudioBuffer>(0, 4);
-        processor = std::make_shared<StreamWriteProcessor>(container);
+        processor = std::make_shared<SoundStreamWriter>(container);
 
         auto& buffer_data = buffer->get_data();
         buffer_data[0] = 0.1;
@@ -251,12 +251,12 @@ protected:
     }
 };
 
-TEST_F(StreamWriteProcessorTest, ConstructorSetsContainer)
+TEST_F(SoundStreamWriterTest, ConstructorSetsContainer)
 {
     EXPECT_EQ(processor->get_container(), container);
 }
 
-TEST_F(StreamWriteProcessorTest, ProcessWritesToContainer)
+TEST_F(SoundStreamWriterTest, ProcessWritesToContainer)
 {
     uint64_t initial_frames = container->get_num_frames();
 
@@ -265,18 +265,18 @@ TEST_F(StreamWriteProcessorTest, ProcessWritesToContainer)
     EXPECT_GT(container->get_num_frames(), initial_frames);
 }
 
-TEST_F(StreamWriteProcessorTest, ProcessWithNullBufferDoesNotCrash)
+TEST_F(SoundStreamWriterTest, ProcessWithNullBufferDoesNotCrash)
 {
     EXPECT_NO_THROW(processor->processing_function(nullptr));
 }
 
-TEST_F(StreamWriteProcessorTest, ProcessWithEmptyBufferDoesNotCrash)
+TEST_F(SoundStreamWriterTest, ProcessWithEmptyBufferDoesNotCrash)
 {
     auto empty_buffer = std::make_shared<AudioBuffer>(0, 0);
     EXPECT_NO_THROW(processor->processing_function(empty_buffer));
 }
 
-TEST_F(StreamWriteProcessorTest, ProcessWritesCorrectData)
+TEST_F(SoundStreamWriterTest, ProcessWritesCorrectData)
 {
     uint64_t initial_frames = container->get_num_frames();
 
@@ -306,7 +306,7 @@ TEST_F(StreamWriteProcessorTest, ProcessWritesCorrectData)
     EXPECT_TRUE(found_some_values) << "Should find some of the written values in the container";
 }
 
-TEST_F(StreamWriteProcessorTest, MultipleProcessCallsAccumulateData)
+TEST_F(SoundStreamWriterTest, MultipleProcessCallsAccumulateData)
 {
     uint64_t initial_frames = container->get_num_frames();
 
@@ -325,7 +325,7 @@ protected:
     std::shared_ptr<DynamicSoundStream> source_container;
     std::shared_ptr<DynamicSoundStream> sink_container;
     std::shared_ptr<AudioBuffer> buffer;
-    std::shared_ptr<StreamWriteProcessor> write_processor;
+    std::shared_ptr<SoundStreamWriter> write_processor;
 
     void SetUp() override
     {
@@ -335,7 +335,7 @@ protected:
         sink_container->get_structure().organization = OrganizationStrategy::INTERLEAVED;
 
         buffer = std::make_shared<AudioBuffer>(0, 4);
-        write_processor = std::make_shared<StreamWriteProcessor>(sink_container);
+        write_processor = std::make_shared<SoundStreamWriter>(sink_container);
 
         std::vector<double> test_data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 };
         auto data_span = { std::span<const double>(test_data) };

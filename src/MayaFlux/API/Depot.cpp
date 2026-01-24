@@ -3,7 +3,7 @@
 
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
-#include "MayaFlux/Buffers/Container/ContainerBuffer.hpp"
+#include "MayaFlux/Buffers/Container/SoundContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
 #include "MayaFlux/IO/ImageReader.hpp"
 #include "MayaFlux/IO/SoundFileReader.hpp"
@@ -81,11 +81,11 @@ std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std
     return sound_container;
 }
 
-std::vector<std::shared_ptr<Buffers::ContainerBuffer>> hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer>& container)
+std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> hook_sound_container_to_buffers(const std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer>& container)
 {
     auto buffer_manager = MayaFlux::get_buffer_manager();
     uint32_t num_channels = container->get_num_channels();
-    std::vector<std::shared_ptr<Buffers::ContainerBuffer>> created_buffers;
+    std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> created_buffers;
 
     MF_TRACE(
         Journal::Component::API,
@@ -94,7 +94,7 @@ std::vector<std::shared_ptr<Buffers::ContainerBuffer>> hook_sound_container_to_b
         num_channels);
 
     for (uint32_t channel = 0; channel < num_channels; ++channel) {
-        auto container_buffer = buffer_manager->create_audio_buffer<MayaFlux::Buffers::ContainerBuffer>(
+        auto container_buffer = buffer_manager->create_audio_buffer<MayaFlux::Buffers::SoundContainerBuffer>(
             MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND,
             channel,
             container,

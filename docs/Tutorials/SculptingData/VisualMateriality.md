@@ -68,7 +68,7 @@ The `| Graphics` token registers the node with the graphics subsystem to run at 
 <details>
 <summary>Click to expand: The Upload Chain</summary>
 
-`GeometryBuffer` does what `ContainerBuffer` does for audio: connects a data source to processing infrastructure.
+`GeometryBuffer` does what `SoundContainerBuffer` does for audio: connects a data source to processing infrastructure.
 
 ```cpp
 auto buffer = vega.GeometryBuffer(point) | Graphics;
@@ -98,7 +98,7 @@ The fluent `| Graphics` token calls `setup_processors(ProcessingToken::GRAPHICS_
 
 This is **identical to audio flow**, just different data:
 
-- Audio: `SoundContainer → ContainerBuffer → FilterProcessor → Speakers`
+- Audio: `SoundContainer → SoundContainerBuffer → FilterProcessor → Speakers`
 - Graphics: `PointNode → GeometryBuffer → [empty chain] → (needs RenderProcessor)`
 
 **The separation:** Upload and rendering are separate processors. You can upload geometry without rendering it (for compute shader reads), or render the same geometry to multiple windows.

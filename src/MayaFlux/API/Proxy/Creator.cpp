@@ -96,7 +96,7 @@ std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_container(const std::
     return load_audio_file(filepath);
 }
 
-std::vector<std::shared_ptr<Buffers::ContainerBuffer>> get_last_created_container_buffers()
+std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> get_last_created_container_buffers()
 {
     return s_last_created_container_buffers;
 }

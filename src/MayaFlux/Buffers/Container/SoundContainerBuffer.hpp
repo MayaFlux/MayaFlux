@@ -7,10 +7,10 @@
 namespace MayaFlux::Buffers {
 
 /**
- * @class ContainerToBufferAdapter
+ * @class SoundStreamReader
  * @brief Adapter for bridging N-dimensional containers and AudioBuffer interface.
  *
- * ContainerToBufferAdapter enables seamless integration between N-dimensional
+ * SoundStreamReader enables seamless integration between N-dimensional
  * data containers (such as Kakshya::StreamContainer or SoundFileContainer) and the AudioBuffer
  * processing system. It extracts audio data from containers and presents it as a standard
  * AudioBuffer for use in block-based DSP, node networks, and hardware output.
@@ -27,11 +27,11 @@ namespace MayaFlux::Buffers {
  * further processing or output. While currently focused on audio, the design can be
  * extended to support other data container types as more reader processors are implemented.
  *
- * @see ContainerBuffer, StreamContainer, SoundFileContainer, ContiguousAccessProcessor
+ * @see SoundContainerBuffer, StreamContainer, SoundFileContainer, ContiguousAccessProcessor
  */
-class MAYAFLUX_API ContainerToBufferAdapter : public BufferProcessor {
+class MAYAFLUX_API SoundStreamReader : public BufferProcessor {
 public:
-    explicit ContainerToBufferAdapter(std::shared_ptr<Kakshya::StreamContainer> container);
+    explicit SoundStreamReader(const std::shared_ptr<Kakshya::StreamContainer>& container);
 
     /**
      * @brief Extracts and processes data from the container into the target AudioBuffer.
@@ -65,7 +65,7 @@ public:
      * @brief Set the container to adapt.
      * @param container The StreamContainer to extract data from.
      */
-    void set_container(std::shared_ptr<Kakshya::StreamContainer> container);
+    void set_container(const std::shared_ptr<Kakshya::StreamContainer>& container);
     std::shared_ptr<Kakshya::StreamContainer> get_container() const { return m_container; }
 
     /**
@@ -118,15 +118,15 @@ private:
      * @param container The container whose state changed.
      * @param state The new processing state.
      */
-    void on_container_state_change(std::shared_ptr<Kakshya::SignalSourceContainer> container,
+    void on_container_state_change(const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
         Kakshya::ProcessingState state);
 };
 
 /**
- * @class ContainerBuffer
+ * @class SoundContainerBuffer
  * @brief AudioBuffer implementation backed by a StreamContainer.
  *
- * ContainerBuffer provides a bridge between the digital-first container system and
+ * SoundContainerBuffer provides a bridge between the digital-first container system and
  * the traditional AudioBuffer interface. It enables zero-copy or efficient extraction
  * of audio data from StreamContainers (such as SoundFileContainer) for use in
  * block-based DSP, node networks, and hardware output.
@@ -135,26 +135,26 @@ private:
  * - Maintains a reference to the backing StreamContainer and source channel.
  * - Supports zero-copy operation when container memory layout matches buffer needs.
  * - Falls back to cached extraction when zero-copy is not possible.
- * - Integrates with ContainerToBufferAdapter for data extraction and state management.
+ * - Integrates with SoundStreamReader for data extraction and state management.
  * - Can be initialized and reconfigured at runtime for flexible routing.
  *
  * While currently focused on audio, this pattern can be extended to other data types
  * as more container reader processors are implemented.
  *
- * @see ContainerToBufferAdapter, StreamContainer, SoundFileContainer
+ * @see SoundStreamReader, StreamContainer, SoundFileContainer
  */
-class MAYAFLUX_API ContainerBuffer : public AudioBuffer {
+class MAYAFLUX_API SoundContainerBuffer : public AudioBuffer {
 public:
     /**
-     * @brief Construct a ContainerBuffer for a specific channel and container.
+     * @brief Construct a SoundContainerBuffer for a specific channel and container.
      * @param channel_id Buffer channel index.
      * @param num_samples Number of samples in the buffer.
      * @param container Backing StreamContainer.
      * @param source_channel Channel index in the container (default: 0).
      */
-    ContainerBuffer(uint32_t channel_id,
+    SoundContainerBuffer(uint32_t channel_id,
         uint32_t num_samples,
-        std::shared_ptr<Kakshya::StreamContainer> container,
+        const std::shared_ptr<Kakshya::StreamContainer>& container,
         uint32_t source_channel = 0);
 
     /**
@@ -177,7 +177,7 @@ public:
      * @brief Update the container reference.
      * @param container New StreamContainer to use.
      */
-    void set_container(std::shared_ptr<Kakshya::StreamContainer> container);
+    void set_container(const std::shared_ptr<Kakshya::StreamContainer>& container);
 
     /**
      * @brief Check if buffer data is directly mapped to container (zero-copy).
@@ -187,7 +187,7 @@ public:
 
 protected:
     /**
-     * @brief Create the default processor (ContainerToBufferAdapter) for this buffer.
+     * @brief Create the default processor (SoundStreamReader) for this buffer.
      * @return Shared pointer to the created processor.
      */
     std::shared_ptr<BufferProcessor> create_default_processor() override;

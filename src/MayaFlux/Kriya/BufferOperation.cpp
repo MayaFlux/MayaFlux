@@ -2,7 +2,7 @@
 
 #include "MayaFlux/API/Depot.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
-#include "MayaFlux/Buffers/Container/FileBridgeBuffer.hpp"
+#include "MayaFlux/Buffers/Container/SoundFileBridge.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -47,8 +47,8 @@ BufferOperation BufferOperation::capture_file(
             "Failed to load audio file: {}", filepath);
     }
 
-    auto file_buffer = std::make_shared<Buffers::FileBridgeBuffer>(channel, file_container);
-    file_buffer->setup_chain_and_processor();
+    auto file_buffer = std::make_shared<Buffers::SoundFileBridge>(channel, file_container);
+    file_buffer->setup_processors(Buffers::ProcessingToken::AUDIO_BACKEND);
 
     BufferCapture capture(file_buffer,
         cycle_count > 0 ? BufferCapture::CaptureMode::ACCUMULATE : BufferCapture::CaptureMode::TRANSIENT,
@@ -69,8 +69,8 @@ CaptureBuilder BufferOperation::capture_file_from(
             "Failed to load audio file: {}", filepath);
     }
 
-    auto file_buffer = std::make_shared<Buffers::FileBridgeBuffer>(channel, file_container);
-    file_buffer->setup_chain_and_processor();
+    auto file_buffer = std::make_shared<Buffers::SoundFileBridge>(channel, file_container);
+    file_buffer->setup_processors(Buffers::ProcessingToken::AUDIO_BACKEND);
 
     return CaptureBuilder(file_buffer).on_capture_processing();
 }
@@ -86,8 +86,8 @@ BufferOperation BufferOperation::file_to_stream(
             "Failed to load audio file: {}", filepath);
     }
 
-    auto temp_buffer = std::make_shared<Buffers::FileBridgeBuffer>(0, file_container);
-    temp_buffer->setup_chain_and_processor();
+    auto temp_buffer = std::make_shared<Buffers::SoundFileBridge>(0, file_container);
+    temp_buffer->setup_processors(Buffers::ProcessingToken::AUDIO_BACKEND);
 
     BufferOperation op(OpType::ROUTE);
     op.m_source_container = temp_buffer->get_capture_stream();

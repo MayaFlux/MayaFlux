@@ -39,7 +39,7 @@ namespace Buffers {
     class AudioBuffer;
     class NodeBuffer;
     class FeedbackBuffer;
-    class ContainerBuffer;
+    class SoundContainerBuffer;
     class VKBuffer;
     class NodeTextureBuffer;
     class TextureBuffer;
@@ -74,13 +74,13 @@ namespace Kakshya {
     W(ModalNetwork, MayaFlux::Nodes::Network::ModalNetwork) \
     W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)
 
-#define ALL_BUFFER_REGISTRATION                                \
-    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)             \
-    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)               \
-    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)       \
-    B(ContainerBuffer, MayaFlux::Buffers::ContainerBuffer)     \
-    B(VKBuffer, MayaFlux::Buffers::VKBuffer)                   \
-    B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer) \
-    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)         \
-    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)       \
+#define ALL_BUFFER_REGISTRATION                                      \
+    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)                   \
+    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)                     \
+    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)             \
+    B(SoundContainerBuffer, MayaFlux::Buffers::SoundContainerBuffer) \
+    B(VKBuffer, MayaFlux::Buffers::VKBuffer)                         \
+    B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer)       \
+    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)               \
+    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)             \
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)

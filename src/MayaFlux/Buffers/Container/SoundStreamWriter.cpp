@@ -1,11 +1,13 @@
-#include "StreamWriteProcessor.hpp"
+#include "SoundStreamWriter.hpp"
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Buffers {
 
-void StreamWriteProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void SoundStreamWriter::processing_function(std::shared_ptr<Buffer> buffer)
 {
     auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio_buffer || !m_container)
@@ -19,9 +21,9 @@ void StreamWriteProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     uint32_t channel_id = audio_buffer->get_channel_id();
 
     if (channel_id >= m_container->get_num_channels()) {
-        std::cerr << "Warning: AudioBuffer channel " << channel_id
-                  << " exceeds container channels (" << m_container->get_num_channels()
-                  << "). Skipping write." << '\n';
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "SoundStreamWriter: AudioBuffer channel {} exceeds container channels ({}). Skipping write.",
+            channel_id, m_container->get_num_channels());
         return;
     }
 
@@ -36,14 +38,14 @@ void StreamWriteProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void StreamWriteProcessor::set_write_position_time(double time_seconds)
+void SoundStreamWriter::set_write_position_time(double time_seconds)
 {
     if (m_container) {
         m_write_position = m_container->time_to_position(time_seconds);
     }
 }
 
-double StreamWriteProcessor::get_write_position_time() const
+double SoundStreamWriter::get_write_position_time() const
 {
     if (m_container) {
         return m_container->position_to_time(m_write_position);
