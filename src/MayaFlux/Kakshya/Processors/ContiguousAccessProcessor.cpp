@@ -5,9 +5,11 @@
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
-void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer> container)
+void ContiguousAccessProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         return;
@@ -22,15 +24,18 @@ void ContiguousAccessProcessor::on_attach(std::shared_ptr<SignalSourceContainer>
         m_prepared = true;
         container->mark_ready_for_processing(true);
 
-        std::cout << "ContiguousAccessProcessor attached: "
-                  << (m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar")
-                  << " layout, " << m_total_elements << " total elements, "
-                  << m_structure.get_channel_count() << " channels\n";
+        MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "ContiguousAccessProcessor attached: {} layout, {} total elements, {} channels",
+            (m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar"),
+            m_total_elements,
+            m_structure.get_channel_count());
 
     } catch (const std::exception& e) {
-        std::cerr << "Failed to attach processor: " << e.what() << '\n';
         m_prepared = false;
-        throw;
+        error_rethrow(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            std::source_location::current(),
+            "Failed to attach ContiguousAccessProcessor: {}",
+            e.what());
     }
 }
 
@@ -68,11 +73,14 @@ void ContiguousAccessProcessor::store_metadata(const std::shared_ptr<SignalSourc
 void ContiguousAccessProcessor::validate()
 {
     if (m_total_elements == 0) {
-        std::cerr << "Warning: Container has no data elements" << '\n';
+        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "ContiguousAccessProcessor validation: Container has no data elements");
     }
 
     if (m_output_shape.size() != 2) {
-        throw std::runtime_error("Audio output shape must be [frames, channels]");
+        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            std::source_location::current(),
+            "Audio output shape must be [frames, channels]");
     }
 
     uint64_t frames_requested = m_output_shape[0];
@@ -80,31 +88,43 @@ void ContiguousAccessProcessor::validate()
     uint64_t available_channels = m_structure.get_channel_count();
 
     if (frames_requested == 0 || channels_requested == 0) {
-        throw std::runtime_error("Frame and channel counts cannot be zero");
+        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            std::source_location::current(),
+            "Frame and channel counts cannot be zero");
     }
 
     if (frames_requested > m_structure.get_samples_count_per_channel()) {
-        throw std::runtime_error("Requested frame count exceeds available samples per channel");
+        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            std::source_location::current(),
+            "Requested {} frames exceeds available {} samples per channel",
+            frames_requested,
+            m_structure.get_samples_count_per_channel());
     }
 
     if (channels_requested > available_channels) {
-        throw std::runtime_error(
-            "Requested " + std::to_string(channels_requested) + " channels exceeds available " + std::to_string(available_channels) + " channels");
+        error<std::runtime_error>(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            std::source_location::current(),
+            "Requested {} channels exceeds available {} channels",
+            channels_requested,
+            available_channels);
     }
 
     if (m_current_position.size() != available_channels) {
-        std::cerr << "Warning: Position vector size " << m_current_position.size()
-                  << " doesn't match channel count " << available_channels << ", adjusting\n";
+        MF_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "Current position size {} doesn't match available channel count {}, resetting positions",
+            m_current_position.size(),
+            available_channels);
         m_current_position.resize(available_channels, 0);
     }
 
-    std::cout << "Audio processor: "
-              << (m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar")
-              << " layout, processing " << frames_requested << "×" << channels_requested
-              << " blocks, " << m_current_position.size() << " channel positions\n";
+    MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+        "ContiguousAccessProcessor validated: memory layout {}, processing {}×{} blocks, current positions for {} channels",
+        (m_structure.organization == OrganizationStrategy::INTERLEAVED ? "interleaved" : "planar"),
+        frames_requested,
+        channels_requested, m_current_position.size());
 }
 
-void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer> /*container*/)
+void ContiguousAccessProcessor::on_detach(const std::shared_ptr<SignalSourceContainer>& /*container*/)
 {
     m_source_container_weak.reset();
     m_current_position.clear();
@@ -112,16 +132,18 @@ void ContiguousAccessProcessor::on_detach(std::shared_ptr<SignalSourceContainer>
     m_total_elements = 0;
 }
 
-void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> container)
+void ContiguousAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!m_prepared) {
-        std::cerr << "ContiguousAccessProcessor not prepared" << '\n';
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "ContiguousAccessProcessor not prepared for processing");
         return;
     }
 
     auto source_container = m_source_container_weak.lock();
     if (!source_container || source_container.get() != container.get()) {
-        std::cerr << "Container mismatch or expired" << '\n';
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "ContiguousAccessProcessor: Source container mismatch or expired");
         return;
     }
 
@@ -168,7 +190,9 @@ void ContiguousAccessProcessor::process(std::shared_ptr<SignalSourceContainer> c
 
         container->update_processing_state(ProcessingState::PROCESSED);
     } catch (const std::exception& e) {
-        std::cerr << "Error during processing: " << e.what() << '\n';
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "Error during ContiguousAccessProcessor processing: {}",
+            e.what());
         container->update_processing_state(ProcessingState::ERROR);
     }
 

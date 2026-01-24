@@ -51,7 +51,7 @@ public:
      * DataProcessor attachment is typically an explicit operation that triggers
      * immediate initialization.
      */
-    virtual void on_attach(std::shared_ptr<SignalSourceContainer> container) = 0;
+    virtual void on_attach(const std::shared_ptr<SignalSourceContainer>& container) = 0;
 
     /**
      * @brief Called when this processor is detached from a container
@@ -66,7 +66,7 @@ public:
      * Explicit detachment provides cleaner resource management compared to
      * BufferProcessor's implicit detachment through chain removal.
      */
-    virtual void on_detach(std::shared_ptr<SignalSourceContainer> container) = 0;
+    virtual void on_detach(const std::shared_ptr<SignalSourceContainer>& container) = 0;
 
     /**
      * @brief Processes the data in the container
@@ -83,7 +83,7 @@ public:
      * - Analyze the container's data and store results
      * - Update the container's metadata or state
      */
-    virtual void process(std::shared_ptr<SignalSourceContainer> container) = 0;
+    virtual void process(const std::shared_ptr<SignalSourceContainer>& container) = 0;
 
     /**
      * @brief Checks if the processor is currently performing processing
@@ -97,7 +97,7 @@ public:
      * BufferProcessors lack this state tracking as they operate synchronously
      * within the engine's processing cycle.
      */
-    virtual bool is_processing() const = 0;
+    [[nodiscard]] virtual bool is_processing() const = 0;
 };
 
 }

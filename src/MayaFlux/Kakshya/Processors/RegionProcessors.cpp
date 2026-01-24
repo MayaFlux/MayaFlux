@@ -1,4 +1,5 @@
 #include "RegionProcessors.hpp"
+
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
@@ -14,12 +15,12 @@ bool is_segment_complete(const OrganizedRegion& region, size_t segment_index)
     return (region.current_position[0] >= segment.source_region.end_coordinates[0]);
 }
 
-RegionOrganizationProcessor::RegionOrganizationProcessor(std::shared_ptr<SignalSourceContainer> container)
+RegionOrganizationProcessor::RegionOrganizationProcessor(const std::shared_ptr<SignalSourceContainer>& container)
 {
     on_attach(container);
 }
 
-void RegionOrganizationProcessor::organize_container_data(std::shared_ptr<SignalSourceContainer> container)
+void RegionOrganizationProcessor::organize_container_data(const std::shared_ptr<SignalSourceContainer>& container)
 {
     m_organized_regions.clear();
 
@@ -39,7 +40,7 @@ void RegionOrganizationProcessor::organize_container_data(std::shared_ptr<Signal
     });
 }
 
-void RegionOrganizationProcessor::process(std::shared_ptr<SignalSourceContainer> container)
+void RegionOrganizationProcessor::process(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container || m_organized_regions.empty()) {
         return;
@@ -432,7 +433,7 @@ DynamicRegionProcessor::DynamicRegionProcessor(const std::shared_ptr<SignalSourc
 {
 }
 
-void DynamicRegionProcessor::process(std::shared_ptr<SignalSourceContainer> container)
+void DynamicRegionProcessor::process(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container)
         return;
@@ -462,7 +463,7 @@ bool DynamicRegionProcessor::should_reorganize(const std::shared_ptr<SignalSourc
 
 void DynamicRegionProcessor::set_reorganization_callback(RegionOrganizer callback)
 {
-    m_reorganizer_callback = callback;
+    m_reorganizer_callback = std::move(callback);
 }
 
 void DynamicRegionProcessor::trigger_reorganization()

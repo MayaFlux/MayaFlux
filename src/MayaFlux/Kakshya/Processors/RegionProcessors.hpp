@@ -35,21 +35,21 @@ public:
      * @brief Construct a region organization processor for a given container.
      * @param container The signal container to process.
      */
-    RegionOrganizationProcessor(std::shared_ptr<SignalSourceContainer> container);
+    RegionOrganizationProcessor(const std::shared_ptr<SignalSourceContainer>& container);
 
     /**
      * @brief Organize the container's data into regions and segments.
      * Must be implemented to define region logic for the container.
      * @param container The signal container to organize.
      */
-    void organize_container_data(std::shared_ptr<SignalSourceContainer> container) override;
+    void organize_container_data(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
      * @brief Processes audio data according to the current region organization.
      * Applies region selection, transitions, and looping as configured.
      * @param container The signal container to process.
      */
-    void process(std::shared_ptr<SignalSourceContainer> container) override;
+    void process(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
      * @brief Creates a new region group for organizing related regions.
@@ -221,7 +221,7 @@ public:
      * @brief Processes audio, performing reorganization if needed.
      * @param container The signal container to process.
      */
-    void process(std::shared_ptr<SignalSourceContainer> container) override;
+    void process(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
      * @brief Triggers a reorganization on the next processing cycle.
@@ -233,7 +233,7 @@ public:
      * @param criteria Function that returns true if reorganization should occur.
      */
     inline void set_auto_reorganization(std::function<bool(const std::vector<OrganizedRegion>&,
-            std::shared_ptr<SignalSourceContainer>)>
+            const std::shared_ptr<SignalSourceContainer>&)>
             criteria)
     {
         m_auto_reorganization_criteria = std::move(criteria);
@@ -256,7 +256,7 @@ private:
      * Returns true if reorganization should occur based on current state.
      */
     std::function<bool(const std::vector<OrganizedRegion>&,
-        std::shared_ptr<SignalSourceContainer>)>
+        const std::shared_ptr<SignalSourceContainer>&)>
         m_auto_reorganization_criteria;
 };
 
