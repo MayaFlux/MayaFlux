@@ -91,7 +91,7 @@ bool TransferProcessor::validate_gpu_to_audio(const std::shared_ptr<AudioBuffer>
         [&target](const auto& pair) { return pair.second == target; });
 }
 
-void TransferProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void TransferProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_direction == TransferDirection::AUDIO_TO_GPU) {
         if (auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer)) {
@@ -135,7 +135,7 @@ void TransferProcessor::on_attach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void TransferProcessor::on_detach(std::shared_ptr<Buffer> buffer)
+void TransferProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_direction == TransferDirection::AUDIO_TO_GPU) {
         if (auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer)) {

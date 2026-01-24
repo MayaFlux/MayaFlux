@@ -170,7 +170,7 @@ public:
      * attached buffer. If the buffer is a FeedbackBuffer, the processor
      * will use its internal previous state.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when this processor is detached from a buffer
@@ -178,7 +178,7 @@ public:
      *
      * Cleans up any buffer-specific state.
      */
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Sets the feedback coefficient

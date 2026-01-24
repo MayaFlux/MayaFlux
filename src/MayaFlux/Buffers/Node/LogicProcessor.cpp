@@ -182,7 +182,7 @@ void LogicProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     apply(buffer);
 }
 
-void LogicProcessor::on_attach(std::shared_ptr<Buffer> /*buffer*/)
+void LogicProcessor::on_attach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (m_logic) {
         m_logic->reset();

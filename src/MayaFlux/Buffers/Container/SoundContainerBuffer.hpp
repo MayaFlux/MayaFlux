@@ -45,14 +45,14 @@ public:
      * Registers for container state changes and prepares for processing.
      * @param buffer The AudioBuffer to attach to.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Detach the adapter from its AudioBuffer.
      * Cleans up state and unregisters callbacks.
      * @param buffer The AudioBuffer to detach from.
      */
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Set which channel dimension to extract from the container.

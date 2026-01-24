@@ -26,7 +26,7 @@ public:
         }
     }
 
-    void on_attach(std::shared_ptr<Buffer> /*buffer*/) override
+    void on_attach(const std::shared_ptr<Buffer>& /*buffer*/) override
     {
         if constexpr (std::is_same_v<FuncType, AudioProcessingFunction>) {
             m_processing_token = ProcessingToken::AUDIO_BACKEND;

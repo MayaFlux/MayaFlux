@@ -395,7 +395,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         cmd_id, m_target_window->get_create_info().title);
 }
 
-void RenderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void RenderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     ShaderProcessor::on_attach(buffer);
 

@@ -85,7 +85,7 @@ public:
      * @brief Called when processor is attached to a buffer
      * @param buffer Buffer being attached to
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with buffer type

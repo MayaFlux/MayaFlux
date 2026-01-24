@@ -257,7 +257,7 @@ public:
      * Validates that the buffer is a RootGraphicsBuffer and ensures
      * token compatibility for GPU processing.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with a specific buffer type
@@ -365,13 +365,13 @@ public:
      * Validates that the buffer is a RootGraphicsBuffer and ensures
      * token compatibility for graphics rendering.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is detached from a buffer
      * @param buffer Buffer being detached from
      */
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with a specific buffer type

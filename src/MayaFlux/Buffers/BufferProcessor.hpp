@@ -80,7 +80,7 @@ public:
      * thread-safe management of processing state to ensure that concurrent access does
      * not lead to race conditions or data corruption.
      */
-    void process(std::shared_ptr<Buffer> buffer);
+    void process(const std::shared_ptr<Buffer>& buffer);
 
     /**
      * @brief The core processing function that must be implemented by derived classes
@@ -117,7 +117,7 @@ public:
      * Default implementation does nothing, but derived classes should override this method
      * to leverage the full capabilities of the expanded processor architecture.
      */
-    virtual void on_attach(std::shared_ptr<Buffer>) {};
+    virtual void on_attach(const std::shared_ptr<Buffer>&) { };
 
     /**
      * @brief Called when this processor is detached from a buffer
@@ -135,7 +135,7 @@ public:
      * Default implementation does nothing, but proper resource management in derived classes
      * is crucial for optimal performance and preventing resource leaks.
      */
-    virtual void on_detach(std::shared_ptr<Buffer>) {};
+    virtual void on_detach(const std::shared_ptr<Buffer>&) { };
 
     /**
      * @brief Gets the preferred processing backend for this processor
@@ -194,7 +194,7 @@ private:
      * processing function is called in a thread-safe manner, managing the
      * active processing state to prevent concurrent access issues.
      */
-    void process_non_owning(std::shared_ptr<Buffer> buffer);
+    void process_non_owning(const std::shared_ptr<Buffer>& buffer);
 };
 
 /** * @struct ProcessorTokenInfo

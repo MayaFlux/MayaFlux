@@ -113,7 +113,7 @@ void BufferDownloadProcessor::ensure_staging_buffer(const std::shared_ptr<VKBuff
         "Created staging buffer for download: {} bytes", staging_buffer->get_size_bytes());
 }
 
-void BufferDownloadProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void BufferDownloadProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     if (!is_compatible_with(buffer)) {
         error<std::runtime_error>(
@@ -140,7 +140,7 @@ void BufferDownloadProcessor::on_attach(std::shared_ptr<Buffer> buffer)
         "BufferDownloadProcessor attached");
 }
 
-void BufferDownloadProcessor::on_detach(std::shared_ptr<Buffer> buffer)
+void BufferDownloadProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
 {
     m_staging_buffers.erase(buffer);
 

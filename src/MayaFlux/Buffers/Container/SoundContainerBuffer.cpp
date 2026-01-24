@@ -144,7 +144,7 @@ void SoundStreamReader::extract_channel_data(std::span<double> output)
     }
 }
 
-void SoundStreamReader::on_attach(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     if (!m_container || !buffer) {
         return;
@@ -174,7 +174,7 @@ void SoundStreamReader::on_attach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void SoundStreamReader::on_detach(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (m_container) {
         m_container->unregister_state_change_callback();

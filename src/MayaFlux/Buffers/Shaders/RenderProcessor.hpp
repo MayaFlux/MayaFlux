@@ -33,7 +33,7 @@ public:
 
     Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_pipeline_id; }
 
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /// Set primitive topology (e.g., triangle list, line list, point list)
     inline void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)

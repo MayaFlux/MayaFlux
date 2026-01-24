@@ -27,8 +27,8 @@ public:
     ~BufferDownloadProcessor() override;
 
     void processing_function(std::shared_ptr<Buffer> buffer) override;
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
     [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
 

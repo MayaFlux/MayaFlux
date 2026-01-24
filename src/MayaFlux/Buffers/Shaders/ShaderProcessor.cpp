@@ -70,7 +70,7 @@ void ShaderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     execute_shader(vk_buffer);
 }
 
-void ShaderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void ShaderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer)
@@ -86,7 +86,7 @@ void ShaderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
         static_cast<int>(vk_buffer->get_modality()));
 }
 
-void ShaderProcessor::on_detach(std::shared_ptr<Buffer> buffer)
+void ShaderProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer)

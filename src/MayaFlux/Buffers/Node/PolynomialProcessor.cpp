@@ -75,7 +75,7 @@ void PolynomialProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void PolynomialProcessor::on_attach(std::shared_ptr<Buffer> /*buffer*/)
+void PolynomialProcessor::on_attach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     m_polynomial->reset();
 }

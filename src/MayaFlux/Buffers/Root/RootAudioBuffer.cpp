@@ -60,7 +60,7 @@ void ChannelProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void ChannelProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void ChannelProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
     if (!root_audio_buffer) {
@@ -137,7 +137,7 @@ FinalLimiterProcessor::FinalLimiterProcessor()
     m_processing_token = ProcessingToken::AUDIO_BACKEND;
 }
 
-void FinalLimiterProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void FinalLimiterProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio_buffer) {

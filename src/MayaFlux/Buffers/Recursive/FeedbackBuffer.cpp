@@ -16,7 +16,7 @@ void FeedbackBuffer::process_default()
     m_default_processor->process(shared_from_this());
 }
 
-void FeedbackProcessor::on_detach(std::shared_ptr<Buffer> /*buffer*/)
+void FeedbackProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (m_using_internal_buffer) {
         m_previous_buffer.clear();
@@ -73,7 +73,7 @@ void FeedbackProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void FeedbackProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void FeedbackProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     if (auto feedback_buffer = std::dynamic_pointer_cast<FeedbackBuffer>(buffer)) {
         m_using_internal_buffer = false;

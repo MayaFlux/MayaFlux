@@ -13,14 +13,14 @@ NodeSourceProcessor::NodeSourceProcessor(std::shared_ptr<Nodes::Node> node, floa
 {
 }
 
-void NodeSourceProcessor::on_attach(std::shared_ptr<Buffer> /*buffer*/)
+void NodeSourceProcessor::on_attach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (m_node) {
         m_node->add_buffer_reference();
     }
 }
 
-void NodeSourceProcessor::on_detach(std::shared_ptr<Buffer> /*buffer*/)
+void NodeSourceProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (m_node) {
         m_node->remove_buffer_reference();

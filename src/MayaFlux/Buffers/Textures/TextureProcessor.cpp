@@ -17,7 +17,7 @@ TextureProcessor::TextureProcessor()
 
 TextureProcessor::~TextureProcessor() = default;
 
-void TextureProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void TextureProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     if (!m_buffer_service) {
         m_buffer_service = Registry::BackendRegistry::instance()
@@ -58,7 +58,7 @@ void TextureProcessor::on_attach(std::shared_ptr<Buffer> buffer)
         tex_buffer->get_width(), tex_buffer->get_height());
 }
 
-void TextureProcessor::on_detach(std::shared_ptr<Buffer> /*buffer*/)
+void TextureProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     m_texture_buffer.reset();
 }

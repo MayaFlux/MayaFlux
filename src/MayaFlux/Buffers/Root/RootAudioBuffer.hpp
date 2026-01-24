@@ -179,7 +179,7 @@ public:
      * Validates that the buffer is a compatible RootAudioBuffer and ensures
      * token compatibility for proper processing pipeline integration.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with a specific buffer type
@@ -240,7 +240,7 @@ public:
      * Validates that the buffer is an AudioBuffer-derived type and ensures
      * token compatibility for proper audio processing.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with a specific buffer type

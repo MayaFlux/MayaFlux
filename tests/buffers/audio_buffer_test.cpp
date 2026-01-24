@@ -160,7 +160,7 @@ TEST_F(AudioBufferTest, ProcessorManagement)
             }
         }
 
-        void on_attach(std::shared_ptr<Buffers::Buffer> buffer) override
+        void on_attach(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             attach_called = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -169,7 +169,7 @@ TEST_F(AudioBufferTest, ProcessorManagement)
             }
         }
 
-        void on_detach(std::shared_ptr<Buffers::Buffer>) override
+        void on_detach(const std::shared_ptr<Buffers::Buffer>&) override
         {
             detach_called = true;
         }

@@ -64,7 +64,7 @@ void FilterProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     m_filter->clear_input_context();
 }
 
-void FilterProcessor::on_attach(std::shared_ptr<Buffer> /*buffer*/)
+void FilterProcessor::on_attach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (m_filter)
         m_filter->reset();

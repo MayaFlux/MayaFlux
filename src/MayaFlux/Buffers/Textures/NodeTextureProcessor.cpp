@@ -127,7 +127,7 @@ void NodeTextureProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void NodeTextureProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void NodeTextureProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     m_attached_buffer = std::dynamic_pointer_cast<NodeTextureBuffer>(buffer);
     if (!m_attached_buffer) {
@@ -189,7 +189,7 @@ void NodeTextureProcessor::initialize_gpu_resources()
         m_attached_buffer->m_vertex_bytes.size());
 }
 
-void NodeTextureProcessor::on_detach(std::shared_ptr<Buffer> /*buffer*/)
+void NodeTextureProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     m_attached_buffer.reset();
 }

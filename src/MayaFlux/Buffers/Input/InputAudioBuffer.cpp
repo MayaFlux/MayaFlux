@@ -64,7 +64,7 @@ void InputAccessProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void InputAccessProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void InputAccessProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto input_buffer = std::dynamic_pointer_cast<InputAudioBuffer>(buffer);
     if (!input_buffer) {

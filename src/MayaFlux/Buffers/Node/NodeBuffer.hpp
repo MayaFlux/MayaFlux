@@ -67,9 +67,9 @@ public:
      */
     [[nodiscard]] inline float get_mix() const { return m_mix; }
 
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     /**
