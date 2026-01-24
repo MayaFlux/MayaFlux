@@ -35,7 +35,7 @@ public:
         }
     }
 
-    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override
+    [[nodiscard]] bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override
     {
         if constexpr (std::is_same_v<FuncType, AudioProcessingFunction>) {
             return std::dynamic_pointer_cast<AudioBuffer>(buffer) != nullptr;

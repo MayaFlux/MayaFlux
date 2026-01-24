@@ -137,7 +137,7 @@ void BufferUploadProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
         "BufferUploadProcessor detached from buffer");
 }
 
-bool BufferUploadProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool BufferUploadProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<VKBuffer>(buffer) != nullptr;
 }

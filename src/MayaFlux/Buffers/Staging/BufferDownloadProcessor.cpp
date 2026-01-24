@@ -148,7 +148,7 @@ void BufferDownloadProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
         "BufferDownloadProcessor detached");
 }
 
-bool BufferDownloadProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool BufferDownloadProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<VKBuffer>(buffer) != nullptr;
 }

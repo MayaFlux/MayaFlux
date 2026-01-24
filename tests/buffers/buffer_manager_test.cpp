@@ -92,7 +92,7 @@ public:
 
     void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
 
-    bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+    bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
     {
         return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
     }
@@ -114,7 +114,7 @@ TEST_F(BufferManagerTest, CloneBufferForChannels)
 
         void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
@@ -331,7 +331,7 @@ TEST_F(BufferManagerTest, ProcessorManagement)
             }
         }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
@@ -389,7 +389,7 @@ TEST_F(BufferManagerTest, TokenChannelProcessors)
             }
         }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
@@ -441,7 +441,7 @@ TEST_F(BufferManagerTest, TokenGlobalProcessors)
             }
         }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }

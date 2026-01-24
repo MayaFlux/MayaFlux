@@ -1,5 +1,7 @@
 #include "InputAudioBuffer.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Buffers {
 
 InputAudioBuffer::InputAudioBuffer(uint32_t channel_id, uint32_t num_samples)
@@ -7,10 +9,11 @@ InputAudioBuffer::InputAudioBuffer(uint32_t channel_id, uint32_t num_samples)
 {
 }
 
-void InputAudioBuffer::write_to(std::shared_ptr<AudioBuffer> buffer)
+void InputAudioBuffer::write_to(const std::shared_ptr<AudioBuffer>& buffer)
 {
     if (!buffer) {
-        std::cerr << "InputAudioBuffer: Attempted to write to null buffer" << std::endl;
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "InputAudioBuffer: Attempted to write to null buffer");
         return;
     }
 
@@ -21,13 +24,14 @@ void InputAudioBuffer::write_to(std::shared_ptr<AudioBuffer> buffer)
         dst_data.resize(src_data.size());
     }
 
-    std::copy(src_data.begin(), src_data.end(), dst_data.begin());
+    std::ranges::copy(src_data, dst_data.begin());
 }
 
-void InputAudioBuffer::register_listener(std::shared_ptr<AudioBuffer> buffer)
+void InputAudioBuffer::register_listener(const std::shared_ptr<AudioBuffer>& buffer)
 {
     if (!buffer) {
-        std::cerr << "InputAudioBuffer: Attempted to register null listener" << std::endl;
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "InputAudioBuffer: Attempted to register null listener");
         return;
     }
 
@@ -36,7 +40,7 @@ void InputAudioBuffer::register_listener(std::shared_ptr<AudioBuffer> buffer)
     }
 }
 
-void InputAudioBuffer::unregister_listener(std::shared_ptr<AudioBuffer> buffer)
+void InputAudioBuffer::unregister_listener(const std::shared_ptr<AudioBuffer>& buffer)
 {
     if (auto processor = std::dynamic_pointer_cast<InputAccessProcessor>(get_default_processor())) {
         processor->remove_listener(buffer);
@@ -72,25 +76,25 @@ void InputAccessProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 }
 
-bool InputAccessProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool InputAccessProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<InputAudioBuffer>(buffer) != nullptr;
 }
 
-void InputAccessProcessor::add_listener(std::shared_ptr<AudioBuffer> buffer)
+void InputAccessProcessor::add_listener(const std::shared_ptr<AudioBuffer>& buffer)
 {
     if (!buffer)
         return;
 
-    auto it = std::find(m_listeners.begin(), m_listeners.end(), buffer);
+    auto it = std::ranges::find(m_listeners, buffer);
     if (it == m_listeners.end()) {
         m_listeners.push_back(buffer);
     }
 }
 
-void InputAccessProcessor::remove_listener(std::shared_ptr<AudioBuffer> buffer)
+void InputAccessProcessor::remove_listener(const std::shared_ptr<AudioBuffer>& buffer)
 {
-    auto it = std::find(m_listeners.begin(), m_listeners.end(), buffer);
+    auto it = std::ranges::find(m_listeners, buffer);
     if (it != m_listeners.end()) {
         m_listeners.erase(it);
     }

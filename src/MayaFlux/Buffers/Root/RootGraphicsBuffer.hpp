@@ -264,7 +264,7 @@ public:
      * @param buffer Buffer to check compatibility with
      * @return True if compatible (buffer is RootGraphicsBuffer), false otherwise
      */
-    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+    [[nodiscard]] bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 
 private:
     /**
@@ -378,7 +378,7 @@ public:
      * @param buffer Buffer to check compatibility with
      * @return True if buffer is RootGraphicsBuffer, false otherwise
      */
-    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+    [[nodiscard]] bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 
     /**
      * @brief Sets or updates the render callback

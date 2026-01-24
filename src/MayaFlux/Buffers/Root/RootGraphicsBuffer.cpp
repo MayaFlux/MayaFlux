@@ -96,7 +96,7 @@ void GraphicsBatchProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 }
 
-bool GraphicsBatchProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool GraphicsBatchProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer) != nullptr;
 }
@@ -184,7 +184,7 @@ void PresentProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
         "RenderProcessor detached from RootGraphicsBuffer");
 }
 
-bool PresentProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool PresentProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer) != nullptr;
 }

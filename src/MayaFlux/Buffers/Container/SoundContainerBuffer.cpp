@@ -213,7 +213,7 @@ void SoundStreamReader::set_container(const std::shared_ptr<Kakshya::StreamConta
 }
 
 void SoundStreamReader::on_container_state_change(
-    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& /*container*/,
     Kakshya::ProcessingState state)
 {
     switch (state) {

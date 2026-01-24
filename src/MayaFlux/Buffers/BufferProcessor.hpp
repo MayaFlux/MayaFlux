@@ -177,7 +177,7 @@ public:
      * and other properties to determine compatibility, enabling robust error handling
      * and automatic processor selection in complex processing pipelines.
      */
-    virtual bool is_compatible_with(std::shared_ptr<Buffer>) const { return true; }
+    virtual bool is_compatible_with(const std::shared_ptr<Buffer>&) const { return true; }
 
 protected:
     ProcessingToken m_processing_token { ProcessingToken::AUDIO_BACKEND };

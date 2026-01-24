@@ -30,7 +30,7 @@ public:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
-    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+    [[nodiscard]] bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 
     /**
      * @brief Configure target buffer for a specific source

@@ -2,8 +2,6 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 
 #include "MayaFlux/Nodes/Filters/Filter.hpp"
-// #include "MayaFlux/Nodes/Filters/FIR.hpp"
-// #include "MayaFlux/Nodes/Filters/IIR.hpp"
 
 namespace MayaFlux::Buffers {
 

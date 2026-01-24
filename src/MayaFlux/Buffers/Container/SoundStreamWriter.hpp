@@ -47,7 +47,7 @@ public:
      * @param container Target container for writing audio data
      * @param start_position Initial write position in frames (default: 0)
      */
-    explicit SoundStreamWriter(std::shared_ptr<Kakshya::DynamicSoundStream> container,
+    explicit SoundStreamWriter(const std::shared_ptr<Kakshya::DynamicSoundStream>& container,
         uint64_t start_position = 0)
         : m_container(container)
         , m_write_position(start_position)

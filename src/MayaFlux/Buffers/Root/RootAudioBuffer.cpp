@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Buffers {
 
-ChannelProcessor::ChannelProcessor(std::shared_ptr<Buffer> root_buffer)
+ChannelProcessor::ChannelProcessor(const std::shared_ptr<Buffer>& root_buffer)
     : m_root_buffer(std::dynamic_pointer_cast<RootAudioBuffer>(root_buffer))
 {
     m_processing_token = ProcessingToken::AUDIO_BACKEND;
@@ -72,7 +72,7 @@ void ChannelProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 }
 
-bool ChannelProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool ChannelProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
     return root_audio_buffer != nullptr;
@@ -149,7 +149,7 @@ void FinalLimiterProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     }
 }
 
-bool FinalLimiterProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool FinalLimiterProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<AudioBuffer>(buffer) != nullptr;
 }

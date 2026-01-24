@@ -1,6 +1,5 @@
 #pragma once
 
-#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Container/SoundContainerBuffer.hpp"
 
 namespace MayaFlux::Kakshya {

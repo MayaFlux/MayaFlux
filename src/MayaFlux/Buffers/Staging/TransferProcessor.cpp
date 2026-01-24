@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
-#include <algorithm>
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "StagingUtils.hpp"

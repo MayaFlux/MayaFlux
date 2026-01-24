@@ -209,7 +209,7 @@ NetworkGeometryProcessor::extract_particle_vertices(
 
 std::vector<Nodes::GpuSync::PointVertex>
 NetworkGeometryProcessor::extract_network_vertices(
-    const std::shared_ptr<Nodes::Network::NodeNetwork>& network)
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& /*network*/)
 {
     std::vector<Nodes::GpuSync::PointVertex> vertices;
 

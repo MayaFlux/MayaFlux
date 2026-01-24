@@ -357,7 +357,7 @@ public:
      * provided AudioBuffer. If force is true, it will attempt to read even if
      * the current buffer or the copy buffer are in processing state
      */
-    virtual bool read_once(std::shared_ptr<AudioBuffer> buffer, bool force = false);
+    virtual bool read_once(const std::shared_ptr<AudioBuffer>& buffer, bool force = false);
 
     /**
      * @brief Marks the buffer as internal-only, preventing root aggregation
