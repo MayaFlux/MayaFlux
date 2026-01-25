@@ -4,6 +4,8 @@
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
 bool is_segment_complete(const OrganizedRegion& region, size_t segment_index)
@@ -70,7 +72,12 @@ void RegionOrganizationProcessor::process(const std::shared_ptr<SignalSourceCont
 
     } catch (const std::exception& e) {
         container->update_processing_state(ProcessingState::ERROR);
-        throw;
+        error_rethrow(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "Error during region organization processing: {}",
+            e.what());
     }
 
     m_is_processing.store(false);

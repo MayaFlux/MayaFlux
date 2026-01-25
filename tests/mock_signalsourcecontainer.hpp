@@ -257,7 +257,7 @@ public:
     }
 
     void register_state_change_callback(
-        std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> callback) override
+        std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> callback) override
     {
         m_state_change_callback = callback;
     }
@@ -287,7 +287,7 @@ public:
         m_processing_state = ProcessingState::PROCESSED;
     }
 
-    void set_default_processor(std::shared_ptr<DataProcessor> processor) override
+    void set_default_processor(const std::shared_ptr<DataProcessor>& processor) override
     {
         m_default_processor = processor;
     }
@@ -302,7 +302,7 @@ public:
         return m_processing_chain;
     }
 
-    void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) override
+    void set_processing_chain(const std::shared_ptr<DataProcessingChain>& chain) override
     {
         m_processing_chain = chain;
     }

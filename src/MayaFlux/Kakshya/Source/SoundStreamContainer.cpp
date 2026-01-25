@@ -5,6 +5,8 @@
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
 SoundStreamContainer::SoundStreamContainer(uint32_t sample_rate, uint32_t num_channels,
@@ -658,7 +660,7 @@ void SoundStreamContainer::process_default()
     }
 }
 
-void SoundStreamContainer::set_default_processor(std::shared_ptr<DataProcessor> processor)
+void SoundStreamContainer::set_default_processor(const std::shared_ptr<DataProcessor>& processor)
 {
     auto old_processor = m_default_processor;
     m_default_processor = processor;
@@ -712,11 +714,9 @@ void SoundStreamContainer::mark_dimension_consumed(uint32_t dimension_index, uin
     if (m_reader_consumed_dimensions.contains(reader_id)) {
         m_reader_consumed_dimensions[reader_id].insert(dimension_index);
     } else {
-        std::cerr << "WARNING: Attempted to mark dimension " << dimension_index
-                  << " as consumed for unknown reader_id " << reader_id
-                  << ". This may indicate the reader was not registered or has already been unregistered. "
-                  << "Please ensure readers are properly registered before marking dimensions as consumed."
-                  << std::endl;
+
+        MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing, "Attempted to mark dimension {} as consumed for unknown reader_id {}. This may indicate the reader was not registered or has already been unregistered. Please ensure readers are properly registered before marking dimensions as consumed.",
+            dimension_index, reader_id);
     }
 }
 
@@ -822,7 +822,12 @@ std::span<const double> SoundStreamContainer::get_data_as_double() const
 DataAccess SoundStreamContainer::channel_data(size_t channel)
 {
     if (channel >= m_data.size()) {
-        throw std::out_of_range("Channel index out of range");
+        error<std::out_of_range>(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "Channel index {} out of range (max {})",
+            channel, m_data.size() - 1);
     }
     return DataAccess { m_data[channel], m_structure.dimensions, m_structure.modality };
 }
