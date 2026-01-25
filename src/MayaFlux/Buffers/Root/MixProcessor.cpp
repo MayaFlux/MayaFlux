@@ -4,7 +4,7 @@
 
 namespace MayaFlux::Buffers {
 
-MixSource::MixSource(std::shared_ptr<AudioBuffer> buffer, double level, bool once_flag)
+MixSource::MixSource(const std::shared_ptr<AudioBuffer>& buffer, double level, bool once_flag)
     : mix_level(level)
     , once(once_flag)
     , buffer_ref(buffer)
@@ -34,7 +34,7 @@ bool MixProcessor::register_source(std::shared_ptr<AudioBuffer> source, double m
         return false;
     }
 
-    auto it = std::find_if(m_sources.begin(), m_sources.end(),
+    auto it = std::ranges::find_if(m_sources,
         [&source](const MixSource& s) {
             return s.matches_buffer(source);
         });
@@ -50,7 +50,7 @@ bool MixProcessor::register_source(std::shared_ptr<AudioBuffer> source, double m
     return true;
 }
 
-void MixProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void MixProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_sources.empty()) {
         return;
@@ -79,7 +79,7 @@ void MixProcessor::cleanup()
 {
     m_sources.erase(
         std::remove_if(m_sources.begin(), m_sources.end(),
-            [](const MixSource& s) { return s.once == true; }),
+            [](const MixSource& s) { return s.once; }),
         m_sources.end());
 }
 

@@ -52,9 +52,9 @@ public:
     {
     }
 
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     [[nodiscard]] inline std::shared_ptr<Nodes::Filters::Filter> get_filter() const
     {

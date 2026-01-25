@@ -2,6 +2,8 @@
 
 #include "MayaFlux/API/Config.hpp"
 
+#include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 

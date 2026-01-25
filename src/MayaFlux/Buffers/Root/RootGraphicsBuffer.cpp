@@ -18,7 +18,7 @@ GraphicsBatchProcessor::GraphicsBatchProcessor(std::shared_ptr<Buffer> root_buff
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
-void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void GraphicsBatchProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_buf = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_buf || root_buf != m_root_buffer) {
@@ -76,7 +76,7 @@ void GraphicsBatchProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void GraphicsBatchProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void GraphicsBatchProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_graphics_buffer) {
@@ -96,7 +96,7 @@ void GraphicsBatchProcessor::on_attach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-bool GraphicsBatchProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool GraphicsBatchProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer) != nullptr;
 }
@@ -115,7 +115,7 @@ PresentProcessor::PresentProcessor()
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
 }
 
-void PresentProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void PresentProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_graphics_buffer) {
@@ -146,7 +146,7 @@ void PresentProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void PresentProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void PresentProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_graphics_buffer = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer);
     if (!root_graphics_buffer) {
@@ -172,7 +172,7 @@ void PresentProcessor::on_attach(std::shared_ptr<Buffer> buffer)
         has_callback());
 }
 
-void PresentProcessor::on_detach(std::shared_ptr<Buffer> buffer)
+void PresentProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
 {
     if (auto root = std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer)) {
         if (root == m_root_buffer) {
@@ -184,7 +184,7 @@ void PresentProcessor::on_detach(std::shared_ptr<Buffer> buffer)
         "RenderProcessor detached from RootGraphicsBuffer");
 }
 
-bool PresentProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool PresentProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<RootGraphicsBuffer>(buffer) != nullptr;
 }

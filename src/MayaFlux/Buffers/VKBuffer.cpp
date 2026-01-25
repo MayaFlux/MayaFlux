@@ -258,7 +258,7 @@ void VKBuffer::process_default()
     }
 }
 
-void VKBuffer::set_default_processor(std::shared_ptr<Buffers::BufferProcessor> processor)
+void VKBuffer::set_default_processor(const std::shared_ptr<BufferProcessor>& processor)
 {
     if (m_default_processor) {
         m_default_processor->on_detach(shared_from_this());
@@ -279,7 +279,7 @@ std::shared_ptr<Buffers::BufferProcessingChain> VKBuffer::get_processing_chain()
     return m_processing_chain;
 }
 
-void VKBuffer::set_processing_chain(std::shared_ptr<Buffers::BufferProcessingChain> chain, bool force)
+void VKBuffer::set_processing_chain(const std::shared_ptr<BufferProcessingChain>& chain, bool force)
 {
     if (m_processing_chain && !force) {
         m_processing_chain->merge_chain(chain);

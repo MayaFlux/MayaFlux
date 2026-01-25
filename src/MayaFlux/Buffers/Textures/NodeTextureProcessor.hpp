@@ -112,10 +112,10 @@ public:
      * Uploads all bound textures that have dirty flags set.
      * Delegates actual upload to TextureLoom which handles staging internally.
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     std::unordered_map<std::string, TextureBinding> m_bindings;

@@ -2,13 +2,13 @@
 
 namespace MayaFlux::Buffers {
 
-ChannelProcessor::ChannelProcessor(std::shared_ptr<Buffer> root_buffer)
+ChannelProcessor::ChannelProcessor(const std::shared_ptr<Buffer>& root_buffer)
     : m_root_buffer(std::dynamic_pointer_cast<RootAudioBuffer>(root_buffer))
 {
     m_processing_token = ProcessingToken::AUDIO_BACKEND;
 }
 
-void ChannelProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void ChannelProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
 
     auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
@@ -60,7 +60,7 @@ void ChannelProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void ChannelProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void ChannelProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
     if (!root_audio_buffer) {
@@ -72,7 +72,7 @@ void ChannelProcessor::on_attach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-bool ChannelProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool ChannelProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     auto root_audio_buffer = std::dynamic_pointer_cast<RootAudioBuffer>(buffer);
     return root_audio_buffer != nullptr;
@@ -137,7 +137,7 @@ FinalLimiterProcessor::FinalLimiterProcessor()
     m_processing_token = ProcessingToken::AUDIO_BACKEND;
 }
 
-void FinalLimiterProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void FinalLimiterProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio_buffer) {
@@ -149,12 +149,12 @@ void FinalLimiterProcessor::on_attach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-bool FinalLimiterProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool FinalLimiterProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<AudioBuffer>(buffer) != nullptr;
 }
 
-void FinalLimiterProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void FinalLimiterProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto audio_buffer = std::dynamic_pointer_cast<AudioBuffer>(buffer);
     if (!audio_buffer) {

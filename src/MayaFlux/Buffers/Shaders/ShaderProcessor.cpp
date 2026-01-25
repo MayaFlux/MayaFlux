@@ -33,7 +33,7 @@ ShaderProcessor::~ShaderProcessor()
 // BufferProcessor Interface
 //==============================================================================
 
-void ShaderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void ShaderProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer) {
@@ -70,7 +70,7 @@ void ShaderProcessor::processing_function(std::shared_ptr<Buffer> buffer)
     execute_shader(vk_buffer);
 }
 
-void ShaderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void ShaderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer)
@@ -86,7 +86,7 @@ void ShaderProcessor::on_attach(std::shared_ptr<Buffer> buffer)
         static_cast<int>(vk_buffer->get_modality()));
 }
 
-void ShaderProcessor::on_detach(std::shared_ptr<Buffer> buffer)
+void ShaderProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer)
@@ -102,7 +102,7 @@ void ShaderProcessor::on_detach(std::shared_ptr<Buffer> buffer)
     m_needs_descriptor_rebuild = true;
 }
 
-bool ShaderProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool ShaderProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<VKBuffer>(buffer) != nullptr;
 }
@@ -278,18 +278,18 @@ void ShaderProcessor::add_binding(const std::string& descriptor_name, const Shad
     return BufferUsageHint::NONE;
 }
 
-[[nodiscard]] bool ShaderProcessor::is_in_place_operation(const std::string& descriptor_name) const
+bool ShaderProcessor::is_in_place_operation(const std::string& descriptor_name) const
 {
     auto hint = get_buffer_usage_hint(descriptor_name);
     return hint == BufferUsageHint::BIDIRECTIONAL;
 }
 
-[[nodiscard]] bool ShaderProcessor::has_binding(const std::string& descriptor_name) const
+bool ShaderProcessor::has_binding(const std::string& descriptor_name) const
 {
     return m_config.bindings.find(descriptor_name) != m_config.bindings.end();
 }
 
-[[nodiscard]] std::vector<std::string> ShaderProcessor::get_binding_names() const
+std::vector<std::string> ShaderProcessor::get_binding_names() const
 {
     std::vector<std::string> names;
     names.reserve(m_config.bindings.size());
@@ -299,14 +299,13 @@ void ShaderProcessor::add_binding(const std::string& descriptor_name, const Shad
     return names;
 }
 
-[[nodiscard]] bool ShaderProcessor::are_bindings_complete() const
+bool ShaderProcessor::are_bindings_complete() const
 {
-    for (const auto& [name, _] : m_config.bindings) {
-        if (m_bound_buffers.find(name) == m_bound_buffers.end()) {
-            return false;
-        }
-    }
-    return true;
+    return std::ranges::all_of(
+        m_config.bindings,
+        [this](const auto& pair) {
+            return m_bound_buffers.find(pair.first) != m_bound_buffers.end();
+        });
 }
 
 //==============================================================================

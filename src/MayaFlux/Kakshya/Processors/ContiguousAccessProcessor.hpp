@@ -40,21 +40,21 @@ public:
      * Initializes dimension metadata, memory layout, and prepares for processing.
      * @param container The SignalSourceContainer to attach to.
      */
-    void on_attach(std::shared_ptr<SignalSourceContainer> container) override;
+    void on_attach(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
      * @brief Detach the processor from its container.
      * Cleans up internal state and metadata.
      * @param container The SignalSourceContainer to detach from.
      */
-    void on_detach(std::shared_ptr<SignalSourceContainer> container) override;
+    void on_detach(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
      * @brief Process the current region or block of data.
      * Advances the read position if auto-advance is enabled.
      * @param container The SignalSourceContainer to process.
      */
-    void process(std::shared_ptr<SignalSourceContainer> container) override;
+    void process(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
      * @brief Query if the processor is currently performing processing.

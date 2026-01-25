@@ -73,10 +73,10 @@ public:
      */
     void set_direction(TransferDirection direction) { m_direction = direction; }
 
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     // Audio→GPU transfers

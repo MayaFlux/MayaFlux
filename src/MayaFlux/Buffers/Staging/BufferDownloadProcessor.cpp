@@ -20,7 +20,7 @@ BufferDownloadProcessor::~BufferDownloadProcessor()
     m_target_map.clear();
 }
 
-void BufferDownloadProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void BufferDownloadProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     auto vk_buffer = std::dynamic_pointer_cast<VKBuffer>(buffer);
     if (!vk_buffer) {
@@ -113,7 +113,7 @@ void BufferDownloadProcessor::ensure_staging_buffer(const std::shared_ptr<VKBuff
         "Created staging buffer for download: {} bytes", staging_buffer->get_size_bytes());
 }
 
-void BufferDownloadProcessor::on_attach(std::shared_ptr<Buffer> buffer)
+void BufferDownloadProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     if (!is_compatible_with(buffer)) {
         error<std::runtime_error>(
@@ -140,7 +140,7 @@ void BufferDownloadProcessor::on_attach(std::shared_ptr<Buffer> buffer)
         "BufferDownloadProcessor attached");
 }
 
-void BufferDownloadProcessor::on_detach(std::shared_ptr<Buffer> buffer)
+void BufferDownloadProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
 {
     m_staging_buffers.erase(buffer);
 
@@ -148,7 +148,7 @@ void BufferDownloadProcessor::on_detach(std::shared_ptr<Buffer> buffer)
         "BufferDownloadProcessor detached");
 }
 
-bool BufferDownloadProcessor::is_compatible_with(std::shared_ptr<Buffer> buffer) const
+bool BufferDownloadProcessor::is_compatible_with(const std::shared_ptr<Buffer>& buffer) const
 {
     return std::dynamic_pointer_cast<VKBuffer>(buffer) != nullptr;
 }

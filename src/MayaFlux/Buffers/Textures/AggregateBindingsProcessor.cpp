@@ -133,7 +133,7 @@ size_t AggregateBindingsProcessor::get_aggregate_count() const
     return m_aggregates.size();
 }
 
-void AggregateBindingsProcessor::processing_function(std::shared_ptr<Buffer> buffer)
+void AggregateBindingsProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (m_aggregates.empty()) {
         return;

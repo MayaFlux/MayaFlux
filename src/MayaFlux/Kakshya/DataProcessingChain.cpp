@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Kakshya {
 
-void DataProcessingChain::add_processor(std::shared_ptr<DataProcessor> processor, std::shared_ptr<SignalSourceContainer> container, const std::string& tag)
+void DataProcessingChain::add_processor(const std::shared_ptr<DataProcessor>& processor, const std::shared_ptr<SignalSourceContainer>& container, const std::string& tag)
 {
     processor->on_attach(container);
     m_container_processors[container].emplace_back(processor);
@@ -11,8 +11,8 @@ void DataProcessingChain::add_processor(std::shared_ptr<DataProcessor> processor
     }
 }
 
-void DataProcessingChain::add_processor_at(std::shared_ptr<DataProcessor> processor,
-    std::shared_ptr<SignalSourceContainer> container,
+void DataProcessingChain::add_processor_at(const std::shared_ptr<DataProcessor>& processor,
+    const std::shared_ptr<SignalSourceContainer>& container,
     size_t position)
 {
     processor->on_attach(container);
@@ -25,7 +25,7 @@ void DataProcessingChain::add_processor_at(std::shared_ptr<DataProcessor> proces
     }
 }
 
-void DataProcessingChain::remove_processor(std::shared_ptr<DataProcessor> processor, std::shared_ptr<SignalSourceContainer> container)
+void DataProcessingChain::remove_processor(const std::shared_ptr<DataProcessor>& processor, const std::shared_ptr<SignalSourceContainer>& container)
 {
     auto it = m_container_processors.find(container);
     if (it != m_container_processors.end()) {
@@ -43,7 +43,7 @@ void DataProcessingChain::remove_processor(std::shared_ptr<DataProcessor> proces
     }
 }
 
-void DataProcessingChain::process(std::shared_ptr<SignalSourceContainer> container)
+void DataProcessingChain::process(const std::shared_ptr<SignalSourceContainer>& container)
 {
     auto it = m_container_processors.find(container);
     if (it != m_container_processors.end()) {
@@ -53,7 +53,7 @@ void DataProcessingChain::process(std::shared_ptr<SignalSourceContainer> contain
     }
 }
 
-void DataProcessingChain::process_filtered(std::shared_ptr<SignalSourceContainer> container, std::function<bool(std::shared_ptr<DataProcessor>)> filter)
+void DataProcessingChain::process_filtered(const std::shared_ptr<SignalSourceContainer>& container, const std::function<bool(const std::shared_ptr<DataProcessor>&)>& filter)
 {
     auto it = m_container_processors.find(container);
     if (it != m_container_processors.end()) {
@@ -65,7 +65,7 @@ void DataProcessingChain::process_filtered(std::shared_ptr<SignalSourceContainer
     }
 }
 
-void DataProcessingChain::process_tagged(std::shared_ptr<SignalSourceContainer> container, const std::string& tag)
+void DataProcessingChain::process_tagged(const std::shared_ptr<SignalSourceContainer>& container, const std::string& tag)
 {
     auto it = m_container_processors.find(container);
     if (it != m_container_processors.end()) {

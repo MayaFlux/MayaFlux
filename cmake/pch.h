@@ -2,7 +2,6 @@
 
 #include "any"
 #include "atomic"
-#include "deque"
 #include "exception"
 #include "functional"
 #include "iostream"

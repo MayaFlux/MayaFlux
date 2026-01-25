@@ -3,6 +3,7 @@
 #include "BufferProcessingChain.hpp"
 
 #include "MayaFlux/API/Config.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
@@ -23,8 +24,9 @@ AudioBuffer::AudioBuffer(uint32_t channel_id, uint32_t num_samples)
     , m_is_processing(false)
 {
     if (num_samples != MayaFlux::Config::get_buffer_size()) {
-        std::cerr << "Warning: AudioBuffer initialized with a non-default number of samples ("
-                  << num_samples << "). This may lead to unexpected behavior." << std::endl;
+        MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
+            "AudioBuffer initialized with a non-default number of samples ({}). This may lead to unexpected behavior.",
+            num_samples);
     }
     m_data.resize(num_samples);
 }
@@ -59,7 +61,7 @@ void AudioBuffer::process_default()
     }
 }
 
-void AudioBuffer::set_default_processor(std::shared_ptr<BufferProcessor> processor)
+void AudioBuffer::set_default_processor(const std::shared_ptr<BufferProcessor>& processor)
 {
     try {
         if (m_default_processor) {
@@ -70,8 +72,9 @@ void AudioBuffer::set_default_processor(std::shared_ptr<BufferProcessor> process
         }
         m_default_processor = processor;
     } catch (const std::exception& e) {
-        std::cout << "Exception in set_default_processor: " << e.what() << std::endl;
-        throw;
+        error_rethrow(Journal::Component::Buffers, Journal::Context::Init,
+            std::source_location::current(),
+            "Error setting default processor: {}", e.what());
     }
 }
 
@@ -91,7 +94,7 @@ std::shared_ptr<AudioBuffer> AudioBuffer::clone_to(uint32_t channel)
     return buffer;
 }
 
-bool AudioBuffer::read_once(std::shared_ptr<AudioBuffer> buffer, bool force)
+bool AudioBuffer::read_once(const std::shared_ptr<AudioBuffer>& buffer, bool force)
 {
     if (buffer && buffer->get_num_samples() == m_num_samples) {
         if (m_is_processing.load() || buffer->is_processing()) {
@@ -117,7 +120,7 @@ bool AudioBuffer::read_once(std::shared_ptr<AudioBuffer> buffer, bool force)
     return false;
 }
 
-void AudioBuffer::set_processing_chain(std::shared_ptr<BufferProcessingChain> chain, bool force)
+void AudioBuffer::set_processing_chain(const std::shared_ptr<BufferProcessingChain>& chain, bool force)
 {
     if (m_processing_chain && !force) {
         m_processing_chain->merge_chain(chain);

@@ -108,7 +108,7 @@ public:
      * 2. Aggregate into single vertex array
      * 3. Upload to GPU vertex buffer
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     std::unordered_map<std::string, NetworkBinding> m_bindings;

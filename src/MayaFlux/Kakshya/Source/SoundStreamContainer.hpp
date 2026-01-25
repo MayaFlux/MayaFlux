@@ -110,7 +110,7 @@ public:
     void update_processing_state(ProcessingState new_state) override;
 
     void register_state_change_callback(
-        std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> callback) override
+        std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> callback) override
     {
         std::lock_guard<std::mutex> lock(m_state_mutex);
         m_state_callback = callback;
@@ -128,11 +128,11 @@ public:
     void create_default_processor() override;
     void process_default() override;
 
-    void set_default_processor(std::shared_ptr<DataProcessor> processor) override;
+    void set_default_processor(const std::shared_ptr<DataProcessor>& processor) override;
     std::shared_ptr<DataProcessor> get_default_processor() const override;
 
     std::shared_ptr<DataProcessingChain> get_processing_chain() override { return m_processing_chain; }
-    void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) override { m_processing_chain = chain; }
+    void set_processing_chain(const std::shared_ptr<DataProcessingChain>& chain) override { m_processing_chain = chain; }
 
     uint32_t register_dimension_reader(uint32_t dimension_index) override;
     void unregister_dimension_reader(uint32_t dimension_index) override;

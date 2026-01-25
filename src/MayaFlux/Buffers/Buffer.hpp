@@ -71,7 +71,7 @@ public:
      * Different buffer types may accept different processor types depending
      * on their data format and processing requirements.
      */
-    virtual void set_default_processor(std::shared_ptr<BufferProcessor> processor) = 0;
+    virtual void set_default_processor(const std::shared_ptr<BufferProcessor>& processor) = 0;
 
     /**
      * @brief Gets the current default transformation processor
@@ -102,7 +102,7 @@ public:
      * The chain should be compatible with the buffer's data type and
      * processing backend.
      */
-    virtual void set_processing_chain(std::shared_ptr<BufferProcessingChain> chain, bool force = false) = 0;
+    virtual void set_processing_chain(const std::shared_ptr<BufferProcessingChain>& chain, bool force = false) = 0;
 
     /**
      * @brief Checks if the buffer has data for the current processing cycle

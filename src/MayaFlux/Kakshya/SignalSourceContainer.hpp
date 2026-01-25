@@ -125,7 +125,7 @@ public:
      * resource management, or UI updates.
      */
     virtual void register_state_change_callback(
-        std::function<void(std::shared_ptr<SignalSourceContainer>, ProcessingState)> callback)
+        std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> callback)
         = 0;
 
     /**
@@ -168,7 +168,7 @@ public:
      * @brief Set the default data processor for this container.
      * @param processor Shared pointer to the DataProcessor to use
      */
-    virtual void set_default_processor(std::shared_ptr<DataProcessor> processor) = 0;
+    virtual void set_default_processor(const std::shared_ptr<DataProcessor>& processor) = 0;
 
     /**
      * @brief Get the current default data processor.
@@ -186,7 +186,7 @@ public:
      * @brief Set the processing chain for this container.
      * @param chain Shared pointer to the DataProcessingChain to use
      */
-    virtual void set_processing_chain(std::shared_ptr<DataProcessingChain> chain) = 0;
+    virtual void set_processing_chain(const std::shared_ptr<DataProcessingChain>& chain) = 0;
 
     /**
      * @brief Register a reader for a specific dimension.

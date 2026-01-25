@@ -53,7 +53,7 @@ public:
      * 2. Generates sequential values from the computational node
      * 3. Applies the specified interpolation between existing and incoming data
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Sets the interpolation coefficient between existing and incoming data
@@ -67,9 +67,9 @@ public:
      */
     [[nodiscard]] inline float get_mix() const { return m_mix; }
 
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     /**

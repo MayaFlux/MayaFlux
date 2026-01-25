@@ -13,7 +13,7 @@ public:
     {
     }
 
-    void processing_function(std::shared_ptr<Buffer> buffer) override
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override
     {
         if constexpr (std::is_same_v<FuncType, AudioProcessingFunction>) {
             if (auto audio_buf = std::dynamic_pointer_cast<AudioBuffer>(buffer)) {
@@ -26,7 +26,7 @@ public:
         }
     }
 
-    void on_attach(std::shared_ptr<Buffer> /*buffer*/) override
+    void on_attach(const std::shared_ptr<Buffer>& /*buffer*/) override
     {
         if constexpr (std::is_same_v<FuncType, AudioProcessingFunction>) {
             m_processing_token = ProcessingToken::AUDIO_BACKEND;
@@ -35,7 +35,7 @@ public:
         }
     }
 
-    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override
+    [[nodiscard]] bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override
     {
         if constexpr (std::is_same_v<FuncType, AudioProcessingFunction>) {
             return std::dynamic_pointer_cast<AudioBuffer>(buffer) != nullptr;

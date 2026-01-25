@@ -1,6 +1,8 @@
 #include "NDData.hpp"
 #include "MayaFlux/EnumUtils.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
 DataDimension::DataDimension(std::string n, uint64_t s, uint64_t st, Role r)
@@ -113,14 +115,22 @@ std::vector<DataDimension> DataDimension::create_dimensions(
     switch (modality) {
     case DataModality::AUDIO_1D:
         if (shape.size() != 1) {
-            throw std::invalid_argument("AUDIO_1D requires 1D shape");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "AUDIO_1D requires 1D shape");
         }
         dims.push_back(DataDimension::time(shape[0]));
         break;
 
     case DataModality::AUDIO_MULTICHANNEL:
         if (shape.size() != 2) {
-            throw std::invalid_argument("AUDIO_MULTICHANNEL requires 2D shape [samples, channels]");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "AUDIO_MULTICHANNEL requires 2D shape [samples, channels]");
         }
         dims.push_back(DataDimension::time(shape[0]));
         dims.push_back(DataDimension::channel(shape[1], strides[1]));
@@ -128,7 +138,11 @@ std::vector<DataDimension> DataDimension::create_dimensions(
 
     case DataModality::IMAGE_2D:
         if (shape.size() != 2) {
-            throw std::invalid_argument("IMAGE_2D requires 2D shape [height, width]");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "IMAGE_2D requires 2D shape [height, width]");
         }
         dims.push_back(DataDimension::spatial(shape[0], 'y', strides[0]));
         dims.push_back(DataDimension::spatial(shape[1], 'x', strides[1]));
@@ -136,7 +150,11 @@ std::vector<DataDimension> DataDimension::create_dimensions(
 
     case DataModality::IMAGE_COLOR:
         if (shape.size() != 3) {
-            throw std::invalid_argument("IMAGE_COLOR requires 3D shape [height, width, channels]");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "IMAGE_COLOR requires 3D shape [height, width, channels]");
         }
         dims.push_back(DataDimension::spatial(shape[0], 'y', strides[0]));
         dims.push_back(DataDimension::spatial(shape[1], 'x', strides[1]));
@@ -145,7 +163,11 @@ std::vector<DataDimension> DataDimension::create_dimensions(
 
     case DataModality::SPECTRAL_2D:
         if (shape.size() != 2) {
-            throw std::invalid_argument("SPECTRAL_2D requires 2D shape [time_windows, frequency_bins]");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "SPECTRAL_2D requires 2D shape [time_windows, frequency_bins]");
         }
         dims.push_back(DataDimension::time(shape[0], "time_windows"));
         dims.push_back(DataDimension::frequency(shape[1]));
@@ -154,7 +176,11 @@ std::vector<DataDimension> DataDimension::create_dimensions(
 
     case DataModality::VOLUMETRIC_3D:
         if (shape.size() != 3) {
-            throw std::invalid_argument("VOLUMETRIC_3D requires 3D shape [x, y, z]");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "VOLUMETRIC_3D requires 3D shape [x, y, z]");
         }
         dims.push_back(DataDimension::spatial(shape[0], 'x', strides[0]));
         dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
@@ -163,7 +189,11 @@ std::vector<DataDimension> DataDimension::create_dimensions(
 
     case DataModality::VIDEO_GRAYSCALE:
         if (shape.size() != 3) {
-            throw std::invalid_argument("VIDEO_GRAYSCALE requires 3D shape [frames, height, width]");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "VIDEO_GRAYSCALE requires 3D shape [frames, height, width]");
         }
         dims.push_back(DataDimension::time(shape[0], "frames"));
         dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
@@ -172,7 +202,11 @@ std::vector<DataDimension> DataDimension::create_dimensions(
 
     case DataModality::VIDEO_COLOR:
         if (shape.size() != 4) {
-            throw std::invalid_argument("VIDEO_COLOR requires 4D shape [frames, height, width, channels]");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya,
+                Journal::Context::Runtime,
+                std::source_location::current(),
+                "VIDEO_COLOR requires 4D shape [frames, height, width, channels]");
         }
         dims.push_back(DataDimension::time(shape[0], "frames"));
         dims.push_back(DataDimension::spatial(shape[1], 'y', strides[1]));
@@ -181,7 +215,11 @@ std::vector<DataDimension> DataDimension::create_dimensions(
         break;
 
     default:
-        throw std::invalid_argument("Unsupported modality for dimension creation");
+        error<std::invalid_argument>(
+            Journal::Component::Kakshya,
+            Journal::Context::Runtime,
+            std::source_location::current(),
+            "Unsupported modality for dimension creation: {}", modality_to_string(modality));
     }
 
     return dims;

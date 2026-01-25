@@ -99,7 +99,7 @@ public:
      * Uploads all geometry nodes to their target vertex buffers.
      * Uses staging buffers for device-local targets.
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
 private:
     std::unordered_map<std::string, GeometryBinding> m_bindings;

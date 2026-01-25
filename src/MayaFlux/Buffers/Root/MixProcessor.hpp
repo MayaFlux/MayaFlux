@@ -17,26 +17,26 @@ struct MAYAFLUX_API MixSource {
     double mix_level = 1.0;
     bool once = false;
 
-    MixSource(std::shared_ptr<AudioBuffer> buffer, double level = 1.0, bool once_flag = false);
+    MixSource(const std::shared_ptr<AudioBuffer>& buffer, double level = 1.0, bool once_flag = false);
 
-    bool is_valid() const
+    [[nodiscard]] bool is_valid() const
     {
         return !buffer_ref.expired() && !data.empty();
     }
 
     bool refresh_data();
 
-    bool matches_buffer(const std::shared_ptr<AudioBuffer>& buffer) const
+    [[nodiscard]] bool matches_buffer(const std::shared_ptr<AudioBuffer>& buffer) const
     {
         return !buffer_ref.expired() && buffer_ref.lock() == buffer;
     }
 
-    inline bool has_sample_at(size_t index) const
+    [[nodiscard]] inline bool has_sample_at(size_t index) const
     {
         return index < data.size();
     }
 
-    inline double get_mixed_sample(size_t index) const
+    [[nodiscard]] inline double get_mixed_sample(size_t index) const
     {
         return data[index] * mix_level;
     }
@@ -69,7 +69,7 @@ public:
     bool register_source(std::shared_ptr<AudioBuffer> source, double mix_level = 1.0, bool once = false);
 
     /** @brief the mechanism to mix output from one buffer to another channel */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Removes a source buffer from the mix

@@ -19,7 +19,7 @@ public:
      *
      * @throws std::runtime_error if buffer is not acceptable based on current token enforcement strategy
      */
-    virtual void add_child_buffer(std::shared_ptr<BufferType> buffer)
+    virtual void add_child_buffer(const std::shared_ptr<BufferType>& buffer)
     {
         if (this->is_processing()) {
             for (auto& m_pending_op : m_pending_ops) {
@@ -46,7 +46,7 @@ public:
      * This is a non-throwing version of add_child_buffer() that can be used
      * when you want to handle rejection gracefully without exception handling.
      */
-    virtual bool try_add_child_buffer(std::shared_ptr<BufferType> buffer, std::string* rejection_reason = nullptr)
+    virtual bool try_add_child_buffer(const std::shared_ptr<BufferType>& buffer, std::string* rejection_reason = nullptr)
     {
         if (!is_buffer_acceptable(buffer, rejection_reason)) {
             return false;
@@ -60,7 +60,7 @@ public:
      * @brief Removes a tributary buffer from this root buffer
      * @param buffer Child buffer to remove from the aggregation hierarchy
      */
-    virtual void remove_child_buffer(std::shared_ptr<BufferType> buffer)
+    virtual void remove_child_buffer(const std::shared_ptr<BufferType>& buffer)
     {
         if (this->is_processing()) {
             for (auto& m_pending_op : m_pending_ops) {
@@ -164,7 +164,7 @@ public:
      * logic and the actual buffer addition process, making the code more maintainable
      * and testable.
      */
-    bool is_buffer_acceptable(std::shared_ptr<BufferType> buffer, std::string* rejection_reason = nullptr) const
+    bool is_buffer_acceptable(const std::shared_ptr<BufferType>& buffer, std::string* rejection_reason = nullptr) const
     {
         auto default_processor = buffer->get_default_processor();
         if (!default_processor) {
@@ -221,7 +221,7 @@ public:
     }
 
 protected:
-    void add_child_buffer_direct(std::shared_ptr<BufferType> buffer)
+    void add_child_buffer_direct(const std::shared_ptr<BufferType>& buffer)
     {
         std::string rejection_reason;
         if (!is_buffer_acceptable(buffer, &rejection_reason)) {
@@ -235,7 +235,7 @@ protected:
         }
     }
 
-    void remove_child_buffer_direct(std::shared_ptr<BufferType> buffer)
+    void remove_child_buffer_direct(const std::shared_ptr<BufferType>& buffer)
     {
         auto it = std::find(m_child_buffers.begin(), m_child_buffers.end(), buffer);
         if (it != m_child_buffers.end()) {

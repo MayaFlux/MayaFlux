@@ -107,9 +107,9 @@ TEST_F(AudioBufferTest, CloneTo)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer>) override { }
+        void processing_function(const std::shared_ptr<Buffers::Buffer>&) override { }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
@@ -144,12 +144,11 @@ TEST_F(AudioBufferTest, ProcessorManagement)
     class TestProcessor : public Buffers::BufferProcessor {
     public:
         TestProcessor()
-            : process_called(false)
         {
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             process_called = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -160,7 +159,7 @@ TEST_F(AudioBufferTest, ProcessorManagement)
             }
         }
 
-        void on_attach(std::shared_ptr<Buffers::Buffer> buffer) override
+        void on_attach(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             attach_called = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -169,12 +168,12 @@ TEST_F(AudioBufferTest, ProcessorManagement)
             }
         }
 
-        void on_detach(std::shared_ptr<Buffers::Buffer>) override
+        void on_detach(const std::shared_ptr<Buffers::Buffer>&) override
         {
             detach_called = true;
         }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
@@ -222,7 +221,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             called_flag = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -233,7 +232,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
             }
         }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
@@ -250,7 +249,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
             m_processing_token = Buffers::ProcessingToken::AUDIO_BACKEND;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer> buffer) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>& buffer) override
         {
             called_flag = true;
             auto audio_buffer = std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer);
@@ -261,7 +260,7 @@ TEST_F(AudioBufferTest, ProcessingChain)
             }
         }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
@@ -320,12 +319,12 @@ TEST_F(AudioBufferTest, TokenCompatibility)
             m_processing_token = token;
         }
 
-        void processing_function(std::shared_ptr<Buffers::Buffer>) override
+        void processing_function(const std::shared_ptr<Buffers::Buffer>&) override
         {
             // Test processing implementation
         }
 
-        bool is_compatible_with(std::shared_ptr<Buffers::Buffer> buffer) const override
+        bool is_compatible_with(const std::shared_ptr<Buffers::Buffer>& buffer) const override
         {
             return std::dynamic_pointer_cast<Buffers::AudioBuffer>(buffer) != nullptr;
         }
@@ -347,7 +346,7 @@ class FeedbackBufferTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        feedback_buffer = std::make_shared<Buffers::FeedbackBuffer>(0, TestConfig::BUFFER_SIZE, 0.5f);
+        feedback_buffer = std::make_shared<Buffers::FeedbackBuffer>(0, TestConfig::BUFFER_SIZE, 0.5F);
     }
 
     std::shared_ptr<Buffers::FeedbackBuffer> feedback_buffer;
@@ -357,7 +356,7 @@ TEST_F(FeedbackBufferTest, Initialization)
 {
     EXPECT_EQ(feedback_buffer->get_channel_id(), 0);
     EXPECT_EQ(feedback_buffer->get_num_samples(), TestConfig::BUFFER_SIZE);
-    EXPECT_FLOAT_EQ(feedback_buffer->get_feedback(), 0.5f);
+    EXPECT_FLOAT_EQ(feedback_buffer->get_feedback(), 0.5F);
 
     const auto& prev_buffer = feedback_buffer->get_previous_buffer();
     EXPECT_EQ(prev_buffer.size(), TestConfig::BUFFER_SIZE);
@@ -387,8 +386,8 @@ TEST_F(FeedbackBufferTest, FeedbackProcessing)
         EXPECT_DOUBLE_EQ(sample, 1.5);
     }
 
-    feedback_buffer->set_feedback(0.25f);
-    EXPECT_FLOAT_EQ(feedback_buffer->get_feedback(), 0.25f);
+    feedback_buffer->set_feedback(0.25F);
+    EXPECT_FLOAT_EQ(feedback_buffer->get_feedback(), 0.25F);
 
     feedback_buffer->process_default();
 
@@ -401,7 +400,7 @@ class NodeBufferTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+        sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
         node_buffer = std::make_shared<Buffers::NodeBuffer>(0, TestConfig::BUFFER_SIZE, sine);
     }
 

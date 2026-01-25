@@ -120,19 +120,19 @@ public:
      * The Logic node handles all temporal state, callbacks, and logic computation.
      * The processor only manages iteration and modulation application.
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when the processor is attached to a buffer
      * @param buffer The buffer this processor is being attached to
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when the processor is detached from a buffer
      * @param buffer The buffer this processor is being detached from
      */
-    inline void on_detach(std::shared_ptr<Buffer>) override { }
+    inline void on_detach(const std::shared_ptr<Buffer>&) override { }
 
     /**
      * @brief Generates discrete logic data from input without modifying any buffer

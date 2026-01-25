@@ -51,6 +51,8 @@ void ComputeProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buff
     }
 
     std::vector<std::vector<Portal::Graphics::DescriptorBindingInfo>> descriptor_sets;
+
+    descriptor_sets.reserve(bindings_by_set.size());
     for (const auto& [set_index, set_bindings] : bindings_by_set) {
         descriptor_sets.push_back(set_bindings);
     }

@@ -55,7 +55,7 @@ public:
      *
      * This method is thread-safe and can be called from real-time threads.
      */
-    virtual void process_default() override;
+    void process_default() override;
 
     /**
      * @brief Resizes this buffer and all tributary buffers
@@ -64,7 +64,7 @@ public:
      * Adjusts the capacity of this buffer and all its tributary buffers to
      * ensure consistent buffer dimensions throughout the aggregation hierarchy.
      */
-    virtual void resize(uint32_t num_samples) override;
+    void resize(uint32_t num_samples) override;
 
     /**
      * @brief Sets direct node network output data for this buffer
@@ -96,13 +96,13 @@ public:
      * token-based processing cycles. When inactive, the buffer won't process
      * even if its token is being processed by the system.
      */
-    inline virtual void set_token_active(bool active) override { m_token_active = active; }
+    inline void set_token_active(bool active) override { m_token_active = active; }
 
     /**
      * @brief Checks if the buffer is active for its assigned token
      * @return True if the buffer will process when its token is processed
      */
-    inline virtual bool is_token_active() const override { return m_token_active; }
+    inline bool is_token_active() const override { return m_token_active; }
 
 protected:
     /**
@@ -112,7 +112,7 @@ protected:
      * Root buffers use a ChannelProcessor as their default processor,
      * which handles combining tributary buffers and node network output.
      */
-    virtual std::shared_ptr<BufferProcessor> create_default_processor() override;
+    std::shared_ptr<BufferProcessor> create_default_processor() override;
 
 private:
     /**
@@ -157,7 +157,7 @@ public:
      * circular references, as the root buffer already owns a shared_ptr
      * to this processor in the object composition hierarchy.
      */
-    ChannelProcessor(std::shared_ptr<Buffer> root_buffer);
+    ChannelProcessor(const std::shared_ptr<Buffer>& root_buffer);
 
     /**
      * @brief Processes a buffer by combining tributary buffers and node network output
@@ -170,7 +170,7 @@ public:
      *
      * The combination algorithm can be customized in the implementation.
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer
@@ -179,14 +179,14 @@ public:
      * Validates that the buffer is a compatible RootAudioBuffer and ensures
      * token compatibility for proper processing pipeline integration.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with a specific buffer type
      * @param buffer Buffer to check compatibility with
      * @return True if compatible (buffer is RootAudioBuffer), false otherwise
      */
-    bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+    bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 
 private:
     /**
@@ -231,7 +231,7 @@ public:
      * being transmitted to hardware interfaces, while preserving the perceptual
      * characteristics of the original signal.
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer
@@ -240,14 +240,14 @@ public:
      * Validates that the buffer is an AudioBuffer-derived type and ensures
      * token compatibility for proper audio processing.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with a specific buffer type
      * @param buffer Buffer to check compatibility with
      * @return True if compatible (buffer is AudioBuffer-derived), false otherwise
      */
-    bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+    bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 };
 
 }

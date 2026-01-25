@@ -40,14 +40,14 @@ public:
      * Initializes region organization, caching, and dimension metadata.
      * @param container The SignalSourceContainer to attach to.
      */
-    void on_attach(std::shared_ptr<SignalSourceContainer> container) override;
+    void on_attach(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
      * @brief Detach this processor from its container.
      * Cleans up region organization and cache state.
      * @param container The SignalSourceContainer to detach from.
      */
-    void on_detach(std::shared_ptr<SignalSourceContainer> container) override;
+    void on_detach(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
      * @brief Query if the processor is currently performing processing.
@@ -113,7 +113,7 @@ protected:
      * Must be implemented by derived classes to define region logic.
      * @param container The SignalSourceContainer to organize.
      */
-    virtual void organize_container_data(std::shared_ptr<SignalSourceContainer> container) = 0;
+    virtual void organize_container_data(const std::shared_ptr<SignalSourceContainer>& container) = 0;
 
     /**
      * @brief Cache a region's data if beneficial and not already cached.

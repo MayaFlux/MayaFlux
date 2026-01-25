@@ -248,7 +248,7 @@ public:
      * 3. Runs each buffer's processing chain
      * 4. Handles synchronization and error cases
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer
@@ -257,14 +257,14 @@ public:
      * Validates that the buffer is a RootGraphicsBuffer and ensures
      * token compatibility for GPU processing.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with a specific buffer type
      * @param buffer Buffer to check compatibility with
      * @return True if compatible (buffer is RootGraphicsBuffer), false otherwise
      */
-    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+    [[nodiscard]] bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 
 private:
     /**
@@ -356,7 +356,7 @@ public:
      * This is the core rendering coordination point - all child buffers
      * have been processed by the time this executes.
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer
@@ -365,20 +365,20 @@ public:
      * Validates that the buffer is a RootGraphicsBuffer and ensures
      * token compatibility for graphics rendering.
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is detached from a buffer
      * @param buffer Buffer being detached from
      */
-    void on_detach(std::shared_ptr<Buffer> buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with a specific buffer type
      * @param buffer Buffer to check compatibility with
      * @return True if buffer is RootGraphicsBuffer, false otherwise
      */
-    [[nodiscard]] bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+    [[nodiscard]] bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 
     /**
      * @brief Sets or updates the render callback

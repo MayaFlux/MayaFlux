@@ -22,7 +22,7 @@ SoundStreamReader::SoundStreamReader(const std::shared_ptr<Kakshya::StreamContai
     }
 }
 
-void SoundStreamReader::processing_function(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::processing_function(const std::shared_ptr<Buffer>& buffer)
 {
     if (!m_container || !buffer) {
         return;
@@ -144,7 +144,7 @@ void SoundStreamReader::extract_channel_data(std::span<double> output)
     }
 }
 
-void SoundStreamReader::on_attach(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::on_attach(const std::shared_ptr<Buffer>& buffer)
 {
     if (!m_container || !buffer) {
         return;
@@ -174,7 +174,7 @@ void SoundStreamReader::on_attach(std::shared_ptr<Buffer> buffer)
     }
 }
 
-void SoundStreamReader::on_detach(std::shared_ptr<Buffer> buffer)
+void SoundStreamReader::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     if (m_container) {
         m_container->unregister_state_change_callback();
@@ -213,7 +213,7 @@ void SoundStreamReader::set_container(const std::shared_ptr<Kakshya::StreamConta
 }
 
 void SoundStreamReader::on_container_state_change(
-    const std::shared_ptr<Kakshya::SignalSourceContainer>& container,
+    const std::shared_ptr<Kakshya::SignalSourceContainer>& /*container*/,
     Kakshya::ProcessingState state)
 {
     switch (state) {

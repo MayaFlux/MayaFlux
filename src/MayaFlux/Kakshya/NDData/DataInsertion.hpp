@@ -78,7 +78,6 @@ public:
             m_variant = std::move(data);
             m_modality = target_modality;
 
-            // Create grouped dimension
             m_dimensions.clear();
             m_dimensions.push_back(create_structured_dimension<T>(
                 static_cast<uint64_t>(data.size()),
@@ -145,7 +144,6 @@ public:
      */
     void reserve_space(size_t element_count, DataModality target_modality)
     {
-        // Determine appropriate type based on modality
         if (is_structured_modality(target_modality)) {
             switch (target_modality) {
             case DataModality::VERTEX_POSITIONS_3D:
@@ -180,7 +178,6 @@ public:
                     modality_to_string(target_modality));
             }
         } else {
-            // Default to double for scalar modalities
             m_variant = std::vector<double>();
             std::get<std::vector<double>>(m_variant).reserve(element_count);
         }
@@ -283,7 +280,6 @@ private:
     [[nodiscard]] DataDimension create_structured_dimension(uint64_t element_count,
         DataModality modality) const
     {
-        // Use the static factory methods where available
         switch (modality) {
         case DataModality::VERTEX_POSITIONS_3D:
             return DataDimension::vertex_positions(element_count);
@@ -303,7 +299,6 @@ private:
         case DataModality::TRANSFORMATION_MATRIX:
         case DataModality::VERTEX_TANGENTS_3D:
         default: {
-            // Use grouped factory for other structured types
             constexpr size_t components = glm_component_count<T>();
             return DataDimension::grouped(
                 modality_to_dimension_name(modality),
@@ -328,7 +323,6 @@ private:
                     new_data.begin(),
                     new_data.end());
             } else if constexpr (std::is_arithmetic_v<ExistingType> && std::is_arithmetic_v<T>) {
-                // Convert and append
                 for (const auto& val : new_data) {
                     existing_vec.push_back(static_cast<ExistingType>(val));
                 }
@@ -344,7 +338,6 @@ private:
         },
             m_variant);
 
-        // Update dimension size
         if (!m_dimensions.empty()) {
             m_dimensions[0].size = std::visit(
                 [](const auto& vec) { return static_cast<uint64_t>(vec.size()); },
@@ -370,7 +363,6 @@ private:
         auto& existing = std::get<std::vector<T>>(m_variant);
         existing.insert(existing.end(), new_data.begin(), new_data.end());
 
-        // Update dimension size
         if (!m_dimensions.empty()) {
             m_dimensions[0].size = existing.size();
         }

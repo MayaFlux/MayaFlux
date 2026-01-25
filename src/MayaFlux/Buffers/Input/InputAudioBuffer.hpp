@@ -40,25 +40,25 @@ public:
      * @brief Writes buffer data to a specific listener buffer
      * @param buffer Target buffer to write to
      */
-    void write_to(std::shared_ptr<AudioBuffer> buffer);
+    void write_to(const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
      * @brief Registers a buffer as a listener of this input
      * @param buffer Buffer to receive input data
      */
-    void register_listener(std::shared_ptr<AudioBuffer> buffer);
+    void register_listener(const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
      * @brief Unregisters a listener buffer
      * @param buffer Buffer to unregister
      */
-    void unregister_listener(std::shared_ptr<AudioBuffer> buffer);
+    void unregister_listener(const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
      * @brief Gets all registered listeners
      * @return Vector of listener buffers
      */
-    const std::vector<std::shared_ptr<AudioBuffer>>& get_listeners() const;
+    const std::vector<const std::shared_ptr<AudioBuffer>&>& get_listeners() const;
 
     /**
      * @brief Clears all registered listeners
@@ -79,32 +79,32 @@ public:
      * @brief Main processing function - dispatches data to listeners
      * @param buffer Input buffer to process
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Called when processor is attached to a buffer
      * @param buffer Buffer being attached to
      */
-    void on_attach(std::shared_ptr<Buffer> buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Checks compatibility with buffer type
      * @param buffer Buffer to check
      * @return True if compatible with InputAudioBuffer
      */
-    bool is_compatible_with(std::shared_ptr<Buffer> buffer) const override;
+    bool is_compatible_with(const std::shared_ptr<Buffer>& buffer) const override;
 
     /**
      * @brief Adds a listener buffer
      * @param buffer Listener buffer
      */
-    void add_listener(std::shared_ptr<AudioBuffer> buffer);
+    void add_listener(const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
      * @brief Removes a listener buffer
      * @param buffer Listener buffer to remove
      */
-    void remove_listener(std::shared_ptr<AudioBuffer> buffer);
+    void remove_listener(const std::shared_ptr<AudioBuffer>& buffer);
 
     /**
      * @brief Gets the number of registered listeners

@@ -47,7 +47,7 @@ public:
      * @param container Target container for writing audio data
      * @param start_position Initial write position in frames (default: 0)
      */
-    explicit SoundStreamWriter(std::shared_ptr<Kakshya::DynamicSoundStream> container,
+    explicit SoundStreamWriter(const std::shared_ptr<Kakshya::DynamicSoundStream>& container,
         uint64_t start_position = 0)
         : m_container(container)
         , m_write_position(start_position)
@@ -60,7 +60,7 @@ public:
      * corresponding to the AudioBuffer's channel ID.
      * @param buffer AudioBuffer containing data to write
      */
-    void processing_function(std::shared_ptr<Buffer> buffer) override;
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
      * @brief Get the target DynamicSoundStream container.

@@ -1,9 +1,11 @@
 #include "RegionProcessorBase.hpp"
 #include "MayaFlux/Kakshya/SignalSourceContainer.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
-void RegionProcessorBase::on_attach(std::shared_ptr<SignalSourceContainer> container)
+void RegionProcessorBase::on_attach(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
         throw std::invalid_argument("Container cannot be null");
@@ -22,7 +24,7 @@ void RegionProcessorBase::on_attach(std::shared_ptr<SignalSourceContainer> conta
     container->mark_ready_for_processing(true);
 }
 
-void RegionProcessorBase::on_detach(std::shared_ptr<SignalSourceContainer> /*container*/)
+void RegionProcessorBase::on_detach(const std::shared_ptr<SignalSourceContainer>& /*container*/)
 {
     m_container_weak.reset();
     m_cache_manager.reset();
@@ -49,7 +51,8 @@ void RegionProcessorBase::cache_region_if_needed(const RegionSegment& segment, c
 
             m_cache_manager->cache_region(cache);
         } catch (const std::exception& e) {
-            // Silently fail caching - not critical
+            MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "Failed to cache region segment: {}", e.what());
         }
     }
 }
