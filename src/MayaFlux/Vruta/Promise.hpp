@@ -356,6 +356,8 @@ struct event_promise : public routine_promise<Event> {
     Event get_return_object();
 
     ProcessingToken processing_token { ProcessingToken::EVENT_DRIVEN };
+
+    DelayContext active_delay_context { DelayContext::EVENT_BASED };
 };
 
 }

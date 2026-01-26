@@ -410,7 +410,8 @@ struct WindowEvent {
         uint32_t width, height;
     };
     struct KeyData {
-        int32_t key, scancode, mods;
+        int16_t key;
+        int32_t scancode, mods;
     };
     struct MousePosData {
         double x, y;
