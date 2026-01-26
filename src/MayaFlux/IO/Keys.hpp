@@ -146,79 +146,79 @@ enum class Keys : int16_t {
  * @param c The character to convert.
  * @return An optional Keys value if the character matches a key, std::nullopt otherwise.
  */
-std::optional<Keys> from_char(char c) noexcept;
+MAYAFLUX_API std::optional<Keys> from_char(char c) noexcept;
 
 /**
  * @brief Converts a string to the corresponding Keys enum value.
  * @param str The string to convert.
  * @return An optional Keys value if the string matches a key, std::nullopt otherwise.
  */
-std::optional<Keys> from_string(std::string_view str) noexcept;
+MAYAFLUX_API std::optional<Keys> from_string(std::string_view str) noexcept;
 
 /**
  * @brief Converts a Keys enum value to its string representation.
  * @param key The key to convert.
  * @return The string view representing the key.
  */
-std::string_view to_string(Keys key) noexcept;
+MAYAFLUX_API std::string_view to_string(Keys key) noexcept;
 
 /**
  * @brief Converts a Keys enum value to its lowercase string representation.
  * @param key The key to convert.
  * @return The lowercase string representing the key.
  */
-std::string to_lowercase_string(Keys key) noexcept;
+MAYAFLUX_API std::string to_lowercase_string(Keys key) noexcept;
 
 /**
  * @brief Checks if a key is a printable character.
  * @param key The key to check.
  * @return True if the key is printable, false otherwise.
  */
-bool is_printable(Keys key) noexcept;
+MAYAFLUX_API bool is_printable(Keys key) noexcept;
 
 /**
  * @brief Checks if a key is a modifier key (e.g., Shift, Ctrl, Alt).
  * @param key The key to check.
  * @return True if the key is a modifier, false otherwise.
  */
-bool is_modifier(Keys key) noexcept;
+MAYAFLUX_API bool is_modifier(Keys key) noexcept;
 
 /**
  * @brief Checks if a key is a function key (e.g., F1-F25).
  * @param key The key to check.
  * @return True if the key is a function key, false otherwise.
  */
-bool is_function_key(Keys key) noexcept;
+MAYAFLUX_API bool is_function_key(Keys key) noexcept;
 
 /**
  * @brief Checks if a key is a keypad key.
  * @param key The key to check.
  * @return True if the key is a keypad key, false otherwise.
  */
-bool is_keypad_key(Keys key) noexcept;
+MAYAFLUX_API bool is_keypad_key(Keys key) noexcept;
 
 /**
  * @brief Returns a vector of all key names in lowercase.
  * @return A vector of lowercase key names.
  */
-std::vector<std::string> all_key_names_lowercase() noexcept;
+MAYAFLUX_API std::vector<std::string> all_key_names_lowercase() noexcept;
 
 /**
  * @brief Returns a container of all key names.
  * @return A container of all key names.
  */
-auto all_key_names() noexcept;
+MAYAFLUX_API auto all_key_names() noexcept;
 
 /**
  * @brief Returns a container of all Keys enum values.
  * @return A container of all Keys values.
  */
-auto all_keys() noexcept;
+MAYAFLUX_API auto all_keys() noexcept;
 
 /**
  * @brief Returns the total number of keys.
  * @return The number of keys.
  */
-size_t key_count() noexcept;
+MAYAFLUX_API size_t key_count() noexcept;
 
 } // namespace MayaFlux::IO

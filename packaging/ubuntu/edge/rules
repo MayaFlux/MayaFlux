@@ -4,16 +4,22 @@ export CC=gcc-15
 export CXX=g++-15
 
 %:
-	dh $@ --buildsystem=cmake --parallel
+	dh $@ --parallel
 
 override_dh_auto_configure:
-	dh_auto_configure -- \
+	dh_auto_configure \
+	  --buildsystem=cmake+ninja -- \
 	  -DCMAKE_CXX_STANDARD=23 \
 	  -DMAYAFLUX_BUILD_TESTS=OFF
 
-override_dh_auto_build:
+override_dh_auto_build-arch:
 	dh_auto_build
-	doxygen doxyconf || true
+
+override_dh_auto_build-indep:
+	doxygen doxyconf
+
+override_dh_auto_test:
+	:
 
 override_dh_shlibdeps:
 	dh_shlibdeps -l$(CURDIR)/debian/mayaflux-edge/usr/lib -- -xmayaflux-edge

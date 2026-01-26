@@ -15,7 +15,7 @@ namespace MayaFlux::Core {
  *
  * @note Unknown/unmapped GLFW keys are converted to Keys::Unknown
  */
-IO::Keys from_glfw_key(int glfw_key) noexcept;
+MAYAFLUX_API IO::Keys from_glfw_key(int glfw_key) noexcept;
 
 /**
  * @brief Convert a MayaFlux Keys enum to GLFW key code.
@@ -26,7 +26,7 @@ IO::Keys from_glfw_key(int glfw_key) noexcept;
  * @param key The IO::Keys value to convert
  * @return The corresponding GLFW key code
  */
-int to_glfw_key(IO::Keys key) noexcept;
+MAYAFLUX_API int to_glfw_key(IO::Keys key) noexcept;
 
 /**
  * @brief Check if a GLFW key code is valid/supported.
@@ -34,6 +34,6 @@ int to_glfw_key(IO::Keys key) noexcept;
  * @param glfw_key GLFW key code to validate
  * @return True if the key is a recognized MayaFlux key, false otherwise
  */
-bool is_valid_glfw_key(int glfw_key) noexcept;
+MAYAFLUX_API bool is_valid_glfw_key(int glfw_key) noexcept;
 
 } // namespace MayaFlux::Core

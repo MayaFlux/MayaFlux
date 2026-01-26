@@ -1,4 +1,4 @@
-%global builddate %(date -u +'%%Y%%m%%d%%H%%M%%S')
+%global builddate %(date -u +'%%Y%%m%%d%%H')
 
 Name:           mayaflux-dev
 Version:        0.2.0
@@ -109,7 +109,7 @@ and live coding features. This is intentional.
     -DMAYAFLUX_PORTABLE=OFF \
     -DMAYAFLUX_BUILD_TESTS=OFF
 
-%cmake_build
+%cmake_build --parallel
 
 %install
 %cmake_install
