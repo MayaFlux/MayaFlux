@@ -63,6 +63,7 @@
 #include "Buffers/Textures/TextureBuffer.hpp"
 
 #include "Kriya/Awaiters/DelayAwaiters.hpp"
+#include "Kriya/Awaiters/EventAwaiter.hpp"
 #include "Kriya/BufferPipeline.hpp"
 #include "Kriya/Chain.hpp"
 #include "Kriya/CycleCoordinator.hpp"
