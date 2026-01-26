@@ -22,10 +22,19 @@ else()
     )
 endif()
 
+file(GLOB_RECURSE EXAMPLES
+    "${CMAKE_CURRENT_SOURCE_DIR}/examples/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/examples/*.cpp"
+)
+if(EXAMPLES)
+    list(APPEND USER_SOURCES ${EXAMPLES})
+endif()
+
 add_executable(project_launcher main.cpp ${HEADERS} ${USER_SOURCES})
 set_target_properties(project_launcher PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
 target_link_libraries(project_launcher PRIVATE MayaFluxLib)
-target_precompile_headers(project_launcher PUBLIC ../cmake/pch.h)
+target_precompile_headers(project_launcher
+    PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)

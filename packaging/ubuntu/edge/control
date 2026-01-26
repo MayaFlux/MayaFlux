@@ -9,6 +9,8 @@ Build-Depends:
     pkg-config,
     g++-15,
     clang-21,
+    doxygen,
+    graphviz,
     llvm-21,
     llvm-21-dev,
     libclang-21-dev,
