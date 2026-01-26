@@ -5,7 +5,7 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 
 #include "MayaFlux/Kakshya/Source/DynamicSoundStream.hpp"
-#include "MayaFlux/Kriya/Awaiters.hpp"
+#include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
