@@ -417,7 +417,8 @@ struct WindowEvent {
         double x, y;
     };
     struct MouseButtonData {
-        int32_t button, mods;
+        int8_t button;
+        int32_t mods;
     };
     struct ScrollData {
         double x_offset, y_offset;

@@ -142,6 +142,21 @@ enum class Keys : int16_t {
 };
 
 /**
+ * @brief Enumeration for mouse buttons.
+ */
+enum class MouseButtons : int8_t {
+    Left = 0,
+    Right = 1,
+    Middle = 2,
+    Button4 = 3,
+    Button5 = 4,
+    Button6 = 5,
+    Button7 = 6,
+    Button8 = 7,
+    Unknown = -1
+};
+
+/**
  * @brief Converts a character to the corresponding Keys enum value.
  * @param c The character to convert.
  * @return An optional Keys value if the character matches a key, std::nullopt otherwise.

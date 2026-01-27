@@ -19,6 +19,13 @@ void EventManager::add_event(const std::shared_ptr<Event>& event, const std::str
     if (!name.empty()) {
         m_named_events[event_name] = event;
     }
+
+    if (event->is_active()) {
+        auto handle = event->get_handle();
+        if (handle && !handle.done()) {
+            handle.resume();
+        }
+    }
 }
 
 bool EventManager::cancel_event(const std::string& name)
