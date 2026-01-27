@@ -292,6 +292,7 @@ void GraphicsSubsystem::process()
 
     register_windows_for_processing();
     m_backend->handle_window_resize();
+    render_all_windows();
 
     m_handle->windows.process();
 

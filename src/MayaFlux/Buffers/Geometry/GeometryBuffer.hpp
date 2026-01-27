@@ -36,12 +36,8 @@ class RenderProcessor;
  *
  *   auto particles = std::make_shared<ParticleSystem>(1000);
  *   auto buffer = std::make_shared<GeometryBuffer>(particles);
+ *   buffer->setup_rendering({ .target_window = window });
  *
- *   auto render = std::make_shared<RenderProcessor>(config);
- *   render->set_fragment_shader("particle.frag");
- *   render->set_target_window(window);
- *
- *   buffer->add_processor(render) | Graphics;
  */
 class MAYAFLUX_API GeometryBuffer : public VKBuffer {
 public:

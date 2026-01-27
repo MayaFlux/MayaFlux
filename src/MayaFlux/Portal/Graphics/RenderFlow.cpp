@@ -569,7 +569,12 @@ void RenderFlow::begin_rendering(
     color_attachment.resolveImageLayout = vk::ImageLayout::eUndefined;
     color_attachment.loadOp = vk::AttachmentLoadOp::eClear;
     color_attachment.storeOp = vk::AttachmentStoreOp::eStore;
-    color_attachment.clearValue.color = vk::ClearColorValue(clear_color);
+
+    if (clear_color != default_color) {
+        color_attachment.clearValue.color = vk::ClearColorValue(clear_color);
+    } else {
+        color_attachment.clearValue.color = vk::ClearColorValue(window->get_create_info().clear_color);
+    }
 
     vk::RenderingInfo rendering_info {};
     rendering_info.sType = vk::StructureType::eRenderingInfo;

@@ -48,9 +48,10 @@ void RenderProcessor::set_tess_eval_shader(const std::string& tess_eval_path)
     m_needs_pipeline_rebuild = true;
 }
 
-void RenderProcessor::set_target_window(std::shared_ptr<Core::Window> window)
+void RenderProcessor::set_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer)
 {
-    m_target_window = std::move(window);
+    m_target_window = window;
+    window->register_rendering_buffer(buffer);
 }
 
 void RenderProcessor::bind_texture(

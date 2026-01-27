@@ -62,7 +62,7 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
     }
 
     m_render_processor->set_fragment_shader(config.fragment_shader);
-    m_render_processor->set_target_window(config.target_window);
+    m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
     m_render_processor->set_primitive_topology(config.topology);
     m_render_processor->set_polygon_mode(config.polygon_mode);
     m_render_processor->set_cull_mode(config.cull_mode);
