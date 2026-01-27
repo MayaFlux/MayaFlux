@@ -74,6 +74,8 @@ public:
 
     void set_position(uint32_t x, uint32_t y) override;
 
+    void set_color(const std::array<float, 4>& color) override;
+
     Vruta::EventSource& get_event_source() override { return m_event_source; }
     [[nodiscard]] const Vruta::EventSource& get_event_source() const override { return m_event_source; }
 

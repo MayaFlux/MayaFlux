@@ -18,6 +18,8 @@ class VKBuffer;
 
 namespace MayaFlux::Portal::Graphics {
 
+const std::array<float, 4> default_color { 0.0F, 0.0F, 0.0F, 1.0F };
+
 /**
  * @class RenderFlow
  * @brief Graphics pipeline orchestration for dynamic rendering
@@ -123,7 +125,7 @@ public:
         CommandBufferID cmd_id,
         const std::shared_ptr<Core::Window>& window,
         vk::Image swapchain_image,
-        const std::array<float, 4>& clear_color = { 0.0F, 0.0F, 0.0F, 1.0F });
+        const std::array<float, 4>& clear_color = default_color);
 
     /**
      * @brief End dynamic rendering

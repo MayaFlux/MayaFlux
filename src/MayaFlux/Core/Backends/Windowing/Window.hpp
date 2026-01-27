@@ -104,6 +104,12 @@ public:
     virtual void set_position(uint32_t x, uint32_t y) = 0;
 
     /**
+     * @brief Set the clear color for the window
+     * @param color RGBA color array
+     */
+    virtual void set_color(const std::array<float, 4>& color) = 0;
+
+    /**
      * @brief Gets the event source for awaiting events
      */
     [[nodiscard]] virtual Vruta::EventSource& get_event_source() = 0;

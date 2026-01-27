@@ -265,6 +265,11 @@ void GlfwWindow::set_position(uint32_t x, uint32_t y)
     }
 }
 
+void GlfwWindow::set_color(const std::array<float, 4>& color)
+{
+    m_create_info.clear_color = color;
+}
+
 void GlfwWindow::glfw_window_close_callback(GLFWwindow* window)
 {
     auto* win = static_cast<GlfwWindow*>(glfwGetWindowUserPointer(window));

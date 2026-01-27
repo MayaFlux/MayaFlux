@@ -263,32 +263,32 @@ struct MAYAFLUX_API GlobalGraphicsConfig {
  */
 struct MAYAFLUX_API WindowCreateInfo {
     /** @brief Window title/identifier */
-    std::string title = "MayaFlux Window";
+    std::string title { "MayaFlux Window" };
 
     /** @brief Initial window dimensions */
-    uint32_t width = 1920;
-    uint32_t height = 1080;
+    uint32_t width { 1920 };
+    uint32_t height { 1080 };
 
     /** @brief Target monitor ID (-1 = primary monitor) */
-    int32_t monitor_id = -1;
+    int32_t monitor_id { -1 };
 
     /** @brief Start in fullscreen mode */
-    bool fullscreen = false;
+    bool fullscreen {};
 
     /** @brief Window can be resized by user */
-    bool resizable = true;
+    bool resizable { true };
 
     /** @brief Show OS window decorations (title bar, borders) */
-    bool decorated = true;
+    bool decorated { true };
 
     /** @brief Transparent framebuffer (compositing) */
-    bool transparent = false;
+    bool transparent {};
 
     /** @brief Window always on top */
-    bool floating = false;
+    bool floating {};
 
     /** @brief Register this window for processing (if false, no grpahics API handles visuals) */
-    bool register_for_processing = true;
+    bool register_for_processing { true };
 
     /** @brief Override global surface format (nullopt = use global default) */
     std::optional<GraphicsSurfaceInfo::SurfaceFormat> surface_format;
@@ -298,10 +298,12 @@ struct MAYAFLUX_API WindowCreateInfo {
 
     /** @brief Container dimensions (channels) */
     struct {
-        uint32_t color_channels = 4;
-        bool has_depth = false;
-        bool has_stencil = false;
+        uint32_t color_channels { 4 };
+        bool has_depth {};
+        bool has_stencil {};
     } container_format;
+
+    std::array<float, 4> clear_color { { 0.0F, 0.0F, 0.0F, 1.0F } };
 };
 
 //==============================================================================
