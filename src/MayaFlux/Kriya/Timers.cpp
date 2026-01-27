@@ -1,6 +1,6 @@
 #include "Timers.hpp"
 #include "MayaFlux/API/Graph.hpp"
-#include "MayaFlux/Kriya/Awaiters.hpp"
+#include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"

@@ -5,7 +5,10 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Kriya/BufferPipeline.hpp"
 #include "MayaFlux/Kriya/Chain.hpp"
+#include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
+
+#include "MayaFlux/Kriya/InputEvents.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -127,6 +130,127 @@ Kriya::ActionToken Action(std::function<void()> func)
 std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline()
 {
     return Kriya::BufferPipeline::create(*get_scheduler(), get_context().get_buffer_manager());
+}
+
+void on_key_pressed(
+    const std::shared_ptr<Core::Window>& window,
+    IO::Keys key,
+    std::function<void()> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "key_press_" + std::to_string(event_manager->get_next_event_id());
+    }
+
+    auto event = std::make_shared<Vruta::Event>(
+        Kriya::key_pressed(window, key, std::move(callback)));
+
+    event_manager->add_event(event, name);
+}
+
+void on_key_released(
+    const std::shared_ptr<Core::Window>& window,
+    IO::Keys key,
+    std::function<void()> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "key_release_" + std::to_string(event_manager->get_next_event_id());
+    }
+
+    auto event = std::make_shared<Vruta::Event>(
+        Kriya::key_released(window, key, std::move(callback)));
+
+    event_manager->add_event(event, name);
+}
+
+void on_any_key(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<void(IO::Keys)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "any_key_" + std::to_string(event_manager->get_next_event_id());
+    }
+
+    auto event = std::make_shared<Vruta::Event>(
+        Kriya::any_key(window, std::move(callback)));
+
+    event_manager->add_event(event, name);
+}
+
+void on_mouse_pressed(
+    const std::shared_ptr<Core::Window>& window,
+    IO::MouseButtons button,
+    std::function<void(double, double)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "mouse_press_" + std::to_string(event_manager->get_next_event_id());
+    }
+
+    auto event = std::make_shared<Vruta::Event>(
+        Kriya::mouse_pressed(window, button, std::move(callback)));
+
+    event_manager->add_event(event, name);
+}
+
+void on_mouse_released(
+    const std::shared_ptr<Core::Window>& window,
+    IO::MouseButtons button,
+    std::function<void(double, double)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "mouse_release_" + std::to_string(event_manager->get_next_event_id());
+    }
+
+    auto event = std::make_shared<Vruta::Event>(
+        Kriya::mouse_released(window, button, std::move(callback)));
+
+    event_manager->add_event(event, name);
+}
+
+void on_mouse_move(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<void(double, double)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "mouse_move_" + std::to_string(event_manager->get_next_event_id());
+    }
+
+    auto event = std::make_shared<Vruta::Event>(
+        Kriya::mouse_moved(window, std::move(callback)));
+
+    event_manager->add_event(event, name);
+}
+
+void on_scroll(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<void(double, double)> callback,
+    std::string name)
+{
+    auto event_manager = get_event_manager();
+    if (name.empty()) {
+        name = "scroll_" + std::to_string(event_manager->get_next_event_id());
+    }
+
+    auto event = std::make_shared<Vruta::Event>(
+        Kriya::mouse_scrolled(window, std::move(callback)));
+
+    event_manager->add_event(event, name);
+}
+
+bool cancel_event_handler(const std::string& name)
+{
+    return get_event_manager()->cancel_event(name);
 }
 
 }

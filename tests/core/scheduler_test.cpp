@@ -1,6 +1,6 @@
 #include "../test_config.h"
 
-#include "MayaFlux/Kriya/Awaiters.hpp"
+#include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
 #include "MayaFlux/Kriya/Tasks.hpp"
 #include "MayaFlux/Vruta/Routine.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"

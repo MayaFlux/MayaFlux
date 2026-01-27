@@ -42,8 +42,8 @@ GlfwWindow::GlfwWindow(const WindowCreateInfo& create_info,
     }
 
     m_window = glfwCreateWindow(
-        create_info.width,
-        create_info.height,
+        (int32_t)create_info.width,
+        (int32_t)create_info.height,
         create_info.title.c_str(),
         monitor,
         nullptr);
@@ -353,7 +353,7 @@ void GlfwWindow::glfw_key_callback(GLFWwindow* window, int key, int scancode, in
     event.type = type;
     event.timestamp = glfwGetTime();
     event.data = WindowEvent::KeyData {
-        .key = key,
+        .key = static_cast<int16_t>(key),
         .scancode = scancode,
         .mods = mods
     };
@@ -399,7 +399,7 @@ void GlfwWindow::glfw_mouse_button_callback(GLFWwindow* window, int button, int 
     event.timestamp = glfwGetTime();
 
     event.data = WindowEvent::MouseButtonData {
-        .button = button,
+        .button = static_cast<int8_t>(button),
         .mods = mods
     };
 

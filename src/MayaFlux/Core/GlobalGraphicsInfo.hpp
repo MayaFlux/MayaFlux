@@ -410,13 +410,15 @@ struct WindowEvent {
         uint32_t width, height;
     };
     struct KeyData {
-        int32_t key, scancode, mods;
+        int16_t key;
+        int32_t scancode, mods;
     };
     struct MousePosData {
         double x, y;
     };
     struct MouseButtonData {
-        int32_t button, mods;
+        int8_t button;
+        int32_t mods;
     };
     struct ScrollData {
         double x_offset, y_offset;
@@ -440,7 +442,6 @@ struct WindowEvent {
     WindowEvent& operator=(WindowEvent&&) noexcept = default;
     ~WindowEvent() = default;
 };
-;
 
 using WindowEventCallback = std::function<void(const WindowEvent&)>;
 

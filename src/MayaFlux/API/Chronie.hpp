@@ -1,6 +1,12 @@
 #pragma once
 
+#include "MayaFlux/IO/Keys.hpp"
+
 namespace MayaFlux {
+
+namespace Core {
+    class Window;
+}
 
 namespace Nodes {
     class Node;
@@ -196,5 +202,146 @@ MAYAFLUX_API Kriya::ActionToken Action(std::function<void()> func);
  * Uses the task scheduler from the default engine.
  */
 MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline();
+
+/**
+ * @brief Schedule a key press handler
+ * @param window Window to listen to
+ * @param key Key to wait for
+ * @param callback Function to call on key press
+ * @param name Optional name for the event handler
+ *
+ * Example:
+ * @code
+ * MayaFlux::on_key_pressed(window, MayaFlux::IO::Keys::Escape, []() {
+ *     // Handle Escape key press
+ * }, "escape_handler");
+ * @endcode
+ */
+MAYAFLUX_API void on_key_pressed(
+    const std::shared_ptr<Core::Window>& window,
+    IO::Keys key,
+    std::function<void()> callback,
+    std::string name = "");
+
+/**
+ * @brief Schedule a key release handler
+ * @param window Window to listen to
+ * @param key Key to wait for
+ * @param callback Function to call on key release
+ * @param name Optional name for the event handler
+ *
+ * Example:
+ * @code
+ * MayaFlux::on_key_released(window, MayaFlux::IO::Keys::Enter, []() {
+ *     // Handle Enter key release
+ * }, "enter_release_handler");
+ * @endcode
+ */
+MAYAFLUX_API void on_key_released(
+    const std::shared_ptr<Core::Window>& window,
+    IO::Keys key,
+    std::function<void()> callback,
+    std::string name = "");
+
+/**
+ * @brief Schedule a handler for any key press
+ * @param window Window to listen to
+ * @param callback Function to call with key code when any key is pressed
+ * @param name Optional name for the event handler
+ *
+ * Example:
+ * @code
+ * MayaFlux::on_any_key(window, [](MayaFlux::IO::Keys key) {
+ *     // Handle any key press, key code in 'key'
+ * }, "any_key_handler");
+ * @endcode
+ */
+MAYAFLUX_API void on_any_key(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<void(IO::Keys)> callback,
+    std::string name = "");
+
+/**
+ * @brief Schedule a mouse button press handler
+ * @param window Window to listen to
+ * @param button Mouse button to wait for
+ * @param callback Function to call on button press (x, y)
+ * @param name Optional name for the event handler
+ *
+ * Example:
+ * @code
+ * MayaFlux::on_mouse_pressed(window, MayaFlux::IO::MouseButtons::Left, [](double x, double y) {
+ *     // Handle left mouse button press at (x, y)
+ * }, "mouse_left_press_handler");
+ * @endcode
+ */
+MAYAFLUX_API void on_mouse_pressed(
+    const std::shared_ptr<Core::Window>& window,
+    IO::MouseButtons button,
+    std::function<void(double, double)> callback,
+    std::string name = "");
+
+/**
+ * @brief Schedule a mouse button release handler
+ * @param window Window to listen to
+ * @param button Mouse button to wait for
+ * @param callback Function to call on button release (x, y)
+ * @param name Optional name for the event handler
+ *
+ * Example:
+ * @code
+ * MayaFlux::on_mouse_released(window, MayaFlux::IO::MouseButtons::Right, [](double x, double y) {
+ *     // Handle right mouse button release at (x, y)
+ * }, "mouse_right_release_handler");
+ * @endcode
+ */
+MAYAFLUX_API void on_mouse_released(
+    const std::shared_ptr<Core::Window>& window,
+    IO::MouseButtons button,
+    std::function<void(double, double)> callback,
+    std::string name = "");
+
+/**
+ * @brief Schedule a mouse movement handler
+ * @param window Window to listen to
+ * @param callback Function to call on mouse move (x, y)
+ * @param name Optional name for the event handler
+ *
+ * Example:
+ * @code
+ * MayaFlux::on_mouse_move(window, [](double x, double y) {
+ *     // Handle mouse move at (x, y)
+ * }, "mouse_move_handler");
+ * @endcode
+ */
+MAYAFLUX_API void on_mouse_move(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<void(double, double)> callback,
+    std::string name = "");
+
+/**
+ * @brief Schedule a mouse scroll handler
+ * @param window Window to listen to
+ * @param callback Function to call on scroll (xoffset, yoffset)
+ * @param name Optional name for the event handler
+ *
+ * Example:
+ * @code
+ * MayaFlux::on_scroll(window, [](double xoffset, double yoffset) {
+ *     // Handle mouse scroll with offsets
+ * }, "mouse_scroll_handler");
+ * @endcode
+ */
+MAYAFLUX_API void on_scroll(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<void(double, double)> callback,
+    std::string name = "");
+
+/**
+ * @brief Cancel an event handler by name
+ * @param name Event handler name
+ * @return True if cancelled successfully
+ */
+MAYAFLUX_API bool cancel_event_handler(const std::string& name);
 
 }

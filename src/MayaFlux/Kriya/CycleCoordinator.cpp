@@ -2,7 +2,7 @@
 
 #include "BufferPipeline.hpp"
 
-#include "MayaFlux/Kriya/Awaiters.hpp"
+#include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
 
 namespace MayaFlux::Kriya {
 
