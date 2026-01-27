@@ -29,6 +29,8 @@ void WindowRenderContext::cleanup(VKContext& context)
     }
     render_finished.clear();
 
+    clear_command_buffers.clear();
+
     for (auto& fence : in_flight) {
         if (fence) {
             device.destroyFence(fence);
@@ -266,6 +268,7 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
         config.image_available.resize(image_count);
         config.render_finished.resize(image_count);
         config.in_flight.resize(image_count);
+        config.clear_command_buffers.resize(image_count);
 
         vk::SemaphoreCreateInfo semaphore_info {};
         vk::FenceCreateInfo fence_info {};
@@ -274,6 +277,9 @@ bool BackendWindowHandler::create_sync_objects(WindowRenderContext& config)
         for (uint32_t i = 0; i < image_count; ++i) {
             config.image_available[i] = device.createSemaphore(semaphore_info);
             config.render_finished[i] = device.createSemaphore(semaphore_info);
+
+            config.clear_command_buffers[i] = m_command_manager.allocate_command_buffer(
+                vk::CommandBufferLevel::ePrimary);
         }
 
         for (auto& i : config.in_flight) {
@@ -320,14 +326,127 @@ bool BackendWindowHandler::recreate_swapchain_internal(WindowRenderContext& cont
 
 void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)
 {
-    MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-        "render_window() is not implemented in BackendWindowHandler. Dynamic rendering is expected to be handled externally.");
+    auto ctx = find_window_context(window);
+    if (!ctx) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Window '{}' not registered for rendering",
+            window->get_create_info().title);
+        return;
+    }
+
+    if (ctx->window && ctx->window->get_rendering_buffers().empty()) {
+        render_empty_window(*ctx);
+    }
 }
 
 void BackendWindowHandler::render_all_windows()
 {
     MF_RT_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "render_all_windows() is not implemented in BackendWindowHandler. Dynamic rendering is expected to be handled externally.");
+}
+
+void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
+{
+    auto window = ctx.window;
+
+    if (!window || !window->get_state().is_visible || !window->get_rendering_buffers().empty()) {
+        return;
+    }
+
+    try {
+        auto device = m_context.get_device();
+
+        size_t frame_index = ctx.current_frame;
+        auto& in_flight = ctx.in_flight[frame_index];
+        auto& image_available = ctx.image_available[frame_index];
+        auto& render_finished = ctx.render_finished[frame_index];
+
+        auto cmd_buffer = ctx.clear_command_buffers[frame_index];
+        if (!cmd_buffer) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "Clear command buffer not allocated for window '{}'",
+                window->get_create_info().title);
+            return;
+        }
+        cmd_buffer.reset({});
+
+        if (device.waitForFences(1, &in_flight, VK_TRUE, UINT64_MAX) == vk::Result::eTimeout) {
+            return;
+        }
+
+        auto image_index_opt = ctx.swapchain->acquire_next_image(image_available);
+        if (!image_index_opt.has_value()) {
+            ctx.needs_recreation = true;
+            return;
+        }
+        ctx.current_image_index = image_index_opt.value();
+
+        if (device.resetFences(1, &in_flight) != vk::Result::eSuccess) {
+            return;
+        }
+
+        vk::CommandBufferBeginInfo begin_info {};
+        begin_info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+        cmd_buffer.begin(begin_info);
+
+        const auto& image_views = ctx.swapchain->get_image_views();
+        auto extent = ctx.swapchain->get_extent();
+
+        vk::RenderingAttachmentInfo color_attachment {};
+        color_attachment.imageView = image_views[ctx.current_image_index];
+        color_attachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+        color_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+        color_attachment.storeOp = vk::AttachmentStoreOp::eStore;
+        color_attachment.clearValue.color = vk::ClearColorValue(
+            window->get_create_info().clear_color);
+
+        vk::RenderingInfo rendering_info {};
+        rendering_info.renderArea = vk::Rect2D { { 0, 0 }, extent };
+        rendering_info.layerCount = 1;
+        rendering_info.colorAttachmentCount = 1;
+        rendering_info.pColorAttachments = &color_attachment;
+
+        vk::ImageMemoryBarrier barrier {};
+        barrier.oldLayout = vk::ImageLayout::eUndefined;
+        barrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = ctx.swapchain->get_images()[ctx.current_image_index];
+        barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
+        barrier.subresourceRange.levelCount = 1;
+        barrier.subresourceRange.layerCount = 1;
+        barrier.srcAccessMask = {};
+        barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+
+        cmd_buffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTopOfPipe,
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            {}, {}, {}, barrier);
+
+        cmd_buffer.beginRendering(rendering_info);
+        cmd_buffer.endRendering();
+
+        barrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
+        barrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
+        barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+        barrier.dstAccessMask = {};
+
+        cmd_buffer.pipelineBarrier(
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits::eBottomOfPipe,
+            {}, {}, {}, barrier);
+
+        cmd_buffer.end();
+
+        submit_and_present(window, cmd_buffer);
+
+        ctx.current_frame = (ctx.current_frame + 1) % ctx.in_flight.size();
+
+    } catch (const std::exception& e) {
+        MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+            "Failed to render empty window '{}': {}",
+            window->get_create_info().title, e.what());
+    }
 }
 
 void BackendWindowHandler::submit_and_present(

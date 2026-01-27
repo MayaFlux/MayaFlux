@@ -22,6 +22,8 @@ struct WindowRenderContext {
     std::vector<vk::Semaphore> render_finished;
     std::vector<vk::Fence> in_flight;
 
+    std::vector<vk::CommandBuffer> clear_command_buffers;
+
     bool needs_recreation {};
     size_t current_frame {};
     uint32_t current_image_index {};
@@ -105,8 +107,15 @@ private:
      */
     bool recreate_swapchain_internal(WindowRenderContext& context);
 
-    // Event handling
-    // void on_window_event(const WindowEvent& event, std::shared_ptr<Window> window);
+    /**
+     * @brief Render empty windows with clear color
+     * @param ctx Window render context
+     *
+     * For windows that are registered for processing but have no buffers attached,
+     * this performs a minimal clear pass so the window is visible and responsive
+     * to input events.
+     */
+    void render_empty_window(WindowRenderContext& ctx);
 };
 
 }
