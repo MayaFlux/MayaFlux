@@ -56,6 +56,7 @@
 #include "Buffers/Node/NodeBuffer.hpp"
 #include "Buffers/Node/PolynomialProcessor.hpp"
 #include "Buffers/Recursive/FeedbackBuffer.hpp"
+#include "Buffers/Shaders/DescriptorBindingsProcessor.hpp"
 #include "Buffers/Shaders/RenderProcessor.hpp"
 #include "Buffers/Staging/BufferDownloadProcessor.hpp"
 #include "Buffers/Staging/BufferUploadProcessor.hpp"
@@ -67,6 +68,7 @@
 #include "Kriya/BufferPipeline.hpp"
 #include "Kriya/Chain.hpp"
 #include "Kriya/CycleCoordinator.hpp"
+#include "Kriya/InputEvents.hpp"
 #include "Kriya/Tasks.hpp"
 
 #include "Vruta/Event.hpp"
