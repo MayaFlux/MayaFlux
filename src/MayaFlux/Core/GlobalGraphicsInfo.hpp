@@ -442,7 +442,6 @@ struct WindowEvent {
     WindowEvent& operator=(WindowEvent&&) noexcept = default;
     ~WindowEvent() = default;
 };
-;
 
 using WindowEventCallback = std::function<void(const WindowEvent&)>;
 
