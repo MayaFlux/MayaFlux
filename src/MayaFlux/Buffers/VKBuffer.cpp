@@ -28,10 +28,7 @@ VKBuffer::VKBuffer(
         size_bytes, Kakshya::modality_to_string(modality));
 }
 
-VKBuffer::~VKBuffer()
-{
-    clear();
-}
+VKBuffer::~VKBuffer() = default;
 
 void VKBuffer::clear()
 {

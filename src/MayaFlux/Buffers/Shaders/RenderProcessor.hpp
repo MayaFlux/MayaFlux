@@ -29,7 +29,7 @@ public:
     void set_tess_control_shader(const std::string& tess_control_path);
     void set_tess_eval_shader(const std::string& tess_eval_path);
     void set_fragment_shader(const std::string& fragment_path);
-    void set_target_window(std::shared_ptr<Core::Window> window);
+    void set_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
 
     Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_pipeline_id; }
 
