@@ -1,7 +1,5 @@
 #include "EventManager.hpp"
 
-#include <algorithm>
-
 namespace MayaFlux::Vruta {
 
 void EventManager::add_event(const std::shared_ptr<Event>& event, const std::string& name)

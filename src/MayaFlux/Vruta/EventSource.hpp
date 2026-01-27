@@ -22,7 +22,7 @@ namespace MayaFlux::Vruta {
 struct MAYAFLUX_API EventFilter {
     std::optional<Core::WindowEventType> event_type;
     std::optional<IO::Keys> key_code; // For KEY_PRESSED/RELEASED filtering
-    std::optional<int> button; // For MOUSE_BUTTON_* filtering
+    std::optional<IO::MouseButtons> button; // For MOUSE_BUTTON_* filtering
 
     EventFilter() = default;
 
@@ -96,11 +96,46 @@ public:
      */
     void clear() { m_pending_events = {}; }
 
+    /**
+     * @brief Query if a specific key is currently pressed
+     * @param key The key to check
+     * @return True if key is currently pressed
+     */
+    [[nodiscard]] bool is_key_pressed(IO::Keys key) const;
+
+    /**
+     * @brief Query if a specific mouse button is currently pressed
+     * @param button Mouse button to check
+     * @return True if button is currently pressed
+     */
+    [[nodiscard]] bool is_mouse_pressed(int button) const;
+
+    /**
+     * @brief Get current mouse position
+     * @return Pair of (x, y) coordinates
+     */
+    [[nodiscard]] std::pair<double, double> get_mouse_position() const;
+
 private:
     std::queue<Core::WindowEvent> m_pending_events;
     std::vector<Kriya::EventAwaiter*> m_waiters;
 
-    std::optional<Core::WindowEvent> pop_event(std::optional<Core::WindowEventType> filter);
+    std::unordered_map<int16_t, bool> m_key_states;
+    std::unordered_map<int, bool> m_button_states;
+    double m_mouse_x {};
+    double m_mouse_y {};
+
+    /**
+     * @brief Pop event matching filter from queue
+     * @param filter Filter criteria
+     * @return Event if found, nullopt otherwise
+     *
+     * Searches the queue for an event matching all filter criteria.
+     * Removes and returns the first matching event, preserving order
+     * of non-matching events.
+     */
+    std::optional<Core::WindowEvent> pop_event(const EventFilter& filter);
+
     void register_waiter(Kriya::EventAwaiter* awaiter);
     void unregister_waiter(Kriya::EventAwaiter* awaiter);
 
