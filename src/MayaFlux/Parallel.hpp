@@ -109,8 +109,18 @@ bool dispatch_main_async_with_timeout(std::chrono::milliseconds timeout_ms, Func
 
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
 
-inline DWORD g_MainThreadId = 0;
+inline DWORD g_MainThreadId = 0; /// < Main thread ID, must be set at startup
 
+/**
+ * @brief Execute a function on the main thread asynchronously (Windows only)
+ * @tparam Func Callable type
+ * @tparam Args Argument types
+ * @param func Function to execute
+ * @param args Arguments to forward to the function
+ *
+ * Posts a message to the main thread's message queue to execute the function.
+ * Use this for GLFW operations that must execute on the main thread.
+ */
 template <typename Func, typename... Args>
 void dispatch_main_async(Func&& func, Args&&... args)
 {
