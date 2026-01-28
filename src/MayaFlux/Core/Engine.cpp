@@ -14,6 +14,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#include "MayaFlux/Parallel.hpp"
+#endif
+
 namespace MayaFlux::Core {
 
 //-------------------------------------------------------------------------
@@ -76,6 +80,10 @@ Engine& Engine::operator=(Engine&& other) noexcept
 
 void Engine::Init()
 {
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    Parallel::g_MainThreadId = GetCurrentThreadId();
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+
     Init(m_stream_info, m_graphics_config);
 }
 
@@ -170,6 +178,8 @@ void Engine::await_shutdown()
 {
 #ifdef MAYAFLUX_PLATFORM_MACOS
     run_macos_event_loop();
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+    run_windows_event_loop();
 #else
     // Simple blocking wait on other platforms
     std::cin.get();
@@ -187,6 +197,8 @@ void Engine::request_shutdown()
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     CFRunLoopStop(CFRunLoopGetMain());
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+    PostThreadMessage(Parallel::g_MainThreadId, WM_QUIT, 0, 0);
 #endif
 }
 
@@ -228,6 +240,51 @@ void Engine::run_macos_event_loop()
 
     dispatch_source_cancel(stdinSource);
     dispatch_release(stdinSource);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::Runtime,
+        "Main thread event loop exiting");
+}
+#endif
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+void Engine::run_windows_event_loop()
+{
+    MSG msg;
+    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+    auto stdinSource = std::thread([this]() {
+        std::cin.get();
+        request_shutdown();
+    });
+
+    MF_PRINT(Journal::Component::Core, Journal::Context::Runtime,
+        "Main thread event loop running");
+
+    while (!is_shutdown_requested()) {
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                request_shutdown();
+                break;
+            }
+
+            if (msg.message == MAYAFLUX_WM_DISPATCH) {
+                auto* task = reinterpret_cast<std::function<void()>*>(msg.lParam);
+                if (task) {
+                    (*task)();
+                    delete task;
+                }
+            } else {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    if (stdinSource.joinable()) {
+        stdinSource.detach();
+    }
 
     MF_INFO(Journal::Component::Core, Journal::Context::Runtime,
         "Main thread event loop exiting");

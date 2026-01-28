@@ -346,6 +346,10 @@ private:
 #ifdef MAYAFLUX_PLATFORM_MACOS
     void run_macos_event_loop();
 #endif
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    void run_windows_event_loop();
+#endif
 };
 
 } // namespace MayaFlux::Core
