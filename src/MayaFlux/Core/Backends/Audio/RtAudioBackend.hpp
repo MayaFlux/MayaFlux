@@ -89,7 +89,7 @@ public:
     std::unique_ptr<AudioStream> create_stream(
         unsigned int output_device_id,
         unsigned int input_device_id,
-        const GlobalStreamInfo& stream_info,
+        GlobalStreamInfo& stream_info,
         void* user_data) override;
 
     /**
@@ -222,7 +222,7 @@ public:
         RtAudio* context,
         unsigned int output_device_id,
         unsigned int input_device_id,
-        const GlobalStreamInfo& streamInfo,
+        GlobalStreamInfo& streamInfo,
         void* userData);
 
     /**
@@ -321,9 +321,6 @@ private:
     /** @brief RtAudio-specific stream options */
     RtAudio::StreamOptions m_options;
 
-    /** @brief Engine stream configuration */
-    GlobalStreamInfo stream_info;
-
     /** @brief User-provided context pointer for callbacks */
     void* m_userData;
 
@@ -337,7 +334,7 @@ private:
     std::function<int(void*, void*, unsigned int)> m_process_callback;
 
     /** @brief Copy of the stream configuration for reference */
-    GlobalStreamInfo m_stream_info;
+    GlobalStreamInfo& m_stream_info;
 
     /**
      * @brief Configures RtAudio stream options based on GlobalStreamInfo

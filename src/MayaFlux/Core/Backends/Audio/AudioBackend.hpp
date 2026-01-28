@@ -77,7 +77,7 @@ public:
     virtual std::unique_ptr<AudioStream> create_stream(
         unsigned int output_device_id,
         unsigned int input_device_id,
-        const GlobalStreamInfo& stream_info,
+        GlobalStreamInfo& stream_info,
         void* user_data)
         = 0;
 
@@ -229,12 +229,15 @@ public:
     /**
      * @brief Creates a specific audio backend implementation
      * @param type Identifier for the requested backend type
+     * @param api_preference Optional preference for a specific audio API
      * @return Unique pointer to an IAudioBackend implementation
      *
      * Instantiates and configures the appropriate backend implementation
      * based on the specified type, abstracting the details of backend
      * selection and initialization.
      */
-    static std::unique_ptr<IAudioBackend> create_backend(Utils::AudioBackendType type);
+    static std::unique_ptr<IAudioBackend> create_backend(
+        Utils::AudioBackendType type,
+        std::optional<GlobalStreamInfo::AudioApi> api_preference = std::nullopt);
 };
 }

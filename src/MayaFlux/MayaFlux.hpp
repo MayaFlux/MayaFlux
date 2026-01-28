@@ -90,6 +90,8 @@
 #include "Portal/Graphics/ShaderFoundry.hpp"
 #include "Portal/Graphics/TextureLoom.hpp"
 
+#include "MayaFlux/IO/ImageReader.hpp"
+
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;
 using namespace MayaFlux::Buffers;

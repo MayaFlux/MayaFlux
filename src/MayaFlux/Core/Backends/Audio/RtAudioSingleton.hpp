@@ -4,6 +4,8 @@
 #include "RtAudio.h"
 #endif
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Core {
 
 /**
@@ -32,6 +34,9 @@ private:
     /** @brief Stream state flag to enforce exclusive stream ownership */
     static bool s_stream_open;
 
+    /** @brief Preferred RtAudio API, if specified */
+    static std::optional<RtAudio::Api> s_preferred_api;
+
     /**
      * @brief Private constructor prevents direct instantiation
      *
@@ -53,9 +58,31 @@ public:
     {
         std::lock_guard<std::mutex> lock(s_mutex);
         if (!s_instance) {
-            s_instance = std::make_unique<RtAudio>();
+            if (s_preferred_api.has_value()) {
+                s_instance = std::make_unique<RtAudio>(*s_preferred_api);
+            } else {
+                s_instance = std::make_unique<RtAudio>();
+            }
         }
         return s_instance.get();
+    }
+
+    /**
+     * @brief Sets the preferred audio API before instance creation
+     * @param api RtAudio API to use (JACK, ALSA, PULSE, etc.)
+     * @throws std::runtime_error if instance already exists
+     */
+    static void set_preferred_api(RtAudio::Api api)
+    {
+        std::lock_guard<std::mutex> lock(s_mutex);
+        if (s_instance) {
+            error<std::runtime_error>(
+                Journal::Component::Core,
+                Journal::Context::AudioBackend,
+                std::source_location::current(),
+                "Cannot set API preference after RtAudio instance created");
+        }
+        s_preferred_api = api;
     }
 
     /**
@@ -70,7 +97,11 @@ public:
     {
         std::lock_guard<std::mutex> lock(s_mutex);
         if (s_stream_open) {
-            throw std::runtime_error("Error: Attempted to open a second RtAudio stream when one is already open");
+            error<std::runtime_error>(
+                Journal::Component::Core,
+                Journal::Context::AudioBackend,
+                std::source_location::current(),
+                "Attempted to open a second RtAudio stream when one is already open");
         }
         s_stream_open = true;
     }
@@ -127,7 +158,12 @@ public:
                 }
                 s_stream_open = false;
             } catch (const RtAudioErrorType& e) {
-                std::cerr << "Error during RtAudio cleanup: " << s_instance->getErrorText() << std::endl;
+                error_rethrow(
+                    Journal::Component::Core,
+                    Journal::Context::AudioBackend,
+                    std::source_location::current(),
+                    "Error during RtAudio cleanup: {}",
+                    s_instance->getErrorText());
             }
         }
         if (s_instance) {
