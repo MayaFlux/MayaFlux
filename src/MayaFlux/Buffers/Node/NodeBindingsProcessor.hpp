@@ -34,10 +34,16 @@ namespace MayaFlux::Buffers {
  */
 class MAYAFLUX_API NodeBindingsProcessor : public ShaderProcessor {
 public:
+    enum class ProcessingMode : uint8_t {
+        INTERNAL, ///< Processor calls extract_single_sample() - owns the processing
+        EXTERNAL ///< Processor reads get_last_output() - node processed elsewhere
+    };
+
     struct NodeBinding {
         std::shared_ptr<Nodes::Node> node;
         uint32_t push_constant_offset;
-        size_t size = sizeof(float);
+        size_t size { sizeof(float) };
+        std::atomic<ProcessingMode> processing_mode { ProcessingMode::INTERNAL };
     };
 
     using ShaderProcessor::ShaderProcessor;
@@ -48,12 +54,14 @@ public:
      * @param node Node whose output will be read
      * @param offset Byte offset in push constant struct
      * @param size Size of value (default: sizeof(float))
+     * @param mode Processing mode (default: INTERNAL)
      */
     void bind_node(
         const std::string& name,
         const std::shared_ptr<Nodes::Node>& node,
         uint32_t offset,
-        size_t size = sizeof(float));
+        size_t size = sizeof(float),
+        ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
      * @brief Remove node binding
@@ -69,6 +77,26 @@ public:
      * @brief Get all binding names
      */
     std::vector<std::string> get_binding_names() const;
+
+    /**
+     * @brief Set processing mode for a specific binding
+     * @param name Binding name
+     * @param mode INTERNAL (processor extracts samples) or EXTERNAL (processor reads node state)
+     */
+    void set_processing_mode(const std::string& name, ProcessingMode mode);
+
+    /**
+     * @brief Set processing mode for all bindings
+     * @param mode INTERNAL or EXTERNAL
+     */
+    void set_processing_mode(ProcessingMode mode);
+
+    /**
+     * @brief Get processing mode for a specific binding
+     * @param name Binding name
+     * @return Current processing mode
+     */
+    ProcessingMode get_processing_mode(const std::string& name) const;
 
 protected:
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;

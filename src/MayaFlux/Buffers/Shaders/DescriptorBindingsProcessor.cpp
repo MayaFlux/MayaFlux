@@ -29,7 +29,8 @@ void DescriptorBindingsProcessor::bind_scalar_node(
     const std::shared_ptr<Nodes::Node>& node,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type)
+    vk::DescriptorType type,
+    ProcessingMode mode)
 {
     if (!node) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -47,24 +48,27 @@ void DescriptorBindingsProcessor::bind_scalar_node(
 
     auto gpu_buffer = create_descriptor_buffer(sizeof(float), type);
 
-    m_bindings[name] = DescriptorBinding {
-        .node = node,
-        .descriptor_name = descriptor_name,
-        .set_index = set,
-        .binding_index = binding_config.binding,
-        .type = type,
-        .binding_type = BindingType::SCALAR,
-        .gpu_buffer = gpu_buffer,
-        .buffer_offset = 0,
-        .buffer_size = sizeof(float)
-    };
+    auto [it, inserted] = m_bindings.try_emplace(name);
+    auto& binding = it->second;
+
+    binding.node = node;
+    binding.descriptor_name = descriptor_name;
+    binding.set_index = set;
+    binding.binding_index = binding_config.binding;
+    binding.type = type;
+    binding.binding_type = BindingType::SCALAR;
+    binding.gpu_buffer = gpu_buffer;
+    binding.buffer_offset = 0;
+    binding.buffer_size = sizeof(float);
+    binding.processing_mode.store(mode, std::memory_order_release);
 
     bind_buffer(descriptor_name, gpu_buffer);
 
     m_needs_descriptor_rebuild = true;
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Bound scalar node '{}' to descriptor '{}'", name, descriptor_name);
+        "Bound scalar node '{}' to descriptor '{}' (mode: {})",
+        name, descriptor_name, mode == ProcessingMode::INTERNAL ? "INTERNAL" : "EXTERNAL");
 }
 
 void DescriptorBindingsProcessor::bind_vector_node(
@@ -72,7 +76,8 @@ void DescriptorBindingsProcessor::bind_vector_node(
     const std::shared_ptr<Nodes::Node>& node,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type)
+    vk::DescriptorType type,
+    ProcessingMode mode)
 {
     if (!node) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -91,24 +96,27 @@ void DescriptorBindingsProcessor::bind_vector_node(
     size_t initial_size = 4096 * sizeof(float);
     auto gpu_buffer = create_descriptor_buffer(initial_size, type);
 
-    m_bindings[name] = DescriptorBinding {
-        .node = node,
-        .descriptor_name = descriptor_name,
-        .set_index = set,
-        .binding_index = binding_config.binding,
-        .type = type,
-        .binding_type = BindingType::VECTOR,
-        .gpu_buffer = gpu_buffer,
-        .buffer_offset = 0,
-        .buffer_size = initial_size
-    };
+    auto [it, inserted] = m_bindings.try_emplace(name);
+    auto& binding = it->second;
+
+    binding.node = node;
+    binding.descriptor_name = descriptor_name;
+    binding.set_index = set;
+    binding.binding_index = binding_config.binding;
+    binding.type = type;
+    binding.binding_type = BindingType::VECTOR;
+    binding.gpu_buffer = gpu_buffer;
+    binding.buffer_offset = 0;
+    binding.buffer_size = initial_size;
+    binding.processing_mode.store(mode, std::memory_order_release);
 
     bind_buffer(descriptor_name, gpu_buffer);
 
     m_needs_descriptor_rebuild = true;
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Bound vector node '{}' to descriptor '{}'", name, descriptor_name);
+        "Bound vector node '{}' to descriptor '{}' (mode: {})",
+        name, descriptor_name, mode == ProcessingMode::INTERNAL ? "INTERNAL" : "EXTERNAL");
 }
 
 void DescriptorBindingsProcessor::bind_matrix_node(
@@ -116,7 +124,8 @@ void DescriptorBindingsProcessor::bind_matrix_node(
     const std::shared_ptr<Nodes::Node>& node,
     const std::string& descriptor_name,
     uint32_t set,
-    vk::DescriptorType type)
+    vk::DescriptorType type,
+    ProcessingMode mode)
 {
     if (!node) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -135,24 +144,74 @@ void DescriptorBindingsProcessor::bind_matrix_node(
     size_t initial_size = static_cast<long>(1024) * 1024 * sizeof(float);
     auto gpu_buffer = create_descriptor_buffer(initial_size, type);
 
-    m_bindings[name] = DescriptorBinding {
-        .node = node,
-        .descriptor_name = descriptor_name,
-        .set_index = set,
-        .binding_index = binding_config.binding,
-        .type = type,
-        .binding_type = BindingType::MATRIX,
-        .gpu_buffer = gpu_buffer,
-        .buffer_offset = 0,
-        .buffer_size = initial_size
-    };
+    auto [it, inserted] = m_bindings.try_emplace(name);
+    auto& binding = it->second;
+
+    binding.node = node;
+    binding.descriptor_name = descriptor_name;
+    binding.set_index = set;
+    binding.binding_index = binding_config.binding;
+    binding.type = type;
+    binding.binding_type = BindingType::MATRIX;
+    binding.gpu_buffer = gpu_buffer;
+    binding.buffer_offset = 0;
+    binding.buffer_size = initial_size;
+    binding.processing_mode.store(mode, std::memory_order_release);
 
     bind_buffer(descriptor_name, gpu_buffer);
 
     m_needs_descriptor_rebuild = true;
 
     MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Bound matrix node '{}' to descriptor '{}'", name, descriptor_name);
+        "Bound matrix node '{}' to descriptor '{}' (mode: {})",
+        name, descriptor_name, mode == ProcessingMode::INTERNAL ? "INTERNAL" : "EXTERNAL");
+}
+
+void DescriptorBindingsProcessor::bind_structured_node(
+    const std::string& name,
+    const std::shared_ptr<Nodes::Node>& node,
+    const std::string& descriptor_name,
+    uint32_t set,
+    vk::DescriptorType type,
+    ProcessingMode mode)
+{
+    if (!node) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot bind null node '{}'", name);
+        return;
+    }
+
+    if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Descriptor '{}' not found in shader config", descriptor_name);
+        return;
+    }
+
+    const auto& binding_config = m_config.bindings[descriptor_name];
+
+    size_t initial_size = static_cast<long>(1024) * 64;
+    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
+
+    auto [it, inserted] = m_bindings.try_emplace(name);
+    auto& binding = it->second;
+
+    binding.node = node;
+    binding.descriptor_name = descriptor_name;
+    binding.set_index = set;
+    binding.binding_index = binding_config.binding;
+    binding.type = type;
+    binding.binding_type = BindingType::STRUCTURED;
+    binding.gpu_buffer = gpu_buffer;
+    binding.buffer_offset = 0;
+    binding.buffer_size = initial_size;
+    binding.processing_mode.store(mode, std::memory_order_release);
+
+    bind_buffer(descriptor_name, gpu_buffer);
+
+    m_needs_descriptor_rebuild = true;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "Bound structured node '{}' to descriptor '{}'", name, descriptor_name);
 }
 
 void DescriptorBindingsProcessor::unbind_node(const std::string& name)
@@ -182,6 +241,30 @@ std::vector<std::string> DescriptorBindingsProcessor::get_binding_names() const
         names.push_back(name);
     }
     return names;
+}
+
+void DescriptorBindingsProcessor::set_processing_mode(const std::string& name, ProcessingMode mode)
+{
+    auto it = m_bindings.find(name);
+    if (it != m_bindings.end()) {
+        it->second.processing_mode.store(mode, std::memory_order_release);
+    }
+}
+
+void DescriptorBindingsProcessor::set_processing_mode(ProcessingMode mode)
+{
+    for (auto& [name, binding] : m_bindings) {
+        binding.processing_mode.store(mode, std::memory_order_release);
+    }
+}
+
+DescriptorBindingsProcessor::ProcessingMode DescriptorBindingsProcessor::get_processing_mode(const std::string& name) const
+{
+    auto it = m_bindings.find(name);
+    if (it != m_bindings.end()) {
+        return it->second.processing_mode.load(std::memory_order_acquire);
+    }
+    return ProcessingMode::INTERNAL;
 }
 
 //==============================================================================
@@ -239,13 +322,18 @@ void DescriptorBindingsProcessor::update_descriptor_from_node(DescriptorBinding&
         return;
     }
 
+    float value {};
+
+    if (binding.processing_mode.load(std::memory_order_acquire) == ProcessingMode::INTERNAL) {
+        value = static_cast<float>(Buffers::extract_single_sample(binding.node));
+    } else {
+        value = static_cast<float>(binding.node->get_last_output());
+    }
     Nodes::NodeContext& ctx = binding.node->get_last_context();
 
     switch (binding.binding_type) {
     case BindingType::SCALAR: {
-        auto value = static_cast<float>(binding.node->get_last_output());
         ensure_buffer_capacity(binding, sizeof(float));
-
         upload_to_gpu(&value, sizeof(float), binding.gpu_buffer, nullptr);
         break;
     }
@@ -293,48 +381,6 @@ void DescriptorBindingsProcessor::update_descriptor_from_node(DescriptorBinding&
         break;
     }
     }
-}
-
-void DescriptorBindingsProcessor::bind_structured_node(
-    const std::string& name,
-    const std::shared_ptr<Nodes::Node>& node,
-    const std::string& descriptor_name,
-    uint32_t set,
-    vk::DescriptorType type)
-{
-    if (!node) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Cannot bind null node '{}'", name);
-        return;
-    }
-
-    if (m_config.bindings.find(descriptor_name) == m_config.bindings.end()) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Descriptor '{}' not found in shader config", descriptor_name);
-        return;
-    }
-
-    const auto& binding_config = m_config.bindings[descriptor_name];
-
-    size_t initial_size = static_cast<long>(1024) * 64;
-    auto gpu_buffer = create_descriptor_buffer(initial_size, type);
-
-    m_bindings[name] = DescriptorBinding {
-        .node = node,
-        .descriptor_name = descriptor_name,
-        .set_index = set,
-        .binding_index = binding_config.binding,
-        .type = type,
-        .binding_type = BindingType::STRUCTURED,
-        .gpu_buffer = gpu_buffer,
-        .buffer_offset = 0,
-        .buffer_size = initial_size
-    };
-
-    bind_buffer(descriptor_name, gpu_buffer);
-
-    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Bound structured node '{}' to descriptor '{}'", name, descriptor_name);
 }
 
 void DescriptorBindingsProcessor::ensure_buffer_capacity(

@@ -31,6 +31,11 @@ namespace MayaFlux::Buffers {
  */
 class MAYAFLUX_API DescriptorBindingsProcessor : public ShaderProcessor {
 public:
+    enum class ProcessingMode : uint8_t {
+        INTERNAL, ///< Processor calls extract_single_sample() or processes node context
+        EXTERNAL ///< Processor reads node's current state (get_last_output/get_last_context)
+    };
+
     enum class BindingType : uint8_t {
         SCALAR, ///< Single value from node output
         VECTOR, ///< Array from VectorContext
@@ -48,6 +53,7 @@ public:
         std::shared_ptr<VKBuffer> gpu_buffer; ///< UBO/SSBO backing storage
         size_t buffer_offset {}; ///< Offset within buffer (for packed UBOs)
         size_t buffer_size; ///< Size to write
+        std::atomic<ProcessingMode> processing_mode { ProcessingMode::INTERNAL };
     };
 
     /**
@@ -69,13 +75,15 @@ public:
      * @param descriptor_name Name in shader config bindings
      * @param set Descriptor set index
      * @param type UBO or SSBO
+     * @param mode Processing mode (default: INTERNAL)
      */
     void bind_scalar_node(
         const std::string& name,
         const std::shared_ptr<Nodes::Node>& node,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eUniformBuffer);
+        vk::DescriptorType type = vk::DescriptorType::eUniformBuffer,
+        ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
      * @brief Bind vector node (VectorContext) to descriptor
@@ -84,13 +92,15 @@ public:
      * @param descriptor_name Name in shader config bindings
      * @param set Descriptor set index
      * @param type Typically eStorageBuffer for arrays
+     * @param mode Processing mode (default: INTERNAL)
      */
     void bind_vector_node(
         const std::string& name,
         const std::shared_ptr<Nodes::Node>& node,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer,
+        ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
      * @brief Bind matrix node (MatrixContext) to descriptor
@@ -100,7 +110,8 @@ public:
         const std::shared_ptr<Nodes::Node>& node,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer,
+        ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
      * @brief Bind structured node (arrays of POD structs) to descriptor
@@ -115,7 +126,8 @@ public:
         const std::shared_ptr<Nodes::Node>& node,
         const std::string& descriptor_name,
         uint32_t set,
-        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer);
+        vk::DescriptorType type = vk::DescriptorType::eStorageBuffer,
+        ProcessingMode mode = ProcessingMode::INTERNAL);
 
     /**
      * @brief Remove a binding
@@ -131,6 +143,26 @@ public:
      * @brief Get all binding names
      */
     std::vector<std::string> get_binding_names() const;
+
+    /**
+     * @brief Set processing mode for a specific binding
+     * @param name Binding name
+     * @param mode INTERNAL (processor processes node) or EXTERNAL (processor reads node state)
+     */
+    void set_processing_mode(const std::string& name, ProcessingMode mode);
+
+    /**
+     * @brief Set processing mode for all bindings
+     * @param mode INTERNAL or EXTERNAL
+     */
+    void set_processing_mode(ProcessingMode mode);
+
+    /**
+     * @brief Get processing mode for a specific binding
+     * @param name Binding name
+     * @return Current processing mode
+     */
+    ProcessingMode get_processing_mode(const std::string& name) const;
 
 protected:
     /**

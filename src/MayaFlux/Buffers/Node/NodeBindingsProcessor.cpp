@@ -9,9 +9,16 @@ void NodeBindingsProcessor::bind_node(
     const std::string& name,
     const std::shared_ptr<Nodes::Node>& node,
     uint32_t offset,
-    size_t size)
+    size_t size,
+    ProcessingMode mode)
 {
-    m_bindings[name] = NodeBinding { .node = node, .push_constant_offset = offset, .size = size };
+    auto [it, inserted] = m_bindings.try_emplace(name);
+    auto& binding = it->second;
+
+    binding.node = node;
+    binding.push_constant_offset = offset;
+    binding.size = size;
+    binding.processing_mode.store(mode, std::memory_order_release);
 }
 
 void NodeBindingsProcessor::unbind_node(const std::string& name)
@@ -32,6 +39,30 @@ std::vector<std::string> NodeBindingsProcessor::get_binding_names() const
         names.push_back(name);
     }
     return names;
+}
+
+void NodeBindingsProcessor::set_processing_mode(const std::string& name, ProcessingMode mode)
+{
+    auto it = m_bindings.find(name);
+    if (it != m_bindings.end()) {
+        it->second.processing_mode.store(mode, std::memory_order_release);
+    }
+}
+
+void NodeBindingsProcessor::set_processing_mode(ProcessingMode mode)
+{
+    for (auto& [name, binding] : m_bindings) {
+        binding.processing_mode.store(mode, std::memory_order_release);
+    }
+}
+
+NodeBindingsProcessor::ProcessingMode NodeBindingsProcessor::get_processing_mode(const std::string& name) const
+{
+    auto it = m_bindings.find(name);
+    if (it != m_bindings.end()) {
+        return it->second.processing_mode.load(std::memory_order_acquire);
+    }
+    return ProcessingMode::INTERNAL;
 }
 
 void NodeBindingsProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
@@ -80,7 +111,14 @@ void NodeBindingsProcessor::update_push_constants_from_nodes()
             continue;
         }
 
-        double value = Buffers::extract_single_sample(binding.node);
+        double value {};
+        ProcessingMode mode = binding.processing_mode.load(std::memory_order_acquire);
+
+        if (mode == ProcessingMode::INTERNAL) {
+            value = Buffers::extract_single_sample(binding.node);
+        } else {
+            value = binding.node->get_last_output();
+        }
 
         if (binding.size == sizeof(float)) {
             auto float_val = static_cast<float>(value);
