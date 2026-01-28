@@ -46,19 +46,13 @@
 
 #ifdef _MSC_VER
 #define MAYAFLUX_COMPILER_MSVC
-#else
-#define MAYAFLUX_COMPILER_MSVC
 #endif
 
 #ifdef __clang__
 #define MAYAFLUX_COMPILER_CLANG
-#else
-#define MAYAFLUX_COMPILER_CLANG
 #endif
 
 #ifdef __GNUC__
-#define MAYAFLUX_COMPILER_GCC
-#else
 #define MAYAFLUX_COMPILER_GCC
 #endif
 
@@ -67,8 +61,7 @@
 #elif defined(__aarch64__) || defined(_M_ARM64)
 #define MAYAFLUX_ARCH_ARM64
 #else
-#define MAYAFLUX_ARCH_X64
-#define MAYAFLUX_ARCH_ARM64
+#error "Unknown or unsupported architecture"
 #endif
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS

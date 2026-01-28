@@ -7,6 +7,18 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#ifdef MAYAFLUX_ARCH_X64
+#define STBI_SSE2
+#ifdef MAYAFLUX_COMPILER_MSVC
+#include <immintrin.h>
+#endif
+#endif
+
+#ifdef MAYAFLUX_ARCH_ARM64
+#define STBI_NEON
+#endif
+
+#define STBI_NO_FAILURE_STRINGS
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
 #include "stb/stb_image.h"
@@ -15,6 +27,20 @@
 #include <fstream>
 
 namespace MayaFlux::IO {
+
+[[maybe_unused]] static bool g_stb_simd_logged = []() {
+#ifdef STBI_SSE2
+    MF_INFO(Journal::Component::IO, Journal::Context::Init,
+        "STB Image: SSE2 SIMD optimizations enabled (x64)");
+#elif defined(STBI_NEON)
+    MF_INFO(Journal::Component::IO, Journal::Context::Init,
+        "STB Image: NEON SIMD optimizations enabled (ARM64)");
+#else
+    MF_INFO(Journal::Component::IO, Journal::Context::Init,
+        "STB Image: No SIMD optimizations (scalar fallback)");
+#endif
+    return true;
+}();
 
 ImageReader::ImageReader()
     : m_is_open(false)
@@ -253,6 +279,15 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
     file.close();
 
     int width {}, height {}, channels {};
+
+    if (desired_channels == 0) {
+        stbi_info_from_memory(file_buffer.data(), static_cast<int>(file_buffer.size()),
+            &width, &height, &channels);
+        if (channels == 3) {
+            desired_channels = 4;
+        }
+    }
+
     unsigned char* pixels = stbi_load_from_memory(
         file_buffer.data(),
         static_cast<int>(file_buffer.size()),
@@ -266,43 +301,40 @@ std::optional<ImageData> ImageReader::load(const std::filesystem::path& path, in
         return std::nullopt;
     }
 
-    Portal::Graphics::ImageFormat format {};
-    switch (channels) {
-    case 1:
-        format = Portal::Graphics::ImageFormat::R8;
-        break;
-    case 2:
-        format = Portal::Graphics::ImageFormat::RG8;
-        break;
-    case 3:
-        format = Portal::Graphics::ImageFormat::RGB8;
-        break;
-    case 4:
-        format = Portal::Graphics::ImageFormat::RGBA8;
-        break;
-    default:
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "Unsupported channel count: {}", channels);
-        stbi_image_free(pixels);
-        return std::nullopt;
-    }
+    int result_channels = (desired_channels != 0) ? desired_channels : channels;
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "Loaded image: {} ({}x{}, {} channels{})",
+        path.filename().string(), width, height, result_channels,
+        (channels == 3 && result_channels == 4) ? " [RGB→RGBA]" : "");
 
     ImageData result;
-
-    size_t data_size = static_cast<long>(width * height) * channels;
+    size_t data_size = static_cast<size_t>(width) * height * result_channels;
     result.pixels.resize(data_size);
     std::memcpy(result.pixels.data(), pixels, data_size);
 
     result.width = width;
     result.height = height;
-    result.format = format;
+    result.channels = result_channels;
+
+    switch (result_channels) {
+    case 1:
+        result.format = Portal::Graphics::ImageFormat::R8;
+        break;
+    case 2:
+        result.format = Portal::Graphics::ImageFormat::RG8;
+        break;
+    case 4:
+        result.format = Portal::Graphics::ImageFormat::RGBA8;
+        break;
+    default:
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "Unsupported channel count: {}", result_channels);
+        stbi_image_free(pixels);
+        return std::nullopt;
+    }
 
     stbi_image_free(pixels);
-
-    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-        "Loaded image: {} ({}x{}, {} channels)",
-        path.filename().string(), width, height, channels);
-
     return result;
 }
 
@@ -313,7 +345,6 @@ std::optional<ImageData> ImageReader::load(const std::string& path, int desired_
 
 std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t size)
 {
-
     if (!data || size == 0) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "Invalid memory buffer for image loading");
@@ -321,11 +352,19 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
     }
 
     int width {}, height {}, channels {};
+
+    stbi_info_from_memory(
+        static_cast<const unsigned char*>(data),
+        static_cast<int>(size),
+        &width, &height, &channels);
+
+    int load_as = (channels == 3) ? 4 : 0; // Force RGBA for RGB images
+
     unsigned char* pixels = stbi_load_from_memory(
         static_cast<const unsigned char*>(data),
         static_cast<int>(size),
         &width, &height, &channels,
-        0);
+        load_as);
 
     if (!pixels) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
@@ -334,42 +373,40 @@ std::optional<ImageData> ImageReader::load_from_memory(const void* data, size_t 
         return std::nullopt;
     }
 
-    Portal::Graphics::ImageFormat format {};
-    switch (channels) {
-    case 1:
-        format = Portal::Graphics::ImageFormat::R8;
-        break;
-    case 2:
-        format = Portal::Graphics::ImageFormat::RG8;
-        break;
-    case 3:
-        format = Portal::Graphics::ImageFormat::RGB8;
-        break;
-    case 4:
-        format = Portal::Graphics::ImageFormat::RGBA8;
-        break;
-    default:
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "Unsupported channel count: {}", channels);
-        stbi_image_free(pixels);
-        return std::nullopt;
-    }
+    int result_channels = (load_as != 0) ? load_as : channels;
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "Loaded image from memory ({}x{}, {} channels{})",
+        width, height, result_channels,
+        (channels == 3 && result_channels == 4) ? " [RGB→RGBA]" : "");
 
     ImageData result;
-    size_t data_size = static_cast<long>(width * height) * channels;
+    size_t data_size = static_cast<size_t>(width) * height * result_channels;
     result.pixels.resize(data_size);
     std::memcpy(result.pixels.data(), pixels, data_size);
 
     result.width = width;
     result.height = height;
-    result.format = format;
+    result.channels = result_channels;
+
+    switch (result_channels) {
+    case 1:
+        result.format = Portal::Graphics::ImageFormat::R8;
+        break;
+    case 2:
+        result.format = Portal::Graphics::ImageFormat::RG8;
+        break;
+    case 4:
+        result.format = Portal::Graphics::ImageFormat::RGBA8;
+        break;
+    default:
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "Unsupported channel count: {}", result_channels);
+        stbi_image_free(pixels);
+        return std::nullopt;
+    }
 
     stbi_image_free(pixels);
-
-    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-        "Loaded image from memory ({}x{}, {} channels)",
-        width, height, channels);
-
     return result;
 }
 
