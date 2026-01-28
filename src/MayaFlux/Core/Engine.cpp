@@ -14,6 +14,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#include "MayaFlux/Parallel.hpp"
+#endif
+
 namespace MayaFlux::Core {
 
 //-------------------------------------------------------------------------
@@ -76,6 +80,10 @@ Engine& Engine::operator=(Engine&& other) noexcept
 
 void Engine::Init()
 {
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    Parallel::g_MainThreadId = GetCurrentThreadId();
+#endif // MAYAFLUX_PLATFORM_WINDOWS
+
     Init(m_stream_info, m_graphics_config);
 }
 
@@ -169,7 +177,47 @@ bool Engine::is_running() const
 void Engine::await_shutdown()
 {
 #ifdef MAYAFLUX_PLATFORM_MACOS
+
     run_macos_event_loop();
+
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+    MSG msg;
+    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+    std::thread stdin_thread([this]() {
+        std::cin.get();
+        request_shutdown();
+    });
+
+    MF_INFO(Journal::Component::Core, Journal::Context::Runtime,
+        "Windows main thread event loop running");
+
+    while (!is_shutdown_requested()) {
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                request_shutdown();
+                break;
+            }
+
+            if (msg.message == MAYAFLUX_WM_DISPATCH) {
+                auto* task = reinterpret_cast<std::function<void()>*>(msg.lParam);
+                if (task) {
+                    (*task)();
+                    delete task;
+                }
+            } else {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    if (stdin_thread.joinable()) {
+        stdin_thread.detach();
+    }
+
 #else
     // Simple blocking wait on other platforms
     std::cin.get();
