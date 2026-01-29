@@ -50,6 +50,7 @@ namespace MayaFlux::Nodes {
 enum class ProcessingToken {
     AUDIO_RATE, ///< Nodes that process at the audio sample rate
     VISUAL_RATE, ///< Nodes that process at the visual frame rate
+    EVENT_RATE, ///< Nodes that process based on event triggers (e.g., input events)
     CUSTOM_RATE ///< Nodes that process at a custom-defined rate
 };
 }
@@ -95,6 +96,16 @@ enum ProcessingToken : uint32_t {
     FRAME_RATE = 0x2,
 
     /**
+     * @brief Processes data on event arrival (async/sporadic)
+     *
+     * Unlike SAMPLE_RATE (fixed audio callback) or FRAME_RATE (vsync),
+     * EVENT_RATE processes when external events arrive. Used for input
+     * devices, network messages, or other async data sources.
+     * Processing is triggered by event, not by timer.
+     */
+    EVENT_RATE = 0x40,
+
+    /**
      * @brief Executes processing operations on CPU threads
      *
      * Specifies that the processing should occur on CPU cores using traditional
@@ -110,7 +121,7 @@ enum ProcessingToken : uint32_t {
      * typically through compute shaders, CUDA, or OpenCL. This is optimal for
      * massively parallel operations that can benefit from GPU's parallel architecture.
      */
-    GPU_PPOCESS = 0x8,
+    GPU_PROCESS = 0x8,
 
     /**
      * @brief Processes operations sequentially, one after another
@@ -148,7 +159,7 @@ enum ProcessingToken : uint32_t {
      * GPU hardware with parallel execution within the graphics callback loop.
      * Optimal for real-time graphics processing and video effects.
      */
-    GRAPHICS_BACKEND = FRAME_RATE | GPU_PPOCESS | PARALLEL,
+    GRAPHICS_BACKEND = FRAME_RATE | GPU_PROCESS | PARALLEL,
 
     /**
      * @brief High-performance audio processing with GPU acceleration
@@ -158,7 +169,7 @@ enum ProcessingToken : uint32_t {
      * for parallel execution. Useful for computationally intensive audio operations
      * like convolution, FFT processing, or complex effects that benefit from GPU parallelization.
      */
-    AUDIO_PARALLEL = SAMPLE_RATE | GPU_PPOCESS | PARALLEL,
+    AUDIO_PARALLEL = SAMPLE_RATE | GPU_PROCESS | PARALLEL,
 
     /**
      * @brief Window event stream processing
@@ -169,6 +180,25 @@ enum ProcessingToken : uint32_t {
      * not its visual content.
      */
     WINDOW_EVENTS = FRAME_RATE | CPU_PROCESS | SEQUENTIAL,
+
+    /**
+     * @brief Input device processing backend configuration
+     *
+     * Combines EVENT_RATE | CPU_PROCESS | SEQUENTIAL for input handling.
+     * Processes input from HID, MIDI, OSC, Serial backends on the CPU
+     * in sequential order as events arrive. Input is inherently event-driven
+     * and doesn't follow fixed sample/frame timing.
+     */
+    INPUT_BACKEND = EVENT_RATE | CPU_PROCESS | SEQUENTIAL,
+
+    /**
+     * @brief Control data processing (LFOs, envelopes, modulation)
+     *
+     * Combines EVENT_RATE | CPU_PROCESS | PARALLEL for control signals.
+     * Control-rate data updates less frequently than audio but needs
+     * to be processed promptly when it changes.
+     */
+    CONTROL_DATA = EVENT_RATE | CPU_PROCESS | PARALLEL,
 };
 
 }

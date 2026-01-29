@@ -25,9 +25,9 @@ bool are_tokens_compatible(ProcessingToken preferred, ProcessingToken current)
 
     // Device compatibility: SAMPLE_RATE can't run on GPU, but FRAME_RATE can run on CPU
     bool preferred_cpu = preferred & CPU_PROCESS;
-    bool preferred_gpu = preferred & GPU_PPOCESS;
+    bool preferred_gpu = preferred & GPU_PROCESS;
     bool current_cpu = current & CPU_PROCESS;
-    bool current_gpu = current & GPU_PPOCESS;
+    bool current_gpu = current & GPU_PROCESS;
 
     if (preferred_sample && current_gpu)
         return false; // Can't run sample rate on GPU
@@ -67,7 +67,7 @@ void validate_token(ProcessingToken token)
             "SAMPLE_RATE and FRAME_RATE are mutually exclusive.");
     }
 
-    if ((token & CPU_PROCESS) && (token & GPU_PPOCESS)) {
+    if ((token & CPU_PROCESS) && (token & GPU_PROCESS)) {
         error<std::invalid_argument>(Journal::Component::Buffers,
             Journal::Context::BufferProcessing,
             std::source_location::current(),

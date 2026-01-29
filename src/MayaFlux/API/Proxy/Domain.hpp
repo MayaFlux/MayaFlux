@@ -84,7 +84,7 @@ enum Domain : uint64_t {
      * - Buffers::ProcessingToken::FRAME_RATE | GPU_PROCESS | PARALLEL
      * - Vruta::ProcessingToken::CUSTOM
      */
-    CUSTOM_FLEXIBLE = (static_cast<uint64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::FRAME_RATE | Buffers::ProcessingToken::GPU_PPOCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::CUSTOM)),
+    CUSTOM_FLEXIBLE = (static_cast<uint64_t>(Nodes::ProcessingToken::CUSTOM_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::FRAME_RATE | Buffers::ProcessingToken::GPU_PROCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::CUSTOM)),
 
     // ===== HYBRID DOMAINS =====
 
@@ -102,7 +102,7 @@ enum Domain : uint64_t {
      * Routes audio through GPU for compute-intensive processing
      * while maintaining sample-accurate timing
      */
-    AUDIO_GPU = (static_cast<uint64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::GPU_PPOCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::MULTI_RATE)),
+    AUDIO_GPU = (static_cast<uint64_t>(Nodes::ProcessingToken::AUDIO_RATE) << 32) | (static_cast<uint64_t>(Buffers::ProcessingToken::SAMPLE_RATE | Buffers::ProcessingToken::GPU_PROCESS | Buffers::ProcessingToken::PARALLEL) << 16) | (static_cast<uint64_t>(Vruta::ProcessingToken::MULTI_RATE)),
 
     /**
      * @brief Pure windowing domain (no rendering)

@@ -70,6 +70,7 @@ enum class Context : uint8_t {
 
     AudioBackend, ///< Audio processing backend (RtAudio, JACK, ASIO)
     GraphicsBackend, ///< Graphics/visual rendering backend (Vulkan, OpenGL)
+    InputBackend, ///< Input device backend (HID, MIDI, OSC)
     CustomBackend, ///< Custom user-defined backend
 
     // ============================================================================
