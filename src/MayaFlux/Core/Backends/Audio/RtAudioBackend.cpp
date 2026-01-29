@@ -48,7 +48,7 @@ std::unique_ptr<AudioDevice> RtAudioBackend::create_device_manager()
 std::unique_ptr<AudioStream> RtAudioBackend::create_stream(
     unsigned int output_device_id,
     unsigned int input_device_id,
-    const GlobalStreamInfo& stream_info,
+    GlobalStreamInfo& stream_info,
     void* user_data)
 {
     return std::make_unique<RtAudioStream>(
@@ -133,7 +133,7 @@ RtAudioStream::RtAudioStream(
     RtAudio* context,
     unsigned int output_device_id,
     unsigned int input_device_id,
-    const GlobalStreamInfo& streamInfo,
+    GlobalStreamInfo& streamInfo,
     void* userData)
     : m_context(context)
     , m_out_parameters()
@@ -237,11 +237,20 @@ void RtAudioStream::open()
         RtAudio::StreamParameters* inputParamsPtr = nullptr;
 
         if (m_stream_info.input.enabled && m_stream_info.input.channels > 0) {
-            // inputParams.deviceId = m_stream_info.input.device_id >= 0 ? m_stream_info.input.device_id : m_context->getDefaultInputDevice();
             m_in_parameters.nChannels = m_stream_info.input.channels;
-            // inputParams.firstChannel = 0;
             inputParamsPtr = &m_in_parameters;
         }
+
+        unsigned int requested_buffer = m_stream_info.buffer_size;
+
+#ifdef MAYAFLUX_PLATFORM_LINUX
+        if (m_context->getCurrentApi() == RtAudio::UNIX_JACK) {
+            setenv("PIPEWIRE_QUANTUM",
+                std::to_string(m_stream_info.buffer_size).c_str(), 0);
+            setenv("PIPEWIRE_LATENCY",
+                Journal::format_runtime("{}/{}", m_stream_info.buffer_size, m_stream_info.sample_rate).c_str(), 0);
+        }
+#endif // MAYAFLUX_PLATFORM_LINUX
 
         RtAudioSingleton::mark_stream_open();
 
@@ -254,6 +263,14 @@ void RtAudioStream::open()
             &RtAudioStream::rtAudioCallback,
             this,
             &m_options);
+
+        if (m_stream_info.buffer_size != requested_buffer) {
+            MF_WARN(Journal::Component::Core,
+                Journal::Context::AudioBackend,
+                "Audio backend changed buffer size from {} to {}. "
+                "Set GlobalStreamInfo.buffer_size = {} before initialization to avoid mismatch.",
+                requested_buffer, m_stream_info.buffer_size, m_stream_info.buffer_size);
+        }
 
         m_isOpen = true;
     } catch (const RtAudioErrorType& e) {
@@ -373,10 +390,23 @@ int RtAudioStream::rtAudioCallback(
     return 0;
 }
 
-std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(Utils::AudioBackendType type)
+std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
+    Utils::AudioBackendType type,
+    std::optional<Core::GlobalStreamInfo::AudioApi> api_preference)
 {
     switch (type) {
     case Utils::AudioBackendType::RTAUDIO:
+        if (api_preference) {
+            auto pref_api = to_rtaudio_api(*api_preference);
+            if (pref_api != RtAudio::UNSPECIFIED) {
+                MF_INFO(Journal::Component::Core, Journal::Context::AudioBackend,
+                    "Setting RtAudio preferred API to {}",
+                    RtAudio::getApiDisplayName(pref_api));
+
+                RtAudioSingleton::set_preferred_api(
+                    to_rtaudio_api(*api_preference));
+            }
+        }
         return std::make_unique<RtAudioBackend>();
     default:
         throw std::runtime_error("Unsupported audio backend type");
