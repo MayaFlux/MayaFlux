@@ -61,3 +61,5 @@ if(MAYAFLUX_DEV)
     set(MAYAFLUX_PORTABLE ON CACHE BOOL "" FORCE)
     set(CMAKE_BUILD_TYPE DEBUG)
 endif()
+
+option(MAYAFLUX_ENABLE_HID "Enable HID input backend (requires HIDAPI)" ON)

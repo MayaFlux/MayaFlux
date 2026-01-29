@@ -42,6 +42,15 @@ if(WIN32)
             INTERFACE_INCLUDE_DIRECTORIES "$ENV{FFMPEG_ROOT}/include")
     endforeach()
 
+
+    if(MAYAFLUX_ENABLE_HID)
+        find_package(hidapi CONFIG QUIET)
+        if(NOT hidapi_FOUND)
+            message(WARNING "HIDAPI not found via vcpkg. Install with: vcpkg install hidapi")
+            set(MAYAFLUX_ENABLE_HID OFF CACHE BOOL "" FORCE)
+        endif()
+    endif()
+
 else()
     find_package(PkgConfig REQUIRED)
 
@@ -68,5 +77,27 @@ else()
     pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
     pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
+
+    if(MAYAFLUX_ENABLE_HID)
+        if(APPLE)
+            pkg_check_modules(HIDAPI QUIET IMPORTED_TARGET hidapi)
+        else()
+            pkg_search_module(HIDAPI QUIET IMPORTED_TARGET
+                hidapi-hidraw hidapi-libusb hidapi)
+        endif()
+
+        if(NOT HIDAPI_FOUND)
+            message(WARNING "HIDAPI not found. Install with:")
+            if(APPLE)
+                message(WARNING "  brew install hidapi")
+            else()
+                message(WARNING
+                        "  sudo apt install libhidapi-dev  # Debian/Ubuntu")
+                message(WARNING "  sudo dnf install hidapi-devel   # Fedora")
+                message(WARNING "  sudo pacman -S hidapi           # Arch")
+            endif()
+            set(MAYAFLUX_ENABLE_HID OFF CACHE BOOL "" FORCE)
+        endif()
+    endif()
 
 endif()
