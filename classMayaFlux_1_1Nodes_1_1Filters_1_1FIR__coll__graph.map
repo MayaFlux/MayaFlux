@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nodes::Filters::FIR" name="MayaFlux::Nodes::Filters::FIR">
+<area shape="rect" id="Node000001" title="Finite Impulse Response filter implementation." alt="" coords="213,1791,417,1956"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter.html" title="Base class for computational signal transformers implementing difference equations." alt="" coords="213,1087,416,1741"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="317,1755,317,1791,312,1791,312,1755"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,375,203,1024"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="206,1037,221,1085,216,1087,201,1038"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FilterContext.html" title="Specialized context for filter node callbacks." alt="" coords="363,183,538,323"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="459,323,465,460,468,644,460,853,450,959,435,1063,423,1120,417,1119,429,1062,444,959,454,853,463,644,460,460,453,323"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FilterContextGpu.html" title="GPU&#45;augmented filter context for callbacks." alt="" coords="227,659,402,739"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="428,337,329,660,324,658,423,335"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="341,5,561,131"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="453,144,453,182,448,182,448,144"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="317,739,317,1070,312,1070,312,739"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="106,180,339,325"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="243,338,309,659,304,660,238,339"/>
+</map>

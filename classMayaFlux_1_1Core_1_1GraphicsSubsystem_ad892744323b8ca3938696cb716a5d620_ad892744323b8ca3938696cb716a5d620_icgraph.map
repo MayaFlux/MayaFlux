@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GraphicsSubsystem::teardown_windows" name="MayaFlux::Core::GraphicsSubsystem::teardown_windows">
+<area shape="rect" id="Node000001" title="Teardown all window resources during shutdown." alt="" coords="243,5,469,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_add3c53f617b297ce6b56ee3109fb931e.html#add3c53f617b297ce6b56ee3109fb931e" title="Shutdown and cleanup subsystem resources." alt="" coords="5,5,195,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,28,195,28,195,23,229,23"/>
+</map>

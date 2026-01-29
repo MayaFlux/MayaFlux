@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::mouse_released" name="MayaFlux::Kriya::mouse_released">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on specific mouse button release." alt="" coords="215,5,395,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ad19b4b6af5aacd5aa72c828b3ffa85a0.html#ad19b4b6af5aacd5aa72c828b3ffa85a0" title="Schedule a mouse button release handler." alt="" coords="5,5,167,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="201,28,167,28,167,23,201,23"/>
+</map>

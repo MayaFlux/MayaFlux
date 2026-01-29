@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::RenderProcessor::initialize_pipeline" name="MayaFlux::Buffers::RenderProcessor::initialize_pipeline">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,70,200,125"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a54c4e0f2eb44a261d8463e8423e3746d.html#a54c4e0f2eb44a261d8463e8423e3746d" title="Get the global render flow instance." alt="" coords="260,5,457,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,67,273,46,275,52,201,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a93376f079e5ee8131036a571247d4563.html#a93376f079e5ee8131036a571247d4563" title="Called after pipeline is created." alt="" coords="281,70,436,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="200,95,268,95,268,100,200,100"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a12017ca94836ca41f1db05fb08534368.html#a12017ca94836ca41f1db05fb08534368" title="Register a window for dynamic rendering." alt="" coords="248,149,469,203"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="193,122,257,142,255,147,191,127"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="517,5,715,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="457,23,504,23,504,28,457,28"/>
+</map>

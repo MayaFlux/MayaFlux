@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::MixSource::matches_buffer" name="MayaFlux::Buffers::MixSource::matches_buffer">
+<area shape="rect" id="Node000001" title=" " alt="" coords="220,13,419,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1MixProcessor_a961a3256abb1c3f27532de3a806fdddb.html#a961a3256abb1c3f27532de3a806fdddb" title="register an AudioBuffer source to be mixed into the output of specified channel" alt="" coords="5,5,172,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,35,172,35,172,30,206,30"/>
+</map>

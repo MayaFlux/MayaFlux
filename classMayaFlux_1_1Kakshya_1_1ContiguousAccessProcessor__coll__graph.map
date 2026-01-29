@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::ContiguousAccessProcessor" name="MayaFlux::Kakshya::ContiguousAccessProcessor">
+<area shape="rect" id="Node000001" title=" " alt="" coords="161,861,392,1301"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="5,322,156,482"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="100,495,130,638,171,798,192,860,187,862,166,799,125,640,95,496"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="181,5,373,799"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="279,799,279,845,274,845,274,799"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1Region.html" title="Represents a point or span in N&#45;dimensional space." alt="" coords="397,182,548,622"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="432,623,387,799,372,838,369,847,364,845,368,836,382,798,427,622"/>
+</map>

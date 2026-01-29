@@ -1,0 +1,23 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::remove_buffer" name="MayaFlux::Buffers::BufferAccessControl::remove_buffer">
+<area shape="rect" id="Node000001" title="Removes a buffer from a token (dispatches based on token type)" alt="" coords="5,267,159,321"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a6c85a3347f55dc148d6e8d86deffd23d.html#a6c85a3347f55dc148d6e8d86deffd23d" title="Removes an audio buffer from a token and channel." alt="" coords="216,113,384,168"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,264,248,174,251,178,123,269"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_af653b66ca482f1608d848644b5472f27.html#af653b66ca482f1608d848644b5472f27" title="Removes a graphics buffer from a token." alt="" coords="207,345,393,400"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="160,319,212,338,210,343,158,324"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4d8b6658b8ba5a37086de5f4ddc07f88.html#a4d8b6658b8ba5a37086de5f4ddc07f88" title="Gets an existing audio unit without creating if missing (mutable)" alt="" coords="456,5,628,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="354,111,440,70,457,63,459,68,442,75,357,116"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_ab300ec63a12ad8cde8c5ef4e7092367b.html#ab300ec63a12ad8cde8c5ef4e7092367b" title=" " alt="" coords="447,85,637,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="384,126,432,118,433,124,384,131"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4531a511fff4b519167f92818c4e6ed6.html#a4531a511fff4b519167f92818c4e6ed6" title="Checks if an audio unit exists for the given token." alt="" coords="455,149,629,204"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="384,150,441,159,440,164,384,156"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Buffers_1_1RootGraphicsUnit_a48b9b18d980ae62892623cfa96dbee07.html#a48b9b18d980ae62892623cfa96dbee07" title=" " alt="" coords="459,228,625,283"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="345,343,440,292,453,286,455,291,443,296,348,347"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a0e7b0fe7658405d81011637c27121499.html#a0e7b0fe7658405d81011637c27121499" title="Gets an existing graphics unit without creating if missing (mutable)" alt="" coords="453,307,631,361"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="393,355,439,348,440,353,394,360"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="459,385,625,440"/>
+<area shape="poly" id="edge8_Node000006_Node000009" title=" " alt="" coords="394,385,445,394,444,399,393,391"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_adfa3bbc2ff0dea134e10dce005d61dee.html#adfa3bbc2ff0dea134e10dce005d61dee" title="Checks if a graphics unit exists for the given token." alt="" coords="455,464,629,519"/>
+<area shape="poly" id="edge9_Node000006_Node000010" title=" " alt="" coords="348,398,443,449,458,456,456,461,440,454,345,402"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="441,543,643,583"/>
+<area shape="poly" id="edge10_Node000006_Node000011" title=" " alt="" coords="321,399,371,464,405,499,443,529,453,535,450,540,440,534,401,503,367,468,317,402"/>
+</map>

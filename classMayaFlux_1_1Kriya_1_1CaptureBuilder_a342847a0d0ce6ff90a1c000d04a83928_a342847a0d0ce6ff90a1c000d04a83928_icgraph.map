@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::CaptureBuilder::on_capture_processing" name="MayaFlux::Kriya::CaptureBuilder::on_capture_processing">
+<area shape="rect" id="Node000001" title="Set processing control to ON_CAPTURE mode." alt="" coords="292,5,517,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_ae7457d99167bee8e2b290c9cba5c9dfb.html#ae7457d99167bee8e2b290c9cba5c9dfb" title="Create CaptureBuilder for file with fluent configuration." alt="" coords="5,5,244,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="278,28,244,28,244,23,278,23"/>
+</map>

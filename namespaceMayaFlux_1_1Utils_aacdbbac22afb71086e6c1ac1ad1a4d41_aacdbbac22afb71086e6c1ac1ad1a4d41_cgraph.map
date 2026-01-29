@@ -1,0 +1,5 @@
+<map id="MayaFlux::Utils::string_to_enum_case_insensitive" name="MayaFlux::Utils::string_to_enum_case_insensitive">
+<area shape="rect" id="Node000001" title="Universal case&#45;insensitive string to enum converter using magic_enum." alt="" coords="5,5,207,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Utils_ad5589e5154ef69f4b0faf3f51f168cc2.html#ad5589e5154ef69f4b0faf3f51f168cc2" title="Convert string to uppercase." alt="" coords="255,5,400,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="207,23,241,23,241,28,207,28"/>
+</map>

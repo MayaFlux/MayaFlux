@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::ParticleNetwork::update_mapped_parameters" name="MayaFlux::Nodes::Network::ParticleNetwork::update_mapped_parameters">
+<area shape="rect" id="Node000001" title="Update mapped parameters before physics step." alt="" coords="5,45,204,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a6542f869975171c5bfae100d200d38e0.html#a6542f869975171c5bfae100d200d38e0" title="Apply broadcast parameter to all particles." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,54,238,48,239,54,205,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a15a2b2bc222ec72a72b689751a1eb59b.html#a15a2b2bc222ec72a72b689751a1eb59b" title="Apply one&#45;to&#45;one parameter from another network." alt="" coords="252,84,451,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="205,86,239,91,238,96,204,91"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="499,99,665,124"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="451,109,485,109,485,114,451,114"/>
+</map>

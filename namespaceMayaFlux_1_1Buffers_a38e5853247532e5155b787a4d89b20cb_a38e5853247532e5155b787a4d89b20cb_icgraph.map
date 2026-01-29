@@ -1,0 +1,35 @@
+<map id="MayaFlux::Buffers::are_tokens_compatible" name="MayaFlux::Buffers::are_tokens_compatible">
+<area shape="rect" id="Node000001" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="960,478,1133,518"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_aef4792499996ee8634cf1b7ed0ee7aaa.html#aef4792499996ee8634cf1b7ed0ee7aaa" title=" " alt="" coords="719,120,887,175"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1036,465,1020,410,995,340,959,268,936,233,910,203,876,177,879,173,914,199,940,230,963,265,1000,338,1026,408,1041,464"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a23d4172a12da9ea88c8487ff720c824d.html#a23d4172a12da9ea88c8487ff720c824d" title="Applies the transformation pipeline to a buffer with intelligent execution." alt="" coords="221,23,389,77"/>
+<area shape="poly" id="edge15_Node000001_Node000005" title=" " alt="" coords="1041,465,1032,392,1011,297,994,247,972,197,944,151,910,111,883,87,854,67,789,37,720,19,648,10,576,9,507,13,390,32,389,26,507,8,576,3,648,4,721,13,791,32,856,62,886,83,914,107,949,148,977,195,999,245,1016,295,1037,391,1046,464"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a59d5a166df6cf4d18c4250548a8f4b81.html#a59d5a166df6cf4d18c4250548a8f4b81" title="Internal processing method for non&#45;owning buffer contexts." alt="" coords="221,156,389,211"/>
+<area shape="poly" id="edge16_Node000001_Node000007" title=" " alt="" coords="1036,465,1021,415,996,355,960,296,937,270,911,248,848,239,708,224,389,194,390,188,708,219,849,234,913,244,941,266,964,293,1001,352,1026,413,1041,464"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a42ad051597ddd923ddd1428093fa0b93.html#a42ad051597ddd923ddd1428093fa0b93" title="Analyzes token compatibility across all processors in the chain." alt="" coords="695,257,912,312"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1026,467,979,397,947,359,910,327,890,314,893,310,914,322,951,356,983,394,1030,464"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ab9fdb520bc0005b32b8befe80b47e826.html#ab9fdb520bc0005b32b8befe80b47e826" title="Enforces the chain&#39;s preferred processing token on all processors." alt="" coords="719,337,887,406"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1001,473,911,422,884,409,887,404,913,417,1003,468"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1RootBuffer_a33daedcf8eeee0c507e2833a9c5ff486.html#a33daedcf8eeee0c507e2833a9c5ff486" title="Validates if a buffer is acceptable based on current token enforcement strategy." alt="" coords="726,431,881,485"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="946,484,880,473,881,468,947,479"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1ChannelProcessor_a2b43afaa7dae4c5e0e18ac4f04750766.html#a2b43afaa7dae4c5e0e18ac4f04750766" title="Called when processor is attached to a buffer." alt="" coords="722,509,885,564"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="947,516,885,526,884,521,946,511"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1FinalLimiterProcessor_ae5507b2a3a68f1fd0774ed0ca5ef22ed.html#ae5507b2a3a68f1fd0774ed0ca5ef22ed" title="Called when processor is attached to a buffer." alt="" coords="722,588,885,643"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="1005,528,913,579,886,591,884,586,911,574,1002,523"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1GraphicsBatchProcessor_ac57f79da7e0600757e37ca28dfc7709d.html#ac57f79da7e0600757e37ca28dfc7709d" title="Called when processor is attached to a buffer." alt="" coords="714,667,893,721"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="1028,531,981,595,949,628,914,657,894,669,891,664,910,653,945,624,976,591,1024,528"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a7c8e1d9356d3a7d6e88209d631b76aaf.html#a7c8e1d9356d3a7d6e88209d631b76aaf" title="Called when processor is attached to a buffer." alt="" coords="724,745,883,800"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1037,532,1020,578,994,632,959,688,914,736,884,754,881,750,910,732,954,684,989,629,1015,575,1032,530"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ad4f40bcc81018e9e1ef02ab0ee2e01fa.html#ad4f40bcc81018e9e1ef02ab0ee2e01fa" title="Optimizes the processing pipeline for improved performance." alt="" coords="719,824,887,879"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="1043,532,1030,592,1005,667,988,707,968,746,943,782,914,815,889,832,886,828,910,811,939,779,963,743,984,705,1000,665,1024,590,1038,531"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a759a7d0be4818cb3120fe0b9972fb2e7.html#a759a7d0be4818cb3120fe0b9972fb2e7" title="Validates all processors in the chain against the preferred processing token." alt="" coords="712,903,895,957"/>
+<area shape="poly" id="edge17_Node000001_Node000016" title=" " alt="" coords="1046,532,1037,606,1016,702,999,753,977,804,949,851,914,893,897,907,894,903,910,889,944,848,972,801,994,751,1011,700,1032,605,1041,531"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a8a06f46d7b89b81b87a256f188b53c81.html#a8a06f46d7b89b81b87a256f188b53c81" title="Adds a processor to the transformation pipeline for a specific buffer." alt="" coords="458,33,626,88"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="707,118,624,91,626,85,708,113"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ab06548041e8f068a9d83945bcac22a90.html#ab06548041e8f068a9d83945bcac22a90" title="Process pending processor operations." alt="" coords="437,113,647,182"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="705,150,647,150,647,145,705,145"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="443,110,372,80,374,75,445,105"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="424,168,390,173,389,168,423,163"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a1b98bf6c28cf994a1cefad945b80817c.html#a1b98bf6c28cf994a1cefad945b80817c" title="Applies preprocessors, processing chain, post processors and final processors sequentially to a buffe..." alt="" coords="5,23,173,77"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="207,53,174,53,174,47,207,47"/>
+</map>

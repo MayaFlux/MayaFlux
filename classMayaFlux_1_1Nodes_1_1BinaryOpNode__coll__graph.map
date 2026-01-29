@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nodes::BinaryOpNode" name="MayaFlux::Nodes::BinaryOpNode">
+<area shape="rect" id="Node000001" title="Combines the outputs of two nodes using a binary operation." alt="" coords="283,1087,512,1512"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,375,203,1024"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,1010,217,1023,249,1082,285,1140,280,1142,245,1085,212,1025,206,1012"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="227,659,434,739"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="339,753,376,1086,371,1087,334,753"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1BinaryOpContext.html" title="Specialized context for binary operation callbacks." alt="" coords="604,203,799,303"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="713,303,731,433,737,520,740,616,736,719,724,823,702,927,668,1025,640,1076,605,1124,566,1167,526,1206,522,1202,563,1164,601,1121,636,1074,663,1023,697,925,719,822,731,718,734,616,732,520,725,434,708,303"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1BinaryOpContextGpu.html" title="GPU&#45;compatible context for binary operation callbacks." alt="" coords="459,659,653,739"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="684,317,571,660,566,658,679,315"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="591,5,811,131"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="704,144,704,202,699,202,699,144"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="548,740,460,1072,455,1070,543,739"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="346,180,579,325"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="483,338,550,659,545,660,478,339"/>
+</map>

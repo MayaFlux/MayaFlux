@@ -1,0 +1,22 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::process_complete" name="MayaFlux::Buffers::BufferProcessingChain::process_complete">
+<area shape="rect" id="Node000001" title="Applies preprocessors, processing chain, post processors and final processors sequentially to a buffe..." alt="" coords="5,124,173,179"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ac9aa6d5e80eb500bc9d6c7f8aab2efe2.html#ac9aa6d5e80eb500bc9d6c7f8aab2efe2" title="Applies the postprocessor to a buffer." alt="" coords="221,5,389,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="132,122,220,69,230,64,232,69,223,74,134,126"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a5c55c0ccf9ea289065ef17d5d70ae412.html#a5c55c0ccf9ea289065ef17d5d70ae412" title="Applies the preprocessor to a buffer." alt="" coords="221,84,389,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,133,207,127,208,132,174,138"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_a23d4172a12da9ea88c8487ff720c824d.html#a23d4172a12da9ea88c8487ff720c824d" title="Applies the transformation pipeline to a buffer with intelligent execution." alt="" coords="221,163,389,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="174,164,208,170,207,175,173,169"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_aef03e6bad560939aaebd406607c7676b.html#aef03e6bad560939aaebd406607c7676b" title="Applies the final processor to a buffer with guaranteed execution." alt="" coords="221,241,389,296"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="135,176,223,228,233,233,230,238,220,232,132,181"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="947,139,1120,179"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="382,160,437,147,571,135,705,132,830,137,933,145,933,151,830,142,705,138,571,140,438,153,383,165"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_aac98ea3bb4f2cdf37b341a7226caa779.html#aac98ea3bb4f2cdf37b341a7226caa779" title="Validates the processing token against the chain&#39;s preferred token." alt="" coords="437,163,656,217"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="389,187,424,187,424,193,389,193"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ab06548041e8f068a9d83945bcac22a90.html#ab06548041e8f068a9d83945bcac22a90" title="Process pending processor operations." alt="" coords="442,242,651,311"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="383,215,438,235,436,240,381,220"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_aef4792499996ee8634cf1b7ed0ee7aaa.html#aef4792499996ee8634cf1b7ed0ee7aaa" title=" " alt="" coords="717,167,885,221"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="651,240,703,223,705,228,652,245"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ac7fd9f1f3cf9d993aac0a4d64b1601b0.html#ac7fd9f1f3cf9d993aac0a4d64b1601b0" title=" " alt="" coords="704,249,899,304"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="652,274,690,274,690,279,652,279"/>
+<area shape="poly" id="edge8_Node000008_Node000005" title=" " alt="" coords="885,179,933,172,934,177,886,184"/>
+</map>

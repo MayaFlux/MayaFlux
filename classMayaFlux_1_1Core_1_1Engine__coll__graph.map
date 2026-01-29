@@ -1,0 +1,19 @@
+<map id="MayaFlux::Core::Engine" name="MayaFlux::Core::Engine">
+<area shape="rect" id="Node000001" title="Central lifecycle manager and component orchestrator for the MayaFlux processing system." alt="" coords="479,791,668,1236"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo.html" title="Comprehensive configuration for digital audio stream processing." alt="" coords="230,363,469,728"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="439,727,474,799,469,802,434,729"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1ChannelConfig.html" title="Configuration for input or output data channels." alt="" coords="5,75,219,215"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="155,214,235,347,230,350,151,217"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1MidiConfig.html" title="Configuration for MIDI data channels." alt="" coords="243,95,456,195"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="352,195,352,346,347,346,347,195"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1GlobalGraphicsConfig.html" title=" " alt="" coords="686,485,909,605"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="771,607,678,802,673,799,767,604"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Core_1_1GlfwPreInitConfig.html" title="Configuration hints for GLFW initialization." alt="" coords="480,65,675,225"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="607,225,630,281,657,337,699,407,744,471,739,474,695,410,652,340,625,283,602,227"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1GraphicsSurfaceInfo.html" title="System&#45;wide configuration for visual stream processing." alt="" coords="699,25,896,265"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="800,265,800,469,795,469,795,265"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Core_1_1GraphicsBackendInfo.html" title="Configuration for graphics API backend (Vulkan/OpenGL/etc.)" alt="" coords="920,5,1101,285"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="938,287,839,471,835,469,934,284"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Core_1_1GraphicsResourceLimits.html" title="Resource limits and budgets for graphics subsystem." alt="" coords="1125,55,1320,235"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="1159,237,1115,287,1003,390,894,477,890,473,999,386,1111,283,1155,234"/>
+</map>

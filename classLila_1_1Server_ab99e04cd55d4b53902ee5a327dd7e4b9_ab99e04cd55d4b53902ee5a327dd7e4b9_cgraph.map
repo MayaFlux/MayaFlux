@@ -1,0 +1,7 @@
+<map id="Lila::Server::process_control_message" name="Lila::Server::process_control_message">
+<area shape="rect" id="Node000001" title="Processes control messages (e.g., session, ping)" alt="" coords="5,37,159,77"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_aaee9cdd22cb0dd2000bfc1caf565c10f.html#aaee9cdd22cb0dd2000bfc1caf565c10f" title="Sends a message to a client." alt="" coords="223,5,357,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,43,209,35,209,40,160,48"/>
+<area shape="rect" id="Node000003" href="$classLila_1_1Server_a30f17a40fb437c66d3af2517b25f3efd.html#a30f17a40fb437c66d3af2517b25f3efd" title="Sets the session ID for a client." alt="" coords="207,69,373,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="160,67,194,72,193,77,159,72"/>
+</map>

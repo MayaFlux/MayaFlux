@@ -1,0 +1,16 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::shutdown" name="MayaFlux::Portal::Graphics::ShaderFoundry::shutdown">
+<area shape="rect" id="Node000001" title="Shutdown and cleanup all ShaderFoundry resources." alt="" coords="5,131,203,171"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a9a8e90ecb5a133113ecd0712fb0ff988.html#a9a8e90ecb5a133113ecd0712fb0ff988" title=" " alt="" coords="251,5,448,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="138,129,249,69,262,63,265,68,252,74,141,133"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a5246a7c29d3226e7c738749fb2b8e6aa.html#a5246a7c29d3226e7c738749fb2b8e6aa" title=" " alt="" coords="251,84,448,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,133,237,127,238,132,203,138"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a267b58fc1e1669a41fd969b3f93d76c6.html#a267b58fc1e1669a41fd969b3f93d76c6" title=" " alt="" coords="251,163,448,217"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="203,164,238,170,237,175,203,170"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a52651a5a78f0c50974d443de43c776ac.html#a52651a5a78f0c50974d443de43c776ac" title="Free all allocated command buffers." alt="" coords="251,241,448,296"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="142,169,252,226,268,233,265,238,249,231,139,174"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="496,131,701,171"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="423,58,449,69,552,122,549,127,447,74,421,62"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="449,125,483,130,482,135,448,130"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="448,172,482,167,483,172,449,177"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="419,239,447,226,547,176,550,180,449,231,421,244"/>
+</map>

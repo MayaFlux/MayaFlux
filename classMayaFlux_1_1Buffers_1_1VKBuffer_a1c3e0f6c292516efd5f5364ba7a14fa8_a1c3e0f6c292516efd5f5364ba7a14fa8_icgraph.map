@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VKBuffer::resize" name="MayaFlux::Buffers::VKBuffer::resize">
+<area shape="rect" id="Node000001" title="Resize buffer and recreate GPU resources if needed." alt="" coords="257,5,405,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ac591a11585eecc22824a7411e4f02dab.html#ac591a11585eecc22824a7411e4f02dab" title="Create texture buffer with dimensions." alt="" coords="5,5,209,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,28,210,28,210,23,244,23"/>
+</map>

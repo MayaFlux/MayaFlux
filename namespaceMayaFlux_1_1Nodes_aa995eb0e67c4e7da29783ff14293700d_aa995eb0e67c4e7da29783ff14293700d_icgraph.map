@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::safe_add_conditional_callback" name="MayaFlux::Nodes::safe_add_conditional_callback">
+<area shape="rect" id="Node000001" title="Safely adds a conditional callback if it doesn&#39;t already exist." alt="" coords="231,5,424,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node_a290c190252ac9250b8a86ff79dfe8970.html#a290c190252ac9250b8a86ff79dfe8970" title="Registers a conditional callback." alt="" coords="5,5,183,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="217,28,183,28,183,23,217,23"/>
+</map>

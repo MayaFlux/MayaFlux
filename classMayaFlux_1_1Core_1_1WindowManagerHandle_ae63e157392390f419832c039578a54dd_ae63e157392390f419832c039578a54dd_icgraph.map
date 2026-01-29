@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::WindowManagerHandle::get_processing_windows" name="MayaFlux::Core::WindowManagerHandle::get_processing_windows">
+<area shape="rect" id="Node000001" title="Get list of windows that are open and not minimized." alt="" coords="1033,13,1275,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a4abeb27756b788566c82fd5f6b4c2603.html#a4abeb27756b788566c82fd5f6b4c2603" title="Register markend windows from window manager for swapchain processing." alt="" coords="769,5,985,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1020,35,986,35,986,30,1020,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_af7661b41b9eb2e292868aca2f7116b9a.html#af7661b41b9eb2e292868aca2f7116b9a" title="Unified processing callback (alternative to separate methods)" alt="" coords="532,13,721,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="756,35,721,35,721,30,756,30"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a5570e0e163a26bb602d622048a29c73f.html#a5570e0e163a26bb602d622048a29c73f" title="Graphics thread main loop." alt="" coords="243,13,484,53"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="518,35,484,35,484,30,518,30"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a34118595a38cba09a09a08824f4d0283.html#a34118595a38cba09a09a08824f4d0283" title="Start the subsystem&#39;s processing/event loops." alt="" coords="5,13,195,53"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="229,35,195,35,195,30,229,30"/>
+</map>

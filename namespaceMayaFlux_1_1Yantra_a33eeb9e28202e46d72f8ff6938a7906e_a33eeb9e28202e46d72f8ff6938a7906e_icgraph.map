@@ -1,0 +1,18 @@
+<map id="MayaFlux::Yantra::validate_extraction_parameters" name="MayaFlux::Yantra::validate_extraction_parameters">
+<area shape="rect" id="Node000001" title="Validate extraction parameters." alt="" coords="603,133,797,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a61e120540bbc4e8889cd4dcd199523ea.html#a61e120540bbc4e8889cd4dcd199523ea" title="Extract data from regions with values above statistical mean." alt="" coords="333,5,521,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="662,127,612,92,554,60,520,48,522,43,556,55,615,87,665,123"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_aa9a82f1632d66651e0ebe0c75c89bfc3.html#aa9a82f1632d66651e0ebe0c75c89bfc3" title="Extract data from high&#45;energy regions using EnergyAnalyzer." alt="" coords="333,69,521,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="600,133,512,112,514,107,602,128"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_a49265071233bcfa5aeab9478d0b038ea.html#a49265071233bcfa5aeab9478d0b038ea" title="Extract data from regions with high spectral energy." alt="" coords="333,133,521,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="589,156,521,156,521,151,589,151"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a16e4c9ffa101e49052b5a69964fd8ad8.html#a16e4c9ffa101e49052b5a69964fd8ad8" title="Extract data from statistical outlier regions." alt="" coords="333,197,521,237"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="602,179,514,200,512,195,600,174"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6c4b962aa9ba7a8bd9967862065772da.html#a6c4b962aa9ba7a8bd9967862065772da" title="Input validation." alt="" coords="300,261,555,301"/>
+<area shape="poly" id="edge9_Node000001_Node000007" title=" " alt="" coords="665,184,615,219,556,252,523,264,521,259,554,247,612,215,662,180"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,101,252,141"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="329,52,301,60,180,104,178,99,299,55,328,46"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="320,103,253,111,252,105,319,98"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="319,144,252,137,253,132,320,139"/>
+<area shape="poly" id="edge8_Node000006_Node000003" title=" " alt="" coords="328,196,299,188,178,144,180,139,301,183,329,191"/>
+</map>

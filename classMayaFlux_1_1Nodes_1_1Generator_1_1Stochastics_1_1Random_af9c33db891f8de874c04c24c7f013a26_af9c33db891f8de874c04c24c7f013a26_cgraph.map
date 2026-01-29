@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Stochastics::Random::notify_tick" name="MayaFlux::Nodes::Generator::Stochastics::Random::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks about a new value." alt="" coords="5,53,248,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a28f5f609deb6c80cc8ff2c2860e17372.html#a28f5f609deb6c80cc8ff2c2860e17372" title="Gets the last created context object." alt="" coords="301,5,509,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,53,287,47,288,52,249,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a9a0d34280d509c15b0a724b12fa5da8b.html#a9a0d34280d509c15b0a724b12fa5da8b" title="Updates the context object with the current node state." alt="" coords="296,84,515,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="249,87,283,92,282,97,248,92"/>
+</map>

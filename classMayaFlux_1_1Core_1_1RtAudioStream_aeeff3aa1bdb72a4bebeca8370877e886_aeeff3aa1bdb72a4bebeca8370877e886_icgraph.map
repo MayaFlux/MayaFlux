@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::RtAudioStream::close" name="MayaFlux::Core::RtAudioStream::close">
+<area shape="rect" id="Node000001" title="Terminates the audio stream and releases all resources." alt="" coords="284,5,515,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a838b8208585c81651e5feeb736348084.html#a838b8208585c81651e5feeb736348084" title="Ensures proper cleanup of stream resources." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

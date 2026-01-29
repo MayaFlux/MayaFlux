@@ -1,0 +1,23 @@
+<map id="BufferService.hpp" name="BufferService.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1074,5,1211,31"/>
+<area shape="rect" id="Node000002" href="$BackendResoureManager_8cpp.html" title=" " alt="" coords="5,79,219,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1061,27,700,48,231,81,219,82,219,77,230,76,700,43,1060,21"/>
+<area shape="rect" id="Node000003" href="$BufferAccessControl_8cpp.html" title=" " alt="" coords="243,79,423,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1060,28,783,50,435,81,424,82,423,77,434,76,783,45,1060,23"/>
+<area shape="rect" id="Node000004" href="$BufferDownloadProcessor_8cpp.html" title=" " alt="" coords="447,79,662,104"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1060,32,650,81,649,76,1060,27"/>
+<area shape="rect" id="Node000005" href="$BufferUploadProcessor_8cpp.html" title=" " alt="" coords="686,79,882,104"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1072,36,843,81,842,76,1071,31"/>
+<area shape="rect" id="Node000006" href="$DescriptorBindingsProcessor_8cpp.html" title=" " alt="" coords="907,79,1141,104"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1113,40,1045,81,1042,76,1110,35"/>
+<area shape="rect" id="Node000007" href="$NodeTextureProcessor_8cpp.html" title=" " alt="" coords="1166,79,1359,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1175,35,1244,76,1242,81,1173,40"/>
+<area shape="rect" id="Node000008" href="$StagingUtils_8cpp.html" title=" " alt="" coords="1384,79,1512,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="1206,31,1399,76,1398,81,1204,36"/>
+<area shape="rect" id="Node000009" href="$TextureProcessor_8cpp.html" title=" " alt="" coords="1537,79,1695,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1225,29,1540,76,1540,81,1224,34"/>
+<area shape="rect" id="Node000010" href="$VKBuffer_8cpp.html" title=" " alt="" coords="1719,79,1825,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1225,23,1444,44,1708,76,1720,78,1719,83,1708,81,1443,50,1225,29"/>
+<area shape="rect" id="Node000011" href="$VulkanBackend_8cpp.html" title=" " alt="" coords="1849,79,1996,104"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="1225,22,1497,44,1838,76,1849,77,1849,83,1837,81,1497,49,1225,28"/>
+</map>

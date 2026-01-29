@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::SoundFileReader::extract_metadata" name="MayaFlux::IO::SoundFileReader::extract_metadata">
+<area shape="rect" id="Node000001" title="Extract metadata from the file." alt="" coords="279,5,504,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a25d2ebc2d552f532a46fbb493f8d88d3.html#a25d2ebc2d552f532a46fbb493f8d88d3" title="Open an audio file for reading." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="265,28,231,28,231,23,265,23"/>
+</map>

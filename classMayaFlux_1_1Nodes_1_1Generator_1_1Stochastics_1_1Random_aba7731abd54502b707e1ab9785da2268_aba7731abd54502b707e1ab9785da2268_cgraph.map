@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Stochastics::Random::generate_distributed_sample" name="MayaFlux::Nodes::Generator::Stochastics::Random::generate_distributed_sample">
+<area shape="rect" id="Node000001" title="Generates a raw value according to the current distribution." alt="" coords="5,45,237,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_abb1f22d5b8cdb7fd3ede90b0be7bb1ca.html#abb1f22d5b8cdb7fd3ede90b0be7bb1ca" title="Fast uniform random number generator using xorshift algorithm." alt="" coords="291,5,499,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,53,276,47,277,53,238,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_abf25d35c453f958d38e0ae373167b7b8.html#abf25d35c453f958d38e0ae373167b7b8" title="Rebuilds distribution objects if parameters have changed." alt="" coords="285,84,504,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,86,272,91,272,97,237,92"/>
+</map>

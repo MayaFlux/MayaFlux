@@ -1,0 +1,18 @@
+<map id="MayaFlux::Core::AudioSubsystem::process_output" name="MayaFlux::Core::AudioSubsystem::process_output">
+<area shape="rect" id="Node000001" title="Processes output data for audio interface." alt="" coords="5,165,247,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1TaskSchedulerHandle_ae8a8e2300b2064c3d22c6e9c5a1dd123.html#ae8a8e2300b2064c3d22c6e9c5a1dd123" title="Process all tasks in token domain." alt="" coords="303,5,528,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="146,163,209,109,250,80,293,55,310,48,312,52,296,60,253,85,212,113,150,167"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1NodeProcessingHandle_a9e484d01e9407b050b815bcf24cfc9f5.html#a9e484d01e9407b050b815bcf24cfc9f5" title=" " alt="" coords="297,69,533,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="175,163,294,119,321,111,322,116,296,124,177,168"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1TaskSchedulerHandle_a52eef6d02c5506e188dc830175e431a7.html#a52eef6d02c5506e188dc830175e431a7" title="Process all tasks scheduled for current buffer cycle." alt="" coords="303,133,528,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="247,169,289,165,289,170,247,175"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_a57660256682189798fbbc3b6d1ea351a.html#a57660256682189798fbbc3b6d1ea351a" title="Process specific channel." alt="" coords="295,197,536,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="247,196,281,200,281,205,247,201"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1NodeProcessingHandle_abddbf9cf0a76c07c39c1d4db0951f25e.html#abddbf9cf0a76c07c39c1d4db0951f25e" title=" " alt="" coords="297,261,533,301"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="177,203,296,247,322,255,321,260,294,252,175,208"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_a498e4d1f3f1e46e52ba3d2565ec0fb56.html#a498e4d1f3f1e46e52ba3d2565ec0fb56" title="Get read&#45;only access to channel data." alt="" coords="295,325,536,365"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="150,204,212,257,253,286,296,311,312,318,310,323,293,316,250,291,209,261,146,208"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_afc0b5cf904eecf62523920f49fecff3d.html#afc0b5cf904eecf62523920f49fecff3d" title=" " alt="" coords="584,261,825,301"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="507,235,601,256,600,261,506,240"/>
+<area shape="poly" id="edge8_Node000008_Node000006" title=" " alt="" coords="506,323,600,302,601,307,507,328"/>
+</map>

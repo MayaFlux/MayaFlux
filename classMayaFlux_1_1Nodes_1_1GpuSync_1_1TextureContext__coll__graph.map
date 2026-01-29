@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::TextureContext" name="MayaFlux::Nodes::GpuSync::TextureContext">
+<area shape="rect" id="Node000001" title="Context for TextureNode &#45; provides pixel buffer access." alt="" coords="145,199,337,299"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,15,225,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,150,206,197,202,200,167,153"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="249,5,483,151"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="306,164,279,200,275,197,302,160"/>
+</map>

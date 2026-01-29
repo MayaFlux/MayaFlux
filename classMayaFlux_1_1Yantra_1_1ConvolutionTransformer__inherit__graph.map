@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::ConvolutionTransformer&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::ConvolutionTransformer&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Concrete transformer for convolution&#45;based operations." alt="" coords="5,1348,272,1617"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer.html" title="Template&#45;flexible transformer base with instance&#45;defined I/O types." alt="" coords="32,563,245,1300"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,1314,141,1348,136,1348,136,1314"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="12,5,265,515"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="141,529,141,562,136,562,136,529"/>
+</map>

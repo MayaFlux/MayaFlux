@@ -1,0 +1,6 @@
+<map id="MayaFlux::Yantra::transform_trigonometric" name="MayaFlux::Yantra::transform_trigonometric">
+<area shape="rect" id="Node000001" title="Trigonometric transformation using specified function (OUT&#45;OF&#45;PLACE)" alt="" coords="5,29,212,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_ab1bf6577512e3d305cc26dd85639f1bb.html#ab1bf6577512e3d305cc26dd85639f1bb" title="Trigonometric transformation using specified function (IN&#45;PLACE)" alt="" coords="260,29,467,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,47,246,47,246,52,212,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="316,30,313,20,321,10,338,5,363,3,393,6,409,13,407,18,391,11,363,8,339,10,324,15,319,21,321,28"/>
+</map>
