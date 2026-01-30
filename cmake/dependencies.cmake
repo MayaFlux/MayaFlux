@@ -45,9 +45,20 @@ if(WIN32)
 
     if(MAYAFLUX_ENABLE_HID)
         find_package(hidapi CONFIG QUIET)
-        if(NOT hidapi_FOUND)
-            message(WARNING "HIDAPI not found via vcpkg. Install with: vcpkg install hidapi")
-            set(MAYAFLUX_ENABLE_HID OFF CACHE BOOL "" FORCE)
+        if(hidapi_FOUND)
+            message(STATUS "Using HIDAPI from vcpkg")
+        else()
+            if(DEFINED ENV{HIDAPI_ROOT} AND DEFINED ENV{HIDAPI_LIB_DIR})
+                add_library(hidapi SHARED IMPORTED GLOBAL)
+                set_target_properties(hidapi PROPERTIES
+                    IMPORTED_LOCATION "$ENV{HIDAPI_LIB_DIR}/hidapi.dll"
+                    IMPORTED_IMPLIB "$ENV{HIDAPI_LIB_DIR}/hidapi.lib"
+                    INTERFACE_INCLUDE_DIRECTORIES "$ENV{HIDAPI_ROOT}/include")
+                message(STATUS "Using HIDAPI from environment: $ENV{HIDAPI_ROOT}")
+            else()
+                message(WARNING "HIDAPI not found via vcpkg or environment variables. Disabling HID support.")
+                set(MAYAFLUX_ENABLE_HID OFF CACHE BOOL "" FORCE)
+            endif()
         endif()
     endif()
 
