@@ -96,11 +96,6 @@ public:
      */
     void close_device(InputType backend_type, uint32_t device_id);
 
-    /**
-     * @brief Get the InputManager
-     */
-    [[nodiscard]] InputManager* get_input_manager() const { return m_input_manager.get(); }
-
 private:
     GlobalInputConfig& m_config;
     SubsystemProcessingHandle* m_handle { nullptr };
@@ -108,8 +103,6 @@ private:
 
     std::atomic<bool> m_ready { false };
     std::atomic<bool> m_running { false };
-
-    std::unique_ptr<InputManager> m_input_manager;
 
     mutable std::shared_mutex m_backends_mutex;
     std::unordered_map<InputType, std::unique_ptr<IInputBackend>> m_backends;

@@ -5,7 +5,11 @@
 
 #include "Subsystems/GraphicsSubsystem.hpp"
 
+#include "Subsystems/InputSubsystem.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
+
+#include "MayaFlux/Core/GlobalInputConfig.hpp"
 
 namespace MayaFlux::Core {
 
@@ -13,11 +17,13 @@ SubsystemManager::SubsystemManager(
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
-    std::shared_ptr<Core::WindowManager> window_manager)
+    std::shared_ptr<Core::WindowManager> window_manager,
+    std::shared_ptr<InputManager> input_manager)
     : m_node_graph_manager(std::move(node_graph_manager))
     , m_buffer_manager(std::move(buffer_manager))
     , m_task_scheduler(std::move(task_scheduler))
     , m_window_manager(std::move(window_manager))
+    , m_input_manager(std::move(input_manager))
 {
     if (!m_node_graph_manager) {
         fatal(Journal::Component::Core, Journal::Context::Init,
@@ -37,6 +43,10 @@ SubsystemManager::SubsystemManager(
     if (!m_window_manager) {
         MF_WARN(Journal::Component::Core, Journal::Context::Init,
             "No WindowManager provided - Graphics subsystems will be unavailable");
+    }
+    if (!m_input_manager) {
+        MF_WARN(Journal::Component::Core, Journal::Context::Init,
+            "No InputManager provided - Input subsystems will be unavailable");
     }
 }
 
@@ -58,6 +68,19 @@ void SubsystemManager::create_graphics_subsystem(const GlobalGraphicsConfig& gra
     create_subsystem_internal<GraphicsSubsystem>(SubsystemType::GRAPHICS, graphics_config);
 }
 
+void SubsystemManager::create_input_subsystem(GlobalInputConfig& input_config)
+{
+    if (!m_input_manager) {
+        error<std::runtime_error>(
+            Journal::Component::Core,
+            Journal::Context::Init,
+            std::source_location::current(),
+            "Cannot create InputSubsystem without a valid InputManager");
+    }
+
+    create_subsystem_internal<InputSubsystem>(SubsystemType::INPUT, input_config);
+}
+
 void SubsystemManager::add_subsystem(SubsystemType type, const std::shared_ptr<ISubsystem>& subsystem)
 {
     auto tokens = subsystem->get_tokens();
@@ -66,6 +89,7 @@ void SubsystemManager::add_subsystem(SubsystemType type, const std::shared_ptr<I
         m_node_graph_manager,
         m_task_scheduler,
         m_window_manager,
+        m_input_manager,
         tokens);
 
     subsystem->initialize(*handle);
@@ -86,6 +110,14 @@ std::shared_ptr<AudioSubsystem> SubsystemManager::get_audio_subsystem()
 std::shared_ptr<GraphicsSubsystem> SubsystemManager::get_graphics_subsystem()
 {
     if (auto subsystem = std::dynamic_pointer_cast<GraphicsSubsystem>(get_subsystem(SubsystemType::GRAPHICS))) {
+        return subsystem;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<InputSubsystem> SubsystemManager::get_input_subsystem()
+{
+    if (auto subsystem = std::dynamic_pointer_cast<InputSubsystem>(get_subsystem(SubsystemType::INPUT))) {
         return subsystem;
     }
     return nullptr;
@@ -166,6 +198,13 @@ void SubsystemManager::stop_graphics_subsystem()
 {
     if (auto graphics = get_graphics_subsystem()) {
         graphics->stop();
+    }
+}
+
+void SubsystemManager::stop_input_subsystem()
+{
+    if (auto input = get_input_subsystem()) {
+        input->stop();
     }
 }
 

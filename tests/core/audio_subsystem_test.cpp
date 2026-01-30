@@ -108,7 +108,7 @@ TEST_F(AudioSubsystemTest, InitializationWithProcessingHandle)
     };
 
     Core::SubsystemProcessingHandle handle(
-        buffer_manager, node_graph_manager, task_scheduler, tokens);
+        buffer_manager, node_graph_manager, task_scheduler, {}, {}, tokens);
 
     EXPECT_NO_THROW(audio_subsystem->initialize(handle));
     EXPECT_TRUE(audio_subsystem->is_ready()) << "AudioSubsystem should be ready after initialization";
@@ -129,7 +129,7 @@ TEST_F(AudioSubsystemTest, CallbackRegistration)
         .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
-    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
+    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, {}, {}, tokens);
 
     EXPECT_NO_THROW(audio_subsystem->initialize(handle));
     EXPECT_NO_THROW(audio_subsystem->register_callbacks());
@@ -147,7 +147,7 @@ TEST_F(AudioSubsystemTest, LifecycleStateTransitions)
         .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
-    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
+    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, {}, {}, tokens);
 
     EXPECT_FALSE(audio_subsystem->is_ready());
     EXPECT_FALSE(audio_subsystem->is_running());
@@ -191,7 +191,7 @@ TEST_F(AudioSubsystemTest, OutputProcessing)
         .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
-    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
+    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, {}, {}, tokens);
 
     audio_subsystem->initialize(handle);
     audio_subsystem->register_callbacks();
@@ -219,7 +219,7 @@ TEST_F(AudioSubsystemTest, InputProcessing)
         .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
-    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
+    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, {}, {}, tokens);
 
     audio_subsystem->initialize(handle);
     audio_subsystem->register_callbacks();
@@ -245,7 +245,7 @@ TEST_F(AudioSubsystemTest, FullDuplexProcessing)
         .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
-    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
+    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, {}, {}, tokens);
 
     audio_subsystem->initialize(handle);
     audio_subsystem->register_callbacks();
@@ -294,7 +294,7 @@ TEST_F(AudioSubsystemTest, ProcessingWithNullBuffers)
         .Task = Vruta::ProcessingToken::SAMPLE_ACCURATE
     };
 
-    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, tokens);
+    Core::SubsystemProcessingHandle handle(buffer_manager, node_graph_manager, task_scheduler, {}, {}, tokens);
 
     audio_subsystem->initialize(handle);
     audio_subsystem->register_callbacks();

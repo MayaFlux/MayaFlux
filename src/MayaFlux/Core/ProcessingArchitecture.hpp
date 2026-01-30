@@ -30,6 +30,9 @@ namespace MayaFlux::Core {
 
 class Window;
 class WindowManager;
+class InputManager;
+
+struct InputValue;
 
 /**
  * @enum HookPosition
@@ -204,6 +207,27 @@ private:
     std::shared_ptr<Core::WindowManager> m_window_manager;
 };
 
+class InputManagerHandle {
+public:
+    /** @brief Constructs handle for specific InputManager */
+    InputManagerHandle(std::shared_ptr<InputManager> input_manager);
+
+    /** @brief start InputManager */
+    void start();
+
+    /** @brief stop InputManager */
+    void stop();
+
+    /** @brief unregister all nodes from InputManager */
+    void unregister();
+
+    /** @brief enqueue input value to InputManager */
+    void enqueue_input(const InputValue& value);
+
+private:
+    std::shared_ptr<InputManager> m_input_manager;
+};
+
 /**
  * @class SubsystemProcessingHandle
  * @brief Unified interface combining buffer and node processing for subsystems
@@ -212,18 +236,12 @@ private:
  */
 class SubsystemProcessingHandle {
 public:
-    /** @brief Constructs unified handle with buffer and node managers */
     SubsystemProcessingHandle(
         std::shared_ptr<Buffers::BufferManager> buffer_manager,
         std::shared_ptr<Nodes::NodeGraphManager> node_manager,
         std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
-        SubsystemTokens tokens);
-
-    SubsystemProcessingHandle(
-        std::shared_ptr<Buffers::BufferManager> buffer_manager,
-        std::shared_ptr<Nodes::NodeGraphManager> node_manager,
-        std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
-        std::shared_ptr<Core::WindowManager> window_manager,
+        std::shared_ptr<WindowManager> window_manager,
+        std::shared_ptr<InputManager> input_manager,
         SubsystemTokens tokens);
 
     /** @brief Buffer processing interface */
@@ -235,6 +253,8 @@ public:
     TaskSchedulerHandle tasks;
 
     WindowManagerHandle windows;
+
+    InputManagerHandle inputs;
 
     /** @brief Get processing token configuration */
     [[nodiscard]] inline SubsystemTokens get_tokens() const { return m_tokens; }

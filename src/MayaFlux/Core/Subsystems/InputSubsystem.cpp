@@ -1,7 +1,6 @@
 #include "InputSubsystem.hpp"
 
 #include "MayaFlux/Core/Backends/Input/HIDBackend.hpp"
-#include "MayaFlux/Core/Input/InputManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Core {
@@ -13,7 +12,6 @@ InputSubsystem::InputSubsystem(GlobalInputConfig& config)
         .Node = Nodes::ProcessingToken::EVENT_RATE,
         .Task = Vruta::ProcessingToken::EVENT_DRIVEN
     }
-    , m_input_manager(std::make_unique<InputManager>())
 {
 }
 
@@ -66,7 +64,7 @@ void InputSubsystem::start()
         return;
     }
 
-    m_input_manager->start();
+    m_handle->inputs.start();
 
     {
         std::shared_lock lock(m_backends_mutex);
@@ -123,7 +121,7 @@ void InputSubsystem::stop()
         }
     }
 
-    m_input_manager->stop();
+    m_handle->inputs.stop();
 
     m_running.store(false);
 
@@ -146,7 +144,7 @@ void InputSubsystem::shutdown()
         m_backends.clear();
     }
 
-    m_input_manager->unregister_all_nodes();
+    m_handle->inputs.unregister();
 
     m_ready.store(false);
 
@@ -250,7 +248,7 @@ void InputSubsystem::close_device(InputType backend_type, uint32_t device_id)
 void InputSubsystem::wire_backend_to_manager(IInputBackend* backend)
 {
     backend->set_input_callback([this](const InputValue& value) {
-        m_input_manager->enqueue(value);
+        m_handle->inputs.enqueue_input(value);
     });
 
     backend->set_device_callback([](const InputDeviceInfo& info, bool connected) {
