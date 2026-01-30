@@ -23,6 +23,7 @@ namespace MayaFlux {
 namespace Core {
     struct GlobalStreamInfo;
     struct GlobalGraphicsConfig;
+    struct GlobalInputConfig;
     class Engine;
 }
 
@@ -81,21 +82,14 @@ MAYAFLUX_API void Init(uint32_t sample_rate, uint32_t buffer_size = 512, uint32_
 MAYAFLUX_API void Init();
 
 /**
- * @brief Initializes the default engine with specified stream info
- * @param stream_info Configuration for sample rate, buffer size, and channels
- *
- * Convenience wrapper for Engine::Init() on the default engine.
- */
-MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info);
-
-/**
  * @brief Initializes the default engine with specified stream and graphics info
  * @param stream_info Configuration for sample rate, buffer size, and channels
  * @param graphics_info Configuration for graphics/windowing backend
+ * @param input_config Configuration for input handling
  *
  * Convenience wrapper for Engine::Init() on the default engine.
  */
-MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config);
+MAYAFLUX_API void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config, Core::GlobalInputConfig input_config);
 
 /**
  * @brief Starts audio processing on the default engine

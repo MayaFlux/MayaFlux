@@ -3,6 +3,7 @@
 #include "SubsystemManager.hpp"
 
 #include "GlobalGraphicsInfo.hpp"
+#include "GlobalInputConfig.hpp"
 #include "GlobalStreamInfo.hpp"
 
 namespace MayaFlux::Nodes::Generator::Stochastics {
@@ -16,11 +17,7 @@ class EventManager;
 namespace MayaFlux::Core {
 
 class WindowManager;
-
-// struct GlobalEngineInfo {
-//     GlobalStreamInfo audio;
-//     GlobalWindowInfo window;
-// };
+class InputManager;
 
 /**
  * @class Engine
@@ -140,11 +137,12 @@ public:
      * @brief Initializes the processing engine with custom stream and graphics configurations
      * @param streamInfo Configuration for sample rate, buffer size, and channels
      * @param graphics_config Configuration for graphics/windowing backend
+     * @param input_config Configuration for input handling
      *
      * Configures the processing engine with the specified stream and graphics information.
      * This method must be called before starting the engine.
      */
-    void Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config);
+    void Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config, const GlobalInputConfig& input_config);
 
     /**
      * @brief Starts the coordinated processing of all subsystems
@@ -325,6 +323,7 @@ private:
 
     GlobalStreamInfo m_stream_info {}; ///< Stream configuration
     GlobalGraphicsConfig m_graphics_config {}; ///< Graphics/windowing configuration
+    GlobalInputConfig m_input_config {}; ///< Input configuration
 
     bool m_is_paused {}; ///< Pause state flag
     bool m_is_initialized {};
@@ -341,6 +340,7 @@ private:
     std::shared_ptr<SubsystemManager> m_subsystem_manager;
     std::shared_ptr<WindowManager> m_window_manager; ///< Window manager (Windowing subsystem)
     std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager (currently only glfw events)
+    std::shared_ptr<InputManager> m_input_manager; ///< Input manager (HID/MIDI/etc.)
     std::unique_ptr<Nodes::Generator::Stochastics::Random> m_rng; ///< Stochastic signal generator
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
