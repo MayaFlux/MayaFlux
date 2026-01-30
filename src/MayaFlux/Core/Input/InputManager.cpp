@@ -1,0 +1,252 @@
+#include "InputManager.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Nodes/Input/InputNode.hpp"
+
+namespace MayaFlux::Core {
+
+InputManager::InputManager() = default;
+
+InputManager::~InputManager()
+{
+    if (m_running.load()) {
+        stop();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lifecycle
+// ─────────────────────────────────────────────────────────────────────────────
+
+void InputManager::start()
+{
+    if (m_running.load()) {
+        MF_WARN(Journal::Component::Core, Journal::Context::Init,
+            "InputManager already running");
+        return;
+    }
+
+    m_stop_requested.store(false);
+    m_running.store(true);
+    m_processing_thread = std::thread(&InputManager::processing_loop, this);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::Init,
+        "InputManager started");
+}
+
+void InputManager::stop()
+{
+    if (!m_running.load()) {
+        return;
+    }
+
+    m_stop_requested.store(true);
+
+    m_queue_notify.store(true);
+    m_queue_notify.notify_one();
+
+    if (m_processing_thread.joinable()) {
+        m_processing_thread.join();
+    }
+
+    m_running.store(false);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::Init,
+        "InputManager stopped (processed {} events)", m_events_processed.load());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Input Enqueueing
+// ─────────────────────────────────────────────────────────────────────────────
+
+void InputManager::enqueue(const InputValue& value)
+{
+
+    if (!m_queue.push(value)) {
+        MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
+            "Input queue full, dropping oldest event");
+    }
+
+    m_queue_notify.store(true);
+    m_queue_notify.notify_one();
+}
+
+void InputManager::enqueue_batch(const std::vector<InputValue>& values)
+{
+    if (values.empty())
+        return;
+
+    bool any_pushed = false;
+    for (const auto& value : values) {
+        if (m_queue.push(value)) {
+            any_pushed = true;
+        } else {
+            MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
+                "Input queue full during batch, dropping oldest events");
+        }
+    }
+
+    if (any_pushed) {
+        m_queue_notify.store(true);
+        m_queue_notify.notify_one();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Node Registration
+// ─────────────────────────────────────────────────────────────────────────────
+
+void InputManager::register_node(
+    const std::shared_ptr<Nodes::Input::InputNode>& node,
+    InputBinding binding)
+{
+    if (!node)
+        return;
+
+    {
+        std::lock_guard lock(m_registry_mutex);
+        auto current_list = m_registrations.load();
+        auto new_list = std::make_shared<RegistrationList>(*current_list);
+
+        new_list->push_back({ .node = node, .binding = binding });
+        m_registrations.store(new_list);
+    }
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
+        "Registered InputNode for backend {} device {}",
+        static_cast<int>(binding.backend), binding.device_id);
+}
+
+void InputManager::unregister_node(const std::shared_ptr<Nodes::Input::InputNode>& node)
+{
+    if (!node)
+        return;
+
+    {
+        std::lock_guard lock(m_registry_mutex);
+
+        auto current_list = m_registrations.load();
+        auto new_list = std::make_shared<RegistrationList>(*current_list);
+
+        new_list->erase(
+            std::remove_if(new_list->begin(), new_list->end(),
+                [&node](const NodeRegistration& reg) {
+                    auto locked = reg.node.lock();
+                    return !locked || locked == node;
+                }),
+            new_list->end());
+
+        m_registrations.store(new_list);
+    }
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
+        "Unregistered InputNode");
+}
+
+void InputManager::unregister_all_nodes()
+{
+    std::lock_guard lock(m_registry_mutex);
+
+    m_registrations.store(std::make_shared<const RegistrationList>());
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
+        "Unregistered all InputNodes (Registry swapped to empty)");
+}
+
+size_t InputManager::get_registered_node_count() const
+{
+    return m_registrations.load()->size();
+}
+
+size_t InputManager::get_queue_depth() const
+{
+    return m_queue.snapshot().size();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Processing Thread
+// ─────────────────────────────────────────────────────────────────────────────
+
+void InputManager::processing_loop()
+{
+    MF_DEBUG(Journal::Component::Core, Journal::Context::AsyncIO,
+        "Processing thread started");
+
+    while (true) {
+        InputValue value;
+
+        while (m_queue.pop(value)) {
+            dispatch_to_nodes(value);
+            m_events_processed.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        if (m_stop_requested.load()) {
+            break;
+        }
+
+        m_queue_notify.wait(false);
+        m_queue_notify.store(false);
+    }
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::AsyncIO,
+        "Processing thread exiting");
+}
+
+void InputManager::dispatch_to_nodes(const InputValue& value)
+{
+    auto current_regs = m_registrations.load();
+
+    for (const auto& reg : *current_regs) {
+        auto node = reg.node.lock();
+        if (!node)
+            continue;
+
+        if (matches_binding(value, reg.binding)) {
+            node->process_input(value);
+        }
+    }
+}
+
+bool InputManager::matches_binding(const InputValue& value, const InputBinding& binding) const
+{
+    if (binding.backend != value.source_type) {
+        return false;
+    }
+
+    if (binding.device_id != 0 && binding.device_id != value.device_id) {
+        return false;
+    }
+
+    switch (binding.backend) {
+    case InputType::MIDI:
+        if (value.type == InputValue::Type::MIDI) {
+            const auto& midi = value.as_midi();
+
+            if (binding.midi_channel && *binding.midi_channel != midi.channel()) {
+                return false;
+            }
+
+            if (binding.midi_message_type && *binding.midi_message_type != midi.type()) {
+                return false;
+            }
+        }
+        break;
+
+    case InputType::OSC:
+        if (value.type == InputValue::Type::OSC && binding.osc_address_pattern) {
+            const auto& osc = value.as_osc();
+            if (!osc.address.starts_with(*binding.osc_address_pattern)) {
+                return false;
+            }
+        }
+        break;
+
+    default:
+        // HID, Serial: no additional filters beyond device_id
+        break;
+    }
+
+    return true;
+}
+
+} // namespace MayaFlux::Core
