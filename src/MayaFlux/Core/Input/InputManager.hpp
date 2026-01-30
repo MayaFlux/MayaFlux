@@ -217,7 +217,21 @@ private:
     using RegistrationList = std::vector<NodeRegistration>;
 
     std::mutex m_registry_mutex;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    // Apple's broken LLVM doesn't support std::atomic<std::shared_ptr<T>>
+    std::atomic<const RegistrationList*> m_registrations { nullptr };
+
+    // Hazard pointers for safe lock-free reads on macOS
+    static constexpr size_t MAX_READERS = 16;
+    mutable std::array<std::atomic<const RegistrationList*>, MAX_READERS> m_hazard_ptrs;
+    mutable std::atomic<size_t> m_hazard_counter { 0 };
+
+    void retire_list(const RegistrationList* list);
+#else
+    // Proper C++20 atomic shared_ptr on real toolchains
     std::atomic<std::shared_ptr<const RegistrationList>> m_registrations;
+#endif
 
     // ─────────────────────────────────────────────────────────────────────
     // Statistics

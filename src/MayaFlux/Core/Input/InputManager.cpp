@@ -5,13 +5,32 @@
 
 namespace MayaFlux::Core {
 
-InputManager::InputManager() = default;
+InputManager::InputManager()
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    : m_registrations(new RegistrationList())
+#else
+    : m_registrations(std::make_shared<const RegistrationList>())
+#endif
+{
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    for (auto& hp : m_hazard_ptrs) {
+        hp.store(nullptr);
+    }
+#endif
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::Init,
+        "InputManager created");
+}
 
 InputManager::~InputManager()
 {
     if (m_running.load()) {
         stop();
     }
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    delete m_registrations.load();
+#endif
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,11 +124,18 @@ void InputManager::register_node(
 
     {
         std::lock_guard lock(m_registry_mutex);
-        auto current_list = m_registrations.load();
-        auto new_list = std::make_shared<RegistrationList>(*current_list);
-
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        auto* old_list = m_registrations.load();
+        auto* new_list = new RegistrationList(*old_list);
         new_list->push_back({ .node = node, .binding = binding });
         m_registrations.store(new_list);
+        retire_list(old_list);
+#else
+        auto current_list = m_registrations.load();
+        auto new_list = std::make_shared<RegistrationList>(*current_list);
+        new_list->push_back({ .node = node, .binding = binding });
+        m_registrations.store(new_list);
+#endif
     }
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
@@ -125,6 +151,21 @@ void InputManager::unregister_node(const std::shared_ptr<Nodes::Input::InputNode
     {
         std::lock_guard lock(m_registry_mutex);
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+        auto* old_list = m_registrations.load();
+        auto* new_list = new RegistrationList(*old_list);
+
+        new_list->erase(
+            std::remove_if(new_list->begin(), new_list->end(),
+                [&node](const NodeRegistration& reg) {
+                    auto locked = reg.node.lock();
+                    return !locked || locked == node;
+                }),
+            new_list->end());
+
+        m_registrations.store(new_list);
+        retire_list(old_list);
+#else
         auto current_list = m_registrations.load();
         auto new_list = std::make_shared<RegistrationList>(*current_list);
 
@@ -137,6 +178,7 @@ void InputManager::unregister_node(const std::shared_ptr<Nodes::Input::InputNode
             new_list->end());
 
         m_registrations.store(new_list);
+#endif
     }
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
@@ -147,7 +189,13 @@ void InputManager::unregister_all_nodes()
 {
     std::lock_guard lock(m_registry_mutex);
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    auto* old_list = m_registrations.load();
+    m_registrations.store(new RegistrationList());
+    retire_list(old_list);
+#else
     m_registrations.store(std::make_shared<const RegistrationList>());
+#endif
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
         "Unregistered all InputNodes (Registry swapped to empty)");
@@ -155,7 +203,21 @@ void InputManager::unregister_all_nodes()
 
 size_t InputManager::get_registered_node_count() const
 {
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    // Brief hazard pointer acquisition for count
+    size_t slot = m_hazard_counter.fetch_add(1) % MAX_READERS;
+    const RegistrationList* current;
+    do {
+        current = m_registrations.load();
+        m_hazard_ptrs[slot].store(current);
+    } while (current != m_registrations.load());
+
+    size_t count = current->size();
+    m_hazard_ptrs[slot].store(nullptr);
+    return count;
+#else
     return m_registrations.load()->size();
+#endif
 }
 
 size_t InputManager::get_queue_depth() const
@@ -194,6 +256,30 @@ void InputManager::processing_loop()
 
 void InputManager::dispatch_to_nodes(const InputValue& value)
 {
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    // Acquire hazard pointer slot
+    size_t slot = m_hazard_counter.fetch_add(1) % MAX_READERS;
+
+    const RegistrationList* current_regs;
+    do {
+        current_regs = m_registrations.load();
+        m_hazard_ptrs[slot].store(current_regs);
+    } while (current_regs != m_registrations.load());
+
+    // Safe to use current_regs now
+    for (const auto& reg : *current_regs) {
+        auto node = reg.node.lock();
+        if (!node)
+            continue;
+
+        if (matches_binding(value, reg.binding)) {
+            node->process_input(value);
+        }
+    }
+
+    // Release hazard pointer
+    m_hazard_ptrs[slot].store(nullptr);
+#else
     auto current_regs = m_registrations.load();
 
     for (const auto& reg : *current_regs) {
@@ -205,6 +291,7 @@ void InputManager::dispatch_to_nodes(const InputValue& value)
             node->process_input(value);
         }
     }
+#endif
 }
 
 bool InputManager::matches_binding(const InputValue& value, const InputBinding& binding) const
@@ -248,5 +335,21 @@ bool InputManager::matches_binding(const InputValue& value, const InputBinding& 
 
     return true;
 }
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+void InputManager::retire_list(const RegistrationList* list)
+{
+    // Check if any reader is using this list
+    for (const auto& hp : m_hazard_ptrs) {
+        if (hp.load() == list) {
+            // Still in use - in production you'd add to retirement queue
+            // For now, leak it (registrations are infrequent)
+            // TODO: Implement proper deferred reclamation queue
+            return;
+        }
+    }
+    delete list;
+}
+#endif
 
 } // namespace MayaFlux::Core
