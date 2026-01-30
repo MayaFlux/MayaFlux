@@ -1,17 +1,8 @@
 #pragma once
 
-namespace MayaFlux::Core {
+#include "MayaFlux/Core/GlobalInputConfig.hpp"
 
-/**
- * @brief Input backend type enumeration
- */
-enum class InputBackendType : uint8_t {
-    HID, ///< Generic HID devices (game controllers, custom hardware)
-    MIDI, ///< MIDI controllers and instruments
-    OSC, ///< Open Sound Control (network)
-    SERIAL, ///< Serial port communication (Arduino, etc.)
-    CUSTOM ///< User-defined input backends
-};
+namespace MayaFlux::Core {
 
 /**
  * @brief Generic input device information
@@ -23,7 +14,7 @@ struct InputDeviceInfo {
     uint32_t id; ///< Unique device identifier within backend
     std::string name; ///< Human-readable device name
     std::string manufacturer; ///< Device manufacturer (if available)
-    InputBackendType backend_type; ///< Which backend manages this device
+    InputType backend_type; ///< Which backend manages this device
     bool is_connected; ///< Current connection state
 
     // HID-specific (populated when backend_type == HID)
@@ -43,98 +34,6 @@ struct InputDeviceInfo {
     // Serial-specific (populated when backend_type == SERIAL)
     std::string port_name; ///< e.g., "/dev/ttyUSB0" or "COM3"
     uint32_t baud_rate {}; ///< Serial baud rate
-};
-
-/**
- * @brief Generic input value container
- *
- * Represents a single input event from any backend type.
- * Uses variant to handle different data formats efficiently.
- */
-struct InputValue {
-    /**
-     * @brief Type of input data
-     */
-    enum class Type : uint8_t {
-        SCALAR, ///< Single normalized float [-1.0, 1.0] or [0.0, 1.0]
-        VECTOR, ///< Multiple float values (e.g., accelerometer xyz)
-        BYTES, ///< Raw byte data (HID reports, sysex)
-        MIDI, ///< Structured MIDI message
-        OSC ///< Structured OSC message
-    };
-
-    /**
-     * @brief MIDI message structure
-     */
-    struct MIDIMessage {
-        uint8_t status; ///< Status byte (channel + message type)
-        uint8_t data1; ///< First data byte
-        uint8_t data2; ///< Second data byte (may be unused)
-        [[nodiscard]] uint8_t channel() const { return status & 0x0F; }
-        [[nodiscard]] uint8_t type() const { return status & 0xF0; }
-    };
-
-    /**
-     * @brief OSC argument types
-     */
-    using OSCArg = std::variant<int32_t, float, std::string, std::vector<uint8_t>>;
-
-    /**
-     * @brief OSC message structure
-     */
-    struct OSCMessage {
-        std::string address; ///< OSC address pattern
-        std::vector<OSCArg> arguments; ///< Typed arguments
-    };
-
-    Type type;
-    std::variant<
-        double, ///< SCALAR
-        std::vector<double>, ///< VECTOR
-        std::vector<uint8_t>, ///< BYTES
-        MIDIMessage, ///< MIDI
-        OSCMessage ///< OSC
-        >
-        data;
-
-    uint64_t timestamp_ns; ///< Nanoseconds since epoch (or backend start)
-    uint32_t device_id; ///< Source device identifier
-    InputBackendType source_type; ///< Backend that generated this value
-
-    // Convenience accessors
-    [[nodiscard]] double as_scalar() const { return std::get<double>(data); }
-    [[nodiscard]] const std::vector<double>& as_vector() const { return std::get<std::vector<double>>(data); }
-    [[nodiscard]] const std::vector<uint8_t>& as_bytes() const { return std::get<std::vector<uint8_t>>(data); }
-    [[nodiscard]] const MIDIMessage& as_midi() const { return std::get<MIDIMessage>(data); }
-    [[nodiscard]] const OSCMessage& as_osc() const { return std::get<OSCMessage>(data); }
-
-    /**
-     * @brief Factory method for scalar input value
-     */
-    static InputValue make_scalar(double v, uint32_t dev_id, InputBackendType src)
-    {
-        return {
-            .type = Type::SCALAR,
-            .data = v,
-            .timestamp_ns = static_cast<uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count()),
-            .device_id = dev_id,
-            .source_type = src
-        };
-    }
-
-    /**
-     * @brief Factory method for MIDI input value
-     */
-    static InputValue make_midi(uint8_t status, uint8_t d1, uint8_t d2, uint32_t dev_id)
-    {
-        return {
-            .type = Type::MIDI,
-            .data = MIDIMessage { .status = status, .data1 = d1, .data2 = d2 },
-            .timestamp_ns = static_cast<uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count()),
-            .device_id = dev_id,
-            .source_type = InputBackendType::MIDI
-        };
-    }
 };
 
 /**
@@ -281,7 +180,7 @@ public:
     /**
      * @brief Get backend type
      */
-    [[nodiscard]] virtual InputBackendType get_type() const = 0;
+    [[nodiscard]] virtual InputType get_type() const = 0;
 
     /**
      * @brief Get backend name/identifier string

@@ -165,7 +165,7 @@ size_t HIDBackend::refresh_devices()
 
         HIDDeviceInfoExt info;
         info.id = dev_id;
-        info.backend_type = InputBackendType::HID;
+        info.backend_type = InputType::HID;
         info.vendor_id = cur->vendor_id;
         info.product_id = cur->product_id;
         info.usage_page = cur->usage_page;
@@ -466,7 +466,7 @@ InputValue HIDBackend::parse_hid_report(uint32_t device_id, std::span<const uint
     value.timestamp_ns = static_cast<uint64_t>(
         std::chrono::steady_clock::now().time_since_epoch().count());
     value.device_id = device_id;
-    value.source_type = InputBackendType::HID;
+    value.source_type = InputType::HID;
     return value;
 }
 } // namespace MayaFlux::Core

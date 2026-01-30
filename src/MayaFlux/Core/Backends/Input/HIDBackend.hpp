@@ -7,42 +7,6 @@ using hid_device = struct hid_device_;
 namespace MayaFlux::Core {
 
 /**
- * @brief HID device filter for selective enumeration
- */
-struct HIDDeviceFilter {
-    std::optional<uint16_t> vendor_id; ///< Filter by VID (nullopt = any)
-    std::optional<uint16_t> product_id; ///< Filter by PID (nullopt = any)
-    std::optional<uint16_t> usage_page; ///< Filter by HID usage page
-    std::optional<uint16_t> usage; ///< Filter by HID usage
-
-    [[nodiscard]] bool matches(uint16_t vid, uint16_t pid, uint16_t upage = 0, uint16_t usg = 0) const
-    {
-        if (vendor_id && *vendor_id != vid)
-            return false;
-        if (product_id && *product_id != pid)
-            return false;
-        if (usage_page && *usage_page != upage)
-            return false;
-
-        return !usage || *usage == usg;
-    }
-
-    // Common device filters
-    static HIDDeviceFilter any() { return {}; }
-    static HIDDeviceFilter controller(); // Standard gamepads
-    static HIDDeviceFilter speciality(); // Flight sticks, etc.
-    static HIDDeviceFilter custom(uint16_t vid, uint16_t pid)
-    {
-        return {
-            .vendor_id = vid,
-            .product_id = pid,
-            .usage_page = std::nullopt,
-            .usage = std::nullopt
-        };
-    }
-};
-
-/**
  * @brief Extended HID device information
  */
 struct HIDDeviceInfoExt : InputDeviceInfo {
@@ -145,7 +109,7 @@ public:
     void set_input_callback(InputCallback callback) override;
     void set_device_callback(DeviceCallback callback) override;
 
-    [[nodiscard]] InputBackendType get_type() const override { return InputBackendType::HID; }
+    [[nodiscard]] InputType get_type() const override { return InputType::HID; }
     [[nodiscard]] std::string get_name() const override { return "HID (HIDAPI)"; }
     [[nodiscard]] std::string get_version() const override;
 
@@ -226,31 +190,5 @@ private:
 
     InputValue parse_hid_report(uint32_t device_id, std::span<const uint8_t> report);
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Common Device Filters
-// ─────────────────────────────────────────────────────────────────────────────
-
-inline HIDDeviceFilter HIDDeviceFilter::controller()
-{
-    // Usage Page 0x01 (Generic Desktop), Usage 0x05 (Game Pad)
-    return {
-        .vendor_id = std::nullopt,
-        .product_id = std::nullopt,
-        .usage_page = 0x01,
-        .usage = 0x05
-    };
-}
-
-inline HIDDeviceFilter HIDDeviceFilter::speciality()
-{
-    // Usage Page 0x01 (Generic Desktop), Usage 0x04 (speciality)
-    return {
-        .vendor_id = std::nullopt,
-        .product_id = std::nullopt,
-        .usage_page = 0x01,
-        .usage = 0x04
-    };
-}
 
 } // namespace MayaFlux::Core
