@@ -99,6 +99,7 @@ jobs:
             shaderc
             glslang
             molten-vk
+            hidapi
 
       - name: Setup Homebrew Environment
         run: |
