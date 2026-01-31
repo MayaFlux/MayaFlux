@@ -303,4 +303,49 @@ void InputSubsystem::initialize_serial_backend()
         "Serial backend not yet implemented");
 }
 
+[[nodiscard]] std::vector<InputDeviceInfo> InputSubsystem::get_hid_devices() const
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(InputType::HID);
+    return (it != m_backends.end()) ? it->second->get_devices() : std::vector<InputDeviceInfo> {};
+}
+
+[[nodiscard]] std::vector<InputDeviceInfo> InputSubsystem::get_midi_devices() const
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(InputType::MIDI);
+    return (it != m_backends.end()) ? it->second->get_devices() : std::vector<InputDeviceInfo> {};
+}
+
+[[nodiscard]] std::optional<InputDeviceInfo> InputSubsystem::get_device_info(
+    InputType backend_type,
+    uint32_t device_id) const
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(backend_type);
+    if (it == m_backends.end())
+        return std::nullopt;
+
+    auto devices = it->second->get_devices();
+    for (const auto& dev : devices) {
+        if (dev.id == device_id) {
+            return dev;
+        }
+    }
+    return std::nullopt;
+}
+
+[[nodiscard]] std::optional<InputDeviceInfo> InputSubsystem::find_hid_device(
+    uint16_t vendor_id,
+    uint16_t product_id) const
+{
+    auto devices = get_hid_devices();
+    for (const auto& dev : devices) {
+        if (dev.vendor_id == vendor_id && dev.product_id == product_id) {
+            return dev;
+        }
+    }
+    return std::nullopt;
+}
+
 } // namespace MayaFlux::Core

@@ -6,6 +6,34 @@
 
 namespace MayaFlux::Nodes::Input {
 
+/**
+ * @enum InputEventType
+ * @brief Types of input events that can trigger callbacks
+ */
+enum class InputEventType : uint8_t {
+    TICK, ///< Every input received
+    VALUE_CHANGE, ///< Value changed from previous
+    THRESHOLD_RISING, ///< Value crossed threshold upward
+    THRESHOLD_FALLING, ///< Value crossed threshold downward
+    RANGE_ENTER, ///< Value entered specified range
+    RANGE_EXIT, ///< Value exited specified range
+    BUTTON_PRESS, ///< Button went from 0.0 to 1.0
+    BUTTON_RELEASE, ///< Button went from 1.0 to 0.0
+    CONDITIONAL ///< User-provided condition
+};
+
+/**
+ * @struct InputCallback
+ * @brief Callback registration with event type and optional parameters
+ */
+struct InputCallback {
+    NodeHook callback;
+    InputEventType event_type;
+    std::optional<NodeCondition> condition; // For CONDITIONAL
+    std::optional<double> threshold; // For THRESHOLD_*
+    std::optional<std::pair<double, double>> range; // For RANGE_*
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // InputContext - Specialized context for input node callbacks
 // ─────────────────────────────────────────────────────────────────────────────
@@ -171,6 +199,78 @@ public:
 
     NodeContext& get_last_context() override { return m_context; }
 
+    /**
+     * @brief Register callback for any input received
+     * @param callback Function to call on every input
+     *
+     * Alias for on_tick() - fires on every process_input() call
+     */
+    void on_input(const NodeHook& callback)
+    {
+        on_tick(callback);
+    }
+
+    /**
+     * @brief Register callback for value changes
+     * @param callback Function to call when value differs from previous
+     * @param epsilon Minimum change to trigger (default: 0.0001)
+     */
+    void on_value_change(const NodeHook& callback, double epsilon = 0.0001);
+
+    /**
+     * @brief Register callback for threshold crossing (rising edge)
+     * @param threshold Value threshold
+     * @param callback Function to call when value crosses threshold upward
+     */
+    void on_threshold_rising(double threshold, const NodeHook& callback);
+
+    /**
+     * @brief Register callback for threshold crossing (falling edge)
+     * @param threshold Value threshold
+     * @param callback Function to call when value crosses threshold downward
+     */
+    void on_threshold_falling(double threshold, const NodeHook& callback);
+
+    /**
+     * @brief Register callback for entering a value range
+     * @param min Range minimum
+     * @param max Range maximum
+     * @param callback Function to call when value enters range
+     */
+    void on_range_enter(double min, double max, const NodeHook& callback);
+
+    /**
+     * @brief Register callback for exiting a value range
+     * @param min Range minimum
+     * @param max Range maximum
+     * @param callback Function to call when value exits range
+     */
+    void on_range_exit(double min, double max, const NodeHook& callback);
+
+    /**
+     * @brief Register callback for button press (0.0 → 1.0 transition)
+     * @param callback Function to call on button press
+     *
+     * Specialized for button inputs - fires once on press
+     */
+    void on_button_press(const NodeHook& callback);
+
+    /**
+     * @brief Register callback for button release (1.0 → 0.0 transition)
+     * @param callback Function to call on button release
+     *
+     * Specialized for button inputs - fires once on release
+     */
+    void on_button_release(const NodeHook& callback);
+
+    /**
+     * @brief Register callback while value is in range
+     * @param min Range minimum
+     * @param max Range maximum
+     * @param callback Function to call continuously while in range
+     */
+    void while_in_range(double min, double max, const NodeHook& callback);
+
 protected:
     /**
      * @brief Extract a scalar value from an InputValue
@@ -202,13 +302,23 @@ private:
     std::atomic<double> m_target_value { 0.0 };
     std::atomic<double> m_current_value { 0.0 };
     std::atomic<bool> m_has_new_input { false };
+    double m_previous_value {};
+    bool m_was_in_range {};
 
     std::atomic<uint32_t> m_last_device_id { 0 };
     Core::InputType m_last_source_type { Core::InputType::HID };
+    std::vector<InputCallback> m_input_callbacks;
 
     Memory::LockFreeRingBuffer<Core::InputValue, 64> m_input_history;
 
     [[nodiscard]] double apply_smoothing(double target, double current) const;
+
+    void add_input_callback(
+        const NodeHook& callback,
+        InputEventType event_type,
+        std::optional<double> threshold = {},
+        std::optional<std::pair<double, double>> range = {},
+        std::optional<NodeCondition> condition = {});
 };
 
 } // namespace MayaFlux::Nodes::Input

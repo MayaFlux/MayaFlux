@@ -1,5 +1,7 @@
 #include "InputNode.hpp"
 
+#include <utility>
+
 namespace MayaFlux::Nodes::Input {
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,25 +107,6 @@ void InputNode::update_context(double value)
     m_context.device_id = m_last_device_id.load();
 }
 
-void InputNode::notify_tick(double value)
-{
-    update_context(value);
-
-    // Minimal callback invocation - input nodes don't typically need
-    // per-sample callbacks since the input event IS the notification.
-    // Only fire if callbacks are registered and we have new input.
-    if (!m_callbacks.empty() || !m_conditional_callbacks.empty()) {
-        for (auto& callback : m_callbacks) {
-            callback(m_context);
-        }
-        for (auto& [callback, condition] : m_conditional_callbacks) {
-            if (condition(m_context)) {
-                callback(m_context);
-            }
-        }
-    }
-}
-
 double InputNode::apply_smoothing(double target, double current) const
 {
     switch (m_config.smoothing) {
@@ -151,6 +134,137 @@ double InputNode::apply_smoothing(double target, double current) const
     default:
         return target;
     }
+}
+
+void InputNode::on_value_change(const NodeHook& callback, double epsilon)
+{
+    add_input_callback(callback, InputEventType::VALUE_CHANGE, epsilon);
+}
+
+void InputNode::on_threshold_rising(double threshold, const NodeHook& callback)
+{
+    add_input_callback(callback, InputEventType::THRESHOLD_RISING, threshold);
+}
+
+void InputNode::on_threshold_falling(double threshold, const NodeHook& callback)
+{
+    add_input_callback(callback, InputEventType::THRESHOLD_FALLING, threshold);
+}
+
+void InputNode::on_range_enter(double min, double max, const NodeHook& callback)
+{
+    add_input_callback(callback, InputEventType::RANGE_ENTER, {}, { { min, max } });
+}
+
+void InputNode::on_range_exit(double min, double max, const NodeHook& callback)
+{
+    add_input_callback(callback, InputEventType::RANGE_EXIT, {}, { { min, max } });
+}
+
+void InputNode::on_button_press(const NodeHook& callback)
+{
+    add_input_callback(callback, InputEventType::BUTTON_PRESS);
+}
+
+void InputNode::on_button_release(const NodeHook& callback)
+{
+    add_input_callback(callback, InputEventType::BUTTON_RELEASE);
+}
+
+void InputNode::while_in_range(double min, double max, const NodeHook& callback)
+{
+    on_tick_if(
+        [min, max](const NodeContext& ctx) {
+            return ctx.value >= min && ctx.value <= max;
+        },
+        callback);
+}
+
+void InputNode::add_input_callback(
+    const NodeHook& callback,
+    InputEventType event_type,
+    std::optional<double> threshold,
+    std::optional<std::pair<double, double>> range,
+    std::optional<NodeCondition> condition)
+{
+    m_input_callbacks.push_back({ .callback = callback,
+        .event_type = event_type,
+        .condition = std::move(condition),
+        .threshold = threshold,
+        .range = range });
+}
+
+void InputNode::notify_tick(double value)
+{
+    update_context(value);
+    auto& ctx = get_last_context();
+
+    for (auto& callback : m_callbacks) {
+        callback(ctx);
+    }
+    for (auto& [callback, condition] : m_conditional_callbacks) {
+        if (condition(ctx)) {
+            callback(ctx);
+        }
+    }
+
+    for (auto& cb : m_input_callbacks) {
+        bool should_fire = false;
+
+        switch (cb.event_type) {
+        case InputEventType::TICK:
+            should_fire = true;
+            break;
+
+        case InputEventType::VALUE_CHANGE: {
+            double epsilon = cb.threshold.value_or(0.0001);
+            should_fire = std::abs(value - m_previous_value) > epsilon;
+            break;
+        }
+
+        case InputEventType::THRESHOLD_RISING:
+            should_fire = (m_previous_value < cb.threshold.value() && value >= cb.threshold.value());
+            break;
+
+        case InputEventType::THRESHOLD_FALLING:
+            should_fire = (m_previous_value >= cb.threshold.value() && value < cb.threshold.value());
+            break;
+
+        case InputEventType::RANGE_ENTER: {
+            auto [min, max] = cb.range.value();
+            bool in_range_now = (value >= min && value <= max);
+            should_fire = (!m_was_in_range && in_range_now);
+            m_was_in_range = in_range_now;
+            break;
+        }
+
+        case InputEventType::RANGE_EXIT: {
+            auto [min, max] = cb.range.value();
+            bool in_range_now = (value >= min && value <= max);
+            should_fire = (m_was_in_range && !in_range_now);
+            m_was_in_range = in_range_now;
+            break;
+        }
+
+        case InputEventType::BUTTON_PRESS:
+            should_fire = (m_previous_value < 0.5 && value >= 0.5);
+            break;
+
+        case InputEventType::BUTTON_RELEASE:
+            should_fire = (m_previous_value >= 0.5 && value < 0.5);
+            break;
+
+        case InputEventType::CONDITIONAL:
+            should_fire = cb.condition && cb.condition.value()(ctx);
+            break;
+        }
+
+        if (should_fire) {
+            cb.callback(ctx);
+        }
+    }
+
+    m_previous_value = value;
 }
 
 } // namespace MayaFlux::Nodes::Input

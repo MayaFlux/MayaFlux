@@ -263,6 +263,15 @@ public:
     inline std::shared_ptr<Vruta::EventManager> get_event_manager() { return m_event_manager; }
 
     /**
+     * @brief Gets the input manager
+     * @return Shared pointer to the InputManager for handling user input
+     *
+     * The InputManager manages various input devices (HID, MIDI, etc.).
+     * Access through Engine ensures proper device initialization and event routing.
+     */
+    inline std::shared_ptr<InputManager> get_input_manager() { return m_input_manager; }
+
+    /**
      * @brief Gets the stochastic signal generator engine
      * @return Pointer to the Random node for random signal generation
      *

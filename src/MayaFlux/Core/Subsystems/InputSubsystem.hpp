@@ -96,6 +96,34 @@ public:
      */
     void close_device(InputType backend_type, uint32_t device_id);
 
+    // ────────────────────────────────────────────────────────────────────────────
+    // Device Discovery (User-Facing API)
+    // ────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Get all HID devices
+     */
+    [[nodiscard]] std::vector<InputDeviceInfo> get_hid_devices() const;
+
+    /**
+     * @brief Get all MIDI devices
+     */
+    [[nodiscard]] std::vector<InputDeviceInfo> get_midi_devices() const;
+
+    /**
+     * @brief Get device info by backend type and device ID
+     */
+    [[nodiscard]] std::optional<InputDeviceInfo> get_device_info(
+        InputType backend_type,
+        uint32_t device_id) const;
+
+    /**
+     * @brief Find HID device by vendor/product ID
+     */
+    [[nodiscard]] std::optional<InputDeviceInfo> find_hid_device(
+        uint16_t vendor_id,
+        uint16_t product_id) const;
+
 private:
     GlobalInputConfig& m_config;
     SubsystemProcessingHandle* m_handle { nullptr };
