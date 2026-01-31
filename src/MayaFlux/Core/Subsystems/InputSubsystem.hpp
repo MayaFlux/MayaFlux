@@ -7,6 +7,10 @@ namespace MayaFlux::Nodes::Input {
 class InputNode;
 }
 
+namespace MayaFlux::Registry::Service {
+struct InputService;
+}
+
 namespace MayaFlux::Core {
 
 class InputManager;
@@ -134,6 +138,7 @@ private:
 
     mutable std::shared_mutex m_backends_mutex;
     std::unordered_map<InputType, std::unique_ptr<IInputBackend>> m_backends;
+    std::shared_ptr<Registry::Service::InputService> m_input_service;
 
     void initialize_hid_backend();
     void initialize_midi_backend();
@@ -141,6 +146,8 @@ private:
     void initialize_serial_backend();
 
     void wire_backend_to_manager(IInputBackend* backend);
+
+    void register_backend_service();
 };
 
 } // namespace MayaFlux::Core

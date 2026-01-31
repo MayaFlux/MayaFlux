@@ -1,5 +1,8 @@
 #include "InputManager.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/InputService.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Input/InputNode.hpp"
 
@@ -43,6 +46,17 @@ void InputManager::start()
         MF_WARN(Journal::Component::Core, Journal::Context::Init,
             "InputManager already running");
         return;
+    }
+
+    if (!m_input_service) {
+        m_input_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::InputService>();
+
+        if (!m_input_service) {
+            MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
+                "InputManager requires InputService but service not registered");
+            return;
+        }
     }
 
     m_stop_requested.store(false);
@@ -122,6 +136,34 @@ void InputManager::register_node(
     if (!node)
         return;
 
+    if (binding.hid_vendor_id || binding.hid_product_id) {
+        if (!m_input_service) {
+            MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
+                "VID/PID binding requires InputService but service not registered");
+            return;
+        }
+
+        auto devices = m_input_service->get_all_devices();
+        auto resolved = resolve_vid_pid(binding, devices);
+        if (resolved) {
+            binding = *resolved;
+        } else {
+            MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
+                "No device found for VID/PID");
+            return;
+        }
+    }
+
+    if (binding.device_id != 0) {
+        if (!m_input_service) {
+            MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
+                "Device ID binding requires InputService but service not registered");
+            return;
+        }
+
+        m_input_service->open_device(binding.backend, binding.device_id);
+    }
+
     {
         std::lock_guard lock(m_registry_mutex);
 #ifdef MAYAFLUX_PLATFORM_MACOS
@@ -142,6 +184,29 @@ void InputManager::register_node(
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
         "Registered InputNode for backend {} device {}",
         static_cast<int>(binding.backend), binding.device_id);
+}
+
+std::optional<InputBinding> InputManager::resolve_vid_pid(
+    const InputBinding& binding,
+    const std::vector<InputDeviceInfo>& devices) const
+{
+    for (const auto& dev : devices) {
+        if (dev.backend_type != binding.backend)
+            continue;
+
+        bool vid_match = !binding.hid_vendor_id || (*binding.hid_vendor_id == dev.vendor_id);
+        bool pid_match = !binding.hid_product_id || (*binding.hid_product_id == dev.product_id);
+
+        if (vid_match && pid_match) {
+            InputBinding resolved = binding;
+            resolved.device_id = dev.id;
+            resolved.hid_vendor_id.reset();
+            resolved.hid_product_id.reset();
+            return resolved;
+        }
+    }
+
+    return std::nullopt;
 }
 
 void InputManager::unregister_node(const std::shared_ptr<Nodes::Input::InputNode>& node)
@@ -321,6 +386,11 @@ bool InputManager::matches_binding(const InputValue& value, const InputBinding& 
 
             if (binding.midi_message_type && *binding.midi_message_type != midi.type()) {
                 return false;
+            }
+            if (binding.midi_cc_number && midi.type() == 0xB0) {
+                if (*binding.midi_cc_number != midi.data1) {
+                    return false;
+                }
             }
         }
         break;

@@ -1,5 +1,8 @@
 #include "InputSubsystem.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/InputService.hpp"
+
 #include "MayaFlux/Core/Backends/Input/HIDBackend.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -46,10 +49,38 @@ void InputSubsystem::initialize(SubsystemProcessingHandle& handle)
         initialize_serial_backend();
     }
 
+    register_backend_service();
+
     m_ready.store(true);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputSubsystem,
         "Input Subsystem initialized with {} backend(s)", m_backends.size());
+}
+
+void InputSubsystem::register_backend_service()
+{
+    auto& registry = Registry::BackendRegistry::instance();
+
+    auto input_service = std::make_shared<Registry::Service::InputService>();
+
+    input_service->get_all_devices = [this]() {
+        return get_all_devices();
+    };
+
+    input_service->open_device = [this](InputType type, uint32_t id) {
+        return open_device(type, id);
+    };
+
+    input_service->close_device = [this](InputType type, uint32_t id) {
+        close_device(type, id);
+    };
+
+    m_input_service = input_service;
+
+    registry.register_service<Registry::Service::InputService>(
+        [input_service]() -> void* {
+            return input_service.get();
+        });
 }
 
 void InputSubsystem::start()
@@ -145,6 +176,10 @@ void InputSubsystem::shutdown()
     }
 
     m_handle->inputs.unregister();
+
+    auto& registry = Registry::BackendRegistry::instance();
+    registry.unregister_service<Registry::Service::InputService>();
+    m_input_service.reset();
 
     m_ready.store(false);
 

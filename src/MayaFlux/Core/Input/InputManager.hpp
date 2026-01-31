@@ -7,6 +7,10 @@ namespace MayaFlux::Nodes::Input {
 class InputNode;
 }
 
+namespace MayaFlux::Registry::Service {
+struct InputService;
+}
+
 namespace MayaFlux::Core {
 
 /**
@@ -135,6 +139,7 @@ private:
     void processing_loop();
     void dispatch_to_nodes(const InputValue& value);
     bool matches_binding(const InputValue& value, const InputBinding& binding) const;
+    std::optional<InputBinding> resolve_vid_pid(const InputBinding& binding, const std::vector<InputDeviceInfo>& devices) const;
 
     std::thread m_processing_thread;
     std::atomic<bool> m_running { false };
@@ -176,6 +181,8 @@ private:
     // Proper C++20 atomic shared_ptr on real toolchains
     std::atomic<std::shared_ptr<const RegistrationList>> m_registrations;
 #endif
+
+    Registry::Service::InputService* m_input_service { nullptr };
 
     // ─────────────────────────────────────────────────────────────────────
     // Statistics
