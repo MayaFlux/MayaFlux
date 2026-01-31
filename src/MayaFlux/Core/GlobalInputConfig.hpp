@@ -105,6 +105,96 @@ struct InputValue {
     }
 };
 
+/**
+ * @struct InputBinding
+ * @brief Specifies what input an InputNode wants to receive
+ */
+struct MAYAFLUX_API InputBinding {
+    InputType backend; ///< Which backend type (HID, MIDI, OSC, etc.)
+    uint32_t device_id { 0 }; ///< Specific device (0 = any device of this backend)
+
+    std::optional<uint8_t> midi_channel;
+    std::optional<uint8_t> midi_message_type; // 0xB0 = CC, 0x90 = Note On, etc.
+
+    std::optional<std::string> osc_address_pattern;
+
+    static InputBinding hid(uint32_t device_id = 0)
+    {
+        return {
+            .backend = InputType::HID,
+            .device_id = device_id,
+            .midi_channel = {},
+            .midi_message_type = {},
+            .osc_address_pattern = {}
+        };
+    }
+
+    static InputBinding midi(uint32_t device_id = 0, std::optional<uint8_t> channel = {})
+    {
+        return {
+            .backend = InputType::MIDI,
+            .device_id = device_id,
+            .midi_channel = channel,
+            .midi_message_type = {},
+            .osc_address_pattern = {}
+        };
+    }
+
+    static InputBinding osc(const std::string& pattern = "")
+    {
+        return {
+            .backend = InputType::OSC,
+            .device_id = 0,
+            .midi_channel = {},
+            .midi_message_type = {},
+            .osc_address_pattern = pattern.empty() ? std::nullopt : std::optional(pattern)
+        };
+    }
+
+    static InputBinding serial(uint32_t device_id = 0)
+    {
+        return {
+            .backend = InputType::SERIAL,
+            .device_id = device_id,
+            .midi_channel = {},
+            .midi_message_type = {},
+            .osc_address_pattern = {}
+        };
+    }
+};
+
+/**
+ * @brief Generic input device information
+ *
+ * Backend-agnostic representation of an input device.
+ * Specific backends may extend this with additional fields.
+ */
+struct InputDeviceInfo {
+    uint32_t id; ///< Unique device identifier within backend
+    std::string name; ///< Human-readable device name
+    std::string manufacturer; ///< Device manufacturer (if available)
+    InputType backend_type; ///< Which backend manages this device
+    bool is_connected; ///< Current connection state
+
+    // HID-specific (populated when backend_type == HID)
+    uint16_t vendor_id {}; ///< USB Vendor ID
+    uint16_t product_id {}; ///< USB Product ID
+    std::string serial_number; ///< Device serial (if available)
+
+    // MIDI-specific (populated when backend_type == MIDI)
+    bool is_input {}; ///< Can receive MIDI
+    bool is_output {}; ///< Can send MIDI
+    uint8_t port_number {}; ///< MIDI port index
+
+    // OSC-specific (populated when backend_type == OSC)
+    std::string address; ///< IP address or hostname
+    uint16_t port {}; ///< UDP/TCP port
+
+    // Serial-specific (populated when backend_type == SERIAL)
+    std::string port_name; ///< e.g., "/dev/ttyUSB0" or "COM3"
+    uint32_t baud_rate {}; ///< Serial baud rate
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // HID Configuration
 // ─────────────────────────────────────────────────────────────────────────────

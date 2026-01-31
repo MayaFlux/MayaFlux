@@ -5,38 +5,6 @@
 namespace MayaFlux::Core {
 
 /**
- * @brief Generic input device information
- *
- * Backend-agnostic representation of an input device.
- * Specific backends may extend this with additional fields.
- */
-struct InputDeviceInfo {
-    uint32_t id; ///< Unique device identifier within backend
-    std::string name; ///< Human-readable device name
-    std::string manufacturer; ///< Device manufacturer (if available)
-    InputType backend_type; ///< Which backend manages this device
-    bool is_connected; ///< Current connection state
-
-    // HID-specific (populated when backend_type == HID)
-    uint16_t vendor_id {}; ///< USB Vendor ID
-    uint16_t product_id {}; ///< USB Product ID
-    std::string serial_number; ///< Device serial (if available)
-
-    // MIDI-specific (populated when backend_type == MIDI)
-    bool is_input {}; ///< Can receive MIDI
-    bool is_output {}; ///< Can send MIDI
-    uint8_t port_number {}; ///< MIDI port index
-
-    // OSC-specific (populated when backend_type == OSC)
-    std::string address; ///< IP address or hostname
-    uint16_t port {}; ///< UDP/TCP port
-
-    // Serial-specific (populated when backend_type == SERIAL)
-    std::string port_name; ///< e.g., "/dev/ttyUSB0" or "COM3"
-    uint32_t baud_rate {}; ///< Serial baud rate
-};
-
-/**
  * @brief Callback signature for input events
  */
 using InputCallback = std::function<void(const InputValue&)>;

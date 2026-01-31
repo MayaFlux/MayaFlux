@@ -213,6 +213,12 @@ public:
      */
     inline GlobalGraphicsConfig& get_graphics_config() { return m_graphics_config; }
 
+    /**
+     * @brief Gets the current input configuration
+     * @return Reference to the GlobalInputConfig struct
+     */
+    inline GlobalInputConfig& get_input_config() { return m_input_config; }
+
     //-------------------------------------------------------------------------
     // Component Access - Engine acts as access router to all subsystems
     //-------------------------------------------------------------------------

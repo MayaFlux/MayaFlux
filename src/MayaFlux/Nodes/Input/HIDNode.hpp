@@ -108,6 +108,10 @@ class MAYAFLUX_API HIDNode : public InputNode {
 public:
     explicit HIDNode(HIDConfig config = {});
 
+    void save_state() override { }
+
+    void restore_state() override { }
+
 protected:
     double extract_value(const Core::InputValue& value) override;
 

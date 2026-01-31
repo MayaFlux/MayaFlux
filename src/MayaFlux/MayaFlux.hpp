@@ -16,6 +16,8 @@
 
 #include "MayaFlux/API/Depot.hpp"
 
+#include "MayaFlux/API/Input.hpp"
+
 #include "MayaFlux/API/Random.hpp"
 
 #include "MayaFlux/API/Windowing.hpp"
@@ -83,6 +85,7 @@
 #include "Core/Windowing/WindowManager.hpp"
 
 #include "Core/GlobalGraphicsInfo.hpp"
+#include "Core/GlobalInputConfig.hpp"
 #include "Core/GlobalStreamInfo.hpp"
 
 #include "Portal/Graphics/Graphics.hpp"

@@ -10,64 +10,6 @@ class InputNode;
 namespace MayaFlux::Core {
 
 /**
- * @struct InputBinding
- * @brief Specifies what input an InputNode wants to receive
- */
-struct MAYAFLUX_API InputBinding {
-    InputType backend; ///< Which backend type (HID, MIDI, OSC, etc.)
-    uint32_t device_id { 0 }; ///< Specific device (0 = any device of this backend)
-
-    std::optional<uint8_t> midi_channel;
-    std::optional<uint8_t> midi_message_type; // 0xB0 = CC, 0x90 = Note On, etc.
-
-    std::optional<std::string> osc_address_pattern;
-
-    static InputBinding hid(uint32_t device_id = 0)
-    {
-        return {
-            .backend = InputType::HID,
-            .device_id = device_id,
-            .midi_channel = {},
-            .midi_message_type = {},
-            .osc_address_pattern = {}
-        };
-    }
-
-    static InputBinding midi(uint32_t device_id = 0, std::optional<uint8_t> channel = {})
-    {
-        return {
-            .backend = InputType::MIDI,
-            .device_id = device_id,
-            .midi_channel = channel,
-            .midi_message_type = {},
-            .osc_address_pattern = {}
-        };
-    }
-
-    static InputBinding osc(const std::string& pattern = "")
-    {
-        return {
-            .backend = InputType::OSC,
-            .device_id = 0,
-            .midi_channel = {},
-            .midi_message_type = {},
-            .osc_address_pattern = pattern.empty() ? std::nullopt : std::optional(pattern)
-        };
-    }
-
-    static InputBinding serial(uint32_t device_id = 0)
-    {
-        return {
-            .backend = InputType::SERIAL,
-            .device_id = device_id,
-            .midi_channel = {},
-            .midi_message_type = {},
-            .osc_address_pattern = {}
-        };
-    }
-};
-
-/**
  * @class InputManager
  * @brief Manages input processing thread and node dispatch
  *
@@ -215,6 +157,8 @@ private:
         InputBinding binding;
     };
     using RegistrationList = std::vector<NodeRegistration>;
+
+    std::vector<std::shared_ptr<Nodes::Input::InputNode>> m_tracked_nodes; ///< To keep nodes alive
 
     std::mutex m_registry_mutex;
 

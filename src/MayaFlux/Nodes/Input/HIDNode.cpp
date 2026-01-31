@@ -5,8 +5,7 @@
 namespace MayaFlux::Nodes::Input {
 
 HIDNode::HIDNode(HIDConfig config)
-    : InputNode(config)
-    , m_config(config)
+    : m_config(std::move(config))
 {
     if (m_config.mode == HIDParseMode::BUTTON) {
         InputNode::m_config.smoothing = SmoothingMode::NONE;

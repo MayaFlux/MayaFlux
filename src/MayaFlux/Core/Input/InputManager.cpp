@@ -136,6 +136,7 @@ void InputManager::register_node(
         new_list->push_back({ .node = node, .binding = binding });
         m_registrations.store(new_list);
 #endif
+        m_tracked_nodes.push_back(node);
     }
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
@@ -179,6 +180,9 @@ void InputManager::unregister_node(const std::shared_ptr<Nodes::Input::InputNode
 
         m_registrations.store(new_list);
 #endif
+        m_tracked_nodes.erase(
+            std::remove(m_tracked_nodes.begin(), m_tracked_nodes.end(), node),
+            m_tracked_nodes.end());
     }
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
@@ -196,6 +200,8 @@ void InputManager::unregister_all_nodes()
 #else
     m_registrations.store(std::make_shared<const RegistrationList>());
 #endif
+
+    m_tracked_nodes.clear();
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
         "Unregistered all InputNodes (Registry swapped to empty)");
