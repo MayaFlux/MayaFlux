@@ -47,7 +47,7 @@ enum class SmoothingMode : uint8_t {
 /**
  * @brief Configuration for InputNode behavior
  */
-struct Config {
+struct InputConfig {
     SmoothingMode smoothing { SmoothingMode::EXPONENTIAL };
     double smoothing_factor { 0.1 }; ///< 0-1, higher = faster response
     double slew_rate { 1.0 }; ///< Max change per sample (SLEW mode)
@@ -85,7 +85,7 @@ class MAYAFLUX_API InputNode : public Node {
 public:
     // explicit InputNode(Config config);
 
-    explicit InputNode(Config config = {});
+    explicit InputNode(InputConfig config = {});
     ~InputNode() override = default;
 
     // ─────────────────────────────────────────────────────────────────────
@@ -163,7 +163,7 @@ public:
         m_config.smoothing_factor = factor;
     }
     void set_slew_rate(double rate) { m_config.slew_rate = rate; }
-    [[nodiscard]] const Config& get_config() const { return m_config; }
+    [[nodiscard]] const InputConfig& get_config() const { return m_config; }
 
     // ─────────────────────────────────────────────────────────────────────
     // Context Access (for callbacks)
@@ -195,7 +195,7 @@ protected:
      */
     void notify_tick(double value) override;
 
-    Config m_config;
+    InputConfig m_config;
     InputContext m_context;
 
 private:

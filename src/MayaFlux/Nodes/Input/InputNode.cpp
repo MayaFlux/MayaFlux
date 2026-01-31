@@ -6,7 +6,7 @@ namespace MayaFlux::Nodes::Input {
 // InputNode Implementation
 // ─────────────────────────────────────────────────────────────────────────────
 
-InputNode::InputNode(Config config)
+InputNode::InputNode(InputConfig config)
     : m_config(config)
     , m_context(m_config.default_value, m_config.default_value,
           Core::InputType::HID, 0)
