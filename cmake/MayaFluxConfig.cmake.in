@@ -103,8 +103,25 @@ if(WIN32)
             INTERFACE_INCLUDE_DIRECTORIES "$ENV{GLM_INCLUDE_DIR}")
     endif()
 
+
     # Shader support
     set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
+
+    # Shader support
+    set(MAYAFLUX_ENABLE_HID @MAYAFLUX_ENABLE_HID@)
+
+    if(MAYAFLUX_ENABLE_HID)
+        find_package(hidapi CONFIG QUIET)
+        if(hidapi_FOUND)
+            if(NOT TARGET hidapi::hidapi)
+                add_library(hidapi SHARED IMPORTED GLOBAL)
+                set_target_properties(hidapi PROPERTIES
+                    IMPORTED_LOCATION "$ENV{HIDAPI_LIB_DIR}/hidapi.dll"
+                    IMPORTED_IMPLIB "$ENV{HIDAPI_LIB_DIR}/hidapi.lib"
+                    INTERFACE_INCLUDE_DIRECTORIES "$ENV{HIDAPI_ROOT}/include")
+            endif()
+        endif()
+    endif()
 
 else()
     # Unix-like systems (Linux, macOS) use pkg-config
@@ -168,6 +185,18 @@ else()
     pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
     pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
+
+    # HID Support
+    set(MAYAFLUX_ENABLE_HID @MAYAFLUX_ENABLE_HID@)
+
+    if(MAYAFLUX_ENABLE_HID)
+        if(APPLE)
+            pkg_check_modules(HIDAPI QUIET IMPORTED_TARGET hidapi)
+        else()
+            pkg_search_module(HIDAPI QUIET IMPORTED_TARGET
+                hidapi-hidraw hidapi-libusb hidapi)
+        endif()
+    endif()
 endif()
 
 # ============================================================================
@@ -296,6 +325,25 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
         endif()
         target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_USE_SHADERC)
     endif()
+
+    # ========================================================================
+    # Optional HID support
+    # ========================================================================
+
+    if(MAYAFLUX_ENABLE_HID)
+        if(WIN32)
+            if(TARGET hidapi::hidapi)
+                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE hidapi::hidapi)
+            else()
+                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE hidapi)
+            endif()
+        elseif(UNIX AND TARGET PkgConfig::HIDAPI)
+            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::HIDAPI)
+        endif()
+        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_HID_BACKEND)
+    endif()
+
+    # ========================================================================
 
     set_property(TARGET MayaFlux::MayaFluxLib PROPERTY VERSION ${MayaFlux_VERSION})
 
