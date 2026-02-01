@@ -328,9 +328,9 @@ function Setup-And-Install-Vcpkg {
         # Convert backslashes to forward slashes so CMake doesn't treat them as escape sequences
         $toolchainFile = $toolchainFile -replace '\\', '/'
         
-        [Environment]::SetEnvironmentVariable("CMAKE_TOOLCHAIN_FILE", $toolchainFile, "Machine")
+        [Environment]::SetEnvironmentVariable("MAYAFLUX_TOOLCHAIN_FILE", $toolchainFile, "Machine")
         $env:CMAKE_TOOLCHAIN_FILE = $toolchainFile
-        Write-Host "  [OK] CMAKE_TOOLCHAIN_FILE set to: $toolchainFile" -ForegroundColor Green
+        Write-Host "  [OK] MAYAFLUX_TOOLCHAIN_FILE set to: $toolchainFile" -ForegroundColor Green
     }
     else {
         Write-Warning "vcpkg toolchain file not found at expected location"

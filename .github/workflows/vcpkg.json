@@ -1,9 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/Microsoft/vcpkg/master/scripts/vcpkg.schema.json",
   "name": "mayaflux",
-  "version-string": "0.1.0",
+  "version-string": "0.2.0",
   "description": "MayaFlux CI Dependencies (Windows x64)",
   "builtin-baseline": "c82f74667287d3dc386bce81e44964370c91a289",
-  "dependencies": ["rtaudio", "glfw3", "eigen3", "glm", "magic-enum", "hidapi", "stb"],
-  "overrides": [{ "name": "eigen3", "version": "3.4.0" }]
+  "dependencies": ["rtaudio", "glfw3", "eigen3", "glm", "magic-enum", "hidapi", "stb"]
 }

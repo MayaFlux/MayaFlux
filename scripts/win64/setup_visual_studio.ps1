@@ -57,15 +57,22 @@ foreach ($envVar in $requiredEnvVars) {
         Write-Host "Missing environment variable: $envVar" -ForegroundColor Red
         $depsOk = $false
     }
+    else {
+        # Fetch the value, flip slashes, and put it back
+        $val = (Get-Item "env:$envVar").Value
+        $cleaned = $val -replace '\\', '/'
+        Set-Item "env:$envVar" $cleaned
+        Write-Host " $envVar found" -ForegroundColor Green
+    }
 }
 
 # vcpkg toolchain (required for all vcpkg-managed packages)
-if (-not (Test-Path "env:CMAKE_TOOLCHAIN_FILE")) {
-    Write-Host "Missing CMAKE_TOOLCHAIN_FILE" -ForegroundColor Red
+if (-not (Test-Path "env:MAYAFLUX_TOOLCHAIN_FILE")) {
+    Write-Host "Missing MAYAFLUX_TOOLCHAIN_FILE" -ForegroundColor Red
     $depsOk = $false
 }
-elseif (-not (Test-Path $env:CMAKE_TOOLCHAIN_FILE)) {
-    Write-Host "CMAKE_TOOLCHAIN_FILE points to non-existent file: $($env:CMAKE_TOOLCHAIN_FILE)" -ForegroundColor Red
+elseif (-not (Test-Path $env:MAYAFLUX_TOOLCHAIN_FILE)) {
+    Write-Host "MAYAFLUX_TOOLCHAIN_FILE points to non-existent file: $($env:MAYAFLUX_TOOLCHAIN_FILE)" -ForegroundColor Red
     $depsOk = $false
 }
 
@@ -99,8 +106,8 @@ try {
         "-DCMAKE_BUILD_TYPE=Release"
     )
 
-    if ($env:CMAKE_TOOLCHAIN_FILE) {
-        $cmakeArgs += "-DCMAKE_TOOLCHAIN_FILE=$($env:CMAKE_TOOLCHAIN_FILE)"
+    if ($env:MAYAFLUX_TOOLCHAIN_FILE) {
+        $cmakeArgs += "-DCMAKE_TOOLCHAIN_FILE=$($env:MAYAFLUX_TOOLCHAIN_FILE)"
     }
 
     Write-Host "CMake command:" -ForegroundColor Cyan

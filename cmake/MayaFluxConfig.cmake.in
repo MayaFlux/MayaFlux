@@ -26,6 +26,8 @@ find_package(PkgConfig QUIET)
 if(WIN32)
     message(STATUS "=== Windows Dependency Resolution ===")
 
+    list(APPEND CMAKE_PREFIX_PATH "@VCPKG_INSTALLED_DIR@/x64-windows")
+
     # GLFW (vcpkg or environment)
     find_package(Vulkan REQUIRED)
     find_package(magic_enum REQUIRED)
@@ -76,14 +78,6 @@ if(WIN32)
         endforeach()
     endif()
 
-    # GLM from environment
-    if(NOT TARGET glm::glm)
-        add_library(glm INTERFACE IMPORTED)
-        set_target_properties(glm PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "$ENV{GLM_INCLUDE_DIR}")
-    endif()
-
-
     # Shader support
     set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
 
@@ -91,13 +85,7 @@ if(WIN32)
     set(MAYAFLUX_ENABLE_HID @MAYAFLUX_ENABLE_HID@)
 
     if(MAYAFLUX_ENABLE_HID)
-        if(NOT TARGET hidapi::hidapi)
-            add_library(hidapi SHARED IMPORTED GLOBAL)
-            set_target_properties(hidapi PROPERTIES
-                IMPORTED_LOCATION "$ENV{HIDAPI_LIB_DIR}/hidapi.dll"
-                IMPORTED_IMPLIB "$ENV{HIDAPI_LIB_DIR}/hidapi.lib"
-                INTERFACE_INCLUDE_DIRECTORIES "$ENV{HIDAPI_ROOT}/include")
-        endif()
+        find_package(hidapi CONFIG REQUIRED)
     endif()
 
 else()
@@ -243,7 +231,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             FFmpeg::avutil
             FFmpeg::swresample
             FFmpeg::swscale
-            magic_enum
             gdi32
             user32
             shell32

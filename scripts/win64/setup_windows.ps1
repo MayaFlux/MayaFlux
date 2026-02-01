@@ -118,12 +118,12 @@ if (Test-Path $vswhere) {
 
 # LLVM/Clang
 $llvmVersion = "21.1.8"
-$llvmRoot = "C:\Program Files\LLVM_Libs\$llvmVersion" -replace '\\', '/'
+$llvmRoot = "C:\Program Files\LLVM_Libs\$llvmVersion"
 
 if (Test-Path $llvmRoot) {
     [Environment]::SetEnvironmentVariable("LLVM_ROOT", $llvmRoot, "Machine")
-    [Environment]::SetEnvironmentVariable("LLVM_DIR", "$llvmRoot/lib/cmake/llvm", "Machine")
-    [Environment]::SetEnvironmentVariable("Clang_DIR", "$llvmRoot/lib/cmake/clang", "Machine")
+    [Environment]::SetEnvironmentVariable("LLVM_DIR", "$llvmRoot\lib\cmake\llvm", "Machine")
+    [Environment]::SetEnvironmentVariable("Clang_DIR", "$llvmRoot\lib\cmake\clang", "Machine")
     Write-Host "[LLVM] Environment configured (v$llvmVersion)" -ForegroundColor Green
 } else {
     Write-Warning "LLVM v$llvmVersion not found at $llvmRoot"

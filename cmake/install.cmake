@@ -61,6 +61,10 @@ install(TARGETS lila_server RUNTIME DESTINATION bin)
 # CMake Config Files
 # ============================================================================
 
+if(DEFINED ENV{VCPKG_ROOT})
+    file(TO_CMAKE_PATH "$ENV{VCPKG_ROOT}/installed" VCPKG_INSTALLED_DIR)
+endif()
+
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
     ${CMAKE_SOURCE_DIR}/cmake/MayaFluxConfig.cmake.in
