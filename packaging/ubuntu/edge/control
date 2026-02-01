@@ -36,6 +36,7 @@ Build-Depends:
     libavcodec-dev,
     libavformat-dev,
     libswscale-dev,
+    libhidapi-dev,
     git
 Standards-Version: 4.7.0
 Homepage: https://mayaflux.org
@@ -75,7 +76,8 @@ Depends:
     librtaudio-dev,
     libavcodec-dev,
     libavformat-dev,
-    libswscale-dev
+    libswscale-dev,
+    libhidapi-dev
 Suggests:
     mayaflux-edge-doc
 Description: Modern C++ framework for real-time graphics and audio with JIT

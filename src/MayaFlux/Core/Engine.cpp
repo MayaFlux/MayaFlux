@@ -1,6 +1,7 @@
 #include "Engine.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Core/Input/InputManager.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
@@ -46,6 +47,7 @@ Engine::Engine(Engine&& other) noexcept
     , m_subsystem_manager(std::move(other.m_subsystem_manager))
     , m_window_manager(std::move(other.m_window_manager))
     , m_event_manager(std::move(other.m_event_manager))
+    , m_input_manager(std::move(other.m_input_manager))
     , m_rng(std::move(other.m_rng))
 {
     other.m_is_initialized = false;
@@ -66,6 +68,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
         m_scheduler = std::move(other.m_scheduler);
         m_window_manager = std::move(other.m_window_manager);
         m_event_manager = std::move(other.m_event_manager);
+        m_input_manager = std::move(other.m_input_manager);
         m_rng = std::move(other.m_rng);
 
         m_is_initialized = other.m_is_initialized;
@@ -84,22 +87,24 @@ void Engine::Init()
     Parallel::g_MainThreadId = GetCurrentThreadId();
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 
-    Init(m_stream_info, m_graphics_config);
+    Init(m_stream_info, m_graphics_config, m_input_config);
 }
 
 void Engine::Init(const GlobalStreamInfo& streamInfo)
 {
-    Init(streamInfo, m_graphics_config);
+    Init(streamInfo, m_graphics_config, m_input_config);
 }
 
-void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config)
+void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig& graphics_config, const GlobalInputConfig& input_config)
 {
     MF_PRINT(Journal::Component::Core, Journal::Context::Init, "Engine initializing");
     m_stream_info = streamInfo;
     m_graphics_config = graphics_config;
+    m_input_config = input_config;
 
     m_scheduler = std::make_shared<Vruta::TaskScheduler>(m_stream_info.sample_rate);
     m_event_manager = std::make_shared<Vruta::EventManager>();
+    m_input_manager = std::make_shared<InputManager>();
 
     m_buffer_manager = std::make_shared<Buffers::BufferManager>(
         m_stream_info.output.channels,
@@ -115,11 +120,13 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
     }
 
     m_subsystem_manager = std::make_shared<SubsystemManager>(
-        m_node_graph_manager, m_buffer_manager, m_scheduler, m_window_manager);
+        m_node_graph_manager, m_buffer_manager, m_scheduler, m_window_manager, m_input_manager);
 
     m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
 
     m_subsystem_manager->create_graphics_subsystem(m_graphics_config);
+
+    m_subsystem_manager->create_input_subsystem(m_input_config);
 
     m_buffer_manager->initialize_buffer_service();
 

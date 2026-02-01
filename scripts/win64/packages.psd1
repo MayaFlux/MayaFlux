@@ -43,6 +43,12 @@
             Url         = 'https://github.com/glfw/glfw/releases/download/3.4/glfw-3.4.bin.WIN64.zip'
             Verify      = 'C:\Program Files\GLFW\include\GLFW\glfw3.h'
         }
+
+        HIDAPI    = @{
+            InstallRoot = 'C:\Program Files\HIDAPI'
+            Url         = 'https://github.com/libusb/hidapi/releases/download/hidapi-0.15.0/hidapi-win.zip'
+            Verify      = 'C:\Program Files\HIDAPI\include\hidapi.h'
+        }
     }
 
     HeaderOnlyPackages = @{

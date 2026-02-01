@@ -75,7 +75,7 @@ bool BufferTokenDistributor::has_cpu(ProcessingToken token)
 
 bool BufferTokenDistributor::has_gpu(ProcessingToken token)
 {
-    return token & ProcessingToken::GPU_PPOCESS;
+    return token & ProcessingToken::GPU_PROCESS;
 }
 
 // ============================================================================

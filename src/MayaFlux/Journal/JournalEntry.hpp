@@ -70,6 +70,7 @@ enum class Context : uint8_t {
 
     AudioBackend, ///< Audio processing backend (RtAudio, JACK, ASIO)
     GraphicsBackend, ///< Graphics/visual rendering backend (Vulkan, OpenGL)
+    InputBackend, ///< Input device backend (HID, MIDI, OSC)
     CustomBackend, ///< Custom user-defined backend
 
     // ============================================================================
@@ -85,6 +86,7 @@ enum class Context : uint8_t {
     AudioSubsystem, ///< Audio subsystem operations (backend, device, stream management)
     WindowingSubsystem, ///< Windowing system operations (GLFW, SDL)
     GraphicsSubsystem, ///< Graphics subsystem operations (Vulkan, rendering pipeline)
+    InputSubsystem, ///< Input subsystem operations (device management, event dispatch)
     CustomSubsystem, ///< Custom user-defined subsystem
 
     // ============================================================================
@@ -94,6 +96,7 @@ enum class Context : uint8_t {
     NodeProcessing, ///< Node graph processing (Nodes::NodeGraphManager)
     BufferProcessing, ///< Buffer processing (Buffers::BufferManager, processing chains)
     BufferManagement, ///< Buffer Management (Buffers::BufferManager, creating buffers)
+    InputManagement, ///< Input management (Core::InputManager)
     CoroutineScheduling, ///< Coroutine scheduling and temporal coordination (Vruta::TaskScheduler)
     ContainerProcessing, ///< Container operations (Kakshya - file/stream/region processing)
     ComputeMatrix, ///< Compute operations (Yantra - algorithms, matrices, DSP)

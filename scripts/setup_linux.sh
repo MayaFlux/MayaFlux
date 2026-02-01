@@ -49,6 +49,7 @@ install_arch() {
         "vulkan-validation-layers"
         "ffmpeg"
         "stb"
+        "hidapi"
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
@@ -92,6 +93,7 @@ install_fedora() {
         "tbb-devel"
         "gtest-devel"
         "libshaderc-devel"
+        "hidapi-devel"
         "wayland-devel"
         "git"
     )
@@ -137,6 +139,8 @@ install_ubuntu() {
         "libavcodec-dev"
         "libavformat-dev"
         "libswscale-dev"
+        "libhidapi-dev"
+        "libgtest-dev"
     )
 
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"

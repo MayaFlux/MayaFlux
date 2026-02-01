@@ -43,6 +43,7 @@ BuildRequires:  gtest-devel
 BuildRequires:  libshaderc-devel
 BuildRequires:  glslc
 BuildRequires:  wayland-devel
+BuildRequires:  hidapi-devel
 BuildRequires:  git
 
 # Runtime = BuildRequires (all needed for live coding/JIT)
@@ -74,6 +75,7 @@ Requires:       gtest-devel
 Requires:       libshaderc-devel
 Requires:       glslc
 Requires:       wayland-devel
+Requires:       hidapi-devel
 
 Provides:       mayaflux = %{version}-%{release}
 Conflicts:      mayaflux

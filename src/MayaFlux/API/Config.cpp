@@ -39,6 +39,14 @@ Core::GlobalGraphicsConfig& get_global_graphics_config()
     return get_context().get_graphics_config();
 }
 
+Core::GlobalInputConfig& get_global_input_config()
+{
+    if (get_context().is_running()) {
+        MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Accessing input config while engine is running may lead to inconsistent state.");
+    }
+    return get_context().get_input_config();
+}
+
 GraphConfig& get_graph_config() { return graph_config; }
 
 NodeConfig& get_node_config() { return node_config; }

@@ -8,9 +8,12 @@ namespace MayaFlux::Core {
 
 class WindowManager;
 class AudioSubsystem;
+class InputSubsystem;
 class GraphicsSubsystem;
+
 struct GlobalStreamInfo;
 struct GlobalGraphicsConfig;
+struct GlobalInputConfig;
 
 /**
  * @class SubsystemManager
@@ -34,6 +37,7 @@ public:
      * @param buffer_manager Shared buffer manager for all subsystems
      * @param task_scheduler Shared task scheduler for all subsystems
      * @param window_manager Optional shared window manager for graphics subsystems
+     * @param input_manager Optional shared input manager for input subsystems
      *
      * Initializes the manager with references to the core processing systems.
      * These managers are shared across all subsystems but accessed through
@@ -43,7 +47,8 @@ public:
         std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager,
         std::shared_ptr<Buffers::BufferManager> buffer_manager,
         std::shared_ptr<Vruta::TaskScheduler> task_scheduler,
-        std::shared_ptr<Core::WindowManager> window_manager = nullptr);
+        std::shared_ptr<Core::WindowManager> window_manager = nullptr,
+        std::shared_ptr<InputManager> input_manager = nullptr);
 
     /**
      * @brief Internal template method for type-safe subsystem creation
@@ -81,6 +86,15 @@ public:
      */
     void create_graphics_subsystem(const GlobalGraphicsConfig& graphics_config);
 
+    /**
+     * @brief Create and register the input subsystem
+     * @param input_config Global input configuration
+     *
+     * Specialized creation method for InputSubsystem. Only one input
+     * subsystem is allowed per manager instance.
+     */
+    void create_input_subsystem(GlobalInputConfig& input_config);
+
     /** @brief Start all registered subsystems in coordination */
     void start_all_subsystems();
 
@@ -117,6 +131,15 @@ public:
      * Equivalent to dynamic_cast on get_subsystem(SubsystemType::GRAPHICS).
      */
     std::shared_ptr<GraphicsSubsystem> get_graphics_subsystem();
+
+    /**
+     * @brief Get typed access to the input subsystem
+     * @return Shared pointer to InputSubsystem or nullptr if not created
+     *
+     * Convenience method that automatically casts to InputSubsystem type.
+     * Equivalent to dynamic_cast on get_subsystem(SubsystemType::INPUT).
+     */
+    std::shared_ptr<InputSubsystem> get_input_subsystem();
 
     /**
      * @brief Check if a subsystem type exists
@@ -190,6 +213,8 @@ public:
             m_buffer_manager,
             m_node_graph_manager,
             m_task_scheduler,
+            m_window_manager,
+            m_input_manager,
             combined_tokens);
 
         operation(temp_handle);
@@ -270,6 +295,9 @@ public:
     /** @brief Stop the graphics subsystem */
     void stop_graphics_subsystem();
 
+    /** @brief Stop the input subsystem */
+    void stop_input_subsystem();
+
 private:
     bool is_cross_access_allowed(SubsystemType from, SubsystemType to) const;
 
@@ -279,6 +307,7 @@ private:
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
     std::shared_ptr<Vruta::TaskScheduler> m_task_scheduler;
     std::shared_ptr<Core::WindowManager> m_window_manager;
+    std::shared_ptr<InputManager> m_input_manager;
 
     std::unordered_map<SubsystemType, std::shared_ptr<ISubsystem>> m_subsystems;
     std::unordered_map<SubsystemType, std::unique_ptr<SubsystemProcessingHandle>> m_handles;

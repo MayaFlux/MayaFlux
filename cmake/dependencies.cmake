@@ -42,6 +42,26 @@ if(WIN32)
             INTERFACE_INCLUDE_DIRECTORIES "$ENV{FFMPEG_ROOT}/include")
     endforeach()
 
+
+    if(MAYAFLUX_ENABLE_HID)
+        find_package(hidapi CONFIG QUIET)
+        if(hidapi_FOUND)
+            message(STATUS "Using HIDAPI from vcpkg")
+        else()
+            if(DEFINED ENV{HIDAPI_ROOT} AND DEFINED ENV{HIDAPI_LIB_DIR})
+                add_library(hidapi SHARED IMPORTED GLOBAL)
+                set_target_properties(hidapi PROPERTIES
+                    IMPORTED_LOCATION "$ENV{HIDAPI_LIB_DIR}/hidapi.dll"
+                    IMPORTED_IMPLIB "$ENV{HIDAPI_LIB_DIR}/hidapi.lib"
+                    INTERFACE_INCLUDE_DIRECTORIES "$ENV{HIDAPI_ROOT}/include")
+                message(STATUS "Using HIDAPI from environment: $ENV{HIDAPI_ROOT}")
+            else()
+                message(WARNING "HIDAPI not found via vcpkg or environment variables. Disabling HID support.")
+                set(MAYAFLUX_ENABLE_HID OFF CACHE BOOL "" FORCE)
+            endif()
+        endif()
+    endif()
+
 else()
     find_package(PkgConfig REQUIRED)
 
@@ -68,5 +88,27 @@ else()
     pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
     pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
+
+    if(MAYAFLUX_ENABLE_HID)
+        if(APPLE)
+            pkg_check_modules(HIDAPI QUIET IMPORTED_TARGET hidapi)
+        else()
+            pkg_search_module(HIDAPI QUIET IMPORTED_TARGET
+                hidapi-hidraw hidapi-libusb hidapi)
+        endif()
+
+        if(NOT HIDAPI_FOUND)
+            message(WARNING "HIDAPI not found. Install with:")
+            if(APPLE)
+                message(WARNING "  brew install hidapi")
+            else()
+                message(WARNING
+                        "  sudo apt install libhidapi-dev  # Debian/Ubuntu")
+                message(WARNING "  sudo dnf install hidapi-devel   # Fedora")
+                message(WARNING "  sudo pacman -S hidapi           # Arch")
+            endif()
+            set(MAYAFLUX_ENABLE_HID OFF CACHE BOOL "" FORCE)
+        endif()
+    endif()
 
 endif()

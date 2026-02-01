@@ -520,7 +520,7 @@ TEST_F(RtAudioUtilityTest, GlobalAPIValidation)
     duplex_config.input.enabled = true;
     duplex_config.input.channels = 1;
 
-    MayaFlux::Init(duplex_config);
+    MayaFlux::Init(duplex_config, {}, {});
 
     auto stream_info = Config::get_global_stream_info();
     EXPECT_EQ(stream_info.sample_rate, 48000);

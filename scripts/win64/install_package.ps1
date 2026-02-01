@@ -176,11 +176,22 @@ function Install-BinaryPackage($name, $config) {
         Write-Host "  Extracting..." -ForegroundColor Yellow
         Expand-ArchiveSafe $downloadFile $tempDir
 
-        # Move contents to install root
-        $extracted = Get-ChildItem $tempDir -Directory | Where-Object { $_.Name -ne (Split-Path $tempDir -Leaf) } | Select-Object -First 1
-        if ($extracted) {
-            Get-ChildItem $extracted.FullName | Move-Item -Destination $config.InstallRoot -Force
-        }
+        # Remove the archive file to avoid interfering with content detection
+        Remove-Item $downloadFile -Force -ErrorAction SilentlyContinue
+
+        # Move contents to install root, handling wrapper dirs intelligently
+        $extractedItems = Get-ChildItem $tempDir | Where-Object { -not $_.Name.StartsWith('.') }
+        $extractedDirs = $extractedItems | Where-Object { $_.PSIsContainer }
+
+        if ($extractedDirs.Count -eq 1 -and $extractedItems.Count -eq 1) {
+            # Single wrapper directory: strip it and move its contents
+            Write-Host "  Stripping wrapper directory..." -ForegroundColor Yellow
+            Get-ChildItem $extractedDirs[0].FullName | Move-Item -Destination $config.InstallRoot -Force
+        } else {
+            # Multiple directories/files or flat: move everything as-is
+            Write-Host "  Moving all contents..." -ForegroundColor Yellow
+            Get-ChildItem $tempDir | Move-Item -Destination $config.InstallRoot -Force
+        }    
     }
 
     # Cleanup

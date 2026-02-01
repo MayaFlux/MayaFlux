@@ -189,6 +189,42 @@ if (Test-Path $glfwRoot) {
     Write-Warning "GLFW not found at $glfwRoot"
 }
 
+# HIDAPI - detect lib directory
+Write-Host "`n[Configuring HIDAPI]" -ForegroundColor Cyan
+$hidapiRoot = "C:\Program Files\HIDAPI"
+if (Test-Path $hidapiRoot) {
+    $hidapiLibDir = $null
+    foreach ($candidate in @("64", "x64", "lib64", "win64", "x86_64")) {
+        $testPath = Join-Path $hidapiRoot $candidate
+        if (Test-Path "$testPath\hidapi.lib") {
+            $hidapiLibDir = $testPath
+            break
+        }
+    }
+
+    if ($hidapiLibDir) {
+        [Environment]::SetEnvironmentVariable("HIDAPI_ROOT", $hidapiRoot, "Machine")
+        [Environment]::SetEnvironmentVariable("HIDAPI_LIB_DIR", $hidapiLibDir, "Machine")
+        Write-Host "[HIDAPI] Library: $hidapiLibDir" -ForegroundColor Green
+        
+        # Add include directory
+        $hidapiInclude = Join-Path $hidapiRoot "include"
+        if (Test-Path $hidapiInclude) {
+            Add-IncludeDirectory -Path $hidapiInclude
+        }
+        
+        # Add library directory
+        Add-LibraryDirectory -Path $hidapiLibDir
+        
+        # Add bin directory to PATH (assuming DLL is in lib dir)
+        Add-EnvPath -Name "PATH" -Value $hidapiLibDir
+    } else {
+        Write-Warning "HIDAPI x64 library directory not found - check for x86-only or adjust candidates"
+    }
+} else {
+    Write-Warning "HIDAPI not found at $hidapiRoot"
+}
+
 # FFmpeg
 $ffmpegRoot = "C:\Program Files\FFmpeg"
 if (Test-Path $ffmpegRoot) {

@@ -101,16 +101,10 @@ void Init(uint32_t sample_rate, uint32_t buffer_size, uint32_t num_out_channels,
     engine.Init();
 }
 
-void Init(Core::GlobalStreamInfo stream_info)
+void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config, Core::GlobalInputConfig input_config)
 {
     auto& engine = internal::get_or_create_engine();
-    engine.Init(stream_info);
-}
-
-void Init(Core::GlobalStreamInfo stream_info, Core::GlobalGraphicsConfig graphics_config)
-{
-    auto& engine = internal::get_or_create_engine();
-    engine.Init(stream_info, graphics_config);
+    engine.Init(stream_info, graphics_config, input_config);
 }
 
 void Start()

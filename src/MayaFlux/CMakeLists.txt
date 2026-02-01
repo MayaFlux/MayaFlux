@@ -11,7 +11,7 @@ if(WIN32)
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_EXPORTS)
     if(MSVC)
         target_compile_options(MayaFluxLib PRIVATE /MD)
-        
+
         if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
             target_compile_options(MayaFluxLib PRIVATE "/Zc:externConstexpr-")
             target_link_options(MayaFluxLib PRIVATE "/IGNORE:4099")
@@ -53,11 +53,27 @@ if(MAYAFLUX_USE_SHADERC)
         elseif(TARGET shaderc_combined)
             target_link_libraries(MayaFluxLib PRIVATE shaderc_combined)
         endif()
-        
+
     else()
         target_link_libraries(MayaFluxLib PRIVATE PkgConfig::shaderc)
     endif()
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SHADERC)
+endif()
+
+if(MAYAFLUX_ENABLE_HID)
+    target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_HID_BACKEND)
+
+    if(WIN32)
+        if(TARGET hidapi::hidapi)
+            target_link_libraries(MayaFluxLib PRIVATE hidapi::hidapi)
+        else()
+            target_link_libraries(MayaFluxLib PRIVATE hidapi)
+        endif()
+    else()
+        target_link_libraries(MayaFluxLib PRIVATE PkgConfig::HIDAPI)
+    endif()
+
+    message(STATUS "Core: HID input backend enabled (HIDAPI ${HIDAPI_VERSION})")
 endif()
 
 target_include_directories(MayaFluxLib PRIVATE ${CMAKE_BINARY_DIR}/include)
