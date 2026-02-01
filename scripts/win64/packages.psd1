@@ -21,7 +21,7 @@
     BinaryPackages     = @{
         LLVM      = @{
             InstallRoot = 'C:\Program Files\LLVM_Libs'
-            Url         = 'https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.3/clang+llvm-21.1.3-x86_64-pc-windows-msvc.tar.xz'
+            Url         = 'https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/clang+llvm-21.1.8-x86_64-pc-windows-msvc.tar.xz'
             Verify      = 'C:\Program Files\LLVM_Libs\lib\LLVMCore.lib'
         }
 
