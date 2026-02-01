@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::time_to_position" name="MayaFlux::Kakshya::time_to_position">
+<area shape="rect" id="Node000001" title="Convert time (seconds) to position (samples/frames) given a sample rate." alt="" coords="225,13,384,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a41cf6c2849e8c1689f711783258ec303.html#a41cf6c2849e8c1689f711783258ec303" title="Convert from time (seconds) to position units (e.g., frame/sample index)." alt="" coords="5,5,177,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,35,178,35,178,30,211,30"/>
+</map>

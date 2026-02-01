@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::PolynomialContext" name="MayaFlux::Nodes::Generator::PolynomialContext">
+<area shape="rect" id="Node000001" title=" " alt="" coords="15,179,215,439"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContextGpu.html" title=" " alt="" coords="15,487,215,567"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="118,452,118,486,113,486,113,452"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,145,118,178,113,178,113,145"/>
+</map>

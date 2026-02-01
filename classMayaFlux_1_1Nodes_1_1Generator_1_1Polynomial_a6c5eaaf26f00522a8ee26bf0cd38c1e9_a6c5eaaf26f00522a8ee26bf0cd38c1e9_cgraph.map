@@ -1,0 +1,24 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::process_sample" name="MayaFlux::Nodes::Generator::Polynomial::process_sample">
+<area shape="rect" id="Node000001" title="Processes a single sample." alt="" coords="5,227,221,267"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a4b8a7b5921b7d9b7ffb1e2f0e596e9a2.html#a4b8a7b5921b7d9b7ffb1e2f0e596e9a2" title="Atomically adds a flag to a node state." alt="" coords="305,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,225,145,188,177,142,219,95,268,55,291,43,293,48,271,60,222,99,181,145,149,191,128,228"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_aa4e4a2ece2a22b6774a5978e557ea25e.html#aa4e4a2ece2a22b6774a5978e557ea25e" title="Atomically decrements the modulator count by a specified amount." alt="" coords="305,69,493,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="132,225,189,172,227,143,268,119,290,109,292,114,271,124,230,148,193,176,135,228"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_a7d0374eb13e0238f520338b13823a627.html#a7d0374eb13e0238f520338b13823a627" title="Atomically increments the modulator count by a specified amount." alt="" coords="305,133,493,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="159,224,268,183,297,174,298,179,270,188,161,229"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a9ab5de0a04311df98067d7d1f607b5ed.html#a9ab5de0a04311df98067d7d1f607b5ed" title=" " alt="" coords="269,197,528,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="221,233,255,229,256,235,222,238"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_acd5575b2d9a01691b88ad7374676473b.html#acd5575b2d9a01691b88ad7374676473b" title=" " alt="" coords="843,316,1056,356"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="222,247,484,263,640,277,795,297,860,310,859,315,794,303,639,282,483,268,222,253"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a78f2f499d75866e25ba584c19622a21f.html#a78f2f499d75866e25ba584c19622a21f" title="Notifies all registered callbacks about a new sample." alt="" coords="295,312,503,352"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="182,264,319,305,317,311,180,269"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_aa86c4d7384d41dab71ac4f1493c456e5.html#aa86c4d7384d41dab71ac4f1493c456e5" title=" " alt="" coords="295,376,503,416"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="137,265,195,314,231,339,271,362,287,369,285,374,268,366,228,344,191,318,134,269"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Nodes_a7c82f258078606084a01f72dfba3bb92.html#a7c82f258078606084a01f72dfba3bb92" title="Attempts to reset the processed state of a node." alt="" coords="311,440,486,480"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="128,266,151,301,183,344,223,389,271,426,299,439,297,444,268,430,220,393,179,348,146,304,124,269"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_ad90842fc652a81bbad736ae05f96d959.html#ad90842fc652a81bbad736ae05f96d959" title="Retrieves the last created context object." alt="" coords="576,312,795,352"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="503,329,562,329,562,335,503,335"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a49ff94fa54ebf11a338b01956d66fab2.html#a49ff94fa54ebf11a338b01956d66fab2" title="Updates the context object with the current node state." alt="" coords="579,376,791,416"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="490,349,583,370,581,376,488,355"/>
+<area shape="poly" id="edge9_Node000009_Node000006" title=" " alt="" coords="773,373,847,356,848,362,775,379"/>
+</map>

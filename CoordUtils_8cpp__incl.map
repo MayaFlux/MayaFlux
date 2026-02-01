@@ -1,0 +1,16 @@
+<map id="CoordUtils.cpp" name="CoordUtils.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="183,5,300,31"/>
+<area shape="rect" id="Node000002" href="$CoordUtils_8hpp.html" title=" " alt="" coords="134,79,253,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,33,211,69,206,66,231,30"/>
+<area shape="rect" id="Node000007" href="$Region_8hpp.html" title=" " alt="" coords="264,152,459,192"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="252,29,340,139,336,143,248,32"/>
+<area shape="rect" id="Node000003" href="$SignalSourceContainer_8hpp.html" title=" " alt="" coords="5,152,240,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="185,106,151,144,147,140,181,102"/>
+<area shape="rect" id="Node000004" href="$NDimensionalContainer_8hpp.html" title=" " alt="" coords="70,240,274,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="137,191,160,227,155,230,132,194"/>
+<area shape="rect" id="Node000005" href="$NDData_8hpp.html" title=" " alt="" coords="163,313,319,339"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="185,264,223,302,219,305,182,268"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="189,387,293,412"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="244,339,244,373,239,373,239,339"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="348,194,261,304,257,301,344,191"/>
+</map>

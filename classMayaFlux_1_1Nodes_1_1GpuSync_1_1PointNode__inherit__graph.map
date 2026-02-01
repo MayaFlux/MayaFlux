@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::PointNode" name="MayaFlux::Nodes::GpuSync::PointNode">
+<area shape="rect" id="Node000001" title="Single 3D point in space." alt="" coords="8,1433,200,1693"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode.html" title="Base class for nodes that generate 3D geometry data." alt="" coords="8,951,200,1385"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,1399,107,1433,101,1433,101,1399"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="8,703,200,903"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="107,917,107,950,101,950,101,917"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,5,203,655"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="107,669,107,702,101,702,101,669"/>
+</map>

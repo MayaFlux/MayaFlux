@@ -1,0 +1,11 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::initialize" name="MayaFlux::Portal::Graphics::ComputePress::initialize">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,203,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="256,5,461,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="184,67,265,46,266,51,185,72"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="260,69,457,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="203,87,246,87,246,92,203,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aa9c6a8bc1c6cc0082f4519bd71da28c5.html#aa9c6a8bc1c6cc0082f4519bd71da28c5" title="Check if compiler is initialized." alt="" coords="251,133,467,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="185,107,266,127,265,133,184,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="515,69,712,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="457,87,501,87,501,92,457,92"/>
+</map>

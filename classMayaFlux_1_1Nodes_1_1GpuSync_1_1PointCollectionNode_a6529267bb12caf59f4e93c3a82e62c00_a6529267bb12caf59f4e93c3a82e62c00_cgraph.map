@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::GpuSync::PointCollectionNode::PointCollectionNode" name="MayaFlux::Nodes::GpuSync::PointCollectionNode::PointCollectionNode">
+<area shape="rect" id="Node000001" title="Create empty point source." alt="" coords="5,84,205,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ad5f8bb454545911e4cef60543eb8e6be.html#ad5f8bb454545911e4cef60543eb8e6be" title="Resize vertex buffer to hold specified number of vertices." alt="" coords="253,5,469,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,81,258,62,259,67,196,86"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="261,84,461,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="205,109,248,109,248,114,205,114"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ae5284939e0d0c2d570576488644f8068.html#ae5284939e0d0c2d570576488644f8068" title="Set vertex stride (bytes per vertex)" alt="" coords="261,163,461,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="196,136,259,156,258,161,194,141"/>
+</map>

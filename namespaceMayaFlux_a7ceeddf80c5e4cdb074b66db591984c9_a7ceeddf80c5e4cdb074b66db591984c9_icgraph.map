@@ -1,0 +1,7 @@
+<map id="MayaFlux::get_input_manager" name="MayaFlux::get_input_manager">
+<area shape="rect" id="Node000001" title="Gets a handle to default input manager." alt="" coords="213,37,368,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a020579332529de276f3dac3895d084f0.html#a020579332529de276f3dac3895d084f0" title="Register an input node with specified binding." alt="" coords="13,5,157,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,46,157,39,158,34,200,41"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a325ef8e37e67d238bb2b8a6753610a53.html#a325ef8e37e67d238bb2b8a6753610a53" title="Unregister an input node." alt="" coords="5,69,165,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="200,74,166,80,165,74,200,69"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::is_ready_for_processing" name="MayaFlux::Kakshya::SoundStreamContainer::is_ready_for_processing">
+<area shape="rect" id="Node000001" title="Check if the container is ready for processing." alt="" coords="225,5,412,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_acf3d518f40a0eda248cfa8de521da9f4.html#acf3d518f40a0eda248cfa8de521da9f4" title="Process the container&#39;s data using the default processor." alt="" coords="5,5,177,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,35,178,35,178,30,212,30"/>
+</map>

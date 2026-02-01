@@ -1,0 +1,29 @@
+<map id="MayaFlux::Core::BufferProcessingHandle::ensure_valid" name="MayaFlux::Core::BufferProcessingHandle::ensure_valid">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1163,177,1404,217"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_a71843f9187ec9d8a3b9e67c789c77fa4.html#a71843f9187ec9d8a3b9e67c789c77fa4" title="Process all channels in token domain." alt="" coords="873,5,1115,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1252,169,1192,113,1154,84,1113,60,1086,48,1088,43,1116,55,1157,80,1195,109,1256,165"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_a57660256682189798fbbc3b6d1ea351a.html#a57660256682189798fbbc3b6d1ea351a" title="Process specific channel." alt="" coords="873,69,1115,109"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1229,174,1114,124,1077,112,1078,107,1116,119,1231,169"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_aba71e54452d61d2c3c0b1b1192844a5a.html#aba71e54452d61d2c3c0b1b1192844a5a" title="Process channel with node output data integration." alt="" coords="873,134,1115,189"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="1149,183,1115,179,1115,174,1150,178"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_a498e4d1f3f1e46e52ba3d2565ec0fb56.html#a498e4d1f3f1e46e52ba3d2565ec0fb56" title="Get read&#45;only access to channel data." alt="" coords="873,213,1115,253"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="1150,217,1115,221,1115,216,1149,211"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_aa5403aa068bd10ee4febd922b476812c.html#aa5403aa068bd10ee4febd922b476812c" title="Configure channel layout for token domain." alt="" coords="873,277,1115,317"/>
+<area shape="poly" id="edge13_Node000001_Node000012" title=" " alt="" coords="1226,225,1116,268,1077,280,1075,275,1114,263,1224,220"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_a021db6750d0e47da4e092250781de7c2.html#a021db6750d0e47da4e092250781de7c2" title="Get write access to channel data with automatic locking." alt="" coords="873,341,1115,381"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="1254,229,1193,281,1156,308,1116,332,1087,344,1085,339,1113,327,1153,304,1190,277,1251,225"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_af7661b41b9eb2e292868aca2f7116b9a.html#af7661b41b9eb2e292868aca2f7116b9a" title="Unified processing callback (alternative to separate methods)" alt="" coords="610,5,799,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="859,28,800,28,800,23,859,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a5570e0e163a26bb602d622048a29c73f.html#a5570e0e163a26bb602d622048a29c73f" title="Graphics thread main loop." alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="596,28,536,28,536,23,596,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a34118595a38cba09a09a08824f4d0283.html#a34118595a38cba09a09a08824f4d0283" title="Start the subsystem&#39;s processing/event loops." alt="" coords="31,5,221,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="281,28,221,28,221,23,281,23"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a528e097a9ed4c0852b3d16be5ba37c75.html#a528e097a9ed4c0852b3d16be5ba37c75" title="Processes output data for audio interface." alt="" coords="584,112,825,152"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="860,112,826,117,825,112,859,106"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_a5d75ecc901d686219b8b39ca4ad68ca4.html#a5d75ecc901d686219b8b39ca4ad68ca4" title="Processes both input and output data in full&#45;duplex mode." alt="" coords="295,83,536,123"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="570,121,536,118,537,112,571,116"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1AudioSubsystem_aee1e241d09520e5661e05a4b50eead99.html#aee1e241d09520e5661e05a4b50eead99" title="Register audio backend callbacks for real&#45;time processing." alt="" coords="5,97,247,137"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="570,139,437,141,295,137,247,134,247,129,295,132,437,136,570,134"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="281,112,247,114,247,109,281,107"/>
+<area shape="poly" id="edge12_Node000011_Node000007" title=" " alt="" coords="898,212,872,204,749,155,751,150,874,199,900,207"/>
+</map>

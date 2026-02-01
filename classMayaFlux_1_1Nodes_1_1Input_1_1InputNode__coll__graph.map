@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::Input::InputNode" name="MayaFlux::Nodes::Input::InputNode">
+<area shape="rect" id="Node000001" title="Abstract base class for nodes that receive external input." alt="" coords="300,955,468,1475"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,243,203,892"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,875,217,891,258,979,302,1064,297,1067,253,981,212,893,206,877"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1Input_1_1InputConfig.html" title="Configuration for InputNode behavior." alt="" coords="227,487,395,647"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="322,647,355,938,350,938,317,648"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputContext.html" title="Context for InputNode callbacks &#45; provides input event access." alt="" coords="419,507,587,627"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="494,628,437,939,432,938,489,627"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="386,23,606,148"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="500,162,505,507,499,507,494,162"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Memory_1_1LockFreeRingBuffer.html" title=" " alt="" coords="617,480,823,655"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="696,656,655,770,601,893,543,995,480,1089,475,1087,538,992,596,891,650,768,691,654"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Memory_1_1LockFreeRingBuffer.html" title=" " alt="" coords="631,5,836,165"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="733,179,725,480,720,480,728,179"/>
+</map>

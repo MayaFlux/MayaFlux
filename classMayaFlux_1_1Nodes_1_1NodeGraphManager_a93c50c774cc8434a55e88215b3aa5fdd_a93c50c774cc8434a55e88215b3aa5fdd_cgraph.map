@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::register_network_global" name="MayaFlux::Nodes::NodeGraphManager::register_network_global">
+<area shape="rect" id="Node000001" title="Register network globally (like nodes)" alt="" coords="5,5,249,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_aeb0f9a55ec7d93a013314c8038aa6750.html#aeb0f9a55ec7d93a013314c8038aa6750" title="Check if network is registered globally." alt="" coords="297,5,528,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="249,23,284,23,284,28,249,28"/>
+</map>

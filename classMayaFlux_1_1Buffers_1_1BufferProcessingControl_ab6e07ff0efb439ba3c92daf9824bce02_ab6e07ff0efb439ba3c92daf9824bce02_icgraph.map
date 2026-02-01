@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferProcessingControl::remove_graphics_processor" name="MayaFlux::Buffers::BufferProcessingControl::remove_graphics_processor">
+<area shape="rect" id="Node000001" title="Removes a processor from the graphics processing chain." alt="" coords="284,45,496,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_af22ed5f9c5d3af97a0f100ca6b62a3ff.html#af22ed5f9c5d3af97a0f100ca6b62a3ff" title="Removes a processor from a buffer (dispatches based on buffer/token)" alt="" coords="31,5,210,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,58,210,49,211,43,271,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_afb3f70aae8e392cbc3cad423a1a6edfc.html#afb3f70aae8e392cbc3cad423a1a6edfc" title="Removes a processor from a token (dispatches based on token)" alt="" coords="5,84,236,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="271,92,237,97,236,92,270,87"/>
+</map>

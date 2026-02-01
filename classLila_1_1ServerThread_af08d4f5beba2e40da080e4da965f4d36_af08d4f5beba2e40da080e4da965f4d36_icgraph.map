@@ -1,0 +1,7 @@
+<map id="Lila::ServerThread::joinable" name="Lila::ServerThread::joinable">
+<area shape="rect" id="Node000001" title=" " alt="" coords="388,5,528,45"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_a903e645c34e93ae5ca91421c8166272f.html#a903e645c34e93ae5ca91421c8166272f" title="Stops the server and disconnects all clients." alt="" coords="209,13,340,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="374,28,340,28,340,23,374,23"/>
+<area shape="rect" id="Node000003" href="$classLila_1_1Server_adfacc21753b2fcedec5e7a1f89c7d5c5.html#adfacc21753b2fcedec5e7a1f89c7d5c5" title="Destructor; stops the server if running." alt="" coords="5,13,161,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="196,28,162,28,162,23,196,23"/>
+</map>

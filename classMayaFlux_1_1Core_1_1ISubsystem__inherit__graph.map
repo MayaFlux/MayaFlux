@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::ISubsystem" name="MayaFlux::Core::ISubsystem">
+<area shape="rect" id="Node000001" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="266,5,466,325"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1AudioSubsystem.html" title="Audio processing subsystem managing real&#45;time audio I/O and processing." alt="" coords="5,455,239,921"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="272,339,254,374,216,456,212,454,249,372,267,336"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem.html" title="Backend agnostic graphics subsystem for visual processing." alt="" coords="263,373,469,1003"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="369,339,369,373,363,373,363,339"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1InputSubsystem.html" title="Input processing subsystem for external devices." alt="" coords="493,425,722,951"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="465,337,483,372,507,424,502,426,478,374,461,339"/>
+</map>

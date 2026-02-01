@@ -1,0 +1,21 @@
+<map id="Engine.hpp" name="Engine.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="459,5,554,31"/>
+<area shape="rect" id="Node000002" href="$SubsystemManager_8hpp.html" title=" " alt="" coords="119,79,297,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="459,33,270,78,269,73,458,28"/>
+<area shape="rect" id="Node000007" href="$GlobalGraphicsInfo_8hpp.html" title=" " alt="" coords="322,79,497,104"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="493,33,438,72,435,68,489,29"/>
+<area shape="rect" id="Node000008" href="$GlobalInputConfig_8hpp.html" title=" " alt="" coords="521,79,687,104"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="524,29,578,68,575,72,521,33"/>
+<area shape="rect" id="Node000010" href="$GlobalStreamInfo_8hpp.html" title=" " alt="" coords="711,79,875,104"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="553,28,734,73,733,78,552,33"/>
+<area shape="rect" id="Node000003" href="$Subsystem_8hpp.html" title=" " alt="" coords="5,159,211,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="195,106,135,153,132,149,192,102"/>
+<area shape="rect" id="Node000006" href="$Utils_8hpp.html" title=" " alt="" coords="235,159,383,185"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="225,102,285,149,282,153,221,106"/>
+<area shape="rect" id="Node000004" href="$ProcessingArchitecture_8hpp.html" title="Unified processing architecture for multimodal subsystem coordination." alt="" coords="11,240,205,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="111,185,111,226,105,226,105,185"/>
+<area shape="rect" id="Node000005" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="11,328,205,368"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="111,280,111,314,105,314,105,280"/>
+<area shape="rect" id="Node000009" href="$InputBinding_8hpp.html" title=" " alt="" coords="525,152,683,192"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="607,104,607,138,601,138,601,104"/>
+</map>

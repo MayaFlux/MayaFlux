@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::NetworkGeometryProcessor::extract_network_vertices" name="MayaFlux::Buffers::NetworkGeometryProcessor::extract_network_vertices">
+<area shape="rect" id="Node000001" title="Extract vertices from generic NodeNetwork (fallback)" alt="" coords="259,5,464,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryProcessor_ac6c764a77a3082815a103b602eddaf77.html#ac6c764a77a3082815a103b602eddaf77" title="BufferProcessor interface &#45; aggregates and uploads network geometry." alt="" coords="5,5,211,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="245,35,211,35,211,30,245,30"/>
+</map>

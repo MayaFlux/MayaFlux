@@ -1,0 +1,3 @@
+<map id="MayaFlux::Core::AudioStream" name="MayaFlux::Core::AudioStream">
+<area shape="rect" id="Node000001" title="Manages digital audio data flow between the engine and hardware." alt="" coords="5,5,213,211"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Utils::seconds_to_units" name="MayaFlux::Utils::seconds_to_units">
+<area shape="rect" id="Node000001" title="Convert seconds to processing units for any rate." alt="" coords="284,5,469,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a1799325adcf528acaaff698264a9ac42.html#a1799325adcf528acaaff698264a9ac42" title="Convert seconds to processing units for a specific domain." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

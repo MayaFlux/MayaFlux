@@ -1,0 +1,21 @@
+<map id="GeometryWriterNode.hpp" name="GeometryWriterNode.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="210,5,399,31"/>
+<area shape="rect" id="Node000002" href="$GpuSync_8hpp.html" title=" " alt="" coords="162,86,269,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="293,33,240,79,237,75,290,29"/>
+<area shape="rect" id="Node000008" href="$VertexLayout_8hpp.html" title=" " alt="" coords="293,79,495,119"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="320,29,364,68,361,72,316,33"/>
+<area shape="rect" id="Node000003" href="$Node_8hpp.html" title=" " alt="" coords="117,167,314,192"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="218,112,218,153,213,153,213,112"/>
+<area shape="rect" id="Node000004" href="$GpuContext_8hpp.html" title=" " alt="" coords="5,240,132,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="193,194,106,236,104,232,191,190"/>
+<area shape="rect" id="Node000005" href="$NodeOperators_8hpp.html" title=" " alt="" coords="156,240,304,265"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="220,192,227,226,222,227,215,193"/>
+<area shape="rect" id="Node000006" href="$NodeUtils_8hpp.html" title=" " alt="" coords="173,313,287,339"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="233,266,233,300,227,300,227,266"/>
+<area shape="rect" id="Node000007" href="$Utils_8hpp.html" title=" " alt="" coords="156,387,304,412"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="233,339,233,373,227,373,227,339"/>
+<area shape="rect" id="Node000009" href="$NDData_8hpp.html" title=" " alt="" coords="343,167,445,192"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="397,119,397,153,391,153,391,119"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="342,240,446,265"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="397,192,397,226,391,226,391,192"/>
+</map>

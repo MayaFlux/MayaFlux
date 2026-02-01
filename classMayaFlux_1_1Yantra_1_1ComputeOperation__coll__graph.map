@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::ComputeOperation&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::ComputeOperation&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,288,259,777"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Yantra_1_1ExecutionContext.html" title="Context information for operation execution." alt="" coords="33,5,231,225"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,226,135,272,129,272,129,226"/>
+</map>

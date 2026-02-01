@@ -1,0 +1,10 @@
+<map id="MayaFlux::IO::ImageReader::open" name="MayaFlux::IO::ImageReader::open">
+<area shape="rect" id="Node000001" title="Open a file for reading." alt="" coords="5,69,208,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageReader_ad5d7faaa96afc186663265d697207f38.html#ad5d7faaa96afc186663265d697207f38" title="Check if a file can be read by this reader." alt="" coords="256,5,459,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,67,265,46,266,51,186,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ImageReader_ad17179439f460d6852a3da61a06dca81.html#ad17179439f460d6852a3da61a06dca81" title="Close the currently open file." alt="" coords="256,69,459,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="208,87,242,87,242,92,208,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ImageReader_a35e7202cd51c429e0c56688344cc4746.html#a35e7202cd51c429e0c56688344cc4746" title="Load image from file (static utility)" alt="" coords="256,157,459,197"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="166,107,288,150,286,155,164,112"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="311,158,308,148,315,138,332,133,357,131,386,134,402,141,400,146,385,139,357,136,333,138,318,143,313,149,316,156"/>
+</map>

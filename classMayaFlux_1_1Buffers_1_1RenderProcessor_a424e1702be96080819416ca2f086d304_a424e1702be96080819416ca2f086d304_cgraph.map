@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::RenderProcessor::bind_texture" name="MayaFlux::Buffers::RenderProcessor::bind_texture">
+<area shape="rect" id="Node000001" title="Bind a texture to a named descriptor." alt="" coords="5,30,172,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a065b63736ca93e3162c1395c8daaac25.html#a065b63736ca93e3162c1395c8daaac25" title="Bind a texture to a descriptor binding point." alt="" coords="220,30,387,85"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,55,206,55,206,60,173,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="435,5,632,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="386,43,421,38,421,44,387,48"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="435,69,632,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="387,66,421,71,421,76,386,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="680,5,877,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="632,23,666,23,666,28,632,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="680,69,877,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="632,87,666,87,666,92,632,92"/>
+</map>

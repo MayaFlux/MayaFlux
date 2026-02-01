@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::RegionProcessorBase" name="MayaFlux::Kakshya::RegionProcessorBase">
+<area shape="rect" id="Node000001" title="Base class for N&#45;dimensional region processors." alt="" coords="65,861,291,1316"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="5,322,156,482"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="96,495,148,861,143,862,91,496"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="181,5,373,799"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="222,799,216,845,210,844,217,798"/>
+</map>

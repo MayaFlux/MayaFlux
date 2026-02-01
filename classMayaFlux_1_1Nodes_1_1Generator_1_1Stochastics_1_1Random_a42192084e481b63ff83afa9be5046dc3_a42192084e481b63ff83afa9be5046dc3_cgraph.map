@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::Generator::Stochastics::Random::process_batch" name="MayaFlux::Nodes::Generator::Stochastics::Random::process_batch">
+<area shape="rect" id="Node000001" title="Generates multiple stochastic values at once." alt="" coords="5,123,272,163"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a4ae02fb01a82e23d598bf81faa63e707.html#a4ae02fb01a82e23d598bf81faa63e707" title="Generates an array of stochastic values within a specified range." alt="" coords="320,123,585,163"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="272,141,306,141,306,146,272,146"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_aba7731abd54502b707e1ab9785da2268.html#aba7731abd54502b707e1ab9785da2268" title="Generates a raw value according to the current distribution." alt="" coords="664,44,896,99"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="544,121,650,97,651,102,545,126"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a738597fad3af35f5638b445c35f02920.html#a738597fad3af35f5638b445c35f02920" title="Transforms a raw value to fit within the specified range." alt="" coords="633,123,927,163"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="586,141,620,141,620,146,586,146"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_a34ef13179493d11f9377127672524070.html#a34ef13179493d11f9377127672524070" title="Validates that the specified range is mathematically valid." alt="" coords="645,187,915,227"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="556,161,664,182,663,187,555,166"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_abb1f22d5b8cdb7fd3ede90b0be7bb1ca.html#abb1f22d5b8cdb7fd3ede90b0be7bb1ca" title="Fast uniform random number generator using xorshift algorithm." alt="" coords="980,5,1188,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="896,54,966,45,967,50,896,59"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Stochastics_1_1Random_abf25d35c453f958d38e0ae373167b7b8.html#abf25d35c453f958d38e0ae373167b7b8" title="Rebuilds distribution objects if parameters have changed." alt="" coords="975,84,1193,139"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="896,84,962,93,961,98,896,89"/>
+</map>
