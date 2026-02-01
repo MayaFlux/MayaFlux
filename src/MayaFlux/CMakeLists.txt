@@ -64,11 +64,7 @@ if(MAYAFLUX_ENABLE_HID)
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_HID_BACKEND)
 
     if(WIN32)
-        if(TARGET hidapi::hidapi)
-            target_link_libraries(MayaFluxLib PRIVATE hidapi::hidapi)
-        else()
-            target_link_libraries(MayaFluxLib PRIVATE hidapi)
-        endif()
+        target_link_libraries(MayaFluxLib PRIVATE hidapi::hidapi)
     else()
         target_link_libraries(MayaFluxLib PRIVATE PkgConfig::HIDAPI)
     endif()
@@ -78,7 +74,7 @@ endif()
 
 target_include_directories(MayaFluxLib PRIVATE ${CMAKE_BINARY_DIR}/include)
 
-if(WIN32 OR APPLE)
+if(APPLE)
     target_include_directories(MayaFluxLib PRIVATE ${STB_INCLUDE_DIR})
 endif()
 
@@ -89,6 +85,7 @@ if(WIN32)
         RtAudio::rtaudio
         Eigen3::Eigen
         glfw
+        glm::glm
         Vulkan::Vulkan
         FFmpeg::avcodec
         FFmpeg::avformat

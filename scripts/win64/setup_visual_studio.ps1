@@ -45,9 +45,12 @@ Write-Host "Visual Studio: $VS_PATH" -ForegroundColor Green
 Write-Host "Generator: $CMakeGenerator" -ForegroundColor Green
 Write-Host ""
 
-# Check if dependencies installed by verifying key environment variables
+# Check dependencies
+Write-Host "Checking dependencies..." -ForegroundColor Cyan
 $depsOk = $true
-$requiredEnvVars = @("LLVM_DIR", "VULKAN_SDK", "FFMPEG_ROOT", "GLFW_ROOT")
+
+# Required manual env setups
+$requiredEnvVars = @("LLVM_DIR", "Clang_DIR" ,"VULKAN_SDK", "FFMPEG_ROOT")
 
 foreach ($envVar in $requiredEnvVars) {
     if (-not (Test-Path "env:$envVar")) {
@@ -56,20 +59,31 @@ foreach ($envVar in $requiredEnvVars) {
     }
 }
 
+# vcpkg toolchain (required for all vcpkg-managed packages)
+if (-not (Test-Path "env:CMAKE_TOOLCHAIN_FILE")) {
+    Write-Host "Missing CMAKE_TOOLCHAIN_FILE" -ForegroundColor Red
+    $depsOk = $false
+}
+elseif (-not (Test-Path $env:CMAKE_TOOLCHAIN_FILE)) {
+    Write-Host "CMAKE_TOOLCHAIN_FILE points to non-existent file: $($env:CMAKE_TOOLCHAIN_FILE)" -ForegroundColor Red
+    $depsOk = $false
+}
+
 if (-not $depsOk) {
     Write-Host ""
-    Write-Host "ERROR: Dependencies not installed" -ForegroundColor Red
-    Write-Host "Run setup_windows.ps1 first (requires admin), then restart terminal" -ForegroundColor Yellow
+    Write-Host "ERROR: Some dependencies are missing" -ForegroundColor Red
+    Write-Host "→ Run setup_windows.ps1 as Administrator first" -ForegroundColor Yellow
+    Write-Host "→ Then restart your terminal" -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "Dependencies found" -ForegroundColor Green
+Write-Host "All core dependencies verified" -ForegroundColor Green
 Write-Host ""
 
 # Generate solution
 $BUILD_DIR = Join-Path $PROJECT_ROOT "build"
 if (-not (Test-Path $BUILD_DIR)) {
-    New-Item -ItemType Directory -Path $BUILD_DIR | Out-Null
+    New-Item -ItemType Directory -Path $BUILD_DIR -Force | Out-Null
 }
 
 Write-Host "Generating Visual Studio solution..." -ForegroundColor Yellow
@@ -85,7 +99,13 @@ try {
         "-DCMAKE_BUILD_TYPE=Release"
     )
 
-    # Execute CMake
+    if ($env:CMAKE_TOOLCHAIN_FILE) {
+        $cmakeArgs += "-DCMAKE_TOOLCHAIN_FILE=$($env:CMAKE_TOOLCHAIN_FILE)"
+    }
+
+    Write-Host "CMake command:" -ForegroundColor Cyan
+    Write-Host "cmake $($cmakeArgs -join ' ')" -ForegroundColor Gray
+
     & cmake @cmakeArgs
 
     if ($LASTEXITCODE -ne 0) {

@@ -169,15 +169,6 @@ jobs:
           key: llvm-21.1.8-windows-x64
           restore-keys: llvm-21.1.8-windows-x64
 
-      - name: Cache STB headers
-        uses: actions/cache@v4
-        id: stb-cache
-        with:
-          path: C:\Program Files\stb
-          key: stb-headers-${{ runner.os }}
-          restore-keys: |
-            stb-headers-
-
       - name: Cache FFmpeg
         uses: actions/cache@v4
         id: ffmpeg-cache
@@ -242,23 +233,6 @@ jobs:
 
           Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
-      - name: Install STB headers
-        if: steps.stb-cache.outputs.cache-hit != 'true'
-        shell: pwsh
-        run: |
-          Write-Host "=== Installing STB headers ===" -ForegroundColor Yellow
-
-          $stbRoot = "C:\Program Files\stb"
-          $stbInclude = "$stbRoot\include\stb"
-
-          New-Item -ItemType Directory -Path $stbInclude -Force | Out-Null
-            
-          Invoke-WebRequest -Uri "https://github.com/nothings/stb/archive/master.zip" -OutFile "$env:TEMP\stb.zip"
-          Expand-Archive "$env:TEMP\stb.zip" -DestinationPath "$env:TEMP\stb" -Force
-          Copy-Item "$env:TEMP\stb\stb-master\*.h" -Destination $stbInclude
-
-          Write-Host "✓ STB installed" -ForegroundColor Green
-
       - name: Install FFmpeg
         if: steps.ffmpeg-cache.outputs.cache-hit != 'true'
         shell: pwsh
@@ -305,9 +279,6 @@ jobs:
 
           # LLVM environment
           echo "LLVM_CI_PATH=${{ env.LLVM_ROOT }}" >> $env:GITHUB_ENV
-
-          # STB environment
-          echo "STB_INCLUDE_DIR=C:\Program Files\stb\include" >> $env:GITHUB_ENV
 
           # FFmpeg environment
           echo "FFMPEG_ROOT=C:\Program Files\FFmpeg" >> $env:GITHUB_ENV
@@ -528,7 +499,6 @@ jobs:
           Write-Host "  ✓ FFmpeg 6.0+ (shared libs via vcpkg.json)" -ForegroundColor Green
           Write-Host "  ✓ Eigen3, GLM, magic_enum (via vcpkg.json)" -ForegroundColor Green
           Write-Host "  [Tier 3 - Header-Only Direct]" -ForegroundColor Cyan
-          Write-Host "  ✓ STB (direct git clone)" -ForegroundColor Green
 
           if (Test-Path "${{ env.PACKAGE_NAME }}.7z") {
             $size = [math]::Round((Get-Item "${{ env.PACKAGE_NAME }}.7z").Length / 1MB, 2)

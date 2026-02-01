@@ -4,6 +4,6 @@
   "version-string": "0.1.0",
   "description": "MayaFlux CI Dependencies (Windows x64)",
   "builtin-baseline": "c82f74667287d3dc386bce81e44964370c91a289",
-  "dependencies": ["rtaudio", "glfw3", "eigen3", "glm", "magic-enum", "hidapi"],
+  "dependencies": ["rtaudio", "glfw3", "eigen3", "glm", "magic-enum", "hidapi", "stb"],
   "overrides": [{ "name": "eigen3", "version": "3.4.0" }]
 }

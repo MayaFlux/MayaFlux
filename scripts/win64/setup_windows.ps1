@@ -117,12 +117,16 @@ if (Test-Path $vswhere) {
 }
 
 # LLVM/Clang
-$llvmRoot = "C:\Program Files\LLVM_Libs"
+$llvmVersion = "21.1.8"
+$llvmRoot = "C:\Program Files\LLVM_Libs\$llvmVersion" -replace '\\', '/'
+
 if (Test-Path $llvmRoot) {
     [Environment]::SetEnvironmentVariable("LLVM_ROOT", $llvmRoot, "Machine")
-    [Environment]::SetEnvironmentVariable("LLVM_DIR", "$llvmRoot\lib\cmake\llvm", "Machine")
-    [Environment]::SetEnvironmentVariable("Clang_DIR", "$llvmRoot\lib\cmake\clang", "Machine")
-    Write-Host "[LLVM] Environment configured" -ForegroundColor Green
+    [Environment]::SetEnvironmentVariable("LLVM_DIR", "$llvmRoot/lib/cmake/llvm", "Machine")
+    [Environment]::SetEnvironmentVariable("Clang_DIR", "$llvmRoot/lib/cmake/clang", "Machine")
+    Write-Host "[LLVM] Environment configured (v$llvmVersion)" -ForegroundColor Green
+} else {
+    Write-Warning "LLVM v$llvmVersion not found at $llvmRoot"
 }
 
 # Vulkan - find actual version directory
@@ -159,72 +163,6 @@ if (Test-Path $vulkanBase) {
     Write-Warning "Vulkan SDK not found at $vulkanBase"
 }
 
-# GLFW - detect lib directory
-Write-Host "`n[Configuring GLFW]" -ForegroundColor Cyan
-$glfwRoot = "C:\Program Files\GLFW"
-if (Test-Path $glfwRoot) {
-    $glfwLibDir = $null
-    foreach ($candidate in @("lib-vc2022", "lib-vc2019", "lib-vc2017", "lib-vc2015")) {
-        $testPath = Join-Path $glfwRoot $candidate
-        if (Test-Path "$testPath\glfw3dll.lib") {
-            $glfwLibDir = $testPath
-            break
-        }
-    }
-
-    if ($glfwLibDir) {
-        [Environment]::SetEnvironmentVariable("GLFW_ROOT", $glfwRoot, "Machine")
-        [Environment]::SetEnvironmentVariable("GLFW_LIB_DIR", $glfwLibDir, "Machine")
-        Write-Host "[GLFW] Library: $glfwLibDir" -ForegroundColor Green
-        
-        # Add include directory
-        $glfwInclude = Join-Path $glfwRoot "include"
-        if (Test-Path $glfwInclude) {
-            Add-IncludeDirectory -Path $glfwInclude
-        }
-    } else {
-        Write-Warning "GLFW library directory not found"
-    }
-} else {
-    Write-Warning "GLFW not found at $glfwRoot"
-}
-
-# HIDAPI - detect lib directory
-Write-Host "`n[Configuring HIDAPI]" -ForegroundColor Cyan
-$hidapiRoot = "C:\Program Files\HIDAPI"
-if (Test-Path $hidapiRoot) {
-    $hidapiLibDir = $null
-    foreach ($candidate in @("64", "x64", "lib64", "win64", "x86_64")) {
-        $testPath = Join-Path $hidapiRoot $candidate
-        if (Test-Path "$testPath\hidapi.lib") {
-            $hidapiLibDir = $testPath
-            break
-        }
-    }
-
-    if ($hidapiLibDir) {
-        [Environment]::SetEnvironmentVariable("HIDAPI_ROOT", $hidapiRoot, "Machine")
-        [Environment]::SetEnvironmentVariable("HIDAPI_LIB_DIR", $hidapiLibDir, "Machine")
-        Write-Host "[HIDAPI] Library: $hidapiLibDir" -ForegroundColor Green
-        
-        # Add include directory
-        $hidapiInclude = Join-Path $hidapiRoot "include"
-        if (Test-Path $hidapiInclude) {
-            Add-IncludeDirectory -Path $hidapiInclude
-        }
-        
-        # Add library directory
-        Add-LibraryDirectory -Path $hidapiLibDir
-        
-        # Add bin directory to PATH (assuming DLL is in lib dir)
-        Add-EnvPath -Name "PATH" -Value $hidapiLibDir
-    } else {
-        Write-Warning "HIDAPI x64 library directory not found - check for x86-only or adjust candidates"
-    }
-} else {
-    Write-Warning "HIDAPI not found at $hidapiRoot"
-}
-
 # FFmpeg
 $ffmpegRoot = "C:\Program Files\FFmpeg"
 if (Test-Path $ffmpegRoot) {
@@ -232,31 +170,13 @@ if (Test-Path $ffmpegRoot) {
     Write-Host "[FFmpeg] Root: $ffmpegRoot" -ForegroundColor Green
 }
 
-# RtAudio
-$rtaudioRoot = "C:\Program Files\RtAudio"
-if (Test-Path $rtaudioRoot) {
-    [Environment]::SetEnvironmentVariable("RTAUDIO_ROOT", $rtaudioRoot, "Machine")
-    Write-Host "[RtAudio] Root: $rtaudioRoot" -ForegroundColor Green
-}
-
-# Header-only libraries
-$headerLibs = @{
-    "EIGEN3_INCLUDE_DIR"     = "C:\Program Files\Eigen3"
-    "GLM_INCLUDE_DIR"        = "C:\Program Files\glm\include"
-    "STB_INCLUDE_DIR"        = "C:\Program Files\stb\include"
-    "MAGIC_ENUM_INCLUDE_DIR" = "C:\Program Files\magic_enum\include"
-    "LIBXML2_INCLUDE_DIR"    = "C:\Program Files\LibXml2\include"
-}
-
-$foundCount = 0
-$totalCount = $headerLibs.Count
-
-foreach ($envVar in $headerLibs.GetEnumerator()) {
-    if (Test-Path $envVar.Value) {
-        [Environment]::SetEnvironmentVariable($envVar.Key, $envVar.Value, "Machine")
-        Add-IncludeDirectory -Path $envVar.Value
-        Write-Host "[$($envVar.Key)] $($envVar.Value)" -ForegroundColor Green
-        $foundCount++
+# vcpkg (general include/lib for migrated packages)
+$vcpkgRoot = $env:VCPKG_ROOT
+if ($vcpkgRoot -and (Test-Path $vcpkgRoot)) {
+    $vcpkgInc = Join-Path $vcpkgRoot "installed/x64-windows/include"
+    if (Test-Path $vcpkgInc) {
+        Add-IncludeDirectory $vcpkgInc
+        Write-Host "[vcpkg] Include path: $vcpkgInc" -ForegroundColor Green
     }
 }
 

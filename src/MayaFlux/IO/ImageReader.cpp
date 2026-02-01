@@ -21,7 +21,14 @@
 #define STBI_NO_FAILURE_STRINGS
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
+
+#if __has_include("stb/stb_image.h")
 #include "stb/stb_image.h"
+#elif __has_include("stb_image.h")
+#include "stb_image.h"
+#else
+#error "stb_image.h not found"
+#endif
 
 #include <cstddef>
 #include <fstream>
