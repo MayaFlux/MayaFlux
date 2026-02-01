@@ -240,14 +240,14 @@ std::vector<uint64_t> DataDimension::calculate_strides(
             reversed_shape.begin(),
             reversed_shape.end(),
             strides.rbegin(),
-            1U,
+            uint64_t(1),
             std::multiplies<uint64_t> {});
     } else {
         std::exclusive_scan(
             shape.begin(),
             shape.end(),
             strides.begin(),
-            1U,
+            uint64_t(1),
             std::multiplies<uint64_t> {});
     }
 

@@ -902,7 +902,7 @@ std::vector<std::vector<double>> windowed_segments(const std::vector<double>& da
     size_t window_size,
     size_t hop_size)
 {
-    auto extractor = std::make_shared<Yantra::FeatureExtractor<>>(window_size, hop_size,
+    auto extractor = std::make_shared<Yantra::FeatureExtractor<>>(static_cast<uint32_t>(window_size), static_cast<uint32_t>(hop_size),
         Yantra::ExtractionMethod::OVERLAPPING_WINDOWS);
     extractor->set_parameter("overlap", double(hop_size) / window_size);
 
@@ -924,7 +924,7 @@ std::vector<std::vector<double>> windowed_segments(const Kakshya::DataVariant& d
     size_t window_size,
     size_t hop_size)
 {
-    auto extractor = std::make_shared<Yantra::FeatureExtractor<>>(window_size, hop_size,
+    auto extractor = std::make_shared<Yantra::FeatureExtractor<>>(static_cast<uint32_t>(window_size), static_cast<uint32_t>(hop_size),
         Yantra::ExtractionMethod::OVERLAPPING_WINDOWS);
     extractor->set_parameter("overlap", double(hop_size) / window_size);
 
