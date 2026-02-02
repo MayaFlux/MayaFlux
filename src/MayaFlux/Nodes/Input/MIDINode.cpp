@@ -3,7 +3,7 @@
 namespace MayaFlux::Nodes::Input {
 
 MIDINode::MIDINode(MIDIConfig config)
-    : m_config(config)
+    : m_config(std::move(config))
 {
 }
 
@@ -30,7 +30,10 @@ double MIDINode::extract_value(const Core::InputValue& value)
         if (midi.data2 == 0 && m_config.note_on_only) {
             return m_last_output;
         }
-        return static_cast<double>(midi.data2) / 127.0;
+
+        return m_config.velocity_curve
+            ? m_config.velocity_curve(midi.data2)
+            : static_cast<double>(midi.data2) / 127.0;
 
     case 0x80: // Note Off
         if (m_config.note_on_only) {
@@ -38,8 +41,10 @@ double MIDINode::extract_value(const Core::InputValue& value)
         }
         return 0.0;
 
-    case 0xB0: // Control Change
-        return static_cast<double>(midi.data2) / 127.0;
+    case 0xB0: { // Control Change
+        double value = static_cast<double>(midi.data2) / 127.0;
+        return m_config.invert_cc ? (1.0 - value) : value;
+    }
 
     case 0xE0: {
         // Pitch bend is 14-bit: combine data1 and data2

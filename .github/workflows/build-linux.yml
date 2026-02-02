@@ -82,7 +82,7 @@ jobs:
             glslc \
             libshaderc-devel \
             hidapi-devel \
-            rttapi-devel \
+            rtmidi-devel \
             ninja-build \
             wayland-devel \
             ccache

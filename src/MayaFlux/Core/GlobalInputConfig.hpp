@@ -102,7 +102,7 @@ struct MAYAFLUX_API HIDDeviceFilter {
 /**
  * @brief HID backend configuration
  */
-struct MAYAFLUX_API HIDConfig {
+struct MAYAFLUX_API HIDBackendInfo {
     bool enabled {}; ///< Enable HID backend
     std::vector<HIDDeviceFilter> filters; ///< Device filters (empty = all devices)
     bool auto_open {}; ///< Auto-open matching devices on start
@@ -119,7 +119,7 @@ struct MAYAFLUX_API HIDConfig {
 /**
  * @brief MIDI backend configuration
  */
-struct MAYAFLUX_API MIDIConfig {
+struct MAYAFLUX_API MIDIBackendInfo {
     bool enabled { false }; ///< Enable MIDI backend
     bool auto_open_inputs { true }; ///< Auto-open all MIDI input ports
     bool auto_open_outputs { false }; ///< Auto-open all MIDI output ports
@@ -136,7 +136,7 @@ struct MAYAFLUX_API MIDIConfig {
 /**
  * @brief OSC backend configuration
  */
-struct MAYAFLUX_API OSCConfig {
+struct MAYAFLUX_API OSCBackendInfo {
     bool enabled { false }; ///< Enable OSC backend
     uint16_t receive_port { 8000 }; ///< UDP port to listen on
     uint16_t send_port { 9000 }; ///< Default UDP port to send to
@@ -165,7 +165,7 @@ struct MAYAFLUX_API SerialPortConfig {
 /**
  * @brief Serial backend configuration
  */
-struct MAYAFLUX_API SerialConfig {
+struct MAYAFLUX_API SerialBackendInfo {
     bool enabled { false }; ///< Enable Serial backend
     std::vector<SerialPortConfig> ports; ///< Ports to open
     bool auto_detect_arduino { false }; ///< Auto-detect Arduino devices
@@ -199,10 +199,10 @@ struct MAYAFLUX_API SerialConfig {
  * @endcode
  */
 struct MAYAFLUX_API GlobalInputConfig {
-    HIDConfig hid; ///< HID backend configuration
-    MIDIConfig midi; ///< MIDI backend configuration
-    OSCConfig osc; ///< OSC backend configuration
-    SerialConfig serial; ///< Serial backend configuration
+    HIDBackendInfo hid; ///< HID backend configuration
+    MIDIBackendInfo midi; ///< MIDI backend configuration
+    OSCBackendInfo osc; ///< OSC backend configuration
+    SerialBackendInfo serial; ///< Serial backend configuration
 
     // ─────────────────────────────────────────────────────────────────────
     // Convenience Factory Methods

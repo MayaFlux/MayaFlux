@@ -2,12 +2,16 @@
 
 #include "MayaFlux/API/Depot.hpp"
 #include "MayaFlux/API/Graph.hpp"
+#include "MayaFlux/API/Input.hpp"
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
+
+#include "MayaFlux/Nodes/Input/HIDNode.hpp"
+#include "MayaFlux/Nodes/Input/MIDINode.hpp"
 
 namespace MayaFlux {
 
@@ -125,6 +129,38 @@ std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer
 std::shared_ptr<Buffers::TextureBuffer> Creator::load_buffer(const std::string& filepath)
 {
     return load_image_file(filepath);
+}
+
+std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(
+    const Core::InputBinding& binding)
+{
+    auto node = std::make_shared<Nodes::Input::HIDNode>();
+    register_input_node(node, binding);
+    return node;
+}
+
+std::shared_ptr<Nodes::Input::MIDINode> Creator::read_midi(
+    const Core::InputBinding& binding)
+{
+    auto node = std::make_shared<Nodes::Input::MIDINode>();
+    register_input_node(node, binding);
+    return node;
+}
+
+std::shared_ptr<Nodes::Input::InputNode> Creator::read_input(
+    const Core::InputBinding& binding)
+{
+    switch (binding.backend) {
+    case Core::InputType::HID:
+        return read_hid(binding);
+    case Core::InputType::MIDI:
+        return read_midi(binding);
+    default:
+        MF_ERROR(Journal::Component::API, Journal::Context::Init,
+            "Input type {} not yet implemented",
+            static_cast<int>(binding.backend));
+        return nullptr;
+    }
 }
 
 } // namespace MayaFlux

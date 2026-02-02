@@ -16,6 +16,9 @@ struct MIDIConfig : InputConfig {
     bool note_on_only {}; ///< Only respond to Note On
     bool note_off_only {}; ///< Only respond to Note Off
 
+    std::function<double(uint8_t)> velocity_curve; ///< Custom velocity mapping
+    bool invert_cc { false }; ///< Flip CC 127→0
+
     /**
      * @brief Note velocity node (responds to any note)
      */
@@ -72,7 +75,16 @@ struct MIDIConfig : InputConfig {
         return cfg;
     }
 
-    // Chaining methods
+    /**
+     * @brief Apply velocity curve transformation
+     */
+    template <typename F>
+    MIDIConfig& with_velocity_curve(F&& curve)
+    {
+        velocity_curve = std::forward<F>(curve);
+        return *this;
+    }
+
     MIDIConfig& on_channel(uint8_t ch)
     {
         channel = ch;
@@ -88,6 +100,12 @@ struct MIDIConfig : InputConfig {
     MIDIConfig& note_off()
     {
         note_off_only = true;
+        return *this;
+    }
+
+    MIDIConfig& inverted()
+    {
+        invert_cc = true;
         return *this;
     }
 };
