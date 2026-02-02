@@ -23,7 +23,7 @@ void SoundFileBridge::setup_processors(Buffers::ProcessingToken token)
 {
     m_capture_stream = std::make_shared<Kakshya::DynamicSoundStream>(
         Config::get_sample_rate(),
-        get_container()->get_structure().get_channel_count());
+        static_cast<uint32_t>(get_container()->get_structure().get_channel_count()));
 
     m_stream_writer = std::make_shared<SoundStreamWriter>(m_capture_stream);
 

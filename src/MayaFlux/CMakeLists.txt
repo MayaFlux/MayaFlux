@@ -13,7 +13,6 @@ if(WIN32)
         target_compile_options(MayaFluxLib PRIVATE /MD)
 
         if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-            target_compile_options(MayaFluxLib PRIVATE "/Zc:externConstexpr-")
             target_link_options(MayaFluxLib PRIVATE "/IGNORE:4099")
         endif()
     endif()
@@ -27,7 +26,7 @@ set_target_properties(MayaFluxLib PROPERTIES
 target_include_directories(MayaFluxLib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..  # Points to src/ for #include "MayaFlux/..."
 )
-target_precompile_headers(MayaFluxLib PUBLIC ../../cmake/pch.h)
+target_precompile_headers(MayaFluxLib PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     target_compile_definitions(MayaFluxLib PRIVATE GLFW_EXPOSE_NATIVE_WAYLAND)
@@ -64,11 +63,7 @@ if(MAYAFLUX_ENABLE_HID)
     target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_HID_BACKEND)
 
     if(WIN32)
-        if(TARGET hidapi::hidapi)
-            target_link_libraries(MayaFluxLib PRIVATE hidapi::hidapi)
-        else()
-            target_link_libraries(MayaFluxLib PRIVATE hidapi)
-        endif()
+        target_link_libraries(MayaFluxLib PRIVATE hidapi::hidapi)
     else()
         target_link_libraries(MayaFluxLib PRIVATE PkgConfig::HIDAPI)
     endif()
@@ -78,7 +73,7 @@ endif()
 
 target_include_directories(MayaFluxLib PRIVATE ${CMAKE_BINARY_DIR}/include)
 
-if(WIN32 OR APPLE)
+if(APPLE)
     target_include_directories(MayaFluxLib PRIVATE ${STB_INCLUDE_DIR})
 endif()
 
@@ -89,6 +84,7 @@ if(WIN32)
         RtAudio::rtaudio
         Eigen3::Eigen
         glfw
+        glm::glm
         Vulkan::Vulkan
         FFmpeg::avcodec
         FFmpeg::avformat

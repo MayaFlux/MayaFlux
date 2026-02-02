@@ -2,6 +2,12 @@
 
 #include "Commentator.hpp"
 
+#ifdef MAYAFLUX_COMPILER_MSVC
+#pragma warning(push)
+#pragma warning(disable : 4291) // no matching operator delete found
+#pragma warning(disable : 4805) // unsafe mix of type 'unsigned int' and type 'bool' in operation
+#endif
+
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/ExecutionEngine/Orc/ThreadSafeModule.h>
 
@@ -11,6 +17,10 @@
 #include <clang/AST/Type.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Interpreter/Interpreter.h>
+
+#ifdef MAYAFLUX_COMPILER_MSVC
+#pragma warning(pop)
+#endif
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
 #include <dispatch/dispatch.h>

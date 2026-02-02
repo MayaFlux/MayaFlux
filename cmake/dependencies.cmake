@@ -1,35 +1,20 @@
 if(WIN32)
     message(STATUS "=== Windows Dependency Detection ===")
 
-    add_library(magic_enum INTERFACE IMPORTED)
-    set_target_properties(magic_enum PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "$ENV{MAGIC_ENUM_INCLUDE_DIR}")
-
-    add_library(Eigen3::Eigen INTERFACE IMPORTED)
-    set_target_properties(Eigen3::Eigen PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "$ENV{EIGEN3_INCLUDE_DIR}")
-
-    include_directories($ENV{GLM_INCLUDE_DIR} $ENV{STB_INCLUDE_DIR} $ENV{LIBXML2_INCLUDE_DIR})
-
     find_package(glfw3 CONFIG QUIET)
     if(glfw3_FOUND)
         message(STATUS "Using GLFW from vcpkg")
     else()
-        if(DEFINED ENV{GLFW_ROOT} AND DEFINED ENV{GLFW_LIB_DIR})
-            add_library(glfw SHARED IMPORTED GLOBAL)
-            set_target_properties(glfw PROPERTIES
-                IMPORTED_LOCATION "$ENV{GLFW_LIB_DIR}/glfw3.dll"
-                IMPORTED_IMPLIB "$ENV{GLFW_LIB_DIR}/glfw3dll.lib"
-                INTERFACE_INCLUDE_DIRECTORIES "$ENV{GLFW_ROOT}/include")
-            message(STATUS "Using GLFW from environment: $ENV{GLFW_ROOT}")
-        else()
-            message(FATAL_ERROR
-                    "GLFW not found via vcpkg or environment variables")
-        endif()
+        message(FATAL_ERROR
+                "GLFW not found via vcpkg or environment variables")
     endif()
 
-    find_package(RtAudio REQUIRED HINTS "$ENV{RTAUDIO_ROOT}")
     find_package(Vulkan REQUIRED)
+    find_package(magic_enum REQUIRED)
+
+    find_package(eigen3 CONFIG REQUIRED)
+    find_package(glm CONFIG REQUIRED)
+    find_package(RtAudio CONFIG REQUIRED)
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
 
@@ -48,17 +33,8 @@ if(WIN32)
         if(hidapi_FOUND)
             message(STATUS "Using HIDAPI from vcpkg")
         else()
-            if(DEFINED ENV{HIDAPI_ROOT} AND DEFINED ENV{HIDAPI_LIB_DIR})
-                add_library(hidapi SHARED IMPORTED GLOBAL)
-                set_target_properties(hidapi PROPERTIES
-                    IMPORTED_LOCATION "$ENV{HIDAPI_LIB_DIR}/hidapi.dll"
-                    IMPORTED_IMPLIB "$ENV{HIDAPI_LIB_DIR}/hidapi.lib"
-                    INTERFACE_INCLUDE_DIRECTORIES "$ENV{HIDAPI_ROOT}/include")
-                message(STATUS "Using HIDAPI from environment: $ENV{HIDAPI_ROOT}")
-            else()
-                message(WARNING "HIDAPI not found via vcpkg or environment variables. Disabling HID support.")
-                set(MAYAFLUX_ENABLE_HID OFF CACHE BOOL "" FORCE)
-            endif()
+            message(WARNING "HIDAPI not found via vcpkg or environment variables. Disabling HID support.")
+            set(MAYAFLUX_ENABLE_HID OFF CACHE BOOL "" FORCE)
         endif()
     endif()
 

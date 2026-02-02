@@ -18,7 +18,18 @@ $ErrorActionPreference = "Stop"
 # ===========================
 
 function Test-Command($cmd) {
-    [bool](Get-Command $cmd -ErrorAction SilentlyContinue)
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+    
+    if (Get-Command $cmd -ErrorAction SilentlyContinue) {
+        return $true
+    }
+    
+    try {
+        & $cmd --version *>$null
+        return $true
+    } catch {
+        return $false
+    }
 }
 
 function Add-ToSystemPath($path) {
@@ -66,30 +77,265 @@ function Invoke-WithRetry($action, $maxRetries = 3) {
 }
 
 function Expand-ArchiveSafe($archivePath, $destination) {
-    $ext = [System.IO.Path]::GetExtension($archivePath).ToLower()
-
-    switch ($ext) {
-        ".zip" {
-            Expand-Archive -Path $archivePath -DestinationPath $destination -Force
-        }
-        { $_ -in ".tar", ".xz", ".gz" } {
-            # Use native tar for tar/xz/gz
-            tar -xf $archivePath -C $destination
-            if ($LASTEXITCODE -ne 0) { throw "tar extraction failed" }
-        }
-        ".7z" {
-            $sevenZip = "${env:ProgramFiles}\7-Zip\7z.exe"
-            if (-not (Test-Path $sevenZip)) { throw "7-Zip required for .7z files" }
-            & $sevenZip x $archivePath "-o$destination" -y | Out-Null
-            if ($LASTEXITCODE -ne 0) { throw "7-Zip extraction failed" }
-        }
-        default { throw "Unsupported archive format: $ext" }
+    $sevenZip = "${env:ProgramFiles}\7-Zip\7z.exe"
+    if (-not (Test-Path $sevenZip)) { 
+        throw "7-Zip required for extractions (install via: winget install 7zip.7zip)"
     }
+    
+    if (-not (Test-Path $archivePath)) {
+        throw "Archive not found: $archivePath"
+    }
+    
+    $archiveSize = [math]::Round((Get-Item $archivePath).Length / 1MB, 2)
+    Write-Host "  [EXTRACT] Processing $archiveSize MB archive: $(Split-Path $archivePath -Leaf)" -ForegroundColor Yellow
+    
+    if (Test-Path $destination) { 
+        Remove-Item $destination -Recurse -Force -ErrorAction SilentlyContinue 
+    }
+    New-Item -ItemType Directory -Path $destination -Force | Out-Null
+    
+    $ext = [System.IO.Path]::GetExtension($archivePath).ToLower()
+    
+    if ($archivePath -match "\.tar\.(xz|gz|bz2)$") {
+        Write-Host "  [EXTRACT] Detected double-compressed archive (.tar.$($matches[1]))" -ForegroundColor Cyan
+        
+        $tempDir = Join-Path $env:TEMP "MayaFlux-extract-$(Get-Random)"
+        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        
+        Write-Host "  [EXTRACT] Step 1/2: Decompressing outer layer..." -ForegroundColor Yellow
+        $tarFile = Join-Path $tempDir ([System.IO.Path]::GetFileNameWithoutExtension($archivePath))
+        
+        Start-Process -FilePath $sevenZip -ArgumentList "x `"$archivePath`" `"-o$tempDir`" -y -mmt=on" -NoNewWindow -Wait
+        
+        if (-not (Test-Path $tarFile)) {
+            Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+            throw "Failed to decompress outer layer - .tar file not created: $tarFile"
+        }
+        
+        Write-Host "  [EXTRACT] Step 2/2: Extracting tar archive..." -ForegroundColor Yellow
+        
+        Start-Process -FilePath $sevenZip -ArgumentList "x `"$tarFile`" `"-o$destination`" -y -mmt=on" -NoNewWindow -Wait
+        
+        Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        
+    } else {
+        Write-Host "  [EXTRACT] Extracting with 7-Zip..." -ForegroundColor Yellow
+        
+        Start-Process -FilePath $sevenZip -ArgumentList "x `"$archivePath`" `"-o$destination`" -y -mmt=on" -NoNewWindow -Wait
+    }
+    
+    $extractedFiles = Get-ChildItem $destination -Recurse -File -ErrorAction SilentlyContinue
+    $fileCount = ($extractedFiles | Measure-Object).Count
+    
+    if ($fileCount -eq 0) {
+        throw "Extraction produced no files - archive may be corrupted or extraction failed"
+    }
+    
+    Write-Host "  [OK] Extracted $fileCount files" -ForegroundColor Green
+}
+
+# ===========================
+# DOWNLOAD ACCELERATION
+# ===========================
+
+function Invoke-FastDownload {
+    param(
+        [string]$Url,
+        [string]$OutFile
+    )
+    
+    $OutFile = [System.IO.Path]::GetFullPath($OutFile)
+    $directory = Split-Path $OutFile -Parent
+    
+    if (-not (Test-Path $directory)) {
+        New-Item -ItemType Directory -Path $directory -Force | Out-Null
+    }
+    
+    if (Test-Path $OutFile) {
+        Remove-Item $OutFile -Force -ErrorAction SilentlyContinue
+    }
+    
+    Write-Host "  [DOWNLOAD] Starting download..." -ForegroundColor Cyan
+    
+    $startTime = Get-Date
+    $lastUpdate = Get-Date
+    $lastBytes = 0
+    
+    $request = [System.Net.HttpWebRequest]::Create($Url)
+    $request.Method = "GET"
+    $request.UserAgent = "PowerShell"
+    
+try {
+        $response = $request.GetResponse()
+        $totalBytes = $response.ContentLength
+        $responseStream = $response.GetResponseStream()
+        $fileStream = [System.IO.File]::Create($OutFile)
+        
+        $buffer = New-Object byte[] 65536
+        $totalRead = 0
+        
+        while (($read = $responseStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+            $fileStream.Write($buffer, 0, $read)
+            $totalRead += $read
+            
+            $now = Get-Date
+            if (($now - $lastUpdate).TotalMilliseconds -ge 5000) {
+                $elapsed = ($now - $lastUpdate).TotalSeconds
+                $speed = ($totalRead - $lastBytes) / $elapsed / 1MB
+                $percent = [math]::Round(($totalRead / $totalBytes) * 100, 0)
+                
+                $receivedMB = $totalRead / 1MB
+                $totalMB = $totalBytes / 1MB
+                
+                if ($speed -gt 0) {
+                    $remaining = $totalBytes - $totalRead
+                    $eta = [math]::Round($remaining / ($speed * 1MB))
+                    Write-Host ("`r  [DOWNLOAD] {0:F1} MB / {1:F1} MB ({2}%) @ {3:F1} MB/s ETA:{4}s     " -f $receivedMB, $totalMB, $percent, $speed, $eta) -NoNewline -ForegroundColor Cyan
+                } else {
+                    Write-Host ("`r  [DOWNLOAD] {0:F1} MB / {1:F1} MB ({2}%)     " -f $receivedMB, $totalMB, $percent) -NoNewline -ForegroundColor Cyan
+                }
+                
+                $lastUpdate = $now
+                $lastBytes = $totalRead
+            }
+        }
+        
+        $fileStream.Close()
+        $responseStream.Close()
+        $response.Close()
+        
+        Write-Host ""
+        $elapsed = (Get-Date) - $startTime
+        Write-Host "  [OK] Download complete in $([math]::Round($elapsed.TotalSeconds, 1))s" -ForegroundColor Green
+    }    
+    catch {
+        if ($fileStream) { $fileStream.Close() }
+        if ($responseStream) { $responseStream.Close() }
+        if ($response) { $response.Close() }
+        
+        Write-Host ""
+        Write-Host "  [WARN] Stream download failed, falling back to Invoke-WebRequest..." -ForegroundColor Yellow
+        
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $Url -OutFile $OutFile -UseBasicParsing
+        $ProgressPreference = 'Continue'
+    }
+    
+    if (-not (Test-Path $OutFile)) {
+        throw "Download failed - file not found at: $OutFile"
+    }
+    
+    $fileSize = (Get-Item $OutFile).Length
+    if ($fileSize -eq 0) {
+        Remove-Item $OutFile -Force
+        throw "Download failed - file is empty (0 bytes)"
+    }
+    
+    $fileSizeMB = [math]::Round($fileSize / 1MB, 2)
+    Write-Host "  [OK] Verified: $fileSizeMB MB" -ForegroundColor Green
 }
 
 # ===========================
 # INSTALLATION HANDLERS
 # ===========================
+
+function Setup-And-Install-Vcpkg {
+    param([hashtable]$VcpkgPackages)
+
+    if (-not $VcpkgPackages -or $VcpkgPackages.Count -eq 0) { return }
+
+    Write-Host "`n=== vcpkg Setup & Packages ===" -ForegroundColor Magenta
+
+    $vcpkgRoot = $env:VCPKG_ROOT
+    $defaultRoot = 'C:\vcpkg'
+
+    # Install vcpkg if missing
+    if (-not $vcpkgRoot -or -not (Test-Path $vcpkgRoot)) {
+        $vcpkgRoot = $defaultRoot
+        Write-Host "  vcpkg not found. Installing to $vcpkgRoot..." -ForegroundColor Yellow
+
+        if (-not (Test-Path $vcpkgRoot)) {
+            git clone https://github.com/microsoft/vcpkg.git $vcpkgRoot
+            if ($LASTEXITCODE -ne 0) { throw "Failed to clone vcpkg repository" }
+        }
+
+        Push-Location $vcpkgRoot
+        try {
+            Write-Host "  Bootstrapping vcpkg..." -ForegroundColor Yellow
+            .\bootstrap-vcpkg.bat
+            if ($LASTEXITCODE -ne 0) { throw "vcpkg bootstrap failed" }
+        }
+        finally {
+            Pop-Location
+        }
+
+        [Environment]::SetEnvironmentVariable("VCPKG_ROOT", $vcpkgRoot, "Machine")
+        $env:VCPKG_ROOT = $vcpkgRoot
+        Write-Host "  [OK] VCPKG_ROOT set to $vcpkgRoot" -ForegroundColor Green
+    }
+    else {
+        Write-Host "  Using existing VCPKG_ROOT: $vcpkgRoot" -ForegroundColor Green
+    }
+
+    # Upgrade vcpkg and install packages
+    Push-Location $vcpkgRoot
+    try {
+        Write-Host "  Upgrading vcpkg (git pull + bootstrap)..." -ForegroundColor Yellow
+        git pull origin master --quiet
+        .\bootstrap-vcpkg.bat
+
+        $vcpkgExe = if (Test-Path "vcpkg.exe") { "vcpkg.exe" } else { "vcpkg" }
+        $triplet = "x64-windows"
+
+        foreach ($entry in $VcpkgPackages.GetEnumerator()) {
+            $port = $entry.Key
+            Write-Host "`n[$port] Installing $port`:$triplet ..." -ForegroundColor Cyan
+            & $vcpkgExe install "$port`:$triplet"
+            if ($LASTEXITCODE -ne 0) {
+                throw "vcpkg install failed for port: $port"
+            }
+            Write-Host "  [OK] $port installed" -ForegroundColor Green
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+    # Add standard vcpkg paths to system environment
+    $instDir = Join-Path $vcpkgRoot "installed\$triplet"
+    if (Test-Path $instDir) {
+        $inc = Join-Path $instDir "include"
+        if (Test-Path $inc) { Add-ToSystemInclude $inc }
+
+        $lib = Join-Path $instDir "lib"
+        if (Test-Path $lib) { Add-ToSystemLib $lib }
+
+        $bin = Join-Path $instDir "bin"
+        if (Test-Path $bin) { Add-ToSystemPath $bin }
+
+        $dbgLib = Join-Path $instDir "debug\lib"
+        if (Test-Path $dbgLib) { Add-ToSystemLib $dbgLib }
+
+        $dbgBin = Join-Path $instDir "debug\bin"
+        if (Test-Path $dbgBin) { Add-ToSystemPath $dbgBin }
+
+        Write-Host "  [OK] vcpkg paths added to INCLUDE/LIB/PATH" -ForegroundColor Green
+    }
+
+    # Set CMAKE_TOOLCHAIN_FILE (recommended and sufficient for local + CI)
+    $toolchainFile = Join-Path $vcpkgRoot "scripts\buildsystems\vcpkg.cmake"
+    if (Test-Path $toolchainFile) {
+        # Convert backslashes to forward slashes so CMake doesn't treat them as escape sequences
+        $toolchainFile = $toolchainFile -replace '\\', '/'
+        
+        [Environment]::SetEnvironmentVariable("MAYAFLUX_TOOLCHAIN_FILE", $toolchainFile, "Machine")
+        $env:CMAKE_TOOLCHAIN_FILE = $toolchainFile
+        Write-Host "  [OK] MAYAFLUX_TOOLCHAIN_FILE set to: $toolchainFile" -ForegroundColor Green
+    }
+    else {
+        Write-Warning "vcpkg toolchain file not found at expected location"
+    }
+}
 
 function Install-SystemTool($name, $config) {
     Write-Host "`n[$name] Checking system tool..." -ForegroundColor Cyan
@@ -123,6 +369,19 @@ function Install-SystemTool($name, $config) {
 function Install-BinaryPackage($name, $config) {
     Write-Host "`n[$name] Installing binary package..." -ForegroundColor Cyan
 
+    $effectiveRoot = if ($config.Version) {
+        Join-Path (Split-Path $config.InstallRoot -Parent) $config.Version
+    } else {
+        $config.InstallRoot
+    }
+
+    if ($config.Version) {
+        $config.InstallRoot = $effectiveRoot
+        if ($config.Verify -and $config.Verify -like "*LLVM_Libs\*") {
+            $config.Verify = $config.Verify -replace 'LLVM_Libs\\[^\\]+', "LLVM_Libs\$($config.Version)"
+        }
+    }
+
     if (Test-Path $config.Verify) {
         Write-Host "  [OK] Already installed at $($config.InstallRoot)" -ForegroundColor Green
         return $config.InstallRoot
@@ -131,23 +390,33 @@ function Install-BinaryPackage($name, $config) {
     $tempDir = Join-Path $env:TEMP "MayaFlux-setup\$name"
     $downloadFile = Join-Path $tempDir (Split-Path $config.Url -Leaf)
 
-    # Create directories
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
     New-Item -ItemType Directory -Path $config.InstallRoot -Force | Out-Null
 
-    # Download
     if (-not (Test-Path $downloadFile)) {
         Write-Host "  Downloading from $($config.Url)..." -ForegroundColor Yellow
         Invoke-WithRetry {
-            Invoke-WebRequest -Uri $config.Url -OutFile $downloadFile -UseBasicParsing
+            Invoke-FastDownload -Url $config.Url -OutFile $downloadFile
         }
+    } else {
+        Write-Host "  [OK] Using cached download: $downloadFile" -ForegroundColor Green
     }
 
-    # Handle installer vs archive
+    if (-not (Test-Path $downloadFile)) {
+        throw "Download file missing: $downloadFile"
+    }
+
+    $fileSize = [math]::Round((Get-Item $downloadFile).Length / 1MB, 2)
+    if ($fileSize -eq 0) {
+        Remove-Item $downloadFile -Force -ErrorAction SilentlyContinue
+        throw "Downloaded file is empty (0 bytes): $downloadFile"
+    }
+
+    Write-Host "  [OK] Download verified: $fileSize MB at $downloadFile" -ForegroundColor Green
+
     if ($downloadFile -match "\.exe$" -and $config.InstallArgs) {
         Write-Host "  Running installer..." -ForegroundColor Yellow
         
-        # Special message for VulkanSDK
         if ($name -eq "VulkanSDK") {
             Write-Host ""
             Write-Host "  ============================================" -ForegroundColor Cyan
@@ -174,24 +443,33 @@ function Install-BinaryPackage($name, $config) {
     else {
         # Extract archive
         Write-Host "  Extracting..." -ForegroundColor Yellow
-        Expand-ArchiveSafe $downloadFile $tempDir
+        $extractDir = Join-Path $env:TEMP "MayaFlux-extract\$name-$(Get-Random)"
+        
+        Expand-ArchiveSafe -archivePath $downloadFile -destination $extractDir
 
         # Remove the archive file to avoid interfering with content detection
         Remove-Item $downloadFile -Force -ErrorAction SilentlyContinue
 
-        # Move contents to install root, handling wrapper dirs intelligently
-        $extractedItems = Get-ChildItem $tempDir | Where-Object { -not $_.Name.StartsWith('.') }
-        $extractedDirs = $extractedItems | Where-Object { $_.PSIsContainer }
+        # === INTELLIGENT CONTENT MOVE (our wrapper handling) ===
+        Write-Host "  Organizing extracted files..." -ForegroundColor Yellow
+
+        $extractedItems = Get-ChildItem $extractDir -Force | Where-Object { -not $_.Name.StartsWith('.') }
+        $extractedDirs  = $extractedItems | Where-Object { $_.PSIsContainer }
 
         if ($extractedDirs.Count -eq 1 -and $extractedItems.Count -eq 1) {
-            # Single wrapper directory: strip it and move its contents
-            Write-Host "  Stripping wrapper directory..." -ForegroundColor Yellow
-            Get-ChildItem $extractedDirs[0].FullName | Move-Item -Destination $config.InstallRoot -Force
-        } else {
-            # Multiple directories/files or flat: move everything as-is
-            Write-Host "  Moving all contents..." -ForegroundColor Yellow
-            Get-ChildItem $tempDir | Move-Item -Destination $config.InstallRoot -Force
-        }    
+            # Single wrapper directory case (GLFW, FFmpeg, LLVM, etc.)
+            $wrapperDir = $extractedDirs[0].FullName
+            Write-Host "  Stripping single wrapper directory: $($extractedDirs[0].Name)" -ForegroundColor Cyan
+            Get-ChildItem $wrapperDir -Force | Move-Item -Destination $config.InstallRoot -Force
+        }
+        else {
+            # Multiple top-level items (HIDAPI) or flat structure
+            Write-Host "  Moving all top-level items directly" -ForegroundColor Cyan
+            Get-ChildItem $extractDir -Force | Move-Item -Destination $config.InstallRoot -Force
+        }
+
+        # Cleanup extraction directory
+        Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 
     # Cleanup
@@ -487,6 +765,17 @@ foreach ($pkg in $packages.BinaryPackages.GetEnumerator()) {
     $installedPath = Install-BinaryPackage $pkg.Key $pkg.Value
     Set-PackageEnvironment $pkg.Key $pkg.Value $installedPath
 }
+
+# Install Winget packages
+Write-Host "`n=== Winget Packages ===" -ForegroundColor Magenta
+foreach ($pkg in $packages.WingetPackages.GetEnumerator()) {
+    if ($Only -and $pkg.Key -notin $Only) { continue }
+    Install-SystemTool $pkg.Key $pkg.Value
+}
+
+# Setup vcpkg + install packages
+Write-Host "`n=== Vcpkg Packages ===" -ForegroundColor Magenta
+Setup-And-Install-Vcpkg -VcpkgPackages $packages.VcpkgPackages
 
 # Install header-only packages
 Write-Host "`n=== Header-Only Packages ===" -ForegroundColor Magenta
