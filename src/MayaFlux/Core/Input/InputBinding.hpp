@@ -29,15 +29,12 @@ struct MAYAFLUX_API InputBinding {
     InputType backend; ///< Which backend type
     uint32_t device_id { 0 }; ///< Specific device (0 = any device)
 
-    // ─── MIDI Filters ───
     std::optional<uint8_t> midi_channel; ///< Match specific MIDI channel (1-16)
     std::optional<uint8_t> midi_message_type; ///< Match message type (0xB0=CC, 0x90=NoteOn, etc.)
     std::optional<uint8_t> midi_cc_number; ///< Match specific CC number
 
-    // ─── OSC Filters ───
     std::optional<std::string> osc_address_pattern; ///< Match OSC address prefix
 
-    // ─── HID Filters (Advanced) ───
     std::optional<uint16_t> hid_vendor_id; ///< Match HID vendor ID
     std::optional<uint16_t> hid_product_id; ///< Match HID product ID
 
@@ -256,7 +253,6 @@ struct MAYAFLUX_API InputValue {
     uint32_t device_id; ///< Source device identifier
     InputType source_type; ///< Backend that generated this value
 
-    // Convenience accessors
     [[nodiscard]] double as_scalar() const { return std::get<double>(data); }
     [[nodiscard]] const std::vector<double>& as_vector() const { return std::get<std::vector<double>>(data); }
     [[nodiscard]] const std::vector<uint8_t>& as_bytes() const { return std::get<std::vector<uint8_t>>(data); }

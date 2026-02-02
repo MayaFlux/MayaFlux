@@ -4,6 +4,8 @@
 #include "MayaFlux/Registry/Service/InputService.hpp"
 
 #include "MayaFlux/Core/Backends/Input/HIDBackend.hpp"
+#include "MayaFlux/Core/Backends/Input/MIDIBackend.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Core {
@@ -317,8 +319,26 @@ void InputSubsystem::initialize_hid_backend()
 
 void InputSubsystem::initialize_midi_backend()
 {
-    MF_WARN(Journal::Component::Core, Journal::Context::InputSubsystem,
-        "MIDI backend not yet implemented");
+    MIDIBackend::Config midi_config;
+    midi_config.input_port_filters = m_config.midi.input_port_filters;
+    midi_config.output_port_filters = m_config.midi.output_port_filters;
+    midi_config.auto_open_inputs = m_config.midi.auto_open_inputs;
+    midi_config.auto_open_outputs = m_config.midi.auto_open_outputs;
+    midi_config.enable_virtual_port = m_config.midi.enable_virtual_port;
+    midi_config.virtual_port_name = m_config.midi.virtual_port_name;
+
+    auto midi = std::make_unique<MIDIBackend>(midi_config);
+
+    if (add_backend(std::move(midi))) {
+        if (m_config.midi.auto_open_inputs) {
+            auto* backend = dynamic_cast<MIDIBackend*>(get_backend(InputType::MIDI));
+            for (const auto& dev : backend->get_devices()) {
+                if (dev.is_input) {
+                    backend->open_device(dev.id);
+                }
+            }
+        }
+    }
 }
 
 void InputSubsystem::initialize_osc_backend()

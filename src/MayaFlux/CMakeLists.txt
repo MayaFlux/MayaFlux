@@ -33,8 +33,6 @@ set_target_properties(MayaFluxLib PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-target_compile_definitions(MayaFluxLib PRIVATE MAYAFLUX_USE_SPIRV_CROSS)
-
 #==============================================================
 #                   Target Includes
 #==============================================================
