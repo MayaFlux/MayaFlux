@@ -10,6 +10,7 @@
     "glm",
     "magic-enum",
     "hidapi",
+    "rtmidi",
     "stb"
   ]
 }

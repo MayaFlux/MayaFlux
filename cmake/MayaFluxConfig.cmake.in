@@ -22,13 +22,15 @@ endif()
 
 find_package(PkgConfig QUIET)
 
+# Shader support
+set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
+
 # Windows-specific dependency resolution
 if(WIN32)
     message(STATUS "=== Windows Dependency Resolution ===")
 
     list(APPEND CMAKE_PREFIX_PATH "@VCPKG_INSTALLED_DIR@/x64-windows")
 
-    # GLFW (vcpkg or environment)
     find_package(Vulkan REQUIRED)
     find_package(magic_enum REQUIRED)
 
@@ -36,6 +38,8 @@ if(WIN32)
     find_package(eigen3 CONFIG REQUIRED)
     find_package(glm CONFIG REQUIRED)
     find_package(RtAudio CONFIG REQUIRED)
+    find_package(hidapi CONFIG REQUIRED)
+    find_package(rtmidi CONFIG REQUIRED)
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
 
@@ -78,31 +82,15 @@ if(WIN32)
         endforeach()
     endif()
 
-    # Shader support
-    set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
-
-    # Shader support
-    set(MAYAFLUX_ENABLE_HID @MAYAFLUX_ENABLE_HID@)
-
-    if(MAYAFLUX_ENABLE_HID)
-        find_package(hidapi CONFIG REQUIRED)
-    endif()
-
 else()
     # Unix-like systems (Linux, macOS) use pkg-config
     message(STATUS "=== Unix/Linux Dependency Resolution ===")
 
     find_package(PkgConfig REQUIRED)
 
-    # Shader support  
-    set(MAYAFLUX_USE_SHADERC @MAYAFLUX_USE_SHADERC@)
-
     if(MAYAFLUX_USE_SHADERC)
         pkg_check_modules(shaderc QUIET IMPORTED_TARGET shaderc)
     endif()
-
-    # magic_enum
-    pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
 
     if(APPLE)
         message(STATUS "=== macOS-specific Dependencies ===")
@@ -110,11 +98,16 @@ else()
         find_package(fmt REQUIRED)
         find_package(Vulkan REQUIRED)
         set(_MAYAFLUX_THREADING_BACKEND "oneDPL")
+
+        pkg_check_modules(HIDAPI REQUIRED IMPORTED_TARGET hidapi)
     else()
         message(STATUS "=== Linux-specific Dependencies ===")
         pkg_check_modules(Vulkan REQUIRED IMPORTED_TARGET vulkan)
         find_package(TBB REQUIRED)
         set(_MAYAFLUX_THREADING_BACKEND "TBB")
+
+        pkg_search_module(HIDAPI REQUIRED IMPORTED_TARGET
+                hidapi-hidraw hidapi-libusb hidapi)
     endif()
 
     find_library(SPIRV_CROSS_CORE_LIB NAMES spirv-cross-core REQUIRED)
@@ -144,6 +137,8 @@ else()
     pkg_check_modules(RtAudio REQUIRED IMPORTED_TARGET rtaudio)
     pkg_check_modules(Eigen REQUIRED IMPORTED_TARGET eigen3)
     pkg_check_modules(Glfw REQUIRED IMPORTED_TARGET glfw3>=3.4)
+    pkg_check_modules(magic_enum REQUIRED IMPORTED_TARGET magic_enum)
+    pkg_check_modules(RtMidi QUIET IMPORTED_TARGET rtmidi)
 
     pkg_check_modules(LIBAVCODEC REQUIRED IMPORTED_TARGET libavcodec)
     pkg_check_modules(LIBAVFORMAT REQUIRED IMPORTED_TARGET libavformat)
@@ -151,17 +146,6 @@ else()
     pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
 
-    # HID Support
-    set(MAYAFLUX_ENABLE_HID @MAYAFLUX_ENABLE_HID@)
-
-    if(MAYAFLUX_ENABLE_HID)
-        if(APPLE)
-            pkg_check_modules(HIDAPI QUIET IMPORTED_TARGET hidapi)
-        else()
-            pkg_search_module(HIDAPI QUIET IMPORTED_TARGET
-                hidapi-hidraw hidapi-libusb hidapi)
-        endif()
-    endif()
 endif()
 
 # ============================================================================
@@ -231,6 +215,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             FFmpeg::avutil
             FFmpeg::swresample
             FFmpeg::swscale
+            hidapi::hidapi
+            rtmidi::rtmidi
             gdi32
             user32
             shell32
@@ -249,6 +235,8 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::LIBSWRESAMPLE
             PkgConfig::LIBSWSCALE
             PkgConfig::magic_enum
+            PkgConfig::HIDAPI
+            PkgConfig::RtMidi
             glm::glm
             spirv-cross-core
             spirv-cross-cpp
@@ -285,23 +273,6 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::shaderc)
         endif()
         target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_USE_SHADERC)
-    endif()
-
-    # ========================================================================
-    # Optional HID support
-    # ========================================================================
-
-    if(MAYAFLUX_ENABLE_HID)
-        if(WIN32)
-            if(TARGET hidapi::hidapi)
-                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE hidapi::hidapi)
-            else()
-                target_link_libraries(MayaFlux::MayaFluxLib INTERFACE hidapi)
-            endif()
-        elseif(UNIX AND TARGET PkgConfig::HIDAPI)
-            target_link_libraries(MayaFlux::MayaFluxLib INTERFACE PkgConfig::HIDAPI)
-        endif()
-        target_compile_definitions(MayaFlux::MayaFluxLib INTERFACE MAYAFLUX_HID_BACKEND)
     endif()
 
     # ========================================================================

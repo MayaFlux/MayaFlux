@@ -2,7 +2,6 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
-#ifdef MAYAFLUX_HID_BACKEND
 #include <hidapi.h>
 
 namespace MayaFlux::Core {
@@ -473,47 +472,3 @@ InputValue HIDBackend::parse_hid_report(uint32_t device_id, std::span<const uint
     return value;
 }
 } // namespace MayaFlux::Core
-
-#else // !MAYAFLUX_HID_BACKEND
-
-namespace MayaFlux::Core {
-
-HIDBackend::HIDBackend()
-    : HIDBackend(Config {})
-{
-}
-HIDBackend::HIDBackend(Config) { }
-HIDBackend::~HIDBackend() = default;
-
-bool HIDBackend::initialize()
-{
-    MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
-        "HIDBackend: HIDAPI not available (MAYAFLUX_HID_BACKEND not defined)");
-    return false;
-}
-
-void HIDBackend::start() { }
-void HIDBackend::stop() { }
-void HIDBackend::shutdown() { }
-
-std::vector<InputDeviceInfo> HIDBackend::get_devices() const { return {}; }
-size_t HIDBackend::refresh_devices() { return 0; }
-bool HIDBackend::open_device(uint32_t) { return false; }
-void HIDBackend::close_device(uint32_t) { }
-bool HIDBackend::is_device_open(uint32_t) const { return false; }
-std::vector<uint32_t> HIDBackend::get_open_devices() const { return {}; }
-
-void HIDBackend::set_input_callback(InputCallback) { }
-void HIDBackend::set_device_callback(DeviceCallback) { }
-
-std::string HIDBackend::get_version() const { return "unavailable"; }
-void HIDBackend::add_device_filter(const HIDDeviceFilter&) { }
-void HIDBackend::clear_device_filters() { }
-std::optional<HIDDeviceInfoExt> HIDBackend::get_device_info_ext(uint32_t) const { return std::nullopt; }
-int HIDBackend::send_feature_report(uint32_t, std::span<const uint8_t>) { return -1; }
-int HIDBackend::get_feature_report(uint32_t, uint8_t, std::span<uint8_t>) { return -1; }
-int HIDBackend::write(uint32_t, std::span<const uint8_t>) { return -1; }
-
-} // namespace MayaFlux::Core
-
-#endif // MAYAFLUX_HID_BACKEND

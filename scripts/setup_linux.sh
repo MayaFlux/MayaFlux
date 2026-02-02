@@ -50,6 +50,7 @@ install_arch() {
         "ffmpeg"
         "stb"
         "hidapi"
+        "rtmidi"
     )
     echo -e "${YELLOW}Installing: ${PACKAGES[*]}${NC}"
     sudo pacman -Syu --noconfirm "${PACKAGES[@]}"
@@ -94,6 +95,7 @@ install_fedora() {
         "gtest-devel"
         "libshaderc-devel"
         "hidapi-devel"
+        "rtmidi-devel"
         "wayland-devel"
         "git"
     )
@@ -140,6 +142,7 @@ install_ubuntu() {
         "libavformat-dev"
         "libswscale-dev"
         "libhidapi-dev"
+        "librtmidi-dev"
         "libgtest-dev"
     )
 

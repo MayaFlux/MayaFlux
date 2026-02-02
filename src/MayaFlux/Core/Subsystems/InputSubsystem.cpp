@@ -296,7 +296,6 @@ void InputSubsystem::wire_backend_to_manager(IInputBackend* backend)
 
 void InputSubsystem::initialize_hid_backend()
 {
-#ifdef MAYAFLUX_HID_BACKEND
     HIDBackend::Config hid_config;
     hid_config.filters = m_config.hid.filters;
     hid_config.read_buffer_size = m_config.hid.read_buffer_size;
@@ -314,10 +313,6 @@ void InputSubsystem::initialize_hid_backend()
             }
         }
     }
-#else
-    MF_WARN(Journal::Component::Core, Journal::Context::InputSubsystem,
-        "HID backend requested but HIDAPI not available at build time");
-#endif
 }
 
 void InputSubsystem::initialize_midi_backend()
