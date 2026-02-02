@@ -35,6 +35,12 @@ set_target_properties(project_launcher PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 )
 
+if(WIN32)
+    set_target_properties(project_launcher PROPERTIES
+        VS_DEBUGGER_ENVIRONMENT "PATH=$<TARGET_FILE_DIR:MayaFluxLib>;$ENV{PATH}"
+    )
+endif()
+
 target_link_libraries(project_launcher PRIVATE MayaFluxLib)
 target_precompile_headers(project_launcher
     PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)

@@ -13,7 +13,6 @@ if(WIN32)
         target_compile_options(MayaFluxLib PRIVATE /MD)
 
         if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-            target_compile_options(MayaFluxLib PRIVATE "/Zc:externConstexpr-")
             target_link_options(MayaFluxLib PRIVATE "/IGNORE:4099")
         endif()
     endif()
@@ -27,7 +26,7 @@ set_target_properties(MayaFluxLib PROPERTIES
 target_include_directories(MayaFluxLib PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..  # Points to src/ for #include "MayaFlux/..."
 )
-target_precompile_headers(MayaFluxLib PUBLIC ../../cmake/pch.h)
+target_precompile_headers(MayaFluxLib PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
     target_compile_definitions(MayaFluxLib PRIVATE GLFW_EXPOSE_NATIVE_WAYLAND)
