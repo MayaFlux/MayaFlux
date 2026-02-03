@@ -14,6 +14,7 @@ double MIDINode::extract_value(const Core::InputValue& value)
     }
 
     const auto& midi = value.as_midi();
+    m_last_midi_message = midi;
 
     if (!matches_filters(value)) {
         return m_last_output;
@@ -86,6 +87,50 @@ bool MIDINode::matches_filters(const Core::InputValue& value) const
     }
 
     return true;
+}
+
+void MIDINode::notify_tick(double value)
+{
+    InputNode::notify_tick(value);
+    if (m_last_midi_message) {
+        fire_midi_callbacks(*m_last_midi_message);
+    }
+}
+
+void MIDINode::fire_midi_callbacks(const Core::InputValue::MIDIMessage& midi)
+{
+    uint8_t msg_type = midi.type();
+
+    switch (msg_type) {
+    case 0x90:
+        for (const auto& cb : m_note_callbacks) {
+            bool is_on = midi.data2 > 0; // velocity 0 = note off
+            cb(midi.data1, midi.data2, is_on);
+        }
+        break;
+
+    case 0x80:
+        for (const auto& cb : m_note_callbacks) {
+            cb(midi.data1, 0, false);
+        }
+        break;
+
+    case 0xB0:
+        for (const auto& cb : m_cc_callbacks) {
+            cb(midi.data1, midi.data2);
+        }
+        break;
+
+    case 0xE0:
+        for (const auto& cb : m_pitch_bend_callbacks) {
+            int16_t bend = ((midi.data2 << 7) | midi.data1) - 8192;
+            cb(bend);
+        }
+        break;
+
+    default:
+        break;
+    }
 }
 
 } // namespace MayaFlux::Nodes::Input

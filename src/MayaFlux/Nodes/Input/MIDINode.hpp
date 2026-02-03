@@ -140,17 +140,54 @@ struct MIDIConfig : InputConfig {
  */
 class MAYAFLUX_API MIDINode : public InputNode {
 public:
+    using NoteCallback = std::function<void(uint8_t note, uint8_t velocity, bool is_on)>;
+    using CC_Callback = std::function<void(uint8_t cc_num, uint8_t value)>;
+    using PitchBendCallback = std::function<void(int16_t bend)>;
+
     explicit MIDINode(MIDIConfig config = {});
 
     void save_state() override { }
     void restore_state() override { }
 
+    /**
+     * @brief Callback for note events with note number and velocity
+     * @param callback Function receiving (note_number, velocity, is_note_on)
+     */
+    void on_note(std::function<void(uint8_t note, uint8_t velocity, bool is_on)> callback)
+    {
+        m_note_callbacks.push_back(std::move(callback));
+    }
+
+    /**
+     * @brief Callback for CC events with controller number and value
+     */
+    void on_cc(std::function<void(uint8_t cc_num, uint8_t value)> callback)
+    {
+        m_cc_callbacks.push_back(std::move(callback));
+    }
+
+    /**
+     * @brief Callback for pitch bend with 14-bit value
+     */
+    void on_pitch_bend(std::function<void(int16_t bend)> callback)
+    {
+        m_pitch_bend_callbacks.push_back(std::move(callback));
+    }
+
 protected:
     double extract_value(const Core::InputValue& value) override;
 
+    void notify_tick(double value) override;
+
 private:
     MIDIConfig m_config;
+    std::optional<Core::InputValue::MIDIMessage> m_last_midi_message;
 
+    std::vector<NoteCallback> m_note_callbacks;
+    std::vector<CC_Callback> m_cc_callbacks;
+    std::vector<PitchBendCallback> m_pitch_bend_callbacks;
+
+    void fire_midi_callbacks(const Core::InputValue::MIDIMessage& midi);
     [[nodiscard]] bool matches_filters(const Core::InputValue& value) const;
 };
 

@@ -33,7 +33,12 @@ std::vector<Core::InputDeviceInfo> get_hid_devices()
     return get_input_subsystem().get_hid_devices();
 }
 
-std::vector<Core::InputDeviceInfo> get_all_devices()
+std::vector<Core::InputDeviceInfo> get_midi_devices()
+{
+    return get_input_subsystem().get_midi_devices();
+}
+
+std::vector<Core::InputDeviceInfo> get_all_input_devices()
 {
     return get_input_subsystem().get_all_devices();
 }

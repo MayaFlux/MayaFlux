@@ -47,7 +47,13 @@ MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_hid_devices();
  * @brief Get a list of connected MIDI devices
  * @return Vector of InputDeviceInfo for each connected MIDI device
  */
-MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_all_devices();
+MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_midi_devices();
+
+/**
+ * @brief Get a list of connected MIDI devices
+ * @return Vector of InputDeviceInfo for each connected MIDI device
+ */
+MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_all_input_devices();
 
 /**
  * @brief Find a HID device by vendor and product ID

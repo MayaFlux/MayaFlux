@@ -34,10 +34,9 @@ bool MIDIBackend::initialize()
         MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
             "Initializing MIDI Backend (RtMidi version: {})", get_version());
 
+        m_initialized.store(true);
         refresh_devices();
         create_virtual_port_if_enabled();
-
-        m_initialized.store(true);
 
         MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
             "MIDIBackend initialized with {} port(s)", m_enumerated_devices.size());
@@ -65,13 +64,18 @@ void MIDIBackend::start()
         return;
     }
 
-    if (m_config.auto_open_inputs) {
+    std::vector<uint32_t> inputs_to_open;
+    {
         std::lock_guard lock(m_devices_mutex);
         for (const auto& [id, info] : m_enumerated_devices) {
             if (info.is_input) {
-                open_device(id);
+                inputs_to_open.push_back(id);
             }
         }
+    }
+
+    for (uint32_t id : inputs_to_open) {
+        open_device(id);
     }
 
     m_running.store(true);
@@ -147,44 +151,54 @@ size_t MIDIBackend::refresh_devices()
         return 0;
     }
 
-    std::lock_guard lock(m_devices_mutex);
+    std::vector<InputDeviceInfo> newly_added_devices;
 
     try {
         RtMidiIn midi_in;
         unsigned int port_count = midi_in.getPortCount();
 
-        for (unsigned int i = 0; i < port_count; ++i) {
-            std::string port_name = midi_in.getPortName(i);
+        {
+            std::lock_guard lock(m_devices_mutex);
 
-            if (!port_matches_filter(port_name)) {
-                continue;
-            }
+            for (unsigned int i = 0; i < port_count; ++i) {
+                std::string port_name = midi_in.getPortName(i);
 
-            uint32_t dev_id = find_or_assign_device_id(i);
+                if (!port_matches_filter(port_name)) {
+                    continue;
+                }
 
-            MIDIPortInfo info {};
-            info.id = dev_id;
-            info.name = port_name;
-            info.backend_type = InputType::MIDI;
-            info.is_connected = true;
-            info.is_input = true;
-            info.is_output = false;
-            info.port_number = static_cast<uint8_t>(i);
-            info.rtmidi_port_number = i;
+                uint32_t dev_id = find_or_assign_device_id(i);
 
-            bool is_new = (m_enumerated_devices.find(dev_id) == m_enumerated_devices.end());
+                MIDIPortInfo info {};
+                info.id = dev_id;
+                info.name = port_name;
+                info.backend_type = InputType::MIDI;
+                info.is_connected = true;
+                info.is_input = true;
+                info.is_output = false;
+                info.port_number = static_cast<uint8_t>(i);
+                info.rtmidi_port_number = i;
 
-            m_enumerated_devices[dev_id] = info;
+                bool is_new = (m_enumerated_devices.find(dev_id) == m_enumerated_devices.end());
 
-            if (is_new) {
-                MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
-                    "MIDI port found: {}", port_name);
-                notify_device_change(info, true);
+                m_enumerated_devices[dev_id] = info;
+
+                if (is_new) {
+                    newly_added_devices.push_back(info);
+                }
             }
         }
 
-        return m_enumerated_devices.size();
+        for (const auto& info : newly_added_devices) {
+            MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
+                "MIDI port found: {}", info.name);
+            notify_device_change(info, true);
+        }
 
+        {
+            std::lock_guard lock(m_devices_mutex);
+            return m_enumerated_devices.size();
+        }
     } catch (const RtMidiError& error) {
         MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
             "Error enumerating MIDI ports: {}", error.getMessage());
