@@ -37,6 +37,8 @@ namespace Nodes {
         class MIDINode;
 
         struct InputConfig;
+        struct HIDConfig;
+        struct MIDIConfig;
     }
 }
 

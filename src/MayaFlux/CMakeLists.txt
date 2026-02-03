@@ -88,7 +88,7 @@ if(WIN32)
         FFmpeg::swresample
         FFmpeg::swscale
         hidapi::hidapi
-        rtmidi::rtmidi
+        RtMidi::rtmidi
         gdi32
         user32
         shell32

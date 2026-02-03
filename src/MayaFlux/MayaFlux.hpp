@@ -101,6 +101,7 @@
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;
 using namespace MayaFlux::Buffers;
+using namespace MayaFlux::Nodes::Input;
 using namespace MayaFlux::Nodes::GpuSync;
 using namespace MayaFlux::Nodes::Network;
 using namespace MayaFlux::Nodes::Filters;

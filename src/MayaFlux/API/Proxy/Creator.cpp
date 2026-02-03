@@ -132,29 +132,32 @@ std::shared_ptr<Buffers::TextureBuffer> Creator::load_buffer(const std::string& 
 }
 
 std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(
+    const Nodes::Input::HIDConfig& config,
     const Core::InputBinding& binding)
 {
-    auto node = std::make_shared<Nodes::Input::HIDNode>();
+    auto node = std::make_shared<Nodes::Input::HIDNode>(config);
     register_input_node(node, binding);
     return node;
 }
 
 std::shared_ptr<Nodes::Input::MIDINode> Creator::read_midi(
+    const Nodes::Input::MIDIConfig& config,
     const Core::InputBinding& binding)
 {
-    auto node = std::make_shared<Nodes::Input::MIDINode>();
+    auto node = std::make_shared<Nodes::Input::MIDINode>(config);
     register_input_node(node, binding);
     return node;
 }
 
 std::shared_ptr<Nodes::Input::InputNode> Creator::read_input(
+    const Nodes::Input::InputConfig& config,
     const Core::InputBinding& binding)
 {
     switch (binding.backend) {
     case Core::InputType::HID:
-        return read_hid(binding);
+        return read_hid(static_cast<const Nodes::Input::HIDConfig&>(config), binding);
     case Core::InputType::MIDI:
-        return read_midi(binding);
+        return read_midi(static_cast<const Nodes::Input::MIDIConfig&>(config), binding);
     default:
         MF_ERROR(Journal::Component::API, Journal::Context::Init,
             "Input type {} not yet implemented",
