@@ -222,6 +222,40 @@ public:
         return CreationHandle<Buffers::TextureBuffer>(buffer);
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Input Node Creation (Special - defined in Creator.cpp)
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * @brief Create and register HID input node
+     * @param config HID input configuration
+     * @param binding HID input binding
+     * @return Shared pointer to HIDNode (already registered)
+     */
+    std::shared_ptr<Nodes::Input::HIDNode> read_hid(
+        const Nodes::Input::HIDConfig& config,
+        const Core::InputBinding& binding);
+
+    /**
+     * @brief Create and register MIDI input node
+     * @param config MIDI input configuration
+     * @param binding MIDI input binding
+     * @return Shared pointer to MIDINode (already registered)
+     */
+    std::shared_ptr<Nodes::Input::MIDINode> read_midi(
+        const Nodes::Input::MIDIConfig& config,
+        const Core::InputBinding& binding);
+
+    /**
+     * @brief Create and register generic input node
+     * @param config Generic input configuration
+     * @param binding Generic input binding
+     * @return Shared pointer to InputNode (already registered)
+     */
+    std::shared_ptr<Nodes::Input::InputNode> read_input(
+        const Nodes::Input::InputConfig& config,
+        const Core::InputBinding& binding);
+
 private:
     std::shared_ptr<Kakshya::SoundFileContainer> load_container(const std::string& filepath);
     std::shared_ptr<Buffers::TextureBuffer> load_buffer(const std::string& filepath);

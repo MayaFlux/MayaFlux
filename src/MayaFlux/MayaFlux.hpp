@@ -46,6 +46,9 @@
 #include "MayaFlux/Nodes/Network/ModalNetwork.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
 
+#include "MayaFlux/Nodes/Input/HIDNode.hpp"
+#include "MayaFlux/Nodes/Input/MIDINode.hpp"
+
 #include "Buffers/BufferManager.hpp"
 #include "Buffers/BufferProcessingChain.hpp"
 #include "Buffers/Container/SoundContainerBuffer.hpp"
@@ -98,6 +101,7 @@
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;
 using namespace MayaFlux::Buffers;
+using namespace MayaFlux::Nodes::Input;
 using namespace MayaFlux::Nodes::GpuSync;
 using namespace MayaFlux::Nodes::Network;
 using namespace MayaFlux::Nodes::Filters;

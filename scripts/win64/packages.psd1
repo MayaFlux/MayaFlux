@@ -50,6 +50,7 @@
         hidapi     = @{}
         glfw3      = @{}
         rtaudio    = @{}
+        rtmidi     = @{}
     }
 
     SpecialPackages    = @{

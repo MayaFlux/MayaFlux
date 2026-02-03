@@ -27,10 +27,18 @@ namespace Nodes {
         class ProceduralTextureNode;
     }
     namespace Network {
-
         class NodeNetwork;
         class ModalNetwork;
         class ParticleNetwork;
+    }
+    namespace Input {
+        class InputNode;
+        class HIDNode;
+        class MIDINode;
+
+        struct InputConfig;
+        struct HIDConfig;
+        struct MIDIConfig;
     }
 }
 
@@ -51,6 +59,10 @@ namespace Kakshya {
     class SignalSourceContainer;
     class DynamicSoundStream;
     class SoundFileContainer;
+}
+
+namespace Core {
+    struct InputBinding;
 }
 }
 

@@ -35,7 +35,7 @@ int main()
     try {
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "=== MayaFlux Creative Coding Framework ===");
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init,
-                 "Version: {}.{}.{}", MAYAFLUX_VERSION_MAJOR, MAYAFLUX_VERSION_MINOR, MAYAFLUX_VERSION_PATCH);
+            "Version: {}.{}.{}", MAYAFLUX_VERSION_MAJOR, MAYAFLUX_VERSION_MINOR, MAYAFLUX_VERSION_PATCH);
         MF_PRINT(MayaFlux::Journal::Component::USER, MayaFlux::Journal::Context::Init, "");
 
         initialize();
@@ -44,7 +44,7 @@ int main()
 
         MayaFlux::Start();
 
-        MF_PRINT(Journal::Component::USER, Journal::Context::Init, "=== Audio Processing Active ===");
+        MF_PRINT(Journal::Component::USER, Journal::Context::Init, "=== AudioVisual Processing Active ===");
 
         run();
 
