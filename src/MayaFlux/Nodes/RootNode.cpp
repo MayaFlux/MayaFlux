@@ -18,9 +18,9 @@ void RootNode::register_node(const std::shared_ptr<Node>& node)
     if (m_is_processing.load(std::memory_order_acquire)) {
         if (m_Nodes.end() != std::ranges::find(m_Nodes, node)) {
             uint32_t state = node->m_state.load();
-            if (state & Utils::NodeState::INACTIVE) {
-                atomic_remove_flag(node->m_state, Utils::NodeState::INACTIVE);
-                atomic_add_flag(node->m_state, Utils::NodeState::ACTIVE);
+            if (state & NodeState::INACTIVE) {
+                atomic_remove_flag(node->m_state, NodeState::INACTIVE);
+                atomic_add_flag(node->m_state, NodeState::ACTIVE);
             }
             return;
         }
@@ -32,8 +32,8 @@ void RootNode::register_node(const std::shared_ptr<Node>& node)
                     std::memory_order_acquire,
                     std::memory_order_relaxed)) {
                 m_pending_op.node = node;
-                atomic_remove_flag(node->m_state, Utils::NodeState::ACTIVE);
-                atomic_add_flag(node->m_state, Utils::NodeState::INACTIVE);
+                atomic_remove_flag(node->m_state, NodeState::ACTIVE);
+                atomic_add_flag(node->m_state, NodeState::INACTIVE);
                 m_pending_count.fetch_add(1, std::memory_order_relaxed);
                 return;
             }
@@ -46,7 +46,7 @@ void RootNode::register_node(const std::shared_ptr<Node>& node)
 
     m_Nodes.push_back(node);
     uint32_t state = node->m_state.load();
-    atomic_add_flag(node->m_state, Utils::NodeState::ACTIVE);
+    atomic_add_flag(node->m_state, NodeState::ACTIVE);
 }
 
 void RootNode::unregister_node(const std::shared_ptr<Node>& node)
@@ -55,7 +55,7 @@ void RootNode::unregister_node(const std::shared_ptr<Node>& node)
         return;
 
     uint32_t state = node->m_state.load();
-    atomic_add_flag(node->m_state, Utils::NodeState::PENDING_REMOVAL);
+    atomic_add_flag(node->m_state, NodeState::PENDING_REMOVAL);
 
     if (m_is_processing.load(std::memory_order_acquire)) {
         for (auto& m_pending_op : m_pending_ops) {
@@ -87,10 +87,10 @@ void RootNode::unregister_node(const std::shared_ptr<Node>& node)
     node->reset_processed_state();
 
     uint32_t flag = node->m_state.load();
-    flag &= ~static_cast<uint32_t>(Utils::NodeState::PENDING_REMOVAL);
-    flag &= ~static_cast<uint32_t>(Utils::NodeState::ACTIVE);
-    flag |= static_cast<uint32_t>(Utils::NodeState::INACTIVE);
-    atomic_set_flag_strong(node->m_state, static_cast<Utils::NodeState>(flag));
+    flag &= ~static_cast<uint32_t>(NodeState::PENDING_REMOVAL);
+    flag &= ~static_cast<uint32_t>(NodeState::ACTIVE);
+    flag |= static_cast<uint32_t>(NodeState::INACTIVE);
+    atomic_set_flag_strong(node->m_state, static_cast<NodeState>(flag));
 }
 
 bool RootNode::preprocess()
@@ -127,14 +127,14 @@ double RootNode::process_sample()
             continue;
 
         uint32_t state = node->m_state.load();
-        if (!(state & Utils::NodeState::PROCESSED)) {
+        if (!(state & NodeState::PROCESSED)) {
             auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
             if (generator && generator->should_mock_process()) {
                 generator->process_sample();
             } else {
                 sample += node->process_sample();
             }
-            atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
+            atomic_add_flag(node->m_state, NodeState::PROCESSED);
         } else {
             sample += node->get_last_output();
         }
@@ -152,9 +152,9 @@ void RootNode::process_frame()
 
     for (auto& node : m_Nodes) {
         uint32_t state = node->m_state.load();
-        if (!(state & Utils::NodeState::PROCESSED)) {
+        if (!(state & NodeState::PROCESSED)) {
             node->process_sample();
-            atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
+            atomic_add_flag(node->m_state, NodeState::PROCESSED);
         }
     }
 
@@ -203,13 +203,13 @@ void RootNode::process_pending_operations()
             auto& op = m_pending_op;
             uint32_t state = op.node->m_state.load();
 
-            if (!(state & Utils::NodeState::ACTIVE)) {
+            if (!(state & NodeState::ACTIVE)) {
                 m_Nodes.push_back(op.node);
 
-                state &= ~static_cast<uint32_t>(Utils::NodeState::INACTIVE);
-                state |= static_cast<uint32_t>(Utils::NodeState::ACTIVE);
-                atomic_set_flag_strong(op.node->m_state, static_cast<Utils::NodeState>(state));
-            } else if (state & Utils::NodeState::PENDING_REMOVAL) {
+                state &= ~static_cast<uint32_t>(NodeState::INACTIVE);
+                state |= static_cast<uint32_t>(NodeState::ACTIVE);
+                atomic_set_flag_strong(op.node->m_state, static_cast<NodeState>(state));
+            } else if (state & NodeState::PENDING_REMOVAL) {
                 auto it = m_Nodes.begin();
                 while (it != m_Nodes.end()) {
                     if ((*it).get() == op.node.get()) {
@@ -220,10 +220,10 @@ void RootNode::process_pending_operations()
                 }
                 op.node->reset_processed_state();
 
-                state &= ~static_cast<uint32_t>(Utils::NodeState::PENDING_REMOVAL);
-                state &= ~static_cast<uint32_t>(Utils::NodeState::ACTIVE);
-                state |= static_cast<uint32_t>(Utils::NodeState::INACTIVE);
-                atomic_set_flag_strong(op.node->m_state, static_cast<Utils::NodeState>(state));
+                state &= ~static_cast<uint32_t>(NodeState::PENDING_REMOVAL);
+                state &= ~static_cast<uint32_t>(NodeState::ACTIVE);
+                state |= static_cast<uint32_t>(NodeState::INACTIVE);
+                atomic_set_flag_strong(op.node->m_state, static_cast<NodeState>(state));
             }
 
             op.node.reset();

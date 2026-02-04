@@ -451,7 +451,7 @@ public:
      * @brief Atomic state flag tracking the node's processing status
      *
      * This atomic state variable tracks the node's current operational status using
-     * bit flags defined in Utils::NodeState. It indicates whether the node is:
+     * bit flags defined in NodeState. It indicates whether the node is:
      * - ACTIVE: Currently part of the processing graph
      * - PROCESSED: Has been processed in the current cycle
      * - PENDING_REMOVAL: Marked for removal from the processing graph
@@ -460,7 +460,7 @@ public:
      * The atomic nature ensures thread-safe state transitions, allowing the audio
      * engine to safely coordinate processing across multiple threads without data races.
      */
-    std::atomic<Utils::NodeState> m_state { Utils::NodeState::INACTIVE };
+    std::atomic<NodeState> m_state { NodeState::INACTIVE };
 
     /**
      * @brief Counter tracking how many other nodes are using this node as a modulator

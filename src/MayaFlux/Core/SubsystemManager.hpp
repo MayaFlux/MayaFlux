@@ -2,8 +2,6 @@
 
 #include "Subsystems/Subsystem.hpp"
 
-#include "MayaFlux/Utils.hpp"
-
 namespace MayaFlux::Core {
 
 class WindowManager;
@@ -70,12 +68,11 @@ public:
     /**
      * @brief Create and register the audio subsystem
      * @tparam Args Constructor argument types
-     * @param args Constructor arguments for AudioSubsystem
      *
      * Specialized creation method for AudioSubsystem. Only one audio subsystem
      * is allowed per manager instance.
      */
-    void create_audio_subsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type);
+    void create_audio_subsystem(GlobalStreamInfo& stream_info);
 
     /**
      * @brief Create and register the graphics subsystem

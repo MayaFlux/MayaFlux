@@ -2,6 +2,10 @@
 
 namespace MayaFlux::Core {
 
+enum AudioBackendType : uint8_t {
+    RTAUDIO
+};
+
 /**
  * @struct GlobalStreamInfo
  * @brief Comprehensive configuration for digital audio stream processing
@@ -47,6 +51,9 @@ struct GlobalStreamInfo {
         DS,
         OSS
     };
+
+    /** @brief Selected audio backend implementation */
+    AudioBackendType backend = AudioBackendType::RTAUDIO;
 
     /** @brief Selected audio API for stream processing */
     AudioApi requested_api = AudioApi::DEFAULT;

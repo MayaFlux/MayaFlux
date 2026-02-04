@@ -85,8 +85,7 @@ TEST_F(AudioSubsystemTest, BasicConstruction)
 TEST_F(AudioSubsystemTest, ConstructionWithCustomBackend)
 {
     EXPECT_NO_THROW({
-        audio_subsystem = std::make_shared<Core::AudioSubsystem>(
-            stream_info, Utils::AudioBackendType::RTAUDIO);
+        audio_subsystem = std::make_shared<Core::AudioSubsystem>(stream_info);
     });
 
     ASSERT_NE(audio_subsystem, nullptr);

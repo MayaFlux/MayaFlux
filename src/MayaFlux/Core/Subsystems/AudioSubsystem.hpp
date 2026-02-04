@@ -101,12 +101,11 @@ public:
     /**
      * @brief Constructs AudioSubsystem with stream configuration
      * @param stream_info Global stream configuration
-     * @param backend_type Audio backend type to use (default: RTAUDIO)
      *
      * Constructor - AudioSubsystem instances are created by Engine.
      * Initializes audio backend and configures processing tokens.
      */
-    explicit AudioSubsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type = Utils::AudioBackendType::RTAUDIO);
+    explicit AudioSubsystem(GlobalStreamInfo& stream_info);
 
     inline SubsystemType get_type() const override { return m_type; }
 

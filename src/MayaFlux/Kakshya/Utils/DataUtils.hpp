@@ -3,18 +3,28 @@
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Utils.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <typeindex>
 
 namespace MayaFlux::Kakshya {
 
+/**
+ * @enum ComplexConversionStrategy
+ * @brief Strategy for converting complex numbers to real values
+ */
+enum class ComplexConversionStrategy : uint8_t {
+    MAGNITUDE, ///< |z| = sqrt(real² + imag²)
+    REAL_PART, ///< z.real()
+    IMAG_PART, ///< z.imag()
+    SQUARED_MAGNITUDE ///< |z|² = real² + imag²
+};
+
 template <typename From, typename To, typename Enable = void>
 struct DataConverter {
     static std::span<To> convert(std::span<From> /*source*/,
         std::vector<To>& /*storage*/,
-        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+        ComplexConversionStrategy = ComplexConversionStrategy::MAGNITUDE)
     {
         static_assert(always_false_v<From>, "No conversion available for these types");
         return {};
@@ -27,7 +37,7 @@ template <typename T>
 struct DataConverter<T, T> {
     static std::span<T> convert(std::span<T> source,
         std::vector<T>&,
-        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+        ComplexConversionStrategy = ComplexConversionStrategy::MAGNITUDE)
     {
         return source;
     }
@@ -43,7 +53,7 @@ struct DataConverter<
     static std::span<To> convert(
         std::span<From> source,
         std::vector<To>& storage,
-        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+        ComplexConversionStrategy = ComplexConversionStrategy::MAGNITUDE)
     {
         storage.resize(source.size());
         std::transform(
@@ -64,22 +74,22 @@ struct DataConverter<
     static std::span<To> convert(
         std::span<From> source,
         std::vector<To>& storage,
-        Utils::ComplexConversionStrategy strategy)
+        ComplexConversionStrategy strategy)
     {
         storage.resize(source.size());
 
         for (size_t i = 0; i < source.size(); ++i) {
             switch (strategy) {
-            case Utils::ComplexConversionStrategy::MAGNITUDE:
+            case ComplexConversionStrategy::MAGNITUDE:
                 storage[i] = static_cast<To>(std::abs(source[i]));
                 break;
-            case Utils::ComplexConversionStrategy::REAL_PART:
+            case ComplexConversionStrategy::REAL_PART:
                 storage[i] = static_cast<To>(source[i].real());
                 break;
-            case Utils::ComplexConversionStrategy::IMAG_PART:
+            case ComplexConversionStrategy::IMAG_PART:
                 storage[i] = static_cast<To>(source[i].imag());
                 break;
-            case Utils::ComplexConversionStrategy::SQUARED_MAGNITUDE:
+            case ComplexConversionStrategy::SQUARED_MAGNITUDE:
                 storage[i] = static_cast<To>(std::norm(source[i]));
                 break;
             }
@@ -99,7 +109,7 @@ struct DataConverter<
     static std::span<To> convert(
         std::span<From> source,
         std::vector<To>& storage,
-        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+        ComplexConversionStrategy = ComplexConversionStrategy::MAGNITUDE)
     {
         using ComplexValueType = typename To::value_type;
         storage.resize(source.size());
@@ -122,7 +132,7 @@ struct DataConverter<
     static std::span<To> convert(
         std::span<From> source,
         std::vector<To>& storage,
-        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+        ComplexConversionStrategy = ComplexConversionStrategy::MAGNITUDE)
     {
         constexpr size_t components = glm_component_count<From>();
         using ComponentType = glm_component_type<From>;
@@ -151,7 +161,7 @@ struct DataConverter<
     static std::span<To> convert(
         std::span<From> source,
         std::vector<To>& storage,
-        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+        ComplexConversionStrategy = ComplexConversionStrategy::MAGNITUDE)
     {
         constexpr size_t components = glm_component_count<To>();
         using ComponentType = glm_component_type<To>;
@@ -200,7 +210,7 @@ struct DataConverter<
     static std::span<To> convert(
         std::span<From> source,
         std::vector<To>& storage,
-        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+        ComplexConversionStrategy = ComplexConversionStrategy::MAGNITUDE)
     {
         using FromComponent = glm_component_type<From>;
         using ToComponent = glm_component_type<To>;
@@ -240,7 +250,7 @@ struct DataConverter<
     static std::span<To> convert(
         std::span<From> source,
         std::vector<To>& storage,
-        Utils::ComplexConversionStrategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+        ComplexConversionStrategy = ComplexConversionStrategy::MAGNITUDE)
     {
         using FromValue = typename From::value_type;
         using ToValue = typename To::value_type;
@@ -336,7 +346,7 @@ std::span<T> extract_frame(
 template <typename From, typename To>
 std::span<To> convert_data(std::span<From> source,
     std::vector<To>& storage,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    ComplexConversionStrategy strategy = ComplexConversionStrategy::MAGNITUDE)
 {
     return DataConverter<From, To>::convert(source, storage, strategy);
 }
@@ -348,7 +358,7 @@ template <typename From, typename To>
     requires(ComplexData<From> && ArithmeticData<To>)
 void convert_complex(std::span<From> source,
     std::span<To> destination,
-    Utils::ComplexConversionStrategy strategy)
+    ComplexConversionStrategy strategy)
 {
     std::vector<To> temp_storage;
     auto result = convert_data(source, temp_storage, strategy);
@@ -364,7 +374,7 @@ void convert_complex(std::span<From> source,
  */
 template <ProcessableData T>
 std::span<T> convert_variant(DataVariant& variant,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    ComplexConversionStrategy strategy = ComplexConversionStrategy::MAGNITUDE)
 {
     if (std::holds_alternative<std::vector<T>>(variant)) {
         auto& vec = std::get<std::vector<T>>(variant);
@@ -397,7 +407,7 @@ std::span<T> convert_variant(DataVariant& variant,
 
 template <ProcessableData T>
 std::span<T> convert_variant(const DataVariant& variant,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    ComplexConversionStrategy strategy = ComplexConversionStrategy::MAGNITUDE)
 {
     return convert_variant<T>(const_cast<DataVariant&>(variant), strategy);
 }
@@ -405,7 +415,7 @@ std::span<T> convert_variant(const DataVariant& variant,
 template <ProcessableData T>
 std::vector<std::span<T>> convert_variants(
     const std::vector<DataVariant>& variants,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    ComplexConversionStrategy strategy = ComplexConversionStrategy::MAGNITUDE)
 {
     std::vector<std::span<T>> result;
     result.reserve(variants.size());
@@ -428,7 +438,7 @@ std::vector<std::span<T>> convert_variants(
 template <ProcessableData From, ProcessableData To>
 std::span<To> extract_data(std::span<const From> source,
     std::vector<To>& destination,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    ComplexConversionStrategy strategy = ComplexConversionStrategy::MAGNITUDE)
 {
     const size_t total_bytes = source.size() * sizeof(From);
     const size_t required_elements = (total_bytes + sizeof(To) - 1) / sizeof(To);
@@ -460,7 +470,7 @@ std::span<To> extract_data(std::span<const From> source,
 template <ProcessableData T>
 std::span<T> extract_from_variant(const DataVariant& variant,
     std::vector<T>& storage,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    ComplexConversionStrategy strategy = ComplexConversionStrategy::MAGNITUDE)
 {
     return std::visit([&storage, strategy](const auto& data) -> std::span<T> {
         using ValueType = typename std::decay_t<decltype(data)>::value_type;
@@ -563,7 +573,7 @@ void safe_copy_typed_variant(const DataVariant& input, DataVariant& output)
  * @return Span of double data
  */
 inline std::span<double> convert_variant_to_double(DataVariant& data,
-    Utils::ComplexConversionStrategy strategy = Utils::ComplexConversionStrategy::MAGNITUDE)
+    ComplexConversionStrategy strategy = ComplexConversionStrategy::MAGNITUDE)
 {
     return convert_variant<double>(data, strategy);
 }

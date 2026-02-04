@@ -135,7 +135,7 @@ double extract_single_sample(const std::shared_ptr<Nodes::Node>& node)
 
     const auto state = node->m_state.load(std::memory_order_acquire);
 
-    if (state == Utils::NodeState::INACTIVE && !node->is_buffer_processed()) {
+    if (state == Nodes::NodeState::INACTIVE && !node->is_buffer_processed()) {
         double value = node->process_sample(0.F);
         node->mark_buffer_processed();
         return value;
@@ -199,7 +199,7 @@ std::vector<double> extract_multiple_samples(
     const auto state = node->m_state.load(std::memory_order_acquire);
 
     // Fast path: inactive node
-    if (state == Utils::NodeState::INACTIVE && !node->is_buffer_processed()) {
+    if (state == Nodes::NodeState::INACTIVE && !node->is_buffer_processed()) {
         for (size_t i = 0; i < num_samples; i++) {
             output[i] = node->process_sample(0.F);
         }
@@ -269,7 +269,7 @@ void update_buffer_with_node_data(
 
     const auto state = node->m_state.load(std::memory_order_acquire);
 
-    if (state == Utils::NodeState::INACTIVE && !node->is_buffer_processed()) {
+    if (state == Nodes::NodeState::INACTIVE && !node->is_buffer_processed()) {
         for (double& sample : buffer) {
             sample += node->process_sample(0.F) * mix;
         }

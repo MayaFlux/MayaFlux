@@ -75,20 +75,20 @@ double ChainNode::process_sample(double input)
     m_last_output = input;
 
     uint32_t sstate = m_Source->m_state.load();
-    if (sstate & Utils::NodeState::PROCESSED) {
+    if (sstate & NodeState::PROCESSED) {
         m_last_output = input + m_Source->get_last_output();
     } else {
         m_last_output = m_Source->process_sample(input);
-        atomic_add_flag(m_Source->m_state, Utils::NodeState::PROCESSED);
+        atomic_add_flag(m_Source->m_state, NodeState::PROCESSED);
     }
 
     uint32_t tstate = m_Target->m_state.load();
-    if (tstate & Utils::NodeState::PROCESSED) {
+    if (tstate & NodeState::PROCESSED) {
         m_last_output += m_Target->get_last_output();
     } else {
         m_last_output = m_Target->process_sample(m_last_output);
-        tstate = tstate | Utils::NodeState::PROCESSED;
-        atomic_add_flag(m_Target->m_state, Utils::NodeState::PROCESSED);
+        tstate = tstate | NodeState::PROCESSED;
+        atomic_add_flag(m_Target->m_state, NodeState::PROCESSED);
     }
 
     atomic_dec_modulator_count(m_Source->m_modulator_count, 1);
@@ -111,7 +111,7 @@ std::vector<double> ChainNode::process_batch(unsigned int num_samples)
 
 void ChainNode::reset_processed_state()
 {
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
+    atomic_remove_flag(m_state, NodeState::PROCESSED);
     if (m_Source)
         m_Source->reset_processed_state();
     if (m_Target)
@@ -143,9 +143,9 @@ bool ChainNode::is_initialized() const
     auto sState = m_Source->m_state.load();
     auto tState = m_Target->m_state.load();
 
-    bool is_source_registered = m_Source ? (sState & Utils::NodeState::ACTIVE) : false;
-    bool is_target_registered = m_Target ? (tState & Utils::NodeState::ACTIVE) : false;
-    return !is_source_registered && !is_target_registered && (m_state.load() & Utils::NodeState::ACTIVE);
+    bool is_source_registered = m_Source ? (sState & NodeState::ACTIVE) : false;
+    bool is_target_registered = m_Target ? (tState & NodeState::ACTIVE) : false;
+    return !is_source_registered && !is_target_registered && (m_state.load() & NodeState::ACTIVE);
 }
 
 NodeContext& ChainNode::get_last_context()
@@ -239,19 +239,19 @@ double BinaryOpNode::process_sample(double input)
     atomic_inc_modulator_count(m_rhs->m_modulator_count, 1);
 
     uint32_t lstate = m_lhs->m_state.load();
-    if (lstate & Utils::NodeState::PROCESSED) {
+    if (lstate & NodeState::PROCESSED) {
         m_last_lhs_value = input + m_lhs->get_last_output();
     } else {
         m_last_lhs_value = m_lhs->process_sample(input);
-        atomic_add_flag(m_lhs->m_state, Utils::NodeState::PROCESSED);
+        atomic_add_flag(m_lhs->m_state, NodeState::PROCESSED);
     }
 
     uint32_t rstate = m_rhs->m_state.load();
-    if (rstate & Utils::NodeState::PROCESSED) {
+    if (rstate & NodeState::PROCESSED) {
         m_last_rhs_value = input + m_rhs->get_last_output();
     } else {
         m_last_rhs_value = m_rhs->process_sample(input);
-        atomic_add_flag(m_rhs->m_state, Utils::NodeState::PROCESSED);
+        atomic_add_flag(m_rhs->m_state, NodeState::PROCESSED);
     }
 
     m_last_output = m_func(m_last_lhs_value, m_last_rhs_value);
@@ -295,7 +295,7 @@ void BinaryOpNode::notify_tick(double value)
 
 void BinaryOpNode::reset_processed_state()
 {
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
+    atomic_remove_flag(m_state, NodeState::PROCESSED);
     if (m_lhs)
         m_lhs->reset_processed_state();
     if (m_rhs)
@@ -353,8 +353,8 @@ bool BinaryOpNode::is_initialized() const
 {
     auto lstate = m_lhs->m_state.load();
     auto rstate = m_rhs->m_state.load();
-    bool is_lhs_registered = m_lhs ? (lstate & Utils::NodeState::ACTIVE) : false;
-    bool is_rhs_registered = m_rhs ? (rstate & Utils::NodeState::ACTIVE) : false;
+    bool is_lhs_registered = m_lhs ? (lstate & NodeState::ACTIVE) : false;
+    bool is_rhs_registered = m_rhs ? (rstate & NodeState::ACTIVE) : false;
     return !is_lhs_registered && !is_rhs_registered;
 }
 

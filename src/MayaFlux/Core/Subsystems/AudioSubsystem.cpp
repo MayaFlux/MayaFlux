@@ -4,9 +4,9 @@
 
 namespace MayaFlux::Core {
 
-AudioSubsystem::AudioSubsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type)
+AudioSubsystem::AudioSubsystem(GlobalStreamInfo& stream_info)
     : m_stream_info(stream_info)
-    , m_audiobackend(AudioBackendFactory::create_backend(backend_type, stream_info.requested_api))
+    , m_audiobackend(AudioBackendFactory::create_backend(stream_info.backend, stream_info.requested_api))
     , m_audio_device(m_audiobackend->create_device_manager())
     , m_subsystem_tokens {
         .Buffer = MayaFlux::Buffers::ProcessingToken::AUDIO_BACKEND,

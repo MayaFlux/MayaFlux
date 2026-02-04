@@ -122,7 +122,7 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
     m_subsystem_manager = std::make_shared<SubsystemManager>(
         m_node_graph_manager, m_buffer_manager, m_scheduler, m_window_manager, m_input_manager);
 
-    m_subsystem_manager->create_audio_subsystem(m_stream_info, Utils::AudioBackendType::RTAUDIO);
+    m_subsystem_manager->create_audio_subsystem(m_stream_info);
 
     m_subsystem_manager->create_graphics_subsystem(m_graphics_config);
 

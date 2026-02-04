@@ -533,7 +533,7 @@ TEST_F(RtAudioUtilityTest, GlobalAPIValidation)
 
 TEST_F(RtAudioUtilityTest, BackendFactoryValidation)
 {
-    auto backend = Core::AudioBackendFactory::create_backend(Utils::AudioBackendType::RTAUDIO);
+    auto backend = Core::AudioBackendFactory::create_backend(Core::AudioBackendType::RTAUDIO);
     EXPECT_NE(backend, nullptr);
 
     EXPECT_FALSE(backend->get_version_string().empty());

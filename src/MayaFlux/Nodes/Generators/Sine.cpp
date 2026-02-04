@@ -82,11 +82,11 @@ double Sine::process_sample(double input)
         uint32_t state = m_frequency_modulator->m_state.load();
         double current_freq = m_frequency;
 
-        if (state & Utils::NodeState::PROCESSED) {
+        if (state & NodeState::PROCESSED) {
             current_freq += m_frequency_modulator->get_last_output();
         } else {
             current_freq += m_frequency_modulator->process_sample(0.F);
-            atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
+            atomic_add_flag(m_frequency_modulator->m_state, NodeState::PROCESSED);
         }
         update_phase_increment(current_freq);
     }
@@ -105,14 +105,14 @@ double Sine::process_sample(double input)
         atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
         uint32_t state = m_amplitude_modulator->m_state.load();
 
-        if (state & Utils::NodeState::PROCESSED) {
+        if (state & NodeState::PROCESSED) {
             current_amplitude += m_amplitude_modulator->get_last_output();
-            if (!(state & Utils::NodeState::ACTIVE)) {
-                atomic_remove_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
+            if (!(state & NodeState::ACTIVE)) {
+                atomic_remove_flag(m_amplitude_modulator->m_state, NodeState::PROCESSED);
             }
         } else {
             current_amplitude += m_amplitude_modulator->process_sample(0.F);
-            atomic_add_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
+            atomic_add_flag(m_amplitude_modulator->m_state, NodeState::PROCESSED);
         }
     }
     current_sample *= current_amplitude;

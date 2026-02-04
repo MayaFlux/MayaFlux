@@ -105,7 +105,7 @@ TEST_F(LogicProcessorTest, ExternalLogicStateManagement)
     auto processor = std::make_shared<Buffers::LogicProcessor>(external_logic);
 
     external_logic->process_sample(0.3);
-    Nodes::atomic_add_flag(external_logic->m_state, Utils::NodeState::PROCESSED);
+    Nodes::atomic_add_flag(external_logic->m_state, Nodes::NodeState::PROCESSED);
 
     std::vector<double> original_data = buffer->get_data();
     processor->process(buffer);

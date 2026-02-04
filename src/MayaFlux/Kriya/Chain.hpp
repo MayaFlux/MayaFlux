@@ -1,9 +1,14 @@
 #pragma once
 
-#include "MayaFlux/Utils.hpp"
 #include "Operators.hpp"
 
 namespace MayaFlux::Kriya {
+
+enum ActionType : uint8_t {
+    NODE,
+    TIME,
+    FUNCTION
+};
 
 /**
  * @class EventChain
@@ -172,7 +177,7 @@ public:
      * This field indicates whether the token represents a node connection,
      * a time delay, or a function call.
      */
-    Utils::ActionType type;
+    ActionType type;
 
     /**
      * @brief The processing node to connect (for NODE type tokens)

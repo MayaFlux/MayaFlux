@@ -391,11 +391,11 @@ int RtAudioStream::rtAudioCallback(
 }
 
 std::unique_ptr<IAudioBackend> AudioBackendFactory::create_backend(
-    Utils::AudioBackendType type,
+    Core::AudioBackendType type,
     std::optional<Core::GlobalStreamInfo::AudioApi> api_preference)
 {
     switch (type) {
-    case Utils::AudioBackendType::RTAUDIO:
+    case Core::AudioBackendType::RTAUDIO:
         if (api_preference) {
             auto pref_api = to_rtaudio_api(*api_preference);
             if (pref_api != RtAudio::UNSPECIFIED) {

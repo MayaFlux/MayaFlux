@@ -117,11 +117,11 @@ double Logic::process_sample(double input)
     if (m_input_node) {
         atomic_inc_modulator_count(m_input_node->m_modulator_count, 1);
         uint32_t state = m_input_node->m_state.load();
-        if (state & Utils::NodeState::PROCESSED) {
+        if (state & NodeState::PROCESSED) {
             input += m_input_node->get_last_output();
         } else {
             input = m_input_node->process_sample(input);
-            atomic_add_flag(m_input_node->m_state, Utils::NodeState::PROCESSED);
+            atomic_add_flag(m_input_node->m_state, NodeState::PROCESSED);
         }
     }
 

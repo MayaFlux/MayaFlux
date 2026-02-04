@@ -4,7 +4,6 @@
 #include "MayaFlux/Yantra/Data/DataIO.hpp"
 
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
-#include "MayaFlux/Utils.hpp"
 
 #include <typeindex>
 
@@ -55,13 +54,13 @@ public:
      * @brief Set global complex conversion strategy
      * @param strategy How to convert complex numbers to doubles
      */
-    static inline void set_complex_conversion_strategy(Utils::ComplexConversionStrategy strategy) { s_complex_strategy = strategy; }
+    static inline void set_complex_conversion_strategy(Kakshya::ComplexConversionStrategy strategy) { s_complex_strategy = strategy; }
 
     /**
      * @brief Get current complex conversion strategy
      * @return Current conversion strategy
      */
-    static inline Utils::ComplexConversionStrategy get_complex_conversion_strategy() { return s_complex_strategy; }
+    static inline Kakshya::ComplexConversionStrategy get_complex_conversion_strategy() { return s_complex_strategy; }
 
     /**
      * @brief extract numeric data from single-variant types
@@ -325,7 +324,7 @@ public:
     }
 
 private:
-    static inline Utils::ComplexConversionStrategy s_complex_strategy = Utils::ComplexConversionStrategy::MAGNITUDE;
+    static inline Kakshya::ComplexConversionStrategy s_complex_strategy = Kakshya::ComplexConversionStrategy::MAGNITUDE;
 
     /**
      * @brief Create DataVariant from Eigen matrix/vector
