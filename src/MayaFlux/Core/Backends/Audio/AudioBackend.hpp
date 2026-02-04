@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Core/GlobalStreamInfo.hpp"
-#include "MayaFlux/Utils.hpp"
 
 namespace MayaFlux::Core {
 class AudioDevice;

@@ -9,8 +9,8 @@ struct TaskEntry {
     std::shared_ptr<Routine> routine;
     std::string name;
 
-    TaskEntry(std::shared_ptr<Routine> r, const std::string& n)
-        : routine(std::move(r))
+    TaskEntry(const std::shared_ptr<Routine>& r, std::string n)
+        : routine(r)
         , name(std::move(n))
     {
     }
@@ -70,7 +70,7 @@ public:
      * which clock it synchronizes with. Automatically dispatches to the appropriate
      * token-specific task list and clock synchronization.
      */
-    void add_task(std::shared_ptr<Routine> routine, const std::string& name = "", bool initialize = false);
+    void add_task(const std::shared_ptr<Routine>& routine, const std::string& name = "", bool initialize = false);
 
     /**
      * @brief Get a named task
@@ -81,14 +81,14 @@ public:
 
     /**
      * @brief Cancels and removes a task from the scheduler
-     * @param task Shared pointer to the task to cancel
+     * @param routine Shared pointer to the task to cancel
      * @return True if the task was found and cancelled, false otherwise
      *
      * This method removes a task from the scheduler, preventing it from
      * executing further. It's used to stop tasks that are no longer needed
      * or to clean up before shutting down the engine.
      */
-    bool cancel_task(std::shared_ptr<Routine> task);
+    bool cancel_task(const std::shared_ptr<Routine>& routine);
 
     /**
      * @brief Cancel a task by name
@@ -346,7 +346,7 @@ private:
      * @param routine The routine to name
      * @return Generated name
      */
-    std::string auto_generate_name(std::shared_ptr<Routine> routine) const;
+    std::string auto_generate_name(const std::shared_ptr<Routine>& routine) const;
 
     /**
      * @brief Find task entry by name
@@ -367,7 +367,7 @@ private:
      * @param routine Routine to find
      * @return Iterator to task entry or end()
      */
-    std::vector<TaskEntry>::iterator find_task_by_routine(std::shared_ptr<Routine> routine);
+    std::vector<TaskEntry>::iterator find_task_by_routine(const std::shared_ptr<Routine>& routine);
 
     /**
      * @brief Initialize a processing domain if it doesn't exist
@@ -400,7 +400,7 @@ private:
      * @param routine Routine to initialize
      * @param token Processing domain
      */
-    bool initialize_routine_state(std::shared_ptr<Routine> routine, ProcessingToken token);
+    bool initialize_routine_state(const std::shared_ptr<Routine>& routine, ProcessingToken token);
 
     /**
      * @brief Clock instances for each processing domain

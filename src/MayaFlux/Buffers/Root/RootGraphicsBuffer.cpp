@@ -203,8 +203,11 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
 {
     const auto& renderable_buffers = root->get_renderable_buffers();
     if (renderable_buffers.empty()) {
-        MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "No renderable buffers found in fallback renderer");
+        if (root->get_buffer_count() > 0) {
+            MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "No renderable buffers found, but root has {} child buffers. Falling back to no-op.",
+                root->get_buffer_count());
+        }
         return;
     }
 

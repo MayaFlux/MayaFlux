@@ -1,9 +1,6 @@
 #pragma once
 
-namespace MayaFlux::Utils {
-
-std::any safe_get_parameter(const std::string& parameter_name, const std::map<std::string, std::any> parameters);
-
+namespace MayaFlux::Vruta {
 /**
  * @brief Convert frames to seconds at a given frame rate
  * @param frames Number of frames
