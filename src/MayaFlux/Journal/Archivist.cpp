@@ -1,9 +1,10 @@
 #include "Archivist.hpp"
 #include "RealtimeEntry.hpp"
-#include "RingBuffer.hpp"
 
 #include "Ansi.hpp"
 #include "Sink.hpp"
+
+#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 namespace MayaFlux::Journal {
 
@@ -103,8 +104,7 @@ public:
         }
 
         RealtimeEntry entry(severity, component, context, message, location);
-
-        if (!m_ring_buffer.try_push(entry)) {
+        if (!m_ring_buffer.push(entry)) {
             m_dropped_messages.fetch_add(1, std::memory_order_relaxed);
         }
     }
@@ -179,8 +179,6 @@ private:
                 std::cout << AnsiColors::BrightRed << AnsiColors::White;
                 break;
             case Severity::NONE:
-                std::cout << AnsiColors::Reset;
-                break;
             default:
                 std::cout << AnsiColors::Reset;
                 break;
@@ -235,8 +233,6 @@ private:
                 std::cout << AnsiColors::BrightRed << AnsiColors::White;
                 break;
             case Severity::NONE:
-                std::cout << AnsiColors::Reset;
-                break;
             default:
                 std::cout << AnsiColors::Reset;
                 break;
@@ -322,9 +318,9 @@ private:
 
     void drain_ring_buffer()
     {
-        while (auto entry = m_ring_buffer.try_pop()) {
-            std::lock_guard lock(m_mutex);
+        while (auto entry = m_ring_buffer.pop()) {
 
+            std::lock_guard lock(m_mutex);
             if (m_sinks.empty()) {
                 write_to_console(*entry);
             } else {
@@ -345,7 +341,7 @@ private:
     std::array<bool, magic_enum::enum_count<Component>()> m_component_filters {};
     bool m_initialized {};
 
-    RingBuffer<RealtimeEntry, RING_BUFFER_SIZE> m_ring_buffer;
+    Memory::LockFreeQueue<RealtimeEntry, RING_BUFFER_SIZE> m_ring_buffer;
     std::atomic<bool> m_worker_running;
     std::thread m_worker_thread;
     std::atomic<uint64_t> m_dropped_messages { 0 };

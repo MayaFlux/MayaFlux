@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Nodes/Generators/Generator.hpp"
 
+#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+
 namespace MayaFlux::Nodes::Generator {
 
 /**
@@ -275,13 +277,13 @@ public:
      * @brief Gets the input buffer
      * @return Reference to the input buffer
      */
-    [[nodiscard]] std::span<double> get_input_buffer() { return { m_linear_view.data(), m_ring_count }; }
+    [[nodiscard]] std::span<double> get_input_buffer() { return m_history.linearized_view(); }
 
     /**
      * @brief Gets the output buffer
      * @return Reference to the output buffer
      */
-    [[nodiscard]] std::span<double> get_output_buffer() { return { m_linear_view.data(), m_ring_count }; }
+    [[nodiscard]] std::span<double> get_output_buffer() { return m_history.linearized_view(); }
 
     /**
      * @brief Prints a visual representation of the polynomial function
@@ -384,16 +386,13 @@ private:
     DirectFunction m_direct_function; ///< Function for direct mode
     BufferFunction m_buffer_function; ///< Function for recursive/feedforward mode
     std::vector<double> m_coefficients; ///< Polynomial coefficients (if using coefficient-based definition)
-    std::span<double> m_external_buffer_context; // View into external buffer
+    std::span<double> m_external_buffer_context; ///< View into external buffer
 
-    std::vector<double> m_ring_data;
-    std::vector<double> m_linear_view;
-    size_t m_ring_head {};
-    size_t m_ring_count {};
+    Memory::HistoryBuffer<double> m_history; ///< Ring buffer for input/output history
+    std::vector<double> m_linear_view; ///< Linearized view of history for easy access
 
-    std::vector<double> m_saved_ring_data;
-    size_t m_saved_ring_head {};
-    size_t m_saved_ring_count {};
+    std::vector<double> m_saved_history_state; ///< Saved state of the history buffer
+
     size_t m_buffer_size {}; ///< Maximum size of the buffers
     double m_scale_factor; ///< Scaling factor for output
     std::shared_ptr<Node> m_input_node; ///< Input node for processing
@@ -404,12 +403,6 @@ private:
 
     PolynomialContext m_context;
     PolynomialContextGpu m_context_gpu;
-
-    void ring_push(double val);
-
-    double ring_at(size_t i);
-
-    std::span<double> linearized_view();
 
     std::span<double> external_context_view(double input);
 };

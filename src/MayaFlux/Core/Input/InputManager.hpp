@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Core/GlobalInputConfig.hpp"
-#include "MayaFlux/Memory.hpp"
+#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 namespace MayaFlux::Nodes::Input {
 class InputNode;
@@ -151,7 +151,7 @@ private:
 
     std::atomic<bool> m_queue_notify { false };
     static constexpr size_t MAX_QUEUE_SIZE = 4096;
-    Memory::LockFreeRingBuffer<InputValue, MAX_QUEUE_SIZE> m_queue;
+    Memory::LockFreeQueue<InputValue, MAX_QUEUE_SIZE> m_queue;
 
     // ─────────────────────────────────────────────────────────────────────
     // Node Registry

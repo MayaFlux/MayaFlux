@@ -1,8 +1,9 @@
 #pragma once
 
 #include "MayaFlux/Core/GlobalInputConfig.hpp"
-#include "MayaFlux/Memory.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
+
+#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 
 namespace MayaFlux::Nodes::Input {
 
@@ -309,7 +310,7 @@ private:
     Core::InputType m_last_source_type { Core::InputType::HID };
     std::vector<InputCallback> m_input_callbacks;
 
-    Memory::LockFreeRingBuffer<Core::InputValue, 64> m_input_history;
+    Memory::LockFreeQueue<Core::InputValue, 64> m_input_history;
 
     [[nodiscard]] double apply_smoothing(double target, double current) const;
 

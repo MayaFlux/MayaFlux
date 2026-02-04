@@ -1,7 +1,5 @@
 #include "Logic.hpp"
 
-#include <algorithm>
-
 #include "MayaFlux/API/Config.hpp"
 
 namespace MayaFlux::Nodes::Generator {

@@ -1,7 +1,5 @@
 #include "InputNode.hpp"
 
-#include <utility>
-
 namespace MayaFlux::Nodes::Input {
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,7 +52,7 @@ void InputNode::process_input(const Core::InputValue& value)
     m_last_device_id.store(value.device_id);
     m_last_source_type = value.source_type;
 
-    m_input_history.push(value);
+    (void)m_input_history.push(value);
 
     notify_tick(smoothed);
 }

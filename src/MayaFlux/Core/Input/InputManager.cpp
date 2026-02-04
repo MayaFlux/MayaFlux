@@ -308,9 +308,9 @@ void InputManager::processing_loop()
     while (true) {
         InputValue value;
 
-        while (m_queue.pop(value)) {
-            dispatch_to_nodes(value);
-            m_events_processed.fetch_add(1, std::memory_order_relaxed);
+        while (auto value = m_queue.pop()) {
+            dispatch_to_nodes(*value);
+            m_events_processed.fetch_add(1);
         }
 
         if (m_stop_requested.load()) {
