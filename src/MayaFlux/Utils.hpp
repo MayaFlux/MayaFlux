@@ -2,15 +2,6 @@
 
 namespace MayaFlux::Utils {
 
-enum class distribution : uint8_t {
-    UNIFORM,
-    NORMAL,
-    EXPONENTIAL,
-    POISSON,
-    // PERLIN,
-    // GENDY
-};
-
 std::any safe_get_parameter(const std::string& parameter_name, const std::map<std::string, std::any> parameters);
 
 /**

@@ -449,10 +449,10 @@ TEST_F(NoiseGeneratorTest, DifferentDistributions)
 {
     unsigned int num_samples = 1000;
 
-    noise->set_type(Utils::distribution::NORMAL);
+    noise->set_type(Kinesis::distribution::NORMAL);
     std::vector<double> normal_samples = noise->process_batch(num_samples);
 
-    noise->set_type(Utils::distribution::EXPONENTIAL);
+    noise->set_type(Kinesis::distribution::EXPONENTIAL);
     noise->random_array(0.0, 1.0, 1);
     std::vector<double> exp_samples = noise->process_batch(num_samples);
 
