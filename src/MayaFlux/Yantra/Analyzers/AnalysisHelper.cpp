@@ -1,8 +1,6 @@
 #include "AnalysisHelper.hpp"
 
-#include <numeric>
-
-#include "MayaFlux/Parallel.hpp"
+#include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
 #include "unsupported/Eigen/FFT"
 

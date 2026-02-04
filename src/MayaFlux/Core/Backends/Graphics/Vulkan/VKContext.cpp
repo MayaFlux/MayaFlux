@@ -7,7 +7,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include "MayaFlux/Parallel.hpp"
+#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
 
 namespace MayaFlux::Core {
 

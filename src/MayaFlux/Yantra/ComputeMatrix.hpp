@@ -4,7 +4,7 @@
 #include "OperationSpec/OperationChain.hpp"
 #include "OperationSpec/OperationPool.hpp"
 
-#include "MayaFlux/Parallel.hpp"
+#include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
 namespace MayaFlux::Yantra {
 

@@ -4,7 +4,7 @@
 #include "MayaFlux/Core/Backends/Windowing/Glfw/GlfwWindow.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
-#include "MayaFlux/Parallel.hpp"
+#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
 
 namespace MayaFlux::Core {
 

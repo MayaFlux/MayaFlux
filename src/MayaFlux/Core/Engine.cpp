@@ -16,7 +16,7 @@
 #endif
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-#include "MayaFlux/Parallel.hpp"
+#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
 #endif
 
 namespace MayaFlux::Core {
