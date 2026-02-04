@@ -109,7 +109,7 @@ protected:
                 return;
             }
             if (auto str_result = safe_any_cast<std::string>(value)) {
-                auto algorithm_enum = Utils::string_to_enum_case_insensitive<SortingAlgorithm>(*str_result.value);
+                auto algorithm_enum = Reflect::string_to_enum_case_insensitive<SortingAlgorithm>(*str_result.value);
                 if (algorithm_enum) {
                     m_algorithm = *algorithm_enum;
                     return;

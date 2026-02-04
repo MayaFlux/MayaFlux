@@ -63,9 +63,9 @@ private:
         auto time_t = std::chrono::system_clock::to_time_t(time);
         oss << "[" << std::put_time(std::localtime(&time_t), "%Y-%m-%d %H:%M:%S") << "]";
 
-        oss << "[" << Utils::enum_to_string(entry.severity) << "]"
-            << "[" << Utils::enum_to_string(entry.component) << "]"
-            << "[" << Utils::enum_to_string(entry.context) << "] ";
+        oss << "[" << Reflect::enum_to_string(entry.severity) << "]"
+            << "[" << Reflect::enum_to_string(entry.component) << "]"
+            << "[" << Reflect::enum_to_string(entry.context) << "] ";
 
         if constexpr (std::is_same_v<Entry, JournalEntry>) {
             oss << entry.message;

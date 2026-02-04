@@ -187,17 +187,17 @@ private:
             }
         }
 
-        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
+        std::cout << "[" << Reflect::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
 
         if (colors_enabled) {
             std::cout << AnsiColors::Magenta;
         }
-        std::cout << "[" << Utils::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
+        std::cout << "[" << Reflect::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
 
         if (colors_enabled) {
             std::cout << AnsiColors::Cyan;
         }
-        std::cout << "[" << Utils::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
+        std::cout << "[" << Reflect::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
 
         std::cout << entry.message;
 
@@ -243,17 +243,17 @@ private:
             }
         }
 
-        std::cout << "[" << Utils::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
+        std::cout << "[" << Reflect::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
 
         if (colors_enabled) {
             std::cout << AnsiColors::Magenta;
         }
-        std::cout << "[" << Utils::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
+        std::cout << "[" << Reflect::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
 
         if (colors_enabled) {
             std::cout << AnsiColors::Cyan;
         }
-        std::cout << "[" << Utils::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
+        std::cout << "[" << Reflect::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
 
         std::cout << entry.message;
 

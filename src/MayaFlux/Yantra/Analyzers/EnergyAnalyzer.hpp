@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "UniversalAnalyzer.hpp"
@@ -157,7 +157,7 @@ public:
      */
     [[nodiscard]] std::vector<std::string> get_available_methods() const override
     {
-        return Utils::get_enum_names_lowercase<EnergyMethod>();
+        return Reflect::get_enum_names_lowercase<EnergyMethod>();
     }
 
     /**
@@ -258,7 +258,7 @@ public:
      */
     static std::string method_to_string(EnergyMethod method)
     {
-        return Utils::enum_to_lowercase_string(method);
+        return Reflect::enum_to_lowercase_string(method);
     }
 
     /**
@@ -270,7 +270,7 @@ public:
     {
         if (str == "default")
             return EnergyMethod::RMS;
-        return Utils::string_to_enum_or_throw_case_insensitive<EnergyMethod>(str, "EnergyMethod");
+        return Reflect::string_to_enum_or_throw_case_insensitive<EnergyMethod>(str, "EnergyMethod");
     }
 
     /**
@@ -280,7 +280,7 @@ public:
      */
     static std::string energy_level_to_string(EnergyLevel level)
     {
-        return Utils::enum_to_lowercase_string(level);
+        return Reflect::enum_to_lowercase_string(level);
     }
 
 protected:

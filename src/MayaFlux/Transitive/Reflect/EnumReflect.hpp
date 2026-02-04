@@ -8,7 +8,7 @@
 #error "magic_enum.hpp not found"
 #endif
 
-namespace MayaFlux::Utils {
+namespace MayaFlux::Reflect {
 
 /**
  * @brief Convert string to lowercase

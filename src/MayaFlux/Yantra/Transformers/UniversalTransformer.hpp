@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
@@ -249,7 +249,7 @@ public:
             }
             auto str_result = safe_any_cast<std::string>(value);
             if (str_result) {
-                auto strategy_enum = Utils::string_to_enum_case_insensitive<TransformationStrategy>(*str_result.value);
+                auto strategy_enum = Reflect::string_to_enum_case_insensitive<TransformationStrategy>(*str_result.value);
                 if (strategy_enum) {
                     m_strategy = *strategy_enum;
                     return;
@@ -264,7 +264,7 @@ public:
             }
             auto str_result = safe_any_cast<std::string>(value);
             if (str_result) {
-                auto quality_enum = Utils::string_to_enum_case_insensitive<TransformationQuality>(*str_result.value);
+                auto quality_enum = Reflect::string_to_enum_case_insensitive<TransformationQuality>(*str_result.value);
                 if (quality_enum) {
                     m_quality = *quality_enum;
                     return;
@@ -279,7 +279,7 @@ public:
             }
             auto str_result = safe_any_cast<std::string>(value);
             if (str_result) {
-                auto scope_enum = Utils::string_to_enum_case_insensitive<TransformationScope>(*str_result.value);
+                auto scope_enum = Reflect::string_to_enum_case_insensitive<TransformationScope>(*str_result.value);
                 if (scope_enum) {
                     m_scope = *scope_enum;
                     return;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 #include "chrono"
 #include "source_location"
@@ -171,17 +171,17 @@ struct MAYAFLUX_API JournalEntry {
 
     static inline std::string severity_to_string(Severity sev)
     {
-        return std::string(Utils::enum_to_string(sev));
+        return std::string(Reflect::enum_to_string(sev));
     }
 
     static inline std::string component_to_string(Component comp)
     {
-        return std::string(Utils::enum_to_string(comp));
+        return std::string(Reflect::enum_to_string(comp));
     }
 
     static inline std::string context_to_string(Context ctx)
     {
-        return std::string(Utils::enum_to_string(ctx));
+        return std::string(Reflect::enum_to_string(ctx));
     }
 };
 

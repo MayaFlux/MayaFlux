@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/ComputeOperation.hpp"
 
 /**
@@ -164,7 +164,7 @@ public:
             }
             auto str_result = safe_any_cast<std::string>(value);
             if (str_result) {
-                auto strategy_enum = Utils::string_to_enum_case_insensitive<SortingStrategy>(*str_result.value);
+                auto strategy_enum = Reflect::string_to_enum_case_insensitive<SortingStrategy>(*str_result.value);
                 if (strategy_enum) {
                     m_strategy = *strategy_enum;
                     return;
@@ -179,7 +179,7 @@ public:
             }
             auto str_result = safe_any_cast<std::string>(value);
             if (str_result) {
-                auto direction_enum = Utils::string_to_enum_case_insensitive<SortingDirection>(*str_result.value);
+                auto direction_enum = Reflect::string_to_enum_case_insensitive<SortingDirection>(*str_result.value);
                 if (direction_enum) {
                     m_direction = *direction_enum;
                     return;
@@ -194,7 +194,7 @@ public:
             }
             auto str_result = safe_any_cast<std::string>(value);
             if (str_result) {
-                auto granularity_enum = Utils::string_to_enum_case_insensitive<SortingGranularity>(*str_result.value);
+                auto granularity_enum = Reflect::string_to_enum_case_insensitive<SortingGranularity>(*str_result.value);
                 if (granularity_enum) {
                     m_granularity = *granularity_enum;
                     return;
