@@ -1,24 +1,11 @@
 #pragma once
 
-#include "MayaFlux/Utils.hpp"
+#include "NodeSpec.hpp"
 
 namespace MayaFlux::Nodes {
 
 class Node;
 class NodeContext;
-
-enum NodeState : uint32_t {
-    INACTIVE = 0x00, ///< Engine is not processing this node
-    ACTIVE = 0x01, ///< Engine is processing this node
-    PENDING_REMOVAL = 0x02, ///< Node is marked for removal
-
-    MOCK_PROCESS = 0x04, ///< Node should be processed but output ignored
-    PROCESSED = 0x08, ///< Node has been processed this cycle
-
-    ENGINE_PROCESSED = ACTIVE | PROCESSED, ///< Engine has processed this node
-    EXTERMAL_PROCESSED = INACTIVE | PROCESSED, ///< External source has processed this node
-    ENGINE_MOCK_PROCESSED = ACTIVE | MOCK_PROCESS | PROCESSED, ///< Engine has mock processed this node
-};
 
 /**
  * @typedef NodeHook

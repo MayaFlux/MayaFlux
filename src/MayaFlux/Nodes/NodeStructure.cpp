@@ -34,16 +34,16 @@ void ChainNode::initialize()
         m_is_initialized = true;
     }
 
-    auto semantics = MayaFlux::Config::get_graph_config().chain_semantics;
+    auto semantics = MayaFlux::Config::get_node_config().chain_semantics;
     switch (semantics) {
-    case Utils::NodeChainSemantics::REPLACE_TARGET:
+    case NodeChainSemantics::REPLACE_TARGET:
         if (m_Target) {
             for (auto& channel : get_active_channels(m_Target, 0)) {
                 MayaFlux::unregister_audio_node(m_Target, channel);
             }
         }
         break;
-    case Utils::NodeChainSemantics::ONLY_CHAIN:
+    case NodeChainSemantics::ONLY_CHAIN:
         if (m_Source) {
             for (auto& channel : get_active_channels(m_Source, 0)) {
                 MayaFlux::unregister_audio_node(m_Source, channel);
@@ -55,7 +55,7 @@ void ChainNode::initialize()
             }
         }
         break;
-    case Utils::NodeChainSemantics::PRESERVE_BOTH:
+    case NodeChainSemantics::PRESERVE_BOTH:
     default:
         break;
     }
@@ -206,9 +206,9 @@ void BinaryOpNode::initialize()
         m_is_initialized = true;
     }
 
-    auto semantics = MayaFlux::Config::get_graph_config().binary_op_semantics;
+    auto semantics = MayaFlux::Config::get_node_config().binary_op_semantics;
     switch (semantics) {
-    case Utils::NodeBinaryOpSemantics::REPLACE:
+    case NodeBinaryOpSemantics::REPLACE:
         if (m_lhs) {
             for (auto& channel : get_active_channels(m_lhs, 0)) {
                 MayaFlux::unregister_audio_node(m_lhs, channel);
@@ -220,7 +220,7 @@ void BinaryOpNode::initialize()
             }
         }
         break;
-    case Utils::NodeBinaryOpSemantics::KEEP:
+    case NodeBinaryOpSemantics::KEEP:
     default:
         break;
     }

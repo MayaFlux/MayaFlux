@@ -1,6 +1,8 @@
 #pragma once
 #include "Generator.hpp"
 
+#include "MayaFlux/Utils.hpp"
+
 #include <random>
 
 namespace MayaFlux::Nodes::Generator::Stochastics {
