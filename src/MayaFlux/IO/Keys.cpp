@@ -1,5 +1,6 @@
 #include "Keys.hpp"
-#include "MayaFlux/EnumUtils.hpp"
+
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 namespace MayaFlux::IO {
 
@@ -48,17 +49,17 @@ std::optional<Keys> from_string(std::string_view str) noexcept
         return from_char(str[0]);
     }
 
-    return Utils::string_to_enum_case_insensitive<Keys>(str);
+    return Reflect::string_to_enum_case_insensitive<Keys>(str);
 }
 
 std::string_view to_string(Keys key) noexcept
 {
-    return Utils::enum_to_string(key);
+    return Reflect::enum_to_string(key);
 }
 
 std::string to_lowercase_string(Keys key) noexcept
 {
-    return Utils::enum_to_lowercase_string(key);
+    return Reflect::enum_to_lowercase_string(key);
 }
 
 bool is_printable(Keys key) noexcept
@@ -86,22 +87,22 @@ bool is_keypad_key(Keys key) noexcept
 
 std::vector<std::string> all_key_names_lowercase() noexcept
 {
-    return Utils::get_enum_names_lowercase<Keys>();
+    return Reflect::get_enum_names_lowercase<Keys>();
 }
 
 auto all_key_names() noexcept
 {
-    return Utils::get_enum_names<Keys>();
+    return Reflect::get_enum_names<Keys>();
 }
 
 auto all_keys() noexcept
 {
-    return Utils::get_enum_values<Keys>();
+    return Reflect::get_enum_values<Keys>();
 }
 
 size_t key_count() noexcept
 {
-    return Utils::enum_count<Keys>();
+    return Reflect::enum_count<Keys>();
 }
 
 } // namespace MayaFlux::IO

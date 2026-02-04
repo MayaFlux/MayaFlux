@@ -396,15 +396,15 @@ private:
 ```cpp
 class AudioSubsystem : public ISubsystem {
 private:
-    Utils::AudioBackendType m_backend_type;
+    Core::AudioBackendType m_backend_type;
     std::unique_ptr<IAudioBackend> m_backend;
     std::unique_ptr<AudioDevice> m_audio_device;
     std::unique_ptr<AudioStream> m_audio_stream;
     GlobalStreamInfo m_stream_info;
 
 public:
-    AudioSubsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type)
-        : m_stream_info(stream_info), m_backend_type(backend_type) {
+    AudioSubsystem(GlobalStreamInfo& stream_info)
+        : m_stream_info(stream_info), m_backend_type(stream_info.backend) {
         // Create appropriate audio backend
         m_backend = AudioBackendFactory::create_backend(backend_type);
         m_audio_device = m_backend->create_device_manager();
@@ -622,7 +622,7 @@ public:
     }
 
     int get_api_type() const override {
-        return static_cast<int>(Utils::AudioBackendType::CUSTOM);
+        return static_cast<int>(Core::AudioBackendType::CUSTOM);
     }
 
     void cleanup() override {
@@ -639,15 +639,15 @@ public:
 // Extended AudioBackendFactory for custom backends
 class AudioBackendFactory {
 public:
-    static std::unique_ptr<IAudioBackend> create_backend(Utils::AudioBackendType type) {
+    static std::unique_ptr<IAudioBackend> create_backend(Core::AudioBackendType type) {
         switch (type) {
-        case Utils::AudioBackendType::RTAUDIO:
+        case Core::AudioBackendType::RTAUDIO:
             return std::make_unique<RtAudioBackend>();
-        case Utils::AudioBackendType::JACK:
+        case Core::AudioBackendType::JACK:
             return std::make_unique<JackAudioBackend>();
-        case Utils::AudioBackendType::ASIO:
+        case Core::AudioBackendType::ASIO:
             return std::make_unique<AsioAudioBackend>();
-        case Utils::AudioBackendType::CUSTOM:
+        case Core::AudioBackendType::CUSTOM:
             return std::make_unique<CustomAudioBackend>();
         default:
             throw std::runtime_error("Unsupported audio backend type");
@@ -656,14 +656,14 @@ public:
 
     // Register custom backend at runtime
     static void register_custom_backend(
-        Utils::AudioBackendType type,
+        Core::AudioBackendType type,
         std::function<std::unique_ptr<IAudioBackend>()> factory) {
 
         custom_factories[type] = factory;
     }
 
 private:
-    static std::map<Utils::AudioBackendType,
+    static std::map<Core::AudioBackendType,
                    std::function<std::unique_ptr<IAudioBackend>()>> custom_factories;
 };
 ```

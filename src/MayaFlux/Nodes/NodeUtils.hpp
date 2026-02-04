@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Utils.hpp"
+#include "NodeSpec.hpp"
 
 namespace MayaFlux::Nodes {
 
@@ -139,7 +139,7 @@ bool safe_remove_conditional_callback(std::vector<std::pair<NodeHook, NodeCondit
  * conditions like whether a node is active, processed, or pending removal,
  * which are critical for coordinating audio signal flow.
  */
-void atomic_set_strong(std::atomic<Utils::NodeState>& flag, Utils::NodeState& expected, const Utils::NodeState& desired);
+void atomic_set_strong(std::atomic<NodeState>& flag, NodeState& expected, const NodeState& desired);
 
 /**
  * @brief Atomically sets a node state flag to a specific value
@@ -151,7 +151,7 @@ void atomic_set_strong(std::atomic<Utils::NodeState>& flag, Utils::NodeState& ex
  * current condition, such as when activating or deactivating nodes in the
  * audio processing chain.
  */
-void atomic_set_flag_strong(std::atomic<Utils::NodeState>& flag, const Utils::NodeState& desired);
+void atomic_set_flag_strong(std::atomic<NodeState>& flag, const NodeState& desired);
 
 /**
  * @brief Atomically adds a flag to a node state
@@ -162,7 +162,7 @@ void atomic_set_flag_strong(std::atomic<Utils::NodeState>& flag, const Utils::No
  * This is used to mark nodes with specific conditions (like PROCESSED or ACTIVE)
  * while preserving other aspects of the node's current state.
  */
-void atomic_add_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flag);
+void atomic_add_flag(std::atomic<NodeState>& state, NodeState flag);
 
 /**
  * @brief Atomically removes a flag from a node state
@@ -173,7 +173,7 @@ void atomic_add_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flag
  * clear processing markers after a node has been processed, or to remove
  * special states like PENDING_REMOVAL when they're no longer applicable.
  */
-void atomic_remove_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState flags);
+void atomic_remove_flag(std::atomic<NodeState>& state, NodeState flags);
 
 /**
  * @brief Atomically sets a node state flag with weak memory ordering
@@ -186,7 +186,7 @@ void atomic_remove_flag(std::atomic<Utils::NodeState>& state, Utils::NodeState f
  * consistency while potentially improving performance in high-throughput
  * audio processing scenarios.
  */
-void atomic_set_flag_weak(std::atomic<Utils::NodeState>& flag, Utils::NodeState& expected, const Utils::NodeState& desired);
+void atomic_set_flag_weak(std::atomic<NodeState>& flag, NodeState& expected, const NodeState& desired);
 
 /**
  * @brief Atomically increments the modulator count by a specified amount

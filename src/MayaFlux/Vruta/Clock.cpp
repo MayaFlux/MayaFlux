@@ -1,7 +1,8 @@
 #include "Clock.hpp"
-#include "MayaFlux/Utils.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+
+#include "ChronUtils.hpp"
 
 namespace MayaFlux::Vruta {
 
@@ -23,7 +24,7 @@ uint64_t SampleClock::current_position() const
 
 double SampleClock::current_time() const
 {
-    return Utils::units_to_seconds(m_current_sample, m_sample_rate);
+    return units_to_seconds(m_current_sample, m_sample_rate);
 }
 
 uint32_t SampleClock::sample_rate() const
@@ -73,7 +74,7 @@ uint64_t FrameClock::current_position() const
 
 double FrameClock::current_time() const
 {
-    return Utils::units_to_seconds(current_position(), m_target_fps);
+    return units_to_seconds(current_position(), m_target_fps);
 }
 
 uint32_t FrameClock::rate() const
@@ -212,7 +213,7 @@ uint64_t CustomClock::current_position() const
 
 double CustomClock::current_time() const
 {
-    return Utils::units_to_seconds(m_current_position, m_processing_rate);
+    return units_to_seconds(m_current_position, m_processing_rate);
 }
 
 uint32_t CustomClock::rate() const

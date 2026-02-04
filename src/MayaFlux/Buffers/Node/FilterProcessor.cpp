@@ -15,11 +15,11 @@ void FilterProcessor::process_single_sample(double& sample)
     Nodes::atomic_inc_modulator_count(m_filter->m_modulator_count, 1);
     uint32_t state = m_filter->m_state.load();
 
-    if (state & Utils::NodeState::PROCESSED) {
+    if (state & Nodes::NodeState::PROCESSED) {
         sample = m_filter->get_last_output();
     } else {
         sample = m_filter->process_sample(sample);
-        Nodes::atomic_add_flag(m_filter->m_state, Utils::NodeState::PROCESSED);
+        Nodes::atomic_add_flag(m_filter->m_state, Nodes::NodeState::PROCESSED);
     }
 
     Nodes::atomic_dec_modulator_count(m_filter->m_modulator_count, 1);
@@ -45,7 +45,7 @@ void FilterProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 
     const auto& state = m_filter->m_state.load();
 
-    if (state == Utils::NodeState::INACTIVE) {
+    if (state == Nodes::NodeState::INACTIVE) {
         for (size_t i = 0; i < data.size(); ++i) {
             m_filter->set_input_context(std::span<double>(data.data(), i));
             data[i] = m_filter->process_sample(data[i]);

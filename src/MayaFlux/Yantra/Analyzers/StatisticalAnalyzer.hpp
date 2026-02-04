@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
 
 #include "UniversalAnalyzer.hpp"
@@ -179,7 +179,7 @@ public:
      */
     [[nodiscard]] std::vector<std::string> get_available_methods() const override
     {
-        return Utils::get_enum_names_lowercase<StatisticalMethod>();
+        return Reflect::get_enum_names_lowercase<StatisticalMethod>();
     }
 
     /**
@@ -307,7 +307,7 @@ public:
      */
     static std::string method_to_string(StatisticalMethod method)
     {
-        return Utils::enum_to_lowercase_string(method);
+        return Reflect::enum_to_lowercase_string(method);
     }
 
     /**
@@ -319,7 +319,7 @@ public:
     {
         if (str == "default")
             return StatisticalMethod::MEAN;
-        return Utils::string_to_enum_or_throw_case_insensitive<StatisticalMethod>(str, "StatisticalMethod");
+        return Reflect::string_to_enum_or_throw_case_insensitive<StatisticalMethod>(str, "StatisticalMethod");
     }
 
     /**
@@ -329,7 +329,7 @@ public:
      */
     static std::string statistical_level_to_string(StatisticalLevel level)
     {
-        return Utils::enum_to_lowercase_string(level);
+        return Reflect::enum_to_lowercase_string(level);
     }
 
 protected:

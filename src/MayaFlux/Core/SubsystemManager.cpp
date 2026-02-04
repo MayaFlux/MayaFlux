@@ -50,9 +50,9 @@ SubsystemManager::SubsystemManager(
     }
 }
 
-void SubsystemManager::create_audio_subsystem(GlobalStreamInfo& stream_info, Utils::AudioBackendType backend_type)
+void SubsystemManager::create_audio_subsystem(GlobalStreamInfo& stream_info)
 {
-    create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, stream_info, backend_type);
+    create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, stream_info);
 }
 
 void SubsystemManager::create_graphics_subsystem(const GlobalGraphicsConfig& graphics_config)

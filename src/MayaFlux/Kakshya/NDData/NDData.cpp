@@ -1,5 +1,6 @@
 #include "NDData.hpp"
-#include "MayaFlux/EnumUtils.hpp"
+
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -81,7 +82,7 @@ DataDimension DataDimension::grouped(
 
 std::string_view modality_to_string(DataModality modality)
 {
-    return Utils::enum_to_string(modality);
+    return Reflect::enum_to_string(modality);
 }
 
 DataDimension DataDimension::vertex_positions(uint64_t count)

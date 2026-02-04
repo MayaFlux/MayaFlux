@@ -1,5 +1,5 @@
 #include "MayaFlux/Journal/JournalEntry.hpp"
-#include "MayaFlux/Utils.hpp"
+#include "MayaFlux/Nodes/NodeSpec.hpp"
 
 namespace MayaFlux {
 
@@ -24,31 +24,9 @@ MAYAFLUX_API bool is_engine_initialized();
 */
 namespace Config {
 
-    /**
-     * @brief Configuration settings for the audio graph
-     */
-    struct MAYAFLUX_API GraphConfig {
-        Utils::NodeChainSemantics chain_semantics;
-        Utils::NodeBinaryOpSemantics binary_op_semantics;
+    extern Nodes::NodeConfig node_config;
 
-        GraphConfig();
-    };
-
-    /**
-     * @brief Configuration settings for individual audio nodes
-     */
-    struct NodeConfig {
-        size_t channel_cache_size = 256; ///< Number of cached channels for oprations
-        uint32_t max_channels = 32; ///< Maximum number of channels supported (uint32_t bits)
-        size_t callback_cache_size = 64;
-        size_t timer_cleanup_threshold = 20;
-    };
-
-    extern GraphConfig graph_config;
-    extern NodeConfig node_config;
-
-    MAYAFLUX_API GraphConfig& get_graph_config();
-    MAYAFLUX_API NodeConfig& get_node_config();
+    MAYAFLUX_API Nodes::NodeConfig& get_node_config();
 
     /**
      * @brief Gets the sample rate from the default engine

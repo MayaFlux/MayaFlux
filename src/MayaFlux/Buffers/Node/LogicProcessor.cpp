@@ -44,7 +44,7 @@ bool LogicProcessor::generate(size_t num_samples, const std::vector<double>& inp
 
     const auto& state = m_logic->m_state.load();
 
-    if (state == Utils::NodeState::INACTIVE) {
+    if (state == Nodes::NodeState::INACTIVE) {
         for (size_t i = 0; i < data.size(); ++i) {
             m_logic_data[i] = m_logic->process_sample(data[i]);
         }

@@ -42,12 +42,12 @@ TEST_F(NodeProcessStateTest, ModulatorAutoReset)
     auto modulator = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     auto consumer = std::make_shared<Nodes::Filters::FIR>(modulator, fir_coeffs);
 
-    Nodes::atomic_add_flag(modulator->m_state, Utils::NodeState::PROCESSED);
-    EXPECT_TRUE(modulator->m_state.load() & Utils::NodeState::PROCESSED);
+    Nodes::atomic_add_flag(modulator->m_state, Nodes::NodeState::PROCESSED);
+    EXPECT_TRUE(modulator->m_state.load() & Nodes::NodeState::PROCESSED);
 
     consumer->process_sample(0.0);
 
-    EXPECT_FALSE(modulator->m_state.load() & Utils::NodeState::PROCESSED);
+    EXPECT_FALSE(modulator->m_state.load() & Nodes::NodeState::PROCESSED);
 }
 
 TEST_F(NodeProcessStateTest, MultipleConsumerCoordination)
@@ -56,13 +56,13 @@ TEST_F(NodeProcessStateTest, MultipleConsumerCoordination)
     auto consumer1 = std::make_shared<Nodes::Filters::FIR>(modulator, fir_coeffs);
     auto consumer2 = std::make_shared<Nodes::Generator::Sine>(modulator, 880.0f, 0.5f);
 
-    Nodes::atomic_add_flag(modulator->m_state, Utils::NodeState::PROCESSED);
+    Nodes::atomic_add_flag(modulator->m_state, Nodes::NodeState::PROCESSED);
 
     consumer1->process_sample(0.0);
-    EXPECT_FALSE(modulator->m_state.load() & Utils::NodeState::PROCESSED);
+    EXPECT_FALSE(modulator->m_state.load() & Nodes::NodeState::PROCESSED);
 
     consumer2->process_sample(0.0);
-    EXPECT_FALSE(modulator->m_state.load() & Utils::NodeState::PROCESSED);
+    EXPECT_FALSE(modulator->m_state.load() & Nodes::NodeState::PROCESSED);
 }
 
 TEST_F(NodeProcessStateTest, RootNodeOwnershipTrumpsCounter)
@@ -70,12 +70,12 @@ TEST_F(NodeProcessStateTest, RootNodeOwnershipTrumpsCounter)
     auto node = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
 
     MayaFlux::register_audio_node(node);
-    EXPECT_TRUE(node->m_state.load() & Utils::NodeState::ACTIVE);
+    EXPECT_TRUE(node->m_state.load() & Nodes::NodeState::ACTIVE);
 
-    Nodes::atomic_add_flag(node->m_state, Utils::NodeState::PROCESSED);
+    Nodes::atomic_add_flag(node->m_state, Nodes::NodeState::PROCESSED);
 
     node->request_reset_from_channel(0);
-    EXPECT_FALSE(node->m_state.load() & Utils::NodeState::PROCESSED);
+    EXPECT_FALSE(node->m_state.load() & Nodes::NodeState::PROCESSED);
 
     MayaFlux::unregister_audio_node(node);
 }

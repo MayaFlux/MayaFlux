@@ -630,7 +630,7 @@ void BufferPipeline::process_operation(BufferOperation& op, uint64_t cycle)
             MF_ERROR(Journal::Component::Kriya,
                 Journal::Context::CoroutineScheduling,
                 "Unknown operation type in pipeline : {} : {}",
-                Utils::enum_to_string(op.get_type()), std::to_string(static_cast<int>(op.get_type())));
+                Reflect::enum_to_string(op.get_type()), std::to_string(static_cast<int>(op.get_type())));
             break;
         }
     } catch (const std::exception& e) {

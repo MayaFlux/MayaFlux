@@ -58,7 +58,7 @@ public:
      */
     [[nodiscard]] std::string get_transformer_name() const override
     {
-        return std::string("SpectralTransformer_").append(Utils::enum_to_string(m_operation));
+        return std::string("SpectralTransformer_").append(Reflect::enum_to_string(m_operation));
     }
 
 protected:
@@ -236,7 +236,7 @@ protected:
                 return;
             }
             if (auto str_result = safe_any_cast<std::string>(value)) {
-                if (auto op_enum = Utils::string_to_enum_case_insensitive<SpectralOperation>(*str_result.value)) {
+                if (auto op_enum = Reflect::string_to_enum_case_insensitive<SpectralOperation>(*str_result.value)) {
                     m_operation = *op_enum;
                     return;
                 }

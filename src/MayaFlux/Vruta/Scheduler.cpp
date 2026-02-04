@@ -1,7 +1,5 @@
 #include "Scheduler.hpp"
 
-#include "MayaFlux/Utils.hpp"
-
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Vruta {
@@ -16,10 +14,10 @@ TaskScheduler::TaskScheduler(uint32_t default_sample_rate, uint32_t default_fram
     ensure_domain(ProcessingToken::ON_DEMAND, 1);
 }
 
-void TaskScheduler::add_task(std::shared_ptr<Routine> routine, const std::string& name, bool initialize)
+void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std::string& name, bool initialize)
 {
     if (!routine) {
-        std::cerr << "Failed to initiate routine\n;\t >> Exiting" << std::endl;
+        MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling, "Failed to initiate routine; routine is null. Exiting add_task.");
         return;
     }
 
@@ -59,7 +57,7 @@ bool TaskScheduler::cancel_task(const std::string& name)
     return false;
 }
 
-bool TaskScheduler::cancel_task(std::shared_ptr<Routine> routine)
+bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
 {
     auto it = find_task_by_routine(routine);
     if (it != m_tasks.end()) {
@@ -111,7 +109,7 @@ void TaskScheduler::process_token(ProcessingToken token, uint64_t processing_uni
     }
 
     static uint64_t cleanup_counter = 0;
-    if (++cleanup_counter % (m_cleanup_threshold * 2) == 0) {
+    if (++cleanup_counter % (static_cast<uint64_t>(m_cleanup_threshold * 2)) == 0) {
         cleanup_completed_tasks();
     }
 }
@@ -152,12 +150,12 @@ const IClock& TaskScheduler::get_clock(ProcessingToken token) const
 uint64_t TaskScheduler::seconds_to_units(double seconds, ProcessingToken token) const
 {
     unsigned int rate = get_rate(token);
-    return Utils::seconds_to_units(seconds, rate);
+    return static_cast<uint64_t>(seconds * rate);
 }
 
 uint64_t TaskScheduler::seconds_to_samples(double seconds) const
 {
-    return Utils::seconds_to_samples(seconds, get_rate(ProcessingToken::SAMPLE_ACCURATE));
+    return static_cast<uint64_t>(seconds * get_rate(ProcessingToken::SAMPLE_ACCURATE));
 }
 
 uint64_t TaskScheduler::current_units(ProcessingToken token) const
@@ -178,7 +176,7 @@ unsigned int TaskScheduler::get_rate(ProcessingToken token) const
 
 bool TaskScheduler::has_active_tasks(ProcessingToken token) const
 {
-    return std::any_of(m_tasks.begin(), m_tasks.end(),
+    return std::ranges::any_of(m_tasks,
         [token](const TaskEntry& entry) {
             return entry.routine && entry.routine->is_active() && entry.routine->get_processing_token() == token;
         });
@@ -189,26 +187,26 @@ uint64_t TaskScheduler::get_next_task_id() const
     return m_next_task_id.fetch_add(1);
 }
 
-std::string TaskScheduler::auto_generate_name(std::shared_ptr<Routine> routine) const
+std::string TaskScheduler::auto_generate_name(const std::shared_ptr<Routine>& /*routine*/) const
 {
     return "task_" + std::to_string(get_next_task_id());
 }
 
 std::vector<TaskEntry>::iterator TaskScheduler::find_task_by_name(const std::string& name)
 {
-    return std::find_if(m_tasks.begin(), m_tasks.end(),
+    return std::ranges::find_if(m_tasks,
         [&name](const TaskEntry& entry) { return entry.name == name; });
 }
 
 std::vector<TaskEntry>::const_iterator TaskScheduler::find_task_by_name(const std::string& name) const
 {
-    return std::find_if(m_tasks.begin(), m_tasks.end(),
+    return std::ranges::find_if(m_tasks,
         [&name](const TaskEntry& entry) { return entry.name == name; });
 }
 
-std::vector<TaskEntry>::iterator TaskScheduler::find_task_by_routine(std::shared_ptr<Routine> routine)
+std::vector<TaskEntry>::iterator TaskScheduler::find_task_by_routine(const std::shared_ptr<Routine>& routine)
 {
-    return std::find_if(m_tasks.begin(), m_tasks.end(),
+    return std::ranges::find_if(m_tasks,
         [&routine](const TaskEntry& entry) { return entry.routine == routine; });
 }
 
@@ -237,15 +235,11 @@ void TaskScheduler::ensure_domain(ProcessingToken token, unsigned int rate)
         unsigned int domain_rate = (rate > 0) ? rate : get_default_rate(token);
 
         switch (token) {
-        case ProcessingToken::SAMPLE_ACCURATE:
-            m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
-            break;
         case ProcessingToken::FRAME_ACCURATE:
-            m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
+            m_token_clocks[token] = std::make_unique<FrameClock>(domain_rate);
             break;
+        case ProcessingToken::SAMPLE_ACCURATE:
         case ProcessingToken::ON_DEMAND:
-            m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
-            break;
         default:
             m_token_clocks[token] = std::make_unique<SampleClock>(domain_rate);
             break;
@@ -298,7 +292,7 @@ void TaskScheduler::cleanup_completed_tasks()
         m_tasks.end());
 }
 
-bool TaskScheduler::initialize_routine_state(std::shared_ptr<Routine> routine, ProcessingToken token)
+bool TaskScheduler::initialize_routine_state(const std::shared_ptr<Routine>& routine, ProcessingToken token)
 {
     if (!routine) {
         return false;
@@ -328,7 +322,7 @@ void TaskScheduler::resume_all_tasks()
 {
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
-            bool* was_auto_resume = entry.routine->get_state<bool>("was_auto_resume");
+            auto was_auto_resume = entry.routine->get_state<bool>("was_auto_resume");
             if (was_auto_resume) {
                 entry.routine->set_auto_resume(*was_auto_resume);
             } else {

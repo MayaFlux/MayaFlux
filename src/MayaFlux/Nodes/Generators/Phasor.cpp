@@ -91,11 +91,11 @@ double Phasor::process_sample(double input)
     if (m_frequency_modulator) {
         atomic_inc_modulator_count(m_frequency_modulator->m_modulator_count, 1);
         uint32_t state = m_frequency_modulator->m_state.load();
-        if (state & Utils::NodeState::PROCESSED) {
+        if (state & NodeState::PROCESSED) {
             effective_freq += m_frequency_modulator->get_last_output();
         } else {
             effective_freq = m_frequency_modulator->process_sample(0.F);
-            atomic_add_flag(m_frequency_modulator->m_state, Utils::NodeState::PROCESSED);
+            atomic_add_flag(m_frequency_modulator->m_state, NodeState::PROCESSED);
         }
 
         update_phase_increment(effective_freq);
@@ -106,11 +106,11 @@ double Phasor::process_sample(double input)
     if (m_amplitude_modulator) {
         atomic_inc_modulator_count(m_amplitude_modulator->m_modulator_count, 1);
         uint32_t state = m_amplitude_modulator->m_state.load();
-        if (state & Utils::NodeState::PROCESSED) {
+        if (state & NodeState::PROCESSED) {
             output *= m_amplitude_modulator->get_last_output();
         } else {
             output *= m_amplitude_modulator->process_sample(0.F);
-            atomic_add_flag(m_amplitude_modulator->m_state, Utils::NodeState::PROCESSED);
+            atomic_add_flag(m_amplitude_modulator->m_state, NodeState::PROCESSED);
         }
     }
 

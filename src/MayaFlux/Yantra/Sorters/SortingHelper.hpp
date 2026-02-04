@@ -6,7 +6,7 @@
 
 #include "UniversalSorter.hpp"
 
-#include "MayaFlux/Parallel.hpp"
+#include "MayaFlux/Transitive/Parallel/Execution.hpp"
 
 /**
  * @file SortingHelpers.hpp

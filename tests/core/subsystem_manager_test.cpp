@@ -106,7 +106,7 @@ TEST_F(SubsystemManagerTest, AudioSubsystemCreation)
     EXPECT_FALSE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
 
     EXPECT_NO_THROW({
-        subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+        subsystem_manager->create_audio_subsystem(stream_info);
     });
 
     EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
@@ -139,7 +139,7 @@ TEST_F(SubsystemManagerTest, AudioSubsystemWithCustomConfiguration)
     custom_stream.priority = Core::GlobalStreamInfo::StreamPriority::REALTIME;
 
     EXPECT_NO_THROW({
-        subsystem_manager->create_audio_subsystem(custom_stream, Utils::AudioBackendType::RTAUDIO);
+        subsystem_manager->create_audio_subsystem(custom_stream);
     });
 
     auto audio_subsystem = subsystem_manager->get_audio_subsystem();
@@ -160,7 +160,7 @@ TEST_F(SubsystemManagerTest, SubsystemLifecycleManagement)
     subsystem_manager = std::make_unique<Core::SubsystemManager>(
         node_graph_manager, buffer_manager, task_scheduler);
 
-    subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+    subsystem_manager->create_audio_subsystem(stream_info);
 
     auto audio_subsystem = subsystem_manager->get_audio_subsystem();
     ASSERT_NE(audio_subsystem, nullptr);
@@ -187,7 +187,7 @@ TEST_F(SubsystemManagerTest, ProcessHookRegistration)
     subsystem_manager = std::make_unique<Core::SubsystemManager>(
         node_graph_manager, buffer_manager, task_scheduler);
 
-    subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+    subsystem_manager->create_audio_subsystem(stream_info);
 
     int pre_hook_count = 0;
     int post_hook_count = 0;
@@ -227,7 +227,7 @@ TEST_F(SubsystemManagerTest, ProcessHookUnregistration)
     subsystem_manager = std::make_unique<Core::SubsystemManager>(
         node_graph_manager, buffer_manager, task_scheduler);
 
-    subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+    subsystem_manager->create_audio_subsystem(stream_info);
 
     int hook_count = 0;
 
@@ -265,7 +265,7 @@ TEST_F(SubsystemManagerTest, CrossAccessPermissions)
     subsystem_manager = std::make_unique<Core::SubsystemManager>(
         node_graph_manager, buffer_manager, task_scheduler);
 
-    subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+    subsystem_manager->create_audio_subsystem(stream_info);
 
     EXPECT_NO_THROW({
         subsystem_manager->allow_cross_access(
@@ -288,7 +288,7 @@ TEST_F(SubsystemManagerTest, CombinedTokenOperations)
     subsystem_manager = std::make_unique<Core::SubsystemManager>(
         node_graph_manager, buffer_manager, task_scheduler);
 
-    subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+    subsystem_manager->create_audio_subsystem(stream_info);
 
     Core::SubsystemTokens audio_tokens = {
         Buffers::ProcessingToken::AUDIO_BACKEND,
@@ -328,7 +328,7 @@ TEST_F(SubsystemManagerTest, SubsystemRemoval)
     subsystem_manager = std::make_unique<Core::SubsystemManager>(
         node_graph_manager, buffer_manager, task_scheduler);
 
-    subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+    subsystem_manager->create_audio_subsystem(stream_info);
     EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
 
     auto audio_subsystem = subsystem_manager->get_audio_subsystem();
@@ -350,7 +350,7 @@ TEST_F(SubsystemManagerTest, ManagerShutdown)
     subsystem_manager = std::make_unique<Core::SubsystemManager>(
         node_graph_manager, buffer_manager, task_scheduler);
 
-    subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+    subsystem_manager->create_audio_subsystem(stream_info);
 
     auto audio_subsystem = subsystem_manager->get_audio_subsystem();
     ASSERT_NE(audio_subsystem, nullptr);
@@ -397,7 +397,7 @@ TEST_F(SubsystemManagerTest, DuplicateSubsystemCreation)
     subsystem_manager = std::make_unique<Core::SubsystemManager>(
         node_graph_manager, buffer_manager, task_scheduler);
 
-    subsystem_manager->create_audio_subsystem(stream_info, Utils::AudioBackendType::RTAUDIO);
+    subsystem_manager->create_audio_subsystem(stream_info);
     EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));
 
     auto first_subsystem = subsystem_manager->get_audio_subsystem();
@@ -407,7 +407,7 @@ TEST_F(SubsystemManagerTest, DuplicateSubsystemCreation)
     modified_stream.sample_rate = 44100;
 
     EXPECT_NO_THROW({
-        subsystem_manager->create_audio_subsystem(modified_stream, Utils::AudioBackendType::RTAUDIO);
+        subsystem_manager->create_audio_subsystem(modified_stream);
     });
 
     EXPECT_TRUE(subsystem_manager->has_subsystem(Core::SubsystemType::AUDIO));

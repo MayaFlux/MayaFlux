@@ -1,6 +1,8 @@
 #pragma once
 #include "Generator.hpp"
 
+#include "MayaFlux/Kinesis/Stochastic.hpp"
+
 #include <random>
 
 namespace MayaFlux::Nodes::Generator::Stochastics {
@@ -37,7 +39,7 @@ public:
      * stochastic generator's current state, including its most recent output
      * value and all parameters that define its statistical behavior.
      */
-    StochasticContext(double value, Utils::distribution type, double amplitude,
+    StochasticContext(double value, Kinesis::distribution type, double amplitude,
         double range_start, double range_end, double normal_spread)
         : NodeContext(value, typeid(StochasticContext).name())
         , distribution_type(type)
@@ -55,7 +57,7 @@ public:
      * generator (uniform, normal, exponential, etc.). This determines the
      * fundamental statistical properties of the generated sequence.
      */
-    Utils::distribution distribution_type;
+    Kinesis::distribution distribution_type;
 
     /**
      * @brief Current amplitude scaling factor
@@ -85,7 +87,7 @@ class MAYAFLUX_API StochasticContextGpu : public StochasticContext, public GpuVe
 public:
     StochasticContextGpu(
         double value,
-        Utils::distribution type,
+        Kinesis::distribution type,
         double amplitude,
         double range_start,
         double range_end,
@@ -135,7 +137,7 @@ public:
      * The generator is initialized with entropy from the system's
      * random device for non-deterministic behavior across program executions.
      */
-    Random(Utils::distribution type = Utils::distribution::UNIFORM);
+    Random(Kinesis::distribution type = Kinesis::distribution::UNIFORM);
 
     /**
      * @brief Virtual destructor
@@ -149,7 +151,7 @@ public:
      * This allows dynamic reconfiguration of the stochastic behavior,
      * enabling real-time transformation of the generator's mathematical properties.
      */
-    inline void set_type(Utils::distribution type)
+    inline void set_type(Kinesis::distribution type)
     {
         m_type = type;
     }
@@ -322,7 +324,7 @@ private:
     /**
      * @brief Current probability distribution algorithm
      */
-    Utils::distribution m_type;
+    Kinesis::distribution m_type;
 
     /**
      * @brief Lower bound of the current output range

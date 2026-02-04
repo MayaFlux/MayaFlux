@@ -89,8 +89,8 @@ void settings() {
     auto& graph = MayaFlux::Config::get_graph_config();
 
     // How nodes handle connections (usually leave as default)
-    // graph.chain_semantics = MayaFlux::Utils::NodeChainSemantics::REPLACE_TARGET;
-    // graph.binary_op_semantics = MayaFlux::Utils::NodeBinaryOpSemantics::REPLACE;
+    // graph.chain_semantics = MayaFlux::NodeChainSemantics::REPLACE_TARGET;
+    // graph.binary_op_semantics = MayaFlux::NodeBinaryOpSemantics::REPLACE;
 }
 ```
 

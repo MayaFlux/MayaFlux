@@ -21,7 +21,7 @@ void PolynomialProcessor::process_span(std::span<double> data)
 
     const auto& state = m_polynomial->m_state.load();
 
-    if (state == Utils::NodeState::INACTIVE) {
+    if (state == Nodes::NodeState::INACTIVE) {
         for (double& i : data) {
             i = m_polynomial->process_sample(i);
         }

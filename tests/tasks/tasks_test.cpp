@@ -205,18 +205,18 @@ TEST_F(TasksTest, ActionTokens)
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
     auto node_token = Kriya::ActionToken(sine);
 
-    EXPECT_EQ(node_token.type, Utils::ActionType::NODE);
+    EXPECT_EQ(node_token.type, Kriya::ActionType::NODE);
     EXPECT_EQ(node_token.node, sine);
 
     auto time_token = Kriya::ActionToken(0.5);
 
-    EXPECT_EQ(time_token.type, Utils::ActionType::TIME);
+    EXPECT_EQ(time_token.type, Kriya::ActionType::TIME);
     EXPECT_DOUBLE_EQ(time_token.seconds, 0.5);
 
     bool func_called = false;
     auto func_token = Kriya::ActionToken([&func_called]() { func_called = true; });
 
-    EXPECT_EQ(func_token.type, Utils::ActionType::FUNCTION);
+    EXPECT_EQ(func_token.type, Kriya::ActionType::FUNCTION);
     EXPECT_FALSE(func_called);
 
     func_token.func();

@@ -5,15 +5,15 @@ namespace MayaFlux::Nodes::Generator {
 void Generator::enable_mock_process(bool mock_process)
 {
     if (mock_process) {
-        atomic_add_flag(m_state, Utils::NodeState::MOCK_PROCESS);
+        atomic_add_flag(m_state, NodeState::MOCK_PROCESS);
     } else {
-        atomic_remove_flag(m_state, Utils::NodeState::MOCK_PROCESS);
+        atomic_remove_flag(m_state, NodeState::MOCK_PROCESS);
     }
 }
 
 bool Generator::should_mock_process() const
 {
-    return m_state.load() & Utils::NodeState::MOCK_PROCESS;
+    return m_state.load() & NodeState::MOCK_PROCESS;
 }
 
 void Generator::update_context(double value)

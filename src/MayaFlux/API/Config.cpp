@@ -14,14 +14,7 @@ bool is_engine_initialized()
 
 namespace MayaFlux::Config {
 
-GraphConfig graph_config;
-NodeConfig node_config;
-
-GraphConfig::GraphConfig()
-    : chain_semantics(Utils::NodeChainSemantics::REPLACE_TARGET)
-    , binary_op_semantics(Utils::NodeBinaryOpSemantics::REPLACE)
-{
-}
+Nodes::NodeConfig node_config;
 
 Core::GlobalStreamInfo& get_global_stream_info()
 {
@@ -47,9 +40,7 @@ Core::GlobalInputConfig& get_global_input_config()
     return get_context().get_input_config();
 }
 
-GraphConfig& get_graph_config() { return graph_config; }
-
-NodeConfig& get_node_config() { return node_config; }
+Nodes::NodeConfig& get_node_config() { return node_config; }
 
 uint32_t get_sample_rate()
 {

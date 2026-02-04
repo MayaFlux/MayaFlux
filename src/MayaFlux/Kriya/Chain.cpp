@@ -52,19 +52,19 @@ void EventChain::start()
 }
 
 ActionToken::ActionToken(std::shared_ptr<Nodes::Node> _node)
-    : type(Utils::ActionType::NODE)
+    : type(ActionType::NODE)
     , node(std::move(_node))
 {
 }
 
 ActionToken::ActionToken(double _seconds)
-    : type(Utils::ActionType::TIME)
+    : type(ActionType::TIME)
     , seconds(_seconds)
 {
 }
 
 ActionToken::ActionToken(std::function<void()> _func)
-    : type(Utils::ActionType::FUNCTION)
+    : type(ActionType::FUNCTION)
     , func(std::move(_func))
 {
 }
@@ -86,16 +86,16 @@ void Sequence::execute(const std::shared_ptr<Nodes::NodeGraphManager>& node_mana
     double accumulated_time = 0.F;
 
     for (const auto& token : tokens) {
-        if (token.type == Utils::ActionType::NODE) {
+        if (token.type == ActionType::NODE) {
             chain.then([node = token.node, node_manager]() {
                 auto& root = node_manager->get_root_node(node_token, 0);
                 root.register_node(node);
             },
                 accumulated_time);
             accumulated_time = 0.F;
-        } else if (token.type == Utils::ActionType::TIME) {
+        } else if (token.type == ActionType::TIME) {
             accumulated_time += token.seconds;
-        } else if (token.type == Utils::ActionType::FUNCTION) {
+        } else if (token.type == ActionType::FUNCTION) {
             chain.then(token.func, accumulated_time);
             accumulated_time = 0.F;
         }

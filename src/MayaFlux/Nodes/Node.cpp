@@ -90,7 +90,7 @@ void Node::reset_processed_state()
 
 void Node::reset_processed_state_internal()
 {
-    atomic_remove_flag(m_state, Utils::NodeState::PROCESSED);
+    atomic_remove_flag(m_state, NodeState::PROCESSED);
 }
 
 bool Node::try_claim_snapshot_context(uint64_t context_id)
@@ -136,7 +136,7 @@ bool Node::mark_buffer_processed()
     uint32_t count = m_buffer_count.load(std::memory_order_acquire);
     auto state = m_state.load(std::memory_order_acquire);
 
-    if (count >= 1 && state == Utils::NodeState::INACTIVE) {
+    if (count >= 1 && state == NodeState::INACTIVE) {
         if (count == 1) {
             return true;
         }

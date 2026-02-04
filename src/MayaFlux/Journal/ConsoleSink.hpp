@@ -73,11 +73,11 @@ private:
             }
         }
 
-        os << "[" << Utils::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
+        os << "[" << Reflect::enum_to_string(entry.severity) << "]" << AnsiColors::Reset;
 
-        os << AnsiColors::Magenta << "[" << Utils::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
+        os << AnsiColors::Magenta << "[" << Reflect::enum_to_string(entry.component) << "]" << AnsiColors::Reset;
 
-        os << AnsiColors::Cyan << "[" << Utils::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
+        os << AnsiColors::Cyan << "[" << Reflect::enum_to_string(entry.context) << "]" << AnsiColors::Reset << " ";
 
         if constexpr (std::is_same_v<Entry, JournalEntry>) {
             os << entry.message;

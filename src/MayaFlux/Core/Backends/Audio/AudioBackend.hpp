@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/Core/GlobalStreamInfo.hpp"
-#include "MayaFlux/Utils.hpp"
 
 namespace MayaFlux::Core {
 class AudioDevice;
@@ -237,7 +236,7 @@ public:
      * selection and initialization.
      */
     static std::unique_ptr<IAudioBackend> create_backend(
-        Utils::AudioBackendType type,
+        Core::AudioBackendType type,
         std::optional<GlobalStreamInfo::AudioApi> api_preference = std::nullopt);
 };
 }

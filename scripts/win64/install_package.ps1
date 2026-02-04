@@ -249,7 +249,6 @@ function Setup-And-Install-Vcpkg {
     $vcpkgRoot = $env:VCPKG_ROOT
     $defaultRoot = 'C:\vcpkg'
 
-    # Install vcpkg if missing
     if (-not $vcpkgRoot -or -not (Test-Path $vcpkgRoot)) {
         $vcpkgRoot = $defaultRoot
         Write-Host "  vcpkg not found. Installing to $vcpkgRoot..." -ForegroundColor Yellow
@@ -261,36 +260,52 @@ function Setup-And-Install-Vcpkg {
 
         Push-Location $vcpkgRoot
         try {
-            Write-Host "  Bootstrapping vcpkg..." -ForegroundColor Yellow
-            .\bootstrap-vcpkg.bat
-            if ($LASTEXITCODE -ne 0) { throw "vcpkg bootstrap failed" }
+            Write-Host "  Bootstrapping vcpkg (this may take a few minutes)..." -ForegroundColor Yellow
+            
+            & "$vcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
+            
+            if ($LASTEXITCODE -ne 0) {
+                throw "vcpkg bootstrap failed with exit code $LASTEXITCODE"
+            }
         }
         finally {
             Pop-Location
         }
 
+        $vcpkgExe = Join-Path $vcpkgRoot "vcpkg.exe"
+        if (-not (Test-Path $vcpkgExe)) {
+            throw "vcpkg.exe not found after bootstrap at $vcpkgExe"
+        }
+
+        [Environment]::SetEnvironmentVariable("VCPKG_DISABLE_METRICS", "1", "Machine")
         [Environment]::SetEnvironmentVariable("VCPKG_ROOT", $vcpkgRoot, "Machine")
         $env:VCPKG_ROOT = $vcpkgRoot
+        $env:VCPKG_DISABLE_METRICS = "1"
         Write-Host "  [OK] VCPKG_ROOT set to $vcpkgRoot" -ForegroundColor Green
     }
     else {
         Write-Host "  Using existing VCPKG_ROOT: $vcpkgRoot" -ForegroundColor Green
     }
 
-    # Upgrade vcpkg and install packages
     Push-Location $vcpkgRoot
     try {
+        $vcpkgExe = Join-Path $vcpkgRoot "vcpkg.exe"
+        if (-not (Test-Path $vcpkgExe)) {
+            throw "vcpkg.exe not found at $vcpkgExe - bootstrap may have failed"
+        }
+        
         Write-Host "  Upgrading vcpkg (git pull + bootstrap)..." -ForegroundColor Yellow
         git pull origin master --quiet
-        .\bootstrap-vcpkg.bat
+        & "$vcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
 
-        $vcpkgExe = if (Test-Path "vcpkg.exe") { "vcpkg.exe" } else { "vcpkg" }
         $triplet = "x64-windows"
 
         foreach ($entry in $VcpkgPackages.GetEnumerator()) {
             $port = $entry.Key
             Write-Host "`n[$port] Installing $port`:$triplet ..." -ForegroundColor Cyan
+            
             & $vcpkgExe install "$port`:$triplet"
+            
             if ($LASTEXITCODE -ne 0) {
                 throw "vcpkg install failed for port: $port"
             }
@@ -301,7 +316,6 @@ function Setup-And-Install-Vcpkg {
         Pop-Location
     }
 
-    # Add standard vcpkg paths to system environment
     $instDir = Join-Path $vcpkgRoot "installed\$triplet"
     if (Test-Path $instDir) {
         $inc = Join-Path $instDir "include"
@@ -322,10 +336,8 @@ function Setup-And-Install-Vcpkg {
         Write-Host "  [OK] vcpkg paths added to INCLUDE/LIB/PATH" -ForegroundColor Green
     }
 
-    # Set CMAKE_TOOLCHAIN_FILE (recommended and sufficient for local + CI)
     $toolchainFile = Join-Path $vcpkgRoot "scripts\buildsystems\vcpkg.cmake"
     if (Test-Path $toolchainFile) {
-        # Convert backslashes to forward slashes so CMake doesn't treat them as escape sequences
         $toolchainFile = $toolchainFile -replace '\\', '/'
         
         [Environment]::SetEnvironmentVariable("MAYAFLUX_TOOLCHAIN_FILE", $toolchainFile, "Machine")
@@ -352,7 +364,42 @@ function Install-SystemTool($name, $config) {
     }
 
     Write-Host "  Installing via winget..." -ForegroundColor Yellow
-    winget install --id $config.WingetId -e --accept-package-agreements --accept-source-agreements --silent
+    
+    $wingetSourceName = $null
+    try {
+        $sources = winget source list 2>&1 | Out-String
+        
+        $possibleNames = @("winget", "Microsoft.Winget.Source", "Microsoft Store")
+        foreach ($sourceName in $possibleNames) {
+            if ($sources -match [regex]::Escape($sourceName)) {
+                $wingetSourceName = $sourceName
+                break
+            }
+        }
+    } catch {
+        Write-Host "  [WARN] Could not detect winget source, using default" -ForegroundColor Yellow
+    }
+
+    $wingetArgs = @(
+        "install",
+        "--id", $config.WingetId,
+        "--exact",
+        "--accept-package-agreements",
+        "--accept-source-agreements",
+        "--silent"
+    )
+    
+    if ($wingetSourceName -and $wingetSourceName -ne "msstore") {
+        $wingetArgs += @("--source", $wingetSourceName)
+        Write-Host "  Using source: $wingetSourceName" -ForegroundColor Gray
+    }
+
+    $result = & winget @wingetArgs 2>&1
+    
+    if ($result) {
+        $result | Where-Object { $_ -notmatch "^\s*[-/\\|]" } | 
+                  ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+    }
 
     $isInstalled = if ($config.Verify -like '*\*' -or $config.Verify -like '*:*') {
         Test-Path $config.Verify
@@ -738,6 +785,59 @@ if (-not (Test-Command "winget")) {
     Write-Error "Winget is required. Please install App Installer from Microsoft Store."
     exit 1
 }
+
+Write-Host "`n=== Checking C++ Compiler ===" -ForegroundColor Magenta
+
+$vsBasePaths = @(
+    'C:\Program Files\Microsoft Visual Studio',
+    'C:\Program Files (x86)\Microsoft Visual Studio'
+)
+
+$vsYears = @('2022', '2019', '2017')
+$vsEditions = @('BuildTools', 'Community', 'Professional', 'Enterprise')
+
+$foundCompiler = $false
+
+foreach ($basePath in $vsBasePaths) {
+    if (-not (Test-Path $basePath)) { continue }
+    
+    foreach ($year in $vsYears) {
+        foreach ($edition in $vsEditions) {
+            $vcToolsPath = Join-Path $basePath "$year\$edition\VC\Tools\MSVC"
+            if (Test-Path $vcToolsPath) {
+                $foundCompiler = $true
+                Write-Host "  [OK] Found Visual Studio $year $edition" -ForegroundColor Green
+                break
+            }
+        }
+        if ($foundCompiler) { break }
+    }
+    if ($foundCompiler) { break }
+}
+
+if (-not $foundCompiler) {
+    Write-Host ""
+    Write-Host "================================================================" -ForegroundColor Red
+    Write-Host "  ERROR: Visual Studio or Build Tools Required" -ForegroundColor Red
+    Write-Host "================================================================" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "MayaFlux requires a C++ compiler to build dependencies." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Please install ONE of the following:" -ForegroundColor Yellow
+    Write-Host "  1. Visual Studio 2022 (Community/Professional/Enterprise)" -ForegroundColor Cyan
+    Write-Host "     https://visualstudio.microsoft.com/downloads/" -ForegroundColor Cyan
+    Write-Host "     - Select 'Desktop development with C++' workload" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  2. Visual Studio Build Tools 2022 (lightweight)" -ForegroundColor Cyan
+    Write-Host "     https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022" -ForegroundColor Cyan
+    Write-Host "     - Select 'C++ build tools' workload" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "After installation, restart this installer." -ForegroundColor Yellow
+    Write-Host ""
+    throw "C++ compiler not found - installation cannot continue"
+}
+
+Write-Host "  [OK] C++ compiler found" -ForegroundColor Green
 
 # Install system tools first
 Write-Host "`n=== System Tools ===" -ForegroundColor Magenta

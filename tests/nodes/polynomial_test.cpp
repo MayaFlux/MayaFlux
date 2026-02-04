@@ -446,14 +446,14 @@ TEST_F(PolynomialProcessorTest, ExternalPolynomialStateManagement)
     double expected_value = 2.0 * 0.5 * 0.5 + 3.0 * 0.5 + 1.0; // 2.25
 
     double processed_value = external_polynomial->process_sample(0.5);
-    Nodes::atomic_add_flag(external_polynomial->m_state, Utils::NodeState::PROCESSED);
+    Nodes::atomic_add_flag(external_polynomial->m_state, Nodes::NodeState::PROCESSED);
 
     processor->process(test_buffer);
 
     EXPECT_DOUBLE_EQ(test_buffer->get_data()[0], processed_value);
     EXPECT_DOUBLE_EQ(processed_value, expected_value);
 
-    EXPECT_TRUE(external_polynomial->m_state.load() & Utils::NodeState::PROCESSED);
+    EXPECT_TRUE(external_polynomial->m_state.load() & Nodes::NodeState::PROCESSED);
 }
 
 TEST_F(PolynomialProcessorTest, SampleByModeInternal)

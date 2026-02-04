@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ExtractionHelper.hpp"
-#include "MayaFlux/EnumUtils.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 #include "UniversalExtractor.hpp"
 
 #include "MayaFlux/Yantra/OperationSpec/OperationHelper.hpp"
@@ -96,7 +96,7 @@ public:
      */
     [[nodiscard]] std::vector<std::string> get_available_methods() const override
     {
-        return Utils::get_enum_names_lowercase<ExtractionMethod>();
+        return Reflect::get_enum_names_lowercase<ExtractionMethod>();
     }
 
     /**
@@ -167,7 +167,7 @@ public:
      */
     static std::string method_to_string(ExtractionMethod method)
     {
-        return Utils::enum_to_lowercase_string(method);
+        return Reflect::enum_to_lowercase_string(method);
     }
 
     /**
@@ -177,7 +177,7 @@ public:
      */
     static ExtractionMethod string_to_method(const std::string& str)
     {
-        return Utils::string_to_enum_or_throw_case_insensitive<ExtractionMethod>(str, "ExtractionMethod");
+        return Reflect::string_to_enum_or_throw_case_insensitive<ExtractionMethod>(str, "ExtractionMethod");
     }
 
     /**
