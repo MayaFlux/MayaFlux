@@ -44,6 +44,7 @@ enum class Component : uint8_t {
     IO, ///< Networking, file handling, streaming
     Registry, ///< Backend and service registry
     Portal, ///< High-level user-facing API layer
+    Kinesis, ///< General mathematical and physics algorithns.
     USER, ///< User code, scripts, plugins
     Unknown
 };
