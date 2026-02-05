@@ -320,15 +320,15 @@ TEST_F(EngineTest, StochasticEngineIntegration)
     EXPECT_GE(uniform, -1.0);
     EXPECT_LE(uniform, 1.0);
 
-    rng->set_type(Kinesis::distribution::NORMAL);
+    rng->set_type(Kinesis::Stochastic::Algorithm::NORMAL);
     std::vector<double> samples = rng->random_array(0.0, 1.0, 100);
     EXPECT_EQ(samples.size(), 100);
 
-    rng->set_type(Kinesis::distribution::EXPONENTIAL);
+    rng->set_type(Kinesis::Stochastic::Algorithm::EXPONENTIAL);
     double exp_sample = rng->random_sample(0.0, 1.0);
     EXPECT_GE(exp_sample, 0.0);
 
-    rng->set_type(Kinesis::distribution::POISSON);
+    rng->set_type(Kinesis::Stochastic::Algorithm::POISSON);
     double pois_sample = rng->random_sample(0.0, 10.0);
     EXPECT_GE(pois_sample, 0.0);
 }

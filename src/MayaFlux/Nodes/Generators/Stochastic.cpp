@@ -2,7 +2,7 @@
 
 namespace MayaFlux::Nodes::Generator::Stochastics {
 
-Random::Random(Kinesis::distribution type)
+Random::Random(Kinesis::Stochastic::Algorithm type)
     : m_random_engine(std::random_device {}())
     , m_current_start(-1.0F)
     , m_current_end(1.0F)
@@ -63,18 +63,18 @@ std::vector<double> Random::process_batch(unsigned int num_samples)
 double Random::generate_distributed_sample()
 {
     switch (m_type) {
-    [[likely]] case Kinesis::distribution::UNIFORM:
+    [[likely]] case Kinesis::Stochastic::Algorithm::UNIFORM:
         return m_current_start + fast_uniform() * (m_current_end - m_current_start);
 
-    case Kinesis::distribution::NORMAL:
+    case Kinesis::Stochastic::Algorithm::NORMAL:
         rebuild_distributions_if_needed();
         return m_normal_dist(m_random_engine);
 
-    case Kinesis::distribution::EXPONENTIAL:
+    case Kinesis::Stochastic::Algorithm::EXPONENTIAL:
         rebuild_distributions_if_needed();
         return m_exponential_dist(m_random_engine);
 
-    case Kinesis::distribution::POISSON: {
+    case Kinesis::Stochastic::Algorithm::POISSON: {
         std::poisson_distribution<int> dist(
             static_cast<int>(m_current_end - m_current_start));
         return static_cast<double>(dist(m_random_engine));
@@ -86,9 +86,9 @@ double Random::generate_distributed_sample()
 
 double Random::transform_sample(double sample, double start, double end) const
 {
-    if (m_type == Kinesis::distribution::NORMAL) {
+    if (m_type == Kinesis::Stochastic::Algorithm::NORMAL) {
         sample = std::max(start, std::min(end, sample));
-    } else if (m_type == Kinesis::distribution::EXPONENTIAL) {
+    } else if (m_type == Kinesis::Stochastic::Algorithm::EXPONENTIAL) {
         sample /= end;
         sample = start + sample * (end - start);
     }

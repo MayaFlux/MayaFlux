@@ -434,14 +434,14 @@ TEST_F(AudibleTest, NoiseGeneratorOutput)
     EXPECT_NO_THROW(node_graph->add_to_root(noise, Nodes::ProcessingToken::AUDIO_RATE));
 
     struct NoiseTest {
-        Kinesis::distribution type;
+        Kinesis::Stochastic::Algorithm type;
         std::string name;
     };
 
     std::vector<NoiseTest> noiseTypes = {
-        { Kinesis::distribution::UNIFORM, "Uniform" },
-        { Kinesis::distribution::NORMAL, "Normal (Gaussian)" },
-        { Kinesis::distribution::EXPONENTIAL, "Exponential" }
+        { Kinesis::Stochastic::Algorithm::UNIFORM, "Uniform" },
+        { Kinesis::Stochastic::Algorithm::NORMAL, "Normal (Gaussian)" },
+        { Kinesis::Stochastic::Algorithm::EXPONENTIAL, "Exponential" }
     };
 
     for (const auto& test : noiseTypes) {
