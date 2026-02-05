@@ -1,0 +1,18 @@
+<map id="MayaFlux::Buffers::RootAudioBuffer" name="MayaFlux::Buffers::RootAudioBuffer">
+<area shape="rect" id="Node000001" title="Top&#45;level aggregation buffer for computational data streams." alt="" coords="155,1864,357,2184"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="157,1177,355,1815"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="259,1829,259,1864,253,1864,253,1829"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer.html" title="Concrete audio implementation of the Buffer interface for double&#45;precision audio data." alt="" coords="5,556,208,1036"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="163,1049,191,1177,185,1178,158,1050"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="15,135,198,415"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="109,428,109,556,104,556,104,428"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="31,5,183,85"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="109,99,109,135,104,135,104,99"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1RootBuffer_1_1PendingBufferOp.html" title="Structure for storing pending buffer add/remove operations." alt="" coords="243,207,410,342"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="305,343,286,408,271,478,251,652,241,829,238,1002,240,1161,235,1161,232,1002,235,829,246,651,265,477,280,406,300,341"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="397,477,595,1115"/>
+<area shape="poly" id="edge8_Node000007_Node000006" title=" " alt="" coords="345,341,376,453,394,510,389,512,371,454,340,343"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="395,1098,357,1209,352,1207,390,1097"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="455,242,537,307"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="499,321,499,477,493,477,493,321"/>
+</map>

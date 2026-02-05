@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::RtAudioStream" name="MayaFlux::Core::RtAudioStream">
+<area shape="rect" id="Node000001" title="RtAudio implementation of the audio stream interface." alt="" coords="19,571,242,976"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1AudioStream.html" title="Manages digital audio data flow between the engine and hardware." alt="" coords="5,263,213,468"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,482,123,570,117,571,113,482"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo.html" title="Comprehensive configuration for digital audio stream processing." alt="" coords="238,223,477,508"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="280,510,252,560,248,557,276,507"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1ChannelConfig.html" title="Configuration for input or output data channels." alt="" coords="132,5,345,145"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="270,144,295,206,290,208,265,147"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1GlobalStreamInfo_1_1MidiConfig.html" title="Configuration for MIDI data channels." alt="" coords="369,25,583,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="458,126,424,209,420,206,453,124"/>
+</map>

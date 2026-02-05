@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::remove_audio_buffer" name="MayaFlux::Buffers::BufferAccessControl::remove_audio_buffer">
+<area shape="rect" id="Node000001" title="Removes an audio buffer from a token and channel." alt="" coords="5,77,173,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4d8b6658b8ba5a37086de5f4ddc07f88.html#a4d8b6658b8ba5a37086de5f4ddc07f88" title="Gets an existing audio unit without creating if missing (mutable)" alt="" coords="231,5,403,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,76,217,61,218,67,174,81"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_ab300ec63a12ad8cde8c5ef4e7092367b.html#ab300ec63a12ad8cde8c5ef4e7092367b" title=" " alt="" coords="221,85,412,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="174,102,208,102,208,107,174,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a4531a511fff4b519167f92818c4e6ed6.html#a4531a511fff4b519167f92818c4e6ed6" title="Checks if an audio unit exists for the given token." alt="" coords="229,149,404,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="174,129,218,143,216,148,173,134"/>
+</map>

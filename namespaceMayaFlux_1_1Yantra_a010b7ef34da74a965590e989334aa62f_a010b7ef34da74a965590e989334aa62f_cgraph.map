@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::process_spectral_windows" name="MayaFlux::Yantra::process_spectral_windows">
+<area shape="rect" id="Node000001" title="Common spectral processing helper to eliminate code duplication." alt="" coords="5,69,197,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_1_1Generator_a56b155fb3b0d4160662bbeb53337af17.html#a56b155fb3b0d4160662bbeb53337af17" title="Generate window coefficients using C++20 ranges." alt="" coords="245,69,453,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,87,232,87,232,92,198,92"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_1_1Generator_a16a1bc78ab4e1a3ab92c56e6daff615b.html#a16a1bc78ab4e1a3ab92c56e6daff615b" title="Creates a Blackman window function." alt="" coords="501,5,709,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="429,67,511,46,513,51,431,72"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_1_1Generator_a68aa44271e6ac1352b69108ff5e66aa7.html#a68aa44271e6ac1352b69108ff5e66aa7" title="Creates a Hamming window function." alt="" coords="501,69,709,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="453,87,488,87,488,92,453,92"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_1_1Generator_ab3e4ccd857b10a9f996ac2ce202bec00.html#ab3e4ccd857b10a9f996ac2ce202bec00" title="Creates a Hann window function." alt="" coords="501,133,709,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="431,107,513,127,511,133,429,112"/>
+</map>

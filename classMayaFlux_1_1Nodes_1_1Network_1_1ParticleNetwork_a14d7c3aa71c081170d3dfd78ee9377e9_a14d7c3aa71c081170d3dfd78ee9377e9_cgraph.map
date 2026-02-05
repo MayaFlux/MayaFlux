@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ParticleNetwork::handle_bounds" name="MayaFlux::Nodes::Network::ParticleNetwork::handle_bounds">
+<area shape="rect" id="Node000001" title="Handle boundary conditions." alt="" coords="5,13,244,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_a4e3583dce6d2f904fb3a96efa7b86aac.html#a4e3583dce6d2f904fb3a96efa7b86aac" title="Random position in bounds volume." alt="" coords="292,5,491,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,30,278,30,278,35,244,35"/>
+</map>

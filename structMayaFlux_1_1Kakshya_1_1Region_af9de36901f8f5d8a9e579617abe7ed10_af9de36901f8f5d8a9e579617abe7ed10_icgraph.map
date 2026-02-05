@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::Region::time_point" name="MayaFlux::Kakshya::Region::time_point">
+<area shape="rect" id="Node000001" title="Create a Region representing a single time point (e.g., a frame or sample)." alt="" coords="237,5,396,45"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1IO_1_1FileRegion_a3e60dc74e7f6385377e4b66bd154192f.html#a3e60dc74e7f6385377e4b66bd154192f" title="Convert this FileRegion to a Region for use in processing." alt="" coords="5,5,189,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,28,190,28,190,23,224,23"/>
+</map>

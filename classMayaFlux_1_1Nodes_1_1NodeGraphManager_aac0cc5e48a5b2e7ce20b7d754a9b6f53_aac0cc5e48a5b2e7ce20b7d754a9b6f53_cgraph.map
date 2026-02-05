@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::set_channel_mask" name="MayaFlux::Nodes::NodeGraphManager::set_channel_mask">
+<area shape="rect" id="Node000001" title="Adds the specified channel mask to a node&#39;s global registration." alt="" coords="5,5,221,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a7659ea2f416c5ebdd7beb68e93e98722.html#a7659ea2f416c5ebdd7beb68e93e98722" title="Registers a node globally if not already registered." alt="" coords="269,5,485,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,23,256,23,256,28,221,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab960be6ecd39c89e51248962d77f94ab.html#ab960be6ecd39c89e51248962d77f94ab" title="Checks if a node is registered with this manager." alt="" coords="533,5,749,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="485,23,520,23,520,28,485,28"/>
+</map>

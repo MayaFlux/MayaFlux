@@ -1,0 +1,25 @@
+var classMayaFlux_1_1Kakshya_1_1DynamicSoundStream =
+[
+    [ "DynamicSoundStream", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a500d7fec8f9e27a2ed8ca11cf8a017b0.html#a500d7fec8f9e27a2ed8ca11cf8a017b0", null ],
+    [ "create_expanded_data", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a6ee56fd9b5665418b0968ddb46ee17c7.html#a6ee56fd9b5665418b0968ddb46ee17c7", null ],
+    [ "disable_circular_buffer", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ab68f447003a3786f4d2add7eb52cd9c3.html#ab68f447003a3786f4d2add7eb52cd9c3", null ],
+    [ "enable_circular_buffer", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a9cfe8b08aab3f3a06d83844e3d0ac864.html#a9cfe8b08aab3f3a06d83844e3d0ac864", null ],
+    [ "ensure_capacity", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_aa4e4316022347f61b6ff80925a636ac4.html#aa4e4316022347f61b6ff80925a636ac4", null ],
+    [ "expand_to", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a76f02825c588ece2a442fa91655dd672.html#a76f02825c588ece2a442fa91655dd672", null ],
+    [ "get_auto_resize", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a7460847ecc05c7bf2eb4489467f1523d.html#a7460847ecc05c7bf2eb4489467f1523d", null ],
+    [ "get_channel_frames", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a2e13dea5e12628e12d63d9ca38474abe.html#a2e13dea5e12628e12d63d9ca38474abe", null ],
+    [ "get_channel_frames", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ac3d49a61e9bf001838b5528660d78fb2.html#ac3d49a61e9bf001838b5528660d78fb2", null ],
+    [ "get_circular_capacity", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a790729a50478ad7ba3b313b950fd2ae5.html#a790729a50478ad7ba3b313b950fd2ae5", null ],
+    [ "is_circular", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ac397487090435c525d1ad8a28e384f8b.html#ac397487090435c525d1ad8a28e384f8b", null ],
+    [ "read_frames", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ac6e06b13caf268f8a130a8127a4bd4c5.html#ac6e06b13caf268f8a130a8127a4bd4c5", null ],
+    [ "set_all_data", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ab6699b2bd18a8cce7d242a4b7bc27c8a.html#ab6699b2bd18a8cce7d242a4b7bc27c8a", null ],
+    [ "set_all_data", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_aaf9ca90c2eb538f3cd091adcc87bfad2.html#aaf9ca90c2eb538f3cd091adcc87bfad2", null ],
+    [ "set_auto_resize", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_abd01dbb8d4cf699d16c1281ed9eb0f1d.html#abd01dbb8d4cf699d16c1281ed9eb0f1d", null ],
+    [ "validate", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_acf923de17bc21ae89e1db4cdf7af3406.html#acf923de17bc21ae89e1db4cdf7af3406", null ],
+    [ "validate_single_channel", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a344f9b30afff0cc221faca44b262b9f1.html#a344f9b30afff0cc221faca44b262b9f1", null ],
+    [ "write_frames", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ade208ea2ca4a19384f898cc1a82d7ba2.html#ade208ea2ca4a19384f898cc1a82d7ba2", null ],
+    [ "write_frames", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_adbb6000f53051d841a016bc8f2cafc38.html#adbb6000f53051d841a016bc8f2cafc38", null ],
+    [ "m_auto_resize", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a4e6d2ac147fcd623fd14c4ac9f04d93a.html#a4e6d2ac147fcd623fd14c4ac9f04d93a", null ],
+    [ "m_circular_capacity", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_af01561c45af6e41bf6c26c7a7bc59110.html#af01561c45af6e41bf6c26c7a7bc59110", null ],
+    [ "m_is_circular", "classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a91e467f3a2237407fb48e9d701f4afdb.html#a91e467f3a2237407fb48e9d701f4afdb", null ]
+];

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::get_graphics_processing_chain" name="MayaFlux::Buffers::BufferAccessControl::get_graphics_processing_chain">
+<area shape="rect" id="Node000001" title="Gets the processing chain for a graphics token." alt="" coords="5,34,237,89"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Buffers_1_1RootGraphicsUnit_a597b382010fec9451fb95268033bc637.html#a597b382010fec9451fb95268033bc637" title=" " alt="" coords="285,5,492,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="237,43,271,38,272,44,238,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a70155d77198bd5159c5cf72c3682be0b.html#a70155d77198bd5159c5cf72c3682be0b" title="Gets or creates a root graphics unit for the specified token." alt="" coords="297,70,481,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,74,283,80,283,86,237,80"/>
+</map>

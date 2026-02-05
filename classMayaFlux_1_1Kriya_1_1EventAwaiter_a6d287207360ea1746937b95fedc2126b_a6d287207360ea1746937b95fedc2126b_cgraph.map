@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::EventAwaiter::await_suspend" name="MayaFlux::Kriya::EventAwaiter::await_suspend">
+<area shape="rect" id="Node000001" title="Suspend coroutine, register for event notification." alt="" coords="5,5,228,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1EventSource_a786a9bf4f59a9eb8d5c3ec5c83705f14.html#a786a9bf4f59a9eb8d5c3ec5c83705f14" title=" " alt="" coords="276,5,495,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,23,262,23,262,28,228,28"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::mix_with_gains" name="MayaFlux::mix_with_gains">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,99,160,139"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="208,41,423,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,97,219,82,221,87,161,102"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a7f9908e44c97d44ca091d25680f754af.html#a7f9908e44c97d44ca091d25680f754af" title=" " alt="" coords="225,106,406,131"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="161,116,211,116,211,121,161,121"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_ab683fce9f226f4cce9530824f595f3ba.html#ab683fce9f226f4cce9530824f595f3ba" title="Mix multiple data streams with specified gains." alt="" coords="238,156,393,196"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="161,135,225,151,224,156,160,140"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a619cf8d723774bd3554af2e67230fb10.html#a619cf8d723774bd3554af2e67230fb10" title="Convert variant to double span." alt="" coords="477,5,671,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="423,44,463,38,464,43,423,49"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ae302865851bb6340051d6bca19881848.html#ae302865851bb6340051d6bca19881848" title="Create DataVariant from Eigen matrix/vector." alt="" coords="471,70,677,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="423,74,457,78,457,84,423,79"/>
+</map>

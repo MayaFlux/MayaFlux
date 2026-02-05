@@ -1,0 +1,110 @@
+<map id="MayaFlux::internal::cleanup_engine" name="MayaFlux::internal::cleanup_engine">
+<area shape="rect" id="Node000001" title=" " alt="" coords="937,56,1081,96"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_afe8d554b31c372f2e0df38b03b51569a.html#afe8d554b31c372f2e0df38b03b51569a" title="Stops and cleans up the default engine." alt="" coords="300,13,419,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="923,72,419,33,419,27,924,67"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="719,107,889,147"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="925,100,886,109,885,104,923,94"/>
+<area shape="rect" id="Node000003" href="$main_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4.html#ae66f6b31b5ad750f1fe042a706a4e3d4" title=" " alt="" coords="85,91,139,117"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="298,44,267,53,141,97,139,92,266,48,296,39"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1Engine_afd59a3875597f3a7f239764e40104b6c.html#afd59a3875597f3a7f239764e40104b6c" title=" " alt="" coords="24,268,200,308"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="289,41,268,53,251,70,241,87,233,107,221,131,129,269,125,266,216,128,228,105,236,85,246,67,265,49,286,37"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1Engine_accfbaa8025794c86714f35593ff63dce.html#accfbaa8025794c86714f35593ff63dce" title="Move assignment operator." alt="" coords="24,5,200,45"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="286,28,200,28,200,23,286,23"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="500,694,671,719"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="793,161,594,695,589,693,788,159"/>
+<area shape="rect" id="Node000173" href="$namespaceMayaFlux_a7d2ef01625e07aeb15550318d3cfb708.html#a7d2ef01625e07aeb15550318d3cfb708" title="Initializes the default engine with default settings." alt="" coords="302,62,417,87"/>
+<area shape="poly" id="edge54_Node000006_Node000173" title=" " alt="" coords="704,111,670,105,534,90,417,81,417,76,534,85,671,100,705,105"/>
+<area shape="rect" id="Node000174" href="$namespaceMayaFlux_ab8f4eb25ff0c25b46cbc567c7ffe4ba2.html#ab8f4eb25ff0c25b46cbc567c7ffe4ba2" title="Initializes the default engine with specified stream and graphics info." alt="" coords="528,114,643,139"/>
+<area shape="poly" id="edge57_Node000006_Node000174" title=" " alt="" coords="705,129,643,129,643,124,705,124"/>
+<area shape="rect" id="Node000175" href="$namespaceMayaFlux_ac41db6c9fbaeff23de068dc98c30d331.html#ac41db6c9fbaeff23de068dc98c30d331" title="Initializes the default engine with specified parameters." alt="" coords="528,163,643,189"/>
+<area shape="poly" id="edge58_Node000006_Node000175" title=" " alt="" coords="706,152,643,166,642,161,705,146"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_aeb6ac35d8d260d49b82cf9696396480a.html#aeb6ac35d8d260d49b82cf9696396480a" title="Blocks launcher until user input (optional convenience function)" alt="" coords="294,111,425,137"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="579,681,565,567,538,407,521,326,500,252,476,192,450,151,424,135,426,130,454,147,481,189,505,251,526,325,544,406,570,566,584,680"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_aa1955a73119c9e977f59ab989e74597e.html#aa1955a73119c9e977f59ab989e74597e" title="Creates a new buffer pipeline instance." alt="" coords="22,597,202,637"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="564,685,517,637,486,613,451,596,416,586,381,580,307,579,238,587,179,600,177,595,237,582,307,573,381,575,418,581,453,591,488,609,520,633,568,681"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_adbd735038cb59c42bd089be2299188df.html#adbd735038cb59c42bd089be2299188df" title="Gets the root node for a specific channel." alt="" coords="280,655,439,695"/>
+<area shape="poly" id="edge10_Node000007_Node000010" title=" " alt="" coords="486,695,439,689,439,683,487,690"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_ab62f030499d58eb3e1d5c43ca3bc230e.html#ab62f030499d58eb3e1d5c43ca3bc230e" title="Gets the buffer manager from the default engine." alt="" coords="279,1423,439,1463"/>
+<area shape="poly" id="edge11_Node000007_Node000011" title=" " alt="" coords="585,733,575,873,551,1076,534,1181,512,1277,486,1357,471,1388,454,1412,440,1425,437,1421,450,1409,466,1386,481,1355,507,1276,529,1180,546,1075,569,873,580,733"/>
+<area shape="rect" id="Node000058" href="$namespaceMayaFlux_1_1Config_a5249afad2e4d9b92e843da6b0d089926.html#a5249afad2e4d9b92e843da6b0d089926" title="Gets the buffer size from the default engine." alt="" coords="277,719,441,759"/>
+<area shape="poly" id="edge30_Node000007_Node000058" title=" " alt="" coords="486,723,442,730,441,724,486,718"/>
+<area shape="rect" id="Node000065" href="$namespaceMayaFlux_a0dfe4501e157cd6e14b62baab5fa9b84.html#a0dfe4501e157cd6e14b62baab5fa9b84" title="Gets the event manager from the default engine." alt="" coords="280,783,439,823"/>
+<area shape="poly" id="edge31_Node000007_Node000065" title=" " alt="" coords="549,728,453,773,422,785,420,780,451,768,546,723"/>
+<area shape="rect" id="Node000074" href="$namespaceMayaFlux_1_1Config_a1df79fdf780d55f831e3eb7e09733fe4.html#a1df79fdf780d55f831e3eb7e09733fe4" title="Gets the graphics configuration from the default engine." alt="" coords="271,847,448,887"/>
+<area shape="poly" id="edge32_Node000007_Node000074" title=" " alt="" coords="567,732,519,784,488,812,453,837,430,849,427,844,451,832,484,808,515,780,564,728"/>
+<area shape="rect" id="Node000075" href="$namespaceMayaFlux_1_1Config_a39911fc00824ff100a15abac405c045e.html#a39911fc00824ff100a15abac405c045e" title="Gets the input configuration from the default engine." alt="" coords="277,911,441,951"/>
+<area shape="poly" id="edge33_Node000007_Node000075" title=" " alt="" coords="575,733,557,770,530,815,495,861,454,901,434,913,431,908,450,897,491,857,525,812,552,768,571,731"/>
+<area shape="rect" id="Node000076" href="$namespaceMayaFlux_1_1Config_add02a960f8fdc0d03e7d4c0aa3c2b518.html#add02a960f8fdc0d03e7d4c0aa3c2b518" title="Gets the stream configuration from the default engine." alt="" coords="277,975,441,1015"/>
+<area shape="poly" id="edge34_Node000007_Node000076" title=" " alt="" coords="580,733,565,782,539,844,503,908,480,938,454,965,436,977,433,972,450,961,476,935,498,905,535,842,560,780,575,732"/>
+<area shape="rect" id="Node000077" href="$namespaceMayaFlux_a7ceeddf80c5e4cdb074b66db591984c9.html#a7ceeddf80c5e4cdb074b66db591984c9" title="Gets a handle to default input manager." alt="" coords="282,1039,437,1079"/>
+<area shape="poly" id="edge35_Node000007_Node000077" title=" " alt="" coords="583,734,571,794,548,872,531,914,510,956,484,994,454,1029,437,1041,434,1036,450,1025,480,991,505,953,526,912,543,871,566,792,578,733"/>
+<area shape="rect" id="Node000083" href="$namespaceMayaFlux_a6e5c54052406287746d6c4a040419b2f.html#a6e5c54052406287746d6c4a040419b2f" title="Gets the input subsystem." alt="" coords="282,1103,437,1143"/>
+<area shape="poly" id="edge36_Node000007_Node000083" title=" " alt="" coords="585,733,577,804,556,900,539,951,517,1002,489,1050,454,1093,438,1105,435,1100,450,1089,485,1047,512,1000,534,949,551,898,572,803,580,733"/>
+<area shape="rect" id="Node000088" href="$namespaceMayaFlux_a5c92c4d97ecd276a33797057eb8c5906.html#a5c92c4d97ecd276a33797057eb8c5906" title="Gets the node graph manager from the default engine." alt="" coords="282,1167,437,1207"/>
+<area shape="poly" id="edge37_Node000007_Node000088" title=" " alt="" coords="587,733,582,814,575,868,564,927,548,988,524,1048,494,1106,454,1157,439,1169,435,1165,450,1153,489,1103,520,1046,543,986,559,925,570,867,577,813,581,733"/>
+<area shape="rect" id="Node000103" href="$namespaceMayaFlux_1_1Config_aea5cc2f1c8447b25797ca248da512ff0.html#aea5cc2f1c8447b25797ca248da512ff0" title="Gets the number of output channels from the default engine." alt="" coords="277,1231,441,1271"/>
+<area shape="poly" id="edge38_Node000007_Node000103" title=" " alt="" coords="583,733,567,839,539,984,521,1058,501,1126,479,1182,454,1220,439,1233,436,1228,450,1217,474,1179,496,1124,516,1057,534,983,562,838,578,733"/>
+<area shape="rect" id="Node000104" href="$namespaceMayaFlux_a97a41796092aa7d4688d2ee9ed29a1dc.html#a97a41796092aa7d4688d2ee9ed29a1dc" title="Get reference to the default random engine." alt="" coords="273,1295,445,1335"/>
+<area shape="poly" id="edge39_Node000007_Node000104" title=" " alt="" coords="584,733,570,850,543,1015,526,1099,505,1176,481,1240,454,1284,439,1297,436,1293,450,1281,476,1238,500,1175,520,1098,538,1014,564,850,579,733"/>
+<area shape="rect" id="Node000110" href="$namespaceMayaFlux_1_1Config_ad8c6968db02415b5ba48863063076989.html#ad8c6968db02415b5ba48863063076989" title="Gets the sample rate from the default engine." alt="" coords="277,1359,441,1399"/>
+<area shape="poly" id="edge40_Node000007_Node000110" title=" " alt="" coords="585,733,572,862,547,1046,530,1140,509,1227,483,1299,469,1327,454,1348,440,1360,437,1356,450,1345,465,1324,479,1297,503,1225,525,1139,542,1045,567,861,579,733"/>
+<area shape="rect" id="Node000145" href="$namespaceMayaFlux_aebfa66114d29585723a0c38dfe4c75b9.html#aebfa66114d29585723a0c38dfe4c75b9" title="Gets the task scheduler from the default engine." alt="" coords="267,605,452,630"/>
+<area shape="poly" id="edge41_Node000007_Node000145" title=" " alt="" coords="548,690,451,645,412,633,414,628,453,640,550,685"/>
+<area shape="rect" id="Node000158" href="$namespaceMayaFlux_ae8ce6104a81a97d5b5e8c1772a71e005.html#ae8ce6104a81a97d5b5e8c1772a71e005" title="Gets a handle to default window manager." alt="" coords="273,161,445,201"/>
+<area shape="poly" id="edge43_Node000007_Node000158" title=" " alt="" coords="582,680,580,593,574,534,564,469,547,402,524,335,492,272,450,217,434,204,438,200,454,213,496,270,529,333,553,401,569,468,579,533,585,593,588,680"/>
+<area shape="rect" id="Node000160" href="$namespaceMayaFlux_a621f792c2b1f9e9d3f0d48c4cc7c2a4d.html#a621f792c2b1f9e9d3f0d48c4cc7c2a4d" title="Pauses audio processing on the default engine." alt="" coords="293,454,425,479"/>
+<area shape="poly" id="edge44_Node000007_Node000160" title=" " alt="" coords="573,682,556,640,530,589,495,538,474,514,450,494,424,480,427,476,454,490,478,511,499,535,535,587,561,638,578,680"/>
+<area shape="rect" id="Node000161" href="$namespaceMayaFlux_a2805d296cd214232e80dd7bfda82c282.html#a2805d296cd214232e80dd7bfda82c282" title=" " alt="" coords="268,226,451,251"/>
+<area shape="poly" id="edge46_Node000007_Node000161" title=" " alt="" coords="582,681,578,600,571,547,561,488,544,428,521,369,490,314,450,266,432,254,435,249,454,262,494,311,526,367,549,427,566,487,577,546,583,600,587,680"/>
+<area shape="rect" id="Node000165" href="$namespaceMayaFlux_a7439636286675f6d800b1f399d562887.html#a7439636286675f6d800b1f399d562887" title="Registers a node network with the default engine&#39;s node graph manager." alt="" coords="287,325,431,365"/>
+<area shape="poly" id="edge47_Node000007_Node000165" title=" " alt="" coords="578,681,567,620,544,539,528,496,506,454,481,414,450,379,430,365,433,361,454,375,485,411,511,451,532,494,549,537,572,618,583,680"/>
+<area shape="rect" id="Node000170" href="$namespaceMayaFlux_a22741f82eff8bc1d08b1a2f98e87bc16.html#a22741f82eff8bc1d08b1a2f98e87bc16" title="Resumes audio processing on the default engine." alt="" coords="286,503,433,529"/>
+<area shape="poly" id="edge48_Node000007_Node000170" title=" " alt="" coords="568,684,521,618,488,581,451,550,411,531,413,526,453,546,491,578,525,614,572,681"/>
+<area shape="rect" id="Node000171" href="$namespaceMayaFlux_a2955e2a3902c0ff3e7a7104fd584d27f.html#a2955e2a3902c0ff3e7a7104fd584d27f" title="Starts audio processing on the default engine." alt="" coords="297,275,422,301"/>
+<area shape="poly" id="edge50_Node000007_Node000171" title=" " alt="" coords="581,681,574,608,554,510,538,457,515,405,486,357,450,315,437,305,421,299,423,294,439,301,454,311,491,354,520,403,543,455,560,508,579,608,586,680"/>
+<area shape="rect" id="Node000172" href="$namespaceMayaFlux_aab984c41b1f4cda065aae5692edce35f.html#aab984c41b1f4cda065aae5692edce35f" title="Unregisters a node network from the default engine&#39;s node graph manager." alt="" coords="279,389,439,429"/>
+<area shape="poly" id="edge53_Node000007_Node000172" title=" " alt="" coords="575,681,560,631,535,568,499,502,476,472,450,445,431,432,434,427,454,441,480,468,503,499,540,566,565,630,580,680"/>
+<area shape="poly" id="edge8_Node000008_Node000003" title=" " alt="" coords="280,120,140,109,140,104,280,115"/>
+<area shape="poly" id="edge22_Node000011_Node000009" title=" " alt="" coords="267,1415,265,1412,252,1392,243,1368,230,1309,225,1239,223,1163,224,1013,223,949,216,899,194,822,168,748,121,639,126,637,173,746,199,821,221,898,228,949,230,1013,229,1163,230,1238,236,1308,248,1367,257,1390,269,1409,271,1412"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_a0354b0e0d2afd2fdec1562cdd2c71d6f.html#a0354b0e0d2afd2fdec1562cdd2c71d6f" title="Adds a processor to all buffers in a specific channel." alt="" coords="18,1551,206,1577"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="326,1474,277,1509,220,1541,183,1554,182,1549,218,1536,274,1504,323,1469"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_a9ac3be4201bfa99c431e54f963406e76.html#a9ac3be4201bfa99c431e54f963406e76" title="Adds a processor to all buffers in a processing domain." alt="" coords="18,1601,206,1626"/>
+<area shape="poly" id="edge13_Node000011_Node000013" title=" " alt="" coords="339,1476,290,1535,257,1566,220,1592,194,1603,192,1598,217,1587,253,1562,286,1532,335,1472"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_a4ccb7fdcd10c1cceabb85ea456ded3cb.html#a4ccb7fdcd10c1cceabb85ea456ded3cb" title="Adds a processor to a specific buffer." alt="" coords="18,1650,206,1675"/>
+<area shape="poly" id="edge14_Node000011_Node000014" title=" " alt="" coords="346,1477,326,1515,299,1560,263,1604,220,1641,197,1652,195,1648,217,1636,259,1600,294,1557,322,1513,341,1474"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_a6026d46d032b38446b8c86b358b637cb.html#a6026d46d032b38446b8c86b358b637cb" title="Attaches a processing function to a specific channel." alt="" coords="23,1700,201,1740"/>
+<area shape="poly" id="edge15_Node000011_Node000019" title=" " alt="" coords="351,1477,333,1524,306,1582,268,1640,246,1667,220,1690,201,1702,199,1698,217,1686,242,1663,264,1637,301,1579,328,1522,346,1475"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_1_1internal_a2191952d73d8d7062792e2215faeb2c5.html#a2191952d73d8d7062792e2215faeb2c5" title=" " alt="" coords="5,1764,219,1804"/>
+<area shape="poly" id="edge16_Node000011_Node000020" title=" " alt="" coords="355,1477,341,1536,315,1611,298,1650,276,1688,250,1723,220,1754,203,1766,200,1762,217,1750,246,1719,272,1685,293,1647,310,1609,336,1535,350,1475"/>
+<area shape="rect" id="Node000022" href="$namespaceMayaFlux_1_1internal_ac90aaed736f4e34c629de02c05b31a89.html#ac90aaed736f4e34c629de02c05b31a89" title=" " alt="" coords="27,1829,197,1883"/>
+<area shape="poly" id="edge17_Node000011_Node000022" title=" " alt="" coords="357,1477,346,1546,322,1637,304,1686,282,1733,254,1778,221,1818,199,1834,196,1830,217,1814,250,1775,277,1731,299,1684,317,1636,341,1545,352,1476"/>
+<area shape="rect" id="Node000024" href="$namespaceMayaFlux_a8292200a0794717cafb259316c39f8a7.html#a8292200a0794717cafb259316c39f8a7" title="Clones a buffer to multiple channels." alt="" coords="25,1908,199,1948"/>
+<area shape="poly" id="edge18_Node000011_Node000024" title=" " alt="" coords="360,1476,355,1561,347,1615,335,1673,317,1734,293,1793,261,1849,220,1898,201,1912,198,1908,217,1894,257,1846,288,1791,312,1732,329,1672,342,1614,349,1560,355,1476"/>
+<area shape="rect" id="Node000037" href="$namespaceMayaFlux_acdd07d9bd5657ea039a60b3bbd2e869d.html#acdd07d9bd5657ea039a60b3bbd2e869d" title=" " alt="" coords="25,911,199,951"/>
+<area shape="poly" id="edge19_Node000011_Node000037" title=" " alt="" coords="267,1415,265,1412,245,1383,232,1354,224,1325,222,1296,228,1240,241,1185,255,1130,260,1076,257,1048,250,1021,237,993,217,964,198,949,201,945,221,961,241,990,255,1019,262,1047,265,1076,260,1131,246,1186,233,1241,227,1296,230,1324,237,1352,249,1380,269,1409,271,1412"/>
+<area shape="rect" id="Node000038" href="$namespaceMayaFlux_a0834074b13c208449d0627c9ca96bb14.html#a0834074b13c208449d0627c9ca96bb14" title="Connects a node to a specific buffer." alt="" coords="20,975,204,1015"/>
+<area shape="poly" id="edge20_Node000011_Node000038" title=" " alt="" coords="267,1415,265,1412,247,1387,236,1362,229,1337,227,1313,231,1265,241,1217,251,1170,255,1123,252,1100,246,1076,234,1053,217,1028,202,1016,206,1012,221,1025,239,1050,251,1074,258,1099,260,1123,257,1171,246,1218,236,1265,232,1313,234,1336,241,1360,252,1384,269,1409,271,1412"/>
+<area shape="rect" id="Node000039" href="$namespaceMayaFlux_af8a61468789afc248ee2f890176d0fcd.html#af8a61468789afc248ee2f890176d0fcd" title="Connects a node to a specific output channel." alt="" coords="20,1039,204,1079"/>
+<area shape="poly" id="edge21_Node000011_Node000039" title=" " alt="" coords="267,1415,265,1412,250,1391,240,1370,231,1329,233,1289,241,1249,248,1210,250,1171,241,1132,231,1112,217,1092,202,1080,206,1076,221,1089,236,1110,246,1130,256,1171,254,1211,246,1250,239,1290,236,1329,245,1369,254,1389,269,1409,271,1412"/>
+<area shape="rect" id="Node000040" href="$namespaceMayaFlux_aa01b246fe947237c4ecc3b71d3984df9.html#aa01b246fe947237c4ecc3b71d3984df9" title="Stops reading audio data from the default input source." alt="" coords="24,1103,200,1143"/>
+<area shape="poly" id="edge23_Node000011_Node000040" title=" " alt="" coords="268,1416,265,1412,244,1379,236,1346,236,1314,241,1282,245,1250,246,1219,237,1188,217,1156,199,1142,202,1138,221,1153,242,1186,251,1218,251,1251,246,1282,241,1314,241,1345,249,1377,269,1409,272,1412"/>
+<area shape="rect" id="Node000041" href="$namespaceMayaFlux_a6a84bbd03792c65a7edd0c71d2544532.html#a6a84bbd03792c65a7edd0c71d2544532" title="Gets the audio buffer for a specific channel." alt="" coords="38,1167,186,1207"/>
+<area shape="poly" id="edge24_Node000011_Node000041" title=" " alt="" coords="268,1416,265,1412,248,1388,240,1363,239,1338,241,1314,242,1290,241,1267,233,1244,217,1220,202,1209,185,1200,188,1196,205,1204,221,1217,238,1241,246,1266,248,1290,246,1314,244,1338,245,1362,252,1385,269,1409,272,1413"/>
+<area shape="rect" id="Node000043" href="$namespaceMayaFlux_adfd1764a90716b65f56ed3647851c96a.html#adfd1764a90716b65f56ed3647851c96a" title="Connects a SoundFileContainer to the buffer system for immediate playback." alt="" coords="26,1231,198,1271"/>
+<area shape="poly" id="edge25_Node000011_Node000043" title=" " alt="" coords="269,1417,265,1412,252,1396,245,1379,240,1347,236,1315,229,1300,217,1285,197,1271,200,1266,220,1281,234,1297,241,1314,246,1346,250,1378,256,1393,269,1409,273,1413"/>
+<area shape="rect" id="Node000046" href="$namespaceMayaFlux_af1b88433262575214bbc89823736358c.html#af1b88433262575214bbc89823736358c" title="Reads audio data from the default input source into a buffer." alt="" coords="31,1295,193,1335"/>
+<area shape="poly" id="edge26_Node000011_Node000046" title=" " alt="" coords="274,1419,265,1413,249,1396,240,1380,232,1364,217,1349,192,1335,194,1330,220,1345,237,1361,245,1377,253,1393,268,1409,277,1414"/>
+<area shape="rect" id="Node000048" href="$namespaceMayaFlux_a93ff247bbf5208e7b89bd81b09139b5c.html#a93ff247bbf5208e7b89bd81b09139b5c" title="Registers an AudioBuffer with the default engine&#39;s buffer manager." alt="" coords="40,1359,184,1399"/>
+<area shape="poly" id="edge27_Node000011_Node000048" title=" " alt="" coords="268,1422,184,1400,185,1395,269,1417"/>
+<area shape="rect" id="Node000050" href="$namespaceMayaFlux_abef255ed51ba80f581c50221db096852.html#abef255ed51ba80f581c50221db096852" title="Registers a VKBuffer with the default engine&#39;s buffer manager." alt="" coords="40,1423,184,1463"/>
+<area shape="poly" id="edge28_Node000011_Node000050" title=" " alt="" coords="266,1445,184,1445,184,1440,266,1440"/>
+<area shape="rect" id="Node000052" href="$namespaceMayaFlux_afc136ade4d9c21adf7ee7477021dc972.html#afc136ade4d9c21adf7ee7477021dc972" title="Removes a supplied buffer from multiple channels." alt="" coords="9,1487,215,1527"/>
+<area shape="poly" id="edge29_Node000011_Node000052" title=" " alt="" coords="269,1469,190,1489,189,1484,267,1464"/>
+<area shape="poly" id="edge42_Node000145_Node000009" title=" " alt="" coords="253,620,202,620,202,615,253,615"/>
+<area shape="poly" id="edge45_Node000160_Node000004" title=" " alt="" coords="281,451,265,444,221,412,182,376,126,310,130,306,186,372,225,408,268,439,284,447"/>
+<area shape="poly" id="edge49_Node000170_Node000004" title=" " alt="" coords="275,500,265,494,215,451,173,399,141,349,120,310,125,307,146,346,177,396,219,447,268,490,278,496"/>
+<area shape="poly" id="edge51_Node000171_Node000003" title=" " alt="" coords="282,275,265,266,217,231,175,189,120,119,124,115,179,185,220,227,268,262,284,270"/>
+<area shape="poly" id="edge52_Node000171_Node000004" title=" " alt="" coords="283,291,200,291,200,285,283,285"/>
+<area shape="poly" id="edge55_Node000173_Node000003" title=" " alt="" coords="289,86,140,103,140,98,288,80"/>
+<area shape="poly" id="edge56_Node000173_Node000004" title=" " alt="" coords="290,91,268,102,221,141,180,188,148,233,127,269,122,266,144,230,176,184,217,138,265,98,287,87"/>
+</map>

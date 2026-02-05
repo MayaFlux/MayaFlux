@@ -1,0 +1,14 @@
+<map id="MayaFlux::Kriya::NodeTimer" name="MayaFlux::Kriya::NodeTimer">
+<area shape="rect" id="Node000001" title="Specialized timer for controlling computational nodes with precise timing." alt="" coords="191,1928,403,2233"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="5,508,228,1088"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="62,1088,43,1268,38,1365,39,1466,45,1567,58,1669,79,1769,110,1864,140,1923,181,1975,177,1978,136,1926,105,1866,74,1770,53,1670,40,1568,33,1466,33,1365,37,1267,56,1088"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1Timer.html" title="High&#45;level utility for scheduling one&#45;shot timed callbacks." alt="" coords="213,1415,380,1601"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="193,1087,272,1399,267,1400,188,1089"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="9,220,224,445"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,445,119,492,114,492,114,445"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="32,5,201,171"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="119,184,119,220,114,220,114,184"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager.html" title="Central manager for the computational processing node graph." alt="" coords="405,1151,626,1865"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="407,1832,394,1866,374,1914,369,1912,389,1864,402,1830"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="299,1601,299,1912,294,1912,294,1601"/>
+</map>

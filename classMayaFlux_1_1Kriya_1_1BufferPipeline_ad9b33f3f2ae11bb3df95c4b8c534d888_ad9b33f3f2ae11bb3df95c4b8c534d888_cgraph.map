@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferPipeline::parallel" name="MayaFlux::Kriya::BufferPipeline::parallel">
+<area shape="rect" id="Node000001" title="Execute operations in parallel within the current cycle." alt="" coords="5,5,232,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a9623a5f6955d5285f8035dd3dff34f88.html#a9623a5f6955d5285f8035dd3dff34f88" title="Set execution priority for scheduler ordering." alt="" coords="280,5,519,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,23,266,23,266,28,232,28"/>
+</map>

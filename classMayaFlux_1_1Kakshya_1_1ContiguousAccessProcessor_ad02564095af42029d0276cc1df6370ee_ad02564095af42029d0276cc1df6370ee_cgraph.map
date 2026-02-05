@@ -1,0 +1,14 @@
+<map id="MayaFlux::Kakshya::ContiguousAccessProcessor::process" name="MayaFlux::Kakshya::ContiguousAccessProcessor::process">
+<area shape="rect" id="Node000001" title="Process the current region or block of data." alt="" coords="5,136,208,191"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_a6b9b1e820df114a20a5384233008e015.html#a6b9b1e820df114a20a5384233008e015" title="Advance current positions by a number of frames, with optional looping." alt="" coords="266,55,425,95"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="179,133,255,105,275,98,277,103,257,110,181,138"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_adb3ed485f36324d5f12a986d54a1a7be.html#adb3ed485f36324d5f12a986d54a1a7be" title="Calculate output region bounds from current position and shape." alt="" coords="256,143,435,183"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="208,161,242,161,242,166,208,166"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kakshya_aa54974c0e7035a5e1d91aa1c3c29d49c.html#aa54974c0e7035a5e1d91aa1c3c29d49c" title="Safely copy data from a DataVariant to another DataVariant, handling type conversion." alt="" coords="257,207,434,247"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="209,188,257,201,256,206,207,193"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="487,5,662,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="424,58,473,49,474,54,425,63"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="483,85,667,154"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="425,88,469,96,468,102,424,93"/>
+<area shape="poly" id="edge5_Node000005_Node000005" title=" " alt="" coords="302,144,300,134,307,124,322,119,345,117,372,120,387,127,384,132,371,125,345,122,323,124,310,129,305,135,308,142"/>
+</map>

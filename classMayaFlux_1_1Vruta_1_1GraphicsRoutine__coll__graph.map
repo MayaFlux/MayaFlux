@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::GraphicsRoutine" name="MayaFlux::Vruta::GraphicsRoutine">
+<area shape="rect" id="Node000001" title="A C++20 coroutine&#45;based graphics processing task with frame&#45;accurate timing." alt="" coords="14,419,201,739"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1Routine.html" title="Base class for all coroutine types in the MayaFlux engine." alt="" coords="5,5,209,371"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,385,110,418,105,418,105,385"/>
+</map>

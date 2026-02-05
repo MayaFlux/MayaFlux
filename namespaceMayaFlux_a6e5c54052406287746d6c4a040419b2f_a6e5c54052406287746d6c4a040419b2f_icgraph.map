@@ -1,0 +1,11 @@
+<map id="MayaFlux::get_input_subsystem" name="MayaFlux::get_input_subsystem">
+<area shape="rect" id="Node000001" title="Gets the input subsystem." alt="" coords="252,99,407,139"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a54a5a5560e601e4af07f6b935654e881.html#a54a5a5560e601e4af07f6b935654e881" title="Find a HID device by vendor and product ID." alt="" coords="32,5,177,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="278,95,203,60,171,48,173,43,205,55,280,90"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a8e2be1e885c030bd006e1545de4871a6.html#a8e2be1e885c030bd006e1545de4871a6" title="Get a list of connected MIDI devices." alt="" coords="15,69,194,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="238,109,194,104,195,98,238,104"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ab37da47c950ecc08197fd330d4c876ae.html#ab37da47c950ecc08197fd330d4c876ae" title="Get a list of connected HID devices." alt="" coords="5,134,204,159"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="238,133,204,137,204,132,238,127"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a09cf231cd5db74158008fd748e5d670d.html#a09cf231cd5db74158008fd748e5d670d" title="Get a list of connected MIDI devices." alt="" coords="29,184,180,224"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="271,146,205,173,168,186,166,181,203,168,269,142"/>
+</map>

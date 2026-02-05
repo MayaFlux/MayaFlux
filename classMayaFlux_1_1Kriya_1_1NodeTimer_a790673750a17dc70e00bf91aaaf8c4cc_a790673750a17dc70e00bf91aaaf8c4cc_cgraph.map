@@ -1,0 +1,13 @@
+<map id="MayaFlux::Kriya::NodeTimer::cleanup_current_operation" name="MayaFlux::Kriya::NodeTimer::cleanup_current_operation">
+<area shape="rect" id="Node000001" title="Cleans up the current operation, disconnecting the node and resetting state." alt="" coords="5,37,213,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="261,5,477,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,42,247,38,248,43,214,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1RootNode_a3223d79efd0c1efec1bbbc0ac0e70902.html#a3223d79efd0c1efec1bbbc0ac0e70902" title="Removes a node from this root node." alt="" coords="266,69,473,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="214,67,253,72,252,78,213,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="525,5,741,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="477,23,512,23,512,28,477,28"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="539,69,727,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="473,87,525,87,525,92,473,92"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Nodes_a8abc7b8f33819075e738d5ed027bd9ec.html#a8abc7b8f33819075e738d5ed027bd9ec" title="Atomically sets a node state flag to a specific value." alt="" coords="539,133,727,173"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="453,107,538,128,537,133,452,112"/>
+</map>

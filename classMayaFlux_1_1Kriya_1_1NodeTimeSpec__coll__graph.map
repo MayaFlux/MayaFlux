@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kriya::NodeTimeSpec" name="MayaFlux::Kriya::NodeTimeSpec">
+<area shape="rect" id="Node000001" title="Represents a timed activation operation for processing nodes." alt="" coords="126,1285,353,1451"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="5,575,228,1155"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,1155,218,1268,213,1270,185,1156"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="9,220,224,445"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,446,119,559,114,559,114,446"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="32,5,201,171"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="119,184,119,220,114,220,114,184"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager.html" title="Central manager for the computational processing node graph." alt="" coords="253,508,474,1223"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="328,1224,315,1262,311,1271,306,1269,310,1260,323,1222"/>
+</map>

@@ -1,0 +1,16 @@
+<map id="MayaFlux::Yantra::compute_variance_statistic" name="MayaFlux::Yantra::compute_variance_statistic">
+<area shape="rect" id="Node000001" title="Compute variance statistic using zero&#45;copy processing." alt="" coords="847,60,1045,100"/>
+<area shape="poly" id="edge8_Node000001_Node000001" title=" " alt="" coords="991,49,975,42,946,39,920,41,905,46,899,52,902,59,897,61,894,51,902,41,919,36,946,34,977,37,993,44"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="5,30,271,70"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="891,57,846,40,798,27,727,17,654,11,508,10,372,19,257,32,257,27,371,13,508,4,654,5,727,11,799,22,848,35,893,52"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a6b1a158103a130be7fae3abd021978a7.html#a6b1a158103a130be7fae3abd021978a7" title="Compute standard deviation statistic using zero&#45;copy processing." alt="" coords="583,60,781,100"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="833,83,782,83,782,78,833,78"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a853e8c531c62174e89938bf0eae8a7d9.html#a853e8c531c62174e89938bf0eae8a7d9" title="Create comprehensive analysis result." alt="" coords="565,124,799,164"/>
+<area shape="poly" id="edge9_Node000001_Node000005" title=" " alt="" coords="850,106,766,127,764,122,849,101"/>
+<area shape="poly" id="edge6_Node000003_Node000002" title=" " alt="" coords="569,77,271,60,271,55,569,71"/>
+<area shape="poly" id="edge7_Node000003_Node000003" title=" " alt="" coords="727,49,711,42,682,39,656,41,641,46,635,52,638,59,633,61,630,51,638,41,655,36,682,34,713,37,729,44"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_ac1594edb7e15913878027f37980a4d9a.html#ac1594edb7e15913878027f37980a4d9a" title="Compute CV (Coefficient of Variation) statistic using zero&#45;copy processing." alt="" coords="319,111,517,151"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="570,105,518,115,517,109,569,99"/>
+<area shape="poly" id="edge5_Node000004_Node000002" title=" " alt="" coords="335,110,207,72,208,67,336,105"/>
+<area shape="poly" id="edge4_Node000004_Node000004" title=" " alt="" coords="463,99,447,92,418,90,392,92,377,97,371,102,374,110,369,112,366,101,374,92,391,86,418,84,449,87,465,95"/>
+</map>

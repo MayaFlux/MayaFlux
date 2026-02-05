@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::NodeSourceProcessor::set_mix" name="MayaFlux::Buffers::NodeSourceProcessor::set_mix">
+<area shape="rect" id="Node000001" title="Sets the interpolation coefficient between existing and incoming data." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="216,20,335,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,30,202,30,202,35,169,35"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="383,20,548,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="335,30,369,30,369,35,335,35"/>
+</map>

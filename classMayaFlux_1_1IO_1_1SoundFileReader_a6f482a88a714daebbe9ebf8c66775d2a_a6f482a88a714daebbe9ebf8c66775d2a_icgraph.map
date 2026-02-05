@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::SoundFileReader::seek_internal" name="MayaFlux::IO::SoundFileReader::seek_internal">
+<area shape="rect" id="Node000001" title="Internal seek implementation." alt="" coords="1099,69,1324,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8bfd1aa043b76cab1172b2d00705066f.html#a8bfd1aa043b76cab1172b2d00705066f" title="Read a specific number of frames from the file." alt="" coords="825,37,1051,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1085,77,1050,73,1051,68,1085,72"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1SoundFileReader_acf94587cbb30d6a656daff698288498f.html#acf94587cbb30d6a656daff698288498f" title="Seek to a specific position in the file." alt="" coords="825,101,1051,141"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1085,107,1051,111,1050,106,1085,101"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a050d7a5e740964893ed6443b04b97108.html#a050d7a5e740964893ed6443b04b97108" title="Read the entire audio file into memory." alt="" coords="552,5,777,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="811,45,777,41,778,36,812,40"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8b9c5ab6495003a5a1b17edaf5cc4e3f.html#a8b9c5ab6495003a5a1b17edaf5cc4e3f" title="Read a specific region from the file." alt="" coords="552,69,777,109"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="812,75,778,79,777,74,811,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a4f0317d6147160c47dbbc3c2663f1756.html#a4f0317d6147160c47dbbc3c2663f1756" title="Load file data into an existing SignalSourceContainer." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="538,28,504,28,504,23,538,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SoundFileReader_accdb3a9779750c1033ec16e660ba77da.html#accdb3a9779750c1033ec16e660ba77da" title="Create a SignalSourceContainer for this file." alt="" coords="5,5,231,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="265,28,231,28,231,23,265,23"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::register_window_for_rendering" name="MayaFlux::Portal::Graphics::RenderFlow::register_window_for_rendering">
+<area shape="rect" id="Node000001" title="Register a window for dynamic rendering." alt="" coords="248,5,469,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a8dffa1bdec232f8a9c7b39ce9a9f78bb.html#a8dffa1bdec232f8a9c7b39ce9a9f78bb" title=" " alt="" coords="5,5,200,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,35,200,35,200,30,234,30"/>
+</map>

@@ -1,0 +1,28 @@
+<map id="MayaFlux::Buffers::TokenUnitManager::has_audio_unit" name="MayaFlux::Buffers::TokenUnitManager::has_audio_unit">
+<area shape="rect" id="Node000001" title="Checks if an audio unit exists for the given token." alt="" coords="532,343,707,398"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a9ee7968dba43bfa9035781971311b14a.html#a9ee7968dba43bfa9035781971311b14a" title="Clones an audio buffer for each channel in the specified list." alt="" coords="299,5,469,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="606,331,589,277,564,213,528,147,507,116,482,89,468,77,471,72,486,85,511,113,533,144,569,211,594,276,611,329"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_afe756361a6f45eaea8d05d214edf6674.html#afe756361a6f45eaea8d05d214edf6674" title="Fills audio token channels from interleaved source data." alt="" coords="284,99,484,154"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="599,332,579,293,553,249,521,205,482,167,466,156,469,152,486,163,525,202,558,246,584,290,603,329"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a582c6a35c4a0fe48c4a080494361b102.html#a582c6a35c4a0fe48c4a080494361b102" title="Fills interleaved buffer from audio token channels." alt="" coords="303,178,465,233"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="584,335,538,289,483,246,462,235,465,230,485,242,542,285,588,331"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a6c85a3347f55dc148d6e8d86deffd23d.html#a6c85a3347f55dc148d6e8d86deffd23d" title="Removes an audio buffer from a token and channel." alt="" coords="300,257,468,311"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="530,341,458,314,460,309,532,336"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_acbf9cc1d3bd7ab2912e8242be8b50d60.html#acbf9cc1d3bd7ab2912e8242be8b50d60" title="Removes a processor from a specific audio token and channel." alt="" coords="287,336,481,405"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="518,373,481,373,481,368,518,368"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a11a3b06d6af714080b5db8c7a2b9a07c.html#a11a3b06d6af714080b5db8c7a2b9a07c" title="Removes a processor from all channels in an audio token." alt="" coords="287,429,481,499"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="538,406,473,432,471,427,536,401"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a5577aee089471fda06decd224c337ada.html#a5577aee089471fda06decd224c337ada" title="Removes a previously supplied buffer from a token and channel." alt="" coords="295,523,473,592"/>
+<area shape="poly" id="edge10_Node000001_Node000010" title=" " alt="" coords="590,411,544,462,486,513,467,525,464,520,482,509,540,458,586,407"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a2978161965ef8e76efc0b7dabfda313a.html#a2978161965ef8e76efc0b7dabfda313a" title="Sets a final processor for an audio token (applied to all channels)" alt="" coords="285,617,483,671"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="607,412,588,457,562,508,528,560,486,606,468,619,465,614,482,602,524,557,557,506,583,454,602,410"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a2b509601b7218863702678b0d1092243.html#a2b509601b7218863702678b0d1092243" title="Supplies an external audio buffer to a specific token and channel." alt="" coords="297,695,471,750"/>
+<area shape="poly" id="edge13_Node000001_Node000013" title=" " alt="" coords="614,412,599,472,575,545,537,620,514,655,486,686,472,697,468,693,482,682,509,651,533,617,570,543,594,471,608,411"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ab81d45e72e1fc78068248a7b5693d40d.html#ab81d45e72e1fc78068248a7b5693d40d" title="Removes a buffer from a token (dispatches based on token type)" alt="" coords="44,257,197,311"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="286,287,198,287,198,281,286,281"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_afb3f70aae8e392cbc3cad423a1a6edfc.html#afb3f70aae8e392cbc3cad423a1a6edfc" title="Removes a processor from a token (dispatches based on token)" alt="" coords="5,390,236,445"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="274,393,237,400,236,394,273,388"/>
+<area shape="poly" id="edge9_Node000009_Node000008" title=" " alt="" coords="273,447,236,440,237,435,274,442"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a897f4e00381ea15fb609a86ec3f65df9.html#a897f4e00381ea15fb609a86ec3f65df9" title="Sets a final processor for a token (dispatches based on token)" alt="" coords="31,617,210,671"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="271,647,210,647,210,641,271,641"/>
+</map>

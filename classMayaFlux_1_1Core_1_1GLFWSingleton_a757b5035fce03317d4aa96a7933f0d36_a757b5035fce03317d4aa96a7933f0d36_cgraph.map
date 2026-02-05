@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::GLFWSingleton::get_required_instance_extensions" name="MayaFlux::Core::GLFWSingleton::get_required_instance_extensions">
+<area shape="rect" id="Node000001" title="Retrieves the list of required Vulkan instance extensions for GLFW." alt="" coords="5,5,257,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a59865076ee8f384943d796eea66a5acb.html#a59865076ee8f384943d796eea66a5acb" title="Initializes the GLFW library if not already initialized." alt="" coords="305,5,536,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,23,292,23,292,28,258,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_ac4935bfb2f344c7d088d038690bd7375.html#ac4935bfb2f344c7d088d038690bd7375" title="Configures GLFW with pre&#45;initialization hints." alt="" coords="584,5,815,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="536,23,570,23,570,28,536,28"/>
+</map>

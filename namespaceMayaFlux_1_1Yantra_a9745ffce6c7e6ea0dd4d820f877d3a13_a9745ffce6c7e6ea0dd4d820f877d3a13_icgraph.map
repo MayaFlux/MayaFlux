@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::extract_peak_data" name="MayaFlux::Yantra::extract_peak_data">
+<area shape="rect" id="Node000001" title="Extract data from peak regions using peak detection." alt="" coords="300,5,488,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1FeatureExtractor_a6625311b756518d90e3d5ef2e4125e10.html#a6625311b756518d90e3d5ef2e4125e10" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,5,252,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="286,28,252,28,252,23,286,23"/>
+</map>

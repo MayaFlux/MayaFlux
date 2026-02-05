@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::MIDIBackend" name="MayaFlux::Core::MIDIBackend">
+<area shape="rect" id="Node000001" title="RtMidi&#45;based MIDI input backend." alt="" coords="9,319,218,899"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1IInputBackend.html" title="Abstract interface for input device backends." alt="" coords="5,5,221,271"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="116,284,116,319,111,319,111,284"/>
+</map>

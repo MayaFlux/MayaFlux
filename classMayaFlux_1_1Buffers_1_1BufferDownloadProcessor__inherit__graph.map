@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferDownloadProcessor" name="MayaFlux::Buffers::BufferDownloadProcessor">
+<area shape="rect" id="Node000001" title="Transfers data from GPU VKBuffer to CPU target buffer." alt="" coords="5,496,223,816"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="17,313,211,448"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,462,117,496,111,496,111,462"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="24,5,204,265"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="117,279,117,313,111,313,111,279"/>
+</map>

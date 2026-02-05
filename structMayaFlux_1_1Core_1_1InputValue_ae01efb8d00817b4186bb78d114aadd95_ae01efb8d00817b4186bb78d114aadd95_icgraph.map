@@ -1,0 +1,20 @@
+<map id="MayaFlux::Core::InputValue::as_midi" name="MayaFlux::Core::InputValue::as_midi">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1088,92,1289,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_aa6aa698e25bb20035ac50308e7674bde.html#aa6aa698e25bb20035ac50308e7674bde" title="Extract a scalar value from an InputValue." alt="" coords="831,5,1026,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1114,90,989,48,991,43,1115,85"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_a53e51aaf8495bc2e1e77e733d3d49f23.html#a53e51aaf8495bc2e1e77e733d3d49f23" title="Extract a scalar value from an InputValue." alt="" coords="563,95,753,135"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1074,111,1040,111,817,111,754,113,754,107,817,105,1040,105,1074,106"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1InputManager_ae58da14f1b59ae4fcfdf0754fd6dfaec.html#ae58da14f1b59ae4fcfdf0754fd6dfaec" title=" " alt="" coords="817,184,1040,224"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1130,140,1041,175,1004,186,1002,181,1039,169,1128,135"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_acb2d34a95ef7763a02981438c59aaa1c.html#acb2d34a95ef7763a02981438c59aaa1c" title=" " alt="" coords="827,120,1030,160"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="1075,127,1030,132,1030,126,1074,122"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a88c4313675ddc5de1acab2ab1fc91876.html#a88c4313675ddc5de1acab2ab1fc91876" title="Process an input value from a backend." alt="" coords="561,5,755,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="818,28,756,28,756,23,818,23"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1InputManager_a81dc89fefa8fe16035c0f849e2b2be32.html#a81dc89fefa8fe16035c0f849e2b2be32" title=" " alt="" coords="547,184,769,224"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="804,207,770,207,770,201,804,201"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1InputManager_a23922bc754619bc6edb2e67b7ac4d9aa.html#a23922bc754619bc6edb2e67b7ac4d9aa" title=" " alt="" coords="276,184,499,224"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="533,207,499,207,499,201,533,201"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1InputManager_a5e9d6fbcc3e3664124e49ae895089da2.html#a5e9d6fbcc3e3664124e49ae895089da2" title="Start the processing thread." alt="" coords="5,184,228,224"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="262,207,228,207,228,201,262,201"/>
+<area shape="poly" id="edge9_Node000009_Node000004" title=" " alt="" coords="813,132,753,126,754,121,814,127"/>
+</map>

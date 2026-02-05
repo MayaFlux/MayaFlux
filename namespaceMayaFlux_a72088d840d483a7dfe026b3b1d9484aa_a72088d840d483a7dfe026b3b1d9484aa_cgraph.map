@@ -1,0 +1,16 @@
+<map id="MayaFlux::mix" name="MayaFlux::mix">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,139,124,164"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="455,163,621,188"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,146,245,145,387,150,454,158,453,163,386,155,245,150,124,152"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="172,49,387,89"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="95,136,171,105,208,91,210,96,173,110,97,141"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a7f9908e44c97d44ca091d25680f754af.html#a7f9908e44c97d44ca091d25680f754af" title=" " alt="" coords="189,164,370,189"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="125,156,175,162,174,167,124,161"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="220,213,339,239"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="90,162,128,181,173,199,207,210,206,215,171,205,126,186,88,167"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a619cf8d723774bd3554af2e67230fb10.html#a619cf8d723774bd3554af2e67230fb10" title="Convert variant to double span." alt="" coords="441,85,635,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="387,81,428,87,427,92,387,86"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ae302865851bb6340051d6bca19881848.html#ae302865851bb6340051d6bca19881848" title="Create DataVariant from Eigen matrix/vector." alt="" coords="435,5,641,60"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="387,51,421,46,421,52,387,56"/>
+<area shape="poly" id="edge7_Node000007_Node000002" title=" " alt="" coords="338,212,459,188,460,193,339,217"/>
+</map>

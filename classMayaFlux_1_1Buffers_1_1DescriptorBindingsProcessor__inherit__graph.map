@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::DescriptorBindingsProcessor" name="MayaFlux::Buffers::DescriptorBindingsProcessor">
+<area shape="rect" id="Node000001" title="ShaderProcessor that uploads node outputs to descriptor sets." alt="" coords="5,1348,231,1803"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor.html" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="19,496,217,1300"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,1314,121,1348,115,1348,115,1314"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="21,313,215,448"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="121,462,121,496,115,496,115,462"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="28,5,208,265"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="121,279,121,313,115,313,115,279"/>
+</map>

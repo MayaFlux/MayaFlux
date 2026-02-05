@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::Input::InputNode" name="MayaFlux::Nodes::Input::InputNode">
+<area shape="rect" id="Node000001" title="Abstract base class for nodes that receive external input." alt="" coords="300,1269,468,1789"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,557,203,1207"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,1190,217,1206,258,1294,302,1379,297,1381,253,1296,212,1208,206,1192"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1Input_1_1InputConfig.html" title="Configuration for InputNode behavior." alt="" coords="227,802,395,962"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="322,962,355,1253,350,1253,317,963"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputContext.html" title="Context for InputNode callbacks &#45; provides input event access." alt="" coords="419,822,587,942"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="494,943,437,1254,432,1253,489,942"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="383,180,603,305"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="497,319,504,822,499,822,492,319"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="621,652,867,1112"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="649,1113,601,1208,542,1307,479,1401,475,1398,537,1304,596,1205,644,1111"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="628,5,895,480"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="757,494,753,652,748,652,752,494"/>
+</map>
