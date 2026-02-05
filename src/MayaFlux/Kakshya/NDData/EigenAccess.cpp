@@ -1,8 +1,5 @@
 #include "EigenAccess.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-#include <glm/gtc/type_ptr.hpp>
-
 namespace MayaFlux::Kakshya {
 
 Eigen::VectorXd EigenAccess::to_vector() const
@@ -216,96 +213,6 @@ std::string EigenAccess::type_name() const
         return typeid(T).name();
     },
         m_variant);
-}
-
-template <typename T>
-Eigen::VectorXd EigenAccess::scalar_to_vector(const std::vector<T>& vec) const
-{
-    if (vec.empty()) {
-        return Eigen::VectorXd(0);
-    }
-    if (vec.size() > static_cast<size_t>(std::numeric_limits<Eigen::Index>::max())) {
-        error<std::overflow_error>(
-            Journal::Component::Kakshya,
-            Journal::Context::Runtime,
-            std::source_location::current(),
-            "Vector size {} exceeds Eigen::Index maximum {}",
-            vec.size(),
-            std::numeric_limits<Eigen::Index>::max());
-    }
-
-    Eigen::VectorXd result(vec.size());
-    for (Eigen::Index i = 0; i < vec.size(); ++i) {
-        result(i) = static_cast<double>(vec[i]);
-    }
-    return result;
-}
-
-template <typename T>
-Eigen::MatrixXd EigenAccess::scalar_to_matrix(const std::vector<T>& vec) const
-{
-    Eigen::MatrixXd result(1, vec.size());
-    for (Eigen::Index i = 0; i < vec.size(); ++i) {
-        result(0, i) = static_cast<double>(vec[i]);
-    }
-    return result;
-}
-
-template <typename T>
-Eigen::MatrixXd EigenAccess::complex_to_matrix(const std::vector<std::complex<T>>& vec) const
-{
-    Eigen::MatrixXd result(2, vec.size());
-    for (Eigen::Index i = 0; i < vec.size(); ++i) {
-        result(0, i) = static_cast<double>(vec[i].real());
-        result(1, i) = static_cast<double>(vec[i].imag());
-    }
-    return result;
-}
-
-template <typename T>
-Eigen::MatrixXd EigenAccess::glm_to_matrix(const std::vector<T>& vec) const
-{
-    if constexpr (GlmVec2Type<T>) {
-        Eigen::MatrixXd result(2, vec.size());
-        for (Eigen::Index i = 0; i < vec.size(); ++i) {
-            result(0, i) = static_cast<double>(vec[i].x);
-            result(1, i) = static_cast<double>(vec[i].y);
-        }
-        return result;
-    } else if constexpr (GlmVec3Type<T>) {
-        Eigen::MatrixXd result(3, vec.size());
-        for (Eigen::Index i = 0; i < vec.size(); ++i) {
-            result(0, i) = static_cast<double>(vec[i].x);
-            result(1, i) = static_cast<double>(vec[i].y);
-            result(2, i) = static_cast<double>(vec[i].z);
-        }
-        return result;
-    } else if constexpr (GlmVec4Type<T>) {
-        Eigen::MatrixXd result(4, vec.size());
-        for (Eigen::Index i = 0; i < vec.size(); ++i) {
-            result(0, i) = static_cast<double>(vec[i].x);
-            result(1, i) = static_cast<double>(vec[i].y);
-            result(2, i) = static_cast<double>(vec[i].z);
-            result(3, i) = static_cast<double>(vec[i].w);
-        }
-        return result;
-    } else if constexpr (GlmMatrixType<T>) {
-        Eigen::MatrixXd result(16, vec.size());
-        for (Eigen::Index i = 0; i < vec.size(); ++i) {
-            const float* ptr = glm::value_ptr(vec[i]);
-            for (int j = 0; j < 16; ++j) {
-                result(j, i) = static_cast<double>(ptr[j]);
-            }
-        }
-        return result;
-    } else {
-        error<std::invalid_argument>(
-            Journal::Component::Kakshya,
-            Journal::Context::Runtime,
-            std::source_location::current(),
-            "Unknown GLM type: {}",
-            typeid(T).name());
-    }
 }
 
 } // namespace MayaFlux::Kakshya
