@@ -6,8 +6,8 @@
 #include "GlobalInputConfig.hpp"
 #include "GlobalStreamInfo.hpp"
 
-namespace MayaFlux::Nodes::Generator::Stochastics {
-class Random;
+namespace MayaFlux::Kinesis::Stochastic {
+class Stochastic;
 }
 
 namespace MayaFlux::Vruta {
@@ -278,12 +278,13 @@ public:
 
     /**
      * @brief Gets the stochastic signal generator engine
-     * @return Pointer to the Random node for random signal generation
+     * @return Pointer to the Stochastic engine for random/procedural generation
      *
-     * The Random node provides various stochastic signal sources.
-     * Managed directly by Engine for optimal performance in generator nodes.
+     * The Stochastic engine provides a unified interface for generating random values
+     * and procedural signals across all domains. Access through Engine ensures a
+     * single shared instance is used throughout the system for consistent behavior and state management.
      */
-    inline Nodes::Generator::Stochastics::Random* get_random_engine() { return m_rng.get(); }
+    inline Kinesis::Stochastic::Stochastic* get_stochastic_engine() { return m_stochastic_engine.get(); }
 
     /**
      * @brief Gets the subsystem manager for advanced component access
@@ -355,7 +356,7 @@ private:
     std::shared_ptr<WindowManager> m_window_manager; ///< Window manager (Windowing subsystem)
     std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager (currently only glfw events)
     std::shared_ptr<InputManager> m_input_manager; ///< Input manager (HID/MIDI/etc.)
-    std::unique_ptr<Nodes::Generator::Stochastics::Random> m_rng; ///< Stochastic signal generator
+    std::unique_ptr<Kinesis::Stochastic::Stochastic> m_stochastic_engine; ///< Core stochastic engine for random generation
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     void run_macos_event_loop();

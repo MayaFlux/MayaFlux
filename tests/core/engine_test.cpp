@@ -7,9 +7,9 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Core/SubsystemManager.hpp"
 #include "MayaFlux/Core/Subsystems/AudioSubsystem.hpp"
+#include "MayaFlux/Kinesis/Stochastic.hpp"
 #include "MayaFlux/Kriya/Tasks.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
-#include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
@@ -96,7 +96,7 @@ TEST_F(EngineTest, ConstructorCreatesCleanState)
     EXPECT_EQ(test_engine->get_buffer_manager(), nullptr) << "BufferManager should be null before Init";
     EXPECT_EQ(test_engine->get_scheduler(), nullptr) << "TaskScheduler should be null before Init";
 
-    EXPECT_NE(test_engine->get_random_engine(), nullptr) << "Random engine should be available";
+    EXPECT_NE(test_engine->get_stochastic_engine(), nullptr) << "Random engine should be available";
 }
 
 TEST_F(EngineTest, InitializationCreatesAndWiresComponents)
@@ -184,7 +184,7 @@ TEST_F(EngineTest, ComponentAccessRouting)
     auto node_graph = engine->get_node_graph_manager();
     auto buffer_manager = engine->get_buffer_manager();
     auto subsystem_manager = engine->get_subsystem_manager();
-    auto random_engine = engine->get_random_engine();
+    auto random_engine = engine->get_stochastic_engine();
 
     EXPECT_NE(scheduler, nullptr);
     EXPECT_NE(node_graph, nullptr);
@@ -313,23 +313,22 @@ TEST_F(EngineTest, BufferSystemIntegration)
 
 TEST_F(EngineTest, StochasticEngineIntegration)
 {
-    auto rng = engine->get_random_engine();
-    ASSERT_NE(rng, nullptr);
+    auto& rng = *engine->get_stochastic_engine();
 
-    double uniform = rng->random_sample(-1.0, 1.0);
+    double uniform = rng(-1.0, 1.0);
     EXPECT_GE(uniform, -1.0);
     EXPECT_LE(uniform, 1.0);
 
-    rng->set_type(Kinesis::Stochastic::Algorithm::NORMAL);
-    std::vector<double> samples = rng->random_array(0.0, 1.0, 100);
+    rng.set_algorithm(Kinesis::Stochastic::Algorithm::NORMAL);
+    std::vector<double> samples = rng.batch(0.0, 1.0, 100);
     EXPECT_EQ(samples.size(), 100);
 
-    rng->set_type(Kinesis::Stochastic::Algorithm::EXPONENTIAL);
-    double exp_sample = rng->random_sample(0.0, 1.0);
+    rng.set_algorithm(Kinesis::Stochastic::Algorithm::EXPONENTIAL);
+    double exp_sample = rng(0.0, 1.0);
     EXPECT_GE(exp_sample, 0.0);
 
-    rng->set_type(Kinesis::Stochastic::Algorithm::POISSON);
-    double pois_sample = rng->random_sample(0.0, 10.0);
+    rng.set_algorithm(Kinesis::Stochastic::Algorithm::POISSON);
+    double pois_sample = rng(0.0, 10.0);
     EXPECT_GE(pois_sample, 0.0);
 }
 

@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/Input/InputManager.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
-#include "MayaFlux/Nodes/Generators/Stochastic.hpp"
+#include "MayaFlux/Kinesis/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
@@ -26,7 +26,7 @@ namespace MayaFlux::Core {
 //-------------------------------------------------------------------------
 
 Engine::Engine()
-    : m_rng(new Nodes::Generator::Stochastics::Random())
+    : m_stochastic_engine(new Kinesis::Stochastic::Stochastic(Kinesis::Stochastic::Algorithm::UNIFORM))
 {
 }
 
@@ -48,7 +48,7 @@ Engine::Engine(Engine&& other) noexcept
     , m_window_manager(std::move(other.m_window_manager))
     , m_event_manager(std::move(other.m_event_manager))
     , m_input_manager(std::move(other.m_input_manager))
-    , m_rng(std::move(other.m_rng))
+    , m_stochastic_engine(std::move(other.m_stochastic_engine))
 {
     other.m_is_initialized = false;
     other.m_is_paused = false;
@@ -69,7 +69,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
         m_window_manager = std::move(other.m_window_manager);
         m_event_manager = std::move(other.m_event_manager);
         m_input_manager = std::move(other.m_input_manager);
-        m_rng = std::move(other.m_rng);
+        m_stochastic_engine = std::move(other.m_stochastic_engine);
 
         m_is_initialized = other.m_is_initialized;
         m_is_paused = other.m_is_paused;
