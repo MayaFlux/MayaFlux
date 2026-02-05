@@ -10,9 +10,7 @@ namespace Nodes {
         class Impulse;
         class Logic;
         class Polynomial;
-        namespace Stochastics {
-            class Random;
-        }
+        class Random;
     }
     namespace Filters {
         class IIR;
@@ -72,7 +70,7 @@ namespace Core {
     N(Impulse, MayaFlux::Nodes::Generator::Impulse)                       \
     N(Logic, MayaFlux::Nodes::Generator::Logic)                           \
     N(Polynomial, MayaFlux::Nodes::Generator::Polynomial)                 \
-    N(Random, MayaFlux::Nodes::Generator::Stochastics::Random)            \
+    N(Random, MayaFlux::Nodes::Generator::Random)                         \
     N(IIR, MayaFlux::Nodes::Filters::IIR)                                 \
     N(FIR, MayaFlux::Nodes::Filters::FIR)                                 \
     N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)           \

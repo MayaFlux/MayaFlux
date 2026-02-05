@@ -6,8 +6,8 @@
 #include "MayaFlux/Core/Subsystems/AudioSubsystem.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
+#include "MayaFlux/Nodes/Generators/Random.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
-#include "MayaFlux/Nodes/Generators/Stochastic.hpp"
 
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "RtAudio.h"
@@ -427,7 +427,7 @@ TEST_F(AudibleTest, NoiseGeneratorOutput)
 {
     std::cout << "Testing various noise types..." << std::endl;
 
-    auto noise = std::make_shared<Nodes::Generator::Stochastics::Random>();
+    auto noise = std::make_shared<Nodes::Generator::Random>();
     noise->set_amplitude(0.3f);
 
     auto node_graph = engine->get_node_graph_manager();

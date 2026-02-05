@@ -3,13 +3,13 @@
 
 #include "MayaFlux/Kinesis/Stochastic.hpp"
 
-namespace MayaFlux::Nodes::Generator::Stochastics {
+namespace MayaFlux::Nodes::Generator {
 
 /**
- * @class StochasticContext
+ * @class RandomContext
  * @brief Specialized context for stochastic generator callbacks
  *
- * StochasticContext extends the base NodeContext to provide detailed information
+ * RandomContext extends the base NodeContext to provide detailed information
  * about a stochastic generator's current state to callbacks. It includes the
  * current distribution type, amplitude scaling, range parameters, and statistical
  * configuration values.
@@ -22,10 +22,10 @@ namespace MayaFlux::Nodes::Generator::Stochastics {
  * - Creating cross-domain mappings based on stochastic properties
  * - Detecting and responding to specific statistical conditions
  */
-class MAYAFLUX_API StochasticContext : public NodeContext {
+class MAYAFLUX_API RandomContext : public NodeContext {
 public:
     /**
-     * @brief Constructs a StochasticContext with the current generator state
+     * @brief Constructs a RandomContext with the current generator state
      * @param value Current output sample value
      * @param type Current probability distribution algorithm
      * @param amplitude Current scaling factor for output values
@@ -37,9 +37,9 @@ public:
      * stochastic generator's current state, including its most recent output
      * value and all parameters that define its statistical behavior.
      */
-    StochasticContext(double value, Kinesis::Stochastic::Algorithm type, double amplitude,
+    RandomContext(double value, Kinesis::Stochastic::Algorithm type, double amplitude,
         double range_start, double range_end, double normal_spread)
-        : NodeContext(value, typeid(StochasticContext).name())
+        : NodeContext(value, typeid(RandomContext).name())
         , distribution_type(type)
         , amplitude(amplitude)
         , range_start(range_start)
@@ -79,11 +79,11 @@ public:
 };
 
 /**
- * @class StochasticContextGpu
+ * @class RandomContextGpu
  */
-class MAYAFLUX_API StochasticContextGpu : public StochasticContext, public GpuVectorData {
+class MAYAFLUX_API RandomContextGpu : public RandomContext, public GpuVectorData {
 public:
-    StochasticContextGpu(
+    RandomContextGpu(
         double value,
         Kinesis::Stochastic::Algorithm type,
         double amplitude,
@@ -91,10 +91,10 @@ public:
         double range_end,
         double normal_spread,
         std::span<const float> gpu_data)
-        : StochasticContext(value, type, amplitude, range_start, range_end, normal_spread)
+        : RandomContext(value, type, amplitude, range_start, range_end, normal_spread)
         , GpuVectorData(gpu_data)
     {
-        type_id = typeid(StochasticContextGpu).name();
+        type_id = typeid(RandomContextGpu).name();
     }
 };
 
@@ -351,12 +351,13 @@ private:
     /** @brief Internal state for xorshift random number generation */
     uint64_t m_xorshift_state;
 
-    StochasticContext m_context;
-    StochasticContextGpu m_context_gpu;
+    RandomContext m_context;
+    RandomContextGpu m_context_gpu;
 
     double m_cached_start = -1.0;
     double m_cached_end = 1.0;
     double m_cached_spread = 4.0;
     bool m_dist_dirty = true;
 };
-}
+
+} // namespace MayaFlux::Nodes::Generator

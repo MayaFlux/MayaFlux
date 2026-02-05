@@ -1,6 +1,6 @@
-#include "Stochastic.hpp"
+#include "Random.hpp"
 
-namespace MayaFlux::Nodes::Generator::Stochastics {
+namespace MayaFlux::Nodes::Generator {
 
 Random::Random(Kinesis::Stochastic::Algorithm type)
     : m_random_engine(std::random_device {}())
