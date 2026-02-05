@@ -3,7 +3,7 @@
 #include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Filters/IIR.hpp"
-#include "MayaFlux/Nodes/Generators/Stochastic.hpp"
+#include "MayaFlux/Nodes/Generators/Random.hpp"
 
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
@@ -413,10 +413,10 @@ class NoiseGeneratorTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        noise = std::make_shared<Nodes::Generator::Stochastics::Random>();
+        noise = std::make_shared<Nodes::Generator::Random>();
     }
 
-    std::shared_ptr<Nodes::Generator::Stochastics::Random> noise;
+    std::shared_ptr<Nodes::Generator::Random> noise;
 };
 
 TEST_F(NoiseGeneratorTest, BasicNoise)
@@ -449,11 +449,11 @@ TEST_F(NoiseGeneratorTest, DifferentDistributions)
 {
     unsigned int num_samples = 1000;
 
-    noise->set_type(Kinesis::distribution::NORMAL);
+    noise->set_type(Kinesis::Stochastic::Algorithm::NORMAL);
     std::vector<double> normal_samples = noise->process_batch(num_samples);
 
-    noise->set_type(Kinesis::distribution::EXPONENTIAL);
-    noise->random_array(0.0, 1.0, 1);
+    noise->set_type(Kinesis::Stochastic::Algorithm::EXPONENTIAL);
+    noise->set_range(0.0, 1.0);
     std::vector<double> exp_samples = noise->process_batch(num_samples);
 
     bool distributions_different = false;
@@ -477,7 +477,9 @@ TEST_F(NoiseGeneratorTest, RangeControl)
     double max = 10.0;
     unsigned int num_samples = 1000;
 
-    std::vector<double> range_samples = noise->random_array(min, max, num_samples);
+    noise->set_range(min, max);
+
+    std::vector<double> range_samples = noise->process_batch(num_samples);
 
     for (const auto& sample : range_samples) {
         EXPECT_GE(sample, min);
@@ -490,7 +492,7 @@ protected:
     void SetUp() override
     {
         sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-        noise = std::make_shared<Nodes::Generator::Stochastics::Random>();
+        noise = std::make_shared<Nodes::Generator::Random>();
         fir_coeffs = { 0.2, 0.2, 0.2, 0.2, 0.2 };
         fir = std::make_shared<Nodes::Filters::FIR>(sine, fir_coeffs);
 
@@ -498,7 +500,7 @@ protected:
     }
 
     std::shared_ptr<Nodes::Generator::Sine> sine;
-    std::shared_ptr<Nodes::Generator::Stochastics::Random> noise;
+    std::shared_ptr<Nodes::Generator::Random> noise;
     std::vector<double> fir_coeffs;
     std::shared_ptr<Nodes::Filters::FIR> fir;
 
