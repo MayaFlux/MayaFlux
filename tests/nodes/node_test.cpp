@@ -453,7 +453,7 @@ TEST_F(NoiseGeneratorTest, DifferentDistributions)
     std::vector<double> normal_samples = noise->process_batch(num_samples);
 
     noise->set_type(Kinesis::Stochastic::Algorithm::EXPONENTIAL);
-    noise->random_array(0.0, 1.0, 1);
+    noise->set_range(0.0, 1.0);
     std::vector<double> exp_samples = noise->process_batch(num_samples);
 
     bool distributions_different = false;
@@ -477,7 +477,9 @@ TEST_F(NoiseGeneratorTest, RangeControl)
     double max = 10.0;
     unsigned int num_samples = 1000;
 
-    std::vector<double> range_samples = noise->random_array(min, max, num_samples);
+    noise->set_range(min, max);
+
+    std::vector<double> range_samples = noise->process_batch(num_samples);
 
     for (const auto& sample : range_samples) {
         EXPECT_GE(sample, min);

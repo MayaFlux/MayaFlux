@@ -100,30 +100,13 @@ public:
 
 /**
  * @class Random
- * @brief Computational stochastic signal generator with multiple probability distributions
+ * @brief Node wrapper for Kinesis::Stochastic - signal-rate stochastic generation
  *
- * The Random generates algorithmic signals based on mathematical probability
- * distributions, serving as a foundational component for generative composition,
- * procedural sound design, and data-driven audio transformation. Unlike deterministic
- * processes, stochastic generators introduce controlled mathematical randomness
- * into computational signal paths.
+ * Provides continuous stochastic signal generation integrated with the node graph system.
+ * This is a thin adapter that connects the core Kinesis::Stochastic infrastructure to
+ * the processing graph, adding amplitude scaling, callbacks, and GPU context support.
  *
- * Stochastic processes are fundamental in computational audio for:
- * - Procedural generation of complex timbral structures
- * - Algorithmic composition and generative music systems
- * - Data-driven environmental simulations
- * - Creating emergent sonic behaviors through probability fields
- * - Cross-domain control signal generation (audio influencing visual, haptic, etc.)
- *
- * This implementation supports multiple probability distributions:
- * - Uniform: Equal probability across the entire range
- * - Normal (Gaussian): Bell-shaped distribution centered around the midpoint
- * - Exponential: Higher probability near the start, decreasing exponentially
- *
- * The Random can function at any rate - from audio-rate signal generation to
- * control-rate parameter modulation, to event-level algorithmic decision making.
- * It can be integrated with other computational domains (graphics, physics, data)
- * to create cross-domain generative systems.
+ * For direct mathematical usage outside the node system, use Kinesis::Stochastic::Stochastic directly.
  */
 class MAYAFLUX_API Random : public Generator {
 public:
@@ -137,22 +120,24 @@ public:
      */
     Random(Kinesis::Stochastic::Algorithm type = Kinesis::Stochastic::Algorithm::UNIFORM);
 
-    /**
-     * @brief Virtual destructor
-     */
     ~Random() override = default;
 
     /**
      * @brief Changes the probability distribution type
      * @param type New distribution type to use
-     *
-     * This allows dynamic reconfiguration of the stochastic behavior,
-     * enabling real-time transformation of the generator's mathematical properties.
      */
-    inline void set_type(Kinesis::Stochastic::Algorithm type)
-    {
-        m_type = type;
-    }
+    void set_type(Kinesis::Stochastic::Algorithm type);
+
+    /**
+     * @brief Configures distribution parameters
+     * @param key Parameter name
+     * @param value Parameter value
+     *
+     * Allows dynamic adjustment of distribution-specific parameters,
+     * such as mean and standard deviation for a normal distribution,
+     * or lambda for an exponential distribution.
+     */
+    inline void configure(const std::string& key, std::any value) { m_generator.configure(key, std::move(value)); }
 
     /**
      * @brief Generates a single stochastic value
@@ -166,17 +151,6 @@ public:
     double process_sample(double input = 0.) override;
 
     /**
-     * @brief Generates a stochastic value within a specified range
-     * @param start Lower bound of the range
-     * @param end Upper bound of the range
-     * @return Value within the specified range based on current distribution
-     *
-     * This method provides precise control over the output range while
-     * maintaining the statistical properties of the selected distribution.
-     */
-    double random_sample(double start, double end);
-
-    /**
      * @brief Generates multiple stochastic values at once
      * @param num_samples Number of values to generate
      * @return Vector of generated values
@@ -185,34 +159,6 @@ public:
      * useful for batch processing or filling buffers.
      */
     std::vector<double> process_batch(unsigned int num_samples) override;
-
-    /**
-     * @brief Generates an array of stochastic values within a specified range
-     * @param start Lower bound of the range
-     * @param end Upper bound of the range
-     * @param num_samples Number of values to generate
-     * @return Vector of values within the specified range
-     *
-     * Generates a collection of values following the current distribution,
-     * mapped to the specified numerical range.
-     */
-    std::vector<double> random_array(double start, double end, unsigned int num_samples);
-
-    /**
-     * @brief Visualizes the distribution characteristics
-     *
-     * Outputs a data visualization of the distribution's statistical properties,
-     * useful for understanding the mathematical behavior of the generator.
-     */
-    void printGraph() override;
-
-    /**
-     * @brief Outputs the current configuration parameters
-     *
-     * Displays the current distribution type, scaling factor, and other
-     * mathematical parameters of the generator.
-     */
-    void printCurrent() override;
 
     /**
      * @brief Sets the variance parameter for normal distribution
@@ -225,6 +171,18 @@ public:
      */
     void set_normal_spread(double spread);
 
+    /**
+     * @brief Sets the output value range
+     * @param start Lower bound of the range
+     * @param end Upper bound of the range
+     *
+     * Defines the minimum and maximum values that the generator can produce.
+     * The actual output values will be scaled to fit within this specified range.
+     */
+    void set_range(double start, double end);
+
+    void printGraph() override { }
+    void printCurrent() override { }
     void save_state() override { }
     void restore_state() override { }
 
@@ -254,71 +212,9 @@ protected:
 
 private:
     /**
-     * @brief Generates a raw value according to the current distribution
-     * @return Raw stochastic value before range transformation
-     *
-     * This internal method applies the selected probability algorithm
-     * to generate a value with the appropriate statistical properties.
+     * @brief Core stochastic generator instance
      */
-    double generate_distributed_sample();
-
-    /**
-     * @brief Transforms a raw value to fit within the specified range
-     * @param sample Raw value from the distribution
-     * @param start Lower bound of the target range
-     * @param end Upper bound of the target range
-     * @return Transformed value within the specified range
-     *
-     * Different distributions require different mathematical transformations
-     * to properly map their output while preserving their statistical properties.
-     */
-    [[nodiscard]] double transform_sample(double sample, double start, double end) const;
-
-    /**
-     * @brief Validates that the specified range is mathematically valid
-     * @param start Lower bound of the range
-     * @param end Upper bound of the range
-     * @throws std::invalid_argument if the range is invalid
-     *
-     * Ensures that the range parameters satisfy the mathematical constraints
-     * of the selected distribution algorithm.
-     */
-    void validate_range(double start, double end) const;
-
-    /**
-     * @brief Fast uniform random number generator using xorshift algorithm
-     * @return Pseudo-random double in the range [0.0, 1.0)
-     *
-     * This method implements a simple and efficient xorshift algorithm
-     * to produce uniform random numbers quickly, suitable for high-performance
-     * applications where speed is critical.
-     */
-    [[nodiscard]] inline double fast_uniform() noexcept
-    {
-        m_xorshift_state ^= m_xorshift_state >> 12;
-        m_xorshift_state ^= m_xorshift_state << 25;
-        m_xorshift_state ^= m_xorshift_state >> 27;
-        return static_cast<double>(m_xorshift_state * 0x2545F4914F6CDD1DULL)
-            * (1.0 / 18446744073709551616.0);
-    }
-
-    /**
-     * @brief Rebuilds distribution objects if parameters have changed
-     *
-     * This method checks if any distribution parameters have been modified
-     * since the last generation and rebuilds the internal distribution
-     * objects accordingly to ensure accurate statistical behavior.
-     */
-    void rebuild_distributions_if_needed() noexcept;
-
-    /**
-     * @brief Mersenne Twister entropy generator
-     *
-     * A high-quality pseudo-random number algorithm that provides
-     * excellent statistical properties for computational applications.
-     */
-    std::mt19937 m_random_engine;
-
+    Kinesis::Stochastic::Stochastic m_generator;
     /**
      * @brief Current probability distribution algorithm
      */
@@ -327,12 +223,12 @@ private:
     /**
      * @brief Lower bound of the current output range
      */
-    double m_current_start;
+    double m_current_start { -1.0 };
 
     /**
      * @brief Upper bound of the current output range
      */
-    double m_current_end;
+    double m_current_end { 1.0 };
 
     /**
      * @brief Variance parameter for normal distribution
@@ -340,24 +236,10 @@ private:
      * Controls the statistical spread in normal distribution.
      * Higher values increase entropy and distribution width.
      */
-    double m_normal_spread;
-
-    /** @brief Normal distribution with mean 0 and standard deviation 1 */
-    std::normal_distribution<double> m_normal_dist { 0.0, 1.0 };
-
-    /** @brief Exponential distribution with lambda = 1 */
-    std::exponential_distribution<double> m_exponential_dist { 1.0 };
-
-    /** @brief Internal state for xorshift random number generation */
-    uint64_t m_xorshift_state;
+    double m_normal_spread { 1.0 };
 
     RandomContext m_context;
     RandomContextGpu m_context_gpu;
-
-    double m_cached_start = -1.0;
-    double m_cached_end = 1.0;
-    double m_cached_spread = 4.0;
-    bool m_dist_dirty = true;
 };
 
 } // namespace MayaFlux::Nodes::Generator
