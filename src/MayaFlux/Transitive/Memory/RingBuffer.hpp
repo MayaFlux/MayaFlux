@@ -471,6 +471,19 @@ public:
     }
 
     /**
+     * @brief Update element at specific index
+     * @param index Temporal offset (0 = newest, k = k samples ago)
+     * @param value New value
+     */
+    void update(size_t index, const T& value)
+    {
+        if (index >= m_count) {
+            return;
+        }
+        m_data[(m_head + index) % m_capacity] = value;
+    }
+
+    /**
      * @brief Reset buffer to initial state (all zeros)
      *
      * Fills buffer with default values and resets to full capacity.
