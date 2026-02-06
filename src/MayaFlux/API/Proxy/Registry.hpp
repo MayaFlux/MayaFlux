@@ -23,6 +23,7 @@ namespace Nodes {
         class PointNode;
         class PointCollectionNode;
         class ProceduralTextureNode;
+        class PathGeneratorNode;
     }
     namespace Network {
         class NodeNetwork;
@@ -77,6 +78,7 @@ namespace Core {
     N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)                 \
     N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode)   \
     N(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                     \
+    N(PathGeneratorNode, MayaFlux::Nodes::GpuSync::PathGeneratorNode)     \
     N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode) \
     N(ProceduralTextureNode, MayaFlux::Nodes::GpuSync::ProceduralTextureNode)
 
