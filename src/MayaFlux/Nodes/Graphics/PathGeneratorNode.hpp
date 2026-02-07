@@ -204,12 +204,19 @@ private:
     glm::vec3 m_current_color { 1.0F, 1.0F, 1.0F };
     float m_current_thickness { 2.0F };
 
+    bool m_geometry_dirty { true };
     bool m_arc_length_parameterization { false };
+
+    static constexpr size_t INVALID_SEGMENT = std::numeric_limits<size_t>::max();
+    size_t m_dirty_segment_start { INVALID_SEGMENT };
+    size_t m_dirty_segment_end { INVALID_SEGMENT };
 
     void generate_path_vertices();
     void generate_direct_path();
     void generate_custom_path();
     void generate_interpolated_path();
+    void regenerate_geometry();
+    void regenerate_segment_range(size_t start_ctrl_idx, size_t end_ctrl_idx);
     void emit_vertices_from_positions(std::span<const glm::vec3> positions);
 };
 
