@@ -127,6 +127,51 @@ void PathGeneratorNode::add_control_point(const glm::vec3& position)
     m_vertex_data_dirty = true;
 }
 
+void PathGeneratorNode::generate_curve_segment(
+    const std::vector<glm::vec3>& points,
+    size_t start_idx,
+    std::vector<LineVertex>& output)
+{
+    if (start_idx + 3 >= points.size()) {
+        return;
+    }
+
+    Eigen::MatrixXd segment_controls(3, 4);
+    for (Eigen::Index i = 0; i < 4; ++i) {
+        const auto& pt = points[start_idx + i];
+        segment_controls.col(i) << pt.x, pt.y, pt.z;
+    }
+
+    Eigen::MatrixXd interpolated = Kinesis::generate_interpolated_points(
+        segment_controls,
+        m_samples_per_segment,
+        m_mode,
+        m_tension);
+
+    if (m_arc_length_parameterization) {
+        interpolated = Kinesis::reparameterize_by_arc_length(
+            interpolated,
+            m_samples_per_segment);
+    }
+
+    for (Eigen::Index i = 0; i < interpolated.cols() - 1; ++i) {
+        glm::vec3 p0(interpolated(0, i), interpolated(1, i), interpolated(2, i));
+        glm::vec3 p1(interpolated(0, i + 1), interpolated(1, i + 1), interpolated(2, i + 1));
+
+        output.push_back({ p0, m_current_color, m_current_thickness });
+        output.push_back({ p1, m_current_color, m_current_thickness });
+    }
+}
+
+void PathGeneratorNode::append_line_segment(
+    const glm::vec3& p0,
+    const glm::vec3& p1,
+    std::vector<LineVertex>& output)
+{
+    output.push_back({ p0, m_current_color, m_current_thickness });
+    output.push_back({ p1, m_current_color, m_current_thickness });
+}
+
 void PathGeneratorNode::draw_to(const glm::vec3& position)
 {
     m_draw_window.push_back(position);
@@ -134,10 +179,10 @@ void PathGeneratorNode::draw_to(const glm::vec3& position)
     if (m_draw_window.size() == 1) {
         m_draw_vertices.push_back({ position, m_current_color, m_current_thickness });
     } else {
-        m_draw_vertices.push_back({ m_draw_window[m_draw_window.size() - 2],
-            m_current_color,
-            m_current_thickness });
-        m_draw_vertices.push_back({ position, m_current_color, m_current_thickness });
+        append_line_segment(
+            m_draw_window[m_draw_window.size() - 2],
+            position,
+            m_draw_vertices);
     }
 
     m_vertex_data_dirty = true;
@@ -220,12 +265,26 @@ void PathGeneratorNode::set_path_color(const glm::vec3& color)
 {
     m_current_color = color;
     m_vertex_data_dirty = true;
+    m_geometry_dirty = true;
+
+    for (auto& v : m_completed_draws)
+        v.color = color;
+
+    for (auto& v : m_draw_vertices)
+        v.color = color;
 }
 
 void PathGeneratorNode::set_path_thickness(float thickness)
 {
     m_current_thickness = thickness;
     m_vertex_data_dirty = true;
+    m_geometry_dirty = true;
+
+    for (auto& v : m_completed_draws)
+        v.thickness = thickness;
+
+    for (auto& v : m_draw_vertices)
+        v.thickness = thickness;
 }
 
 void PathGeneratorNode::set_interpolation_mode(Kinesis::InterpolationMode mode)
@@ -318,33 +377,10 @@ void PathGeneratorNode::generate_custom_path()
 void PathGeneratorNode::generate_interpolated_path()
 {
     auto control_view = m_control_points.linearized_view();
-    const size_t num_points = control_view.size();
+    std::vector<glm::vec3> control_vec(control_view.begin(), control_view.end());
 
-    Eigen::MatrixXd control_matrix(3, num_points);
-    for (Eigen::Index i = 0; i < num_points; ++i) {
-        control_matrix.col(i) << control_view[i].x,
-            control_view[i].y,
-            control_view[i].z;
-    }
-
-    Eigen::Index total_samples = m_samples_per_segment * (num_points - 1);
-
-    Eigen::MatrixXd interpolated = Kinesis::generate_interpolated_points(
-        control_matrix,
-        total_samples,
-        m_mode,
-        m_tension);
-
-    if (m_arc_length_parameterization) {
-        interpolated = Kinesis::reparameterize_by_arc_length(interpolated, total_samples);
-    }
-
-    for (Eigen::Index i = 0; i < interpolated.cols() - 1; ++i) {
-        glm::vec3 p0(interpolated(0, i), interpolated(1, i), interpolated(2, i));
-        glm::vec3 p1(interpolated(0, i + 1), interpolated(1, i + 1), interpolated(2, i + 1));
-
-        m_vertices.push_back({ p0, m_current_color, m_current_thickness });
-        m_vertices.push_back({ p1, m_current_color, m_current_thickness });
+    for (size_t i = 0; i + 3 < control_vec.size(); ++i) {
+        generate_curve_segment(control_vec, i, m_vertices);
     }
 }
 
@@ -378,51 +414,24 @@ void PathGeneratorNode::regenerate_segment_range(size_t start_ctrl_idx, size_t e
         return;
     }
 
-    size_t segment_ctrl_count = end_ctrl_idx - start_ctrl_idx + 1;
-
-    Eigen::MatrixXd control_matrix(3, segment_ctrl_count);
-    for (Eigen::Index i = 0; i < segment_ctrl_count; ++i) {
-        size_t idx = start_ctrl_idx + i;
-        control_matrix.col(i) << view[idx].x, view[idx].y, view[idx].z;
+    std::vector<glm::vec3> segment_points;
+    for (size_t i = start_ctrl_idx; i <= end_ctrl_idx; ++i) {
+        segment_points.push_back(view[i]);
     }
 
-    Eigen::Index segment_samples = m_samples_per_segment * (segment_ctrl_count - 1);
+    size_t start_vertex_idx = start_ctrl_idx * m_samples_per_segment * 2;
 
-    Eigen::MatrixXd interpolated = Kinesis::generate_interpolated_points(
-        control_matrix,
-        segment_samples,
-        m_mode,
-        m_tension);
+    std::vector<LineVertex> new_segment;
 
-    if (m_arc_length_parameterization) {
-        interpolated = Kinesis::reparameterize_by_arc_length(interpolated, segment_samples);
+    for (size_t i = 0; i + 3 < segment_points.size(); ++i) {
+        generate_curve_segment(segment_points, i, new_segment);
     }
 
-    size_t start_vertex_idx = start_ctrl_idx * m_samples_per_segment;
-    auto vertex_count = static_cast<size_t>(interpolated.cols());
-
-    if (start_vertex_idx + vertex_count > m_vertices.size()) {
-        m_vertices.resize(start_vertex_idx + vertex_count);
+    if (start_vertex_idx + new_segment.size() > m_vertices.size()) {
+        m_vertices.resize(start_vertex_idx + new_segment.size());
     }
 
-    for (Eigen::Index i = 0; i < interpolated.cols() - 1; ++i) {
-        glm::vec3 p0(interpolated(0, i), interpolated(1, i), interpolated(2, i));
-        glm::vec3 p1(interpolated(0, i + 1), interpolated(1, i + 1), interpolated(2, i + 1));
-
-        size_t v_idx = start_vertex_idx + (i * 2);
-        if (v_idx + 1 < m_vertices.size()) {
-            m_vertices[v_idx] = {
-                .position = p0,
-                .color = m_current_color,
-                .thickness = m_current_thickness
-            };
-            m_vertices[v_idx + 1] = {
-                .position = p1,
-                .color = m_current_color,
-                .thickness = m_current_thickness
-            };
-        }
-    }
+    std::ranges::copy(new_segment, m_vertices.begin() + start_vertex_idx);
 }
 
 void PathGeneratorNode::compute_frame()
@@ -479,46 +488,12 @@ void PathGeneratorNode::complete()
 
     size_t start_idx = 0;
     while (start_idx + 3 < m_draw_window.size()) {
-        Eigen::MatrixXd segment_controls(3, 4);
-        segment_controls.col(0) << m_draw_window[start_idx].x,
-            m_draw_window[start_idx].y,
-            m_draw_window[start_idx].z;
-        segment_controls.col(1) << m_draw_window[start_idx + 1].x,
-            m_draw_window[start_idx + 1].y,
-            m_draw_window[start_idx + 1].z;
-        segment_controls.col(2) << m_draw_window[start_idx + 2].x,
-            m_draw_window[start_idx + 2].y,
-            m_draw_window[start_idx + 2].z;
-        segment_controls.col(3) << m_draw_window[start_idx + 3].x,
-            m_draw_window[start_idx + 3].y,
-            m_draw_window[start_idx + 3].z;
-
-        Eigen::MatrixXd interpolated = Kinesis::generate_interpolated_points(
-            segment_controls,
-            m_samples_per_segment,
-            m_mode,
-            m_tension);
-
-        if (m_arc_length_parameterization) {
-            interpolated = Kinesis::reparameterize_by_arc_length(
-                interpolated,
-                m_samples_per_segment);
-        }
-
-        for (Eigen::Index i = 0; i < interpolated.cols() - 1; ++i) {
-            glm::vec3 p0(interpolated(0, i), interpolated(1, i), interpolated(2, i));
-            glm::vec3 p1(interpolated(0, i + 1), interpolated(1, i + 1), interpolated(2, i + 1));
-
-            smoothed.push_back({ p0, m_current_color, m_current_thickness });
-            smoothed.push_back({ p1, m_current_color, m_current_thickness });
-        }
-
+        generate_curve_segment(m_draw_window, start_idx, smoothed);
         start_idx++;
     }
 
     for (size_t i = start_idx + 1; i < m_draw_window.size(); ++i) {
-        smoothed.push_back({ m_draw_window[i - 1], m_current_color, m_current_thickness });
-        smoothed.push_back({ m_draw_window[i], m_current_color, m_current_thickness });
+        append_line_segment(m_draw_window[i - 1], m_draw_window[i], smoothed);
     }
 
     m_completed_draws.insert(

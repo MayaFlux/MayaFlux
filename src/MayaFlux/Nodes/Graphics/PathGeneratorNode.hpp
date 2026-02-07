@@ -8,24 +8,34 @@ namespace MayaFlux::Nodes::GpuSync {
 
 /**
  * @class PathGeneratorNode
- * @brief Generates dense vertex paths from sparse control points using interpolation
+ * @brief Generates dense vertex paths from sparse control points or freehand drawing
  *
- * Takes control points added over time and generates smooth curves through them
- * using various interpolation methods. Produces LINE_STRIP topology output.
+ * Supports two distinct workflows:
+ * 1. Parametric curve editing via control points (full regeneration on changes)
+ * 2. Incremental freehand drawing (append-only strokes with smoothing on completion)
  *
- * Control points stored in fixed-capacity ring buffer for efficient history management.
- * Most recent control point is at index [0], oldest at [capacity-1].
+ * Both modes use Catmull-Rom or other interpolation methods to generate smooth curves.
+ * Produces LINE_STRIP topology output.
  *
  * Philosophy:
+ * - Dual-mode design: parametric editing + incremental drawing in one node
+ * - Structural Reactivity: Only parametric paths (control points) are live. Changing interpolation
+ *   modes, tension, or sampling density will rebuild the parametric curve but will NOT
+ *   affect completed freehand strokes.
  * - Control points are sparse input (artist/algorithm provides key positions)
+ * - Freehand strokes draw linearly in real-time, smooth on completion
  * - Output vertices are dense (GPU draws smooth curves)
  * - Interpolation happens CPU-side, leveraging Kinesis math primitives
  * - Fixed memory allocation (real-time safe after construction)
+ * - Visual Reactivity: Changes to color and thickness are applied globally to both live
+ *   control-point paths and "baked" freehand strokes.
+ * - Memory Efficiency: Freehand strokes are converted to static vertices upon completion;
+ *   raw mouse data is discarded, preventing re-interpolation of baked strokes.
  *
- * Usage:
+ * Parametric Mode Usage:
  * ```cpp
  * auto path = std::make_shared<PathGeneratorNode>(
- *     PathMode::CATMULL_ROM,
+ *     Kinesis::InterpolationMode::CATMULL_ROM,
  *     32,   // 32 vertices between each control point
  *     100   // Store up to 100 control points
  * );
@@ -33,6 +43,7 @@ namespace MayaFlux::Nodes::GpuSync {
  * path->add_control_point(glm::vec3(0.0f, 0.0f, 0.0f));
  * path->add_control_point(glm::vec3(0.5f, 0.5f, 0.0f));
  * path->add_control_point(glm::vec3(1.0f, 0.0f, 0.0f));
+ * // Entire curve regenerates through all control points
  *
  * auto buffer = std::make_shared<GeometryBuffer>(path);
  * buffer->setup_rendering({
@@ -40,6 +51,36 @@ namespace MayaFlux::Nodes::GpuSync {
  *     .topology = PrimitiveTopology::LINE_STRIP
  * });
  * ```
+ *
+ * Freehand Drawing Mode Usage:
+ * ```cpp
+ * auto path = std::make_shared<PathGeneratorNode>(
+ *     Kinesis::InterpolationMode::CATMULL_ROM,
+ *     32    // Smoothing resolution
+ * );
+ *
+ * // Real-time drawing (linear segments)
+ * window->on_mouse_move([path](double x, double y) {
+ *     if (mouse_button_pressed) {
+ *         path->draw_to(screen_to_ndc(x, y));  // Appends linear segment
+ *     }
+ * });
+ *
+ * // Smooth the stroke when finished
+ * window->on_mouse_release([path]() {
+ *     path->complete();  // Replaces linear segments with smooth curve
+ * });
+ *
+ * auto buffer = std::make_shared<GeometryBuffer>(path);
+ * buffer->setup_rendering({.target_window = window});
+ * ```
+ *
+ * Implementation Details:
+ * - Control points stored in fixed-capacity ring buffer (index [0] = newest)
+ * - Freehand strokes use sliding 4-point window for Catmull-Rom interpolation
+ * - Three vertex collections: control point geometry, completed strokes, in-progress stroke
+ * - Parametric edits trigger full regeneration; freehand is append-only
+ * - Both modes can coexist: control points and freehand strokes are independent
  */
 class MAYAFLUX_API PathGeneratorNode : public GeometryWriterNode {
 public:
@@ -53,7 +94,7 @@ public:
      * @param tension Tension parameter for applicable modes
      */
     explicit PathGeneratorNode(
-        Kinesis::InterpolationMode mode = Kinesis::InterpolationMode::CATMULL_ROM,
+        Kinesis::InterpolationMode mode = Kinesis::InterpolationMode::QUADRATIC_BEZIER,
         Eigen::Index samples_per_segment = 32,
         size_t max_control_points = 64,
         double tension = 0.5);
@@ -147,13 +188,14 @@ public:
 
     /**
      * @brief Set interpolation mode
-     * @param mode New interpolation mode
+     * @note Structural change: Only affects control-point paths.
+     * Baked freehand strokes remain unchanged.
      */
     void set_interpolation_mode(Kinesis::InterpolationMode mode);
 
     /**
      * @brief Set samples per segment
-     * @param samples Vertices between control points
+     * @note Structural change: Only affects control-point paths.
      */
     void set_samples_per_segment(Eigen::Index samples);
 
@@ -226,9 +268,9 @@ private:
     float m_current_thickness { 2.0F };
 
     bool m_geometry_dirty { true };
-    bool m_arc_length_parameterization { false };
+    bool m_arc_length_parameterization {};
 
-    static constexpr size_t INVALID_SEGMENT = std::numeric_limits<size_t>::max();
+    static constexpr size_t INVALID_SEGMENT { std::numeric_limits<size_t>::max() };
     size_t m_dirty_segment_start { INVALID_SEGMENT };
     size_t m_dirty_segment_end { INVALID_SEGMENT };
 
@@ -238,6 +280,16 @@ private:
     void generate_interpolated_path();
     void regenerate_geometry();
     void regenerate_segment_range(size_t start_ctrl_idx, size_t end_ctrl_idx);
+
+    void generate_curve_segment(
+        const std::vector<glm::vec3>& points,
+        size_t start_idx,
+        std::vector<LineVertex>& output);
+
+    void append_line_segment(
+        const glm::vec3& p0,
+        const glm::vec3& p1,
+        std::vector<LineVertex>& output);
 };
 
 } // namespace MayaFlux::Nodes::GpuSync
