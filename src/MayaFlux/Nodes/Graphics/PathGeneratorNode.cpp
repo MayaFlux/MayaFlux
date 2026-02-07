@@ -13,27 +13,6 @@ namespace {
         size_t end_vertex_idx;
     };
 
-    Kakshya::VertexLayout create_line_vertex_layout()
-    {
-        Kakshya::VertexLayout layout;
-        layout.stride_bytes = sizeof(LineVertex);
-
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::VERTEX_POSITIONS_3D,
-            .offset_in_vertex = 0,
-            .name = "position" });
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::VERTEX_COLORS_RGB,
-            .offset_in_vertex = sizeof(glm::vec3),
-            .name = "color" });
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::UNKNOWN,
-            .offset_in_vertex = sizeof(glm::vec3) + sizeof(glm::vec3),
-            .name = "thickness" });
-
-        return layout;
-    }
-
     SegmentRange calculate_affected_segment_range(
         size_t control_idx,
         size_t total_controls,
@@ -84,9 +63,10 @@ PathGeneratorNode::PathGeneratorNode(
     , m_samples_per_segment(samples_per_segment)
     , m_tension(tension)
 {
-    set_vertex_stride(sizeof(LineVertex));
+    const auto& stride = sizeof(LineVertex);
+    set_vertex_stride(stride);
 
-    auto layout = create_line_vertex_layout();
+    auto layout = Kakshya::VertexLayout::for_lines(stride);
     layout.vertex_count = 0;
     set_vertex_layout(layout);
 
@@ -108,9 +88,10 @@ PathGeneratorNode::PathGeneratorNode(
     , m_samples_per_segment(samples_per_segment)
     , m_tension(0.5)
 {
-    set_vertex_stride(sizeof(LineVertex));
+    const auto& stride = sizeof(LineVertex);
+    set_vertex_stride(stride);
 
-    auto layout = create_line_vertex_layout();
+    auto layout = Kakshya::VertexLayout::for_lines(stride);
     layout.vertex_count = 0;
     set_vertex_layout(layout);
 

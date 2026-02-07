@@ -57,7 +57,7 @@ struct VertexLayout {
     std::vector<VertexAttributeLayout> attributes;
 
     /**
-     * Helper: compute stride from attributes if not explicitly set
+     * @brief Helper: compute stride from attributes if not explicitly set
      */
     void compute_stride()
     {
@@ -75,6 +75,60 @@ struct VertexLayout {
 
             stride_bytes = max_offset + last_size;
         }
+    }
+
+    /**
+     * @brief Factory: Create layout for point primitives (position, color, size)
+     * @return VertexLayout configured for PointVertex
+     */
+    static VertexLayout for_points(uint32_t stride = 28)
+    {
+        VertexLayout layout;
+        layout.stride_bytes = stride;
+
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::VERTEX_POSITIONS_3D,
+            .offset_in_vertex = 0,
+            .name = "position" });
+
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::VERTEX_COLORS_RGB,
+            .offset_in_vertex = 12,
+            .name = "color" });
+
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::UNKNOWN,
+            .offset_in_vertex = 24,
+            .name = "size" });
+
+        return layout;
+    }
+
+    /**
+     * @brief Factory: Create layout for line primitives (position, color, thickness)
+     * @return VertexLayout configured for LineVertex
+     */
+    static VertexLayout for_lines(uint32_t stride = 28)
+    {
+        VertexLayout layout;
+        layout.stride_bytes = stride;
+
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::VERTEX_POSITIONS_3D,
+            .offset_in_vertex = 0,
+            .name = "position" });
+
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::VERTEX_COLORS_RGB,
+            .offset_in_vertex = 12,
+            .name = "color" });
+
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::UNKNOWN,
+            .offset_in_vertex = 24,
+            .name = "thickness" });
+
+        return layout;
     }
 
 private:
