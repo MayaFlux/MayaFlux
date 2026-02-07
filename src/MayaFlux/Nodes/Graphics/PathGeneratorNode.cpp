@@ -127,6 +127,22 @@ void PathGeneratorNode::add_control_point(const glm::vec3& position)
     m_vertex_data_dirty = true;
 }
 
+void PathGeneratorNode::draw_to(const glm::vec3& position)
+{
+    m_draw_window.push_back(position);
+
+    if (m_draw_window.size() == 1) {
+        m_draw_vertices.push_back({ position, m_current_color, m_current_thickness });
+    } else {
+        m_draw_vertices.push_back({ m_draw_window[m_draw_window.size() - 2],
+            m_current_color,
+            m_current_thickness });
+        m_draw_vertices.push_back({ position, m_current_color, m_current_thickness });
+    }
+
+    m_vertex_data_dirty = true;
+}
+
 void PathGeneratorNode::set_control_points(const std::vector<glm::vec3>& points)
 {
     m_control_points.reset();
@@ -190,6 +206,9 @@ void PathGeneratorNode::clear_path()
 {
     m_control_points.reset();
     m_vertices.clear();
+    m_draw_window.clear();
+    m_draw_vertices.clear();
+    m_completed_draws.clear();
     m_vertex_data_dirty = true;
     m_needs_layout_update = true;
     m_geometry_dirty = true;
@@ -406,43 +425,110 @@ void PathGeneratorNode::regenerate_segment_range(size_t start_ctrl_idx, size_t e
     }
 }
 
-void PathGeneratorNode::emit_vertices_from_positions(
-    std::span<const glm::vec3> positions)
-{
-    m_vertices.resize(positions.size());
-
-    for (size_t i = 0; i < positions.size(); ++i) {
-        m_vertices[i] = LineVertex {
-            .position = positions[i],
-            .color = m_current_color,
-            .thickness = m_current_thickness
-        };
-    }
-}
-
 void PathGeneratorNode::compute_frame()
 {
-    if (m_control_points.empty()) {
+    if (m_control_points.empty() && m_draw_vertices.empty() && m_completed_draws.empty()) {
         resize_vertex_buffer(0);
         return;
     }
 
-    regenerate_geometry();
+    if (m_geometry_dirty) {
+        regenerate_geometry();
+        m_geometry_dirty = false;
+    }
 
     if (!m_vertex_data_dirty) {
         return;
     }
 
-    if (m_vertices.empty()) {
+    std::vector<LineVertex> combined;
+    combined.reserve(m_vertices.size() + m_completed_draws.size() + m_draw_vertices.size());
+    combined.insert(combined.end(), m_vertices.begin(), m_vertices.end());
+    combined.insert(combined.end(), m_completed_draws.begin(), m_completed_draws.end());
+    combined.insert(combined.end(), m_draw_vertices.begin(), m_draw_vertices.end());
+
+    if (combined.empty()) {
         resize_vertex_buffer(0);
         return;
     }
 
-    set_vertices<LineVertex>(std::span { m_vertices.data(), m_vertices.size() });
+    set_vertices<LineVertex>(std::span { combined.data(), combined.size() });
 
     auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(m_vertices.size());
+    layout->vertex_count = static_cast<uint32_t>(combined.size());
     set_vertex_layout(*layout);
+}
+
+void PathGeneratorNode::complete()
+{
+    if (m_draw_window.size() < 4) {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "Not enough points in draw window to generate curve segment ({} points)",
+            m_draw_window.size());
+        m_completed_draws.insert(
+            m_completed_draws.end(),
+            m_draw_vertices.begin(),
+            m_draw_vertices.end());
+        m_draw_vertices.clear();
+        m_draw_window.clear();
+        m_vertex_data_dirty = true;
+        return;
+    }
+
+    std::vector<LineVertex> smoothed;
+
+    size_t start_idx = 0;
+    while (start_idx + 3 < m_draw_window.size()) {
+        Eigen::MatrixXd segment_controls(3, 4);
+        segment_controls.col(0) << m_draw_window[start_idx].x,
+            m_draw_window[start_idx].y,
+            m_draw_window[start_idx].z;
+        segment_controls.col(1) << m_draw_window[start_idx + 1].x,
+            m_draw_window[start_idx + 1].y,
+            m_draw_window[start_idx + 1].z;
+        segment_controls.col(2) << m_draw_window[start_idx + 2].x,
+            m_draw_window[start_idx + 2].y,
+            m_draw_window[start_idx + 2].z;
+        segment_controls.col(3) << m_draw_window[start_idx + 3].x,
+            m_draw_window[start_idx + 3].y,
+            m_draw_window[start_idx + 3].z;
+
+        Eigen::MatrixXd interpolated = Kinesis::generate_interpolated_points(
+            segment_controls,
+            m_samples_per_segment,
+            m_mode,
+            m_tension);
+
+        if (m_arc_length_parameterization) {
+            interpolated = Kinesis::reparameterize_by_arc_length(
+                interpolated,
+                m_samples_per_segment);
+        }
+
+        for (Eigen::Index i = 0; i < interpolated.cols() - 1; ++i) {
+            glm::vec3 p0(interpolated(0, i), interpolated(1, i), interpolated(2, i));
+            glm::vec3 p1(interpolated(0, i + 1), interpolated(1, i + 1), interpolated(2, i + 1));
+
+            smoothed.push_back({ p0, m_current_color, m_current_thickness });
+            smoothed.push_back({ p1, m_current_color, m_current_thickness });
+        }
+
+        start_idx++;
+    }
+
+    for (size_t i = start_idx + 1; i < m_draw_window.size(); ++i) {
+        smoothed.push_back({ m_draw_window[i - 1], m_current_color, m_current_thickness });
+        smoothed.push_back({ m_draw_window[i], m_current_color, m_current_thickness });
+    }
+
+    m_completed_draws.insert(
+        m_completed_draws.end(),
+        smoothed.begin(),
+        smoothed.end());
+
+    m_draw_vertices.clear();
+    m_draw_window.clear();
+    m_vertex_data_dirty = true;
 }
 
 } // namespace MayaFlux::Nodes::GpuSync

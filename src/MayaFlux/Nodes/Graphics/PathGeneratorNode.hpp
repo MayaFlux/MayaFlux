@@ -79,6 +79,15 @@ public:
     void add_control_point(const glm::vec3& position);
 
     /**
+     * @brief Extend path by drawing curve to new position
+     * @param position Target position to draw curve to
+     *
+     * Generates interpolated vertices ONLY between last added point and new position.
+     * Appends generated vertices to existing geometry. No history awareness beyond last point.
+     */
+    void draw_to(const glm::vec3& position);
+
+    /**
      * @brief Set all control points at once (replaces history)
      * @param points Vector of control point positions (ordered newest to oldest)
      *
@@ -192,11 +201,23 @@ public:
      */
     void compute_frame() override;
 
+    /**
+     * @brief Finish incremental drawing stroke
+     *
+     * Clears the sliding window. Call this when pen lifts or stroke ends.
+     * Next draw_to() will start a fresh stroke.
+     */
+    void complete();
+
 private:
     Kinesis::InterpolationMode m_mode;
     CustomPathFunction m_custom_func;
     Memory::HistoryBuffer<glm::vec3> m_control_points;
     std::vector<LineVertex> m_vertices;
+    std::vector<LineVertex> m_draw_vertices;
+    std::vector<LineVertex> m_completed_draws;
+
+    std::vector<glm::vec3> m_draw_window;
 
     Eigen::Index m_samples_per_segment;
     double m_tension;
@@ -217,7 +238,6 @@ private:
     void generate_interpolated_path();
     void regenerate_geometry();
     void regenerate_segment_range(size_t start_ctrl_idx, size_t end_ctrl_idx);
-    void emit_vertices_from_positions(std::span<const glm::vec3> positions);
 };
 
 } // namespace MayaFlux::Nodes::GpuSync
