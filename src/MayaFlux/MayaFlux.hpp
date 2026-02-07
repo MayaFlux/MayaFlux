@@ -40,6 +40,7 @@
 #include "Nodes/Graphics/PointNode.hpp"
 #include "Nodes/Graphics/ProceduralTextureNode.hpp"
 #include "Nodes/Graphics/TextureNode.hpp"
+#include "Nodes/Graphics/TopologyGeneratorNode.hpp"
 #include "Nodes/Network/NodeNetwork.hpp"
 #include "Nodes/NodeGraphManager.hpp"
 #include "Nodes/NodeStructure.hpp"
