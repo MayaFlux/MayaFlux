@@ -19,6 +19,17 @@ struct PhysicsState {
 };
 
 /**
+ * @enum BoundsMode
+ * @brief How particles behave at spatial bounds
+ */
+enum class BoundsMode : uint8_t {
+    NONE, ///< No bounds checking
+    BOUNCE, ///< Reflect off boundaries with damping
+    WRAP, ///< Teleport to opposite side
+    CLAMP ///< Stop at boundary
+};
+
+/**
  * @class PhysicsOperator
  * @brief N-body physics simulation with point rendering
  *
@@ -134,6 +145,42 @@ public:
      */
     [[nodiscard]] float get_drag() const { return m_drag; }
 
+    /**
+     * @brief Set the current bounds mode.
+     * @param mode Bounds mode to set.
+     */
+    void set_bounds_mode(BoundsMode mode) { m_bounds_mode = mode; }
+
+    /**
+     * @brief Get the current bounds mode.
+     * @return Current bounds mode.
+     */
+    [[nodiscard]] BoundsMode get_bounds_mode() const { return m_bounds_mode; }
+
+    /**
+     * @brief Enable or disable spatial interactions between particles.
+     * @param enable True to enable, false to disable.
+     */
+    void enable_spatial_interactions(bool enable) { m_spatial_interactions_enabled = enable; }
+
+    /**
+     * @brief Set the strength of repulsion between particles when spatial interactions are enabled.
+     * @param strength Repulsion strength value.
+     */
+    void set_repulsion_strength(float strength) { m_repulsion_strength = strength; }
+
+    /**
+     * @brief Check if spatial interactions between particles are enabled.
+     * @return True if enabled, false otherwise.
+     */
+    [[nodiscard]] bool spatial_interactions_enabled() const { return m_spatial_interactions_enabled; }
+
+    /**
+     * @brief Get the current repulsion strength for spatial interactions.
+     * @return Repulsion strength value.
+     */
+    [[nodiscard]] float get_repulsion_strength() const { return m_repulsion_strength; }
+
 private:
     std::vector<CollectionGroup> m_collections;
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
@@ -145,8 +192,12 @@ private:
     float m_point_size { 5.0F };
     glm::vec3 m_bounds_min { -10.0F };
     glm::vec3 m_bounds_max { 10.0F };
+    BoundsMode m_bounds_mode { BoundsMode::BOUNCE };
+    bool m_spatial_interactions_enabled {};
+    float m_repulsion_strength { 0.5F };
 
     void apply_forces();
+    void apply_spatial_interactions();
     void integrate(float dt);
     void handle_boundary_conditions();
     void sync_to_point_collection();

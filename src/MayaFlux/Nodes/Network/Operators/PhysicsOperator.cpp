@@ -226,6 +226,10 @@ void PhysicsOperator::set_parameter(std::string_view param, double value)
         m_interaction_radius = static_cast<float>(value);
     } else if (param == "spring_stiffness") {
         m_spring_stiffness = static_cast<float>(value);
+    } else if (param == "repulsion_strength") {
+        m_repulsion_strength = static_cast<float>(value);
+    } else if (param == "spatial_interactions") {
+        m_spatial_interactions_enabled = (value > 0.5);
     } else if (param == "point_size") {
         m_point_size = static_cast<float>(value);
         for (auto& group : m_collections) {
@@ -284,6 +288,54 @@ void PhysicsOperator::apply_forces()
             state.force = m_gravity * state.mass;
         }
     }
+
+    if (m_spatial_interactions_enabled && m_interaction_radius > 0.0F) {
+        apply_spatial_interactions();
+    }
+}
+
+void PhysicsOperator::apply_spatial_interactions()
+{
+    for (size_t g1 = 0; g1 < m_collections.size(); ++g1) {
+        auto& group1 = m_collections[g1];
+        auto& points1 = group1.collection->get_points();
+
+        for (size_t i = 0; i < points1.size(); ++i) {
+            const auto& pos_i = points1[i].position;
+            auto& state_i = group1.physics_state[i];
+
+            for (size_t g2 = 0; g2 < m_collections.size(); ++g2) {
+                auto& group2 = m_collections[g2];
+                auto& points2 = group2.collection->get_points();
+
+                size_t start_j = (g1 == g2) ? i + 1 : 0;
+
+                for (size_t j = start_j; j < points2.size(); ++j) {
+                    const auto& pos_j = points2[j].position;
+                    auto& state_j = group2.physics_state[j];
+
+                    glm::vec3 delta = pos_j - pos_i;
+                    float distance = glm::length(delta);
+
+                    if (distance < m_interaction_radius && distance > 0.001F) {
+                        glm::vec3 direction = delta / distance;
+
+                        float spring_force = m_spring_stiffness * (distance - m_interaction_radius * 0.5F);
+
+                        float repulsion_force = 0.0F;
+                        if (distance < m_interaction_radius * 0.3F) {
+                            repulsion_force = m_repulsion_strength / (distance * distance);
+                        }
+
+                        glm::vec3 force = direction * (spring_force - repulsion_force);
+
+                        state_i.force += force;
+                        state_j.force -= force;
+                    }
+                }
+            }
+        }
+    }
 }
 
 void PhysicsOperator::integrate(float dt)
@@ -307,6 +359,10 @@ void PhysicsOperator::integrate(float dt)
 
 void PhysicsOperator::handle_boundary_conditions()
 {
+    if (m_bounds_mode == BoundsMode::NONE) {
+        return;
+    }
+
     constexpr float damping = 0.8F;
 
     for (auto& group : m_collections) {
@@ -316,28 +372,40 @@ void PhysicsOperator::handle_boundary_conditions()
             auto& vertex = points[i];
             auto& state = group.physics_state[i];
 
-            if (vertex.position.x < m_bounds_min.x) {
-                vertex.position.x = m_bounds_min.x;
-                state.velocity.x *= -damping;
-            } else if (vertex.position.x > m_bounds_max.x) {
-                vertex.position.x = m_bounds_max.x;
-                state.velocity.x *= -damping;
-            }
-
-            if (vertex.position.y < m_bounds_min.y) {
-                vertex.position.y = m_bounds_min.y;
-                state.velocity.y *= -damping;
-            } else if (vertex.position.y > m_bounds_max.y) {
-                vertex.position.y = m_bounds_max.y;
-                state.velocity.y *= -damping;
-            }
-
-            if (vertex.position.z < m_bounds_min.z) {
-                vertex.position.z = m_bounds_min.z;
-                state.velocity.z *= -damping;
-            } else if (vertex.position.z > m_bounds_max.z) {
-                vertex.position.z = m_bounds_max.z;
-                state.velocity.z *= -damping;
+            for (int axis = 0; axis < 3; ++axis) {
+                if (vertex.position[axis] < m_bounds_min[axis]) {
+                    switch (m_bounds_mode) {
+                    case BoundsMode::BOUNCE:
+                        vertex.position[axis] = m_bounds_min[axis];
+                        state.velocity[axis] *= -damping;
+                        break;
+                    case BoundsMode::WRAP:
+                        vertex.position[axis] = m_bounds_max[axis];
+                        break;
+                    case BoundsMode::CLAMP:
+                        vertex.position[axis] = m_bounds_min[axis];
+                        state.velocity[axis] = 0.0F;
+                        break;
+                    case BoundsMode::NONE:
+                        break;
+                    }
+                } else if (vertex.position[axis] > m_bounds_max[axis]) {
+                    switch (m_bounds_mode) {
+                    case BoundsMode::BOUNCE:
+                        vertex.position[axis] = m_bounds_max[axis];
+                        state.velocity[axis] *= -damping;
+                        break;
+                    case BoundsMode::WRAP:
+                        vertex.position[axis] = m_bounds_min[axis];
+                        break;
+                    case BoundsMode::CLAMP:
+                        vertex.position[axis] = m_bounds_max[axis];
+                        state.velocity[axis] = 0.0F;
+                        break;
+                    case BoundsMode::NONE:
+                        break;
+                    }
+                }
             }
         }
     }
