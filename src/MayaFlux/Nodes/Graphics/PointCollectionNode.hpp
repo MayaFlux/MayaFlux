@@ -70,6 +70,15 @@ public:
     }
 
     /**
+     * @brief Get all points
+     * @return Vector of positions
+     */
+    [[nodiscard]] std::vector<PointVertex>& get_points()
+    {
+        return m_points;
+    }
+
+    /**
      * @brief Clear all points
      */
     void clear_points();

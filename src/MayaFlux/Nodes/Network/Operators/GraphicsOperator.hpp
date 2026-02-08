@@ -41,6 +41,12 @@ public:
     [[nodiscard]] virtual std::span<const uint8_t> get_vertex_data() const = 0;
 
     /**
+     * @brief Get vertex data for specific collection (if multiple)
+     * @param idx Collection index
+     */
+    [[nodiscard]] virtual std::span<const uint8_t> get_vertex_data_at(uint32_t idx = 0) const = 0;
+
+    /**
      * @brief Get vertex layout describing vertex structure
      */
     [[nodiscard]] virtual const Kakshya::VertexLayout& get_vertex_layout() const = 0;

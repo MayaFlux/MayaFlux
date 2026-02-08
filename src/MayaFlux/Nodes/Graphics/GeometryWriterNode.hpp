@@ -294,6 +294,21 @@ public:
     }
 
     /**
+     * @brief Check if vertex data has changed since last GPU sync
+     * @return True if vertex buffer content has been modified
+     *
+     * This is a more specific check for data changes, ignoring layout/stride.
+     * Useful for optimizations that only care about vertex content changes.
+     */
+    [[nodiscard]] bool needs_vertex_data_update() const { return m_vertex_data_dirty; }
+
+    /**
+     * @brief Set vertex data dirty flag
+     * @param state New state of the dirty flag
+     */
+    void mark_vertex_data_dirty(bool state) { m_vertex_data_dirty = state; }
+
+    /**
      * @brief Clear the dirty flag after GPU upload completes
      *
      * Called by GeometryBindingsProcessor after it stages the vertex data
