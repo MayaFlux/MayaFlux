@@ -22,6 +22,19 @@ public:
         const std::vector<glm::vec3>& colors = {}) override;
 
     /**
+     * @brief Initialize multiple paths with given control points and properties.
+     * @param paths Vector of control point vectors, one per path.
+     * @param mode Interpolation mode for all paths.
+     * @param color_tints Optional vector of color tints (one per path, default white).
+     * @param thickness_scales Optional vector of thickness scales (one per path, default 1.0).
+     */
+    void initialize_paths(
+        const std::vector<std::vector<glm::vec3>>& paths,
+        Kinesis::InterpolationMode mode,
+        const std::vector<glm::vec3>& color_tints = {},
+        const std::vector<float>& thickness_scales = {});
+
+    /**
      * @brief Add a new path with given control points and properties.
      * @param control_points Control points defining the path.
      * @param mode Interpolation mode for the path.

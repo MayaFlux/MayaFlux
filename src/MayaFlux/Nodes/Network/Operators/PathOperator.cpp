@@ -40,6 +40,23 @@ void PathOperator::initialize(
         positions.size());
 }
 
+void PathOperator::initialize_paths(
+    const std::vector<std::vector<glm::vec3>>& paths,
+    Kinesis::InterpolationMode mode,
+    const std::vector<glm::vec3>& color_tints,
+    const std::vector<float>& thickness_scales)
+{
+    for (size_t i = 0; i < paths.size(); ++i) {
+        glm::vec3 color_tint = (i < color_tints.size()) ? color_tints[i] : glm::vec3(1.0F);
+        float thickness_scale = (i < thickness_scales.size()) ? thickness_scales[i] : 1.0F;
+        add_path(paths[i], mode, color_tint, thickness_scale);
+    }
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "PathOperator initialized with {} paths",
+        paths.size());
+}
+
 //-----------------------------------------------------------------------------
 // Advanced Initialization (Multiple Paths)
 //-----------------------------------------------------------------------------
