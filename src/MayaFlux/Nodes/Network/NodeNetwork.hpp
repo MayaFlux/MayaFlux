@@ -169,7 +169,7 @@ public:
     /**
      * @brief Set the network's topology
      */
-    void set_topology(Topology topology) { m_topology = topology; }
+    virtual void set_topology(Topology topology) { m_topology = topology; }
 
     /**
      * @brief Get the current topology

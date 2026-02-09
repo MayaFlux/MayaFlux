@@ -60,7 +60,7 @@ TopologyGeneratorNode::TopologyGeneratorNode(
         "Created TopologyGeneratorNode with custom function");
 }
 
-void TopologyGeneratorNode::add_point(const Point& point)
+void TopologyGeneratorNode::add_point(const LineVertex& point)
 {
     m_points.push(point);
 
@@ -73,7 +73,7 @@ void TopologyGeneratorNode::add_point(const Point& point)
 
 void TopologyGeneratorNode::add_point(const glm::vec3& position)
 {
-    add_point(Point { .position = position });
+    add_point(LineVertex { .position = position });
 }
 
 void TopologyGeneratorNode::remove_point(size_t index)
@@ -85,7 +85,7 @@ void TopologyGeneratorNode::remove_point(size_t index)
     }
 
     auto view = m_points.linearized_view();
-    std::vector<Point> temp_points(view.begin(), view.end());
+    std::vector<LineVertex> temp_points(view.begin(), view.end());
     temp_points.erase(temp_points.begin() + static_cast<uint32_t>(index));
 
     m_points.reset();
@@ -108,7 +108,7 @@ void TopologyGeneratorNode::update_point(size_t index, const glm::vec3& position
         return;
     }
 
-    Point pt = m_points[index];
+    LineVertex pt = m_points[index];
     pt.position = position;
 
     m_points.update(index, pt);
@@ -120,7 +120,7 @@ void TopologyGeneratorNode::update_point(size_t index, const glm::vec3& position
     m_vertex_data_dirty = true;
 }
 
-void TopologyGeneratorNode::update_point(size_t index, const Point& point)
+void TopologyGeneratorNode::update_point(size_t index, const LineVertex& point)
 {
     if (index >= m_points.size()) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -137,7 +137,7 @@ void TopologyGeneratorNode::update_point(size_t index, const Point& point)
     m_vertex_data_dirty = true;
 }
 
-void TopologyGeneratorNode::set_points(const std::vector<Point>& points)
+void TopologyGeneratorNode::set_points(const std::vector<LineVertex>& points)
 {
     m_points.reset();
     for (const auto& pt : points) {
@@ -155,7 +155,7 @@ void TopologyGeneratorNode::set_points(const std::vector<glm::vec3>& positions)
 {
     m_points.reset();
     for (const auto& pos : positions) {
-        m_points.push(Point { .position = pos });
+        m_points.push(LineVertex { .position = pos });
     }
 
     if (m_auto_connect) {
@@ -235,19 +235,19 @@ void TopologyGeneratorNode::set_line_thickness(float thickness)
     m_vertex_data_dirty = true;
 }
 
-const TopologyGeneratorNode::Point& TopologyGeneratorNode::get_point(size_t index) const
+const LineVertex& TopologyGeneratorNode::get_point(size_t index) const
 {
     if (index >= m_points.size()) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "Point index {} out of range", index);
-        static Point default_point {};
+        static LineVertex default_point {};
         return default_point;
     }
 
     return m_points[index];
 }
 
-std::vector<TopologyGeneratorNode::Point> TopologyGeneratorNode::get_points() const
+std::vector<LineVertex> TopologyGeneratorNode::get_points() const
 {
     auto view = m_points.linearized_view();
     return { view.begin(), view.end() };
@@ -307,7 +307,7 @@ void TopologyGeneratorNode::compute_frame()
 }
 
 void TopologyGeneratorNode::build_interpolated_path(
-    std::span<Point> points,
+    std::span<LineVertex> points,
     size_t num_points)
 {
     Eigen::MatrixXd control_points(3, num_points);
@@ -348,7 +348,7 @@ void TopologyGeneratorNode::build_interpolated_path(
 }
 
 void TopologyGeneratorNode::build_direct_connections(
-    std::span<Point> points,
+    std::span<LineVertex> points,
     size_t num_points)
 {
     size_t valid_connections = std::ranges::count_if(m_connections,

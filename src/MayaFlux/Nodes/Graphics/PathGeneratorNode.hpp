@@ -215,28 +215,31 @@ public:
      * @brief Get number of control points currently stored
      * @return Control point count
      */
-    [[nodiscard]] size_t get_control_point_count() const
-    {
-        return m_control_points.size();
-    }
+    [[nodiscard]] size_t get_control_point_count() const { return m_control_points.size(); }
 
     /**
      * @brief Get maximum control point capacity
      * @return Maximum control points
      */
-    [[nodiscard]] size_t get_control_point_capacity() const
-    {
-        return m_control_points.capacity();
-    }
+    [[nodiscard]] size_t get_control_point_capacity() const { return m_control_points.capacity(); }
 
     /**
      * @brief Get number of generated vertices
      * @return Vertex count
      */
-    [[nodiscard]] size_t get_generated_vertex_count() const
-    {
-        return m_vertices.size();
-    }
+    [[nodiscard]] size_t get_generated_vertex_count() const { return m_vertices.size(); }
+
+    /**
+     * @brief Get combined vertex count (control points + completed strokes + in-progress stroke)
+     * @return Total vertex count
+     */
+    [[nodiscard]] size_t get_all_vertex_count() const { return m_combined_cache.size(); }
+
+    /**
+     * @brief Get all generated vertices (control points + completed strokes + in-progress stroke)
+     * @return Vector of all vertices
+     */
+    [[nodiscard]] const std::vector<LineVertex>& get_all_vertices() const { return m_combined_cache; }
 
     /**
      * @brief Compute frame - generates interpolated vertices from control points
@@ -258,6 +261,8 @@ private:
     std::vector<LineVertex> m_vertices;
     std::vector<LineVertex> m_draw_vertices;
     std::vector<LineVertex> m_completed_draws;
+
+    std::vector<LineVertex> m_combined_cache;
 
     std::vector<glm::vec3> m_draw_window;
 

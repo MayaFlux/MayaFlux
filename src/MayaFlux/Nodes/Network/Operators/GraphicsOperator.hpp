@@ -1,0 +1,100 @@
+#pragma once
+
+#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
+#include "NetworkOperator.hpp"
+
+namespace MayaFlux::Nodes::Network {
+
+/**
+ * @class GraphicsOperator
+ * @brief Operator that produces GPU-renderable geometry
+ *
+ * Adds graphics-specific interface (vertex data, position extraction)
+ * on top of base NetworkOperator. Uses glm::vec3 for positions since
+ * that's the graphics domain standard.
+ */
+class MAYAFLUX_API GraphicsOperator : public NetworkOperator {
+public:
+    /**
+     * @brief Initialize operator with positions from previous operator
+     * @param positions Initial point positions (graphics coordinate space)
+     * @param colors Optional colors (empty = use defaults)
+     */
+    virtual void initialize(
+        const std::vector<glm::vec3>& positions,
+        const std::vector<glm::vec3>& colors = {})
+        = 0;
+
+    /**
+     * @brief Extract current positions (for operator switching)
+     */
+    [[nodiscard]] [[nodiscard]] virtual std::vector<glm::vec3> extract_positions() const = 0;
+
+    /**
+     * @brief Extract current colors (for operator switching)
+     */
+    [[nodiscard]] virtual std::vector<glm::vec3> extract_colors() const = 0;
+
+    /**
+     * @brief Get vertex data for GPU upload
+     */
+    [[nodiscard]] virtual std::span<const uint8_t> get_vertex_data() const = 0;
+
+    /**
+     * @brief Get vertex data for specific collection (if multiple)
+     * @param idx Collection index
+     */
+    [[nodiscard]] virtual std::span<const uint8_t> get_vertex_data_for_collection(uint32_t idx = 0) const = 0;
+
+    /**
+     * @brief Get vertex layout describing vertex structure
+     */
+    [[nodiscard]] virtual const Kakshya::VertexLayout& get_vertex_layout() const = 0;
+
+    /**
+     * @brief Get number of vertices (may differ from point count for topology/path)
+     */
+    [[nodiscard]] virtual size_t get_vertex_count() const = 0;
+
+    /**
+     * @brief Check if geometry changed this frame
+     */
+    [[nodiscard]] virtual bool is_vertex_data_dirty() const = 0;
+
+    /**
+     * @brief Clear dirty flag after GPU upload
+     */
+    virtual void mark_vertex_data_clean() = 0;
+
+    /**
+     * @brief Get source point count (before topology expansion)
+     */
+    [[nodiscard]] virtual size_t get_point_count() const = 0;
+
+    /**
+     * @brief Apply ONE_TO_ONE parameter mapping
+     *
+     * Default implementation handles common graphics properties:
+     * - "color": Per-point color
+     * - "size": Per-point size (for point rendering)
+     */
+    void apply_one_to_one(
+        std::string_view param,
+        const std::shared_ptr<NodeNetwork>& source) override;
+
+    /**
+     * @brief Get human-readable vertex type name (for validation/debugging)
+     */
+    [[nodiscard]] virtual const char* get_vertex_type_name() const = 0;
+
+protected:
+    /**
+     * @brief Get mutable access to point at global index
+     * @return Pointer to vertex data, or nullptr if index invalid
+     *
+     * Subclasses must implement to provide per-point access
+     */
+    virtual void* get_data_at(size_t global_index) = 0;
+};
+
+} // namespace MayaFlux::Nodes::Network::Operators
