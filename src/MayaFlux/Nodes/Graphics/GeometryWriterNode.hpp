@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GpuSync.hpp"
-#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
+#include "VertexSpec.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
 

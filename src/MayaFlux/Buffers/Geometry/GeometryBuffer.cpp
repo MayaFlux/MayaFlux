@@ -57,11 +57,51 @@ void GeometryBuffer::setup_processors(ProcessingToken token)
 
 void GeometryBuffer::setup_rendering(const RenderConfig& config)
 {
-    if (!m_render_processor) {
-        m_render_processor = std::make_shared<RenderProcessor>(ShaderConfig { config.vertex_shader });
+    RenderConfig resolved_config;
+    switch (config.topology) {
+    case Portal::Graphics::PrimitiveTopology::POINT_LIST:
+        resolved_config.vertex_shader = "point.vert.spv";
+        resolved_config.fragment_shader = "point.frag.spv";
+        break;
+
+    case Portal::Graphics::PrimitiveTopology::LINE_LIST:
+    case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+        resolved_config.vertex_shader = "line.vert.spv";
+        resolved_config.fragment_shader = "line.frag.spv";
+        resolved_config.geometry_shader = "line.geom.spv";
+        break;
+
+    case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
+    case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
+        resolved_config.vertex_shader = "triangle.vert.spv";
+        resolved_config.fragment_shader = "triangle.frag.spv";
+        break;
+
+    default:
+        resolved_config.vertex_shader = "point.vert.spv";
+        resolved_config.fragment_shader = "point.frag.spv";
     }
 
-    m_render_processor->set_fragment_shader(config.fragment_shader);
+    if (!config.vertex_shader.empty()) {
+        resolved_config.vertex_shader = config.vertex_shader;
+    }
+    if (!config.fragment_shader.empty()) {
+        resolved_config.fragment_shader = config.fragment_shader;
+    }
+    if (!config.geometry_shader.empty()) {
+        resolved_config.geometry_shader = config.geometry_shader;
+    }
+
+    if (!m_render_processor) {
+        m_render_processor = std::make_shared<RenderProcessor>(ShaderConfig { resolved_config.vertex_shader });
+    } else {
+        m_render_processor->set_shader(resolved_config.vertex_shader);
+    }
+
+    m_render_processor->set_fragment_shader(resolved_config.fragment_shader);
+    if (!resolved_config.geometry_shader.empty()) {
+        m_render_processor->set_geometry_shader(resolved_config.geometry_shader);
+    }
     m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
     m_render_processor->set_primitive_topology(config.topology);
     m_render_processor->set_polygon_mode(config.polygon_mode);

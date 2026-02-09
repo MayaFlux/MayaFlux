@@ -65,20 +65,6 @@ namespace {
         }
     }
 
-    Eigen::MatrixXd interpolate_single_segment(
-        const Eigen::MatrixXd& control_points,
-        Eigen::Index num_samples,
-        InterpolationMode mode,
-        double tension)
-    {
-        Eigen::MatrixXd result(control_points.rows(), num_samples);
-        for (Eigen::Index i = 0; i < num_samples; ++i) {
-            double t = static_cast<double>(i) / static_cast<double>(num_samples - 1);
-            result.col(i) = interpolate(control_points, t, mode, tension);
-        }
-        return result;
-    }
-
     struct ExtendedControls {
         const Eigen::MatrixXd* controls;
         Eigen::Index count;
@@ -126,6 +112,20 @@ namespace {
             };
         }
     };
+
+    Eigen::MatrixXd interpolate_single_segment(
+        const Eigen::MatrixXd& control_points,
+        Eigen::Index num_samples,
+        InterpolationMode mode,
+        double tension)
+    {
+        Eigen::MatrixXd result(control_points.rows(), num_samples);
+        for (Eigen::Index i = 0; i < num_samples; ++i) {
+            double t = static_cast<double>(i) / static_cast<double>(num_samples - 1);
+            result.col(i) = interpolate(control_points, t, mode, tension);
+        }
+        return result;
+    }
 
     Eigen::MatrixXd extract_segment_controls(
         const Eigen::MatrixXd& active_controls,

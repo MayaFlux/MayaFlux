@@ -23,6 +23,8 @@ namespace Nodes {
         class PointNode;
         class PointCollectionNode;
         class ProceduralTextureNode;
+        class PathGeneratorNode;
+        class TopologyGeneratorNode;
     }
     namespace Network {
         class NodeNetwork;
@@ -64,20 +66,22 @@ namespace Core {
 }
 }
 
-#define ALL_NODE_REGISTRATIONS                                            \
-    N(Sine, MayaFlux::Nodes::Generator::Sine)                             \
-    N(Phasor, MayaFlux::Nodes::Generator::Phasor)                         \
-    N(Impulse, MayaFlux::Nodes::Generator::Impulse)                       \
-    N(Logic, MayaFlux::Nodes::Generator::Logic)                           \
-    N(Polynomial, MayaFlux::Nodes::Generator::Polynomial)                 \
-    N(Random, MayaFlux::Nodes::Generator::Random)                         \
-    N(IIR, MayaFlux::Nodes::Filters::IIR)                                 \
-    N(FIR, MayaFlux::Nodes::Filters::FIR)                                 \
-    N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)           \
-    N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)                 \
-    N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode)   \
-    N(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                     \
-    N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode) \
+#define ALL_NODE_REGISTRATIONS                                                \
+    N(Sine, MayaFlux::Nodes::Generator::Sine)                                 \
+    N(Phasor, MayaFlux::Nodes::Generator::Phasor)                             \
+    N(Impulse, MayaFlux::Nodes::Generator::Impulse)                           \
+    N(Logic, MayaFlux::Nodes::Generator::Logic)                               \
+    N(Polynomial, MayaFlux::Nodes::Generator::Polynomial)                     \
+    N(Random, MayaFlux::Nodes::Generator::Random)                             \
+    N(IIR, MayaFlux::Nodes::Filters::IIR)                                     \
+    N(FIR, MayaFlux::Nodes::Filters::FIR)                                     \
+    N(ComputeOutNode, MayaFlux::Nodes::GpuSync::ComputeOutNode)               \
+    N(TextureNode, MayaFlux::Nodes::GpuSync::TextureNode)                     \
+    N(GeometryWriterNode, MayaFlux::Nodes::GpuSync::GeometryWriterNode)       \
+    N(PointNode, MayaFlux::Nodes::GpuSync::PointNode)                         \
+    N(PathGeneratorNode, MayaFlux::Nodes::GpuSync::PathGeneratorNode)         \
+    N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)     \
+    N(TopologyGeneratorNode, MayaFlux::Nodes::GpuSync::TopologyGeneratorNode) \
     N(ProceduralTextureNode, MayaFlux::Nodes::GpuSync::ProceduralTextureNode)
 
 #define ALL_NODE_NETWORK_REGISTRATIONS                      \

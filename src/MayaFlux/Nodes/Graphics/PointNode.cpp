@@ -17,29 +17,9 @@ PointNode::PointNode(const PointVertex& point)
     : GeometryWriterNode(0)
     , m_point_vertex(point)
 {
-    set_vertex_stride(sizeof(PointVertex));
-
-    Kakshya::VertexLayout layout;
-    layout.vertex_count = 1;
-    layout.stride_bytes = sizeof(PointVertex);
-
-    // Location 0: position
-    layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-        .component_modality = Kakshya::DataModality::VERTEX_POSITIONS_3D,
-        .offset_in_vertex = 0,
-        .name = "position" });
-
-    // Location 1: color
-    layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-        .component_modality = Kakshya::DataModality::VERTEX_COLORS_RGB,
-        .offset_in_vertex = sizeof(glm::vec3),
-        .name = "color" });
-
-    // Location 2: size
-    layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-        .component_modality = Kakshya::DataModality::UNKNOWN,
-        .offset_in_vertex = sizeof(glm::vec3) + sizeof(glm::vec3),
-        .name = "size" });
+    const auto& stride = sizeof(PointVertex);
+    set_vertex_stride(stride);
+    const auto& layout = Kakshya::VertexLayout::for_points(stride);
 
     set_vertex_layout(layout);
 

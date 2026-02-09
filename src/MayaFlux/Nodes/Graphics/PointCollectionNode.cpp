@@ -3,36 +3,14 @@
 
 namespace MayaFlux::Nodes::GpuSync {
 
-namespace {
-    Kakshya::VertexLayout create_point_vertex_layout()
-    {
-        Kakshya::VertexLayout layout;
-        layout.stride_bytes = sizeof(PointVertex);
-
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::VERTEX_POSITIONS_3D,
-            .offset_in_vertex = 0,
-            .name = "position" });
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::VERTEX_COLORS_RGB,
-            .offset_in_vertex = sizeof(glm::vec3),
-            .name = "color" });
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::UNKNOWN,
-            .offset_in_vertex = sizeof(glm::vec3) + sizeof(glm::vec3),
-            .name = "size" });
-
-        return layout;
-    }
-}
-
 PointCollectionNode::PointCollectionNode(size_t initial_capacity)
     : GeometryWriterNode(static_cast<uint32_t>(initial_capacity))
 {
     m_points.reserve(initial_capacity);
-    set_vertex_stride(sizeof(PointVertex));
+    const auto& stride = sizeof(PointVertex);
+    set_vertex_stride(stride);
+    auto layout = Kakshya::VertexLayout::for_points(stride);
 
-    auto layout = create_point_vertex_layout();
     layout.vertex_count = 0;
     set_vertex_layout(layout);
 
@@ -46,9 +24,9 @@ PointCollectionNode::PointCollectionNode(std::vector<PointVertex> points)
     : GeometryWriterNode(static_cast<uint32_t>(points.size()))
     , m_points(std::move(points))
 {
-    set_vertex_stride(sizeof(PointVertex));
-
-    auto layout = create_point_vertex_layout();
+    const auto& stride = sizeof(PointVertex);
+    set_vertex_stride(stride);
+    auto layout = Kakshya::VertexLayout::for_points(stride);
     layout.vertex_count = static_cast<uint32_t>(m_points.size());
     set_vertex_layout(layout);
 
