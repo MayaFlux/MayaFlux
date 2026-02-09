@@ -2,6 +2,8 @@
 
 namespace MayaFlux::Nodes::Network {
 
+class NodeNetwork;
+
 /**
  * @class NetworkOperator
  * @brief Domain-agnostic interpretive lens for network processing
@@ -34,6 +36,21 @@ public:
      * @brief Type name for introspection
      */
     [[nodiscard]] virtual std::string_view get_type_name() const = 0;
+
+    /**
+     * @brief Apply ONE_TO_ONE parameter mapping (per-point control)
+     * @param param Parameter name (e.g., "force_x", "color", "mass")
+     * @param source Source network providing per-point values
+     *
+     * Default implementation does nothing. Operators that support
+     * per-point control override this method.
+     */
+    virtual void apply_one_to_one(
+        std::string_view param,
+        const std::shared_ptr<NodeNetwork>& source)
+    {
+        // Default: no-op (operator doesn't support per-point control)
+    }
 };
 
 } // namespace MayaFlux::Nodes::Network

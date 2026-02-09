@@ -140,7 +140,7 @@ std::vector<glm::vec3> PathOperator::extract_colors() const
     return colors;
 }
 
-std::span<const uint8_t> PathOperator::get_vertex_data_at(uint32_t idx) const
+std::span<const uint8_t> PathOperator::get_vertex_data_for_collection(uint32_t idx) const
 {
     if (m_paths.empty() || idx >= m_paths.size()) {
         return {};

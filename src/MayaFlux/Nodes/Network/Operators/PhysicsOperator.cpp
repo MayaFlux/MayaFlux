@@ -1,5 +1,10 @@
 #include "PhysicsOperator.hpp"
+
+#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -98,6 +103,103 @@ void PhysicsOperator::process(float dt)
 }
 
 //-----------------------------------------------------------------------------
+// Parameter System
+//-----------------------------------------------------------------------------
+
+std::optional<PhysicsParameter> PhysicsOperator::string_to_parameter(std::string_view param)
+{
+    return Reflect::string_to_enum_case_insensitive<PhysicsParameter>(param);
+}
+
+void PhysicsOperator::set_parameter(std::string_view param, double value)
+{
+    auto param_enum = string_to_parameter(param);
+
+    if (!param_enum) {
+        try {
+            Reflect::string_to_enum_or_throw_case_insensitive<PhysicsParameter>(
+                param, "PhysicsOperator parameter");
+        } catch (const std::invalid_argument& e) {
+            MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+                "{}", e.what());
+        }
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "Unknown physics parameter: '{}'", param);
+        return;
+    }
+
+    switch (*param_enum) {
+    case PhysicsParameter::GRAVITY_X:
+        m_gravity.x = static_cast<float>(value);
+        break;
+    case PhysicsParameter::GRAVITY_Y:
+        m_gravity.y = static_cast<float>(value);
+        break;
+    case PhysicsParameter::GRAVITY_Z:
+        m_gravity.z = static_cast<float>(value);
+        break;
+    case PhysicsParameter::DRAG:
+        m_drag = glm::clamp(static_cast<float>(value), 0.0F, 1.0F);
+        break;
+    case PhysicsParameter::INTERACTION_RADIUS:
+        m_interaction_radius = static_cast<float>(value);
+        break;
+    case PhysicsParameter::SPRING_STIFFNESS:
+        m_spring_stiffness = static_cast<float>(value);
+        break;
+    case PhysicsParameter::REPULSION_STRENGTH:
+        m_repulsion_strength = static_cast<float>(value);
+        break;
+    case PhysicsParameter::SPATIAL_INTERACTIONS:
+        m_spatial_interactions_enabled = (value > 0.5);
+        break;
+    case PhysicsParameter::POINT_SIZE:
+        m_point_size = static_cast<float>(value);
+        for (auto& group : m_collections) {
+            auto& points = group.collection->get_points();
+            for (auto& pt : points) {
+                pt.size = m_point_size * group.size_scale;
+            }
+        }
+        break;
+    case PhysicsParameter::ATTRACTION_STRENGTH:
+        m_attraction_strength = static_cast<float>(value);
+        break;
+    case PhysicsParameter::TURBULENCE:
+        m_turbulence_strength = static_cast<float>(value);
+        break;
+    }
+}
+
+std::optional<double> PhysicsOperator::query_state(std::string_view query) const
+{
+    if (query == "point_count") {
+        return static_cast<double>(get_point_count());
+    }
+    if (query == "collection_count") {
+        return static_cast<double>(m_collections.size());
+    }
+    if (query == "avg_velocity") {
+        glm::vec3 avg(0.0F);
+        size_t total_points = 0;
+
+        for (const auto& group : m_collections) {
+            for (const auto& state : group.physics_state) {
+                avg += state.velocity;
+                ++total_points;
+            }
+        }
+
+        if (total_points > 0) {
+            avg /= static_cast<float>(total_points);
+        }
+        return static_cast<double>(glm::length(avg));
+    }
+
+    return std::nullopt;
+}
+
+//-----------------------------------------------------------------------------
 // GraphicsOperator Interface (Data Extraction)
 //-----------------------------------------------------------------------------
 
@@ -129,7 +231,7 @@ std::vector<glm::vec3> PhysicsOperator::extract_colors() const
     return colors;
 }
 
-std::span<const uint8_t> PhysicsOperator::get_vertex_data_at(uint32_t idx) const
+std::span<const uint8_t> PhysicsOperator::get_vertex_data_for_collection(uint32_t idx) const
 {
     if (m_collections.empty() || idx >= m_collections.size()) {
         return {};
@@ -208,73 +310,83 @@ size_t PhysicsOperator::get_point_count() const
     return total;
 }
 
-//-----------------------------------------------------------------------------
-// Parameter Control
-//-----------------------------------------------------------------------------
-
-void PhysicsOperator::set_parameter(std::string_view param, double value)
-{
-    if (param == "gravity_x") {
-        m_gravity.x = static_cast<float>(value);
-    } else if (param == "gravity_y") {
-        m_gravity.y = static_cast<float>(value);
-    } else if (param == "gravity_z") {
-        m_gravity.z = static_cast<float>(value);
-    } else if (param == "drag") {
-        m_drag = static_cast<float>(value);
-    } else if (param == "interaction_radius") {
-        m_interaction_radius = static_cast<float>(value);
-    } else if (param == "spring_stiffness") {
-        m_spring_stiffness = static_cast<float>(value);
-    } else if (param == "repulsion_strength") {
-        m_repulsion_strength = static_cast<float>(value);
-    } else if (param == "spatial_interactions") {
-        m_spatial_interactions_enabled = (value > 0.5);
-    } else if (param == "point_size") {
-        m_point_size = static_cast<float>(value);
-        for (auto& group : m_collections) {
-            auto& points = group.collection->get_points();
-            for (auto& pt : points) {
-                pt.size = m_point_size * group.size_scale;
-            }
-        }
-    }
-}
-
-std::optional<double> PhysicsOperator::query_state(std::string_view query) const
-{
-    if (query == "point_count") {
-        return static_cast<double>(get_point_count());
-    }
-
-    if (query == "collection_count") {
-        return static_cast<double>(m_collections.size());
-    }
-
-    if (query == "avg_velocity") {
-        glm::vec3 avg(0.0F);
-        size_t total_points = 0;
-
-        for (const auto& group : m_collections) {
-            for (const auto& state : group.physics_state) {
-                avg += state.velocity;
-                ++total_points;
-            }
-        }
-
-        if (total_points > 0) {
-            avg /= static_cast<float>(total_points);
-        }
-        return static_cast<double>(glm::length(avg));
-    }
-
-    return std::nullopt;
-}
-
 void PhysicsOperator::set_bounds(const glm::vec3& min, const glm::vec3& max)
 {
     m_bounds_min = min;
     m_bounds_max = max;
+}
+
+void PhysicsOperator::set_attraction_point(const glm::vec3& point)
+{
+    m_attraction_point = point;
+    m_has_attraction_point = true;
+}
+
+//-----------------------------------------------------------------------------
+// ONE_TO_ONE Parameter Mapping
+//-----------------------------------------------------------------------------
+
+void PhysicsOperator::apply_one_to_one(
+    std::string_view param,
+    const std::shared_ptr<NodeNetwork>& source)
+{
+    size_t point_count = get_point_count();
+
+    if (source->get_node_count() != point_count) {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "ONE_TO_ONE size mismatch: {} particles vs {} source nodes",
+            point_count, source->get_node_count());
+        return;
+    }
+
+    if (param == "force_x" || param == "force_y" || param == "force_z") {
+        apply_per_particle_force(param, source);
+    } else if (param == "mass") {
+        apply_per_particle_mass(source);
+    } else {
+        GraphicsOperator::apply_one_to_one(param, source);
+    }
+}
+
+void PhysicsOperator::apply_per_particle_force(
+    std::string_view param,
+    const std::shared_ptr<NodeNetwork>& source)
+{
+    size_t global_index = 0;
+
+    for (auto& group : m_collections) {
+        for (auto& i : group.physics_state) {
+            auto val = source->get_node_output(global_index++);
+            if (!val)
+                continue;
+
+            auto force = static_cast<float>(*val);
+
+            if (param == "force_x") {
+                i.force.x += force;
+            } else if (param == "force_y") {
+                i.force.y += force;
+            } else if (param == "force_z") {
+                i.force.z += force;
+            }
+        }
+    }
+}
+
+void PhysicsOperator::apply_per_particle_mass(
+    const std::shared_ptr<NodeNetwork>& source)
+{
+    size_t global_index = 0;
+
+    for (auto& group : m_collections) {
+        for (auto& i : group.physics_state) {
+            auto val = source->get_node_output(global_index++);
+            if (!val)
+                continue;
+
+            i.mass = std::max(0.1F, static_cast<float>(*val));
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -289,8 +401,31 @@ void PhysicsOperator::apply_forces()
         }
     }
 
+    if (m_has_attraction_point) {
+        apply_attraction_forces();
+    }
+
+    if (m_turbulence_strength > 0.001F) {
+        apply_turbulence();
+    }
+
     if (m_spatial_interactions_enabled && m_interaction_radius > 0.0F) {
         apply_spatial_interactions();
+    }
+}
+
+void PhysicsOperator::apply_turbulence()
+{
+    static Kinesis::Stochastic::Stochastic rng;
+
+    for (auto& group : m_collections) {
+        for (auto& state : group.physics_state) {
+            glm::vec3 random_force(
+                rng(-1.0F, 1.0F),
+                rng(-1.0F, 1.0F),
+                rng(-1.0F, 1.0F));
+            state.force += random_force * m_turbulence_strength;
+        }
     }
 }
 
@@ -333,6 +468,24 @@ void PhysicsOperator::apply_spatial_interactions()
                         state_j.force -= force;
                     }
                 }
+            }
+        }
+    }
+}
+
+void PhysicsOperator::apply_attraction_forces()
+{
+    for (auto& group : m_collections) {
+        auto& points = group.collection->get_points();
+
+        for (size_t i = 0; i < points.size(); ++i) {
+            glm::vec3 to_attractor = m_attraction_point - points[i].position;
+            float distance = glm::length(to_attractor);
+
+            if (distance > 0.001F) {
+                glm::vec3 direction = to_attractor / distance;
+                float force_magnitude = m_attraction_strength / std::max(distance * distance, 0.1F);
+                group.physics_state[i].force += direction * force_magnitude * group.physics_state[i].mass;
             }
         }
     }
@@ -415,6 +568,41 @@ void PhysicsOperator::sync_to_point_collection()
 {
     for (auto& group : m_collections) {
         group.collection->mark_vertex_data_dirty(true);
+    }
+}
+
+void* PhysicsOperator::get_data_at(size_t global_index)
+{
+    size_t offset = 0;
+    for (auto& group : m_collections) {
+        if (global_index < offset + group.collection->get_point_count()) {
+            size_t local_index = global_index - offset;
+            return &group.collection->get_points()[local_index];
+        }
+        offset += group.collection->get_point_count();
+    }
+    return nullptr;
+}
+
+void PhysicsOperator::apply_global_impulse(const glm::vec3& impulse)
+{
+    for (auto& group : m_collections) {
+        for (auto& state : group.physics_state) {
+            state.velocity += impulse / state.mass;
+        }
+    }
+}
+
+void PhysicsOperator::apply_impulse(size_t index, const glm::vec3& impulse)
+{
+    size_t offset = 0;
+    for (auto& group : m_collections) {
+        if (index < offset + group.collection->get_point_count()) {
+            size_t local_index = index - offset;
+            group.physics_state[local_index].velocity += impulse / group.physics_state[local_index].mass;
+            return;
+        }
+        offset += group.collection->get_point_count();
     }
 }
 

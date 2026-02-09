@@ -44,7 +44,7 @@ public:
      * @brief Get vertex data for specific collection (if multiple)
      * @param idx Collection index
      */
-    [[nodiscard]] virtual std::span<const uint8_t> get_vertex_data_at(uint32_t idx = 0) const = 0;
+    [[nodiscard]] virtual std::span<const uint8_t> get_vertex_data_for_collection(uint32_t idx = 0) const = 0;
 
     /**
      * @brief Get vertex layout describing vertex structure
@@ -70,6 +70,28 @@ public:
      * @brief Get source point count (before topology expansion)
      */
     [[nodiscard]] virtual size_t get_point_count() const = 0;
+
+    /**
+     * @brief Apply ONE_TO_ONE parameter mapping
+     *
+     * Default implementation handles common graphics properties:
+     * - "color": Per-point color
+     * - "size": Per-point size (for point rendering)
+     */
+    void apply_one_to_one(
+        std::string_view param,
+        const std::shared_ptr<NodeNetwork>& source) override;
+
+protected:
+    /**
+     * @brief Get mutable access to point at global index
+     * @return Pointer to vertex data, or nullptr if index invalid
+     *
+     * Subclasses must implement to provide per-point access
+     */
+    virtual void* get_data_at(size_t global_index) = 0;
+
+    [[nodiscard]] virtual const char* get_vertex_type_name() const = 0;
 };
 
 } // namespace MayaFlux::Nodes::Network::Operators

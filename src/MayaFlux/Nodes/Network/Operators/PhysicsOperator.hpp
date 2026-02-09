@@ -5,6 +5,24 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @enum PhysicsParameter
+ * @brief Identifiers for physics parameters that can be set via parameter mapping
+ */
+enum class PhysicsParameter : uint8_t {
+    GRAVITY_X,
+    GRAVITY_Y,
+    GRAVITY_Z,
+    DRAG,
+    INTERACTION_RADIUS,
+    SPRING_STIFFNESS,
+    REPULSION_STRENGTH,
+    SPATIAL_INTERACTIONS,
+    POINT_SIZE,
+    ATTRACTION_STRENGTH,
+    TURBULENCE
+};
+
+/**
  * @struct PhysicsState
  * @brief Physics-specific data parallel to PointVertex array
  *
@@ -77,7 +95,7 @@ public:
     [[nodiscard]] std::vector<glm::vec3> extract_positions() const override;
     [[nodiscard]] std::vector<glm::vec3> extract_colors() const override;
 
-    [[nodiscard]] std::span<const uint8_t> get_vertex_data_at(uint32_t idx) const override;
+    [[nodiscard]] std::span<const uint8_t> get_vertex_data_for_collection(uint32_t idx) const override;
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const override;
     [[nodiscard]] const Kakshya::VertexLayout& get_vertex_layout() const override;
     [[nodiscard]] size_t get_vertex_count() const override;
@@ -87,7 +105,6 @@ public:
     void set_parameter(std::string_view param, double value) override;
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;
     [[nodiscard]] std::string_view get_type_name() const override { return "Physics"; }
-
     [[nodiscard]] size_t get_point_count() const override;
 
     /**
@@ -128,6 +145,30 @@ public:
     void set_point_size(float size) { m_point_size = size; }
 
     /**
+     * @brief Set the current bounds mode.
+     * @param mode Bounds mode to set.
+     */
+    void set_bounds_mode(BoundsMode mode) { m_bounds_mode = mode; }
+
+    /**
+     * @brief Enable or disable spatial interactions between particles.
+     * @param enable True to enable, false to disable.
+     */
+    void enable_spatial_interactions(bool enable) { m_spatial_interactions_enabled = enable; }
+
+    /**
+     * @brief Set the strength of repulsion between particles when spatial interactions are enabled.
+     * @param strength Repulsion strength value.
+     */
+    void set_repulsion_strength(float strength) { m_repulsion_strength = strength; }
+
+    /**
+     * @brief Set the strength of attraction towards the attraction point.
+     * @param strength Attraction strength value.
+     */
+    void set_turbulence_strength(float strength) { m_turbulence_strength = strength; }
+
+    /**
      * @brief Get velocity magnitude for specific particle
      * @param global_index Particle index across all collections
      */
@@ -146,28 +187,10 @@ public:
     [[nodiscard]] float get_drag() const { return m_drag; }
 
     /**
-     * @brief Set the current bounds mode.
-     * @param mode Bounds mode to set.
-     */
-    void set_bounds_mode(BoundsMode mode) { m_bounds_mode = mode; }
-
-    /**
      * @brief Get the current bounds mode.
      * @return Current bounds mode.
      */
     [[nodiscard]] BoundsMode get_bounds_mode() const { return m_bounds_mode; }
-
-    /**
-     * @brief Enable or disable spatial interactions between particles.
-     * @param enable True to enable, false to disable.
-     */
-    void enable_spatial_interactions(bool enable) { m_spatial_interactions_enabled = enable; }
-
-    /**
-     * @brief Set the strength of repulsion between particles when spatial interactions are enabled.
-     * @param strength Repulsion strength value.
-     */
-    void set_repulsion_strength(float strength) { m_repulsion_strength = strength; }
 
     /**
      * @brief Check if spatial interactions between particles are enabled.
@@ -181,6 +204,48 @@ public:
      */
     [[nodiscard]] float get_repulsion_strength() const { return m_repulsion_strength; }
 
+    void set_attraction_point(const glm::vec3& point);
+
+    void clear_attraction_point() { m_has_attraction_point = false; }
+
+    [[nodiscard]] bool has_attraction_point() const { return m_has_attraction_point; }
+
+    [[nodiscard]] glm::vec3 get_attraction_point() const { return m_attraction_point; }
+
+    /**
+     * @brief Apply impulse to all particles
+     */
+    void apply_global_impulse(const glm::vec3& impulse);
+
+    /**
+     * @brief Apply impulse to specific particle
+     */
+    void apply_impulse(size_t index, const glm::vec3& impulse);
+
+    /**
+     * @brief Direct access to collections for advanced per-particle control
+     * @warning Only for ParticleNetwork's ONE_TO_ONE parameter mapping
+     */
+    std::vector<CollectionGroup>& get_collections() { return m_collections; }
+
+    /**
+     * @brief Apply ONE_TO_ONE parameter for physics-specific properties
+     *
+     * Supports:
+     * - "force_x/y/z": Per-particle force application
+     * - "mass": Per-particle mass
+     * - "color": Per-particle color (delegated to base)
+     * - "size": Per-particle size (delegated to base)
+     */
+    void apply_one_to_one(
+        std::string_view param,
+        const std::shared_ptr<NodeNetwork>& source) override;
+
+protected:
+    const char* get_vertex_type_name() const override { return "PointVertex"; }
+
+    void* get_data_at(size_t global_index) override;
+
 private:
     std::vector<CollectionGroup> m_collections;
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
@@ -190,17 +255,33 @@ private:
     float m_interaction_radius { 1.0F };
     float m_spring_stiffness { 0.5F };
     float m_point_size { 5.0F };
+    float m_turbulence_strength { 0.0F };
     glm::vec3 m_bounds_min { -10.0F };
     glm::vec3 m_bounds_max { 10.0F };
     BoundsMode m_bounds_mode { BoundsMode::BOUNCE };
     bool m_spatial_interactions_enabled {};
     float m_repulsion_strength { 0.5F };
 
+    glm::vec3 m_attraction_point { 0.0F };
+    bool m_has_attraction_point { false };
+    float m_attraction_strength { 1.0F };
+
+    static std::optional<PhysicsParameter> string_to_parameter(std::string_view param);
+
     void apply_forces();
     void apply_spatial_interactions();
+    void apply_attraction_forces();
+    void apply_turbulence();
     void integrate(float dt);
     void handle_boundary_conditions();
     void sync_to_point_collection();
+
+    void apply_per_particle_force(
+        std::string_view param,
+        const std::shared_ptr<NodeNetwork>& source);
+
+    void apply_per_particle_mass(
+        const std::shared_ptr<NodeNetwork>& source);
 };
 
-} // namespace MayaFlux::Nodes::Network::Operators
+} // namespace MayaFlux::Nodes::Network

@@ -147,7 +147,7 @@ std::vector<glm::vec3> TopologyOperator::extract_colors() const
     return colors;
 }
 
-std::span<const uint8_t> TopologyOperator::get_vertex_data_at(uint32_t idx) const
+std::span<const uint8_t> TopologyOperator::get_vertex_data_for_collection(uint32_t idx) const
 {
     if (m_topologies.empty() || idx >= m_topologies.size()) {
         return {};

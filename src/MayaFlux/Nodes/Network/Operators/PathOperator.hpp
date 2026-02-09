@@ -52,7 +52,7 @@ public:
     [[nodiscard]] std::vector<glm::vec3> extract_positions() const override;
     [[nodiscard]] std::vector<glm::vec3> extract_colors() const override;
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const override;
-    [[nodiscard]] std::span<const uint8_t> get_vertex_data_at(uint32_t idx) const override;
+    [[nodiscard]] std::span<const uint8_t> get_vertex_data_for_collection(uint32_t idx) const override;
     [[nodiscard]] const Kakshya::VertexLayout& get_vertex_layout() const override;
     [[nodiscard]] size_t get_vertex_count() const override;
     [[nodiscard]] bool is_vertex_data_dirty() const override;
