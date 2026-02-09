@@ -112,23 +112,6 @@ public:
 
 private:
     std::unordered_map<std::string, NetworkBinding> m_bindings;
-
-    /**
-     * @brief Extract vertices from ParticleNetwork
-     * @return Vector of aggregated PointVertex data
-     */
-    std::vector<Nodes::GpuSync::PointVertex> extract_particle_vertices(
-        const std::shared_ptr<Nodes::Network::ParticleNetwork>& network);
-
-    /**
-     * @brief Extract vertices from generic NodeNetwork (fallback)
-     * @return Vector of aggregated vertex data
-     *
-     * Attempts to cast internal nodes to PointNode and extract geometry.
-     * For custom network types, extend this with type-specific logic.
-     */
-    std::vector<Nodes::GpuSync::PointVertex> extract_network_vertices(
-        const std::shared_ptr<Nodes::Network::NodeNetwork>& network);
 };
 
 } // namespace MayaFlux::Buffers

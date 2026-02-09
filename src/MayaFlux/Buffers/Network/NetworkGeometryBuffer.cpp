@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
-#include "MayaFlux/Nodes/Graphics/PointNode.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -61,12 +61,51 @@ void NetworkGeometryBuffer::setup_processors(ProcessingToken token)
 
 void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
 {
-    if (!m_render_processor) {
-        m_render_processor = std::make_shared<RenderProcessor>(
-            ShaderConfig { config.vertex_shader });
+    RenderConfig resolved_config = config;
+
+    if (config.vertex_shader.empty() || config.fragment_shader.empty()) {
+        switch (config.topology) {
+        case Portal::Graphics::PrimitiveTopology::POINT_LIST:
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "point.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "point.frag.spv";
+            break;
+        case Portal::Graphics::PrimitiveTopology::LINE_LIST:
+        case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "line.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "line.frag.spv";
+            if (config.geometry_shader.empty())
+                resolved_config.geometry_shader = "line.geom.spv";
+            break;
+        case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
+        case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "triangle.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "triangle.frag.spv";
+            break;
+        default:
+            if (config.vertex_shader.empty())
+                resolved_config.vertex_shader = "point.vert.spv";
+            if (config.fragment_shader.empty())
+                resolved_config.fragment_shader = "point.frag.spv";
+        }
     }
 
-    m_render_processor->set_fragment_shader(config.fragment_shader);
+    if (!m_render_processor) {
+        m_render_processor = std::make_shared<RenderProcessor>(
+            ShaderConfig { resolved_config.vertex_shader });
+    } else {
+        m_render_processor->set_shader(resolved_config.vertex_shader);
+    }
+
+    m_render_processor->set_fragment_shader(resolved_config.fragment_shader);
+    if (!resolved_config.geometry_shader.empty()) {
+        m_render_processor->set_geometry_shader(resolved_config.geometry_shader);
+    }
     m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
     m_render_processor->set_primitive_topology(config.topology);
     m_render_processor->set_polygon_mode(config.polygon_mode);
@@ -77,9 +116,19 @@ void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
 
 uint32_t NetworkGeometryBuffer::get_vertex_count() const
 {
-    // Each node in network typically produces 1 vertex (for PointNode networks)
-    // Processor will provide actual count after aggregation
-    return static_cast<uint32_t>(m_network ? m_network->get_node_count() : 0);
+    if (!m_network) {
+        return 0;
+    }
+
+    auto* operator_ptr = m_network->get_operator();
+    if (operator_ptr) {
+        auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(operator_ptr);
+        if (graphics_op) {
+            return static_cast<uint32_t>(graphics_op->get_vertex_count());
+        }
+    }
+
+    return static_cast<uint32_t>(m_network->get_node_count());
 }
 
 size_t NetworkGeometryBuffer::calculate_buffer_size(
@@ -91,24 +140,45 @@ size_t NetworkGeometryBuffer::calculate_buffer_size(
     }
 
     size_t node_count = network->get_node_count();
-
     if (node_count == 0) {
         MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
             "NodeNetwork has zero nodes. Buffer will be created with minimum size.");
         return 4096;
     }
 
-    // Estimate: assume each node produces one PointVertex (position + color + size)
-    size_t vertex_size = sizeof(Nodes::GpuSync::PointVertex);
-    size_t base_size = node_count * vertex_size;
+    size_t base_size = 0;
+
+    if (auto* operator_ptr = network->get_operator()) {
+        if (auto graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(operator_ptr)) {
+            size_t vertex_count = graphics_op->get_vertex_count();
+            auto layout = graphics_op->get_vertex_layout();
+
+            if (vertex_count > 0 && layout.stride_bytes > 0) {
+                base_size = vertex_count * layout.stride_bytes;
+
+                MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferManagement,
+                    "Network geometry buffer sizing: {} vertices × {} bytes = {} bytes (operator: {})",
+                    vertex_count, layout.stride_bytes, base_size, operator_ptr->get_type_name());
+            }
+        }
+    }
+
+    if (base_size == 0) {
+        size_t vertex_size = sizeof(Nodes::GpuSync::PointVertex);
+        base_size = node_count * vertex_size;
+
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "Network geometry buffer fallback sizing: {} nodes × {} bytes = {} bytes",
+            node_count, vertex_size, base_size);
+    }
 
     auto allocated_size = static_cast<size_t>(
         static_cast<float>(base_size) * over_allocate_factor);
 
     if (over_allocate_factor > 1.0F) {
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferManagement,
-            "Over-allocated network geometry buffer: {} nodes × {} bytes = {} → {} bytes ({}x)",
-            node_count, vertex_size, base_size, allocated_size, over_allocate_factor);
+            "Over-allocated by {}x: {} → {} bytes",
+            over_allocate_factor, base_size, allocated_size);
     }
 
     return allocated_size;
