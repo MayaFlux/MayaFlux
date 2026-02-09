@@ -156,9 +156,9 @@ public:
         return dynamic_cast<const OpType*>(m_operator.get());
     }
 
-    NetworkOperator* get_operator() { return m_operator.get(); }
-    const NetworkOperator* get_operator() const { return m_operator.get(); }
-    bool has_operator() const { return m_operator != nullptr; }
+    NetworkOperator* get_operator() override { return m_operator.get(); }
+    const NetworkOperator* get_operator() const override { return m_operator.get(); }
+    bool has_operator() const override { return m_operator != nullptr; }
 
     //-------------------------------------------------------------------------
     // Configuration

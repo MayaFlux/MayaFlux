@@ -268,13 +268,18 @@ std::optional<double> PhysicsOperator::get_particle_velocity(size_t global_index
     return std::nullopt;
 }
 
-const Kakshya::VertexLayout& PhysicsOperator::get_vertex_layout() const
+Kakshya::VertexLayout PhysicsOperator::get_vertex_layout() const
 {
     if (m_collections.empty()) {
-        static Kakshya::VertexLayout empty_layout;
-        return empty_layout;
+        return {};
     }
-    return *m_collections[0].collection->get_vertex_layout();
+
+    auto layout_opt = m_collections[0].collection->get_vertex_layout();
+    if (!layout_opt.has_value()) {
+        return {};
+    }
+
+    return *layout_opt;
 }
 
 size_t PhysicsOperator::get_vertex_count() const

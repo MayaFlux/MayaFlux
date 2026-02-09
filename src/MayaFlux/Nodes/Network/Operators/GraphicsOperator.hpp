@@ -49,7 +49,7 @@ public:
     /**
      * @brief Get vertex layout describing vertex structure
      */
-    [[nodiscard]] virtual const Kakshya::VertexLayout& get_vertex_layout() const = 0;
+    [[nodiscard]] virtual Kakshya::VertexLayout get_vertex_layout() const = 0;
 
     /**
      * @brief Get number of vertices (may differ from point count for topology/path)

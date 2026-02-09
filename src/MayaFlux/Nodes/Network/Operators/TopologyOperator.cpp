@@ -165,13 +165,18 @@ std::span<const uint8_t> TopologyOperator::get_vertex_data() const
     return { m_vertex_data_aggregate.data(), m_vertex_data_aggregate.size() };
 }
 
-const Kakshya::VertexLayout& TopologyOperator::get_vertex_layout() const
+Kakshya::VertexLayout TopologyOperator::get_vertex_layout() const
 {
     if (m_topologies.empty()) {
-        static Kakshya::VertexLayout empty_layout;
-        return empty_layout;
+        return {};
     }
-    return *m_topologies[0].generator->get_vertex_layout();
+
+    auto layout_opt = m_topologies[0].generator->get_vertex_layout();
+    if (!layout_opt) {
+        return {};
+    }
+
+    return *layout_opt;
 }
 
 size_t TopologyOperator::get_vertex_count() const
