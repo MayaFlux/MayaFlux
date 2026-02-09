@@ -1,6 +1,5 @@
 #include "PhysicsOperator.hpp"
 
-#include "MayaFlux/Kinesis/Stochastic.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -416,14 +415,12 @@ void PhysicsOperator::apply_forces()
 
 void PhysicsOperator::apply_turbulence()
 {
-    static Kinesis::Stochastic::Stochastic rng;
-
     for (auto& group : m_collections) {
         for (auto& state : group.physics_state) {
             glm::vec3 random_force(
-                rng(-1.0F, 1.0F),
-                rng(-1.0F, 1.0F),
-                rng(-1.0F, 1.0F));
+                m_random_generator(-1.0F, 1.0F),
+                m_random_generator(-1.0F, 1.0F),
+                m_random_generator(-1.0F, 1.0F));
             state.force += random_force * m_turbulence_strength;
         }
     }

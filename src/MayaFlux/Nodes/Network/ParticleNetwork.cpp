@@ -1,7 +1,5 @@
 #include "ParticleNetwork.hpp"
 
-#include "Operators/PhysicsOperator.hpp"
-
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include <glm/gtc/constants.hpp>

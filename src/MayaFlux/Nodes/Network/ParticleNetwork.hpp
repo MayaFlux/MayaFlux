@@ -1,9 +1,8 @@
 #pragma once
 
 #include "NodeNetwork.hpp"
-#include "Operators/GraphicsOperator.hpp"
 
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "Operators/PhysicsOperator.hpp"
 
 namespace MayaFlux::Nodes::Network {
 

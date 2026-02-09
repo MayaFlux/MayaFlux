@@ -2,6 +2,8 @@
 #include "GraphicsOperator.hpp"
 #include "MayaFlux/Nodes/Graphics/PointCollectionNode.hpp"
 
+#include "MayaFlux/Kinesis/Stochastic.hpp"
+
 namespace MayaFlux::Nodes::Network {
 
 /**
@@ -37,17 +39,6 @@ struct PhysicsState {
 };
 
 /**
- * @enum BoundsMode
- * @brief How particles behave at spatial bounds
- */
-enum class BoundsMode : uint8_t {
-    NONE, ///< No bounds checking
-    BOUNCE, ///< Reflect off boundaries with damping
-    WRAP, ///< Teleport to opposite side
-    CLAMP ///< Stop at boundary
-};
-
-/**
  * @class PhysicsOperator
  * @brief N-body physics simulation with point rendering
  *
@@ -67,6 +58,17 @@ public:
         float mass_multiplier;
         glm::vec3 color_tint;
         float size_scale;
+    };
+
+    /**
+     * @enum BoundsMode
+     * @brief How particles behave at spatial bounds
+     */
+    enum class BoundsMode : uint8_t {
+        NONE, ///< No bounds checking
+        BOUNCE, ///< Reflect off boundaries with damping
+        WRAP, ///< Teleport to opposite side
+        CLAMP ///< Stop at boundary
     };
 
     PhysicsOperator();
@@ -249,6 +251,8 @@ protected:
 private:
     std::vector<CollectionGroup> m_collections;
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
+
+    Kinesis::Stochastic::Stochastic m_random_generator;
 
     glm::vec3 m_gravity { 0.0F, -9.81F, 0.0F };
     float m_drag { 0.01F };
