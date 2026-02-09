@@ -195,14 +195,47 @@ NetworkGeometryProcessor::extract_particle_vertices(
 {
     std::vector<Nodes::GpuSync::PointVertex> vertices;
 
-    const auto& particles = network->get_particles();
-    vertices.reserve(particles.size());
-
-    for (const auto& particle : particles) {
-        vertices.push_back({ .position = particle.point->get_position(),
-            .color = particle.point->get_color(),
-            .size = particle.point->get_size() });
+    auto* operator_ptr = network->get_operator();
+    if (!operator_ptr) {
+        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "ParticleNetwork has no operator");
+        return vertices;
     }
+
+    auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(operator_ptr);
+    if (!graphics_op) {
+        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "ParticleNetwork operator '{}' is not a GraphicsOperator",
+            operator_ptr->get_type_name());
+        return vertices;
+    }
+
+    if (std::string_view(graphics_op->get_vertex_type_name()) != "PointVertex") {
+        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Operator vertex type '{}' does not match expected 'PointVertex'",
+            graphics_op->get_vertex_type_name());
+        return vertices;
+    }
+
+    auto vertex_data = graphics_op->get_vertex_data();
+    size_t vertex_count = graphics_op->get_vertex_count();
+
+    if (vertex_data.empty() || vertex_count == 0) {
+        return vertices;
+    }
+
+    size_t expected_size = vertex_count * sizeof(Nodes::GpuSync::PointVertex);
+    if (vertex_data.size() < expected_size) {
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Vertex data size mismatch: expected {} bytes, got {}",
+            expected_size, vertex_data.size());
+        return vertices;
+    }
+
+    const auto* vertex_ptr = reinterpret_cast<const Nodes::GpuSync::PointVertex*>(
+        vertex_data.data());
+
+    vertices.assign(vertex_ptr, vertex_ptr + vertex_count);
 
     return vertices;
 }

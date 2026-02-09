@@ -82,6 +82,11 @@ public:
         std::string_view param,
         const std::shared_ptr<NodeNetwork>& source) override;
 
+    /**
+     * @brief Get human-readable vertex type name (for validation/debugging)
+     */
+    [[nodiscard]] virtual const char* get_vertex_type_name() const = 0;
+
 protected:
     /**
      * @brief Get mutable access to point at global index
@@ -90,8 +95,6 @@ protected:
      * Subclasses must implement to provide per-point access
      */
     virtual void* get_data_at(size_t global_index) = 0;
-
-    [[nodiscard]] virtual const char* get_vertex_type_name() const = 0;
 };
 
 } // namespace MayaFlux::Nodes::Network::Operators

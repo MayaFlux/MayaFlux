@@ -241,9 +241,9 @@ public:
         std::string_view param,
         const std::shared_ptr<NodeNetwork>& source) override;
 
-protected:
     const char* get_vertex_type_name() const override { return "PointVertex"; }
 
+protected:
     void* get_data_at(size_t global_index) override;
 
 private:
