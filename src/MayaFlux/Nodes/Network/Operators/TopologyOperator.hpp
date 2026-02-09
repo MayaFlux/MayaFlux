@@ -87,6 +87,11 @@ public:
      */
     [[nodiscard]] size_t get_topology_count() const { return m_topologies.size(); }
 
+    const char* get_vertex_type_name() const override { return "PathVertex"; }
+
+protected:
+    void* get_data_at(size_t global_index) override;
+
 private:
     std::vector<TopologyCollection> m_topologies;
 

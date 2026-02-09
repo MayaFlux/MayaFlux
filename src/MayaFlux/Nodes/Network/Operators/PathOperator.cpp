@@ -273,4 +273,18 @@ void PathOperator::set_global_color(const glm::vec3& color)
     }
 }
 
+void* PathOperator::get_data_at(size_t global_index)
+{
+    size_t offset = 0;
+    for (auto& group : m_paths) {
+        const auto& vertices = group.generator->get_all_vertices();
+        if (global_index < offset + vertices.size()) {
+            size_t local_index = global_index - offset;
+            return const_cast<GpuSync::LineVertex*>(&vertices[local_index]);
+        }
+        offset += vertices.size();
+    }
+    return nullptr;
+}
+
 } // namespace MayaFlux::Nodes::Network

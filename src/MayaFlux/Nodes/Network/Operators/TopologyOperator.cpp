@@ -78,15 +78,13 @@ void TopologyOperator::add_topology(
     topology.line_color = line_color;
     topology.line_thickness = line_thickness;
 
-    std::vector<GpuSync::TopologyGeneratorNode::Point> gen_points;
+    std::vector<GpuSync::LineVertex> gen_points;
     gen_points.reserve(positions.size());
 
     for (const auto& pos : positions) {
-        gen_points.push_back(GpuSync::TopologyGeneratorNode::Point {
+        gen_points.push_back(GpuSync::LineVertex {
             .position = pos,
-            .color = line_color,
-            .influence_radius = 1.0F,
-            .connectable = true });
+            .color = line_color });
     }
 
     topology.generator->set_points(gen_points);
@@ -277,6 +275,19 @@ void TopologyOperator::set_global_line_color(const glm::vec3& color)
         topology.line_color = color;
         topology.generator->set_line_color(color);
     }
+}
+
+void* TopologyOperator::get_data_at(size_t global_index)
+{
+    size_t offset = 0;
+    for (auto& group : m_topologies) {
+        if (global_index < offset + group.generator->get_point_count()) {
+            size_t local_index = global_index - offset;
+            return &group.generator->get_points()[local_index];
+        }
+        offset += group.generator->get_point_count();
+    }
+    return nullptr;
 }
 
 } // namespace MayaFlux::Nodes::Network

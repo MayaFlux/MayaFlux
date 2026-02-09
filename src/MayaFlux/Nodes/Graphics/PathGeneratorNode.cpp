@@ -431,21 +431,21 @@ void PathGeneratorNode::compute_frame()
         return;
     }
 
-    std::vector<LineVertex> combined;
-    combined.reserve(m_vertices.size() + m_completed_draws.size() + m_draw_vertices.size());
-    combined.insert(combined.end(), m_vertices.begin(), m_vertices.end());
-    combined.insert(combined.end(), m_completed_draws.begin(), m_completed_draws.end());
-    combined.insert(combined.end(), m_draw_vertices.begin(), m_draw_vertices.end());
+    m_combined_cache.clear();
+    m_combined_cache.reserve(m_vertices.size() + m_completed_draws.size() + m_draw_vertices.size());
+    m_combined_cache.insert(m_combined_cache.end(), m_vertices.begin(), m_vertices.end());
+    m_combined_cache.insert(m_combined_cache.end(), m_completed_draws.begin(), m_completed_draws.end());
+    m_combined_cache.insert(m_combined_cache.end(), m_draw_vertices.begin(), m_draw_vertices.end());
 
-    if (combined.empty()) {
+    if (m_combined_cache.empty()) {
         resize_vertex_buffer(0);
         return;
     }
 
-    set_vertices<LineVertex>(std::span { combined.data(), combined.size() });
+    set_vertices<LineVertex>(std::span { m_combined_cache.data(), m_combined_cache.size() });
 
     auto layout = get_vertex_layout();
-    layout->vertex_count = static_cast<uint32_t>(combined.size());
+    layout->vertex_count = static_cast<uint32_t>(m_combined_cache.size());
     set_vertex_layout(*layout);
 }
 

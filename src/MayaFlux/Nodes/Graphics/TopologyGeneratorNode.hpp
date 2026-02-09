@@ -85,13 +85,6 @@ public:
     using CustomConnectionFunction = std::function<std::vector<std::pair<size_t, size_t>>(
         const Eigen::MatrixXd&)>;
 
-    struct Point {
-        glm::vec3 position;
-        glm::vec3 color { 1.0F, 1.0F, 1.0F };
-        float influence_radius { 1.0F };
-        bool connectable { true };
-    };
-
     /**
      * @brief Create topology generator
      * @param mode Connection generation rule
@@ -116,11 +109,11 @@ public:
 
     /**
      * @brief Add point to topology
-     * @param point Point data
+     * @param point LineVertex data
      *
      * If auto_connect enabled, immediately regenerates connections.
      */
-    void add_point(const Point& point);
+    void add_point(const LineVertex& point);
 
     /**
      * @brief Add point with just position (uses defaults)
@@ -142,16 +135,16 @@ public:
 
     /**
      * @brief Update point data
-     * @param index Point index
-     * @param point New point data
+     * @param index LineVertex index
+     * @param point New LineVertex data
      */
-    void update_point(size_t index, const Point& point);
+    void update_point(size_t index, const LineVertex& point);
 
     /**
      * @brief Set all points at once
-     * @param points Vector of point data
+     * @param points Vector of LineVertex data
      */
-    void set_points(const std::vector<Point>& points);
+    void set_points(const std::vector<LineVertex>& points);
 
     /**
      * @brief Set points using just positions (color and other attributes defaulted)
@@ -226,12 +219,12 @@ public:
     /**
      * @brief Get point by index
      */
-    [[nodiscard]] const Point& get_point(size_t index) const;
+    [[nodiscard]] const LineVertex& get_point(size_t index) const;
 
     /**
      * @brief Get all points
      */
-    [[nodiscard]] std::vector<Point> get_points() const;
+    [[nodiscard]] std::vector<LineVertex> get_points() const;
 
     /**
      * @brief Get connection edges (pairs of point indices)
@@ -271,7 +264,7 @@ public:
 private:
     Kinesis::ProximityMode m_mode;
     CustomConnectionFunction m_custom_func;
-    Memory::HistoryBuffer<Point> m_points;
+    Memory::HistoryBuffer<LineVertex> m_points;
     std::vector<LineVertex> m_vertices;
     std::vector<std::pair<size_t, size_t>> m_connections;
 
@@ -289,10 +282,10 @@ private:
     void build_vertex_buffer();
 
     void build_interpolated_path(
-        std::span<Point> points,
+        std::span<LineVertex> points,
         size_t num_points);
 
-    void build_direct_connections(std::span<Point> points, size_t num_points);
+    void build_direct_connections(std::span<LineVertex> points, size_t num_points);
 
     Eigen::MatrixXd points_to_eigen() const;
 };
