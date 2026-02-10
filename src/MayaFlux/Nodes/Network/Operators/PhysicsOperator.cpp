@@ -33,7 +33,7 @@ void PhysicsOperator::initialize(
             .size = m_point_size });
     }
 
-    add_collection(vertices, 1.0F);
+    add_collection(vertices);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "PhysicsOperator initialized with {} points in 1 collection",
@@ -48,7 +48,7 @@ void PhysicsOperator::initialize_collections(
     const std::vector<std::vector<PointVertex>>& collections)
 {
     for (const auto& collection : collections) {
-        add_collection(collection, 1.0F);
+        add_collection(collection);
     }
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -68,9 +68,6 @@ void PhysicsOperator::add_collection(
 
     CollectionGroup group;
     group.collection = std::make_shared<GpuSync::PointCollectionNode>();
-    group.mass_multiplier = mass_multiplier;
-    group.color_tint = vertices[0].color;
-    group.size_scale = vertices[0].size / m_point_size;
 
     group.physics_state.resize(vertices.size());
 
@@ -78,7 +75,7 @@ void PhysicsOperator::add_collection(
         group.physics_state[i] = PhysicsState {
             .velocity = glm::vec3(0.0F),
             .force = glm::vec3(0.0F),
-            .mass = 1.0F * mass_multiplier
+            .mass = mass_multiplier
         };
     }
 
@@ -168,7 +165,7 @@ void PhysicsOperator::set_parameter(std::string_view param, double value)
         for (auto& group : m_collections) {
             auto& points = group.collection->get_points();
             for (auto& pt : points) {
-                pt.size = m_point_size * group.size_scale;
+                pt.size = m_point_size;
             }
         }
         break;

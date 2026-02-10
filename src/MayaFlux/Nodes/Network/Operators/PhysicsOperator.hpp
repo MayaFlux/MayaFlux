@@ -54,10 +54,6 @@ public:
     struct CollectionGroup {
         std::shared_ptr<GpuSync::PointCollectionNode> collection;
         std::vector<PhysicsState> physics_state;
-
-        float mass_multiplier;
-        glm::vec3 color_tint;
-        float size_scale;
     };
 
     /**

@@ -448,8 +448,9 @@ public:
     /**
      * @brief Mark config as changed (processors will detect and react)
      * @param is_dirty Whether the config is now dirty (default: true)
+     * NOTE: Child classes override this to call their internal setup_rendering() with the new config, which may have additional side effects.
      */
-    void mark_render_config_dirty(bool is_dirty = true) { m_render_config_dirty = is_dirty; }
+    virtual void mark_render_config_dirty(bool is_dirty = true) { m_render_config_dirty = is_dirty; }
 
     /**
      * @brief Check if config has changed since last frame

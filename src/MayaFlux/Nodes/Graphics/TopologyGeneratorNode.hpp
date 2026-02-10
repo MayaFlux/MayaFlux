@@ -285,6 +285,21 @@ public:
      */
     void set_arc_length_reparameterization(bool enable);
 
+    /**
+     * @brief Set primitive topology for rendering
+     * @param topology Primitive topology (e.g. LINE_LIST, TRIANGLE_LIST)
+     *
+     * This determines how the vertex data is interpreted when rendered.
+     * For example, LINE_LIST treats every pair of vertices as a line segment,
+     * while TRIANGLE_LIST treats every triplet of vertices as a triangle.
+     */
+    void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology) { m_primitive_topology = topology; }
+
+    [[nodiscard]] inline Portal::Graphics::PrimitiveTopology get_primitive_topology() const override
+    {
+        return m_primitive_topology;
+    }
+
 private:
     Kinesis::ProximityMode m_mode;
     CustomConnectionFunction m_custom_func;
@@ -293,6 +308,7 @@ private:
     std::vector<std::pair<size_t, size_t>> m_connections;
 
     Kinesis::InterpolationMode m_path_interpolation_mode { Kinesis::InterpolationMode::CATMULL_ROM };
+    Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::LINE_LIST };
     size_t m_samples_per_segment { 20 }; ///< Controls smoothness vs performance
     bool m_use_arc_length_reparameterization {}; ///< Optional constant-speed
 

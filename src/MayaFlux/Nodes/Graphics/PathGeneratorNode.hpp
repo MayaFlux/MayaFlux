@@ -308,6 +308,21 @@ public:
      */
     void complete();
 
+    /**
+     * @brief Set primitive topology for rendering
+     * @param topology Primitive topology (e.g. LINE_LIST, TRIANGLE_LIST)
+     *
+     * This determines how the vertex data is interpreted when rendered.
+     * For example, LINE_LIST treats every pair of vertices as a line segment,
+     * while TRIANGLE_LIST treats every triplet of vertices as a triangle.
+     */
+    void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology) { m_primitive_topology = topology; }
+
+    [[nodiscard]] inline Portal::Graphics::PrimitiveTopology get_primitive_topology() const override
+    {
+        return m_primitive_topology;
+    }
+
 private:
     Kinesis::InterpolationMode m_mode;
     CustomPathFunction m_custom_func;
@@ -330,6 +345,7 @@ private:
     bool m_force_uniform_thickness {};
     bool m_geometry_dirty { true };
     bool m_arc_length_parameterization {};
+    Portal::Graphics::PrimitiveTopology m_primitive_topology { Portal::Graphics::PrimitiveTopology::LINE_STRIP };
 
     static constexpr size_t INVALID_SEGMENT { std::numeric_limits<size_t>::max() };
     size_t m_dirty_segment_start { INVALID_SEGMENT };
