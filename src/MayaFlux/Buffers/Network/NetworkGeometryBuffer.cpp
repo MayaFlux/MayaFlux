@@ -112,6 +112,8 @@ void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
     m_render_processor->set_cull_mode(config.cull_mode);
 
     get_processing_chain()->add_final_processor(m_render_processor, shared_from_this());
+
+    set_default_render_config(resolved_config);
 }
 
 uint32_t NetworkGeometryBuffer::get_vertex_count() const

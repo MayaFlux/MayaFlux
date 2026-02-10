@@ -18,6 +18,13 @@ NodeTextureBuffer::NodeTextureBuffer(
     , m_texture_node(std::move(node))
     , m_binding_name(std::move(binding_name))
 {
+    RenderConfig default_config;
+    default_config.vertex_shader = "texture.vert.spv";
+    default_config.fragment_shader = "texture.frag.spv";
+    default_config.default_texture_binding = "texSampler";
+    default_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
+    set_default_render_config(default_config);
+
     if (!m_texture_node) {
         error<std::invalid_argument>(
             Journal::Component::Buffers,
@@ -82,15 +89,40 @@ void NodeTextureBuffer::setup_processors(ProcessingToken token)
         m_texture_node->get_height());
 }
 
-void NodeTextureBuffer::setup_rendering(const RenderConfig& config)
+void NodeTextureBuffer::setup_rendering(const RenderConfig& user_config)
 {
+    if (!user_config.vertex_shader.empty()) {
+        m_render_config.vertex_shader = user_config.vertex_shader;
+    }
+    if (!user_config.fragment_shader.empty()) {
+        m_render_config.fragment_shader = user_config.fragment_shader;
+    }
+    if (!user_config.default_texture_binding.empty()) {
+        m_render_config.default_texture_binding = user_config.default_texture_binding;
+    }
+    if (user_config.topology != Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "NodeTextureBuffer currently only supports TRIANGLE_STRIP topology. Ignoring provided topology.");
+    } else {
+        if (user_config.topology != m_render_config.topology) {
+            m_render_config.topology = user_config.topology;
+        }
+    }
+    m_render_config.target_window = user_config.target_window;
+
+    if (!user_config.additional_textures.empty()) {
+        for (const auto& [name, texture] : user_config.additional_textures) {
+            m_render_config.additional_textures.emplace_back(name, texture);
+        }
+    }
+
     if (!m_render_processor) {
-        ShaderConfig shader_config { config.vertex_shader };
-        shader_config.bindings[config.default_texture_binding] = ShaderBinding(
+        ShaderConfig shader_config { m_render_config.vertex_shader };
+        shader_config.bindings[m_render_config.default_texture_binding] = ShaderBinding(
             0, 0, vk::DescriptorType::eCombinedImageSampler);
 
         uint32_t binding_index = 1;
-        for (const auto& [name, _] : config.additional_textures) {
+        for (const auto& [name, _] : m_render_config.additional_textures) {
             shader_config.bindings[name] = ShaderBinding(
                 0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
         }
@@ -98,13 +130,13 @@ void NodeTextureBuffer::setup_rendering(const RenderConfig& config)
         m_render_processor = std::make_shared<RenderProcessor>(shader_config);
     }
 
-    m_render_processor->set_fragment_shader(config.fragment_shader);
-    m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(config.topology);
+    m_render_processor->set_fragment_shader(m_render_config.fragment_shader);
+    m_render_processor->set_target_window(m_render_config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+    m_render_processor->set_primitive_topology(m_render_config.topology);
 
-    m_render_processor->bind_texture(config.default_texture_binding, get_gpu_texture());
+    m_render_processor->bind_texture(m_render_config.default_texture_binding, get_gpu_texture());
 
-    for (const auto& [name, texture] : config.additional_textures) {
+    for (const auto& [name, texture] : m_render_config.additional_textures) {
         m_render_processor->bind_texture(name, texture);
     }
 
@@ -112,8 +144,8 @@ void NodeTextureBuffer::setup_rendering(const RenderConfig& config)
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
         "NodeTextureBuffer '{}' rendering configured: shader={}, topology={}",
-        m_binding_name, config.fragment_shader,
-        static_cast<int>(config.topology));
+        m_binding_name, m_render_config.fragment_shader,
+        static_cast<int>(m_render_config.topology));
 }
 
 size_t NodeTextureBuffer::calculate_buffer_size(

@@ -51,6 +51,8 @@ using CommandBufferID = uint64_t;
  */
 class MAYAFLUX_API VKBuffer : public Buffer {
 public:
+    using RenderConfig = Portal::Graphics::RenderConfig;
+
     enum class Usage : uint8_t {
         STAGING, ///< Host-visible staging buffer (CPU-writable)
         DEVICE, ///< Device-local GPU-only buffer
@@ -442,6 +444,58 @@ public:
 
     /** Access the pipeline context for custom metadata (const) */
     const PipelineContext& get_pipeline_context() const { return m_pipeline_context; }
+
+    /**
+     * @brief Mark config as changed (processors will detect and react)
+     * @param is_dirty Whether the config is now dirty (default: true)
+     */
+    void mark_render_config_dirty(bool is_dirty = true) { m_render_config_dirty = is_dirty; }
+
+    /**
+     * @brief Check if config has changed since last frame
+     */
+    [[nodiscard]] bool is_render_config_dirty() const { return m_render_config_dirty; }
+
+    /**
+     * @brief Get the current render configuration
+     * @return RenderConfig struct with current settings
+     */
+    RenderConfig get_render_config() const { return m_render_config; }
+
+    /**
+     * @brief Update the render configuration and mark as dirty
+     * @param config New RenderConfig to apply
+     *
+     * This will update the buffer's render configuration and set the dirty flag,
+     * signaling to any RenderProcessor that it needs to reconfigure rendering for this buffer.
+     * NOTE: Child classes override this to call their internal setup_rendering() with the new config, which may have additional side effects.
+     */
+    virtual void set_render_config(const RenderConfig& config)
+    {
+        m_render_config = config;
+        m_render_config_dirty = true;
+    }
+
+protected:
+    /**
+     * @brief Called by derived classes to set their context-specific defaults
+     * @param config RenderConfig with default values for this buffer type
+     *
+     * Example (GeometryBuffer calls this in constructor):
+     *   RenderConfig defaults;
+     *   defaults.vertex_shader = "point.vert.spv";
+     *   defaults.fragment_shader = "point.frag.spv";
+     *   defaults.topology = PrimitiveTopology::POINT_LIST;
+     *   set_default_render_config(defaults);
+     */
+    void set_default_render_config(const RenderConfig& config)
+    {
+        m_render_config = config;
+        m_render_config_dirty = false;
+    }
+
+    bool m_render_config_dirty {};
+    RenderConfig m_render_config;
 
 private:
     VKBufferResources m_resources;

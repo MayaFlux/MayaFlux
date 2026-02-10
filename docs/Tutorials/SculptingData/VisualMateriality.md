@@ -152,7 +152,7 @@ void RenderProcessor::execute_shader(VKBuffer* buffer) {
 **RenderConfig** lets you customize:
 
 ```cpp
-GeometryBuffer::RenderConfig {
+Portal::Graphics::RenderConfig {
     .target_window = window,
     .vertex_shader = "point.vert.spv",     // Default: point rendering
     .fragment_shader = "point.frag.spv",   // Default: flat color

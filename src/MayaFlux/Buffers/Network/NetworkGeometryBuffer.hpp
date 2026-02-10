@@ -4,8 +4,6 @@
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "NetworkGeometryProcessor.hpp"
 
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
-
 namespace MayaFlux::Buffers {
 
 class RenderProcessor;
@@ -47,15 +45,6 @@ class RenderProcessor;
  */
 class MAYAFLUX_API NetworkGeometryBuffer : public VKBuffer {
 public:
-    struct RenderConfig {
-        std::shared_ptr<Core::Window> target_window;
-        std::string vertex_shader;
-        std::string fragment_shader;
-        std::string geometry_shader;
-        Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
-        Portal::Graphics::PolygonMode polygon_mode = Portal::Graphics::PolygonMode::FILL;
-        Portal::Graphics::CullMode cull_mode = Portal::Graphics::CullMode::NONE;
-    };
     /**
      * @brief Create geometry buffer from network
      * @param network NodeNetwork containing geometry nodes (e.g., ParticleNetwork)
