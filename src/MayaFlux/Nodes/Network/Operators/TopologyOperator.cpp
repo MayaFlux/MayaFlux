@@ -24,12 +24,23 @@ void TopologyOperator::initialize(
 {
     if (positions.empty()) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Cannot initialize TopologyOperator with zero positions");
+            "Cannot initialize topology with zero positions");
         return;
     }
 
-    glm::vec3 line_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
-    add_topology(positions, m_default_mode, line_color, m_default_thickness);
+    std::vector<GpuSync::LineVertex> vertices;
+    vertices.reserve(positions.size());
+
+    glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
+    for (size_t i = 0; i < positions.size(); ++i) {
+        glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
+        vertices.push_back(GpuSync::LineVertex {
+            .position = positions[i],
+            .color = color,
+            .thickness = m_default_thickness });
+    }
+
+    add_topology(vertices, m_default_mode);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "TopologyOperator initialized with {} points in 1 topology",
@@ -41,15 +52,11 @@ void TopologyOperator::initialize(
 //-----------------------------------------------------------------------------
 
 void TopologyOperator::initialize_topologies(
-    const std::vector<std::vector<glm::vec3>>& topologies,
-    Kinesis::ProximityMode mode,
-    const std::vector<glm::vec3>& line_colors,
-    const std::vector<float>& line_thicknesses)
+    const std::vector<std::vector<GpuSync::LineVertex>>& topologies,
+    Kinesis::ProximityMode mode)
 {
-    for (size_t i = 0; i < topologies.size(); ++i) {
-        glm::vec3 line_color = (i < line_colors.size()) ? line_colors[i] : glm::vec3(1.0F);
-        float line_thickness = (i < line_thicknesses.size()) ? line_thicknesses[i] : m_default_thickness;
-        add_topology(topologies[i], mode, line_color, line_thickness);
+    for (const auto& topo : topologies) {
+        add_topology(topo, mode);
     }
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -58,45 +65,35 @@ void TopologyOperator::initialize_topologies(
 }
 
 void TopologyOperator::add_topology(
-    const std::vector<glm::vec3>& positions,
-    Kinesis::ProximityMode mode,
-    glm::vec3 line_color,
-    float line_thickness)
+    const std::vector<GpuSync::LineVertex>& vertices,
+    Kinesis::ProximityMode mode)
 {
-    if (positions.empty()) {
+    if (vertices.empty()) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Cannot add topology with zero positions");
+            "Cannot add topology with zero vertices");
         return;
     }
 
     TopologyCollection topology;
-    topology.generator = std::make_shared<GpuSync::TopologyGeneratorNode>(
-        mode,
-        1024);
-    topology.input_positions = positions;
-    topology.mode = mode;
-    topology.line_color = line_color;
-    topology.line_thickness = line_thickness;
-
-    std::vector<GpuSync::LineVertex> gen_points;
-    gen_points.reserve(positions.size());
-
-    for (const auto& pos : positions) {
-        gen_points.push_back(GpuSync::LineVertex {
-            .position = pos,
-            .color = line_color });
+    topology.generator = std::make_shared<GpuSync::TopologyGeneratorNode>(mode, 1024);
+    topology.input_positions.reserve(vertices.size());
+    for (const auto& v : vertices) {
+        topology.input_positions.push_back(v.position);
     }
+    topology.mode = mode;
+    topology.line_color = vertices[0].color;
+    topology.line_thickness = vertices[0].thickness;
 
-    topology.generator->set_points(gen_points);
-    topology.generator->set_line_color(line_color);
-    topology.generator->set_line_thickness(line_thickness);
+    topology.generator->set_points(vertices);
+    topology.generator->set_line_color(topology.line_color);
+    topology.generator->set_line_thickness(topology.line_thickness);
     topology.generator->compute_frame();
 
     m_topologies.push_back(std::move(topology));
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Added topology #{} with {} points, {} connections",
-        m_topologies.size(), positions.size(),
+        m_topologies.size(), vertices.size(),
         m_topologies.back().generator->get_connection_count());
 }
 

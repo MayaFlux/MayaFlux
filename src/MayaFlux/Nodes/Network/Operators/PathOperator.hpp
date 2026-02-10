@@ -25,27 +25,19 @@ public:
      * @brief Initialize multiple paths with given control points and properties.
      * @param paths Vector of control point vectors, one per path.
      * @param mode Interpolation mode for all paths.
-     * @param color_tints Optional vector of color tints (one per path, default white).
-     * @param thickness_scales Optional vector of thickness scales (one per path, default 1.0).
      */
     void initialize_paths(
-        const std::vector<std::vector<glm::vec3>>& paths,
-        Kinesis::InterpolationMode mode,
-        const std::vector<glm::vec3>& color_tints = {},
-        const std::vector<float>& thickness_scales = {});
+        const std::vector<std::vector<GpuSync::LineVertex>>& paths,
+        Kinesis::InterpolationMode mode);
 
     /**
      * @brief Add a new path with given control points and properties.
-     * @param control_points Control points defining the path.
+     * @param control_points Vector of control points for the path.
      * @param mode Interpolation mode for the path.
-     * @param color_tint Color tint applied to the path (default white).
-     * @param thickness_scale Thickness multiplier for the path (default 1.0).
      */
     void add_path(
-        const std::vector<glm::vec3>& control_points,
-        Kinesis::InterpolationMode mode,
-        glm::vec3 color_tint = glm::vec3(1.0F),
-        float thickness_scale = 1.0F);
+        const std::vector<GpuSync::LineVertex>& control_vertices,
+        Kinesis::InterpolationMode mode);
 
     void process(float dt) override;
 

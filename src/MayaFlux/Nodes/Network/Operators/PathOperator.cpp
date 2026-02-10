@@ -32,24 +32,35 @@ void PathOperator::initialize(
         return;
     }
 
-    glm::vec3 color_tint = colors.empty() ? glm::vec3(1.0F) : colors[0];
-    add_path(positions, m_default_mode, color_tint, 1.0F);
+    std::vector<GpuSync::LineVertex> vertices;
+    vertices.reserve(positions.size());
+
+    glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
+    for (size_t i = 0; i < positions.size(); ++i) {
+        glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
+        vertices.push_back(GpuSync::LineVertex {
+            .position = positions[i],
+            .color = color,
+            .thickness = m_default_thickness });
+    }
+
+    add_path(vertices, m_default_mode);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "PathOperator initialized with {} control points in 1 path",
         positions.size());
 }
 
+//-----------------------------------------------------------------------------
+// Advanced Initialization (Multiple Paths)
+//-----------------------------------------------------------------------------
+
 void PathOperator::initialize_paths(
-    const std::vector<std::vector<glm::vec3>>& paths,
-    Kinesis::InterpolationMode mode,
-    const std::vector<glm::vec3>& color_tints,
-    const std::vector<float>& thickness_scales)
+    const std::vector<std::vector<GpuSync::LineVertex>>& paths,
+    Kinesis::InterpolationMode mode)
 {
-    for (size_t i = 0; i < paths.size(); ++i) {
-        glm::vec3 color_tint = (i < color_tints.size()) ? color_tints[i] : glm::vec3(1.0F);
-        float thickness_scale = (i < thickness_scales.size()) ? thickness_scales[i] : 1.0F;
-        add_path(paths[i], mode, color_tint, thickness_scale);
+    for (const auto& path : paths) {
+        add_path(path, mode);
     }
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -57,19 +68,13 @@ void PathOperator::initialize_paths(
         paths.size());
 }
 
-//-----------------------------------------------------------------------------
-// Advanced Initialization (Multiple Paths)
-//-----------------------------------------------------------------------------
-
 void PathOperator::add_path(
-    const std::vector<glm::vec3>& control_points,
-    Kinesis::InterpolationMode mode,
-    glm::vec3 color_tint,
-    float thickness_scale)
+    const std::vector<GpuSync::LineVertex>& control_vertices,
+    Kinesis::InterpolationMode mode)
 {
-    if (control_points.empty()) {
+    if (control_vertices.empty()) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Cannot add path with zero control points");
+            "Cannot add path with zero control vertices");
         return;
     }
 
@@ -78,20 +83,24 @@ void PathOperator::add_path(
         mode,
         m_default_samples_per_segment,
         1024);
-    path.control_points = control_points;
-    path.color_tint = color_tint;
-    path.thickness_scale = thickness_scale;
 
-    path.generator->set_control_points(control_points);
-    path.generator->set_path_color(color_tint);
-    path.generator->set_path_thickness(m_default_thickness * thickness_scale);
+    path.control_points.reserve(control_vertices.size());
+    for (const auto& v : control_vertices) {
+        path.control_points.push_back(v.position);
+    }
+    path.color_tint = control_vertices[0].color;
+    path.thickness_scale = control_vertices[0].thickness / m_default_thickness;
+
+    path.generator->set_control_points(control_vertices);
+    path.generator->set_path_color(path.color_tint);
+    path.generator->set_path_thickness(m_default_thickness * path.thickness_scale);
     path.generator->compute_frame();
 
     m_paths.push_back(std::move(path));
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "Added path #{} with {} control points, {} generated vertices",
-        m_paths.size(), control_points.size(),
+        "Added path #{} with {} control vertices, {} generated vertices",
+        m_paths.size(), control_vertices.size(),
         m_paths.back().generator->get_generated_vertex_count());
 }
 

@@ -223,15 +223,29 @@ void TopologyGeneratorNode::set_connection_radius(float radius)
     }
 }
 
-void TopologyGeneratorNode::set_line_color(const glm::vec3& color)
+void TopologyGeneratorNode::set_line_color(const glm::vec3& color, bool force_uniform)
 {
     m_line_color = color;
+    m_force_uniform_color = force_uniform;
     m_vertex_data_dirty = true;
 }
 
-void TopologyGeneratorNode::set_line_thickness(float thickness)
+void TopologyGeneratorNode::force_uniform_color(bool should_force)
+{
+    m_force_uniform_color = should_force;
+    m_vertex_data_dirty = true;
+}
+
+void TopologyGeneratorNode::set_line_thickness(float thickness, bool force_uniform)
 {
     m_line_thickness = thickness;
+    m_force_uniform_thickness = force_uniform;
+    m_vertex_data_dirty = true;
+}
+
+void TopologyGeneratorNode::force_uniform_thickness(bool should_force)
+{
+    m_force_uniform_thickness = should_force;
     m_vertex_data_dirty = true;
 }
 
@@ -318,7 +332,7 @@ void TopologyGeneratorNode::build_interpolated_path(
     }
 
     size_t num_segments = num_points - 1;
-    Eigen::Index total_samples = 1 + num_segments * (m_samples_per_segment - 1);
+    Eigen::Index total_samples = 1 + (Eigen::Index)num_segments * ((Eigen::Index)m_samples_per_segment - 1);
 
     Eigen::MatrixXd dense_points = Kinesis::generate_interpolated_points(
         control_points,
@@ -335,15 +349,27 @@ void TopologyGeneratorNode::build_interpolated_path(
     m_vertices.reserve((dense_points.cols() - 1) * 2);
 
     for (Eigen::Index i = 0; i < dense_points.cols() - 1; ++i) {
+        float t0 = float(i) / float(total_samples - 1);
+        float t1 = float(i + 1) / float(total_samples - 1);
+
+        auto segment_idx0 = std::min<size_t>(size_t(t0 * float(num_segments)), num_segments - 1);
+        auto segment_idx1 = std::min<size_t>(size_t(t1 * float(num_segments)), num_segments - 1);
+
+        glm::vec3 color0 = m_force_uniform_color ? m_line_color : points[segment_idx0].color;
+        glm::vec3 color1 = m_force_uniform_color ? m_line_color : points[segment_idx1].color;
+
+        float thick0 = m_force_uniform_thickness ? m_line_thickness : points[segment_idx0].thickness;
+        float thick1 = m_force_uniform_thickness ? m_line_thickness : points[segment_idx1].thickness;
+
         m_vertices.emplace_back(LineVertex {
             .position = glm::vec3(dense_points(0, i), dense_points(1, i), dense_points(2, i)),
-            .color = m_line_color,
-            .thickness = m_line_thickness });
+            .color = color0,
+            .thickness = thick0 });
 
         m_vertices.emplace_back(LineVertex {
             .position = glm::vec3(dense_points(0, i + 1), dense_points(1, i + 1), dense_points(2, i + 1)),
-            .color = m_line_color,
-            .thickness = m_line_thickness });
+            .color = color1,
+            .thickness = thick1 });
     }
 }
 
@@ -364,14 +390,21 @@ void TopologyGeneratorNode::build_direct_connections(
             continue;
         }
 
+        glm::vec3 color_a = m_force_uniform_color ? m_line_color : points[a].color;
+        glm::vec3 color_b = m_force_uniform_color ? m_line_color : points[b].color;
+
+        float thick_a = m_force_uniform_thickness ? m_line_thickness : points[a].thickness;
+        float thick_b = m_force_uniform_thickness ? m_line_thickness : points[b].thickness;
+
         m_vertices.emplace_back(LineVertex {
             .position = points[a].position,
-            .color = m_line_color,
-            .thickness = m_line_thickness });
+            .color = color_a,
+            .thickness = thick_a });
+
         m_vertices.emplace_back(LineVertex {
             .position = points[b].position,
-            .color = m_line_color,
-            .thickness = m_line_thickness });
+            .color = color_b,
+            .thickness = thick_b });
     }
 }
 

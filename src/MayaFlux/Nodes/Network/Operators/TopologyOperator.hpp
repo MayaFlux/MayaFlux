@@ -25,27 +25,19 @@ public:
      * @brief Initialize multiple topologies with given positions and properties.
      * @param topologies Vector of position vectors, one per topology.
      * @param mode Proximity mode for all topologies.
-     * @param line_colors Optional vector of line colors (one per topology, default white).
-     * @param line_thicknesses Optional vector of line thicknesses (one per topology, default 2.0).
      */
     void initialize_topologies(
-        const std::vector<std::vector<glm::vec3>>& topologies,
-        Kinesis::ProximityMode mode,
-        const std::vector<glm::vec3>& line_colors = {},
-        const std::vector<float>& line_thicknesses = {});
+        const std::vector<std::vector<GpuSync::LineVertex>>& topologies,
+        Kinesis::ProximityMode mode);
 
     /**
-     * @brief Initialize multiple topologies with given positions and properties.
-     * @param topologies Vector of position vectors, one per topology.
-     * @param mode Proximity mode for all topologies.
-     * @param line_colors Optional vector of line colors (one per topology, default white).
-     * @param line_thicknesses Optional vector of line thicknesses (one per topology, default 2.0).
+     * @brief Add a single topology with full per-vertex control.
+     * @param vertices Vector of LineVertex defining the topology's points and attributes.
+     * @param mode Proximity mode for this topology.
      */
     void add_topology(
-        const std::vector<glm::vec3>& positions,
-        Kinesis::ProximityMode mode,
-        glm::vec3 line_color = glm::vec3(1.0F),
-        float line_thickness = 2.0F);
+        const std::vector<GpuSync::LineVertex>& vertices,
+        Kinesis::ProximityMode mode);
 
     void process(float dt) override;
 

@@ -21,7 +21,19 @@ void PhysicsOperator::initialize(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors)
 {
-    initialize_collection(positions, colors, 1.0F, glm::vec3(1.0F), 1.0F);
+    std::vector<GpuSync::PointVertex> vertices;
+    vertices.reserve(positions.size());
+
+    glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
+    for (size_t i = 0; i < positions.size(); ++i) {
+        glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
+        vertices.push_back(GpuSync::PointVertex {
+            .position = positions[i],
+            .color = color,
+            .size = m_point_size });
+    }
+
+    add_collection(vertices, 1.0F);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "PhysicsOperator initialized with {} points in 1 collection",
@@ -32,38 +44,37 @@ void PhysicsOperator::initialize(
 // Advanced Initialization (Multiple Collections)
 //-----------------------------------------------------------------------------
 
-void PhysicsOperator::initialize_collection(
-    const std::vector<glm::vec3>& positions,
-    const std::vector<glm::vec3>& colors,
-    float mass_multiplier,
-    glm::vec3 color_tint,
-    float size_scale)
+void PhysicsOperator::initialize_collections(
+    const std::vector<std::vector<GpuSync::PointVertex>>& collections)
 {
-    if (positions.empty()) {
+    for (const auto& collection : collections) {
+        add_collection(collection, 1.0F);
+    }
+
+    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+        "PhysicsOperator initialized with {} collections",
+        collections.size());
+}
+
+void PhysicsOperator::add_collection(
+    const std::vector<GpuSync::PointVertex>& vertices,
+    float mass_multiplier)
+{
+    if (vertices.empty()) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Cannot initialize collection with zero positions");
+            "Cannot add collection with zero vertices");
         return;
     }
 
     CollectionGroup group;
     group.collection = std::make_shared<GpuSync::PointCollectionNode>();
     group.mass_multiplier = mass_multiplier;
-    group.color_tint = color_tint;
-    group.size_scale = size_scale;
+    group.color_tint = vertices[0].color;
+    group.size_scale = vertices[0].size / m_point_size;
 
-    group.physics_state.resize(positions.size());
+    group.physics_state.resize(vertices.size());
 
-    std::vector<GpuSync::PointVertex> vertices;
-    vertices.reserve(positions.size());
-
-    for (size_t i = 0; i < positions.size(); ++i) {
-        glm::vec3 color = colors.empty() ? glm::vec3(1.0F) : colors[i];
-
-        vertices.push_back(GpuSync::PointVertex {
-            .position = positions[i],
-            .color = color * color_tint,
-            .size = m_point_size * size_scale });
-
+    for (size_t i = 0; i < vertices.size(); ++i) {
         group.physics_state[i] = PhysicsState {
             .velocity = glm::vec3(0.0F),
             .force = glm::vec3(0.0F),
@@ -77,8 +88,8 @@ void PhysicsOperator::initialize_collection(
     m_collections.push_back(std::move(group));
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "Added collection #{} with {} points (mass_mult={:.2f}, size_scale={:.2f})",
-        m_collections.size(), positions.size(), mass_multiplier, size_scale);
+        "Added collection #{} with {} points (mass_mult={:.2f})",
+        m_collections.size(), vertices.size(), mass_multiplier);
 }
 
 //-----------------------------------------------------------------------------

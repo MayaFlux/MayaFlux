@@ -84,7 +84,7 @@ namespace MayaFlux::Nodes::GpuSync {
  */
 class MAYAFLUX_API PathGeneratorNode : public GeometryWriterNode {
 public:
-    using CustomPathFunction = std::function<glm::vec3(std::span<const glm::vec3>, double)>;
+    using CustomPathFunction = std::function<glm::vec3(std::span<const LineVertex>, double)>;
 
     /**
      * @brief Create path generator with interpolation mode
@@ -120,6 +120,15 @@ public:
     void add_control_point(const glm::vec3& position);
 
     /**
+     * @brief Add control point with full LineVertex data
+     * @param vertex LineVertex containing position, color, thickness
+     *
+     * Pushes vertex to front of ring buffer (index [0]).
+     * Oldest vertex discarded if buffer full.
+     */
+    void add_control_point(const LineVertex& vertex);
+
+    /**
      * @brief Extend path by drawing curve to new position
      * @param position Target position to draw curve to
      *
@@ -127,6 +136,15 @@ public:
      * Appends generated vertices to existing geometry. No history awareness beyond last point.
      */
     void draw_to(const glm::vec3& position);
+
+    /**
+     * @brief Extend path with full LineVertex data
+     * @param vertex LineVertex containing target position, color, thickness
+     *
+     * Generates interpolated vertices between last added point and vertex.position.
+     * Appends generated vertices to existing geometry. No history awareness beyond last point.
+     */
+    void draw_to(const LineVertex& vertex);
 
     /**
      * @brief Set all control points at once (replaces history)
@@ -138,11 +156,27 @@ public:
     void set_control_points(const std::vector<glm::vec3>& points);
 
     /**
+     * @brief Set all control points with full LineVertex data
+     * @param vertices Vector of LineVertex data (ordered newest to oldest)
+     *
+     * Clears existing history and fills buffer with new vertices.
+     * If vertices.size() > capacity, only most recent vertices kept.
+     */
+    void set_control_points(const std::vector<LineVertex>& vertices);
+
+    /**
      * @brief Update specific control point
      * @param index Control point index (0 = newest)
      * @param position New position
      */
     void update_control_point(size_t index, const glm::vec3& position);
+
+    /**
+     * @brief Update specific control point with full LineVertex data
+     * @param index Control point index (0 = newest)
+     * @param vertex New LineVertex data
+     */
+    void update_control_point(size_t index, const LineVertex& vertex);
 
     /**
      * @brief Get control point
@@ -165,14 +199,28 @@ public:
     /**
      * @brief Set path color (applied to all generated vertices)
      * @param color RGB color
+     * @param force_uniform If true, ignores per-vertex color and uses this color for all vertices
      */
-    void set_path_color(const glm::vec3& color);
+    void set_path_color(const glm::vec3& color, bool force_uniform = true);
+
+    /**
+     * @brief Set uniform color mode
+     * @param should_force If true, all vertices will use m_current_color instead of per-vertex color
+     */
+    void force_uniform_color(bool should_force);
 
     /**
      * @brief Set path thickness (applied to all generated vertices)
      * @param thickness Line thickness
+     * @param force_uniform If true, ignores per-segment thickness and uses this thickness for all vertices
      */
-    void set_path_thickness(float thickness);
+    void set_path_thickness(float thickness, bool force_uniform = true);
+
+    /**
+     * @brief Set uniform thickness mode
+     * @param should_force If true, all vertices will use m_current_thickness instead of per-segment thickness
+     */
+    void force_uniform_thickness(bool should_force);
 
     /**
      * @brief Get current path color
@@ -257,14 +305,14 @@ public:
 private:
     Kinesis::InterpolationMode m_mode;
     CustomPathFunction m_custom_func;
-    Memory::HistoryBuffer<glm::vec3> m_control_points;
+    Memory::HistoryBuffer<LineVertex> m_control_points;
     std::vector<LineVertex> m_vertices;
     std::vector<LineVertex> m_draw_vertices;
     std::vector<LineVertex> m_completed_draws;
 
     std::vector<LineVertex> m_combined_cache;
 
-    std::vector<glm::vec3> m_draw_window;
+    std::vector<LineVertex> m_draw_window;
 
     Eigen::Index m_samples_per_segment;
     double m_tension;
@@ -272,6 +320,8 @@ private:
     glm::vec3 m_current_color { 1.0F, 1.0F, 1.0F };
     float m_current_thickness { 2.0F };
 
+    bool m_force_uniform_color {};
+    bool m_force_uniform_thickness {};
     bool m_geometry_dirty { true };
     bool m_arc_length_parameterization {};
 
@@ -287,13 +337,13 @@ private:
     void regenerate_segment_range(size_t start_ctrl_idx, size_t end_ctrl_idx);
 
     void generate_curve_segment(
-        const std::vector<glm::vec3>& points,
+        const std::vector<LineVertex>& curve_verts,
         size_t start_idx,
         std::vector<LineVertex>& output);
 
     void append_line_segment(
-        const glm::vec3& p0,
-        const glm::vec3& p1,
+        const LineVertex& v0,
+        const LineVertex& v1,
         std::vector<LineVertex>& output);
 };
 

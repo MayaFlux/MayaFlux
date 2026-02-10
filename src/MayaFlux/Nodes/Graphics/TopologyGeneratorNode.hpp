@@ -191,14 +191,28 @@ public:
     /**
      * @brief Set line color (applied to all connections)
      * @param color RGB color
+     * @param force_uniform Wether to ingore per vertex color and use this color for all points
      */
-    void set_line_color(const glm::vec3& color);
+    void set_line_color(const glm::vec3& color, bool force_uniform = true);
+
+    /**
+     * @brief Force uniform color for all vertices
+     * @param should_force If true, all vertices will use m_line_color instead of per-vertex color
+     */
+    void force_uniform_color(bool should_force);
 
     /**
      * @brief Set line thickness
      * @param thickness Line width
+     * @param force_uniform Wether to ingore per segment thickness and use this color for all points
      */
-    void set_line_thickness(float thickness);
+    void set_line_thickness(float thickness, bool force_uniform = true);
+
+    /**
+     * @brief Force uniform thickness for all vertices
+     * @param should_force If true, all vertices will use m_line_thickness instead of per-vertex thickness
+     */
+    void force_uniform_thickness(bool should_force);
 
     /**
      * @brief Get point count
@@ -270,7 +284,7 @@ private:
 
     Kinesis::InterpolationMode m_path_interpolation_mode { Kinesis::InterpolationMode::CATMULL_ROM };
     size_t m_samples_per_segment { 20 }; ///< Controls smoothness vs performance
-    bool m_use_arc_length_reparameterization { false }; ///< Optional constant-speed
+    bool m_use_arc_length_reparameterization {}; ///< Optional constant-speed
 
     bool m_auto_connect;
     size_t m_k_neighbors { 3 };
@@ -278,6 +292,9 @@ private:
 
     glm::vec3 m_line_color { 1.0F, 1.0F, 1.0F };
     float m_line_thickness { 1.0F };
+
+    bool m_force_uniform_color {}; ///< If true, all vertices use m_line_color instead of per-vertex color
+    bool m_force_uniform_thickness {}; ///< If true, all vertices use m_line_thickness instead of per-vertex thickness
 
     void build_vertex_buffer();
 
