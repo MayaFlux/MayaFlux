@@ -6,13 +6,6 @@ namespace MayaFlux::Nodes::Network {
 
 class MAYAFLUX_API PathOperator : public GraphicsOperator {
 public:
-    struct PathCollection {
-        std::shared_ptr<GpuSync::PathGeneratorNode> generator;
-        std::vector<glm::vec3> control_points;
-        glm::vec3 color_tint;
-        float thickness_scale;
-    };
-
     explicit PathOperator(
         Kinesis::InterpolationMode mode = Kinesis::InterpolationMode::CATMULL_ROM,
         Eigen::Index samples_per_segment = 32);
@@ -91,7 +84,7 @@ protected:
     void* get_data_at(size_t global_index) override;
 
 private:
-    std::vector<PathCollection> m_paths;
+    std::vector<std::shared_ptr<GpuSync::PathGeneratorNode>> m_paths;
 
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
 

@@ -210,6 +210,12 @@ public:
     void force_uniform_color(bool should_force);
 
     /**
+     * @brief Check if uniform color mode is enabled
+     * @return True if uniform color is forced, false if per-vertex color is used
+     */
+    bool should_force_uniform_color() const { return m_force_uniform_color; }
+
+    /**
      * @brief Set path thickness (applied to all generated vertices)
      * @param thickness Line thickness
      * @param force_uniform If true, ignores per-segment thickness and uses this thickness for all vertices

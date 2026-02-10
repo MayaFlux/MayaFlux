@@ -78,30 +78,21 @@ void PathOperator::add_path(
         return;
     }
 
-    PathCollection path;
-    path.generator = std::make_shared<GpuSync::PathGeneratorNode>(
+    auto path = std::make_shared<GpuSync::PathGeneratorNode>(
         mode,
         m_default_samples_per_segment,
         1024);
 
-    path.control_points.reserve(control_vertices.size());
-    for (const auto& v : control_vertices) {
-        path.control_points.push_back(v.position);
-    }
-    path.color_tint = control_vertices[0].color;
-    path.thickness_scale = control_vertices[0].thickness / m_default_thickness;
-
-    path.generator->set_control_points(control_vertices);
-    path.generator->set_path_color(path.color_tint);
-    path.generator->set_path_thickness(m_default_thickness * path.thickness_scale);
-    path.generator->compute_frame();
+    path->set_control_points(control_vertices);
+    path->set_path_thickness(m_default_thickness);
+    path->compute_frame();
 
     m_paths.push_back(std::move(path));
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "Added path #{} with {} control vertices, {} generated vertices",
         m_paths.size(), control_vertices.size(),
-        m_paths.back().generator->get_generated_vertex_count());
+        m_paths.back()->get_generated_vertex_count());
 }
 
 //-----------------------------------------------------------------------------
@@ -115,7 +106,7 @@ void PathOperator::process(float /*dt*/)
     }
 
     for (auto& path : m_paths) {
-        path.generator->compute_frame();
+        path->compute_frame();
     }
 }
 
@@ -128,9 +119,10 @@ std::vector<glm::vec3> PathOperator::extract_positions() const
     std::vector<glm::vec3> positions;
 
     for (const auto& path : m_paths) {
-        positions.insert(positions.end(),
-            path.control_points.begin(),
-            path.control_points.end());
+        auto points = path->get_all_vertices();
+        for (const auto& pt : points) {
+            positions.push_back(pt.position);
+        }
     }
 
     return positions;
@@ -141,9 +133,21 @@ std::vector<glm::vec3> PathOperator::extract_colors() const
     std::vector<glm::vec3> colors;
 
     for (const auto& path : m_paths) {
-        colors.insert(colors.end(),
-            path.control_points.size(),
-            path.color_tint);
+        auto points = path->get_all_vertices();
+        if (points.empty()) {
+            continue;
+        }
+
+        if (path->should_force_uniform_color()) {
+            colors.insert(colors.end(),
+                points.size(),
+                path->get_path_color());
+            continue;
+        }
+
+        for (const auto& pt : points) {
+            colors.push_back(pt.color);
+        }
     }
 
     return colors;
@@ -154,14 +158,14 @@ std::span<const uint8_t> PathOperator::get_vertex_data_for_collection(uint32_t i
     if (m_paths.empty() || idx >= m_paths.size()) {
         return {};
     }
-    return m_paths[idx].generator->get_vertex_data();
+    return m_paths[idx]->get_vertex_data();
 }
 
 std::span<const uint8_t> PathOperator::get_vertex_data() const
 {
     m_vertex_data_aggregate.clear();
     for (const auto& group : m_paths) {
-        auto span = group.generator->get_vertex_data();
+        auto span = group->get_vertex_data();
         m_vertex_data_aggregate.insert(
             m_vertex_data_aggregate.end(),
             span.begin(), span.end());
@@ -175,7 +179,7 @@ Kakshya::VertexLayout PathOperator::get_vertex_layout() const
         return {};
     }
 
-    auto layout_opt = m_paths[0].generator->get_vertex_layout();
+    auto layout_opt = m_paths[0]->get_vertex_layout();
     if (!layout_opt) {
         return {};
     }
@@ -187,7 +191,7 @@ size_t PathOperator::get_vertex_count() const
 {
     size_t total = 0;
     for (const auto& path : m_paths) {
-        total += path.generator->get_vertex_count();
+        total += path->get_vertex_count();
     }
     return total;
 }
@@ -196,13 +200,13 @@ bool PathOperator::is_vertex_data_dirty() const
 {
     return std::ranges::any_of(
         m_paths,
-        [](const auto& group) { return group.generator->needs_gpu_update(); });
+        [](const auto& group) { return group->needs_gpu_update(); });
 }
 
 void PathOperator::mark_vertex_data_clean()
 {
     for (auto& path : m_paths) {
-        path.generator->clear_gpu_update_flag();
+        path->clear_gpu_update_flag();
     }
 }
 
@@ -210,7 +214,7 @@ size_t PathOperator::get_point_count() const
 {
     size_t total = 0;
     for (const auto& path : m_paths) {
-        total += path.control_points.size();
+        total += path->get_all_vertex_count();
     }
     return total;
 }
@@ -223,17 +227,17 @@ void PathOperator::set_parameter(std::string_view param, double value)
 {
     if (param == "tension") {
         for (auto& path : m_paths) {
-            path.generator->set_tension(value);
+            path->set_tension(value);
         }
     } else if (param == "samples_per_segment") {
         m_default_samples_per_segment = static_cast<Eigen::Index>(value);
         for (auto& path : m_paths) {
-            path.generator->set_samples_per_segment(static_cast<Eigen::Index>(value));
+            path->set_samples_per_segment(static_cast<Eigen::Index>(value));
         }
     } else if (param == "thickness") {
         m_default_thickness = static_cast<float>(value);
         for (auto& path : m_paths) {
-            path.generator->set_path_thickness(m_default_thickness * path.thickness_scale);
+            path->set_path_thickness(m_default_thickness);
         }
     }
 }
@@ -260,14 +264,14 @@ void PathOperator::set_samples_per_segment(Eigen::Index samples)
 {
     m_default_samples_per_segment = samples;
     for (auto& path : m_paths) {
-        path.generator->set_samples_per_segment(samples);
+        path->set_samples_per_segment(samples);
     }
 }
 
 void PathOperator::set_tension(double tension)
 {
     for (auto& path : m_paths) {
-        path.generator->set_tension(tension);
+        path->set_tension(tension);
     }
 }
 
@@ -275,15 +279,14 @@ void PathOperator::set_global_thickness(float thickness)
 {
     m_default_thickness = thickness;
     for (auto& path : m_paths) {
-        path.generator->set_path_thickness(thickness * path.thickness_scale);
+        path->set_path_thickness(thickness);
     }
 }
 
 void PathOperator::set_global_color(const glm::vec3& color)
 {
     for (auto& path : m_paths) {
-        path.color_tint = color;
-        path.generator->set_path_color(color);
+        path->set_path_color(color);
     }
 }
 
@@ -291,7 +294,7 @@ void* PathOperator::get_data_at(size_t global_index)
 {
     size_t offset = 0;
     for (auto& group : m_paths) {
-        const auto& vertices = group.generator->get_all_vertices();
+        const auto& vertices = group->get_all_vertices();
         if (global_index < offset + vertices.size()) {
             size_t local_index = global_index - offset;
             return const_cast<LineVertex*>(&vertices[local_index]);

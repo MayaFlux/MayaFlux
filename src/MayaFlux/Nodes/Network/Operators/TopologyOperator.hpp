@@ -6,14 +6,6 @@ namespace MayaFlux::Nodes::Network {
 
 class MAYAFLUX_API TopologyOperator : public GraphicsOperator {
 public:
-    struct TopologyCollection {
-        std::shared_ptr<GpuSync::TopologyGeneratorNode> generator;
-        std::vector<glm::vec3> input_positions;
-        Kinesis::ProximityMode mode;
-        glm::vec3 line_color;
-        float line_thickness;
-    };
-
     explicit TopologyOperator(
         Kinesis::ProximityMode mode = Kinesis::ProximityMode::K_NEAREST);
 
@@ -85,7 +77,7 @@ protected:
     void* get_data_at(size_t global_index) override;
 
 private:
-    std::vector<TopologyCollection> m_topologies;
+    std::vector<std::shared_ptr<GpuSync::TopologyGeneratorNode>> m_topologies;
 
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
 

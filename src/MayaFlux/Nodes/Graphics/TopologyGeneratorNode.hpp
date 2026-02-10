@@ -196,10 +196,20 @@ public:
     void set_line_color(const glm::vec3& color, bool force_uniform = true);
 
     /**
+     * @brief Get current line color
+     */
+    glm::vec3 get_line_color() const { return m_line_color; }
+
+    /**
      * @brief Force uniform color for all vertices
      * @param should_force If true, all vertices will use m_line_color instead of per-vertex color
      */
     void force_uniform_color(bool should_force);
+
+    /**
+     * @brief Check if uniform color is forced
+     */
+    bool should_force_uniform_color() const { return m_force_uniform_color; }
 
     /**
      * @brief Set line thickness
