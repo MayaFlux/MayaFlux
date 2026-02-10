@@ -4,8 +4,6 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Nodes/Graphics/GeometryWriterNode.hpp"
 
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
-
 namespace MayaFlux::Buffers {
 
 class RenderProcessor;
@@ -41,16 +39,6 @@ class RenderProcessor;
  */
 class MAYAFLUX_API GeometryBuffer : public VKBuffer {
 public:
-    struct RenderConfig {
-        std::shared_ptr<Core::Window> target_window;
-        std::string vertex_shader;
-        std::string fragment_shader;
-        std::string geometry_shader;
-        Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
-        Portal::Graphics::PolygonMode polygon_mode = Portal::Graphics::PolygonMode::FILL;
-        Portal::Graphics::CullMode cull_mode = Portal::Graphics::CullMode::NONE;
-    };
-
     /**
      * @brief Create geometry buffer from generative node
      * @param node GeometryWriterNode that generates vertices each frame
@@ -64,7 +52,7 @@ public:
     explicit GeometryBuffer(
         std::shared_ptr<Nodes::GpuSync::GeometryWriterNode> node,
         const std::string& binding_name = "geometry",
-        float over_allocate_factor = 1.5f);
+        float over_allocate_factor = 1.5F);
 
     ~GeometryBuffer() override = default;
 

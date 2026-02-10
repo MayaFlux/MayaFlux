@@ -1,5 +1,10 @@
 #pragma once
 
+namespace MayaFlux::Core {
+class Window;
+class VKImage;
+}
+
 namespace MayaFlux::Portal::Graphics {
 
 //============================================================================
@@ -172,6 +177,39 @@ enum class AddressMode : uint8_t {
     MIRRORED_REPEAT, ///< Mirror and repeat
     CLAMP_TO_EDGE, ///< Clamp to edge color
     CLAMP_TO_BORDER ///< Clamp to border color
+};
+
+/**
+ * @struct RenderConfig
+ * @brief Unified rendering configuration for graphics buffers
+ *
+ * This is the persistent state that processors query and react to.
+ * All rendering parameters in one place, independent of buffer type.
+ * Child buffer classes populate it with context-specific defaults
+ * during construction, then expose it to their processors.
+ *
+ * Design:
+ * - Owned by VKBuffer as persistent state
+ * - Processors query and react to changes
+ * - Child classes have their own convenience RenderConfig with defaults
+ *   that bridge to this Portal-level config
+ */
+struct RenderConfig {
+    std::shared_ptr<Core::Window> target_window;
+    std::string vertex_shader;
+    std::string fragment_shader;
+    std::string geometry_shader;
+    std::string default_texture_binding;
+    PrimitiveTopology topology { PrimitiveTopology::POINT_LIST };
+    PolygonMode polygon_mode { PolygonMode::FILL };
+    CullMode cull_mode { CullMode::NONE };
+
+    std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures;
+
+    ///< For child-specific fields
+    std::unordered_map<std::string, std::string> extra_string_params;
+
+    bool operator==(const RenderConfig& other) const = default;
 };
 
 }

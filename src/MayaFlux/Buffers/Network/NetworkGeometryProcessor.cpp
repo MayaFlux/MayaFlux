@@ -1,8 +1,10 @@
 #include "NetworkGeometryProcessor.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+#include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
-#include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -117,15 +119,25 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             continue;
         }
 
-        std::vector<Nodes::GpuSync::PointVertex> vertices;
-
-        if (auto particle_net = std::dynamic_pointer_cast<Nodes::Network::ParticleNetwork>(binding.network)) {
-            vertices = extract_particle_vertices(particle_net);
-        } else {
-            vertices = extract_network_vertices(binding.network);
+        auto* operator_ptr = binding.network->get_operator();
+        if (!operator_ptr) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Network '{}' has no operator", name);
+            continue;
         }
 
-        if (vertices.empty()) {
+        auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(operator_ptr);
+        if (!graphics_op) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Network '{}' operator '{}' is not a GraphicsOperator",
+                name, operator_ptr->get_type_name());
+            continue;
+        }
+
+        auto vertex_data = graphics_op->get_vertex_data();
+        size_t vertex_count = graphics_op->get_vertex_count();
+
+        if (vertex_data.empty() || vertex_count == 0) {
             if (binding.gpu_vertex_buffer->is_host_visible()) {
                 binding.gpu_vertex_buffer->clear();
             }
@@ -134,7 +146,7 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             continue;
         }
 
-        size_t required_size = vertices.size() * sizeof(Nodes::GpuSync::PointVertex);
+        size_t required_size = vertex_data.size();
         size_t available_size = binding.gpu_vertex_buffer->get_size_bytes();
 
         if (required_size > available_size) {
@@ -145,7 +157,6 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
                 name, available_size, new_size);
 
             binding.gpu_vertex_buffer->resize(new_size, false);
-            available_size = new_size;
 
             if (binding.staging_buffer) {
                 binding.staging_buffer->resize(new_size, false);
@@ -154,106 +165,20 @@ void NetworkGeometryProcessor::processing_function(const std::shared_ptr<Buffer>
             }
         }
 
-        size_t upload_size = std::min<size_t>(required_size, available_size);
-
         upload_to_gpu(
-            vertices.data(),
-            upload_size,
+            vertex_data.data(),
+            vertex_data.size(),
             binding.gpu_vertex_buffer,
             binding.staging_buffer);
 
-        Kakshya::VertexLayout layout;
-        layout.vertex_count = static_cast<uint32_t>(vertices.size());
-        layout.stride_bytes = sizeof(Nodes::GpuSync::PointVertex);
-
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::VERTEX_POSITIONS_3D,
-            .offset_in_vertex = 0,
-            .name = "position" });
-
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::VERTEX_COLORS_RGB,
-            .offset_in_vertex = sizeof(glm::vec3),
-            .name = "color" });
-
-        layout.attributes.push_back(Kakshya::VertexAttributeLayout {
-            .component_modality = Kakshya::DataModality::UNKNOWN,
-            .offset_in_vertex = sizeof(glm::vec3) + sizeof(glm::vec3),
-            .name = "size" });
+        auto layout = graphics_op->get_vertex_layout();
 
         binding.gpu_vertex_buffer->set_vertex_layout(layout);
 
         MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Uploaded {} vertices from network '{}' ({} bytes)",
-            vertices.size(), name, upload_size);
+            "Uploaded {} vertices from network '{}' ({} bytes, {} operator)",
+            vertex_count, name, vertex_data.size(), operator_ptr->get_type_name());
     }
-}
-
-std::vector<Nodes::GpuSync::PointVertex>
-NetworkGeometryProcessor::extract_particle_vertices(
-    const std::shared_ptr<Nodes::Network::ParticleNetwork>& network)
-{
-    std::vector<Nodes::GpuSync::PointVertex> vertices;
-
-    auto* operator_ptr = network->get_operator();
-    if (!operator_ptr) {
-        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "ParticleNetwork has no operator");
-        return vertices;
-    }
-
-    auto* graphics_op = dynamic_cast<Nodes::Network::GraphicsOperator*>(operator_ptr);
-    if (!graphics_op) {
-        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "ParticleNetwork operator '{}' is not a GraphicsOperator",
-            operator_ptr->get_type_name());
-        return vertices;
-    }
-
-    if (std::string_view(graphics_op->get_vertex_type_name()) != "PointVertex") {
-        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Operator vertex type '{}' does not match expected 'PointVertex'",
-            graphics_op->get_vertex_type_name());
-        return vertices;
-    }
-
-    auto vertex_data = graphics_op->get_vertex_data();
-    size_t vertex_count = graphics_op->get_vertex_count();
-
-    if (vertex_data.empty() || vertex_count == 0) {
-        return vertices;
-    }
-
-    size_t expected_size = vertex_count * sizeof(Nodes::GpuSync::PointVertex);
-    if (vertex_data.size() < expected_size) {
-        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Vertex data size mismatch: expected {} bytes, got {}",
-            expected_size, vertex_data.size());
-        return vertices;
-    }
-
-    const auto* vertex_ptr = reinterpret_cast<const Nodes::GpuSync::PointVertex*>(
-        vertex_data.data());
-
-    vertices.assign(vertex_ptr, vertex_ptr + vertex_count);
-
-    return vertices;
-}
-
-std::vector<Nodes::GpuSync::PointVertex>
-NetworkGeometryProcessor::extract_network_vertices(
-    const std::shared_ptr<Nodes::Network::NodeNetwork>& /*network*/)
-{
-    std::vector<Nodes::GpuSync::PointVertex> vertices;
-
-    // Generic fallback: attempt to extract from network metadata
-    // This is a placeholder - specific network types should be handled explicitly
-
-    MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Generic network vertex extraction not yet implemented for this network type. "
-        "Returning empty vertex array.");
-
-    return vertices;
 }
 
 } // namespace MayaFlux::Buffers

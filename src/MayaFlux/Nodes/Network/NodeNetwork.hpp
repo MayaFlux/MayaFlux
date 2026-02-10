@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nodes/Network/Operators/NetworkOperator.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -341,6 +342,11 @@ public:
      * @param channel_id Channel index
      */
     void request_reset_from_channel(uint32_t channel_id);
+
+    virtual NetworkOperator* get_operator() { return nullptr; }
+    virtual const NetworkOperator* get_operator() const { return nullptr; }
+
+    virtual bool has_operator() const { return false; }
 
 protected:
     //-------------------------------------------------------------------------

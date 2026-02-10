@@ -28,6 +28,13 @@ TextureBuffer::TextureBuffer(
     , m_height(height)
     , m_format(format)
 {
+    RenderConfig default_config;
+    default_config.vertex_shader = "texture.vert.spv";
+    default_config.fragment_shader = "texture.frag.spv";
+    default_config.default_texture_binding = "texSampler";
+    default_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
+    set_default_render_config(default_config);
+
     if (initial_pixel_data) {
         size_t pixel_bytes = static_cast<size_t>(width) * height * Portal::Graphics::TextureLoom::get_bytes_per_pixel(format);
         m_pixel_data.resize(pixel_bytes);
@@ -61,15 +68,40 @@ void TextureBuffer::setup_processors(ProcessingToken token)
         "TextureBuffer setup_processors: TextureProcessor will be attached on first registration");
 }
 
-void TextureBuffer::setup_rendering(const RenderConfig& config)
+void TextureBuffer::setup_rendering(const RenderConfig& user_config)
 {
+    if (!user_config.vertex_shader.empty()) {
+        m_render_config.vertex_shader = user_config.vertex_shader;
+    }
+    if (!user_config.fragment_shader.empty()) {
+        m_render_config.fragment_shader = user_config.fragment_shader;
+    }
+    if (!user_config.default_texture_binding.empty()) {
+        m_render_config.default_texture_binding = user_config.default_texture_binding;
+    }
+    if (user_config.topology != Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "TextureBuffer only supports TRIANGLE_STRIP topology. Ignoring provided topology.");
+    } else {
+        if (user_config.topology != m_render_config.topology) {
+            m_render_config.topology = user_config.topology;
+        }
+    }
+    m_render_config.target_window = user_config.target_window;
+
+    if (!user_config.additional_textures.empty()) {
+        for (const auto& [name, texture] : user_config.additional_textures) {
+            m_render_config.additional_textures.emplace_back(name, texture);
+        }
+    }
+
     if (!m_render_processor) {
-        ShaderConfig shader_config { config.vertex_shader };
-        shader_config.bindings[config.default_texture_binding] = ShaderBinding(
+        ShaderConfig shader_config { m_render_config.vertex_shader };
+        shader_config.bindings[m_render_config.default_texture_binding] = ShaderBinding(
             0, 0, vk::DescriptorType::eCombinedImageSampler);
 
         uint32_t binding_index = 1;
-        for (const auto& [name, _] : config.additional_textures) {
+        for (const auto& [name, _] : m_render_config.additional_textures) {
             shader_config.bindings[name] = ShaderBinding(
                 0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
         }
@@ -77,13 +109,13 @@ void TextureBuffer::setup_rendering(const RenderConfig& config)
         m_render_processor = std::make_shared<RenderProcessor>(shader_config);
     }
 
-    m_render_processor->set_fragment_shader(config.fragment_shader);
-    m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(config.topology);
+    m_render_processor->set_fragment_shader(m_render_config.fragment_shader);
+    m_render_processor->set_target_window(m_render_config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+    m_render_processor->set_primitive_topology(m_render_config.topology);
 
-    m_render_processor->bind_texture(config.default_texture_binding, get_texture());
+    m_render_processor->bind_texture(m_render_config.default_texture_binding, get_texture());
 
-    for (const auto& [name, texture] : config.additional_textures) {
+    for (const auto& [name, texture] : m_render_config.additional_textures) {
         m_render_processor->bind_texture(name, texture);
     }
 

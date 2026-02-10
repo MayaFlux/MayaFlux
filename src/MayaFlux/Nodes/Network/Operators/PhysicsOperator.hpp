@@ -54,10 +54,6 @@ public:
     struct CollectionGroup {
         std::shared_ptr<GpuSync::PointCollectionNode> collection;
         std::vector<PhysicsState> physics_state;
-
-        float mass_multiplier;
-        glm::vec3 color_tint;
-        float size_scale;
     };
 
     /**
@@ -78,19 +74,20 @@ public:
         const std::vector<glm::vec3>& colors = {}) override;
 
     /**
-     * @brief Initialize a new physics collection with given positions and colors.
-     * @param positions Particle positions.
-     * @param colors Particle colors (optional).
-     * @param mass_multiplier Multiplier for particle mass.
-     * @param color_tint Color tint for the collection.
-     * @param size_scale Size scale for the collection.
+     * @brief Initialize multiple physics collections
+     * @param collections Vector of PointVertex vectors (one per collection)
      */
-    void initialize_collection(
-        const std::vector<glm::vec3>& positions,
-        const std::vector<glm::vec3>& colors = {},
-        float mass_multiplier = 1.0F,
-        glm::vec3 color_tint = glm::vec3(1.0F),
-        float size_scale = 1.0F);
+    void initialize_collections(
+        const std::vector<std::vector<PointVertex>>& collections);
+
+    /**
+     * @brief Add a single physics collection
+     * @param vertices PointVertex array with position, color, size
+     * @param mass_multiplier Mass multiplier for all particles in this collection
+     */
+    void add_collection(
+        const std::vector<PointVertex>& vertices,
+        float mass_multiplier = 1.0F);
 
     void process(float dt) override;
 
@@ -99,7 +96,7 @@ public:
 
     [[nodiscard]] std::span<const uint8_t> get_vertex_data_for_collection(uint32_t idx) const override;
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const override;
-    [[nodiscard]] const Kakshya::VertexLayout& get_vertex_layout() const override;
+    [[nodiscard]] Kakshya::VertexLayout get_vertex_layout() const override;
     [[nodiscard]] size_t get_vertex_count() const override;
     [[nodiscard]] bool is_vertex_data_dirty() const override;
     void mark_vertex_data_clean() override;

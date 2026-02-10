@@ -4,8 +4,6 @@
 #include "MayaFlux/Nodes/Graphics/TextureNode.hpp"
 #include "NodeTextureProcessor.hpp"
 
-#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
-
 namespace MayaFlux::Buffers {
 
 class RenderProcessor;
@@ -44,16 +42,6 @@ class RenderProcessor;
  */
 class MAYAFLUX_API NodeTextureBuffer : public VKBuffer {
 public:
-    struct RenderConfig {
-        std::shared_ptr<Core::Window> target_window;
-        std::string vertex_shader = "texture.vert.spv";
-        std::string fragment_shader = "texture.frag.spv";
-        std::string default_texture_binding = "texSampler";
-        Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
-
-        // Optional additional texture bindings
-        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures;
-    };
     /**
      * @brief Create texture staging buffer from generative node
      * @param node TextureNode that generates pixels each frame

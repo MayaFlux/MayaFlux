@@ -31,17 +31,6 @@ class RenderProcessor;
  */
 class MAYAFLUX_API TextureBuffer : public VKBuffer {
 public:
-    struct RenderConfig {
-        std::shared_ptr<Core::Window> target_window;
-        std::string vertex_shader = "texture.vert.spv";
-        std::string fragment_shader = "texture.frag.spv";
-        std::string default_texture_binding = "texSampler";
-        Portal::Graphics::PrimitiveTopology topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP;
-
-        // Optional additional texture binding
-        std::vector<std::pair<std::string, std::shared_ptr<Core::VKImage>>> additional_textures;
-    };
-
     /**
      * @brief Create texture buffer with dimensions
      * @param width Texture width in pixels

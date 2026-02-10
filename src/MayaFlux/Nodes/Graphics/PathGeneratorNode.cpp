@@ -101,25 +101,30 @@ PathGeneratorNode::PathGeneratorNode(
         "Created PathGeneratorNode with custom function");
 }
 
-void PathGeneratorNode::add_control_point(const glm::vec3& position)
+void PathGeneratorNode::add_control_point(const LineVertex& vertex)
 {
-    m_control_points.push(position);
+    m_control_points.push(vertex);
     m_geometry_dirty = true;
     m_vertex_data_dirty = true;
 }
 
+void PathGeneratorNode::add_control_point(const glm::vec3& position)
+{
+    add_control_point(LineVertex { .position = position, .color = m_current_color, .thickness = m_current_thickness });
+}
+
 void PathGeneratorNode::generate_curve_segment(
-    const std::vector<glm::vec3>& points,
+    const std::vector<LineVertex>& curve_verts,
     size_t start_idx,
     std::vector<LineVertex>& output)
 {
-    if (start_idx + 3 >= points.size()) {
+    if (start_idx + 3 >= curve_verts.size()) {
         return;
     }
 
     Eigen::MatrixXd segment_controls(3, 4);
     for (Eigen::Index i = 0; i < 4; ++i) {
-        const auto& pt = points[start_idx + i];
+        const auto& pt = curve_verts[start_idx + i].position;
         segment_controls.col(i) << pt.x, pt.y, pt.z;
     }
 
@@ -136,37 +141,60 @@ void PathGeneratorNode::generate_curve_segment(
     }
 
     for (Eigen::Index i = 0; i < interpolated.cols() - 1; ++i) {
+        float t0 = static_cast<float>(i) / static_cast<float>(interpolated.cols() - 1);
+        float t1 = static_cast<float>(i + 1) / static_cast<float>(interpolated.cols() - 1);
+
+        size_t ctrl_idx0 = start_idx + std::min(static_cast<size_t>(t0 * 3), size_t(3));
+        size_t ctrl_idx1 = start_idx + std::min(static_cast<size_t>(t1 * 3), size_t(3));
+
+        glm::vec3 color0 = m_force_uniform_color ? m_current_color : curve_verts[ctrl_idx0].color;
+        glm::vec3 color1 = m_force_uniform_color ? m_current_color : curve_verts[ctrl_idx1].color;
+
+        float thick0 = m_force_uniform_thickness ? m_current_thickness : curve_verts[ctrl_idx0].thickness;
+        float thick1 = m_force_uniform_thickness ? m_current_thickness : curve_verts[ctrl_idx1].thickness;
+
         glm::vec3 p0(interpolated(0, i), interpolated(1, i), interpolated(2, i));
         glm::vec3 p1(interpolated(0, i + 1), interpolated(1, i + 1), interpolated(2, i + 1));
 
-        output.push_back({ p0, m_current_color, m_current_thickness });
-        output.push_back({ p1, m_current_color, m_current_thickness });
+        output.push_back({ p0, color0, thick0 });
+        output.push_back({ p1, color1, thick1 });
     }
 }
 
 void PathGeneratorNode::append_line_segment(
-    const glm::vec3& p0,
-    const glm::vec3& p1,
+    const LineVertex& v0,
+    const LineVertex& v1,
     std::vector<LineVertex>& output)
 {
-    output.push_back({ p0, m_current_color, m_current_thickness });
-    output.push_back({ p1, m_current_color, m_current_thickness });
+    glm::vec3 color0 = m_force_uniform_color ? m_current_color : v0.color;
+    glm::vec3 color1 = m_force_uniform_color ? m_current_color : v1.color;
+
+    float thick0 = m_force_uniform_thickness ? m_current_thickness : v0.thickness;
+    float thick1 = m_force_uniform_thickness ? m_current_thickness : v1.thickness;
+
+    output.push_back({ v0.position, color0, thick0 });
+    output.push_back({ v1.position, color1, thick1 });
 }
 
-void PathGeneratorNode::draw_to(const glm::vec3& position)
+void PathGeneratorNode::draw_to(const LineVertex& vertex)
 {
-    m_draw_window.push_back(position);
+    m_draw_window.push_back(vertex);
 
     if (m_draw_window.size() == 1) {
-        m_draw_vertices.push_back({ position, m_current_color, m_current_thickness });
+        m_draw_vertices.push_back({ vertex });
     } else {
         append_line_segment(
             m_draw_window[m_draw_window.size() - 2],
-            position,
+            vertex,
             m_draw_vertices);
     }
 
     m_vertex_data_dirty = true;
+}
+
+void PathGeneratorNode::draw_to(const glm::vec3& position)
+{
+    draw_to(LineVertex { .position = position, .color = m_current_color, .thickness = m_current_thickness });
 }
 
 void PathGeneratorNode::set_control_points(const std::vector<glm::vec3>& points)
@@ -174,7 +202,22 @@ void PathGeneratorNode::set_control_points(const std::vector<glm::vec3>& points)
     m_control_points.reset();
 
     for (const auto& pt : points) {
-        m_control_points.push(pt);
+        m_control_points.push(LineVertex {
+            .position = pt,
+            .color = m_current_color,
+            .thickness = m_current_thickness });
+    }
+
+    m_vertex_data_dirty = true;
+    m_geometry_dirty = true;
+}
+
+void PathGeneratorNode::set_control_points(const std::vector<LineVertex>& vertices)
+{
+    m_control_points.reset();
+
+    for (const auto& v : vertices) {
+        m_control_points.push(v);
     }
 
     m_vertex_data_dirty = true;
@@ -190,7 +233,38 @@ void PathGeneratorNode::update_control_point(size_t index, const glm::vec3& posi
         return;
     }
 
-    m_control_points.update(index, position);
+    LineVertex v = m_control_points[index];
+    v.position = position;
+    m_control_points.update(index, v);
+
+    auto range = calculate_affected_segment_range(
+        index,
+        m_control_points.size(),
+        m_mode,
+        m_samples_per_segment);
+
+    if (m_dirty_segment_start == INVALID_SEGMENT) {
+        m_dirty_segment_start = range.start_control_idx;
+        m_dirty_segment_end = range.end_control_idx;
+    } else {
+        m_dirty_segment_start = std::min(m_dirty_segment_start, range.start_control_idx);
+        m_dirty_segment_end = std::max(m_dirty_segment_end, range.end_control_idx);
+    }
+
+    m_geometry_dirty = true;
+    m_vertex_data_dirty = true;
+}
+
+void PathGeneratorNode::update_control_point(size_t index, const LineVertex& vertex)
+{
+    if (index >= m_control_points.size()) {
+        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "Control point index {} out of range (count: {})",
+            index, m_control_points.size());
+        return;
+    }
+
+    m_control_points.update(index, vertex);
 
     auto range = calculate_affected_segment_range(
         index,
@@ -219,13 +293,18 @@ glm::vec3 PathGeneratorNode::get_control_point(size_t index) const
         return glm::vec3(0.0F);
     }
 
-    return m_control_points[index];
+    return m_control_points[index].position;
 }
 
 std::vector<glm::vec3> PathGeneratorNode::get_control_points() const
 {
     auto view = m_control_points.linearized_view();
-    return { view.begin(), view.end() };
+    std::vector<glm::vec3> positions;
+    positions.reserve(view.size());
+    for (const auto& v : view) {
+        positions.push_back(v.position);
+    }
+    return positions;
 }
 
 void PathGeneratorNode::clear_path()
@@ -242,30 +321,46 @@ void PathGeneratorNode::clear_path()
     m_dirty_segment_end = INVALID_SEGMENT;
 }
 
-void PathGeneratorNode::set_path_color(const glm::vec3& color)
+void PathGeneratorNode::set_path_color(const glm::vec3& color, bool force_uniform)
 {
     m_current_color = color;
+    m_force_uniform_color = force_uniform;
     m_vertex_data_dirty = true;
     m_geometry_dirty = true;
 
-    for (auto& v : m_completed_draws)
-        v.color = color;
+    if (m_force_uniform_color) {
+        for (auto& v : m_completed_draws)
+            v.color = color;
 
-    for (auto& v : m_draw_vertices)
-        v.color = color;
+        for (auto& v : m_draw_vertices)
+            v.color = color;
+    }
 }
 
-void PathGeneratorNode::set_path_thickness(float thickness)
+void PathGeneratorNode::force_uniform_color(bool should_force)
+{
+    set_path_color(m_current_color, should_force);
+}
+
+void PathGeneratorNode::set_path_thickness(float thickness, bool force_uniform)
 {
     m_current_thickness = thickness;
+    m_force_uniform_thickness = force_uniform;
     m_vertex_data_dirty = true;
     m_geometry_dirty = true;
 
-    for (auto& v : m_completed_draws)
-        v.thickness = thickness;
+    if (m_force_uniform_thickness) {
+        for (auto& v : m_completed_draws)
+            v.thickness = thickness;
 
-    for (auto& v : m_draw_vertices)
-        v.thickness = thickness;
+        for (auto& v : m_draw_vertices)
+            v.thickness = thickness;
+    }
+}
+
+void PathGeneratorNode::force_uniform_thickness(bool should_force)
+{
+    set_path_thickness(m_current_thickness, should_force);
 }
 
 void PathGeneratorNode::set_interpolation_mode(Kinesis::InterpolationMode mode)
@@ -329,11 +424,14 @@ void PathGeneratorNode::generate_direct_path()
     auto view = m_control_points.linearized_view();
     m_vertices.reserve(view.size());
 
-    for (const auto& pt : view) {
+    for (const auto& v : view) {
+        glm::vec3 color = m_force_uniform_color ? m_current_color : v.color;
+        float thickness = m_force_uniform_thickness ? m_current_thickness : v.thickness;
+
         m_vertices.emplace_back(LineVertex {
-            .position = pt,
-            .color = m_current_color,
-            .thickness = m_current_thickness });
+            .position = v.position,
+            .color = color,
+            .thickness = thickness });
     }
 }
 
@@ -347,10 +445,15 @@ void PathGeneratorNode::generate_custom_path()
 
     for (Eigen::Index i = 0; i < total_samples; ++i) {
         double t = static_cast<double>(i) / static_cast<double>(total_samples - 1);
+
+        auto ctrl_idx = std::min<size_t>(static_cast<size_t>(t * float(num_points - 1)), num_points - 1);
+        glm::vec3 color = m_force_uniform_color ? m_current_color : view[ctrl_idx].color;
+        float thickness = m_force_uniform_thickness ? m_current_thickness : view[ctrl_idx].thickness;
+
         m_vertices[i] = LineVertex {
             .position = m_custom_func(view, t),
-            .color = m_current_color,
-            .thickness = m_current_thickness
+            .color = color,
+            .thickness = thickness
         };
     }
 }
@@ -358,7 +461,7 @@ void PathGeneratorNode::generate_custom_path()
 void PathGeneratorNode::generate_interpolated_path()
 {
     auto control_view = m_control_points.linearized_view();
-    std::vector<glm::vec3> control_vec(control_view.begin(), control_view.end());
+    std::vector<LineVertex> control_vec(control_view.begin(), control_view.end());
 
     for (size_t i = 0; i + 3 < control_vec.size(); ++i) {
         generate_curve_segment(control_vec, i, m_vertices);
@@ -395,24 +498,24 @@ void PathGeneratorNode::regenerate_segment_range(size_t start_ctrl_idx, size_t e
         return;
     }
 
-    std::vector<glm::vec3> segment_points;
+    std::vector<LineVertex> segment_verts;
     for (size_t i = start_ctrl_idx; i <= end_ctrl_idx; ++i) {
-        segment_points.push_back(view[i]);
+        segment_verts.push_back(view[i]);
     }
 
     size_t start_vertex_idx = start_ctrl_idx * m_samples_per_segment * 2;
 
     std::vector<LineVertex> new_segment;
 
-    for (size_t i = 0; i + 3 < segment_points.size(); ++i) {
-        generate_curve_segment(segment_points, i, new_segment);
+    for (size_t i = 0; i + 3 < segment_verts.size(); ++i) {
+        generate_curve_segment(segment_verts, i, new_segment);
     }
 
     if (start_vertex_idx + new_segment.size() > m_vertices.size()) {
         m_vertices.resize(start_vertex_idx + new_segment.size());
     }
 
-    std::ranges::copy(new_segment, m_vertices.begin() + start_vertex_idx);
+    std::ranges::copy(new_segment, m_vertices.begin() + (long)start_vertex_idx);
 }
 
 void PathGeneratorNode::compute_frame()

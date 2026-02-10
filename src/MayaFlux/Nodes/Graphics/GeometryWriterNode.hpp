@@ -3,6 +3,8 @@
 #include "GpuSync.hpp"
 #include "VertexSpec.hpp"
 
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+
 namespace MayaFlux::Nodes::GpuSync {
 
 /**
@@ -335,6 +337,16 @@ public:
      * @param value The current sample value
      */
     void update_context(double value) override;
+
+    /**
+     * @brief Get primitive topology for rendering
+     *
+     * Default is POINT_LIST, but operators can override for lines/triangles.
+     */
+    [[nodiscard]] virtual Portal::Graphics::PrimitiveTopology get_primitive_topology() const
+    {
+        return Portal::Graphics::PrimitiveTopology::POINT_LIST;
+    }
 
 protected:
     GeometryContext m_context { 0.0, {}, 0, 0 };

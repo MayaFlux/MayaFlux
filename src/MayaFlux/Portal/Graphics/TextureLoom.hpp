@@ -6,7 +6,6 @@
 
 namespace MayaFlux::Core {
 class VulkanBackend;
-class VKImage;
 class BackendResourceManager;
 }
 

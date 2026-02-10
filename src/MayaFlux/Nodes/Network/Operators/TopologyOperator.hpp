@@ -6,14 +6,6 @@ namespace MayaFlux::Nodes::Network {
 
 class MAYAFLUX_API TopologyOperator : public GraphicsOperator {
 public:
-    struct TopologyCollection {
-        std::shared_ptr<GpuSync::TopologyGeneratorNode> generator;
-        std::vector<glm::vec3> input_positions;
-        Kinesis::ProximityMode mode;
-        glm::vec3 line_color;
-        float line_thickness;
-    };
-
     explicit TopologyOperator(
         Kinesis::ProximityMode mode = Kinesis::ProximityMode::K_NEAREST);
 
@@ -25,27 +17,19 @@ public:
      * @brief Initialize multiple topologies with given positions and properties.
      * @param topologies Vector of position vectors, one per topology.
      * @param mode Proximity mode for all topologies.
-     * @param line_colors Optional vector of line colors (one per topology, default white).
-     * @param line_thicknesses Optional vector of line thicknesses (one per topology, default 2.0).
      */
     void initialize_topologies(
-        const std::vector<std::vector<glm::vec3>>& topologies,
-        Kinesis::ProximityMode mode,
-        const std::vector<glm::vec3>& line_colors = {},
-        const std::vector<float>& line_thicknesses = {});
+        const std::vector<std::vector<LineVertex>>& topologies,
+        Kinesis::ProximityMode mode);
 
     /**
-     * @brief Initialize multiple topologies with given positions and properties.
-     * @param topologies Vector of position vectors, one per topology.
-     * @param mode Proximity mode for all topologies.
-     * @param line_colors Optional vector of line colors (one per topology, default white).
-     * @param line_thicknesses Optional vector of line thicknesses (one per topology, default 2.0).
+     * @brief Add a single topology with full per-vertex control.
+     * @param vertices Vector of LineVertex defining the topology's points and attributes.
+     * @param mode Proximity mode for this topology.
      */
     void add_topology(
-        const std::vector<glm::vec3>& positions,
-        Kinesis::ProximityMode mode,
-        glm::vec3 line_color = glm::vec3(1.0F),
-        float line_thickness = 2.0F);
+        const std::vector<LineVertex>& vertices,
+        Kinesis::ProximityMode mode);
 
     void process(float dt) override;
 
@@ -53,7 +37,7 @@ public:
     [[nodiscard]] std::vector<glm::vec3> extract_colors() const override;
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const override;
     [[nodiscard]] std::span<const uint8_t> get_vertex_data_for_collection(uint32_t idx) const override;
-    [[nodiscard]] const Kakshya::VertexLayout& get_vertex_layout() const override;
+    [[nodiscard]] Kakshya::VertexLayout get_vertex_layout() const override;
     [[nodiscard]] size_t get_vertex_count() const override;
     [[nodiscard]] bool is_vertex_data_dirty() const override;
     void mark_vertex_data_clean() override;
@@ -93,7 +77,7 @@ protected:
     void* get_data_at(size_t global_index) override;
 
 private:
-    std::vector<TopologyCollection> m_topologies;
+    std::vector<std::shared_ptr<GpuSync::TopologyGeneratorNode>> m_topologies;
 
     mutable std::vector<uint8_t> m_vertex_data_aggregate;
 

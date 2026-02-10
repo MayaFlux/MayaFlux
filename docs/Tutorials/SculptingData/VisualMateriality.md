@@ -152,7 +152,7 @@ void RenderProcessor::execute_shader(VKBuffer* buffer) {
 **RenderConfig** lets you customize:
 
 ```cpp
-GeometryBuffer::RenderConfig {
+Portal::Graphics::RenderConfig {
     .target_window = window,
     .vertex_shader = "point.vert.spv",     // Default: point rendering
     .fragment_shader = "point.frag.spv",   // Default: flat color
@@ -1114,7 +1114,7 @@ Points accumulate until cleared. Trail effects, particle emissions, growing form
 
 ```cpp
 MayaFlux::schedule_metro(0.016, [points]() {
-    std::vector<Nodes::GpuSync::PointVertex> new_points;
+    std::vector<Nodes::PointVertex> new_points;
 
     // Generate entirely new point set
     for (int i = 0; i < 100; i++) {
