@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
 
-namespace MayaFlux::Nodes::GpuSync {
+namespace MayaFlux::Nodes {
 
 struct PointVertex {
     glm::vec3 position;

@@ -21,7 +21,7 @@ void GraphicsOperator::apply_one_to_one(
             if (!val)
                 continue;
 
-            auto* point = static_cast<GpuSync::PointVertex*>(get_data_at(i));
+            auto* point = static_cast<PointVertex*>(get_data_at(i));
             if (point) {
                 float normalized = glm::clamp(static_cast<float>(*val), 0.0F, 1.0F);
                 point->color = glm::vec3(normalized, 0.5F, 1.0F - normalized);
@@ -33,7 +33,7 @@ void GraphicsOperator::apply_one_to_one(
             if (!val)
                 continue;
 
-            auto* point = static_cast<GpuSync::PointVertex*>(get_data_at(i));
+            auto* point = static_cast<PointVertex*>(get_data_at(i));
             if (point) {
                 point->size = glm::clamp(static_cast<float>(*val) * 10.0F, 1.0F, 50.0F);
             }

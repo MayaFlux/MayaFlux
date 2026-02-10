@@ -27,7 +27,7 @@ public:
      * @param mode Interpolation mode for all paths.
      */
     void initialize_paths(
-        const std::vector<std::vector<GpuSync::LineVertex>>& paths,
+        const std::vector<std::vector<LineVertex>>& paths,
         Kinesis::InterpolationMode mode);
 
     /**
@@ -36,7 +36,7 @@ public:
      * @param mode Interpolation mode for the path.
      */
     void add_path(
-        const std::vector<GpuSync::LineVertex>& control_vertices,
+        const std::vector<LineVertex>& control_vertices,
         Kinesis::InterpolationMode mode);
 
     void process(float dt) override;

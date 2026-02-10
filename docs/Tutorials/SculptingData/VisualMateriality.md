@@ -1114,7 +1114,7 @@ Points accumulate until cleared. Trail effects, particle emissions, growing form
 
 ```cpp
 MayaFlux::schedule_metro(0.016, [points]() {
-    std::vector<Nodes::GpuSync::PointVertex> new_points;
+    std::vector<Nodes::PointVertex> new_points;
 
     // Generate entirely new point set
     for (int i = 0; i < 100; i++) {

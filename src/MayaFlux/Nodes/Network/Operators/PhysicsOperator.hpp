@@ -82,7 +82,7 @@ public:
      * @param collections Vector of PointVertex vectors (one per collection)
      */
     void initialize_collections(
-        const std::vector<std::vector<GpuSync::PointVertex>>& collections);
+        const std::vector<std::vector<PointVertex>>& collections);
 
     /**
      * @brief Add a single physics collection
@@ -90,7 +90,7 @@ public:
      * @param mass_multiplier Mass multiplier for all particles in this collection
      */
     void add_collection(
-        const std::vector<GpuSync::PointVertex>& vertices,
+        const std::vector<PointVertex>& vertices,
         float mass_multiplier = 1.0F);
 
     void process(float dt) override;

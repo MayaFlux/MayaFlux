@@ -21,13 +21,13 @@ void PhysicsOperator::initialize(
     const std::vector<glm::vec3>& positions,
     const std::vector<glm::vec3>& colors)
 {
-    std::vector<GpuSync::PointVertex> vertices;
+    std::vector<PointVertex> vertices;
     vertices.reserve(positions.size());
 
     glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
     for (size_t i = 0; i < positions.size(); ++i) {
         glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
-        vertices.push_back(GpuSync::PointVertex {
+        vertices.push_back(PointVertex {
             .position = positions[i],
             .color = color,
             .size = m_point_size });
@@ -45,7 +45,7 @@ void PhysicsOperator::initialize(
 //-----------------------------------------------------------------------------
 
 void PhysicsOperator::initialize_collections(
-    const std::vector<std::vector<GpuSync::PointVertex>>& collections)
+    const std::vector<std::vector<PointVertex>>& collections)
 {
     for (const auto& collection : collections) {
         add_collection(collection, 1.0F);
@@ -57,7 +57,7 @@ void PhysicsOperator::initialize_collections(
 }
 
 void PhysicsOperator::add_collection(
-    const std::vector<GpuSync::PointVertex>& vertices,
+    const std::vector<PointVertex>& vertices,
     float mass_multiplier)
 {
     if (vertices.empty()) {

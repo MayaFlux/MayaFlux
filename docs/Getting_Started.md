@@ -328,7 +328,7 @@ void compose() {
         float y = std::sin(angle) * radius * (16.0f / 9.0f);
         float brightness = 1.0f - (radius * 0.7f);
 
-        points->add_point(Nodes::GpuSync::PointVertex {
+        points->add_point(Nodes::PointVertex {
             .position = glm::vec3(x, y, 0.0f),
             .color = glm::vec3(brightness, brightness * 0.8f, 1.0f),
             .size = 8.0f + radius * 4.0f });

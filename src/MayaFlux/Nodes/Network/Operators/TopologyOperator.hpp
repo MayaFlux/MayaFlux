@@ -27,7 +27,7 @@ public:
      * @param mode Proximity mode for all topologies.
      */
     void initialize_topologies(
-        const std::vector<std::vector<GpuSync::LineVertex>>& topologies,
+        const std::vector<std::vector<LineVertex>>& topologies,
         Kinesis::ProximityMode mode);
 
     /**
@@ -36,7 +36,7 @@ public:
      * @param mode Proximity mode for this topology.
      */
     void add_topology(
-        const std::vector<GpuSync::LineVertex>& vertices,
+        const std::vector<LineVertex>& vertices,
         Kinesis::ProximityMode mode);
 
     void process(float dt) override;

@@ -28,13 +28,13 @@ void TopologyOperator::initialize(
         return;
     }
 
-    std::vector<GpuSync::LineVertex> vertices;
+    std::vector<LineVertex> vertices;
     vertices.reserve(positions.size());
 
     glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
     for (size_t i = 0; i < positions.size(); ++i) {
         glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
-        vertices.push_back(GpuSync::LineVertex {
+        vertices.push_back(LineVertex {
             .position = positions[i],
             .color = color,
             .thickness = m_default_thickness });
@@ -52,7 +52,7 @@ void TopologyOperator::initialize(
 //-----------------------------------------------------------------------------
 
 void TopologyOperator::initialize_topologies(
-    const std::vector<std::vector<GpuSync::LineVertex>>& topologies,
+    const std::vector<std::vector<LineVertex>>& topologies,
     Kinesis::ProximityMode mode)
 {
     for (const auto& topo : topologies) {
@@ -65,7 +65,7 @@ void TopologyOperator::initialize_topologies(
 }
 
 void TopologyOperator::add_topology(
-    const std::vector<GpuSync::LineVertex>& vertices,
+    const std::vector<LineVertex>& vertices,
     Kinesis::ProximityMode mode)
 {
     if (vertices.empty()) {

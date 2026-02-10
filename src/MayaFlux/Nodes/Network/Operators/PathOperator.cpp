@@ -32,13 +32,13 @@ void PathOperator::initialize(
         return;
     }
 
-    std::vector<GpuSync::LineVertex> vertices;
+    std::vector<LineVertex> vertices;
     vertices.reserve(positions.size());
 
     glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
     for (size_t i = 0; i < positions.size(); ++i) {
         glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
-        vertices.push_back(GpuSync::LineVertex {
+        vertices.push_back(LineVertex {
             .position = positions[i],
             .color = color,
             .thickness = m_default_thickness });
@@ -56,7 +56,7 @@ void PathOperator::initialize(
 //-----------------------------------------------------------------------------
 
 void PathOperator::initialize_paths(
-    const std::vector<std::vector<GpuSync::LineVertex>>& paths,
+    const std::vector<std::vector<LineVertex>>& paths,
     Kinesis::InterpolationMode mode)
 {
     for (const auto& path : paths) {
@@ -69,7 +69,7 @@ void PathOperator::initialize_paths(
 }
 
 void PathOperator::add_path(
-    const std::vector<GpuSync::LineVertex>& control_vertices,
+    const std::vector<LineVertex>& control_vertices,
     Kinesis::InterpolationMode mode)
 {
     if (control_vertices.empty()) {
@@ -294,7 +294,7 @@ void* PathOperator::get_data_at(size_t global_index)
         const auto& vertices = group.generator->get_all_vertices();
         if (global_index < offset + vertices.size()) {
             size_t local_index = global_index - offset;
-            return const_cast<GpuSync::LineVertex*>(&vertices[local_index]);
+            return const_cast<LineVertex*>(&vertices[local_index]);
         }
         offset += vertices.size();
     }
