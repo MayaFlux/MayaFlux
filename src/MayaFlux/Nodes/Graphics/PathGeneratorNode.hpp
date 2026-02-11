@@ -40,9 +40,9 @@ namespace MayaFlux::Nodes::GpuSync {
  *     100   // Store up to 100 control points
  * );
  *
- * path->add_control_point(glm::vec3(0.0f, 0.0f, 0.0f));
- * path->add_control_point(glm::vec3(0.5f, 0.5f, 0.0f));
- * path->add_control_point(glm::vec3(1.0f, 0.0f, 0.0f));
+ * path->add_control_point({glm::vec3(0.0f, 0.0f, 0.0f)});
+ * path->add_control_point({glm::vec3(0.5f, 0.5f, 0.0f)});
+ * path->add_control_point({glm::vec3(1.0f, 0.0f, 0.0f)});
  * // Entire curve regenerates through all control points
  *
  * auto buffer = std::make_shared<GeometryBuffer>(path);

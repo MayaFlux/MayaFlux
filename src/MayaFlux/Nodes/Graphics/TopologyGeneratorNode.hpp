@@ -32,9 +32,9 @@ namespace MayaFlux::Nodes::GpuSync {
  *     true  // auto_connect
  * );
  *
- * topo->add_point(glm::vec3(0.0f, 0.0f, 0.0f));
- * topo->add_point(glm::vec3(1.0f, 0.0f, 0.0f));
- * topo->add_point(glm::vec3(0.5f, 1.0f, 0.0f));
+ * topo->add_point({glm::vec3(0.0f, 0.0f, 0.0f)});
+ * topo->add_point({glm::vec3(1.0f, 0.0f, 0.0f)});
+ * topo->add_point({glm::vec3(0.5f, 1.0f, 0.0f)});
  * // Delaunay triangulation automatically computed
  *
  * auto buffer = std::make_shared<GeometryBuffer>(topo);
