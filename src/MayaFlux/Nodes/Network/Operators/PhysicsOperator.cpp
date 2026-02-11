@@ -17,27 +17,19 @@ PhysicsOperator::PhysicsOperator()
 // GraphicsOperator Interface (Basic Initialization)
 //-----------------------------------------------------------------------------
 
-void PhysicsOperator::initialize(
-    const std::vector<glm::vec3>& positions,
-    const std::vector<glm::vec3>& colors)
+void PhysicsOperator::initialize(const std::vector<PointVertex>& vertices)
 {
-    std::vector<PointVertex> vertices;
-    vertices.reserve(positions.size());
-
-    glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
-    for (size_t i = 0; i < positions.size(); ++i) {
-        glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
-        vertices.push_back(PointVertex {
-            .position = positions[i],
-            .color = color,
-            .size = m_point_size });
+    if (vertices.empty()) {
+        MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
+            "Cannot initialize PhysicsOperator with zero vertices");
+        return;
     }
 
+    m_collections.clear();
     add_collection(vertices);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "PhysicsOperator initialized with {} points in 1 collection",
-        positions.size());
+        "PhysicsOperator initialized with {} points", vertices.size());
 }
 
 //-----------------------------------------------------------------------------
@@ -210,32 +202,18 @@ std::optional<double> PhysicsOperator::query_state(std::string_view query) const
 // GraphicsOperator Interface (Data Extraction)
 //-----------------------------------------------------------------------------
 
-std::vector<glm::vec3> PhysicsOperator::extract_positions() const
+std::vector<PointVertex> PhysicsOperator::extract_vertices() const
 {
-    std::vector<glm::vec3> positions;
+    std::vector<PointVertex> positions;
 
     for (const auto& group : m_collections) {
         const auto& points = group.collection->get_points();
         for (const auto& pt : points) {
-            positions.push_back(pt.position);
+            positions.push_back(pt);
         }
     }
 
     return positions;
-}
-
-std::vector<glm::vec3> PhysicsOperator::extract_colors() const
-{
-    std::vector<glm::vec3> colors;
-
-    for (const auto& group : m_collections) {
-        const auto& points = group.collection->get_points();
-        for (const auto& pt : points) {
-            colors.push_back(pt.color);
-        }
-    }
-
-    return colors;
 }
 
 std::span<const uint8_t> PhysicsOperator::get_vertex_data_for_collection(uint32_t idx) const

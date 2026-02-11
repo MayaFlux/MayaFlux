@@ -9,9 +9,10 @@ public:
     explicit TopologyOperator(
         Kinesis::ProximityMode mode = Kinesis::ProximityMode::K_NEAREST);
 
-    void initialize(
-        const std::vector<glm::vec3>& positions,
-        const std::vector<glm::vec3>& colors = {}) override;
+    /**
+     * @brief Initialize a single topology with single set of vertices
+     */
+    void initialize(const std::vector<LineVertex>& vertices);
 
     /**
      * @brief Initialize multiple topologies with given positions and properties.
@@ -33,14 +34,18 @@ public:
 
     void process(float dt) override;
 
-    [[nodiscard]] std::vector<glm::vec3> extract_positions() const override;
-    [[nodiscard]] std::vector<glm::vec3> extract_colors() const override;
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const override;
     [[nodiscard]] std::span<const uint8_t> get_vertex_data_for_collection(uint32_t idx) const override;
     [[nodiscard]] Kakshya::VertexLayout get_vertex_layout() const override;
     [[nodiscard]] size_t get_vertex_count() const override;
     [[nodiscard]] bool is_vertex_data_dirty() const override;
     void mark_vertex_data_clean() override;
+
+    /**
+     * @brief Extract current vertex data as LineVertex array
+     * @return Vector of LineVertex with current positions, colors, thicknesses
+     */
+    [[nodiscard]] std::vector<LineVertex> extract_vertices() const;
 
     void set_parameter(std::string_view param, double value) override;
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;

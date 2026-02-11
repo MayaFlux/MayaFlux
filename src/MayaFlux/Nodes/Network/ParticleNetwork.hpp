@@ -200,8 +200,8 @@ private:
     float m_timestep { 0.016F };
 
     void ensure_initialized();
-    std::vector<glm::vec3> generate_initial_positions();
-    glm::vec3 generate_single_position(InitializationMode mode, size_t index, size_t total);
+    std::vector<PointVertex> generate_initial_vertices();
+    PointVertex generate_single_vertex(InitializationMode mode, size_t index, size_t total);
 
     //-------------------------------------------------------------------------
     // Parameter Mapping Helpers
