@@ -1,5 +1,6 @@
 #include "ModalNetwork.hpp"
 
+#include "MayaFlux/Nodes/Filters/Filter.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
 #include "MayaFlux/API/Config.hpp"
@@ -75,7 +76,6 @@ std::vector<double> ModalNetwork::generate_spectrum_ratios(Spectrum spectrum,
         break;
 
     case Spectrum::CUSTOM:
-        // Should not reach here - custom ratios provided directly
         for (size_t i = 0; i < count; ++i) {
             ratios.push_back(static_cast<double>(i + 1));
         }
@@ -104,8 +104,7 @@ void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
 
         mode.decay_time = base_decay / ratios[i];
 
-        // Initial amplitude decreases with mode number (1/n falloff)
-        mode.initial_amplitude = 1.0 / (i + 1);
+        mode.initial_amplitude = 1.0 / double(i + 1);
         mode.amplitude = 0.0;
 
         mode.oscillator = std::make_shared<Generator::Sine>(static_cast<float>(mode.current_frequency));
@@ -128,6 +127,171 @@ void ModalNetwork::reset()
 }
 
 //-----------------------------------------------------------------------------
+// Exciter System
+//-----------------------------------------------------------------------------
+
+void ModalNetwork::set_exciter_duration(double seconds)
+{
+    m_exciter_duration = std::max(0.001, seconds);
+}
+
+void ModalNetwork::set_exciter_sample(const std::vector<double>& sample)
+{
+    m_exciter_sample = sample;
+}
+
+void ModalNetwork::initialize_exciter(double /*strength*/)
+{
+    m_exciter_active = true;
+    m_exciter_sample_position = 0;
+
+    switch (m_exciter_type) {
+    case ExciterType::IMPULSE:
+        m_exciter_samples_remaining = 1;
+        break;
+
+    case ExciterType::NOISE_BURST:
+    case ExciterType::FILTERED_NOISE:
+        m_exciter_samples_remaining = static_cast<size_t>(
+            m_exciter_duration * Config::get_sample_rate());
+        break;
+
+    case ExciterType::SAMPLE:
+        m_exciter_samples_remaining = m_exciter_sample.size();
+        break;
+
+    case ExciterType::CONTINUOUS:
+        m_exciter_samples_remaining = std::numeric_limits<size_t>::max();
+        break;
+    }
+}
+
+double ModalNetwork::generate_exciter_sample()
+{
+    if (!m_exciter_active || m_exciter_samples_remaining == 0) {
+        m_exciter_active = false;
+        return 0.0;
+    }
+
+    --m_exciter_samples_remaining;
+    double sample = 0.0;
+
+    switch (m_exciter_type) {
+    case ExciterType::IMPULSE:
+        sample = 1.0;
+        break;
+
+    case ExciterType::NOISE_BURST:
+        sample = m_random_generator(-1.0, 1.0);
+        break;
+
+    case ExciterType::FILTERED_NOISE: {
+        double noise = m_random_generator(-1.0, 1.0);
+        if (m_exciter_filter) {
+            sample = m_exciter_filter->process_sample(noise);
+        } else {
+            sample = noise;
+        }
+        break;
+    }
+
+    case ExciterType::SAMPLE:
+        if (m_exciter_sample_position < m_exciter_sample.size()) {
+            sample = m_exciter_sample[m_exciter_sample_position++];
+        }
+        break;
+
+    case ExciterType::CONTINUOUS:
+        if (m_exciter_node) {
+            sample = m_exciter_node->process_sample(0.0);
+        }
+        break;
+    }
+
+    return sample;
+}
+
+//-----------------------------------------------------------------------------
+// Spatial Excitation
+//-----------------------------------------------------------------------------
+
+void ModalNetwork::excite_at_position(double position, double strength)
+{
+    position = std::clamp(position, 0.0, 1.0);
+
+    if (m_spatial_distribution.empty()) {
+        compute_spatial_distribution();
+    }
+
+    initialize_exciter(strength);
+
+    for (size_t i = 0; i < m_modes.size(); ++i) {
+        double spatial_amp = std::sin((i + 1) * M_PI * position);
+        spatial_amp = std::abs(spatial_amp);
+
+        m_modes[i].amplitude = m_modes[i].initial_amplitude * strength * spatial_amp;
+    }
+}
+
+void ModalNetwork::set_spatial_distribution(const std::vector<double>& distribution)
+{
+    if (distribution.size() != m_modes.size()) {
+        return;
+    }
+    m_spatial_distribution = distribution;
+}
+
+void ModalNetwork::compute_spatial_distribution()
+{
+    m_spatial_distribution.clear();
+    m_spatial_distribution.reserve(m_modes.size());
+
+    for (size_t i = 0; i < m_modes.size(); ++i) {
+        m_spatial_distribution.push_back(1.0);
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Modal Coupling
+//-----------------------------------------------------------------------------
+
+void ModalNetwork::set_mode_coupling(size_t mode_a, size_t mode_b, double strength)
+{
+    if (mode_a >= m_modes.size() || mode_b >= m_modes.size() || mode_a == mode_b) {
+        return;
+    }
+
+    strength = std::clamp(strength, 0.0, 1.0);
+
+    remove_mode_coupling(mode_a, mode_b);
+
+    m_couplings.push_back({ mode_a, mode_b, strength });
+}
+
+void ModalNetwork::remove_mode_coupling(size_t mode_a, size_t mode_b)
+{
+    m_couplings.erase(
+        std::remove_if(m_couplings.begin(), m_couplings.end(),
+            [mode_a, mode_b](const ModeCoupling& c) {
+                return (c.mode_a == mode_a && c.mode_b == mode_b) || (c.mode_a == mode_b && c.mode_b == mode_a);
+            }),
+        m_couplings.end());
+}
+
+void ModalNetwork::compute_mode_coupling()
+{
+    for (const auto& coupling : m_couplings) {
+        auto& mode_a = m_modes[coupling.mode_a];
+        auto& mode_b = m_modes[coupling.mode_b];
+
+        double energy_diff = (mode_a.amplitude - mode_b.amplitude) * coupling.strength;
+
+        mode_a.amplitude -= energy_diff * 0.5;
+        mode_b.amplitude += energy_diff * 0.5;
+    }
+}
+
+//-----------------------------------------------------------------------------
 // Processing
 //-----------------------------------------------------------------------------
 
@@ -146,7 +310,12 @@ void ModalNetwork::process_batch(unsigned int num_samples)
     update_mapped_parameters();
     m_last_audio_buffer.reserve(num_samples);
 
-    for (unsigned int i = 0; i < num_samples; ++i) {
+    for (size_t i = 0; i < num_samples; ++i) {
+        double exciter_signal = generate_exciter_sample();
+
+        if (m_coupling_enabled && !m_couplings.empty()) {
+            compute_mode_coupling();
+        }
         double sum = 0.0;
 
         for (auto& mode : m_modes) {
@@ -267,6 +436,8 @@ void ModalNetwork::unmap_parameter(const std::string& param_name)
 
 void ModalNetwork::excite(double strength)
 {
+    initialize_exciter(strength);
+
     for (auto& mode : m_modes) {
         mode.amplitude = mode.initial_amplitude * strength;
     }
@@ -328,8 +499,28 @@ ModalNetwork::get_metadata() const
     for (const auto& mode : m_modes) {
         avg_amplitude += mode.amplitude;
     }
-    avg_amplitude /= m_modes.size();
+    avg_amplitude /= (double)m_modes.size();
     metadata["avg_amplitude"] = std::to_string(avg_amplitude);
+
+    metadata["exciter_type"] = [this]() {
+        switch (m_exciter_type) {
+        case ExciterType::IMPULSE:
+            return "IMPULSE";
+        case ExciterType::NOISE_BURST:
+            return "NOISE_BURST";
+        case ExciterType::FILTERED_NOISE:
+            return "FILTERED_NOISE";
+        case ExciterType::SAMPLE:
+            return "SAMPLE";
+        case ExciterType::CONTINUOUS:
+            return "CONTINUOUS";
+        default:
+            return "UNKNOWN";
+        }
+    }();
+
+    metadata["coupling_enabled"] = m_coupling_enabled ? "true" : "false";
+    metadata["coupling_count"] = std::to_string(m_couplings.size());
 
     return metadata;
 }
@@ -339,7 +530,7 @@ ModalNetwork::get_metadata() const
     if (m_modes.size() > index) {
         return m_modes[index].oscillator->get_last_output();
     }
-    return std::nullopt; // Default: not supported
+    return std::nullopt;
 }
 
 } // namespace MayaFlux::Nodes::Network
