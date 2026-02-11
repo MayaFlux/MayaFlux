@@ -30,6 +30,7 @@ namespace Nodes {
         class NodeNetwork;
         class ModalNetwork;
         class ParticleNetwork;
+        class PointCloudNetwork;
     }
     namespace Input {
         class InputNode;
@@ -84,9 +85,10 @@ namespace Core {
     N(TopologyGeneratorNode, MayaFlux::Nodes::GpuSync::TopologyGeneratorNode) \
     N(ProceduralTextureNode, MayaFlux::Nodes::GpuSync::ProceduralTextureNode)
 
-#define ALL_NODE_NETWORK_REGISTRATIONS                      \
-    W(ModalNetwork, MayaFlux::Nodes::Network::ModalNetwork) \
-    W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)
+#define ALL_NODE_NETWORK_REGISTRATIONS                            \
+    W(ModalNetwork, MayaFlux::Nodes::Network::ModalNetwork)       \
+    W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork) \
+    W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork)
 
 #define ALL_BUFFER_REGISTRATION                                      \
     B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)                   \
