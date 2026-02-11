@@ -22,33 +22,19 @@ PathOperator::PathOperator(
 // GraphicsOperator Interface (Simple Initialization)
 //-----------------------------------------------------------------------------
 
-void PathOperator::initialize(
-    const std::vector<glm::vec3>& positions,
-    const std::vector<glm::vec3>& colors)
+void PathOperator::initialize(const std::vector<LineVertex>& vertices)
 {
-    if (positions.empty()) {
+    if (vertices.empty()) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Cannot initialize PathOperator with zero positions");
+            "Cannot initialize PathOperator with zero vertices");
         return;
     }
 
-    std::vector<LineVertex> vertices;
-    vertices.reserve(positions.size());
-
-    glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
-    for (size_t i = 0; i < positions.size(); ++i) {
-        glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
-        vertices.push_back(LineVertex {
-            .position = positions[i],
-            .color = color,
-            .thickness = m_default_thickness });
-    }
-
+    m_paths.clear();
     add_path(vertices, m_default_mode);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "PathOperator initialized with {} control points in 1 path",
-        positions.size());
+        "PathOperator initialized with {} control vertices", vertices.size());
 }
 
 //-----------------------------------------------------------------------------
@@ -114,43 +100,18 @@ void PathOperator::process(float /*dt*/)
 // GraphicsOperator Interface (Data Extraction)
 //-----------------------------------------------------------------------------
 
-std::vector<glm::vec3> PathOperator::extract_positions() const
+std::vector<LineVertex> PathOperator::extract_vertices() const
 {
-    std::vector<glm::vec3> positions;
+    std::vector<LineVertex> positions;
 
     for (const auto& path : m_paths) {
         auto points = path->get_all_vertices();
         for (const auto& pt : points) {
-            positions.push_back(pt.position);
+            positions.push_back(pt);
         }
     }
 
     return positions;
-}
-
-std::vector<glm::vec3> PathOperator::extract_colors() const
-{
-    std::vector<glm::vec3> colors;
-
-    for (const auto& path : m_paths) {
-        auto points = path->get_all_vertices();
-        if (points.empty()) {
-            continue;
-        }
-
-        if (path->should_force_uniform_color()) {
-            colors.insert(colors.end(),
-                points.size(),
-                path->get_path_color());
-            continue;
-        }
-
-        for (const auto& pt : points) {
-            colors.push_back(pt.color);
-        }
-    }
-
-    return colors;
 }
 
 std::span<const uint8_t> PathOperator::get_vertex_data_for_collection(uint32_t idx) const

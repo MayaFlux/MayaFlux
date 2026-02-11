@@ -108,11 +108,6 @@ void PathGeneratorNode::add_control_point(const LineVertex& vertex)
     m_vertex_data_dirty = true;
 }
 
-void PathGeneratorNode::add_control_point(const glm::vec3& position)
-{
-    add_control_point(LineVertex { .position = position, .color = m_current_color, .thickness = m_current_thickness });
-}
-
 void PathGeneratorNode::generate_curve_segment(
     const std::vector<LineVertex>& curve_verts,
     size_t start_idx,
@@ -192,26 +187,6 @@ void PathGeneratorNode::draw_to(const LineVertex& vertex)
     m_vertex_data_dirty = true;
 }
 
-void PathGeneratorNode::draw_to(const glm::vec3& position)
-{
-    draw_to(LineVertex { .position = position, .color = m_current_color, .thickness = m_current_thickness });
-}
-
-void PathGeneratorNode::set_control_points(const std::vector<glm::vec3>& points)
-{
-    m_control_points.reset();
-
-    for (const auto& pt : points) {
-        m_control_points.push(LineVertex {
-            .position = pt,
-            .color = m_current_color,
-            .thickness = m_current_thickness });
-    }
-
-    m_vertex_data_dirty = true;
-    m_geometry_dirty = true;
-}
-
 void PathGeneratorNode::set_control_points(const std::vector<LineVertex>& vertices)
 {
     m_control_points.reset();
@@ -222,37 +197,6 @@ void PathGeneratorNode::set_control_points(const std::vector<LineVertex>& vertic
 
     m_vertex_data_dirty = true;
     m_geometry_dirty = true;
-}
-
-void PathGeneratorNode::update_control_point(size_t index, const glm::vec3& position)
-{
-    if (index >= m_control_points.size()) {
-        MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Control point index {} out of range (count: {})",
-            index, m_control_points.size());
-        return;
-    }
-
-    LineVertex v = m_control_points[index];
-    v.position = position;
-    m_control_points.update(index, v);
-
-    auto range = calculate_affected_segment_range(
-        index,
-        m_control_points.size(),
-        m_mode,
-        m_samples_per_segment);
-
-    if (m_dirty_segment_start == INVALID_SEGMENT) {
-        m_dirty_segment_start = range.start_control_idx;
-        m_dirty_segment_end = range.end_control_idx;
-    } else {
-        m_dirty_segment_start = std::min(m_dirty_segment_start, range.start_control_idx);
-        m_dirty_segment_end = std::max(m_dirty_segment_end, range.end_control_idx);
-    }
-
-    m_geometry_dirty = true;
-    m_vertex_data_dirty = true;
 }
 
 void PathGeneratorNode::update_control_point(size_t index, const LineVertex& vertex)
@@ -284,25 +228,25 @@ void PathGeneratorNode::update_control_point(size_t index, const LineVertex& ver
     m_vertex_data_dirty = true;
 }
 
-glm::vec3 PathGeneratorNode::get_control_point(size_t index) const
+LineVertex PathGeneratorNode::get_control_point(size_t index) const
 {
     if (index >= m_control_points.size()) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "Control point index {} out of range (count: {})",
             index, m_control_points.size());
-        return glm::vec3(0.0F);
+        return {};
     }
 
-    return m_control_points[index].position;
+    return m_control_points[index];
 }
 
-std::vector<glm::vec3> PathGeneratorNode::get_control_points() const
+std::vector<LineVertex> PathGeneratorNode::get_control_points() const
 {
     auto view = m_control_points.linearized_view();
-    std::vector<glm::vec3> positions;
+    std::vector<LineVertex> positions;
     positions.reserve(view.size());
     for (const auto& v : view) {
-        positions.push_back(v.position);
+        positions.push_back(v);
     }
     return positions;
 }

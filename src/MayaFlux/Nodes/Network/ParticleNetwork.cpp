@@ -40,7 +40,7 @@ void ParticleNetwork::initialize()
         return;
     }
 
-    auto positions = generate_initial_positions();
+    auto positions = generate_initial_vertices();
 
     if (!m_operator) {
         auto physics = std::make_unique<PhysicsOperator>();
@@ -59,10 +59,10 @@ void ParticleNetwork::initialize()
 
 void ParticleNetwork::reset()
 {
-    auto positions = generate_initial_positions();
+    auto vertices = generate_initial_vertices();
 
-    if (auto* graphics_op = dynamic_cast<GraphicsOperator*>(m_operator.get())) {
-        graphics_op->initialize(positions);
+    if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
+        physics->initialize(vertices);
     }
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -173,22 +173,20 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         "Switching operator: '{}' → '{}'",
         old_name, new_name);
 
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> colors;
+    std::vector<PointVertex> vertices;
 
-    if (auto* old_graphics = dynamic_cast<GraphicsOperator*>(m_operator.get())) {
-        positions = old_graphics->extract_positions();
-        colors = old_graphics->extract_colors();
+    if (auto* old_graphics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
+        vertices = old_graphics->extract_vertices();
 
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Extracted {} positions, {} colors from old operator",
-            positions.size(), colors.size());
+            "Extracted {} vertices from old operator",
+            vertices.size());
     } else if (!m_operator) {
-        positions = generate_initial_positions();
+        vertices = generate_initial_vertices();
     }
 
-    if (auto* new_graphics = dynamic_cast<GraphicsOperator*>(op.get())) {
-        new_graphics->initialize(positions, colors);
+    if (auto* new_graphics = dynamic_cast<PhysicsOperator*>(op.get())) {
+        new_graphics->initialize(vertices);
 
         if (auto* physics = dynamic_cast<PhysicsOperator*>(op.get())) {
             physics->set_bounds(m_bounds_min, m_bounds_max);
@@ -196,7 +194,7 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
 
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "Initialized new graphics operator with {} points",
-            positions.size());
+            vertices.size());
     }
 
     m_operator = std::move(op);
@@ -255,110 +253,166 @@ void ParticleNetwork::ensure_initialized()
     }
 }
 
-std::vector<glm::vec3> ParticleNetwork::generate_initial_positions()
+std::vector<PointVertex> ParticleNetwork::generate_initial_vertices()
 {
-    std::vector<glm::vec3> positions;
-    positions.reserve(m_num_points);
+    std::vector<PointVertex> vertices;
+    vertices.reserve(m_num_points);
 
     for (size_t i = 0; i < m_num_points; ++i) {
-        positions.push_back(generate_single_position(m_init_mode, i, m_num_points));
+        vertices.push_back(generate_single_vertex(m_init_mode, i, m_num_points));
     }
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "Generated {} initial positions with mode {}",
+        "Generated {} initial vertices with mode {}",
         m_num_points, static_cast<int>(m_init_mode));
 
-    return positions;
+    return vertices;
 }
 
-glm::vec3 ParticleNetwork::generate_single_position(
+PointVertex ParticleNetwork::generate_single_vertex(
     InitializationMode mode,
     size_t index,
     size_t total)
 {
+    PointVertex vertex;
+    glm::vec3 center = (m_bounds_min + m_bounds_max) * 0.5F;
+    glm::vec3 extent = m_bounds_max - m_bounds_min;
+
     switch (mode) {
-    case InitializationMode::RANDOM_VOLUME:
-        return {
+    case InitializationMode::RANDOM_VOLUME: {
+        vertex.position = {
             m_random_gen(m_bounds_min.x, m_bounds_max.x),
             m_random_gen(m_bounds_min.y, m_bounds_max.y),
             m_random_gen(m_bounds_min.z, m_bounds_max.z)
         };
+
+        vertex.color = (vertex.position - m_bounds_min) / extent;
+
+        vertex.size = static_cast<float>(m_random_gen(8.0F, 12.0F));
+        break;
+    }
 
     case InitializationMode::RANDOM_SURFACE: {
         int face = static_cast<int>(m_random_gen(0, 6));
 
         switch (face) {
         case 0:
-            return { m_bounds_min.x,
+            vertex.position = {
+                m_bounds_min.x,
                 m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_random_gen(m_bounds_min.z, m_bounds_max.z) };
+                m_random_gen(m_bounds_min.z, m_bounds_max.z)
+            };
+            vertex.color = glm::vec3(0.8F, 0.3F, 0.3F);
+            break;
         case 1:
-            return { m_bounds_max.x,
+            vertex.position = {
+                m_bounds_max.x,
                 m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_random_gen(m_bounds_min.z, m_bounds_max.z) };
+                m_random_gen(m_bounds_min.z, m_bounds_max.z)
+            };
+            vertex.color = glm::vec3(1.0F, 0.4F, 0.4F);
+            break;
         case 2:
-            return {
+            vertex.position = {
                 m_random_gen(m_bounds_min.x, m_bounds_max.x),
                 m_bounds_min.y,
                 m_random_gen(m_bounds_min.z, m_bounds_max.z)
             };
+            vertex.color = glm::vec3(0.3F, 0.8F, 0.3F);
+            break;
         case 3:
-            return {
+            vertex.position = {
                 m_random_gen(m_bounds_min.x, m_bounds_max.x),
                 m_bounds_max.y,
                 m_random_gen(m_bounds_min.z, m_bounds_max.z)
             };
+            vertex.color = glm::vec3(0.4F, 1.0F, 0.4F);
+            break;
         case 4:
-            return {
+            vertex.position = {
                 m_random_gen(m_bounds_min.x, m_bounds_max.x),
                 m_random_gen(m_bounds_min.y, m_bounds_max.y),
                 m_bounds_min.z
             };
+            vertex.color = glm::vec3(0.3F, 0.3F, 0.8F);
+            break;
         default:
-            return {
+            vertex.position = {
                 m_random_gen(m_bounds_min.x, m_bounds_max.x),
                 m_random_gen(m_bounds_min.y, m_bounds_max.y),
                 m_bounds_max.z
             };
+            vertex.color = glm::vec3(0.4F, 0.4F, 1.0F);
+            break;
         }
+
+        vertex.size = static_cast<float>(m_random_gen(10.0F, 14.0F));
+        break;
     }
 
     case InitializationMode::GRID: {
-        size_t grid_size = static_cast<size_t>(std::cbrt(static_cast<double>(total))) + 1;
-        glm::vec3 spacing = (m_bounds_max - m_bounds_min) / static_cast<float>(grid_size);
+        const size_t grid_size = static_cast<size_t>(std::cbrt(static_cast<double>(total))) + 1;
+        const glm::vec3 spacing = extent / static_cast<float>(grid_size);
 
-        size_t x = index % grid_size;
-        size_t y = (index / grid_size) % grid_size;
-        size_t z = index / (grid_size * grid_size);
+        const size_t x = index % grid_size;
+        const size_t y = (index / grid_size) % grid_size;
+        const size_t z = index / (grid_size * grid_size);
 
-        return m_bounds_min + glm::vec3(x * spacing.x, y * spacing.y, z * spacing.z);
+        vertex.position = m_bounds_min + glm::vec3(static_cast<float>(x) * spacing.x, static_cast<float>(y) * spacing.y, static_cast<float>(z) * spacing.z);
+
+        vertex.color = glm::vec3(
+            static_cast<float>(x) / static_cast<float>(grid_size),
+            static_cast<float>(y) / static_cast<float>(grid_size),
+            static_cast<float>(z) / static_cast<float>(grid_size));
+
+        vertex.size = 10.0F;
+        break;
     }
 
     case InitializationMode::SPHERE_VOLUME: {
-        glm::vec3 center = (m_bounds_min + m_bounds_max) * 0.5F;
-        float max_radius = glm::length(m_bounds_max - center);
+        const float max_radius = glm::length(extent) * 0.5F;
+        const float radius = max_radius * std::cbrt(static_cast<float>(m_random_gen(0.0, 1.0)));
+        const auto theta = static_cast<float>(m_random_gen(0.0, 2.0 * glm::pi<double>()));
+        const float phi = std::acos(static_cast<float>(m_random_gen(-1.0, 1.0)));
 
-        float radius = max_radius * std::cbrt(static_cast<float>(m_random_gen(0.0, 1.0)));
-        auto theta = static_cast<float>(m_random_gen(0.0, 2.0 * glm::pi<double>()));
-        float phi = std::acos(static_cast<float>(m_random_gen(-1.0, 1.0)));
+        vertex.position = center + glm::vec3(radius * std::sin(phi) * std::cos(theta), radius * std::sin(phi) * std::sin(theta), radius * std::cos(phi));
 
-        return center + glm::vec3(radius * std::sin(phi) * std::cos(theta), radius * std::sin(phi) * std::sin(theta), radius * std::cos(phi));
+        const float normalized_radius = radius / max_radius;
+        vertex.color = glm::mix(
+            glm::vec3(1.0F, 0.8F, 0.2F),
+            glm::vec3(0.2F, 0.4F, 1.0F),
+            normalized_radius);
+
+        vertex.size = glm::mix(15.0F, 6.0F, normalized_radius);
+        break;
     }
 
     case InitializationMode::SPHERE_SURFACE: {
-        glm::vec3 center = (m_bounds_min + m_bounds_max) * 0.5F;
-        float radius = glm::length(m_bounds_max - center);
+        const float radius = glm::length(extent) * 0.5F;
+        const auto theta = static_cast<float>(m_random_gen(0.0, 2.0 * glm::pi<double>()));
+        const float phi = std::acos(static_cast<float>(m_random_gen(-1.0, 1.0)));
 
-        auto theta = static_cast<float>(m_random_gen(0.0, 2.0 * glm::pi<double>()));
-        float phi = std::acos(static_cast<float>(m_random_gen(-1.0, 1.0)));
+        vertex.position = center + glm::vec3(radius * std::sin(phi) * std::cos(theta), radius * std::sin(phi) * std::sin(theta), radius * std::cos(phi));
 
-        return center + glm::vec3(radius * std::sin(phi) * std::cos(theta), radius * std::sin(phi) * std::sin(theta), radius * std::cos(phi));
+        vertex.color = glm::vec3(
+            (std::sin(theta) + 1.0F) * 0.5F,
+            (phi / glm::pi<float>()),
+            (std::cos(theta) + 1.0F) * 0.5F);
+
+        const float lat_factor = std::sin(phi);
+        vertex.size = glm::mix(8.0F, 12.0F, lat_factor);
+        break;
     }
 
     case InitializationMode::CUSTOM:
     default:
-        return glm::vec3(0.0F);
+        vertex.position = glm::vec3(0.0F);
+        vertex.color = glm::vec3(0.5F);
+        vertex.size = 10.0F;
+        break;
     }
+
+    return vertex;
 }
 
 } // namespace MayaFlux::Nodes::Network

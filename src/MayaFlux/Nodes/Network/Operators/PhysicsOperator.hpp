@@ -69,9 +69,11 @@ public:
 
     PhysicsOperator();
 
-    void initialize(
-        const std::vector<glm::vec3>& positions,
-        const std::vector<glm::vec3>& colors = {}) override;
+    /**
+     * @brief Initialize with a single physics collection
+     * @param vertices PointVertex array with position, color, size
+     */
+    void initialize(const std::vector<PointVertex>& vertices);
 
     /**
      * @brief Initialize multiple physics collections
@@ -91,15 +93,18 @@ public:
 
     void process(float dt) override;
 
-    [[nodiscard]] std::vector<glm::vec3> extract_positions() const override;
-    [[nodiscard]] std::vector<glm::vec3> extract_colors() const override;
-
     [[nodiscard]] std::span<const uint8_t> get_vertex_data_for_collection(uint32_t idx) const override;
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const override;
     [[nodiscard]] Kakshya::VertexLayout get_vertex_layout() const override;
     [[nodiscard]] size_t get_vertex_count() const override;
     [[nodiscard]] bool is_vertex_data_dirty() const override;
     void mark_vertex_data_clean() override;
+
+    /**
+     * @brief Extract current vertex data as PointVertex array
+     * @return Vector of PointVertex with current positions, colors, sizes
+     */
+    [[nodiscard]] std::vector<PointVertex> extract_vertices() const;
 
     void set_parameter(std::string_view param, double value) override;
     [[nodiscard]] std::optional<double> query_state(std::string_view query) const override;

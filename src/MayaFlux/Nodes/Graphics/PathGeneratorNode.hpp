@@ -40,9 +40,9 @@ namespace MayaFlux::Nodes::GpuSync {
  *     100   // Store up to 100 control points
  * );
  *
- * path->add_control_point(glm::vec3(0.0f, 0.0f, 0.0f));
- * path->add_control_point(glm::vec3(0.5f, 0.5f, 0.0f));
- * path->add_control_point(glm::vec3(1.0f, 0.0f, 0.0f));
+ * path->add_control_point({glm::vec3(0.0f, 0.0f, 0.0f)});
+ * path->add_control_point({glm::vec3(0.5f, 0.5f, 0.0f)});
+ * path->add_control_point({glm::vec3(1.0f, 0.0f, 0.0f)});
  * // Entire curve regenerates through all control points
  *
  * auto buffer = std::make_shared<GeometryBuffer>(path);
@@ -111,15 +111,6 @@ public:
         size_t max_control_points = 64);
 
     /**
-     * @brief Add control point to path history
-     * @param position 3D control point position
-     *
-     * Pushes point to front of ring buffer (becomes index [0]).
-     * Oldest point automatically discarded if buffer full.
-     */
-    void add_control_point(const glm::vec3& position);
-
-    /**
      * @brief Add control point with full LineVertex data
      * @param vertex LineVertex containing position, color, thickness
      *
@@ -127,15 +118,6 @@ public:
      * Oldest vertex discarded if buffer full.
      */
     void add_control_point(const LineVertex& vertex);
-
-    /**
-     * @brief Extend path by drawing curve to new position
-     * @param position Target position to draw curve to
-     *
-     * Generates interpolated vertices ONLY between last added point and new position.
-     * Appends generated vertices to existing geometry. No history awareness beyond last point.
-     */
-    void draw_to(const glm::vec3& position);
 
     /**
      * @brief Extend path with full LineVertex data
@@ -147,15 +129,6 @@ public:
     void draw_to(const LineVertex& vertex);
 
     /**
-     * @brief Set all control points at once (replaces history)
-     * @param points Vector of control point positions (ordered newest to oldest)
-     *
-     * Clears existing history and fills buffer with new points.
-     * If points.size() > capacity, only most recent points kept.
-     */
-    void set_control_points(const std::vector<glm::vec3>& points);
-
-    /**
      * @brief Set all control points with full LineVertex data
      * @param vertices Vector of LineVertex data (ordered newest to oldest)
      *
@@ -163,13 +136,6 @@ public:
      * If vertices.size() > capacity, only most recent vertices kept.
      */
     void set_control_points(const std::vector<LineVertex>& vertices);
-
-    /**
-     * @brief Update specific control point
-     * @param index Control point index (0 = newest)
-     * @param position New position
-     */
-    void update_control_point(size_t index, const glm::vec3& position);
 
     /**
      * @brief Update specific control point with full LineVertex data
@@ -183,13 +149,13 @@ public:
      * @param index Control point index (0 = newest)
      * @return Control point position
      */
-    [[nodiscard]] glm::vec3 get_control_point(size_t index) const;
+    [[nodiscard]] LineVertex get_control_point(size_t index) const;
 
     /**
      * @brief Get all control points as vector
      * @return Vector of control point positions (ordered newest to oldest)
      */
-    [[nodiscard]] std::vector<glm::vec3> get_control_points() const;
+    [[nodiscard]] std::vector<LineVertex> get_control_points() const;
 
     /**
      * @brief Clear all control points and generated vertices

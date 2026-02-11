@@ -16,26 +16,6 @@ namespace MayaFlux::Nodes::Network {
 class MAYAFLUX_API GraphicsOperator : public NetworkOperator {
 public:
     /**
-     * @brief Initialize operator with positions from previous operator
-     * @param positions Initial point positions (graphics coordinate space)
-     * @param colors Optional colors (empty = use defaults)
-     */
-    virtual void initialize(
-        const std::vector<glm::vec3>& positions,
-        const std::vector<glm::vec3>& colors = {})
-        = 0;
-
-    /**
-     * @brief Extract current positions (for operator switching)
-     */
-    [[nodiscard]] [[nodiscard]] virtual std::vector<glm::vec3> extract_positions() const = 0;
-
-    /**
-     * @brief Extract current colors (for operator switching)
-     */
-    [[nodiscard]] virtual std::vector<glm::vec3> extract_colors() const = 0;
-
-    /**
      * @brief Get vertex data for GPU upload
      */
     [[nodiscard]] virtual std::span<const uint8_t> get_vertex_data() const = 0;

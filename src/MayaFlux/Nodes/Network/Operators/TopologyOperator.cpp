@@ -18,33 +18,20 @@ TopologyOperator::TopologyOperator(Kinesis::ProximityMode mode)
 // GraphicsOperator Interface (Simple Initialization)
 //-----------------------------------------------------------------------------
 
-void TopologyOperator::initialize(
-    const std::vector<glm::vec3>& positions,
-    const std::vector<glm::vec3>& colors)
+void TopologyOperator::initialize(const std::vector<LineVertex>& vertices)
 {
-    if (positions.empty()) {
+    if (vertices.empty()) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-            "Cannot initialize topology with zero positions");
+            "Cannot initialize topology with zero vertices");
         return;
     }
 
-    std::vector<LineVertex> vertices;
-    vertices.reserve(positions.size());
-
-    glm::vec3 fallback_color = colors.empty() ? glm::vec3(1.0F) : colors[0];
-    for (size_t i = 0; i < positions.size(); ++i) {
-        glm::vec3 color = (i < colors.size()) ? colors[i] : fallback_color;
-        vertices.push_back(LineVertex {
-            .position = positions[i],
-            .color = color,
-            .thickness = m_default_thickness });
-    }
-
+    m_topologies.clear();
     add_topology(vertices, m_default_mode);
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
         "TopologyOperator initialized with {} points in 1 topology",
-        positions.size());
+        vertices.size());
 }
 
 //-----------------------------------------------------------------------------
@@ -106,42 +93,18 @@ void TopologyOperator::process(float /*dt*/)
 // GraphicsOperator Interface (Data Extraction)
 //-----------------------------------------------------------------------------
 
-std::vector<glm::vec3> TopologyOperator::extract_positions() const
+std::vector<LineVertex> TopologyOperator::extract_vertices() const
 {
-    std::vector<glm::vec3> positions;
+    std::vector<LineVertex> positions;
 
     for (const auto& topology : m_topologies) {
         auto points = topology->get_points();
         for (const auto& pt : points) {
-            positions.push_back(pt.position);
+            positions.push_back(pt);
         }
     }
 
     return positions;
-}
-
-std::vector<glm::vec3> TopologyOperator::extract_colors() const
-{
-    std::vector<glm::vec3> colors;
-
-    for (const auto& topology : m_topologies) {
-        auto points = topology->get_points();
-        if (points.empty())
-            continue;
-
-        if (topology->should_force_uniform_color()) {
-            colors.insert(colors.end(),
-                points.size(),
-                topology->get_line_color());
-            continue;
-        }
-
-        for (const auto& pt : points) {
-            colors.push_back(pt.color);
-        }
-    }
-
-    return colors;
 }
 
 std::span<const uint8_t> TopologyOperator::get_vertex_data_for_collection(uint32_t idx) const

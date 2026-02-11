@@ -32,9 +32,9 @@ namespace MayaFlux::Nodes::GpuSync {
  *     true  // auto_connect
  * );
  *
- * topo->add_point(glm::vec3(0.0f, 0.0f, 0.0f));
- * topo->add_point(glm::vec3(1.0f, 0.0f, 0.0f));
- * topo->add_point(glm::vec3(0.5f, 1.0f, 0.0f));
+ * topo->add_point({glm::vec3(0.0f, 0.0f, 0.0f)});
+ * topo->add_point({glm::vec3(1.0f, 0.0f, 0.0f)});
+ * topo->add_point({glm::vec3(0.5f, 1.0f, 0.0f)});
  * // Delaunay triangulation automatically computed
  *
  * auto buffer = std::make_shared<GeometryBuffer>(topo);
@@ -116,22 +116,10 @@ public:
     void add_point(const LineVertex& point);
 
     /**
-     * @brief Add point with just position (uses defaults)
-     */
-    void add_point(const glm::vec3& position);
-
-    /**
      * @brief Remove point by index
      * @param index Point index to remove
      */
     void remove_point(size_t index);
-
-    /**
-     * @brief Update point position
-     * @param index Point index
-     * @param position New position
-     */
-    void update_point(size_t index, const glm::vec3& position);
 
     /**
      * @brief Update point data
@@ -145,12 +133,6 @@ public:
      * @param points Vector of LineVertex data
      */
     void set_points(const std::vector<LineVertex>& points);
-
-    /**
-     * @brief Set points using just positions (color and other attributes defaulted)
-     * @param positions Vector of point positions
-     */
-    void set_points(const std::vector<glm::vec3>& positions);
 
     /**
      * @brief Clear all points and connections
