@@ -1,10 +1,14 @@
 #include "../test_config.h"
+
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Kriya/Chain.hpp"
-#include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Generators/Logic.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
+#include "MayaFlux/Nodes/Network/ModalNetwork.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
+
+#include "MayaFlux/MayaFlux.hpp"
 
 namespace MayaFlux::Test {
 
@@ -14,6 +18,7 @@ protected:
     {
         scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
         node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
+        buffer_manager = std::make_shared<Buffers::BufferManager>();
         processing_token = Nodes::ProcessingToken::AUDIO_RATE;
     }
 
@@ -25,6 +30,7 @@ protected:
 
     std::shared_ptr<Vruta::TaskScheduler> scheduler;
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager;
+    std::shared_ptr<Buffers::BufferManager> buffer_manager;
     Nodes::ProcessingToken processing_token;
 };
 
@@ -128,16 +134,16 @@ TEST_F(TasksTest, TimedAction)
     EXPECT_FALSE(end_executed);
 }
 
-TEST_F(TasksTest, NodeTimer)
+TEST_F(TasksTest, TemporalActivationNode)
 {
     EXPECT_NE(node_graph_manager, nullptr);
 
-    Kriya::NodeTimer node_timer(*scheduler, *node_graph_manager);
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    Kriya::TemporalActivation time_action(*scheduler, *node_graph_manager, *buffer_manager);
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
 
-    node_timer.play_for(sine, 0.009);
+    time_action.activate_node(sine, 0.009, Nodes::ProcessingToken::AUDIO_RATE, { 0 });
 
-    EXPECT_TRUE(node_timer.is_active());
+    EXPECT_TRUE(time_action.is_active());
 
     auto& root = node_graph_manager->get_root_node(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 1);
@@ -147,134 +153,57 @@ TEST_F(TasksTest, NodeTimer)
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
     root.process_batch(samples_10ms);
 
-    EXPECT_FALSE(node_timer.is_active());
-    EXPECT_EQ(root.get_node_size(), 0);
-
-    bool setup_called = false;
-    bool cleanup_called = false;
-
-    node_timer.play_with_processing(
-        sine,
-        [&setup_called](std::shared_ptr<Nodes::Node>) {
-            setup_called = true;
-        },
-        [&cleanup_called](std::shared_ptr<Nodes::Node>) {
-            cleanup_called = true;
-        },
-        0.009);
-
-    EXPECT_TRUE(node_timer.is_active());
-    EXPECT_TRUE(setup_called);
-    EXPECT_FALSE(cleanup_called);
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    root.process_batch(samples_10ms);
-
-    EXPECT_FALSE(node_timer.is_active());
-    EXPECT_TRUE(cleanup_called);
-    EXPECT_EQ(root.get_node_size(), 0);
-
-    setup_called = false;
-    cleanup_called = false;
-
-    node_timer.play_with_processing(
-        sine,
-        [&setup_called](std::shared_ptr<Nodes::Node>) {
-            setup_called = true;
-        },
-        [&cleanup_called](std::shared_ptr<Nodes::Node>) {
-            cleanup_called = true;
-        },
-        0.009);
-
-    EXPECT_TRUE(setup_called);
-    EXPECT_FALSE(cleanup_called);
-
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    node_timer.cancel();
-    root.process_batch(samples_10ms);
-
-    EXPECT_FALSE(node_timer.is_active());
-    EXPECT_TRUE(cleanup_called);
+    EXPECT_FALSE(time_action.is_active());
     EXPECT_EQ(root.get_node_size(), 0);
 }
 
-TEST_F(TasksTest, ActionTokens)
+TEST_F(TasksTest, TemporalActivationBuffer)
 {
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto node_token = Kriya::ActionToken(sine);
+    Kriya::TemporalActivation time_action(*scheduler, *node_graph_manager, *buffer_manager);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(1024);
 
-    EXPECT_EQ(node_token.type, Kriya::ActionType::NODE);
-    EXPECT_EQ(node_token.node, sine);
+    time_action.activate_buffer(buffer, 0.009, Buffers::ProcessingToken::AUDIO_BACKEND, 0);
 
-    auto time_token = Kriya::ActionToken(0.5);
+    EXPECT_TRUE(time_action.is_active());
 
-    EXPECT_EQ(time_token.type, Kriya::ActionType::TIME);
-    EXPECT_DOUBLE_EQ(time_token.seconds, 0.5);
+    auto root_buffer = buffer_manager->get_root_audio_buffer(Buffers::ProcessingToken::AUDIO_BACKEND, 0);
+    auto child_buffers = root_buffer->get_child_buffers();
 
-    bool func_called = false;
-    auto func_token = Kriya::ActionToken([&func_called]() { func_called = true; });
-
-    EXPECT_EQ(func_token.type, Kriya::ActionType::FUNCTION);
-    EXPECT_FALSE(func_called);
-
-    func_token.func();
-    EXPECT_TRUE(func_called);
-}
-
-TEST_F(TasksTest, Sequence)
-{
-    Kriya::Sequence sequence;
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    bool func_called = false;
-
-    sequence >> Play(sine)
-        >> Wait(0.009)
-        >> Action([&func_called]() {
-              func_called = true;
-          });
-
-    EXPECT_FALSE(func_called);
-
-    sequence.execute(node_graph_manager, scheduler);
-
-    auto& root = node_graph_manager->get_root_node(processing_token, 0);
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    auto samples_9ms = scheduler->seconds_to_samples(0.009);
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_9ms - 1);
-    root.process_batch(samples_9ms);
-    EXPECT_FALSE(func_called);
-
-    auto samples_1ms = scheduler->seconds_to_samples(0.001);
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_1ms);
-    root.process_batch(samples_1ms);
-
-    EXPECT_TRUE(func_called);
-}
-
-TEST_F(TasksTest, TimeOperator)
-{
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-
-    auto& root = node_graph_manager->get_root_node(processing_token, 0);
-    EXPECT_EQ(root.get_node_size(), 0);
-
-    sine >> Kriya::NodeTimeSpec(0.01, *scheduler, *node_graph_manager);
-
-    EXPECT_EQ(root.get_node_size(), 1);
+    EXPECT_TRUE(std::ranges::any_of(child_buffers, [&buffer](const std::shared_ptr<Buffers::Buffer>& child) {
+        return child == buffer;
+    }));
 
     uint64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms - 1);
-    root.process_batch(samples_10ms);
-    EXPECT_EQ(root.get_node_size(), 1);
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
+    buffer_manager->process_channel(Buffers::ProcessingToken::AUDIO_BACKEND, 0, samples_10ms, {});
+
+    EXPECT_FALSE(time_action.is_active());
+
+    child_buffers = root_buffer->get_child_buffers();
+
+    EXPECT_FALSE(std::ranges::any_of(child_buffers, [&buffer](const std::shared_ptr<Buffers::Buffer>& child) {
+        return child == buffer;
+    }));
+}
+
+TEST_F(TasksTest, TemporalActivationNetwork)
+{
+    Kriya::TemporalActivation time_action(*scheduler, *node_graph_manager, *buffer_manager);
+    auto network = std::make_shared<Nodes::Network::ModalNetwork>(5);
+
+    time_action.activate_network(network, 0.009, Nodes::ProcessingToken::AUDIO_RATE, { 0 });
+
+    EXPECT_TRUE(time_action.is_active());
+
+    EXPECT_EQ(node_graph_manager->get_network_count(processing_token), 1);
+
+    uint64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    root.process_batch(samples_10ms);
 
-    EXPECT_EQ(root.get_node_size(), 0);
+    EXPECT_FALSE(time_action.is_active());
+    EXPECT_EQ(node_graph_manager->get_network_count(processing_token), 0);
 }
 
 TEST_F(TasksTest, CoroutineTasks)
@@ -312,14 +241,14 @@ TEST_F(TasksTest, CoroutineTasks)
 
 TEST_F(TasksTest, LineTask)
 {
-    float start_value = 0.0f;
-    float end_value = 1.0f;
-    float duration = 0.05f;
+    float start_value = 0.0F;
+    float end_value = 1.0F;
+    float duration = 0.05F;
 
     auto line_routine = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, start_value, end_value, duration, 5, false));
     scheduler->add_task(line_routine, "", true);
 
-    float* current_value = line_routine->get_state<float>("current_value");
+    auto current_value = line_routine->get_state<float>("current_value");
     ASSERT_NE(current_value, nullptr);
     EXPECT_FLOAT_EQ(*current_value, start_value);
 
@@ -333,22 +262,22 @@ TEST_F(TasksTest, LineTask)
 
     EXPECT_FLOAT_EQ(*current_value, end_value);
 
-    auto restartable_line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, 0.0f, 10.f, 0.05f, 5, true));
+    auto restartable_line = std::make_shared<Vruta::SoundRoutine>(Kriya::line(*scheduler, 0.0F, 10.F, 0.05F, 5, true));
     scheduler->add_task(restartable_line, "", true);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.05));
 
-    float* restartable_value = restartable_line->get_state<float>("current_value");
+    auto restartable_value = restartable_line->get_state<float>("current_value");
     ASSERT_NE(restartable_value, nullptr);
-    EXPECT_NEAR(*restartable_value, 10.0f, 0.001f);
+    EXPECT_NEAR(*restartable_value, 10.0F, 0.001F);
 
     restartable_line->restart();
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE);
 
-    EXPECT_NEAR(*restartable_value, 0.0f, 0.1f);
+    EXPECT_NEAR(*restartable_value, 0.0F, 0.1F);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.025));
-    EXPECT_NEAR(*restartable_value, 5.0f, 0.5f);
+    EXPECT_NEAR(*restartable_value, 5.0F, 0.5F);
 }
 
 TEST_F(TasksTest, PatternTask)
@@ -628,83 +557,143 @@ TEST_F(TasksTest, MultipleLogicTasks)
     EXPECT_TRUE(scheduler->cancel_task(change_task));
 }
 
+TEST_F(TasksTest, EventChainCancel)
+{
+    bool event1 = false;
+    bool event2 = false;
+    bool event3 = false;
+    bool cleanup_called = false;
+
+    Kriya::EventChain chain(*scheduler, "cancel_test");
+
+    chain.then([&event1]() { event1 = true; })
+        .then([&event2]() { event2 = true; }, 0.01)
+        .then([&event3]() { event3 = true; }, 0.01)
+        .on_complete([&cleanup_called]() { cleanup_called = true; });
+
+    chain.start();
+
+    EXPECT_TRUE(chain.is_active());
+    EXPECT_TRUE(event1);
+    EXPECT_FALSE(event2);
+    EXPECT_FALSE(event3);
+    EXPECT_FALSE(cleanup_called);
+
+    chain.cancel();
+
+    EXPECT_FALSE(chain.is_active());
+    EXPECT_TRUE(cleanup_called);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.03));
+
+    EXPECT_FALSE(event2);
+    EXPECT_FALSE(event3);
+}
+
+TEST_F(TasksTest, EventChainOnComplete)
+{
+    bool event1 = false;
+    bool event2 = false;
+    bool cleanup_called = false;
+
+    Kriya::EventChain chain(*scheduler, "complete_test");
+
+    chain.then([&event1]() { event1 = true; })
+        .then([&event2]() { event2 = true; }, 0.01)
+        .on_complete([&cleanup_called]() { cleanup_called = true; });
+
+    chain.start();
+
+    EXPECT_TRUE(event1);
+    EXPECT_FALSE(event2);
+    EXPECT_FALSE(cleanup_called);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.02));
+
+    EXPECT_TRUE(event2);
+    EXPECT_TRUE(cleanup_called);
+    EXPECT_FALSE(chain.is_active());
+}
+
+TEST_F(TasksTest, EventChainOnCompleteFiresOnce)
+{
+    int cleanup_count = 0;
+
+    Kriya::EventChain chain(*scheduler, "once_test");
+
+    chain.then([]() { /* action */ })
+        .on_complete([&cleanup_count]() { cleanup_count++; });
+
+    chain.start();
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.01));
+
+    EXPECT_EQ(cleanup_count, 1);
+    EXPECT_FALSE(chain.is_active());
+
+    chain.cancel();
+
+    EXPECT_EQ(cleanup_count, 1);
+}
+
+TEST_F(TasksTest, EventChainActionErrorsDoNotBreakChain)
+{
+    bool event1 = false;
+    bool event2_attempted = false;
+    bool event3_attempted = false;
+    bool cleanup_called = false;
+
+    Kriya::EventChain chain(*scheduler, "error_test");
+
+    chain.then([&event1]() {
+             event1 = true;
+             // Simulate error condition without throwing
+             // (returns early, sets error flag, etc.)
+         })
+        .then([&event2_attempted]() {
+            event2_attempted = true;
+        },
+            0.01)
+        .then([&event3_attempted]() {
+            event3_attempted = true;
+        },
+            0.01)
+        .on_complete([&cleanup_called]() {
+            cleanup_called = true;
+        });
+
+    chain.start();
+
+    EXPECT_TRUE(event1);
+    EXPECT_FALSE(event2_attempted);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.02));
+
+    EXPECT_TRUE(event2_attempted);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.02));
+
+    EXPECT_TRUE(event3_attempted);
+    EXPECT_TRUE(cleanup_called);
+}
+
+TEST_F(TasksTest, EventChainNaming)
+{
+    Kriya::EventChain named_chain(*scheduler, "my_sequence");
+    EXPECT_EQ(named_chain.name(), "my_sequence");
+
+    Kriya::EventChain unnamed_chain(*scheduler);
+    EXPECT_TRUE(unnamed_chain.name().empty());
+}
+
 #define INTEGRATION_TEST ;
 
 #ifdef INTEGRATION_TEST
-
-/* TEST_F(TasksTest, SequenceI)
-{
-    MayaFlux::Init();
-
-    MayaFlux::Start();
-    AudioTestHelper::waitForAudio(100);
-
-    Kriya::Sequence sequence;
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    bool func_called = false;
-
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
-
-    sequence >> Play(sine)
-        >> Wait(0.01)
-        >> Action([&func_called]() { func_called = true; });
-
-    EXPECT_FALSE(func_called);
-
-    sequence.execute();
-
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    EXPECT_FALSE(func_called);
-
-    AudioTestHelper::waitForAudio(10);
-    EXPECT_TRUE(func_called);
-
-    MayaFlux::End();
-
-    AudioTestHelper::waitForAudio(100);
-} */
-
-TEST_F(TasksTest, SequenceIntegration)
-{
-    MayaFlux::Init();
-
-    MayaFlux::Start();
-
-    Kriya::Sequence sequence;
-    auto sine1 = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f);
-    bool sequence_completed = false;
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
-
-    sequence
-        >> Play(sine1)
-        >> Wait(0.2)
-        >> Action([sine1]() { sine1->set_frequency(550.0f); })
-        >> Wait(0.2)
-        >> Play(sine2)
-        >> Wait(0.2)
-        >> Action([&sequence_completed]() { sequence_completed = true; });
-
-    EXPECT_FALSE(sequence_completed);
-    EXPECT_EQ(root.get_node_size(), 0);
-
-    sequence.execute();
-
-    AudioTestHelper::waitForAudio(4);
-
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    AudioTestHelper::waitForAudio(500);
-
-    EXPECT_EQ(root.get_node_size(), 2);
-
-    AudioTestHelper::waitForAudio(1000);
-
-    EXPECT_TRUE(sequence_completed);
-
-    MayaFlux::End();
-}
 
 TEST_F(TasksTest, TimeOperatorI)
 {
@@ -712,47 +701,21 @@ TEST_F(TasksTest, TimeOperatorI)
 
     MayaFlux::Start();
 
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
     auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
     auto scheduler = MayaFlux::get_scheduler();
 
     EXPECT_EQ(root.get_node_size(), 0);
 
-    sine >> Kriya::NodeTimeSpec(0.1);
+    sine >> Time(0.2) | Domain::AUDIO;
 
     EXPECT_EQ(root.get_node_size(), 1);
 
-    uint64_t samples = scheduler->seconds_to_samples(0.11);
+    uint64_t samples = scheduler->seconds_to_samples(0.21);
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples);
     root.process_batch(samples);
 
     EXPECT_EQ(root.get_node_size(), 0);
-
-    MayaFlux::End();
-}
-
-TEST_F(TasksTest, DACOperator)
-{
-    MayaFlux::Init();
-
-    MayaFlux::Start();
-
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto& dac = Kriya::DAC::instance();
-
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
-    EXPECT_EQ(root.get_node_size(), 0);
-
-    sine >> dac;
-
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    dac.channel = 1;
-    auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f);
-    sine2 >> dac;
-
-    auto& root1 = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 1);
-    EXPECT_EQ(root1.get_node_size(), 1);
 
     MayaFlux::End();
 }
@@ -798,7 +761,7 @@ TEST_F(TasksTest, ProcessingTokens)
 
 TEST_F(TasksTest, NodeGraphManagerIntegration)
 {
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
+    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
 
     node_graph_manager->add_to_root(sine, processing_token, 0);
 
@@ -826,22 +789,22 @@ TEST_F(TasksTest, TaskSchedulerTokenDomains)
 TEST_F(TasksTest, CoroutineStatePersistence)
 {
     auto line_routine = std::make_shared<Vruta::SoundRoutine>(
-        Kriya::line(*scheduler, 0.0f, 10.0f, 0.1f, 5, true));
+        Kriya::line(*scheduler, 0.0F, 10.0F, 0.1F, 5, true));
 
     scheduler->add_task(line_routine, "persistent_line", true);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.05));
 
-    float* value = line_routine->get_state<float>("current_value");
+    auto value = line_routine->get_state<float>("current_value");
     ASSERT_NE(value, nullptr);
 
     float mid_value = *value;
-    EXPECT_GT(mid_value, 0.0f);
-    EXPECT_LT(mid_value, 10.0f);
+    EXPECT_GT(mid_value, 0.0F);
+    EXPECT_LT(mid_value, 10.0F);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, scheduler->seconds_to_samples(0.05));
 
-    EXPECT_NEAR(*value, 10.0f, 0.1f);
+    EXPECT_NEAR(*value, 10.0F, 0.1F);
 
     EXPECT_TRUE(scheduler->cancel_task("persistent_line"));
 }

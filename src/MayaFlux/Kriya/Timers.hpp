@@ -1,10 +1,19 @@
 #pragma once
 
+#include "MayaFlux/Core/ProcessingTokens.hpp"
 #include "Tasks.hpp"
 
 namespace MayaFlux::Nodes {
 class Node;
 class NodeGraphManager;
+namespace Network {
+    class NodeNetwork;
+}
+}
+
+namespace MayaFlux::Buffers {
+class Buffer;
+class BufferManager;
 }
 
 namespace MayaFlux::Kriya {
@@ -165,7 +174,7 @@ public:
      * If an action is already in progress, it is cancelled before starting
      * the new one.
      */
-    void execute(std::function<void()> start_func, std::function<void()> end_func, double duration_seconds);
+    void execute(const std::function<void()>& start_func, const std::function<void()>& end_func, double duration_seconds);
 
     /**
      * @brief Cancels any active action
@@ -203,112 +212,98 @@ private:
 };
 
 /**
- * @class NodeTimer
- * @brief Specialized timer for controlling computational nodes with precise timing
+ * @class TemporalActivation
+ * @brief Specialized timer for controlling computational nodes, buffers, and networks
  *
- * The NodeTimer class provides a convenient way to activate processing nodes for
- * specific durations with sample-accurate timing. It handles the details
- * of connecting and disconnecting nodes from the processing graph at precisely
- * the right moments.
+ * The TemporalActivation class provides a high-level interface for activating
+ * nodes, buffers, or entire networks for a specified duration. It manages the
+ * lifecycle of the activated entity, ensuring that it is properly connected to
+ * the processing graph when activated and cleanly disconnected when the timer expires.
  *
- * This is particularly useful for activating temporary processes, applying time-limited
- * transformations, or creating precisely timed events in any computational domain.
- *
- * NOTE: As this class is centered around audio playback,
- * it enforces use of AUDIO_RATE processing token that cant be overridden.
- *
- * Example usage:
+ * Usage example:
  * ```cpp
- * // Create a node timer
- * NodeTimer timer(*scheduler, *graph_manager);
+ * // Create a temporal activation
+ * TemporalActivation activation(*scheduler, node_graph_manager, buffer_manager);
  *
- * // Activate a processing node for exactly 2 seconds
- * timer.play_for(process_node, 2.0);
+ * // Activate a node for 5 seconds on channels 0 and 1
+ * activation.activate_node(my_node, my_token, 5.0, {0, 1});
  * ```
- *
- * Only one node can be active at a time; activating a new node cancels
- * any previously active node.
  */
-class MAYAFLUX_API NodeTimer {
+class MAYAFLUX_API TemporalActivation {
 public:
     /**
-     * @brief Constructs a NodeTimer with the specified scheduler
-     * @param scheduler The TaskScheduler that will manage this timer
-     *
-     * Creates a new NodeTimer that will use the provided scheduler for
-     * timing operations. The scheduler provides the sample clock and
-     * task management infrastructure needed for precise timing.
-     */
-    NodeTimer(Vruta::TaskScheduler& scheduler);
-
-    /**
-     * @brief Constructs a NodeTimer with the specified scheduler and graph manager
+     * @brief Constructs a TemporalActivation with the specified scheduler and manager
      * @param scheduler The TaskScheduler that will manage this timer
      * @param graph_manager The NodeGraphManager that will manage the processing nodes
+     * @param buffer_manager The BufferManager that will manage any buffers needed for processing
      *
      * Creates a new NodeTimer that will use the provided scheduler and
      * graph manager for timing and node management operations.
      */
-    NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager);
-    ~NodeTimer() = default;
+    TemporalActivation(
+        Vruta::TaskScheduler& scheduler,
+        Nodes::NodeGraphManager& graph_manager,
+        Buffers::BufferManager& buffer_manager);
+
+    ~TemporalActivation() = default;
 
     /**
-     * @brief Activates a processing node for a specific duration
-     * @param node The processing node to activate
-     * @param duration_seconds How long to keep the node active (in seconds)
-     * @param channels The output channels to connect the node to
-     * @param channel The output channel to connect the node to (single-channel overload)
+     * @brief Activates a node for a specified duration
+     * @param node The node to activate
+     * @param token The processing token associated with the node
+     * @param duration_seconds The duration to keep the node active (in seconds)
+     * @param channels Optional list of output channels to connect the node to (default is all channels)
      *
-     * This method connects the specified node to the output channel,
-     * activates it for the specified duration, then automatically disconnects it.
-     * The timing is sample-accurate, ensuring that the node remains active for
-     * exactly the right duration.
+     * This method activates the specified node by connecting it to the output channels or graphics sync,
+     * and starts a timer for the specified duration. When the timer expires, the node is automatically
+     * disconnected from the output channels, effectively deactivating it.
      *
-     * If a node is already active, it is deactivated before starting the new one.
+     * If another node, network, or buffer is already active, it will be cancelled before activating the new one.
      */
-    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, std::vector<uint32_t> channels);
-    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, uint32_t channel);
-    void play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds);
+    void activate_node(const std::shared_ptr<Nodes::Node>& node,
+        double duration_seconds,
+        Nodes::ProcessingToken token = Nodes::ProcessingToken::AUDIO_RATE,
+        const std::vector<uint32_t>& channels = {});
 
     /**
-     * @brief Activates a processing node with custom setup and cleanup functions
-     * @param node The processing node to activate
-     * @param setup_func Function to call before activating the node
-     * @param cleanup_func Function to call after deactivating the node
-     * @param duration_seconds How long to keep the node active (in seconds)
-     * @param channels The output channel to connect the node to
-     * @param channel The output channel to connect the node to (single-channel overload)
+     * @brief Activates a node network for a specified duration
+     * @param network The node network to activate
+     * @param token The processing token associated with the network
+     * @param duration_seconds The duration to keep the network active (in seconds)
+     * @param channels Optional list of output channels to connect the network to (default is all channels)
      *
-     * This method provides more control over the node activation process by
-     * allowing custom setup and cleanup functions. The setup function is
-     * called before connecting the node, and the cleanup function is called
-     * after disconnecting it.
+     * This method activates the specified node network by connecting it to the output channels or graphics sync,
+     * and starts a timer for the specified duration. When the timer expires, the network is automatically
+     * disconnected from the output channels, effectively deactivating it.
      *
-     * This is useful for more complex scenarios where additional setup or
-     * cleanup steps are needed, such as configuring node parameters or
-     * managing resources.
-     *
-     * If a node is already active, it is deactivated before starting the new one.
+     * If another node, network, or buffer is already active, it will be cancelled before activating the new one.
      */
-    void play_with_processing(std::shared_ptr<Nodes::Node> node,
-        std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
-        std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
-        double duration_seconds, std::vector<uint32_t> channels);
+    void activate_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+        double duration_seconds,
+        Nodes::ProcessingToken token = Nodes::ProcessingToken::AUDIO_RATE,
+        const std::vector<uint32_t>& channels = {});
 
-    void play_with_processing(std::shared_ptr<Nodes::Node> node,
-        std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
-        std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
-        double duration_seconds, uint32_t channel);
-
-    void play_with_processing(std::shared_ptr<Nodes::Node> node,
-        std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
-        std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
-        double duration_seconds);
+    /**
+     * @brief Activates a buffer for a specified duration
+     * @param buffer The buffer to activate
+     * @param token The processing token associated with the buffer
+     * @param duration_seconds The duration to keep the buffer active (in seconds)
+     * @param channel Optional output channel to connect the buffer to (default is 0)
+     * This method activates the specified buffer by connecting it to the output channel,
+     * and starts a timer for the specified duration. When the timer expires, the buffer is automatically
+     * disconnected from the output channel, effectively deactivating it.
+     *
+     * If another node, network, or buffer is already active, it will be cancelled before activating the new one.
+     */
+    void activate_buffer(const std::shared_ptr<Buffers::Buffer>& buffer,
+        double duration_seconds,
+        Buffers::ProcessingToken token = Buffers::ProcessingToken::AUDIO_BACKEND,
+        uint32_t channel = 0);
 
     /**
      * @brief Cancels any currently active node
      *
-     * This method deactivates any currently active node, disconnecting it from
+     * This method deactivates any currently active node, nodenetowrk or buffer, disconnecting it from
      * the output channel. If no node is active, this method has no effect.
      */
     void cancel();
@@ -317,7 +312,7 @@ public:
      * @brief Checks if a node is currently active
      * @return True if a node is active, false otherwise
      *
-     * This method returns true if the timer has an active node that's
+     * This method returns true if the timer has an active entity that's
      * currently processing, and false otherwise.
      */
     [[nodiscard]] inline bool is_active() const { return m_timer.is_active(); }
@@ -327,15 +322,16 @@ private:
      * @brief Reference to the scheduler that manages this timer
      *
      * The scheduler provides the timing infrastructure needed for
-     * precise control of node activation durations.
+     * precise control of entity activation durations.
      */
     Vruta::TaskScheduler& m_scheduler;
 
     /**
-     * @brief Cleans up the current operation, disconnecting the node and resetting state
+     * @brief Cleans up the current operation, disconnecting the entity and resetting state
      *
      * This method is called when the timer completes its specified duration.
-     * It disconnects the currently active node from the output channels and
+     * It disconnects the currently active node/nodenetwork/buffer from the
+     *  output channels or graphics syc, or active and
      * resets internal state to allow new operations to be started.
      */
     void cleanup_current_operation();
@@ -349,9 +345,17 @@ private:
     Nodes::NodeGraphManager& m_node_graph_manager;
 
     /**
-     * @brief The timer used to schedule node disconnection
+     * @brief Reference to the buffer manager that manages processing buffers
      *
-     * This timer is used to disconnect the node after the
+     * The buffer manager provides the infrastructure for managing any buffers
+     * needed for processing nodes during their active duration.
+     */
+    Buffers::BufferManager& m_buffer_manager;
+
+    /**
+     * @brief The timer used to schedule processing duration
+     *
+     * This timer is used to disconnect the entity after the
      * specified duration has elapsed.
      */
     Timer m_timer;
@@ -366,6 +370,42 @@ private:
     std::shared_ptr<Nodes::Node> m_current_node;
 
     /**
+     * @brief The currently active network being played
+     *
+     * This pointer holds the network that is currently being played.
+     * It is set when play_for() or play_with_processing() is called
+     * and reset when the network finishes playing or is cancelled.
+     */
+    std::shared_ptr<Nodes::Network::NodeNetwork> m_current_network;
+
+    /**
+     * @brief The currently active buffer being played
+     *
+     * This pointer holds the buffer that is currently being played.
+     * It is set when play_for() or play_with_processing() is called
+     * and reset when the buffer finishes playing or is cancelled.
+     */
+    std::shared_ptr<Buffers::Buffer> m_current_buffer;
+
+    /**
+     * @brief The processing token associated with the currently active node or buffer
+     *
+     * This token is used to identify the processing context for the active node or buffer.
+     * It is set when play_for() or play_with_processing() is called and reset when the
+     * node or buffer finishes playing or is cancelled.
+     */
+    Nodes::ProcessingToken m_node_token;
+
+    /**
+     * @brief The processing token associated with the currently active buffer
+     *
+     * This token is used to identify the processing context for the active buffer.
+     * It is set when play_for() or play_with_processing() is called and reset when the
+     * buffer finishes playing or is cancelled.
+     */
+    Buffers::ProcessingToken m_buffer_token;
+
+    /**
      * @brief The output channels the current node is connected to
      *
      * This vector stores the output channel numbers that the current
@@ -373,6 +413,13 @@ private:
      * is called and reset when the node finishes playing or is cancelled.
      */
     std::vector<uint32_t> m_channels;
+
+    enum class ActiveType : uint8_t { NONE,
+        NODE,
+        BUFFER,
+        NETWORK };
+
+    ActiveType m_active_type = ActiveType::NONE;
 };
 
 }

@@ -377,7 +377,7 @@ The Engine provides central lifecycle management for coroutines via `TaskSchedul
 ```cpp
 // Fluent API - Engine handles domain assignment and task registration
 auto shape_node = vega.Polynomial({0.1, 0.5, 2.f});
-auto coordination_routine = shape_node >> Time(2.f);  // Automatic temporal domain assignment
+auto coordination_routine = shape_node >> Time(2.f) | Domain::AUDIO;  // Automatic temporal domain assignment
 
 // API Wrappers - Engine manages task registration and token assignment
 MayaFlux::schedule_metro(2.0, []() {
@@ -408,7 +408,7 @@ auto event_chain = MayaFlux::create_event_chain()
 
 When using `MayaFlux::schedule_metro`, using internal awaiter `SampleDelay` it constructs a `Vruta::SoundRoutine` frame -> store it in a shared_ptr, calls `TaskScheduler::add_task` which extracts token based on awaiter and adds it to the graph.
 
-When using temporal fluent operations like `node >> Time(2.f)`, the instruction creates a coroutine -> gets default `TaskScheduler` from engine -> registers it for the appropriate domain -> implicitly creates `Kriya::NodeTimer` and registers one-shot time operation;
+When using temporal fluent operations like `node >> Time(2.f) | Audio`, the instruction creates a coroutine -> gets default `TaskScheduler` from engine -> registers it for the appropriate domain -> implicitly creates `Kriya::NodeTimer` and registers one-shot time operation;
 
 ### Kriya
 

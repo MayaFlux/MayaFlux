@@ -1,14 +1,11 @@
 #pragma once
 
-#include "Operators.hpp"
+namespace MayaFlux::Vruta {
+class TaskScheduler;
+class SoundRoutine;
+}
 
 namespace MayaFlux::Kriya {
-
-enum ActionType : uint8_t {
-    NODE,
-    TIME,
-    FUNCTION
-};
 
 /**
  * @class EventChain
@@ -44,23 +41,15 @@ enum ActionType : uint8_t {
 class MAYAFLUX_API EventChain {
 public:
     /**
-     * @brief Constructs an EventChain using the global scheduler
-     *
-     * Creates a new EventChain that will use the global scheduler for timing
-     * operations. This is convenient for simple cases where only one processing
-     * engine is active.
-     */
-    EventChain();
-
-    /**
      * @brief Constructs an EventChain with an explicit scheduler
      * @param scheduler The TaskScheduler to use for timing
+     * @param name Optional name for the event chain (useful for debugging)
      *
      * Creates a new EventChain that will use the provided scheduler for timing
      * operations. This allows for more control over which scheduler is used,
      * which is useful in contexts where multiple processing engines might exist.
      */
-    EventChain(Vruta::TaskScheduler& scheduler);
+    EventChain(Vruta::TaskScheduler& scheduler, std::string name = "");
 
     /**
      * @brief Adds an event to the chain with a specified delay
@@ -88,6 +77,43 @@ public:
      * the right moment in the computational timeline.
      */
     void start();
+
+    /**
+     * @brief Cancels the event chain if it's currently executing
+     *
+     * Terminates the underlying coroutine, preventing any remaining
+     * events from executing. Safe to call even if chain has completed.
+     */
+    void cancel();
+
+    /**
+     * @brief Checks if the event chain is currently active
+     * @return True if chain is executing, false if completed or not started
+     */
+    [[nodiscard]] bool is_active() const;
+
+    /**
+     * @brief Sets a callback to execute when the chain stops executing
+     * @param callback Function to call after chain completes or is cancelled
+     *
+     * The callback fires regardless of how the chain stops:
+     * - After final event completes normally
+     * - After cancel() is called
+     * - After an exception in an action (action exceptions are caught)
+     *
+     * Use this for cleanup that must happen regardless of completion reason.
+     * For actions that should only run on successful completion, use .then()
+     */
+    EventChain& on_complete(std::function<void()> callback);
+
+    /**
+     * @brief Gets the name of the event chain
+     * @return Name of the event chain
+     *
+     * The name can be used for debugging or management purposes, especially when
+     * multiple chains are active. If no name was set, this will return an empty string.
+     */
+    [[nodiscard]] const std::string& name() const { return m_name; }
 
 private:
     /**
@@ -124,174 +150,30 @@ private:
      * in the chain. It's created when start() is called.
      */
     std::shared_ptr<Vruta::SoundRoutine> m_routine;
-};
-
-/**
- * @class ActionToken
- * @brief A token representing an action in a computational sequence
- *
- * The ActionToken class represents a single action in a sequence, which can be
- * a node connection, a time delay, or a function call. It's designed to be used
- * with the Sequence class to create expressive sequences of computational operations.
- *
- * This approach is inspired by dataflow programming and reactive systems,
- * which use similar concepts to represent sequences of computational events. It allows for
- * a more intuitive, declarative way of expressing sequences compared to traditional
- * imperative programming.
- *
- * ActionTokens are typically created implicitly through conversions from nodes,
- * time values, or functions, making the API more concise and expressive.
- */
-class MAYAFLUX_API ActionToken {
-public:
-    /**
-     * @brief Constructs an ActionToken representing a node connection
-     * @param _node The processing node to connect
-     *
-     * Creates a token that represents connecting a processing node to the output
-     * or applying some other operation to it.
-     */
-    ActionToken(std::shared_ptr<Nodes::Node> _node);
 
     /**
-     * @brief Constructs an ActionToken representing a time delay
-     * @param _seconds The delay duration in seconds
+     * @brief Optional callback to execute when the chain completes
      *
-     * Creates a token that represents waiting for a specified amount of time
-     * before proceeding to the next action in the sequence.
+     * This function is called after the final event in the chain has executed.
+     * It can be used for cleanup, triggering subsequent actions, or any other
+     * behavior that should occur after the chain finishes.
      */
-    ActionToken(double _seconds);
+    std::function<void()> m_on_complete;
 
     /**
-     * @brief Constructs an ActionToken representing a function call
-     * @param _func The function to call
+     * @brief Optional name for the event chain
      *
-     * Creates a token that represents calling a function as part of the sequence.
-     * This is useful for triggering state changes or control logic.
+     * This name can be used for debugging or management purposes, especially when
+     * multiple chains are active. If no name is provided, it will be an empty string.
      */
-    ActionToken(std::function<void()> _func);
+    std::string m_name;
+
+    bool m_on_complete_fired {}; ///< Flag to ensure on_complete is only fired once
 
     /**
-     * @brief The type of action this token represents
-     *
-     * This field indicates whether the token represents a node connection,
-     * a time delay, or a function call.
+     * @brief Internal method to safely fire the on_complete callback
      */
-    ActionType type;
-
-    /**
-     * @brief The processing node to connect (for NODE type tokens)
-     *
-     * This field contains the processing node to connect, if this token
-     * represents a node connection.
-     */
-    std::shared_ptr<Nodes::Node> node;
-
-    /**
-     * @brief The function to call (for FUNCTION type tokens)
-     *
-     * This field contains the function to call, if this token
-     * represents a function call.
-     */
-    std::function<void()> func;
-
-    /**
-     * @brief The delay duration in seconds (for TIME type tokens)
-     *
-     * This field contains the delay duration, if this token
-     * represents a time delay.
-     */
-    double seconds = 0.F;
-};
-
-/**
- * @class Sequence
- * @brief A sequence of computational operations with a fluent, declarative API
- *
- * The Sequence class provides a way to create sequences of computational operations
- * using a fluent, declarative API with the stream operator (>>). It's designed
- * for creating expressive sequences of node connections, time delays, and
- * function calls.
- *
- * This approach is inspired by dataflow programming and reactive systems, which
- * use similar operators to express both data flow and temporal sequencing.
- * It allows for a more intuitive, declarative way of expressing sequences compared
- * to traditional imperative programming.
- *
- * Example usage:
- * ```cpp
- * // Create a sequence
- * Sequence seq;
- *
- * // Define a sequence of operations
- * seq >> data_source >> 0.5 >> []() { std::cout << "Half second passed" << std::endl; }
- *     >> transform_node >> 0.5 >> output_node;
- *
- * // Execute the sequence
- * seq.execute();
- * ```
- *
- * This creates a sequence that:
- * 1. Connects data_source to the output
- * 2. Waits 0.5 seconds
- * 3. Prints a message
- * 4. Connects transform_node to the output
- * 5. Waits 0.5 seconds
- * 6. Connects output_node to the output
- *
- * The Sequence is part of a broader pattern of using operator overloading
- * to create a domain-specific language for computational flow programming within C++.
- */
-class MAYAFLUX_API Sequence {
-public:
-    /**
-     * @brief Adds an action to the sequence
-     * @param token The action to add
-     * @return Reference to this Sequence for method chaining
-     *
-     * This operator overload implements the seq >> action syntax, which adds
-     * an action to the sequence. The action can be a node connection, a time
-     * delay, or a function call, represented by an ActionToken.
-     *
-     * The method returns a reference to the Sequence itself, allowing for a
-     * fluent, declarative API style.
-     */
-    Sequence& operator>>(const ActionToken& token);
-
-    /**
-     * @brief Executes the sequence using the global managers
-     *
-     * This method executes the sequence of actions using the global node manager
-     * and scheduler. It's convenient for simple cases where only one processing
-     * engine is active.
-     *
-     * The actions are executed in the order they were added, with any time
-     * delays respected.
-     */
-    void execute();
-
-    /**
-     * @brief Executes the sequence with explicit managers
-     * @param node_manager The NodeGraphManager to use for node connections
-     * @param scheduler The TaskScheduler to use for timing
-     *
-     * This method executes the sequence of actions using the provided node manager
-     * and scheduler. This allows for more control over which managers are used,
-     * which is useful in contexts where multiple processing engines might exist.
-     *
-     * The actions are executed in the order they were added, with any time
-     * delays respected.
-     */
-    void execute(const std::shared_ptr<Nodes::NodeGraphManager>& node_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler);
-
-private:
-    /**
-     * @brief Collection of actions in this sequence
-     *
-     * This vector contains all the actions that have been added to the sequence,
-     * in the order they will be executed.
-     */
-    std::vector<ActionToken> tokens;
+    void fire_on_complete();
 };
 
 }

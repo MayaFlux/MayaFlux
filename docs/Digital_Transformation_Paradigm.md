@@ -143,7 +143,7 @@ connection point represents a decision about how information should
 evolve. Critically, these streams work across domains:
 
 ```cpp
-phasor >> noise >> (IIR(sine) * 0.5) + noise >> DAC;
+phasor >> noise >> (IIR(sine) * 0.5) + noise | Audio;
 
 // Cross-domain connection: audio drives visual parameters
 auto audio_envelope = vega.Sine(1.0f) | Audio;
@@ -437,7 +437,7 @@ simple non-verbose creation and not time manipulate **at** creation.
 ```cpp
 // Fluent API
 auto shape_node = vega.Polynomial({0.1, 0.5, 2.f});
-shape_node >> Time(2.f);
+shape_node >> Time(2.f) | Audio;
 auto wave = vega.Phasor(shape_node, 440.f);
 NodeTimer::play_for(wave, 5.f);
 
@@ -544,14 +544,8 @@ auto chain = Kriya::EventChain{}
     .then([]() { trigger_release(); }, 0.5);
 chain.start();
 
-// Node and time sequencing through operators
-auto sequence = Kriya::Sequence{};
-sequence >> Play(sine_node) >> Wait(0.5) >> Action(reset_state) >> Wait(0.25);
-sequence.execute();
-
 // Temporal operators for direct node control
-sine_node >> Time(2.0);  // Play node for 2 seconds
-filter_node >> DAC::instance();  // Route to output
+sine_node >> Time(2.0) | Audio;  // Play node for 2 seconds
 ```
 
 ### Buffer Integration and Capture

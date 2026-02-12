@@ -1,21 +1,17 @@
 #include "Chain.hpp"
-#include "MayaFlux/API/Chronie.hpp"
-#include "MayaFlux/API/Graph.hpp"
+
 #include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 static const auto node_token = MayaFlux::Nodes::ProcessingToken::AUDIO_RATE;
 
 namespace MayaFlux::Kriya {
 
-EventChain::EventChain()
-    : m_Scheduler(*MayaFlux::get_scheduler())
-{
-}
-
-EventChain::EventChain(Vruta::TaskScheduler& scheduler)
+EventChain::EventChain(Vruta::TaskScheduler& scheduler, std::string name)
     : m_Scheduler(scheduler)
+    , m_name(std::move(name))
 {
 }
 
@@ -30,76 +26,81 @@ void EventChain::start()
     if (m_events.empty())
         return;
 
-    auto shared_this = std::make_shared<EventChain>(*this);
+    m_on_complete_fired = false;
 
-    auto coroutine_func = [](Vruta::TaskScheduler& scheduler, std::shared_ptr<EventChain> chain) -> MayaFlux::Vruta::SoundRoutine {
+    auto coroutine_func = [](Vruta::TaskScheduler& scheduler, EventChain* chain) -> MayaFlux::Vruta::SoundRoutine {
+        auto& promise = co_await Kriya::GetAudioPromise {};
+
         for (const auto& event : chain->m_events) {
+            if (promise.should_terminate) {
+                break;
+            }
+
             co_await SampleDelay { scheduler.seconds_to_samples(event.delay_seconds) };
             try {
                 if (event.action) {
                     event.action();
                 }
             } catch (const std::exception& e) {
-                std::cerr << "Exception in EventChain action: " << e.what() << '\n';
+                MF_RT_ERROR(
+                    Journal::Component::Kriya,
+                    Journal::Context::CoroutineScheduling,
+                    "Exception in EventChain action: {}", e.what());
             } catch (...) {
-                std::cerr << "Unknown exception in EventChain action" << '\n';
+                MF_RT_ERROR(
+                    Journal::Component::Kriya,
+                    Journal::Context::CoroutineScheduling,
+                    "Unknown exception in EventChain action");
             }
         }
+
+        chain->fire_on_complete();
     };
 
-    m_routine = std::make_shared<Vruta::SoundRoutine>(coroutine_func(m_Scheduler, shared_this));
-    m_Scheduler.add_task(m_routine);
+    std::string task_name = m_name.empty() ? "EventChain_" + std::to_string(m_Scheduler.get_next_task_id()) : m_name;
+    m_routine = std::make_shared<Vruta::SoundRoutine>(coroutine_func(m_Scheduler, this));
+    m_Scheduler.add_task(m_routine, task_name, true);
 }
 
-ActionToken::ActionToken(std::shared_ptr<Nodes::Node> _node)
-    : type(ActionType::NODE)
-    , node(std::move(_node))
+void EventChain::cancel()
 {
+    if (is_active()) {
+        m_Scheduler.cancel_task(m_routine);
+        m_routine = nullptr;
+
+        fire_on_complete();
+    }
 }
 
-ActionToken::ActionToken(double _seconds)
-    : type(ActionType::TIME)
-    , seconds(_seconds)
+bool EventChain::is_active() const
 {
+    return m_routine && m_routine->is_active();
 }
 
-ActionToken::ActionToken(std::function<void()> _func)
-    : type(ActionType::FUNCTION)
-    , func(std::move(_func))
+EventChain& EventChain::on_complete(std::function<void()> callback)
 {
-}
-
-Sequence& Sequence::operator>>(const ActionToken& token)
-{
-    tokens.push_back(token);
+    m_on_complete = std::move(callback);
     return *this;
 }
 
-void Sequence::execute()
+void EventChain::fire_on_complete()
 {
-    execute(MayaFlux::get_node_graph_manager(), MayaFlux::get_scheduler());
-}
-
-void Sequence::execute(const std::shared_ptr<Nodes::NodeGraphManager>& node_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler)
-{
-    EventChain chain(*scheduler);
-    double accumulated_time = 0.F;
-
-    for (const auto& token : tokens) {
-        if (token.type == ActionType::NODE) {
-            chain.then([node = token.node, node_manager]() {
-                auto& root = node_manager->get_root_node(node_token, 0);
-                root.register_node(node);
-            },
-                accumulated_time);
-            accumulated_time = 0.F;
-        } else if (token.type == ActionType::TIME) {
-            accumulated_time += token.seconds;
-        } else if (token.type == ActionType::FUNCTION) {
-            chain.then(token.func, accumulated_time);
-            accumulated_time = 0.F;
+    if (m_on_complete && !m_on_complete_fired) {
+        m_on_complete_fired = true;
+        try {
+            m_on_complete();
+        } catch (const std::exception& e) {
+            MF_RT_ERROR(
+                Journal::Component::Kriya,
+                Journal::Context::CoroutineScheduling,
+                "Exception in EventChain on_complete: {}", e.what());
+        } catch (...) {
+            MF_RT_ERROR(
+                Journal::Component::Kriya,
+                Journal::Context::CoroutineScheduling,
+                "Unknown exception in EventChain on_complete");
         }
     }
-    chain.start();
 }
+
 }
