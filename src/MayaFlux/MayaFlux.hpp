@@ -26,6 +26,7 @@
 
 #ifdef MAYASIMPLE
 #include "MayaFlux/API/Proxy/Creator.hpp"
+#include "MayaFlux/API/Proxy/Temporal.hpp"
 
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"

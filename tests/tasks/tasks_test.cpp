@@ -8,6 +8,7 @@
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+#include "MayaFlux/API/Proxy/Temporal.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 
 namespace MayaFlux::Test {
@@ -259,29 +260,6 @@ TEST_F(TasksTest, Sequence)
 
     EXPECT_TRUE(func_called);
 }
-
-/* TEST_F(TasksTest, TimeOperator)
-{
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
-
-    auto& root = node_graph_manager->get_root_node(processing_token, 0);
-    EXPECT_EQ(root.get_node_size(), 0);
-
-    sine >> Kriya::NodeTimeSpec(0.01, *scheduler, *node_graph_manager);
-
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    uint64_t samples_10ms = scheduler->seconds_to_samples(0.01);
-
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms - 1);
-    root.process_batch(samples_10ms);
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    root.process_batch(samples_10ms);
-
-    EXPECT_EQ(root.get_node_size(), 0);
-} */
 
 TEST_F(TasksTest, CoroutineTasks)
 {
@@ -712,7 +690,7 @@ TEST_F(TasksTest, SequenceIntegration)
     MayaFlux::End();
 }
 
-/* TEST_F(TasksTest, TimeOperatorI)
+TEST_F(TasksTest, TimeOperatorI)
 {
     MayaFlux::Init();
 
@@ -724,18 +702,18 @@ TEST_F(TasksTest, SequenceIntegration)
 
     EXPECT_EQ(root.get_node_size(), 0);
 
-    sine >> Kriya::NodeTimeSpec(0.1);
+    sine >> Time(0.2) | Domain::AUDIO;
 
     EXPECT_EQ(root.get_node_size(), 1);
 
-    uint64_t samples = scheduler->seconds_to_samples(0.11);
+    uint64_t samples = scheduler->seconds_to_samples(0.21);
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples);
     root.process_batch(samples);
 
     EXPECT_EQ(root.get_node_size(), 0);
 
     MayaFlux::End();
-} */
+}
 
 TEST_F(TasksTest, LogicTasksIntegration)
 {

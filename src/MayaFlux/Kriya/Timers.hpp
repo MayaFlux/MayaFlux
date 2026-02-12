@@ -18,26 +18,6 @@ class BufferManager;
 
 namespace MayaFlux::Kriya {
 
-struct MAYAFLUX_API TimeSpec {
-    double seconds;
-    std::optional<std::vector<uint32_t>> channels;
-
-    TimeSpec(double s)
-        : seconds(s)
-    {
-    }
-    TimeSpec(double s, std::vector<uint32_t> ch)
-        : seconds(s)
-        , channels(ch)
-    {
-    }
-    TimeSpec(double s, uint32_t ch)
-        : seconds(s)
-        , channels(std::vector<uint32_t> { ch })
-    {
-    }
-};
-
 /**
  * @class Timer
  * @brief High-level utility for scheduling one-shot timed callbacks
