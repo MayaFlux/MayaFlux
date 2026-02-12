@@ -5,6 +5,7 @@
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Kriya/BufferPipeline.hpp"
 #include "MayaFlux/Kriya/Chain.hpp"
+#include "MayaFlux/Kriya/Tasks.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
@@ -98,7 +99,7 @@ float* get_line_value(const std::string& name)
 
 void schedule_task(const std::string& name, Vruta::SoundRoutine&& task, bool initialize)
 {
-    auto task_ptr = std::make_shared<Vruta::SoundRoutine>(task);
+    auto task_ptr = std::make_shared<Vruta::SoundRoutine>(std::move(task));
     get_scheduler()->add_task(std::move(task_ptr), name, initialize);
 }
 
@@ -110,21 +111,6 @@ bool cancel_task(const std::string& name)
 bool restart_task(const std::string& name)
 {
     return get_scheduler()->restart_task(name);
-}
-
-Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node)
-{
-    return { std::move(node) };
-}
-
-Kriya::ActionToken Wait(double seconds)
-{
-    return { seconds };
-}
-
-Kriya::ActionToken Action(std::function<void()> func)
-{
-    return { std::move(func) };
 }
 
 std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline()

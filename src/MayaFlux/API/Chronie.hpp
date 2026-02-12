@@ -19,7 +19,6 @@ namespace Vruta {
 }
 
 namespace Kriya {
-    class ActionToken;
     class BufferPipeline;
 }
 
@@ -167,33 +166,6 @@ MAYAFLUX_API bool restart_task(const std::string& name);
  */
 template <typename... Args>
 MAYAFLUX_API bool update_task_params(const std::string& name, Args... args);
-
-/**
- * @brief Creates an action to play a node
- * @param node Node to play
- * @return ActionToken representing the action
- *
- * Adds the node to the default engine's processing chain.
- */
-MAYAFLUX_API Kriya::ActionToken Play(std::shared_ptr<Nodes::Node> node);
-
-/**
- * @brief Creates a wait action
- * @param seconds Time to wait in seconds
- * @return ActionToken representing the wait
- *
- * Uses the task scheduler from the default engine.
- */
-MAYAFLUX_API Kriya::ActionToken Wait(double seconds);
-
-/**
- * @brief Creates a custom action
- * @param func Function to execute
- * @return ActionToken representing the action
- *
- * Uses the task scheduler from the default engine.
- */
-MAYAFLUX_API Kriya::ActionToken Action(std::function<void()> func);
 
 /**
  * @brief Creates a new buffer pipeline instance

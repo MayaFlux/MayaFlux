@@ -544,11 +544,6 @@ auto chain = Kriya::EventChain{}
     .then([]() { trigger_release(); }, 0.5);
 chain.start();
 
-// Node and time sequencing through operators
-auto sequence = Kriya::Sequence{};
-sequence >> Play(sine_node) >> Wait(0.5) >> Action(reset_state) >> Wait(0.25);
-sequence.execute();
-
 // Temporal operators for direct node control
 sine_node >> Time(2.0) | Audio;  // Play node for 2 seconds
 ```

@@ -8,7 +8,6 @@
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
-#include "MayaFlux/API/Proxy/Temporal.hpp"
 #include "MayaFlux/MayaFlux.hpp"
 
 namespace MayaFlux::Test {
@@ -205,60 +204,6 @@ TEST_F(TasksTest, TemporalActivationNetwork)
 
     EXPECT_FALSE(time_action.is_active());
     EXPECT_EQ(node_graph_manager->get_network_count(processing_token), 0);
-}
-
-TEST_F(TasksTest, ActionTokens)
-{
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
-    auto node_token = Kriya::ActionToken(sine);
-
-    EXPECT_EQ(node_token.type, Kriya::ActionType::NODE);
-    EXPECT_EQ(node_token.node, sine);
-
-    auto time_token = Kriya::ActionToken(0.5);
-
-    EXPECT_EQ(time_token.type, Kriya::ActionType::TIME);
-    EXPECT_DOUBLE_EQ(time_token.seconds, 0.5);
-
-    bool func_called = false;
-    auto func_token = Kriya::ActionToken([&func_called]() { func_called = true; });
-
-    EXPECT_EQ(func_token.type, Kriya::ActionType::FUNCTION);
-    EXPECT_FALSE(func_called);
-
-    func_token.func();
-    EXPECT_TRUE(func_called);
-}
-
-TEST_F(TasksTest, Sequence)
-{
-    Kriya::Sequence sequence;
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
-    bool func_called = false;
-
-    sequence >> Play(sine)
-        >> Wait(0.009)
-        >> Action([&func_called]() {
-              func_called = true;
-          });
-
-    EXPECT_FALSE(func_called);
-
-    sequence.execute(node_graph_manager, scheduler);
-
-    auto& root = node_graph_manager->get_root_node(processing_token, 0);
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    auto samples_9ms = scheduler->seconds_to_samples(0.009);
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_9ms - 1);
-    root.process_batch(samples_9ms);
-    EXPECT_FALSE(func_called);
-
-    auto samples_1ms = scheduler->seconds_to_samples(0.001);
-    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_1ms);
-    root.process_batch(samples_1ms);
-
-    EXPECT_TRUE(func_called);
 }
 
 TEST_F(TasksTest, CoroutineTasks)
@@ -615,80 +560,6 @@ TEST_F(TasksTest, MultipleLogicTasks)
 #define INTEGRATION_TEST ;
 
 #ifdef INTEGRATION_TEST
-
-TEST_F(TasksTest, SequenceI)
-{
-    MayaFlux::Init();
-
-    MayaFlux::Start();
-    AudioTestHelper::waitForAudio(100);
-
-    Kriya::Sequence sequence;
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
-    bool func_called = false;
-
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
-
-    sequence >> Play(sine)
-        >> Wait(0.01)
-        >> Action([&func_called]() { func_called = true; });
-
-    EXPECT_FALSE(func_called);
-
-    sequence.execute();
-
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    EXPECT_FALSE(func_called);
-
-    AudioTestHelper::waitForAudio(10);
-    EXPECT_TRUE(func_called);
-
-    MayaFlux::End();
-
-    AudioTestHelper::waitForAudio(100);
-}
-
-TEST_F(TasksTest, SequenceIntegration)
-{
-    MayaFlux::Init();
-
-    MayaFlux::Start();
-
-    Kriya::Sequence sequence;
-    auto sine1 = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
-    auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0F, 0.5F);
-    bool sequence_completed = false;
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
-
-    sequence
-        >> Play(sine1)
-        >> Wait(0.2)
-        >> Action([sine1]() { sine1->set_frequency(550.0F); })
-        >> Wait(0.2)
-        >> Play(sine2)
-        >> Wait(0.2)
-        >> Action([&sequence_completed]() { sequence_completed = true; });
-
-    EXPECT_FALSE(sequence_completed);
-    EXPECT_EQ(root.get_node_size(), 0);
-
-    sequence.execute();
-
-    AudioTestHelper::waitForAudio(4);
-
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    AudioTestHelper::waitForAudio(500);
-
-    EXPECT_EQ(root.get_node_size(), 2);
-
-    AudioTestHelper::waitForAudio(1000);
-
-    EXPECT_TRUE(sequence_completed);
-
-    MayaFlux::End();
-}
 
 TEST_F(TasksTest, TimeOperatorI)
 {

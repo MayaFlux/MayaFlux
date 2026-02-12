@@ -1,8 +1,7 @@
 #include "Chain.hpp"
+
 #include "MayaFlux/API/Chronie.hpp"
-#include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
-#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 static const auto node_token = MayaFlux::Nodes::ProcessingToken::AUDIO_RATE;
@@ -51,55 +50,4 @@ void EventChain::start()
     m_Scheduler.add_task(m_routine);
 }
 
-ActionToken::ActionToken(std::shared_ptr<Nodes::Node> _node)
-    : type(ActionType::NODE)
-    , node(std::move(_node))
-{
-}
-
-ActionToken::ActionToken(double _seconds)
-    : type(ActionType::TIME)
-    , seconds(_seconds)
-{
-}
-
-ActionToken::ActionToken(std::function<void()> _func)
-    : type(ActionType::FUNCTION)
-    , func(std::move(_func))
-{
-}
-
-Sequence& Sequence::operator>>(const ActionToken& token)
-{
-    tokens.push_back(token);
-    return *this;
-}
-
-void Sequence::execute()
-{
-    execute(MayaFlux::get_node_graph_manager(), MayaFlux::get_scheduler());
-}
-
-void Sequence::execute(const std::shared_ptr<Nodes::NodeGraphManager>& node_manager, const std::shared_ptr<Vruta::TaskScheduler>& scheduler)
-{
-    EventChain chain(*scheduler);
-    double accumulated_time = 0.F;
-
-    for (const auto& token : tokens) {
-        if (token.type == ActionType::NODE) {
-            chain.then([node = token.node, node_manager]() {
-                auto& root = node_manager->get_root_node(node_token, 0);
-                root.register_node(node);
-            },
-                accumulated_time);
-            accumulated_time = 0.F;
-        } else if (token.type == ActionType::TIME) {
-            accumulated_time += token.seconds;
-        } else if (token.type == ActionType::FUNCTION) {
-            chain.then(token.func, accumulated_time);
-            accumulated_time = 0.F;
-        }
-    }
-    chain.start();
-}
 }
