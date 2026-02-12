@@ -437,7 +437,7 @@ simple non-verbose creation and not time manipulate **at** creation.
 ```cpp
 // Fluent API
 auto shape_node = vega.Polynomial({0.1, 0.5, 2.f});
-shape_node >> Time(2.f);
+shape_node >> Time(2.f) | Audio;
 auto wave = vega.Phasor(shape_node, 440.f);
 NodeTimer::play_for(wave, 5.f);
 
@@ -550,7 +550,7 @@ sequence >> Play(sine_node) >> Wait(0.5) >> Action(reset_state) >> Wait(0.25);
 sequence.execute();
 
 // Temporal operators for direct node control
-sine_node >> Time(2.0);  // Play node for 2 seconds
+sine_node >> Time(2.0) | Audio;  // Play node for 2 seconds
 ```
 
 ### Buffer Integration and Capture

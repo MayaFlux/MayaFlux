@@ -102,9 +102,6 @@ public:
 private:
     std::shared_ptr<T> m_entity;
     TimeSpec m_spec;
-
-    // template <typename U>
-    // friend class TemporalWrapper;
 };
 
 /**

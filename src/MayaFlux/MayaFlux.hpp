@@ -24,10 +24,11 @@
 
 #include "MayaFlux/API/Yantra.hpp"
 
-#ifdef MAYASIMPLE
 #include "MayaFlux/API/Proxy/Creator.hpp"
+
 #include "MayaFlux/API/Proxy/Temporal.hpp"
 
+#ifdef MAYASIMPLE
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
 #include "Nodes/Generators/Impulse.hpp"
