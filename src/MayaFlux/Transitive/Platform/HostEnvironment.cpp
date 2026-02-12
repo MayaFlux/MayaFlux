@@ -2,6 +2,15 @@
 
 namespace MayaFlux::Platform {
 
+namespace {
+
+    const std::vector<std::string> eigen_includes = {
+        "/usr/include/eigen3",
+        "/usr/local/include/eigen3",
+        "/opt/homebrew/include/eigen3"
+    };
+}
+
 std::string safe_getenv(const char* var)
 {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
@@ -113,6 +122,32 @@ const std::string& SystemConfig::find_library(const std::string& library_name)
         if (fs::exists(full_path)) {
             result = full_path.string();
             break;
+        }
+    }
+
+    return result;
+}
+
+const std::string& SystemConfig::get_dep_includes(const std::string& library_name)
+{
+    static std::unordered_map<std::string, std::string> cache;
+
+    auto it = cache.find(library_name);
+    if (it != cache.end()) {
+        return it->second;
+    }
+
+    std::string& result = cache[library_name];
+    if (library_name == "Eigen" || library_name == "eigen") {
+        if (!Config::EIGEN_HINT.empty() && fs::exists(Config::EIGEN_HINT)) {
+            result = Config::EIGEN_HINT;
+        } else {
+            for (const auto& path : eigen_includes) {
+                if (std::filesystem::exists(path)) {
+                    result = path;
+                    break;
+                }
+            }
         }
     }
 

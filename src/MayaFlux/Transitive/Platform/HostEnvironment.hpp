@@ -21,6 +21,8 @@ public:
 
     static const std::string& find_library(const std::string& library_name);
 
+    static const std::string& get_dep_includes(const std::string& library_name);
+
 #ifdef MAYAFLUX_PLATFORM_MACOS
     static std::string get_macos_sdk_path();
 #endif // MAYAFLUX_PLATFORM_MACOS

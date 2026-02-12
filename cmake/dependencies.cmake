@@ -21,6 +21,8 @@ if(WIN32)
             IMPORTED_LOCATION "$ENV{FFMPEG_ROOT}/lib/${component}.lib"
             INTERFACE_INCLUDE_DIRECTORIES "$ENV{FFMPEG_ROOT}/include")
     endforeach()
+
+    set(MAYAFLUX_EIGEN_INCLUDE ${eigen3_INCLUDE_DIRS})
 else()
     message(STATUS "=== UNIX Dependency Detection ===")
 
@@ -53,4 +55,6 @@ else()
     pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
     pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
+
+    set(MAYAFLUX_EIGEN_INCLUDE ${Eigen_INCLUDE_DIRS})
 endif()

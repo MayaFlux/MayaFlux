@@ -115,6 +115,18 @@ bool ClangInterpreter::initialize()
         m_impl->compile_flags.push_back("-isystem" + include);
     }
 
+#ifndef MAYAFLUX_PLATFORM_WINDOWS
+    const auto& eigen_include = MayaFlux::Platform::SystemConfig::get_dep_includes("eigen");
+    if (!eigen_include.empty()) {
+        m_impl->compile_flags.push_back("-isystem" + eigen_include);
+        LILA_DEBUG(Emitter::INTERPRETER,
+            std::string("Added Eigen include path: ") + eigen_include);
+    } else {
+        LILA_WARN(Emitter::INTERPRETER,
+            "Could not find Eigen include path - some features may not work");
+    }
+#endif
+
 #ifdef MAYAFLUX_PLATFORM_MACOS
     // CRITICAL: JIT uses Homebrew LLVM but needs macOS SDK for system headers
     // Homebrew LLVM's libc++ requires pthread.h, sched.h, time.h, etc. from SDK
