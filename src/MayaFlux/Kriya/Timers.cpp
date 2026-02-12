@@ -1,11 +1,11 @@
 #include "Timers.hpp"
-#include "MayaFlux/API/Graph.hpp"
+
 #include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
-#include "MayaFlux/Nodes/Node.hpp"
+#include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
+
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
-
-static MayaFlux::Nodes::ProcessingToken token = MayaFlux::Nodes::ProcessingToken::AUDIO_RATE;
 
 namespace MayaFlux::Kriya {
 
@@ -18,7 +18,7 @@ Timer::Timer(Vruta::TaskScheduler& scheduler)
 void Timer::schedule(double delay_seconds, std::function<void()> callback)
 {
     cancel();
-    m_callback = callback;
+    m_callback = std::move(callback);
     m_active = true;
 
     auto routine_func = [](Vruta::TaskScheduler& scheduler, uint64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
@@ -57,7 +57,7 @@ TimedAction::TimedAction(Vruta::TaskScheduler& scheduler)
 {
 }
 
-void TimedAction::execute(std::function<void()> start_func, std::function<void()> end_func, double duration_seconds)
+void TimedAction::execute(const std::function<void()>& start_func, const std::function<void()>& end_func, double duration_seconds)
 {
     cancel();
     start_func();
@@ -74,33 +74,29 @@ bool TimedAction::is_pending() const
     return m_timer.is_active();
 }
 
-NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler)
+TemporalActivation::TemporalActivation(Vruta::TaskScheduler& scheduler,
+    Nodes::NodeGraphManager& node_graph_manager,
+    Buffers::BufferManager& buffer_manager)
     : m_scheduler(scheduler)
-    , m_node_graph_manager(*MayaFlux::get_node_graph_manager())
+    , m_node_graph_manager(node_graph_manager)
+    , m_buffer_manager(buffer_manager)
     , m_timer(scheduler)
 {
 }
 
-NodeTimer::NodeTimer(Vruta::TaskScheduler& scheduler, Nodes::NodeGraphManager& graph_manager)
-    : m_scheduler(scheduler)
-    , m_node_graph_manager(graph_manager)
-    , m_timer(scheduler)
-{
-}
-
-void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, uint32_t channel)
-{
-    play_for(node, duration_seconds, std::vector<uint32_t> { channel });
-}
-
-void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds, std::vector<uint32_t> channels)
+void TemporalActivation::activate_node(const std::shared_ptr<Nodes::Node>& node,
+    double duration_seconds,
+    Nodes::ProcessingToken token,
+    const std::vector<uint32_t>& channels)
 {
     cancel();
 
     m_current_node = node;
+    m_node_token = token;
     m_channels = channels;
+    m_active_type = ActiveType::NODE;
 
-    for (auto& channel : channels) {
+    for (auto channel : channels) {
         m_node_graph_manager.add_to_root(node, token, channel);
     }
 
@@ -109,79 +105,92 @@ void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seco
     });
 }
 
-void NodeTimer::play_for(std::shared_ptr<Nodes::Node> node, double duration_seconds)
-{
-    auto source_mask = node->get_channel_mask().load(std::memory_order_relaxed);
-    std::vector<uint32_t> channels;
-
-    if (source_mask == 0) {
-        channels = { 0 };
-    } else {
-        for (auto& channel : Nodes::get_active_channels(source_mask, 0)) {
-            channels.push_back(channel);
-        }
-    }
-
-    play_for(node, duration_seconds, channels);
-}
-
-void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, uint32_t channel)
-{
-    play_with_processing(node, setup_func, cleanup_func, duration_seconds, std::vector<uint32_t> { channel });
-}
-
-void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node, std::function<void(std::shared_ptr<Nodes::Node>)> setup_func, std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func, double duration_seconds, std::vector<uint32_t> channels)
+void TemporalActivation::activate_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    double duration_seconds, Nodes::ProcessingToken token, const std::vector<uint32_t>& channels)
 {
     cancel();
 
-    m_current_node = node;
+    m_current_network = network;
+    m_node_token = token;
+    m_active_type = ActiveType::NETWORK;
     m_channels = channels;
 
-    setup_func(node);
-
-    for (auto channel : channels) {
-        m_node_graph_manager.add_to_root(node, token, channel);
+    for (const auto& ch : channels) {
+        network->add_channel_usage(ch);
     }
 
-    m_timer.schedule(duration_seconds, [this, node, cleanup_func]() {
-        cleanup_func(node);
+    m_node_graph_manager.add_network(network, token);
+
+    m_timer.schedule(duration_seconds, [this]() {
         cleanup_current_operation();
     });
 }
 
-void NodeTimer::play_with_processing(std::shared_ptr<Nodes::Node> node,
-    std::function<void(std::shared_ptr<Nodes::Node>)> setup_func,
-    std::function<void(std::shared_ptr<Nodes::Node>)> cleanup_func,
-    double duration_seconds)
+void TemporalActivation::activate_buffer(const std::shared_ptr<Buffers::Buffer>& buffer,
+    double duration_seconds,
+    Buffers::ProcessingToken token,
+    uint32_t channel)
 {
-    auto source_mask = node->get_channel_mask().load(std::memory_order_relaxed);
-    std::vector<uint32_t> channels;
+    cancel();
 
-    if (source_mask == 0) {
-        channels = { 0 };
-    } else {
-        for (auto& channel : Nodes::get_active_channels(source_mask, 0)) {
-            channels.push_back(channel);
-        }
-    }
+    m_current_buffer = buffer;
+    m_buffer_token = token;
+    m_channels = { channel };
+    m_active_type = ActiveType::BUFFER;
 
-    play_with_processing(node, setup_func, cleanup_func, duration_seconds, channels);
+    m_buffer_manager.add_buffer(buffer, token, channel);
+
+    m_timer.schedule(duration_seconds, [this]() {
+        cleanup_current_operation();
+    });
 }
 
-void NodeTimer::cleanup_current_operation()
+void TemporalActivation::cleanup_current_operation()
 {
-    if (m_current_node) {
-        for (auto channel : m_channels) {
-            if (m_current_node->is_used_by_channel(channel)) {
-                m_node_graph_manager.get_root_node(token, channel).unregister_node(m_current_node);
+    switch (m_active_type) {
+    case ActiveType::NODE:
+        if (m_current_node) {
+            if (m_channels.empty()) {
+                m_node_graph_manager.get_root_node(m_node_token, 0).unregister_node(m_current_node);
             }
+            for (auto channel : m_channels) {
+                if (m_current_node->is_used_by_channel(channel)) {
+                    m_node_graph_manager.get_root_node(m_node_token, channel).unregister_node(m_current_node);
+                }
+            }
+            m_current_node = nullptr;
+            m_channels.clear();
         }
-        m_current_node = nullptr;
-        m_channels.clear();
+        break;
+
+    case ActiveType::NETWORK:
+        if (m_current_network) {
+            for (const auto& ch : m_channels) {
+                m_current_network->remove_channel_usage(ch);
+            }
+
+            m_node_graph_manager.remove_network(m_current_network, m_node_token);
+            m_current_network = nullptr;
+        }
+        break;
+
+    case ActiveType::BUFFER:
+        if (m_current_buffer) {
+            for (auto channel : m_channels) {
+                m_buffer_manager.remove_buffer(m_current_buffer, m_buffer_token, channel);
+            }
+            m_current_buffer = nullptr;
+        }
+        break;
+
+    case ActiveType::NONE:
+        break;
     }
+
+    m_active_type = ActiveType::NONE;
 }
 
-void NodeTimer::cancel()
+void TemporalActivation::cancel()
 {
     if (m_timer.is_active()) {
         cleanup_current_operation();

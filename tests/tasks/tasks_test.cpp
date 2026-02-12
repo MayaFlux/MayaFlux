@@ -1,10 +1,14 @@
 #include "../test_config.h"
+
+#include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Kriya/Chain.hpp"
-#include "MayaFlux/MayaFlux.hpp"
 #include "MayaFlux/Nodes/Generators/Logic.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
+#include "MayaFlux/Nodes/Network/ModalNetwork.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
+
+#include "MayaFlux/MayaFlux.hpp"
 
 namespace MayaFlux::Test {
 
@@ -14,6 +18,7 @@ protected:
     {
         scheduler = std::make_shared<Vruta::TaskScheduler>(TestConfig::SAMPLE_RATE);
         node_graph_manager = std::make_shared<Nodes::NodeGraphManager>();
+        buffer_manager = std::make_shared<Buffers::BufferManager>();
         processing_token = Nodes::ProcessingToken::AUDIO_RATE;
     }
 
@@ -25,6 +30,7 @@ protected:
 
     std::shared_ptr<Vruta::TaskScheduler> scheduler;
     std::shared_ptr<Nodes::NodeGraphManager> node_graph_manager;
+    std::shared_ptr<Buffers::BufferManager> buffer_manager;
     Nodes::ProcessingToken processing_token;
 };
 
@@ -128,16 +134,16 @@ TEST_F(TasksTest, TimedAction)
     EXPECT_FALSE(end_executed);
 }
 
-/* TEST_F(TasksTest, NodeTimer)
+TEST_F(TasksTest, TemporalActivationNode)
 {
     EXPECT_NE(node_graph_manager, nullptr);
 
-    Kriya::NodeTimer node_timer(*scheduler, *node_graph_manager);
+    Kriya::TemporalActivation time_action(*scheduler, *node_graph_manager, *buffer_manager);
     auto sine = std::make_shared<Nodes::Generator::Sine>(440.0F, 0.5F);
 
-    node_timer.play_for(sine, 0.009);
+    time_action.activate_node(sine, 0.009, Nodes::ProcessingToken::AUDIO_RATE, { 0 });
 
-    EXPECT_TRUE(node_timer.is_active());
+    EXPECT_TRUE(time_action.is_active());
 
     auto& root = node_graph_manager->get_root_node(processing_token, 0);
     EXPECT_EQ(root.get_node_size(), 1);
@@ -147,58 +153,58 @@ TEST_F(TasksTest, TimedAction)
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
     root.process_batch(samples_10ms);
 
-    EXPECT_FALSE(node_timer.is_active());
+    EXPECT_FALSE(time_action.is_active());
     EXPECT_EQ(root.get_node_size(), 0);
+}
 
-    bool setup_called = false;
-    bool cleanup_called = false;
+TEST_F(TasksTest, TemporalActivationBuffer)
+{
+    Kriya::TemporalActivation time_action(*scheduler, *node_graph_manager, *buffer_manager);
+    auto buffer = std::make_shared<Buffers::AudioBuffer>(1024);
 
-    node_timer.play_with_processing(
-        sine,
-        [&setup_called](std::shared_ptr<Nodes::Node>) {
-            setup_called = true;
-        },
-        [&cleanup_called](std::shared_ptr<Nodes::Node>) {
-            cleanup_called = true;
-        },
-        0.009);
+    time_action.activate_buffer(buffer, 0.009, Buffers::ProcessingToken::AUDIO_BACKEND, 0);
 
-    EXPECT_TRUE(node_timer.is_active());
-    EXPECT_TRUE(setup_called);
-    EXPECT_FALSE(cleanup_called);
-    EXPECT_EQ(root.get_node_size(), 1);
+    EXPECT_TRUE(time_action.is_active());
+
+    auto root_buffer = buffer_manager->get_root_audio_buffer(Buffers::ProcessingToken::AUDIO_BACKEND, 0);
+    auto child_buffers = root_buffer->get_child_buffers();
+
+    EXPECT_TRUE(std::ranges::any_of(child_buffers, [&buffer](const std::shared_ptr<Buffers::Buffer>& child) {
+        return child == buffer;
+    }));
+
+    uint64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    root.process_batch(samples_10ms);
+    buffer_manager->process_channel(Buffers::ProcessingToken::AUDIO_BACKEND, 0, samples_10ms, {});
 
-    EXPECT_FALSE(node_timer.is_active());
-    EXPECT_TRUE(cleanup_called);
-    EXPECT_EQ(root.get_node_size(), 0);
+    EXPECT_FALSE(time_action.is_active());
 
-    setup_called = false;
-    cleanup_called = false;
+    child_buffers = root_buffer->get_child_buffers();
 
-    node_timer.play_with_processing(
-        sine,
-        [&setup_called](std::shared_ptr<Nodes::Node>) {
-            setup_called = true;
-        },
-        [&cleanup_called](std::shared_ptr<Nodes::Node>) {
-            cleanup_called = true;
-        },
-        0.009);
+    EXPECT_FALSE(std::ranges::any_of(child_buffers, [&buffer](const std::shared_ptr<Buffers::Buffer>& child) {
+        return child == buffer;
+    }));
+}
 
-    EXPECT_TRUE(setup_called);
-    EXPECT_FALSE(cleanup_called);
+TEST_F(TasksTest, TemporalActivationNetwork)
+{
+    Kriya::TemporalActivation time_action(*scheduler, *node_graph_manager, *buffer_manager);
+    auto network = std::make_shared<Nodes::Network::ModalNetwork>(5);
+
+    time_action.activate_network(network, 0.009, Nodes::ProcessingToken::AUDIO_RATE, { 0 });
+
+    EXPECT_TRUE(time_action.is_active());
+
+    EXPECT_EQ(node_graph_manager->get_network_count(processing_token), 1);
+
+    uint64_t samples_10ms = scheduler->seconds_to_samples(0.01);
 
     scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE, samples_10ms);
-    node_timer.cancel();
-    root.process_batch(samples_10ms);
 
-    EXPECT_FALSE(node_timer.is_active());
-    EXPECT_TRUE(cleanup_called);
-    EXPECT_EQ(root.get_node_size(), 0);
-} */
+    EXPECT_FALSE(time_action.is_active());
+    EXPECT_EQ(node_graph_manager->get_network_count(processing_token), 0);
+}
 
 TEST_F(TasksTest, ActionTokens)
 {
