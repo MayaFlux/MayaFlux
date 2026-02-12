@@ -31,7 +31,6 @@ else()
     message(STATUS "Release build - MAYAFLUX_DEBUG disabled")
 endif()
 
-set(CONFIG_IMPL ${CMAKE_SOURCE_DIR}/cmake/config.cpp)
 set(DATA_DIR "${CMAKE_SOURCE_DIR}/data")
 
 if(WIN32)

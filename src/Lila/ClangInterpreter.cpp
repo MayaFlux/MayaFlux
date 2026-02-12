@@ -2,6 +2,8 @@
 
 #include "Commentator.hpp"
 
+#include "MayaFlux/Transitive/Platform/HostEnvironment.hpp"
+
 #ifdef MAYAFLUX_COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4291) // no matching operator delete found
