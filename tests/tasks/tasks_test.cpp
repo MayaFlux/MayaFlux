@@ -731,32 +731,6 @@ TEST_F(TasksTest, TimeOperatorI)
     MayaFlux::End();
 }
 
-TEST_F(TasksTest, DACOperator)
-{
-    MayaFlux::Init();
-
-    MayaFlux::Start();
-
-    auto sine = std::make_shared<Nodes::Generator::Sine>(440.0f, 0.5f);
-    auto& dac = Kriya::DAC::instance();
-
-    auto& root = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 0);
-    EXPECT_EQ(root.get_node_size(), 0);
-
-    sine >> dac;
-
-    EXPECT_EQ(root.get_node_size(), 1);
-
-    dac.channel = 1;
-    auto sine2 = std::make_shared<Nodes::Generator::Sine>(880.0f, 0.5f);
-    sine2 >> dac;
-
-    auto& root1 = MayaFlux::get_node_graph_manager()->get_root_node(Nodes::ProcessingToken::AUDIO_RATE, 1);
-    EXPECT_EQ(root1.get_node_size(), 1);
-
-    MayaFlux::End();
-}
-
 TEST_F(TasksTest, LogicTasksIntegration)
 {
     MayaFlux::Init();

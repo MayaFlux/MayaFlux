@@ -143,7 +143,7 @@ connection point represents a decision about how information should
 evolve. Critically, these streams work across domains:
 
 ```cpp
-phasor >> noise >> (IIR(sine) * 0.5) + noise >> DAC;
+phasor >> noise >> (IIR(sine) * 0.5) + noise | Audio;
 
 // Cross-domain connection: audio drives visual parameters
 auto audio_envelope = vega.Sine(1.0f) | Audio;
@@ -551,7 +551,6 @@ sequence.execute();
 
 // Temporal operators for direct node control
 sine_node >> Time(2.0);  // Play node for 2 seconds
-filter_node >> DAC::instance();  // Route to output
 ```
 
 ### Buffer Integration and Capture
