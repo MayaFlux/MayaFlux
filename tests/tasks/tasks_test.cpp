@@ -557,6 +557,140 @@ TEST_F(TasksTest, MultipleLogicTasks)
     EXPECT_TRUE(scheduler->cancel_task(change_task));
 }
 
+TEST_F(TasksTest, EventChainCancel)
+{
+    bool event1 = false;
+    bool event2 = false;
+    bool event3 = false;
+    bool cleanup_called = false;
+
+    Kriya::EventChain chain(*scheduler, "cancel_test");
+
+    chain.then([&event1]() { event1 = true; })
+        .then([&event2]() { event2 = true; }, 0.01)
+        .then([&event3]() { event3 = true; }, 0.01)
+        .on_complete([&cleanup_called]() { cleanup_called = true; });
+
+    chain.start();
+
+    EXPECT_TRUE(chain.is_active());
+    EXPECT_TRUE(event1);
+    EXPECT_FALSE(event2);
+    EXPECT_FALSE(event3);
+    EXPECT_FALSE(cleanup_called);
+
+    chain.cancel();
+
+    EXPECT_FALSE(chain.is_active());
+    EXPECT_TRUE(cleanup_called);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.03));
+
+    EXPECT_FALSE(event2);
+    EXPECT_FALSE(event3);
+}
+
+TEST_F(TasksTest, EventChainOnComplete)
+{
+    bool event1 = false;
+    bool event2 = false;
+    bool cleanup_called = false;
+
+    Kriya::EventChain chain(*scheduler, "complete_test");
+
+    chain.then([&event1]() { event1 = true; })
+        .then([&event2]() { event2 = true; }, 0.01)
+        .on_complete([&cleanup_called]() { cleanup_called = true; });
+
+    chain.start();
+
+    EXPECT_TRUE(event1);
+    EXPECT_FALSE(event2);
+    EXPECT_FALSE(cleanup_called);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.02));
+
+    EXPECT_TRUE(event2);
+    EXPECT_TRUE(cleanup_called);
+    EXPECT_FALSE(chain.is_active());
+}
+
+TEST_F(TasksTest, EventChainOnCompleteFiresOnce)
+{
+    int cleanup_count = 0;
+
+    Kriya::EventChain chain(*scheduler, "once_test");
+
+    chain.then([]() { /* action */ })
+        .on_complete([&cleanup_count]() { cleanup_count++; });
+
+    chain.start();
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.01));
+
+    EXPECT_EQ(cleanup_count, 1);
+    EXPECT_FALSE(chain.is_active());
+
+    chain.cancel();
+
+    EXPECT_EQ(cleanup_count, 1);
+}
+
+TEST_F(TasksTest, EventChainActionErrorsDoNotBreakChain)
+{
+    bool event1 = false;
+    bool event2_attempted = false;
+    bool event3_attempted = false;
+    bool cleanup_called = false;
+
+    Kriya::EventChain chain(*scheduler, "error_test");
+
+    chain.then([&event1]() {
+             event1 = true;
+             // Simulate error condition without throwing
+             // (returns early, sets error flag, etc.)
+         })
+        .then([&event2_attempted]() {
+            event2_attempted = true;
+        },
+            0.01)
+        .then([&event3_attempted]() {
+            event3_attempted = true;
+        },
+            0.01)
+        .on_complete([&cleanup_called]() {
+            cleanup_called = true;
+        });
+
+    chain.start();
+
+    EXPECT_TRUE(event1);
+    EXPECT_FALSE(event2_attempted);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.02));
+
+    EXPECT_TRUE(event2_attempted);
+
+    scheduler->process_token(Vruta::ProcessingToken::SAMPLE_ACCURATE,
+        scheduler->seconds_to_samples(0.02));
+
+    EXPECT_TRUE(event3_attempted);
+    EXPECT_TRUE(cleanup_called);
+}
+
+TEST_F(TasksTest, EventChainNaming)
+{
+    Kriya::EventChain named_chain(*scheduler, "my_sequence");
+    EXPECT_EQ(named_chain.name(), "my_sequence");
+
+    Kriya::EventChain unnamed_chain(*scheduler);
+    EXPECT_TRUE(unnamed_chain.name().empty());
+}
+
 #define INTEGRATION_TEST ;
 
 #ifdef INTEGRATION_TEST

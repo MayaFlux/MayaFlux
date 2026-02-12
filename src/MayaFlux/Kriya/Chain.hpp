@@ -41,23 +41,15 @@ namespace MayaFlux::Kriya {
 class MAYAFLUX_API EventChain {
 public:
     /**
-     * @brief Constructs an EventChain using the global scheduler
-     *
-     * Creates a new EventChain that will use the global scheduler for timing
-     * operations. This is convenient for simple cases where only one processing
-     * engine is active.
-     */
-    EventChain();
-
-    /**
      * @brief Constructs an EventChain with an explicit scheduler
      * @param scheduler The TaskScheduler to use for timing
+     * @param name Optional name for the event chain (useful for debugging)
      *
      * Creates a new EventChain that will use the provided scheduler for timing
      * operations. This allows for more control over which scheduler is used,
      * which is useful in contexts where multiple processing engines might exist.
      */
-    EventChain(Vruta::TaskScheduler& scheduler);
+    EventChain(Vruta::TaskScheduler& scheduler, std::string name = "");
 
     /**
      * @brief Adds an event to the chain with a specified delay
@@ -85,6 +77,43 @@ public:
      * the right moment in the computational timeline.
      */
     void start();
+
+    /**
+     * @brief Cancels the event chain if it's currently executing
+     *
+     * Terminates the underlying coroutine, preventing any remaining
+     * events from executing. Safe to call even if chain has completed.
+     */
+    void cancel();
+
+    /**
+     * @brief Checks if the event chain is currently active
+     * @return True if chain is executing, false if completed or not started
+     */
+    [[nodiscard]] bool is_active() const;
+
+    /**
+     * @brief Sets a callback to execute when the chain stops executing
+     * @param callback Function to call after chain completes or is cancelled
+     *
+     * The callback fires regardless of how the chain stops:
+     * - After final event completes normally
+     * - After cancel() is called
+     * - After an exception in an action (action exceptions are caught)
+     *
+     * Use this for cleanup that must happen regardless of completion reason.
+     * For actions that should only run on successful completion, use .then()
+     */
+    EventChain& on_complete(std::function<void()> callback);
+
+    /**
+     * @brief Gets the name of the event chain
+     * @return Name of the event chain
+     *
+     * The name can be used for debugging or management purposes, especially when
+     * multiple chains are active. If no name was set, this will return an empty string.
+     */
+    [[nodiscard]] const std::string& name() const { return m_name; }
 
 private:
     /**
@@ -121,6 +150,30 @@ private:
      * in the chain. It's created when start() is called.
      */
     std::shared_ptr<Vruta::SoundRoutine> m_routine;
+
+    /**
+     * @brief Optional callback to execute when the chain completes
+     *
+     * This function is called after the final event in the chain has executed.
+     * It can be used for cleanup, triggering subsequent actions, or any other
+     * behavior that should occur after the chain finishes.
+     */
+    std::function<void()> m_on_complete;
+
+    /**
+     * @brief Optional name for the event chain
+     *
+     * This name can be used for debugging or management purposes, especially when
+     * multiple chains are active. If no name is provided, it will be an empty string.
+     */
+    std::string m_name;
+
+    bool m_on_complete_fired {}; ///< Flag to ensure on_complete is only fired once
+
+    /**
+     * @brief Internal method to safely fire the on_complete callback
+     */
+    void fire_on_complete();
 };
 
 }
