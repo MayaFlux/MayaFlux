@@ -11,15 +11,15 @@ constexpr char PathSeparator = '/';
 static std::string safe_getenv(const char* var);
 
 namespace fs = std::filesystem;
-class SystemConfig {
+class MAYAFLUX_API SystemConfig {
 public:
-    static std::string get_clang_resource_dir();
+    static const std::string& get_clang_resource_dir();
 
-    static std::vector<std::string> get_system_includes();
+    static const std::vector<std::string>& get_system_includes();
 
-    static std::vector<std::string> get_system_libraries();
+    static const std::vector<std::string>& get_system_libraries();
 
-    static std::string find_library(const std::string& library_name);
+    static const std::string& find_library(const std::string& library_name);
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     static std::string get_macos_sdk_path();
