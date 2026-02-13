@@ -84,6 +84,45 @@ bool VKDevice::pick_physical_device(vk::Instance instance, vk::SurfaceKHR /*temp
         QueueFamilyIndices indices = find_queue_families(device, nullptr);
 
         if (indices.graphics_family.has_value()) {
+            auto available_extensions = device.enumerateDeviceExtensionProperties();
+            bool supports_swapchain = false;
+            bool supports_mesh_shader = false;
+
+            for (const auto& ext : available_extensions) {
+                if (strcmp(ext.extensionName, VK_KHR_SWAPCHAIN_EXTENSION_NAME) == 0) {
+                    supports_swapchain = true;
+                }
+                if (strcmp(ext.extensionName, VK_EXT_MESH_SHADER_EXTENSION_NAME) == 0) {
+                    supports_mesh_shader = true;
+                }
+            }
+
+            if (!supports_swapchain) {
+                MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                    "Physical device {} does not support VK_KHR_swapchain - skipping",
+                    device.getProperties().deviceName.data());
+                continue;
+            }
+
+            if (!supports_mesh_shader) {
+                MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                    "Physical device {} does not support VK_EXT_mesh_shader - skipping (required for cross-platform compatibility)",
+                    device.getProperties().deviceName.data());
+                continue;
+            }
+
+            vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_features;
+            vk::PhysicalDeviceFeatures2 temp_features;
+            temp_features.pNext = &mesh_features;
+            device.getFeatures2(&temp_features);
+
+            if (mesh_features.meshShader == VK_FALSE || mesh_features.taskShader == VK_FALSE) {
+                MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                    "Physical device {} supports VK_EXT_mesh_shader extension but not the required features - skipping",
+                    device.getProperties().deviceName.data());
+                continue;
+            }
+
             m_physical_device = device;
             m_queue_families = indices;
 
@@ -197,7 +236,7 @@ void VKDevice::query_supported_extensions()
     MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend, "End of list.");
 }
 
-bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBackendInfo& backend_info)
+bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info)
 {
     if (!m_queue_families.graphics_family.has_value()) {
         error<std::runtime_error>(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -237,13 +276,21 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     vk::PhysicalDeviceFeatures2 features2 {};
     features2.features = device_features;
 
+    vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features {};
+    mesh_shader_features.taskShader = VK_TRUE;
+    mesh_shader_features.meshShader = VK_TRUE;
+
     vk::PhysicalDeviceVulkan13Features vulkan_13_features {};
     vulkan_13_features.dynamicRendering = VK_TRUE;
     vulkan_13_features.synchronization2 = VK_TRUE;
+    vulkan_13_features.pNext = &mesh_shader_features;
 
     features2.pNext = &vulkan_13_features;
 
-    std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    std::vector<const char*> device_extensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_EXT_MESH_SHADER_EXTENSION_NAME
+    };
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     auto available_exts = m_physical_device.enumerateDeviceExtensionProperties();
@@ -267,10 +314,11 @@ bool VKDevice::create_logical_device(vk::Instance /*instance*/, const GraphicsBa
     create_info.pNext = &features2;
     create_info.enabledExtensionCount = static_cast<uint32_t>(device_extensions.size());
     create_info.ppEnabledExtensionNames = device_extensions.data();
-    // create_info.enabledLayerCount = 0;
 
     try {
         m_logical_device = m_physical_device.createDevice(create_info);
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(m_logical_device);
+
     } catch (const std::exception& e) {
         error_rethrow(Journal::Component::Core, Journal::Context::GraphicsBackend,
             std::source_location::current(),
