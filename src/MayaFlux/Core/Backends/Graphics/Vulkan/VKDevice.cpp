@@ -106,25 +106,26 @@ bool VKDevice::pick_physical_device(vk::Instance instance, vk::SurfaceKHR /*temp
 
             if (!supports_mesh_shader) {
                 MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                    "Physical device {} does not support VK_EXT_mesh_shader - skipping (required for cross-platform compatibility)",
+                    "Physical device {} does not support VK_EXT_mesh_shader - "
+                    "mesh shading features will be unavailable",
                     device.getProperties().deviceName.data());
-                continue;
-            }
+            } else {
+                vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_features;
+                vk::PhysicalDeviceFeatures2 temp_features;
+                temp_features.pNext = &mesh_features;
+                device.getFeatures2(&temp_features);
 
-            vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_features;
-            vk::PhysicalDeviceFeatures2 temp_features;
-            temp_features.pNext = &mesh_features;
-            device.getFeatures2(&temp_features);
-
-            if (mesh_features.meshShader == VK_FALSE || mesh_features.taskShader == VK_FALSE) {
-                MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                    "Physical device {} supports VK_EXT_mesh_shader extension but not the required features - skipping",
-                    device.getProperties().deviceName.data());
-                continue;
+                if (mesh_features.meshShader == VK_FALSE || mesh_features.taskShader == VK_FALSE) {
+                    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                        "Physical device {} supports VK_EXT_mesh_shader extension but features disabled",
+                        device.getProperties().deviceName.data());
+                    supports_mesh_shader = false;
+                }
             }
 
             m_physical_device = device;
             m_queue_families = indices;
+            m_supports_mesh_shaders = supports_mesh_shader;
 
             vk::PhysicalDeviceProperties props = device.getProperties();
             MF_PRINT(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -276,21 +277,11 @@ bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBacken
     vk::PhysicalDeviceFeatures2 features2 {};
     features2.features = device_features;
 
-    vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features {};
-    mesh_shader_features.taskShader = VK_TRUE;
-    mesh_shader_features.meshShader = VK_TRUE;
-
     vk::PhysicalDeviceVulkan13Features vulkan_13_features {};
     vulkan_13_features.dynamicRendering = VK_TRUE;
     vulkan_13_features.synchronization2 = VK_TRUE;
-    vulkan_13_features.pNext = &mesh_shader_features;
 
-    features2.pNext = &vulkan_13_features;
-
-    std::vector<const char*> device_extensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_EXT_MESH_SHADER_EXTENSION_NAME
-    };
+    std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     auto available_exts = m_physical_device.enumerateDeviceExtensionProperties();
@@ -302,7 +293,19 @@ bool VKDevice::create_logical_device(vk::Instance instance, const GraphicsBacken
     if (has_portability) {
         device_extensions.push_back("VK_KHR_portability_subset");
     }
+#else
+    vk::PhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features {};
+    if (m_supports_mesh_shaders) {
+        device_extensions.push_back(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+
+        mesh_shader_features.taskShader = VK_TRUE;
+        mesh_shader_features.meshShader = VK_TRUE;
+
+        vulkan_13_features.pNext = &mesh_shader_features;
+    }
 #endif
+
+    features2.pNext = &vulkan_13_features;
 
     for (const auto& ext : backend_info.required_extensions) {
         device_extensions.push_back(ext.c_str());

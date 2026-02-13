@@ -105,6 +105,12 @@ public:
      */
     void query_supported_extensions();
 
+    /**
+     * @brief Check if the device supports mesh shaders
+     * @return true if mesh shaders are supported
+     */
+    [[nodiscard]] bool supports_mesh_shaders() const { return m_supports_mesh_shaders; }
+
 private:
     vk::PhysicalDevice m_physical_device; ///< Selected physical device (GPU)
     vk::Device m_logical_device; ///< Logical device handle
@@ -140,8 +146,8 @@ private:
      */
     bool create_logical_device(vk::Instance instance, const GraphicsBackendInfo& backend_info);
 
-    bool m_presentation_initialized = false;
+    bool m_presentation_initialized {}; ///< Whether presentation support has been initialized
 
-    // Add more members and methods as needed for device management
+    bool m_supports_mesh_shaders {}; ///< Whether the device supports mesh shaders
 };
 }
