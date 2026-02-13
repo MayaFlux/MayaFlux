@@ -2,6 +2,8 @@
 
 #include "Commentator.hpp"
 
+#include "MayaFlux/Transitive/Platform/HostEnvironment.hpp"
+
 #ifdef MAYAFLUX_COMPILER_MSVC
 #pragma warning(push)
 #pragma warning(disable : 4291) // no matching operator delete found
@@ -97,7 +99,7 @@ bool ClangInterpreter::initialize()
 
     m_impl->compile_flags.push_back("-I" + pch_dir);
 
-    std::string resource_dir = MayaFlux::Platform::SystemConfig::get_clang_resource_dir();
+    const std::string& resource_dir = MayaFlux::Platform::SystemConfig::get_clang_resource_dir();
     if (!resource_dir.empty()) {
         m_impl->compile_flags.push_back("-resource-dir=" + resource_dir);
         LILA_DEBUG(Emitter::INTERPRETER,
@@ -108,10 +110,22 @@ bool ClangInterpreter::initialize()
             "Using default clang resource dir: /usr/lib/clang/21");
     }
 
-    auto system_includes = MayaFlux::Platform::SystemConfig::get_system_includes();
+    const auto& system_includes = MayaFlux::Platform::SystemConfig::get_system_includes();
     for (const auto& include : system_includes) {
         m_impl->compile_flags.push_back("-isystem" + include);
     }
+
+#ifndef MAYAFLUX_PLATFORM_WINDOWS
+    const auto& eigen_include = MayaFlux::Platform::SystemConfig::get_dep_includes("eigen");
+    if (!eigen_include.empty()) {
+        m_impl->compile_flags.push_back("-isystem" + eigen_include);
+        LILA_DEBUG(Emitter::INTERPRETER,
+            std::string("Added Eigen include path: ") + eigen_include);
+    } else {
+        LILA_WARN(Emitter::INTERPRETER,
+            "Could not find Eigen include path - some features may not work");
+    }
+#endif
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     // CRITICAL: JIT uses Homebrew LLVM but needs macOS SDK for system headers

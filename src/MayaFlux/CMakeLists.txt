@@ -5,7 +5,6 @@ file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp)
 
 add_library(MayaFluxLib SHARED ${SOURCES} ${HEADERS})
-target_sources(MayaFluxLib PRIVATE ${CONFIG_IMPL})
 
 #==============================================================
 #               Target Definitions and Properties

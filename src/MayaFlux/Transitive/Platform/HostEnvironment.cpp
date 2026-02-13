@@ -1,6 +1,15 @@
-#include "config.h"
+#include "HostEnvironment.hpp"
 
 namespace MayaFlux::Platform {
+
+namespace {
+
+    const std::vector<std::string> eigen_includes = {
+        "/usr/include/eigen3",
+        "/usr/local/include/eigen3",
+        "/opt/homebrew/include/eigen3"
+    };
+}
 
 std::string safe_getenv(const char* var)
 {
@@ -19,84 +28,130 @@ std::string safe_getenv(const char* var)
 #endif
 }
 
-std::string SystemConfig::get_clang_resource_dir()
+const std::string& SystemConfig::get_clang_resource_dir()
 {
-    const char* cmd = "clang -print-resource-dir";
-    auto result = exec_command(cmd);
-    trim_output(result);
+    static std::string cached_resource_dir;
 
-    if (!result.empty()
-        && (result.find("error:") == std::string::npos)
-        && (result.find("clang") != std::string::npos
-            || result.find("lib") != std::string::npos
-            || fs::exists(result))) {
-        return result;
+    if (cached_resource_dir.empty()) {
+        const char* cmd = "clang -print-resource-dir";
+        auto result = exec_command(cmd);
+        trim_output(result);
+
+        if (!result.empty()
+            && (result.find("error:") == std::string::npos)
+            && (result.find("clang") != std::string::npos
+                || result.find("lib") != std::string::npos
+                || fs::exists(result))) {
+            {
+                cached_resource_dir = std::move(result);
+            }
+        }
     }
 
-    return "";
+    return cached_resource_dir;
 }
 
-std::vector<std::string> SystemConfig::get_system_includes()
+const std::vector<std::string>& SystemConfig::get_system_includes()
 {
-    std::vector<std::string> includes;
+    static std::vector<std::string> includes;
 
+    if (includes.empty()) {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    auto msvc_includes = get_msvc_includes();
-    includes.insert(includes.end(), msvc_includes.begin(), msvc_includes.end());
+        auto msvc_includes = get_msvc_includes();
+        includes.insert(includes.end(), msvc_includes.begin(), msvc_includes.end());
 
-    auto sdk_includes = get_windows_sdk_includes();
-    includes.insert(includes.end(), sdk_includes.begin(), sdk_includes.end());
+        auto sdk_includes = get_windows_sdk_includes();
+        includes.insert(includes.end(), sdk_includes.begin(), sdk_includes.end());
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 
-    auto clang_includes = get_clang_includes();
-    includes.insert(includes.end(), clang_includes.begin(), clang_includes.end());
+        auto clang_includes = get_clang_includes();
+        includes.insert(includes.end(), clang_includes.begin(), clang_includes.end());
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
-    std::string xcode_includes = SystemConfig::get_xcode_system_includes();
-    if (!xcode_includes.empty()) {
-        includes.push_back(xcode_includes);
-    }
+        std::string xcode_includes = SystemConfig::get_xcode_system_includes();
+        if (!xcode_includes.empty()) {
+            includes.push_back(xcode_includes);
+        }
 
-    std::string homebrew_includes = "/opt/homebrew/include";
-    if (fs::exists(homebrew_includes)) {
-        includes.push_back(homebrew_includes);
-    }
+        std::string homebrew_includes = "/opt/homebrew/include";
+        if (fs::exists(homebrew_includes)) {
+            includes.push_back(homebrew_includes);
+        }
 #endif // MAYAFLUX_PLATFORM_MACOS
+    }
 
     return includes;
 }
 
-std::vector<std::string> SystemConfig::get_system_libraries()
+const std::vector<std::string>& SystemConfig::get_system_libraries()
 {
-    std::vector<std::string> lib_paths;
+    static std::vector<std::string> lib_paths;
 
+    if (lib_paths.empty()) {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    auto msvc_libs = get_msvc_libraries();
-    lib_paths.insert(lib_paths.end(), msvc_libs.begin(), msvc_libs.end());
+        auto msvc_libs = get_msvc_libraries();
+        lib_paths.insert(lib_paths.end(), msvc_libs.begin(), msvc_libs.end());
 
-    auto sdk_libs = get_windows_sdk_libraries();
-    lib_paths.insert(lib_paths.end(), sdk_libs.begin(), sdk_libs.end());
+        auto sdk_libs = get_windows_sdk_libraries();
+        lib_paths.insert(lib_paths.end(), sdk_libs.begin(), sdk_libs.end());
 #else
-    auto system_libs = get_unix_library_paths();
-    lib_paths.insert(lib_paths.end(), system_libs.begin(), system_libs.end());
+        auto system_libs = get_unix_library_paths();
+        lib_paths.insert(lib_paths.end(), system_libs.begin(), system_libs.end());
 #endif
+    }
 
     return lib_paths;
 }
 
-std::string SystemConfig::find_library(const std::string& library_name)
+const std::string& SystemConfig::find_library(const std::string& library_name)
 {
+    static std::unordered_map<std::string, std::string> cache;
+
+    auto it = cache.find(library_name);
+    if (it != cache.end()) {
+        return it->second;
+    }
+
+    std::string& result = cache[library_name];
+
     auto lib_paths = get_system_libraries();
     std::string search_name = format_library_name(library_name);
 
     for (const auto& lib_path : lib_paths) {
         fs::path full_path = fs::path(lib_path) / search_name;
         if (fs::exists(full_path)) {
-            return full_path.string();
+            result = full_path.string();
+            break;
         }
     }
 
-    return "";
+    return result;
+}
+
+const std::string& SystemConfig::get_dep_includes(const std::string& library_name)
+{
+    static std::unordered_map<std::string, std::string> cache;
+
+    auto it = cache.find(library_name);
+    if (it != cache.end()) {
+        return it->second;
+    }
+
+    std::string& result = cache[library_name];
+    if (library_name == "Eigen" || library_name == "eigen") {
+        if (!Config::EIGEN_HINT.empty() && fs::exists(Config::EIGEN_HINT)) {
+            result = Config::EIGEN_HINT;
+        } else {
+            for (const auto& path : eigen_includes) {
+                if (std::filesystem::exists(path)) {
+                    result = path;
+                    break;
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
 // NOLINTNEXTLINE(cert-env33-c)

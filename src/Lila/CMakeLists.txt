@@ -19,7 +19,6 @@ set(LILA_HEADERS
 )
 
 add_library(Lila SHARED ${LILA_SOURCES} ${LILA_HEADERS})
-target_sources(Lila PRIVATE ${CONFIG_IMPL})
 
 if(WIN32)
     target_compile_definitions(Lila PRIVATE LILA_EXPORTS)
@@ -34,7 +33,7 @@ target_include_directories(Lila PUBLIC
     ${CLANG_INCLUDE_DIRS}
 )
 
-target_precompile_headers(Lila PUBLIC ../../cmake/pch.h)
+target_precompile_headers(Lila PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
 target_include_directories(Lila PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 if(CLANG_DEFINITIONS)
