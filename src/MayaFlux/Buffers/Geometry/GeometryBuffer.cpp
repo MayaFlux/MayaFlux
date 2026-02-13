@@ -66,9 +66,22 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
 
     case Portal::Graphics::PrimitiveTopology::LINE_LIST:
     case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-        resolved_config.vertex_shader = "line.vert.spv";
-        resolved_config.fragment_shader = "line.frag.spv";
-        resolved_config.geometry_shader = "line.geom.spv";
+#ifndef MAYAFLUX_PLATFORM_MACOS
+        if (config.vertex_shader.empty())
+            resolved_config.vertex_shader = "line.vert.spv";
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = "line.frag.spv";
+        if (config.geometry_shader.empty())
+            resolved_config.geometry_shader = "line.geom.spv";
+
+#else
+        if (config.vertex_shader.empty())
+            resolved_config.vertex_shader = "line_fallback.vert.spv";
+        if (config.fragment_shader.empty())
+            resolved_config.fragment_shader = "line_fallback.frag.spv";
+
+        resolved_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
+#endif
         break;
 
     case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
@@ -103,7 +116,7 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
         m_render_processor->set_geometry_shader(resolved_config.geometry_shader);
     }
     m_render_processor->set_target_window(config.target_window, std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
-    m_render_processor->set_primitive_topology(config.topology);
+    m_render_processor->set_primitive_topology(resolved_config.topology);
     m_render_processor->set_polygon_mode(config.polygon_mode);
     m_render_processor->set_cull_mode(config.cull_mode);
 

@@ -349,6 +349,16 @@ public:
     }
 
 protected:
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    /**
+     * @brief Convert line segments (pairs of LineVertex) into triangle strip vertices
+     * @param line_segments Input LINE_LIST vertices (2N vertices = N line segments)
+     * @return Triangle vertices (6N vertices = 2N triangles)
+     */
+    static std::vector<LineVertex> expand_lines_to_triangles(
+        const std::vector<LineVertex>& line_segments);
+#endif
+
     GeometryContext m_context { 0.0, {}, 0, 0 };
 
 private:

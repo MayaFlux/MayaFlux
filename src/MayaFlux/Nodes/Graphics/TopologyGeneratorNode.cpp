@@ -274,11 +274,20 @@ void TopologyGeneratorNode::compute_frame()
 
     build_vertex_buffer();
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    std::vector<LineVertex> expanded = expand_lines_to_triangles(m_vertices);
+    set_vertices<LineVertex>(std::span { expanded.data(), expanded.size() });
+
+    auto layout = get_vertex_layout();
+    layout->vertex_count = static_cast<uint32_t>(expanded.size());
+    set_vertex_layout(*layout);
+#else
     set_vertices<LineVertex>(std::span { m_vertices.data(), m_vertices.size() });
 
     auto layout = get_vertex_layout();
     layout->vertex_count = static_cast<uint32_t>(m_vertices.size());
     set_vertex_layout(*layout);
+#endif
 }
 
 void TopologyGeneratorNode::build_interpolated_path(

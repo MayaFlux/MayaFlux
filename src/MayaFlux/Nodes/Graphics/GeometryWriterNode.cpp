@@ -224,4 +224,59 @@ NodeContext& GeometryWriterNode::get_last_context()
     return m_context;
 }
 
+#ifdef MAYAFLUX_PLATFORM_MACOS
+std::vector<LineVertex> GeometryWriterNode::expand_lines_to_triangles(
+    const std::vector<LineVertex>& line_segment)
+{
+    if (line_segment.size() < 2) {
+        return {};
+    }
+
+    std::vector<LineVertex> triangles;
+    triangles.reserve((line_segment.size() - 1) * 6);
+
+    for (size_t i = 0; i + 1 < line_segment.size(); ++i) {
+        const auto& v0 = line_segment[i];
+        const auto& v1 = line_segment[i + 1];
+
+        glm::vec2 p0_2d = glm::vec2(v0.position.x, v0.position.y);
+        glm::vec2 p1_2d = glm::vec2(v1.position.x, v1.position.y);
+
+        glm::vec2 dir = p1_2d - p0_2d;
+        float len = glm::length(dir);
+
+        if (len < 1e-6F) {
+            continue;
+        }
+
+        dir = dir / len;
+        glm::vec2 normal = glm::vec2(-dir.y, dir.x);
+
+        float t0 = v0.thickness * 0.005F;
+        float t1 = v1.thickness * 0.005F;
+
+        glm::vec3 p0_top = glm::vec3(p0_2d + normal * t0, v0.position.z);
+        glm::vec3 p0_bot = glm::vec3(p0_2d - normal * t0, v0.position.z);
+        glm::vec3 p1_top = glm::vec3(p1_2d + normal * t1, v1.position.z);
+        glm::vec3 p1_bot = glm::vec3(p1_2d - normal * t1, v1.position.z);
+
+        triangles.push_back({ p0_top, v0.color, v0.thickness,
+            glm::vec2(0.0F, 0.0F) });
+        triangles.push_back({ p0_bot, v0.color, v0.thickness,
+            glm::vec2(0.0F, 1.0F) });
+        triangles.push_back({ p1_top, v1.color, v1.thickness,
+            glm::vec2(1.0F, 0.0F) });
+
+        triangles.push_back({ p0_bot, v0.color, v0.thickness,
+            glm::vec2(0.0F, 1.0F) });
+        triangles.push_back({ p1_bot, v1.color, v1.thickness,
+            glm::vec2(1.0F, 1.0F) });
+        triangles.push_back({ p1_top, v1.color, v1.thickness,
+            glm::vec2(1.0F, 0.0F) });
+    }
+
+    return triangles;
+}
+#endif
+
 } // namespace MayaFlux::Nodes

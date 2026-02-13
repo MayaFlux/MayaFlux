@@ -108,7 +108,7 @@ struct VertexLayout {
      * @brief Factory: Create layout for line primitives (position, color, thickness)
      * @return VertexLayout configured for LineVertex
      */
-    static VertexLayout for_lines(uint32_t stride = 28)
+    static VertexLayout for_lines(uint32_t stride = 36)
     {
         VertexLayout layout;
         layout.stride_bytes = stride;
@@ -128,6 +128,10 @@ struct VertexLayout {
             .offset_in_vertex = 24,
             .name = "thickness" });
 
+        layout.attributes.push_back(VertexAttributeLayout {
+            .component_modality = DataModality::UNKNOWN,
+            .offset_in_vertex = 28,
+            .name = "uv" });
         return layout;
     }
 
