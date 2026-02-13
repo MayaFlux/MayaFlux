@@ -410,6 +410,60 @@ public:
      */
     void terminate_active_processing();
 
+    /**
+     * @brief Routes a node's output to specific channels within a token domain
+     * @param node Node to route
+     * @param token Processing domain to route within
+     * @param target_channels Vector of channel indices to route the node's output to
+     * @param fade_cycles Number of cycles to fade in the routing (optional)
+     *
+     * This method adds the specified node to the root nodes of the target channels
+     * within the given processing domain. If fade_cycles is greater than 0, the routing
+     * will be smoothly faded in over that many processing cycles.
+     */
+    void route_node_to_channels(
+        const std::shared_ptr<Node>& node,
+        ProcessingToken token,
+        const std::vector<uint32_t>& target_channels,
+        uint32_t fade_cycles);
+
+    /**
+     * @brief Routes a network's output to specific channels within a token domain
+     * @param network Network to route (must be an audio sink)
+     * @param token Processing domain to route within
+     * @param target_channels Vector of channel indices to route the network's output to
+     * @param fade_cycles Number of cycles to fade in the routing (optional)
+     *
+     * This method registers the network and adds it to the specified channels' root nodes
+     * within the given processing domain. If fade_cycles is greater than 0, the routing
+     * will be smoothly faded in over that many processing cycles.
+     */
+    void route_network_to_channels(
+        const std::shared_ptr<Network::NodeNetwork>& network,
+        ProcessingToken token,
+        const std::vector<uint32_t>& target_channels,
+        uint32_t fade_cycles);
+
+    /**
+     * @brief Updates routing states for all nodes and networks for a given token
+     * @param token Processing domain to update routing states for
+     *
+     * This method should be called at the end of each processing cycle to update the
+     * routing states of all nodes and networks that are currently undergoing routing changes.
+     * It handles the fade-in/out logic and transitions routing states as needed.
+     */
+    void update_routing_states_for_cycle(ProcessingToken token);
+
+    /**
+     * @brief Cleans up completed routing transitions for a given token
+     * @param token Processing domain to clean up routing for
+     *
+     * This method should be called after routing states have been updated to remove any nodes
+     * or networks that have completed their fade-out transitions and are no longer contributing
+     * to the output of their previous channels.
+     */
+    void cleanup_completed_routing(ProcessingToken token);
+
 private:
     /**
      * @brief Map of channel indices to their root nodes (AUDIO_RATE domain)

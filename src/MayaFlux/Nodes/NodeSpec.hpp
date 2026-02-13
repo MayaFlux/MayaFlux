@@ -51,4 +51,33 @@ enum NodeState : uint32_t {
     ENGINE_MOCK_PROCESSED = ACTIVE | MOCK_PROCESS | PROCESSED, ///< Engine has mock processed this node
 };
 
+/**
+ * @struct RoutingState
+ * @brief Represents the state of routing transitions for a node
+ *
+ * This structure tracks the state of routing changes, including fade-in and fade-out phases,
+ * channel counts, and elapsed cycles. It's used to manage smooth transitions when routing
+ * changes occur, ensuring seamless audio output during dynamic reconfigurations of the processing graph.
+ */
+struct RoutingState {
+    double amount[32];
+    uint32_t cycles_elapsed {};
+    uint32_t from_channels {};
+    uint32_t to_channels {};
+    uint32_t fade_cycles {};
+
+    /**
+     * @enum Phase
+     * @brief Represents the current phase of a routing transition
+     *
+     * This enum defines the different phases of a routing transition, such as fade-out and fade-in.
+     * It allows the audio engine to manage the transition process effectively, ensuring that audio
+     * output remains seamless during dynamic changes in the processing graph.
+     */
+    enum Phase : uint8_t {
+        NONE = 0x00, ///< No routing transition is currently active
+        ACTIVE = 0x01, ///< Currently in the fade-out phase of a routing transition
+    } phase { Phase::NONE };
+};
+
 }

@@ -583,6 +583,37 @@ public:
      */
     void set_in_network(bool networked) { m_networked_node = networked; }
 
+    /**
+     * @brief Retrieves the current routing state of the network
+     * @return Reference to the current RoutingState structure
+     *
+     * This method provides access to the network's current routing state, which
+     * includes information about fade-in/out (Active) phases, channel counts, and elapsed cycles.
+     * The routing state is used to manage smooth transitions when routing changes occur,
+     * ensuring seamless audio output during dynamic reconfigurations of the processing graph.
+     */
+    [[nodiscard]] const RoutingState& get_routing_state() const { return m_routing_state; }
+
+    /**
+     * @brief Retrieves the current routing state of the network (non-const)
+     * @return Reference to the current RoutingState structure
+     */
+    RoutingState& get_routing_state() { return m_routing_state; }
+
+    /**
+     * @brief Checks if the network is currently in a routing transition phase
+     * @return true if the network is in a fade-in or fade-out (Active) phase
+     *
+     * This method checks the network's routing state to determine if it is currently
+     * undergoing a routing transition, such as fading in or out. This information
+     * can be used by processing algorithms to adjust their behavior during transitions,
+     * ensuring smooth audio output without artifacts.
+     */
+    [[nodiscard]] bool needs_channel_routing() const
+    {
+        return m_routing_state.phase & RoutingState::ACTIVE;
+    }
+
 private:
     /**
      * @brief Bitmask tracking which channels are currently using this node
@@ -632,5 +663,15 @@ private:
      * that process.
      */
     std::atomic<uint32_t> m_buffer_reset_count { 0 };
+
+    /**
+     * @brief Internal state tracking for routing transitions
+     *
+     * This structure tracks the state of routing transitions,
+     * such as fade-in and fade-out phases, channel counts, and elapsed cycles.
+     * It's used to manage smooth transitions when routing changes occur, ensuring
+     * that audio output remains seamless during dynamic reconfigurations of the processing graph.
+     */
+    RoutingState m_routing_state;
 };
 }
