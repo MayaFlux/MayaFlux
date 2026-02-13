@@ -57,7 +57,8 @@ void GeometryBuffer::setup_processors(ProcessingToken token)
 
 void GeometryBuffer::setup_rendering(const RenderConfig& config)
 {
-    RenderConfig resolved_config;
+    RenderConfig resolved_config = config;
+
     switch (config.topology) {
     case Portal::Graphics::PrimitiveTopology::POINT_LIST:
         resolved_config.vertex_shader = "point.vert.spv";
@@ -73,7 +74,6 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
             resolved_config.fragment_shader = "line.frag.spv";
         if (config.geometry_shader.empty())
             resolved_config.geometry_shader = "line.geom.spv";
-
 #else
         if (config.vertex_shader.empty())
             resolved_config.vertex_shader = "line_fallback.vert.spv";
@@ -93,16 +93,6 @@ void GeometryBuffer::setup_rendering(const RenderConfig& config)
     default:
         resolved_config.vertex_shader = "point.vert.spv";
         resolved_config.fragment_shader = "point.frag.spv";
-    }
-
-    if (!config.vertex_shader.empty()) {
-        resolved_config.vertex_shader = config.vertex_shader;
-    }
-    if (!config.fragment_shader.empty()) {
-        resolved_config.fragment_shader = config.fragment_shader;
-    }
-    if (!config.geometry_shader.empty()) {
-        resolved_config.geometry_shader = config.geometry_shader;
     }
 
     if (!m_render_processor) {
