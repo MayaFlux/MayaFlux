@@ -1224,6 +1224,10 @@ vk::ShaderStageFlagBits ShaderFoundry::to_vulkan_stage(ShaderStage stage)
         return vk::ShaderStageFlagBits::eTessellationControl;
     case ShaderStage::TESS_EVALUATION:
         return vk::ShaderStageFlagBits::eTessellationEvaluation;
+    case ShaderStage::MESH:
+        return vk::ShaderStageFlagBits::eMeshEXT;
+    case ShaderStage::TASK:
+        return vk::ShaderStageFlagBits::eTaskEXT;
     default:
         return vk::ShaderStageFlagBits::eCompute;
     }
@@ -1249,6 +1253,10 @@ std::optional<ShaderStage> ShaderFoundry::detect_stage_from_extension(const std:
         return ShaderStage::TESS_CONTROL;
     case vk::ShaderStageFlagBits::eTessellationEvaluation:
         return ShaderStage::TESS_EVALUATION;
+    case vk::ShaderStageFlagBits::eMeshEXT:
+        return ShaderStage::MESH;
+    case vk::ShaderStageFlagBits::eTaskEXT:
+        return ShaderStage::TASK;
     default:
         return std::nullopt;
     }

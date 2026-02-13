@@ -223,6 +223,25 @@ public:
         int32_t vertex_offset = 0,
         uint32_t first_instance = 0);
 
+    /**
+     * @brief Draw mesh tasks (mesh shading pipeline only)
+     */
+    void draw_mesh_tasks(
+        CommandBufferID cmd_id,
+        uint32_t group_count_x,
+        uint32_t group_count_y = 1,
+        uint32_t group_count_z = 1);
+
+    /**
+     * @brief Draw mesh tasks indirect
+     */
+    void draw_mesh_tasks_indirect(
+        CommandBufferID cmd_id,
+        const std::shared_ptr<Buffers::VKBuffer>& buffer,
+        vk::DeviceSize offset = 0,
+        uint32_t draw_count = 1,
+        uint32_t stride = sizeof(VkDrawMeshTasksIndirectCommandEXT));
+
     //==========================================================================
     // Window Rendering Registration
     //==========================================================================
@@ -277,6 +296,8 @@ private:
         std::shared_ptr<Core::VKGraphicsPipeline> pipeline;
         std::vector<vk::DescriptorSetLayout> layouts;
         vk::PipelineLayout layout;
+        vk::ShaderStageFlags push_constant_stages = vk::ShaderStageFlagBits::eVertex
+            | vk::ShaderStageFlagBits::eFragment;
     };
 
     std::unordered_map<RenderPipelineID, PipelineState> m_pipelines;

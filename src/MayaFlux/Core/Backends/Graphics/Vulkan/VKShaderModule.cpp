@@ -426,7 +426,9 @@ bool VKShaderModule::reflect_spirv(const std::vector<uint32_t>& spirv_code)
                 m_reflection.specialization_constants.size());
         }
 
-        if (m_stage == vk::ShaderStageFlagBits::eCompute) {
+        if (m_stage == vk::ShaderStageFlagBits::eCompute
+            || m_stage == vk::ShaderStageFlagBits::eMeshEXT
+            || m_stage == vk::ShaderStageFlagBits::eTaskEXT) {
             auto entry_points = compiler.get_entry_points_and_stages();
 
             for (const auto& ep : entry_points) {
@@ -622,6 +624,12 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv(
     case vk::ShaderStageFlagBits::eTessellationEvaluation:
         shader_kind = shaderc_glsl_tess_evaluation_shader;
         break;
+    case vk::ShaderStageFlagBits::eMeshEXT:
+        shader_kind = shaderc_glsl_mesh_shader;
+        break;
+    case vk::ShaderStageFlagBits::eTaskEXT:
+        shader_kind = shaderc_glsl_task_shader;
+        break;
     default:
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Unsupported shader stage for GLSL compilation: {}", vk::to_string(stage));
@@ -762,12 +770,30 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv_external(
 
     std::string stage_flag;
     switch (stage) {
-    case vk::ShaderStageFlagBits::eVertex: stage_flag = "-fshader-stage=vertex"; break;
-    case vk::ShaderStageFlagBits::eFragment: stage_flag = "-fshader-stage=fragment"; break;
-    case vk::ShaderStageFlagBits::eCompute: stage_flag = "-fshader-stage=compute"; break;
-    case vk::ShaderStageFlagBits::eGeometry: stage_flag = "-fshader-stage=geometry"; break;
-    case vk::ShaderStageFlagBits::eTessellationControl: stage_flag = "-fshader-stage=tesscontrol"; break;
-    case vk::ShaderStageFlagBits::eTessellationEvaluation: stage_flag = "-fshader-stage=tesseval"; break;
+    case vk::ShaderStageFlagBits::eVertex:
+        stage_flag = "-fshader-stage=vertex";
+        break;
+    case vk::ShaderStageFlagBits::eFragment:
+        stage_flag = "-fshader-stage=fragment";
+        break;
+    case vk::ShaderStageFlagBits::eCompute:
+        stage_flag = "-fshader-stage=compute";
+        break;
+    case vk::ShaderStageFlagBits::eGeometry:
+        stage_flag = "-fshader-stage=geometry";
+        break;
+    case vk::ShaderStageFlagBits::eTessellationControl:
+        stage_flag = "-fshader-stage=tesscontrol";
+        break;
+    case vk::ShaderStageFlagBits::eTessellationEvaluation:
+        stage_flag = "-fshader-stage=tesseval";
+        break;
+    case vk::ShaderStageFlagBits::eMeshEXT:
+        stage_flag = "-fshader-stage=mesh";
+        break;
+    case vk::ShaderStageFlagBits::eTaskEXT:
+        stage_flag = "-fshader-stage=task";
+        break;
     default:
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Unsupported shader stage for external compilation: {}", vk::to_string(stage));
@@ -797,7 +823,7 @@ std::vector<uint32_t> VKShaderModule::compile_glsl_to_spirv_external(
     }
 
     std::string null_device = get_null_device();
-    
+
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Invoking external glslc : {}", cmd);
 
@@ -843,6 +869,10 @@ Stage VKShaderModule::get_stage_type() const
         return Stage::TESS_CONTROL;
     case vk::ShaderStageFlagBits::eTessellationEvaluation:
         return Stage::TESS_EVALUATION;
+    case vk::ShaderStageFlagBits::eMeshEXT:
+        return Stage::MESH;
+    case vk::ShaderStageFlagBits::eTaskEXT:
+        return Stage::TASK;
     default:
         MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Unknown shader stage: {}", vk::to_string(m_stage));

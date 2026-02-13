@@ -217,20 +217,22 @@ bool VKGraphicsPipeline::create(vk::Device device, const GraphicsPipelineConfig&
     }
 
     std::vector<vk::PipelineShaderStageCreateInfo> shader_stages;
-    if (config.vertex_shader) {
-        shader_stages.push_back(config.vertex_shader->get_stage_create_info());
-    }
-    if (config.fragment_shader) {
-        shader_stages.push_back(config.fragment_shader->get_stage_create_info());
-    }
-    if (config.geometry_shader) {
-        shader_stages.push_back(config.geometry_shader->get_stage_create_info());
-    }
-    if (config.tess_control_shader) {
-        shader_stages.push_back(config.tess_control_shader->get_stage_create_info());
-    }
-    if (config.tess_evaluation_shader) {
-        shader_stages.push_back(config.tess_evaluation_shader->get_stage_create_info());
+    if (config.mesh_shader) {
+        shader_stages.push_back(config.mesh_shader->get_stage_create_info());
+        if (config.task_shader) {
+            shader_stages.push_back(config.task_shader->get_stage_create_info());
+        }
+    } else {
+        if (config.vertex_shader)
+            shader_stages.push_back(config.vertex_shader->get_stage_create_info());
+        if (config.fragment_shader)
+            shader_stages.push_back(config.fragment_shader->get_stage_create_info());
+        if (config.geometry_shader)
+            shader_stages.push_back(config.geometry_shader->get_stage_create_info());
+        if (config.tess_control_shader)
+            shader_stages.push_back(config.tess_control_shader->get_stage_create_info());
+        if (config.tess_evaluation_shader)
+            shader_stages.push_back(config.tess_evaluation_shader->get_stage_create_info());
     }
 
     std::vector<vk::VertexInputBindingDescription> vertex_bindings;
@@ -338,6 +340,28 @@ vk::PipelineLayout VKGraphicsPipeline::create_pipeline_layout(
 
 bool VKGraphicsPipeline::validate_shaders(const GraphicsPipelineConfig& config)
 {
+    const bool has_mesh = config.mesh_shader != nullptr;
+
+    if (has_mesh) {
+        if (config.mesh_shader->get_stage() != vk::ShaderStageFlagBits::eMeshEXT) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Mesh shader must have stage eMeshEXT");
+            return false;
+        }
+        if (config.task_shader && config.task_shader->get_stage() != vk::ShaderStageFlagBits::eTaskEXT) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Task shader must have stage eTaskEXT");
+            return false;
+        }
+
+        if (config.vertex_shader || config.geometry_shader || config.tess_control_shader || config.tess_evaluation_shader) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+                "Mesh shading pipeline cannot contain vertex/geometry/tessellation shaders");
+            return false;
+        }
+        return true;
+    }
+
     if (!config.vertex_shader) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Graphics pipeline requires a vertex shader");
@@ -445,6 +469,14 @@ vk::PipelineVertexInputStateCreateInfo VKGraphicsPipeline::build_vertex_input_st
     }
 
     vk::PipelineVertexInputStateCreateInfo vertex_input;
+    if (config.mesh_shader) {
+        MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Mesh shading pipeline — vertex input ignored");
+        vertex_input.vertexBindingDescriptionCount = 0;
+        vertex_input.vertexAttributeDescriptionCount = 0;
+        return vertex_input;
+    }
+
     vertex_input.vertexBindingDescriptionCount = static_cast<uint32_t>(bindings.size());
     vertex_input.pVertexBindingDescriptions = bindings.empty() ? nullptr : bindings.data();
     vertex_input.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributes.size());
@@ -843,6 +875,35 @@ void VKGraphicsPipeline::draw_indexed_indirect(
     }
 
     cmd.drawIndexedIndirect(buffer, offset, draw_count, stride);
+}
+
+void VKGraphicsPipeline::drawMeshTasks(
+    vk::CommandBuffer cmd,
+    uint32_t groupCountX,
+    uint32_t groupCountY,
+    uint32_t groupCountZ)
+{
+    if (!m_pipeline) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot draw mesh tasks with invalid pipeline");
+        return;
+    }
+    cmd.drawMeshTasksEXT(groupCountX, groupCountY, groupCountZ);
+}
+
+void VKGraphicsPipeline::drawMeshTasksIndirect(
+    vk::CommandBuffer cmd,
+    vk::Buffer buffer,
+    vk::DeviceSize offset,
+    uint32_t drawCount,
+    uint32_t stride)
+{
+    if (!m_pipeline) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Cannot draw mesh tasks indirect with invalid pipeline");
+        return;
+    }
+    cmd.drawMeshTasksIndirectEXT(buffer, offset, drawCount, stride);
 }
 
 } // namespace MayaFlux::Core
