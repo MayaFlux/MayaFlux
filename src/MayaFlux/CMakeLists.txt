@@ -32,6 +32,9 @@ set_target_properties(MayaFluxLib PROPERTIES
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
+target_compile_definitions(MayaFluxLib PUBLIC
+                           VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+
 #==============================================================
 #                   Target Includes
 #==============================================================

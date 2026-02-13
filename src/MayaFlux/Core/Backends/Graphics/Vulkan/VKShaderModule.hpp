@@ -21,7 +21,9 @@ enum class Stage : uint8_t {
     FRAGMENT,
     GEOMETRY,
     TESS_CONTROL,
-    TESS_EVALUATION
+    TESS_EVALUATION,
+    MESH,
+    TASK
 };
 
 struct FragmentOutputState {
@@ -438,7 +440,7 @@ private:
      * @param stage Shader stage (affects compiler settings)
      * @param include_directories Include paths
      * @param defines Preprocessor macros
-    */
+     */
     static std::vector<uint32_t> compile_glsl_to_spirv_external(
         const std::string& glsl_source,
         vk::ShaderStageFlagBits stage,

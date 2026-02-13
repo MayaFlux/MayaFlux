@@ -169,6 +169,8 @@ struct RenderPipelineConfig {
     ShaderID geometry_shader = INVALID_SHADER; ///< Optional
     ShaderID tess_control_shader = INVALID_SHADER; ///< Optional
     ShaderID tess_eval_shader = INVALID_SHADER; ///< Optional
+    ShaderID mesh_shader = INVALID_SHADER; ///< Optional
+    ShaderID task_shader = INVALID_SHADER; ///< Optional
 
     // Vertex input
     std::vector<Core::VertexBinding> vertex_bindings;

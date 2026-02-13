@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 namespace MayaFlux::Core {
 
 static const std::vector<const char*> VALIDATION_LAYERS = {
@@ -40,6 +42,9 @@ bool VKInstance::initialize(bool enable_validation,
     const std::vector<const char*>& required_extensions)
 {
     m_validation_enabled = enable_validation;
+
+    auto vkGetInstanceProcAddr = vk::detail::DynamicLoader().getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
     if (m_validation_enabled && !check_validation_layer_support(VALIDATION_LAYERS)) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend, "Vulkan validation layers requested, but not available!");
@@ -93,6 +98,8 @@ bool VKInstance::initialize(bool enable_validation,
     try {
         m_instance = vk::createInstance(create_info);
         m_dynamic_dispatcher = vk::detail::DispatchLoaderDynamic(m_instance, vkGetInstanceProcAddr);
+
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(m_instance);
 
     } catch (const std::exception& e) {
         error_rethrow(Journal::Component::Core, Journal::Context::GraphicsBackend,

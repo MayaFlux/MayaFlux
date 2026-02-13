@@ -269,9 +269,9 @@ RenderPipelineID RenderFlow::create_pipeline(
         return INVALID_RENDER_PIPELINE;
     }
 
-    if (config.vertex_shader == INVALID_SHADER) {
+    if (config.mesh_shader == INVALID_SHADER && config.vertex_shader == INVALID_SHADER) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "Vertex shader required for graphics pipeline");
+            "Pipeline requires either mesh shader or vertex shader");
         return INVALID_RENDER_PIPELINE;
     }
 
@@ -295,6 +295,15 @@ RenderPipelineID RenderFlow::create_pipeline(
     }
     if (config.tess_eval_shader != INVALID_SHADER) {
         vk_config.tess_evaluation_shader = m_shader_foundry->get_vk_shader_module(config.tess_eval_shader);
+    }
+
+    vk_config.mesh_shader = m_shader_foundry->get_vk_shader_module(config.mesh_shader);
+    if (config.task_shader != INVALID_SHADER) {
+        vk_config.task_shader = m_shader_foundry->get_vk_shader_module(config.task_shader);
+    }
+
+    if (config.fragment_shader != INVALID_SHADER) {
+        vk_config.fragment_shader = m_shader_foundry->get_vk_shader_module(config.fragment_shader);
     }
 
     if (config.semantic_vertex_layout.has_value()) {
@@ -387,9 +396,32 @@ RenderPipelineID RenderFlow::create_pipeline(
     }
     vk_config.descriptor_set_layouts = layouts;
 
+    vk::ShaderStageFlags push_constant_stages;
+
+    if (config.mesh_shader != INVALID_SHADER) {
+        push_constant_stages = vk::ShaderStageFlagBits::eMeshEXT;
+        if (config.task_shader != INVALID_SHADER) {
+            push_constant_stages |= vk::ShaderStageFlagBits::eTaskEXT;
+        }
+        if (config.fragment_shader != INVALID_SHADER) {
+            push_constant_stages |= vk::ShaderStageFlagBits::eFragment;
+        }
+    } else {
+        push_constant_stages = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment;
+        if (config.geometry_shader != INVALID_SHADER) {
+            push_constant_stages |= vk::ShaderStageFlagBits::eGeometry;
+        }
+        if (config.tess_control_shader != INVALID_SHADER) {
+            push_constant_stages |= vk::ShaderStageFlagBits::eTessellationControl;
+        }
+        if (config.tess_eval_shader != INVALID_SHADER) {
+            push_constant_stages |= vk::ShaderStageFlagBits::eTessellationEvaluation;
+        }
+    }
+
     if (config.push_constant_size > 0) {
         vk::PushConstantRange range;
-        range.stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment;
+        range.stageFlags = push_constant_stages;
         range.offset = 0;
         range.size = static_cast<uint32_t>(config.push_constant_size);
         vk_config.push_constant_ranges.push_back(range);
@@ -420,6 +452,7 @@ RenderPipelineID RenderFlow::create_pipeline(
     state.pipeline = pipeline;
     state.layouts = layouts;
     state.layout = pipeline->get_layout();
+    state.push_constant_stages = push_constant_stages;
     m_pipelines[pipeline_id] = std::move(state);
 
     MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
@@ -779,7 +812,7 @@ void RenderFlow::push_constants(
 
     cmd.pushConstants(
         pipeline_it->second.layout,
-        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+        pipeline_it->second.push_constant_stages,
         0,
         static_cast<uint32_t>(size),
         data);
@@ -817,6 +850,36 @@ void RenderFlow::draw_indexed(
 
     cmd.drawIndexed(index_count, instance_count, first_index,
         vertex_offset, first_instance);
+}
+
+void RenderFlow::draw_mesh_tasks(
+    CommandBufferID cmd_id,
+    uint32_t group_count_x,
+    uint32_t group_count_y,
+    uint32_t group_count_z)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    cmd.drawMeshTasksEXT(group_count_x, group_count_y, group_count_z);
+}
+
+void RenderFlow::draw_mesh_tasks_indirect(
+    CommandBufferID cmd_id,
+    const std::shared_ptr<Buffers::VKBuffer>& buffer,
+    vk::DeviceSize offset,
+    uint32_t draw_count,
+    uint32_t stride)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd || !buffer)
+        return;
+
+    cmd.drawMeshTasksIndirectEXT(buffer->get_buffer(), offset, draw_count, stride);
 }
 
 //==========================================================================

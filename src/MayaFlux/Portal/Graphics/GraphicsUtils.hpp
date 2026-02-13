@@ -121,7 +121,9 @@ enum class ShaderStage : uint8_t {
     FRAGMENT,
     GEOMETRY,
     TESS_CONTROL,
-    TESS_EVALUATION
+    TESS_EVALUATION,
+    MESH,
+    TASK
 };
 
 //============================================================================

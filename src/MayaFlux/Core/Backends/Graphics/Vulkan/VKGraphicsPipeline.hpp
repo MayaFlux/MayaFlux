@@ -64,6 +64,10 @@ struct GraphicsPipelineConfig {
     std::shared_ptr<VKShaderModule> geometry_shader = nullptr; // Optional
     std::shared_ptr<VKShaderModule> tess_control_shader = nullptr; // Optional
     std::shared_ptr<VKShaderModule> tess_evaluation_shader = nullptr; // Optional
+    std::shared_ptr<VKShaderModule> mesh_shader = nullptr; // Optional (mesh shading)
+    std::shared_ptr<VKShaderModule> task_shader = nullptr; // Optional (mesh shading)
+
+    bool use_mesh_shading {}; // If true, ignore vertex/fragment shaders and use mesh/task shaders instead
 
     //==========================================================================
     // VERTEX INPUT STATE
@@ -419,6 +423,23 @@ public:
         vk::Buffer buffer,
         vk::DeviceSize offset,
         uint32_t draw_count,
+        uint32_t stride);
+
+    /**
+     * @brief Draw mesh tasks (mesh shading pipeline only)
+     */
+    void drawMeshTasks(vk::CommandBuffer cmd,
+        uint32_t groupCountX,
+        uint32_t groupCountY = 1,
+        uint32_t groupCountZ = 1);
+
+    /**
+     * @brief Draw mesh tasks indirect (mesh shading pipeline only)
+     */
+    void drawMeshTasksIndirect(vk::CommandBuffer cmd,
+        vk::Buffer buffer,
+        vk::DeviceSize offset,
+        uint32_t drawCount,
         uint32_t stride);
 
     //==========================================================================

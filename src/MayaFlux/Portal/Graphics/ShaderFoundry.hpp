@@ -160,6 +160,8 @@ public:
      *   .geom → GEOMETRY
      *   .tesc → TESS_CONTROL
      *   .tese → TESS_EVALUATION
+     *   .mesh → MESH
+     *   .task → TASK
      *
      * Examples:
      *   load_shader("shaders/kernel.comp");              // File
