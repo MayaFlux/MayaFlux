@@ -110,6 +110,16 @@ std::vector<std::vector<double>> NodeProcessingHandle::process_audio_networks(ui
     return m_manager->process_audio_networks(m_token, num_samples, channel);
 }
 
+void NodeProcessingHandle::update_routing_states()
+{
+    m_manager->update_routing_states_for_cycle(m_token);
+}
+
+void NodeProcessingHandle::cleanup_completed_routing()
+{
+    m_manager->cleanup_completed_routing(m_token);
+}
+
 TaskSchedulerHandle::TaskSchedulerHandle(
     std::shared_ptr<Vruta::TaskScheduler> task_manager,
     Vruta::ProcessingToken token)

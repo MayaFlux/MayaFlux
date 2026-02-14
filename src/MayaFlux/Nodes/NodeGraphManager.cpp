@@ -141,11 +141,18 @@ std::vector<std::vector<double>> NodeGraphManager::process_audio_networks(Proces
             if (net_buffer) {
                 if (network->needs_channel_routing()) {
                     double scale = network->get_routing_state().amount[channel];
-                    std::vector<double> scaled_buffer = *net_buffer;
-                    for (auto& sample : scaled_buffer) {
-                        sample *= scale;
+                    if (scale == 0.0)
+                        continue;
+
+                    if (scale == 1.0) {
+                        all_network_outputs.push_back(*net_buffer);
+                    } else {
+                        std::vector<double> scaled_buffer = *net_buffer;
+                        for (auto& sample : scaled_buffer)
+                            sample *= scale;
+
+                        all_network_outputs.push_back(std::move(scaled_buffer));
                     }
-                    all_network_outputs.push_back(std::move(scaled_buffer));
                 } else {
                     all_network_outputs.push_back(*net_buffer);
                 }
@@ -666,9 +673,9 @@ void NodeGraphManager::update_routing_states_for_cycle(ProcessingToken token)
 
 void NodeGraphManager::route_node_to_channels(
     const std::shared_ptr<Node>& node,
-    ProcessingToken token,
     const std::vector<uint32_t>& target_channels,
-    uint32_t fade_cycles)
+    uint32_t fade_cycles,
+    ProcessingToken token)
 {
     uint32_t current_channels = node->get_channel_mask();
 
@@ -677,11 +684,14 @@ void NodeGraphManager::route_node_to_channels(
         target_bitmask |= (1 << ch);
     }
 
+    uint32_t block_size = 512; // temporary
+    uint32_t fade_blocks = (fade_cycles + block_size - 1) / block_size;
+    fade_blocks = std::max(1u, fade_blocks);
+
     RoutingState state;
     state.from_channels = current_channels;
     state.to_channels = target_bitmask;
-    state.fade_cycles = fade_cycles;
-    state.cycles_elapsed = 0;
+    state.fade_cycles = fade_blocks;
     state.phase = RoutingState::ACTIVE;
 
     for (uint32_t ch = 0; ch < 32; ch++) {
@@ -699,9 +709,9 @@ void NodeGraphManager::route_node_to_channels(
 
 void NodeGraphManager::route_network_to_channels(
     const std::shared_ptr<Network::NodeNetwork>& network,
-    ProcessingToken token,
     const std::vector<uint32_t>& target_channels,
-    uint32_t fade_cycles)
+    uint32_t fade_cycles,
+    ProcessingToken token)
 {
     if (network->get_output_mode() != Network::NodeNetwork::OutputMode::AUDIO_SINK) {
         MF_WARN(Journal::Component::Nodes,
@@ -755,7 +765,7 @@ void NodeGraphManager::cleanup_completed_routing(ProcessingToken token)
 
         auto& state = node->get_routing_state();
 
-        if (state.phase == RoutingState::NONE) {
+        if (state.phase == RoutingState::COMPLETED) {
             for (uint32_t ch = 0; ch < 32; ch++) {
                 if ((state.from_channels & (1 << ch)) && !(state.to_channels & (1 << ch))) {
                     nodes_to_remove.emplace_back(node, ch);
@@ -777,7 +787,7 @@ void NodeGraphManager::cleanup_completed_routing(ProcessingToken token)
 
         auto& state = network->get_routing_state();
 
-        if (state.phase == RoutingState::NONE) {
+        if (state.phase == RoutingState::COMPLETED) {
             for (uint32_t ch = 0; ch < 32; ch++) {
                 if ((state.from_channels & (1 << ch)) && !(state.to_channels & (1 << ch))) {
                     networks_to_cleanup.emplace_back(network, ch);

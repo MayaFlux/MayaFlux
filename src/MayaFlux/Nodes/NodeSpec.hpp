@@ -77,6 +77,7 @@ struct RoutingState {
     enum Phase : uint8_t {
         NONE = 0x00, ///< No routing transition is currently active
         ACTIVE = 0x01, ///< Currently in the fade-out phase of a routing transition
+        COMPLETED = 0x02 ///< Routing transition has completed
     } phase { Phase::NONE };
 };
 

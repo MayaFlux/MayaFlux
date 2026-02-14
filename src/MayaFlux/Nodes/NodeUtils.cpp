@@ -163,7 +163,18 @@ std::vector<uint32_t> get_active_channels(uint32_t channel_mask, uint32_t fallba
 void update_routing_state(RoutingState& state)
 {
     state.cycles_elapsed++;
-    double progress = static_cast<double>(state.cycles_elapsed) / state.fade_cycles;
+
+    double progress = 0.;
+    if (state.fade_cycles > 0) {
+        progress = std::min<double>(1.0, static_cast<double>(state.cycles_elapsed) / state.fade_cycles);
+    } else {
+        for (uint32_t ch = 0; ch < 32; ++ch) {
+            bool will_be_in = state.to_channels & (1 << ch);
+            state.amount[ch] = will_be_in ? 1.0 : 0.0;
+        }
+        state.phase = RoutingState::NONE;
+        return;
+    }
 
     for (uint32_t ch = 0; ch < 32; ch++) {
         bool was_in = state.from_channels & (1 << ch);
@@ -181,7 +192,7 @@ void update_routing_state(RoutingState& state)
     }
 
     if (state.cycles_elapsed >= state.fade_cycles) {
-        state.phase = RoutingState::NONE;
+        state.phase = RoutingState::COMPLETED;
     }
 }
 

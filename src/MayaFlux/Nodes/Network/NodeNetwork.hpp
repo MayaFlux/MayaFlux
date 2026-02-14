@@ -376,7 +376,7 @@ public:
      */
     [[nodiscard]] bool needs_channel_routing() const
     {
-        return m_routing_state.phase & RoutingState::ACTIVE;
+        return m_routing_state.phase & (RoutingState::ACTIVE | RoutingState::COMPLETED);
     }
 
 protected:
