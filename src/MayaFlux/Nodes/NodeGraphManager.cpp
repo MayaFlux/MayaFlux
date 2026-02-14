@@ -6,7 +6,9 @@
 
 namespace MayaFlux::Nodes {
 
-NodeGraphManager::NodeGraphManager()
+NodeGraphManager::NodeGraphManager(uint32_t sample_rate, uint32_t block_size)
+    : m_registered_sample_rate(sample_rate)
+    , m_registered_block_size(block_size)
 {
     ensure_root_exists(ProcessingToken::AUDIO_RATE, 0);
 }
@@ -16,6 +18,7 @@ void NodeGraphManager::add_to_root(const std::shared_ptr<Node>& node,
     unsigned int channel)
 {
     set_channel_mask(node, channel);
+    node->set_sample_rate(m_registered_sample_rate);
 
     auto& root = get_root_node(token, channel);
     root.register_node(node);
@@ -595,6 +598,8 @@ void NodeGraphManager::register_network_global(const std::shared_ptr<Network::No
         ss << "network_" << network.get();
         std::string generated_id = ss.str();
         m_network_registry[generated_id] = network;
+        network->set_sample_rate(m_registered_sample_rate);
+        network->set_block_size(m_registered_block_size);
     }
 }
 
@@ -684,8 +689,7 @@ void NodeGraphManager::route_node_to_channels(
         target_bitmask |= (1 << ch);
     }
 
-    uint32_t block_size = 512; // temporary
-    uint32_t fade_blocks = (fade_cycles + block_size - 1) / block_size;
+    uint32_t fade_blocks = (fade_cycles + m_registered_block_size - 1) / m_registered_block_size;
     fade_blocks = std::max(1u, fade_blocks);
 
     RoutingState state;
@@ -741,11 +745,13 @@ void NodeGraphManager::route_network_to_channels(
         ensure_root_exists(token, ch);
     }
 
+    uint32_t fade_blocks = (fade_cycles + m_registered_block_size - 1) / m_registered_block_size;
+    fade_blocks = std::max(1u, fade_blocks);
+
     RoutingState state;
     state.from_channels = current_channels;
     state.to_channels = target_bitmask;
-    state.fade_cycles = fade_cycles;
-    state.cycles_elapsed = 0;
+    state.fade_cycles = fade_blocks;
     state.phase = RoutingState::ACTIVE;
 
     for (uint32_t ch = 0; ch < 32; ch++) {

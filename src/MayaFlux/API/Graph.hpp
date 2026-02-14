@@ -68,6 +68,40 @@ MAYAFLUX_API void register_node(
     uint32_t channel = 0);
 
 /**
+ *  @breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade time
+ *  @param node Node to route
+ *  @param channels Vector of channel indices to route the node to
+ *  @param seconds_to_fade Time in seconds to fade the routing (optional, default is 1 second)
+ *  @param token Processing domain to route within (default is AUDIO_RATE)
+ *
+ *  This method adds the specified node to the root nodes of the target channels
+ *  within the given processing domain. If seconds_to_fade is greater than 0, the routing
+ *  will be smoothly faded in over that time period.
+ */
+MAYAFLUX_API void route_node(
+    const std::shared_ptr<Nodes::Node>& node,
+    const std::vector<uint32_t>& channels,
+    double seconds_to_fade = 1.F,
+    const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
+
+/**
+ *  @breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade time
+ *  @param node Node to route
+ *  @param channels Vector of channel indices to route the node to
+ *  @param num_samples Number of samples to fade the routing over (optional, default is 48000 samples for 1 second at 48kHz)
+ *  @param token Processing domain to route within (default is AUDIO_RATE)
+ *
+ *  This method adds the specified node to the root nodes of the target channels
+ *  within the given processing domain. If num_samples is greater than 0, the routing
+ *  will be smoothly faded in over that many samples.
+ */
+MAYAFLUX_API void route_node(
+    const std::shared_ptr<Nodes::Node>& node,
+    const std::vector<uint32_t>& channels,
+    uint32_t num_samples,
+    const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
+
+/**
  * @brief Removes a node from the root node of a specific channel
  * @param node Node to remove
  * @param channel Channel index
@@ -140,6 +174,40 @@ MAYAFLUX_API void register_node_network(const std::shared_ptr<Nodes::Network::No
  * The network will no longer be available for managing nodes and their connections.
  */
 MAYAFLUX_API void unregister_node_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
+
+/**
+ *  @breif Moves the network from its current channel(s) to the specified channel(s) with an optional fade time
+ *  @param network NodeNetwork to route
+ *  @param channels Vector of channel indices to route the network to
+ *  @param seconds_to_fade Time in seconds to fade the routing (optional, default is 1 second)
+ *  @param token Processing domain to route within (default is AUDIO_RATE)
+ *
+ *  This method adds the specified network to the target channels
+ *  within the given processing domain. If seconds_to_fade is greater than 0, the routing
+ *  will be smoothly faded in over that time period.
+ */
+MAYAFLUX_API void route_network(
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    const std::vector<uint32_t>& channels,
+    double seconds_to_fade = 1.F,
+    const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
+
+/**
+ *  @breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade time
+ *  @param network NodeNetwork to route
+ *  @param channels Vector of channel indices to route the node to
+ *  @param num_samples Number of samples to fade the routing over (optional, default is 48000 samples for 1 second at 48kHz)
+ *  @param token Processing domain to route within (default is AUDIO_RATE)
+ *
+ *  This method adds the specified network to the target channels
+ *  within the given processing domain. If num_samples is greater than 0, the routing
+ *  will be smoothly faded in over that many samples.
+ */
+MAYAFLUX_API void route_network(
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    const std::vector<uint32_t>& channels,
+    uint32_t num_samples,
+    const Nodes::ProcessingToken& token = Nodes::ProcessingToken::AUDIO_RATE);
 
 /**
  * @brief Creates a new node network

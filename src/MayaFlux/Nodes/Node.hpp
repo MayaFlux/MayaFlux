@@ -337,6 +337,9 @@ public:
      */
     [[nodiscard]] std::span<const float> get_gpu_data_buffer() const;
 
+    void set_sample_rate(uint32_t sample_rate) { m_sample_rate = sample_rate; }
+    [[nodiscard]] uint32_t get_sample_rate() const { return m_sample_rate; }
+
 protected:
     /**
      * @brief Notifies all registered callbacks with the current context
@@ -424,6 +427,8 @@ protected:
     @brief tracks if the node's state has been saved by a snapshot operation
     */
     bool m_state_saved {};
+
+    uint32_t m_sample_rate { 48000 }; ///< Sample rate for audio processing, used for normalization
 
 public:
     /**

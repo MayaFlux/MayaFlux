@@ -316,4 +316,15 @@ MAYAFLUX_API void on_scroll(
  */
 MAYAFLUX_API bool cancel_event_handler(const std::string& name);
 
+/**
+ * @brief Converts a time duration in seconds to the equivalent number of audio samples
+ * @param seconds Time duration in seconds
+ * @return Equivalent number of audio samples based on the current sample rate
+ *
+ * This function uses the sample rate from the default engine to calculate how many
+ * audio samples correspond to the given time duration in seconds. It's useful for
+ * scheduling tasks or processing buffers based on time intervals.
+ */
+MAYAFLUX_API uint64_t seconds_to_samples(double seconds);
+
 }

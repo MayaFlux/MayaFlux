@@ -1,5 +1,4 @@
 #include "Phasor.hpp"
-#include "MayaFlux/API/Config.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
@@ -59,11 +58,7 @@ void Phasor::set_frequency(float frequency)
 
 void Phasor::update_phase_increment(double frequency)
 {
-    uint64_t s_rate = 48000U;
-    if (MayaFlux::is_engine_initialized()) {
-        s_rate = Config::get_sample_rate();
-    }
-    m_phase_inc = frequency / (double)s_rate;
+    m_phase_inc = frequency / (double)m_sample_rate;
 }
 
 void Phasor::set_frequency_modulator(const std::shared_ptr<Node>& modulator)

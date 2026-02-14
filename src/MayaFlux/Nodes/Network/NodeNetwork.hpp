@@ -379,6 +379,11 @@ public:
         return m_routing_state.phase & (RoutingState::ACTIVE | RoutingState::COMPLETED);
     }
 
+    void set_sample_rate(uint32_t sample_rate) { m_sample_rate = sample_rate; }
+    [[nodiscard]] uint32_t get_sample_rate() const { return m_sample_rate; }
+    void set_block_size(uint32_t block_size) { m_block_size = block_size; }
+    [[nodiscard]] uint32_t get_block_size() const { return m_block_size; }
+
 protected:
     //-------------------------------------------------------------------------
     // Protected State (Accessible to subclasses)
@@ -388,6 +393,8 @@ protected:
     OutputMode m_output_mode = OutputMode::NONE;
     bool m_enabled = true;
     bool m_initialized = false;
+    uint32_t m_sample_rate { 48000 };
+    uint32_t m_block_size { 512 };
 
     /**
      * @brief Ensure initialize() is called exactly once

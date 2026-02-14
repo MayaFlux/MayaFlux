@@ -239,4 +239,13 @@ bool cancel_event_handler(const std::string& name)
     return get_event_manager()->cancel_event(name);
 }
 
+uint64_t seconds_to_samples(double seconds)
+{
+    uint64_t sample_rate = 48000;
+    if (get_context().is_running()) {
+        sample_rate = get_context().get_stream_info().sample_rate;
+    }
+    return static_cast<uint64_t>(seconds * sample_rate);
+}
+
 }

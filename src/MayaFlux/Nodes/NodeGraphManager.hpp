@@ -42,12 +42,14 @@ class MAYAFLUX_API NodeGraphManager {
 public:
     /**
      * @brief Creates a new NodeGraphManager
+     * @param sample_rate Sample rate for audio processing (default: 48000 Hz)
+     * @param block_size Block size for audio processing (default: 512 samples)
      *
      * Initializes the manager with a root node for channel 0 (the default channel)
      * in the AUDIO_RATE domain. Additional root nodes for other tokens and channels
      * are created on demand when accessed.
      */
-    NodeGraphManager();
+    NodeGraphManager(uint32_t sample_rate = 48000, uint32_t block_size = 512);
 
     /**
      * @brief Destroys the NodeGraphManager
@@ -551,6 +553,10 @@ private:
     std::unordered_map<ProcessingToken, std::unique_ptr<std::atomic<bool>>> m_token_network_processing;
 
     std::atomic<bool> m_terminate_requested { false }; ///< Global termination flag
+
+    uint32_t m_registered_sample_rate { 48000 }; ///< Sample rate for audio processing, used for normalization
+
+    uint32_t m_registered_block_size { 512 }; ///< Block size for audio processing, used for normalizationbuffer
 
     /**
      * @brief Ensures a root node exists for the given token and channel

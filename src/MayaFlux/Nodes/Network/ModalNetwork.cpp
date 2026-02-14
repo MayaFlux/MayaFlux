@@ -110,7 +110,7 @@ void ModalNetwork::initialize_modes(const std::vector<double>& ratios,
         mode.oscillator = std::make_shared<Generator::Sine>(static_cast<float>(mode.current_frequency));
         mode.oscillator->set_in_network(true);
 
-        mode.decay_coefficient = std::exp(-1.0 / (base_decay * Config::get_sample_rate()));
+        mode.decay_coefficient = std::exp(-1.0 / (base_decay * m_sample_rate));
 
         m_modes.push_back(std::move(mode));
     }
@@ -153,7 +153,7 @@ void ModalNetwork::initialize_exciter(double /*strength*/)
     case ExciterType::NOISE_BURST:
     case ExciterType::FILTERED_NOISE:
         m_exciter_samples_remaining = static_cast<size_t>(
-            m_exciter_duration * Config::get_sample_rate());
+            m_exciter_duration * m_sample_rate);
         break;
 
     case ExciterType::SAMPLE:
