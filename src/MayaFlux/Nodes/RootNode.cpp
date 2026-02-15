@@ -127,17 +127,25 @@ double RootNode::process_sample()
             continue;
 
         uint32_t state = node->m_state.load();
+        double node_output = 0.0;
+
         if (!(state & NodeState::PROCESSED)) {
             auto generator = std::dynamic_pointer_cast<Nodes::Generator::Generator>(node);
             if (generator && generator->should_mock_process()) {
                 generator->process_sample();
             } else {
-                sample += node->process_sample();
+                node_output = node->process_sample();
             }
             atomic_add_flag(node->m_state, NodeState::PROCESSED);
         } else {
-            sample += node->get_last_output();
+            node_output = node->get_last_output();
         }
+
+        if (node->needs_channel_routing()) {
+            node_output *= node->get_routing_state().amount[m_channel];
+        }
+
+        sample += node_output;
     }
 
     postprocess();

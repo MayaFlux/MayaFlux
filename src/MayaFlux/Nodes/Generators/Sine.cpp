@@ -1,5 +1,4 @@
 #include "Sine.hpp"
-#include "MayaFlux/API/Config.hpp"
 
 namespace MayaFlux::Nodes::Generator {
 
@@ -51,11 +50,7 @@ void Sine::set_frequency(float frequency)
 
 void Sine::update_phase_increment(double frequency)
 {
-    uint64_t s_rate = 48000U;
-    if (MayaFlux::is_engine_initialized()) {
-        s_rate = Config::get_sample_rate();
-    }
-    m_phase_inc = (2 * M_PI * frequency) / (double)s_rate;
+    m_phase_inc = (2 * M_PI * frequency) / (double)m_sample_rate;
 }
 
 void Sine::set_frequency_modulator(const std::shared_ptr<Node>& modulator)

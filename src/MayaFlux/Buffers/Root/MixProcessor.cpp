@@ -68,7 +68,7 @@ void MixProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
                 }
             }
 
-            data[i] /= m_sources.size();
+            data[i] /= (double)m_sources.size();
         }
 
         cleanup();
@@ -77,36 +77,35 @@ void MixProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
 
 void MixProcessor::cleanup()
 {
-    m_sources.erase(
-        std::remove_if(m_sources.begin(), m_sources.end(),
-            [](const MixSource& s) { return s.once; }),
-        m_sources.end());
+    std::erase_if(m_sources, [](const MixSource& s) { return s.once; });
 }
 
 void MixProcessor::validate_sources()
 {
-    auto it = std::remove_if(m_sources.begin(), m_sources.end(),
-        [](MixSource& s) { return !s.refresh_data(); });
-
-    m_sources.erase(it, m_sources.end());
+    std::erase_if(m_sources, [](MixSource& s) { return !s.refresh_data(); });
 }
 
-bool MixProcessor::remove_source(std::shared_ptr<AudioBuffer> buffer)
+bool MixProcessor::remove_source(const std::shared_ptr<AudioBuffer>& buffer)
 {
     if (!buffer) {
         return false;
     }
 
-    auto it = std::remove_if(m_sources.begin(), m_sources.end(),
-        [&buffer](const MixSource& s) {
-            return s.matches_buffer(buffer);
-        });
+    auto erased = std::erase_if(m_sources, [&buffer](const MixSource& s) {
+        return s.matches_buffer(buffer);
+    });
 
-    if (it != m_sources.end()) {
-        m_sources.erase(it, m_sources.end());
-        return true;
+    return erased > 0;
+}
+
+bool MixProcessor::update_source_mix(const std::shared_ptr<AudioBuffer>& buffer, double new_mix_level)
+{
+    for (auto& source : m_sources) {
+        if (source.matches_buffer(buffer)) {
+            source.mix_level = new_mix_level;
+            return true;
+        }
     }
-
     return false;
 }
 

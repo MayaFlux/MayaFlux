@@ -183,4 +183,150 @@ std::vector<std::shared_ptr<AudioBuffer>> BufferSupplyMixing::clone_audio_buffer
     return cloned_buffers;
 }
 
+void BufferSupplyMixing::route_buffer_to_channel(
+    const std::shared_ptr<AudioBuffer>& buffer,
+    uint32_t target_channel,
+    uint32_t fade_cycles,
+    ProcessingToken token)
+{
+    if (!buffer) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "BufferSupplyMixing: Invalid buffer for routing");
+        return;
+    }
+
+    uint32_t current_channel = buffer->get_channel_id();
+
+    if (current_channel == target_channel) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "BufferSupplyMixing: Buffer already on target channel {}", target_channel);
+        return;
+    }
+
+    if (!m_unit_manager.has_audio_unit(token)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "BufferSupplyMixing: Invalid token for routing");
+        return;
+    }
+
+    auto& unit = m_unit_manager.get_audio_unit_mutable(token);
+    if (target_channel >= unit.channel_count) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "BufferSupplyMixing: Target channel {} out of range", target_channel);
+        return;
+    }
+
+    uint32_t fade_blocks = std::max(1U, fade_cycles);
+
+    BufferRoutingState state;
+    state.from_channel = current_channel;
+    state.to_channel = target_channel;
+    state.fade_cycles = fade_blocks;
+    state.from_amount = 1.0;
+    state.to_amount = 0.0;
+    state.cycles_elapsed = 0;
+    state.phase = BufferRoutingState::ACTIVE;
+
+    buffer->get_routing_state() = state;
+
+    supply_audio_buffer_to(buffer, token, target_channel, 0.0);
+}
+
+void BufferSupplyMixing::update_routing_states_for_cycle(ProcessingToken token)
+{
+    if (!m_unit_manager.has_audio_unit(token)) {
+        return;
+    }
+
+    auto& unit = m_unit_manager.get_audio_unit_mutable(token);
+
+    for (uint32_t channel = 0; channel < unit.channel_count; ++channel) {
+        auto root_buffer = unit.get_buffer(channel);
+
+        for (auto& child : root_buffer->get_child_buffers()) {
+            if (!child->needs_routing()) {
+                continue;
+            }
+
+            auto& state = child->get_routing_state();
+
+            if (state.phase != BufferRoutingState::ACTIVE) {
+                continue;
+            }
+
+            update_routing_state(state);
+
+            auto root_target = unit.get_buffer(state.to_channel);
+            auto chain_target = unit.get_chain(state.to_channel);
+
+            if (auto mix_proc = chain_target->get_processor<MixProcessor>(root_target)) {
+                mix_proc->update_source_mix(child, state.to_amount);
+            }
+        }
+    }
+}
+
+void BufferSupplyMixing::cleanup_completed_routing(ProcessingToken token)
+{
+    if (!m_unit_manager.has_audio_unit(token)) {
+        return;
+    }
+
+    auto& unit = m_unit_manager.get_audio_unit_mutable(token);
+
+    std::vector<std::tuple<std::shared_ptr<AudioBuffer>, uint32_t, uint32_t>> buffers_to_move;
+
+    for (uint32_t channel = 0; channel < unit.channel_count; ++channel) {
+        auto root_buffer = unit.get_buffer(channel);
+
+        for (auto& child : root_buffer->get_child_buffers()) {
+            if (!child->needs_routing()) {
+                continue;
+            }
+
+            auto& state = child->get_routing_state();
+
+            if (state.phase == BufferRoutingState::COMPLETED) {
+                buffers_to_move.emplace_back(child, state.from_channel, state.to_channel);
+            }
+        }
+    }
+
+    for (auto& [buffer, from_ch, to_ch] : buffers_to_move) {
+        auto root_from = unit.get_buffer(from_ch);
+        auto root_to = unit.get_buffer(to_ch);
+
+        root_from->remove_child_buffer(buffer);
+
+        buffer->set_channel_id(to_ch);
+        root_to->add_child_buffer(buffer);
+
+        remove_supplied_audio_buffer(buffer, token, to_ch);
+
+        buffer->get_routing_state() = BufferRoutingState {};
+    }
+}
+
+void BufferSupplyMixing::update_routing_state(BufferRoutingState& state)
+{
+    state.cycles_elapsed++;
+
+    double progress = 0.0;
+    if (state.fade_cycles > 0) {
+        progress = std::min(1.0, static_cast<double>(state.cycles_elapsed) / state.fade_cycles);
+    } else {
+        state.from_amount = 0.0;
+        state.to_amount = 1.0;
+        state.phase = BufferRoutingState::COMPLETED;
+        return;
+    }
+
+    state.from_amount = 1.0 - progress;
+    state.to_amount = progress;
+
+    if (state.cycles_elapsed >= state.fade_cycles) {
+        state.phase = BufferRoutingState::COMPLETED;
+    }
+}
+
 } // namespace MayaFlux::Buffers

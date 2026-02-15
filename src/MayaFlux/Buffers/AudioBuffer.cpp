@@ -2,14 +2,13 @@
 
 #include "BufferProcessingChain.hpp"
 
-#include "MayaFlux/API/Config.hpp"
-
+#include "MayaFlux/Buffers/BufferSpec.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
 
 AudioBuffer::AudioBuffer()
-    : AudioBuffer(0, MayaFlux::Config::get_buffer_size())
+    : AudioBuffer(0, s_preferred_buffer_size)
 {
 }
 
@@ -23,7 +22,7 @@ AudioBuffer::AudioBuffer(uint32_t channel_id, uint32_t num_samples)
     , m_processing_chain(std::make_shared<BufferProcessingChain>())
     , m_is_processing(false)
 {
-    if (num_samples != MayaFlux::Config::get_buffer_size()) {
+    if (num_samples != s_preferred_buffer_size) {
         MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
             "AudioBuffer initialized with a non-default number of samples ({}). This may lead to unexpected behavior.",
             num_samples);

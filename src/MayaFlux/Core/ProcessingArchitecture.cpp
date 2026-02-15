@@ -76,6 +76,18 @@ std::span<double> BufferProcessingHandle::write_channel_data(uint32_t channel)
     return m_manager->get_buffer_data(m_token, channel);
 }
 
+void BufferProcessingHandle::update_routing_states()
+{
+    ensure_valid();
+    m_manager->update_routing_states(m_token);
+}
+
+void BufferProcessingHandle::cleanup_completed_routing()
+{
+    ensure_valid();
+    m_manager->cleanup_completed_routing(m_token);
+}
+
 void BufferProcessingHandle::setup_channels(uint32_t num_channels, uint32_t buffer_size)
 {
     ensure_valid();
@@ -108,6 +120,16 @@ double NodeProcessingHandle::process_sample(uint32_t channel)
 std::vector<std::vector<double>> NodeProcessingHandle::process_audio_networks(uint32_t num_samples, uint32_t channel)
 {
     return m_manager->process_audio_networks(m_token, num_samples, channel);
+}
+
+void NodeProcessingHandle::update_routing_states()
+{
+    m_manager->update_routing_states_for_cycle(m_token);
+}
+
+void NodeProcessingHandle::cleanup_completed_routing()
+{
+    m_manager->cleanup_completed_routing(m_token);
 }
 
 TaskSchedulerHandle::TaskSchedulerHandle(

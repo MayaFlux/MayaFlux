@@ -241,4 +241,15 @@ std::vector<uint32_t> get_active_channels(const std::shared_ptr<Nodes::Node>& no
  */
 std::vector<uint32_t> get_active_channels(uint32_t channel_mask, uint32_t fallback_channel = 0);
 
+/**
+ * @brief Updates the routing state for a node based on its current channel usage
+ * @param state The routing state to update
+ *
+ * This function evaluates the current channel usage of a node and updates the
+ * routing state accordingly. It manages transitions between different routing
+ * phases (such as fade-in and fade-out(Active)) based on changes in channel counts,
+ * ensuring smooth audio output during dynamic reconfigurations of the processing graph.
+ */
+void update_routing_state(RoutingState& state);
+
 }

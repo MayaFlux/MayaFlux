@@ -1,13 +1,14 @@
 #include "NodeGraphManager.hpp"
 
 #include "Network/NodeNetwork.hpp"
-#include "NodeStructure.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nodes {
 
-NodeGraphManager::NodeGraphManager()
+NodeGraphManager::NodeGraphManager(uint32_t sample_rate, uint32_t block_size)
+    : m_registered_sample_rate(sample_rate)
+    , m_registered_block_size(block_size)
 {
     ensure_root_exists(ProcessingToken::AUDIO_RATE, 0);
 }
@@ -17,6 +18,7 @@ void NodeGraphManager::add_to_root(const std::shared_ptr<Node>& node,
     unsigned int channel)
 {
     set_channel_mask(node, channel);
+    node->set_sample_rate(m_registered_sample_rate);
 
     auto& root = get_root_node(token, channel);
     root.register_node(node);
@@ -140,7 +142,23 @@ std::vector<std::vector<double>> NodeGraphManager::process_audio_networks(Proces
 
             const auto& net_buffer = network->get_audio_buffer();
             if (net_buffer) {
-                all_network_outputs.push_back(*net_buffer);
+                if (network->needs_channel_routing()) {
+                    double scale = network->get_routing_state().amount[channel];
+                    if (scale == 0.0)
+                        continue;
+
+                    if (scale == 1.0) {
+                        all_network_outputs.push_back(*net_buffer);
+                    } else {
+                        std::vector<double> scaled_buffer = *net_buffer;
+                        for (auto& sample : scaled_buffer)
+                            sample *= scale;
+
+                        all_network_outputs.push_back(std::move(scaled_buffer));
+                    }
+                } else {
+                    all_network_outputs.push_back(*net_buffer);
+                }
             }
         }
     }
@@ -499,17 +517,13 @@ void NodeGraphManager::remove_network(const std::shared_ptr<Network::NodeNetwork
         auto token_it = m_audio_networks.find(token);
         if (token_it != m_audio_networks.end()) {
             auto& networks = token_it->second;
-            networks.erase(
-                std::remove(networks.begin(), networks.end(), network),
-                networks.end());
+            std::erase_if(networks, [&](const auto& n) { return n == network; });
         }
     } else {
         auto it = m_token_networks.find(token);
         if (it != m_token_networks.end()) {
             auto& networks = it->second;
-            networks.erase(
-                std::remove(networks.begin(), networks.end(), network),
-                networks.end());
+            std::erase_if(networks, [&](const auto& n) { return n == network; });
         }
     }
 
@@ -584,6 +598,8 @@ void NodeGraphManager::register_network_global(const std::shared_ptr<Network::No
         ss << "network_" << network.get();
         std::string generated_id = ss.str();
         m_network_registry[generated_id] = network;
+        network->set_sample_rate(m_registered_sample_rate);
+        network->set_block_size(m_registered_block_size);
     }
 }
 
@@ -643,6 +659,162 @@ NodeGraphManager::~NodeGraphManager()
 
     m_Node_registry.clear();
     m_network_registry.clear();
+}
+
+void NodeGraphManager::update_routing_states_for_cycle(ProcessingToken token)
+{
+    for (const auto& [id, node] : m_Node_registry) {
+        if (!node->needs_channel_routing())
+            continue;
+        update_routing_state(node->get_routing_state());
+    }
+
+    for (const auto& network : get_all_networks(token)) {
+        if (!network || !network->needs_channel_routing())
+            continue;
+        update_routing_state(network->get_routing_state());
+    }
+}
+
+void NodeGraphManager::route_node_to_channels(
+    const std::shared_ptr<Node>& node,
+    const std::vector<uint32_t>& target_channels,
+    uint32_t fade_cycles,
+    ProcessingToken token)
+{
+    uint32_t current_channels = node->get_channel_mask();
+
+    uint32_t target_bitmask = 0;
+    for (auto ch : target_channels) {
+        target_bitmask |= (1 << ch);
+    }
+
+    uint32_t fade_blocks = (fade_cycles + m_registered_block_size - 1) / m_registered_block_size;
+    fade_blocks = std::max(1u, fade_blocks);
+
+    RoutingState state;
+    state.from_channels = current_channels;
+    state.to_channels = target_bitmask;
+    state.fade_cycles = fade_blocks;
+    state.phase = RoutingState::ACTIVE;
+
+    for (uint32_t ch = 0; ch < 32; ch++) {
+        state.amount[ch] = (current_channels & (1 << ch)) ? 1.0 : 0.0;
+    }
+
+    node->get_routing_state() = state;
+
+    for (auto ch : target_channels) {
+        if (!(current_channels & (1 << ch))) {
+            add_to_root(node, token, ch);
+        }
+    }
+}
+
+void NodeGraphManager::route_network_to_channels(
+    const std::shared_ptr<Network::NodeNetwork>& network,
+    const std::vector<uint32_t>& target_channels,
+    uint32_t fade_cycles,
+    ProcessingToken token)
+{
+    if (network->get_output_mode() != Network::NodeNetwork::OutputMode::AUDIO_SINK) {
+        MF_WARN(Journal::Component::Nodes,
+            Journal::Context::NodeProcessing,
+            "Attempted to route network that is not an audio sink. Operation ignored.");
+        return;
+    }
+
+    register_network_global(network);
+    network->set_enabled(true);
+
+    auto& networks = m_audio_networks[token];
+    if (std::ranges::find(networks, network) == networks.end()) {
+        networks.push_back(network);
+    }
+
+    uint32_t current_channels = network->get_channel_mask();
+
+    uint32_t target_bitmask = 0;
+    for (auto ch : target_channels) {
+        target_bitmask |= (1 << ch);
+    }
+
+    uint32_t combined_mask = current_channels | target_bitmask;
+    network->set_channel_mask(combined_mask);
+    for (auto ch : target_channels) {
+        network->add_channel_usage(ch);
+        ensure_root_exists(token, ch);
+    }
+
+    uint32_t fade_blocks = (fade_cycles + m_registered_block_size - 1) / m_registered_block_size;
+    fade_blocks = std::max(1u, fade_blocks);
+
+    RoutingState state;
+    state.from_channels = current_channels;
+    state.to_channels = target_bitmask;
+    state.fade_cycles = fade_blocks;
+    state.phase = RoutingState::ACTIVE;
+
+    for (uint32_t ch = 0; ch < 32; ch++) {
+        state.amount[ch] = (current_channels & (1 << ch)) ? 1.0 : 0.0;
+    }
+
+    network->get_routing_state() = state;
+}
+
+void NodeGraphManager::cleanup_completed_routing(ProcessingToken token)
+{
+    std::vector<std::pair<std::shared_ptr<Node>, uint32_t>> nodes_to_remove;
+
+    for (const auto& [id, node] : m_Node_registry) {
+        if (!node->needs_channel_routing())
+            continue;
+
+        auto& state = node->get_routing_state();
+
+        if (state.phase == RoutingState::COMPLETED) {
+            for (uint32_t ch = 0; ch < 32; ch++) {
+                if ((state.from_channels & (1 << ch)) && !(state.to_channels & (1 << ch))) {
+                    nodes_to_remove.emplace_back(node, ch);
+                }
+            }
+            state = RoutingState {};
+        }
+    }
+
+    for (auto& [node, channel] : nodes_to_remove) {
+        remove_from_root(node, token, channel);
+    }
+
+    std::vector<std::pair<std::shared_ptr<Network::NodeNetwork>, uint32_t>> networks_to_cleanup;
+
+    for (const auto& network : get_all_networks(token)) {
+        if (!network || !network->needs_channel_routing())
+            continue;
+
+        auto& state = network->get_routing_state();
+
+        if (state.phase == RoutingState::COMPLETED) {
+            network->set_channel_mask(state.to_channels);
+
+            for (uint32_t ch = 0; ch < 32; ch++) {
+                if ((state.from_channels & (1 << ch)) && !(state.to_channels & (1 << ch))) {
+                    networks_to_cleanup.emplace_back(network, ch);
+                }
+            }
+            state = RoutingState {};
+        }
+    }
+
+    for (auto& [network, channel] : networks_to_cleanup) {
+        network->remove_channel_usage(channel);
+
+        if (network->get_channel_mask() == 0) {
+            auto& networks = m_audio_networks[token];
+            std::erase_if(networks, [&](const auto& n) { return n == network; });
+            unregister_network_global(network);
+        }
+    }
 }
 
 }

@@ -451,6 +451,9 @@ private:
     uint32_t m_cleanup_threshold;
 
     uint64_t m_current_buffer_cycle {};
+
+    uint64_t m_registered_sample_rate { 48000 };
+    uint32_t m_registered_frame_rate { 60 };
 };
 
 }

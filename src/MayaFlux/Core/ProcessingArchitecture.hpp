@@ -123,6 +123,12 @@ public:
     /** @brief Configure channel layout for token domain */
     void setup_channels(uint32_t num_channels, uint32_t buffer_size);
 
+    /* @brief Supply buffer to a channel with optional mixing */
+    void update_routing_states();
+
+    /* @brief Route a buffer to a different channel with fade transition */
+    void cleanup_completed_routing();
+
 private:
     void ensure_valid() const;
     void acquire_write_lock();
@@ -152,6 +158,10 @@ public:
     std::vector<double> process_channel(uint32_t channel, uint32_t num_samples);
 
     double process_sample(uint32_t channel);
+
+    void update_routing_states();
+
+    void cleanup_completed_routing();
 
     std::vector<std::vector<double>> process_audio_networks(uint32_t num_samples, uint32_t channel = 0);
 

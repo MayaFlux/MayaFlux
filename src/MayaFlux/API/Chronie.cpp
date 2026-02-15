@@ -9,6 +9,8 @@
 #include "MayaFlux/Vruta/EventManager.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
+#include "MayaFlux/Vruta/ChronUtils.hpp"
+
 #include "MayaFlux/Kriya/InputEvents.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -237,6 +239,39 @@ void on_scroll(
 bool cancel_event_handler(const std::string& name)
 {
     return get_event_manager()->cancel_event(name);
+}
+
+uint64_t seconds_to_samples(double seconds)
+{
+    uint64_t sample_rate = 48000;
+    if (get_context().is_running()) {
+        sample_rate = get_context().get_stream_info().sample_rate;
+    }
+    return static_cast<uint64_t>(seconds * sample_rate);
+}
+
+uint64_t seconds_to_blocks(double seconds)
+{
+    uint32_t sample_rate = 48000;
+    uint32_t block_size = 512;
+
+    if (get_context().is_running()) {
+        sample_rate = get_context().get_stream_info().sample_rate;
+        block_size = get_context().get_stream_info().buffer_size;
+    }
+
+    return Vruta::seconds_to_blocks(seconds, sample_rate, block_size);
+}
+
+uint64_t samples_to_blocks(uint64_t samples)
+{
+    uint32_t block_size = 512;
+
+    if (get_context().is_running()) {
+        block_size = get_context().get_stream_info().buffer_size;
+    }
+
+    return Vruta::samples_to_blocks(samples, block_size);
 }
 
 }

@@ -2,6 +2,8 @@
 
 #include "Core.hpp"
 
+#include "Chronie.hpp"
+
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Core/Engine.hpp"
@@ -94,6 +96,24 @@ void unregister_node(const std::shared_ptr<Nodes::Node>& node, const Nodes::Proc
     manager->remove_from_root(node, token, channel);
 }
 
+void route_node(
+    const std::shared_ptr<Nodes::Node>& node,
+    const std::vector<uint32_t>& channels,
+    uint32_t num_samples,
+    const Nodes::ProcessingToken& token)
+{
+    get_node_graph_manager()->route_node_to_channels(node, channels, num_samples, token);
+}
+
+void route_node(
+    const std::shared_ptr<Nodes::Node>& node,
+    const std::vector<uint32_t>& channels,
+    double seconds_to_fade,
+    const Nodes::ProcessingToken& token)
+{
+    get_node_graph_manager()->route_node_to_channels(node, channels, seconds_to_samples(seconds_to_fade), token);
+}
+
 Nodes::RootNode& get_audio_channel_root(uint32_t channel)
 {
     return *get_context().get_node_graph_manager()->get_all_root_nodes(Nodes::ProcessingToken::AUDIO_RATE)[channel];
@@ -161,6 +181,24 @@ void register_node_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& n
 void unregister_node_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& network, const Nodes::ProcessingToken& token)
 {
     get_context().get_node_graph_manager()->remove_network(network, token);
+}
+
+void route_network(
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    const std::vector<uint32_t>& channels,
+    uint32_t num_samples,
+    const Nodes::ProcessingToken& token)
+{
+    get_node_graph_manager()->route_network_to_channels(network, channels, num_samples, token);
+}
+
+void route_network(
+    const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
+    const std::vector<uint32_t>& channels,
+    double seconds_to_fade,
+    const Nodes::ProcessingToken& token)
+{
+    get_node_graph_manager()->route_network_to_channels(network, channels, seconds_to_samples(seconds_to_fade), token);
 }
 
 //-------------------------------------------------------------------------
@@ -264,6 +302,25 @@ void remove_supplied_buffer_from_channels(const std::shared_ptr<Buffers::AudioBu
     for (const auto& channel : channels) {
         remove_supplied_buffer_from_channel(buffer, channel);
     }
+}
+
+void route_buffer(
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer,
+    uint32_t target_channel,
+    double seconds_to_fade,
+    const Buffers::ProcessingToken& token)
+{
+    get_buffer_manager()->route_buffer_to_channel(
+        buffer, target_channel, seconds_to_blocks(seconds_to_fade), token);
+}
+
+void route_buffer(
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer,
+    uint32_t target_channel,
+    uint32_t num_blocks,
+    const Buffers::ProcessingToken& token)
+{
+    get_buffer_manager()->route_buffer_to_channel(buffer, target_channel, num_blocks, token);
 }
 
 }

@@ -17,6 +17,7 @@ namespace MayaFlux::Buffers {
 BufferManager::BufferManager(
     uint32_t default_out_channels,
     uint32_t default_in_channels,
+    uint64_t default_sample_rate,
     uint32_t default_buffer_size,
     ProcessingToken default_audio_token,
     ProcessingToken default_graphics_token)
@@ -27,6 +28,8 @@ BufferManager::BufferManager(
     , m_supply_mixing(std::make_unique<BufferSupplyMixing>(*m_unit_manager, *m_access_control))
     , m_global_processing_chain(std::make_shared<BufferProcessingChain>())
 {
+    s_registered_sample_rate = default_sample_rate;
+    s_preferred_buffer_size = default_buffer_size;
     validate_num_channels(default_audio_token, default_out_channels, default_buffer_size);
 
     if (default_in_channels) {
@@ -346,6 +349,25 @@ void BufferManager::connect_node_to_buffer(
     bool clear_before)
 {
     m_processor_control->connect_node_to_audio_buffer(node, buffer, mix, clear_before);
+}
+
+void BufferManager::route_buffer_to_channel(
+    const std::shared_ptr<AudioBuffer>& buffer,
+    uint32_t target_channel,
+    uint32_t fade_cycles,
+    ProcessingToken token)
+{
+    m_supply_mixing->route_buffer_to_channel(buffer, target_channel, fade_cycles, token);
+}
+
+void BufferManager::update_routing_states(ProcessingToken token)
+{
+    m_supply_mixing->update_routing_states_for_cycle(token);
+}
+
+void BufferManager::cleanup_completed_routing(ProcessingToken token)
+{
+    m_supply_mixing->cleanup_completed_routing(token);
 }
 
 // ============================================================================

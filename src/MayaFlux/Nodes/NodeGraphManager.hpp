@@ -42,12 +42,14 @@ class MAYAFLUX_API NodeGraphManager {
 public:
     /**
      * @brief Creates a new NodeGraphManager
+     * @param sample_rate Sample rate for audio processing (default: 48000 Hz)
+     * @param block_size Block size for audio processing (default: 512 samples)
      *
      * Initializes the manager with a root node for channel 0 (the default channel)
      * in the AUDIO_RATE domain. Additional root nodes for other tokens and channels
      * are created on demand when accessed.
      */
-    NodeGraphManager();
+    NodeGraphManager(uint32_t sample_rate = 48000, uint32_t block_size = 512);
 
     /**
      * @brief Destroys the NodeGraphManager
@@ -410,6 +412,60 @@ public:
      */
     void terminate_active_processing();
 
+    /**
+     * @brief Routes a node's output to specific channels within a token domain
+     * @param node Node to route
+     * @param target_channels Vector of channel indices to route the node's output to
+     * @param fade_cycles Number of cycles to fade in the routing (optional)
+     * @param token Processing domain to route within
+     *
+     * This method adds the specified node to the root nodes of the target channels
+     * within the given processing domain. If fade_cycles is greater than 0, the routing
+     * will be smoothly faded in over that many processing cycles.
+     */
+    void route_node_to_channels(
+        const std::shared_ptr<Node>& node,
+        const std::vector<uint32_t>& target_channels,
+        uint32_t fade_cycles,
+        ProcessingToken token);
+
+    /**
+     * @brief Routes a network's output to specific channels within a token domain
+     * @param network Network to route (must be an audio sink)
+     * @param target_channels Vector of channel indices to route the network's output to
+     * @param fade_cycles Number of cycles to fade in the routing (optional)
+     * @param token Processing domain to route within
+     *
+     * This method registers the network and adds it to the specified channels' root nodes
+     * within the given processing domain. If fade_cycles is greater than 0, the routing
+     * will be smoothly faded in over that many processing cycles.
+     */
+    void route_network_to_channels(
+        const std::shared_ptr<Network::NodeNetwork>& network,
+        const std::vector<uint32_t>& target_channels,
+        uint32_t fade_cycles,
+        ProcessingToken token);
+
+    /**
+     * @brief Updates routing states for all nodes and networks for a given token
+     * @param token Processing domain to update routing states for
+     *
+     * This method should be called at the end of each processing cycle to update the
+     * routing states of all nodes and networks that are currently undergoing routing changes.
+     * It handles the fade-in/out logic and transitions routing states as needed.
+     */
+    void update_routing_states_for_cycle(ProcessingToken token);
+
+    /**
+     * @brief Cleans up completed routing transitions for a given token
+     * @param token Processing domain to clean up routing for
+     *
+     * This method should be called after routing states have been updated to remove any nodes
+     * or networks that have completed their fade-out transitions and are no longer contributing
+     * to the output of their previous channels.
+     */
+    void cleanup_completed_routing(ProcessingToken token);
+
 private:
     /**
      * @brief Map of channel indices to their root nodes (AUDIO_RATE domain)
@@ -497,6 +553,10 @@ private:
     std::unordered_map<ProcessingToken, std::unique_ptr<std::atomic<bool>>> m_token_network_processing;
 
     std::atomic<bool> m_terminate_requested { false }; ///< Global termination flag
+
+    uint32_t m_registered_sample_rate { 48000 }; ///< Sample rate for audio processing, used for normalization
+
+    uint32_t m_registered_block_size { 512 }; ///< Block size for audio processing, used for normalizationbuffer
 
     /**
      * @brief Ensures a root node exists for the given token and channel

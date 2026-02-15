@@ -44,16 +44,28 @@ Nodes::NodeConfig& get_node_config() { return node_config; }
 
 uint32_t get_sample_rate()
 {
+    if (!get_context().is_running()) {
+        MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Engine is not running. Returning default sample rate");
+        return 48000;
+    }
     return get_context().get_stream_info().sample_rate;
 }
 
 uint32_t get_buffer_size()
 {
+    if (!get_context().is_running()) {
+        MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Engine is not running. Returning default buffer size");
+        return 512;
+    }
     return get_context().get_stream_info().buffer_size;
 }
 
 uint32_t get_num_out_channels()
 {
+    if (!get_context().is_running()) {
+        MF_WARN(Journal::Component::API, Journal::Context::Configuration, "Engine is not running. Returning default number of output channels");
+        return 2;
+    }
     return get_context().get_stream_info().output.channels;
 }
 

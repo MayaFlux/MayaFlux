@@ -29,6 +29,7 @@ protected:
         buffer_manager = std::make_shared<Buffers::BufferManager>(
             TestConfig::NUM_CHANNELS,
             0,
+            TestConfig::SAMPLE_RATE,
             TestConfig::BUFFER_SIZE,
             Buffers::ProcessingToken::AUDIO_BACKEND);
 
