@@ -56,7 +56,7 @@ Jump to [Working with MayaFlux](#your-first-mayaflux-program)
 
 **Platform-Specific Requirements:**
 
-- **macOS**: Minimum macOS 14 (Sonoma) with Apple Clang 15+
+- **macOS**: Minimum macOS 15 (Sequoia) (intel or m-series) with Apple Clang 16+
 - **Windows**: Visual Studio 2022+ or MinGW-w64
 - **Linux**: Standard development tools and multimedia libraries
 
@@ -82,16 +82,11 @@ cmake --build . --parallel
 
 **System Requirements:**
 
-- **ARM64 (Apple Silicon)**: macOS 14 (Sonoma) or later
-- **x86_64 (Intel)**: macOS 15 (Sequoia) or later
-- **Binary distributions**: Available for both ARM64 and x86_64
-- **Building from source**: Supported on macOS 14+ (ARM64) or 15+ (Intel)
+- **Minimum macOS version**: 15 (Sequoia)
+- **Architectures supported**: Apple Silicon (ARM64) and Intel (x86_64)
+- **Compiler**: Apple Clang 16+ (Xcode 16+ Command Line Tools)
 
-**Apple Silicon Users**: All automated setup and distribution channels work seamlessly.
-
-**Intel Mac Users (macOS 15+)**: Pre-built binaries available via releases.
-
-**Intel Mac Users (pre-macOS 15)**: Requires manual source build:
+Both binary releases and source builds require macOS 15 or later.
 
 ```bash
 # Standard CMake build (source build only)
@@ -152,11 +147,14 @@ MayaFlux/
 
 ## Building on Intel Macs
 
-MayaFlux provides pre-built x86_64 (Intel) binaries for macOS 15+. For older Intel Macs (pre-macOS 15), you'll need to build from source.
+MayaFlux supports Intel (x86_64) Macs running macOS 15 or later.
+
+Source builds and binary distributions are supported on macOS 15+.
+Earlier macOS versions are no longer supported.
 
 ### Prerequisites
 
-1. **macOS 14+** with Xcode Command Line Tools
+1. **macOS 15.6+** with Xcode Command Line Tools
 2. **Homebrew** (for dependency management)
 3. Manual dependency installation
 
@@ -486,21 +484,42 @@ If you have already completed the aforementioned tutorial, proceed to the next t
 
 For graphics starting points, check out [Graphics Basics](/docs/Tutorials/SculptingData/VisualMateriality.md)
 
-## FAQ (MacOS)
+## FAQ (macOS)
 
 ### Q: I have an Intel Mac. Can I use MayaFlux?
 
-**A**: Yes, fully!
+**A**: Yes — provided you are running **macOS 15 (Sequoia) or later**.
 
-- **macOS 15+**: Pre-built binaries available via GitHub releases
-- **Pre-macOS 15**: Build from source following the [Building on Intel Macs](#building-on-intel-macs) guide (~10-15 minutes)
+MayaFlux supports both:
 
-Intel Macs have identical functionality to Apple Silicon.
+- **Apple Silicon (ARM64)**
+- **Intel (x86_64)**
 
-### Q: Why is macOS 15 minimum for Intel binaries?
+Pre-built binaries and source builds are available for both architectures on macOS 15+.
 
-**A**: Our CI/CD uses GitHub's `macos-15` runners for Intel builds. For older Intel systems, source builds are fully supported and well-documented. If you need binaries for specific older versions, open an issue to discuss.
+Earlier macOS versions are no longer supported.
+
+---
+
+### Q: Why is macOS 15 the minimum supported version?
+
+**A**: MayaFlux relies on modern Apple toolchains (Apple Clang 16+, Xcode 16+, updated SDKs) and current C++23 support.
+
+macOS 15 provides:
+
+- Stable libc++ behavior for modern C++
+- Up-to-date graphics and Metal/Vulkan compatibility layers
+- Proper support for current Command Line Tools
+- Alignment with Homebrew and dependency ecosystem
+
+Supporting older macOS versions would require older toolchains and introduce maintenance complexity without meaningful benefit.
+
+---
 
 ### Q: Performance difference between ARM64 and x86_64?
 
-**A**: No meaningful difference for MayaFlux. Both are fully optimized. Vulkan performance may vary slightly due to MoltenVK translation layer, but both work well.
+**A**: No meaningful difference for MayaFlux. Both are fully optimized.
+
+Vulkan performance may vary slightly due to MoltenVK translation layer, but both architectures work well.
+
+---

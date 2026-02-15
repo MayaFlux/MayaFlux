@@ -31,8 +31,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14
-            name: "macOS 14+ ARM64 (Apple Silicon)"
+          - os: macos-15
+            name: "macOS 15+ ARM64 (Apple Silicon)"
             arch: arm64
           - os: macos-15-intel
             name: "macOS 15 x86_64 (Intel)"
@@ -170,13 +170,11 @@ jobs:
       - name: Install STB headers
         shell: bash
         run: |
-          echo "Installing STB headers..."
-          STB_INSTALL_DIR="$HOME/Libraries/stb"
-          git clone https://github.com/nothings/stb.git "$STB_INSTALL_DIR/stb"
-          ls "$STB_INSTALL_DIR"
-
-          echo "STB_ROOT=$STB_INSTALL_DIR" >> $GITHUB_ENV
-          echo "CPATH=$STB_INSTALL_DIR:$CPATH" >> $GITHUB_ENV
+          echo "Installing STB tap..."
+          brew tap mayaflux/mayaflux
+          brew install mayaflux/mayaflux/stb
+          STB_INCLUDE_DIR="$(brew --prefix stb)/include/stb"
+          echo "STB_ROOT=$STB_INCLUDE_DIR" >> $GITHUB_ENV
 
       - name: Configure CMake
         shell: bash
