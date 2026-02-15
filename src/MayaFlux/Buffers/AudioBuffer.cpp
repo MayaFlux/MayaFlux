@@ -23,7 +23,7 @@ AudioBuffer::AudioBuffer(uint32_t channel_id, uint32_t num_samples)
     , m_is_processing(false)
 {
     if (num_samples != s_preferred_buffer_size) {
-        MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
             "AudioBuffer initialized with a non-default number of samples ({}). This may lead to unexpected behavior.",
             num_samples);
     }
