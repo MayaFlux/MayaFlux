@@ -304,4 +304,23 @@ void remove_supplied_buffer_from_channels(const std::shared_ptr<Buffers::AudioBu
     }
 }
 
+void route_buffer(
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer,
+    uint32_t target_channel,
+    double seconds_to_fade,
+    const Buffers::ProcessingToken& token)
+{
+    get_buffer_manager()->route_buffer_to_channel(
+        buffer, target_channel, seconds_to_blocks(seconds_to_fade), token);
+}
+
+void route_buffer(
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer,
+    uint32_t target_channel,
+    uint32_t num_blocks,
+    const Buffers::ProcessingToken& token)
+{
+    get_buffer_manager()->route_buffer_to_channel(buffer, target_channel, num_blocks, token);
+}
+
 }

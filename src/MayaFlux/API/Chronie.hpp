@@ -327,4 +327,21 @@ MAYAFLUX_API bool cancel_event_handler(const std::string& name);
  */
 MAYAFLUX_API uint64_t seconds_to_samples(double seconds);
 
+/**
+ * @brief Converts a time duration in seconds to the equivalent number of processing blocks
+ * @param seconds Time duration in seconds
+ * @return Equivalent number of blocks based on current sample rate and block size
+ *
+ * Uses the sample rate and block size from the default engine. Falls back to
+ * 48kHz/512 samples if engine is not running.
+ */
+MAYAFLUX_API uint64_t seconds_to_blocks(double seconds);
+
+/**
+ * @brief Converts samples to blocks based on current block size
+ * @param samples Number of samples
+ * @return Number of blocks
+ */
+MAYAFLUX_API uint64_t samples_to_blocks(uint64_t samples);
+
 }

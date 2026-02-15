@@ -132,4 +132,52 @@ inline double units_to_seconds(uint64_t units, uint32_t rate)
     return static_cast<double>(units) / rate;
 }
 
+/**
+ * @brief Convert seconds to number of processing blocks
+ * @param seconds Time duration in seconds
+ * @param sample_rate Sample rate in Hz
+ * @param block_size Number of samples per block
+ * @return Number of blocks
+ */
+inline uint64_t seconds_to_blocks(double seconds, uint32_t sample_rate, uint32_t block_size)
+{
+    uint64_t total_samples = seconds_to_samples(seconds, sample_rate);
+    return (total_samples + block_size - 1) / block_size; // Ceiling division
+}
+
+/**
+ * @brief Convert samples to number of processing blocks
+ * @param samples Number of samples
+ * @param block_size Number of samples per block
+ * @return Number of blocks
+ */
+inline uint64_t samples_to_blocks(uint64_t samples, uint32_t block_size)
+{
+    return (samples + block_size - 1) / block_size; // Ceiling division
+}
+
+/**
+ * @brief Convert blocks to samples
+ * @param blocks Number of blocks
+ * @param block_size Number of samples per block
+ * @return Number of samples
+ */
+inline uint64_t blocks_to_samples(uint64_t blocks, uint32_t block_size)
+{
+    return blocks * block_size;
+}
+
+/**
+ * @brief Convert blocks to seconds
+ * @param blocks Number of blocks
+ * @param sample_rate Sample rate in Hz
+ * @param block_size Number of samples per block
+ * @return Time duration in seconds
+ */
+inline double blocks_to_seconds(uint64_t blocks, uint32_t sample_rate, uint32_t block_size)
+{
+    uint64_t total_samples = blocks_to_samples(blocks, block_size);
+    return units_to_seconds(total_samples, sample_rate);
+}
+
 }

@@ -543,4 +543,32 @@ MAYAFLUX_API void remove_supplied_buffer_from_channel(const std::shared_ptr<Buff
 MAYAFLUX_API void remove_supplied_buffer_from_channels(const std::shared_ptr<Buffers::AudioBuffer>& buffer,
     const std::vector<uint32_t>& channels);
 
+/**
+ * @brief Routes a buffer from its current channel to a target channel with fade
+ * @param buffer Buffer to route
+ * @param target_channel Destination channel
+ * @param seconds_to_fade Crossfade duration in seconds
+ * @param token Processing domain
+ */
+MAYAFLUX_API void route_buffer(
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer,
+    uint32_t target_channel,
+    double seconds_to_fade = 1.0,
+    const Buffers::ProcessingToken& token = Buffers::ProcessingToken::AUDIO_BACKEND);
+
+/**
+ * @brief Routes a buffer from its current channel to a target channel with fade
+ * @param buffer Buffer to route
+ * @param target_channel Destination channel
+ * @param num_blocks Crossfade duration in processing blocks
+ * @param token Processing domain
+ *
+ * NOTE: num_blocks is in processing blocks, not samples. The actual time duration will depend on the block size and sample rate.
+ */
+MAYAFLUX_API void route_buffer(
+    const std::shared_ptr<Buffers::AudioBuffer>& buffer,
+    uint32_t target_channel,
+    uint32_t num_blocks,
+    const Buffers::ProcessingToken& token = Buffers::ProcessingToken::AUDIO_BACKEND);
+
 }
