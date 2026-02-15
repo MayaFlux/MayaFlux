@@ -23,6 +23,36 @@ EventChain& EventChain::then(std::function<void()> action, double delay_seconds)
     return *this;
 }
 
+EventChain& EventChain::repeat(size_t count)
+{
+    if (m_events.empty() || count == 0)
+        return *this;
+
+    auto last_event = m_events.back();
+
+    for (size_t i = 0; i < count; ++i) {
+        m_events.push_back(last_event);
+    }
+
+    return *this;
+}
+
+EventChain& EventChain::times(size_t count)
+{
+    m_repeat_count = count;
+    return *this;
+}
+
+EventChain& EventChain::wait(double delay_seconds)
+{
+    return then([]() { }, delay_seconds);
+}
+
+EventChain& EventChain::every(double interval_seconds, std::function<void()> action)
+{
+    return then(std::move(action), interval_seconds);
+}
+
 void EventChain::start()
 {
     if (m_events.empty())
@@ -30,37 +60,61 @@ void EventChain::start()
 
     m_on_complete_fired = false;
 
-    auto coroutine_func = [](EventChain* chain) -> MayaFlux::Vruta::SoundRoutine {
+    auto coroutine_func = [](std::vector<TimedEvent> events,
+                              uint64_t rate,
+                              std::function<void()> on_complete_callback,
+                              size_t repeat_count) -> MayaFlux::Vruta::SoundRoutine {
         auto& promise = co_await Kriya::GetAudioPromise {};
 
-        for (const auto& event : chain->m_events) {
+        for (size_t iteration = 0; iteration < repeat_count; ++iteration) {
+            for (const auto& event : events) {
+                if (promise.should_terminate) {
+                    break;
+                }
+
+                co_await SampleDelay { Vruta::seconds_to_samples(event.delay_seconds, rate) };
+                try {
+                    if (event.action) {
+                        event.action();
+                    }
+                } catch (const std::exception& e) {
+                    MF_RT_ERROR(
+                        Journal::Component::Kriya,
+                        Journal::Context::CoroutineScheduling,
+                        "Exception in EventChain action: {}", e.what());
+                } catch (...) {
+                    MF_RT_ERROR(
+                        Journal::Component::Kriya,
+                        Journal::Context::CoroutineScheduling,
+                        "Unknown exception in EventChain action");
+                }
+            }
+
             if (promise.should_terminate) {
                 break;
             }
+        }
 
-            co_await SampleDelay { Vruta::seconds_to_samples(event.delay_seconds, chain->m_default_rate) };
+        if (on_complete_callback) {
             try {
-                if (event.action) {
-                    event.action();
-                }
+                on_complete_callback();
             } catch (const std::exception& e) {
                 MF_RT_ERROR(
                     Journal::Component::Kriya,
                     Journal::Context::CoroutineScheduling,
-                    "Exception in EventChain action: {}", e.what());
+                    "Exception in EventChain on_complete: {}", e.what());
             } catch (...) {
                 MF_RT_ERROR(
                     Journal::Component::Kriya,
                     Journal::Context::CoroutineScheduling,
-                    "Unknown exception in EventChain action");
+                    "Unknown exception in EventChain on_complete");
             }
         }
-
-        chain->fire_on_complete();
     };
 
     std::string task_name = m_name.empty() ? "EventChain_" + std::to_string(m_Scheduler.get_next_task_id()) : m_name;
-    m_routine = std::make_shared<Vruta::SoundRoutine>(coroutine_func(this));
+    m_routine = std::make_shared<Vruta::SoundRoutine>(
+        coroutine_func(m_events, m_default_rate, m_on_complete, m_repeat_count));
     m_Scheduler.add_task(m_routine, task_name, true);
 }
 
