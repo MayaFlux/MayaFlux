@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::TextureBuffer" name="MayaFlux::Buffers::TextureBuffer">
+<area shape="rect" id="Node000001" title="A hybrid buffer managing both a textured quad geometry and its pixel data." alt="" coords="5,1099,199,1728"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="11,461,193,1051"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,1064,105,1098,99,1098,99,1064"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="11,133,193,413"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="105,427,105,461,99,461,99,427"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="26,5,178,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="105,99,105,133,99,133,99,99"/>
+</map>

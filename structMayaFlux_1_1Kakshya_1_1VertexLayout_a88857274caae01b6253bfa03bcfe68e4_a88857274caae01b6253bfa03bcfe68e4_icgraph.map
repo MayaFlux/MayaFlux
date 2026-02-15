@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::VertexLayout::for_points" name="MayaFlux::Kakshya::VertexLayout::for_points">
+<area shape="rect" id="Node000001" title="Factory: Create layout for point primitives (position, color, size)" alt="" coords="253,91,435,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a6529267bb12caf59f4e93c3a82e62c00.html#a6529267bb12caf59f4e93c3a82e62c00" title="Create empty point source." alt="" coords="5,5,205,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="269,90,188,63,190,58,271,85"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a39a470fe14b0ebdf43cc45f4820b2ec7.html#a39a470fe14b0ebdf43cc45f4820b2ec7" title="Create with initial points." alt="" coords="5,84,205,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="240,114,206,114,206,109,240,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointNode_a7a49ac8d4e1b41559041884a82a8865c.html#a7a49ac8d4e1b41559041884a82a8865c" title="Create point from PointVertex." alt="" coords="5,163,205,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="265,138,173,166,172,161,263,133"/>
+</map>

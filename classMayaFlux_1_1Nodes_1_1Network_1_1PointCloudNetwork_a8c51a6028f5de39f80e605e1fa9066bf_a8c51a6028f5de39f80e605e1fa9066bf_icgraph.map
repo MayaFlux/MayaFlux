@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::PointCloudNetwork::generate_initial_positions" name="MayaFlux::Nodes::Network::PointCloudNetwork::generate_initial_positions">
+<area shape="rect" id="Node000001" title=" " alt="" coords="272,62,493,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_aee69fa7a48f2beb3a97e7a22edf17b50.html#aee69fa7a48f2beb3a97e7a22edf17b50" title="Called once before first process_batch()" alt="" coords="5,5,224,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,62,199,48,200,43,259,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_acc330c7695cd9d2d3e46e4acc38c0ee0.html#acc330c7695cd9d2d3e46e4acc38c0ee0" title="Reset network to initial state." alt="" coords="15,69,214,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="258,92,214,92,214,87,258,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a5bf88acf450983ded344055b1f293f3d.html#a5bf88acf450983ded344055b1f293f3d" title=" " alt="" coords="15,134,214,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="268,123,215,137,213,132,266,118"/>
+</map>

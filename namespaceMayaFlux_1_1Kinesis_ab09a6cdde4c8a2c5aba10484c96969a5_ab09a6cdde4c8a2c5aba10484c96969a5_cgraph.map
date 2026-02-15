@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kinesis::generate_proximity_graph" name="MayaFlux::Kinesis::generate_proximity_graph">
+<area shape="rect" id="Node000001" title="Generate proximity graph using specified mode." alt="" coords="5,229,200,269"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kinesis_a62178d0a85c5898502d363b2615d4d0b.html#a62178d0a85c5898502d363b2615d4d0b" title="Custom proximity graph via user function." alt="" coords="262,5,446,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,228,131,191,161,144,200,96,246,55,256,49,258,54,250,59,204,100,166,148,136,194,116,230"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ac52c9eee0fbcf6c3f05998045b64cadb.html#ac52c9eee0fbcf6c3f05998045b64cadb" title="Compute Gabriel graph." alt="" coords="279,69,429,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="120,227,173,174,208,144,247,119,265,110,268,115,249,124,211,149,177,178,123,231"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a70498b37671f0fd75d7443f9795b3319.html#a70498b37671f0fd75d7443f9795b3319" title="Compute K&#45;nearest neighbors graph." alt="" coords="275,133,433,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="145,227,247,183,268,175,270,180,249,188,147,232"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_a0823cdca071528dabb2423727e07e149.html#a0823cdca071528dabb2423727e07e149" title="Compute minimum spanning tree (Prim&#39;s algorithm)" alt="" coords="262,197,446,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="200,234,248,228,249,233,200,240"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a1faf209142dfbee6be1a743a8630072d.html#a1faf209142dfbee6be1a743a8630072d" title="Compute nearest neighbor graph." alt="" coords="265,261,443,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="200,259,251,266,251,271,200,264"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_abf863c6079677bef016abd00067a7880.html#abf863c6079677bef016abd00067a7880" title="Compute radius threshold graph." alt="" coords="267,325,441,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="147,267,249,311,270,318,268,323,247,316,145,272"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_aabe525f8be41349721b9680dc7ca6f0c.html#aabe525f8be41349721b9680dc7ca6f0c" title="Compute relative neighborhood graph." alt="" coords="248,389,460,429"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="123,268,177,321,211,350,249,375,262,381,260,386,247,380,208,354,173,325,120,272"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_a9732a5cbb67ccb790693539d8dc62c2d.html#a9732a5cbb67ccb790693539d8dc62c2d" title="Compute sequential chain graph." alt="" coords="279,453,429,493"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="116,268,136,305,166,351,204,399,250,439,268,450,265,454,246,443,200,402,161,354,131,308,111,271"/>
+</map>

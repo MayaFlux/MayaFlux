@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::set_buffer_function" name="MayaFlux::Nodes::Generator::Polynomial::set_buffer_function">
+<area shape="rect" id="Node000001" title="Sets a custom buffer function." alt="" coords="5,5,213,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a0b1432247ff72f19a4124869c216b323.html#a0b1432247ff72f19a4124869c216b323" title="Resize buffer capacity." alt="" coords="261,13,464,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,30,248,30,248,35,213,35"/>
+</map>

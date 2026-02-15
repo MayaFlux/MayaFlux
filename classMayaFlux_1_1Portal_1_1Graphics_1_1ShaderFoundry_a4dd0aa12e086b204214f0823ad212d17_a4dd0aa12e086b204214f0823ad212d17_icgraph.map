@@ -1,0 +1,27 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::create_shader_module" name="MayaFlux::Portal::Graphics::ShaderFoundry::create_shader_module">
+<area shape="rect" id="Node000001" title=" " alt="" coords="808,98,1005,153"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_adfa75c7749cc2487c2fe9f4a714fc698.html#adfa75c7749cc2487c2fe9f4a714fc698" title=" " alt="" coords="563,19,760,74"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="807,96,746,77,748,72,809,91"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_acb22c14cebc9a18cf108a627d120667a.html#acb22c14cebc9a18cf108a627d120667a" title=" " alt="" coords="563,177,760,231"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="809,159,748,179,746,174,807,154"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ae5a522d867e2b80341716b58ea8d9378.html#ae5a522d867e2b80341716b58ea8d9378" title=" " alt="" coords="563,98,760,153"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="794,128,760,128,760,123,794,123"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a23013e23149b90cc22041c02e618cf0a.html#a23013e23149b90cc22041c02e618cf0a" title="Compile shader from ShaderSource descriptor." alt="" coords="309,69,507,109"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="549,68,507,75,506,70,549,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a276481b6104359c71f4ce0780299404c.html#a276481b6104359c71f4ce0780299404c" title="Hot&#45;reload a shader from file." alt="" coords="307,5,509,45"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="549,40,509,37,510,31,549,35"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ae87f819ac9d895c64a969332bcc120f1.html#ae87f819ac9d895c64a969332bcc120f1" title="Universal shader loader &#45; auto&#45;detects source type." alt="" coords="301,133,515,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="574,82,564,88,540,106,516,124,488,136,485,131,513,119,537,102,561,83,572,77"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ad83f46edd697dd2be9760d5d2ca94f7b.html#ad83f46edd697dd2be9760d5d2ca94f7b" title="Load shader from explicit ShaderSource descriptor." alt="" coords="23,69,236,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="306,133,216,112,218,107,307,128"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a2470e6d877935c4ca8a7fa4d1537bf88.html#a2470e6d877935c4ca8a7fa4d1537bf88" title="Hot&#45;reload shader (returns new ID)" alt="" coords="16,133,243,173"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="288,156,243,156,243,151,288,151"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acb0d34c2c49f2f4b7865c5b366075c63.html#acb0d34c2c49f2f4b7865c5b366075c63" title=" " alt="" coords="5,197,253,237"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="307,179,218,200,216,195,306,174"/>
+<area shape="poly" id="edge9_Node000009_Node000003" title=" " alt="" coords="569,172,561,168,547,156,537,145,528,134,513,124,488,112,490,107,516,119,531,130,541,141,550,152,564,163,572,168"/>
+<area shape="poly" id="edge11_Node000009_Node000005" title=" " alt="" coords="548,184,508,176,509,171,549,179"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aa6c0ffba6a18470328705f5c9f27690f.html#aa6c0ffba6a18470328705f5c9f27690f" title=" " alt="" coords="309,198,507,253"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="549,216,507,220,506,214,549,211"/>
+<area shape="poly" id="edge13_Node000011_Node000003" title=" " alt="" coords="549,112,506,106,507,101,549,107"/>
+<area shape="poly" id="edge14_Node000011_Node000005" title=" " alt="" coords="549,140,515,144,515,139,548,135"/>
+</map>

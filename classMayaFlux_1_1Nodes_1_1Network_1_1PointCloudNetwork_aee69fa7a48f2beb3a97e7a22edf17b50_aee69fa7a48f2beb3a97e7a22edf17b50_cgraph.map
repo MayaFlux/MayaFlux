@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::PointCloudNetwork::initialize" name="MayaFlux::Nodes::Network::PointCloudNetwork::initialize">
+<area shape="rect" id="Node000001" title="Called once before first process_batch()" alt="" coords="5,13,224,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a8c51a6028f5de39f80e605e1fa9066bf.html#a8c51a6028f5de39f80e605e1fa9066bf" title=" " alt="" coords="272,5,493,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="224,30,258,30,258,35,224,35"/>
+</map>

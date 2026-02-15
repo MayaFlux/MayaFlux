@@ -1,0 +1,26 @@
+<map id="MayaFlux::Nodes::Generator::Logic::process_batch" name="MayaFlux::Nodes::Generator::Logic::process_batch">
+<area shape="rect" id="Node000001" title="Processes multiple samples in batch mode." alt="" coords="5,227,213,267"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a4cd7a43ebf1ff5518bf9b006bad898fe.html#a4cd7a43ebf1ff5518bf9b006bad898fe" title="Processes a single input sample through the logic function." alt="" coords="261,227,469,267"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,244,248,244,248,249,213,249"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_af61f26175e63fcb97fecc58562e980c2.html#af61f26175e63fcb97fecc58562e980c2" title=" " alt="" coords="517,5,725,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="375,225,397,189,428,143,468,96,516,55,525,49,528,54,519,59,472,99,432,146,401,191,380,228"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="527,69,715,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="384,224,440,172,477,144,516,119,530,112,532,117,519,124,480,148,444,176,388,228"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_aa4e4a2ece2a22b6774a5978e557ea25e.html#aa4e4a2ece2a22b6774a5978e557ea25e" title="Atomically decrements the modulator count by a specified amount." alt="" coords="527,133,715,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="412,224,516,183,539,175,541,180,518,188,414,229"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Nodes_a7d0374eb13e0238f520338b13823a627.html#a7d0374eb13e0238f520338b13823a627" title="Atomically increments the modulator count by a specified amount." alt="" coords="527,197,715,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="469,232,513,227,514,232,470,237"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ad95a9cc80e842eb783fc2e9063c9990d.html#ad95a9cc80e842eb783fc2e9063c9990d" title=" " alt="" coords="1029,316,1256,356"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="470,249,704,265,843,279,982,297,1049,310,1048,316,981,303,843,284,704,270,469,254"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a7a01f01a6161fd3fda7a7769aca0731a.html#a7a01f01a6161fd3fda7a7769aca0731a" title=" " alt="" coords="517,312,725,352"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="427,264,549,305,547,310,425,269"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_af10ea4c6662404570141818fe29693ea.html#af10ea4c6662404570141818fe29693ea" title="Notifies all registered callbacks about a new sample." alt="" coords="517,376,725,416"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="389,265,445,313,481,339,519,362,533,369,531,373,516,366,478,343,442,317,386,269"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Nodes_a7c82f258078606084a01f72dfba3bb92.html#a7c82f258078606084a01f72dfba3bb92" title="Attempts to reset the processed state of a node." alt="" coords="534,440,709,480"/>
+<area shape="poly" id="edge12_Node000002_Node000012" title=" " alt="" coords="380,265,402,300,433,343,473,388,519,426,529,432,526,436,516,430,469,392,429,347,398,303,376,268"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a5d9eb9e8a257bccb93937782b284884e.html#a5d9eb9e8a257bccb93937782b284884e" title="Retrieves the last created context object." alt="" coords="773,312,981,352"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="701,373,783,353,785,358,703,379"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a24fe3adaafc789f42b92eb0294f9575e.html#a24fe3adaafc789f42b92eb0294f9575e" title="Updates the context with the latest sample value." alt="" coords="773,376,981,416"/>
+<area shape="poly" id="edge10_Node000009_Node000011" title=" " alt="" coords="725,393,760,393,760,399,725,399"/>
+<area shape="poly" id="edge11_Node000011_Node000007" title=" " alt="" coords="966,373,1040,356,1041,362,967,379"/>
+</map>

@@ -1,0 +1,12 @@
+<map id="MayaFlux::Kriya::TimedAction" name="MayaFlux::Kriya::TimedAction">
+<area shape="rect" id="Node000001" title="Utility for executing actions with a start and end function over a duration." alt="" coords="11,1439,222,1584"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="5,508,228,1128"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,1128,111,1376,113,1422,108,1422,106,1376,105,1128"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1Timer.html" title="High&#45;level utility for scheduling one&#45;shot timed callbacks." alt="" coords="213,1191,380,1376"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="231,1105,258,1174,253,1176,226,1107"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="9,220,224,445"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,445,119,492,114,492,114,445"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="32,5,201,171"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="119,184,119,220,114,220,114,184"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="226,1378,186,1427,182,1424,221,1375"/>
+</map>

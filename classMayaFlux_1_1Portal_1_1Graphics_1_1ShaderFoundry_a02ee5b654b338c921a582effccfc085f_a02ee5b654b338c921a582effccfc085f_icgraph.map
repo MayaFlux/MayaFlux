@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::get_descriptor_set" name="MayaFlux::Portal::Graphics::ShaderFoundry::get_descriptor_set">
+<area shape="rect" id="Node000001" title="Get Vulkan descriptor set handle from DescriptorSetID." alt="" coords="565,37,820,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a85438e9d6db2cc223c00c736f86661aa.html#a85438e9d6db2cc223c00c736f86661aa" title="Bind descriptor sets to active command buffer." alt="" coords="251,5,517,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="552,45,517,42,518,37,552,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ac10032cbea37994979010b933e06d682.html#ac10032cbea37994979010b933e06d682" title="Bind descriptor sets." alt="" coords="260,69,508,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="552,75,509,79,508,74,552,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a313d13f003f0f617d9e27addb3a3e7f3.html#a313d13f003f0f617d9e27addb3a3e7f3" title="All&#45;in&#45;one: bind pipeline + descriptors + push constants." alt="" coords="5,5,203,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="237,28,203,28,203,23,237,23"/>
+</map>

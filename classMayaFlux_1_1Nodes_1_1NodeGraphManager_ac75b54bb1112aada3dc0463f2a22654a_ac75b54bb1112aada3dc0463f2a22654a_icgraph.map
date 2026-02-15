@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::remove_from_root" name="MayaFlux::Nodes::NodeGraphManager::remove_from_root">
+<area shape="rect" id="Node000001" title="Remove node from a specific processing token and channel." alt="" coords="269,13,485,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ac273f1e6f4adc9845bd162ca115d5c8c.html#ac273f1e6f4adc9845bd162ca115d5c8c" title="Cleans up completed routing transitions for a given token." alt="" coords="5,5,221,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="256,35,221,35,221,30,256,30"/>
+</map>

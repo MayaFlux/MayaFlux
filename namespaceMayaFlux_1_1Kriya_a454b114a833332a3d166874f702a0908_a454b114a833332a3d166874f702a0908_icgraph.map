@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::mouse_scrolled" name="MayaFlux::Kriya::mouse_scrolled">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on mouse scroll." alt="" coords="205,5,385,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a07d5520bf6595375c13cc1b166a911a5.html#a07d5520bf6595375c13cc1b166a911a5" title="Schedule a mouse scroll handler." alt="" coords="5,13,157,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,28,158,28,158,23,192,23"/>
+</map>

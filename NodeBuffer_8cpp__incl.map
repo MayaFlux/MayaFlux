@@ -1,0 +1,40 @@
+<map id="NodeBuffer.cpp" name="NodeBuffer.cpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="615,5,737,31"/>
+<area shape="rect" id="Node000002" href="$NodeBuffer_8hpp.html" title=" " alt="" coords="345,79,468,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="633,33,464,78,463,73,632,28"/>
+<area shape="rect" id="Node000008" href="$Node_8hpp.html" title=" " alt="" coords="577,79,775,104"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="679,31,679,65,673,65,673,31"/>
+<area shape="rect" id="Node000013" href="$Archivist_8hpp.html" title=" " alt="" coords="847,79,1071,104"/>
+<area shape="poly" id="edge13_Node000001_Node000013" title=" " alt="" coords="722,28,901,73,899,78,721,33"/>
+<area shape="rect" id="Node000003" href="$AudioBuffer_8hpp.html" title=" " alt="" coords="5,152,248,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="362,107,186,151,185,146,361,101"/>
+<area shape="rect" id="Node000006" href="$BufferProcessor_8hpp.html" title=" " alt="" coords="272,152,541,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="409,104,409,138,404,138,404,104"/>
+<area shape="rect" id="Node000004" href="$Buffer_8hpp.html" title=" " alt="" coords="83,233,171,258"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="129,178,129,219,124,219,124,178"/>
+<area shape="rect" id="Node000005" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="236,313,431,353"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="143,175,301,302,297,306,139,179"/>
+<area shape="rect" id="Node000007" href="$BufferUtils_8hpp.html" title=" " alt="" coords="322,233,441,258"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="405,178,392,221,387,219,400,177"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="377,259,353,302,348,300,373,257"/>
+<area shape="rect" id="Node000009" href="$GpuContext_8hpp.html" title=" " alt="" coords="566,152,693,177"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="671,106,647,142,642,139,666,103"/>
+<area shape="rect" id="Node000010" href="$NodeOperators_8hpp.html" title=" " alt="" coords="717,152,865,177"/>
+<area shape="poly" id="edge10_Node000008_Node000010" title=" " alt="" coords="696,102,762,142,759,147,693,106"/>
+<area shape="rect" id="Node000011" href="$NodeUtils_8hpp.html" title=" " alt="" coords="723,233,837,258"/>
+<area shape="poly" id="edge11_Node000010_Node000011" title=" " alt="" coords="792,178,786,219,781,218,786,177"/>
+<area shape="rect" id="Node000012" href="$NodeSpec_8hpp.html" title=" " alt="" coords="723,321,837,346"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="783,258,783,306,777,306,777,258"/>
+<area shape="rect" id="Node000014" href="$Format_8hpp.html" title=" " alt="" coords="911,152,1007,177"/>
+<area shape="poly" id="edge14_Node000013_Node000014" title=" " alt="" coords="961,104,961,138,956,138,956,104"/>
+<area shape="rect" id="Node000015" href="$JournalEntry_8hpp.html" title=" " alt="" coords="1042,152,1169,177"/>
+<area shape="poly" id="edge15_Node000013_Node000015" title=" " alt="" coords="983,102,1070,144,1068,148,981,106"/>
+<area shape="rect" id="Node000016" href="$EnumReflect_8hpp.html" title=" " alt="" coords="862,225,1047,265"/>
+<area shape="poly" id="edge16_Node000015_Node000016" title=" " alt="" coords="1084,180,1004,221,1002,217,1082,175"/>
+<area shape="rect" id="Node000017" title=" " alt="" coords="1072,233,1139,258"/>
+<area shape="poly" id="edge17_Node000015_Node000017" title=" " alt="" coords="1108,178,1108,219,1103,219,1103,178"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="1163,233,1287,258"/>
+<area shape="poly" id="edge18_Node000015_Node000018" title=" " alt="" coords="1124,175,1197,223,1194,227,1122,180"/>
+<area shape="rect" id="Node000019" title=" " alt="" coords="1311,233,1409,258"/>
+<area shape="poly" id="edge19_Node000015_Node000019" title=" " alt="" coords="1144,175,1301,223,1311,226,1310,231,1299,228,1142,180"/>
+</map>

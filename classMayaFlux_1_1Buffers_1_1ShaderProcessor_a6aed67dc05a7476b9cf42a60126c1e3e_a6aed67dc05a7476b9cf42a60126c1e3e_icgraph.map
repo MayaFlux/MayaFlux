@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::auto_bind_buffer" name="MayaFlux::Buffers::ShaderProcessor::auto_bind_buffer">
+<area shape="rect" id="Node000001" title="Auto&#45;bind buffer based on attachment order." alt="" coords="411,5,577,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae44d0289391012ba44cf53378967cbcf.html#ae44d0289391012ba44cf53378967cbcf" title="Called when this processor is attached to a buffer." alt="" coords="208,5,363,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="397,35,363,35,363,30,397,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a80ee45a9667036708bc1f86158cd9f7c.html#a80ee45a9667036708bc1f86158cd9f7c" title="Called when this processor is attached to a buffer." alt="" coords="5,5,160,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="194,35,161,35,161,30,194,30"/>
+</map>

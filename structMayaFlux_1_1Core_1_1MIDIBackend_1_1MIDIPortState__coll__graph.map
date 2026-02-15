@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::MIDIBackend::MIDIPortState" name="MayaFlux::Core::MIDIBackend::MIDIPortState">
+<area shape="rect" id="Node000001" title=" " alt="" coords="14,583,223,723"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1MIDIBackend_1_1MIDIPortInfo.html" title=" " alt="" coords="14,440,223,520"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,520,121,566,116,566,116,520"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1InputDeviceInfo.html" title="Information about a connected input device." alt="" coords="5,5,232,391"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="121,404,121,440,116,440,116,404"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::set_region_data" name="MayaFlux::Kakshya::SoundStreamContainer::set_region_data">
+<area shape="rect" id="Node000001" title="Set data for a specific region." alt="" coords="5,41,177,96"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a93e6f9e5095df9ea658c152a67e5dd96.html#a93e6f9e5095df9ea658c152a67e5dd96" title="Invalidate the span cache when data or layout changes." alt="" coords="239,5,418,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,53,225,46,226,51,178,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="225,85,432,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="178,79,212,84,211,90,177,84"/>
+</map>

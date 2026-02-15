@@ -1,0 +1,19 @@
+<map id="Operators" name="Operators">
+<area shape="rect" id="node1" href="dir_8ecb7d40f88b57c08c0962309805dcc6.html" title="Operators" alt="" coords="192,52,279,77"/>
+<area shape="rect" id="node2" href="dir_98903ca72f3f031f88d95d1d2149bfa4.html" title="Kakshya" alt="" coords="5,125,84,151"/>
+<area shape="poly" id="edge1" href="dir_000038_000025.html" alt="" coords="206,80,90,123,88,118,204,75"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000038_000025.html" title="1" alt="" coords="91,119,100,134"/>
+<area shape="rect" id="node3" href="dir_a8ec6d67cf3caa06b6fdb4f1cb0d9531.html" title="Kinesis" alt="" coords="109,125,178,151"/>
+<area shape="poly" id="edge2" href="dir_000038_000026.html" alt="" coords="222,79,171,119,167,115,219,75"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000038_000026.html" title="1" alt="" coords="173,113,183,128"/>
+<area shape="rect" id="node4" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="202,125,269,151"/>
+<area shape="poly" id="edge3" href="dir_000038_000024.html" alt="" coords="238,78,238,112,233,112,233,78"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000038_000024.html" title="3" alt="" coords="239,100,248,114"/>
+<area shape="rect" id="node5" href="dir_b1cbfefe53099ced2f396fc8e2be6e6b.html" title="Graphics" alt="" coords="293,125,372,151"/>
+<area shape="poly" id="edge4" href="dir_000038_000016.html" alt="" coords="253,75,307,115,304,119,249,80"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000038_000016.html" title="4" alt="" coords="302,100,312,115"/>
+<area shape="rect" id="node6" href="dir_fa9701bc8dd421cc9c72fe138aba5a04.html" title="Transitive" alt="" coords="397,125,482,151"/>
+<area shape="poly" id="edge5" href="dir_000038_000059.html" alt="" coords="269,75,394,118,393,123,267,80"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000038_000059.html" title="1" alt="" coords="387,104,397,119"/>
+<area shape="rect" id="clust1" href="dir_e048869b98951148b69b1c6ea615d17c.html" title="Network" alt="" coords="181,16,290,88"/>
+</map>

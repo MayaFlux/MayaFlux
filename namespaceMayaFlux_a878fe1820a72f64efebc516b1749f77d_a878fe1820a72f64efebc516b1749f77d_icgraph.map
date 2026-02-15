@@ -1,0 +1,22 @@
+<map id="MayaFlux::normalize" name="MayaFlux::normalize">
+<area shape="rect" id="Node000001" title="Normalize single&#45;channel data to specified peak level (in&#45;place)" alt="" coords="845,150,1004,175"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a6a020ef96480ab2d031f28a9d57a6626.html#a6a020ef96480ab2d031f28a9d57a6626" title="Normalize each channel independently to specified peak level (in&#45;place)" alt="" coords="615,5,773,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="898,143,853,105,796,66,757,48,759,43,799,62,856,100,902,139"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a076994d553705adc1b6d432c31536b70.html#a076994d553705adc1b6d432c31536b70" title="Auto&#45;correlation using FFT (IN&#45;PLACE)" alt="" coords="336,56,543,96"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="883,147,842,131,797,117,732,104,665,94,543,83,543,77,666,89,733,99,798,112,843,126,885,142"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Core transformation implementation for convolution operations." alt="" coords="5,141,288,181"/>
+<area shape="poly" id="edge11_Node000001_Node000004" title=" " alt="" coords="832,162,797,161,527,160,289,162,289,156,527,155,797,156,832,157"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_ac1be280f4546a882ab996233f09b3265.html#ac1be280f4546a882ab996233f09b3265" title="Auto&#45;correlation using FFT (OUT&#45;OF&#45;PLACE)" alt="" coords="591,171,797,211"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="832,177,798,181,797,175,831,171"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a619009aaf1cccfc7692e98b045074476.html#a619009aaf1cccfc7692e98b045074476" title="Cross&#45;correlation using FFT (convolution with time&#45;reversed impulse) (OUT&#45;OF&#45;PLACE)" alt="" coords="591,235,797,275"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="888,184,798,225,765,237,763,232,796,220,886,179"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_a6a3458d6ef24b32ed18b47d7daab7400.html#a6a3458d6ef24b32ed18b47d7daab7400" title="Cross&#45;correlation using FFT (convolution with time&#45;reversed impulse) (IN&#45;PLACE)" alt="" coords="591,299,797,339"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="907,188,862,239,832,266,799,289,775,301,772,296,796,284,828,261,858,235,903,184"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="358,102,217,144,215,139,356,97"/>
+<area shape="poly" id="edge7_Node000007_Node000004" title=" " alt="" coords="598,295,589,289,573,271,565,253,557,236,541,221,481,192,416,173,351,162,288,158,288,153,351,157,418,168,483,187,544,216,561,233,570,251,577,268,592,285,601,290"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_a16b7981e7ffe1c058c5eae0351560fa2.html#a16b7981e7ffe1c058c5eae0351560fa2" title="Matched filter using cross&#45;correlation for signal detection (IN&#45;PLACE)" alt="" coords="336,231,543,271"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="605,298,514,273,516,268,606,293"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_aeede47ef227de112c0d668d3fc0de51f.html#aeede47ef227de112c0d668d3fc0de51f" title="Matched filter using cross&#45;correlation for signal detection (OUT&#45;OF&#45;PLACE)" alt="" coords="336,299,543,339"/>
+<area shape="poly" id="edge10_Node000007_Node000009" title=" " alt="" coords="577,321,543,321,543,316,577,316"/>
+<area shape="poly" id="edge9_Node000008_Node000004" title=" " alt="" coords="359,229,213,184,214,179,360,224"/>
+</map>

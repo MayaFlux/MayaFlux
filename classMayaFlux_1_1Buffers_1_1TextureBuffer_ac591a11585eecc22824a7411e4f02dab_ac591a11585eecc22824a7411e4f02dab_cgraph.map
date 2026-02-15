@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::TextureBuffer::TextureBuffer" name="MayaFlux::Buffers::TextureBuffer::TextureBuffer">
+<area shape="rect" id="Node000001" title="Create texture buffer with dimensions." alt="" coords="5,91,209,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ad4dfd30af6ecb53741917052bf839ccb.html#ad4dfd30af6ecb53741917052bf839ccb" title=" " alt="" coords="269,5,443,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,89,255,62,257,67,172,94"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a1a8ce2b9ced17d9ff6137c563c58a0e0.html#a1a8ce2b9ced17d9ff6137c563c58a0e0" title="Get bytes per pixel for a format." alt="" coords="257,84,455,139"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="209,109,244,109,244,114,209,114"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_acb563960a9f338d6e93cf7bae6f64f46.html#acb563960a9f338d6e93cf7bae6f64f46" title="Called by derived classes to set their context&#45;specific defaults." alt="" coords="276,163,436,217"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="172,129,264,158,262,163,171,134"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a16b3cbfb638d1ce2063d8b9436faf7ec.html#a16b3cbfb638d1ce2063d8b9436faf7ec" title="Set vertex layout for this buffer." alt="" coords="503,5,659,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="444,30,489,30,489,35,444,35"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a69d6a400c22a219150d8b28007441d5d.html#a69d6a400c22a219150d8b28007441d5d" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="707,5,880,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="659,30,693,30,693,35,659,35"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a544b48334c1b582e8bf50da8215d2095.html#a544b48334c1b582e8bf50da8215d2095" title="Get size in bytes for a given modality Mirrors VKBuffer::get_format() logic." alt="" coords="928,5,1103,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="880,30,914,30,914,35,880,35"/>
+</map>

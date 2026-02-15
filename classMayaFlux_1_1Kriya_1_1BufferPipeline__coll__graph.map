@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kriya::BufferPipeline" name="MayaFlux::Kriya::BufferPipeline">
+<area shape="rect" id="Node000001" title="Coroutine&#45;based execution engine for composable, multi&#45;strategy buffer processing." alt="" coords="61,1191,293,2056"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,778,209,858"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,871,142,1190,137,1191,109,872"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="233,508,456,1128"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="283,1129,273,1175,268,1174,277,1128"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="237,220,452,445"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="347,445,347,492,342,492,342,445"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="260,5,429,171"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="347,184,347,220,342,220,342,184"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Node::on_tick_if" name="MayaFlux::Nodes::Node::on_tick_if">
+<area shape="rect" id="Node000001" title="Registers a conditional callback." alt="" coords="5,5,183,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_aa995eb0e67c4e7da29783ff14293700d.html#aa995eb0e67c4e7da29783ff14293700d" title="Safely adds a conditional callback if it doesn&#39;t already exist." alt="" coords="231,5,424,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="183,23,217,23,217,28,183,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a1d792a9c7c4adccf80fff01afb356cb7.html#a1d792a9c7c4adccf80fff01afb356cb7" title="Checks if a specific callback and condition pair already exists." alt="" coords="472,5,669,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="424,23,458,23,458,28,424,28"/>
+</map>

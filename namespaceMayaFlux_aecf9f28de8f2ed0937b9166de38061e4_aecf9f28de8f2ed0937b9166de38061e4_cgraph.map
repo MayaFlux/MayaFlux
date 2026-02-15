@@ -1,0 +1,5 @@
+<map id="MayaFlux::apply_gain_per_channel" name="MayaFlux::apply_gain_per_channel">
+<area shape="rect" id="Node000001" title="Apply different gain to each channel (in&#45;place)" alt="" coords="5,5,171,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aec6eff0979aee0842a5ba73791661498.html#aec6eff0979aee0842a5ba73791661498" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="219,13,384,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="171,23,205,23,205,28,171,28"/>
+</map>

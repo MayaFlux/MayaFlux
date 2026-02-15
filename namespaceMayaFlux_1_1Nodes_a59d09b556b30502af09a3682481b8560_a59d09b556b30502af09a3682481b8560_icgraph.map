@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nodes::get_active_channels" name="MayaFlux::Nodes::get_active_channels">
+<area shape="rect" id="Node000001" title="Extracts active channel list from a node&#39;s channel mask." alt="" coords="793,37,957,77"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="916,26,902,19,875,16,852,18,839,23,834,29,836,36,831,38,828,28,836,18,851,13,875,11,903,14,918,21"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1ChainNode_a218d8c8509ee92e129b3f0655765522e.html#a218d8c8509ee92e129b3f0655765522e" title="Initializes the chain node." alt="" coords="531,5,745,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="779,47,745,42,746,37,780,42"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a4ace2e51cdec1304fdf524a635253d32.html#a4ace2e51cdec1304fdf524a635253d32" title="Initializes the binary operation node." alt="" coords="537,69,739,109"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="780,73,740,78,739,73,779,68"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1ChainNode_a6c75109f5288690e52abf73747ac590b.html#a6c75109f5288690e52abf73747ac590b" title="Processes a single sample through the chain." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="517,28,483,28,483,23,517,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1ChainNode_a3e207440f2ca922b104b34793a5408e2.html#a3e207440f2ca922b104b34793a5408e2" title="Processes multiple samples through the chain." alt="" coords="5,5,220,45"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="255,28,220,28,220,23,255,23"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a8fae564fe72bb7d724f53eb5ace2b6ef.html#a8fae564fe72bb7d724f53eb5ace2b6ef" title="Processes a single sample through both nodes and combines the results." alt="" coords="274,69,477,109"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="523,92,477,92,477,87,523,87"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_aa542907435255abd16572f736ba82e2d.html#aa542907435255abd16572f736ba82e2d" title="Processes multiple samples through both nodes and combines the results." alt="" coords="11,69,214,109"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="260,92,214,92,214,87,260,87"/>
+</map>

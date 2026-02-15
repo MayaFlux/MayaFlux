@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork" name="MayaFlux::Nodes::Network::NodeNetwork">
+<area shape="rect" id="Node000001" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="276,5,473,665"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork.html" title="Network of resonant modes for modal synthesis." alt="" coords="5,713,237,1373"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="274,625,240,720,235,718,269,623"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork.html" title="Motion&#45;focused point network with swappable operators." alt="" coords="262,803,487,1283"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="377,679,377,803,372,803,372,679"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork.html" title="Spatial relational network operating on unordered point sets." alt="" coords="511,823,737,1263"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="480,628,549,822,544,824,475,630"/>
+</map>

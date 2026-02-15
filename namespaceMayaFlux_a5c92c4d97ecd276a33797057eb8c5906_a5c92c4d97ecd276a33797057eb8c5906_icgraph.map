@@ -1,0 +1,43 @@
+<map id="MayaFlux::get_node_graph_manager" name="MayaFlux::get_node_graph_manager">
+<area shape="rect" id="Node000001" title="Gets the node graph manager from the default engine." alt="" coords="1040,247,1195,287"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a073d89c4ca218efc62570a5ca7793421.html#a073d89c4ca218efc62570a5ca7793421" title="Activates a buffer in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="816,5,969,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1104,235,1089,191,1066,139,1033,87,1013,64,990,44,968,32,971,27,994,40,1017,60,1037,84,1070,136,1094,189,1109,233"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a0b740ba3757842dafbd9afc7c2a73cc2.html#a0b740ba3757842dafbd9afc7c2a73cc2" title="Activates a node network in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="816,55,969,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1099,236,1082,201,1057,163,1027,125,991,94,968,82,971,78,993,89,1031,121,1062,160,1086,199,1104,233"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a9fdb6f36962a8cb52fb9439cd2d92946.html#a9fdb6f36962a8cb52fb9439cd2d92946" title="Activates a node in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="816,104,969,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="1091,238,1048,189,1021,165,991,144,962,132,964,127,993,140,1024,161,1052,186,1095,235"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_aa901a4b0b9f930abe9966d0dd5e779f1.html#aa901a4b0b9f930abe9966d0dd5e779f1" title="Adds a node to the root node of a specific channel." alt="" coords="821,154,965,194"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="1066,243,991,208,959,197,961,192,993,204,1068,239"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_a3007544776c384d1c0e640f3a0d645e3.html#a3007544776c384d1c0e640f3a0d645e3" title="@breif Moves the network from its current channel(s) to the specified channel(s) with an optional fad..." alt="" coords="799,283,987,308"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="1027,281,987,286,987,281,1026,276"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_aa1e8ff65bee12ce47305eab8e3b24481.html#aa1e8ff65bee12ce47305eab8e3b24481" title="@breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade t..." alt="" coords="799,332,987,357"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="1063,295,993,323,954,334,952,329,991,318,1061,290"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_a5e7ec95e02b8766a3aee0d66f51ac239.html#a5e7ec95e02b8766a3aee0d66f51ac239" title="@breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade t..." alt="" coords="809,381,976,407"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="1089,299,1046,338,993,372,964,384,962,379,991,368,1043,333,1086,296"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_a5bd5bbb74eef5f1f05248d85fb6c4d87.html#a5bd5bbb74eef5f1f05248d85fb6c4d87" title="@breif Moves the node from its current channel(s) to the specified channel(s) with an optional fade t..." alt="" coords="809,431,976,456"/>
+<area shape="poly" id="edge16_Node000001_Node000017" title=" " alt="" coords="1101,301,1057,363,1028,395,993,422,970,433,967,428,991,417,1024,391,1053,360,1096,298"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_aad56cf1420bfb5ad395d77cfed879312.html#aad56cf1420bfb5ad395d77cfed879312" title="Removes a node from the root node of a specific channel." alt="" coords="813,218,973,258"/>
+<area shape="poly" id="edge17_Node000001_Node000018" title=" " alt="" coords="1026,258,972,251,973,246,1027,253"/>
+<area shape="rect" id="Node000020" href="$namespaceMayaFlux_a333e458f39650286ee7fec6808b18fef.html#a333e458f39650286ee7fec6808b18fef" title="Removes a node from the root node of specified channels." alt="" coords="793,480,992,505"/>
+<area shape="poly" id="edge21_Node000001_Node000020" title=" " alt="" coords="1107,301,1091,341,1066,387,1034,432,994,471,973,482,970,478,990,467,1030,429,1062,384,1086,338,1102,299"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_aaed41e3f8ff8e36b6e2df90aa68a1e24.html#aaed41e3f8ff8e36b6e2df90aa68a1e24" title=" " alt="" coords="551,104,725,129"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="807,157,695,132,696,127,808,152"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1ChainNode_a218d8c8509ee92e129b3f0655765522e.html#a218d8c8509ee92e129b3f0655765522e" title="Initializes the chain node." alt="" coords="531,218,745,258"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="808,198,719,220,718,215,807,193"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a4ace2e51cdec1304fdf524a635253d32.html#a4ace2e51cdec1304fdf524a635253d32" title="Initializes the binary operation node." alt="" coords="537,154,739,194"/>
+<area shape="poly" id="edge9_Node000005_Node000010" title=" " alt="" coords="807,177,740,177,740,171,807,171"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_abe3b2ac7f14796fddaade4da6f50641f.html#abe3b2ac7f14796fddaade4da6f50641f" title="Adds a node to the root node of specified channels." alt="" coords="566,39,710,79"/>
+<area shape="poly" id="edge12_Node000005_Node000013" title=" " alt="" coords="807,151,792,143,777,130,767,117,758,105,744,94,709,78,712,73,747,89,762,102,772,114,781,126,795,138,809,147"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1ChainNode_a6c75109f5288690e52abf73747ac590b.html#a6c75109f5288690e52abf73747ac590b" title="Processes a single sample through the chain." alt="" coords="268,218,483,258"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="517,241,483,241,483,235,517,235"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1ChainNode_a3e207440f2ca922b104b34793a5408e2.html#a3e207440f2ca922b104b34793a5408e2" title="Processes multiple samples through the chain." alt="" coords="5,218,220,258"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="255,241,220,241,220,235,255,235"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a8fae564fe72bb7d724f53eb5ace2b6ef.html#a8fae564fe72bb7d724f53eb5ace2b6ef" title="Processes a single sample through both nodes and combines the results." alt="" coords="274,154,477,194"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="523,177,477,177,477,171,523,171"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_aa542907435255abd16572f736ba82e2d.html#aa542907435255abd16572f736ba82e2d" title="Processes multiple samples through both nodes and combines the results." alt="" coords="11,154,214,194"/>
+<area shape="poly" id="edge11_Node000011_Node000012" title=" " alt="" coords="260,177,214,177,214,171,260,171"/>
+<area shape="poly" id="edge18_Node000018_Node000007" title=" " alt="" coords="799,241,746,241,746,235,799,235"/>
+<area shape="poly" id="edge19_Node000018_Node000010" title=" " alt="" coords="799,217,718,197,719,191,800,212"/>
+<area shape="rect" id="Node000019" href="$namespaceMayaFlux_aa4c12145e393f66fe17cb79555f4a402.html#aa4c12145e393f66fe17cb79555f4a402" title="Removes a node from the root node from list of channels." alt="" coords="558,282,718,322"/>
+<area shape="poly" id="edge20_Node000018_Node000019" title=" " alt="" coords="800,264,719,285,718,279,799,259"/>
+</map>

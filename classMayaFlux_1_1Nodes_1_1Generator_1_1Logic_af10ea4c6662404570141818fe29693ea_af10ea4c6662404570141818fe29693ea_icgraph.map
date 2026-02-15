@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::Logic::notify_tick" name="MayaFlux::Nodes::Generator::Logic::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks about a new sample." alt="" coords="517,37,725,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_ac29f7cc81f95277d8686a1d296f334f2.html#ac29f7cc81f95277d8686a1d296f334f2" title="Processes multiple parallel inputs." alt="" coords="261,5,469,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="504,45,469,41,470,36,504,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a4cd7a43ebf1ff5518bf9b006bad898fe.html#a4cd7a43ebf1ff5518bf9b006bad898fe" title="Processes a single input sample through the logic function." alt="" coords="261,69,469,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="504,75,470,79,469,74,504,69"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic_a99bea86cf7a74676b8a309df546d8007.html#a99bea86cf7a74676b8a309df546d8007" title="Processes multiple samples in batch mode." alt="" coords="5,69,213,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="248,92,213,92,213,87,248,87"/>
+</map>

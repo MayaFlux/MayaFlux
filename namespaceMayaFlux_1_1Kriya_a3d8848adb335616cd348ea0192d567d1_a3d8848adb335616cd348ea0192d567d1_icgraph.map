@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kriya::sequence" name="MayaFlux::Kriya::sequence">
+<area shape="rect" id="Node000001" title="Creates a temporal sequence that executes callbacks at specified time offsets." alt="" coords="457,29,656,55"/>
+<area shape="poly" id="edge3_Node000001_Node000001" title=" " alt="" coords="601,20,598,15,590,12,557,8,530,10,516,15,513,20,520,27,516,31,508,21,512,11,529,5,557,3,592,7,602,11,605,17"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_adba3d43ff7eda5bebca4f34e8cad65ad.html#adba3d43ff7eda5bebca4f34e8cad65ad" title="Creates a sequence task that calls functions at specified times." alt="" coords="205,29,409,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="444,45,409,45,409,39,444,39"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a44556db6c9a1fd8493244b1e6b30e443.html#a44556db6c9a1fd8493244b1e6b30e443" title="Creates a sequence task that calls functions at specified times and addes it to the default scheduler..." alt="" coords="5,22,157,62"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="191,45,157,45,157,39,191,39"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::channel_data" name="MayaFlux::Kakshya::SoundStreamContainer::channel_data">
+<area shape="rect" id="Node000001" title="Get channel data with semantic interpretation." alt="" coords="228,45,400,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a2e13dea5e12628e12d63d9ca38474abe.html#a2e13dea5e12628e12d63d9ca38474abe" title=" " alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,57,180,51,180,46,215,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ac3d49a61e9bf001838b5528660d78fb2.html#ac3d49a61e9bf001838b5528660d78fb2" title="Get the fixed capacity of the circular buffer if enabled." alt="" coords="5,84,180,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="215,93,180,99,180,93,214,87"/>
+</map>

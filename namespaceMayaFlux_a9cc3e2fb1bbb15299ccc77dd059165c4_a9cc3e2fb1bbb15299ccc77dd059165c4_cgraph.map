@@ -1,0 +1,25 @@
+<map id="MayaFlux::register_container" name="MayaFlux::register_container">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,97,149,137"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_adfd1764a90716b65f56ed3647851c96a.html#adfd1764a90716b65f56ed3647851c96a" title="Connects a SoundFileContainer to the buffer system for immediate playback." alt="" coords="197,97,369,137"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="150,115,184,115,184,120,150,120"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ab62f030499d58eb3e1d5c43ca3bc230e.html#ab62f030499d58eb3e1d5c43ca3bc230e" title="Gets the buffer manager from the default engine." alt="" coords="419,61,579,101"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="369,100,405,94,406,100,370,106"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1SoundContainerBuffer_a249c5d9818c533d2a1ab266be6a1994c.html#a249c5d9818c533d2a1ab266be6a1994c" title="Initialize the buffer after construction." alt="" coords="417,126,581,181"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="370,129,404,135,403,140,369,134"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1Engine_ae91ca2d8b17039d5aab98e53258bb777.html#ae91ca2d8b17039d5aab98e53258bb777" title="Gets the buffer manager." alt="" coords="631,5,807,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="578,59,626,46,627,51,579,64"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="633,70,804,95"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="580,79,620,79,620,85,579,84"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="856,63,1027,103"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="804,80,842,80,842,85,804,85"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="1075,63,1219,103"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1027,80,1061,80,1061,85,1027,85"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="1267,63,1417,103"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1219,80,1253,80,1253,85,1219,85"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="1465,63,1612,103"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1418,80,1452,80,1452,85,1418,85"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_a6aae69de3f5918a7aa02c5da98c93db9.html#a6aae69de3f5918a7aa02c5da98c93db9" title="Controls whether the audio buffer should use default processing." alt="" coords="641,123,796,178"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="581,150,628,149,628,154,581,155"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer_ab92b94273add3b0656839d3d86a250dd.html#ab92b94273add3b0656839d3d86a250dd" title="Sets the default audio transformation processor for this buffer." alt="" coords="629,202,808,257"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="580,178,628,195,626,200,578,183"/>
+</map>

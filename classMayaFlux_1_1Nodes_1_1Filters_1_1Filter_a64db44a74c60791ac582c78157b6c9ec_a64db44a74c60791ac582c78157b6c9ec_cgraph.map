@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Filters::Filter::set_shift" name="MayaFlux::Nodes::Filters::Filter::set_shift">
+<area shape="rect" id="Node000001" title="Updates the filter&#39;s shift configuration." alt="" coords="5,5,188,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_1_1Filters_ae2ddf7b2bf77495486335c278b3fd6ce.html#ae2ddf7b2bf77495486335c278b3fd6ce" title="Parses a string representation of filter order into input/output shift configuration." alt="" coords="236,5,419,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,23,222,23,222,28,188,28"/>
+</map>
