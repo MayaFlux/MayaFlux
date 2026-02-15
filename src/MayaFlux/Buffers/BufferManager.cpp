@@ -349,6 +349,25 @@ void BufferManager::connect_node_to_buffer(
     m_processor_control->connect_node_to_audio_buffer(node, buffer, mix, clear_before);
 }
 
+void BufferManager::route_buffer_to_channel(
+    const std::shared_ptr<AudioBuffer>& buffer,
+    uint32_t target_channel,
+    uint32_t fade_cycles,
+    ProcessingToken token)
+{
+    m_supply_mixing->route_buffer_to_channel(buffer, target_channel, fade_cycles, token);
+}
+
+void BufferManager::update_routing_states(ProcessingToken token)
+{
+    m_supply_mixing->update_routing_states_for_cycle(token);
+}
+
+void BufferManager::cleanup_completed_routing(ProcessingToken token)
+{
+    m_supply_mixing->cleanup_completed_routing(token);
+}
+
 // ============================================================================
 // Data I/O (Audio-Specific)
 // ============================================================================

@@ -439,6 +439,16 @@ public:
         ProcessingToken token,
         uint32_t channel);
 
+    void route_buffer_to_channel(
+        const std::shared_ptr<AudioBuffer>& buffer,
+        uint32_t target_channel,
+        uint32_t fade_cycles,
+        ProcessingToken token);
+
+    void update_routing_states(ProcessingToken token);
+
+    void cleanup_completed_routing(ProcessingToken token);
+
     // =========================================================================
     // Utility
     // =========================================================================

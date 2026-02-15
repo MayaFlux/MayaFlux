@@ -7,6 +7,7 @@ namespace MayaFlux::Buffers {
 class AudioBuffer;
 class TokenUnitManager;
 class BufferAccessControl;
+struct BufferRoutingState;
 
 /**
  * @class BufferSupplyMixing
@@ -127,12 +128,52 @@ public:
         const std::vector<uint32_t>& channels,
         ProcessingToken token);
 
+    /**
+     * @brief Routes a buffer's processing from one channel to another with fade
+     * @param buffer Buffer to route
+     * @param target_channel Destination channel
+     * @param fade_cycles Number of processing cycles to fade over
+     * @param token Processing domain
+     *
+     * Transitions the buffer's channel_id from its current channel to the target channel
+     * with smooth crossfade. During transition, buffer continues processing in its original
+     * channel while fading in via supply to the target channel.
+     */
+    void route_buffer_to_channel(
+        const std::shared_ptr<AudioBuffer>& buffer,
+        uint32_t target_channel,
+        uint32_t fade_cycles,
+        ProcessingToken token);
+
+    /**
+     * @brief Updates routing states for all buffers undergoing transitions
+     * @param token Processing domain to update
+     *
+     * Should be called once per processing cycle to advance routing fade states.
+     */
+    void update_routing_states_for_cycle(ProcessingToken token);
+
+    /**
+     * @brief Cleans up completed routing transitions
+     * @param token Processing domain to clean up
+     *
+     * Removes buffers from old channels and finalizes registration to new channels
+     * after fade completion.
+     */
+    void cleanup_completed_routing(ProcessingToken token);
+
 private:
     /// Reference to the token/unit manager
     TokenUnitManager& m_unit_manager;
 
     /// Reference to the buffer access control
     BufferAccessControl& m_access_control;
+
+    /**
+     * @brief Updates a single buffer's routing state
+     * @param state Routing state to update
+     */
+    void update_routing_state(BufferRoutingState& state);
 };
 
 } // namespace MayaFlux::Buffers

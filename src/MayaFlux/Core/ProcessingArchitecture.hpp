@@ -123,6 +123,12 @@ public:
     /** @brief Configure channel layout for token domain */
     void setup_channels(uint32_t num_channels, uint32_t buffer_size);
 
+    /* @brief Supply buffer to a channel with optional mixing */
+    void update_routing_states();
+
+    /* @brief Route a buffer to a different channel with fade transition */
+    void cleanup_completed_routing();
+
 private:
     void ensure_valid() const;
     void acquire_write_lock();

@@ -92,6 +92,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         std::span<double> output_span(output_buffer, total_samples);
 
         m_handle->nodes.update_routing_states();
+        m_handle->buffers.update_routing_states();
 
         std::vector<std::span<const double>> buffer_data(num_channels);
         std::vector<std::vector<std::vector<double>>> all_network_outputs(num_channels);
@@ -140,6 +141,7 @@ int AudioSubsystem::process_output(double* output_buffer, unsigned int num_frame
         }
 
         m_handle->nodes.cleanup_completed_routing();
+        m_handle->buffers.cleanup_completed_routing();
 
         m_callback_active.fetch_sub(1, std::memory_order_release);
         return has_underrun ? 1 : 0;

@@ -47,9 +47,16 @@ void ChannelProcessor::processing_function(const std::shared_ptr<Buffer>& buffer
     if (active_buffers > 0) {
         for (auto& child : m_root_buffer->get_child_buffers()) {
             if (child->has_data_for_cycle() && !child->needs_removal() && !child->is_internal_only()) {
+                double scale = 1.0;
+                if (child->needs_routing()) {
+                    const auto& state = child->get_routing_state();
+                    if (state.from_channel == m_root_buffer->get_channel_id()) {
+                        scale = state.from_amount;
+                    }
+                }
                 const auto& child_data = child->get_data();
                 for (size_t i = 0; i < std::min(child_data.size(), output_data.size()); i++) {
-                    output_data[i] += child_data[i] / active_buffers;
+                    output_data[i] += (child_data[i] * scale) / active_buffers;
                 }
             }
         }

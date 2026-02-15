@@ -76,7 +76,15 @@ public:
      * @param buffer Buffer to remove
      * @return true if the source was successfully removed, false if it was not found
      */
-    bool remove_source(std::shared_ptr<AudioBuffer> buffer);
+    bool remove_source(const std::shared_ptr<AudioBuffer>& buffer);
+
+    /**
+     * @brief Updates the mix level of an existing source
+     * @param buffer Source buffer to update
+     * @param new_mix_level New mix level
+     * @return true if source was found and updated
+     */
+    bool update_source_mix(const std::shared_ptr<AudioBuffer>& buffer, double new_mix_level);
 
 private:
     void cleanup();

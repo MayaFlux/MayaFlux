@@ -6,6 +6,28 @@
 namespace MayaFlux::Buffers {
 
 /**
+ * @struct BufferRoutingState
+ * @brief Represents the state of routing transitions for a buffer
+ *
+ * Tracks fade-in and fade-out state when routing a buffer from one channel to another.
+ * Unlike nodes, buffers only support 1-to-1 routing due to their single channel_id architecture.
+ */
+struct BufferRoutingState {
+    double from_amount { 1.0 };
+    double to_amount { 0.0 };
+    uint32_t cycles_elapsed {};
+    uint32_t from_channel {};
+    uint32_t to_channel {};
+    uint32_t fade_cycles {};
+
+    enum Phase : uint8_t {
+        NONE = 0x00,
+        ACTIVE = 0x01,
+        COMPLETED = 0x02
+    } phase { Phase::NONE };
+};
+
+/**
  * @class AudioBuffer
  * @brief Concrete audio implementation of the Buffer interface for double-precision audio data
  *
@@ -60,7 +82,7 @@ public:
      * Ensures proper cleanup of audio buffer resources and any attached
      * audio processors when the buffer is destroyed.
      */
-    virtual ~AudioBuffer() override = default;
+    ~AudioBuffer() override = default;
 
     /**
      * @brief Initializes the audio buffer with specified channel and capacity
@@ -100,7 +122,7 @@ public:
      * the buffer capacity. This is the audio-specific implementation of the
      * Buffer interface's clear() method.
      */
-    virtual void clear() override;
+    void clear() override;
 
     /**
      * @brief Gets the current capacity of the audio buffer
@@ -137,7 +159,7 @@ public:
      * The specific transformation depends on the configured default audio processor,
      * which may perform operations like normalization, filtering, or effects processing.
      */
-    virtual void process_default() override;
+    void process_default() override;
 
     /**
      * @brief Gets the audio channel identifier for this buffer
@@ -176,7 +198,7 @@ public:
      * process_default() is called. The processor should be compatible
      * with double-precision audio data processing.
      */
-    virtual void set_default_processor(const std::shared_ptr<BufferProcessor>& processor) override;
+    void set_default_processor(const std::shared_ptr<BufferProcessor>& processor) override;
 
     /**
      * @brief Gets the current default audio transformation processor
@@ -185,7 +207,7 @@ public:
      * Returns the audio processor that will be used for default transformations
      * on this buffer's audio data, or nullptr if no default processor is set.
      */
-    inline virtual std::shared_ptr<BufferProcessor> get_default_processor() const override { return m_default_processor; }
+    inline std::shared_ptr<BufferProcessor> get_default_processor() const override { return m_default_processor; }
 
     /**
      * @brief Gets the audio transformation chain attached to this buffer
@@ -195,7 +217,7 @@ public:
      * applied in sequence when the buffer is processed. This enables complex
      * audio processing pipelines for effects, filtering, and analysis.
      */
-    inline virtual std::shared_ptr<BufferProcessingChain> get_processing_chain() override { return m_processing_chain; }
+    inline std::shared_ptr<BufferProcessingChain> get_processing_chain() override { return m_processing_chain; }
 
     /**
      * @brief Sets the audio transformation chain for this buffer
@@ -206,7 +228,7 @@ public:
      * The chain should contain processors compatible with double-precision
      * audio data.
      */
-    virtual void set_processing_chain(const std::shared_ptr<BufferProcessingChain>& chain, bool force = false) override;
+    void set_processing_chain(const std::shared_ptr<BufferProcessingChain>& chain, bool force = false) override;
 
     /**
      * @brief Gets a reference to a specific audio sample in the buffer
@@ -228,7 +250,7 @@ public:
      * explicitly marked otherwise, but derived classes may implement different
      * behavior based on streaming state or data availability.
      */
-    inline virtual bool has_data_for_cycle() const override { return m_has_data; }
+    inline bool has_data_for_cycle() const override { return m_has_data; }
 
     /**
      * @brief Checks if the buffer should be removed from the processing chain
@@ -241,7 +263,7 @@ public:
      * derived classes may implement automatic removal based on streaming end
      * conditions or resource management policies.
      */
-    inline virtual bool needs_removal() const override { return m_should_remove; }
+    inline bool needs_removal() const override { return m_should_remove; }
 
     /**
      * @brief Marks the audio buffer for processing in the current cycle
@@ -251,7 +273,7 @@ public:
      * be considered for processing in the current audio cycle. Standard audio buffers
      * are typically always marked as having data unless explicitly disabled.
      */
-    inline virtual void mark_for_processing(bool has_data) override { m_has_data = has_data; }
+    inline void mark_for_processing(bool has_data) override { m_has_data = has_data; }
 
     /**
      * @brief Marks the audio buffer for removal from processing chains
@@ -261,7 +283,7 @@ public:
      * rarely need removal unless explicitly requested by the application or
      * when audio streams end.
      */
-    inline virtual void mark_for_removal() override { m_should_remove = true; }
+    inline void mark_for_removal() override { m_should_remove = true; }
 
     /**
      * @brief Controls whether the audio buffer should use default processing
@@ -272,7 +294,7 @@ public:
      * default processing unless specific audio processing requirements dictate
      * otherwise.
      */
-    inline virtual void enforce_default_processing(bool should_process) override { m_process_default = should_process; }
+    inline void enforce_default_processing(bool should_process) override { m_process_default = should_process; }
 
     /**
      * @brief Checks if the audio buffer should undergo default processing
@@ -283,7 +305,7 @@ public:
      * need default processing unless specifically configured otherwise for
      * specialized audio processing scenarios.
      */
-    inline virtual bool needs_default_processing() override { return m_process_default; }
+    inline bool needs_default_processing() override { return m_process_default; }
 
     /**
      * @brief Attempts to acquire processing rights for the buffer
@@ -379,6 +401,27 @@ public:
      */
     bool is_internal_only() const override { return m_internal_usage; }
 
+    /**
+     * @brief Retrieves the current routing state of the buffer
+     * @return Reference to the current BufferRoutingState structure
+     */
+    [[nodiscard]] const BufferRoutingState& get_routing_state() const { return m_routing_state; }
+
+    /**
+     * @brief Retrieves the current routing state of the buffer (non-const)
+     * @return Reference to the current BufferRoutingState structure
+     */
+    BufferRoutingState& get_routing_state() { return m_routing_state; }
+
+    /**
+     * @brief Checks if the buffer is currently in a routing transition phase
+     * @return true if the buffer is in an active or completed routing phase
+     */
+    [[nodiscard]] bool needs_routing() const
+    {
+        return m_routing_state.phase & (BufferRoutingState::ACTIVE | BufferRoutingState::COMPLETED);
+    }
+
 protected:
     /**
      * @brief Audio channel identifier for this buffer
@@ -460,6 +503,11 @@ protected:
      * processing based on current requirements.
      */
     bool m_process_default;
+
+    /**
+     * @brief Internal state tracking for routing transitions
+     */
+    BufferRoutingState m_routing_state;
 
 private:
     std::atomic<bool> m_is_processing;
