@@ -17,6 +17,7 @@ namespace MayaFlux::Buffers {
 BufferManager::BufferManager(
     uint32_t default_out_channels,
     uint32_t default_in_channels,
+    uint64_t default_sample_rate,
     uint32_t default_buffer_size,
     ProcessingToken default_audio_token,
     ProcessingToken default_graphics_token)
@@ -27,6 +28,7 @@ BufferManager::BufferManager(
     , m_supply_mixing(std::make_unique<BufferSupplyMixing>(*m_unit_manager, *m_access_control))
     , m_global_processing_chain(std::make_shared<BufferProcessingChain>())
 {
+    s_registered_sample_rate = default_sample_rate;
     s_preferred_buffer_size = default_buffer_size;
     validate_num_channels(default_audio_token, default_out_channels, default_buffer_size);
 

@@ -15,7 +15,7 @@ protected:
     void SetUp() override
     {
         standard_buffer = std::make_shared<Buffers::AudioBuffer>(0, TestConfig::BUFFER_SIZE);
-        buffer_manager = std::make_shared<Buffers::BufferManager>(2, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
+        buffer_manager = std::make_shared<Buffers::BufferManager>(2, TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
     }
 
     std::shared_ptr<Buffers::AudioBuffer> standard_buffer;
@@ -445,7 +445,7 @@ class RootAudioBufferTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        buffer_manager = std::make_shared<Buffers::BufferManager>(2, 0, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
+        buffer_manager = std::make_shared<Buffers::BufferManager>(2, 0, TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, Buffers::ProcessingToken::AUDIO_BACKEND);
         root_buffer = buffer_manager->get_root_audio_buffer(Buffers::ProcessingToken::AUDIO_BACKEND, 0);
     }
 

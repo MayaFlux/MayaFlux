@@ -12,7 +12,7 @@ class BufferManagerTest : public ::testing::Test {
 protected:
     void SetUp() override
     {
-        manager = std::make_shared<Buffers::BufferManager>(TestConfig::NUM_CHANNELS, 2, TestConfig::BUFFER_SIZE, default_token);
+        manager = std::make_shared<Buffers::BufferManager>(TestConfig::NUM_CHANNELS, 2, TestConfig::SAMPLE_RATE, TestConfig::BUFFER_SIZE, default_token);
     }
 
     void TearDown() override

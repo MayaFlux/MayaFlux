@@ -43,6 +43,16 @@ using AudioProcessingFunction = std::function<void(const std::shared_ptr<AudioBu
  */
 using GraphicsProcessingFunction = std::function<void(const std::shared_ptr<VKBuffer>&)>;
 
+//------------------------------------------------------------------------------------------
+
+/**
+ * @brief Global default sample rate. Updated by buffer manager upon engine instantiation.
+ */
+static uint64_t s_registered_sample_rate { 48000 };
+
+/**
+ * @brief Global default buffer size. Updated by buffer manager upon engine instantiation.
+ */
 static uint32_t s_preferred_buffer_size { 512 };
 
 }
