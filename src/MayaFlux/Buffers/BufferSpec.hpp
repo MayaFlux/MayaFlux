@@ -43,4 +43,6 @@ using AudioProcessingFunction = std::function<void(const std::shared_ptr<AudioBu
  */
 using GraphicsProcessingFunction = std::function<void(const std::shared_ptr<VKBuffer>&)>;
 
+static uint32_t s_preferred_buffer_size { 512 };
+
 }

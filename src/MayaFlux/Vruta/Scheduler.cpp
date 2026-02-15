@@ -7,6 +7,8 @@ namespace MayaFlux::Vruta {
 TaskScheduler::TaskScheduler(uint32_t default_sample_rate, uint32_t default_frame_rate)
     : m_clock(default_sample_rate)
     , m_cleanup_threshold(512)
+    , m_registered_sample_rate(default_sample_rate)
+    , m_registered_frame_rate(default_frame_rate)
 {
     ensure_domain(ProcessingToken::SAMPLE_ACCURATE, default_sample_rate);
     ensure_domain(ProcessingToken::FRAME_ACCURATE, default_frame_rate);
@@ -214,17 +216,17 @@ unsigned int TaskScheduler::get_default_rate(ProcessingToken token) const
 {
     switch (token) {
     case ProcessingToken::SAMPLE_ACCURATE:
-        return 48000;
+        return m_registered_sample_rate;
     case ProcessingToken::FRAME_ACCURATE:
-        return 60;
+        return m_registered_frame_rate;
     case ProcessingToken::MULTI_RATE:
-        return 48000;
+        return m_registered_sample_rate;
     case ProcessingToken::ON_DEMAND:
         return 1;
     case ProcessingToken::CUSTOM:
         return 1000;
     default:
-        return 48000;
+        return m_registered_sample_rate;
     }
 }
 

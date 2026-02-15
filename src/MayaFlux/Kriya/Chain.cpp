@@ -1,6 +1,7 @@
 #include "Chain.hpp"
 
 #include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
+#include "MayaFlux/Vruta/ChronUtils.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -12,6 +13,7 @@ namespace MayaFlux::Kriya {
 EventChain::EventChain(Vruta::TaskScheduler& scheduler, std::string name)
     : m_Scheduler(scheduler)
     , m_name(std::move(name))
+    , m_default_rate(scheduler.get_rate())
 {
 }
 
@@ -28,7 +30,7 @@ void EventChain::start()
 
     m_on_complete_fired = false;
 
-    auto coroutine_func = [](Vruta::TaskScheduler& scheduler, EventChain* chain) -> MayaFlux::Vruta::SoundRoutine {
+    auto coroutine_func = [](EventChain* chain) -> MayaFlux::Vruta::SoundRoutine {
         auto& promise = co_await Kriya::GetAudioPromise {};
 
         for (const auto& event : chain->m_events) {
@@ -36,7 +38,7 @@ void EventChain::start()
                 break;
             }
 
-            co_await SampleDelay { scheduler.seconds_to_samples(event.delay_seconds) };
+            co_await SampleDelay { Vruta::seconds_to_samples(event.delay_seconds, chain->m_default_rate) };
             try {
                 if (event.action) {
                     event.action();
@@ -58,7 +60,7 @@ void EventChain::start()
     };
 
     std::string task_name = m_name.empty() ? "EventChain_" + std::to_string(m_Scheduler.get_next_task_id()) : m_name;
-    m_routine = std::make_shared<Vruta::SoundRoutine>(coroutine_func(m_Scheduler, this));
+    m_routine = std::make_shared<Vruta::SoundRoutine>(coroutine_func(this));
     m_Scheduler.add_task(m_routine, task_name, true);
 }
 

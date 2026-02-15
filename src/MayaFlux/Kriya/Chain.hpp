@@ -174,6 +174,8 @@ private:
      * @brief Internal method to safely fire the on_complete callback
      */
     void fire_on_complete();
+
+    uint64_t m_default_rate { 48000 };
 };
 
 }

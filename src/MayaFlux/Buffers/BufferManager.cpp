@@ -27,6 +27,7 @@ BufferManager::BufferManager(
     , m_supply_mixing(std::make_unique<BufferSupplyMixing>(*m_unit_manager, *m_access_control))
     , m_global_processing_chain(std::make_shared<BufferProcessingChain>())
 {
+    s_preferred_buffer_size = default_buffer_size;
     validate_num_channels(default_audio_token, default_out_channels, default_buffer_size);
 
     if (default_in_channels) {

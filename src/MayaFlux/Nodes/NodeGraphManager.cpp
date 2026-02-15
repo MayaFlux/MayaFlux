@@ -739,7 +739,8 @@ void NodeGraphManager::route_network_to_channels(
         target_bitmask |= (1 << ch);
     }
 
-    network->set_channel_mask(target_bitmask);
+    uint32_t combined_mask = current_channels | target_bitmask;
+    network->set_channel_mask(combined_mask);
     for (auto ch : target_channels) {
         network->add_channel_usage(ch);
         ensure_root_exists(token, ch);
@@ -794,6 +795,8 @@ void NodeGraphManager::cleanup_completed_routing(ProcessingToken token)
         auto& state = network->get_routing_state();
 
         if (state.phase == RoutingState::COMPLETED) {
+            network->set_channel_mask(state.to_channels);
+
             for (uint32_t ch = 0; ch < 32; ch++) {
                 if ((state.from_channels & (1 << ch)) && !(state.to_channels & (1 << ch))) {
                     networks_to_cleanup.emplace_back(network, ch);

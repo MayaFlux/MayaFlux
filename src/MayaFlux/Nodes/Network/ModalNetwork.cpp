@@ -3,8 +3,6 @@
 #include "MayaFlux/Nodes/Filters/Filter.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 
-#include "MayaFlux/API/Config.hpp"
-
 namespace MayaFlux::Nodes::Network {
 
 //-----------------------------------------------------------------------------
