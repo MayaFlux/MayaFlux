@@ -67,6 +67,35 @@ public:
     EventChain& then(std::function<void()> action, double delay_seconds = 0.F);
 
     /**
+     * @brief Repeat the last event N times
+     * @param count Number of times to repeat
+     * @return Reference to this EventChain for method chaining
+     */
+    EventChain& repeat(size_t count);
+
+    /**
+     * @brief Repeat entire chain N times
+     * @param count Number of times to repeat the entire sequence
+     * @return Reference to this EventChain for method chaining
+     */
+    EventChain& times(size_t count);
+
+    /**
+     * @brief Add a wait/delay without an action
+     * @param delay_seconds Time to wait in seconds
+     * @return Reference to this EventChain for method chaining
+     */
+    EventChain& wait(double delay_seconds);
+
+    /**
+     * @brief Convenience method for repeating an action at regular intervals
+     * @param interval_seconds Time between each execution
+     * @param action Function to execute
+     * @return Reference to this EventChain for method chaining
+     */
+    EventChain& every(double interval_seconds, std::function<void()> action);
+
+    /**
      * @brief Starts executing the event chain
      *
      * This method begins the execution of the event chain, scheduling each event
@@ -114,6 +143,18 @@ public:
      * multiple chains are active. If no name was set, this will return an empty string.
      */
     [[nodiscard]] const std::string& name() const { return m_name; }
+
+    /**
+     * @brief Gets the number of events in the chain
+     * @return Number of events
+     */
+    [[nodiscard]] size_t event_count() const { return m_events.size(); }
+
+    /**
+     * @brief Gets the repeat count for the entire chain
+     * @return Number of times the chain will repeat
+     */
+    [[nodiscard]] size_t repeat_count() const { return m_repeat_count; }
 
 private:
     /**
@@ -174,6 +215,8 @@ private:
      * @brief Internal method to safely fire the on_complete callback
      */
     void fire_on_complete();
+
+    size_t m_repeat_count { 1 }; ///< Number of times to repeat the entire chain
 
     uint64_t m_default_rate { 48000 };
 };
