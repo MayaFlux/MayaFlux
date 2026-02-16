@@ -333,7 +333,14 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     if (width > 0 && height > 0) {
         auto cmd = foundry.get_command_buffer(cmd_id);
 
-        vk::Viewport viewport { 0.0F, 0.0F, static_cast<float>(width), static_cast<float>(height), 0.0F, 1.0F };
+        vk::Viewport viewport {
+            0.0F,
+            static_cast<float>(height),
+            static_cast<float>(width),
+            -static_cast<float>(height),
+            0.0F,
+            1.0F
+        };
         cmd.setViewport(0, 1, &viewport);
 
         vk::Rect2D scissor { { 0, 0 }, { width, height } };
