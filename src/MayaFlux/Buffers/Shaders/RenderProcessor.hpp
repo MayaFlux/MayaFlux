@@ -83,6 +83,32 @@ public:
      */
     bool is_pipeline_ready() const { return m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE; }
 
+    /**
+     * @brief Set vertex range for drawing subset of buffer
+     * @param first_vertex Starting vertex index in buffer
+     * @param vertex_count Number of vertices to draw
+     *
+     * Enables drawing a specific range of vertices from the bound buffer.
+     * Used for composite geometry where multiple collections are aggregated
+     * into a single buffer but rendered with different topologies.
+     *
+     * Default: draws all vertices (first_vertex=0, vertex_count=0 means "use layout count")
+     */
+    void set_vertex_range(uint32_t first_vertex, uint32_t vertex_count);
+
+    /**
+     * @brief Override the vertex layout used when building the pipeline for buffer
+     * @param buffer Target buffer (key into m_buffer_info)
+     * @param layout Layout specific to this processor's topology
+     *
+     * Called by CompositeGeometryBuffer to give each RenderProcessor its own
+     * topology-specific layout rather than the shared aggregate on the VKBuffer.
+     * Triggers a pipeline rebuild on the next execute_shader() call.
+     */
+    void set_buffer_vertex_layout(
+        const std::shared_ptr<VKBuffer>& buffer,
+        const Kakshya::VertexLayout& layout);
+
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
@@ -117,6 +143,13 @@ private:
         vk::Sampler sampler;
     };
     std::unordered_map<uint32_t, TextureBinding> m_texture_bindings;
+
+    uint32_t m_first_vertex { 0 };
+    uint32_t m_vertex_count { 0 };
+
+    const Kakshya::VertexLayout* get_or_cache_vertex_layout(
+        std::unordered_map<std::shared_ptr<VKBuffer>, VertexInfo>& buffer_info,
+        const std::shared_ptr<VKBuffer>& buffer);
 };
 
 } // namespace MayaFlux::Buffers

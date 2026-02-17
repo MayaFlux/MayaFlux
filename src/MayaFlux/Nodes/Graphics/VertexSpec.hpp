@@ -17,4 +17,4 @@ struct LineVertex {
     glm::vec2 uv = glm::vec2(0.F);
 };
 
-} // MayaFlux::Nodes::GpuSync
+} // MayaFlux::Nodes
