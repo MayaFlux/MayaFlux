@@ -31,6 +31,9 @@ vk::Format VertexLayoutTranslator::modality_to_vk_format(Kakshya::DataModality m
     case DataModality::TRANSFORMATION_MATRIX:
         return vk::Format::eR32G32B32A32Sfloat;
 
+    case DataModality::SCALAR_F32:
+        return vk::Format::eR32Sfloat;
+
     default:
         MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
             "Unknown modality for vertex format conversion, defaulting to R32G32B32Sfloat");
@@ -113,15 +116,14 @@ uint32_t VertexLayoutTranslator::get_modality_size_bytes(Kakshya::DataModality m
         return 16; // 4 * float32
 
     case DataModality::AUDIO_1D:
-    case DataModality::AUDIO_MULTICHANNEL:
-        return 8; // float64
-
-    case DataModality::SPECTRAL_2D:
-        return 8; // 2 * float32
+    case DataModality::AUDIO_MULTICHANNEL: // float64
+    case DataModality::SPECTRAL_2D: // 2 * float32
+        return 8;
 
     case DataModality::TRANSFORMATION_MATRIX:
         return 64; // 4x4 * float32
 
+    case DataModality::SCALAR_F32:
     default:
         return 4;
     }

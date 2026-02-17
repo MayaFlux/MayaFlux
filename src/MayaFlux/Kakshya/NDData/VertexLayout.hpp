@@ -97,7 +97,7 @@ struct VertexLayout {
             .name = "color" });
 
         layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::UNKNOWN,
+            .component_modality = DataModality::SCALAR_F32,
             .offset_in_vertex = 24,
             .name = "size" });
 
@@ -124,12 +124,12 @@ struct VertexLayout {
             .name = "color" });
 
         layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::UNKNOWN,
+            .component_modality = DataModality::SCALAR_F32,
             .offset_in_vertex = 24,
             .name = "thickness" });
 
         layout.attributes.push_back(VertexAttributeLayout {
-            .component_modality = DataModality::UNKNOWN,
+            .component_modality = DataModality::TEXTURE_COORDS_2D,
             .offset_in_vertex = 28,
             .name = "uv" });
         return layout;

@@ -14,6 +14,26 @@
 
 namespace MayaFlux::Buffers {
 
+const Kakshya::VertexLayout* RenderProcessor::get_or_cache_vertex_layout(
+    std::unordered_map<std::shared_ptr<VKBuffer>, RenderProcessor::VertexInfo>& buffer_info,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    auto info_it = buffer_info.find(buffer);
+    if (info_it == buffer_info.end()) {
+        if (buffer->has_vertex_layout()) {
+            auto vertex_layout = buffer->get_vertex_layout();
+            if (vertex_layout.has_value()) {
+                buffer_info[buffer] = { .semantic_layout = vertex_layout.value(), .use_reflection = false };
+                info_it = buffer_info.find(buffer);
+            }
+        }
+        if (info_it == buffer_info.end()) {
+            return nullptr;
+        }
+    }
+    return &info_it->second.semantic_layout;
+}
+
 RenderProcessor::RenderProcessor(const ShaderConfig& config)
     : ShaderProcessor(config)
 {
@@ -150,11 +170,16 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
             }
         }
     }
-    if (m_buffer_info.find(buffer) != m_buffer_info.end()) {
-        const auto& vertex_info = m_buffer_info.find(buffer)->second;
-        pipeline_config.semantic_vertex_layout = vertex_info.semantic_layout;
-        pipeline_config.use_vertex_shader_reflection = vertex_info.use_reflection;
+
+    const Kakshya::VertexLayout* local_layout = get_or_cache_vertex_layout(m_buffer_info, buffer);
+    if (!local_layout) {
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "initialize_pipeline: layout not yet available, deferring");
+        return;
     }
+
+    pipeline_config.semantic_vertex_layout = *local_layout;
+    pipeline_config.use_vertex_shader_reflection = m_buffer_info[buffer].use_reflection;
 
     const auto& staging = buffer->get_pipeline_context().push_constant_staging;
     if (!staging.empty()) {
@@ -265,6 +290,27 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
     on_descriptors_created();
 }
 
+void RenderProcessor::set_vertex_range(uint32_t first_vertex, uint32_t vertex_count)
+{
+    m_first_vertex = first_vertex;
+    m_vertex_count = vertex_count;
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "RenderProcessor: Set vertex range [offset={}, count={}]",
+        first_vertex, vertex_count);
+}
+
+void RenderProcessor::set_buffer_vertex_layout(
+    const std::shared_ptr<VKBuffer>& buffer,
+    const Kakshya::VertexLayout& layout)
+{
+    m_buffer_info[buffer] = {
+        .semantic_layout = layout,
+        .use_reflection = false
+    };
+    m_needs_pipeline_rebuild = true;
+}
+
 bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_id*/, const std::shared_ptr<VKBuffer>& /*buffer*/)
 {
     if (!m_target_window) {
@@ -297,22 +343,10 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         return;
     }
 
-    auto vertex_layout = buffer->get_vertex_layout();
-    if (!vertex_layout.has_value()) {
+    const Kakshya::VertexLayout* local_layout = get_or_cache_vertex_layout(m_buffer_info, buffer);
+    if (!local_layout) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "VKBuffer has no vertex layout set. Use buffer->set_vertex_layout()");
-        return;
-    }
-
-    if (vertex_layout->vertex_count == 0) {
-        MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Vertex layout has zero vertices, skipping draw");
-        return;
-    }
-
-    if (vertex_layout->attributes.empty()) {
-        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Vertex layout has no attributes");
         return;
     }
 
@@ -391,7 +425,20 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 
     flow.bind_vertex_buffers(cmd_id, { buffer });
 
-    flow.draw(cmd_id, vertex_layout->vertex_count);
+    uint32_t draw_count = 0;
+    if (m_vertex_count > 0) {
+        draw_count = m_vertex_count;
+    } else {
+        auto current_layout = buffer->get_vertex_layout();
+        if (!current_layout.has_value() || current_layout->vertex_count == 0) {
+            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Vertex layout has zero vertices, skipping draw");
+            return;
+        }
+        draw_count = current_layout->vertex_count;
+    }
+
+    flow.draw(cmd_id, draw_count, 1, m_first_vertex, 0);
 
     foundry.end_commands(cmd_id);
 

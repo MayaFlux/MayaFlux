@@ -93,6 +93,7 @@ enum class DataModality : uint8_t {
     VERTEX_COLORS_RGBA, // glm::vec4 - RGBA colors
     TEXTURE_COORDS_2D, // glm::vec2 - UV coordinates
     TRANSFORMATION_MATRIX, // glm::mat4 - transform matrices
+    SCALAR_F32, ///< Single-channel float data
     UNKNOWN ///< Unknown or undefined modality
 };
 
