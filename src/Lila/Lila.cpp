@@ -9,6 +9,10 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
+#endif
+
 namespace Lila {
 
 Lila::Lila()
@@ -226,6 +230,44 @@ void Lila::await_shutdown(const std::atomic<bool>* external_flag)
         }
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, server_loop_rate, false);
     }
+
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+    if (MayaFlux::Parallel::g_MainThreadId == 0) {
+        MayaFlux::Parallel::g_MainThreadId = GetCurrentThreadId();
+    }
+
+    MSG msg;
+    PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+    while (!m_shutdown_requested.load(std::memory_order_acquire)
+        && (!external_flag || external_flag->load(std::memory_order_acquire))) {
+        if (!is_server_running()) {
+            LILA_ERROR(Emitter::SYSTEM, "Server stopped unexpectedly");
+            break;
+        }
+
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                m_shutdown_requested.store(true, std::memory_order_release);
+                break;
+            }
+
+            if (msg.message == MAYAFLUX_WM_DISPATCH) {
+                auto* task = reinterpret_cast<std::function<void()>*>(msg.lParam);
+                if (task) {
+                    (*task)();
+                    delete task;
+                }
+            } else {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(static_cast<int>(server_loop_rate * 1000.0F)));
+    }
+
 #else
     while (!m_shutdown_requested.load(std::memory_order_acquire) && (!external_flag || external_flag->load(std::memory_order_acquire))) {
         if (!is_server_running()) {
@@ -245,6 +287,8 @@ void Lila::request_shutdown()
 
 #ifdef MAYAFLUX_PLATFORM_MACOS
     CFRunLoopStop(CFRunLoopGetMain());
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+    PostThreadMessage(MayaFlux::Parallel::g_MainThreadId, WM_QUIT, 0, 0);
 #endif
 }
 

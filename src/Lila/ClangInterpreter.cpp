@@ -28,6 +28,10 @@
 #include <dispatch/dispatch.h>
 #endif
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
+#endif
+
 namespace Lila {
 
 struct ClangInterpreter::Impl {
@@ -221,6 +225,31 @@ ClangInterpreter::EvalResult ClangInterpreter::eval(const std::string& code)
             LILA_ERROR(Emitter::INTERPRETER, result.error);
         }
     });
+
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+    auto completed = std::make_shared<std::atomic<bool>>(false);
+
+    auto* task = new std::function<void()>([&, completed]() {
+        auto eval_result = m_impl->interpreter->ParseAndExecute(code);
+
+        if (!eval_result) {
+            result.success = true;
+            LILA_DEBUG(Emitter::INTERPRETER, "Code evaluation succeeded");
+        } else {
+            result.success = false;
+            result.error = "Execution failed: " + llvm::toString(std::move(eval_result));
+            LILA_ERROR(Emitter::INTERPRETER, result.error);
+        }
+
+        completed->store(true, std::memory_order_release);
+    });
+
+    PostThreadMessage(MayaFlux::Parallel::g_MainThreadId, MAYAFLUX_WM_DISPATCH, 0, (LPARAM)task);
+
+    while (!completed->load(std::memory_order_acquire)) {
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
+
 #else
     auto eval_result = m_impl->interpreter->ParseAndExecute(code);
 

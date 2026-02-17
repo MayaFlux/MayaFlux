@@ -84,7 +84,9 @@ Engine& Engine::operator=(Engine&& other) noexcept
 void Engine::Init()
 {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    Parallel::g_MainThreadId = GetCurrentThreadId();
+    if (Parallel::g_MainThreadId == 0) {
+        Parallel::g_MainThreadId = GetCurrentThreadId();
+    }
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 
     Init(m_stream_info, m_graphics_config, m_input_config);
