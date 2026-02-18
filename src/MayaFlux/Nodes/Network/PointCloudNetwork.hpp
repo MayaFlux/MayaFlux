@@ -111,10 +111,24 @@ namespace MayaFlux::Nodes::Network {
 class MAYAFLUX_API PointCloudNetwork : public NodeNetwork {
 public:
     enum class InitializationMode : uint8_t {
+        // Basic Geometric
         UNIFORM_GRID,
         RANDOM_SPHERE,
         RANDOM_CUBE,
         PROCEDURAL,
+
+        // Stochastic / Noise-based (Kinesis::Stochastic)
+        PERLIN_FIELD, ///< Density-based distribution using 3D noise
+        BROWNIAN_PATH, ///< Continuous random walk (trails)
+        STRATIFIED_CUBE, ///< Jittered grid for "blue noise" distribution
+
+        // Algorithmic / Structural (Kinesis::MotionCurves)
+        SPLINE_PATH, ///< Points along a Catmull-Rom spline
+        LISSAJOUS, ///< Complex harmonic patterns
+        FIBONACCI_SPHERE, ///< Golden ratio-based point distribution on sphere
+        FIBONACCI_SPIRAL, ///< Golden ratio-based point distribution along spiralO
+        TORUS, ///< Points arranged in a toroidal shape
+
         EMPTY
     };
 
@@ -242,7 +256,7 @@ public:
     void set_operator(std::unique_ptr<NetworkOperator> op);
 
 private:
-    size_t m_num_points { 0 };
+    size_t m_num_points {};
     glm::vec3 m_bounds_min { -1.0F };
     glm::vec3 m_bounds_max { 1.0F };
     InitializationMode m_init_mode { InitializationMode::RANDOM_CUBE };
