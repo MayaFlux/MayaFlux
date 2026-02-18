@@ -7,7 +7,7 @@
 namespace MayaFlux::Nodes::Network {
 
 PointCloudNetwork::PointCloudNetwork()
-    : m_init_mode(InitializationMode::EMPTY)
+    : m_init_mode(Kinesis::SpatialDistribution::EMPTY)
 {
     set_topology(Topology::INDEPENDENT);
     set_output_mode(OutputMode::GRAPHICS_BIND);
@@ -20,10 +20,9 @@ PointCloudNetwork::PointCloudNetwork(
     size_t num_points,
     const glm::vec3& bounds_min,
     const glm::vec3& bounds_max,
-    InitializationMode init_mode)
+    Kinesis::SpatialDistribution init_mode)
     : m_num_points(num_points)
-    , m_bounds_min(bounds_min)
-    , m_bounds_max(bounds_max)
+    , m_bounds(bounds_min, bounds_max)
     , m_init_mode(init_mode)
 {
     set_topology(Topology::INDEPENDENT);
@@ -42,7 +41,7 @@ void PointCloudNetwork::initialize()
         return;
     }
 
-    if (m_init_mode != InitializationMode::EMPTY && m_num_points > 0) {
+    if (m_init_mode != Kinesis::SpatialDistribution::EMPTY && m_num_points > 0) {
         m_cached_vertices = generate_initial_positions();
 
         if (!m_operator) {
@@ -95,7 +94,7 @@ void PointCloudNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
 
 void PointCloudNetwork::reset()
 {
-    if (m_init_mode != InitializationMode::EMPTY && m_num_points > 0) {
+    if (m_init_mode != Kinesis::SpatialDistribution::EMPTY && m_num_points > 0) {
         m_cached_vertices = generate_initial_positions();
 
         if (m_operator) {
@@ -162,9 +161,9 @@ std::unordered_map<std::string, std::string> PointCloudNetwork::get_metadata() c
     metadata["point_count"] = std::to_string(get_node_count());
     metadata["operator"] = std::string(m_operator ? m_operator->get_type_name() : "none");
     metadata["bounds_min"] = std::format("({:.2f}, {:.2f}, {:.2f})",
-        m_bounds_min.x, m_bounds_min.y, m_bounds_min.z);
+        m_bounds.min.x, m_bounds.min.y, m_bounds.min.z);
     metadata["bounds_max"] = std::format("({:.2f}, {:.2f}, {:.2f})",
-        m_bounds_max.x, m_bounds_max.y, m_bounds_max.z);
+        m_bounds.max.x, m_bounds.max.y, m_bounds.max.z);
 
     if (auto* topology_op = dynamic_cast<const TopologyOperator*>(m_operator.get())) {
         if (auto connections = topology_op->query_state("connection_count")) {
@@ -358,205 +357,8 @@ void PointCloudNetwork::update_mapped_parameters()
 
 std::vector<LineVertex> PointCloudNetwork::generate_initial_positions()
 {
-    std::vector<LineVertex> vertices;
-    vertices.reserve(m_num_points);
-
-    const glm::vec3 range = m_bounds_max - m_bounds_min;
-    const glm::vec3 center = (m_bounds_min + m_bounds_max) * 0.5F;
-    const float max_radius = glm::length(range) * 0.5F;
-    auto float_points = static_cast<float>(m_num_points);
-
-    switch (m_init_mode) {
-    case InitializationMode::UNIFORM_GRID: {
-        const auto points_per_axis = static_cast<size_t>(std::cbrt(static_cast<double>(m_num_points)));
-        const glm::vec3 step = range / static_cast<float>(points_per_axis - 1);
-
-        for (size_t x = 0; x < points_per_axis; ++x) {
-            for (size_t y = 0; y < points_per_axis; ++y) {
-                for (size_t z = 0; z < points_per_axis; ++z) {
-                    if (vertices.size() >= m_num_points)
-                        break;
-                    glm::vec3 pos = m_bounds_min + glm::vec3(static_cast<float>(x) * step.x, static_cast<float>(y) * step.y, static_cast<float>(z) * step.z);
-                    glm::vec3 color = glm::vec3(
-                        static_cast<float>(x) / static_cast<float>(points_per_axis - 1),
-                        static_cast<float>(y) / static_cast<float>(points_per_axis - 1),
-                        static_cast<float>(z) / static_cast<float>(points_per_axis - 1));
-                    glm::vec3 center = (m_bounds_min + m_bounds_max) * 0.5F;
-                    float thickness = 1.0F + glm::length(pos - center) / glm::length(range) * 2.0F;
-                    vertices.emplace_back(LineVertex {
-                        .position = pos,
-                        .color = color,
-                        .thickness = thickness });
-                }
-            }
-        }
-        break;
-    }
-    case InitializationMode::RANDOM_SPHERE: {
-        glm::vec3 center = (m_bounds_min + m_bounds_max) * 0.5F;
-        float max_radius = glm::length(range) * 0.5F;
-        for (size_t i = 0; i < m_num_points; ++i) {
-            auto theta = static_cast<float>(m_random_gen(0.0F, M_PI * 2.0F));
-            auto phi = static_cast<float>(std::acos(m_random_gen(-1.0F, 1.0F)));
-            auto radius = static_cast<float>(std::cbrt(m_random_gen(0.0F, 1.0F)));
-
-            glm::vec3 pos = center + max_radius * radius * glm::vec3(std::sin(phi) * std::cos(theta), std::sin(phi) * std::sin(theta), std::cos(phi));
-            glm::vec3 color = glm::vec3(
-                radius,
-                theta / glm::two_pi<float>(),
-                phi / glm::pi<float>());
-            float thickness = 1.0F + radius * 2.0F;
-            vertices.emplace_back(LineVertex {
-                .position = pos,
-                .color = color,
-                .thickness = thickness });
-        }
-        break;
-    }
-    case InitializationMode::PERLIN_FIELD: {
-        auto perlin = Kinesis::Stochastic::perlin(4, 0.5);
-        size_t accepted = 0;
-        while (accepted < m_num_points) {
-            glm::vec3 p(m_random_gen(m_bounds_min.x, m_bounds_max.x),
-                m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_random_gen(m_bounds_min.z, m_bounds_max.z));
-
-            double density = perlin.at(p.x, p.y, p.z);
-            if (density > m_random_gen(0.0, 1.0)) {
-                vertices.emplace_back(LineVertex { .position = p, .color = (p - m_bounds_min) / range });
-                accepted++;
-            }
-        }
-        break;
-    }
-
-    case InitializationMode::BROWNIAN_PATH: {
-        auto walker = Kinesis::Stochastic::brownian(0.05);
-        glm::vec3 current_pos = center;
-        for (size_t i = 0; i < m_num_points; ++i) {
-            current_pos += glm::vec3(walker(-1.0, 1.0), walker(-1.0, 1.0), walker(-1.0, 1.0)) * 0.1F;
-            current_pos = glm::clamp(current_pos, m_bounds_min, m_bounds_max);
-            vertices.emplace_back(LineVertex { .position = current_pos, .color = glm::vec3(static_cast<float>(i) / (float)m_num_points) });
-        }
-        break;
-    }
-
-    case InitializationMode::STRATIFIED_CUBE: {
-        const auto ppa = static_cast<size_t>(std::cbrt(m_num_points));
-        const glm::vec3 step = range / static_cast<float>(ppa);
-        for (size_t x = 0; x < ppa; ++x) {
-            for (size_t y = 0; y < ppa; ++y) {
-                for (size_t z = 0; z < ppa; ++z) {
-                    glm::vec3 jitter(m_random_gen(-0.5F, 0.5F), m_random_gen(-0.5F, 0.5F), m_random_gen(-0.5F, 0.5F));
-                    glm::vec3 pos = m_bounds_min + (glm::vec3(x, y, z) + 0.5F + jitter) * step;
-                    vertices.emplace_back(LineVertex { .position = pos, .color = (pos - m_bounds_min) / range, .thickness = 1.2F });
-                }
-            }
-        }
-        break;
-    }
-
-    case InitializationMode::SPLINE_PATH: {
-        Eigen::MatrixXd controls(3, 6);
-        for (int i = 0; i < 6; ++i) {
-            controls.col(i) = Eigen::Vector3d(m_random_gen(m_bounds_min.x, m_bounds_max.x),
-                m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_random_gen(m_bounds_min.z, m_bounds_max.z));
-        }
-
-        Eigen::MatrixXd path = Kinesis::generate_interpolated_points(
-            controls, (Eigen::Index)m_num_points, Kinesis::InterpolationMode::CATMULL_ROM);
-
-        for (int i = 0; i < path.cols(); ++i) {
-            vertices.emplace_back(LineVertex {
-                .position = glm::vec3(path(0, i), path(1, i), path(2, i)),
-                .color = glm::vec3(0.1F, 0.8F, 0.4F) });
-        }
-        break;
-    }
-
-    case InitializationMode::FIBONACCI_SPHERE: {
-        const float phi = glm::pi<float>() * (3.0F - std::sqrt(5.0F));
-        for (size_t i = 0; i < m_num_points; ++i) {
-            float y = 1.0F - (static_cast<float>(i) / (float_points - 1)) * 2.0F;
-            float radius = std::sqrt(1.0F - y * y);
-            float theta = phi * float(i);
-
-            glm::vec3 pos = center + (max_radius * glm::vec3(std::cos(theta) * radius, y, std::sin(theta) * radius));
-            vertices.emplace_back(LineVertex {
-                .position = pos,
-                .color = (pos - m_bounds_min) / range,
-                .thickness = 1.0F });
-        }
-        break;
-    }
-
-    case InitializationMode::FIBONACCI_SPIRAL: {
-        const float golden_angle = glm::pi<float>() * (3.0F - std::sqrt(5.0F));
-        for (size_t i = 0; i < m_num_points; ++i) {
-            float r = max_radius * std::sqrt(static_cast<float>(i) / float_points);
-            float theta = float(i) * golden_angle;
-
-            glm::vec3 pos = center + glm::vec3(r * std::cos(theta), r * std::sin(theta), 0.0F);
-            vertices.emplace_back(LineVertex {
-                .position = pos,
-                .color = glm::vec3(r / max_radius, 0.5F, 1.0F - (r / max_radius)),
-                .thickness = 1.5F });
-        }
-        break;
-    }
-
-    case InitializationMode::TORUS: {
-        float main_radius = max_radius * 0.7F;
-        float tube_radius = max_radius * 0.3F;
-        auto ring_samples = static_cast<size_t>(std::sqrt(m_num_points));
-        size_t side_samples = m_num_points / ring_samples;
-
-        for (size_t i = 0; i < ring_samples; ++i) {
-            float u = (static_cast<float>(i) / static_cast<float>(ring_samples)) * glm::two_pi<float>();
-            for (size_t j = 0; j < side_samples; ++j) {
-                float v = (static_cast<float>(j) / static_cast<float>(side_samples)) * glm::two_pi<float>();
-
-                glm::vec3 pos = center + glm::vec3((main_radius + tube_radius * std::cos(v)) * std::cos(u), (main_radius + tube_radius * std::cos(v)) * std::sin(u), tube_radius * std::sin(v));
-                vertices.emplace_back(LineVertex { .position = pos, .color = glm::vec3(u / 6.28F, v / 6.28F, 0.5F), .thickness = 1.0F });
-            }
-        }
-        break;
-    }
-
-    case InitializationMode::LISSAJOUS: {
-        const float a = 3.0F, b = 2.0F, c = 5.0F;
-        for (size_t i = 0; i < m_num_points; ++i) {
-            float t = (static_cast<float>(i) / float_points) * glm::two_pi<float>() * 2.0F;
-            glm::vec3 pos = center + max_radius * glm::vec3(std::sin(a * t), std::sin(b * t), std::sin(c * t));
-            vertices.emplace_back(LineVertex { .position = pos, .color = glm::vec3(0.5F + pos.x, 0.5F, 0.8F), .thickness = 2.0F });
-        }
-        break;
-    }
-
-    case InitializationMode::PROCEDURAL:
-    case InitializationMode::EMPTY:
-        break;
-
-    case InitializationMode::RANDOM_CUBE:
-    default: {
-        for (size_t i = 0; i < m_num_points; ++i) {
-            glm::vec3 pos = glm::vec3(
-                m_random_gen(m_bounds_min.x, m_bounds_max.x),
-                m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_random_gen(m_bounds_min.z, m_bounds_max.z));
-            glm::vec3 color = (pos - m_bounds_min) / range;
-            auto thickness = m_random_gen(1.0F, 3.0F);
-            vertices.emplace_back(LineVertex {
-                .position = pos,
-                .color = color,
-                .thickness = (float)thickness });
-        }
-        break;
-    }
-    }
-
-    return vertices;
+    auto samples = Kinesis::generate_samples(m_init_mode, m_num_points, m_bounds, m_random_gen);
+    return Kinesis::to_line_vertices(samples, { 1.0F, 2.0F });
 }
 
 } // namespace MayaFlux::Nodes::Network

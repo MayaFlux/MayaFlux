@@ -14,10 +14,9 @@ ParticleNetwork::ParticleNetwork(
     size_t num_particles,
     const glm::vec3& bounds_min,
     const glm::vec3& bounds_max,
-    InitializationMode init_mode)
+    Kinesis::SpatialDistribution init_mode)
     : m_num_points(num_particles)
-    , m_bounds_min(bounds_min)
-    , m_bounds_max(bounds_max)
+    , m_bounds(bounds_min, bounds_max)
     , m_init_mode(init_mode)
 {
     set_topology(Topology::INDEPENDENT);
@@ -44,7 +43,7 @@ void ParticleNetwork::initialize()
 
     if (!m_operator) {
         auto physics = std::make_unique<PhysicsOperator>();
-        physics->set_bounds(m_bounds_min, m_bounds_max);
+        physics->set_bounds(m_bounds.min, m_bounds.max);
         physics->initialize(positions);
         m_operator = std::move(physics);
     }
@@ -132,9 +131,9 @@ std::unordered_map<std::string, std::string> ParticleNetwork::get_metadata() con
     metadata["operator"] = std::string(m_operator ? m_operator->get_type_name() : "none");
     metadata["timestep"] = std::to_string(m_timestep);
     metadata["bounds_min"] = std::format("({:.2f}, {:.2f}, {:.2f})",
-        m_bounds_min.x, m_bounds_min.y, m_bounds_min.z);
+        m_bounds.min.x, m_bounds.min.y, m_bounds.min.z);
     metadata["bounds_max"] = std::format("({:.2f}, {:.2f}, {:.2f})",
-        m_bounds_max.x, m_bounds_max.y, m_bounds_max.z);
+        m_bounds.max.x, m_bounds.max.y, m_bounds.max.z);
 
     if (m_operator) {
         if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
@@ -189,7 +188,7 @@ void ParticleNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
         new_graphics->initialize(vertices);
 
         if (auto* physics = dynamic_cast<PhysicsOperator*>(op.get())) {
-            physics->set_bounds(m_bounds_min, m_bounds_max);
+            physics->set_bounds(m_bounds.min, m_bounds.max);
         }
 
         MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
@@ -255,164 +254,15 @@ void ParticleNetwork::ensure_initialized()
 
 std::vector<PointVertex> ParticleNetwork::generate_initial_vertices()
 {
-    std::vector<PointVertex> vertices;
-    vertices.reserve(m_num_points);
-
-    for (size_t i = 0; i < m_num_points; ++i) {
-        vertices.push_back(generate_single_vertex(m_init_mode, i, m_num_points));
-    }
-
-    MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,
-        "Generated {} initial vertices with mode {}",
-        m_num_points, static_cast<int>(m_init_mode));
-
-    return vertices;
+    auto samples = Kinesis::generate_samples(m_init_mode, m_num_points, m_bounds, m_random_gen);
+    return Kinesis::to_point_vertices(samples, { 8.0F, 12.0F });
 }
 
-PointVertex ParticleNetwork::generate_single_vertex(
-    InitializationMode mode,
-    size_t index,
-    size_t total)
+PointVertex ParticleNetwork::generate_single_vertex(Kinesis::SpatialDistribution mode, size_t index, size_t total)
 {
-    PointVertex vertex;
-    glm::vec3 center = (m_bounds_min + m_bounds_max) * 0.5F;
-    glm::vec3 extent = m_bounds_max - m_bounds_min;
-
-    switch (mode) {
-    case InitializationMode::RANDOM_VOLUME: {
-        vertex.position = {
-            m_random_gen(m_bounds_min.x, m_bounds_max.x),
-            m_random_gen(m_bounds_min.y, m_bounds_max.y),
-            m_random_gen(m_bounds_min.z, m_bounds_max.z)
-        };
-
-        vertex.color = (vertex.position - m_bounds_min) / extent;
-
-        vertex.size = static_cast<float>(m_random_gen(8.0F, 12.0F));
-        break;
-    }
-
-    case InitializationMode::RANDOM_SURFACE: {
-        int face = static_cast<int>(m_random_gen(0, 6));
-
-        switch (face) {
-        case 0:
-            vertex.position = {
-                m_bounds_min.x,
-                m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_random_gen(m_bounds_min.z, m_bounds_max.z)
-            };
-            vertex.color = glm::vec3(0.8F, 0.3F, 0.3F);
-            break;
-        case 1:
-            vertex.position = {
-                m_bounds_max.x,
-                m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_random_gen(m_bounds_min.z, m_bounds_max.z)
-            };
-            vertex.color = glm::vec3(1.0F, 0.4F, 0.4F);
-            break;
-        case 2:
-            vertex.position = {
-                m_random_gen(m_bounds_min.x, m_bounds_max.x),
-                m_bounds_min.y,
-                m_random_gen(m_bounds_min.z, m_bounds_max.z)
-            };
-            vertex.color = glm::vec3(0.3F, 0.8F, 0.3F);
-            break;
-        case 3:
-            vertex.position = {
-                m_random_gen(m_bounds_min.x, m_bounds_max.x),
-                m_bounds_max.y,
-                m_random_gen(m_bounds_min.z, m_bounds_max.z)
-            };
-            vertex.color = glm::vec3(0.4F, 1.0F, 0.4F);
-            break;
-        case 4:
-            vertex.position = {
-                m_random_gen(m_bounds_min.x, m_bounds_max.x),
-                m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_bounds_min.z
-            };
-            vertex.color = glm::vec3(0.3F, 0.3F, 0.8F);
-            break;
-        default:
-            vertex.position = {
-                m_random_gen(m_bounds_min.x, m_bounds_max.x),
-                m_random_gen(m_bounds_min.y, m_bounds_max.y),
-                m_bounds_max.z
-            };
-            vertex.color = glm::vec3(0.4F, 0.4F, 1.0F);
-            break;
-        }
-
-        vertex.size = static_cast<float>(m_random_gen(10.0F, 14.0F));
-        break;
-    }
-
-    case InitializationMode::GRID: {
-        const size_t grid_size = static_cast<size_t>(std::cbrt(static_cast<double>(total))) + 1;
-        const glm::vec3 spacing = extent / static_cast<float>(grid_size);
-
-        const size_t x = index % grid_size;
-        const size_t y = (index / grid_size) % grid_size;
-        const size_t z = index / (grid_size * grid_size);
-
-        vertex.position = m_bounds_min + glm::vec3(static_cast<float>(x) * spacing.x, static_cast<float>(y) * spacing.y, static_cast<float>(z) * spacing.z);
-
-        vertex.color = glm::vec3(
-            static_cast<float>(x) / static_cast<float>(grid_size),
-            static_cast<float>(y) / static_cast<float>(grid_size),
-            static_cast<float>(z) / static_cast<float>(grid_size));
-
-        vertex.size = 10.0F;
-        break;
-    }
-
-    case InitializationMode::SPHERE_VOLUME: {
-        const float max_radius = glm::length(extent) * 0.5F;
-        const float radius = max_radius * std::cbrt(static_cast<float>(m_random_gen(0.0, 1.0)));
-        const auto theta = static_cast<float>(m_random_gen(0.0, 2.0 * glm::pi<double>()));
-        const float phi = std::acos(static_cast<float>(m_random_gen(-1.0, 1.0)));
-
-        vertex.position = center + glm::vec3(radius * std::sin(phi) * std::cos(theta), radius * std::sin(phi) * std::sin(theta), radius * std::cos(phi));
-
-        const float normalized_radius = radius / max_radius;
-        vertex.color = glm::mix(
-            glm::vec3(1.0F, 0.8F, 0.2F),
-            glm::vec3(0.2F, 0.4F, 1.0F),
-            normalized_radius);
-
-        vertex.size = glm::mix(15.0F, 6.0F, normalized_radius);
-        break;
-    }
-
-    case InitializationMode::SPHERE_SURFACE: {
-        const float radius = glm::length(extent) * 0.5F;
-        const auto theta = static_cast<float>(m_random_gen(0.0, 2.0 * glm::pi<double>()));
-        const float phi = std::acos(static_cast<float>(m_random_gen(-1.0, 1.0)));
-
-        vertex.position = center + glm::vec3(radius * std::sin(phi) * std::cos(theta), radius * std::sin(phi) * std::sin(theta), radius * std::cos(phi));
-
-        vertex.color = glm::vec3(
-            (std::sin(theta) + 1.0F) * 0.5F,
-            (phi / glm::pi<float>()),
-            (std::cos(theta) + 1.0F) * 0.5F);
-
-        const float lat_factor = std::sin(phi);
-        vertex.size = glm::mix(8.0F, 12.0F, lat_factor);
-        break;
-    }
-
-    case InitializationMode::CUSTOM:
-    default:
-        vertex.position = glm::vec3(0.0F);
-        vertex.color = glm::vec3(0.5F);
-        vertex.size = 10.0F;
-        break;
-    }
-
-    return vertex;
+    return Kinesis::to_point_vertex(
+        Kinesis::generate_sample_at(mode, index, total, m_bounds, m_random_gen),
+        { 8.0F, 12.0F });
 }
 
 } // namespace MayaFlux::Nodes::Network

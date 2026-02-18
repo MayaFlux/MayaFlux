@@ -53,19 +53,6 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API ParticleNetwork : public NodeNetwork {
 public:
-    /**
-     * @enum InitializationMode
-     * @brief Particle spawn distribution
-     */
-    enum class InitializationMode : uint8_t {
-        RANDOM_VOLUME, ///< Random positions in bounds volume
-        RANDOM_SURFACE, ///< Random positions on bounds surface
-        GRID, ///< Regular grid distribution
-        SPHERE_VOLUME, ///< Random in sphere
-        SPHERE_SURFACE, ///< Random on sphere surface
-        CUSTOM ///< User-provided initialization function
-    };
-
     //-------------------------------------------------------------------------
     // Construction
     //-------------------------------------------------------------------------
@@ -81,7 +68,7 @@ public:
         size_t num_particles,
         const glm::vec3& bounds_min = glm::vec3(-10.0F),
         const glm::vec3& bounds_max = glm::vec3(10.0F),
-        InitializationMode init_mode = InitializationMode::RANDOM_VOLUME);
+        Kinesis::SpatialDistribution init_mode = Kinesis::SpatialDistribution::RANDOM_VOLUME);
 
     //-------------------------------------------------------------------------
     // NodeNetwork Interface
@@ -169,12 +156,10 @@ public:
 
     void set_bounds(const glm::vec3& min, const glm::vec3& max)
     {
-        m_bounds_min = min;
-        m_bounds_max = max;
+        m_bounds = Kinesis::SamplerBounds(min, max);
     }
 
-    glm::vec3 get_bounds_min() const { return m_bounds_min; }
-    glm::vec3 get_bounds_max() const { return m_bounds_max; }
+    Kinesis::SamplerBounds get_bounds() const { return m_bounds; }
 
     void set_topology(Topology topology) override;
 
@@ -194,14 +179,15 @@ private:
     Kinesis::Stochastic::Stochastic m_random_gen;
 
     size_t m_num_points;
-    glm::vec3 m_bounds_min;
-    glm::vec3 m_bounds_max;
-    InitializationMode m_init_mode;
+    // glm::vec3 m_bounds_min;
+    // glm::vec3 m_bounds_max;
+    Kinesis::SamplerBounds m_bounds;
+    Kinesis::SpatialDistribution m_init_mode;
     float m_timestep { 0.016F };
 
     void ensure_initialized();
     std::vector<PointVertex> generate_initial_vertices();
-    PointVertex generate_single_vertex(InitializationMode mode, size_t index, size_t total);
+    PointVertex generate_single_vertex(Kinesis::SpatialDistribution mode, size_t index, size_t total);
 
     //-------------------------------------------------------------------------
     // Parameter Mapping Helpers

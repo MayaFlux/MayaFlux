@@ -2,7 +2,7 @@
 #include "GraphicsOperator.hpp"
 #include "MayaFlux/Nodes/Graphics/PointCollectionNode.hpp"
 
-#include "MayaFlux/Kinesis/Stochastic.hpp"
+#include "MayaFlux/Kinesis/VertexSampler.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -262,8 +262,7 @@ private:
     float m_spring_stiffness { 0.5F };
     float m_point_size { 5.0F };
     float m_turbulence_strength { 0.0F };
-    glm::vec3 m_bounds_min { -10.0F };
-    glm::vec3 m_bounds_max { 10.0F };
+    Kinesis::SamplerBounds m_bounds { .min = glm::vec3 { -10.0F }, .max = glm::vec3 { 10.0F } };
     BoundsMode m_bounds_mode { BoundsMode::BOUNCE };
     bool m_spatial_interactions_enabled {};
     float m_repulsion_strength { 0.5F };

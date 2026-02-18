@@ -302,8 +302,8 @@ size_t PhysicsOperator::get_point_count() const
 
 void PhysicsOperator::set_bounds(const glm::vec3& min, const glm::vec3& max)
 {
-    m_bounds_min = min;
-    m_bounds_max = max;
+    m_bounds.min = min;
+    m_bounds.max = max;
 }
 
 void PhysicsOperator::set_attraction_point(const glm::vec3& point)
@@ -514,33 +514,33 @@ void PhysicsOperator::handle_boundary_conditions()
             auto& state = group.physics_state[i];
 
             for (int axis = 0; axis < 3; ++axis) {
-                if (vertex.position[axis] < m_bounds_min[axis]) {
+                if (vertex.position[axis] < m_bounds.min[axis]) {
                     switch (m_bounds_mode) {
                     case BoundsMode::BOUNCE:
-                        vertex.position[axis] = m_bounds_min[axis];
+                        vertex.position[axis] = m_bounds.min[axis];
                         state.velocity[axis] *= -damping;
                         break;
                     case BoundsMode::WRAP:
-                        vertex.position[axis] = m_bounds_max[axis];
+                        vertex.position[axis] = m_bounds.max[axis];
                         break;
                     case BoundsMode::CLAMP:
-                        vertex.position[axis] = m_bounds_min[axis];
+                        vertex.position[axis] = m_bounds.min[axis];
                         state.velocity[axis] = 0.0F;
                         break;
                     case BoundsMode::NONE:
                         break;
                     }
-                } else if (vertex.position[axis] > m_bounds_max[axis]) {
+                } else if (vertex.position[axis] > m_bounds.max[axis]) {
                     switch (m_bounds_mode) {
                     case BoundsMode::BOUNCE:
-                        vertex.position[axis] = m_bounds_max[axis];
+                        vertex.position[axis] = m_bounds.max[axis];
                         state.velocity[axis] *= -damping;
                         break;
                     case BoundsMode::WRAP:
-                        vertex.position[axis] = m_bounds_min[axis];
+                        vertex.position[axis] = m_bounds.min[axis];
                         break;
                     case BoundsMode::CLAMP:
-                        vertex.position[axis] = m_bounds_max[axis];
+                        vertex.position[axis] = m_bounds.max[axis];
                         state.velocity[axis] = 0.0F;
                         break;
                     case BoundsMode::NONE:
