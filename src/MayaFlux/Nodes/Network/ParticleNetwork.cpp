@@ -56,12 +56,32 @@ void ParticleNetwork::initialize()
         m_operator ? m_operator->get_type_name() : "none");
 }
 
+void ParticleNetwork::reinitialize(
+    size_t num_particles,
+    const glm::vec3& bounds_min,
+    const glm::vec3& bounds_max,
+    Kinesis::SpatialDistribution init_mode)
+{
+    m_num_points = num_particles;
+    m_bounds = { .min = bounds_min, .max = bounds_max };
+    m_init_mode = init_mode;
+
+    reset();
+}
+
 void ParticleNetwork::reset()
 {
     auto vertices = generate_initial_vertices();
 
-    if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
+    if (m_operator) {
+        if (auto* physics = dynamic_cast<PhysicsOperator*>(m_operator.get())) {
+            physics->initialize(vertices);
+        }
+    } else {
+        auto physics = std::make_unique<PhysicsOperator>();
+        physics->set_bounds(m_bounds.min, m_bounds.max);
         physics->initialize(vertices);
+        m_operator = std::move(physics);
     }
 
     MF_DEBUG(Journal::Component::Nodes, Journal::Context::NodeProcessing,

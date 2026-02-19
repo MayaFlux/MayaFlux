@@ -59,6 +59,25 @@ void PointCloudNetwork::initialize()
         m_operator ? m_operator->get_type_name() : "none");
 }
 
+void PointCloudNetwork::reinitialize(
+    size_t count,
+    const glm::vec3& bounds_min,
+    const glm::vec3& bounds_max,
+    Kinesis::SpatialDistribution mode)
+{
+    m_bounds = { .min = bounds_min, .max = bounds_max };
+    m_num_points = count;
+    m_init_mode = mode;
+
+    reset();
+
+    if (!m_operator) {
+        auto topology = std::make_unique<TopologyOperator>();
+        topology->initialize(m_cached_vertices);
+        m_operator = std::move(topology);
+    }
+}
+
 void PointCloudNetwork::set_operator(std::unique_ptr<NetworkOperator> op)
 {
     if (!op) {

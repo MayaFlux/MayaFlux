@@ -134,6 +134,19 @@ public:
     void process_batch(unsigned int num_samples) override;
     void set_topology(Topology topology) override;
 
+    /**
+     * @brief Reinitialize point cloud with new parameters
+     * @param count Number of points to generate
+     * @param bounds_min Minimum coordinate bounds
+     * @param bounds_max Maximum coordinate bounds
+     * @param mode How to distribute initial positions
+     */
+    void reinitialize(
+        size_t count,
+        const glm::vec3& bounds_min,
+        const glm::vec3& bounds_max,
+        Kinesis::SpatialDistribution mode);
+
     [[nodiscard]] size_t get_node_count() const override;
     [[nodiscard]] std::optional<double> get_node_output(size_t index) const override;
     [[nodiscard]] std::unordered_map<std::string, std::string> get_metadata() const override;

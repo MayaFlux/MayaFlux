@@ -79,6 +79,19 @@ public:
     void process_batch(unsigned int num_samples) override;
 
     /**
+     * @brief Reinitialize particle network with new parameters
+     * @param num_particles Number of particles
+     * @param bounds_min Minimum spatial extent
+     * @param bounds_max Maximum spatial extent
+     * @param init_mode Initialization distribution
+     */
+    void reinitialize(
+        size_t num_particles,
+        const glm::vec3& bounds_min,
+        const glm::vec3& bounds_max,
+        Kinesis::SpatialDistribution init_mode);
+
+    /**
      * @brief Get number of particles in network
      *
      * Returns total particle count across all internal collections.
