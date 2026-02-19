@@ -223,6 +223,14 @@ public:
     }
 
     /**
+     * @brief Get total vertex count (after interpolation)
+     */
+    [[nodiscard]] size_t get_vertex_count() const
+    {
+        return m_vertices.size();
+    }
+
+    /**
      * @brief Get point by index
      */
     [[nodiscard]] const LineVertex& get_point(size_t index) const;

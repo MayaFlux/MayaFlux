@@ -431,7 +431,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
     } else {
         auto current_layout = buffer->get_vertex_layout();
         if (!current_layout.has_value() || current_layout->vertex_count == 0) {
-            MF_RT_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Vertex layout has zero vertices, skipping draw");
             return;
         }
