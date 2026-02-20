@@ -23,7 +23,11 @@ WaveguideNetwork::WaveguideNetwork(
 
     compute_delay_length();
 
-    m_segments.emplace_back(m_delay_length_integer + 2);
+    const auto prop_mode = (m_type == WaveguideType::TUBE)
+        ? WaveguideSegment::PropagationMode::BIDIRECTIONAL
+        : WaveguideSegment::PropagationMode::UNIDIRECTIONAL;
+
+    m_segments.emplace_back(m_delay_length_integer + 2, prop_mode);
 
     create_default_loop_filter();
 }
@@ -40,8 +44,9 @@ void WaveguideNetwork::initialize()
 void WaveguideNetwork::reset()
 {
     for (auto& seg : m_segments) {
-        auto len = seg.delay_line.capacity();
-        seg.delay_line = Memory::HistoryBuffer<double>(len);
+        const auto len = seg.p_plus.capacity();
+        seg.p_plus = Memory::HistoryBuffer<double>(len);
+        seg.p_minus = Memory::HistoryBuffer<double>(len);
     }
 
     m_exciter_active = false;
@@ -78,6 +83,11 @@ void WaveguideNetwork::create_default_loop_filter()
 
     if (!m_segments.empty()) {
         m_segments[0].loop_filter = filter;
+
+        if (m_segments[0].mode == WaveguideSegment::PropagationMode::BIDIRECTIONAL) {
+            m_segments[0].loop_filter_open = filter;
+            m_segments[0].loop_filter_closed = filter;
+        }
     }
 }
 
@@ -102,7 +112,6 @@ double WaveguideNetwork::read_with_interpolation(
 void WaveguideNetwork::process_batch(unsigned int num_samples)
 {
     ensure_initialized();
-
     m_last_audio_buffer.clear();
 
     if (!is_enabled() || m_segments.empty()) {
@@ -116,29 +125,63 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
 
     auto& seg = m_segments[0];
 
-    for (unsigned int i = 0; i < num_samples; ++i) {
-        double exciter_signal = generate_exciter_sample();
+    if (seg.mode == WaveguideSegment::PropagationMode::UNIDIRECTIONAL) {
+        process_unidirectional(seg, num_samples);
+    } else {
+        process_bidirectional(seg, num_samples);
+    }
 
-        double delayed = read_with_interpolation(
-            seg.delay_line,
-            m_delay_length_integer,
-            m_delay_length_fraction);
+    m_last_output = m_last_audio_buffer.back();
+}
+
+void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
+    unsigned int num_samples)
+{
+    for (unsigned int i = 0; i < num_samples; ++i) {
+        const double exciter = generate_exciter_sample();
+
+        const double delayed = read_with_interpolation(
+            seg.p_plus, m_delay_length_integer, m_delay_length_fraction);
 
         double filtered = delayed;
         if (seg.loop_filter) {
             filtered = seg.loop_filter->process_sample(delayed);
         }
 
-        double feedback = filtered * seg.loss_factor;
+        seg.p_plus.push(exciter + filtered * seg.loss_factor);
 
-        seg.delay_line.push(exciter_signal + feedback);
-
-        double output = seg.delay_line[m_pickup_sample];
-
-        m_last_audio_buffer.push_back(output);
+        m_last_audio_buffer.push_back(seg.p_plus[m_pickup_sample]);
     }
+}
 
-    m_last_output = m_last_audio_buffer.back();
+void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
+    unsigned int num_samples)
+{
+    for (unsigned int i = 0; i < num_samples; ++i) {
+        const double exciter = generate_exciter_sample();
+
+        const double plus_end = read_with_interpolation(
+            seg.p_plus, m_delay_length_integer, m_delay_length_fraction);
+
+        const double minus_end = read_with_interpolation(
+            seg.p_minus, m_delay_length_integer, m_delay_length_fraction);
+
+        auto* filt_open = seg.loop_filter_open ? seg.loop_filter_open.get()
+                                               : seg.loop_filter.get();
+        auto* filt_closed = seg.loop_filter_closed ? seg.loop_filter_closed.get()
+                                                   : seg.loop_filter.get();
+
+        const double filtered_plus = filt_open ? filt_open->process_sample(plus_end)
+                                               : plus_end;
+        const double filtered_minus = filt_closed ? filt_closed->process_sample(minus_end)
+                                                  : minus_end;
+
+        seg.p_minus.push(filtered_plus * seg.loss_factor);
+        seg.p_plus.push(exciter - filtered_minus * seg.loss_factor);
+
+        m_last_audio_buffer.push_back(
+            seg.p_plus[m_pickup_sample] + seg.p_minus[m_pickup_sample]);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -154,21 +197,22 @@ void WaveguideNetwork::pluck(double position, double strength)
     }
 
     auto& seg = m_segments[0];
-    size_t len = m_delay_length_integer;
+    const size_t len = m_delay_length_integer;
+    const auto pluck_sample = static_cast<size_t>(position * static_cast<double>(len));
 
-    auto pluck_sample = static_cast<size_t>(position * static_cast<double>(len));
-
-    seg.delay_line = Memory::HistoryBuffer<double>(seg.delay_line.capacity());
+    seg.p_plus = Memory::HistoryBuffer<double>(seg.p_plus.capacity());
+    seg.p_minus = Memory::HistoryBuffer<double>(seg.p_minus.capacity());
 
     for (size_t s = 0; s < len; ++s) {
         double value = 0.0;
         if (s <= pluck_sample) {
-            value = strength * static_cast<double>(s) / static_cast<double>(pluck_sample);
+            value = strength * static_cast<double>(s)
+                / static_cast<double>(pluck_sample);
         } else {
             value = strength * static_cast<double>(len - s)
                 / static_cast<double>(len - pluck_sample);
         }
-        seg.delay_line.push(value);
+        seg.p_plus.push(value);
     }
 
     m_exciter_active = false;
@@ -189,17 +233,19 @@ void WaveguideNetwork::strike(double position, double strength)
     }
 
     auto& seg = m_segments[0];
-    size_t len = m_delay_length_integer;
-    auto strike_center = static_cast<size_t>(position * static_cast<double>(len));
-    size_t burst_width = std::max<size_t>(len / 10, 4);
+    const size_t len = m_delay_length_integer;
+    const auto strike_center = static_cast<size_t>(position * static_cast<double>(len));
+    const size_t burst_width = std::max<size_t>(len / 10, 4);
 
-    seg.delay_line = Memory::HistoryBuffer<double>(seg.delay_line.capacity());
+    seg.p_plus = Memory::HistoryBuffer<double>(seg.p_plus.capacity());
+    seg.p_minus = Memory::HistoryBuffer<double>(seg.p_minus.capacity());
 
     for (size_t s = 0; s < len; ++s) {
-        double dist = std::abs(static_cast<double>(s) - static_cast<double>(strike_center));
-        double window = std::exp(-(dist * dist) / (2.0 * static_cast<double>(burst_width * burst_width)));
-        double noise = m_random_generator(-1.0, 1.0);
-        seg.delay_line.push(strength * noise * window);
+        const double dist = std::abs(static_cast<double>(s)
+            - static_cast<double>(strike_center));
+        const double window = std::exp(-(dist * dist)
+            / (2.0 * static_cast<double>(burst_width * burst_width)));
+        seg.p_plus.push(strength * m_random_generator(-1.0, 1.0) * window);
     }
 
     m_exciter_active = false;
@@ -293,9 +339,11 @@ void WaveguideNetwork::set_fundamental(double freq)
     compute_delay_length();
 
     if (!m_segments.empty()) {
-        size_t required = m_delay_length_integer + 2;
-        if (m_segments[0].delay_line.capacity() < required) {
-            m_segments[0].delay_line = Memory::HistoryBuffer<double>(required);
+        const size_t required = m_delay_length_integer + 2;
+        auto& seg = m_segments[0];
+        if (seg.p_plus.capacity() < required) {
+            seg.p_plus = Memory::HistoryBuffer<double>(required);
+            seg.p_minus = Memory::HistoryBuffer<double>(required);
         }
     }
 }
@@ -333,6 +381,20 @@ double WaveguideNetwork::get_pickup_position() const
         return 0.5;
     }
     return static_cast<double>(m_pickup_sample) / static_cast<double>(m_delay_length_integer);
+}
+
+void WaveguideNetwork::set_loop_filter_open(const std::shared_ptr<Filters::Filter>& filter)
+{
+    if (!m_segments.empty()) {
+        m_segments[0].loop_filter_open = filter;
+    }
+}
+
+void WaveguideNetwork::set_loop_filter_closed(const std::shared_ptr<Filters::Filter>& filter)
+{
+    if (!m_segments.empty()) {
+        m_segments[0].loop_filter_closed = filter;
+    }
 }
 
 //-----------------------------------------------------------------------------

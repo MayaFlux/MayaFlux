@@ -17,52 +17,70 @@ namespace MayaFlux::Nodes::Network {
 
 /**
  * @class WaveguideNetwork
- * @brief Digital waveguide synthesis via delay lines with loop filtering
+ * @brief Digital waveguide synthesis via uni- and bidirectional delay-line architectures
  *
  * CONCEPT:
  * ========
  * Digital waveguide synthesis models vibrating structures as traveling waves
- * propagating through delay lines. A loop filter at the termination points
- * simulates frequency-dependent energy loss, producing realistic string,
- * tube, and membrane timbres from simple delay-line feedback.
+ * propagating through delay lines. A loop filter at each termination simulates
+ * frequency-dependent energy loss. This complements ModalNetwork (frequency-domain)
+ * with time-domain physical modeling: where ModalNetwork decomposes resonance into
+ * independent modes, WaveguideNetwork simulates wave propagation directly.
  *
- * This complements ModalNetwork (frequency-domain) with time-domain physical
- * modeling. Where ModalNetwork decomposes resonance into independent modes,
- * WaveguideNetwork simulates wave propagation directly.
+ * PROPAGATION MODES:
+ * ==================
+ * WaveguideSegment is direction-agnostic and supports both modes via PropagationMode:
  *
- * STRUCTURE:
- * ==========
- * Phase 1 (current): Single-segment Karplus-Strong extended model
- * - One delay line (HistoryBuffer) representing the string/bore
- * - Loop filter (IIR/FIR) for frequency-dependent damping
- * - Fractional delay via linear interpolation for accurate tuning
- * - Exciter system (shared pattern with ModalNetwork)
+ * UNIDIRECTIONAL (STRING):
+ *   Single loop. Wave circulates on p_plus only. Karplus-Strong extended model.
+ *   Loop filter at the single termination controls frequency-dependent damping.
  *
- * Phase 2 (future): Multi-segment bidirectional waveguide
- * - Forward + backward traveling waves per segment
- * - Junction scattering between segments
- * - Topology::CHAIN for tube models, Topology::RING for strings
+ *     exciter ──► p_plus ──► [delay N] ──► loop_filter ──► loss ──┐
+ *     output  ◄── tap(pickup_sample)                               │
+ *                 └─────────────────────────────────────────────────┘
+ *
+ * BIDIRECTIONAL (TUBE):
+ *   Two rails. p_plus travels toward the open end, p_minus returns toward the
+ *   closed end. Reflection sign at each termination determines harmonic series:
+ *   - Closed end (mouthpiece): pressure node, sign preserved → odd harmonics
+ *   - Open end (bell): pressure antinode, sign inverted → adds even harmonics
+ *   Output is the physical pressure sum p_plus[pickup] + p_minus[pickup].
+ *
+ *     exciter ──► p_plus  ──► [delay N] ──► loop_filter ──► loss ──► open-end  (−)
+ *     output  ◄── tap                                                     │
+ *                 p_minus ◄── [delay N] ◄── loop_filter ◄── loss ◄── closed-end (+)
+ *
+ * EXCITATION:
+ * ===========
+ * pluck() seeds p_plus with a triangle waveform (shaped initial displacement).
+ * strike() seeds p_plus with a Gaussian-windowed noise burst at the strike point.
+ * Both clear p_minus, ensuring a clean bidirectional state on re-excitation.
+ * Continuous and sample-based exciters inject per-sample into p_plus at the
+ * closed end on every call to process_batch().
  *
  * USAGE:
  * ======
  * ```cpp
+ * // Plucked string
  * auto string = std::make_shared<WaveguideNetwork>(
- *     WaveguideNetwork::WaveguideType::STRING,
- *     220.0  // A3
- * );
- * string->pluck(0.3, 0.8);  // Pluck at 30% position, 80% strength
+ *     WaveguideNetwork::WaveguideType::STRING, 220.0);
+ * string->pluck(0.3, 0.8);
  *
- * // Or via vega API:
- * auto string = vega.WaveguideNetwork(
- *     WaveguideNetwork::WaveguideType::STRING, 220.0)[0] | Audio;
+ * // Cylindrical bore (clarinet-like, odd harmonics)
+ * auto tube = std::make_shared<WaveguideNetwork>(
+ *     WaveguideNetwork::WaveguideType::TUBE, 220.0);
+ * tube->strike(0.1, 0.9);
+ *
+ * // Via vega API:
+ * auto string = vega.WaveguideNetwork(WaveguideType::STRING, 220.0)[0] | Audio;
  * string->pluck(0.3, 0.8);
  * ```
  *
  * PARAMETER MAPPING:
  * ==================
- * - "frequency": Fundamental frequency (BROADCAST)
- * - "damping": Loop filter cutoff / loss factor (BROADCAST)
- * - "position": Pickup position along the string (BROADCAST)
+ * - "frequency": Fundamental frequency in Hz (BROADCAST)
+ * - "damping" / "loss": Loop filter cutoff / loss factor (BROADCAST)
+ * - "position": Pickup position along the delay line (BROADCAST)
  */
 class MAYAFLUX_API WaveguideNetwork : public NodeNetwork {
 public:
@@ -73,7 +91,6 @@ public:
     enum class WaveguideType : uint8_t {
         STRING, ///< 1D string (Karplus-Strong extended)
         TUBE, ///< Cylindrical bore (future: clarinet, flute)
-        MEMBRANE ///< 2D mesh (future: drums, plates)
     };
 
     /**
@@ -90,15 +107,55 @@ public:
 
     /**
      * @struct WaveguideSegment
-     * @brief Single delay-line segment with loop filter
+     * @brief 1D delay-line segment supporting both uni- and bidirectional propagation
+     *
+     * UNIDIRECTIONAL (STRING):
+     *   Only p_plus is active. Wave circulates in a single loop.
+     *   p_minus is allocated but never written or read.
+     *   Output tapped at pickup_sample along p_plus.
+     *
+     * BIDIRECTIONAL (TUBE):
+     *   Both rails active. p_plus travels toward the open end (bell),
+     *   p_minus travels back toward the mouthpiece.
+     *   At the closed end:  p_minus[0] = -p_plus[end]  (pressure inversion)
+     *   At the open end:    p_plus[0]  = -p_minus[end]  (approximate open reflection)
+     *   Output is p_plus[pickup] + p_minus[pickup] (physical pressure sum).
+     *
+     * Both rails share the same integer/fractional delay length and loop filter.
+     * The propagation mode is set once at construction and never changes.
      */
     struct WaveguideSegment {
-        Memory::HistoryBuffer<double> delay_line;
-        std::shared_ptr<Filters::Filter> loop_filter;
+        /**
+         * @enum PropagationMode
+         * @brief Whether this segment uses one or two traveling-wave rails
+         */
+        enum class PropagationMode : uint8_t {
+            UNIDIRECTIONAL, ///< Single loop (STRING)
+            BIDIRECTIONAL, ///< Forward + backward rails (TUBE)
+        };
+
+        Memory::HistoryBuffer<double> p_plus; ///< Forward-traveling wave rail
+        Memory::HistoryBuffer<double> p_minus; ///< Backward-traveling wave rail (BIDIRECTIONAL only)
+        std::shared_ptr<Filters::Filter> loop_filter; ///< UNIDIRECTIONAL: single termination filter
+        std::shared_ptr<Filters::Filter> loop_filter_closed; ///< BIDIRECTIONAL: closed-end filter (mouthpiece/nut)
+        std::shared_ptr<Filters::Filter> loop_filter_open; ///< BIDIRECTIONAL: open-end filter (bell/bridge)
+        PropagationMode mode { PropagationMode::UNIDIRECTIONAL };
         double loss_factor { 0.996 };
 
-        explicit WaveguideSegment(size_t length)
-            : delay_line(length)
+        /**
+         * @brief Construct segment with both rails at the specified length
+         * @param length  Delay-line length in samples
+         * @param prop_mode  Propagation mode; determines which rails are active
+         *
+         * Both rails are always allocated regardless of mode to avoid
+         * conditional sizing logic at call sites. The UNIDIRECTIONAL path
+         * simply never touches p_minus.
+         */
+        explicit WaveguideSegment(size_t length,
+            PropagationMode prop_mode = PropagationMode::UNIDIRECTIONAL)
+            : p_plus(length)
+            , p_minus(length)
+            , mode(prop_mode)
         {
         }
     };
@@ -263,6 +320,24 @@ public:
      */
     [[nodiscard]] const std::vector<WaveguideSegment>& get_segments() const { return m_segments; }
 
+    /**
+     * @brief Set filter for the closed-end termination (mouthpiece/nut)
+     * @param filter Filter applied to p_plus as it reflects at the closed end
+     *
+     * Only meaningful for WaveguideType::TUBE. Falls back to loop_filter if unset.
+     * Models reed/embouchure losses and input impedance characteristic.
+     */
+    void set_loop_filter_closed(const std::shared_ptr<Filters::Filter>& filter);
+
+    /**
+     * @brief Set filter for the open-end termination (bell/bridge)
+     * @param filter Filter applied to p_minus as it reflects at the open end
+     *
+     * Only meaningful for WaveguideType::TUBE. Falls back to loop_filter if unset.
+     * Models radiation resistance and bell flare HF rolloff.
+     */
+    void set_loop_filter_open(const std::shared_ptr<Filters::Filter>& filter);
+
 private:
     //-------------------------------------------------------------------------
     // Internal State
@@ -324,6 +399,9 @@ private:
     void update_mapped_parameters();
     void apply_broadcast_parameter(const std::string& param, double value);
     void apply_one_to_one_parameter(const std::string& param, const std::shared_ptr<NodeNetwork>& source);
+
+    void process_unidirectional(WaveguideSegment& seg, unsigned int num_samples);
+    void process_bidirectional(WaveguideSegment& seg, unsigned int num_samples);
 };
 
 } // namespace MayaFlux::Nodes::Network
