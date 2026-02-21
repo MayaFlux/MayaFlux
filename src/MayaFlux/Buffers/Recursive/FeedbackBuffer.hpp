@@ -3,234 +3,138 @@
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/BufferProcessor.hpp"
 
+#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+
 namespace MayaFlux::Buffers {
 
 /**
  * @class FeedbackBuffer
- * @brief Specialized buffer implementing computational feedback systems
+ * @brief Buffer with temporal memory for recursive processing
  *
- * FeedbackBuffer extends AudioBuffer to create a buffer that maintains memory
- * of its previous state, enabling the creation of recursive computational systems.
- * This implementation transcends traditional audio effects, providing a foundation
- * for complex dynamical systems, emergent behaviors, and self-modifying algorithms.
+ * FeedbackBuffer extends AudioBuffer with a HistoryBuffer that maintains
+ * the previous processing state, enabling delay-line feedback and recursive
+ * algorithms. The history buffer provides proper temporal indexing where
+ * [0] = most recent sample and [k] = k samples ago.
  *
- * Key features:
- * - Implements a discrete-time recursive system with controllable feedback coefficient
- * - Enables creation of complex dynamical systems with memory
- * - Supports emergence of non-linear behaviors through controlled recursion
- * - Provides a foundation for generative algorithms that evolve over time
+ * The feedback path is:
+ *   output[n] = input[n] + feedback_amount * history[feed_samples]
  *
- * Feedback is a fundamental concept in computational systems that enables complex
- * behaviors to emerge from simple rules. This implementation provides a clean,
- * controlled way to introduce recursive elements without the risks of uncontrolled
- * recursion or stack overflow that can occur in node-based feedback.
+ * For filtering in the feedback path, attach a FilterProcessor to the
+ * buffer's processing chain rather than relying on hardcoded averaging.
  */
 class MAYAFLUX_API FeedbackBuffer : public AudioBuffer {
 public:
     /**
-     * @brief Creates a new feedback buffer
-     * @param channel_id Channel identifier for this buffer
+     * @brief Construct feedback buffer
+     * @param channel_id Audio channel assignment
      * @param num_samples Buffer size in samples
-     * @param feedback Feedback coefficient (0.0-1.0)
-     * @param feed_samples Number of samples to feed back
-     *
-     * Initializes a buffer that implements a discrete-time recursive system.
-     * The feedback parameter controls the coefficient of recursion, determining
-     * how strongly the system's past states influence its future evolution.
+     * @param feedback Feedback coefficient (0.0 to 1.0)
+     * @param feed_samples Delay length in samples
      */
-    FeedbackBuffer(uint32_t channel_id = 0, uint32_t num_samples = 512, float feedback = 0.5F, uint32_t feed_samples = 512);
+    FeedbackBuffer(uint32_t channel_id, uint32_t num_samples,
+        float feedback = 0.5F, uint32_t feed_samples = 512);
 
     /**
-     * @brief Sets the feedback coefficient
-     * @param amount Feedback coefficient (0.0-1.0)
-     *
-     * Controls the strength of recursion in the system:
-     * - 0.0: No recursion (behaves like a standard buffer)
-     * - 0.5: Balanced influence between new input and previous state
-     * - 1.0: Maximum recursion (can lead to saturation or chaotic behavior)
-     */
-    inline void set_feedback(float amount) { m_feedback_amount = amount; }
-
-    /**
-     * @brief Gets the current feedback coefficient
-     * @return Current feedback coefficient (0.0-1.0)
-     */
-    inline float get_feedback() const { return m_feedback_amount; }
-
-    /**
-     * @brief Gets mutable access to the previous state vector
-     * @return Reference to the vector containing previous state data
-     *
-     * This provides direct access to the system's previous state, which can be
-     * useful for advanced algorithms or analysis. Use with caution as modifying
-     * this directly can affect the system's evolution.
-     */
-    inline std::vector<double>& get_previous_buffer() { return m_previous_buffer; }
-
-    /**
-     * @brief Gets read-only access to the previous state vector
-     * @return Const reference to the vector containing previous state data
-     */
-    inline const std::vector<double>& get_previous_buffer() const { return m_previous_buffer; }
-
-    /**
-     * @brief Processes this buffer using its default processor
-     *
-     * For a FeedbackBuffer, this involves applying the recursive algorithm
-     * that combines current input with the previous state according to
-     * the feedback coefficient.
-     */
-    void process_default() override;
-
-    inline void set_feed_samples(uint32_t samples) { m_feed_samples = samples; }
-
-    [[nodiscard]] inline uint32_t get_feed_samples() const { return m_feed_samples; }
-
-protected:
-    /**
-     * @brief Creates the default processor for this buffer type
-     * @return Shared pointer to a FeedbackProcessor
-     *
-     * FeedbackBuffers use a FeedbackProcessor as their default processor,
-     * which implements the recursive algorithm.
-     */
-    std::shared_ptr<BufferProcessor> create_default_processor() override;
-
-private:
-    /**
-     * @brief Feedback coefficient (0.0-1.0)
-     *
-     * Controls the strength of recursion in the system.
-     */
-    float m_feedback_amount;
-
-    /**
-     * @brief Storage for the previous system state
-     *
-     * This vector maintains a copy of the system's state from the previous
-     * processing cycle, enabling the implementation of recursive algorithms.
-     */
-    std::vector<double> m_previous_buffer;
-
-    uint32_t m_feed_samples { 512 }; /// Number of samples to feed back
-};
-
-/**
- * @class FeedbackProcessor
- * @brief Processor that implements recursive computational algorithms
- *
- * FeedbackProcessor is a specialized buffer processor that implements discrete-time
- * recursive algorithms by combining a system's current state with its previous state.
- * It can be applied to any AudioBuffer, not just FeedbackBuffer, allowing recursive
- * properties to be added to existing computational pipelines.
- *
- * Unlike stateless processors, FeedbackProcessor maintains memory between processing
- * cycles, storing the previous system state for use in the next cycle. This
- * memory-based behavior enables the emergence of complex temporal patterns and
- * evolutionary behaviors.
- *
- * Applications:
- * - Generative algorithms with memory and evolution
- * - Simulation of complex dynamical systems
- * - Creation of emergent, self-modifying behaviors
- * - Implementation of recursive mathematical functions
- * - Cross-domain feedback systems (audio influencing visual, data influencing audio, etc.)
- */
-class MAYAFLUX_API FeedbackProcessor : public BufferProcessor {
-
-public:
-    /**
-     * @brief Creates a new feedback processor
-     * @param feedback Feedback coefficient (0.0-1.0)
-     *
-     * Initializes a processor that implements a recursive algorithm
-     * combining a system's current state with its previous state
-     * according to the specified feedback coefficient.
-     */
-    FeedbackProcessor(float feedback = 0.5F, uint32_t feed_samples = 512);
-
-    /**
-     * @brief Processes a buffer by applying the recursive algorithm
-     * @param buffer Buffer to process
-     *
-     * This method:
-     * 1. Combines the current state with the stored previous state
-     * 2. Stores the resulting output as the new previous state
-     *
-     * The combination is weighted by the feedback coefficient, with higher
-     * values resulting in stronger influence from the previous state.
-     */
-    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
-
-    /**
-     * @brief Called when this processor is attached to a buffer
-     * @param buffer Buffer this processor is being attached to
-     *
-     * Initializes the previous state storage to match the size of the
-     * attached buffer. If the buffer is a FeedbackBuffer, the processor
-     * will use its internal previous state.
-     */
-    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
-
-    /**
-     * @brief Called when this processor is detached from a buffer
-     * @param buffer Buffer this processor is being detached from
-     *
-     * Cleans up any buffer-specific state.
-     */
-    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
-
-    /**
-     * @brief Sets the feedback coefficient
-     * @param amount Feedback coefficient (0.0-1.0)
-     */
-    inline void set_feedback(float amount) { m_feedback_amount = amount; }
-
-    /**
-     * @brief Gets the current feedback coefficient
-     * @return Current feedback coefficient (0.0-1.0)
+     * @brief Get feedback coefficient
      */
     [[nodiscard]] inline float get_feedback() const { return m_feedback_amount; }
 
     /**
-     * @brief Gets the number of samples to feed back
-     * @return Number of samples to feed back
+     * @brief Set feedback coefficient
+     * @param amount Feedback coefficient (0.0 to 1.0)
+     *
+     * Propagates to the default processor if one is attached.
+     */
+    void set_feedback(float amount);
+
+    /**
+     * @brief Get mutable access to the history buffer
+     * @return Reference to the HistoryBuffer storing previous state
+     */
+    inline Memory::HistoryBuffer<double>& get_history_buffer() { return m_history; }
+
+    /**
+     * @brief Get read-only access to the history buffer
+     * @return Const reference to the HistoryBuffer storing previous state
+     */
+    [[nodiscard]] inline const Memory::HistoryBuffer<double>& get_history_buffer() const { return m_history; }
+
+    void process_default() override;
+
+    /**
+     * @brief Set delay length in samples
+     * @param samples New delay length
+     *
+     * Reconstructs the history buffer. Previous state is lost.
+     */
+    void set_feed_samples(uint32_t samples);
+
+    /**
+     * @brief Get delay length in samples
      */
     [[nodiscard]] inline uint32_t get_feed_samples() const { return m_feed_samples; }
 
-    /**
-     * @brief Sets the number of samples to feed back
-     * @param samples Number of samples to feed back
-     */
-    inline void set_feed_samples(uint32_t samples) { m_feed_samples = samples; }
+protected:
+    std::shared_ptr<BufferProcessor> create_default_processor() override;
 
 private:
-    /**
-     * @brief Feedback coefficient (0.0-1.0)
-     */
     float m_feedback_amount;
+    uint32_t m_feed_samples;
+    Memory::HistoryBuffer<double> m_history;
+};
+
+/**
+ * @class FeedbackProcessor
+ * @brief Processor implementing delay-line feedback via HistoryBuffer
+ *
+ * Applies a simple delay-line feedback algorithm:
+ *   output[n] = input[n] + feedback_amount * delayed_sample
+ *
+ * When attached to a FeedbackBuffer, uses its internal HistoryBuffer.
+ * When attached to any other AudioBuffer, maintains its own HistoryBuffer.
+ *
+ * For filtering in the feedback loop (lowpass damping, etc.), chain a
+ * FilterProcessor after this processor rather than embedding filter logic.
+ */
+class MAYAFLUX_API FeedbackProcessor : public BufferProcessor {
+public:
+    /**
+     * @brief Construct feedback processor
+     * @param feedback Feedback coefficient (0.0 to 1.0)
+     * @param feed_samples Delay length in samples
+     */
+    FeedbackProcessor(float feedback = 0.5F, uint32_t feed_samples = 512);
+
+    void processing_function(const std::shared_ptr<Buffer>& buffer) override;
+    void on_attach(const std::shared_ptr<Buffer>& buffer) override;
+    void on_detach(const std::shared_ptr<Buffer>& buffer) override;
 
     /**
-     * @brief Number of samples to feed back
+     * @brief Set feedback coefficient
      */
+    inline void set_feedback(float amount) { m_feedback_amount = amount; }
+
+    /**
+     * @brief Get feedback coefficient
+     */
+    [[nodiscard]] inline float get_feedback() const { return m_feedback_amount; }
+
+    /**
+     * @brief Set delay length in samples
+     */
+    void set_feed_samples(uint32_t samples);
+
+    /**
+     * @brief Get delay length in samples
+     */
+    [[nodiscard]] inline uint32_t get_feed_samples() const { return m_feed_samples; }
+
+private:
+    float m_feedback_amount;
     uint32_t m_feed_samples;
 
-    /**
-     * @brief Storage for the previous system state
-     *
-     * This vector maintains a copy of the system's state from the previous
-     * processing cycle, enabling the implementation of recursive algorithms.
-     */
-    std::vector<double> m_previous_buffer;
-
-    /**
-     * @brief Flag indicating whether to use the buffer's internal previous state
-     *
-     * If the attached buffer is a FeedbackBuffer, the processor will use its
-     * internal previous state instead of maintaining its own.
-     */
-    bool m_using_internal_buffer;
-
-    size_t m_buffer_index {}; /// Current index in the previous buffer for feedback
+    Memory::HistoryBuffer<double> m_history;
+    Memory::HistoryBuffer<double>* m_active_history { nullptr };
 };
-}
+
+} // namespace MayaFlux::Buffers

@@ -1,5 +1,7 @@
 #include "NodeNetwork.hpp"
 
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
+
 namespace MayaFlux::Nodes::Network {
 
 void NodeNetwork::ensure_initialized()
@@ -31,7 +33,6 @@ void NodeNetwork::map_parameter(const std::string& param_name,
     const std::shared_ptr<Node>& source,
     MappingMode mode)
 {
-    // Default: store mapping, subclass handles in process_batch()
     m_parameter_mappings.push_back({ param_name, mode, source, nullptr });
 }
 
@@ -44,11 +45,8 @@ void NodeNetwork::map_parameter(const std::string& param_name,
 
 void NodeNetwork::unmap_parameter(const std::string& param_name)
 {
-    m_parameter_mappings.erase(
-        std::remove_if(
-            m_parameter_mappings.begin(), m_parameter_mappings.end(),
-            [&](const auto& m) { return m.param_name == param_name; }),
-        m_parameter_mappings.end());
+    std::erase_if(m_parameter_mappings,
+        [&](const auto& m) { return m.param_name == param_name; });
 }
 
 bool NodeNetwork::is_processing() const
@@ -126,40 +124,12 @@ void NodeNetwork::request_reset_from_channel(uint32_t channel_id)
 
 std::string NodeNetwork::topology_to_string(Topology topo)
 {
-    switch (topo) {
-    case Topology::INDEPENDENT:
-        return "INDEPENDENT";
-    case Topology::CHAIN:
-        return "CHAIN";
-    case Topology::RING:
-        return "RING";
-    case Topology::GRID_2D:
-        return "GRID_2D";
-    case Topology::GRID_3D:
-        return "GRID_3D";
-    case Topology::SPATIAL:
-        return "SPATIAL";
-    case Topology::CUSTOM:
-        return "CUSTOM";
-    default:
-        return "UNKNOWN";
-    }
+    return std::string(MayaFlux::Reflect::enum_to_string(topo));
 }
 
 std::string NodeNetwork::output_mode_to_string(OutputMode mode)
 {
-    switch (mode) {
-    case OutputMode::NONE:
-        return "NONE";
-    case OutputMode::AUDIO_SINK:
-        return "AUDIO_SINK";
-    case OutputMode::GRAPHICS_BIND:
-        return "GRAPHICS_BIND";
-    case OutputMode::CUSTOM:
-        return "CUSTOM";
-    default:
-        return "UNKNOWN";
-    }
+    return std::string(MayaFlux::Reflect::enum_to_string(mode));
 }
 
 } // namespace MayaFlux::Nodes::Network

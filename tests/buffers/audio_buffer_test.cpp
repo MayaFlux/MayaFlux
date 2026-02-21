@@ -358,9 +358,10 @@ TEST_F(FeedbackBufferTest, Initialization)
     EXPECT_EQ(feedback_buffer->get_num_samples(), TestConfig::BUFFER_SIZE);
     EXPECT_FLOAT_EQ(feedback_buffer->get_feedback(), 0.5F);
 
-    const auto& prev_buffer = feedback_buffer->get_previous_buffer();
-    EXPECT_EQ(prev_buffer.size(), TestConfig::BUFFER_SIZE);
-    for (const auto& sample : prev_buffer) {
+    const auto& history = feedback_buffer->get_history_buffer();
+    EXPECT_EQ(history.capacity(), TestConfig::BUFFER_SIZE);
+    auto view = history.linearized_view();
+    for (const auto& sample : view) {
         EXPECT_DOUBLE_EQ(sample, 0.0);
     }
 }
@@ -375,8 +376,9 @@ TEST_F(FeedbackBufferTest, FeedbackProcessing)
         EXPECT_DOUBLE_EQ(sample, 1.0);
     }
 
-    const auto& prev_buffer = feedback_buffer->get_previous_buffer();
-    for (const auto& sample : prev_buffer) {
+    const auto& history = feedback_buffer->get_history_buffer();
+    auto view = history.linearized_view();
+    for (const auto& sample : view) {
         EXPECT_DOUBLE_EQ(sample, 1.0);
     }
 
@@ -392,7 +394,7 @@ TEST_F(FeedbackBufferTest, FeedbackProcessing)
     feedback_buffer->process_default();
 
     for (const auto& sample : feedback_buffer->get_data()) {
-        EXPECT_DOUBLE_EQ(sample, 2);
+        EXPECT_DOUBLE_EQ(sample, 1.875);
     }
 }
 
