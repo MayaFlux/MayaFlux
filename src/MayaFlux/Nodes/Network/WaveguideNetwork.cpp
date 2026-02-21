@@ -83,11 +83,6 @@ void WaveguideNetwork::create_default_loop_filter()
 
     if (!m_segments.empty()) {
         m_segments[0].loop_filter = filter;
-
-        if (m_segments[0].mode == WaveguideSegment::PropagationMode::BIDIRECTIONAL) {
-            m_segments[0].loop_filter_open = filter;
-            m_segments[0].loop_filter_closed = filter;
-        }
     }
 }
 
@@ -108,6 +103,21 @@ double WaveguideNetwork::read_with_interpolation(
 //-----------------------------------------------------------------------------
 // Processing
 //-----------------------------------------------------------------------------
+
+double WaveguideNetwork::observe_sample(const WaveguideSegment& seg) const
+{
+    if (seg.mode == WaveguideSegment::PropagationMode::UNIDIRECTIONAL) {
+        return seg.p_plus[m_pickup_sample];
+    }
+
+    const double plus = seg.p_plus[m_pickup_sample];
+    const double minus = seg.p_minus[m_pickup_sample];
+
+    if (m_measurement_mode == MeasurementMode::PRESSURE)
+        return plus + minus;
+
+    return plus - minus;
+}
 
 void WaveguideNetwork::process_batch(unsigned int num_samples)
 {
@@ -143,14 +153,13 @@ void WaveguideNetwork::process_unidirectional(WaveguideSegment& seg,
         const double delayed = read_with_interpolation(
             seg.p_plus, m_delay_length_integer, m_delay_length_fraction);
 
-        double filtered = delayed;
-        if (seg.loop_filter) {
-            filtered = seg.loop_filter->process_sample(delayed);
-        }
+        const double filtered = seg.loop_filter ? seg.loop_filter->process_sample(delayed)
+                                                : delayed;
 
-        seg.p_plus.push(exciter + filtered * seg.loss_factor);
+        seg.p_plus.push(
+            exciter + filtered * seg.loss_factor * seg.reflection_closed);
 
-        m_last_audio_buffer.push_back(seg.p_plus[m_pickup_sample]);
+        m_last_audio_buffer.push_back(observe_sample(seg));
     }
 }
 
@@ -176,11 +185,10 @@ void WaveguideNetwork::process_bidirectional(WaveguideSegment& seg,
         const double filtered_minus = filt_closed ? filt_closed->process_sample(minus_end)
                                                   : minus_end;
 
-        seg.p_minus.push(filtered_plus * seg.loss_factor);
-        seg.p_plus.push(exciter - filtered_minus * seg.loss_factor);
+        seg.p_minus.push(filtered_plus * seg.loss_factor * seg.reflection_open);
+        seg.p_plus.push(exciter + filtered_minus * seg.loss_factor * seg.reflection_closed);
 
-        m_last_audio_buffer.push_back(
-            seg.p_plus[m_pickup_sample] + seg.p_minus[m_pickup_sample]);
+        m_last_audio_buffer.push_back(observe_sample(seg));
     }
 }
 

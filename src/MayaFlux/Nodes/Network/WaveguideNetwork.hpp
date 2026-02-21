@@ -106,6 +106,17 @@ public:
     };
 
     /**
+     * @enum MeasurementMode
+     * @brief Whether node outputs represent pressure or velocity (for future use)
+     * Pressure: output is physical pressure at pickup (p_plus + p_minus)
+     * Velocity: output is particle velocity at pickup (p_plus - p_minus)
+     */
+    enum class MeasurementMode : uint8_t {
+        PRESSURE, ///< Output is physical pressure at pickup (p_plus + p_minus)
+        VELOCITY ///< Output is particle velocity at pickup (p_plus - p_minus)
+    };
+
+    /**
      * @struct WaveguideSegment
      * @brief 1D delay-line segment supporting both uni- and bidirectional propagation
      *
@@ -141,6 +152,8 @@ public:
         std::shared_ptr<Filters::Filter> loop_filter_open; ///< BIDIRECTIONAL: open-end filter (bell/bridge)
         PropagationMode mode { PropagationMode::UNIDIRECTIONAL };
         double loss_factor { 0.996 };
+        double reflection_closed { -1.0 }; ///< Reflection coefficient at closed end (pressure node)
+        double reflection_open { 1.0 }; ///< Reflection coefficient at open end (pressure antinode)
 
         /**
          * @brief Construct segment with both rails at the specified length
@@ -338,6 +351,17 @@ public:
      */
     void set_loop_filter_open(const std::shared_ptr<Filters::Filter>& filter);
 
+    /**
+     * @brief Set measurement mode for output
+     * @param mode Whether outputs represent pressure or velocity
+     */
+    void set_measurement_mode(MeasurementMode mode) { m_measurement_mode = mode; }
+
+    /**
+     * @brief Get current measurement mode
+     */
+    [[nodiscard]] MeasurementMode get_measurement_mode() const { return m_measurement_mode; }
+
 private:
     //-------------------------------------------------------------------------
     // Internal State
@@ -357,6 +381,7 @@ private:
     //-------------------------------------------------------------------------
 
     ExciterType m_exciter_type { ExciterType::NOISE_BURST };
+    MeasurementMode m_measurement_mode { MeasurementMode::PRESSURE };
     double m_exciter_duration { 0.005 };
     std::vector<double> m_exciter_sample;
     std::shared_ptr<Filters::Filter> m_exciter_filter;
@@ -402,6 +427,7 @@ private:
 
     void process_unidirectional(WaveguideSegment& seg, unsigned int num_samples);
     void process_bidirectional(WaveguideSegment& seg, unsigned int num_samples);
+    double observe_sample(const WaveguideSegment& seg) const;
 };
 
 } // namespace MayaFlux::Nodes::Network
