@@ -358,14 +358,35 @@ TEST_F(WaveguideNetworkUnitTest, ConstructionAndDelayGeometry)
 
     const double expected_total = TestConfig::SAMPLE_RATE / 440.0 - 0.5;
     const auto expected_integer = static_cast<size_t>(expected_total);
-    EXPECT_EQ(wg.get_segments().size(), 1);
-    EXPECT_GE(wg.get_segments()[0].delay_line.capacity(), expected_integer + 2);
+    ASSERT_EQ(wg.get_segments().size(), 1);
+    EXPECT_GE(wg.get_segments()[0].p_plus.capacity(), expected_integer + 2);
+    EXPECT_EQ(wg.get_segments()[0].mode,
+        Nodes::Network::WaveguideNetwork::WaveguideSegment::PropagationMode::UNIDIRECTIONAL);
 
     Nodes::Network::WaveguideNetwork wg_low(
         Nodes::Network::WaveguideNetwork::WaveguideType::STRING, 55.0, TestConfig::SAMPLE_RATE);
     const double expected_low = TestConfig::SAMPLE_RATE / 55.0 - 0.5;
-    EXPECT_GE(wg_low.get_segments()[0].delay_line.capacity(),
+    EXPECT_GE(wg_low.get_segments()[0].p_plus.capacity(),
         static_cast<size_t>(expected_low) + 2);
+}
+
+TEST_F(WaveguideNetworkUnitTest, TubeConstructionAndBidirectionalGeometry)
+{
+    Nodes::Network::WaveguideNetwork tube(
+        Nodes::Network::WaveguideNetwork::WaveguideType::TUBE, 220.0, TestConfig::SAMPLE_RATE);
+
+    EXPECT_EQ(tube.get_type(), Nodes::Network::WaveguideNetwork::WaveguideType::TUBE);
+    ASSERT_EQ(tube.get_segments().size(), 1);
+
+    const auto& seg = tube.get_segments()[0];
+    EXPECT_EQ(seg.mode,
+        Nodes::Network::WaveguideNetwork::WaveguideSegment::PropagationMode::BIDIRECTIONAL);
+
+    EXPECT_EQ(seg.p_plus.capacity(), seg.p_minus.capacity());
+    EXPECT_GE(seg.p_plus.capacity(), 2);
+
+    EXPECT_EQ(seg.loop_filter_closed, nullptr);
+    EXPECT_EQ(seg.loop_filter_open, nullptr);
 }
 
 TEST_F(WaveguideNetworkUnitTest, MetadataAndFundamentalControl)
@@ -471,6 +492,90 @@ TEST_F(WaveguideNetworkUnitTest, ExcitationBehavior)
     for (double s : *strike_buf)
         max_strike = std::max(max_strike, std::abs(s));
     EXPECT_GT(max_strike, 0.001);
+}
+
+TEST_F(WaveguideNetworkUnitTest, TubeExcitationAndBidirectionalOutput)
+{
+    Nodes::Network::WaveguideNetwork tube(
+        Nodes::Network::WaveguideNetwork::WaveguideType::TUBE, 220.0, TestConfig::SAMPLE_RATE);
+
+    tube.strike(0.1, 1.0);
+    tube.process_batch(TestConfig::BUFFER_SIZE);
+
+    auto buf = tube.get_audio_buffer();
+    ASSERT_TRUE(buf.has_value());
+    ASSERT_EQ(buf->size(), TestConfig::BUFFER_SIZE);
+
+    double max_abs = 0.0;
+    for (double s : *buf)
+        max_abs = std::max(max_abs, std::abs(s));
+    EXPECT_GT(max_abs, 0.001);
+
+    const auto& seg = tube.get_segments()[0];
+    double p_minus_energy = 0.0;
+    for (size_t i = 0; i < seg.p_minus.capacity(); ++i) {
+        p_minus_energy += seg.p_minus[i] * seg.p_minus[i];
+    }
+    EXPECT_GT(p_minus_energy, 0.0);
+}
+
+TEST_F(WaveguideNetworkUnitTest, TubeAndStringProduceDifferentOutput)
+{
+    Nodes::Network::WaveguideNetwork str(
+        Nodes::Network::WaveguideNetwork::WaveguideType::STRING, 220.0, TestConfig::SAMPLE_RATE);
+    Nodes::Network::WaveguideNetwork tube(
+        Nodes::Network::WaveguideNetwork::WaveguideType::TUBE, 220.0, TestConfig::SAMPLE_RATE);
+
+    str.pluck(0.5, 1.0);
+    tube.pluck(0.5, 1.0);
+
+    for (int i = 0; i < 10; ++i) {
+        str.process_batch(TestConfig::BUFFER_SIZE);
+        tube.process_batch(TestConfig::BUFFER_SIZE);
+    }
+
+    auto buf_str = str.get_audio_buffer();
+    auto buf_tube = tube.get_audio_buffer();
+    ASSERT_TRUE(buf_str.has_value());
+    ASSERT_TRUE(buf_tube.has_value());
+
+    double e_str = 0.0, e_tube = 0.0;
+    for (size_t i = 0; i < TestConfig::BUFFER_SIZE; ++i) {
+        e_str += (*buf_str)[i] * (*buf_str)[i];
+        e_tube += (*buf_tube)[i] * (*buf_tube)[i];
+    }
+    EXPECT_NE(e_str, e_tube);
+}
+
+TEST_F(WaveguideNetworkUnitTest, TubePerEndFiltersAffectTimbre)
+{
+    Nodes::Network::WaveguideNetwork tube_default(
+        Nodes::Network::WaveguideNetwork::WaveguideType::TUBE, 220.0, TestConfig::SAMPLE_RATE);
+    Nodes::Network::WaveguideNetwork tube_custom(
+        Nodes::Network::WaveguideNetwork::WaveguideType::TUBE, 220.0, TestConfig::SAMPLE_RATE);
+
+    tube_custom.set_loop_filter_open(std::make_shared<Nodes::Filters::FIR>(
+        std::vector<double> { 0.2, 0.6, 0.2 }));
+
+    tube_default.strike(0.1, 1.0);
+    tube_custom.strike(0.1, 1.0);
+
+    for (int i = 0; i < 20; ++i) {
+        tube_default.process_batch(TestConfig::BUFFER_SIZE);
+        tube_custom.process_batch(TestConfig::BUFFER_SIZE);
+    }
+
+    auto buf_def = tube_default.get_audio_buffer();
+    auto buf_cust = tube_custom.get_audio_buffer();
+    ASSERT_TRUE(buf_def.has_value());
+    ASSERT_TRUE(buf_cust.has_value());
+
+    double e_def = 0.0, e_cust = 0.0;
+    for (size_t i = 0; i < TestConfig::BUFFER_SIZE; ++i) {
+        e_def += (*buf_def)[i] * (*buf_def)[i];
+        e_cust += (*buf_cust)[i] * (*buf_cust)[i];
+    }
+    EXPECT_NE(e_def, e_cust);
 }
 
 TEST_F(WaveguideNetworkUnitTest, PluckPositionAndDecayBehavior)
