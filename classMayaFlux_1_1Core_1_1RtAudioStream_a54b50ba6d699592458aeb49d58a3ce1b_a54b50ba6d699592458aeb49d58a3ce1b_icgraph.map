@@ -1,0 +1,8 @@
+<map id="MayaFlux::Core::RtAudioStream::stop" name="MayaFlux::Core::RtAudioStream::stop">
+<area shape="rect" id="Node000001" title="Deactivates the audio stream and halts data transfer." alt="" coords="563,35,793,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1RtAudioStream_aeeff3aa1bdb72a4bebeca8370877e886.html#aeeff3aa1bdb72a4bebeca8370877e886" title="Terminates the audio stream and releases all resources." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="549,44,515,40,515,35,549,38"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a838b8208585c81651e5feeb736348084.html#a838b8208585c81651e5feeb736348084" title="Ensures proper cleanup of stream resources." alt="" coords="5,35,236,75"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="549,60,515,60,284,60,236,59,236,54,284,55,515,55,549,54"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="271,42,236,45,236,40,270,36"/>
+</map>

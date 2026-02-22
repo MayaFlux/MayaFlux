@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::IInputBackend" name="MayaFlux::Core::IInputBackend">
+<area shape="rect" id="Node000001" title="Abstract interface for input device backends." alt="" coords="113,5,329,271"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1HIDBackend.html" title="HIDAPI&#45;based HID input backend." alt="" coords="5,319,208,944"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="190,284,182,319,177,318,185,283"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1MIDIBackend.html" title="RtMidi&#45;based MIDI input backend." alt="" coords="233,341,442,921"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="258,283,272,340,266,342,253,285"/>
+</map>

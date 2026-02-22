@@ -1,0 +1,37 @@
+<map id="MayaFlux::Kriya::BufferPipeline::process_operation" name="MayaFlux::Kriya::BufferPipeline::process_operation">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,555,232,595"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a799269182652064c956c8cb2ca41b788.html#a799269182652064c956c8cb2ca41b788" title=" " alt="" coords="286,325,513,365"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="143,552,361,372,365,376,146,556"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_af673adc43388027548bdbd43a9763f50.html#af673adc43388027548bdbd43a9763f50" title=" " alt="" coords="567,5,793,45"/>
+<area shape="poly" id="edge13_Node000001_Node000003" title=" " alt="" coords="127,553,186,446,229,378,278,312,348,228,406,165,473,111,565,55,579,48,581,53,568,60,476,116,410,169,352,231,282,315,233,381,190,449,132,556"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a2904c1132bb2a0b535150edbf2decbe4.html#a2904c1132bb2a0b535150edbf2decbe4" title=" " alt="" coords="567,453,793,493"/>
+<area shape="poly" id="edge14_Node000001_Node000008" title=" " alt="" coords="200,552,279,535,553,489,554,494,281,540,201,557"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_aa36e2b986fcfba0c37816dc969931e61.html#aa36e2b986fcfba0c37816dc969931e61" title=" " alt="" coords="567,517,793,557"/>
+<area shape="poly" id="edge18_Node000001_Node000011" title=" " alt="" coords="232,565,553,543,553,548,232,570"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a1f94fa92a9e1b0b37bdc9fe90f6d4443.html#a1f94fa92a9e1b0b37bdc9fe90f6d4443" title=" " alt="" coords="567,581,793,621"/>
+<area shape="poly" id="edge19_Node000001_Node000012" title=" " alt="" coords="232,577,553,593,553,598,232,583"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="326,612,473,652"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="218,592,313,612,312,617,217,597"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a9dd46473d7b974476837e9b200df0bd7.html#a9dd46473d7b974476837e9b200df0bd7" title="Getters for internal state (read&#45;only)" alt="" coords="280,676,519,716"/>
+<area shape="poly" id="edge15_Node000001_Node000014" title=" " alt="" coords="152,593,211,627,281,662,302,669,300,674,279,666,208,632,149,597"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a792e3313503636c56cf26ec60dfc04fb.html#a792e3313503636c56cf26ec60dfc04fb" title="Check if this operation is a streaming operation." alt="" coords="280,740,519,780"/>
+<area shape="poly" id="edge16_Node000001_Node000015" title=" " alt="" coords="137,593,196,659,236,695,281,726,295,732,292,737,279,730,233,699,192,662,133,597"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_a9a8f66e12bae19f71c8559a0c739c99d.html#a9a8f66e12bae19f71c8559a0c739c99d" title=" " alt="" coords="286,804,513,844"/>
+<area shape="poly" id="edge17_Node000001_Node000016" title=" " alt="" coords="132,594,153,635,186,689,229,743,254,768,282,790,291,796,288,800,278,794,251,772,225,747,181,692,148,638,127,596"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="415,323,463,259,516,175,529,141,534,112,543,84,565,55,570,51,574,55,569,59,547,86,540,113,534,142,521,177,468,262,419,327"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a04fad0228394387dd8347b48a933cd56.html#a04fad0228394387dd8347b48a933cd56" title=" " alt="" coords="567,69,793,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="412,324,494,207,537,150,565,119,575,113,577,118,568,123,541,153,499,210,417,327"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_aed9c4caec55f8256103cda3dcc2fa70a.html#aed9c4caec55f8256103cda3dcc2fa70a" title=" " alt="" coords="567,133,793,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="414,323,475,254,518,216,565,183,578,176,581,181,568,188,521,220,479,258,418,327"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a6893d5b73ac0625d9595ec120aa422b9.html#a6893d5b73ac0625d9595ec120aa422b9" title=" " alt="" coords="567,197,793,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="429,323,490,285,566,247,585,239,587,244,568,252,493,290,432,328"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a121e85715aee85d9bac7e6c8c9922b1d.html#a121e85715aee85d9bac7e6c8c9922b1d" title=" " alt="" coords="567,261,793,301"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="487,323,578,302,579,307,488,328"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="432,363,493,401,568,439,587,446,585,451,566,444,490,406,429,368"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a6d1bbc9b23723e197df1d8a35ae02d58.html#a6d1bbc9b23723e197df1d8a35ae02d58" title=" " alt="" coords="567,325,793,365"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="513,343,553,343,553,348,513,348"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline_ae3432cb2bed402941236115ea71cdc5b.html#ae3432cb2bed402941236115ea71cdc5b" title=" " alt="" coords="567,389,793,429"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="488,363,579,384,578,389,487,368"/>
+<area shape="poly" id="edge10_Node000002_Node000011" title=" " alt="" coords="418,364,479,432,521,470,568,503,581,510,578,514,565,508,518,475,475,436,414,368"/>
+<area shape="poly" id="edge11_Node000002_Node000012" title=" " alt="" coords="412,364,435,407,469,462,514,519,540,545,568,567,577,573,575,577,565,572,536,549,510,522,464,465,430,410,408,367"/>
+</map>

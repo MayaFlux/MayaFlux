@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::peek_sequential" name="MayaFlux::Kakshya::SoundStreamContainer::peek_sequential">
+<area shape="rect" id="Node000001" title="Peek at data without advancing the read position." alt="" coords="225,5,397,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa439bfd4e77f899c063e07263effaaa3.html#aa439bfd4e77f899c063e07263effaaa3" title="Read data sequentially from the current position." alt="" coords="5,5,177,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,35,177,35,177,30,211,30"/>
+</map>

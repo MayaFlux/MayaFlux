@@ -1,0 +1,5 @@
+<map id="MayaFlux::is_initialized" name="MayaFlux::is_initialized">
+<area shape="rect" id="Node000001" title="Checks if the default engine has been initialized." alt="" coords="209,13,385,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a0fc6290a23f16e191541924dffcb696b.html#a0fc6290a23f16e191541924dffcb696b" title="Checks if the default audio engine is initialized." alt="" coords="5,5,161,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,28,162,28,162,23,195,23"/>
+</map>

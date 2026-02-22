@@ -1,0 +1,7 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1IO_1_1FileReader.html" title="Abstract interface for reading various file formats into containers." alt="" coords="5,31,191,56"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1IO_1_1ImageReader.html" title="File reader for image formats (PNG, JPG, BMP, TGA, etc.)" alt="" coords="250,5,453,31"/>
+<area shape="poly" id="edge43_Node000000_Node000001" title=" " alt="" coords="204,30,250,25,250,31,205,35"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader.html" title="FFmpeg&#45;based audio file reader for MayaFlux." alt="" coords="239,55,464,80"/>
+<area shape="poly" id="edge44_Node000000_Node000002" title=" " alt="" coords="205,51,239,54,238,59,204,56"/>
+</map>

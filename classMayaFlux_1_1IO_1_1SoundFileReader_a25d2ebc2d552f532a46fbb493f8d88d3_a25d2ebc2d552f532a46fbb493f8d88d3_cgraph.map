@@ -1,0 +1,14 @@
+<map id="MayaFlux::IO::SoundFileReader::open" name="MayaFlux::IO::SoundFileReader::open">
+<area shape="rect" id="Node000001" title="Open an audio file for reading." alt="" coords="5,133,231,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aab2d8297cb01dd1d3f38fb838f0b8903.html#aab2d8297cb01dd1d3f38fb838f0b8903" title="Clear the last error message." alt="" coords="279,5,504,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="146,131,205,93,278,55,297,47,299,52,280,60,208,98,149,135"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a838df6458e477ffc9b8201a8e0e5f5fe.html#a838df6458e477ffc9b8201a8e0e5f5fe" title="Extract metadata from the file." alt="" coords="279,69,504,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,131,292,110,293,115,205,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a7ca069c515c71853be31237419eb6e15.html#a7ca069c515c71853be31237419eb6e15" title="Extract region information from the file." alt="" coords="279,133,504,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="231,151,265,151,265,156,231,156"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a800c7fe05bac701dcfa6a826ad78c22e.html#a800c7fe05bac701dcfa6a826ad78c22e" title="Set the last error message." alt="" coords="552,220,777,260"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="215,171,279,183,539,221,538,227,278,188,214,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a87b10deb4e9f9badd0992589caa94a95.html#a87b10deb4e9f9badd0992589caa94a95" title="Set up the FFmpeg resampler if needed." alt="" coords="279,248,504,288"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="160,171,280,227,316,241,315,246,278,232,158,176"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="504,254,538,250,539,256,505,259"/>
+</map>

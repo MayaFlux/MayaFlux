@@ -1,0 +1,22 @@
+<map id="Subsystems" name="Subsystems">
+<area shape="rect" id="node1" href="dir_94f1b68a6383a08583d02d2b55007930.html" title="Backends" alt="" coords="35,125,119,151"/>
+<area shape="rect" id="node2" href="dir_699f508924c0268b6bb09f38a90b7b57.html" title="Subsystems" alt="" coords="27,52,128,77"/>
+<area shape="poly" id="edge5" href="dir_000056_000004.html" alt="" coords="80,78,80,112,75,112,75,78"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000056_000004.html" title="6" alt="" coords="81,100,90,114"/>
+<area shape="rect" id="node3" href="dir_18c1c755ed1756c25167e465033be95a.html" title="Registry" alt="" coords="150,125,226,151"/>
+<area shape="poly" id="edge1" href="dir_000056_000047.html" alt="" coords="97,75,160,115,157,120,94,80"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000056_000047.html" title="2" alt="" coords="155,101,164,116"/>
+<area shape="rect" id="node4" href="dir_3ed6e73a097ab1d640b1fa27e30113a2.html" title="Vruta" alt="" coords="250,125,307,151"/>
+<area shape="poly" id="edge2" href="dir_000056_000062.html" alt="" coords="111,75,238,120,236,125,109,80"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000056_000062.html" title="2" alt="" coords="231,105,240,120"/>
+<area shape="rect" id="node5" href="dir_64c2d47494cb42df00b60c7e5b15f956.html" title="Buffers" alt="" coords="331,125,399,151"/>
+<area shape="poly" id="edge3" href="dir_000056_000005.html" alt="" coords="125,75,319,122,318,127,124,80"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000056_000005.html" title="1" alt="" coords="311,108,320,123"/>
+<area shape="rect" id="node6" href="dir_7571807f242a2381d2cf58ce0b78549e.html" title="Portal" alt="" coords="423,125,483,151"/>
+<area shape="poly" id="edge4" href="dir_000056_000041.html" alt="" coords="129,71,253,91,411,123,410,128,252,97,128,76"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000056_000041.html" title="1" alt="" coords="403,108,412,123"/>
+<area shape="rect" id="node7" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="508,125,575,151"/>
+<area shape="poly" id="edge6" href="dir_000056_000024.html" alt="" coords="129,69,288,89,495,123,494,128,287,94,128,74"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000056_000024.html" title="3" alt="" coords="487,109,496,123"/>
+<area shape="rect" id="clust1" href="dir_037f3af2a9411e4bf64b79d81d1060f6.html" title="Core" alt="" coords="16,16,139,161"/>
+</map>

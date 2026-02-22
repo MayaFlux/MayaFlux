@@ -1,0 +1,5 @@
+<map id="MayaFlux::create_metro" name="MayaFlux::create_metro">
+<area shape="rect" id="Node000001" title="Creates a simple task that calls a function at a specified interval." alt="" coords="205,13,387,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a0b2f122006fb411804adab9baa87647d.html#a0b2f122006fb411804adab9baa87647d" title="Creates a metronome task and addes it to the default scheduler list for evaluation." alt="" coords="5,5,157,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,28,157,28,157,23,191,23"/>
+</map>

@@ -1,0 +1,14 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::process_non_owning" name="MayaFlux::Buffers::BufferProcessingChain::process_non_owning">
+<area shape="rect" id="Node000001" title="Internal processing method for non&#45;owning buffer contexts." alt="" coords="5,34,173,88"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="731,10,904,50"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,31,221,18,355,5,489,3,614,8,717,16,717,22,614,13,489,9,355,11,222,24,167,36"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_aac98ea3bb4f2cdf37b341a7226caa779.html#aac98ea3bb4f2cdf37b341a7226caa779" title="Validates the processing token against the chain&#39;s preferred token." alt="" coords="221,34,440,88"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="173,58,208,58,208,64,173,64"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ab06548041e8f068a9d83945bcac22a90.html#ab06548041e8f068a9d83945bcac22a90" title="Process pending processor operations." alt="" coords="226,113,435,182"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="167,86,222,106,220,111,165,91"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_aef4792499996ee8634cf1b7ed0ee7aaa.html#aef4792499996ee8634cf1b7ed0ee7aaa" title=" " alt="" coords="501,38,669,92"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="435,111,487,94,489,99,436,116"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ac7fd9f1f3cf9d993aac0a4d64b1601b0.html#ac7fd9f1f3cf9d993aac0a4d64b1601b0" title=" " alt="" coords="488,120,683,175"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="436,145,474,145,474,150,436,150"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="669,50,717,43,718,48,670,55"/>
+</map>

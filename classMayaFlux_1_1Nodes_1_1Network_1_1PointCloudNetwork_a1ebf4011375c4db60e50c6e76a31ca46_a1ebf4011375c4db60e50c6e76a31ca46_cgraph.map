@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::PointCloudNetwork::apply_radial_gradient" name="MayaFlux::Nodes::Network::PointCloudNetwork::apply_radial_gradient">
+<area shape="rect" id="Node000001" title="Apply radial color gradient from center." alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a91373f77fa0c47848bd8ea586c7b80cc.html#a91373f77fa0c47848bd8ea586c7b80cc" title="Set all point vertices." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

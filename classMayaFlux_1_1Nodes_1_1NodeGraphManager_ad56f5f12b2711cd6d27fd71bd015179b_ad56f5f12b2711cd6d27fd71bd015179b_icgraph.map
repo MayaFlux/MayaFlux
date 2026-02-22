@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::get_node" name="MayaFlux::Nodes::NodeGraphManager::get_node">
+<area shape="rect" id="Node000001" title="Looks up a node by its string identifier." alt="" coords="269,5,485,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_aa576ae548e18bf48c3760c49388351f0.html#aa576ae548e18bf48c3760c49388351f0" title="Connects two nodes by their string identifiers." alt="" coords="5,5,221,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="256,28,221,28,221,23,256,23"/>
+</map>

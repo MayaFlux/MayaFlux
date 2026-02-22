@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::on_attach" name="MayaFlux::Buffers::ShaderProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="208,5,363,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a80ee45a9667036708bc1f86158cd9f7c.html#a80ee45a9667036708bc1f86158cd9f7c" title="Called when this processor is attached to a buffer." alt="" coords="5,5,160,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,35,161,35,161,30,194,30"/>
+</map>

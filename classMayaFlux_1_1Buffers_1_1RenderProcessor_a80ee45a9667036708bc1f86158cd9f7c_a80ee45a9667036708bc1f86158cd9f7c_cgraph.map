@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::RenderProcessor::on_attach" name="MayaFlux::Buffers::RenderProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,77,160,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="225,5,392,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="159,78,211,61,213,66,161,83"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="208,85,409,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="160,102,194,102,194,107,160,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae44d0289391012ba44cf53378967cbcf.html#ae44d0289391012ba44cf53378967cbcf" title="Called when this processor is attached to a buffer." alt="" coords="231,149,386,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="161,127,219,145,217,150,159,132"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a6aed67dc05a7476b9cf42a60126c1e3e.html#a6aed67dc05a7476b9cf42a60126c1e3e" title="Auto&#45;bind buffer based on attachment order." alt="" coords="457,149,624,204"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="386,174,443,174,443,179,386,179"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="672,149,839,204"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="625,174,658,174,658,179,625,179"/>
+</map>

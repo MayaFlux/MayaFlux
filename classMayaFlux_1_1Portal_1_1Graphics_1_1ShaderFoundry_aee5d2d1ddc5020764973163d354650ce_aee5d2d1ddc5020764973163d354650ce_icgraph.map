@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::get_shader_stage" name="MayaFlux::Portal::Graphics::ShaderFoundry::get_shader_stage">
+<area shape="rect" id="Node000001" title="Get shader stage for compiled shader." alt="" coords="601,5,851,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a92da11722411d5f02bed2ba7dcf02278.html#a92da11722411d5f02bed2ba7dcf02278" title="Create compute pipeline." alt="" coords="321,5,553,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="588,28,553,28,553,23,588,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_ad0f8d812bde066c3f0a74005057322ad.html#ad0f8d812bde066c3f0a74005057322ad" title="Create pipeline with auto&#45;reflection." alt="" coords="5,5,273,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="307,28,274,28,274,23,307,23"/>
+</map>

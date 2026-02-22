@@ -1,0 +1,19 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::create_pipeline_auto" name="MayaFlux::Portal::Graphics::ComputePress::create_pipeline_auto">
+<area shape="rect" id="Node000001" title="Create pipeline with auto&#45;reflection." alt="" coords="5,169,273,209"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a92da11722411d5f02bed2ba7dcf02278.html#a92da11722411d5f02bed2ba7dcf02278" title="Create compute pipeline." alt="" coords="321,133,553,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="273,170,307,166,308,172,274,176"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ac6a862c8f16d498057475c7bda594be9.html#ac6a862c8f16d498057475c7bda594be9" title="Get reflection info for compiled shader." alt="" coords="334,198,541,253"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="274,203,321,209,320,214,273,208"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1DescriptorSetLayoutConfig_af8bd5a3ce4c379707ad5cbf309224b98.html#af8bd5a3ce4c379707ad5cbf309224b98" title=" " alt="" coords="619,5,833,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="466,131,526,93,600,55,621,47,623,52,602,60,529,97,469,135"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1ComputePipelineConfig_a92bc0c7ce6032af5f1c51ecd9a1bbd98.html#a92bc0c7ce6032af5f1c51ecd9a1bbd98" title=" " alt="" coords="605,69,847,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="528,131,621,110,622,115,529,136"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="623,133,829,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="553,151,610,151,610,156,553,156"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aee5d2d1ddc5020764973163d354650ce.html#aee5d2d1ddc5020764973163d354650ce" title="Get shader stage for compiled shader." alt="" coords="601,197,851,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="529,171,622,192,621,197,528,176"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a3e37592425a0a5c22f7809f8c19d0af8.html#a3e37592425a0a5c22f7809f8c19d0af8" title=" " alt="" coords="627,262,825,317"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="533,171,555,183,571,199,580,216,588,232,603,247,616,256,613,260,600,251,584,235,575,218,567,202,552,187,531,176"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="899,269,1096,309"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="825,287,885,287,885,292,825,292"/>
+</map>

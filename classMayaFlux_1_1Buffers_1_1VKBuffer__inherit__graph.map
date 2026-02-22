@@ -1,0 +1,21 @@
+<map id="MayaFlux::Buffers::VKBuffer" name="MayaFlux::Buffers::VKBuffer">
+<area shape="rect" id="Node000001" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="595,461,776,1051"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="8,1099,205,1756"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="584,810,496,861,398,927,349,966,302,1008,258,1052,219,1100,208,1117,203,1114,215,1097,254,1049,298,1004,346,962,395,923,493,857,581,806"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1CompositeGeometryBuffer.html" title="Buffer for aggregating multiple geometry nodes with independent topologies." alt="" coords="229,1223,453,1632"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="589,897,526,995,468,1100,413,1223,408,1221,463,1097,522,992,585,894"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer.html" title="Specialized buffer for generative geometry from GeometryWriterNode." alt="" coords="477,1257,669,1597"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="637,1065,604,1258,599,1257,631,1064"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer.html" title="Specialized buffer for geometry from NodeNetwork instances." alt="" coords="694,1257,903,1597"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="740,1064,773,1257,767,1258,735,1065"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer.html" title="Staging buffer for uploading TextureNode pixel data to GPU textures." alt="" coords="928,1193,1112,1662"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="786,883,856,985,918,1098,957,1192,952,1194,914,1100,851,988,782,886"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer.html" title="A hybrid buffer managing both a textured quad geometry and its pixel data." alt="" coords="1137,1113,1330,1742"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="790,811,872,863,962,929,1050,1008,1090,1051,1126,1097,1139,1116,1134,1119,1122,1100,1086,1055,1046,1011,958,933,869,867,787,815"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="594,133,777,413"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="688,427,688,461,683,461,683,427"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="609,5,761,85"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="688,99,688,133,683,133,683,99"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer.html" title="Root container for GPU buffer lifecycle management and batch processing." alt="" coords="5,1804,208,2264"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="109,1770,109,1804,104,1804,104,1770"/>
+</map>

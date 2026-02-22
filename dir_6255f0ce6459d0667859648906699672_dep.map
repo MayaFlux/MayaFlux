@@ -1,0 +1,14 @@
+<map id="Windowing" name="Windowing">
+<area shape="rect" id="node2" href="dir_454754a2f5e646215aaf6db34467f61d.html" title="Glfw" alt="" coords="71,63,122,88"/>
+<area shape="rect" id="node3" href="dir_30c551cdb1b5e5e8d34a68131522bc06.html" title="IO" alt="" coords="5,136,44,161"/>
+<area shape="poly" id="edge1" href="dir_000014_000023.html" alt="" coords="87,90,48,128,44,124,83,86"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000014_000023.html" title="1" alt="" coords="51,122,60,137"/>
+<area shape="rect" id="node4" href="dir_3ed6e73a097ab1d640b1fa27e30113a2.html" title="Vruta" alt="" coords="68,136,125,161"/>
+<area shape="poly" id="edge2" href="dir_000014_000062.html" alt="" coords="99,88,99,122,94,122,94,88"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000014_000062.html" title="1" alt="" coords="100,110,110,125"/>
+<area shape="rect" id="node5" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="150,136,217,161"/>
+<area shape="poly" id="edge3" href="dir_000014_000024.html" alt="" coords="112,86,137,107,159,125,156,129,134,111,108,90"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000014_000024.html" title="2" alt="" coords="155,111,164,125"/>
+<area shape="rect" id="clust2" href="dir_6255f0ce6459d0667859648906699672.html" alt="" coords="61,52,253,99"/>
+<area shape="rect" id="clust1" href="dir_94f1b68a6383a08583d02d2b55007930.html" title="Backends" alt="" coords="50,16,263,109"/>
+</map>

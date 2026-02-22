@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::EigenAccess::to_magnitude_vector" name="MayaFlux::Kakshya::EigenAccess::to_magnitude_vector">
+<area shape="rect" id="Node000001" title="Convert complex data to magnitude vector." alt="" coords="5,30,207,85"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a14e7ae56f6e50946546895866c768b93.html#a14e7ae56f6e50946546895866c768b93" title="Check if data contains complex numbers." alt="" coords="255,5,440,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,41,241,37,241,42,207,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a4c650b815175873b6f85d666d93beb12.html#a4c650b815175873b6f85d666d93beb12" title="Get underlying data type name." alt="" coords="255,69,439,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="207,68,242,73,241,78,206,73"/>
+</map>

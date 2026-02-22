@@ -1,0 +1,25 @@
+<map id="GeometryWriterNode.hpp" name="GeometryWriterNode.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="301,5,490,31"/>
+<area shape="rect" id="Node000002" href="$GpuSync_8hpp.html" title=" " alt="" coords="182,86,289,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="373,33,272,82,270,78,371,28"/>
+<area shape="rect" id="Node000008" href="$VertexSpec_8hpp.html" title=" " alt="" coords="334,86,457,111"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="398,31,398,72,393,72,393,31"/>
+<area shape="rect" id="Node000012" href="$GraphicsUtils_8hpp.html" title=" " alt="" coords="481,79,670,119"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="423,28,521,71,518,76,420,33"/>
+<area shape="rect" id="Node000003" href="$Node_8hpp.html" title=" " alt="" coords="94,174,291,199"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="232,113,207,162,202,160,227,110"/>
+<area shape="rect" id="Node000004" href="$GpuContext_8hpp.html" title=" " alt="" coords="5,255,132,280"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="176,202,100,249,97,245,173,197"/>
+<area shape="rect" id="Node000005" href="$NodeOperators_8hpp.html" title=" " alt="" coords="156,255,304,280"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="201,198,221,241,216,243,196,201"/>
+<area shape="rect" id="Node000006" href="$NodeUtils_8hpp.html" title=" " alt="" coords="173,328,287,353"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="233,280,233,314,227,314,227,280"/>
+<area shape="rect" id="Node000007" href="$NodeSpec_8hpp.html" title=" " alt="" coords="173,401,287,427"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="233,354,233,388,227,388,227,354"/>
+<area shape="rect" id="Node000009" href="$VertexLayout_8hpp.html" title=" " alt="" coords="316,167,517,207"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="401,111,411,152,406,154,396,112"/>
+<area shape="rect" id="Node000010" href="$NDData_8hpp.html" title=" " alt="" coords="366,255,467,280"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="419,207,419,241,414,241,414,207"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="365,328,469,353"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="419,280,419,314,414,314,414,280"/>
+</map>

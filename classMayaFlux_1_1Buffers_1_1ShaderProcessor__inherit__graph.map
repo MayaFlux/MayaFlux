@@ -1,0 +1,15 @@
+<map id="MayaFlux::Buffers::ShaderProcessor" name="MayaFlux::Buffers::ShaderProcessor">
+<area shape="rect" id="Node000001" title="Abstract base class for shader&#45;based buffer processing." alt="" coords="333,496,532,1300"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor.html" title="Specialized ShaderProcessor for Compute Pipelines." alt="" coords="5,1518,183,1853"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="329,1080,260,1210,196,1349,165,1433,139,1518,134,1517,160,1432,192,1347,255,1208,324,1077"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor.html" title="ShaderProcessor that uploads node outputs to descriptor sets." alt="" coords="207,1458,432,1913"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="375,1314,355,1458,349,1458,370,1313"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1NodeBindingsProcessor.html" title="ShaderProcessor with automatic node&#45;to&#45;push&#45;constant binding." alt="" coords="457,1518,638,1853"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="496,1313,526,1517,520,1518,491,1314"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor.html" title=" " alt="" coords="662,1348,859,2023"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="541,1102,598,1222,652,1347,664,1377,660,1379,648,1349,593,1224,536,1104"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="336,313,529,448"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="435,462,435,496,430,496,430,462"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="343,5,523,265"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="435,279,435,313,430,313,430,279"/>
+</map>

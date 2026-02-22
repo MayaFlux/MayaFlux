@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::compute_delay_length" name="MayaFlux::Nodes::Network::WaveguideNetwork::compute_delay_length">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1160,70,1383,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_ae558cdec38a6d01b242b775cd34e3f9f.html#ae558cdec38a6d01b242b775cd34e3f9f" title="Called once before first process_batch()" alt="" coords="855,5,1077,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1150,69,1111,60,1059,48,1061,43,1113,55,1151,64"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a89cd696dd3cd64ca8cf8d0ff9910bccc.html#a89cd696dd3cd64ca8cf8d0ff9910bccc" title="Set fundamental frequency." alt="" coords="867,70,1065,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="1146,100,1065,100,1065,95,1146,95"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_aa2a7f724fe1324c3363ea5bc2d42c3a9.html#aa2a7f724fe1324c3363ea5bc2d42c3a9" title="Create waveguide network with specified type and frequency." alt="" coords="820,149,1112,189"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1147,130,1113,139,1056,152,1055,147,1111,133,1146,125"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_acee3acc704e71412521612a979c05b64.html#acee3acc704e71412521612a979c05b64" title=" " alt="" coords="571,70,772,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="853,100,772,100,772,95,853,95"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a42df1eba8712bdde82d6fcc4746def9a.html#a42df1eba8712bdde82d6fcc4746def9a" title=" " alt="" coords="312,70,523,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="557,100,523,100,523,95,557,95"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a474473fbb4038d846ed350acbd7e7312.html#a474473fbb4038d846ed350acbd7e7312" title="Process the network for the given number of samples." alt="" coords="5,77,264,117"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="298,100,264,100,264,95,298,95"/>
+</map>

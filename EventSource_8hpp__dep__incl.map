@@ -1,0 +1,20 @@
+<map id="EventSource.hpp" name="EventSource.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="315,5,446,31"/>
+<area shape="rect" id="Node000002" href="$EventAwaiter_8hpp.html" title=" " alt="" coords="183,79,319,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="349,40,274,81,271,76,346,35"/>
+<area shape="rect" id="Node000004" href="$EventSource_8cpp.html" title=" " alt="" coords="315,152,446,177"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="383,45,383,152,378,152,378,45"/>
+<area shape="rect" id="Node000006" href="$GlfwWindow_8hpp.html" title=" " alt="" coords="543,79,674,104"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="431,32,573,76,571,81,430,37"/>
+<area shape="rect" id="Node000003" href="$EventAwaiter_8cpp.html" title=" " alt="" coords="5,152,140,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="211,111,103,154,101,149,209,106"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="286,108,361,149,358,154,283,113"/>
+<area shape="rect" id="Node000005" href="$InputEvents_8cpp.html" title=" " alt="" coords="164,152,291,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="246,118,234,153,229,151,241,116"/>
+<area shape="rect" id="Node000007" href="$GlfwWindow_8cpp.html" title=" " alt="" coords="471,152,600,177"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="589,116,549,154,545,150,585,112"/>
+<area shape="rect" id="Node000008" href="$VKContext_8cpp.html" title=" " alt="" coords="625,152,742,177"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="632,111,673,150,669,154,629,115"/>
+<area shape="rect" id="Node000009" href="$WindowManager_8cpp.html" title=" " alt="" coords="766,152,923,177"/>
+<area shape="poly" id="edge9_Node000006_Node000009" title=" " alt="" coords="660,105,807,149,806,154,659,110"/>
+</map>

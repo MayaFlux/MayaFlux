@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Impulse::remove_hook" name="MayaFlux::Nodes::Generator::Impulse::remove_hook">
+<area shape="rect" id="Node000001" title="Removes a previously registered callback." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_af2ba0cea47fb16d775d5e2f9c512a2f3.html#af2ba0cea47fb16d775d5e2f9c512a2f3" title="Safely removes a callback from a collection." alt="" coords="261,5,432,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,23,248,23,248,28,214,28"/>
+</map>

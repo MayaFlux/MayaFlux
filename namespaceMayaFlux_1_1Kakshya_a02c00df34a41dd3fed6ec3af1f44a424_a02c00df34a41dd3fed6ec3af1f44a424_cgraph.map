@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kakshya::to_eigen_matrix" name="MayaFlux::Kakshya::to_eigen_matrix">
+<area shape="rect" id="Node000001" title="Convenience function for direct conversion." alt="" coords="5,91,164,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a57d47f4899fd8dc254d7b53a740a5495.html#a57d47f4899fd8dc254d7b53a740a5495" title="Convert DataVariant to Eigen matrix." alt="" coords="212,91,387,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,109,198,109,198,114,164,114"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_af525cecbdff773a0b47670c796f2567d.html#af525cecbdff773a0b47670c796f2567d" title=" " alt="" coords="435,5,601,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="355,89,428,62,430,67,357,94"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_aa3282f64720442a23196b8c07c49bd61.html#aa3282f64720442a23196b8c07c49bd61" title=" " alt="" coords="439,84,597,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="387,109,425,109,425,114,387,114"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a88d43c5e9d4cd2a06d922f5c389e8257.html#a88d43c5e9d4cd2a06d922f5c389e8257" title=" " alt="" coords="439,163,597,217"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="357,129,430,155,428,160,355,134"/>
+</map>

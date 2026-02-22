@@ -1,0 +1,15 @@
+<map id="MayaFlux::Core::MIDIBackend::initialize" name="MayaFlux::Core::MIDIBackend::initialize">
+<area shape="rect" id="Node000001" title="Initialize the input backend." alt="" coords="5,85,223,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a1385dd871406cea4dec86a33dacb2d00.html#a1385dd871406cea4dec86a33dacb2d00" title=" " alt="" coords="271,5,488,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,82,264,61,266,66,189,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a29cce6485aabe40ac8081b4f9bbd78c4.html#a29cce6485aabe40ac8081b4f9bbd78c4" title="Get backend version string." alt="" coords="271,85,488,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,102,257,102,257,107,223,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a6b2a39ef093ddd1f55acc6addd9c2064.html#a6b2a39ef093ddd1f55acc6addd9c2064" title="Refresh the device list." alt="" coords="271,149,488,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="198,122,283,143,282,148,197,127"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a09dbf95db2415e85525ef98074842d80.html#a09dbf95db2415e85525ef98074842d80" title=" " alt="" coords="536,85,753,125"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="462,146,548,125,549,130,464,151"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1MIDIBackend_aecaebeea649510834adc6243b7605614.html#aecaebeea649510834adc6243b7605614" title=" " alt="" coords="536,149,753,189"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="488,166,523,166,523,171,488,171"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a33add2499256b149e9d5dda8b3601a71.html#a33add2499256b149e9d5dda8b3601a71" title=" " alt="" coords="536,213,753,253"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="464,186,549,207,548,212,462,191"/>
+</map>

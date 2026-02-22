@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nodes::Generator::Generator" name="MayaFlux::Nodes::Generator::Generator">
+<area shape="rect" id="Node000001" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="254,1155,454,1455"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="27,423,225,1092"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,1062,244,1091,274,1153,269,1156,240,1093,227,1064"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="5,180,191,360"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="106,360,108,406,103,406,100,360"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContext.html" title="Specialized context for generator node callbacks." alt="" coords="473,210,673,330"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="578,330,580,476,578,571,571,678,559,790,540,906,513,1021,478,1132,464,1162,459,1160,473,1130,508,1020,535,905,553,790,565,677,572,571,575,476,573,330"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="254,717,454,797"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="543,344,374,718,369,716,538,341"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="463,5,683,131"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="575,145,575,210,570,210,570,145"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="357,797,357,1138,351,1138,351,797"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="215,197,448,343"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="338,357,355,717,350,717,333,357"/>
+</map>

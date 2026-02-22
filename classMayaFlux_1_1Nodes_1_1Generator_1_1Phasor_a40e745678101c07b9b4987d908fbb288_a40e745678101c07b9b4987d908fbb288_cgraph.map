@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Phasor::remove_hook" name="MayaFlux::Nodes::Generator::Phasor::remove_hook">
+<area shape="rect" id="Node000001" title="Removes a previously registered callback." alt="" coords="5,49,213,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a0f0e7e692457f061fecfd7fa245982b3.html#a0f0e7e692457f061fecfd7fa245982b3" title="Removes a previously registered phase wrap callback." alt="" coords="261,5,469,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,51,247,47,248,52,214,57"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_af2ba0cea47fb16d775d5e2f9c512a2f3.html#af2ba0cea47fb16d775d5e2f9c512a2f3" title="Safely removes a callback from a collection." alt="" coords="280,85,451,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,81,266,88,266,93,213,86"/>
+</map>

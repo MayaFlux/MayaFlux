@@ -1,0 +1,15 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::hot_reload" name="MayaFlux::Portal::Graphics::ShaderFoundry::hot_reload">
+<area shape="rect" id="Node000001" title="Hot&#45;reload a shader from file." alt="" coords="5,153,208,193"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_adfa75c7749cc2487c2fe9f4a714fc698.html#adfa75c7749cc2487c2fe9f4a714fc698" title=" " alt="" coords="279,109,477,164"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,157,265,149,266,154,208,162"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a5461e966f74d328cea7d885a572b1b21.html#a5461e966f74d328cea7d885a572b1b21" title="Invalidate cache for specific shader." alt="" coords="256,189,500,229"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="208,183,243,188,242,193,208,189"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a4dd0aa12e086b204214f0823ad212d17.html#a4dd0aa12e086b204214f0823ad212d17" title=" " alt="" coords="569,5,767,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="449,107,547,70,570,62,572,67,549,75,451,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="565,85,771,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="477,123,551,115,552,120,477,128"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_aa9c6a8bc1c6cc0082f4519bd71da28c5.html#aa9c6a8bc1c6cc0082f4519bd71da28c5" title="Check if compiler is initialized." alt="" coords="560,149,776,189"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="477,145,547,153,546,158,477,150"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a7164141bfc6000673da8c39715c4c85e.html#a7164141bfc6000673da8c39715c4c85e" title="Convert Portal ShaderStage to Vulkan ShaderStageFlagBits." alt="" coords="548,213,788,253"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="468,162,501,174,549,198,571,206,570,211,547,203,499,179,466,167"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::InputValue::as_osc" name="MayaFlux::Core::InputValue::as_osc">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1088,5,1289,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputManager_ae58da14f1b59ae4fcfdf0754fd6dfaec.html#ae58da14f1b59ae4fcfdf0754fd6dfaec" title=" " alt="" coords="817,5,1040,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1074,28,1040,28,1040,23,1074,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1InputManager_a81dc89fefa8fe16035c0f849e2b2be32.html#a81dc89fefa8fe16035c0f849e2b2be32" title=" " alt="" coords="547,5,769,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="804,28,770,28,770,23,804,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1InputManager_a23922bc754619bc6edb2e67b7ac4d9aa.html#a23922bc754619bc6edb2e67b7ac4d9aa" title=" " alt="" coords="276,5,499,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="533,28,499,28,499,23,533,23"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1InputManager_a5e9d6fbcc3e3664124e49ae895089da2.html#a5e9d6fbcc3e3664124e49ae895089da2" title="Start the processing thread." alt="" coords="5,5,228,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="262,28,228,28,228,23,262,23"/>
+</map>

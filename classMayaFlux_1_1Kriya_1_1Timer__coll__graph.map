@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kriya::Timer" name="MayaFlux::Kriya::Timer">
+<area shape="rect" id="Node000001" title="High&#45;level utility for scheduling one&#45;shot timed callbacks." alt="" coords="33,1191,200,1376"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler.html" title="Token&#45;based multimodal task scheduling system for unified coroutine processing." alt="" coords="5,508,228,1128"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,1129,119,1174,114,1174,114,1129"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="9,220,224,445"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="119,445,119,492,114,492,114,445"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="32,5,201,171"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="119,184,119,220,114,220,114,184"/>
+</map>

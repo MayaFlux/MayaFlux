@@ -1,0 +1,14 @@
+<map id="MayaFlux::Buffers::VKBuffer::is_initialized" name="MayaFlux::Buffers::VKBuffer::is_initialized">
+<area shape="rect" id="Node000001" title="Check whether Vulkan handles are present (buffer registered)" alt="" coords="397,92,567,132"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a818e469f4792c407c6ebc6e1112a6121.html#a818e469f4792c407c6ebc6e1112a6121" title="Clear buffer contents." alt="" coords="201,5,349,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="420,89,323,48,325,43,422,84"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_ae22f33ecea5953e1b819bbd36db3114c.html#ae22f33ecea5953e1b819bbd36db3114c" title="Write data into the buffer." alt="" coords="5,31,153,71"/>
+<area shape="poly" id="edge6_Node000001_Node000003" title=" " alt="" coords="384,100,153,65,154,59,384,95"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a382af8166b7e2e54d7336352c261d954.html#a382af8166b7e2e54d7336352c261d954" title="Read buffer contents as Kakshya DataVariant." alt="" coords="201,120,349,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="384,128,350,133,350,127,383,123"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a1c3e0f6c292516efd5f5364ba7a14fa8.html#a1c3e0f6c292516efd5f5364ba7a14fa8" title="Resize buffer and recreate GPU resources if needed." alt="" coords="201,184,349,224"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="426,140,350,174,324,186,321,182,348,170,423,135"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="188,39,154,44,154,38,187,34"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_af6dd001810af7fa06b5b2fd83d04303a.html#af6dd001810af7fa06b5b2fd83d04303a" title="Create a clone of this buffer with the same data and properties." alt="" coords="5,120,153,160"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="187,143,154,143,154,137,187,137"/>
+</map>

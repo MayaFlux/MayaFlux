@@ -1,0 +1,13 @@
+<map id="Staging" name="Staging">
+<area shape="rect" id="node1" href="dir_0bb69e04a8d74bf4e1b6838b7f8d5369.html" title="Staging" alt="" coords="109,52,180,77"/>
+<area shape="rect" id="node2" href="dir_18c1c755ed1756c25167e465033be95a.html" title="Registry" alt="" coords="5,125,81,151"/>
+<area shape="poly" id="edge1" href="dir_000055_000047.html" alt="" coords="130,80,73,119,70,115,127,75"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000055_000047.html" title="6" alt="" coords="75,114,84,129"/>
+<area shape="rect" id="node3" href="dir_98903ca72f3f031f88d95d1d2149bfa4.html" title="Kakshya" alt="" coords="105,125,184,151"/>
+<area shape="poly" id="edge2" href="dir_000055_000025.html" alt="" coords="147,78,147,112,142,112,142,78"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000055_000025.html" title="1" alt="" coords="148,100,158,114"/>
+<area shape="rect" id="node4" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="209,125,275,151"/>
+<area shape="poly" id="edge3" href="dir_000055_000024.html" alt="" coords="162,75,216,115,213,119,159,80"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000055_000024.html" title="3" alt="" coords="212,100,221,115"/>
+<area shape="rect" id="clust1" href="dir_64c2d47494cb42df00b60c7e5b15f956.html" title="Buffers" alt="" coords="98,16,191,88"/>
+</map>

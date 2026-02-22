@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::GpuSync::PointNode::PointNode" name="MayaFlux::Nodes::GpuSync::PointNode::PointNode">
+<area shape="rect" id="Node000001" title="Create point from PointVertex." alt="" coords="5,117,205,157"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a88857274caae01b6253bfa03bcfe68e4.html#a88857274caae01b6253bfa03bcfe68e4" title="Factory: Create layout for point primitives (position, color, size)" alt="" coords="271,5,452,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="138,115,190,85,252,55,272,47,274,52,254,60,193,89,140,120"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ad5f8bb454545911e4cef60543eb8e6be.html#ad5f8bb454545911e4cef60543eb8e6be" title="Resize vertex buffer to hold specified number of vertices." alt="" coords="253,70,469,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="205,119,239,114,240,119,206,124"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a79b8530548d0f4b4c464071439faaac5.html#a79b8530548d0f4b4c464071439faaac5" title="Set cached vertex layout." alt="" coords="261,149,461,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="206,150,248,156,247,162,205,155"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_ae5284939e0d0c2d570576488644f8068.html#ae5284939e0d0c2d570576488644f8068" title="Set vertex stride (bytes per vertex)" alt="" coords="261,227,461,282"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="143,155,254,212,271,220,269,224,252,217,140,160"/>
+</map>

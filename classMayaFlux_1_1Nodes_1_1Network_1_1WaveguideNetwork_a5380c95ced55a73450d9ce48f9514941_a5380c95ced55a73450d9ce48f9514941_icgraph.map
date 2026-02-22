@@ -1,0 +1,10 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::observe_sample" name="MayaFlux::Nodes::Network::WaveguideNetwork::observe_sample">
+<area shape="rect" id="Node000001" title=" " alt="" coords="575,53,847,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a9f74cfbd70d9b35e6b6d3caa4fa79e7e.html#a9f74cfbd70d9b35e6b6d3caa4fa79e7e" title=" " alt="" coords="312,5,527,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="561,55,527,50,527,45,561,49"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_aa1f0c2aeb85167039df9fdef62b81076.html#aa1f0c2aeb85167039df9fdef62b81076" title=" " alt="" coords="312,84,527,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="561,95,527,100,527,94,561,90"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a474473fbb4038d846ed350acbd7e7312.html#a474473fbb4038d846ed350acbd7e7312" title="Process the network for the given number of samples." alt="" coords="5,53,264,93"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="299,52,265,57,264,52,298,47"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="298,98,264,93,265,88,299,92"/>
+</map>

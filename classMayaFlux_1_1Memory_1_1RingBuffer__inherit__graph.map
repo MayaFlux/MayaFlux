@@ -1,0 +1,9 @@
+<map id="MayaFlux::Memory::RingBuffer&lt; T, StoragePolicy, ConcurrencyPolicy, AccessPattern &gt;" name="MayaFlux::Memory::RingBuffer&lt; T, StoragePolicy, ConcurrencyPolicy, AccessPattern &gt;">
+<area shape="rect" id="Node000001" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="237,5,503,480"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="5,572,220,1047"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="230,396,194,449,164,505,141,573,136,571,160,503,190,447,226,393"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="245,572,495,1047"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="373,494,373,572,367,572,367,494"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="520,579,767,1039"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="512,486,520,503,555,578,550,580,516,505,507,488"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::remove_from_root" name="MayaFlux::Nodes::NodeGraphManager::remove_from_root">
+<area shape="rect" id="Node000001" title="Remove node from a specific processing token and channel." alt="" coords="5,37,221,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="273,5,489,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,42,259,37,260,42,222,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a5b7627b25ad4de317b0c6ca93d1001c9.html#a5b7627b25ad4de317b0c6ca93d1001c9" title="Unsets the specified channel mask from a node&#39;s global registration." alt="" coords="269,69,493,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="222,68,256,72,255,77,221,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="541,5,757,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="489,23,527,23,527,28,489,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4cd923129ef6f6c0b41c9900f81f3e7d.html#a4cd923129ef6f6c0b41c9900f81f3e7d" title="Unregisters a node globally." alt="" coords="541,69,757,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="494,87,528,87,528,92,494,92"/>
+</map>
