@@ -44,3 +44,10 @@ endif()
 target_link_libraries(project_launcher PRIVATE MayaFluxLib)
 target_precompile_headers(project_launcher
     PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
+
+if(TARGET compile_example_shaders)
+    add_dependencies(project_launcher compile_example_shaders)
+    target_compile_definitions(project_launcher PRIVATE
+        MAYAFLUX_EXAMPLE_SHADER_DIR="${CMAKE_SOURCE_DIR}/src/examples/shaders"
+    )
+endif()

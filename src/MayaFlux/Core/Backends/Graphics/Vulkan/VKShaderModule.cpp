@@ -15,13 +15,19 @@ namespace MayaFlux::Core {
 namespace {
     std::vector<std::string> get_shader_search_paths()
     {
-        return {
+        std::vector<std::string> paths {
             SHADER_BUILD_OUTPUT_DIR, // 1. Build directory (development)
             SHADER_INSTALL_DIR, // 2. Install directory (production)
             SHADER_SOURCE_DIR, // 3. Source directory (fallback)
             "./shaders", // 4. Current working directory
             "../shaders" // 5. Parent directory
         };
+
+        if (std::string_view(SHADER_EXAMPLE_DIR).length() > 0) {
+            paths.push_back(SHADER_EXAMPLE_DIR);
+        }
+
+        return paths;
     }
 
     std::string resolve_shader_path(const std::string& filename)

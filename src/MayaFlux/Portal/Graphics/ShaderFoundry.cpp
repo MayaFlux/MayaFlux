@@ -370,6 +370,10 @@ std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const st
         "../shaders"
     };
 
+    if (std::string_view(Core::SHADER_EXAMPLE_DIR).length() > 0) {
+        search_paths.emplace_back(Core::SHADER_EXAMPLE_DIR);
+    }
+
     for (const auto& search_path : search_paths) {
         fs::path full_path = fs::path(search_path) / filepath;
         if (fs::exists(full_path)) {

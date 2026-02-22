@@ -123,6 +123,7 @@ namespace Config {
 namespace Core {
     constexpr const char* SHADER_BUILD_OUTPUT_DIR = "@SHADER_OUTPUT_DIR@";
     constexpr const char* SHADER_SOURCE_DIR = "@SHADERS_DIR@";
+    constexpr const char* SHADER_EXAMPLE_DIR      = "@EXAMPLE_SHADER_DIR@";  // empty string in non-dev builds
 #if defined(MAYAFLUX_PLATFORM_MACOS) && (defined(__aarch64__) || defined(_M_ARM64))
     constexpr const char* SHADER_INSTALL_DIR = "/opt/homebrew/share/MayaFlux/shaders";
 #else
