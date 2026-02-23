@@ -367,12 +367,19 @@ std::optional<std::filesystem::path> ShaderFoundry::resolve_shader_path(const st
         Core::SHADER_INSTALL_DIR,
         Core::SHADER_SOURCE_DIR,
         "./shaders",
-        "../shaders"
+        "../shaders",
+        "data/shaders",
+        "./data/shaders",
+        "../data/shaders"
     };
 
     if (std::string_view(Core::SHADER_EXAMPLE_DIR).length() > 0) {
         search_paths.emplace_back(Core::SHADER_EXAMPLE_DIR);
     }
+
+#ifdef MAYAFLUX_PROJECT_SHADER_DIR
+    search_paths.emplace_back(MAYAFLUX_PROJECT_SHADER_DIR);
+#endif
 
     for (const auto& search_path : search_paths) {
         fs::path full_path = fs::path(search_path) / filepath;

@@ -20,12 +20,19 @@ namespace {
             SHADER_INSTALL_DIR, // 2. Install directory (production)
             SHADER_SOURCE_DIR, // 3. Source directory (fallback)
             "./shaders", // 4. Current working directory
-            "../shaders" // 5. Parent directory
+            "../shaders", // 5. Parent directory
+            "data/shaders", // 6. Weave project root convention
+            "./data/shaders", // 6. Weave project root convention
+            "../data/shaders" // 7. if running from build/
         };
 
         if (std::string_view(SHADER_EXAMPLE_DIR).length() > 0) {
-            paths.push_back(SHADER_EXAMPLE_DIR);
+            paths.emplace_back(SHADER_EXAMPLE_DIR);
         }
+
+#ifdef MAYAFLUX_PROJECT_SHADER_DIR
+        paths.emplace_back(MAYAFLUX_PROJECT_SHADER_DIR);
+#endif
 
         return paths;
     }
