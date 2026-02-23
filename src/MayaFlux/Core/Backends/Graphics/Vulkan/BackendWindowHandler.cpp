@@ -184,6 +184,19 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         view = image_views[context->current_image_index];
         return static_cast<void*>(&view);
     };
+
+    display_service->get_current_swapchain_image = [this](const std::shared_ptr<void>& window_ptr) -> uint64_t {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* ctx = find_window_context(window);
+        if (!ctx || !ctx->swapchain)
+            return 0;
+
+        const auto& images = ctx->swapchain->get_images();
+        if (ctx->current_image_index >= images.size())
+            return 0;
+
+        return reinterpret_cast<uint64_t>(static_cast<VkImage>(images[ctx->current_image_index]));
+    };
 }
 
 WindowRenderContext* BackendWindowHandler::find_window_context(const std::shared_ptr<Window>& window)

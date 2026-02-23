@@ -91,6 +91,17 @@ struct MAYAFLUX_API DisplayService {
      * Used with dynamic rendering.
      */
     std::function<void*(const std::shared_ptr<void>&)> get_current_image_view;
+
+    /**
+     * @brief Get the VkImage bits for the most recently acquired swapchain image.
+     * @param window_handle Window handle.
+     * @return VkImage cast to uint64_t, or 0 if no image has been acquired yet.
+     *
+     * Safe to call after acquire_next_swapchain_image() has been invoked for
+     * the current frame. Does not advance the frame index or wait on any fence.
+     * Intended for read-only operations such as pixel readback.
+     */
+    std::function<uint64_t(const std::shared_ptr<void>&)> get_current_swapchain_image;
 };
 
 } // namespace MayaFlux::Registry::Services
