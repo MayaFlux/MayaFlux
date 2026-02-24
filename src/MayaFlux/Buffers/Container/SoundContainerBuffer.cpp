@@ -4,8 +4,6 @@
 
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 namespace MayaFlux::Buffers {
 
 SoundStreamReader::SoundStreamReader(const std::shared_ptr<Kakshya::StreamContainer>& container)
