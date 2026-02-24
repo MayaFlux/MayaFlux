@@ -608,7 +608,9 @@ void BackendResourceManager::upload_image_data(
 void BackendResourceManager::download_image_data(
     std::shared_ptr<VKImage> image,
     void* data,
-    size_t size)
+    size_t size,
+    vk::ImageLayout restore_layout,
+    vk::PipelineStageFlags restore_stage)
 {
     if (!image || !data) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -641,8 +643,7 @@ void BackendResourceManager::download_image_data(
         cmd.pipelineBarrier(
             vk::PipelineStageFlagBits::eFragmentShader,
             vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlags {},
-            0, nullptr, 0, nullptr, 1, &barrier);
+            vk::DependencyFlags {}, {}, {}, barrier);
 
         vk::BufferImageCopy region {};
         region.bufferOffset = 0;
@@ -666,28 +667,27 @@ void BackendResourceManager::download_image_data(
             1, &region);
 
         barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
-        barrier.newLayout = image->get_current_layout();
+        barrier.newLayout = restore_layout;
         barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
 
         cmd.pipelineBarrier(
             vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eFragmentShader,
-            vk::DependencyFlags {},
-            0, nullptr, 0, nullptr, 1, &barrier);
+            restore_stage,
+            vk::DependencyFlags {}, {}, {}, barrier);
     });
 
     staging->mark_invalid_range(0, size);
     auto& resources = staging->get_buffer_resources();
     vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
 
-    if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range); result != vk::Result::eSuccess) {
+    if (auto result = m_context.get_device().invalidateMappedMemoryRanges(1, &range);
+        result != vk::Result::eSuccess) {
         MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
             "Failed to invalidate mapped memory range: {}", vk::to_string(result));
     }
 
-    void* mapped = staging->get_mapped_ptr();
-    if (mapped) {
+    if (void* mapped = staging->get_mapped_ptr()) {
         std::memcpy(data, mapped, size);
     }
 

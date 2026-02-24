@@ -5,6 +5,8 @@
 #include "MayaFlux/Kakshya/Region/OrganizedRegion.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Kakshya {
 
 /** @brief Remove the channel dimension from a Region.
@@ -68,7 +70,11 @@ std::vector<T> extract_region_data(const std::span<const T>& source_data, const 
 {
     for (size_t i = 0; i < region.start_coordinates.size(); ++i) {
         if (region.end_coordinates[i] > 0 && (region.end_coordinates[i] >= dimensions[i].size)) {
-            throw std::out_of_range("Requested region is out of bounds for dimension " + std::to_string(i));
+            error<std::out_of_range>(
+                Journal::Component::Kakshya, Journal::Context::Runtime,
+                std::source_location::current(),
+                "Requested region is out of bounds for dimension {}",
+                std::to_string(i));
         }
     }
 
@@ -82,7 +88,7 @@ std::vector<T> extract_region_data(const std::span<const T>& source_data, const 
         result.push_back(source_data[linear_index]);
 
         bool done = true;
-        for (int dim = current.size() - 1; dim >= 0; --dim) {
+        for (int dim = (int)current.size() - 1; dim >= 0; --dim) {
             if (current[dim] < region.end_coordinates[dim]) {
                 current[dim]++;
                 done = false;
@@ -201,7 +207,10 @@ std::vector<std::vector<T>> extract_segments_data(
     OrganizationStrategy organization)
 {
     if (source_spans.size() != 1) {
-        throw std::invalid_argument("Source spans cannot be empty");
+        error<std::invalid_argument>(
+            Journal::Component::Kakshya, Journal::Context::Runtime,
+            std::source_location::current(),
+            "Source spans cannot be empty");
     }
 
     std::vector<std::vector<T>> result;
@@ -643,5 +652,84 @@ std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& posi
  * @return Optional index of the containing region, or std::nullopt if not found.
  */
 std::optional<size_t> find_region_for_position(const std::vector<uint64_t>& position, std::vector<OrganizedRegion> regions);
+
+/**
+ * @brief Test whether two N-dimensional regions overlap on every shared axis.
+ *
+ * Regions are treated as closed intervals.  Only axes present in both
+ * regions are tested; regions with fewer than 2 coordinates on either side
+ * are never considered intersecting.
+ *
+ * @param r1 First region.
+ * @param r2 Second region.
+ * @return true if all shared axes of r1 and r2 overlap.
+ */
+[[nodiscard]] bool regions_intersect(const Region& r1, const Region& r2) noexcept;
+
+/**
+ * @brief Extract the data described by @p region from @p src using the
+ *        container's dimension descriptors.
+ *
+ * Delegates to the existing role-aware @c extract_region_data machinery so
+ * that the region coordinates are interpreted correctly regardless of axis
+ * order or modality.  The caller decides what the region bounds mean — this
+ * function imposes no shape assumption (rectangular, cubic, or otherwise).
+ *
+ * For interleaved image data (IMAGE_COLOR / ROW_MAJOR) the channel dimension
+ * is included in the walk if the region carries a coordinate for it;
+ * if the region has fewer coordinates than dimensions, trailing axes are
+ * included in full.
+ *
+ * @tparam T       Element type of the source buffer (e.g. @c uint8_t).
+ * @param src      Flat source buffer in the layout described by @p dims.
+ * @param region   N-dimensional bounds; start/end coordinate count may be
+ *                 less than @c dims.size() — missing trailing axes default
+ *                 to full extent.
+ * @param dims     Dimension descriptors from the container structure,
+ *                 ordered consistently with the flat buffer layout.
+ * @return         Flat buffer containing the extracted elements in the same
+ *                 axis order as @p dims.
+ * @throws std::invalid_argument if @p dims is empty or @p src is smaller
+ *         than the total element count implied by @p dims.
+ * @throws std::out_of_range    if any coordinate in @p region exceeds the
+ *         corresponding dimension size.
+ */
+template <typename T>
+[[nodiscard]] std::vector<T> extract_nd_region(
+    std::span<const T> src,
+    const Region& region,
+    const std::vector<DataDimension>& dims)
+{
+    if (dims.empty()) {
+        error<std::invalid_argument>(
+            Journal::Component::Kakshya, Journal::Context::Runtime,
+            std::source_location::current(),
+            "extract_nd_region: dims must not be empty");
+    }
+
+    uint64_t total = 1;
+    for (const auto& d : dims)
+        total *= d.size;
+
+    if (src.size() < total) {
+        error<std::invalid_argument>(
+            Journal::Component::Kakshya, Journal::Context::Runtime,
+            std::source_location::current(),
+            "extract_nd_region: src smaller than total element count implied by dims");
+    }
+
+    Region clamped = region;
+    clamped.start_coordinates.resize(dims.size(), 0);
+    clamped.end_coordinates.resize(dims.size());
+    for (size_t i = 0; i < dims.size(); ++i) {
+        if (i >= region.end_coordinates.size()) {
+            clamped.end_coordinates[i] = dims[i].size - 1;
+        } else {
+            clamped.end_coordinates[i] = std::min(region.end_coordinates[i], dims[i].size - 1);
+        }
+    }
+
+    return extract_region_data<T>(src, clamped, dims);
+}
 
 }

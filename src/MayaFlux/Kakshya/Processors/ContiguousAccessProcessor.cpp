@@ -5,8 +5,6 @@
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 namespace MayaFlux::Kakshya {
 
 void ContiguousAccessProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& container)

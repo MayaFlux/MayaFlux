@@ -1,8 +1,6 @@
 #include "VulkanBackend.hpp"
 
 #include "VKCommandManager.hpp"
-#include "VKFramebuffer.hpp"
-#include "VKRenderPass.hpp"
 #include "VKSwapchain.hpp"
 
 #include "BackendPipelineManager.hpp"
@@ -27,6 +25,7 @@ VulkanBackend::VulkanBackend()
     , m_pipeline_manager(std::make_unique<BackendPipelineManager>(*m_context))
     , m_window_handler(std::make_unique<BackendWindowHandler>(*m_context, *m_command_manager))
 {
+    m_window_handler->set_resource_manager(m_resource_manager.get());
 }
 
 VulkanBackend::~VulkanBackend() { cleanup(); }

@@ -1,4 +1,6 @@
 #include "VKImage.hpp"
+
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKEnumUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Core {
@@ -54,13 +56,7 @@ vk::ImageUsageFlags VKImage::get_usage_flags() const
         break;
 
     case Usage::TRANSFER_SRC:
-        // Already included above
-        break;
-
     case Usage::TRANSFER_DST:
-        // Already included above
-        break;
-
     case Usage::STAGING:
         // Staging images are rare in Vulkan (usually use buffers)
         // Just transfer ops
@@ -106,104 +102,21 @@ vk::ImageAspectFlags VKImage::get_aspect_flags() const
 
 size_t VKImage::get_size_bytes() const
 {
-    size_t bytes_per_pixel = 0;
+    const size_t bpp = vk_format_bytes_per_pixel(m_format);
 
-    switch (m_format) {
-    case vk::Format::eR8Unorm:
-    case vk::Format::eR8Snorm:
-    case vk::Format::eR8Uint:
-    case vk::Format::eR8Sint:
-        bytes_per_pixel = 1;
-        break;
-
-    case vk::Format::eR8G8Unorm:
-    case vk::Format::eR8G8Snorm:
-    case vk::Format::eR8G8Uint:
-    case vk::Format::eR8G8Sint:
-    case vk::Format::eR16Unorm:
-    case vk::Format::eR16Snorm:
-    case vk::Format::eR16Uint:
-    case vk::Format::eR16Sint:
-    case vk::Format::eR16Sfloat:
-        bytes_per_pixel = 2;
-        break;
-
-    case vk::Format::eR8G8B8Unorm:
-    case vk::Format::eR8G8B8Snorm:
-    case vk::Format::eR8G8B8Uint:
-    case vk::Format::eR8G8B8Sint:
-    case vk::Format::eB8G8R8Unorm:
-        bytes_per_pixel = 3;
-        break;
-
-    case vk::Format::eR8G8B8A8Unorm:
-    case vk::Format::eR8G8B8A8Snorm:
-    case vk::Format::eR8G8B8A8Uint:
-    case vk::Format::eR8G8B8A8Sint:
-    case vk::Format::eR8G8B8A8Srgb:
-    case vk::Format::eB8G8R8A8Unorm:
-    case vk::Format::eB8G8R8A8Srgb:
-    case vk::Format::eR16G16Unorm:
-    case vk::Format::eR16G16Snorm:
-    case vk::Format::eR16G16Uint:
-    case vk::Format::eR16G16Sint:
-    case vk::Format::eR16G16Sfloat:
-    case vk::Format::eR32Uint:
-    case vk::Format::eR32Sint:
-    case vk::Format::eR32Sfloat:
-    case vk::Format::eD24UnormS8Uint:
-    case vk::Format::eD32Sfloat:
-        bytes_per_pixel = 4;
-        break;
-
-    case vk::Format::eR16G16B16A16Unorm:
-    case vk::Format::eR16G16B16A16Snorm:
-    case vk::Format::eR16G16B16A16Uint:
-    case vk::Format::eR16G16B16A16Sint:
-    case vk::Format::eR16G16B16A16Sfloat:
-    case vk::Format::eR32G32Uint:
-    case vk::Format::eR32G32Sint:
-    case vk::Format::eR32G32Sfloat:
-        bytes_per_pixel = 8;
-        break;
-
-    case vk::Format::eR32G32B32Uint:
-    case vk::Format::eR32G32B32Sint:
-    case vk::Format::eR32G32B32Sfloat:
-        bytes_per_pixel = 12;
-        break;
-
-    case vk::Format::eR32G32B32A32Uint:
-    case vk::Format::eR32G32B32A32Sint:
-    case vk::Format::eR32G32B32A32Sfloat:
-        bytes_per_pixel = 16;
-        break;
-
-    default:
-        // Fallback: assume 4 bytes per pixel for unknown formats
-        bytes_per_pixel = 4;
-        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-            "Unknown format for size calculation, assuming 4 bytes/pixel");
-        break;
-    }
-
-    size_t total_size = 0;
-    uint32_t mip_width = m_width;
-    uint32_t mip_height = m_height;
-    uint32_t mip_depth = m_depth;
+    size_t total = 0;
+    uint32_t mip_w = m_width;
+    uint32_t mip_h = m_height;
+    uint32_t mip_d = m_depth;
 
     for (uint32_t i = 0; i < m_mip_levels; ++i) {
-        total_size += static_cast<size_t>(mip_width) * mip_height * mip_depth * bytes_per_pixel;
-
-        mip_width = std::max(1U, mip_width / 2);
-        mip_height = std::max(1U, mip_height / 2);
-        mip_depth = std::max(1U, mip_depth / 2);
+        total += static_cast<size_t>(mip_w) * mip_h * mip_d * bpp;
+        mip_w = std::max(1U, mip_w / 2);
+        mip_h = std::max(1U, mip_h / 2);
+        mip_d = std::max(1U, mip_d / 2);
     }
 
-    // Multiply by array layers (e.g., 6 for cubemaps)
-    total_size *= m_array_layers;
-
-    return total_size;
+    return total * m_array_layers;
 }
 
 void VKImage::infer_dimensions_from_parameters()

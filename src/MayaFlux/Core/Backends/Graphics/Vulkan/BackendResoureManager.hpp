@@ -102,15 +102,28 @@ public:
         size_t size);
 
     /**
-     * @brief Download data from an image (creates staging buffer internally)
-     * @param image Source VKImage
-     * @param data Destination buffer pointer
-     * @param size Buffer size in bytes
+     * @brief Download data from an image into a caller-supplied buffer.
+     *
+     * Transitions the image to eTransferSrcOptimal, copies to a staging buffer,
+     * then restores it to restore_layout using restore_stage.
+     *
+     * The defaults cover the common case of a device-local texture in shader
+     * read-only layout. Pass ePresentSrcKHR / eBottomOfPipe for swapchain images.
+     *
+     * @param image          Source image.
+     * @param data           Destination host pointer (must be at least size bytes).
+     * @param size           Byte count to read.
+     * @param restore_layout Layout to transition back to after the copy.
+     *                       Defaults to eShaderReadOnlyOptimal.
+     * @param restore_stage  Pipeline stage that will consume the image after
+     *                       restore. Defaults to eFragmentShader.
      */
     void download_image_data(
         std::shared_ptr<VKImage> image,
         void* data,
-        size_t size);
+        size_t size,
+        vk::ImageLayout restore_layout = vk::ImageLayout::eShaderReadOnlyOptimal,
+        vk::PipelineStageFlags restore_stage = vk::PipelineStageFlagBits::eFragmentShader);
 
     // ========================================================================
     // Sampler management

@@ -5,8 +5,6 @@
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 
-#include "MayaFlux/Journal/Archivist.hpp"
-
 namespace MayaFlux::Kakshya {
 
 SoundStreamContainer::SoundStreamContainer(uint32_t sample_rate, uint32_t num_channels,

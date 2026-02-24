@@ -184,7 +184,12 @@ Region calculate_output_region(const std::vector<uint64_t>& current_pos,
     const std::vector<uint64_t>& output_shape)
 {
     if (current_pos.size() != output_shape.size()) {
-        throw std::invalid_argument("Position and shape vectors must have same size");
+        error<std::invalid_argument>(
+            Journal::Component::Kakshya, Journal::Context::Runtime,
+            std::source_location::current(),
+            "Position and shape vectors must have same size: current_pos size = "
+                + std::to_string(current_pos.size()) + ", output_shape size = "
+                + std::to_string(output_shape.size()));
     }
 
     std::vector<uint64_t> end_pos;
@@ -192,7 +197,10 @@ Region calculate_output_region(const std::vector<uint64_t>& current_pos,
 
     for (size_t i = 0; i < current_pos.size(); ++i) {
         if (output_shape[i] == 0) {
-            throw std::invalid_argument("Output shape cannot have zero dimensions");
+            error<std::invalid_argument>(
+                Journal::Component::Kakshya, Journal::Context::Runtime,
+                std::source_location::current(),
+                "Output shape cannot have zero dimensions: dimension " + std::to_string(i) + " is zero");
         }
         end_pos.push_back(current_pos[i] + output_shape[i] - 1);
     }
@@ -209,7 +217,12 @@ Region calculate_output_region(uint64_t current_frame,
     uint64_t num_channels = structure.get_channel_count();
 
     if (current_frame >= total_frames) {
-        throw std::out_of_range("Current frame exceeds container bounds");
+        error<std::out_of_range>(
+            Journal::Component::Kakshya, Journal::Context::Runtime,
+            std::source_location::current(),
+            "Current frame exceeds container bounds: current_frame = "
+                + std::to_string(current_frame) + ", total_frames = "
+                + std::to_string(total_frames));
     }
 
     uint64_t available_frames = total_frames - current_frame;
@@ -252,7 +265,10 @@ bool is_region_access_contiguous(const Region& region,
 std::vector<std::unordered_map<std::string, std::any>> extract_all_regions_info(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container) {
-        throw std::invalid_argument("Container is null");
+        error<std::invalid_argument>(
+            Journal::Component::Kakshya, Journal::Context::Runtime,
+            std::source_location::current(),
+            "Container is null");
     }
 
     auto all_groups = container->get_all_region_groups();
@@ -394,5 +410,22 @@ std::vector<DataDimension> get_non_channel_dimensions(const std::vector<DataDime
             return dim.role != DataDimension::Role::CHANNEL;
         });
     return result;
+}
+
+bool regions_intersect(const Region& r1, const Region& r2) noexcept
+{
+    const size_t ndim = std::min({ r1.start_coordinates.size(),
+        r1.end_coordinates.size(),
+        r2.start_coordinates.size(),
+        r2.end_coordinates.size() });
+    if (ndim < 2)
+        return false;
+
+    for (size_t i = 0; i < ndim; ++i) {
+        if (r1.end_coordinates[i] < r2.start_coordinates[i]
+            || r2.end_coordinates[i] < r1.start_coordinates[i])
+            return false;
+    }
+    return true;
 }
 }
