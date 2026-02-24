@@ -13,26 +13,28 @@ namespace MayaFlux::Kakshya {
  * @brief SignalSourceContainer wrapping a live GLFW/Vulkan window surface.
  *
  * Exposes a window's rendered surface as addressable N-dimensional data.
- * Dimensions follow IMAGE_COLOR convention [height, width, channels].
- *
- * Processing model:
- *   - process() performs one full-surface GPU readback into processed_data[0].
- *   - Region selection is CPU-side: get_region_data() crops from processed_data[0].
- *   - load_region_tracked() registers a rect and returns a stable slot index
- *     for consumer tracking across frames.
- *   - GPU work is constant per frame regardless of region count.
- *
- * The default processor (WindowAccessProcessor) guarantees that on each
- * process() call, get_processed_data() returns one interleaved
- * std::vector<uint8_t> (RGBA8) per loaded region, in load order.
+ * Dimensions follow IMAGE_COLOR convention:
+ *   dims[0] → SPATIAL_Y (height)
+ *   dims[1] → SPATIAL_X (width)
+ *   dims[2] → CHANNEL
  *
  * Region semantics:
- *   load_region_tracked()     — registers a pixel rect as active; processor reads it, returns its index.
- *   unload_region()   — removes the rect; processor stops reading it.
- *   is_region_loaded()— returns true if the rect intersects the active set.
+ *   Regions are registered through the inherited RegionGroup API
+ *   (add_region_group / get_all_region_groups / remove_region_group).
+ *   load_region() and unload_region() are no-ops on this container — all
+ *   surface data is always available after a GPU readback; region selection
+ *   is a processor concern, not a container concern.
  *
- * Write semantics (region replacement/compositing) are pinned for a
- * future processor and do not affect this interface.
+ * Processing model:
+ *   - The default processor (WindowAccessProcessor) performs one full-surface
+ *     GPU readback per process() call into processed_data[0].
+ *   - The processing chain (SpatialRegionProcessor) extracts registered
+ *     regions from the readback as separate DataVariant entries.
+ *   - get_region_data() crops directly from processed_data[0] if it is
+ *     non-empty; returns empty if no readback has occurred yet.
+ *   - The container never calls process() itself — callers drive the chain.
+ *
+ * Write semantics (compositing) are deferred to a future processor.
  */
 class MAYAFLUX_API WindowContainer : public SignalSourceContainer {
 public:
@@ -64,10 +66,10 @@ public:
     void set_memory_layout(MemoryLayout layout) override;
 
     /**
-     * @brief Crop and return pixel data for all loaded regions that intersect
-     *        the query region. Each match yields one DataVariant entry
-     *        (interleaved uint8_t, row-major, IMAGE_COLOR).
+     * @brief Extract data for all regions across all region groups that
+     *        spatially intersect @p region.
      *        Crops from the last full-surface readback — no GPU work.
+     *        Returns empty if no readback has been performed yet.
      */
     [[nodiscard]] std::vector<DataVariant> get_region_data(const Region& region) const override;
     void set_region_data(const Region& region, const std::vector<DataVariant>& data) override;
@@ -93,40 +95,30 @@ public:
     [[nodiscard]] const ContainerDataStructure& get_structure() const override { return m_structure; }
     void set_structure(ContainerDataStructure s) override { m_structure = std::move(s); }
 
+    // -------------------------------------------------------------------------
+    // RegionGroup API — primary region registration interface.
+    // -------------------------------------------------------------------------
+
     void add_region_group(const RegionGroup& group) override;
     [[nodiscard]] const RegionGroup& get_region_group(const std::string& name) const override;
     [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override;
     void remove_region_group(const std::string& name) override;
 
     /**
-     * @brief Register a pixel rect for CPU-side cropping. Thin wrapper around
-     *        load_region_tracked(); discards the returned slot index.
+     * @brief No-op. All surface data is continuously available after readback.
+     *        Register regions via add_region_group() instead.
      */
     void load_region(const Region& region) override;
 
     /**
-     * @brief Register a pixel rect and return its stable slot index.
-     *        Returns the existing slot index if the region is already loaded.
-     *        The slot index is the handle for consumer tracking via
-     *        register_dimension_reader() / mark_dimension_consumed().
-     */
-    std::optional<uint32_t> load_region_tracked(const Region& region);
-
-    /**
-     * @brief Deregister a pixel rectangle; processor stops reading it next cycle.
+     * @brief No-op. See load_region().
      */
     void unload_region(const Region& region) override;
 
     /**
-     * @brief Returns true if any loaded region spatially intersects the query.
+     * @brief Always returns true. Surface data is available after any readback.
      */
     [[nodiscard]] bool is_region_loaded(const Region& region) const override;
-
-    /**
-     * @brief Read-only access to the current loaded-region set.
-     *        Used by WindowAccessProcessor to iterate readback targets.
-     */
-    [[nodiscard]] const std::vector<Region>& get_loaded_regions() const;
 
     // =========================================================================
     // SignalSourceContainer
@@ -144,6 +136,7 @@ public:
 
     void create_default_processor() override;
     void process_default() override;
+
     void set_default_processor(const std::shared_ptr<DataProcessor>& processor) override;
     [[nodiscard]] std::shared_ptr<DataProcessor> get_default_processor() const override;
 
@@ -179,7 +172,7 @@ private:
     std::vector<DataVariant> m_data;
     std::vector<DataVariant> m_processed_data;
 
-    std::vector<Region> m_loaded_regions;
+    std::unordered_map<std::string, RegionGroup> m_region_groups;
 
     std::shared_ptr<DataProcessor> m_default_processor;
     std::shared_ptr<DataProcessingChain> m_processing_chain;
@@ -188,7 +181,6 @@ private:
     std::atomic<bool> m_ready_for_processing { false };
 
     std::function<void(const std::shared_ptr<SignalSourceContainer>&, ProcessingState)> m_state_callback;
-    std::unordered_map<std::string, RegionGroup> m_region_groups;
 
     mutable std::shared_mutex m_data_mutex;
     mutable std::mutex m_state_mutex;
@@ -198,25 +190,6 @@ private:
     std::atomic<uint32_t> m_next_reader_id { 0 };
 
     void setup_dimensions();
-
-    /**
-     * @brief CPU-side crop of a pixel rect from the full-surface readback.
-     * @param src    Full-surface interleaved pixel data.
-     * @param x0     Left edge of the crop rect.
-     * @param y0     Top edge of the crop rect.
-     * @param pw     Width of the crop rect in pixels.
-     * @param ph     Height of the crop rect in pixels.
-     * @return Interleaved uint8_t blob of size pw * ph * m_channels.
-     */
-    [[nodiscard]] std::vector<uint8_t> crop_region(
-        const std::vector<uint8_t>& src,
-        uint32_t x0, uint32_t y0,
-        uint32_t pw, uint32_t ph) const;
-
-    /**
-     * @brief Returns true if r1 and r2 spatially overlap on the Y/X axes.
-     */
-    [[nodiscard]] static bool regions_intersect(const Region& r1, const Region& r2) noexcept;
 };
 
 } // namespace MayaFlux::Kakshya

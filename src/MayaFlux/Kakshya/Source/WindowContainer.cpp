@@ -6,6 +6,7 @@
 #include "MayaFlux/Kakshya/Processors/WindowAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
+#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -86,24 +87,22 @@ std::vector<DataVariant> WindowContainer::get_region_data(const Region& region) 
     if (!src || src->empty())
         return {};
 
+    const auto& dims = m_structure.dimensions;
+    const std::span<const uint8_t> src_span { src->data(), src->size() };
+
     std::vector<DataVariant> result;
-    result.reserve(m_loaded_regions.size());
 
-    for (const auto& r : m_loaded_regions) {
-        if (!regions_intersect(r, region))
-            continue;
-
-        const auto x0 = static_cast<uint32_t>(r.start_coordinates[1]);
-        const auto y0 = static_cast<uint32_t>(r.start_coordinates[0]);
-        const auto x1 = static_cast<uint32_t>(std::min(r.end_coordinates[1],
-            static_cast<uint64_t>(m_structure.get_width())));
-        const auto y1 = static_cast<uint32_t>(std::min(r.end_coordinates[0],
-            static_cast<uint64_t>(m_structure.get_height())));
-
-        if (x1 <= x0 || y1 <= y0)
-            continue;
-
-        result.emplace_back(crop_region(*src, x0, y0, x1 - x0, y1 - y0));
+    for (const auto& [name, group] : m_region_groups) {
+        for (const auto& r : group.regions) {
+            if (!regions_intersect(r, region))
+                continue;
+            try {
+                result.emplace_back(extract_nd_region<uint8_t>(src_span, r, dims));
+            } catch (const std::exception& e) {
+                MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                    "WindowContainer::get_region_data extraction failed — {}", e.what());
+            }
+        }
     }
 
     return result;
@@ -187,110 +186,21 @@ bool WindowContainer::has_data() const
     return std::visit([](const auto& v) { return !v.empty(); }, m_processed_data[0]);
 }
 
-// =========================================================================
-// Crop helper
-// =========================================================================
-
-std::vector<uint8_t> WindowContainer::crop_region(
-    const std::vector<uint8_t>& src,
-    uint32_t x0, uint32_t y0,
-    uint32_t pw, uint32_t ph) const
+void WindowContainer::load_region(const Region& /*region*/)
 {
-    const auto full_w = static_cast<uint32_t>(m_structure.get_width());
-    const auto c = static_cast<uint32_t>(m_structure.get_channel_count());
-    const uint32_t row_bytes = pw * c;
-
-    std::vector<uint8_t> out(static_cast<size_t>(pw) * ph * c);
-
-    for (uint32_t row = 0; row < ph; ++row) {
-        const size_t src_offset = static_cast<size_t>(((y0 + row) * full_w + x0)) * c;
-        const size_t dst_offset = static_cast<size_t>(row) * row_bytes;
-        std::memcpy(out.data() + dst_offset, src.data() + src_offset, row_bytes);
-    }
-
-    return out;
+    MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+        "WindowContainer::load_region — no-op. Register regions via add_region_group()");
 }
 
-// =========================================================================
-// Region management
-// =========================================================================
-
-void WindowContainer::load_region(const Region& region)
+void WindowContainer::unload_region(const Region& /*region*/)
 {
-    load_region_tracked(region);
+    MF_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+        "WindowContainer::unload_region — no-op. Remove regions via remove_region_group()");
 }
 
-std::optional<uint32_t> WindowContainer::load_region_tracked(const Region& region)
+bool WindowContainer::is_region_loaded(const Region& /*region*/) const
 {
-    std::unique_lock lock(m_data_mutex);
-
-    for (size_t i = 0; i < m_loaded_regions.size(); ++i) {
-        const auto& r = m_loaded_regions[i];
-        if (r.start_coordinates == region.start_coordinates
-            && r.end_coordinates == region.end_coordinates)
-            return static_cast<uint32_t>(i);
-    }
-
-    m_loaded_regions.push_back(region);
-    const auto slot = static_cast<uint32_t>(m_loaded_regions.size() - 1);
-
-    lock.unlock();
-
-    MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-        "WindowContainer: loaded region [{},{} -> {},{}], {} active region(s)",
-        region.start_coordinates.size() > 1 ? region.start_coordinates[1] : 0,
-        region.start_coordinates.size() > 0 ? region.start_coordinates[0] : 0,
-        region.end_coordinates.size() > 1 ? region.end_coordinates[1] : 0,
-        region.end_coordinates.size() > 0 ? region.end_coordinates[0] : 0,
-        m_loaded_regions.size());
-
-    return slot;
-}
-
-void WindowContainer::unload_region(const Region& region)
-{
-    std::unique_lock lock(m_data_mutex);
-
-    auto it = std::ranges::find_if(m_loaded_regions, [&](const Region& r) {
-        return r.start_coordinates == region.start_coordinates
-            && r.end_coordinates == region.end_coordinates;
-    });
-
-    if (it == m_loaded_regions.end())
-        return;
-
-    m_loaded_regions.erase(it);
-
-    MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-        "WindowContainer: unloaded region, {} active region(s)",
-        m_loaded_regions.size());
-}
-
-bool WindowContainer::is_region_loaded(const Region& region) const
-{
-    std::shared_lock lock(m_data_mutex);
-    return std::ranges::any_of(m_loaded_regions, [&](const Region& r) {
-        return regions_intersect(r, region);
-    });
-}
-
-const std::vector<Region>& WindowContainer::get_loaded_regions() const
-{
-    return m_loaded_regions;
-}
-
-bool WindowContainer::regions_intersect(const Region& r1, const Region& r2) noexcept
-{
-    if (r1.start_coordinates.size() < 2 || r1.end_coordinates.size() < 2
-        || r2.start_coordinates.size() < 2 || r2.end_coordinates.size() < 2)
-        return false;
-
-    const bool y_overlap = r1.start_coordinates[0] <= r2.end_coordinates[0]
-        && r2.start_coordinates[0] <= r1.end_coordinates[0];
-    const bool x_overlap = r1.start_coordinates[1] <= r2.end_coordinates[1]
-        && r2.start_coordinates[1] <= r1.end_coordinates[1];
-
-    return y_overlap && x_overlap;
+    return true;
 }
 
 // =========================================================================
@@ -368,9 +278,9 @@ void WindowContainer::mark_ready_for_processing(bool ready)
 
 void WindowContainer::create_default_processor()
 {
-    auto proc = std::make_shared<WindowAccessProcessor>();
-    proc->on_attach(shared_from_this());
-    m_default_processor = proc;
+    auto readback = std::make_shared<WindowAccessProcessor>();
+    readback->on_attach(shared_from_this());
+    m_default_processor = readback;
 }
 
 void WindowContainer::process_default()
