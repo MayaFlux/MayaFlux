@@ -1,6 +1,8 @@
 #pragma once
 
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
+
 #include "MayaFlux/Kakshya/Region/Region.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -10,19 +12,19 @@ namespace MayaFlux::Kakshya {
  * @brief Default DataProcessor for WindowContainer.
  *
  * Reads pixel data from the last completed swapchain frame into the
- * container's processed_data as a single interleaved std::vector<uint8_t>
- * with modality IMAGE_COLOR.
+ * container's processed_data. The DataVariant type is selected at
+ * on_attach() time based on the live swapchain format reported by
+ * DisplayService::get_swapchain_format, ensuring HDR and packed formats
+ * are stored with their native precision rather than truncated to uint8.
  *
- * Guarantee: each process() call populates get_processed_data() with data
- * from the last fully-presented frame — the swapchain image whose fence has
- * already signaled. Never reads from the image currently being written to.
+ * Format → DataVariant element type:
+ *   8-bit UNORM/SRGB  → std::vector<uint8_t>
+ *   16-bit SFLOAT     → std::vector<uint16_t>  (raw half-float bits)
+ *   10-bit packed     → std::vector<uint32_t>  (packed word per pixel)
+ *   32-bit SFLOAT     → std::vector<float>
  *
- * Performs a single full-surface GPU readback per process() call into
- * processed_data[0] as an interleaved std::vector<uint8_t> (IMAGE_COLOR).
- * Region selection is a CPU-side concern handled by WindowContainer::get_region_data().
- *
- * One readback per frame regardless of how many regions are loaded — region
- * count has no effect on GPU work.
+ * One readback per frame regardless of region count — region extraction
+ * is a CPU-side crop performed by WindowContainer::get_region_data().
  */
 class MAYAFLUX_API WindowAccessProcessor : public DataProcessor {
 public:
@@ -31,20 +33,20 @@ public:
 
     /**
      * @brief Attach to a WindowContainer.
-     *        Caches surface dimensions from the container's structure.
-     *        Throws if container is not a WindowContainer.
+     *        Queries the live swapchain format and caches surface traits.
+     *        Throws std::invalid_argument if container is not a WindowContainer.
      */
     void on_attach(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
-     * @brief Release cached state.
+     * @brief Release all cached state.
      */
     void on_detach(const std::shared_ptr<SignalSourceContainer>& container) override;
 
     /**
-     * @brief Execute pixel readback for the active region.
-     *        Reads from the last completed swapchain frame via VisualContainerUtils.
-     *        Updates container ProcessingState: PROCESSING → PROCESSED.
+     * @brief Execute a full-surface pixel readback.
+     *        Allocates a format-appropriate DataVariant and updates
+     *        container ProcessingState: PROCESSING → PROCESSED.
      */
     void process(const std::shared_ptr<SignalSourceContainer>& container) override;
 
@@ -58,22 +60,24 @@ public:
      */
     [[nodiscard]] size_t get_last_readback_bytes() const { return m_last_readback_bytes; }
 
+    /**
+     * @brief The surface format currently in use for readback allocation.
+     */
+    [[nodiscard]] Core::GraphicsSurfaceInfo::SurfaceFormat get_surface_format() const
+    {
+        return m_surface_format;
+    }
+
 private:
     std::atomic<bool> m_is_processing { false };
 
     uint32_t m_width { 0 };
     uint32_t m_height { 0 };
-    uint32_t m_channels { 0 };
     size_t m_last_readback_bytes { 0 };
 
-    /**
-     * @brief Resolve a Region to a clamped pixel rect.
-     * @return {x_offset, y_offset, pixel_width, pixel_height}.
-     *         Returns the full surface rect if the region has fewer than
-     *         2 coordinates or produces a degenerate rect.
-     */
-    // [[nodiscard]] std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>
-    // resolve_pixel_rect(const Region& region) const;
+    Core::GraphicsSurfaceInfo::SurfaceFormat m_surface_format {
+        Core::GraphicsSurfaceInfo::SurfaceFormat::B8G8R8A8_SRGB
+    };
 };
 
 } // namespace MayaFlux::Kakshya
