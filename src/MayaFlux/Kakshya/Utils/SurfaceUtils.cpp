@@ -62,7 +62,8 @@ namespace {
     }
 
     /**
-     * @brief Allocate the correctly-typed DataVariant and copy raw bytes into it.
+     * @brief Reinterpret a raw byte blob as the element type matching the
+     *        surface format and move it into out.
      *
      * The swapchain readback yields a contiguous byte blob. This function
      * reinterprets that blob as the element type that matches the surface
@@ -137,14 +138,6 @@ DataAccess readback_region(
 
     const auto window_handle = std::static_pointer_cast<void>(window);
 
-    const uint64_t image_bits = display->get_current_swapchain_image(window_handle);
-    if (image_bits == 0) {
-        MF_RT_WARN(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "SurfaceUtils::readback_region: no current swapchain image for '{}'",
-            window->get_create_info().title);
-        return s_fail;
-    }
-
     const int raw_fmt = display->get_swapchain_format(window_handle);
     const auto vk_fmt = static_cast<vk::Format>(raw_fmt);
     const auto mf_fmt = Core::from_vk_format(vk_fmt);
@@ -152,8 +145,6 @@ DataAccess readback_region(
     const uint32_t bpp = Core::vk_format_bytes_per_pixel(vk_fmt);
 
     const size_t byte_count = static_cast<size_t>(pixel_width) * pixel_height * bpp;
-
-    auto image = vk::Image(reinterpret_cast<VkImage>(image_bits));
 
     auto staging = Buffers::create_staging_buffer(byte_count);
     if (!staging) {
@@ -163,75 +154,30 @@ DataAccess readback_region(
         return s_fail;
     }
 
-    bool copy_ok = false;
-
-    buf_svc->execute_immediate([&](void* raw_cmd) {
-        auto cmd = static_cast<vk::CommandBuffer>(reinterpret_cast<VkCommandBuffer>(raw_cmd));
-
-        vk::ImageMemoryBarrier to_src;
-        to_src.oldLayout = vk::ImageLayout::ePresentSrcKHR;
-        to_src.newLayout = vk::ImageLayout::eTransferSrcOptimal;
-        to_src.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        to_src.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        to_src.image = image;
-        to_src.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
-        to_src.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
-        to_src.dstAccessMask = vk::AccessFlagBits::eTransferRead;
-
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eBottomOfPipe,
-            vk::PipelineStageFlagBits::eTransfer,
-            {}, {}, {}, to_src);
-
-        vk::BufferImageCopy region {};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 0;
-        region.bufferImageHeight = 0;
-        region.imageSubresource = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
-        region.imageOffset = vk::Offset3D {
-            static_cast<int32_t>(x_offset),
-            static_cast<int32_t>(y_offset),
-            0
-        };
-        region.imageExtent = vk::Extent3D { pixel_width, pixel_height, 1U };
-
-        cmd.copyImageToBuffer(image, vk::ImageLayout::eTransferSrcOptimal,
-            staging->get_buffer(), region);
-
-        vk::ImageMemoryBarrier to_present;
-        to_present.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
-        to_present.newLayout = vk::ImageLayout::ePresentSrcKHR;
-        to_present.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        to_present.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        to_present.image = image;
-        to_present.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
-        to_present.srcAccessMask = vk::AccessFlagBits::eTransferRead;
-        to_present.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
-
-        cmd.pipelineBarrier(
-            vk::PipelineStageFlagBits::eTransfer,
-            vk::PipelineStageFlagBits::eTopOfPipe,
-            {}, {}, {}, to_present);
-
-        copy_ok = true;
-    });
-
-    if (!copy_ok) {
-        buf_svc->destroy_buffer(std::static_pointer_cast<void>(staging));
-        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-            "SurfaceUtils::readback_region: GPU copy failed for '{}'",
-            window->get_create_info().title);
-        return s_fail;
-    }
-
     const auto& res = staging->get_buffer_resources();
 
     buf_svc->invalidate_range(res.memory, 0, byte_count);
-    const void* mapped = buf_svc->map_buffer(res.memory, 0, byte_count);
+    void* mapped = buf_svc->map_buffer(res.memory, 0, byte_count);
     if (!mapped) {
         buf_svc->destroy_buffer(std::static_pointer_cast<void>(staging));
         MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "SurfaceUtils::readback_region: staging map failed for '{}'",
+            window->get_create_info().title);
+        return s_fail;
+    }
+
+    const bool ok = display->readback_swapchain_region(
+        window_handle,
+        mapped,
+        x_offset, y_offset,
+        pixel_width, pixel_height,
+        byte_count);
+
+    if (!ok) {
+        buf_svc->unmap_buffer(res.memory);
+        buf_svc->destroy_buffer(std::static_pointer_cast<void>(staging));
+        MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+            "SurfaceUtils::readback_region: GPU copy failed for '{}'",
             window->get_create_info().title);
         return s_fail;
     }

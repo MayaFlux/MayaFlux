@@ -1,5 +1,7 @@
 #include "BackendWindowHandler.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/BackendResoureManager.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "VKCommandManager.hpp"
 #include "VKSwapchain.hpp"
 
@@ -196,6 +198,61 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             return 0;
 
         return reinterpret_cast<uint64_t>(static_cast<VkImage>(images[ctx->current_image_index]));
+    };
+
+    display_service->readback_swapchain_region = [this](
+                                                     const std::shared_ptr<void>& window_ptr,
+                                                     void* dst,
+                                                     uint32_t /*x_offset*/,
+                                                     uint32_t /*y_offset*/,
+                                                     uint32_t pixel_width,
+                                                     uint32_t pixel_height,
+                                                     size_t byte_count) -> bool {
+        auto window = std::static_pointer_cast<Window>(window_ptr);
+        auto* ctx = find_window_context(window);
+
+        if (!ctx || !ctx->swapchain) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "readback_swapchain_region: window '{}' has no swapchain",
+                window->get_create_info().title);
+            return false;
+        }
+
+        if (!m_resource_manager) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "readback_swapchain_region: resource manager not set");
+            return false;
+        }
+
+        const auto& images = ctx->swapchain->get_images();
+        if (ctx->current_image_index >= images.size()) {
+            MF_RT_ERROR(Journal::Component::Core, Journal::Context::GraphicsCallback,
+                "readback_swapchain_region: invalid image index {} for '{}'",
+                ctx->current_image_index, window->get_create_info().title);
+            return false;
+        }
+
+        auto proxy = std::make_shared<VKImage>(
+            pixel_width, pixel_height, 1U,
+            ctx->swapchain->get_image_format(),
+            VKImage::Usage::TEXTURE_2D,
+            VKImage::Type::TYPE_2D,
+            1U, 1U,
+            Kakshya::DataModality::IMAGE_COLOR);
+
+        VKImageResources res {};
+        res.image = images[ctx->current_image_index];
+        proxy->set_image_resources(res);
+        proxy->set_current_layout(vk::ImageLayout::ePresentSrcKHR);
+
+        m_resource_manager->download_image_data(
+            proxy,
+            dst,
+            byte_count,
+            vk::ImageLayout::ePresentSrcKHR,
+            vk::PipelineStageFlagBits::eBottomOfPipe);
+
+        return true;
     };
 }
 

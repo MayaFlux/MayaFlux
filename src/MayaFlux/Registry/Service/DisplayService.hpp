@@ -102,6 +102,36 @@ struct MAYAFLUX_API DisplayService {
      * Intended for read-only operations such as pixel readback.
      */
     std::function<uint64_t(const std::shared_ptr<void>&)> get_current_swapchain_image;
+
+    /**
+     * @brief Copy a sub-rectangle of the last presented swapchain image into
+     *        a caller-supplied host buffer.
+     *
+     * Internally calls BackendResourceManager::download_image_data with
+     * restore_layout = ePresentSrcKHR and restore_stage = eBottomOfPipe,
+     * which are the correct values for a swapchain image post-present.
+     *
+     * The destination buffer must be at least
+     * pixel_width * pixel_height * bytes_per_pixel bytes.
+     *
+     * @param window_handle  Window whose last presented image is the source.
+     * @param dst            Host-visible destination pointer.
+     * @param x_offset       Left edge of the source rectangle in pixels.
+     * @param y_offset       Top edge of the source rectangle in pixels.
+     * @param pixel_width    Width of the rectangle in pixels.
+     * @param pixel_height   Height of the rectangle in pixels.
+     * @param byte_count     Total bytes to read (width * height * bpp).
+     * @return true if the copy completed successfully.
+     */
+    std::function<bool(
+        const std::shared_ptr<void>& window_handle,
+        void* dst,
+        uint32_t x_offset,
+        uint32_t y_offset,
+        uint32_t pixel_width,
+        uint32_t pixel_height,
+        size_t byte_count)>
+        readback_swapchain_region;
 };
 
 } // namespace MayaFlux::Registry::Services

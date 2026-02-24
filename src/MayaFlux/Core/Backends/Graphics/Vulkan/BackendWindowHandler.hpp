@@ -12,6 +12,7 @@ class VKContext;
 class VKSwapchain;
 class VKCommandManager;
 class Window;
+class BackendResourceManager;
 
 struct WindowRenderContext {
     std::shared_ptr<Window> window;
@@ -82,6 +83,8 @@ public:
     // Cleanup
     void cleanup();
 
+    void set_resource_manager(BackendResourceManager* resource_manager) { m_resource_manager = resource_manager; }
+
 private:
     VKContext& m_context;
     VKCommandManager& m_command_manager;
@@ -116,6 +119,8 @@ private:
      * to input events.
      */
     void render_empty_window(WindowRenderContext& ctx);
+
+    BackendResourceManager* m_resource_manager {};
 };
 
 }
