@@ -29,6 +29,7 @@
 #include "MayaFlux/API/Proxy/Temporal.hpp"
 
 #ifdef MAYASIMPLE
+#include "Nodes/Constant.hpp"
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
 #include "Nodes/Generators/Impulse.hpp"
