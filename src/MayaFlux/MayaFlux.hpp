@@ -29,6 +29,7 @@
 #include "MayaFlux/API/Proxy/Temporal.hpp"
 
 #ifdef MAYASIMPLE
+#include "Nodes/Constant.hpp"
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
 #include "Nodes/Generators/Impulse.hpp"
@@ -50,6 +51,7 @@
 #include "MayaFlux/Nodes/Network/ModalNetwork.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
 #include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
+#include "MayaFlux/Nodes/Network/ResonatorNetwork.hpp"
 #include "MayaFlux/Nodes/Network/WaveguideNetwork.hpp"
 
 #include "MayaFlux/Nodes/Input/HIDNode.hpp"

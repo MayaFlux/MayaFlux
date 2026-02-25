@@ -353,8 +353,8 @@ TEST_F(WaveguideNetworkUnitTest, ConstructionAndDelayGeometry)
     EXPECT_DOUBLE_EQ(wg.get_fundamental(), 440.0);
     EXPECT_EQ(wg.get_type(), Nodes::Network::WaveguideNetwork::WaveguideType::STRING);
     EXPECT_EQ(wg.get_node_count(), 1);
-    EXPECT_EQ(wg.get_output_mode(), Nodes::Network::NodeNetwork::OutputMode::AUDIO_SINK);
-    EXPECT_EQ(wg.get_topology(), Nodes::Network::NodeNetwork::Topology::RING);
+    EXPECT_EQ(wg.get_output_mode(), Nodes::Network::OutputMode::AUDIO_SINK);
+    EXPECT_EQ(wg.get_topology(), Nodes::Network::Topology::RING);
 
     const double expected_total = TestConfig::SAMPLE_RATE / 440.0 - 0.5;
     const auto expected_integer = static_cast<size_t>(expected_total);

@@ -141,6 +141,7 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
         process_bidirectional(seg, num_samples);
     }
 
+    apply_output_scale();
     m_last_output = m_last_audio_buffer.back();
 }
 
@@ -429,6 +430,8 @@ void WaveguideNetwork::apply_broadcast_parameter(const std::string& param, doubl
         set_loss_factor(value);
     } else if (param == "position") {
         set_pickup_position(value);
+    } else if (param == "scale") {
+        m_output_scale = std::max(0.0, value);
     }
 }
 
@@ -502,6 +505,14 @@ std::optional<double> WaveguideNetwork::get_node_output(size_t index) const
         return m_last_output;
     }
     return std::nullopt;
+}
+
+std::optional<std::span<const double>> WaveguideNetwork::get_node_audio_buffer(size_t index) const
+{
+    if (index != 0 || m_last_audio_buffer.empty())
+        return std::nullopt;
+
+    return std::span<const double>(m_last_audio_buffer);
 }
 
 } // namespace MayaFlux::Nodes::Network

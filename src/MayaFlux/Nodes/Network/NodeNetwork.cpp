@@ -14,10 +14,22 @@ void NodeNetwork::ensure_initialized()
 
 std::optional<std::vector<double>> NodeNetwork::get_audio_buffer() const
 {
-    if (m_output_mode == OutputMode::AUDIO_SINK && !m_last_audio_buffer.empty()) {
+    if (
+        (m_output_mode == OutputMode::AUDIO_SINK
+            || m_output_mode == OutputMode::AUDIO_COMPUTE)
+        && !m_last_audio_buffer.empty()) {
         return m_last_audio_buffer;
     }
     return std::nullopt;
+}
+
+void NodeNetwork::apply_output_scale()
+{
+    if (m_output_scale == 1.0)
+        return;
+
+    for (auto& s : m_last_audio_buffer)
+        s *= m_output_scale;
 }
 
 [[nodiscard]] std::unordered_map<std::string, std::string>

@@ -201,6 +201,7 @@ public:
 
     [[nodiscard]] std::optional<double> get_node_output(size_t index) const override;
     [[nodiscard]] std::unordered_map<std::string, std::string> get_metadata() const override;
+    [[nodiscard]] std::optional<std::span<const double>> get_node_audio_buffer(size_t index) const override;
 
     //-------------------------------------------------------------------------
     // Parameter Mapping

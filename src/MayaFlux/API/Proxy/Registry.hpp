@@ -30,6 +30,7 @@ namespace Nodes {
         class NodeNetwork;
         class ModalNetwork;
         class WaveguideNetwork;
+        class ResonatorNetwork;
         class ParticleNetwork;
         class PointCloudNetwork;
     }
@@ -42,6 +43,7 @@ namespace Nodes {
         struct HIDConfig;
         struct MIDIConfig;
     }
+    class Constant;
 }
 
 namespace Buffers {
@@ -84,11 +86,13 @@ namespace Core {
     N(PathGeneratorNode, MayaFlux::Nodes::GpuSync::PathGeneratorNode)         \
     N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)     \
     N(TopologyGeneratorNode, MayaFlux::Nodes::GpuSync::TopologyGeneratorNode) \
-    N(ProceduralTextureNode, MayaFlux::Nodes::GpuSync::ProceduralTextureNode)
+    N(ProceduralTextureNode, MayaFlux::Nodes::GpuSync::ProceduralTextureNode) \
+    N(Constant, MayaFlux::Nodes::Constant)
 
 #define ALL_NODE_NETWORK_REGISTRATIONS                              \
     W(ModalNetwork, MayaFlux::Nodes::Network::ModalNetwork)         \
     W(WaveguideNetwork, MayaFlux::Nodes::Network::WaveguideNetwork) \
+    W(ResonatorNetwork, MayaFlux::Nodes::Network::ResonatorNetwork) \
     W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)   \
     W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork)
 

@@ -6,6 +6,42 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @enum Topology
+ * @brief Defines the structural relationships between nodes in the network
+ */
+enum class Topology : uint8_t {
+    INDEPENDENT, ///< No connections, nodes process independently
+    CHAIN, ///< Linear sequence: node[i] → node[i+1]
+    RING, ///< Circular: last node connects to first
+    GRID_2D, ///< 2D lattice with 4-connectivity
+    GRID_3D, ///< 3D lattice with 6-connectivity
+    SPATIAL, ///< Dynamic proximity-based (nodes within radius interact)
+    CUSTOM ///< User-defined arbitrary topology
+};
+
+/**
+ * @enum OutputMode
+ * @brief Defines how the network's computational results are exposed
+ */
+enum class OutputMode : uint8_t {
+    NONE, ///< Pure internal state, no external output
+    AUDIO_SINK, ///< Aggregated audio samples sent to output
+    AUDIO_COMPUTE, ///< processed each cycle but not sent to output
+    GRAPHICS_BIND, ///< State available for visualization (read-only)
+    CUSTOM ///< User-defined output handling via callbacks
+};
+
+/**
+ * @enum MappingMode
+ * @brief Defines how nodes map to external entities (e.g., audio channels,
+ * graphics objects)
+ */
+enum class MappingMode : uint8_t {
+    BROADCAST, ///< One node → all network nodes
+    ONE_TO_ONE ///< Node array/network → network nodes (must match count)
+};
+
+/**
  * @class NodeNetwork
  * @brief Abstract base class for structured collections of nodes with defined
  * relationships
@@ -77,41 +113,6 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API NodeNetwork {
 public:
-    /**
-     * @enum Topology
-     * @brief Defines the structural relationships between nodes in the network
-     */
-    enum class Topology : uint8_t {
-        INDEPENDENT, ///< No connections, nodes process independently
-        CHAIN, ///< Linear sequence: node[i] → node[i+1]
-        RING, ///< Circular: last node connects to first
-        GRID_2D, ///< 2D lattice with 4-connectivity
-        GRID_3D, ///< 3D lattice with 6-connectivity
-        SPATIAL, ///< Dynamic proximity-based (nodes within radius interact)
-        CUSTOM ///< User-defined arbitrary topology
-    };
-
-    /**
-     * @enum OutputMode
-     * @brief Defines how the network's computational results are exposed
-     */
-    enum class OutputMode : uint8_t {
-        NONE, ///< Pure internal state, no external output
-        AUDIO_SINK, ///< Aggregated audio samples sent to output
-        GRAPHICS_BIND, ///< State available for visualization (read-only)
-        CUSTOM ///< User-defined output handling via callbacks
-    };
-
-    /**
-     * @enum MappingMode
-     * @brief Defines how nodes map to external entities (e.g., audio channels,
-     * graphics objects)
-     */
-    enum class MappingMode : uint8_t {
-        BROADCAST, ///< One node → all network nodes
-        ONE_TO_ONE ///< Node array/network → network nodes (must match count)
-    };
-
     virtual ~NodeNetwork() = default;
 
     //-------------------------------------------------------------------------
@@ -152,6 +153,18 @@ public:
      * All channels requesting this network's output get the same buffer.
      */
     [[nodiscard]] virtual std::optional<std::vector<double>> get_audio_buffer() const;
+
+    /**
+     * @brief Get output of specific internal node as audio buffer (for ONE_TO_ONE mapping)
+     * @param index Index of node in network
+     * @return Optional span of samples for this node, or nullopt if not applicable
+     *
+     * For networks with multiple nodes, this allows external entities to access
+     * individual node outputs as separate audio buffers. Useful for granular
+     * synthesis, multi-voice processing, etc.
+     */
+    [[nodiscard]] virtual std::optional<std::span<const double>>
+    get_node_audio_buffer(size_t /*index*/) const { return std::nullopt; }
 
     //-------------------------------------------------------------------------
     // Configuration (Non-virtual, base class managed)
@@ -272,6 +285,17 @@ public:
      * @brief Remove parameter mapping
      */
     virtual void unmap_parameter(const std::string& param_name);
+
+    /**
+     * @brief Set the scalar multiplier applied to the network's output buffer after processing
+     * @param scale Linear scale factor (1.0 = unity, 0.0 = silence, >1.0 = amplify)
+     */
+    void set_output_scale(double scale) { m_output_scale = scale; }
+
+    /**
+     * @brief Get the current output scale factor
+     */
+    [[nodiscard]] double get_output_scale() const { return m_output_scale; }
 
     //-------------------------------------------------------------------------
     // Channel Registration (Mirrors Node interface)
@@ -440,6 +464,13 @@ protected:
     static std::unordered_map<size_t, std::vector<size_t>>
     build_chain_neighbors(size_t count);
 
+    /**
+     * @brief Apply m_output_scale to m_last_audio_buffer
+     *
+     * Call at the end of each concrete process_batch() after all samples are written.
+     */
+    void apply_output_scale();
+
     struct ParameterMapping {
         std::string param_name;
         MappingMode mode;
@@ -465,6 +496,7 @@ protected:
 
     // Cached buffer from last process_batch() call
     mutable std::vector<double> m_last_audio_buffer;
+    double m_output_scale { 1.0 }; ///< Post-processing scalar applied to m_last_audio_buffer each batch
 
 private:
     //-------------------------------------------------------------------------
