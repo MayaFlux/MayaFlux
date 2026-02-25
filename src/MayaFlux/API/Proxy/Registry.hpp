@@ -30,6 +30,7 @@ namespace Nodes {
         class NodeNetwork;
         class ModalNetwork;
         class WaveguideNetwork;
+        class ResonatorNetwork;
         class ParticleNetwork;
         class PointCloudNetwork;
     }
@@ -91,6 +92,7 @@ namespace Core {
 #define ALL_NODE_NETWORK_REGISTRATIONS                              \
     W(ModalNetwork, MayaFlux::Nodes::Network::ModalNetwork)         \
     W(WaveguideNetwork, MayaFlux::Nodes::Network::WaveguideNetwork) \
+    W(ResonatorNetwork, MayaFlux::Nodes::Network::ResonatorNetwork) \
     W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)   \
     W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork)
 

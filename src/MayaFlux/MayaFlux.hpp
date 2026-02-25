@@ -51,6 +51,7 @@
 #include "MayaFlux/Nodes/Network/ModalNetwork.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
 #include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
+#include "MayaFlux/Nodes/Network/ResonatorNetwork.hpp"
 #include "MayaFlux/Nodes/Network/WaveguideNetwork.hpp"
 
 #include "MayaFlux/Nodes/Input/HIDNode.hpp"
