@@ -154,6 +154,18 @@ public:
      */
     [[nodiscard]] virtual std::optional<std::vector<double>> get_audio_buffer() const;
 
+    /**
+     * @brief Get output of specific internal node as audio buffer (for ONE_TO_ONE mapping)
+     * @param index Index of node in network
+     * @return Optional span of samples for this node, or nullopt if not applicable
+     *
+     * For networks with multiple nodes, this allows external entities to access
+     * individual node outputs as separate audio buffers. Useful for granular
+     * synthesis, multi-voice processing, etc.
+     */
+    [[nodiscard]] virtual std::optional<std::span<const double>>
+    get_node_audio_buffer(size_t /*index*/) const { return std::nullopt; }
+
     //-------------------------------------------------------------------------
     // Configuration (Non-virtual, base class managed)
     //-------------------------------------------------------------------------

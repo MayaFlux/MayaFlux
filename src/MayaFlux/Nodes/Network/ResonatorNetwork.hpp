@@ -233,6 +233,17 @@ public:
      */
     void clear_resonator_exciter(size_t index);
 
+    /**
+     * @brief Set a NodeNetwork as a source of per-resonator excitation (ONE_TO_ONE)
+     * @param network NodeNetwork with get_node_count() == get_node_count()
+     */
+    void set_network_exciter(const std::shared_ptr<NodeNetwork>& network);
+
+    /**
+     * @brief Clear the network exciter
+     */
+    void clear_network_exciter();
+
     //-------------------------------------------------------------------------
     // Per-resonator parameter control
     //-------------------------------------------------------------------------
@@ -298,6 +309,9 @@ public:
      * @brief Current audio sample rate
      */
     [[nodiscard]] double get_sample_rate() const { return m_sample_rate; }
+
+    [[nodiscard]] std::optional<std::span<const double>>
+    get_node_audio_buffer(size_t index) const override;
 
     //-------------------------------------------------------------------------
     // Metadata
@@ -370,7 +384,11 @@ private:
 
     std::shared_ptr<Node> m_exciter; ///< networ-level shared exciter (may be nullptr)
 
+    std::shared_ptr<NodeNetwork> m_network_exciter; ///< Optional NodeNetwork exciter for ONE_TO_ONE mapping (may be nullptr)
+
     std::vector<double> m_last_audio_buffer; ///< Mixed output from last process_batch()
+
+    std::vector<std::vector<double>> m_node_buffers; ///< Per-resonator sample buffers populated each process_batch()
 
     struct ParameterMapping {
         std::string param_name;

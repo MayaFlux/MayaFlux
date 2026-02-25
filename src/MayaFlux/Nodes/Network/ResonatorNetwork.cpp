@@ -214,18 +214,33 @@ void ResonatorNetwork::process_batch(unsigned int num_samples)
     m_last_audio_buffer.assign(num_samples, 0.0);
     const double norm = 1.0 / static_cast<double>(m_resonators.size());
 
-    for (unsigned int s = 0; s < num_samples; ++s) {
-        for (auto& r : m_resonators) {
+    m_node_buffers.assign(m_resonators.size(), {});
+    for (auto& nb : m_node_buffers)
+        nb.reserve(num_samples);
+
+    std::vector<std::optional<std::span<const double>>> net_exc_bufs;
+    if (m_network_exciter) {
+        net_exc_bufs.reserve(m_resonators.size());
+        for (size_t ri = 0; ri < m_resonators.size(); ++ri)
+            net_exc_bufs.push_back(m_network_exciter->get_node_audio_buffer(ri));
+    }
+
+    for (size_t s = 0; s < num_samples; ++s) {
+        for (size_t ri = 0; ri < m_resonators.size(); ++ri) {
+            auto& r = m_resonators[ri];
             double excitation = 0.0;
 
             if (r.exciter) {
                 excitation = r.exciter->process_sample(0.0);
+            } else if (!net_exc_bufs.empty() && net_exc_bufs[ri] && s < net_exc_bufs[ri]->size()) {
+                excitation = (*net_exc_bufs[ri])[s];
             } else if (m_exciter) {
                 excitation = m_exciter->process_sample(0.0);
             }
 
             const double out = r.filter->process_sample(excitation) * r.gain;
             r.last_output = out;
+            m_node_buffers[ri].push_back(out);
             m_last_audio_buffer[s] += out * norm;
         }
     }
@@ -245,6 +260,13 @@ std::optional<double> ResonatorNetwork::get_node_output(size_t index) const
         return std::nullopt;
     }
     return m_resonators[index].last_output;
+}
+
+std::optional<std::span<const double>> ResonatorNetwork::get_node_audio_buffer(size_t index) const
+{
+    if (index >= m_node_buffers.size() || m_node_buffers[index].empty())
+        return std::nullopt;
+    return std::span<const double>(m_node_buffers[index]);
 }
 
 //-----------------------------------------------------------------------------
@@ -358,6 +380,16 @@ void ResonatorNetwork::clear_resonator_exciter(size_t index)
             "ResonatorNetwork::clear_resonator_exciter: index out of range (index={}, resonator_count={})", index, m_resonators.size());
     }
     m_resonators[index].exciter = nullptr;
+}
+
+void ResonatorNetwork::set_network_exciter(const std::shared_ptr<NodeNetwork>& network)
+{
+    m_network_exciter = network;
+}
+
+void ResonatorNetwork::clear_network_exciter()
+{
+    m_network_exciter = nullptr;
 }
 
 //-----------------------------------------------------------------------------

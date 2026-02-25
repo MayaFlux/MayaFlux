@@ -504,4 +504,12 @@ std::optional<double> WaveguideNetwork::get_node_output(size_t index) const
     return std::nullopt;
 }
 
+std::optional<std::span<const double>> WaveguideNetwork::get_node_audio_buffer(size_t index) const
+{
+    if (index != 0 || m_last_audio_buffer.empty())
+        return std::nullopt;
+
+    return std::span<const double>(m_last_audio_buffer);
+}
+
 } // namespace MayaFlux::Nodes::Network

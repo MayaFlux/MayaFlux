@@ -147,6 +147,9 @@ public:
     [[nodiscard]] std::unordered_map<std::string, std::string>
     get_metadata() const override;
 
+    [[nodiscard]] std::optional<std::span<const double>>
+    get_node_audio_buffer(size_t index) const override;
+
     //-------------------------------------------------------------------------
     // Parameter Mapping
     //-------------------------------------------------------------------------
@@ -359,6 +362,7 @@ private:
     double m_decay_multiplier = 1.0;
 
     mutable double m_last_output = 0.0;
+    std::vector<std::vector<double>> m_node_buffers; ///< Per-mode sample buffers populated each process_batch()
 
     //-------------------------------------------------------------------------
     // Exciter State

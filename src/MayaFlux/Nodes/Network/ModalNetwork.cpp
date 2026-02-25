@@ -268,12 +268,11 @@ void ModalNetwork::set_mode_coupling(size_t mode_a, size_t mode_b, double streng
 
 void ModalNetwork::remove_mode_coupling(size_t mode_a, size_t mode_b)
 {
-    m_couplings.erase(
-        std::remove_if(m_couplings.begin(), m_couplings.end(),
-            [mode_a, mode_b](const ModeCoupling& c) {
-                return (c.mode_a == mode_a && c.mode_b == mode_b) || (c.mode_a == mode_b && c.mode_b == mode_a);
-            }),
-        m_couplings.end());
+    std::erase_if(m_couplings,
+        [mode_a, mode_b](const ModeCoupling& c) {
+            return (c.mode_a == mode_a && c.mode_b == mode_b)
+                || (c.mode_a == mode_b && c.mode_b == mode_a);
+        });
 }
 
 void ModalNetwork::compute_mode_coupling()
@@ -308,15 +307,19 @@ void ModalNetwork::process_batch(unsigned int num_samples)
     update_mapped_parameters();
     m_last_audio_buffer.reserve(num_samples);
 
+    m_node_buffers.assign(m_modes.size(), {});
+    for (auto& nb : m_node_buffers)
+        nb.reserve(num_samples);
+
     for (size_t i = 0; i < num_samples; ++i) {
         double exciter_signal = generate_exciter_sample();
 
-        if (m_coupling_enabled && !m_couplings.empty()) {
+        if (m_coupling_enabled && !m_couplings.empty())
             compute_mode_coupling();
-        }
-        double sum = 0.0;
 
-        for (auto& mode : m_modes) {
+        double sum = 0.0;
+        for (size_t m = 0; m < m_modes.size(); ++m) {
+            auto& mode = m_modes[m];
 
             if (mode.amplitude > 0.0001) {
                 mode.amplitude *= mode.decay_coefficient;
@@ -325,7 +328,7 @@ void ModalNetwork::process_batch(unsigned int num_samples)
             }
 
             double sample = mode.oscillator->process_sample(0.0) * mode.amplitude;
-
+            m_node_buffers[m].push_back(sample);
             sum += sample;
         }
         m_last_audio_buffer.push_back(sum);
@@ -422,10 +425,8 @@ void ModalNetwork::map_parameter(
 
 void ModalNetwork::unmap_parameter(const std::string& param_name)
 {
-    m_parameter_mappings.erase(
-        std::remove_if(m_parameter_mappings.begin(), m_parameter_mappings.end(),
-            [&](const auto& m) { return m.param_name == param_name; }),
-        m_parameter_mappings.end());
+    std::erase_if(m_parameter_mappings,
+        [&](const auto& m) { return m.param_name == param_name; });
 }
 
 //-----------------------------------------------------------------------------
@@ -529,6 +530,13 @@ ModalNetwork::get_metadata() const
         return m_modes[index].oscillator->get_last_output();
     }
     return std::nullopt;
+}
+
+std::optional<std::span<const double>> ModalNetwork::get_node_audio_buffer(size_t index) const
+{
+    if (index >= m_node_buffers.size() || m_node_buffers[index].empty())
+        return std::nullopt;
+    return std::span<const double>(m_node_buffers[index]);
 }
 
 } // namespace MayaFlux::Nodes::Network
