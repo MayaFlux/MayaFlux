@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::has_active_readers" name="MayaFlux::Kakshya::SoundStreamContainer::has_active_readers">
+<area shape="rect" id="Node000001" title="Check if any dimensions currently have active readers." alt="" coords="5,5,177,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="225,13,432,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="177,30,212,30,212,35,177,35"/>
+</map>

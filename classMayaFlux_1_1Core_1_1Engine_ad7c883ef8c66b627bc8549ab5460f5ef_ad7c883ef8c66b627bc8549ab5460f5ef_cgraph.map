@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::Engine::~Engine" name="MayaFlux::Core::Engine::~Engine">
+<area shape="rect" id="Node000001" title="Destroys the Engine instance and cleans up resources." alt="" coords="5,5,181,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1Engine_aeafd948b381d94be47920247d2f75115.html#aeafd948b381d94be47920247d2f75115" title="Stops all processing and performs clean shutdown." alt="" coords="229,13,437,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,23,216,23,216,28,181,28"/>
+</map>

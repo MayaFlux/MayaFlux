@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::RenderFlow::get_current_image_view" name="MayaFlux::Portal::Graphics::RenderFlow::get_current_image_view">
+<area shape="rect" id="Node000001" title="Get current image view for window." alt="" coords="272,5,469,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a076382d38425260c61ab2180090258c5.html#a076382d38425260c61ab2180090258c5" title="Begin dynamic rendering to a window." alt="" coords="5,13,224,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,35,224,35,224,30,258,30"/>
+</map>

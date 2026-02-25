@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::unbind_buffer" name="MayaFlux::Buffers::ShaderProcessor::unbind_buffer">
+<area shape="rect" id="Node000001" title="Unbind a buffer from a descriptor." alt="" coords="261,5,444,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a28859d462f24596cf944a9b303b87898.html#a28859d462f24596cf944a9b303b87898" title="Remove a binding." alt="" coords="5,5,213,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,35,214,35,214,30,247,30"/>
+</map>

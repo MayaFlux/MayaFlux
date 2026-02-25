@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::RtAudioSingleton::mark_stream_closed" name="MayaFlux::Core::RtAudioSingleton::mark_stream_closed">
+<area shape="rect" id="Node000001" title="Deregisters an active audio stream from the system." alt="" coords="563,37,807,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1RtAudioStream_aeeff3aa1bdb72a4bebeca8370877e886.html#aeeff3aa1bdb72a4bebeca8370877e886" title="Terminates the audio stream and releases all resources." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="549,45,514,41,515,36,549,39"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a9854f64e246d04b4c2fcd5f2b508f22e.html#a9854f64e246d04b4c2fcd5f2b508f22e" title="Initializes the audio stream and allocates required resources." alt="" coords="284,69,515,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="549,75,515,79,514,74,549,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a838b8208585c81651e5feeb736348084.html#a838b8208585c81651e5feeb736348084" title="Ensures proper cleanup of stream resources." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

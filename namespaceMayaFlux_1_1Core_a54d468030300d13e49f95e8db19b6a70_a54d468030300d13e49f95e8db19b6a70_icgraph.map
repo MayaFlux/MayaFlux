@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::to_vk_format" name="MayaFlux::Core::to_vk_format">
+<area shape="rect" id="Node000001" title=" " alt="" coords="809,77,955,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKSwapchain_aaf073740edeebd7898331b08ba2c57cd.html#aaf073740edeebd7898331b08ba2c57cd" title="Choose best surface format from available formats based on config." alt="" coords="541,5,761,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="808,75,761,60,722,48,723,43,762,55,810,70"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aaf082c0521c39ed5dd7c6bb078b08a0f.html#aaf082c0521c39ed5dd7c6bb078b08a0f" title="Attach to a WindowContainer." alt="" coords="560,70,743,125"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="796,100,743,100,743,95,796,95"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aa8f3d77af39015f983f7e6d38e71a8d1.html#aa8f3d77af39015f983f7e6d38e71a8d1" title="Execute a full&#45;surface pixel readback." alt="" coords="560,149,743,203"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="811,124,733,151,731,146,809,119"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKSwapchain_ae4e56dd203c0a1860f59d00e0d50604f.html#ae4e56dd203c0a1860f59d00e0d50604f" title="Create swapchain for the given surface using VKContext." alt="" coords="273,5,493,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="528,28,494,28,494,23,528,23"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a77fe883ab4d94277b8d68aac94c9d76c.html#a77fe883ab4d94277b8d68aac94c9d76c" title="Recreate swapchain (for window resize)" alt="" coords="5,5,225,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="260,28,226,28,226,23,260,23"/>
+</map>

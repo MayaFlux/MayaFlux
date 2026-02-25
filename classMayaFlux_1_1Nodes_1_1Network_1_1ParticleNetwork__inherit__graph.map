@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ParticleNetwork" name="MayaFlux::Nodes::Network::ParticleNetwork">
+<area shape="rect" id="Node000001" title="Motion&#45;focused point network with swappable operators." alt="" coords="5,753,231,1213"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork.html" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="19,5,217,705"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,719,121,753,115,753,115,719"/>
+</map>

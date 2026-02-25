@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::add_network" name="MayaFlux::Nodes::NodeGraphManager::add_network">
+<area shape="rect" id="Node000001" title="Add a network to a processing token." alt="" coords="5,37,221,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="283,5,499,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,42,270,37,270,42,222,48"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a93c50c774cc8434a55e88215b3aa5fdd.html#a93c50c774cc8434a55e88215b3aa5fdd" title="Register network globally (like nodes)" alt="" coords="269,69,513,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="222,67,256,71,255,76,221,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_aeb0f9a55ec7d93a013314c8038aa6750.html#aeb0f9a55ec7d93a013314c8038aa6750" title="Check if network is registered globally." alt="" coords="561,69,792,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="513,87,548,87,548,92,513,92"/>
+</map>

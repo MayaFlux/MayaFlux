@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::GlfwWindow" name="MayaFlux::Core::GlfwWindow">
+<area shape="rect" id="Node000001" title="Platform&#45;agnostic window wrapper." alt="" coords="467,573,693,1153"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1Window.html" title="Platform&#45;agnostic window wrapper." alt="" coords="5,125,181,391"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,403,165,458,196,509,258,588,328,660,400,725,468,779,465,783,397,729,324,664,254,591,191,512,160,460,135,405"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1WindowCreateInfo.html" title="Configuration for creating a single window instance." alt="" coords="206,125,450,391"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="385,390,463,574,458,576,381,392"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1WindowState.html" title="Runtime state of a window (mutable by system, read by user)" alt="" coords="475,135,685,381"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="583,381,583,557,577,557,577,381"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Core_1_1InputConfig.html" title="Input configuration for a window." alt="" coords="709,175,907,341"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="780,342,698,559,693,557,775,340"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1EventSource.html" title="Awaitable event stream for window events." alt="" coords="931,5,1141,511"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="933,496,922,512,873,578,818,642,707,754,703,750,814,639,868,575,918,509,928,493"/>
+</map>

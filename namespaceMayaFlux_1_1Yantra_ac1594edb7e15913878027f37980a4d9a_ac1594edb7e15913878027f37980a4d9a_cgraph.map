@@ -1,0 +1,18 @@
+<map id="MayaFlux::Yantra::compute_cv_statistic" name="MayaFlux::Yantra::compute_cv_statistic">
+<area shape="rect" id="Node000001" title="Compute CV (Coefficient of Variation) statistic using zero&#45;copy processing." alt="" coords="5,147,204,187"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="59,147,56,137,64,128,80,122,105,120,133,123,149,130,146,135,132,128,105,125,81,127,67,132,61,138,64,146"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_aaafa1e20e4c30f5cf958dee7ec0132cc.html#aaafa1e20e4c30f5cf958dee7ec0132cc" title="Compute mean statistic using zero&#45;copy processing." alt="" coords="252,29,451,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="135,144,188,112,251,79,268,72,270,77,253,84,191,116,138,149"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a6b1a158103a130be7fae3abd021978a7.html#a6b1a158103a130be7fae3abd021978a7" title="Compute standard deviation statistic using zero&#45;copy processing." alt="" coords="252,117,451,157"/>
+<area shape="poly" id="edge4_Node000001_Node000003" title=" " alt="" coords="204,152,238,148,239,153,205,158"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_ad2f0572dfef62bb7629c7ef74ff29449.html#ad2f0572dfef62bb7629c7ef74ff29449" title="Calculate mean of single&#45;channel data." alt="" coords="745,154,876,179"/>
+<area shape="poly" id="edge9_Node000001_Node000005" title=" " alt="" coords="204,166,252,167,697,167,731,166,731,171,697,172,252,172,204,171"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_ac5d314d2c7c7550f063afda336d7a5c1.html#ac5d314d2c7c7550f063afda336d7a5c1" title="Calculate standard deviation of single&#45;channel data." alt="" coords="279,233,424,258"/>
+<area shape="poly" id="edge10_Node000001_Node000006" title=" " alt="" coords="169,184,298,226,297,231,167,189"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="306,30,303,20,310,10,327,5,351,3,380,6,395,13,393,18,378,11,351,8,328,10,313,15,308,21,311,28"/>
+<area shape="poly" id="edge5_Node000003_Node000003" title=" " alt="" coords="306,118,303,108,310,98,327,93,351,91,380,94,395,101,393,106,378,99,351,96,328,98,313,103,308,109,311,116"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_a1fae63c51525baa688d3e10343cea836.html#a1fae63c51525baa688d3e10343cea836" title="Compute variance statistic using zero&#45;copy processing." alt="" coords="499,117,697,157"/>
+<area shape="poly" id="edge6_Node000003_Node000004" title=" " alt="" coords="451,135,485,135,485,140,451,140"/>
+<area shape="poly" id="edge7_Node000004_Node000004" title=" " alt="" coords="558,118,556,108,562,98,577,93,598,91,623,94,636,101,634,106,621,99,598,96,578,98,566,103,561,109,564,116"/>
+<area shape="poly" id="edge8_Node000004_Node000005" title=" " alt="" coords="698,148,732,153,731,158,697,154"/>
+</map>

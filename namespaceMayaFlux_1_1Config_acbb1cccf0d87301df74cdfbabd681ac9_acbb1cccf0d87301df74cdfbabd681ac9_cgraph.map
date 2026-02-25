@@ -1,0 +1,7 @@
+<map id="MayaFlux::Config::sink_journal_to_console" name="MayaFlux::Config::sink_journal_to_console">
+<area shape="rect" id="Node000001" title="Outputs journal entries to the console by adding a ConsoleSink to the Archivist NOTE: This records th..." alt="" coords="5,37,176,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Journal_1_1Archivist_a129a86762e45b9743ff20b2b49d961b3.html#a129a86762e45b9743ff20b2b49d961b3" title="Add a log sink for output." alt="" coords="224,5,371,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="176,41,210,36,211,41,177,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="224,69,371,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="177,68,211,73,210,79,176,73"/>
+</map>

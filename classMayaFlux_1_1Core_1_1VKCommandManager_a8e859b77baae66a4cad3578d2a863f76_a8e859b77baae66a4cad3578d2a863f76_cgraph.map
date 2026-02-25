@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VKCommandManager::begin_single_time_commands" name="MayaFlux::Core::VKCommandManager::begin_single_time_commands">
+<area shape="rect" id="Node000001" title="Begin single&#45;time command (for transfers, etc.)" alt="" coords="5,5,221,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKCommandManager_ab25f2104b7f013fca0c7876ade0632b5.html#ab25f2104b7f013fca0c7876ade0632b5" title="Allocate a command buffer with specified level." alt="" coords="269,13,525,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,30,256,30,256,35,221,35"/>
+</map>

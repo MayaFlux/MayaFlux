@@ -1,0 +1,26 @@
+var classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge =
+[
+    [ "SamplerForge", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a65d8a4f5d8e73676ac909a077cb6a582.html#a65d8a4f5d8e73676ac909a077cb6a582", null ],
+    [ "SamplerForge", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a5ff203bd8d4aef824ce6b232b404b9d0.html#a5ff203bd8d4aef824ce6b232b404b9d0", null ],
+    [ "SamplerForge", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a12ea7e0baa5a0435e51c19a643f0a34c.html#a12ea7e0baa5a0435e51c19a643f0a34c", null ],
+    [ "~SamplerForge", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_aaa8ef6a3548a2f19b374a05309844760.html#aaa8ef6a3548a2f19b374a05309844760", null ],
+    [ "create_sampler", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_afa86f42384001799058f8318acca8434.html#afa86f42384001799058f8318acca8434", null ],
+    [ "destroy_sampler", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_acfad50a7438053e9d70abce48312b0e7.html#acfad50a7438053e9d70abce48312b0e7", null ],
+    [ "get_anisotropic", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_ade63c03afc20d0cee517408a7de6ba39.html#ade63c03afc20d0cee517408a7de6ba39", null ],
+    [ "get_default_linear", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a46fed27700393079b4a9ba50bb2073b1.html#a46fed27700393079b4a9ba50bb2073b1", null ],
+    [ "get_default_nearest", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a98abd9597dc9dce341946786fd85f57b.html#a98abd9597dc9dce341946786fd85f57b", null ],
+    [ "get_or_create", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_ad25bae266361d43df981d38d888b013e.html#ad25bae266361d43df981d38d888b013e", null ],
+    [ "get_sampler_count", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_acd63d3132c66e0a8fe7875fd6730db2c.html#acd63d3132c66e0a8fe7875fd6730db2c", null ],
+    [ "hash_config", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a90db6c9ddb1c049e8481bf49af7bea3e.html#a90db6c9ddb1c049e8481bf49af7bea3e", null ],
+    [ "initialize", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_af40bd9f25d2df079c638ebb513eb1653.html#af40bd9f25d2df079c638ebb513eb1653", null ],
+    [ "instance", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a880d0694e043c227ecf475a1beb906cb.html#a880d0694e043c227ecf475a1beb906cb", null ],
+    [ "is_initialized", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a15a0922824ec316d8aa5b8f8bb7e3e73.html#a15a0922824ec316d8aa5b8f8bb7e3e73", null ],
+    [ "operator=", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a37da39118dc6d9b58411570a07ffbf91.html#a37da39118dc6d9b58411570a07ffbf91", null ],
+    [ "operator=", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_af1da4de248505d3a97ea2acc2c79402a.html#af1da4de248505d3a97ea2acc2c79402a", null ],
+    [ "shutdown", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_acc55d7263cab1f2e742b78bff02500ac.html#acc55d7263cab1f2e742b78bff02500ac", null ],
+    [ "to_vk_address_mode", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a3601257f00f541625ec136c52dd88ce5.html#a3601257f00f541625ec136c52dd88ce5", null ],
+    [ "to_vk_filter", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a1f850f0d077848db00815e87087c3765.html#a1f850f0d077848db00815e87087c3765", null ],
+    [ "m_backend", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_afeaad3788621010513708ad3edeb5605.html#afeaad3788621010513708ad3edeb5605", null ],
+    [ "m_sampler_cache", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a3363b3dee3021c83976974a321d3504b.html#a3363b3dee3021c83976974a321d3504b", null ],
+    [ "s_initialized", "classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_a5ef983645bef6ac30581161b8f80108a.html#a5ef983645bef6ac30581161b8f80108a", null ]
+];

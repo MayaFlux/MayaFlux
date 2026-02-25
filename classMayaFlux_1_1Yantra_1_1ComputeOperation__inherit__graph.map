@@ -1,0 +1,40 @@
+<map id="MayaFlux::Yantra::ComputeOperation&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::ComputeOperation&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Base interface for all computational operations in the processing pipeline." alt="" coords="1469,5,1722,515"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer.html" title="Template&#45;flexible analyzer base with instance&#45;defined I/O types." alt="" coords="397,685,644,1265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1456,298,1307,343,1132,409,1041,451,951,497,864,550,784,609,746,642,710,680,646,760,642,757,706,676,742,639,780,605,861,546,948,493,1038,446,1130,405,1305,338,1454,293"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Yantra_1_1UniversalExtractor.html" title="Template&#45;flexible extractor base with instance&#45;defined I/O types." alt="" coords="1726,701,1974,1250"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="1693,527,1755,699,1750,701,1688,529"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter.html" title="Template&#45;flexible sorter base with instance&#45;defined I/O types." alt="" coords="1071,608,1301,1343"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="1464,495,1303,775,1299,772,1459,493"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer.html" title="Template&#45;flexible transformer base with instance&#45;defined I/O types." alt="" coords="1489,607,1702,1344"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="1598,529,1598,606,1593,606,1593,529"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title=" " alt="" coords="794,721,1047,1230"/>
+<area shape="poly" id="edge15_Node000001_Node000016" title=" " alt="" coords="1457,323,1360,373,1254,438,1201,476,1151,517,1104,561,1061,608,1024,662,994,722,989,719,1020,660,1057,605,1100,557,1148,512,1198,471,1251,433,1357,368,1455,318"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title=" " alt="" coords="1998,706,2275,1245"/>
+<area shape="poly" id="edge19_Node000001_Node000017" title=" " alt="" coords="1735,356,1799,407,1866,467,1931,534,1988,605,2019,653,2046,705,2041,707,2014,656,1984,608,1927,537,1863,471,1796,412,1731,360"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title=" " alt="" coords="2300,713,2539,1237"/>
+<area shape="poly" id="edge20_Node000001_Node000018" title=" " alt="" coords="1736,289,1871,330,1946,359,2022,395,2097,436,2168,485,2233,541,2289,605,2323,656,2350,712,2345,714,2318,659,2285,608,2229,545,2165,489,2094,441,2019,399,1943,364,1869,335,1735,294"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer.html" title="High&#45;performance energy analyzer with zero&#45;copy processing." alt="" coords="276,1478,523,2178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="480,1279,452,1478,446,1477,475,1279"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer.html" title="High&#45;performance statistical analyzer with zero&#45;copy processing." alt="" coords="5,1436,252,2220"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="393,1192,327,1312,266,1437,254,1463,250,1461,261,1435,322,1310,388,1189"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer.html" title=" " alt="" coords="547,1531,785,2125"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="575,1279,618,1530,613,1531,570,1280"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Yantra_1_1StandardSorter.html" title="Concrete implementation for standard comparison&#45;based sorting." alt="" coords="1064,1568,1292,2088"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1185,1356,1183,1568,1178,1568,1180,1356"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter.html" title=" " alt="" coords="810,1453,1039,2203"/>
+<area shape="poly" id="edge8_Node000007_Node000009" title=" " alt="" coords="1065,1342,1061,1346,1048,1355,1035,1358,1024,1361,1013,1370,987,1410,967,1454,962,1452,983,1407,1009,1366,1021,1356,1034,1353,1046,1350,1058,1342,1061,1338"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer.html" title="Concrete transformer for convolution&#45;based operations." alt="" coords="2089,1693,2355,1963"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1714,1340,1715,1342,1776,1360,1896,1388,2016,1415,2078,1434,2104,1461,2127,1490,2164,1556,2190,1625,2207,1692,2202,1694,2185,1627,2159,1558,2123,1493,2100,1464,2075,1438,2015,1420,1895,1393,1774,1365,1713,1346,1710,1344"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer.html" title="Concrete transformer for mathematical operations." alt="" coords="2379,1693,2646,1963"/>
+<area shape="poly" id="edge11_Node000010_Node000012" title=" " alt="" coords="1714,1340,1715,1342,1732,1350,1754,1356,1810,1362,1914,1365,1985,1371,2048,1369,2157,1361,2208,1363,2259,1372,2312,1395,2369,1434,2396,1460,2420,1489,2457,1554,2484,1624,2500,1692,2495,1694,2478,1626,2453,1557,2416,1492,2392,1463,2366,1438,2309,1400,2257,1378,2207,1368,2157,1367,2048,1375,1985,1376,1914,1371,1810,1367,1753,1362,1730,1355,1713,1346,1710,1344"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer.html" title="Concrete transformer for frequency&#45;domain operations." alt="" coords="1614,1686,1827,1970"/>
+<area shape="poly" id="edge12_Node000010_Node000013" title=" " alt="" coords="1696,1357,1698,1368,1716,1532,1723,1686,1717,1686,1710,1533,1693,1368,1691,1358"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer.html" title="Concrete transformer for time&#45;domain operations." alt="" coords="1851,1686,2065,1970"/>
+<area shape="poly" id="edge13_Node000010_Node000014" title=" " alt="" coords="1712,1337,1716,1342,1731,1360,1746,1372,1778,1387,1810,1403,1826,1416,1842,1434,1877,1494,1904,1558,1925,1623,1940,1685,1935,1687,1920,1625,1899,1560,1872,1496,1837,1438,1822,1420,1807,1408,1776,1392,1744,1376,1728,1364,1712,1346,1708,1340"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer.html" title=" " alt="" coords="1316,1452,1589,2204"/>
+<area shape="poly" id="edge14_Node000010_Node000015" title=" " alt="" coords="1487,1270,1465,1368,1453,1452,1448,1451,1459,1368,1482,1269"/>
+<area shape="poly" id="edge16_Node000016_Node000005" title=" " alt="" coords="843,1244,757,1531,752,1530,838,1243"/>
+<area shape="poly" id="edge17_Node000016_Node000009" title=" " alt="" coords="925,1244,926,1453,920,1453,919,1244"/>
+<area shape="poly" id="edge18_Node000016_Node000015" title=" " alt="" coords="904,1243,914,1290,929,1334,951,1375,981,1410,1007,1423,1044,1428,1139,1424,1236,1418,1276,1422,1305,1434,1324,1450,1321,1454,1302,1438,1274,1427,1236,1424,1139,1429,1044,1433,1005,1428,978,1414,947,1378,924,1336,908,1291,899,1244"/>
+</map>

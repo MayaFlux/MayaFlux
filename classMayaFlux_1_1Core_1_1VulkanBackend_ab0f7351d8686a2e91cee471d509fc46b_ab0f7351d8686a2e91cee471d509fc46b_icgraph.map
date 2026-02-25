@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::VulkanBackend::cleanup" name="MayaFlux::Core::VulkanBackend::cleanup">
+<area shape="rect" id="Node000001" title="Cleanup the graphics backend and release all resources." alt="" coords="284,5,515,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VulkanBackend_a450bbd176a47a37d8b295c4ce5d3103d.html#a450bbd176a47a37d8b295c4ce5d3103d" title=" " alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

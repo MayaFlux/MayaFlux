@@ -1,0 +1,5 @@
+<map id="MayaFlux::supply_buffer_to_channel" name="MayaFlux::supply_buffer_to_channel">
+<area shape="rect" id="Node000001" title="Supplies a buffer to a single channel with mixing." alt="" coords="236,5,419,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a85e658c39b619933f0dddf2008b737f9.html#a85e658c39b619933f0dddf2008b737f9" title="Supplies a buffer to multiple channels with mixing." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,28,188,28,188,23,223,23"/>
+</map>

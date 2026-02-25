@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::BufferOperation::capture" name="MayaFlux::Kriya::BufferOperation::capture">
+<area shape="rect" id="Node000001" title="Create a capture operation using BufferCapture configuration." alt="" coords="292,37,531,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a0f5c0ba5cc0e7bca02da90a3b6062038.html#a0f5c0ba5cc0e7bca02da90a3b6062038" title="Create a file capture operation that reads from file and stores in stream." alt="" coords="5,5,244,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="278,45,244,41,244,36,279,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_aa3f74b80ef42e88ebdab93349e468f4d.html#aa3f74b80ef42e88ebdab93349e468f4d" title="Create capture operation from input channel using convenience API." alt="" coords="5,69,244,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="279,75,244,79,244,73,278,70"/>
+</map>

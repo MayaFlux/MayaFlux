@@ -1,0 +1,9 @@
+<map id="MayaFlux::aspect_ratio" name="MayaFlux::aspect_ratio">
+<area shape="rect" id="Node000001" title="Get window aspect ratio (width/height)" alt="" coords="435,35,609,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ae2cc805f3bfc3981d00031be64056e60.html#ae2cc805f3bfc3981d00031be64056e60" title="Get window aspect ratio from window state." alt="" coords="212,5,387,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="421,37,386,32,387,27,421,31"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac70795128aaf814714e51932a118c898.html#ac70795128aaf814714e51932a118c898" title="Normalize coordinates preserving aspect ratio (useful for circular/square shapes)" alt="" coords="220,55,379,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="421,63,379,68,379,63,421,57"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ada9c26211fe6eaddce876cd5d5a52b2c.html#ada9c26211fe6eaddce876cd5d5a52b2c" title="Normalize coordinates preserving aspect ratio using window state." alt="" coords="5,55,164,95"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="206,78,164,78,164,73,206,73"/>
+</map>

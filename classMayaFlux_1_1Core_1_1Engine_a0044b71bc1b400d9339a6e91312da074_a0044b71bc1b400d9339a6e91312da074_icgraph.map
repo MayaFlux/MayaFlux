@@ -1,0 +1,14 @@
+<map id="MayaFlux::Core::Engine::Init" name="MayaFlux::Core::Engine::Init">
+<area shape="rect" id="Node000001" title="Initializes all system components and prepares for processing." alt="" coords="627,37,803,77"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="753,26,739,19,715,16,693,18,680,23,675,29,678,36,673,38,670,28,677,18,692,13,715,11,741,14,755,21"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1Engine_a3a51b9af2aedb19b784be6641bdcef1a.html#a3a51b9af2aedb19b784be6641bdcef1a" title="Initializes the processing engine with a custom stream configuration." alt="" coords="403,5,579,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="613,45,579,41,579,35,614,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1Engine_a780dcd6b2f3da01d574cba6e475e087c.html#a780dcd6b2f3da01d574cba6e475e087c" title="Starts the coordinated processing of all subsystems." alt="" coords="403,69,579,109"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="614,74,579,79,579,74,613,69"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a2955e2a3902c0ff3e7a7104fd584d27f.html#a2955e2a3902c0ff3e7a7104fd584d27f" title="Starts audio processing on the default engine." alt="" coords="229,77,355,102"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="389,92,355,92,355,87,389,87"/>
+<area shape="rect" id="Node000005" href="$main_8cpp_ae66f6b31b5ad750f1fe042a706a4e3d4.html#ae66f6b31b5ad750f1fe042a706a4e3d4" title=" " alt="" coords="66,47,121,73"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="215,81,121,67,121,61,216,75"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1Engine_afd59a3875597f3a7f239764e40104b6c.html#afd59a3875597f3a7f239764e40104b6c" title=" " alt="" coords="5,97,181,137"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="216,103,182,108,181,102,215,97"/>
+</map>

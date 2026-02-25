@@ -1,0 +1,6 @@
+<map id="MayaFlux::detect_onsets" name="MayaFlux::detect_onsets">
+<area shape="rect" id="Node000001" title="Detect onset times in single&#45;channel signal." alt="" coords="5,37,191,62"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a48d6edf10802baa81f1701d63ffb8b43.html#a48d6edf10802baa81f1701d63ffb8b43" title="Find onset positions using spectral flux." alt="" coords="239,29,405,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,47,225,47,225,52,191,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="280,30,278,20,284,10,299,5,322,3,348,6,362,13,360,18,347,11,322,8,300,10,288,15,283,21,285,28"/>
+</map>

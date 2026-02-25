@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kriya::pattern" name="MayaFlux::Kriya::pattern">
+<area shape="rect" id="Node000001" title="Creates a generative algorithm that produces values based on a pattern function." alt="" coords="443,13,625,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a42a25c1b0a46849e6804c5c24153fc50.html#a42a25c1b0a46849e6804c5c24153fc50" title="Schedules a pattern generator that produces values based on a pattern function." alt="" coords="205,13,395,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="429,28,395,28,395,23,429,23"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a870a8536c64a612c813800c78068a986.html#a870a8536c64a612c813800c78068a986" title="Schedules a pattern generator that produces values based on a pattern function and addes it to the de..." alt="" coords="5,5,157,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="192,28,157,28,157,23,192,23"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ChannelProcessor::on_attach" name="MayaFlux::Buffers::ChannelProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when processor is attached to a buffer." alt="" coords="5,5,168,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="216,13,389,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="168,30,202,30,202,35,168,35"/>
+</map>

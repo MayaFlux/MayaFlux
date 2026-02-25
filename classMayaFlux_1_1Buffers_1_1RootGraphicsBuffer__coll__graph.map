@@ -1,0 +1,24 @@
+<map id="MayaFlux::Buffers::RootGraphicsBuffer" name="MayaFlux::Buffers::RootGraphicsBuffer">
+<area shape="rect" id="Node000001" title="Root container for GPU buffer lifecycle management and batch processing." alt="" coords="737,1864,939,2324"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="739,1177,937,1815"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="841,1828,841,1864,835,1864,835,1828"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="406,511,587,1081"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="596,994,742,1292,737,1294,591,996"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="5,135,188,415"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="199,407,203,413,408,677,404,681,199,416,194,411"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="21,5,173,85"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="99,99,99,135,94,135,94,99"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1RenderConfig.html" title="Unified rendering configuration for graphics buffers." alt="" coords="213,145,402,405"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="353,404,370,452,403,542,398,544,365,454,348,406"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Buffers_1_1VKBufferResources.html" title=" " alt="" coords="427,215,567,335"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="499,335,499,494,494,494,494,335"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Buffers_1_1VKBuffer_1_1PipelineContext.html" title="Context shared with BufferProcessors during pipeline execution." alt="" coords="591,215,792,335"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="672,336,596,539,591,537,667,334"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Buffers_1_1RootBuffer_1_1PendingBufferOp.html" title="Structure for storing pending buffer add/remove operations." alt="" coords="836,207,1003,342"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="893,343,870,408,853,478,830,652,818,829,815,1002,818,1161,813,1161,810,1002,813,829,824,651,847,477,865,406,888,341"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="979,477,1177,1115"/>
+<area shape="poly" id="edge11_Node000010_Node000009" title=" " alt="" coords="933,342,958,453,977,516,972,517,953,454,928,343"/>
+<area shape="poly" id="edge9_Node000002_Node000010" title=" " alt="" coords="977,1098,939,1209,934,1207,972,1097"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="1037,242,1119,307"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="1081,321,1081,477,1075,477,1075,321"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::transform_exponential" name="MayaFlux::Yantra::transform_exponential">
+<area shape="rect" id="Node000001" title="Exponential transformation y = a * base^(b * x) (IN&#45;PLACE)" alt="" coords="336,37,543,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a0b777379cfaa76e8bfc8208d564122f6.html#a0b777379cfaa76e8bfc8208d564122f6" title="Exponential transformation y = a * base^(b * x) (OUT&#45;OF&#45;PLACE)" alt="" coords="43,5,250,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="322,47,250,39,251,34,322,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a6e33d648c252e4cff7c42a3d50779efb.html#a6e33d648c252e4cff7c42a3d50779efb" title="Core transformation implementation." alt="" coords="5,69,288,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="323,73,289,76,288,71,322,67"/>
+</map>

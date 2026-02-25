@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::restore_state" name="MayaFlux::Nodes::Generator::Polynomial::restore_state">
+<area shape="rect" id="Node000001" title="Restores the node&#39;s state from the last save Recursively cascades through all connected modulator nod..." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1HistoryBuffer_a1d998dcdb41648e0769c54ccca8b78a0.html#a1d998dcdb41648e0769c54ccca8b78a0" title="Restore previously saved state." alt="" coords="261,5,464,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,23,248,23,248,28,213,28"/>
+</map>

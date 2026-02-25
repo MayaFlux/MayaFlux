@@ -1,0 +1,17 @@
+<map id="MayaFlux::Kakshya::interleave_channels" name="MayaFlux::Kakshya::interleave_channels">
+<area shape="rect" id="Node000001" title="Interleave multiple channels of data into a single vector." alt="" coords="676,171,835,211"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a042de125fda620e471fd2a02de28805a.html#a042de125fda620e471fd2a02de28805a" title="Get the audio data as a specific type." alt="" coords="451,104,623,159"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="668,170,622,158,624,152,669,165"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a5a5f738d4e843355ce805d7891bf018b.html#a5a5f738d4e843355ce805d7891bf018b" title=" " alt="" coords="445,203,628,257"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="662,210,629,216,628,211,661,205"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ab03f87ed9ae6c628248b8125974e5102.html#ab03f87ed9ae6c628248b8125974e5102" title="Get multiple frames efficiently." alt="" coords="225,5,397,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="460,101,373,62,375,58,462,96"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a434879b574d2efee512dbb277bf691ab.html#a434879b574d2efee512dbb277bf691ab" title="Get a raw pointer to the underlying data storage." alt="" coords="225,84,397,139"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="437,125,397,122,398,116,437,120"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2df106c31610185cee99251f3bad8aa7.html#a2df106c31610185cee99251f3bad8aa7" title="Peek at data without advancing the read position." alt="" coords="225,163,397,217"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="438,160,398,170,397,165,437,155"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa439bfd4e77f899c063e07263effaaa3.html#aa439bfd4e77f899c063e07263effaaa3" title="Read data sequentially from the current position." alt="" coords="5,163,177,217"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="211,193,177,193,177,187,211,187"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a08dc4478282e0137fd1bde69318c0578.html#a08dc4478282e0137fd1bde69318c0578" title="Set the memory layout for this container." alt="" coords="225,241,397,296"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="432,251,398,257,397,251,431,245"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::SubsystemManager::get_graphics_subsystem" name="MayaFlux::Core::SubsystemManager::get_graphics_subsystem">
+<area shape="rect" id="Node000001" title="Get typed access to the graphics subsystem." alt="" coords="257,13,505,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a853a093ef4e7c5b11eff549ca074d78a.html#a853a093ef4e7c5b11eff549ca074d78a" title="Stop the graphics subsystem." alt="" coords="5,5,209,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="244,35,210,35,210,30,244,30"/>
+</map>

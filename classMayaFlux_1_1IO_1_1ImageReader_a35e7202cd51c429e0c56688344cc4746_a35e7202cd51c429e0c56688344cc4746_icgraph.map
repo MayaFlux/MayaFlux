@@ -1,0 +1,12 @@
+<map id="MayaFlux::IO::ImageReader::load" name="MayaFlux::IO::ImageReader::load">
+<area shape="rect" id="Node000001" title="Load image from file (static utility)" alt="" coords="700,37,903,77"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="844,26,829,19,801,16,777,18,762,23,757,29,760,36,755,38,752,28,759,18,776,13,801,11,830,14,846,21"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageReader_ae660058c52405b4605ecce4c631a4b44.html#ae660058c52405b4605ecce4c631a4b44" title="Load image directly into GPU texture (static utility)" alt="" coords="449,5,652,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="686,45,652,41,652,36,687,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ImageReader_a6f7eb96fe2b0cf72967ed2263dcaa23a.html#a6f7eb96fe2b0cf72967ed2263dcaa23a" title="Open a file for reading." alt="" coords="449,69,652,109"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="687,75,652,79,652,74,686,69"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a85ad9cceab7b34f8f0d1d425baa0e4ca.html#a85ad9cceab7b34f8f0d1d425baa0e4ca" title="Loads an image file into a TextureBuffer." alt="" coords="204,77,401,102"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="436,92,401,92,401,87,436,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_aa2e11e8495a68e8f168b49d86af99430.html#aa2e11e8495a68e8f168b49d86af99430" title=" " alt="" coords="5,69,156,109"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="190,92,156,92,156,87,190,87"/>
+</map>

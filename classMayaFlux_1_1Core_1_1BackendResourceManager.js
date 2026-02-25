@@ -1,0 +1,25 @@
+var classMayaFlux_1_1Core_1_1BackendResourceManager =
+[
+    [ "BackendResourceManager", "classMayaFlux_1_1Core_1_1BackendResourceManager_a627d81770342e30bf1c935a71959a3c5.html#a627d81770342e30bf1c935a71959a3c5", null ],
+    [ "~BackendResourceManager", "classMayaFlux_1_1Core_1_1BackendResourceManager_a1fe5c96d56ec273270cbd6d95450fd6c.html#a1fe5c96d56ec273270cbd6d95450fd6c", null ],
+    [ "cleanup", "classMayaFlux_1_1Core_1_1BackendResourceManager_a0b8f88d24279b446461742f7fcd82692.html#a0b8f88d24279b446461742f7fcd82692", null ],
+    [ "cleanup_buffer", "classMayaFlux_1_1Core_1_1BackendResourceManager_a0db85a56fc0aa2720febc7f3e8c3dbf9.html#a0db85a56fc0aa2720febc7f3e8c3dbf9", null ],
+    [ "cleanup_image", "classMayaFlux_1_1Core_1_1BackendResourceManager_a0d36804c3058228b8958634d74a89902.html#a0d36804c3058228b8958634d74a89902", null ],
+    [ "compute_sampler_hash", "classMayaFlux_1_1Core_1_1BackendResourceManager_a2dcea0b660ee62a482f77c4bb94bffa9.html#a2dcea0b660ee62a482f77c4bb94bffa9", null ],
+    [ "create_sampler", "classMayaFlux_1_1Core_1_1BackendResourceManager_a85e150c17138613c7bbf72fb8f53ea7f.html#a85e150c17138613c7bbf72fb8f53ea7f", null ],
+    [ "destroy_sampler", "classMayaFlux_1_1Core_1_1BackendResourceManager_a68057bd4430d7e35dd103f5d35219232.html#a68057bd4430d7e35dd103f5d35219232", null ],
+    [ "download_image_data", "classMayaFlux_1_1Core_1_1BackendResourceManager_aafa5d8311572679330d3f1d21407cc8c.html#aafa5d8311572679330d3f1d21407cc8c", null ],
+    [ "execute_immediate_commands", "classMayaFlux_1_1Core_1_1BackendResourceManager_a5dcf25547288ef33225a71929a05c358.html#a5dcf25547288ef33225a71929a05c358", null ],
+    [ "find_memory_type", "classMayaFlux_1_1Core_1_1BackendResourceManager_ab4e39f5b542838628a267c0cfe94dba4.html#ab4e39f5b542838628a267c0cfe94dba4", null ],
+    [ "flush_pending_buffer_operations", "classMayaFlux_1_1Core_1_1BackendResourceManager_a0ee80302063bcca06ed8e89aae653203.html#a0ee80302063bcca06ed8e89aae653203", null ],
+    [ "initialize_buffer", "classMayaFlux_1_1Core_1_1BackendResourceManager_ad1bfc97eb921df611d3503d11e6e2347.html#ad1bfc97eb921df611d3503d11e6e2347", null ],
+    [ "initialize_image", "classMayaFlux_1_1Core_1_1BackendResourceManager_a679073bdea75b683dc38931d4ad17d8c.html#a679073bdea75b683dc38931d4ad17d8c", null ],
+    [ "record_deferred_commands", "classMayaFlux_1_1Core_1_1BackendResourceManager_ae611d961802ca76657d758d0a834b5aa.html#ae611d961802ca76657d758d0a834b5aa", null ],
+    [ "setup_backend_service", "classMayaFlux_1_1Core_1_1BackendResourceManager_ae3f1ac9a86e74efe0b8afa6a4f57168f.html#ae3f1ac9a86e74efe0b8afa6a4f57168f", null ],
+    [ "transition_image_layout", "classMayaFlux_1_1Core_1_1BackendResourceManager_ab9333b3ff9c0372c1bf8af57a449c3b0.html#ab9333b3ff9c0372c1bf8af57a449c3b0", null ],
+    [ "upload_image_data", "classMayaFlux_1_1Core_1_1BackendResourceManager_ae6ec7e3044b266267de2e7fcb3c0f2e4.html#ae6ec7e3044b266267de2e7fcb3c0f2e4", null ],
+    [ "m_command_manager", "classMayaFlux_1_1Core_1_1BackendResourceManager_ab60f1c007e39ea245950b5507b754c02.html#ab60f1c007e39ea245950b5507b754c02", null ],
+    [ "m_context", "classMayaFlux_1_1Core_1_1BackendResourceManager_a8b31d33e80bd9af50cc059532d807cab.html#a8b31d33e80bd9af50cc059532d807cab", null ],
+    [ "m_managed_buffers", "classMayaFlux_1_1Core_1_1BackendResourceManager_af9faf2abf7351948d835c1a5d1f3ef61.html#af9faf2abf7351948d835c1a5d1f3ef61", null ],
+    [ "m_sampler_cache", "classMayaFlux_1_1Core_1_1BackendResourceManager_a64511ac80ad9ec297105b76594bde011.html#a64511ac80ad9ec297105b76594bde011", null ]
+];

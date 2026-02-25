@@ -1,0 +1,3 @@
+<map id="MayaFlux::IO::FFmpegContext" name="MayaFlux::IO::FFmpegContext">
+<area shape="rect" id="Node000001" title="RAII wrapper for FFmpeg contexts with proper cleanup." alt="" coords="5,5,217,311"/>
+</map>

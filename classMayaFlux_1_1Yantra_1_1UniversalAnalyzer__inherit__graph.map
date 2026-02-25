@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::UniversalAnalyzer&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::UniversalAnalyzer&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Template&#45;flexible analyzer base with instance&#45;defined I/O types." alt="" coords="276,564,523,1144"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer.html" title="High&#45;performance energy analyzer with zero&#45;copy processing." alt="" coords="5,1278,252,1978"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="294,1158,266,1237,251,1279,246,1277,261,1235,289,1156"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer.html" title="High&#45;performance statistical analyzer with zero&#45;copy processing." alt="" coords="276,1236,523,2020"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="402,1158,402,1236,397,1236,397,1158"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Yantra_1_1UniversalAnalyzer.html" title=" " alt="" coords="547,1331,785,1925"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="509,1156,537,1235,569,1330,564,1331,531,1237,504,1158"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="273,5,526,515"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="402,528,402,564,397,564,397,528"/>
+</map>

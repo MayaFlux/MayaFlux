@@ -1,0 +1,14 @@
+<map id="MayaFlux::Nodes::Input::HIDNode::extract_value" name="MayaFlux::Nodes::Input::HIDNode::extract_value">
+<area shape="rect" id="Node000001" title="Extract a scalar value from an InputValue." alt="" coords="5,69,191,109"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputValue_a131449a28bb0768f99fa6584b92f1e5e.html#a131449a28bb0768f99fa6584b92f1e5e" title=" " alt="" coords="239,5,440,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,67,250,46,251,51,175,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a9a5191762bc5b46f3fbfebdde29fb7a4.html#a9a5191762bc5b46f3fbfebdde29fb7a4" title="Parse axis value from HID report bytes." alt="" coords="251,69,427,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="191,87,238,87,238,92,191,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a07b6b53a0ac08245042db262ea4757bf.html#a07b6b53a0ac08245042db262ea4757bf" title="Parse button value from HID report bytes." alt="" coords="249,133,430,173"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="175,107,251,127,250,132,174,112"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_aead79997c067cb55df35d99d61645983.html#aead79997c067cb55df35d99d61645983" title=" " alt="" coords="488,41,691,81"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="427,77,474,72,474,77,428,82"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="739,78,905,103"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="428,89,488,91,691,91,725,90,725,96,691,96,488,96,427,95"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="691,71,725,76,724,81,691,77"/>
+</map>

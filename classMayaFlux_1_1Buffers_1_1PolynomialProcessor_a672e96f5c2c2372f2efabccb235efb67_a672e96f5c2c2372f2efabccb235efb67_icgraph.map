@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::PolynomialProcessor::process_span" name="MayaFlux::Buffers::PolynomialProcessor::process_span">
+<area shape="rect" id="Node000001" title="Processes a span of data using the polynomial function." alt="" coords="213,5,372,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1PolynomialProcessor_a149e4c6e69d0d4f115ec7f6c25f04ced.html#a149e4c6e69d0d4f115ec7f6c25f04ced" title="Processes an audio buffer using the polynomial function." alt="" coords="5,5,165,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,35,165,35,165,30,199,30"/>
+</map>

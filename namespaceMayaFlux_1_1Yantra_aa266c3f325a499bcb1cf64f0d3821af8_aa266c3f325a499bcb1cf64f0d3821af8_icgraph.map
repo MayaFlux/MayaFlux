@@ -1,0 +1,8 @@
+<map id="MayaFlux::Yantra::compute_rms_energy" name="MayaFlux::Yantra::compute_rms_energy">
+<area shape="rect" id="Node000001" title="Compute RMS energy using zero&#45;copy processing." alt="" coords="319,49,517,89"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="466,37,449,30,418,27,391,29,374,34,368,40,371,47,366,49,363,39,371,30,390,24,418,22,450,25,468,32"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aae10121eaa04e3e509079717b90890ef.html#aae10121eaa04e3e509079717b90890ef" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="40,5,236,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="305,57,236,48,237,43,306,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="5,85,271,125"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="305,86,271,90,271,85,305,81"/>
+</map>

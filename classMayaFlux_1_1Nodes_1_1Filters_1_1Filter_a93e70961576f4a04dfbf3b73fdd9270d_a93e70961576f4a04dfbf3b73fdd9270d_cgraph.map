@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Filters::Filter::Filter" name="MayaFlux::Nodes::Filters::Filter::Filter">
+<area shape="rect" id="Node000001" title="Constructor using string&#45;based filter configuration." alt="" coords="5,49,188,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter_a7d0d8d45b7af55d54c51d3f8ac0d5ad7.html#a7d0d8d45b7af55d54c51d3f8ac0d5ad7" title="Initializes the input and output history buffers." alt="" coords="236,5,419,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,52,222,46,223,52,189,57"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_1_1Filters_ae2ddf7b2bf77495486335c278b3fd6ce.html#ae2ddf7b2bf77495486335c278b3fd6ce" title="Parses a string representation of filter order into input/output shift configuration." alt="" coords="236,85,419,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="189,80,223,86,222,91,188,86"/>
+</map>

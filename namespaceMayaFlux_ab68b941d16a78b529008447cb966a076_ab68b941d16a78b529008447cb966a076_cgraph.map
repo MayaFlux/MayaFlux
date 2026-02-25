@@ -1,0 +1,5 @@
+<map id="MayaFlux::normalized_channels" name="MayaFlux::normalized_channels">
+<area shape="rect" id="Node000001" title="Normalize each channel independently (non&#45;destructive)" alt="" coords="5,5,172,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="220,13,387,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,23,206,23,206,28,173,28"/>
+</map>

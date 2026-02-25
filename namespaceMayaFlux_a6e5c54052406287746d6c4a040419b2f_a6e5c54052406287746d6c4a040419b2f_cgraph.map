@@ -1,0 +1,15 @@
+<map id="MayaFlux::get_input_subsystem" name="MayaFlux::get_input_subsystem">
+<area shape="rect" id="Node000001" title="Gets the input subsystem." alt="" coords="5,35,160,75"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="211,13,381,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="160,41,197,36,197,42,160,47"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1Engine_a5eb8d357adbd106bac8c3c9f452d9033.html#a5eb8d357adbd106bac8c3c9f452d9033" title="Get typed access to a specific subsystem." alt="" coords="208,63,384,103"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="160,62,195,67,194,72,160,67"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="432,5,603,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="382,23,418,23,418,28,382,28"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="651,5,795,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="603,23,637,23,637,28,603,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="843,5,993,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="795,23,829,23,829,28,795,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="1041,5,1188,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="994,23,1028,23,1028,28,994,28"/>
+</map>

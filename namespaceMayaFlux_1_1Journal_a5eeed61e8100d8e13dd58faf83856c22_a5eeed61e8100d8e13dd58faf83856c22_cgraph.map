@@ -1,0 +1,9 @@
+<map id="MayaFlux::Journal::print" name="MayaFlux::Journal::print">
+<area shape="rect" id="Node000001" title="printf&#45;style overload of print()." alt="" coords="5,69,152,109"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_ac8a0d998c1bbe834a1da5a0d15e7eef2.html#ac8a0d998c1bbe834a1da5a0d15e7eef2" title=" " alt="" coords="215,5,362,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="144,67,209,47,210,52,146,72"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="215,69,362,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="153,87,202,87,202,92,153,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Journal_1_1Archivist_a0e67b6b704802f641c0a18defc7862d1.html#a0e67b6b704802f641c0a18defc7862d1" title="Log a simple message without source location information." alt="" coords="200,133,377,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="146,107,210,127,209,132,144,112"/>
+</map>

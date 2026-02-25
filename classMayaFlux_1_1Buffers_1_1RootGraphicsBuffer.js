@@ -1,0 +1,26 @@
+var classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer =
+[
+    [ "RenderableBufferInfo", "structMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_1_1RenderableBufferInfo.html", "structMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_1_1RenderableBufferInfo" ],
+    [ "RootGraphicsBuffer", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_afaad2b09e9af69ad0f6551b2dff3ea85.html#afaad2b09e9af69ad0f6551b2dff3ea85", null ],
+    [ "~RootGraphicsBuffer", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_af4fcc63cad2a8fa7cc6fe7247ffe54fa.html#af4fcc63cad2a8fa7cc6fe7247ffe54fa", null ],
+    [ "add_renderable_buffer", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a5325aca51a6ceb50c25494c99697c816.html#a5325aca51a6ceb50c25494c99697c816", null ],
+    [ "cleanup_marked_buffers", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a4ef7b0e7dd634d15d3a54b7c3f369955.html#a4ef7b0e7dd634d15d3a54b7c3f369955", null ],
+    [ "clear_renderable_buffers", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a4a8ef66deb42238764706c5a2536e921.html#a4a8ef66deb42238764706c5a2536e921", null ],
+    [ "create_default_processor", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_afd83397dc57131bc5dc809b6210da4df.html#afd83397dc57131bc5dc809b6210da4df", null ],
+    [ "get_buffer_count", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a3086e126756dc90b94e2074b083f3349.html#a3086e126756dc90b94e2074b083f3349", null ],
+    [ "get_buffers_by_usage", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a6eb7513972ade1caeb7586f224318444.html#a6eb7513972ade1caeb7586f224318444", null ],
+    [ "get_child_buffers", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a46b6e3263033cd5360b8dee56ccaf223.html#a46b6e3263033cd5360b8dee56ccaf223", null ],
+    [ "get_final_processor", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a2901d2913f1c6dc769924b99624a03ea.html#a2901d2913f1c6dc769924b99624a03ea", null ],
+    [ "get_renderable_buffers", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a43f95e896132fd592e5ba78b46548d53.html#a43f95e896132fd592e5ba78b46548d53", null ],
+    [ "has_buffer", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_aed6376cc64a53f7e0ae25690932d1f0a.html#aed6376cc64a53f7e0ae25690932d1f0a", null ],
+    [ "initialize", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_ad8b2a9f9180353ed3d46beacd093d276.html#ad8b2a9f9180353ed3d46beacd093d276", null ],
+    [ "is_token_active", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a949cf6810fd00432d83b69f948a819f6.html#a949cf6810fd00432d83b69f948a819f6", null ],
+    [ "process_default", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a029200f36add1c03e20ad38528c6eded.html#a029200f36add1c03e20ad38528c6eded", null ],
+    [ "set_final_processor", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a4f306655233db6cdd35252d292bf3612.html#a4f306655233db6cdd35252d292bf3612", null ],
+    [ "set_token_active", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a8c3f221f2f4be118a8fdc222d110a7ae.html#a8c3f221f2f4be118a8fdc222d110a7ae", null ],
+    [ "GraphicsBatchProcessor", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a8d93af853b5d27b635bbcb42eb85a562.html#a8d93af853b5d27b635bbcb42eb85a562", null ],
+    [ "m_final_processor", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_abf1d65247a042435503d712ae8fff610.html#abf1d65247a042435503d712ae8fff610", null ],
+    [ "m_pending_removal", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_acdf5eb91112bb82ef69475b21657a81a.html#acdf5eb91112bb82ef69475b21657a81a", null ],
+    [ "m_renderable_buffers", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_a03dd9960b42ce21d9f39e29738d6d834.html#a03dd9960b42ce21d9f39e29738d6d834", null ],
+    [ "m_token_active", "classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer_ae3c8db1a44f578435527fcd173772047.html#ae3c8db1a44f578435527fcd173772047", null ]
+];

@@ -1,0 +1,13 @@
+<map id="AudioSubsystem.hpp" name="AudioSubsystem.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="137,5,295,31"/>
+<area shape="rect" id="Node000002" href="$Subsystem_8hpp.html" title=" " alt="" coords="53,86,176,111"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,33,142,79,139,75,199,29"/>
+<area shape="rect" id="Node000005" href="$AudioBackend_8hpp.html" title=" " alt="" coords="224,79,411,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="233,29,284,68,280,72,229,33"/>
+<area shape="rect" id="Node000003" href="$ProcessingArchitecture_8hpp.html" title="Unified processing architecture for multimodal subsystem coordination." alt="" coords="5,167,200,207"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="116,112,110,153,105,153,110,111"/>
+<area shape="rect" id="Node000004" href="$ProcessingTokens_8hpp.html" title=" " alt="" coords="5,255,200,295"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="105,207,105,241,100,241,100,207"/>
+<area shape="rect" id="Node000006" href="$GlobalStreamInfo_8hpp.html" title=" " alt="" coords="224,167,437,207"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="323,119,328,153,323,154,318,119"/>
+</map>

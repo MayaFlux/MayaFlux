@@ -1,0 +1,17 @@
+<map id="MayaFlux::add_processor" name="MayaFlux::add_processor">
+<area shape="rect" id="Node000001" title="Adds a processor to a specific buffer." alt="" coords="5,42,193,67"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_ab62f030499d58eb3e1d5c43ca3bc230e.html#ab62f030499d58eb3e1d5c43ca3bc230e" title="Gets the buffer manager from the default engine." alt="" coords="241,35,401,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,52,228,52,228,57,194,57"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1Engine_ae91ca2d8b17039d5aab98e53258bb777.html#ae91ca2d8b17039d5aab98e53258bb777" title="Gets the buffer manager." alt="" coords="449,5,625,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="401,41,435,36,436,42,402,46"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="452,70,623,95"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="402,62,439,67,438,73,401,68"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="673,63,844,103"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="623,80,659,80,659,85,623,85"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="892,63,1036,103"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="844,80,878,80,878,85,844,85"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="1084,63,1235,103"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1037,80,1070,80,1070,85,1037,85"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="1283,63,1429,103"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1235,80,1269,80,1269,85,1235,85"/>
+</map>

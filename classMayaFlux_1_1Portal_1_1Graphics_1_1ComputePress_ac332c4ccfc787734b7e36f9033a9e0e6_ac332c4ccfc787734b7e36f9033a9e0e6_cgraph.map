@@ -1,0 +1,5 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress::dispatch_indirect" name="MayaFlux::Portal::Graphics::ComputePress::dispatch_indirect">
+<area shape="rect" id="Node000001" title="Dispatch compute workgroups indirectly." alt="" coords="5,5,203,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab2be21f08a8e73058950c603e8a77020.html#ab2be21f08a8e73058950c603e8a77020" title="Get Vulkan command buffer handle from CommandBufferID." alt="" coords="251,13,523,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,30,237,30,237,35,203,35"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::safe_remove_callback" name="MayaFlux::Nodes::safe_remove_callback">
+<area shape="rect" id="Node000001" title="Safely removes a callback from a collection." alt="" coords="261,69,432,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node_ab5a5510902f880e76853b7c39783d058.html#ab5a5510902f880e76853b7c39783d058" title="Removes a previously registered callback." alt="" coords="21,5,198,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="258,68,183,48,185,43,259,63"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse_a05a9c802788b7ef5591846bc846cb26a.html#a05a9c802788b7ef5591846bc846cb26a" title="Removes a previously registered callback." alt="" coords="5,69,213,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="248,92,213,92,213,87,248,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a40e745678101c07b9b4987d908fbb288.html#a40e745678101c07b9b4987d908fbb288" title="Removes a previously registered callback." alt="" coords="5,133,213,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="259,116,185,136,183,131,258,110"/>
+</map>

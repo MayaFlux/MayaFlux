@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::extract_multiple_samples" name="MayaFlux::Buffers::extract_multiple_samples">
+<area shape="rect" id="Node000001" title="Extract multiple samples from a node into a vector." alt="" coords="216,13,407,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1NodeSourceProcessor_abefe4bc1e3c19335b91708c2d4deec41.html#abefe4bc1e3c19335b91708c2d4deec41" title="Gets a batch of data from the node." alt="" coords="5,5,168,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="202,35,168,35,168,30,202,30"/>
+</map>

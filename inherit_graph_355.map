@@ -1,0 +1,11 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,135,124,160"/>
+<area shape="rect" id="Node000001" href="$structMayaFlux_1_1Yantra_1_1OperationRegistry_1_1has__operation__category.html" title=" " alt="" coords="172,5,379,60"/>
+<area shape="poly" id="edge173_Node000000_Node000001" title=" " alt="" coords="90,124,127,96,171,69,194,58,196,63,173,74,130,101,93,128"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Yantra_1_1OperationRegistry_1_1has__operation__traits.html" title=" " alt="" coords="172,84,379,139"/>
+<area shape="poly" id="edge174_Node000000_Node000002" title=" " alt="" coords="137,132,171,126,172,132,138,138"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Yantra_1_1is__IO.html" title="Helper to detect if a type is an IO." alt="" coords="199,163,352,203"/>
+<area shape="poly" id="edge175_Node000000_Node000003" title=" " alt="" coords="138,157,199,168,198,173,137,162"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Yantra_1_1is__eigen__matrix.html" title=" " alt="" coords="199,227,352,267"/>
+<area shape="poly" id="edge176_Node000000_Node000004" title=" " alt="" coords="95,166,132,190,173,213,203,225,201,230,171,218,129,195,92,170"/>
+</map>

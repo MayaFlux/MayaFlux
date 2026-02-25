@@ -1,0 +1,7 @@
+<map id="MayaFlux::Journal::Archivist::Impl" name="MayaFlux::Journal::Archivist::Impl">
+<area shape="rect" id="Node000001" title=" " alt="" coords="42,1109,235,1729"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="13,572,264,1047"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="141,1047,141,1093,136,1093,136,1047"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="5,5,272,480"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="141,494,141,572,136,572,136,494"/>
+</map>

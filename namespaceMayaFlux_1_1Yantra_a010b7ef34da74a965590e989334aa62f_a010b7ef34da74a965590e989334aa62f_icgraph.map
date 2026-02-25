@@ -1,0 +1,19 @@
+<map id="MayaFlux::Yantra::process_spectral_windows" name="MayaFlux::Yantra::process_spectral_windows">
+<area shape="rect" id="Node000001" title="Common spectral processing helper to eliminate code duplication." alt="" coords="503,170,695,210"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a7823c1c101caf6098831e5ec802ebf19.html#a7823c1c101caf6098831e5ec802ebf19" title="Core transformation implementation for spectral operations." alt="" coords="5,99,200,153"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="578,160,557,127,529,91,494,58,454,32,399,13,353,9,306,16,249,33,217,46,186,63,135,101,132,96,183,58,214,41,247,28,305,11,353,3,400,8,456,28,497,54,533,88,562,124,583,157"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_ac51804b962e477d775ebe70dada765bf.html#ac51804b962e477d775ebe70dada765bf" title="Pitch shifting using existing FFT from AnalysisHelper with C++20 ranges (OUT&#45;OF&#45;PLACE)" alt="" coords="248,42,455,82"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="560,164,511,129,453,96,425,85,427,80,456,92,514,125,563,160"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_ac646e918f1e6a6e257ec45eacdff6be0.html#ac646e918f1e6a6e257ec45eacdff6be0" title="Pitch shifting using existing FFT from AnalysisHelper with C++20 ranges (IN&#45;PLACE)" alt="" coords="248,106,455,146"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="507,169,428,149,430,144,508,164"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_a975d5c9bcf0c18ed32c5416d6d801eb0.html#a975d5c9bcf0c18ed32c5416d6d801eb0" title="Spectral filtering using existing FFT infrastructure with C++20 ranges (OUT&#45;OF&#45;PLACE)" alt="" coords="248,170,455,210"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="489,193,455,193,455,187,489,187"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a3a44dffd00d6bfd66ea04d3d9f2a0683.html#a3a44dffd00d6bfd66ea04d3d9f2a0683" title="Spectral filtering using existing FFT infrastructure with C++20 ranges (IN&#45;PLACE)" alt="" coords="248,234,455,274"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="508,216,430,237,428,232,507,211"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_a0f65fefead3bd246bb66943966beeb05.html#a0f65fefead3bd246bb66943966beeb05" title="Spectral inversion (phase inversion in frequency domain) using C++20 ranges (OUT&#45;OF&#45;PLACE)" alt="" coords="248,298,455,338"/>
+<area shape="poly" id="edge8_Node000001_Node000007" title=" " alt="" coords="563,221,514,255,456,288,427,301,425,296,453,284,511,251,560,216"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_a9c717e7997f5cca25982ca194f25a351.html#a9c717e7997f5cca25982ca194f25a351" title="Spectral inversion (phase inversion in frequency domain) using C++20 ranges (IN&#45;PLACE)" alt="" coords="248,362,455,402"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="579,223,528,289,494,323,456,352,433,364,431,360,453,348,491,319,524,285,575,220"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="234,129,200,129,200,123,234,123"/>
+<area shape="poly" id="edge7_Node000006_Node000002" title=" " alt="" coords="264,232,247,224,188,191,137,156,141,151,191,186,249,220,266,227"/>
+</map>

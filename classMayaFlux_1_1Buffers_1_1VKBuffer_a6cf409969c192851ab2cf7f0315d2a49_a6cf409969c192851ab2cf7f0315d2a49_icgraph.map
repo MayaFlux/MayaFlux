@@ -1,0 +1,25 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_processing_chain" name="MayaFlux::Buffers::VKBuffer::get_processing_chain">
+<area shape="rect" id="Node000001" title="Access the buffer&#39;s processing chain." alt="" coords="249,393,476,433"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1CompositeGeometryBuffer_a648e67dd64cd724f38cd6e4a969c1b70.html#a648e67dd64cd724f38cd6e4a969c1b70" title="Add a geometry collection with explicit render config." alt="" coords="5,5,201,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="352,380,334,316,304,235,284,192,260,150,232,110,200,75,184,62,187,58,203,71,236,107,264,147,288,189,309,233,339,314,357,378"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_af6dd001810af7fa06b5b2fd83d04303a.html#af6dd001810af7fa06b5b2fd83d04303a" title="Create a clone of this buffer with the same data and properties." alt="" coords="29,85,177,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="348,380,328,327,297,262,254,196,228,166,200,139,176,124,179,120,203,135,232,162,258,193,301,260,333,325,353,378"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1CompositeGeometryBuffer_a44ec3dd3ca26067fdef53405de6c7696.html#a44ec3dd3ca26067fdef53405de6c7696" title="Initialize buffer processors." alt="" coords="5,149,201,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="341,382,284,301,244,257,200,217,182,206,185,202,203,213,248,253,288,298,345,379"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer_a4b3330629d9f0a4866ef5db19e24c7e4.html#a4b3330629d9f0a4866ef5db19e24c7e4" title="Initialize the buffer and its processors." alt="" coords="18,228,189,283"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="326,386,269,341,200,296,178,285,180,280,203,292,272,337,330,382"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_ad2976671728be8e38c0768ea2571c4df.html#ad2976671728be8e38c0768ea2571c4df" title="Initialize the buffer and its processors." alt="" coords="13,307,194,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="282,391,193,364,195,359,284,386"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ac67634c77e2bdb1c6e7c6f5bceb492c1.html#ac67634c77e2bdb1c6e7c6f5bceb492c1" title="Initialize the buffer, create GPU texture, and setup processors." alt="" coords="10,385,197,440"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="236,415,197,415,197,410,236,410"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a00b176eef7680a35ca43232088d67600.html#a00b176eef7680a35ca43232088d67600" title="Setup processors with a processing token." alt="" coords="27,464,180,519"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="284,439,181,471,180,466,282,434"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer_a4bed9c933e8e726e4d8633eda36d0a8e.html#a4bed9c933e8e726e4d8633eda36d0a8e" title="Setup rendering with RenderProcessor." alt="" coords="18,543,189,597"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="329,443,271,488,203,532,178,545,175,540,200,528,268,483,326,439"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a737c7476f1d59431ce65648a3b8b5206.html#a737c7476f1d59431ce65648a3b8b5206" title="Setup rendering with RenderProcessor." alt="" coords="13,621,194,676"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="344,446,287,527,248,572,203,611,183,623,180,619,200,607,244,568,283,524,340,443"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ae4283d11fe6637b7070b88c8df94484a.html#ae4283d11fe6637b7070b88c8df94484a" title="Setup rendering with RenderProcessor." alt="" coords="10,700,197,755"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="353,447,332,499,300,563,257,630,231,661,203,689,185,702,182,698,200,685,227,658,253,627,295,561,327,497,348,445"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a8246ebf4f6657f85f2d0c7c0854249d1.html#a8246ebf4f6657f85f2d0c7c0854249d1" title="Setup rendering with RenderProcessor." alt="" coords="27,779,180,833"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="357,447,340,513,311,598,290,644,266,688,237,730,203,768,182,784,178,780,200,764,233,727,261,685,285,641,306,596,335,511,352,445"/>
+</map>

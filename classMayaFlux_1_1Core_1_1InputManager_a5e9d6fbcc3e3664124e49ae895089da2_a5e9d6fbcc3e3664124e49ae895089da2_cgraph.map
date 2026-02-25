@@ -1,0 +1,17 @@
+<map id="MayaFlux::Core::InputManager::start" name="MayaFlux::Core::InputManager::start">
+<area shape="rect" id="Node000001" title="Start the processing thread." alt="" coords="5,85,228,125"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="304,5,471,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,82,290,56,291,61,193,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="287,85,488,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="228,102,273,102,273,107,228,107"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1InputManager_a23922bc754619bc6edb2e67b7ac4d9aa.html#a23922bc754619bc6edb2e67b7ac4d9aa" title=" " alt="" coords="276,149,499,189"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,122,290,143,288,148,201,127"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1InputManager_a81dc89fefa8fe16035c0f849e2b2be32.html#a81dc89fefa8fe16035c0f849e2b2be32" title=" " alt="" coords="547,149,769,189"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="499,166,533,166,533,171,499,171"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1InputManager_ae58da14f1b59ae4fcfdf0754fd6dfaec.html#ae58da14f1b59ae4fcfdf0754fd6dfaec" title=" " alt="" coords="817,149,1040,189"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="769,166,804,166,804,171,769,171"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1InputValue_ae01efb8d00817b4186bb78d114aadd95.html#ae01efb8d00817b4186bb78d114aadd95" title=" " alt="" coords="1088,117,1289,157"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1040,152,1074,148,1075,153,1041,158"/>
+<area shape="rect" id="Node000008" href="$structMayaFlux_1_1Core_1_1InputValue_a5ec2dc0bb7ad697dd696cb224e4bb82c.html#a5ec2dc0bb7ad697dd696cb224e4bb82c" title=" " alt="" coords="1088,181,1289,221"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="1041,180,1075,184,1074,189,1040,185"/>
+</map>

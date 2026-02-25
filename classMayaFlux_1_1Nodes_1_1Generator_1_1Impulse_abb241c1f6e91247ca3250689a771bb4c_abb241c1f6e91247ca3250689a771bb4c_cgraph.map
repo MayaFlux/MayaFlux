@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Impulse::on_impulse" name="MayaFlux::Nodes::Generator::Impulse::on_impulse">
+<area shape="rect" id="Node000001" title="Registers a callback for every impulse." alt="" coords="5,5,213,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a4cc726e3c21a41cdf05c43b6ab318057.html#a4cc726e3c21a41cdf05c43b6ab318057" title="Safely adds a callback to a collection if it doesn&#39;t already exist." alt="" coords="261,5,432,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,23,248,23,248,28,214,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a2d27a73b4696edf80f94f03a6605ef5a.html#a2d27a73b4696edf80f94f03a6605ef5a" title="Checks if a callback function already exists in a collection." alt="" coords="480,5,677,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="432,23,466,23,466,28,432,28"/>
+</map>

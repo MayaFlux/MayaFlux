@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Network::PathOperator::add_path" name="MayaFlux::Nodes::Network::PathOperator::add_path">
+<area shape="rect" id="Node000001" title="Add a new path with given control points and properties." alt="" coords="276,37,475,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator_ab8e2d6ba5340484729102905c53d3fe8.html#ab8e2d6ba5340484729102905c53d3fe8" title="Initialize a single path with given control points and properties." alt="" coords="17,5,216,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,46,216,40,217,35,263,41"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator_a4bc721e3d7f342f2500fb58a9b9dc0b7.html#a4bc721e3d7f342f2500fb58a9b9dc0b7" title="Initialize multiple paths with given control points and properties." alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="263,74,229,78,228,73,262,69"/>
+</map>

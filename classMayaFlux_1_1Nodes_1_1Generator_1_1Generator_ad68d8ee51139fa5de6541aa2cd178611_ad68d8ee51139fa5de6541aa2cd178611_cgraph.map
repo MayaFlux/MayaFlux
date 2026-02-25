@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Generator::enable_mock_process" name="MayaFlux::Nodes::Generator::Generator::enable_mock_process">
+<area shape="rect" id="Node000001" title="Allows RootNode to process the Generator without using the processed sample." alt="" coords="5,30,213,85"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="261,5,449,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,41,248,37,248,42,214,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a88c692052149167c04433fa84013bf15.html#a88c692052149167c04433fa84013bf15" title="Atomically removes a flag from a node state." alt="" coords="261,69,449,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,68,248,73,248,78,213,74"/>
+</map>

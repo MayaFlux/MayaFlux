@@ -1,0 +1,20 @@
+<map id="MayaFlux::Portal::Graphics::stop" name="MayaFlux::Portal::Graphics::stop">
+<area shape="rect" id="Node000001" title="Stop all Portal::Graphics operations." alt="" coords="5,165,203,205"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="251,5,448,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="121,163,175,110,211,81,249,55,262,48,265,53,252,60,214,85,179,114,125,167"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a427f34bcec94e920d4dbbb76ae7f175f.html#a427f34bcec94e920d4dbbb76ae7f175f" title=" " alt="" coords="251,69,448,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="147,163,250,119,270,111,272,116,252,124,149,168"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="251,133,448,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="203,170,237,165,238,171,203,175"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a544f1fadb55c58459349ebcc9254eaf2.html#a544f1fadb55c58459349ebcc9254eaf2" title=" " alt="" coords="251,197,448,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="203,196,238,200,237,205,203,201"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a5caaefa7ac32568cf867e030ad65a48e.html#a5caaefa7ac32568cf867e030ad65a48e" title=" " alt="" coords="251,261,448,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="149,203,252,247,272,254,270,259,250,252,147,208"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a801c60f0413377246f917c64dc54ad50.html#a801c60f0413377246f917c64dc54ad50" title="Stop active command recording and free command buffers." alt="" coords="251,325,448,365"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="125,204,179,257,214,286,252,311,265,318,262,322,249,316,211,290,175,261,121,207"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a52651a5a78f0c50974d443de43c776ac.html#a52651a5a78f0c50974d443de43c776ac" title="Free all allocated command buffers." alt="" coords="496,285,693,339"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="448,329,482,325,483,330,449,335"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="741,325,947,365"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="448,347,496,348,693,348,727,347,728,353,693,353,496,353,448,352"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="694,323,728,327,727,332,693,328"/>
+</map>

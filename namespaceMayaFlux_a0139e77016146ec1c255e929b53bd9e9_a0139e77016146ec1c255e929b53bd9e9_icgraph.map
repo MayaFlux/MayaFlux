@@ -1,0 +1,11 @@
+<map id="MayaFlux::load_audio_file" name="MayaFlux::load_audio_file">
+<area shape="rect" id="Node000001" title="Loads an audio file into a SoundFileContainer with automatic format detection." alt="" coords="292,109,484,134"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a0f5c0ba5cc0e7bca02da90a3b6062038.html#a0f5c0ba5cc0e7bca02da90a3b6062038" title="Create a file capture operation that reads from file and stores in stream." alt="" coords="5,5,244,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="348,105,243,60,206,48,207,43,245,55,350,100"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_ae7457d99167bee8e2b290c9cba5c9dfb.html#ae7457d99167bee8e2b290c9cba5c9dfb" title="Create CaptureBuilder for file with fluent configuration." alt="" coords="5,69,244,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="278,111,244,107,245,101,279,105"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_ab25c315c19da09dd46451cc13027d635.html#ab25c315c19da09dd46451cc13027d635" title="Create operation to route file data to DynamicSoundStream." alt="" coords="5,133,244,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="279,137,245,141,244,136,278,132"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Creator_ac8c01771aeaada8e8218b8a8eb83bbbb.html#ac8c01771aeaada8e8218b8a8eb83bbbb" title=" " alt="" coords="49,197,200,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="350,143,245,188,201,202,199,197,243,183,348,138"/>
+</map>

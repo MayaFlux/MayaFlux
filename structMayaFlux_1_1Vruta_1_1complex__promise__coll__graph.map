@@ -1,0 +1,7 @@
+<map id="MayaFlux::Vruta::complex_promise" name="MayaFlux::Vruta::complex_promise">
+<area shape="rect" id="Node000001" title="Coroutine promise type for complex processing tasks with multi&#45;rate scheduling." alt="" coords="19,757,204,897"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title=" " alt="" coords="5,388,217,708"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,722,114,757,109,757,109,722"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Vruta_1_1routine__promise.html" title="Base coroutine promise type for audio processing tasks." alt="" coords="13,5,210,325"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="114,339,114,388,109,388,109,339"/>
+</map>

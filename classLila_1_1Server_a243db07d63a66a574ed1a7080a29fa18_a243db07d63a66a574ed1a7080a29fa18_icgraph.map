@@ -1,0 +1,5 @@
+<map id="Lila::Server::read_message" name="Lila::Server::read_message">
+<area shape="rect" id="Node000001" title="Reads a message from a client." alt="" coords="200,5,332,45"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_a37724cbd86a53f3a079b9e0b524481a9.html#a37724cbd86a53f3a079b9e0b524481a9" title="Handles communication with a single client." alt="" coords="5,5,152,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="186,28,152,28,152,23,186,23"/>
+</map>

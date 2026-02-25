@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::BufferProcessor::processing_function" name="MayaFlux::Buffers::BufferProcessor::processing_function">
+<area shape="rect" id="Node000001" title="The core processing function that must be implemented by derived classes." alt="" coords="236,34,439,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_a8d78744c6eeea932aceea31ea7bf2559.html#a8d78744c6eeea932aceea31ea7bf2559" title="Applies a computational transformation to the data in the provided buffer." alt="" coords="5,5,188,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="222,47,188,42,189,36,223,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor_a473ed735ba43d3ad3e5ef11b404a5704.html#a473ed735ba43d3ad3e5ef11b404a5704" title="Internal processing method for non&#45;owning buffer contexts." alt="" coords="5,70,188,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="223,81,189,86,188,81,222,76"/>
+</map>

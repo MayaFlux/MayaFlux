@@ -1,0 +1,7 @@
+<map id="UniversalExtractor.hpp" name="UniversalExtractor.hpp">
+<area shape="rect" id="Node000001" title="Modern, digital&#45;first universal extractor framework for Maya Flux." alt="" coords="5,5,176,31"/>
+<area shape="rect" id="Node000002" href="$FeatureExtractor_8hpp.html" title="Concrete feature extractor using analyzer&#45;guided extraction." alt="" coords="12,79,169,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="93,44,93,79,88,79,88,44"/>
+<area shape="rect" id="Node000003" href="$Yantra_8cpp.html" title=" " alt="" coords="46,152,135,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="93,118,93,152,88,152,88,118"/>
+</map>

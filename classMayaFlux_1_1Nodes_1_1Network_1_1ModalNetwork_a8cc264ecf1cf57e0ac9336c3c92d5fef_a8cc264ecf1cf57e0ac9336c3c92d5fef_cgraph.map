@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::ModalNetwork::set_mode_coupling" name="MayaFlux::Nodes::Network::ModalNetwork::set_mode_coupling">
+<area shape="rect" id="Node000001" title="Define bidirectional coupling between two modes." alt="" coords="5,5,204,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a98190a554eee903b4d0535588830a76d.html#a98190a554eee903b4d0535588830a76d" title="Remove specific coupling." alt="" coords="252,5,451,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,30,238,30,238,35,204,35"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Nodes::Input::HIDNode::parse_axis" name="MayaFlux::Nodes::Input::HIDNode::parse_axis">
+<area shape="rect" id="Node000001" title="Parse axis value from HID report bytes." alt="" coords="5,35,181,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_aead79997c067cb55df35d99d61645983.html#aead79997c067cb55df35d99d61645983" title=" " alt="" coords="229,5,432,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,41,215,37,216,42,182,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac8ded33a4e354a3259e25ea984c19053.html#ac8ded33a4e354a3259e25ea984c19053" title="Normalize single&#45;channel data (non&#45;destructive)" alt="" coords="480,42,647,67"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="182,54,229,55,432,55,466,54,466,60,432,60,229,60,182,59"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="433,35,467,40,466,45,432,41"/>
+</map>

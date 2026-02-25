@@ -1,0 +1,11 @@
+<map id="MayaFlux::Kriya::EventChain::cancel" name="MayaFlux::Kriya::EventChain::cancel">
+<area shape="rect" id="Node000001" title="Cancels the event chain if it&#39;s currently executing." alt="" coords="5,69,216,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_aefd214af5e476f686dc86cc7d7220c96.html#aefd214af5e476f686dc86cc7d7220c96" title="Cancels and removes a task from the scheduler." alt="" coords="264,5,495,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,67,281,46,282,51,196,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1EventChain_a87ff306eecb63389bb7d505340c90274.html#a87ff306eecb63389bb7d505340c90274" title="Internal method to safely fire the on_complete callback." alt="" coords="274,69,485,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="216,87,261,87,261,92,216,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1EventChain_af92a8cd66f541eae8e57c51c613e708e.html#af92a8cd66f541eae8e57c51c613e708e" title="Checks if the event chain is currently active." alt="" coords="274,133,485,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="196,107,282,128,281,133,195,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_afb823dfb8ca7ec5182cfaa8e3ee93649.html#afb823dfb8ca7ec5182cfaa8e3ee93649" title="Find task entry by routine pointer." alt="" coords="543,5,773,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="495,23,529,23,529,28,495,28"/>
+</map>

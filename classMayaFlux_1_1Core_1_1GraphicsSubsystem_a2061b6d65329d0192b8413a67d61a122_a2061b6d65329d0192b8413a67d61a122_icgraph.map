@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GraphicsSubsystem::register_frame_processor" name="MayaFlux::Core::GraphicsSubsystem::register_frame_processor">
+<area shape="rect" id="Node000001" title="Register custom frame processor with scheduler." alt="" coords="273,5,472,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_ad5ec54c083defcdf92fdfbb15d47f782.html#ad5ec54c083defcdf92fdfbb15d47f782" title="Register callback hooks for this domain." alt="" coords="5,13,225,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="260,35,226,35,226,30,260,30"/>
+</map>

@@ -1,0 +1,10 @@
+<map id="MayaFlux::Buffers::TextureProcessor::update_pixels_if_dirty" name="MayaFlux::Buffers::TextureProcessor::update_pixels_if_dirty">
+<area shape="rect" id="Node000001" title="Re&#45;upload pixels to GPU if they changed." alt="" coords="5,39,192,93"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureProcessor_a074276cd9ffa82ba762d51bf0240190a.html#a074276cd9ffa82ba762d51bf0240190a" title="Create VKImage for texture storage." alt="" coords="240,5,423,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,50,226,45,227,50,193,55"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="471,46,668,86"/>
+<area shape="poly" id="edge4_Node000001_Node000003" title=" " alt="" coords="192,67,240,69,423,69,457,68,457,73,423,74,240,74,192,73"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="423,43,458,48,457,53,423,48"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="716,46,913,86"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="668,63,702,63,702,69,668,69"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Input::HIDNode::parse_button" name="MayaFlux::Nodes::Input::HIDNode::parse_button">
+<area shape="rect" id="Node000001" title="Parse button value from HID report bytes." alt="" coords="239,5,420,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode_a0c6611981fa29feaab354242db4daaf3.html#a0c6611981fa29feaab354242db4daaf3" title="Extract a scalar value from an InputValue." alt="" coords="5,5,191,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,28,191,28,191,23,225,23"/>
+</map>

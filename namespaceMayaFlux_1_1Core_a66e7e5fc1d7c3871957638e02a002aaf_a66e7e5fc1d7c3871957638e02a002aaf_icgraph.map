@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::get_surface_format_traits" name="MayaFlux::Core::get_surface_format_traits">
+<area shape="rect" id="Node000001" title="Query DataVariant&#45;dispatch traits for a surface format." alt="" coords="443,13,612,53"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_adf1a57ec9fd544212ad62643faacc3c3.html#adf1a57ec9fd544212ad62643faacc3c3" title="Read a pixel rectangle from the last completed swapchain frame into a DataVariant whose element type ..." alt="" coords="236,13,395,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="429,35,395,35,395,30,429,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor_aa8f3d77af39015f983f7e6d38e71a8d1.html#aa8f3d77af39015f983f7e6d38e71a8d1" title="Execute a full&#45;surface pixel readback." alt="" coords="5,5,188,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="222,35,188,35,188,30,222,30"/>
+</map>

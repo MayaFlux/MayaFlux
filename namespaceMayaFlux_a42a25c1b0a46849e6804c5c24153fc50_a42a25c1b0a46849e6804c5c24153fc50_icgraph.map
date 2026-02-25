@@ -1,0 +1,5 @@
+<map id="MayaFlux::create_pattern" name="MayaFlux::create_pattern">
+<area shape="rect" id="Node000001" title="Schedules a pattern generator that produces values based on a pattern function." alt="" coords="205,13,395,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a870a8536c64a612c813800c78068a986.html#a870a8536c64a612c813800c78068a986" title="Schedules a pattern generator that produces values based on a pattern function and addes it to the de..." alt="" coords="5,5,157,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,28,157,28,157,23,192,23"/>
+</map>

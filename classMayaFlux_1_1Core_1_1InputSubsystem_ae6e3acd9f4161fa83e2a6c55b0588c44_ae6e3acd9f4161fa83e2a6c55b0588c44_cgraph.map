@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputSubsystem::stop" name="MayaFlux::Core::InputSubsystem::stop">
+<area shape="rect" id="Node000001" title="Stop the subsystem&#39;s processing/event loops." alt="" coords="5,5,243,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputManagerHandle_a0d49652de420711631bfc5a12c50f2b4.html#a0d49652de420711631bfc5a12c50f2b4" title="stop InputManager" alt="" coords="291,5,513,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,23,277,23,277,28,243,28"/>
+</map>

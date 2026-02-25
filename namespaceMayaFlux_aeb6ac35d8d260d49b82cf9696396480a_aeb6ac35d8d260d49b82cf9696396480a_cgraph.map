@@ -1,0 +1,15 @@
+<map id="MayaFlux::Await" name="MayaFlux::Await">
+<area shape="rect" id="Node000001" title="Blocks launcher until user input (optional convenience function)" alt="" coords="5,42,136,67"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1Engine_a1855ee90d6ed5860c25e0faee3e5098b.html#a1855ee90d6ed5860c25e0faee3e5098b" title="Blocks until shutdown is requested (main thread event loop)" alt="" coords="184,5,360,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="136,43,170,38,171,43,137,48"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="187,70,357,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="137,61,174,66,173,72,136,66"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="408,63,579,103"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="358,80,394,80,394,85,358,85"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="627,63,771,103"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="579,80,613,80,613,85,579,85"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="819,63,969,103"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="771,80,805,80,805,85,771,85"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="1017,63,1164,103"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="970,80,1004,80,1004,85,970,85"/>
+</map>

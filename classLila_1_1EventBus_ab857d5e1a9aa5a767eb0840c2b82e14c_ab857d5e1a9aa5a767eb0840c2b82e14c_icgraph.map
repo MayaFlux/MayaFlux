@@ -1,0 +1,14 @@
+<map id="Lila::EventBus::publish" name="Lila::EventBus::publish">
+<area shape="rect" id="Node000001" title="Publish an event to all subscribers of its type." alt="" coords="412,95,581,121"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_ae16a69445e5d3ff3469e4e329977a573.html#ae16a69445e5d3ff3469e4e329977a573" title="Cleans up resources for a disconnected client." alt="" coords="209,5,364,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="450,93,338,48,340,43,452,88"/>
+<area shape="rect" id="Node000003" href="$classLila_1_1Server_a37724cbd86a53f3a079b9e0b524481a9.html#a37724cbd86a53f3a079b9e0b524481a9" title="Handles communication with a single client." alt="" coords="10,35,157,75"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="398,98,156,67,157,61,399,93"/>
+<area shape="rect" id="Node000004" href="$classLila_1_1Server_a59b7f591adc209cf231f3336d9ae45a3.html#a59b7f591adc209cf231f3336d9ae45a3" title="Starts the server and begins accepting clients." alt="" coords="220,121,353,146"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="399,122,354,128,353,123,398,117"/>
+<area shape="rect" id="Node000005" href="$classLila_1_1Server_a903e645c34e93ae5ca91421c8166272f.html#a903e645c34e93ae5ca91421c8166272f" title="Stops the server and disconnects all clients." alt="" coords="221,170,352,195"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="452,128,365,161,331,172,329,167,363,156,450,123"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="196,41,157,47,157,41,195,36"/>
+<area shape="rect" id="Node000006" href="$classLila_1_1Server_adfacc21753b2fcedec5e7a1f89c7d5c5.html#adfacc21753b2fcedec5e7a1f89c7d5c5" title="Destructor; stops the server if running." alt="" coords="5,170,161,195"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="208,185,161,185,161,180,208,180"/>
+</map>

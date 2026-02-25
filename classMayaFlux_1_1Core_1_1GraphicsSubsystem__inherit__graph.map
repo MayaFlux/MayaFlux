@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GraphicsSubsystem" name="MayaFlux::Core::GraphicsSubsystem">
+<area shape="rect" id="Node000001" title="Backend agnostic graphics subsystem for visual processing." alt="" coords="5,373,211,1003"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1ISubsystem.html" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="8,5,208,325"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,339,111,373,105,373,105,339"/>
+</map>

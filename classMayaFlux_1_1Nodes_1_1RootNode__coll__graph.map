@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::RootNode" name="MayaFlux::Nodes::RootNode">
+<area shape="rect" id="Node000001" title="Container for top&#45;level nodes in a processing channel with multi&#45;modal support." alt="" coords="5,168,229,633"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Nodes_1_1RootNode_1_1PendingOp.html" title="Structure for storing pending node registration/unregistration operations." alt="" coords="18,5,217,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,105,120,151,115,151,115,105"/>
+</map>

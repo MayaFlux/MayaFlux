@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::MIDIBackend::notify_device_change" name="MayaFlux::Core::MIDIBackend::notify_device_change">
+<area shape="rect" id="Node000001" title=" " alt="" coords="536,5,753,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a6b2a39ef093ddd1f55acc6addd9c2064.html#a6b2a39ef093ddd1f55acc6addd9c2064" title="Refresh the device list." alt="" coords="271,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="522,28,488,28,488,23,522,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a9af3e1ab56f287f5763f9b2a6c16bfde.html#a9af3e1ab56f287f5763f9b2a6c16bfde" title="Initialize the input backend." alt="" coords="5,5,223,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="257,28,223,28,223,23,257,23"/>
+</map>

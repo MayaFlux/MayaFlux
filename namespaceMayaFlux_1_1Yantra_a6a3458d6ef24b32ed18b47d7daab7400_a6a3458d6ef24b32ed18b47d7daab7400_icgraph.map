@@ -1,0 +1,10 @@
+<map id="MayaFlux::Yantra::transform_cross_correlate" name="MayaFlux::Yantra::transform_cross_correlate">
+<area shape="rect" id="Node000001" title="Cross&#45;correlation using FFT (convolution with time&#45;reversed impulse) (IN&#45;PLACE)" alt="" coords="591,33,797,73"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ConvolutionTransformer_a9d070c72f78555559c94e86b6274fcab.html#a9d070c72f78555559c94e86b6274fcab" title="Core transformation implementation for convolution operations." alt="" coords="5,5,288,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="600,33,542,24,412,17,288,19,288,13,412,12,543,19,601,28"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a16b7981e7ffe1c058c5eae0351560fa2.html#a16b7981e7ffe1c058c5eae0351560fa2" title="Matched filter using cross&#45;correlation for signal detection (IN&#45;PLACE)" alt="" coords="336,33,543,73"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="577,56,543,56,543,51,577,51"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_aeede47ef227de112c0d668d3fc0de51f.html#aeede47ef227de112c0d668d3fc0de51f" title="Matched filter using cross&#45;correlation for signal detection (OUT&#45;OF&#45;PLACE)" alt="" coords="336,97,543,137"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="601,79,520,100,519,95,600,74"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="322,45,288,42,289,36,323,40"/>
+</map>

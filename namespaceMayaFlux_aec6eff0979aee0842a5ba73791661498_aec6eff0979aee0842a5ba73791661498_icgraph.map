@@ -1,0 +1,39 @@
+<map id="MayaFlux::apply_gain" name="MayaFlux::apply_gain">
+<area shape="rect" id="Node000001" title="Apply gain to single&#45;channel data (in&#45;place)" alt="" coords="725,189,891,215"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aecf9f28de8f2ed0937b9166de38061e4.html#aecf9f28de8f2ed0937b9166de38061e4" title="Apply different gain to each channel (in&#45;place)" alt="" coords="512,125,677,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="746,188,669,167,670,162,748,183"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a72088d840d483a7dfe026b3b1d9484aa.html#a72088d840d483a7dfe026b3b1d9484aa" title=" " alt="" coords="291,5,409,31"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="731,219,678,223,620,220,562,207,535,195,510,179,495,163,487,146,484,111,482,76,475,60,462,44,437,29,409,22,410,17,439,24,466,40,480,57,487,75,490,110,493,144,500,160,514,175,538,190,564,202,620,215,678,218,730,214"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_aeeb5db3214dcd90b0778eea361e62276.html#aeeb5db3214dcd90b0778eea361e62276" title="Mix multiple data streams with equal weighting." alt="" coords="535,423,654,448"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="788,227,610,424,606,420,784,223"/>
+<area shape="poly" id="edge10_Node000004_Node000003" title=" " alt="" coords="580,411,547,327,509,221,500,168,498,123,496,103,491,84,480,64,462,44,438,29,409,21,410,16,440,24,466,40,484,61,496,82,501,102,504,123,505,167,515,220,552,326,585,409"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a7d678edca5be1c2bedf271a80f4e5b70.html#a7d678edca5be1c2bedf271a80f4e5b70" title="Connects a node directly to a specific audio buffer." alt="" coords="236,55,464,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="581,411,515,243,481,162,462,124,446,112,449,107,466,120,486,160,520,241,586,409"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingControl_a12821895ab2a40d4cb3f094878e46e9d.html#a12821895ab2a40d4cb3f094878e46e9d" title="Connects a node to a specific audio token and channel." alt="" coords="259,134,441,203"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="582,411,565,369,539,318,505,264,462,217,440,202,443,198,466,213,509,261,544,315,570,367,587,409"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a7df445e77dad9a2be3c5ccb20b654375.html#a7df445e77dad9a2be3c5ccb20b654375" title=" " alt="" coords="261,228,439,283"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="575,413,528,356,497,325,463,298,438,284,440,279,465,293,501,321,532,352,579,410"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a0834074b13c208449d0627c9ca96bb14.html#a0834074b13c208449d0627c9ca96bb14" title="Connects a node to a specific buffer." alt="" coords="258,307,442,347"/>
+<area shape="poly" id="edge7_Node000004_Node000008" title=" " alt="" coords="562,417,517,389,463,362,431,350,433,345,465,357,519,384,565,413"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1BufferManager_adac0b225d7baeb845bd9e8d739a87020.html#adac0b225d7baeb845bd9e8d739a87020" title=" " alt="" coords="261,372,439,427"/>
+<area shape="poly" id="edge8_Node000004_Node000009" title=" " alt="" coords="521,427,438,415,439,410,522,422"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_af8a61468789afc248ee2f890176d0fcd.html#af8a61468789afc248ee2f890176d0fcd" title="Connects a node to a specific output channel." alt="" coords="258,451,442,491"/>
+<area shape="poly" id="edge9_Node000004_Node000010" title=" " alt="" coords="522,449,443,460,442,455,521,443"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1NodeSourceProcessor_a020100c1153a3cd1d01078f8847e2f68.html#a020100c1153a3cd1d01078f8847e2f68" title="Sets the interpolation coefficient between existing and incoming data." alt="" coords="269,516,431,571"/>
+<area shape="poly" id="edge11_Node000004_Node000011" title=" " alt="" coords="561,457,465,506,433,519,431,514,463,501,558,452"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a2b509601b7218863702678b0d1092243.html#a2b509601b7218863702678b0d1092243" title="Supplies an external audio buffer to a specific token and channel." alt="" coords="263,595,437,649"/>
+<area shape="poly" id="edge12_Node000004_Node000012" title=" " alt="" coords="580,461,533,522,501,555,465,584,438,599,435,595,463,580,498,551,529,519,576,458"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a6a08ceffa342c802127f92786a27099e.html#a6a08ceffa342c802127f92786a27099e" title=" " alt="" coords="265,673,435,728"/>
+<area shape="poly" id="edge14_Node000004_Node000014" title=" " alt="" coords="588,462,571,505,546,559,511,614,489,640,466,663,436,681,434,676,462,659,486,636,506,611,541,557,566,503,583,460"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_a8f1eb4bef5683897c7977d5d1e0b9d84.html#a8f1eb4bef5683897c7977d5d1e0b9d84" title="Supplies a buffer to a single channel with mixing." alt="" coords="259,753,441,793"/>
+<area shape="poly" id="edge15_Node000004_Node000015" title=" " alt="" coords="592,463,581,520,558,595,541,635,521,674,496,710,466,741,443,756,440,752,462,737,491,706,516,671,536,632,553,593,576,519,587,461"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_a85e658c39b619933f0dddf2008b737f9.html#a85e658c39b619933f0dddf2008b737f9" title="Supplies a buffer to multiple channels with mixing." alt="" coords="5,774,188,814"/>
+<area shape="poly" id="edge17_Node000004_Node000016" title=" " alt="" coords="596,462,592,533,585,580,574,629,558,680,535,728,505,771,466,807,428,827,388,840,345,846,302,846,220,835,152,817,153,812,221,830,302,841,345,841,386,835,426,823,462,803,500,768,530,725,553,678,569,628,580,579,586,533,591,461"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_1_1Buffers_aaa0a91ed33cd8bedc7d3b7b3c0b8c28e.html#aaa0a91ed33cd8bedc7d3b7b3c0b8c28e" title="Apply node output to an existing buffer with mixing." alt="" coords="239,867,461,907"/>
+<area shape="poly" id="edge18_Node000004_Node000017" title=" " alt="" coords="596,462,590,537,571,641,554,697,532,752,503,804,466,851,440,869,437,865,462,847,498,801,527,750,549,695,566,640,584,537,590,462"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_a327d6aba60b88382cf4e9772615d5afc.html#a327d6aba60b88382cf4e9772615d5afc" title="Routes a buffer&#39;s processing from one channel to another with fade." alt="" coords="7,595,186,649"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="250,625,186,625,186,619,250,619"/>
+<area shape="poly" id="edge16_Node000015_Node000016" title=" " alt="" coords="245,784,188,789,188,784,245,779"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Buffers_1_1NodeSourceProcessor_abb9c8186748067cf20214a1f01b1575d.html#abb9c8186748067cf20214a1f01b1575d" title="Captures node computation output into a buffer." alt="" coords="15,860,178,915"/>
+<area shape="poly" id="edge19_Node000017_Node000018" title=" " alt="" coords="225,890,178,890,178,885,225,885"/>
+</map>

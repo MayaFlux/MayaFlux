@@ -1,0 +1,21 @@
+<map id="MayaFlux::Nodes::atomic_remove_flag" name="MayaFlux::Nodes::atomic_remove_flag">
+<area shape="rect" id="Node000001" title="Atomically removes a flag from a node state." alt="" coords="524,181,712,221"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator_ad68d8ee51139fa5de6541aa2cd178611.html#ad68d8ee51139fa5de6541aa2cd178611" title="Allows RootNode to process the Generator without using the processed sample." alt="" coords="265,5,473,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="588,172,538,123,475,75,451,63,454,58,477,70,541,119,592,168"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_af63eeb6345c84fd7e61860b99ca369bb.html#af63eeb6345c84fd7e61860b99ca369bb" title="Processes a single input sample and generates a sine wave sample." alt="" coords="265,85,473,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="563,177,475,139,440,127,442,122,477,134,565,172"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1RootNode_a827a622849583085c5b8486cb1641a6f.html#a827a622849583085c5b8486cb1641a6f" title="Adds a node to this root node." alt="" coords="265,149,472,189"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="510,190,472,185,473,179,511,184"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1ChainNode_aa4c379f3200f4853612587000424428f.html#aa4c379f3200f4853612587000424428f" title="Resets the processed state of the node and any attached input nodes." alt="" coords="261,213,476,253"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="511,217,476,222,476,216,510,212"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode_a851ea7ab5d7210f82ca623254f86576b.html#a851ea7ab5d7210f82ca623254f86576b" title="Resets the processed state of the node and any attached input nodes." alt="" coords="263,277,474,317"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="565,229,477,267,442,279,440,274,475,262,563,224"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Node_a9e6c5b1744c554c1d12a1bcf0490b2c4.html#a9e6c5b1744c554c1d12a1bcf0490b2c4" title="Resets the processed state of the node directly." alt="" coords="280,341,457,396"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="592,233,541,282,477,331,454,343,451,339,475,326,538,278,588,229"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a125814268df2731f1cc48170d935d6c1.html#a125814268df2731f1cc48170d935d6c1" title="Processes multiple samples at once." alt="" coords="5,85,213,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="251,107,214,107,214,102,251,102"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Node_ac690cb5b574ec82c80b693affafad7f2.html#ac690cb5b574ec82c80b693affafad7f2" title="Requests a reset of the processed state from a specific channel." alt="" coords="21,305,198,360"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="266,357,198,348,199,342,266,352"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Node_a616a185e0d4025da8ddbc5561a778581.html#a616a185e0d4025da8ddbc5561a778581" title="Resets the processed state of the node and any attached input nodes." alt="" coords="21,385,198,425"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="266,386,199,395,198,390,266,380"/>
+</map>

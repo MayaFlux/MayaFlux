@@ -1,0 +1,16 @@
+<map id="MayaFlux::Memory::HistoryBuffer::push" name="MayaFlux::Memory::HistoryBuffer::push">
+<area shape="rect" id="Node000001" title="Push new value to front of history." alt="" coords="585,127,788,167"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a9f74cfbd70d9b35e6b6d3caa4fa79e7e.html#a9f74cfbd70d9b35e6b6d3caa4fa79e7e" title=" " alt="" coords="317,5,532,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="636,123,536,74,508,63,510,58,538,69,639,118"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a6c5eaaf26f00522a8ee26bf0cd38c1e9.html#a6c5eaaf26f00522a8ee26bf0cd38c1e9" title="Processes a single sample." alt="" coords="317,163,533,203"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="572,166,533,171,533,166,571,160"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_aa1f0c2aeb85167039df9fdef62b81076.html#aa1f0c2aeb85167039df9fdef62b81076" title=" " alt="" coords="317,84,532,139"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="571,134,532,129,532,123,572,129"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1FeedbackProcessor_a833681ef35569b129b9e9d57aa941f2e.html#a833681ef35569b129b9e9d57aa941f2e" title="The core processing function that must be implemented by derived classes." alt="" coords="312,228,537,283"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="633,176,538,218,506,230,504,225,536,213,631,171"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_a474473fbb4038d846ed350acbd7e7312.html#a474473fbb4038d846ed350acbd7e7312" title="Process the network for the given number of samples." alt="" coords="5,53,264,93"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="304,52,264,57,264,52,303,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_afb0f9f325eeff81f429ee11b15cc5aac.html#afb0f9f325eeff81f429ee11b15cc5aac" title="Processes multiple samples at once." alt="" coords="31,163,239,203"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="303,186,239,186,239,181,303,181"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="303,98,264,93,264,87,304,93"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::RtAudioStream::open" name="MayaFlux::Core::RtAudioStream::open">
+<area shape="rect" id="Node000001" title="Initializes the audio stream and allocates required resources." alt="" coords="5,133,236,173"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Journal_ac8a0d998c1bbe834a1da5a0d15e7eef2.html#ac8a0d998c1bbe834a1da5a0d15e7eef2" title=" " alt="" coords="333,5,479,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="149,131,209,93,283,55,318,42,320,47,285,60,212,97,152,135"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a90b65b7aca61c04ab1ced9cff8c87c8c.html#a90b65b7aca61c04ab1ced9cff8c87c8c" title="Checks if the stream is initialized and ready for activation." alt="" coords="291,69,521,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="210,131,303,110,304,115,211,136"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1RtAudioSingleton_a3ed24df4feb48d6c2cad18123a3440d3.html#a3ed24df4feb48d6c2cad18123a3440d3" title="Deregisters an active audio stream from the system." alt="" coords="284,133,528,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="236,151,270,151,270,156,236,156"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1RtAudioSingleton_a96d4fe4fb71c3f249db00df07caa1c8d.html#a96d4fe4fb71c3f249db00df07caa1c8d" title="Registers an active audio stream in the system." alt="" coords="284,197,528,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="211,171,304,192,303,197,210,176"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1RtAudioStream_afe0234675be426a00e32be35e84ce422.html#afe0234675be426a00e32be35e84ce422" title="Static callback function for the RtAudio API." alt="" coords="291,261,521,301"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="152,171,212,209,285,247,306,255,304,260,283,252,209,214,149,176"/>
+</map>

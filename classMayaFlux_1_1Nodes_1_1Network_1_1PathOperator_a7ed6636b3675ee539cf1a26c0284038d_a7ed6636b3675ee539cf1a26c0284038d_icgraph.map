@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::PathOperator::get_point_count" name="MayaFlux::Nodes::Network::PathOperator::get_point_count">
+<area shape="rect" id="Node000001" title="Get source point count (before topology expansion)" alt="" coords="253,5,480,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator_ae2d672448f1dea809590200b9e9cfd3c.html#ae2d672448f1dea809590200b9e9cfd3c" title="Query operator internal state." alt="" coords="5,5,205,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="240,28,205,28,205,23,240,23"/>
+</map>

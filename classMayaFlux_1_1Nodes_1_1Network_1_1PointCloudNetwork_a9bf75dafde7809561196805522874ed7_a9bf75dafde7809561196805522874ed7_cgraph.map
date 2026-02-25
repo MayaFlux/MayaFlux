@@ -1,0 +1,16 @@
+<map id="MayaFlux::Nodes::Network::PointCloudNetwork::get_metadata" name="MayaFlux::Nodes::Network::PointCloudNetwork::get_metadata">
+<area shape="rect" id="Node000001" title="Get network metadata for debugging/visualization." alt="" coords="5,106,204,161"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_ad6c14660b161b3f6174a1528fd3c2fe9.html#ad6c14660b161b3f6174a1528fd3c2fe9" title="Get network metadata for debugging/visualization." alt="" coords="252,77,471,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,117,238,112,239,117,205,122"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a0c3c7a8d1b085dde69d89ed483e2bf6b.html#a0c3c7a8d1b085dde69d89ed483e2bf6b" title="Get the number of nodes in the network." alt="" coords="262,142,461,197"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="205,145,249,151,248,156,204,150"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_af24c0ffef2666eb05f2f14b7e297c14b.html#af24c0ffef2666eb05f2f14b7e297c14b" title="Get the number of nodes in the network." alt="" coords="519,5,749,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="437,75,544,46,545,51,439,80"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_ad5a21f007cb5e6328667ee852b6ad5fa.html#ad5a21f007cb5e6328667ee852b6ad5fa" title=" " alt="" coords="527,70,741,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="471,95,514,95,514,100,471,100"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NodeNetwork_a578ed1a9dcdf428b49a853724219e8c9.html#a578ed1a9dcdf428b49a853724219e8c9" title=" " alt="" coords="535,149,733,203"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="432,115,526,142,525,147,431,120"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="797,117,944,157"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="741,113,784,120,783,125,740,118"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="733,157,783,149,784,154,734,162"/>
+</map>

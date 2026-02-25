@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::TextureBuffer::get_texture" name="MayaFlux::Buffers::TextureBuffer::get_texture">
+<area shape="rect" id="Node000001" title="Get GPU texture image Suitable for binding to shaders via RenderProcessor::bind_texture()" alt="" coords="207,13,399,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_a8246ebf4f6657f85f2d0c7c0854249d1.html#a8246ebf4f6657f85f2d0c7c0854249d1" title="Setup rendering with RenderProcessor." alt="" coords="5,5,159,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,35,159,35,159,30,193,30"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="MayaFlux::Kakshya::find_references_in_region" name="MayaFlux::Kakshya::find_references_in_region">
+<area shape="rect" id="Node000001" title="Find all references in a reference list that overlap a given region." alt="" coords="5,29,195,69"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="59,30,56,20,63,10,78,5,100,3,126,6,140,13,138,18,124,11,100,8,79,10,66,15,61,21,64,28"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1Region_ae95deceda3d5ad80985dcc7ff619ae4d.html#ae95deceda3d5ad80985dcc7ff619ae4d" title="Check if the given coordinates are contained within this region." alt="" coords="243,29,401,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,47,229,47,229,52,195,52"/>
+</map>

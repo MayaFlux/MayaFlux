@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::BufferProcessingChain::add_processor" name="MayaFlux::Buffers::BufferProcessingChain::add_processor">
+<area shape="rect" id="Node000001" title="Adds a processor to the transformation pipeline for a specific buffer." alt="" coords="5,45,173,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_aef4792499996ee8634cf1b7ed0ee7aaa.html#aef4792499996ee8634cf1b7ed0ee7aaa" title=" " alt="" coords="249,5,417,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,56,235,46,236,51,174,62"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferProcessingChain_ad44f02158491b794de6ed249f039c824.html#ad44f02158491b794de6ed249f039c824" title=" " alt="" coords="221,84,444,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="174,83,208,89,208,94,173,89"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Buffers_a38e5853247532e5155b787a4d89b20cb.html#a38e5853247532e5155b787a4d89b20cb" title="Determines if two processing tokens are compatible for joint execution." alt="" coords="492,13,665,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="417,30,479,30,479,35,417,35"/>
+</map>

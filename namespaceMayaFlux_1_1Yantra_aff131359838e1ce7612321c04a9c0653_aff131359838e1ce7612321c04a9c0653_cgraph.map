@@ -1,0 +1,21 @@
+<map id="MayaFlux::Yantra::sort_compute_data_inplace" name="MayaFlux::Yantra::sort_compute_data_inplace">
+<area shape="rect" id="Node000001" title="Universal sort function &#45; handles extraction/conversion internally." alt="" coords="5,137,181,177"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ad367bd6ef37555bb3918e5545cac03bd.html#ad367bd6ef37555bb3918e5545cac03bd" title="extract numeric data from single&#45;variant types" alt="" coords="229,41,444,81"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="132,135,228,91,250,83,251,88,230,96,134,140"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Yantra_1_1IO_a1a9b17687ba38db3e916a40b4bcb08c5.html#a1a9b17687ba38db3e916a40b4bcb08c5" title="Check if a container reference is associated." alt="" coords="259,105,415,145"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="181,143,245,135,245,140,182,148"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Yantra_1_1IO_a5b78e7c4cba798f7b15961d1b0d2d8eb.html#a5b78e7c4cba798f7b15961d1b0d2d8eb" title="Check if processing is needed (for container types)" alt="" coords="259,169,415,209"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="182,166,245,175,245,180,181,172"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_a06b399b5c5804274f48a0f2309c1f79c.html#a06b399b5c5804274f48a0f2309c1f79c" title="Sort multiple channels (spans) in&#45;place." alt="" coords="253,233,420,273"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="134,175,230,219,251,226,250,231,228,224,132,180"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a619cf8d723774bd3554af2e67230fb10.html#a619cf8d723774bd3554af2e67230fb10" title="Convert variant to double span." alt="" coords="498,5,693,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="444,44,484,38,485,43,445,49"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1OperationHelper_ae302865851bb6340051d6bca19881848.html#ae302865851bb6340051d6bca19881848" title="Create DataVariant from Eigen matrix/vector." alt="" coords="492,70,699,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="445,74,479,78,478,84,444,79"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_a5a7b06ef96c6f13f45dbcebdb95ca0fe.html#a5a7b06ef96c6f13f45dbcebdb95ca0fe" title="Sort a single span of doubles in&#45;place." alt="" coords="512,233,679,273"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="420,251,498,251,498,256,420,256"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_a776a1e198fc8013f858e1fe93c386420.html#a776a1e198fc8013f858e1fe93c386420" title="Create standard direction&#45;based comparator for doubles." alt="" coords="752,201,935,241"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="678,240,738,232,738,238,679,245"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Yantra_a01e6e4bcb8d40dab36d495f0a8fb510a.html#a01e6e4bcb8d40dab36d495f0a8fb510a" title="Execute sorting algorithm on iterator range." alt="" coords="747,265,940,305"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="679,261,734,269,733,274,678,267"/>
+</map>

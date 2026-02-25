@@ -1,0 +1,15 @@
+<map id="MayaFlux::get_buffer_manager" name="MayaFlux::get_buffer_manager">
+<area shape="rect" id="Node000001" title="Gets the buffer manager from the default engine." alt="" coords="5,35,165,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1Engine_ae91ca2d8b17039d5aab98e53258bb777.html#ae91ca2d8b17039d5aab98e53258bb777" title="Gets the buffer manager." alt="" coords="213,5,389,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="165,41,199,36,200,42,166,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_ac4ab74951370ff0dd899203f3b94c775.html#ac4ab74951370ff0dd899203f3b94c775" title="Gets the default engine instance." alt="" coords="216,70,387,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="166,62,203,67,202,73,165,68"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1internal_ac0f0b4b1cae6af4441db0ea022e15583.html#ac0f0b4b1cae6af4441db0ea022e15583" title=" " alt="" coords="437,63,608,103"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="387,80,423,80,423,85,387,85"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1internal_a3cc5413e05c2f9c9f04372841aa0a5b1.html#a3cc5413e05c2f9c9f04372841aa0a5b1" title=" " alt="" coords="656,63,800,103"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="608,80,642,80,642,85,608,85"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Journal_1_1Archivist_a82e2d12db8781df4afc43ef4c1fba2be.html#a82e2d12db8781df4afc43ef4c1fba2be" title="Shutdown the logging system." alt="" coords="848,63,999,103"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="801,80,834,80,834,85,801,85"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Journal_1_1Archivist_a8b7829e34d79ec5bbbf02e3d4afbdab9.html#a8b7829e34d79ec5bbbf02e3d4afbdab9" title="Get the singleton instance of the Archivist." alt="" coords="1047,63,1193,103"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="999,80,1033,80,1033,85,999,85"/>
+</map>

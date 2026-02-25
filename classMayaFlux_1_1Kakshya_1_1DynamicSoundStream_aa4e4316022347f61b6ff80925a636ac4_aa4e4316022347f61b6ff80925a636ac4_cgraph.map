@@ -1,0 +1,25 @@
+<map id="MayaFlux::Kakshya::DynamicSoundStream::ensure_capacity" name="MayaFlux::Kakshya::DynamicSoundStream::ensure_capacity">
+<area shape="rect" id="Node000001" title="Pre&#45;allocate capacity for the specified number of frames." alt="" coords="5,158,180,213"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a76f02825c588ece2a442fa91655dd672.html#a76f02825c588ece2a442fa91655dd672" title=" " alt="" coords="228,158,403,213"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,183,214,183,214,188,180,188"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa614dad97adb83d9b5e5b10e839e033c.html#aa614dad97adb83d9b5e5b10e839e033c" title=" " alt="" coords="675,122,847,177"/>
+<area shape="poly" id="edge12_Node000001_Node000007" title=" " alt="" coords="137,156,196,122,273,83,360,47,450,20,499,9,539,3,579,6,626,21,659,38,688,61,734,110,730,113,685,64,656,42,624,26,578,11,540,9,500,15,451,26,361,52,275,88,199,126,139,160"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a2198982176e99651ef683458877dd741.html#a2198982176e99651ef683458877dd741" title="Get the total number of elements in the container." alt="" coords="452,269,624,324"/>
+<area shape="poly" id="edge13_Node000001_Node000008" title=" " alt="" coords="181,210,229,223,439,273,438,278,227,228,180,215"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a6ee56fd9b5665418b0968ddb46ee17c7.html#a6ee56fd9b5665418b0968ddb46ee17c7" title=" " alt="" coords="451,190,625,245"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="403,196,438,201,437,206,403,201"/>
+<area shape="poly" id="edge7_Node000002_Node000007" title=" " alt="" coords="403,176,661,155,661,160,403,181"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="367,211,452,255,463,261,461,266,449,260,365,216"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_ab6699b2bd18a8cce7d242a4b7bc27c8a.html#ab6699b2bd18a8cce7d242a4b7bc27c8a" title=" " alt="" coords="451,60,625,114"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="377,156,462,118,464,122,379,161"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kakshya_a446e512dc040ea0ab603d860100224a8.html#a446e512dc040ea0ab603d860100224a8" title="Get typed span from DataVariant using concepts." alt="" coords="681,202,840,242"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="626,217,668,217,667,223,626,222"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="625,188,661,177,662,182,626,194"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kakshya_ab16b9c38ab1e261f3f3e1d058c841d85.html#ab16b9c38ab1e261f3f3e1d058c841d85" title="Convert a span of one data type to another (with type conversion)." alt="" coords="896,202,1055,242"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="840,219,883,219,883,224,840,224"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1DataConverter_a5ada60bc3ff099a631f9a979e89feb19.html#a5ada60bc3ff099a631f9a979e89feb19" title=" " alt="" coords="1103,202,1277,242"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1055,219,1089,219,1089,224,1055,224"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_ab431dba6cb69464326e81fe5e4bf83b0.html#ab431dba6cb69464326e81fe5e4bf83b0" title="Get total elements across all dimensions." alt="" coords="673,269,848,324"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="624,294,659,294,659,299,624,299"/>
+<area shape="poly" id="edge11_Node000010_Node000010" title=" " alt="" coords="495,60,495,50,503,41,517,35,538,33,563,36,577,44,575,49,561,41,538,38,518,40,506,45,500,51,500,60"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::advance_read_position" name="MayaFlux::Kakshya::SoundStreamContainer::advance_read_position">
+<area shape="rect" id="Node000001" title="Advance the read position by a specified amount." alt="" coords="225,5,405,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_aa439bfd4e77f899c063e07263effaaa3.html#aa439bfd4e77f899c063e07263effaaa3" title="Read data sequentially from the current position." alt="" coords="5,5,177,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,35,177,35,177,30,212,30"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::DescriptorBindingsProcessor::bind_structured_node" name="MayaFlux::Buffers::DescriptorBindingsProcessor::bind_structured_node">
+<area shape="rect" id="Node000001" title="Bind structured node (arrays of POD structs) to descriptor." alt="" coords="5,45,213,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_ae72d99984f65f41164441d313ae0af88.html#ae72d99984f65f41164441d313ae0af88" title="Bind a VKBuffer to a named shader descriptor." alt="" coords="282,5,449,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,54,268,45,269,50,214,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a8d3ba64c18f7667ade571771cd137ff4.html#a8d3ba64c18f7667ade571771cd137ff4" title="Create GPU buffer for a descriptor binding." alt="" coords="261,84,469,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,86,248,91,247,96,213,91"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="535,48,701,103"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="469,94,521,86,522,92,470,99"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="517,127,719,167"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="470,123,504,128,503,134,469,129"/>
+</map>

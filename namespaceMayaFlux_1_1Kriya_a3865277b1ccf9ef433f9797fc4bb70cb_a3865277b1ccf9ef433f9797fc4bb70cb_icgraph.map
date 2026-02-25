@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::mouse_moved" name="MayaFlux::Kriya::mouse_moved">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on mouse movement." alt="" coords="259,5,439,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a04a9ebaa3b5d4ee64cd760f2efedf5c7.html#a04a9ebaa3b5d4ee64cd760f2efedf5c7" title="Schedule a mouse movement handler." alt="" coords="5,13,211,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="245,28,211,28,211,23,245,23"/>
+</map>

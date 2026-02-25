@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::NodeTextureProcessor" name="MayaFlux::Buffers::NodeTextureProcessor">
+<area shape="rect" id="Node000001" title="Uploads TextureNode pixel data to GPU textures via TextureLoom." alt="" coords="5,496,201,816"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBufferProcessor.html" title=" " alt="" coords="7,313,200,448"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="106,462,106,496,101,496,101,462"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="13,5,193,265"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="106,279,106,313,101,313,101,279"/>
+</map>

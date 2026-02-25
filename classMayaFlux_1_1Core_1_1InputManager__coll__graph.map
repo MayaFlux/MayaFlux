@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::InputManager" name="MayaFlux::Core::InputManager">
+<area shape="rect" id="Node000001" title="Manages input processing thread and node dispatch." alt="" coords="189,1095,403,1600"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title=" " alt="" coords="31,557,246,1032"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="209,1031,222,1078,217,1080,204,1033"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1RingBuffer.html" title="Policy&#45;driven unified circular buffer implementation." alt="" coords="5,5,272,480"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="141,494,141,557,136,557,136,494"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Registry_1_1Service_1_1InputService.html" title="Backend input device service interface." alt="" coords="270,735,429,855"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="346,855,325,1078,319,1078,341,855"/>
+</map>

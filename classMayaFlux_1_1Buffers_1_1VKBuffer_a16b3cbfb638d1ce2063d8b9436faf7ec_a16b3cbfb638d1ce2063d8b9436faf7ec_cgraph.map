@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::VKBuffer::set_vertex_layout" name="MayaFlux::Buffers::VKBuffer::set_vertex_layout">
+<area shape="rect" id="Node000001" title="Set vertex layout for this buffer." alt="" coords="5,5,161,60"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a69d6a400c22a219150d8b28007441d5d.html#a69d6a400c22a219150d8b28007441d5d" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="209,5,383,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="162,30,196,30,196,35,162,35"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a544b48334c1b582e8bf50da8215d2095.html#a544b48334c1b582e8bf50da8215d2095" title="Get size in bytes for a given modality Mirrors VKBuffer::get_format() logic." alt="" coords="431,5,605,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="383,30,417,30,417,35,383,35"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::MIDIBackend::~MIDIBackend" name="MayaFlux::Core::MIDIBackend::~MIDIBackend">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,223,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1MIDIBackend_adec6b5cd54b03a0e122a8cfed782e6f2.html#adec6b5cd54b03a0e122a8cfed782e6f2" title="Shutdown and release all resources." alt="" coords="271,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="223,23,257,23,257,28,223,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1MIDIBackend_ab5fb880e90c01aa7c9db9b71297997c9.html#ab5fb880e90c01aa7c9db9b71297997c9" title="Stop listening for input events." alt="" coords="536,5,753,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="488,23,523,23,523,28,488,28"/>
+</map>

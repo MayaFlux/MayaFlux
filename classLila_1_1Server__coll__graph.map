@@ -1,0 +1,7 @@
+<map id="Lila::Server" name="Lila::Server">
+<area shape="rect" id="Node000001" title="TCP server for interactive live coding sessions in MayaFlux." alt="" coords="48,333,255,879"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1ServerThread.html" title="Fallback std::thread&#45;based thread wrapper with manual stop signaling." alt="" coords="5,5,143,271"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="78,271,82,309,83,317,78,317,77,310,73,271"/>
+<area shape="rect" id="Node000003" href="$classLila_1_1EventBus.html" title="Thread&#45;safe event subscription and publishing system for Lila." alt="" coords="167,75,290,201"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="221,202,202,317,197,316,216,201"/>
+</map>

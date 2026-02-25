@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Generator::Phasor::remove_threshold_callback" name="MayaFlux::Nodes::Generator::Phasor::remove_threshold_callback">
+<area shape="rect" id="Node000001" title="Removes a previously registered phase wrap callback." alt="" coords="261,5,469,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor_a40e745678101c07b9b4987d908fbb288.html#a40e745678101c07b9b4987d908fbb288" title="Removes a previously registered callback." alt="" coords="5,13,213,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="248,35,213,35,213,30,248,30"/>
+</map>

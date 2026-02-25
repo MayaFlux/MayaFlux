@@ -1,0 +1,23 @@
+<map id="MayaFlux::IO::SoundFileReader::load_into_container" name="MayaFlux::IO::SoundFileReader::load_into_container">
+<area shape="rect" id="Node000001" title="Load file data into an existing SignalSourceContainer." alt="" coords="5,171,231,211"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aeb9f2bf441774c93741b4e91b72f45fb.html#aeb9f2bf441774c93741b4e91b72f45fb" title="Get metadata for the currently open file." alt="" coords="279,43,504,83"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="146,168,205,130,278,92,297,85,299,90,280,97,208,135,149,173"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader_aec0578014d8a3dbb1de7df9845e3095e.html#aec0578014d8a3dbb1de7df9845e3095e" title="Get all regions (markers, loops, etc.) from the file." alt="" coords="279,107,504,147"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,168,292,147,293,152,205,173"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a050d7a5e740964893ed6443b04b97108.html#a050d7a5e740964893ed6443b04b97108" title="Read the entire audio file into memory." alt="" coords="279,171,504,211"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="231,188,265,188,265,193,231,193"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a800c7fe05bac701dcfa6a826ad78c22e.html#a800c7fe05bac701dcfa6a826ad78c22e" title="Set the last error message." alt="" coords="1099,120,1324,160"/>
+<area shape="poly" id="edge12_Node000001_Node000007" title=" " alt="" coords="204,208,279,220,368,224,480,224,732,214,951,199,1050,191,1101,178,1148,162,1150,167,1102,183,1051,196,951,205,733,219,480,229,367,230,278,225,203,213"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1IO_1_1FileReader_a97ddf502da7bbc82717eea5fa733b059.html#a97ddf502da7bbc82717eea5fa733b059" title="Convert file regions to region groups." alt="" coords="299,285,484,325"/>
+<area shape="poly" id="edge11_Node000001_Node000009" title=" " alt="" coords="160,209,280,264,316,278,315,283,278,269,158,213"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a8bfd1aa043b76cab1172b2d00705066f.html#a8bfd1aa043b76cab1172b2d00705066f" title="Read a specific number of frames from the file." alt="" coords="552,92,777,132"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="462,168,503,156,582,133,583,138,505,161,464,173"/>
+<area shape="poly" id="edge10_Node000004_Node000007" title=" " alt="" coords="504,191,755,189,903,182,1050,169,1110,160,1111,165,1051,175,903,187,755,194,504,196"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a6e78174d0462d4ced0d9ad4d87c739c6.html#a6e78174d0462d4ced0d9ad4d87c739c6" title="Decode a specific number of frames from the file." alt="" coords="825,5,1051,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="728,89,860,47,861,52,730,94"/>
+<area shape="poly" id="edge9_Node000005_Node000007" title=" " alt="" coords="777,102,909,99,1051,105,1113,115,1112,120,1050,111,908,104,777,107"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1IO_1_1SoundFileReader_a6f482a88a714daebbe9ebf8c66775d2a.html#a6f482a88a714daebbe9ebf8c66775d2a" title="Internal seek implementation." alt="" coords="825,120,1051,160"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="778,121,812,124,812,130,777,126"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="1002,43,1052,62,1160,111,1157,116,1050,66,1000,48"/>
+<area shape="poly" id="edge8_Node000008_Node000007" title=" " alt="" coords="1051,137,1085,137,1085,143,1051,143"/>
+</map>

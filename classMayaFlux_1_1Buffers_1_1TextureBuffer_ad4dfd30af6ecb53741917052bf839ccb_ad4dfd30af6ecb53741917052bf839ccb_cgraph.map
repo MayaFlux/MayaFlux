@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::TextureBuffer::generate_default_quad" name="MayaFlux::Buffers::TextureBuffer::generate_default_quad">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,180,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a16b3cbfb638d1ce2063d8b9436faf7ec.html#a16b3cbfb638d1ce2063d8b9436faf7ec" title="Set vertex layout for this buffer." alt="" coords="228,5,384,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="180,30,214,30,214,35,180,35"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a69d6a400c22a219150d8b28007441d5d.html#a69d6a400c22a219150d8b28007441d5d" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="432,5,605,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="384,30,418,30,418,35,384,35"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a544b48334c1b582e8bf50da8215d2095.html#a544b48334c1b582e8bf50da8215d2095" title="Get size in bytes for a given modality Mirrors VKBuffer::get_format() logic." alt="" coords="653,5,828,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="605,30,640,30,640,35,605,35"/>
+</map>

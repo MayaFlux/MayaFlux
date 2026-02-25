@@ -1,0 +1,8 @@
+<map id="MayaFlux::Yantra::compute_skewness_statistic" name="MayaFlux::Yantra::compute_skewness_statistic">
+<area shape="rect" id="Node000001" title="Compute skewness statistic using zero&#45;copy processing." alt="" coords="319,37,517,77"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="466,26,449,19,418,16,391,18,374,23,368,29,371,36,366,38,363,28,371,18,390,13,418,11,450,13,468,21"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="5,5,271,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="305,47,271,43,271,38,305,42"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a853e8c531c62174e89938bf0eae8a7d9.html#a853e8c531c62174e89938bf0eae8a7d9" title="Create comprehensive analysis result." alt="" coords="21,69,255,109"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="305,73,255,79,255,73,305,68"/>
+</map>

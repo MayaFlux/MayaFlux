@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::Region::set_attribute" name="MayaFlux::Kakshya::Region::set_attribute">
+<area shape="rect" id="Node000001" title="Set an attribute value by key." alt="" coords="256,49,415,89"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1RegionGroup_adf42d46a861a465e8d191192d947c1a9.html#adf42d46a861a465e8d191192d947c1a9" title="Get the bounding region that contains all regions in the group." alt="" coords="5,5,208,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,57,208,51,209,46,243,51"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1IO_1_1FileRegion_a3e60dc74e7f6385377e4b66bd154192f.html#a3e60dc74e7f6385377e4b66bd154192f" title="Convert this FileRegion to a Region for use in processing." alt="" coords="15,85,199,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="242,86,199,93,198,88,242,81"/>
+</map>

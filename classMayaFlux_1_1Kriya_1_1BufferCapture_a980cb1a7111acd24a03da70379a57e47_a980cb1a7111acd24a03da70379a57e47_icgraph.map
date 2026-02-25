@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::BufferCapture::as_circular" name="MayaFlux::Kriya::BufferCapture::as_circular">
+<area shape="rect" id="Node000001" title="Enable circular buffer mode with fixed size." alt="" coords="240,5,467,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1CaptureBuilder_aed380d2559a7319838372e27e1026dd8.html#aed380d2559a7319838372e27e1026dd8" title="Enable circular buffer mode with specified size." alt="" coords="5,5,192,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="226,28,192,28,192,23,226,23"/>
+</map>

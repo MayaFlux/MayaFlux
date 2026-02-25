@@ -1,0 +1,15 @@
+<map id="Lila::Server::~Server" name="Lila::Server::~Server">
+<area shape="rect" id="Node000001" title="Destructor; stops the server if running." alt="" coords="5,134,161,159"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_a903e645c34e93ae5ca91421c8166272f.html#a903e645c34e93ae5ca91421c8166272f" title="Stops the server and disconnects all clients." alt="" coords="209,134,340,159"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="161,144,196,144,196,149,161,149"/>
+<area shape="rect" id="Node000003" href="$classLila_1_1ServerThread_a01dd9f3e2c26be2053c06750a9ba04c2.html#a01dd9f3e2c26be2053c06750a9ba04c2" title=" " alt="" coords="403,5,543,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="288,132,330,95,387,55,398,49,401,53,389,60,333,99,291,136"/>
+<area shape="rect" id="Node000004" href="$classLila_1_1ServerThread_af08d4f5beba2e40da080e4da965f4d36.html#af08d4f5beba2e40da080e4da965f4d36" title=" " alt="" coords="403,69,543,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="319,131,389,111,391,116,320,137"/>
+<area shape="rect" id="Node000005" href="$classLila_1_1EventBus_ab857d5e1a9aa5a767eb0840c2b82e14c.html#ab857d5e1a9aa5a767eb0840c2b82e14c" title="Publish an event to all subscribers of its type." alt="" coords="388,134,557,159"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="341,144,374,144,374,149,341,149"/>
+<area shape="rect" id="Node000006" href="$classLila_1_1ServerThread_a1158d74fd789cd2aea837ac18082d86a.html#a1158d74fd789cd2aea837ac18082d86a" title=" " alt="" coords="403,184,543,224"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="320,157,391,178,389,183,319,162"/>
+<area shape="rect" id="Node000007" href="$namespaceLila_a621d0772974477ddb86f454f03532733.html#a621d0772974477ddb86f454f03532733" title=" " alt="" coords="405,249,541,274"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="290,157,332,195,389,234,407,242,405,246,387,238,329,199,287,161"/>
+</map>

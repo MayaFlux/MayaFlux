@@ -1,0 +1,9 @@
+<map id="MayaFlux::concat_vectors" name="MayaFlux::concat_vectors">
+<area shape="rect" id="Node000001" title=" " alt="" coords="269,55,461,80"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_adafbd9d1c8bd9ce9ce587fd1a4787cb5.html#adafbd9d1c8bd9ce9ce587fd1a4787cb5" title="Calculate mean across all channels (mix then analyze)" alt="" coords="12,5,215,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="286,55,179,33,180,28,287,49"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a9ab298b5816aefaf4e1e6f8f076a82d9.html#a9ab298b5816aefaf4e1e6f8f076a82d9" title="Calculate RMS energy across all channels (mix then analyze)" alt="" coords="18,55,209,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="256,70,209,70,209,65,256,65"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a16be9d2fb24e6e4c7bad01172d669503.html#a16be9d2fb24e6e4c7bad01172d669503" title="Calculate standard deviation across all channels (mix then analyze)" alt="" coords="5,104,221,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="287,85,180,107,179,101,286,80"/>
+</map>

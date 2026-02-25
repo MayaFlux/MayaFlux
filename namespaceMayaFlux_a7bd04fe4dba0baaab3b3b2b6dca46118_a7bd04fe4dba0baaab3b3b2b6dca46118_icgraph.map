@@ -1,0 +1,9 @@
+<map id="MayaFlux::window_coords" name="MayaFlux::window_coords">
+<area shape="rect" id="Node000001" title="Convert NDC coordinates to window pixel coordinates." alt="" coords="248,55,443,80"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a86ba1be3d376c49989e6c6e022f6d30f.html#a86ba1be3d376c49989e6c6e022f6d30f" title="Convert NDC vec3 position to window pixel coordinates using window state." alt="" coords="5,5,200,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="268,55,165,33,167,28,269,49"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a8154e9c5ef1a1fa664a231a8784a125e.html#a8154e9c5ef1a1fa664a231a8784a125e" title="Convert NDC vec3 position to window pixel coordinates." alt="" coords="5,55,200,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="234,70,200,70,200,65,234,65"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_adc6ccccdab7a148f5b372e925320153d.html#adc6ccccdab7a148f5b372e925320153d" title="Convert NDC coordinates to window pixel coordinates using window state." alt="" coords="5,104,200,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="269,85,167,107,165,101,268,80"/>
+</map>

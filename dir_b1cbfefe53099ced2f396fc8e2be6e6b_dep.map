@@ -1,0 +1,22 @@
+<map id="Graphics" name="Graphics">
+<area shape="rect" id="node1" href="dir_b1cbfefe53099ced2f396fc8e2be6e6b.html" title="Graphics" alt="" coords="231,52,309,77"/>
+<area shape="rect" id="node2" href="dir_64c2d47494cb42df00b60c7e5b15f956.html" title="Buffers" alt="" coords="5,125,73,151"/>
+<area shape="poly" id="edge1" href="dir_000016_000005.html" alt="" coords="234,80,87,125,86,120,232,75"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000016_000005.html" title="1" alt="" coords="89,122,98,136"/>
+<area shape="rect" id="node3" href="dir_7571807f242a2381d2cf58ce0b78549e.html" title="Portal" alt="" coords="97,125,157,151"/>
+<area shape="poly" id="edge2" href="dir_000016_000041.html" alt="" coords="248,80,164,121,162,117,246,75"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000016_000041.html" title="1" alt="" coords="166,117,175,132"/>
+<area shape="rect" id="node4" href="dir_98903ca72f3f031f88d95d1d2149bfa4.html" title="Kakshya" alt="" coords="181,125,260,151"/>
+<area shape="poly" id="edge3" href="dir_000016_000025.html" alt="" coords="264,79,239,116,234,113,260,76"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000016_000025.html" title="1" alt="" coords="241,108,251,123"/>
+<area shape="rect" id="node5" href="dir_a8ec6d67cf3caa06b6fdb4f1cb0d9531.html" title="Kinesis" alt="" coords="285,125,354,151"/>
+<area shape="poly" id="edge4" href="dir_000016_000026.html" alt="" coords="280,76,306,113,301,116,276,79"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000016_000026.html" title="3" alt="" coords="303,98,313,113"/>
+<area shape="rect" id="node6" href="dir_ab78b5ea7d224bd3b6129089c2cbe6d1.html" title="Journal" alt="" coords="378,125,445,151"/>
+<area shape="poly" id="edge5" href="dir_000016_000024.html" alt="" coords="294,75,377,117,375,121,292,80"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000016_000024.html" title="8" alt="" coords="371,102,380,117"/>
+<area shape="rect" id="node7" href="dir_fa9701bc8dd421cc9c72fe138aba5a04.html" title="Transitive" alt="" coords="469,125,554,151"/>
+<area shape="poly" id="edge6" href="dir_000016_000059.html" alt="" coords="310,75,460,119,458,124,308,80"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000016_000059.html" title="2" alt="" coords="453,105,462,119"/>
+<area shape="rect" id="clust1" href="dir_7362a85c6e8ffcf327f9cd0b108e12a6.html" title="Nodes" alt="" coords="219,16,321,88"/>
+</map>

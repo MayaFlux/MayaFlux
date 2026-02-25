@@ -1,0 +1,9 @@
+<map id="MayaFlux::Yantra::UniversalSorter&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::UniversalSorter&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Template&#45;flexible sorter base with instance&#45;defined I/O types." alt="" coords="131,564,361,1299"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StandardSorter.html" title="Concrete implementation for standard comparison&#45;based sorting." alt="" coords="5,1491,233,2011"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="190,1313,162,1491,157,1490,184,1312"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1UniversalSorter.html" title=" " alt="" coords="258,1376,487,2125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="308,1313,317,1375,312,1376,302,1313"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="119,5,373,515"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="249,529,249,564,243,564,243,529"/>
+</map>

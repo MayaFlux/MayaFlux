@@ -1,0 +1,12 @@
+<map id="MayaFlux::Yantra::compute_mean_statistic" name="MayaFlux::Yantra::compute_mean_statistic">
+<area shape="rect" id="Node000001" title="Compute mean statistic using zero&#45;copy processing." alt="" coords="600,87,799,127"/>
+<area shape="poly" id="edge4_Node000001_Node000001" title=" " alt="" coords="744,75,729,68,699,65,674,67,658,72,653,78,655,85,650,87,647,77,655,68,673,62,699,60,730,63,747,70"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_ac1594edb7e15913878027f37980a4d9a.html#ac1594edb7e15913878027f37980a4d9a" title="Compute CV (Coefficient of Variation) statistic using zero&#45;copy processing." alt="" coords="336,29,535,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="593,86,527,72,529,67,594,81"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="5,59,271,99"/>
+<area shape="poly" id="edge5_Node000001_Node000003" title=" " alt="" coords="586,104,271,88,271,83,586,98"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_a853e8c531c62174e89938bf0eae8a7d9.html#a853e8c531c62174e89938bf0eae8a7d9" title="Create comprehensive analysis result." alt="" coords="319,144,552,184"/>
+<area shape="poly" id="edge6_Node000001_Node000004" title=" " alt="" coords="594,132,529,147,527,141,593,127"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="480,18,465,11,435,8,410,10,394,15,389,21,391,28,386,30,383,20,391,10,409,5,435,3,466,5,483,13"/>
+<area shape="poly" id="edge3_Node000002_Node000003" title=" " alt="" coords="323,63,271,68,271,63,322,58"/>
+</map>

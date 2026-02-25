@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::ShaderProcessor::on_after_execute" name="MayaFlux::Buffers::ShaderProcessor::on_after_execute">
+<area shape="rect" id="Node000001" title="Called after each process callback." alt="" coords="256,5,411,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a73dacb014d3d5c7ad1f060fad72f8681.html#a73dacb014d3d5c7ad1f060fad72f8681" title=" " alt="" coords="5,5,208,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,35,208,35,208,30,242,30"/>
+</map>

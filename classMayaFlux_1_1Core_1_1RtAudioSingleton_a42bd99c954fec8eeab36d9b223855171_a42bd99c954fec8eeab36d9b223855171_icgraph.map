@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::RtAudioSingleton::set_preferred_api" name="MayaFlux::Core::RtAudioSingleton::set_preferred_api">
+<area shape="rect" id="Node000001" title="Sets the preferred audio API before instance creation." alt="" coords="277,5,521,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1AudioBackendFactory_aad4ce811c754786f9ce16b91b3cfc622.html#aad4ce811c754786f9ce16b91b3cfc622" title="Creates a specific audio backend implementation." alt="" coords="5,5,229,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="264,28,230,28,230,23,264,23"/>
+</map>

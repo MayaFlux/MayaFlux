@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::MIDIBackend::open_device" name="MayaFlux::Core::MIDIBackend::open_device">
+<area shape="rect" id="Node000001" title="Open a device for input." alt="" coords="576,37,793,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a04932575dede3a84e7ef9fc7f7194059.html#a04932575dede3a84e7ef9fc7f7194059" title=" " alt="" coords="291,5,528,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="562,46,528,42,529,36,563,41"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1MIDIBackend_a5bb90f08625f96804858ad7c6d44618b.html#a5bb90f08625f96804858ad7c6d44618b" title="Start listening for input events." alt="" coords="301,69,518,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="563,74,519,79,518,74,562,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1InputSubsystem_ab94b4335f7caf62f62863584b6a7c29b.html#ab94b4335f7caf62f62863584b6a7c29b" title="Initialize with a handle provided by SubsystemManager." alt="" coords="5,5,243,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="277,28,243,28,243,23,277,23"/>
+</map>

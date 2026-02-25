@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::ComplexRoutine" name="MayaFlux::Vruta::ComplexRoutine">
+<area shape="rect" id="Node000001" title="Multi&#45;domain coroutine that can handle multiple processing rates." alt="" coords="14,419,201,759"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1Routine.html" title="Base class for all coroutine types in the MayaFlux engine." alt="" coords="5,5,209,371"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="110,384,110,418,105,418,105,384"/>
+</map>

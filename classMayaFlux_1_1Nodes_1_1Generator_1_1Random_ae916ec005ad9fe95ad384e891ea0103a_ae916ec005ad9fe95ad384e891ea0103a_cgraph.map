@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Generator::Random::process_sample" name="MayaFlux::Nodes::Generator::Random::process_sample">
+<area shape="rect" id="Node000001" title="Generates a single stochastic value." alt="" coords="5,37,213,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Random_a0b002c79868bb9e99ad068818a637d75.html#a0b002c79868bb9e99ad068818a637d75" title="Notifies all registered callbacks about a new value." alt="" coords="261,37,469,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,55,248,55,248,60,213,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Random_a8677a01f2a65024543d1f02a5060dc25.html#a8677a01f2a65024543d1f02a5060dc25" title="Gets the last created context object." alt="" coords="517,5,725,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="469,42,503,37,504,43,470,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Random_aeffca293637a7165777be283e860dc25.html#aeffca293637a7165777be283e860dc25" title="Updates the context object with the current node state." alt="" coords="517,69,725,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="470,68,504,72,503,77,469,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a9d57386d7231ae1612b96776771e7950.html#a9d57386d7231ae1612b96776771e7950" title="Gets current algorithm." alt="" coords="773,62,937,117"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="725,87,760,87,760,92,725,92"/>
+</map>

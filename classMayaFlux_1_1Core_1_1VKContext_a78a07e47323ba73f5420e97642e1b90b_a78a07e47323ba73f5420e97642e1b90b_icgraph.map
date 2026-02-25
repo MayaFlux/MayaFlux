@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::VKContext::get_surface_info" name="MayaFlux::Core::VKContext::get_surface_info">
+<area shape="rect" id="Node000001" title="Get graphics surface info." alt="" coords="541,5,741,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKSwapchain_ae4e56dd203c0a1860f59d00e0d50604f.html#ae4e56dd203c0a1860f59d00e0d50604f" title="Create swapchain for the given surface using VKContext." alt="" coords="273,5,493,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="528,28,494,28,494,23,528,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKSwapchain_a77fe883ab4d94277b8d68aac94c9d76c.html#a77fe883ab4d94277b8d68aac94c9d76c" title="Recreate swapchain (for window resize)" alt="" coords="5,5,225,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="260,28,226,28,226,23,260,23"/>
+</map>

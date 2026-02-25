@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::update_processing_state" name="MayaFlux::Kakshya::SoundStreamContainer::update_processing_state">
+<area shape="rect" id="Node000001" title="Update the processing state of the container." alt="" coords="5,5,197,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="465,13,672,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="197,24,245,22,417,22,452,23,452,29,417,27,245,27,198,29"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_a6b017a7f21c67f1c3faa5a30dbdc0750.html#a6b017a7f21c67f1c3faa5a30dbdc0750" title=" " alt="" coords="245,37,417,92"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="198,43,232,48,231,53,197,49"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="417,50,451,46,452,51,418,56"/>
+</map>

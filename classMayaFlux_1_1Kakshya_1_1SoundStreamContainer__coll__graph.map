@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer" name="MayaFlux::Kakshya::SoundStreamContainer">
+<area shape="rect" id="Node000001" title="Concrete base implementation for streaming audio containers." alt="" coords="318,1549,518,2184"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="129,943,318,1237"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,1250,341,1549,336,1550,261,1251"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="114,335,333,644"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="226,658,226,942,221,942,221,658"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="5,5,193,285"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="157,297,170,333,165,335,152,299"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="217,105,477,185"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="331,199,282,336,277,334,326,198"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Kakshya_1_1Region.html" title="Represents a point or span in N&#45;dimensional space." alt="" coords="343,870,493,1310"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="421,1310,421,1533,415,1533,415,1310"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure.html" title="Container structure for consistent dimension ordering." alt="" coords="518,693,710,1487"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="548,1488,538,1526,525,1572,520,1570,533,1525,542,1486"/>
+</map>

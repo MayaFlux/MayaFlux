@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GraphicsSubsystem::register_windows_for_processing" name="MayaFlux::Core::GraphicsSubsystem::register_windows_for_processing">
+<area shape="rect" id="Node000001" title="Register markend windows from window manager for swapchain processing." alt="" coords="5,5,221,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1WindowManagerHandle_ae63e157392390f419832c039578a54dd.html#ae63e157392390f419832c039578a54dd" title="Get list of windows that are open and not minimized." alt="" coords="269,13,511,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,30,256,30,256,35,221,35"/>
+</map>

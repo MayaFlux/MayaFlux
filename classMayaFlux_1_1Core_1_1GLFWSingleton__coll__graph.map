@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GLFWSingleton" name="MayaFlux::Core::GLFWSingleton">
+<area shape="rect" id="Node000001" title="Singleton utility for managing global GLFW initialization and termination." alt="" coords="5,228,228,628"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1GlfwPreInitConfig.html" title="Configuration hints for GLFW initialization." alt="" coords="19,5,214,165"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,166,119,212,114,212,114,166"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Memory::RingBuffer::pop" name="MayaFlux::Memory::RingBuffer::pop">
+<area shape="rect" id="Node000001" title="Pop element from buffer." alt="" coords="5,45,260,70"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Memory_1_1RingBuffer_ab9b32b60c34fcca16a74cda794064804.html#ab9b32b60c34fcca16a74cda794064804" title=" " alt="" coords="308,5,531,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="246,42,294,37,295,42,247,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Memory_1_1RingBuffer_a5b3070f498da1e4cad07d91d1066a448.html#a5b3070f498da1e4cad07d91d1066a448" title=" " alt="" coords="308,69,531,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,67,295,73,294,78,246,73"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Vruta::units_to_seconds" name="MayaFlux::Vruta::units_to_seconds">
+<area shape="rect" id="Node000001" title="Convert processing units to seconds for any rate." alt="" coords="276,101,445,141"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Vruta_a94d1f6329450996efd4badd83ed763a0.html#a94d1f6329450996efd4badd83ed763a0" title="Convert blocks to seconds." alt="" coords="27,5,206,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="309,97,227,60,193,48,195,43,229,55,311,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SampleClock_ad939380c6835e0f5fead48252f55fa60.html#ad939380c6835e0f5fead48252f55fa60" title="Converts current sample position to seconds." alt="" coords="5,69,228,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="262,111,228,107,229,101,263,106"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1FrameClock_a8edfa870af33736af5b0e7ebcb69aae6.html#a8edfa870af33736af5b0e7ebcb69aae6" title="Convert current frame to seconds." alt="" coords="9,133,224,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="263,137,225,142,224,137,262,132"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1CustomClock_a4c9e0040e1255c68cf5d808dfe7d9664.html#a4c9e0040e1255c68cf5d808dfe7d9664" title="Converts current position to seconds using custom rate." alt="" coords="5,197,228,237"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="311,150,229,188,195,200,193,195,227,183,309,145"/>
+</map>

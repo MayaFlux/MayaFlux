@@ -1,0 +1,25 @@
+<map id="MayaFlux::Core::GraphicsSubsystem::start" name="MayaFlux::Core::GraphicsSubsystem::start">
+<area shape="rect" id="Node000001" title="Start the subsystem&#39;s processing/event loops." alt="" coords="5,213,195,253"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a5570e0e163a26bb602d622048a29c73f.html#a5570e0e163a26bb602d622048a29c73f" title="Graphics thread main loop." alt="" coords="243,213,484,253"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="195,230,229,230,229,235,195,235"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_af7661b41b9eb2e292868aca2f7116b9a.html#af7661b41b9eb2e292868aca2f7116b9a" title="Unified processing callback (alternative to separate methods)" alt="" coords="532,213,721,253"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="484,230,518,230,518,235,484,235"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a28ff7831678b8f7db1ada479ad23acc5.html#a28ff7831678b8f7db1ada479ad23acc5" title="Cleanup resources for windows that have been closed." alt="" coords="789,5,991,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="639,211,690,143,726,104,768,70,779,64,781,68,771,75,730,108,694,146,643,214"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1WindowManagerHandle_a84cdc55033d8eb11b3762489117a927f.html#a84cdc55033d8eb11b3762489117a927f" title="Process window events and frame hooks." alt="" coords="769,85,1011,125"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="650,210,703,172,768,134,786,127,788,132,771,139,706,176,654,215"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1NodeProcessingHandle_a209dc2ace5e26fa22b730a4b14202d57.html#a209dc2ace5e26fa22b730a4b14202d57" title="Process all nodes in token domain." alt="" coords="772,149,1008,189"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="709,210,793,189,795,195,710,215"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_a71843f9187ec9d8a3b9e67c789c77fa4.html#a71843f9187ec9d8a3b9e67c789c77fa4" title="Process all channels in token domain." alt="" coords="769,213,1011,253"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="721,230,756,230,756,235,721,235"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Core_1_1TaskSchedulerHandle_ae8a8e2300b2064c3d22c6e9c5a1dd123.html#ae8a8e2300b2064c3d22c6e9c5a1dd123" title="Process all tasks in token domain." alt="" coords="777,277,1003,317"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="710,250,795,271,793,276,709,255"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a4abeb27756b788566c82fd5f6b4c2603.html#a4abeb27756b788566c82fd5f6b4c2603" title="Register markend windows from window manager for swapchain processing." alt="" coords="782,341,998,396"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="655,251,707,288,771,326,786,333,784,338,768,331,704,293,652,255"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a6fdf5dfa50f9032ed8733328b2e97094.html#a6fdf5dfa50f9032ed8733328b2e97094" title="Render all registered windows." alt="" coords="795,420,985,475"/>
+<area shape="poly" id="edge11_Node000003_Node000012" title=" " alt="" coords="641,251,691,327,728,370,771,407,784,415,782,419,768,411,724,373,687,330,637,254"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1BufferProcessingHandle_afc0b5cf904eecf62523920f49fecff3d.html#afc0b5cf904eecf62523920f49fecff3d" title=" " alt="" coords="1059,213,1300,253"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="1011,230,1045,230,1045,235,1011,235"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Core_1_1WindowManagerHandle_ae63e157392390f419832c039578a54dd.html#ae63e157392390f419832c039578a54dd" title="Get list of windows that are open and not minimized." alt="" coords="1059,349,1300,389"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="998,366,1045,366,1045,371,998,371"/>
+</map>

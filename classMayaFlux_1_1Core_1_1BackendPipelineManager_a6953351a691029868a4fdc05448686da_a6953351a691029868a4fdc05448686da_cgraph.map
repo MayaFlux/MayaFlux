@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::BackendPipelineManager::create_descriptor_manager" name="MayaFlux::Core::BackendPipelineManager::create_descriptor_manager">
+<area shape="rect" id="Node000001" title="Create a descriptor manager for managing descriptor sets." alt="" coords="5,37,271,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="347,5,547,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,41,334,34,334,40,271,46"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1BackendPipelineManager_a9ef462ac433a311b4af78291d94cea9a.html#a9ef462ac433a311b4af78291d94cea9a" title=" " alt="" coords="319,69,576,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="271,68,305,72,305,77,270,74"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="624,5,819,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="547,23,610,23,610,28,547,28"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::VKContext::create_surface" name="MayaFlux::Core::VKContext::create_surface">
+<area shape="rect" id="Node000001" title="Create surface from window&#39;s native handles." alt="" coords="5,37,205,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Parallel_a5da0996dba37190dffba9510d880a0c9.html#a5da0996dba37190dffba9510d880a0c9" title=" " alt="" coords="275,5,437,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="205,42,261,35,261,40,206,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKInstance_ad5009d0f849278358ae38dcc785627d6.html#ad5009d0f849278358ae38dcc785627d6" title="Get the Vulkan instance handle." alt="" coords="253,69,459,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="206,67,240,72,239,77,205,73"/>
+</map>

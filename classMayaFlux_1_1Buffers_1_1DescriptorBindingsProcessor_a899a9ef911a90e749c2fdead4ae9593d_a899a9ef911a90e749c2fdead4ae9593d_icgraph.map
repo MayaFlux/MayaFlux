@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::DescriptorBindingsProcessor::ensure_buffer_capacity" name="MayaFlux::Buffers::DescriptorBindingsProcessor::ensure_buffer_capacity">
+<area shape="rect" id="Node000001" title="Ensure descriptor buffer has sufficient capacity." alt="" coords="533,5,741,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a238425e8a4b5fa24981002245c3b804a.html#a238425e8a4b5fa24981002245c3b804a" title="Update descriptor from node context." alt="" coords="261,5,485,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="519,35,486,35,486,30,519,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1DescriptorBindingsProcessor_a7f3868a3f75b5b5b82dcac442b63db4b.html#a7f3868a3f75b5b5b82dcac442b63db4b" title=" " alt="" coords="5,5,213,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="248,35,213,35,213,30,248,30"/>
+</map>

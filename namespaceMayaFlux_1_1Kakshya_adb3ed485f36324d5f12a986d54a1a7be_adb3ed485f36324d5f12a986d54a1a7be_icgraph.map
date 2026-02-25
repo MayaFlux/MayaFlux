@@ -1,0 +1,8 @@
+<map id="MayaFlux::Kakshya::calculate_output_region" name="MayaFlux::Kakshya::calculate_output_region">
+<area shape="rect" id="Node000001" title="Calculate output region bounds from current position and shape." alt="" coords="256,41,435,81"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="386,30,372,23,345,20,322,22,309,27,304,33,306,40,301,42,298,32,306,22,321,17,345,15,373,18,388,25"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Kakshya_accc13451166c20dae8fba2f212a2cf14.html#accc13451166c20dae8fba2f212a2cf14" title="Calculate output region for frame&#45;based processing." alt="" coords="17,5,196,45"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="242,48,196,41,197,36,243,43"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor_ad02564095af42029d0276cc1df6370ee.html#ad02564095af42029d0276cc1df6370ee" title="Process the current region or block of data." alt="" coords="5,70,208,125"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="243,79,208,85,208,79,242,74"/>
+</map>

@@ -1,0 +1,95 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::instance" name="MayaFlux::Portal::Graphics::ShaderFoundry::instance">
+<area shape="rect" id="Node000001" title=" " alt="" coords="863,1339,1060,1379"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="617,627,815,667"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="946,1327,722,669,727,667,951,1325"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a3e37592425a0a5c22f7809f8c19d0af8.html#a3e37592425a0a5c22f7809f8c19d0af8" title=" " alt="" coords="617,1228,815,1283"/>
+<area shape="poly" id="edge29_Node000001_Node000027" title=" " alt="" coords="902,1336,814,1298,784,1285,786,1280,816,1293,904,1331"/>
+<area shape="rect" id="Node000031" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_a8b62fc52029322ba0eb773bca6340e11.html#a8b62fc52029322ba0eb773bca6340e11" title=" " alt="" coords="617,1307,815,1347"/>
+<area shape="poly" id="edge33_Node000001_Node000031" title=" " alt="" coords="849,1347,814,1343,815,1338,849,1342"/>
+<area shape="rect" id="Node000032" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_ac663547dd9fc85f307003370fdf087a3.html#ac663547dd9fc85f307003370fdf087a3" title="Initialize Portal::Graphics Glue Layer." alt="" coords="617,1371,815,1411"/>
+<area shape="poly" id="edge34_Node000001_Node000032" title=" " alt="" coords="849,1377,815,1381,814,1376,849,1371"/>
+<area shape="rect" id="Node000035" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a3889f398a94af104f9e3d00b1d059006.html#a3889f398a94af104f9e3d00b1d059006" title="Shutdown Portal::Graphics subsystem." alt="" coords="617,1651,815,1691"/>
+<area shape="poly" id="edge37_Node000001_Node000035" title=" " alt="" coords="938,1392,735,1653,731,1650,934,1389"/>
+<area shape="rect" id="Node000043" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a13c39b9130452b3f5cb320082881b3fa.html#a13c39b9130452b3f5cb320082881b3fa" title="Stop all Portal::Graphics operations." alt="" coords="617,1439,815,1479"/>
+<area shape="poly" id="edge45_Node000001_Node000043" title=" " alt="" coords="905,1387,816,1426,775,1442,773,1437,814,1421,903,1382"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a065b63736ca93e3162c1395c8daaac25.html#a065b63736ca93e3162c1395c8daaac25" title="Bind a texture to a descriptor binding point." alt="" coords="362,816,529,871"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="695,680,643,743,609,777,571,806,530,825,528,820,568,801,605,773,639,740,691,677"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a5066b7ac50552a50869a303adcb41d84.html#a5066b7ac50552a50869a303adcb41d84" title=" " alt="" coords="351,946,540,986"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="709,682,692,736,664,802,624,870,599,902,571,929,540,948,537,944,568,925,595,898,620,867,659,800,687,734,704,680"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a3498377e5d02f243e29f4b28e358733c.html#a3498377e5d02f243e29f4b28e358733c" title=" " alt="" coords="44,893,235,933"/>
+<area shape="poly" id="edge8_Node000002_Node000006" title=" " alt="" coords="707,681,690,729,661,785,622,840,598,864,571,884,545,895,510,904,423,915,326,919,235,918,235,913,325,913,422,909,509,899,543,890,568,880,595,860,618,837,657,783,685,727,702,680"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a4f3e779de39433f9e357c7c03804df3d.html#a4f3e779de39433f9e357c7c03804df3d" title=" " alt="" coords="344,1010,547,1050"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="713,682,701,749,675,835,657,880,634,924,605,964,571,1000,549,1015,546,1010,568,996,601,961,629,921,652,878,670,833,695,747,708,681"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a73dacb014d3d5c7ad1f060fad72f8681.html#a73dacb014d3d5c7ad1f060fad72f8681" title=" " alt="" coords="344,1075,547,1129"/>
+<area shape="poly" id="edge9_Node000002_Node000009" title=" " alt="" coords="715,681,706,759,682,861,664,916,640,969,609,1020,571,1064,549,1080,545,1076,568,1060,605,1016,635,967,659,914,677,860,700,758,710,681"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acd3ee18a43b25af2aa06f17efacd6c5f.html#acd3ee18a43b25af2aa06f17efacd6c5f" title=" " alt="" coords="350,1153,541,1208"/>
+<area shape="poly" id="edge10_Node000002_Node000010" title=" " alt="" coords="718,682,713,773,705,832,693,896,674,963,649,1028,615,1090,571,1144,542,1164,539,1160,568,1140,610,1087,644,1026,669,961,688,895,700,831,707,772,712,681"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a6212541d4b11fad6638fe5117e8361c5.html#a6212541d4b11fad6638fe5117e8361c5" title=" " alt="" coords="348,5,543,60"/>
+<area shape="poly" id="edge11_Node000002_Node000011" title=" " alt="" coords="708,614,690,494,660,332,641,250,619,175,594,114,567,73,541,54,544,50,571,69,599,112,624,174,646,248,666,331,696,493,713,613"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aaadd8ac9b438fa8658e52561d65b6693.html#aaadd8ac9b438fa8658e52561d65b6693" title="Hot&#45;reload shader from ShaderFoundry." alt="" coords="366,84,525,139"/>
+<area shape="poly" id="edge13_Node000002_Node000013" title=" " alt="" coords="712,613,707,523,700,464,687,399,669,333,644,268,610,207,567,153,547,138,524,127,526,122,550,133,571,149,615,204,649,266,674,332,693,398,705,463,712,522,718,613"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a23562358774d2249670ae369c9d54e36.html#a23562358774d2249670ae369c9d54e36" title=" " alt="" coords="347,163,544,203"/>
+<area shape="poly" id="edge14_Node000002_Node000014" title=" " alt="" coords="710,614,702,535,679,430,661,374,636,320,606,269,568,224,541,206,544,201,571,220,610,266,641,317,665,372,684,429,707,534,716,613"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a890135d823fb945281a666474fa18c6b.html#a890135d823fb945281a666474fa18c6b" title=" " alt="" coords="42,200,237,255"/>
+<area shape="poly" id="edge15_Node000002_Node000015" title=" " alt="" coords="710,614,702,540,679,444,661,395,637,347,606,304,568,268,544,256,511,246,425,233,328,228,237,227,237,222,328,222,426,228,512,241,546,251,571,264,610,301,641,344,666,393,684,443,707,539,716,613"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_af6abf1b7268faeb627e3554e282bde9f.html#af6abf1b7268faeb627e3554e282bde9f" title=" " alt="" coords="348,357,543,412"/>
+<area shape="poly" id="edge16_Node000002_Node000016" title=" " alt="" coords="699,615,679,573,650,522,613,471,568,427,542,411,544,407,571,423,617,467,655,519,684,570,704,613"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acb0d34c2c49f2f4b7865c5b366075c63.html#acb0d34c2c49f2f4b7865c5b366075c63" title=" " alt="" coords="321,437,569,477"/>
+<area shape="poly" id="edge20_Node000002_Node000020" title=" " alt="" coords="692,617,640,552,606,519,568,491,544,479,546,474,571,486,610,515,644,549,696,614"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_acc98dd1763cd8574461594b84f9b2751.html#acc98dd1763cd8574461594b84f9b2751" title=" " alt="" coords="366,501,525,556"/>
+<area shape="poly" id="edge21_Node000002_Node000021" title=" " alt="" coords="670,623,622,596,568,570,524,553,526,548,570,565,624,591,673,618"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_abac2cda9efc2bf0ea93bd29fd8061882.html#abac2cda9efc2bf0ea93bd29fd8061882" title=" " alt="" coords="366,580,525,635"/>
+<area shape="poly" id="edge22_Node000002_Node000022" title=" " alt="" coords="603,633,524,622,525,616,604,628"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a6782af2893d5d8df4cd7d53a41c52ea1.html#a6782af2893d5d8df4cd7d53a41c52ea1" title=" " alt="" coords="366,659,525,713"/>
+<area shape="poly" id="edge23_Node000002_Node000023" title=" " alt="" coords="604,666,525,677,524,672,603,661"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a3a5e5284fa6eec094ddc19002fa32042.html#a3a5e5284fa6eec094ddc19002fa32042" title=" " alt="" coords="366,737,525,792"/>
+<area shape="poly" id="edge24_Node000002_Node000024" title=" " alt="" coords="670,677,570,727,526,744,524,739,568,722,668,672"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a4adab2a16b3c9e0df7b5ad8db5a4a1f0.html#a4adab2a16b3c9e0df7b5ad8db5a4a1f0" title=" " alt="" coords="354,279,537,333"/>
+<area shape="poly" id="edge25_Node000002_Node000025" title=" " alt="" coords="705,615,689,557,662,485,622,410,597,376,568,347,536,327,538,323,571,343,601,373,627,407,667,482,695,555,710,613"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RenderProcessor_a424e1702be96080819416ca2f086d304.html#a424e1702be96080819416ca2f086d304" title="Bind a texture to a named descriptor." alt="" coords="56,813,223,868"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="348,845,223,844,223,839,349,840"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="336,950,234,932,235,927,337,945"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a9682945ee892c3ab788ce216b49b5d61.html#a9682945ee892c3ab788ce216b49b5d61" title=" " alt="" coords="11,957,268,997"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="337,972,269,975,268,970,337,967"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1PresentProcessor_a22d8a0b8420935561a87ea6c698483ae.html#a22d8a0b8420935561a87ea6c698483ae" title="Executes the render callback." alt="" coords="33,5,245,60"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="334,35,246,35,246,30,334,30"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a89618010c366c34c7e4c7968750175ae.html#a89618010c366c34c7e4c7968750175ae" title="The core processing function that must be implemented by derived classes." alt="" coords="35,357,243,412"/>
+<area shape="poly" id="edge17_Node000016_Node000017" title=" " alt="" coords="334,387,244,387,244,382,334,382"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aadb3a42f427db73ee7f40139f8241c3a.html#aadb3a42f427db73ee7f40139f8241c3a" title="Update entire configuration." alt="" coords="60,515,219,569"/>
+<area shape="poly" id="edge18_Node000016_Node000018" title=" " alt="" coords="337,417,323,427,307,445,300,464,292,484,275,504,248,520,220,531,218,526,246,515,272,500,288,482,295,463,303,442,320,423,334,413"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_aadeab6294ee97ac6e5e525f99e857080.html#aadeab6294ee97ac6e5e525f99e857080" title="Update shader path and reload." alt="" coords="60,436,219,491"/>
+<area shape="poly" id="edge19_Node000016_Node000019" title=" " alt="" coords="335,416,220,446,218,440,334,411"/>
+<area shape="poly" id="edge27_Node000025_Node000015" title=" " alt="" coords="340,282,236,255,238,250,341,277"/>
+<area shape="poly" id="edge28_Node000025_Node000017" title=" " alt="" coords="341,335,244,360,243,355,340,330"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_a4112addd2594e7172317b2a7fb28cacf.html#a4112addd2594e7172317b2a7fb28cacf" title=" " alt="" coords="35,279,243,333"/>
+<area shape="poly" id="edge26_Node000025_Node000026" title=" " alt="" coords="340,309,244,309,244,303,340,303"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_ae9388c1a899276d6d021dcbff1326eea.html#ae9388c1a899276d6d021dcbff1326eea" title="Create graphics pipeline for dynamic rendering (no render pass object)" alt="" coords="338,1233,553,1273"/>
+<area shape="poly" id="edge30_Node000027_Node000028" title=" " alt="" coords="604,1257,553,1256,553,1251,604,1252"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a92da11722411d5f02bed2ba7dcf02278.html#a92da11722411d5f02bed2ba7dcf02278" title="Create compute pipeline." alt="" coords="329,1297,561,1337"/>
+<area shape="poly" id="edge31_Node000027_Node000029" title=" " alt="" coords="604,1283,535,1299,534,1294,603,1278"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_ad0f8d812bde066c3f0a74005057322ad.html#ad0f8d812bde066c3f0a74005057322ad" title="Create pipeline with auto&#45;reflection." alt="" coords="5,1297,273,1337"/>
+<area shape="poly" id="edge32_Node000029_Node000030" title=" " alt="" coords="316,1319,274,1319,274,1314,316,1314"/>
+<area shape="rect" id="Node000033" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a25611dc038e2fa775987e640a7826262.html#a25611dc038e2fa775987e640a7826262" title="Initialize Portal::Graphics subsystem." alt="" coords="351,1361,540,1416"/>
+<area shape="poly" id="edge35_Node000032_Node000033" title=" " alt="" coords="603,1393,540,1392,540,1387,603,1388"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a1278000eee96b8f7c3cefbe13f7f91a9.html#a1278000eee96b8f7c3cefbe13f7f91a9" title="Initialize with graphics configuration." alt="" coords="45,1369,234,1409"/>
+<area shape="poly" id="edge36_Node000033_Node000034" title=" " alt="" coords="337,1391,234,1391,234,1386,337,1386"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_af1da4de248505d3a97ea2acc2c79402a.html#af1da4de248505d3a97ea2acc2c79402a" title=" " alt="" coords="347,1875,544,1915"/>
+<area shape="poly" id="edge38_Node000035_Node000036" title=" " alt="" coords="701,1705,680,1743,651,1786,614,1829,571,1866,546,1879,543,1874,568,1861,610,1825,646,1783,675,1740,696,1703"/>
+<area shape="rect" id="Node000037" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_add3c53f617b297ce6b56ee3109fb931e.html#add3c53f617b297ce6b56ee3109fb931e" title="Shutdown and cleanup subsystem resources." alt="" coords="45,1498,234,1538"/>
+<area shape="poly" id="edge39_Node000035_Node000037" title=" " alt="" coords="689,1643,637,1590,604,1565,568,1546,527,1531,483,1520,395,1508,309,1506,235,1509,234,1504,309,1500,395,1503,484,1515,528,1526,570,1541,607,1561,641,1586,693,1639"/>
+<area shape="rect" id="Node000038" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a99caf073b7498d9e65afbc64e2e7e63f.html#a99caf073b7498d9e65afbc64e2e7e63f" title=" " alt="" coords="327,1619,564,1659"/>
+<area shape="poly" id="edge40_Node000035_Node000038" title=" " alt="" coords="603,1661,564,1656,564,1651,604,1655"/>
+<area shape="rect" id="Node000039" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1RenderFlow_acf220481570311029824bedf79be9dbe.html#acf220481570311029824bedf79be9dbe" title=" " alt="" coords="344,1683,547,1723"/>
+<area shape="poly" id="edge41_Node000035_Node000039" title=" " alt="" coords="604,1687,547,1694,546,1689,603,1682"/>
+<area shape="rect" id="Node000040" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1SamplerForge_aaa8ef6a3548a2f19b374a05309844760.html#aaa8ef6a3548a2f19b374a05309844760" title=" " alt="" coords="331,1747,560,1787"/>
+<area shape="poly" id="edge42_Node000035_Node000040" title=" " alt="" coords="662,1700,570,1738,532,1750,530,1745,568,1733,660,1695"/>
+<area shape="rect" id="Node000041" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ac2a823c7787484ea47fe26650c632202.html#ac2a823c7787484ea47fe26650c632202" title=" " alt="" coords="324,1811,567,1851"/>
+<area shape="poly" id="edge43_Node000035_Node000041" title=" " alt="" coords="690,1703,638,1754,606,1780,571,1802,543,1814,541,1809,568,1797,603,1775,635,1750,687,1700"/>
+<area shape="rect" id="Node000042" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ac5e1ee8ca32707cc9150992a2ce16ad1.html#ac5e1ee8ca32707cc9150992a2ce16ad1" title=" " alt="" coords="337,1555,554,1595"/>
+<area shape="poly" id="edge44_Node000035_Node000042" title=" " alt="" coords="660,1648,568,1610,530,1598,532,1593,570,1605,662,1643"/>
+<area shape="rect" id="Node000044" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_acc5c12947dbc44adb045c15c8471cb12.html#acc5c12947dbc44adb045c15c8471cb12" title="Stop the subsystem&#39;s processing/event loops." alt="" coords="351,1441,540,1481"/>
+<area shape="poly" id="edge46_Node000043_Node000044" title=" " alt="" coords="603,1463,540,1463,540,1458,603,1457"/>
+<area shape="poly" id="edge47_Node000044_Node000037" title=" " alt="" coords="338,1483,235,1503,234,1498,337,1478"/>
+<area shape="rect" id="Node000045" href="$classMayaFlux_1_1Core_1_1GraphicsSubsystem_a8edbb4e731ea5677f47b9de8cc583bcb.html#a8edbb4e731ea5677f47b9de8cc583bcb" title=" " alt="" coords="18,1434,261,1474"/>
+<area shape="poly" id="edge48_Node000044_Node000045" title=" " alt="" coords="337,1461,261,1459,261,1454,337,1456"/>
+</map>

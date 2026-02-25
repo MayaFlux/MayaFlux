@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::transform_spectral_filter" name="MayaFlux::Yantra::transform_spectral_filter">
+<area shape="rect" id="Node000001" title="Spectral filtering using existing FFT infrastructure with C++20 ranges (IN&#45;PLACE)" alt="" coords="248,13,455,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1SpectralTransformer_a7823c1c101caf6098831e5ec802ebf19.html#a7823c1c101caf6098831e5ec802ebf19" title="Core transformation implementation for spectral operations." alt="" coords="5,5,200,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="234,35,200,35,200,30,234,30"/>
+</map>

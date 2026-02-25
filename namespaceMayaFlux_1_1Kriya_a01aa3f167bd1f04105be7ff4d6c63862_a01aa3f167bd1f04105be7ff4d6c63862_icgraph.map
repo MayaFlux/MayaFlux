@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::key_released" name="MayaFlux::Kriya::key_released">
+<area shape="rect" id="Node000001" title="Creates an Event coroutine that triggers on specific key release." alt="" coords="256,5,415,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_aa0213ccfa76fafbb55a88f9982da7cee.html#aa0213ccfa76fafbb55a88f9982da7cee" title="Schedule a key release handler." alt="" coords="5,13,208,38"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,28,208,28,208,23,242,23"/>
+</map>

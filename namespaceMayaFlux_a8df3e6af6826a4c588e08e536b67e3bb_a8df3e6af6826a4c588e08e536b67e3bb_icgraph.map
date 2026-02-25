@@ -1,0 +1,5 @@
+<map id="MayaFlux::normalize_coords" name="MayaFlux::normalize_coords">
+<area shape="rect" id="Node000001" title="Convert window pixel coordinates to normalized device coordinates (NDC)" alt="" coords="212,5,371,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a791bfb1b9b67db772c388344e7671188.html#a791bfb1b9b67db772c388344e7671188" title="Convert window pixel coordinates to NDC using window state." alt="" coords="5,5,164,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="198,28,164,28,164,23,198,23"/>
+</map>

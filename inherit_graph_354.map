@@ -1,0 +1,115 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" title=" " alt="" coords="21,700,167,740"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="275,549,423,589"/>
+<area shape="poly" id="edge115_Node000000_Node000001" title=" " alt="" coords="121,688,168,643,198,620,229,600,274,582,276,587,232,605,201,624,172,647,124,692"/>
+<area shape="rect" id="Node000018" href="$classMayaFlux_1_1Kakshya_1_1SignalSourceContainer.html" title="Data&#45;driven interface for managing arbitrary processable signal sources." alt="" coords="265,181,434,221"/>
+<area shape="poly" id="edge132_Node000000_Node000018" title=" " alt="" coords="109,686,336,220,341,223,114,688"/>
+<area shape="rect" id="Node000026" href="$classMayaFlux_1_1Kriya_1_1BufferPipeline.html" title="Coroutine&#45;based execution engine for composable, multi&#45;strategy buffer processing." alt="" coords="236,783,463,809"/>
+<area shape="poly" id="edge140_Node000000_Node000026" title=" " alt="" coords="169,742,231,761,300,781,299,786,230,767,167,747"/>
+<area shape="rect" id="Node000027" href="$classMayaFlux_1_1Nodes_1_1BinaryOpNode.html" title="Combines the outputs of two nodes using a binary operation." alt="" coords="231,882,468,907"/>
+<area shape="poly" id="edge141_Node000000_Node000027" title=" " alt="" coords="117,750,165,811,196,841,232,867,261,880,259,884,229,872,193,846,161,814,113,753"/>
+<area shape="rect" id="Node000029" href="$classMayaFlux_1_1Nodes_1_1ChainNode.html" title="Connects two nodes in series to form a processing chain." alt="" coords="242,833,457,858"/>
+<area shape="poly" id="edge142_Node000000_Node000029" title=" " alt="" coords="128,747,175,784,232,818,268,830,266,835,230,822,172,789,125,751"/>
+<area shape="rect" id="Node000035" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse.html" title="Impulse generator node." alt="" coords="518,677,726,717"/>
+<area shape="poly" id="edge143_Node000000_Node000035" title=" " alt="" coords="180,714,518,699,518,704,181,719"/>
+<area shape="rect" id="Node000037" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor.html" title="Phase ramp generator node." alt="" coords="518,741,726,781"/>
+<area shape="poly" id="edge144_Node000000_Node000037" title=" " alt="" coords="181,724,518,751,518,756,180,729"/>
+<area shape="rect" id="Node000053" href="$classMayaFlux_1_1Yantra_1_1ComputeMatrix.html" title="Local execution orchestrator for computational operations." alt="" coords="249,615,450,655"/>
+<area shape="poly" id="edge145_Node000000_Node000053" title=" " alt="" coords="166,693,288,652,290,657,168,698"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1AudioBuffer.html" title="Concrete audio implementation of the Buffer interface for double&#45;precision audio data." alt="" coords="548,293,696,333"/>
+<area shape="poly" id="edge116_Node000001_Node000002" title=" " alt="" coords="380,538,597,332,601,336,384,542"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="548,549,696,589"/>
+<area shape="poly" id="edge124_Node000001_Node000010" title=" " alt="" coords="437,567,548,567,548,572,437,572"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="777,197,975,237"/>
+<area shape="poly" id="edge117_Node000002_Node000003" title=" " alt="" coords="680,285,775,247,809,235,811,240,777,252,682,290"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1FeedbackBuffer.html" title="Buffer with temporal memory for recursive processing." alt="" coords="802,261,950,301"/>
+<area shape="poly" id="edge119_Node000002_Node000005" title=" " alt="" coords="709,300,801,288,802,293,710,305"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1InputAudioBuffer.html" title="Specialized buffer for audio input with listener dispatch." alt="" coords="802,325,950,365"/>
+<area shape="poly" id="edge120_Node000002_Node000006" title=" " alt="" coords="710,322,802,333,801,339,709,327"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1NodeBuffer.html" title="Specialized buffer that automatically captures output from computational nodes." alt="" coords="802,389,950,429"/>
+<area shape="poly" id="edge121_Node000002_Node000007" title=" " alt="" coords="682,336,777,375,811,387,809,392,775,380,680,341"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1SoundContainerBuffer.html" title="AudioBuffer implementation backed by a StreamContainer." alt="" coords="794,133,958,173"/>
+<area shape="poly" id="edge122_Node000002_Node000008" title=" " alt="" coords="661,283,726,231,749,206,759,195,775,183,799,171,801,176,777,188,763,199,753,210,730,235,665,287"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RootAudioBuffer.html" title="Top&#45;level aggregation buffer for computational data streams." alt="" coords="1033,197,1181,237"/>
+<area shape="poly" id="edge118_Node000003_Node000004" title=" " alt="" coords="988,215,1033,215,1033,220,988,220"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Buffers_1_1SoundFileBridge.html" title="An audio buffer that reads from a file container and writes to a dynamic stream." alt="" coords="1033,133,1181,173"/>
+<area shape="poly" id="edge123_Node000008_Node000009" title=" " alt="" coords="972,151,1033,151,1033,156,972,156"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="787,709,965,749"/>
+<area shape="poly" id="edge125_Node000010_Node000011" title=" " alt="" coords="711,587,730,599,748,624,755,649,761,672,778,695,795,707,792,711,774,699,756,675,750,650,743,626,726,603,708,591"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Buffers_1_1CompositeGeometryBuffer.html" title="Buffer for aggregating multiple geometry nodes with independent topologies." alt="" coords="778,773,974,813"/>
+<area shape="poly" id="edge127_Node000010_Node000013" title=" " alt="" coords="710,585,730,599,745,620,753,641,755,681,757,721,764,740,778,759,793,771,790,775,774,763,759,743,751,722,750,681,748,642,741,622,726,603,707,589"/>
+<area shape="rect" id="Node000014" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer.html" title="Specialized buffer for generative geometry from GeometryWriterNode." alt="" coords="802,453,950,493"/>
+<area shape="poly" id="edge128_Node000010_Node000014" title=" " alt="" coords="680,541,775,503,809,491,811,496,777,508,682,546"/>
+<area shape="rect" id="Node000015" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer.html" title="Specialized buffer for geometry from NodeNetwork instances." alt="" coords="785,517,967,557"/>
+<area shape="poly" id="edge129_Node000010_Node000015" title=" " alt="" coords="709,556,785,546,786,551,710,561"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer.html" title="Staging buffer for uploading TextureNode pixel data to GPU textures." alt="" coords="802,581,950,621"/>
+<area shape="poly" id="edge130_Node000010_Node000016" title=" " alt="" coords="710,578,802,589,801,595,709,583"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer.html" title="A hybrid buffer managing both a textured quad geometry and its pixel data." alt="" coords="802,645,950,685"/>
+<area shape="poly" id="edge131_Node000010_Node000017" title=" " alt="" coords="710,591,729,599,754,615,777,631,806,643,804,648,775,636,751,619,727,604,708,596"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer.html" title="Root container for GPU buffer lifecycle management and batch processing." alt="" coords="1033,709,1181,749"/>
+<area shape="poly" id="edge126_Node000011_Node000012" title=" " alt="" coords="979,727,1033,727,1033,732,979,732"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Kakshya_1_1StreamContainer.html" title="Data&#45;driven interface for temporal stream containers with navigable read position." alt="" coords="543,69,701,109"/>
+<area shape="poly" id="edge133_Node000018_Node000019" title=" " alt="" coords="410,174,571,107,573,112,413,179"/>
+<area shape="rect" id="Node000024" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer.html" title="SignalSourceContainer wrapping a live GLFW/Vulkan window surface." alt="" coords="543,181,701,221"/>
+<area shape="poly" id="edge139_Node000018_Node000024" title=" " alt="" coords="448,199,543,199,543,204,448,204"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Kakshya_1_1FileContainer.html" title="Marker interface for containers backed by file storage (in&#45;memory only)." alt="" coords="797,5,955,45"/>
+<area shape="poly" id="edge134_Node000019_Node000020" title=" " alt="" coords="714,64,796,43,797,48,715,69"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer.html" title="Concrete base implementation for streaming audio containers." alt="" coords="790,69,962,109"/>
+<area shape="poly" id="edge136_Node000019_Node000022" title=" " alt="" coords="715,87,790,87,790,92,715,92"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Kakshya_1_1SoundFileContainer.html" title="File&#45;backed audio container with complete streaming functionality." alt="" coords="1028,5,1187,45"/>
+<area shape="poly" id="edge135_Node000020_Node000021" title=" " alt="" coords="969,23,1028,23,1028,28,969,28"/>
+<area shape="poly" id="edge138_Node000022_Node000021" title=" " alt="" coords="961,63,1034,43,1035,48,963,68"/>
+<area shape="rect" id="Node000023" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream.html" title="Dynamic capacity streaming audio container with automatic resizing and circular buffering." alt="" coords="1024,69,1191,109"/>
+<area shape="poly" id="edge137_Node000022_Node000023" title=" " alt="" coords="976,87,1024,87,1024,92,976,92"/>
+<area shape="rect" id="Node000054" href="$classMayaFlux_1_1Yantra_1_1GrammarAwareComputeMatrix.html" title="ComputeMatrix extension that integrates grammar&#45;based operation selection." alt="" coords="520,613,724,653"/>
+<area shape="poly" id="edge146_Node000053_Node000054" title=" " alt="" coords="463,631,520,631,520,636,464,637"/>
+<area shape="rect" id="Node000025" href="$classMayaFlux_1_1Kakshya_1_1NDDataContainer.html" title="Abstract interface for N&#45;dimensional data containers." alt="" coords="15,181,173,221"/>
+<area shape="poly" id="edge147_Node000025_Node000018" title=" " alt="" coords="187,199,264,199,264,204,187,204"/>
+<area shape="rect" id="Node000028" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,1133,183,1158"/>
+<area shape="poly" id="edge148_Node000028_Node000027" title=" " alt="" coords="101,1119,117,1075,144,1020,181,964,204,939,229,918,253,905,255,910,232,922,207,943,185,968,148,1023,122,1077,106,1121"/>
+<area shape="poly" id="edge149_Node000028_Node000029" title=" " alt="" coords="98,1118,111,1065,136,997,153,961,174,926,200,895,229,867,248,856,251,860,232,871,204,898,179,929,158,963,141,999,116,1067,103,1120"/>
+<area shape="rect" id="Node000030" href="$classMayaFlux_1_1Nodes_1_1Constant.html" title="Zero&#45;overhead scalar source node that emits a fixed value on every tick." alt="" coords="249,1286,450,1311"/>
+<area shape="poly" id="edge150_Node000028_Node000030" title=" " alt="" coords="115,1167,164,1220,196,1248,232,1271,263,1283,261,1288,229,1276,193,1252,160,1224,111,1171"/>
+<area shape="rect" id="Node000031" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1Filter.html" title="Base class for computational signal transformers implementing difference equations." alt="" coords="258,1375,441,1415"/>
+<area shape="poly" id="edge151_Node000028_Node000031" title=" " alt="" coords="112,1168,161,1241,195,1283,232,1322,270,1350,308,1372,305,1377,267,1354,229,1326,191,1287,157,1245,107,1171"/>
+<area shape="rect" id="Node000034" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="245,932,453,972"/>
+<area shape="poly" id="edge154_Node000028_Node000034" title=" " alt="" coords="121,1122,320,970,323,974,124,1127"/>
+<area shape="rect" id="Node000041" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="249,1125,449,1165"/>
+<area shape="poly" id="edge161_Node000028_Node000041" title=" " alt="" coords="197,1143,249,1143,249,1148,197,1148"/>
+<area shape="rect" id="Node000050" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode.html" title="Abstract base class for nodes that receive external input." alt="" coords="261,1221,437,1261"/>
+<area shape="poly" id="edge170_Node000028_Node000050" title=" " alt="" coords="143,1160,296,1219,294,1224,141,1165"/>
+<area shape="rect" id="Node000032" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FIR.html" title="Finite Impulse Response filter implementation." alt="" coords="516,1431,728,1457"/>
+<area shape="poly" id="edge152_Node000031_Node000032" title=" " alt="" coords="455,1411,551,1429,551,1434,454,1416"/>
+<area shape="rect" id="Node000033" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1IIR.html" title="Infinite Impulse Response filter implementation." alt="" coords="518,1382,726,1407"/>
+<area shape="poly" id="edge153_Node000031_Node000033" title=" " alt="" coords="454,1392,518,1392,518,1397,454,1397"/>
+<area shape="poly" id="edge155_Node000034_Node000035" title=" " alt="" coords="460,922,466,917,483,894,490,871,491,848,490,824,488,800,489,776,497,752,514,728,529,715,532,720,518,731,502,754,494,777,493,800,495,824,497,848,495,872,487,896,470,920,464,926"/>
+<area shape="poly" id="edge157_Node000034_Node000037" title=" " alt="" coords="459,922,466,917,479,902,485,887,490,856,494,824,501,807,514,791,531,779,534,784,518,795,505,810,499,825,495,857,490,889,483,905,470,921,462,927"/>
+<area shape="rect" id="Node000036" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic.html" title="Digital signal processor implementing boolean logic operations." alt="" coords="518,933,726,973"/>
+<area shape="poly" id="edge156_Node000034_Node000036" title=" " alt="" coords="467,950,518,950,518,955,467,955"/>
+<area shape="rect" id="Node000038" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial.html" title="Generator that produces values based on polynomial functions." alt="" coords="518,997,726,1037"/>
+<area shape="poly" id="edge158_Node000034_Node000038" title=" " alt="" coords="447,973,539,995,537,1000,446,978"/>
+<area shape="rect" id="Node000039" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Random.html" title="Node wrapper for Kinesis::Stochastic &#45; signal&#45;rate stochastic generation." alt="" coords="518,805,726,845"/>
+<area shape="poly" id="edge159_Node000034_Node000039" title=" " alt="" coords="454,924,466,917,481,902,490,887,498,871,514,855,536,843,539,848,518,859,503,874,494,889,486,905,470,921,456,929"/>
+<area shape="rect" id="Node000040" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine.html" title="Sinusoidal oscillator generator node." alt="" coords="518,869,726,909"/>
+<area shape="poly" id="edge160_Node000034_Node000040" title=" " alt="" coords="449,926,534,907,535,912,450,932"/>
+<area shape="rect" id="Node000042" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ComputeOutNode.html" title="Node that reads back data from GPU buffer to CPU." alt="" coords="522,1061,722,1101"/>
+<area shape="poly" id="edge162_Node000041_Node000042" title=" " alt="" coords="448,1120,536,1099,537,1104,449,1125"/>
+<area shape="rect" id="Node000043" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode.html" title="Base class for nodes that generate 3D geometry data." alt="" coords="522,1125,722,1165"/>
+<area shape="poly" id="edge163_Node000041_Node000043" title=" " alt="" coords="463,1143,522,1143,522,1148,463,1148"/>
+<area shape="rect" id="Node000048" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TextureNode.html" title="Base class for texture&#45;generating nodes." alt="" coords="522,1189,722,1229"/>
+<area shape="poly" id="edge168_Node000041_Node000048" title=" " alt="" coords="449,1166,537,1187,536,1192,448,1171"/>
+<area shape="rect" id="Node000044" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode.html" title="Generates dense vertex paths from sparse control points or freehand drawing." alt="" coords="776,1125,976,1165"/>
+<area shape="poly" id="edge164_Node000043_Node000044" title=" " alt="" coords="736,1143,776,1143,776,1148,736,1148"/>
+<area shape="rect" id="Node000045" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode.html" title="Unstructured collection of 3D points for visualization." alt="" coords="776,1189,976,1229"/>
+<area shape="poly" id="edge165_Node000043_Node000045" title=" " alt="" coords="716,1166,797,1187,795,1192,715,1171"/>
+<area shape="rect" id="Node000046" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointNode.html" title="Single 3D point in space." alt="" coords="776,997,976,1037"/>
+<area shape="poly" id="edge166_Node000043_Node000046" title=" " alt="" coords="718,1117,726,1111,742,1096,750,1080,758,1064,774,1047,796,1035,798,1040,778,1051,763,1067,754,1083,746,1099,730,1115,720,1121"/>
+<area shape="rect" id="Node000047" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode.html" title="Generates dynamic mesh topology from sparse control points." alt="" coords="776,1061,976,1101"/>
+<area shape="poly" id="edge167_Node000043_Node000047" title=" " alt="" coords="715,1119,795,1099,797,1104,716,1124"/>
+<area shape="rect" id="Node000049" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ProceduralTextureNode.html" title="Pixels generated by arbitrary functions." alt="" coords="776,1253,976,1293"/>
+<area shape="poly" id="edge169_Node000048_Node000049" title=" " alt="" coords="716,1230,797,1251,795,1256,715,1235"/>
+<area shape="rect" id="Node000051" href="$classMayaFlux_1_1Nodes_1_1Input_1_1HIDNode.html" title=" " alt="" coords="534,1253,710,1293"/>
+<area shape="poly" id="edge171_Node000050_Node000051" title=" " alt="" coords="451,1251,534,1260,534,1266,451,1256"/>
+<area shape="rect" id="Node000052" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode.html" title="Specialized InputNode for MIDI messages." alt="" coords="534,1317,710,1357"/>
+<area shape="poly" id="edge172_Node000050_Node000052" title=" " alt="" coords="447,1263,469,1272,493,1288,517,1303,547,1315,545,1320,515,1308,491,1292,467,1277,445,1268"/>
+</map>

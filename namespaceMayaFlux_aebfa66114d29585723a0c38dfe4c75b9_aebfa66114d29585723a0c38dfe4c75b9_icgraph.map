@@ -1,0 +1,38 @@
+<map id="MayaFlux::get_scheduler" name="MayaFlux::get_scheduler">
+<area shape="rect" id="Node000001" title="Gets the task scheduler from the default engine." alt="" coords="457,397,643,423"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_abe02d6d4a3a24e5787913202d5834384.html#abe02d6d4a3a24e5787913202d5834384" title="Cancels a scheduled task." alt="" coords="222,5,393,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="544,384,535,316,512,224,495,175,472,128,443,84,408,45,388,33,391,28,411,41,447,80,476,125,500,173,517,222,540,315,549,383"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aa1955a73119c9e977f59ab989e74597e.html#aa1955a73119c9e977f59ab989e74597e" title="Creates a new buffer pipeline instance." alt="" coords="217,55,397,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="541,384,528,327,502,253,484,214,463,176,437,140,408,109,390,98,393,93,411,105,442,137,467,173,489,212,507,251,533,326,547,383"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a6a9afa59d6d5d235f7d9bf2f1157004c.html#a6a9afa59d6d5d235f7d9bf2f1157004c" title="Creates a line generator that interpolates between values over time." alt="" coords="224,120,391,145"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="539,384,523,336,497,274,459,211,435,183,408,159,388,148,391,143,411,155,439,179,463,208,502,272,528,334,544,383"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_a95d5dddcf0ccf005163f77b570c8e7a5.html#a95d5dddcf0ccf005163f77b570c8e7a5" title="Creates a simple task that calls a function at a specified interval." alt="" coords="217,169,398,195"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="535,386,516,348,487,303,451,256,408,216,369,197,371,192,411,212,455,252,492,300,520,346,540,384"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_a0b2f122006fb411804adab9baa87647d.html#a0b2f122006fb411804adab9baa87647d" title="Creates a metronome task and addes it to the default scheduler list for evaluation." alt="" coords="5,187,157,227"/>
+<area shape="poly" id="edge15_Node000001_Node000006" title=" " alt="" coords="532,387,511,357,483,322,448,288,408,260,346,235,279,219,215,211,157,208,158,202,215,205,280,214,347,230,411,256,451,284,487,318,515,354,536,384"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_a42a25c1b0a46849e6804c5c24153fc50.html#a42a25c1b0a46849e6804c5c24153fc50" title="Schedules a pattern generator that produces values based on a pattern function." alt="" coords="213,271,402,296"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="521,391,470,354,408,318,357,299,359,294,410,313,473,350,524,387"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_a870a8536c64a612c813800c78068a986.html#a870a8536c64a612c813800c78068a986" title="Schedules a pattern generator that produces values based on a pattern function and addes it to the de..." alt="" coords="5,298,157,338"/>
+<area shape="poly" id="edge16_Node000001_Node000008" title=" " alt="" coords="506,394,460,377,409,362,276,338,157,325,158,320,277,333,410,357,461,372,508,389"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_adba3d43ff7eda5bebca4f34e8cad65ad.html#adba3d43ff7eda5bebca4f34e8cad65ad" title="Creates a sequence task that calls functions at specified times." alt="" coords="205,372,409,397"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="444,402,409,398,410,393,444,396"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_a44556db6c9a1fd8493244b1e6b30e443.html#a44556db6c9a1fd8493244b1e6b30e443" title="Creates a sequence task that calls functions at specified times and addes it to the default scheduler..." alt="" coords="5,381,157,421"/>
+<area shape="poly" id="edge17_Node000001_Node000010" title=" " alt="" coords="443,415,205,413,158,410,158,405,205,407,443,409"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_a89874cd168dfb7e79d35b2234e49a468.html#a89874cd168dfb7e79d35b2234e49a468" title="Gets a pointer to a task&#39;s current value." alt="" coords="234,473,381,513"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="500,430,368,475,366,470,498,425"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_a073d89c4ca218efc62570a5ca7793421.html#a073d89c4ca218efc62570a5ca7793421" title="Activates a buffer in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="231,537,384,563"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="529,435,478,481,446,506,411,527,378,540,376,535,408,522,443,502,475,477,526,431"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_a0b740ba3757842dafbd9afc7c2a73cc2.html#a0b740ba3757842dafbd9afc7c2a73cc2" title="Activates a node network in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="231,587,384,612"/>
+<area shape="poly" id="edge12_Node000001_Node000013" title=" " alt="" coords="537,436,517,469,488,507,452,545,411,578,386,589,383,584,408,573,449,541,484,504,512,466,533,433"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_a9fdb6f36962a8cb52fb9439cd2d92946.html#a9fdb6f36962a8cb52fb9439cd2d92946" title="Activates a node in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="231,636,384,661"/>
+<area shape="poly" id="edge13_Node000001_Node000014" title=" " alt="" coords="542,437,524,479,496,531,458,583,436,606,411,627,385,640,383,635,408,622,432,603,454,579,491,528,519,477,537,435"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_a1098a01a89726849902f5863981f4db4.html#a1098a01a89726849902f5863981f4db4" title="Restarts a scheduled task." alt="" coords="221,685,393,711"/>
+<area shape="poly" id="edge14_Node000001_Node000015" title=" " alt="" coords="545,437,530,488,503,553,464,620,440,650,411,676,391,688,389,683,408,672,436,646,460,616,499,550,525,486,540,435"/>
+<area shape="rect" id="Node000016" href="$namespaceMayaFlux_a7d92c127beeb01028a2e57d42ee1a1ba.html#a7d92c127beeb01028a2e57d42ee1a1ba" title="Schedules a new sound routine task." alt="" coords="214,735,401,760"/>
+<area shape="poly" id="edge18_Node000001_Node000016" title=" " alt="" coords="547,437,535,497,510,575,492,616,470,656,443,693,411,725,393,737,390,732,408,721,439,690,466,653,488,614,505,573,530,496,542,436"/>
+<area shape="rect" id="Node000017" href="$namespaceMayaFlux_a0628d5bc82aea3e244f07b46c0080cec.html#a0628d5bc82aea3e244f07b46c0080cec" title="Updates parameters of a scheduled task." alt="" coords="220,785,395,825"/>
+<area shape="poly" id="edge19_Node000001_Node000017" title=" " alt="" coords="549,437,538,504,515,594,497,643,474,691,446,735,411,775,395,787,392,782,408,771,442,732,470,688,492,641,510,593,533,503,544,436"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="203,196,158,201,157,196,203,191"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="211,301,158,309,157,304,210,295"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="192,396,158,398,157,393,191,390"/>
+</map>

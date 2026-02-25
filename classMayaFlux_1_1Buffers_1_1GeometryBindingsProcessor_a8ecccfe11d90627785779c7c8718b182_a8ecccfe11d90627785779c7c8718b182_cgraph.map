@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::GeometryBindingsProcessor::bind_geometry_node" name="MayaFlux::Buffers::GeometryBindingsProcessor::bind_geometry_node">
+<area shape="rect" id="Node000001" title="Bind a geometry node to a GPU vertex buffer." alt="" coords="5,41,212,96"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Buffers_a64c6abe8842e398d178e4275a4d4b404.html#a64c6abe8842e398d178e4275a4d4b404" title="Create staging buffer for transfers." alt="" coords="260,49,423,89"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="212,66,246,66,246,71,212,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="488,5,655,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="422,53,474,45,475,50,423,59"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="471,85,672,125"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="423,79,458,84,457,89,422,84"/>
+</map>

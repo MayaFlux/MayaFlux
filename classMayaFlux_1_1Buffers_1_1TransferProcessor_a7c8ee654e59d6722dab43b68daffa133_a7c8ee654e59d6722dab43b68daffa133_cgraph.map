@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::TransferProcessor::on_attach" name="MayaFlux::Buffers::TransferProcessor::on_attach">
+<area shape="rect" id="Node000001" title="Called when this processor is attached to a buffer." alt="" coords="5,45,167,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_a07af231ac997fbac00a5c3d777377f71.html#a07af231ac997fbac00a5c3d777377f71" title=" " alt="" coords="215,5,413,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="166,56,201,50,202,55,167,61"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1TransferProcessor_a981dd011acbea8a480720693b8b1ea0b.html#a981dd011acbea8a480720693b8b1ea0b" title=" " alt="" coords="215,84,413,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="167,84,202,90,201,95,166,89"/>
+</map>

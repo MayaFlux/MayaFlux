@@ -1,0 +1,19 @@
+<map id="MayaFlux::Nodes::GpuVectorData" name="MayaFlux::Nodes::GpuVectorData">
+<area shape="rect" id="Node000001" title="GPU&#45;uploadable 1D array data interface." alt="" coords="743,5,977,151"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1BinaryOpContextGpu.html" title="GPU&#45;compatible context for binary operation callbacks." alt="" coords="5,209,200,289"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="730,97,618,113,488,135,349,164,213,201,185,211,183,206,211,196,348,159,487,130,617,107,730,91"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Filters_1_1FilterContextGpu.html" title="GPU&#45;augmented filter context for callbacks." alt="" coords="225,209,399,289"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="731,110,577,149,413,201,389,211,387,206,411,196,575,144,729,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1GeneratorContextGpu.html" title=" " alt="" coords="424,209,624,289"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="732,146,603,211,600,206,730,142"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1LogicContextGpu.html" title="GPU&#45;accelerated context for logic node callbacks." alt="" coords="648,209,848,289"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="807,164,776,210,772,207,803,161"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1PolynomialContextGpu.html" title=" " alt="" coords="872,209,1072,289"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="917,161,948,207,944,210,913,164"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1RandomContextGpu.html" title=" " alt="" coords="1096,209,1296,289"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="990,142,1120,206,1117,211,988,146"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ComputeOutContext.html" title="Context for ComputeOutNode &#45; provides readback buffer access." alt="" coords="1320,209,1512,289"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="990,105,1144,145,1309,196,1334,206,1332,211,1307,201,1143,150,989,111"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TextureContext.html" title="Context for TextureNode &#45; provides pixel buffer access." alt="" coords="1536,199,1728,299"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="991,91,1106,106,1241,129,1384,158,1525,196,1537,200,1535,205,1523,201,1383,163,1240,134,1105,111,990,96"/>
+</map>

@@ -1,0 +1,25 @@
+<map id="VKDevice.hpp" name="VKDevice.hpp">
+<area shape="rect" id="Node000001" title=" " alt="" coords="644,5,757,31"/>
+<area shape="rect" id="Node000002" href="$VKContext_8hpp.html" title=" " alt="" coords="572,79,691,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="682,43,644,80,641,77,678,39"/>
+<area shape="rect" id="Node000012" href="$VKDevice_8cpp.html" title=" " alt="" coords="714,79,826,104"/>
+<area shape="poly" id="edge11_Node000001_Node000012" title=" " alt="" coords="723,39,761,77,757,80,720,43"/>
+<area shape="rect" id="Node000003" href="$BackendPipelineManager_8cpp.html" title=" " alt="" coords="5,152,217,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="558,105,195,155,195,149,558,100"/>
+<area shape="rect" id="Node000004" href="$BackendResoureManager_8cpp.html" title=" " alt="" coords="242,152,455,177"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="573,110,395,154,394,149,572,105"/>
+<area shape="rect" id="Node000005" href="$SamplerForge_8cpp.html" title=" " alt="" coords="479,152,618,177"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="609,115,564,154,560,150,606,111"/>
+<area shape="rect" id="Node000006" href="$ShaderFoundry_8cpp.html" title=" " alt="" coords="642,152,786,177"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="657,111,702,150,699,154,653,115"/>
+<area shape="rect" id="Node000007" href="$VKContext_8cpp.html" title=" " alt="" coords="810,152,927,177"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="683,105,831,149,829,154,682,110"/>
+<area shape="rect" id="Node000008" href="$VKSwapchain_8hpp.html" title=" " alt="" coords="951,152,1090,177"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="705,103,958,149,957,155,704,108"/>
+<area shape="rect" id="Node000009" href="$BackendWindowHandler_8cpp.html" title=" " alt="" coords="721,225,928,251"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="977,184,858,228,856,223,976,179"/>
+<area shape="rect" id="Node000010" href="$VKSwapchain_8cpp.html" title=" " alt="" coords="952,225,1089,251"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="1023,191,1023,225,1018,225,1018,191"/>
+<area shape="rect" id="Node000011" href="$VulkanBackend_8cpp.html" title=" " alt="" coords="1114,225,1261,251"/>
+<area shape="poly" id="edge10_Node000008_Node000011" title=" " alt="" coords="1061,180,1161,223,1159,228,1059,185"/>
+</map>

@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::InputSubsystem::~InputSubsystem" name="MayaFlux::Core::InputSubsystem::~InputSubsystem">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,69,243,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1InputSubsystem_a4b7ab1f75725aebcf0256a71b26219d1.html#a4b7ab1f75725aebcf0256a71b26219d1" title="Shutdown and cleanup subsystem resources." alt="" coords="291,69,528,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="243,87,277,87,277,92,243,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="594,5,795,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="499,67,591,46,592,51,500,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1InputSubsystem_ae6e3acd9f4161fa83e2a6c55b0588c44.html#ae6e3acd9f4161fa83e2a6c55b0588c44" title="Stop the subsystem&#39;s processing/event loops." alt="" coords="576,69,813,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="528,87,562,87,562,92,528,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1InputManagerHandle_a654b89622b77375cdfc6acf6995ddeb2.html#a654b89622b77375cdfc6acf6995ddeb2" title="unregister all nodes from InputManager" alt="" coords="583,133,806,173"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="500,107,592,128,591,133,499,112"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1InputManagerHandle_a0d49652de420711631bfc5a12c50f2b4.html#a0d49652de420711631bfc5a12c50f2b4" title="stop InputManager" alt="" coords="861,69,1084,109"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="814,87,847,87,847,92,814,92"/>
+</map>

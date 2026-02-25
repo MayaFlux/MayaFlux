@@ -1,0 +1,7 @@
+<map id="MayaFlux::IO::FileReader" name="MayaFlux::IO::FileReader">
+<area shape="rect" id="Node000001" title="Abstract interface for reading various file formats into containers." alt="" coords="129,5,306,291"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1ImageReader.html" title="File reader for image formats (PNG, JPG, BMP, TGA, etc.)" alt="" coords="5,489,200,894"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="187,304,148,489,143,488,182,303"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1SoundFileReader.html" title="FFmpeg&#45;based audio file reader for MayaFlux." alt="" coords="225,339,442,1044"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="253,303,261,338,255,339,248,304"/>
+</map>

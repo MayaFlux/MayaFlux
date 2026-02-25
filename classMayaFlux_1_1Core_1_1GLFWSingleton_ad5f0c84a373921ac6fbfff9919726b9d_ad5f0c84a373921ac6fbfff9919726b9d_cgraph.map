@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::GLFWSingleton::is_wayland" name="MayaFlux::Core::GLFWSingleton::is_wayland">
+<area shape="rect" id="Node000001" title="Checks if running on Wayland." alt="" coords="5,5,236,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a159954d4bd49c3e6189770ff87163413.html#a159954d4bd49c3e6189770ff87163413" title="Gets the current GLFW platform (Wayland, X11, etc.)" alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,23,270,23,270,28,236,28"/>
+</map>

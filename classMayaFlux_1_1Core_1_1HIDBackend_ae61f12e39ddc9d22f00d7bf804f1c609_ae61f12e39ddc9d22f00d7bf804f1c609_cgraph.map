@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::HIDBackend::initialize" name="MayaFlux::Core::HIDBackend::initialize">
+<area shape="rect" id="Node000001" title="Initialize the input backend." alt="" coords="5,37,216,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1HIDBackend_ad825bbd79a997f1486d73624254c268c.html#ad825bbd79a997f1486d73624254c268c" title="Get backend version string." alt="" coords="264,5,475,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,42,250,37,251,43,216,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1HIDBackend_aee3ff5a5dec633a3075d0bda46752f71.html#aee3ff5a5dec633a3075d0bda46752f71" title="Refresh the device list." alt="" coords="264,69,475,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="216,68,251,72,250,77,216,73"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1HIDBackend_acfaed8e8edda3af91b81e139a433b70e.html#acfaed8e8edda3af91b81e139a433b70e" title=" " alt="" coords="523,5,733,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="450,67,533,46,534,51,452,72"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1HIDBackend_a64affcd85db8974d0be9793ac872db31.html#a64affcd85db8974d0be9793ac872db31" title=" " alt="" coords="523,69,733,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="475,87,509,87,509,92,475,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1HIDBackend_ad7ca6153c9850b240c82ba36581124c1.html#ad7ca6153c9850b240c82ba36581124c1" title=" " alt="" coords="523,133,733,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="452,107,534,127,533,133,450,112"/>
+</map>

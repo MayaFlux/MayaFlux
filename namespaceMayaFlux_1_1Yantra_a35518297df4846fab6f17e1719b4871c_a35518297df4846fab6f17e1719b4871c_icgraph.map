@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::transform_polynomial" name="MayaFlux::Yantra::transform_polynomial">
+<area shape="rect" id="Node000001" title="Polynomial transformation using existing Generator::Polynomial (IN&#45;PLACE)" alt="" coords="336,5,543,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1MathematicalTransformer_a6e33d648c252e4cff7c42a3d50779efb.html#a6e33d648c252e4cff7c42a3d50779efb" title="Core transformation implementation." alt="" coords="5,5,288,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="322,28,288,28,288,23,322,23"/>
+</map>

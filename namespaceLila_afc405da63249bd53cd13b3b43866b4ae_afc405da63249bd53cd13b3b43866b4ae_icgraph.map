@@ -1,0 +1,7 @@
+<map id="Lila::socket_read" name="Lila::socket_read">
+<area shape="rect" id="Node000001" title=" " alt="" coords="380,13,511,38"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_a243db07d63a66a574ed1a7080a29fa18.html#a243db07d63a66a574ed1a7080a29fa18" title="Reads a message from a client." alt="" coords="200,5,332,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="366,28,332,28,332,23,366,23"/>
+<area shape="rect" id="Node000003" href="$classLila_1_1Server_a37724cbd86a53f3a079b9e0b524481a9.html#a37724cbd86a53f3a079b9e0b524481a9" title="Handles communication with a single client." alt="" coords="5,5,152,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="186,28,152,28,152,23,186,23"/>
+</map>

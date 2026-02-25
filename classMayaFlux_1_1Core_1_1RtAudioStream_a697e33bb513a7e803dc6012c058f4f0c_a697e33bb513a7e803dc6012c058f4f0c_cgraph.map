@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::RtAudioStream::RtAudioStream" name="MayaFlux::Core::RtAudioStream::RtAudioStream">
+<area shape="rect" id="Node000001" title="Initializes an audio stream with the specified configuration." alt="" coords="5,5,236,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a6ac5578d156d7e8976b006db9bbca36b.html#a6ac5578d156d7e8976b006db9bbca36b" title="Configures RtAudio stream options based on GlobalStreamInfo." alt="" coords="284,5,515,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,23,270,23,270,28,236,28"/>
+</map>

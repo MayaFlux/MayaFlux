@@ -1,0 +1,19 @@
+<map id="MayaFlux::Buffers::download_device_local" name="MayaFlux::Buffers::download_device_local">
+<area shape="rect" id="Node000001" title="Download data from a device&#45;local buffer using a staging buffer." alt="" coords="548,77,721,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_af6dd001810af7fa06b5b2fd83d04303a.html#af6dd001810af7fa06b5b2fd83d04303a" title="Create a clone of this buffer with the same data and properties." alt="" coords="331,5,479,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="557,76,469,48,471,43,558,71"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_a33653ee42aac9bf3bc12ab1bb2635539.html#a33653ee42aac9bf3bc12ab1bb2635539" title=" " alt="" coords="311,70,500,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="534,100,500,100,500,95,534,95"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Buffers_abc5487d0fedb6c081eb0d4f3f6df64e1.html#abc5487d0fedb6c081eb0d4f3f6df64e1" title="Download from GPU buffer to raw data (auto&#45;detects host&#45;visible vs device&#45;local)" alt="" coords="328,181,483,221"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="579,125,452,184,450,179,576,121"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1BufferDownloadProcessor_a463aff930b610d9dbf3511a6577a5067.html#a463aff930b610d9dbf3511a6577a5067" title="The core processing function that must be implemented by derived classes." alt="" coords="39,38,229,93"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="296,87,229,79,229,74,297,82"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1ComputeOutNode_a66ac1c6e154aba9b4647486ebd270c66.html#a66ac1c6e154aba9b4647486ebd270c66" title="Compute GPU data for this frame." alt="" coords="5,117,263,157"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="314,183,219,160,220,155,315,177"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Buffers_ad1ebb56b44fda03711dc07302a75dc76.html#ad1ebb56b44fda03711dc07302a75dc76" title="Download from GPU buffer to typed span." alt="" coords="57,181,211,221"/>
+<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="314,204,212,204,212,199,314,199"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Buffers_a50260feafa2d5225aa5883a71845e8a5.html#a50260feafa2d5225aa5883a71845e8a5" title="Download from GPU buffer to vector." alt="" coords="57,245,211,285"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="315,225,212,250,211,245,314,220"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Buffers_add2c1891c03233b4d9bdbabb12e331f1.html#add2c1891c03233b4d9bdbabb12e331f1" title="Download GPU buffer to DataAccess&#45;compatible format (precision&#45;preserving)" alt="" coords="60,309,208,349"/>
+<area shape="poly" id="edge8_Node000005_Node000009" title=" " alt="" coords="371,232,322,267,264,300,209,318,207,313,262,295,319,263,368,228"/>
+</map>

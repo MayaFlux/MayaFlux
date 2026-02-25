@@ -1,0 +1,6 @@
+<map id="MayaFlux::Yantra::extract_onset_data" name="MayaFlux::Yantra::extract_onset_data">
+<area shape="rect" id="Node000001" title="Extract data at onset/transient positions using spectral flux." alt="" coords="5,29,193,69"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a48d6edf10802baa81f1701d63ffb8b43.html#a48d6edf10802baa81f1701d63ffb8b43" title="Find onset positions using spectral flux." alt="" coords="241,29,408,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,47,228,47,228,52,194,52"/>
+<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="283,30,280,20,287,10,302,5,325,3,351,6,365,13,363,18,349,11,325,8,303,10,290,15,285,21,288,28"/>
+</map>

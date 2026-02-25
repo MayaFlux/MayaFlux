@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Vruta_1_1IClock.html" title="Abstract base interface for all clock types in the multimodal scheduling system." alt="" coords="5,55,183,80"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Vruta_1_1CustomClock.html" title="Configurable timing system for custom processing domains." alt="" coords="231,5,453,31"/>
+<area shape="poly" id="edge91_Node000000_Node000001" title=" " alt="" coords="171,49,277,28,278,33,172,55"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1FrameClock.html" title="Frame&#45;accurate timing system for visual processing domain." alt="" coords="235,55,449,80"/>
+<area shape="poly" id="edge92_Node000000_Node000002" title=" " alt="" coords="196,65,234,65,234,70,196,70"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1SampleClock.html" title="Sample&#45;accurate timing system for audio processing domain." alt="" coords="231,104,453,129"/>
+<area shape="poly" id="edge93_Node000000_Node000003" title=" " alt="" coords="172,80,278,101,277,107,171,85"/>
+</map>

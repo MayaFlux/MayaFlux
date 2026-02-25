@@ -1,0 +1,16 @@
+<map id="MayaFlux::Creator::load_buffer" name="MayaFlux::Creator::load_buffer">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,37,156,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a85ad9cceab7b34f8f0d1d425baa0e4ca.html#a85ad9cceab7b34f8f0d1d425baa0e4ca" title="Loads an image file into a TextureBuffer." alt="" coords="204,45,401,70"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,55,190,55,190,60,156,60"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1IO_1_1ImageReader_a5c44d3c21bab47cfccd455f86fc5101f.html#a5c44d3c21bab47cfccd455f86fc5101f" title="Create a VKBuffer containing the loaded image pixel data." alt="" coords="449,5,652,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="401,42,436,37,436,43,402,47"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1IO_1_1ImageReader_a6f7eb96fe2b0cf72967ed2263dcaa23a.html#a6f7eb96fe2b0cf72967ed2263dcaa23a" title="Open a file for reading." alt="" coords="449,69,652,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="402,67,436,72,436,77,401,73"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1IO_1_1ImageReader_ad5d7faaa96afc186663265d697207f38.html#ad5d7faaa96afc186663265d697207f38" title="Check if a file can be read by this reader." alt="" coords="700,5,903,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="629,67,709,46,710,51,630,72"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1IO_1_1ImageReader_ad17179439f460d6852a3da61a06dca81.html#ad17179439f460d6852a3da61a06dca81" title="Close the currently open file." alt="" coords="700,69,903,109"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="652,87,686,87,686,92,652,92"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1ImageReader_a35e7202cd51c429e0c56688344cc4746.html#a35e7202cd51c429e0c56688344cc4746" title="Load image from file (static utility)" alt="" coords="700,157,903,197"/>
+<area shape="poly" id="edge6_Node000004_Node000007" title=" " alt="" coords="610,107,732,150,730,155,608,112"/>
+<area shape="poly" id="edge7_Node000007_Node000007" title=" " alt="" coords="755,158,752,148,759,138,776,133,801,131,830,134,846,141,844,146,829,139,801,136,777,138,762,143,757,149,760,156"/>
+</map>

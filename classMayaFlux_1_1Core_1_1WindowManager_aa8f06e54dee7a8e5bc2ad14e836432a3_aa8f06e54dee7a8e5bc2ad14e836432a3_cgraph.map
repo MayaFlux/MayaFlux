@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::WindowManager::create_window" name="MayaFlux::Core::WindowManager::create_window">
+<area shape="rect" id="Node000001" title="Creates a new window." alt="" coords="5,37,247,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1WindowManager_a70ca15b7f426ce702541bb0651a11084.html#a70ca15b7f426ce702541bb0651a11084" title="Factory for creating backend&#45;specific windows." alt="" coords="295,5,536,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="247,41,281,38,281,43,247,47"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_a159954d4bd49c3e6189770ff87163413.html#a159954d4bd49c3e6189770ff87163413" title="Gets the current GLFW platform (Wayland, X11, etc.)" alt="" coords="300,69,531,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="247,68,286,72,286,78,247,73"/>
+</map>

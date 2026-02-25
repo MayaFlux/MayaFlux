@@ -1,0 +1,11 @@
+<map id="Lila::ServerThread::request_stop" name="Lila::ServerThread::request_stop">
+<area shape="rect" id="Node000001" title=" " alt="" coords="397,63,537,103"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1ServerThread_ad6cf64d0e7060ac6a2f0239b7e01d724.html#ad6cf64d0e7060ac6a2f0239b7e01d724" title=" " alt="" coords="209,5,349,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="388,61,345,48,347,43,389,56"/>
+<area shape="rect" id="Node000003" href="$classLila_1_1Server_a903e645c34e93ae5ca91421c8166272f.html#a903e645c34e93ae5ca91421c8166272f" title="Stops the server and disconnects all clients." alt="" coords="214,70,345,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="384,85,345,85,345,80,384,80"/>
+<area shape="rect" id="Node000005" href="$classLila_1_1ServerThread_aae670a7d1eae9223f98cb94632059a81.html#aae670a7d1eae9223f98cb94632059a81" title=" " alt="" coords="209,120,349,160"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="389,109,347,122,345,117,388,104"/>
+<area shape="rect" id="Node000004" href="$classLila_1_1Server_adfacc21753b2fcedec5e7a1f89c7d5c5.html#adfacc21753b2fcedec5e7a1f89c7d5c5" title="Destructor; stops the server if running." alt="" coords="5,70,161,95"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="200,85,162,85,162,80,200,80"/>
+</map>

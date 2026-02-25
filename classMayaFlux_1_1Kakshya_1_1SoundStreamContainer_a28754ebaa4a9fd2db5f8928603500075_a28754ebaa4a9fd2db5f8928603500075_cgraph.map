@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::all_dimensions_consumed" name="MayaFlux::Kakshya::SoundStreamContainer::all_dimensions_consumed">
+<area shape="rect" id="Node000001" title="Check if all active dimensions have been consumed in this cycle." alt="" coords="5,5,208,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_ac59ca8d9a3ed7bd4dbc766943227b44a.html#ac59ca8d9a3ed7bd4dbc766943227b44a" title="Acquire a lock for thread&#45;safe access." alt="" coords="256,13,463,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,30,242,30,242,35,208,35"/>
+</map>

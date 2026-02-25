@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::GpuSync::GeometryWriterNode::resize_vertex_buffer" name="MayaFlux::Nodes::GpuSync::GeometryWriterNode::resize_vertex_buffer">
+<area shape="rect" id="Node000001" title="Resize vertex buffer to hold specified number of vertices." alt="" coords="321,189,537,244"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode_a955c6dc3cb0c487e83b38d921002f045.html#a955c6dc3cb0c487e83b38d921002f045" title="Clear vertex buffer and resize to specified count." alt="" coords="35,5,244,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="394,181,340,126,307,99,272,75,243,61,245,56,275,70,311,94,344,122,398,177"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PathGeneratorNode_a0bb983c3a14dd53e111349bc461d1250.html#a0bb983c3a14dd53e111349bc461d1250" title="Compute frame &#45; generates interpolated vertices from control points." alt="" coords="5,85,273,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="369,185,323,161,272,139,235,127,237,122,274,134,325,156,372,180"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a89f1ca486920e33188f6cc4367186a2d.html#a89f1ca486920e33188f6cc4367186a2d" title="Compute frame &#45; uploads positions to vertex buffer." alt="" coords="39,149,239,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="307,203,239,193,240,188,308,197"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a6529267bb12caf59f4e93c3a82e62c00.html#a6529267bb12caf59f4e93c3a82e62c00" title="Create empty point source." alt="" coords="39,228,239,283"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="308,235,240,245,239,239,307,230"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointCollectionNode_a39a470fe14b0ebdf43cc45f4820b2ec7.html#a39a470fe14b0ebdf43cc45f4820b2ec7" title="Create with initial points." alt="" coords="39,307,239,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="368,253,274,296,239,309,238,304,272,292,365,248"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1PointNode_a7a49ac8d4e1b41559041884a82a8865c.html#a7a49ac8d4e1b41559041884a82a8865c" title="Create point from PointVertex." alt="" coords="39,386,239,426"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="402,257,347,318,313,349,275,375,240,390,238,385,272,370,309,345,344,314,398,254"/>
+</map>

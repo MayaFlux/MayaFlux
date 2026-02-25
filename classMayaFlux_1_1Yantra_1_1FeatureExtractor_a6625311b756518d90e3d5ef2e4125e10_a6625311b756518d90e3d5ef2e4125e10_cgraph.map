@@ -1,0 +1,29 @@
+<map id="MayaFlux::Yantra::FeatureExtractor::extract_implementation" name="MayaFlux::Yantra::FeatureExtractor::extract_implementation">
+<area shape="rect" id="Node000001" title="Core extraction implementation &#45; delegates to ExtractionHelper." alt="" coords="5,261,252,301"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a61e120540bbc4e8889cd4dcd199523ea.html#a61e120540bbc4e8889cd4dcd199523ea" title="Extract data from regions with values above statistical mean." alt="" coords="300,5,488,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="138,259,161,217,197,162,243,105,298,55,306,50,309,54,302,59,247,109,201,165,166,220,143,262"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_aa9a82f1632d66651e0ebe0c75c89bfc3.html#aa9a82f1632d66651e0ebe0c75c89bfc3" title="Extract data from high&#45;energy regions using EnergyAnalyzer." alt="" coords="300,69,488,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="144,259,207,192,251,153,299,119,310,113,313,117,301,124,254,157,211,195,148,263"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_a49265071233bcfa5aeab9478d0b038ea.html#a49265071233bcfa5aeab9478d0b038ea" title="Extract data from regions with high spectral energy." alt="" coords="300,133,488,173"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="160,259,223,222,299,183,316,176,318,181,301,188,226,226,163,263"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Yantra_a53861af8329062f255f923931d0e7da2.html#a53861af8329062f255f923931d0e7da2" title="Extract data at onset/transient positions using spectral flux." alt="" coords="300,261,488,301"/>
+<area shape="poly" id="edge7_Node000001_Node000006" title=" " alt="" coords="252,279,286,279,286,284,252,284"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Yantra_a16e4c9ffa101e49052b5a69964fd8ad8.html#a16e4c9ffa101e49052b5a69964fd8ad8" title="Extract data from statistical outlier regions." alt="" coords="300,197,488,237"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="212,259,297,238,298,243,213,264"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Yantra_a13d0bda7f4723ea4150cffdf4f6395db.html#a13d0bda7f4723ea4150cffdf4f6395db" title="Extract overlapping windows of actual data." alt="" coords="300,325,488,365"/>
+<area shape="poly" id="edge12_Node000001_Node000009" title=" " alt="" coords="213,299,298,320,297,325,212,304"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Yantra_a9745ffce6c7e6ea0dd4d820f877d3a13.html#a9745ffce6c7e6ea0dd4d820f877d3a13" title="Extract data from peak regions using peak detection." alt="" coords="300,389,488,429"/>
+<area shape="poly" id="edge13_Node000001_Node000010" title=" " alt="" coords="163,299,226,336,301,375,318,382,316,387,299,380,223,341,160,304"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Yantra_a1e6d45bfa8237d84c79048b033db1f2f.html#a1e6d45bfa8237d84c79048b033db1f2f" title="Extract data from silent regions using existing EnergyAnalyzer." alt="" coords="300,453,488,493"/>
+<area shape="poly" id="edge14_Node000001_Node000011" title=" " alt="" coords="148,300,211,367,254,406,301,439,313,445,310,450,299,444,251,410,207,371,144,303"/>
+<area shape="rect" id="Node000012" href="$namespaceMayaFlux_1_1Yantra_ab005f775d7b4f6cbcb225367e0c06f5a.html#ab005f775d7b4f6cbcb225367e0c06f5a" title="Extract data at zero crossing points using existing EnergyAnalyzer." alt="" coords="300,517,488,557"/>
+<area shape="poly" id="edge15_Node000001_Node000012" title=" " alt="" coords="143,301,166,343,201,397,247,454,302,503,309,508,306,513,298,507,243,458,197,400,161,346,138,303"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a33eeb9e28202e46d72f8ff6938a7906e.html#a33eeb9e28202e46d72f8ff6938a7906e" title="Validate extraction parameters." alt="" coords="536,101,731,141"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="457,43,489,55,578,93,576,98,487,60,455,48"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="489,99,523,104,522,109,488,105"/>
+<area shape="poly" id="edge6_Node000005_Node000003" title=" " alt="" coords="488,138,522,133,523,139,489,143"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Yantra_a48d6edf10802baa81f1701d63ffb8b43.html#a48d6edf10802baa81f1701d63ffb8b43" title="Find onset positions using spectral flux." alt="" coords="550,261,717,301"/>
+<area shape="poly" id="edge8_Node000006_Node000007" title=" " alt="" coords="488,279,536,279,536,284,488,284"/>
+<area shape="poly" id="edge9_Node000007_Node000007" title=" " alt="" coords="589,262,586,252,594,242,609,237,633,235,661,238,676,245,674,250,660,243,633,240,610,242,597,247,592,253,594,260"/>
+<area shape="poly" id="edge11_Node000008_Node000003" title=" " alt="" coords="455,195,487,183,576,144,578,149,489,188,457,200"/>
+</map>

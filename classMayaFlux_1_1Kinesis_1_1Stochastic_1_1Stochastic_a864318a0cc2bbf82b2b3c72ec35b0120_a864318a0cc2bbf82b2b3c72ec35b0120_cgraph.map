@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kinesis::Stochastic::Stochastic::generate_brownian_impl" name="MayaFlux::Kinesis::Stochastic::Stochastic::generate_brownian_impl">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,45,196,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_ac198bed63425b9d10f778ee3ad400c84.html#ac198bed63425b9d10f778ee3ad400c84" title=" " alt="" coords="244,5,408,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="196,53,230,47,231,52,197,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a8979e544684ae33d6648d9994c1770a6.html#a8979e544684ae33d6648d9994c1770a6" title="Gets configuration parameter." alt="" coords="244,84,408,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="197,86,231,92,230,98,196,92"/>
+</map>

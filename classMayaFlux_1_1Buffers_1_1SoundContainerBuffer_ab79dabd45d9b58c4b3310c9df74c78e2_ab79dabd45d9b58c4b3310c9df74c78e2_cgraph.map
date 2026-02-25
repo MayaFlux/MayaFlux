@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::SoundContainerBuffer::SoundContainerBuffer" name="MayaFlux::Buffers::SoundContainerBuffer::SoundContainerBuffer">
+<area shape="rect" id="Node000001" title="Construct a SoundContainerBuffer for a specific channel and container." alt="" coords="5,13,177,67"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1SoundContainerBuffer_a2fc263d5560278db620a5dc36ee9392e.html#a2fc263d5560278db620a5dc36ee9392e" title="Attempt to enable zero&#45;copy operation if container layout allows." alt="" coords="225,5,389,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,37,212,37,212,43,178,43"/>
+</map>

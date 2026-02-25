@@ -1,0 +1,38 @@
+var SortingHelper_8hpp =
+[
+    [ "SortingAlgorithm", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3", [
+      [ "STANDARD", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3a94e94133f4bdc1794c6b647b8ea134d0", null ],
+      [ "STABLE", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3a32987cdf8a725702042ab18f5c700905", null ],
+      [ "PARTIAL", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3afba5cdfa4bcb408f641c743519a0fe19", null ],
+      [ "NTH_ELEMENT", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3ad6f9277542945cbcbdaa2f9945b5f123", null ],
+      [ "HEAP", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3ab6722804f5872cdd88347da194d42087", null ],
+      [ "PARALLEL", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3adf13a99b035d6f0bce4f44ab18eec8eb", null ],
+      [ "RADIX", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3a74fd9b16d4b2f7b0458f518f6ed9317d", null ],
+      [ "COUNTING", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3aa5fa48e29b30e37389febd475c4c866a", null ],
+      [ "BUCKET", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3af86b537c5694cf4156bb6d8d940bad1b", null ],
+      [ "MERGE_EXTERNAL", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3ab9542b498ecf7a0be566b071777573c2", null ],
+      [ "QUICK_OPTIMIZED", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3a0b5c60d0d326337796770172595ad424", null ],
+      [ "LAZY_STREAMING", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3aa7f142a76d280360fb9663dcdfa7ad65", null ],
+      [ "PREDICTIVE_ML", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3ad8edd28a74f605ed564aad6686be088b", null ],
+      [ "EIGEN_OPTIMIZED", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3a5e97d147c2fcea8d75d5b7c74d95d707", null ],
+      [ "GPU_ACCELERATED", "SortingHelper_8hpp.html#aad2895941e12cdd28c214ba4fe0a6de3a54d9009c7b3fbaf79084799dcba5026e", null ]
+    ] ],
+    [ "create_complex_magnitude_comparator", "SortingHelper_8hpp.html#a8e0646e2016efbfb354ebf477eda9bd8", null ],
+    [ "create_double_comparator", "SortingHelper_8hpp.html#a776a1e198fc8013f858e1fe93c386420", null ],
+    [ "create_multi_key_comparator", "SortingHelper_8hpp.html#af6d4db4b514833b191baec664e21774c", null ],
+    [ "create_universal_sort_key", "SortingHelper_8hpp.html#a8999d56fbd1dacad722668cf3f2c0694", null ],
+    [ "execute_sorting_algorithm", "SortingHelper_8hpp.html#a01e6e4bcb8d40dab36d495f0a8fb510a", null ],
+    [ "generate_channels_sort_indices", "SortingHelper_8hpp.html#a2b449852d7c06e6a16d81f3f280e3dee", null ],
+    [ "generate_compute_data_indices", "SortingHelper_8hpp.html#a405dfb0c8d4e4d044d44d50764e2d644", null ],
+    [ "generate_sort_indices", "SortingHelper_8hpp.html#a43d9c38f4515ad49457bd2532113882b", null ],
+    [ "generate_span_sort_indices", "SortingHelper_8hpp.html#a038ee1d0ef42228c4fbee4cc83f7249f", null ],
+    [ "get_temporal_position", "SortingHelper_8hpp.html#a745cab1ce5b2561ceff4e575927b038b", null ],
+    [ "sort_channels_extract", "SortingHelper_8hpp.html#ac878b27376ae997a32dc3ce40f47f87a", null ],
+    [ "sort_channels_inplace", "SortingHelper_8hpp.html#a06b399b5c5804274f48a0f2309c1f79c", null ],
+    [ "sort_compute_data", "SortingHelper_8hpp.html#a3deb7abab695c99ec7389cc32ef73abc", null ],
+    [ "sort_compute_data_extract", "SortingHelper_8hpp.html#a539de26c4b6fee0df29b2d7e133380a4", null ],
+    [ "sort_compute_data_extract", "SortingHelper_8hpp.html#aefd8d29775269d3755674992909e379f", null ],
+    [ "sort_compute_data_inplace", "SortingHelper_8hpp.html#aff131359838e1ce7612321c04a9c0653", null ],
+    [ "sort_span_extract", "SortingHelper_8hpp.html#ad32342a3992bb2fb029499c4ca58d2af", null ],
+    [ "sort_span_inplace", "SortingHelper_8hpp.html#a5a7b06ef96c6f13f45dbcebdb95ca0fe", null ]
+];

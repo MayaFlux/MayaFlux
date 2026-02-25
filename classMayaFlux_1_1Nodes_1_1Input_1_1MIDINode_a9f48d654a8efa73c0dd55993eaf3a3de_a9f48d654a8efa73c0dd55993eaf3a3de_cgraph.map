@@ -1,0 +1,13 @@
+<map id="MayaFlux::Nodes::Input::MIDINode::notify_tick" name="MayaFlux::Nodes::Input::MIDINode::notify_tick">
+<area shape="rect" id="Node000001" title="Notify callbacks (minimal for InputNode)" alt="" coords="5,49,181,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_a04c1fc0722f24423dfcd3398a62b24f5.html#a04c1fc0722f24423dfcd3398a62b24f5" title=" " alt="" coords="229,5,405,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,52,215,46,216,52,182,57"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_aa1e2d3eb1a1c2e7ee3b9b65eea3b7c91.html#aa1e2d3eb1a1c2e7ee3b9b65eea3b7c91" title="Notify callbacks (minimal for InputNode)" alt="" coords="229,85,405,125"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="182,80,216,86,215,91,181,85"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1InputValue_1_1MIDIMessage_af9c0c149056f572759af0ee1e6841663.html#af9c0c149056f572759af0ee1e6841663" title=" " alt="" coords="456,13,657,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="405,30,442,30,442,35,405,35"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a2be2c134aaaf5c6c4696909b3de35baa.html#a2be2c134aaaf5c6c4696909b3de35baa" title="Retrieves the last created context object." alt="" coords="469,77,645,132"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="405,102,455,102,455,107,405,107"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a00e489ddf0b8e4f74a220feeb318b36f.html#a00e489ddf0b8e4f74a220feeb318b36f" title="Update context after processing." alt="" coords="453,157,660,197"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="385,122,477,150,476,155,384,127"/>
+</map>

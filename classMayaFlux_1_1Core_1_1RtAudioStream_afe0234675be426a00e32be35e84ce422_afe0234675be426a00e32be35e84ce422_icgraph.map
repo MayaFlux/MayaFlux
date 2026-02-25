@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::RtAudioStream::rtAudioCallback" name="MayaFlux::Core::RtAudioStream::rtAudioCallback">
+<area shape="rect" id="Node000001" title="Static callback function for the RtAudio API." alt="" coords="284,5,515,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a9854f64e246d04b4c2fcd5f2b508f22e.html#a9854f64e246d04b4c2fcd5f2b508f22e" title="Initializes the audio stream and allocates required resources." alt="" coords="5,5,236,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,28,236,28,236,23,270,23"/>
+</map>

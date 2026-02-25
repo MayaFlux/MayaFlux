@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::SubsystemManager::get_input_subsystem" name="MayaFlux::Core::SubsystemManager::get_input_subsystem">
+<area shape="rect" id="Node000001" title="Get typed access to the input subsystem." alt="" coords="5,5,232,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a91312240ebdc99232e28a80ea5cd1f51.html#a91312240ebdc99232e28a80ea5cd1f51" title="Get access to a specific subsystem by type." alt="" coords="280,5,484,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,23,266,23,266,28,232,28"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1SubsystemManager_a653e25775b3ec620d14eec5e48aab270.html#a653e25775b3ec620d14eec5e48aab270" title="Check if a subsystem type exists." alt="" coords="532,5,736,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="484,23,518,23,518,28,484,28"/>
+</map>

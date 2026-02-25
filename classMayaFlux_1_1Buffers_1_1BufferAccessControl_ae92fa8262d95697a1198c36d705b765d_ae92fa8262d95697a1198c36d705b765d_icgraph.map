@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::add_graphics_buffer" name="MayaFlux::Buffers::BufferAccessControl::add_graphics_buffer">
+<area shape="rect" id="Node000001" title="Adds a graphics buffer to a token." alt="" coords="207,5,368,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ae10b17df86560e065378c3dc8ac90c0d.html#ae10b17df86560e065378c3dc8ac90c0d" title="Adds a buffer to a token (dispatches based on token type)" alt="" coords="5,5,159,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="193,35,159,35,159,30,193,30"/>
+</map>

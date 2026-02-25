@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Generator::Phasor" name="MayaFlux::Nodes::Generator::Phasor">
+<area shape="rect" id="Node000001" title="Phase ramp generator node." alt="" coords="98,1131,315,1711"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator.html" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="5,743,205,1083"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="144,1096,151,1130,146,1131,139,1097"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="7,5,204,695"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="108,708,108,743,103,743,103,708"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="229,873,387,953"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="300,967,267,1131,262,1130,295,966"/>
+</map>

@@ -1,0 +1,25 @@
+<map id="MayaFlux::Nodes::Generator::Sine::process_batch" name="MayaFlux::Nodes::Generator::Sine::process_batch">
+<area shape="rect" id="Node000001" title="Processes multiple samples at once." alt="" coords="5,197,213,237"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_af63eeb6345c84fd7e61860b99ca369bb.html#af63eeb6345c84fd7e61860b99ca369bb" title="Processes a single input sample and generates a sine wave sample." alt="" coords="261,197,469,237"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,215,248,215,248,220,213,220"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Nodes_a2b661b58f860423fa6cf1d12c5accbd8.html#a2b661b58f860423fa6cf1d12c5accbd8" title="Atomically adds a flag to a node state." alt="" coords="539,5,727,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="378,196,432,127,472,88,516,55,528,49,530,53,519,60,475,92,436,130,382,199"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Nodes_aa4e4a2ece2a22b6774a5978e557ea25e.html#aa4e4a2ece2a22b6774a5978e557ea25e" title="Atomically decrements the modulator count by a specified amount." alt="" coords="539,69,727,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="392,195,447,157,516,119,535,111,537,116,518,124,450,161,395,199"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Nodes_a7d0374eb13e0238f520338b13823a627.html#a7d0374eb13e0238f520338b13823a627" title="Atomically increments the modulator count by a specified amount." alt="" coords="539,133,727,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="449,195,535,174,536,179,450,200"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Nodes_a88c692052149167c04433fa84013bf15.html#a88c692052149167c04433fa84013bf15" title="Atomically removes a flag from a node state." alt="" coords="539,197,727,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="469,215,525,215,525,220,469,220"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a2c50fcf951f65f7ede86afe123a3684f.html#a2c50fcf951f65f7ede86afe123a3684f" title="Notifies all registered callbacks about a new sample." alt="" coords="529,261,737,301"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="450,235,536,256,535,261,449,240"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Nodes_a7c82f258078606084a01f72dfba3bb92.html#a7c82f258078606084a01f72dfba3bb92" title="Attempts to reset the processed state of a node." alt="" coords="545,325,720,365"/>
+<area shape="poly" id="edge10_Node000002_Node000011" title=" " alt="" coords="395,235,450,273,518,311,537,318,535,323,516,316,447,278,392,240"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine_a5109ee00efbeeca62a1be0399ce6fec4.html#a5109ee00efbeeca62a1be0399ce6fec4" title="Updates the phase increment based on a new frequency." alt="" coords="517,389,748,429"/>
+<area shape="poly" id="edge11_Node000002_Node000012" title=" " alt="" coords="382,236,436,304,475,343,519,375,530,381,528,386,516,380,472,347,432,308,378,239"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator_ac55fe175b2a841ced9d39db3d12203a6.html#ac55fe175b2a841ced9d39db3d12203a6" title="Gets the last created context object." alt="" coords="796,229,1007,269"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="737,266,782,261,783,266,737,272"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Generator_ad643e8c89712568663b2eb4ec28b9125.html#ad643e8c89712568663b2eb4ec28b9125" title="Updates the context object for callbacks." alt="" coords="797,293,1005,333"/>
+<area shape="poly" id="edge9_Node000007_Node000010" title=" " alt="" coords="737,291,784,297,783,302,737,296"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Nodes_1_1Node_a9e543f00ad2066f1dd3641b32e7416db.html#a9e543f00ad2066f1dd3641b32e7416db" title="Checks if the node supports GPU processing." alt="" coords="1055,229,1232,269"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="1007,247,1041,247,1041,252,1007,252"/>
+</map>

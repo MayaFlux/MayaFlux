@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::VKBuffer::set_modality" name="MayaFlux::Buffers::VKBuffer::set_modality">
+<area shape="rect" id="Node000001" title="Update the semantic modality and re&#45;infer dimensions." alt="" coords="5,13,177,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a0b88df705302552cb7b6442dd31ee2c3.html#a0b88df705302552cb7b6442dd31ee2c3" title="Infer Kakshya::DataDimension entries from a given byte count." alt="" coords="225,5,424,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,30,212,30,212,35,178,35"/>
+</map>

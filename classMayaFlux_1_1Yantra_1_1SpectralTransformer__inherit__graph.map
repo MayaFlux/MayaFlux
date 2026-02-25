@@ -1,0 +1,7 @@
+<map id="MayaFlux::Yantra::SpectralTransformer&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::SpectralTransformer&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Concrete transformer for frequency&#45;domain operations." alt="" coords="25,1348,239,1632"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1UniversalTransformer.html" title="Template&#45;flexible transformer base with instance&#45;defined I/O types." alt="" coords="25,563,239,1300"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,1314,135,1348,129,1348,129,1314"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,5,259,515"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="135,529,135,562,129,562,129,529"/>
+</map>

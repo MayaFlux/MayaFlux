@@ -1,0 +1,7 @@
+<map id="MayaFlux::Core::InputDeviceInfo" name="MayaFlux::Core::InputDeviceInfo">
+<area shape="rect" id="Node000001" title="Information about a connected input device." alt="" coords="101,5,327,391"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1HIDDeviceInfoExt.html" title="Extended HID device information." alt="" coords="5,439,199,599"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="145,404,132,439,127,438,140,403"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1MIDIBackend_1_1MIDIPortInfo.html" title=" " alt="" coords="223,479,432,559"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="289,403,316,477,311,479,284,404"/>
+</map>

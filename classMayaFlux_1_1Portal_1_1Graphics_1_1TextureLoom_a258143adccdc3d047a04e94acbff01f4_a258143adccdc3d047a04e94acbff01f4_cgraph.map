@@ -1,0 +1,17 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::get_nearest_sampler" name="MayaFlux::Portal::Graphics::TextureLoom::get_nearest_sampler">
+<area shape="rect" id="Node000001" title="Get a default nearest sampler (for pixel&#45;perfect sampling)" alt="" coords="5,62,204,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a55f5ecf770be1229809e0d952b00b07c.html#a55f5ecf770be1229809e0d952b00b07c" title="Get or create a sampler with the given configuration." alt="" coords="252,62,463,117"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,87,238,87,238,92,204,92"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a82f32d8a64b7b9a0d516b83dc586d1c0.html#a82f32d8a64b7b9a0d516b83dc586d1c0" title=" " alt="" coords="529,5,751,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="462,63,537,46,538,51,464,68"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ab64eceb10cd1be8fe9540749ee51d68d.html#ab64eceb10cd1be8fe9540749ee51d68d" title=" " alt="" coords="511,69,769,109"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="463,87,497,87,497,92,463,92"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_af23625d18fe68e281f157b63a0466073.html#af23625d18fe68e281f157b63a0466073" title="Check if manager is initialized." alt="" coords="538,133,742,173"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="464,111,538,128,537,133,462,116"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_a85e150c17138613c7bbf72fb8f53ea7f.html#a85e150c17138613c7bbf72fb8f53ea7f" title="Create sampler." alt="" coords="817,5,1064,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="751,23,804,23,804,28,751,28"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="1112,5,1312,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="1064,23,1098,23,1098,28,1064,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="1360,5,1555,45"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="1312,23,1346,23,1346,28,1312,28"/>
+</map>

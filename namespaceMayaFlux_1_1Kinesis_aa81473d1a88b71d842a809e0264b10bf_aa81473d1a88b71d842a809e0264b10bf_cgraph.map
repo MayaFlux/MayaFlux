@@ -1,0 +1,46 @@
+<map id="MayaFlux::Kinesis::interpolate_nddata" name="MayaFlux::Kinesis::interpolate_nddata">
+<area shape="rect" id="Node000001" title="Process DataVariant through interpolation." alt="" coords="5,307,155,347"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_acd42f42d33f720c61e14fd6026561873.html#acd42f42d33f720c61e14fd6026561873" title="Get number of components per element (rows in matrix representation)" alt="" coords="203,135,429,175"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="91,305,135,245,166,212,201,184,212,178,215,183,204,189,169,216,139,248,96,308"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kakshya_a0a210554c3428315f7daa96220a8cab8.html#a0a210554c3428315f7daa96220a8cab8" title="Convenience function for direct conversion." alt="" coords="237,199,395,239"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="108,304,151,277,202,250,224,241,226,246,204,254,153,281,111,309"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_a20bcc988582b6b8dfd3de3c199455fa6.html#a20bcc988582b6b8dfd3de3c199455fa6" title="Generate interpolated points from control points." alt="" coords="233,263,399,318"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="155,313,218,303,219,308,156,318"/>
+<area shape="rect" id="Node000016" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a14e7ae56f6e50946546895866c768b93.html#a14e7ae56f6e50946546895866c768b93" title="Check if data contains complex numbers." alt="" coords="223,343,409,383"/>
+<area shape="poly" id="edge16_Node000001_Node000016" title=" " alt="" coords="156,335,210,344,210,349,155,341"/>
+<area shape="rect" id="Node000017" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_aa095ef1660d754124534b22b6c37258b.html#aa095ef1660d754124534b22b6c37258b" title="Check if data contains GLM types." alt="" coords="219,407,413,447"/>
+<area shape="poly" id="edge17_Node000001_Node000017" title=" " alt="" coords="114,345,156,369,204,392,223,400,222,405,202,397,153,374,111,349"/>
+<area shape="rect" id="Node000018" href="$namespaceMayaFlux_1_1Kakshya_a02c00df34a41dd3fed6ec3af1f44a424.html#a02c00df34a41dd3fed6ec3af1f44a424" title="Convenience function for direct conversion." alt="" coords="237,509,395,549"/>
+<area shape="poly" id="edge18_Node000001_Node000018" title=" " alt="" coords="99,345,144,398,204,457,267,500,264,504,201,461,140,402,95,349"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_afae4fdb884bcfc31ef058a55e18ab229.html#afae4fdb884bcfc31ef058a55e18ab229" title="Insert Eigen matrix with automatic interpretation." alt="" coords="485,63,645,118"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="395,198,428,184,477,156,520,125,523,129,480,160,431,189,397,202"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Reflect_aad91118cbd25bd9e35a3ced9aa4e6dbd.html#aad91118cbd25bd9e35a3ced9aa4e6dbd" title="Universal enum to string converter using magic_enum (original case)" alt="" coords="936,5,1083,45"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="644,62,700,48,815,32,922,25,922,30,816,38,700,53,645,67"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_ae3c16477974cf354497bad6e2ba47932.html#ae3c16477974cf354497bad6e2ba47932" title=" " alt="" coords="700,63,876,118"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="645,88,686,88,686,93,645,93"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="876,62,927,47,928,52,877,67"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1EigenInsertion_a01143be19f9ec5a48a84add79e896c48.html#a01143be19f9ec5a48a84add79e896c48" title=" " alt="" coords="930,70,1089,125"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="876,91,916,92,916,97,876,96"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_a3dc95aa4f4532c63baab8739169a3813.html#a3dc95aa4f4532c63baab8739169a3813" title="Generic interpolation dispatcher." alt="" coords="490,271,639,311"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="400,288,476,288,476,293,400,293"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_a3f28e2188e03c01335a8e40c284f5428.html#a3f28e2188e03c01335a8e40c284f5428" title="Uniform B&#45;spline interpolation using Eigen matrices." alt="" coords="713,143,863,183"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="588,268,638,231,699,192,712,186,715,191,701,197,641,235,592,273"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_afdb1ec2f9c871867b5a8e1e8ee7d488d.html#afdb1ec2f9c871867b5a8e1e8ee7d488d" title="Catmull&#45;Rom spline interpolation using Eigen matrices." alt="" coords="713,207,863,247"/>
+<area shape="poly" id="edge11_Node000009_Node000011" title=" " alt="" coords="634,268,704,248,705,253,636,273"/>
+<area shape="rect" id="Node000013" href="$namespaceMayaFlux_1_1Kinesis_a7936a84c20fc9580ada9f401d81c1853.html#a7936a84c20fc9580ada9f401d81c1853" title="Cubic Bezier interpolation using Eigen matrices." alt="" coords="713,271,863,311"/>
+<area shape="poly" id="edge13_Node000009_Node000013" title=" " alt="" coords="639,288,700,288,700,293,639,293"/>
+<area shape="rect" id="Node000014" href="$namespaceMayaFlux_1_1Kinesis_a670cd0a74c8ee3ecebf3355794a83339.html#a670cd0a74c8ee3ecebf3355794a83339" title="Cubic Hermite interpolation using Eigen matrices." alt="" coords="713,335,863,375"/>
+<area shape="poly" id="edge14_Node000009_Node000014" title=" " alt="" coords="636,308,705,328,704,333,634,313"/>
+<area shape="rect" id="Node000015" href="$namespaceMayaFlux_1_1Kinesis_ad75c60659787b7670802a72a799a31f2.html#ad75c60659787b7670802a72a799a31f2" title="Quadratic Bezier interpolation using Eigen matrices." alt="" coords="713,399,863,439"/>
+<area shape="poly" id="edge15_Node000009_Node000015" title=" " alt="" coords="592,309,641,346,701,384,715,391,712,396,699,389,638,351,588,313"/>
+<area shape="rect" id="Node000012" href="$structMayaFlux_1_1Kinesis_1_1BasisMatrices_a818351b64ca1e3653ad9c97cca70e765.html#a818351b64ca1e3653ad9c97cca70e765" title=" " alt="" coords="924,199,1095,254"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="863,224,910,224,910,229,863,229"/>
+<area shape="rect" id="Node000019" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a57d47f4899fd8dc254d7b53a740a5495.html#a57d47f4899fd8dc254d7b53a740a5495" title="Convert DataVariant to Eigen matrix." alt="" coords="477,529,652,569"/>
+<area shape="poly" id="edge19_Node000018_Node000019" title=" " alt="" coords="396,533,464,539,463,544,395,538"/>
+<area shape="rect" id="Node000020" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_af525cecbdff773a0b47670c796f2567d.html#af525cecbdff773a0b47670c796f2567d" title=" " alt="" coords="705,463,871,518"/>
+<area shape="poly" id="edge20_Node000019_Node000020" title=" " alt="" coords="641,527,691,513,692,519,642,532"/>
+<area shape="rect" id="Node000021" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_aa3282f64720442a23196b8c07c49bd61.html#aa3282f64720442a23196b8c07c49bd61" title=" " alt="" coords="709,542,867,597"/>
+<area shape="poly" id="edge21_Node000019_Node000021" title=" " alt="" coords="653,555,695,558,695,564,652,560"/>
+<area shape="rect" id="Node000022" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a88d43c5e9d4cd2a06d922f5c389e8257.html#a88d43c5e9d4cd2a06d922f5c389e8257" title=" " alt="" coords="709,621,867,675"/>
+<area shape="poly" id="edge22_Node000019_Node000022" title=" " alt="" coords="612,567,701,607,714,613,712,618,699,612,610,572"/>
+</map>

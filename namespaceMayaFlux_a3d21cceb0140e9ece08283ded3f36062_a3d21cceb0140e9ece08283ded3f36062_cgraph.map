@@ -1,0 +1,7 @@
+<map id="MayaFlux::normalize_together" name="MayaFlux::normalize_together">
+<area shape="rect" id="Node000001" title="Normalize multi&#45;channel data relative to global peak (in&#45;place)" alt="" coords="5,35,164,75"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a333017e3db75fb2d7a88148af5b7f853.html#a333017e3db75fb2d7a88148af5b7f853" title="Apply gain to multi&#45;channel data (in&#45;place)" alt="" coords="212,5,377,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,41,198,36,199,41,165,46"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_aeab6358bb22d5e99a73934d063aeb7ba.html#aeab6358bb22d5e99a73934d063aeb7ba" title="Find peak amplitude in single&#45;channel data." alt="" coords="231,70,358,95"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="165,63,218,70,217,75,164,68"/>
+</map>

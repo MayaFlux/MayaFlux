@@ -1,0 +1,9 @@
+<map id="MayaFlux::Portal::Graphics::TextureLoom::calculate_image_size" name="MayaFlux::Portal::Graphics::TextureLoom::calculate_image_size">
+<area shape="rect" id="Node000001" title="Calculate image data size." alt="" coords="284,62,481,117"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aaf5e48e2bb8325c1db70971a89cabec7.html#aaf5e48e2bb8325c1db70971a89cabec7" title="Create a 2D texture." alt="" coords="22,5,219,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="270,65,202,48,204,43,271,59"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7ac47f4e64fd980c46a937ca4c69a1d0.html#a7ac47f4e64fd980c46a937ca4c69a1d0" title="Create a 3D texture (volumetric)" alt="" coords="22,69,219,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="270,92,220,92,220,87,270,87"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ad61a4d872b3af82eb1af351bc6118126.html#ad61a4d872b3af82eb1af351bc6118126" title="Create a cubemap texture." alt="" coords="5,133,236,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="271,119,204,136,202,131,270,114"/>
+</map>

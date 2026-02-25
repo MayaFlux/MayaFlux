@@ -1,0 +1,11 @@
+<map id="MayaFlux::Core::BackendResourceManager::upload_image_data" name="MayaFlux::Core::BackendResourceManager::upload_image_data">
+<area shape="rect" id="Node000001" title="Upload data to an image (creates staging buffer internally)" alt="" coords="535,69,781,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a3a42e83f8a57c6ea8cf2e15cbaaf3892.html#a3a42e83f8a57c6ea8cf2e15cbaaf3892" title="Upload pixel data to an existing texture." alt="" coords="284,69,487,109"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="521,92,487,92,487,87,521,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_aaf5e48e2bb8325c1db70971a89cabec7.html#aaf5e48e2bb8325c1db70971a89cabec7" title="Create a 2D texture." alt="" coords="22,5,219,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="288,69,203,48,205,43,289,63"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a7ac47f4e64fd980c46a937ca4c69a1d0.html#a7ac47f4e64fd980c46a937ca4c69a1d0" title="Create a 3D texture (volumetric)" alt="" coords="22,69,219,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="270,92,220,92,220,87,270,87"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_ad61a4d872b3af82eb1af351bc6118126.html#ad61a4d872b3af82eb1af351bc6118126" title="Create a cubemap texture." alt="" coords="5,133,236,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="289,115,205,136,203,131,288,110"/>
+</map>

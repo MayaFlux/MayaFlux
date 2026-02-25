@@ -1,0 +1,11 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Nodes_1_1Network_1_1NetworkOperator.html" title="Domain&#45;agnostic interpretive lens for network processing." alt="" coords="5,69,204,109"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Nodes_1_1Network_1_1GraphicsOperator.html" title="Operator that produces GPU&#45;renderable geometry." alt="" coords="252,69,451,109"/>
+<area shape="poly" id="edge82_Node000000_Node000001" title=" " alt="" coords="218,87,252,87,252,92,218,92"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PathOperator.html" title=" " alt="" coords="499,5,697,45"/>
+<area shape="poly" id="edge83_Node000001_Node000002" title=" " alt="" coords="442,63,520,43,521,48,443,68"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PhysicsOperator.html" title="N&#45;body physics simulation with point rendering." alt="" coords="499,69,697,109"/>
+<area shape="poly" id="edge84_Node000001_Node000003" title=" " alt="" coords="465,87,498,87,498,92,465,92"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1TopologyOperator.html" title=" " alt="" coords="499,133,697,173"/>
+<area shape="poly" id="edge85_Node000001_Node000004" title=" " alt="" coords="443,110,521,131,520,136,442,115"/>
+</map>

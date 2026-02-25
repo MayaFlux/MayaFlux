@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::safe_remove_conditional_callback" name="MayaFlux::Nodes::safe_remove_conditional_callback">
+<area shape="rect" id="Node000001" title="Safely removes all conditional callbacks with a specific condition." alt="" coords="252,5,471,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node_acee05aa115e21d16fb4ef93b4f8325b1.html#acee05aa115e21d16fb4ef93b4f8325b1" title="Removes a previously registered conditional callback." alt="" coords="5,5,204,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="239,28,204,28,204,23,239,23"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Input::InputNode::notify_tick" name="MayaFlux::Nodes::Input::InputNode::notify_tick">
+<area shape="rect" id="Node000001" title="Notify callbacks (minimal for InputNode)" alt="" coords="5,49,181,89"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a2be2c134aaaf5c6c4696909b3de35baa.html#a2be2c134aaaf5c6c4696909b3de35baa" title="Retrieves the last created context object." alt="" coords="245,5,421,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,53,230,45,231,51,182,58"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a00e489ddf0b8e4f74a220feeb318b36f.html#a00e489ddf0b8e4f74a220feeb318b36f" title="Update context after processing." alt="" coords="229,85,436,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="182,79,216,84,215,90,181,85"/>
+</map>

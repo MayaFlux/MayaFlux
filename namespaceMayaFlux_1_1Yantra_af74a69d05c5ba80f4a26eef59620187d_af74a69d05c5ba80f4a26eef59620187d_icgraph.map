@@ -1,0 +1,6 @@
+<map id="MayaFlux::Yantra::compute_max_statistic" name="MayaFlux::Yantra::compute_max_statistic">
+<area shape="rect" id="Node000001" title="Compute max statistic using zero&#45;copy processing." alt="" coords="319,29,517,69"/>
+<area shape="poly" id="edge1_Node000001_Node000001" title=" " alt="" coords="466,18,449,11,418,8,391,10,374,15,368,21,371,28,366,30,363,20,371,10,390,5,418,3,450,5,468,13"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1StatisticalAnalyzer_ac6b9656bbc2b37d4603de52ef0115d85.html#ac6b9656bbc2b37d4603de52ef0115d85" title="Compute statistical values using span (zero&#45;copy processing)" alt="" coords="5,29,271,69"/>
+<area shape="poly" id="edge2_Node000001_Node000002" title=" " alt="" coords="305,52,271,52,271,47,305,47"/>
+</map>

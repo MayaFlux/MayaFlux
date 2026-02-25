@@ -1,0 +1,6 @@
+<map id="MayaFlux::Yantra::compute_harmonic_energy" name="MayaFlux::Yantra::compute_harmonic_energy">
+<area shape="rect" id="Node000001" title="Compute harmonic energy using low&#45;frequency FFT analysis." alt="" coords="249,29,448,69"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="390,18,376,11,349,8,325,10,311,15,305,21,308,28,303,30,300,20,308,10,324,5,349,3,377,6,393,13"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aae10121eaa04e3e509079717b90890ef.html#aae10121eaa04e3e509079717b90890ef" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="5,22,201,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,52,201,52,201,47,236,47"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="MayaFlux::IO::SoundFileReader::initialize_ffmpeg" name="MayaFlux::IO::SoundFileReader::initialize_ffmpeg">
+<area shape="rect" id="Node000001" title="Initialize FFmpeg libraries (thread&#45;safe, called automatically)." alt="" coords="565,131,791,171"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a0139e77016146ec1c255e929b53bd9e9.html#a0139e77016146ec1c255e929b53bd9e9" title="Loads an audio file into a SoundFileContainer with automatic format detection." alt="" coords="309,109,501,134"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="551,140,501,134,501,129,552,134"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1IO_1_1SoundFileReader_ada623835764ecaf37aa2c437d2b2f3c7.html#ada623835764ecaf37aa2c437d2b2f3c7" title="Construct a new SoundFileReader object." alt="" coords="292,159,517,199"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="552,166,518,170,517,164,551,161"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_a0f5c0ba5cc0e7bca02da90a3b6062038.html#a0f5c0ba5cc0e7bca02da90a3b6062038" title="Create a file capture operation that reads from file and stores in stream." alt="" coords="5,5,244,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="361,106,243,60,204,48,206,43,245,55,363,101"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_ae7457d99167bee8e2b290c9cba5c9dfb.html#ae7457d99167bee8e2b290c9cba5c9dfb" title="Create CaptureBuilder for file with fluent configuration." alt="" coords="5,69,244,109"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="295,112,244,106,245,100,296,106"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kriya_1_1BufferOperation_ab25c315c19da09dd46451cc13027d635.html#ab25c315c19da09dd46451cc13027d635" title="Create operation to route file data to DynamicSoundStream." alt="" coords="5,133,244,173"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="296,136,245,142,244,137,295,131"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Creator_ac8c01771aeaada8e8218b8a8eb83bbbb.html#ac8c01771aeaada8e8218b8a8eb83bbbb" title=" " alt="" coords="49,197,200,237"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="314,141,293,149,279,158,270,168,260,178,245,188,201,205,199,200,243,183,257,174,266,164,276,154,291,144,312,136"/>
+</map>

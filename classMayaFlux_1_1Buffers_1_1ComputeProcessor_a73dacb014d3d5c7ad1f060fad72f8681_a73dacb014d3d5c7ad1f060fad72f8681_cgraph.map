@@ -1,0 +1,17 @@
+<map id="MayaFlux::Buffers::ComputeProcessor::execute_shader" name="MayaFlux::Buffers::ComputeProcessor::execute_shader">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,141,208,196"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1ComputeProcessor_ae63c13a695732ad34d9213abb9751dd0.html#ae63c13a695732ad34d9213abb9751dd0" title="Calculate dispatch size from buffer." alt="" coords="256,5,467,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="144,139,196,104,255,70,269,63,272,68,257,75,198,109,147,143"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_af50ca0aa0cb7511c99eaf758430efdce.html#af50ca0aa0cb7511c99eaf758430efdce" title=" " alt="" coords="263,85,460,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="208,141,267,125,268,131,209,146"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a715d57394465ff2924727d7c82d87e7b.html#a715d57394465ff2924727d7c82d87e7b" title="Get the global shader compiler instance." alt="" coords="263,149,460,189"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="208,166,249,166,249,171,208,171"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a3cbf5a521d0f7612d2bb62a5d5dbc766.html#a3cbf5a521d0f7612d2bb62a5d5dbc766" title="Called after each process callback." alt="" coords="284,213,439,268"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="205,194,271,213,270,218,203,199"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1ShaderProcessor_a694e033fab8ccc2569ec3395bfb07737.html#a694e033fab8ccc2569ec3395bfb07737" title="Called before each process callback." alt="" coords="284,292,439,347"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="141,194,194,237,257,278,273,286,270,291,255,283,190,241,137,199"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ComputePress_a89b259adf28ef041294928959e03fa9c.html#a89b259adf28ef041294928959e03fa9c" title=" " alt="" coords="515,85,712,125"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="460,102,501,102,501,107,460,107"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_ab22eaae6b8210236918b85f409fc4c49.html#ab22eaae6b8210236918b85f409fc4c49" title=" " alt="" coords="515,149,712,189"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="460,166,501,166,501,171,460,171"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="MayaFlux::Buffers::TextureBuffer::use_default_quad" name="MayaFlux::Buffers::TextureBuffer::use_default_quad">
+<area shape="rect" id="Node000001" title="Reset to default fullscreen quad Uses position and scale to generate quad geometry." alt="" coords="5,13,237,53"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1TextureBuffer_ad4dfd30af6ecb53741917052bf839ccb.html#ad4dfd30af6ecb53741917052bf839ccb" title=" " alt="" coords="285,5,460,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="238,30,272,30,272,35,238,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1VKBuffer_a16b3cbfb638d1ce2063d8b9436faf7ec.html#a16b3cbfb638d1ce2063d8b9436faf7ec" title="Set vertex layout for this buffer." alt="" coords="508,5,664,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="460,30,494,30,494,35,460,35"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a69d6a400c22a219150d8b28007441d5d.html#a69d6a400c22a219150d8b28007441d5d" title="Helper: compute stride from attributes if not explicitly set." alt="" coords="712,5,885,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="664,30,698,30,698,35,664,35"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Kakshya_1_1VertexLayout_a544b48334c1b582e8bf50da8215d2095.html#a544b48334c1b582e8bf50da8215d2095" title="Get size in bytes for a given modality Mirrors VKBuffer::get_format() logic." alt="" coords="933,5,1108,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="885,30,920,30,920,35,885,35"/>
+</map>

@@ -1,0 +1,25 @@
+<map id="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::clear" name="MayaFlux::Nodes::GpuSync::TopologyGeneratorNode::clear">
+<area shape="rect" id="Node000001" title="Clear all points and connections." alt="" coords="5,265,232,305"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a3572e031b1391fb7d3c40eae99191953.html#a3572e031b1391fb7d3c40eae99191953" title="Manually trigger connection regeneration." alt="" coords="280,258,480,313"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,283,266,283,266,288,232,288"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Kinesis_ab09a6cdde4c8a2c5aba10484c96969a5.html#ab09a6cdde4c8a2c5aba10484c96969a5" title="Generate proximity graph using specified mode." alt="" coords="531,229,725,269"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="480,268,517,263,518,268,480,273"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1TopologyGeneratorNode_a185b8fd72b13fc2d267d401523578152.html#a185b8fd72b13fc2d267d401523578152" title=" " alt="" coords="528,294,728,349"/>
+<area shape="poly" id="edge11_Node000002_Node000012" title=" " alt="" coords="480,297,515,302,514,307,480,302"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Kinesis_a62178d0a85c5898502d363b2615d4d0b.html#a62178d0a85c5898502d363b2615d4d0b" title="Custom proximity graph via user function." alt="" coords="790,5,974,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="637,228,657,191,688,144,727,96,774,55,784,49,786,54,778,59,731,100,692,148,662,194,642,230"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Kinesis_ac52c9eee0fbcf6c3f05998045b64cadb.html#ac52c9eee0fbcf6c3f05998045b64cadb" title="Compute Gabriel graph." alt="" coords="807,69,957,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="645,227,700,174,736,144,775,119,793,110,796,115,777,124,739,149,703,178,649,231"/>
+<area shape="rect" id="Node000006" href="$namespaceMayaFlux_1_1Kinesis_a70498b37671f0fd75d7443f9795b3319.html#a70498b37671f0fd75d7443f9795b3319" title="Compute K&#45;nearest neighbors graph." alt="" coords="803,133,961,173"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="671,227,775,183,797,175,799,180,777,188,673,232"/>
+<area shape="rect" id="Node000007" href="$namespaceMayaFlux_1_1Kinesis_a0823cdca071528dabb2423727e07e149.html#a0823cdca071528dabb2423727e07e149" title="Compute minimum spanning tree (Prim&#39;s algorithm)" alt="" coords="790,197,974,237"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="725,234,776,228,777,233,726,240"/>
+<area shape="rect" id="Node000008" href="$namespaceMayaFlux_1_1Kinesis_a1faf209142dfbee6be1a743a8630072d.html#a1faf209142dfbee6be1a743a8630072d" title="Compute nearest neighbor graph." alt="" coords="793,261,971,301"/>
+<area shape="poly" id="edge7_Node000003_Node000008" title=" " alt="" coords="726,259,779,266,779,271,725,264"/>
+<area shape="rect" id="Node000009" href="$namespaceMayaFlux_1_1Kinesis_abf863c6079677bef016abd00067a7880.html#abf863c6079677bef016abd00067a7880" title="Compute radius threshold graph." alt="" coords="795,325,969,365"/>
+<area shape="poly" id="edge8_Node000003_Node000009" title=" " alt="" coords="700,267,729,279,753,295,777,311,794,318,792,323,775,316,750,300,727,284,698,272"/>
+<area shape="rect" id="Node000010" href="$namespaceMayaFlux_1_1Kinesis_aabe525f8be41349721b9680dc7ca6f0c.html#aabe525f8be41349721b9680dc7ca6f0c" title="Compute relative neighborhood graph." alt="" coords="776,389,988,429"/>
+<area shape="poly" id="edge9_Node000003_Node000010" title=" " alt="" coords="712,267,730,279,748,304,754,329,761,353,778,375,784,380,781,384,774,379,756,355,749,330,743,306,726,283,709,272"/>
+<area shape="rect" id="Node000011" href="$namespaceMayaFlux_1_1Kinesis_a9732a5cbb67ccb790693539d8dc62c2d.html#a9732a5cbb67ccb790693539d8dc62c2d" title="Compute sequential chain graph." alt="" coords="807,453,957,493"/>
+<area shape="poly" id="edge10_Node000003_Node000011" title=" " alt="" coords="714,267,730,279,745,300,753,321,754,361,756,401,763,420,778,439,796,453,793,457,774,443,759,423,751,402,749,362,747,322,740,303,726,283,711,271"/>
+</map>

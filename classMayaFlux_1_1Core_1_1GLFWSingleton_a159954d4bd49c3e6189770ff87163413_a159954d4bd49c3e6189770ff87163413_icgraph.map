@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::GLFWSingleton::get_platform" name="MayaFlux::Core::GLFWSingleton::get_platform">
+<area shape="rect" id="Node000001" title="Gets the current GLFW platform (Wayland, X11, etc.)" alt="" coords="535,37,765,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1WindowManager_aa8f06e54dee7a8e5bc2ad14e836432a3.html#aa8f06e54dee7a8e5bc2ad14e836432a3" title="Creates a new window." alt="" coords="245,5,487,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="521,45,487,42,487,36,522,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1GLFWSingleton_ad5f0c84a373921ac6fbfff9919726b9d.html#ad5f0c84a373921ac6fbfff9919726b9d" title="Checks if running on Wayland." alt="" coords="251,69,481,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="521,75,482,79,481,74,521,69"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a76496539df28697c745cc22b37edcade.html#a76496539df28697c745cc22b37edcade" title="Create a new window with specified parameters." alt="" coords="5,13,197,38"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="232,28,198,28,198,23,232,23"/>
+</map>

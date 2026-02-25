@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::WaveguideNetwork::create_default_loop_filter" name="MayaFlux::Nodes::Network::WaveguideNetwork::create_default_loop_filter">
+<area shape="rect" id="Node000001" title=" " alt="" coords="345,5,552,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_aa2a7f724fe1324c3363ea5bc2d42c3a9.html#aa2a7f724fe1324c3363ea5bc2d42c3a9" title="Create waveguide network with specified type and frequency." alt="" coords="5,13,297,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="332,35,298,35,298,30,332,30"/>
+</map>

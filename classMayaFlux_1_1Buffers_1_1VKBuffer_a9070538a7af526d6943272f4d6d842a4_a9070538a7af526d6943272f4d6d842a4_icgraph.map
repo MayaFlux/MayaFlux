@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::VKBuffer::get_size_bytes" name="MayaFlux::Buffers::VKBuffer::get_size_bytes">
+<area shape="rect" id="Node000001" title=" " alt="" coords="292,157,476,197"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1CompositeGeometryBuffer_a471dab929e26742d15e8303d0c08feed.html#a471dab929e26742d15e8303d0c08feed" title="Create empty composite buffer." alt="" coords="23,5,227,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="349,150,300,112,243,75,216,63,218,58,245,70,303,107,352,146"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1GeometryBuffer_ab3fafe8be8ff00aa36fc134600d06346.html#ab3fafe8be8ff00aa36fc134600d06346" title="Create geometry buffer from generative node." alt="" coords="5,85,244,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="300,155,243,139,200,127,202,122,245,134,301,150"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1NetworkGeometryBuffer_a09a747b9b0a8d796ca0bb2ae91181221.html#a09a747b9b0a8d796ca0bb2ae91181221" title="Create geometry buffer from network." alt="" coords="30,149,219,204"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="278,179,220,179,220,174,278,174"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_a00e6d4055c95164561929c303ba49f8c.html#a00e6d4055c95164561929c303ba49f8c" title="Create texture staging buffer from generative node." alt="" coords="8,228,241,283"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="305,203,216,230,215,225,303,198"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1NodeTextureBuffer_ac67634c77e2bdb1c6e7c6f5bceb492c1.html#ac67634c77e2bdb1c6e7c6f5bceb492c1" title="Initialize the buffer, create GPU texture, and setup processors." alt="" coords="31,307,218,361"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="356,208,307,253,245,296,219,309,217,304,243,292,303,249,352,205"/>
+</map>

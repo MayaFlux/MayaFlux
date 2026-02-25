@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::TextureProcessor::upload_initial_pixels" name="MayaFlux::Buffers::TextureProcessor::upload_initial_pixels">
+<area shape="rect" id="Node000001" title="Upload initial pixel data to GPU texture." alt="" coords="5,5,191,60"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Portal_1_1Graphics_a335ffb0c43b53ec263ab6559ac29476b.html#a335ffb0c43b53ec263ab6559ac29476b" title="Get the global texture manager instance." alt="" coords="239,13,436,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,30,225,30,225,35,191,35"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1TextureLoom_a6887ad297693c2392be7960daab06002.html#a6887ad297693c2392be7960daab06002" title=" " alt="" coords="484,13,681,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="436,30,470,30,470,35,436,35"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::invalidate_cache" name="MayaFlux::Portal::Graphics::ShaderFoundry::invalidate_cache">
+<area shape="rect" id="Node000001" title="Invalidate cache for specific shader." alt="" coords="280,37,524,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a276481b6104359c71f4ce0780299404c.html#a276481b6104359c71f4ce0780299404c" title="Hot&#45;reload a shader from file." alt="" coords="17,5,220,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="266,45,220,39,220,34,266,39"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a2470e6d877935c4ca8a7fa4d1537bf88.html#a2470e6d877935c4ca8a7fa4d1537bf88" title="Hot&#45;reload shader (returns new ID)" alt="" coords="5,69,232,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="267,75,233,79,232,74,266,70"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::VKShaderModule" name="MayaFlux::Core::VKShaderModule">
+<area shape="rect" id="Node000001" title="Wrapper for Vulkan shader module with lifecycle and reflection." alt="" coords="260,233,492,883"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1ShaderReflection.html" title="Metadata extracted from shader module." alt="" coords="5,5,240,171"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,169,254,327,250,329,164,172"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Core_1_1VertexInputInfo.html" title=" " alt="" coords="264,45,488,131"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="379,131,379,217,373,217,373,131"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1FragmentOutputInfo.html" title=" " alt="" coords="512,28,699,148"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="579,149,502,307,497,304,574,147"/>
+</map>

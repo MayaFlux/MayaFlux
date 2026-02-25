@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kakshya::EigenAccess::type_name" name="MayaFlux::Kakshya::EigenAccess::type_name">
+<area shape="rect" id="Node000001" title="Get underlying data type name." alt="" coords="255,91,439,131"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a338281fbf5e4fe3fd43082f151a46ab0.html#a338281fbf5e4fe3fd43082f151a46ab0" title="Convert complex data to Eigen complex vector." alt="" coords="13,5,199,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="271,90,190,63,191,58,273,85"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_a9d4f4c8971f32fc343f787100982af3c.html#a9d4f4c8971f32fc343f787100982af3c" title="Convert complex data to magnitude vector." alt="" coords="5,84,207,139"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="241,114,207,114,207,109,241,109"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1EigenAccess_accd81411332a85f2f5532705b09ecf94.html#accd81411332a85f2f5532705b09ecf94" title="Convert complex data to phase vector (angle in radians)" alt="" coords="21,163,191,217"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="273,138,191,165,190,160,271,133"/>
+</map>

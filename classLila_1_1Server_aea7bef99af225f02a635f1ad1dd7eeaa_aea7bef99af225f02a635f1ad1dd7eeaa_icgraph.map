@@ -1,0 +1,5 @@
+<map id="Lila::Server::server_loop" name="Lila::Server::server_loop">
+<area shape="rect" id="Node000001" title="Main server loop; accepts and manages clients." alt="" coords="187,5,365,31"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_a59b7f591adc209cf231f3336d9ae45a3.html#a59b7f591adc209cf231f3336d9ae45a3" title="Starts the server and begins accepting clients." alt="" coords="5,5,139,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="173,21,139,21,139,15,173,15"/>
+</map>

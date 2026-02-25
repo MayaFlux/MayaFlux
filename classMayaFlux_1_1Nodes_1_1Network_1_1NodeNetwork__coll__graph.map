@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork" name="MayaFlux::Nodes::Network::NodeNetwork">
+<area shape="rect" id="Node000001" title="Abstract base class for structured collections of nodes with defined relationships." alt="" coords="5,248,203,928"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,5,197,185"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="107,185,107,231,101,231,101,185"/>
+</map>

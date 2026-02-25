@@ -1,0 +1,3 @@
+<map id="Lila::ServerThread" name="Lila::ServerThread">
+<area shape="rect" id="Node000001" title="Fallback std::thread&#45;based thread wrapper with manual stop signaling." alt="" coords="5,5,143,271"/>
+</map>

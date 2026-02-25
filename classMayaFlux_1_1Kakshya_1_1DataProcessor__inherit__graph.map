@@ -1,0 +1,15 @@
+<map id="MayaFlux::Kakshya::DataProcessor" name="MayaFlux::Kakshya::DataProcessor">
+<area shape="rect" id="Node000001" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="299,5,449,165"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor.html" title=" " alt="" coords="5,213,236,693"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="291,167,251,215,238,232,234,229,247,212,287,164"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase.html" title="Base class for N&#45;dimensional region processors." alt="" coords="261,216,487,691"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="377,179,377,216,371,216,371,179"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor.html" title="Default DataProcessor for WindowContainer." alt="" coords="512,303,721,603"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="461,163,501,212,530,256,555,302,550,304,525,258,497,215,457,167"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor.html" title="Data&#45;driven processor for organizing and processing non&#45;linear audio regions." alt="" coords="139,741,369,1176"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="317,705,308,742,303,740,312,704"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1SpatialRegionProcessor.html" title="Parallel spatial extraction processor for image&#45;modality containers." alt="" coords="393,851,595,1066"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="436,703,471,850,466,852,431,705"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1DynamicRegionProcessor.html" title="Extends RegionOrganizationProcessor with dynamic, runtime reorganization capabilities." alt="" coords="151,1224,357,1473"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="257,1190,257,1224,251,1224,251,1190"/>
+</map>

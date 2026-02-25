@@ -1,0 +1,9 @@
+<map id="MayaFlux::TemporalWrapper::spec" name="MayaFlux::TemporalWrapper::spec">
+<area shape="rect" id="Node000001" title=" " alt="" coords="207,47,416,87"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a073d89c4ca218efc62570a5ca7793421.html#a073d89c4ca218efc62570a5ca7793421" title="Activates a buffer in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="5,5,159,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="204,47,141,33,142,28,205,42"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_a0b740ba3757842dafbd9afc7c2a73cc2.html#a0b740ba3757842dafbd9afc7c2a73cc2" title="Activates a node network in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="5,55,159,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,70,159,70,159,65,193,65"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_a9fdb6f36962a8cb52fb9439cd2d92946.html#a9fdb6f36962a8cb52fb9439cd2d92946" title="Activates a node in a specific domain for the duration specified by the TemporalWrapper." alt="" coords="5,104,159,129"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="205,93,142,107,141,101,204,88"/>
+</map>

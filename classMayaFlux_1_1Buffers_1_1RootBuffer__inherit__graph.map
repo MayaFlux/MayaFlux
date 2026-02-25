@@ -1,0 +1,13 @@
+<map id="MayaFlux::Buffers::RootBuffer&lt; BufferType &gt;" name="MayaFlux::Buffers::RootBuffer&lt; BufferType &gt;">
+<area shape="rect" id="Node000001" title=" " alt="" coords="120,120,317,777"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="9,840,207,1497"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="169,792,161,840,156,839,163,791"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1RootBuffer.html" title=" " alt="" coords="232,840,429,1497"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="281,791,283,801,288,839,283,840,277,802,276,791"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="177,5,260,71"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,84,221,120,216,120,216,84"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1RootAudioBuffer.html" title="Top&#45;level aggregation buffer for computational data streams." alt="" coords="5,1617,208,1937"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="110,1511,110,1617,104,1617,105,1511"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Buffers_1_1RootGraphicsBuffer.html" title="Root container for GPU buffer lifecycle management and batch processing." alt="" coords="232,1547,435,2007"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="335,1511,335,1546,330,1546,330,1511"/>
+</map>

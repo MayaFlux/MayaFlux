@@ -1,0 +1,15 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="Node000000" href="$classMayaFlux_1_1Kakshya_1_1DataProcessor.html" title="Interface for processing data within SignalSourceContainer objects." alt="" coords="5,69,164,109"/>
+<area shape="rect" id="Node000001" href="$classMayaFlux_1_1Kakshya_1_1ContiguousAccessProcessor.html" title=" " alt="" coords="212,5,415,45"/>
+<area shape="poly" id="edge48_Node000000_Node000001" title=" " alt="" coords="169,63,241,43,242,48,170,68"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1RegionProcessorBase.html" title="Base class for N&#45;dimensional region processors." alt="" coords="232,69,395,109"/>
+<area shape="poly" id="edge49_Node000000_Node000002" title=" " alt="" coords="178,87,232,87,232,92,178,92"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Kakshya_1_1WindowAccessProcessor.html" title="Default DataProcessor for WindowContainer." alt="" coords="222,133,405,173"/>
+<area shape="poly" id="edge53_Node000000_Node000006" title=" " alt="" coords="170,110,242,131,241,136,169,116"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1RegionOrganizationProcessor.html" title="Data&#45;driven processor for organizing and processing non&#45;linear audio regions." alt="" coords="463,37,676,77"/>
+<area shape="poly" id="edge50_Node000002_Node000003" title=" " alt="" coords="408,75,462,68,463,73,408,80"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Kakshya_1_1SpatialRegionProcessor.html" title="Parallel spatial extraction processor for image&#45;modality containers." alt="" coords="482,101,657,141"/>
+<area shape="poly" id="edge52_Node000002_Node000005" title=" " alt="" coords="409,99,482,108,481,113,408,104"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kakshya_1_1DynamicRegionProcessor.html" title="Extends RegionOrganizationProcessor with dynamic, runtime reorganization capabilities." alt="" coords="724,37,912,77"/>
+<area shape="poly" id="edge51_Node000003_Node000004" title=" " alt="" coords="690,55,724,55,724,60,690,60"/>
+</map>

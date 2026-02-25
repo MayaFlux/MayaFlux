@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferManager::validate_num_channels" name="MayaFlux::Buffers::BufferManager::validate_num_channels">
+<area shape="rect" id="Node000001" title="Validates the number of channels and resizes buffers if necessary (audio&#45;specific)" alt="" coords="276,5,455,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferManager_a4825cd3ab006a264f7bbbbe260b7383a.html#a4825cd3ab006a264f7bbbbe260b7383a" title="Creates a new multimodal buffer manager." alt="" coords="5,13,228,53"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="262,35,228,35,228,30,262,30"/>
+</map>

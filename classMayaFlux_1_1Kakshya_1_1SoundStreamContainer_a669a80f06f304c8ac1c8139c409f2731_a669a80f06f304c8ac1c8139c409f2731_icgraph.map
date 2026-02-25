@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::set_read_position" name="MayaFlux::Kakshya::SoundStreamContainer::set_read_position">
+<area shape="rect" id="Node000001" title="Set the current read position in the primary temporal dimension per channel." alt="" coords="448,5,620,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1SoundStreamContainer_adab595bb0b0f3acc2900e680a4d0ad63.html#adab595bb0b0f3acc2900e680a4d0ad63" title="Set the loop region using a Region." alt="" coords="228,5,400,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="434,35,400,35,400,30,434,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a9cfe8b08aab3f3a06d83844e3d0ac864.html#a9cfe8b08aab3f3a06d83844e3d0ac864" title="Enable circular buffer mode with fixed capacity." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="214,35,180,35,180,30,214,30"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kakshya::SoundStreamContainer::set_loop_region" name="MayaFlux::Kakshya::SoundStreamContainer::set_loop_region">
+<area shape="rect" id="Node000001" title="Set the loop region using a Region." alt="" coords="228,5,400,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DynamicSoundStream_a9cfe8b08aab3f3a06d83844e3d0ac864.html#a9cfe8b08aab3f3a06d83844e3d0ac864" title="Enable circular buffer mode with fixed capacity." alt="" coords="5,5,180,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="214,35,180,35,180,30,214,30"/>
+</map>

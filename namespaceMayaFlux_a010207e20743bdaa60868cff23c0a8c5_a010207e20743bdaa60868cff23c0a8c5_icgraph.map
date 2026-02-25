@@ -1,0 +1,8 @@
+<map id="MayaFlux::zero_crossings" name="MayaFlux::zero_crossings">
+<area shape="rect" id="Node000001" title="Detect zero crossings in single&#45;channel signal." alt="" coords="496,37,687,62"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_ac08ce00385b1ee685fdccdafd5c36935.html#ac08ce00385b1ee685fdccdafd5c36935" title="Compute zero&#45;crossing energy using zero&#45;copy processing." alt="" coords="249,29,448,69"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="482,52,448,52,448,47,482,47"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="390,18,375,11,349,8,325,10,311,15,306,21,309,28,303,30,301,20,308,10,324,5,349,3,377,6,392,13"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_aae10121eaa04e3e509079717b90890ef.html#aae10121eaa04e3e509079717b90890ef" title="Compute energy values using span (zero&#45;copy processing)" alt="" coords="5,22,201,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="236,52,201,52,201,47,236,47"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::Polynomial::notify_tick" name="MayaFlux::Nodes::Generator::Polynomial::notify_tick">
+<area shape="rect" id="Node000001" title="Notifies all registered callbacks about a new sample." alt="" coords="525,5,733,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_a6c5eaaf26f00522a8ee26bf0cd38c1e9.html#a6c5eaaf26f00522a8ee26bf0cd38c1e9" title="Processes a single sample." alt="" coords="261,5,477,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="512,28,478,28,478,23,512,23"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial_afb0f9f325eeff81f429ee11b15cc5aac.html#afb0f9f325eeff81f429ee11b15cc5aac" title="Processes multiple samples at once." alt="" coords="5,5,213,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="248,28,214,28,214,23,248,23"/>
+</map>

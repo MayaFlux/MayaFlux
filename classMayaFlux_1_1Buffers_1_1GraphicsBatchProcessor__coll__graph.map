@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::GraphicsBatchProcessor" name="MayaFlux::Buffers::GraphicsBatchProcessor">
+<area shape="rect" id="Node000001" title="Default processor for coordinating batch GPU buffer processing." alt="" coords="5,313,201,453"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferProcessor.html" title="Central computational transformation interface for continuous buffer processing." alt="" coords="13,5,193,265"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="106,279,106,313,101,313,101,279"/>
+</map>

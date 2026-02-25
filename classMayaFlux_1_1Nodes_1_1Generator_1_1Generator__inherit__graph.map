@@ -1,0 +1,17 @@
+<map id="MayaFlux::Nodes::Generator::Generator" name="MayaFlux::Nodes::Generator::Generator">
+<area shape="rect" id="Node000001" title="Base class for all signal and pattern generators in Maya Flux." alt="" coords="583,743,783,1083"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Impulse.html" title="Impulse generator node." alt="" coords="5,1188,208,1708"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="570,943,485,971,392,1011,345,1036,301,1064,259,1096,222,1132,200,1159,182,1189,177,1186,196,1156,218,1129,256,1092,298,1060,343,1031,389,1006,483,966,568,938"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Logic.html" title="Digital signal processor implementing boolean logic operations." alt="" coords="232,1131,432,1765"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="574,997,506,1059,474,1095,446,1132,434,1151,430,1148,442,1129,470,1091,502,1056,570,993"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Phasor.html" title="Phase ramp generator node." alt="" coords="457,1158,674,1738"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="645,1097,632,1158,626,1157,640,1095"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Polynomial.html" title="Generator that produces values based on polynomial functions." alt="" coords="698,1178,902,1718"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="725,1096,743,1177,738,1178,720,1097"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Random.html" title="Node wrapper for Kinesis::Stochastic &#45; signal&#45;rate stochastic generation." alt="" coords="927,1208,1127,1688"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="795,996,860,1058,890,1092,917,1129,958,1206,954,1209,912,1132,886,1096,856,1061,791,1000"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Sine.html" title="Sinusoidal oscillator generator node." alt="" coords="1151,1208,1353,1688"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="797,939,881,967,973,1007,1018,1032,1062,1060,1104,1093,1141,1129,1169,1166,1192,1206,1187,1209,1164,1169,1137,1132,1100,1097,1059,1065,1016,1037,970,1012,879,972,795,944"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="584,5,781,695"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="685,708,685,743,680,743,680,708"/>
+</map>

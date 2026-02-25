@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::NodeGraphManager::process_channel" name="MayaFlux::Nodes::NodeGraphManager::process_channel">
+<area shape="rect" id="Node000001" title="Process a specific channel within a token domain." alt="" coords="5,69,221,109"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_ab7485f6b5bd28a3d64ffaa5034d3ed9a.html#ab7485f6b5bd28a3d64ffaa5034d3ed9a" title="Gets or creates the root node for a specific token and channel." alt="" coords="293,5,509,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,67,296,46,298,51,205,72"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a4abd4114d034a6b8fd0a0f61c2a18491.html#a4abd4114d034a6b8fd0a0f61c2a18491" title="Normalizes a sample to the range [&#45;1, 1] based on the number of nodes." alt="" coords="293,69,509,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="221,87,279,87,279,92,221,92"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a6480c54078bc0477ac6251ed41104d2a.html#a6480c54078bc0477ac6251ed41104d2a" title="Resets the processing state of audio networks for a token and channel." alt="" coords="269,133,532,173"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="205,107,298,128,296,133,203,112"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1NodeGraphManager_a9c43d6dbcd53013e4d61fa43f038384a.html#a9c43d6dbcd53013e4d61fa43f038384a" title="Ensures a root node exists for the given token and channel." alt="" coords="580,5,796,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="509,23,566,23,566,28,509,28"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Nodes::Input::InputNode::apply_smoothing" name="MayaFlux::Nodes::Input::InputNode::apply_smoothing">
+<area shape="rect" id="Node000001" title=" " alt="" coords="511,37,728,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a88c4313675ddc5de1acab2ab1fc91876.html#a88c4313675ddc5de1acab2ab1fc91876" title="Process an input value from a backend." alt="" coords="260,5,455,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="497,45,454,40,455,35,497,40"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a7b64dd73ad7f5746fe7ec2f77ac3eaa7.html#a7b64dd73ad7f5746fe7ec2f77ac3eaa7" title="Process a single sample." alt="" coords="252,69,463,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="498,75,463,79,463,74,497,70"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Input_1_1InputNode_a923ae3355f22d62ea7f1dfd76faa056b.html#a923ae3355f22d62ea7f1dfd76faa056b" title="Process a batch of samples." alt="" coords="5,69,204,109"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="238,92,204,92,204,87,238,87"/>
+</map>

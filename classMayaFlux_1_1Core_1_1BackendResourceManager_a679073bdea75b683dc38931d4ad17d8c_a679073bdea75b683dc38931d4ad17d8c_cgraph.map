@@ -1,0 +1,13 @@
+<map id="MayaFlux::Core::BackendResourceManager::initialize_image" name="MayaFlux::Core::BackendResourceManager::initialize_image">
+<area shape="rect" id="Node000001" title="Initialize a VKImage (allocate VkImage, memory, and create image view)" alt="" coords="5,37,252,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1BackendResourceManager_ab4e39f5b542838628a267c0cfe94dba4.html#ab4e39f5b542838628a267c0cfe94dba4" title="Find a suitable memory type for Vulkan buffer allocation." alt="" coords="300,5,547,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="252,41,286,38,287,43,252,47"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1VKContext_a41228db586851246809c40f704b64292.html#a41228db586851246809c40f704b64292" title="Get logical device." alt="" coords="323,69,523,109"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="252,68,310,74,309,80,252,73"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKContext_abb26eca0db297f0a9545aee095450aa1.html#abb26eca0db297f0a9545aee095450aa1" title="Get physical device." alt="" coords="595,5,795,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="547,23,581,23,581,28,547,28"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKDevice_a094d1ed720c72ced04293743f4b2a63e.html#a094d1ed720c72ced04293743f4b2a63e" title="Get physical device handle." alt="" coords="843,5,1037,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="795,23,829,23,829,28,795,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKDevice_ac91623c4b7b52f1f5f7460ef91021583.html#ac91623c4b7b52f1f5f7460ef91021583" title="Get logical device handle." alt="" coords="597,69,792,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="524,87,584,87,584,92,524,92"/>
+</map>

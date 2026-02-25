@@ -1,0 +1,11 @@
+<map id="MayaFlux::Nodes::Input::MIDINode::extract_value" name="MayaFlux::Nodes::Input::MIDINode::extract_value">
+<area shape="rect" id="Node000001" title="Extract a scalar value from an InputValue." alt="" coords="5,49,196,89"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Core_1_1InputValue_ae01efb8d00817b4186bb78d114aadd95.html#ae01efb8d00817b4186bb78d114aadd95" title=" " alt="" coords="495,5,696,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="178,47,244,35,366,24,481,21,481,27,366,30,244,40,179,52"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Input_1_1MIDINode_acb2d34a95ef7763a02981438c59aaa1c.html#acb2d34a95ef7763a02981438c59aaa1c" title=" " alt="" coords="244,49,447,89"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="196,67,230,67,230,72,196,72"/>
+<area shape="rect" id="Node000004" href="$structMayaFlux_1_1Core_1_1InputValue_1_1MIDIMessage_af9c0c149056f572759af0ee1e6841663.html#af9c0c149056f572759af0ee1e6841663" title=" " alt="" coords="495,81,696,121"/>
+<area shape="poly" id="edge5_Node000001_Node000004" title=" " alt="" coords="177,87,244,99,366,106,481,105,481,110,366,111,244,104,176,92"/>
+<area shape="poly" id="edge3_Node000003_Node000002" title=" " alt="" coords="446,49,481,43,482,48,447,54"/>
+<area shape="poly" id="edge4_Node000003_Node000004" title=" " alt="" coords="447,80,481,84,481,89,447,85"/>
+</map>

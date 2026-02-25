@@ -1,0 +1,5 @@
+<map id="MayaFlux::Kriya::CaptureBuilder::for_cycles" name="MayaFlux::Kriya::CaptureBuilder::for_cycles">
+<area shape="rect" id="Node000001" title="Set number of cycles to capture (enables ACCUMULATE mode)." alt="" coords="5,5,192,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kriya_1_1BufferCapture_a078fc06bf417ce8337968ddeb1ad46a4.html#a078fc06bf417ce8337968ddeb1ad46a4" title="Set the number of times to execute this capture operation." alt="" coords="240,5,467,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,23,226,23,226,28,192,28"/>
+</map>

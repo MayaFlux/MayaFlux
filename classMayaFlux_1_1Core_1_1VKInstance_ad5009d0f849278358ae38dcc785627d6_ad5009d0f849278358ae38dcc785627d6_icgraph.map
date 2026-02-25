@@ -1,0 +1,19 @@
+<map id="MayaFlux::Core::VKInstance::get_instance" name="MayaFlux::Core::VKInstance::get_instance">
+<area shape="rect" id="Node000001" title="Get the Vulkan instance handle." alt="" coords="540,120,745,160"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_aa076977c33941d8fc34f2bfe2fd295a7.html#aa076977c33941d8fc34f2bfe2fd295a7" title="Cleanup all Vulkan resources." alt="" coords="292,5,492,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="591,116,491,66,446,48,449,43,493,62,594,111"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKContext_abc215601510a7e2e54380a535f0718a2.html#abc215601510a7e2e54380a535f0718a2" title="Initialize Vulkan context." alt="" coords="25,31,225,71"/>
+<area shape="poly" id="edge9_Node000001_Node000003" title=" " alt="" coords="538,120,492,111,224,67,225,62,492,105,539,115"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKContext_a6382877e444e62689aefafc83802ddb4.html#a6382877e444e62689aefafc83802ddb4" title="Create surface from window&#39;s native handles." alt="" coords="292,120,492,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="526,143,492,143,492,137,526,137"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1VKContext_af845c6be15bdbecf3f0dd9a205df2d78.html#af845c6be15bdbecf3f0dd9a205df2d78" title="Destroy a specific surface Called when window is unregistered." alt="" coords="292,184,492,224"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="551,166,472,187,470,181,550,161"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Core_1_1VKContext_acae011b617fee86645b737858e2d904b.html#acae011b617fee86645b737858e2d904b" title="Get Vulkan instance." alt="" coords="292,248,492,288"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="605,170,553,205,493,238,464,250,462,245,491,234,550,201,602,166"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="279,39,225,44,225,39,278,33"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1BackendWindowHandler_a2179912b3470858a70a12e7a94691a1f.html#a2179912b3470858a70a12e7a94691a1f" title=" " alt="" coords="5,120,244,160"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="278,143,244,143,244,137,278,137"/>
+<area shape="poly" id="edge7_Node000006_Node000005" title=" " alt="" coords="294,183,208,163,209,157,295,178"/>
+<area shape="rect" id="Node000007" href="$structMayaFlux_1_1Core_1_1WindowRenderContext_ab15a8ec6c660b65ebe3e2a0fc8094585.html#ab15a8ec6c660b65ebe3e2a0fc8094585" title=" " alt="" coords="9,184,240,224"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="278,207,240,207,240,201,278,201"/>
+</map>

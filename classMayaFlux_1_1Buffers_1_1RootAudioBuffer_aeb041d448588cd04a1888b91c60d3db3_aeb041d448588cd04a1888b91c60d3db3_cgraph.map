@@ -1,0 +1,7 @@
+<map id="MayaFlux::Buffers::RootAudioBuffer::process_default" name="MayaFlux::Buffers::RootAudioBuffer::process_default">
+<area shape="rect" id="Node000001" title="Processes this buffer using its default aggregation processor." alt="" coords="5,49,192,104"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1RootBuffer_a4caaf6780d877fb987e33dc37f628e2c.html#a4caaf6780d877fb987e33dc37f628e2c" title=" " alt="" coords="240,5,443,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="192,57,226,51,227,56,193,62"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1RootBuffer_a369670e6eff7497260bcac971f482080.html#a369670e6eff7497260bcac971f482080" title="Process pending operations &#45; call this at start of processing cycles." alt="" coords="242,85,441,154"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,90,229,97,228,102,192,96"/>
+</map>

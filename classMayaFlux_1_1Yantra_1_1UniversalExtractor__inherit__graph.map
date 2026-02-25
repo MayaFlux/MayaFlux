@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::UniversalExtractor&lt; InputType, OutputType &gt;" name="MayaFlux::Yantra::UniversalExtractor&lt; InputType, OutputType &gt;">
+<area shape="rect" id="Node000001" title="Template&#45;flexible extractor base with instance&#45;defined I/O types." alt="" coords="8,563,256,1112"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1ComputeOperation.html" title="Base interface for all computational operations in the processing pipeline." alt="" coords="5,5,259,515"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="135,528,135,563,129,563,129,528"/>
+</map>

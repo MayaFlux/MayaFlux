@@ -1,0 +1,5 @@
+<map id="MayaFlux::IO::ImageReader" name="MayaFlux::IO::ImageReader">
+<area shape="rect" id="Node000001" title="File reader for image formats (PNG, JPG, BMP, TGA, etc.)" alt="" coords="5,339,200,744"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1IO_1_1FileReader.html" title="Abstract interface for reading various file formats into containers." alt="" coords="14,5,191,291"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,304,105,338,100,338,100,304"/>
+</map>

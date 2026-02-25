@@ -1,0 +1,19 @@
+<map id="MayaFlux::Kriya::BufferPipeline::dispatch_branch_async" name="MayaFlux::Kriya::BufferPipeline::dispatch_branch_async">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,133,232,173"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a01f29b8e9975b80306f4bc0b534a09d8.html#a01f29b8e9975b80306f4bc0b534a09d8" title="Add a routine to the scheduler based on its processing token." alt="" coords="280,133,511,173"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="232,151,266,151,266,156,232,156"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a56a711df9c3a3f4e569e036ea6980559.html#a56a711df9c3a3f4e569e036ea6980559" title="Generate automatic name for a routine based on its type." alt="" coords="559,5,789,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="424,131,484,93,558,55,577,47,579,52,560,60,487,98,427,135"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a81c68c47d8ac2ce8f736f8d35f4fe20c.html#a81c68c47d8ac2ce8f736f8d35f4fe20c" title="Initialize a processing domain if it doesn&#39;t exist." alt="" coords="559,69,789,109"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="483,131,572,110,574,115,484,136"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a6cab5fd4999392badaec656a94ab3d16.html#a6cab5fd4999392badaec656a94ab3d16" title="Find task entry by name." alt="" coords="559,133,789,173"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="511,151,545,151,545,156,511,156"/>
+<area shape="rect" id="Node000008" href="$main_8cpp_a25a40b6614565f755233080a384c35f1.html#a25a40b6614565f755233080a384c35f1" title=" " alt="" coords="635,198,713,223"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="494,171,622,197,621,203,493,176"/>
+<area shape="rect" id="Node000009" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a09eae60c02e878e614b69c8ead276f14.html#a09eae60c02e878e614b69c8ead276f14" title="Initialize a routine&#39;s state for a specific domain." alt="" coords="559,248,789,288"/>
+<area shape="poly" id="edge8_Node000002_Node000009" title=" " alt="" coords="432,171,491,202,560,234,582,241,580,246,558,238,489,207,430,176"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a8c97edc92dee77f6fc9b6030a14637e7.html#a8c97edc92dee77f6fc9b6030a14637e7" title="Generates a unique task ID for new tasks." alt="" coords="837,5,1068,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="790,23,824,23,824,28,790,28"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Vruta_1_1TaskScheduler_a219ff6ebd74ddb638ccf403556a0168c.html#a219ff6ebd74ddb638ccf403556a0168c" title="Get the default rate for a processing token." alt="" coords="837,69,1068,109"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="790,87,824,87,824,92,790,92"/>
+</map>

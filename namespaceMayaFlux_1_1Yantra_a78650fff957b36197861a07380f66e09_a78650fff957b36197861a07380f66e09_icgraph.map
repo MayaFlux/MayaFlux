@@ -1,0 +1,6 @@
+<map id="MayaFlux::Yantra::find_peak_positions" name="MayaFlux::Yantra::find_peak_positions">
+<area shape="rect" id="Node000001" title="Find actual peak positions in the signal." alt="" coords="243,29,409,69"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="364,18,351,11,326,8,304,10,292,15,287,21,289,28,284,30,282,20,288,10,303,5,326,3,352,6,366,13"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1EnergyAnalyzer_a6481979f5e36c8d244d6c48966fc2ef0.html#a6481979f5e36c8d244d6c48966fc2ef0" title="Create comprehensive analysis result from energy computation." alt="" coords="5,22,195,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="229,52,195,52,195,47,229,47"/>
+</map>

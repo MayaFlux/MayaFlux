@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::Generator::RandomContext" name="MayaFlux::Nodes::Generator::RandomContext">
+<area shape="rect" id="Node000001" title="Specialized context for stochastic generator callbacks." alt="" coords="15,179,215,339"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1RandomContextGpu.html" title=" " alt="" coords="15,387,215,467"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="118,352,118,387,113,387,113,352"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,5,225,131"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,144,118,178,113,178,113,144"/>
+</map>

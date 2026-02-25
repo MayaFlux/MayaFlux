@@ -1,0 +1,15 @@
+<map id="MayaFlux::Nodes::Network::NodeNetwork::set_output_mode" name="MayaFlux::Nodes::Network::NodeNetwork::set_output_mode">
+<area shape="rect" id="Node000001" title="Set the network&#39;s output routing mode." alt="" coords="345,169,585,209"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_a689e2110fa55b2242e6424d482d897da.html#a689e2110fa55b2242e6424d482d897da" title="Create modal network with custom frequency ratios." alt="" coords="37,5,265,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="433,161,373,109,336,82,296,60,265,48,267,43,298,55,339,78,376,104,437,157"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ModalNetwork_aec29355c52c7bcb3ecdbbb490ce2ea15.html#aec29355c52c7bcb3ecdbbb490ce2ea15" title="Create modal network with predefined spectrum." alt="" coords="37,69,265,109"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="407,166,297,124,253,112,254,107,298,119,409,161"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Network_1_1ParticleNetwork_af273b4d1d6c230db90b1ac9c594fb76d.html#af273b4d1d6c230db90b1ac9c594fb76d" title="Create particle network with spatial bounds." alt="" coords="29,133,273,173"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="331,177,273,170,274,165,331,171"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_a7409f92341204dace851a6e1730cb73b.html#a7409f92341204dace851a6e1730cb73b" title="Create empty point cloud network." alt="" coords="35,198,268,253"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="332,207,268,215,268,209,331,202"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1Network_1_1PointCloudNetwork_af77e219f872cdb26cb4845ff4b2d18f6.html#af77e219f872cdb26cb4845ff4b2d18f6" title="Create network with initial point count and bounds." alt="" coords="35,277,268,331"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="413,218,298,266,260,279,258,274,296,262,411,213"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1Network_1_1WaveguideNetwork_aa2a7f724fe1324c3363ea5bc2d42c3a9.html#aa2a7f724fe1324c3363ea5bc2d42c3a9" title="Create waveguide network with specified type and frequency." alt="" coords="5,356,297,396"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="441,222,381,285,341,318,299,345,267,358,265,353,296,340,338,313,377,281,437,219"/>
+</map>

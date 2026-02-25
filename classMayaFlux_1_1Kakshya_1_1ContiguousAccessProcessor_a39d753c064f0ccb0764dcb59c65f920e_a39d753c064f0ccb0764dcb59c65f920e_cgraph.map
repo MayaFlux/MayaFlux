@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::ContiguousAccessProcessor::validate" name="MayaFlux::Kakshya::ContiguousAccessProcessor::validate">
+<area shape="rect" id="Node000001" title="Validate the container&#39;s structure and output configuration." alt="" coords="5,49,208,104"/>
+<area shape="rect" id="Node000002" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a27b9d48a60ea2512b02a8196c6581eec.html#a27b9d48a60ea2512b02a8196c6581eec" title="Extract channel count from dimensions." alt="" coords="261,5,435,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="208,56,247,48,248,54,209,61"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Kakshya_1_1ContainerDataStructure_a707364e4c5a8e950a981eaf7ff5edff6.html#a707364e4c5a8e950a981eaf7ff5edff6" title="Get samples per channel (time dimension only)." alt="" coords="256,85,440,154"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="209,92,243,98,242,103,208,97"/>
+</map>

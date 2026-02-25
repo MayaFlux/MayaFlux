@@ -1,0 +1,10 @@
+<map id="Lila::Server::send_message" name="Lila::Server::send_message">
+<area shape="rect" id="Node000001" title="Sends a message to a client." alt="" coords="415,63,549,103"/>
+<area shape="rect" id="Node000002" href="$classLila_1_1Server_ab1c63f840186d9d9fac246d16060c60b.html#ab1c63f840186d9d9fac246d16060c60b" title="Broadcasts an event to connected clients." alt="" coords="200,5,367,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="400,62,353,48,354,43,402,57"/>
+<area shape="rect" id="Node000003" href="$classLila_1_1Server_a37724cbd86a53f3a079b9e0b524481a9.html#a37724cbd86a53f3a079b9e0b524481a9" title="Handles communication with a single client." alt="" coords="5,92,152,132"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="401,91,152,109,152,104,401,86"/>
+<area shape="rect" id="Node000004" href="$classLila_1_1Server_ab99e04cd55d4b53902ee5a327dd7e4b9.html#ab99e04cd55d4b53902ee5a327dd7e4b9" title="Processes control messages (e.g., session, ping)" alt="" coords="207,120,360,160"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="402,108,354,122,353,117,400,103"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="192,130,152,125,153,119,193,125"/>
+</map>

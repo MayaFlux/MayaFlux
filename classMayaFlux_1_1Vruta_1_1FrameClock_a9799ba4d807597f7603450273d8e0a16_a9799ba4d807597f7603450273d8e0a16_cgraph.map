@@ -1,0 +1,5 @@
+<map id="MayaFlux::Vruta::FrameClock::FrameClock" name="MayaFlux::Vruta::FrameClock::FrameClock">
+<area shape="rect" id="Node000001" title="Constructs a FrameClock with target frame rate." alt="" coords="5,5,220,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Vruta_1_1FrameClock_a2c3e03bc14aed1d08092794239d96413.html#a2c3e03bc14aed1d08092794239d96413" title="Recalculate frame duration when target FPS changes." alt="" coords="268,5,483,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="220,23,254,23,254,28,220,28"/>
+</map>

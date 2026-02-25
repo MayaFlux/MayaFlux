@@ -1,0 +1,5 @@
+<map id="MayaFlux::Buffers::BufferSupplyMixing::remove_supplied_audio_buffer" name="MayaFlux::Buffers::BufferSupplyMixing::remove_supplied_audio_buffer">
+<area shape="rect" id="Node000001" title="Removes a previously supplied buffer from a token and channel." alt="" coords="256,5,433,75"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferSupplyMixing_ad6770b4bdd1819900b6f221f244a1593.html#ad6770b4bdd1819900b6f221f244a1593" title="Cleans up completed routing transitions." alt="" coords="5,13,208,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,43,208,43,208,37,242,37"/>
+</map>

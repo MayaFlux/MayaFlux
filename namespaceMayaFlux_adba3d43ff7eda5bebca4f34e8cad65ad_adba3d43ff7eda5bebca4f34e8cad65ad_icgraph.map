@@ -1,0 +1,5 @@
+<map id="MayaFlux::create_sequence" name="MayaFlux::create_sequence">
+<area shape="rect" id="Node000001" title="Creates a sequence task that calls functions at specified times." alt="" coords="205,13,409,38"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_a44556db6c9a1fd8493244b1e6b30e443.html#a44556db6c9a1fd8493244b1e6b30e443" title="Creates a sequence task that calls functions at specified times and addes it to the default scheduler..." alt="" coords="5,5,157,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="191,28,157,28,157,23,191,23"/>
+</map>

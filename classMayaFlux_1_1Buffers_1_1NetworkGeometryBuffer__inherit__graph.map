@@ -1,0 +1,9 @@
+<map id="MayaFlux::Buffers::NetworkGeometryBuffer" name="MayaFlux::Buffers::NetworkGeometryBuffer">
+<area shape="rect" id="Node000001" title="Specialized buffer for geometry from NodeNetwork instances." alt="" coords="5,1099,215,1439"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1VKBuffer.html" title="Vulkan&#45;backed buffer wrapper used in processing chains." alt="" coords="19,461,201,1051"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,1064,113,1098,107,1098,107,1064"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1Buffer.html" title="Backend&#45;agnostic interface for sequential data storage and transformation." alt="" coords="19,133,201,413"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="113,427,113,461,107,461,107,427"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="34,5,186,85"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="113,99,113,133,107,133,107,99"/>
+</map>

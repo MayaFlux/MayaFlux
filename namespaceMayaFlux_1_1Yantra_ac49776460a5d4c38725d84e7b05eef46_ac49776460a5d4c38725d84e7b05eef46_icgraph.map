@@ -1,0 +1,5 @@
+<map id="MayaFlux::Yantra::transform_fade" name="MayaFlux::Yantra::transform_fade">
+<area shape="rect" id="Node000001" title="Fade transformation (linear fade&#45;in and fade&#45;out) using C++20 ranges (IN&#45;PLACE)" alt="" coords="256,20,499,45"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Yantra_1_1TemporalTransformer_ad3890517ed8b6bb33c19146ce905c80e.html#ad3890517ed8b6bb33c19146ce905c80e" title="Core transformation implementation for temporal operations." alt="" coords="5,5,208,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="242,35,208,35,208,30,242,30"/>
+</map>

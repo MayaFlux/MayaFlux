@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::is_structured_modality" name="MayaFlux::Kakshya::is_structured_modality">
+<area shape="rect" id="Node000001" title="Check if a modality represents structured data (vectors, matrices)." alt="" coords="265,41,436,81"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1DataInsertion_a34b7026f84b7c339e5c1efde99d30356.html#a34b7026f84b7c339e5c1efde99d30356" title="Reserve space without initialization." alt="" coords="5,5,217,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="251,49,217,44,218,39,252,44"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1DataInsertion_a93be4fdaba14e343a2ae8bec952bcc09.html#a93be4fdaba14e343a2ae8bec952bcc09" title="Validate scalar insertion matches modality expectations." alt="" coords="26,70,197,125"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="252,79,197,87,196,82,251,74"/>
+</map>

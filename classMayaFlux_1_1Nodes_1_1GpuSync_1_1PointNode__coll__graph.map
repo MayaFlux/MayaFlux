@@ -1,0 +1,19 @@
+<map id="MayaFlux::Nodes::GpuSync::PointNode" name="MayaFlux::Nodes::GpuSync::PointNode">
+<area shape="rect" id="Node000001" title="Single 3D point in space." alt="" coords="240,1707,432,1967"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryWriterNode.html" title="Base class for nodes that generate 3D geometry data." alt="" coords="128,1229,320,1644"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="288,1656,302,1706,297,1707,283,1658"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GpuSync.html" title=" " alt="" coords="21,967,213,1167"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="152,1179,167,1229,162,1230,147,1181"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Nodes_1_1Node.html" title="Base interface for all computational processing nodes." alt="" coords="5,248,203,917"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="116,931,117,967,112,967,111,931"/>
+<area shape="rect" id="Node000005" href="$structMayaFlux_1_1Nodes_1_1RoutingState.html" title="Represents the state of routing transitions for a node." alt="" coords="11,5,197,185"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="107,186,107,231,101,231,101,186"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Nodes_1_1GpuSync_1_1GeometryContext.html" title="Context for GeometryWriterNode &#45; provides vertex buffer access." alt="" coords="241,1017,433,1117"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="325,1118,295,1214,290,1213,320,1116"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="227,520,447,645"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="340,659,340,1017,335,1017,335,659"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Nodes_1_1GpuStructuredData.html" title="GPU&#45;uploadable structured data (arrays of POD structs)" alt="" coords="472,480,731,685"/>
+<area shape="poly" id="edge7_Node000006_Node000008" title=" " alt="" coords="565,699,520,808,493,864,462,919,425,971,386,1018,382,1014,421,968,458,916,488,862,515,806,560,697"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Nodes_1_1PointVertex.html" title=" " alt="" coords="344,1384,555,1489"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="437,1490,380,1692,375,1690,432,1489"/>
+</map>

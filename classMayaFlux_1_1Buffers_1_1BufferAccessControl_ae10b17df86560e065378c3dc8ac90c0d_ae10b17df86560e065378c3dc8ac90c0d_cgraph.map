@@ -1,0 +1,28 @@
+<map id="MayaFlux::Buffers::BufferAccessControl::add_buffer" name="MayaFlux::Buffers::BufferAccessControl::add_buffer">
+<area shape="rect" id="Node000001" title="Adds a buffer to a token (dispatches based on token type)" alt="" coords="5,228,159,283"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a6be98ac3f4f6e9111f4f13241e5fdefe.html#a6be98ac3f4f6e9111f4f13241e5fdefe" title="Adds an audio buffer to a token and channel." alt="" coords="211,128,364,183"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="138,225,217,186,219,191,140,230"/>
+<area shape="rect" id="Node000008" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_ae92fa8262d95697a1198c36d705b765d.html#ae92fa8262d95697a1198c36d705b765d" title="Adds a graphics buffer to a token." alt="" coords="207,292,368,347"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="160,277,194,288,193,293,158,282"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_a4bc263b052de827013ed2117e56a58e5.html#a4bc263b052de827013ed2117e56a58e5" title="Ensures minimum number of audio channels exist for a token." alt="" coords="435,5,618,60"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="330,126,415,77,444,63,446,68,417,82,333,130"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_ac9fd8c50e96db19443030c7582b9cc20.html#ac9fd8c50e96db19443030c7582b9cc20" title="Gets or creates a root audio unit for the specified token." alt="" coords="935,39,1107,93"/>
+<area shape="poly" id="edge7_Node000002_Node000005" title=" " alt="" coords="363,132,416,121,552,101,689,86,921,68,921,73,690,91,553,106,416,126,365,137"/>
+<area shape="rect" id="Node000006" href="$structMayaFlux_1_1Buffers_1_1RootAudioUnit_adab6da56d6eb5d1fc2606c8c1ab8e01f.html#adab6da56d6eb5d1fc2606c8c1ab8e01f" title=" " alt="" coords="433,135,620,175"/>
+<area shape="poly" id="edge5_Node000002_Node000006" title=" " alt="" coords="364,153,420,153,420,158,364,158"/>
+<area shape="rect" id="Node000007" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a7673914495c7a5a49599cbcc48f727fe.html#a7673914495c7a5a49599cbcc48f727fe" title="Acquires the manager&#39;s mutex for external synchronization." alt="" coords="416,199,637,239"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="365,173,439,193,438,198,364,178"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a07357824fe6b9475bda41f8b45668eb3.html#a07357824fe6b9475bda41f8b45668eb3" title="Ensures an audio unit exists and resizes it to the specified channel count." alt="" coords="689,5,883,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="618,30,675,30,675,35,618,35"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="884,44,921,49,921,55,883,49"/>
+<area shape="rect" id="Node000009" href="$structMayaFlux_1_1Buffers_1_1RootGraphicsUnit_a597b382010fec9451fb95268033bc637.html#a597b382010fec9451fb95268033bc637" title=" " alt="" coords="423,263,630,303"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="368,305,409,298,410,304,369,310"/>
+<area shape="rect" id="Node000010" href="$classMayaFlux_1_1Buffers_1_1TokenUnitManager_a70155d77198bd5159c5cf72c3682be0b.html#a70155d77198bd5159c5cf72c3682be0b" title="Gets or creates a root graphics unit for the specified token." alt="" coords="435,328,619,383"/>
+<area shape="poly" id="edge10_Node000008_Node000010" title=" " alt="" coords="369,329,422,337,421,342,368,334"/>
+<area shape="rect" id="Node000011" href="$classMayaFlux_1_1Buffers_1_1BufferAccessControl_aa81561b9078f8cc810801fb2aea06fb6.html#aa81561b9078f8cc810801fb2aea06fb6" title="Initializes the buffer service for Vulkan operations." alt="" coords="434,407,619,461"/>
+<area shape="poly" id="edge11_Node000008_Node000011" title=" " alt="" coords="331,345,417,393,431,399,429,404,415,398,329,349"/>
+<area shape="rect" id="Node000012" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_a0c7a59c0847791ed0915dcd64e8df783.html#a0c7a59c0847791ed0915dcd64e8df783" title="Query for a backend service." alt="" coords="703,371,869,425"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="619,419,689,409,690,414,620,424"/>
+<area shape="rect" id="Node000013" href="$classMayaFlux_1_1Registry_1_1BackendRegistry_aa28c6f5592e5893508bafb62aefcc496.html#aa28c6f5592e5893508bafb62aefcc496" title="Get the global registry instance." alt="" coords="685,450,887,490"/>
+<area shape="poly" id="edge13_Node000011_Node000013" title=" " alt="" coords="620,444,672,452,672,457,619,449"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="MayaFlux::Core::VKDevice::cleanup" name="MayaFlux::Core::VKDevice::cleanup">
+<area shape="rect" id="Node000001" title="Cleanup device resources." alt="" coords="501,37,696,77"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1VKContext_aa076977c33941d8fc34f2bfe2fd295a7.html#aa076977c33941d8fc34f2bfe2fd295a7" title="Cleanup all Vulkan resources." alt="" coords="253,5,453,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="487,46,453,41,454,36,488,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1VKDevice_aaf8ad2f23b229ea98cd756341f15f7ba.html#aaf8ad2f23b229ea98cd756341f15f7ba" title=" " alt="" coords="256,69,451,109"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="488,74,451,79,450,74,487,69"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1VKContext_abc215601510a7e2e54380a535f0718a2.html#abc215601510a7e2e54380a535f0718a2" title="Initialize Vulkan context." alt="" coords="5,5,205,45"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="240,28,206,28,206,23,240,23"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="MayaFlux::Portal::Graphics::ShaderFoundry::stop" name="MayaFlux::Portal::Graphics::ShaderFoundry::stop">
+<area shape="rect" id="Node000001" title="Stop active command recording and free command buffers." alt="" coords="5,46,203,86"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a52651a5a78f0c50974d443de43c776ac.html#a52651a5a78f0c50974d443de43c776ac" title="Free all allocated command buffers." alt="" coords="251,5,448,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="203,50,237,45,238,51,203,55"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry_a148fdbfbb76b1df59986ea791e772885.html#a148fdbfbb76b1df59986ea791e772885" title=" " alt="" coords="496,46,701,86"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="203,67,251,69,448,69,482,68,482,73,448,74,251,74,203,73"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="449,43,483,48,482,53,448,48"/>
+</map>

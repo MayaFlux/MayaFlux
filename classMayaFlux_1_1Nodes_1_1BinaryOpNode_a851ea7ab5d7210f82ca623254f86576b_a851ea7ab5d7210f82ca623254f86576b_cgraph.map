@@ -1,0 +1,5 @@
+<map id="MayaFlux::Nodes::BinaryOpNode::reset_processed_state" name="MayaFlux::Nodes::BinaryOpNode::reset_processed_state">
+<area shape="rect" id="Node000001" title="Resets the processed state of the node and any attached input nodes." alt="" coords="5,5,216,45"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Nodes_a88c692052149167c04433fa84013bf15.html#a88c692052149167c04433fa84013bf15" title="Atomically removes a flag from a node state." alt="" coords="264,5,452,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="216,23,250,23,250,28,216,28"/>
+</map>

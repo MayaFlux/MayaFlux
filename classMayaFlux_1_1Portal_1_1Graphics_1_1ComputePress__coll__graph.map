@@ -1,0 +1,7 @@
+<map id="MayaFlux::Portal::Graphics::ComputePress" name="MayaFlux::Portal::Graphics::ComputePress">
+<area shape="rect" id="Node000001" title="Compute&#45;specific pipeline and dispatch orchestration." alt="" coords="27,1229,216,1649"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Portal_1_1Graphics_1_1ShaderFoundry.html" title="Portal&#45;level shader compilation and caching." alt="" coords="5,248,237,1167"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="124,1167,124,1213,119,1213,119,1167"/>
+<area shape="rect" id="Node000003" href="$structMayaFlux_1_1Portal_1_1Graphics_1_1ShaderCompilerConfig.html" title="Configuration for shader compilation." alt="" coords="27,5,216,185"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="124,186,124,231,119,231,119,186"/>
+</map>

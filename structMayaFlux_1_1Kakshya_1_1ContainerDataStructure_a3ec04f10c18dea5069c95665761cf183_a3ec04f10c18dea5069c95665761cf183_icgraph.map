@@ -1,0 +1,7 @@
+<map id="MayaFlux::Kakshya::ContainerDataStructure::image_interleaved" name="MayaFlux::Kakshya::ContainerDataStructure::image_interleaved">
+<area shape="rect" id="Node000001" title="Create structure for interleaved image data." alt="" coords="543,5,717,60"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a4f3732dbd3029c2933d6d2f2b3efde3f.html#a4f3732dbd3029c2933d6d2f2b3efde3f" title=" " alt="" coords="313,5,495,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="529,35,495,35,495,30,529,30"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Kakshya_1_1WindowContainer_a2b7ca842f83285bdfa67d35ebc9f8713.html#a2b7ca842f83285bdfa67d35ebc9f8713" title="Construct from an existing managed window." alt="" coords="5,13,265,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="300,35,266,35,266,30,300,30"/>
+</map>

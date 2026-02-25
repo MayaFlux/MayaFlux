@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::AudioDevice" name="MayaFlux::Core::AudioDevice">
+<area shape="rect" id="Node000001" title="Manages audio endpoint discovery and enumeration." alt="" coords="12,5,219,165"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1RtAudioDevice.html" title="RtAudio implementation of the audio device interface." alt="" coords="5,213,225,453"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,179,118,213,113,213,113,179"/>
+</map>

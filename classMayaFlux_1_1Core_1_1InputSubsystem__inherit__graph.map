@@ -1,0 +1,5 @@
+<map id="MayaFlux::Core::InputSubsystem" name="MayaFlux::Core::InputSubsystem">
+<area shape="rect" id="Node000001" title="Input processing subsystem for external devices." alt="" coords="5,373,235,899"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1ISubsystem.html" title="Base interface for all subsystems in the MayaFlux processing architecture." alt="" coords="20,5,220,325"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,339,123,373,117,373,117,339"/>
+</map>

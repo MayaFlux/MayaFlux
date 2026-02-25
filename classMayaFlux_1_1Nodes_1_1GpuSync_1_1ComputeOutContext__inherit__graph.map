@@ -1,0 +1,7 @@
+<map id="MayaFlux::Nodes::GpuSync::ComputeOutContext" name="MayaFlux::Nodes::GpuSync::ComputeOutContext">
+<area shape="rect" id="Node000001" title="Context for ComputeOutNode &#45; provides readback buffer access." alt="" coords="145,199,337,279"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Nodes_1_1NodeContext.html" title="Base context class for node callbacks." alt="" coords="5,15,225,141"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="175,150,212,197,208,200,170,153"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1GpuVectorData.html" title="GPU&#45;uploadable 1D array data interface." alt="" coords="249,5,483,151"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="303,163,274,200,269,197,299,160"/>
+</map>

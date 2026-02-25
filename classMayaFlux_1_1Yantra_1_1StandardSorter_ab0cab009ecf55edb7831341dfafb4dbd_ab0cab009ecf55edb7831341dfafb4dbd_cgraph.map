@@ -1,0 +1,11 @@
+<map id="MayaFlux::Yantra::StandardSorter::sort_copy" name="MayaFlux::Yantra::StandardSorter::sort_copy">
+<area shape="rect" id="Node000001" title="Copy&#45;based sorting (preserves input)" alt="" coords="5,37,205,77"/>
+<area shape="rect" id="Node000002" href="$namespaceMayaFlux_1_1Yantra_a06b399b5c5804274f48a0f2309c1f79c.html#a06b399b5c5804274f48a0f2309c1f79c" title="Sort multiple channels (spans) in&#45;place." alt="" coords="253,37,420,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="206,55,240,55,240,60,206,60"/>
+<area shape="rect" id="Node000003" href="$namespaceMayaFlux_1_1Yantra_a5a7b06ef96c6f13f45dbcebdb95ca0fe.html#a5a7b06ef96c6f13f45dbcebdb95ca0fe" title="Sort a single span of doubles in&#45;place." alt="" coords="468,37,635,77"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="421,55,454,55,454,60,421,60"/>
+<area shape="rect" id="Node000004" href="$namespaceMayaFlux_1_1Yantra_a776a1e198fc8013f858e1fe93c386420.html#a776a1e198fc8013f858e1fe93c386420" title="Create standard direction&#45;based comparator for doubles." alt="" coords="688,5,871,45"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="635,43,674,37,675,43,636,48"/>
+<area shape="rect" id="Node000005" href="$namespaceMayaFlux_1_1Yantra_a01e6e4bcb8d40dab36d495f0a8fb510a.html#a01e6e4bcb8d40dab36d495f0a8fb510a" title="Execute sorting algorithm on iterator range." alt="" coords="683,69,876,109"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="636,66,669,71,669,77,635,72"/>
+</map>

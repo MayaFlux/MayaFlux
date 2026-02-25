@@ -1,0 +1,9 @@
+<map id="MayaFlux::Kinesis::Stochastic::Stochastic::validate_range" name="MayaFlux::Kinesis::Stochastic::Stochastic::validate_range">
+<area shape="rect" id="Node000001" title=" " alt="" coords="473,45,637,100"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a7a7d2515539722a278e2779a762e7493.html#a7a7d2515539722a278e2779a762e7493" title="Batch generation." alt="" coords="261,5,425,60"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="459,57,425,51,426,45,460,52"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Kinesis_1_1Stochastic_1_1Stochastic_a90f6258ef28fe6281d652f225d4c6255.html#a90f6258ef28fe6281d652f225d4c6255" title="Generates single value in range." alt="" coords="261,84,425,139"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="460,93,426,99,425,94,459,87"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Nodes_1_1Generator_1_1Random_abfb649116abcbc972cbe3e2d379ed137.html#abfb649116abcbc972cbe3e2d379ed137" title="Generates multiple stochastic values at once." alt="" coords="5,13,213,53"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="248,35,213,35,213,30,248,30"/>
+</map>

@@ -1,0 +1,16 @@
+<map id="MayaFlux::Core::RtAudioStream::~RtAudioStream" name="MayaFlux::Core::RtAudioStream::~RtAudioStream">
+<area shape="rect" id="Node000001" title="Ensures proper cleanup of stream resources." alt="" coords="5,128,236,168"/>
+<area shape="rect" id="Node000002" href="$classMayaFlux_1_1Core_1_1RtAudioStream_aeeff3aa1bdb72a4bebeca8370877e886.html#aeeff3aa1bdb72a4bebeca8370877e886" title="Terminates the audio stream and releases all resources." alt="" coords="284,37,515,77"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="182,125,323,79,325,84,184,130"/>
+<area shape="rect" id="Node000003" href="$classMayaFlux_1_1Core_1_1RtAudioStream_aff267acf58b495025612c82b2889dccb.html#aff267acf58b495025612c82b2889dccb" title="Checks if the stream is actively processing audio data." alt="" coords="855,97,1085,137"/>
+<area shape="poly" id="edge7_Node000001_Node000003" title=" " alt="" coords="236,152,498,159,652,156,806,146,870,137,870,142,807,152,652,162,498,164,236,157"/>
+<area shape="rect" id="Node000005" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a54b50ba6d699592458aeb49d58a3ce1b.html#a54b50ba6d699592458aeb49d58a3ce1b" title="Deactivates the audio stream and halts data transfer." alt="" coords="569,97,800,137"/>
+<area shape="poly" id="edge8_Node000001_Node000005" title=" " alt="" coords="236,139,556,121,556,127,236,144"/>
+<area shape="rect" id="Node000006" href="$classMayaFlux_1_1Core_1_1RtAudioStream_a90b65b7aca61c04ab1ced9cff8c87c8c.html#a90b65b7aca61c04ab1ced9cff8c87c8c" title="Checks if the stream is initialized and ready for activation." alt="" coords="284,212,515,252"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="189,165,320,205,318,210,187,170"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="467,34,538,18,624,6,716,4,762,9,807,18,843,31,878,49,935,86,932,91,875,53,841,36,806,24,762,14,716,10,624,12,539,24,468,40"/>
+<area shape="rect" id="Node000004" href="$classMayaFlux_1_1Core_1_1RtAudioSingleton_a3ed24df4feb48d6c2cad18123a3440d3.html#a3ed24df4feb48d6c2cad18123a3440d3" title="Deregisters an active audio stream from the system." alt="" coords="563,33,807,73"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="515,53,549,52,549,58,515,58"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="496,74,576,91,575,97,495,80"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="800,114,841,114,841,120,800,120"/>
+</map>
