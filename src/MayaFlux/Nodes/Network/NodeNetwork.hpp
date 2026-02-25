@@ -286,6 +286,17 @@ public:
      */
     virtual void unmap_parameter(const std::string& param_name);
 
+    /**
+     * @brief Set the scalar multiplier applied to the network's output buffer after processing
+     * @param scale Linear scale factor (1.0 = unity, 0.0 = silence, >1.0 = amplify)
+     */
+    void set_output_scale(double scale) { m_output_scale = scale; }
+
+    /**
+     * @brief Get the current output scale factor
+     */
+    [[nodiscard]] double get_output_scale() const { return m_output_scale; }
+
     //-------------------------------------------------------------------------
     // Channel Registration (Mirrors Node interface)
     //-------------------------------------------------------------------------
@@ -453,6 +464,13 @@ protected:
     static std::unordered_map<size_t, std::vector<size_t>>
     build_chain_neighbors(size_t count);
 
+    /**
+     * @brief Apply m_output_scale to m_last_audio_buffer
+     *
+     * Call at the end of each concrete process_batch() after all samples are written.
+     */
+    void apply_output_scale();
+
     struct ParameterMapping {
         std::string param_name;
         MappingMode mode;
@@ -478,6 +496,7 @@ protected:
 
     // Cached buffer from last process_batch() call
     mutable std::vector<double> m_last_audio_buffer;
+    double m_output_scale { 1.0 }; ///< Post-processing scalar applied to m_last_audio_buffer each batch
 
 private:
     //-------------------------------------------------------------------------

@@ -244,6 +244,8 @@ void ResonatorNetwork::process_batch(unsigned int num_samples)
             m_last_audio_buffer[s] += out * norm;
         }
     }
+
+    apply_output_scale();
 }
 
 std::optional<std::vector<double>> ResonatorNetwork::get_audio_buffer() const
@@ -327,6 +329,8 @@ void ResonatorNetwork::apply_broadcast_parameter(const std::string& param, doubl
         for (auto& r : m_resonators) {
             r.gain = value;
         }
+    } else if (param == "scale") {
+        m_output_scale = std::max(0.0, value);
     }
 }
 

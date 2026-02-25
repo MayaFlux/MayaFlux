@@ -23,6 +23,15 @@ std::optional<std::vector<double>> NodeNetwork::get_audio_buffer() const
     return std::nullopt;
 }
 
+void NodeNetwork::apply_output_scale()
+{
+    if (m_output_scale == 1.0)
+        return;
+
+    for (auto& s : m_last_audio_buffer)
+        s *= m_output_scale;
+}
+
 [[nodiscard]] std::unordered_map<std::string, std::string>
 NodeNetwork::get_metadata() const
 {

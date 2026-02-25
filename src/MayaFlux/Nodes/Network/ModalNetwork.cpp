@@ -121,7 +121,6 @@ void ModalNetwork::reset()
         mode.phase = 0.0;
         mode.current_frequency = mode.base_frequency;
     }
-    m_last_output = 0.0;
 }
 
 //-----------------------------------------------------------------------------
@@ -300,7 +299,6 @@ void ModalNetwork::process_batch(unsigned int num_samples)
 
     if (!is_enabled()) {
         m_last_audio_buffer.assign(num_samples, 0.0);
-        m_last_output = 0.0;
         return;
     }
 
@@ -333,7 +331,8 @@ void ModalNetwork::process_batch(unsigned int num_samples)
         }
         m_last_audio_buffer.push_back(sum);
     }
-    m_last_output = m_last_audio_buffer.back();
+
+    apply_output_scale();
 }
 
 //-----------------------------------------------------------------------------
@@ -363,6 +362,8 @@ void ModalNetwork::apply_broadcast_parameter(const std::string& param,
         for (auto& mode : m_modes) {
             mode.amplitude *= value;
         }
+    } else if (param == "scale") {
+        m_output_scale = std::max(0.0, value);
     }
 }
 

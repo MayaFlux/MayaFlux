@@ -141,6 +141,7 @@ void WaveguideNetwork::process_batch(unsigned int num_samples)
         process_bidirectional(seg, num_samples);
     }
 
+    apply_output_scale();
     m_last_output = m_last_audio_buffer.back();
 }
 
@@ -429,6 +430,8 @@ void WaveguideNetwork::apply_broadcast_parameter(const std::string& param, doubl
         set_loss_factor(value);
     } else if (param == "position") {
         set_pickup_position(value);
+    } else if (param == "scale") {
+        m_output_scale = std::max(0.0, value);
     }
 }
 
