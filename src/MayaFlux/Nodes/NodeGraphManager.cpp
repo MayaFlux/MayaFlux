@@ -141,7 +141,7 @@ std::vector<std::vector<double>> NodeGraphManager::process_audio_networks(Proces
             }
 
             const auto& net_buffer = network->get_audio_buffer();
-            if (net_buffer) {
+            if (net_buffer && network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_SINK) {
                 if (network->needs_channel_routing()) {
                     double scale = network->get_routing_state().amount[channel];
                     if (scale == 0.0)
@@ -475,7 +475,8 @@ void NodeGraphManager::add_network(const std::shared_ptr<Network::NodeNetwork>& 
 
     network->set_enabled(true);
 
-    if (network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_SINK) {
+    if (network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_SINK
+        || network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_COMPUTE) {
         uint32_t channel_mask = network->get_channel_mask();
 
         if (channel_mask == 0) {
@@ -513,7 +514,8 @@ void NodeGraphManager::remove_network(const std::shared_ptr<Network::NodeNetwork
         return;
     }
 
-    if (network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_SINK) {
+    if (network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_SINK
+        || network->get_output_mode() == Network::NodeNetwork::OutputMode::AUDIO_COMPUTE) {
         auto token_it = m_audio_networks.find(token);
         if (token_it != m_audio_networks.end()) {
             auto& networks = token_it->second;

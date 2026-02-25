@@ -98,6 +98,7 @@ public:
     enum class OutputMode : uint8_t {
         NONE, ///< Pure internal state, no external output
         AUDIO_SINK, ///< Aggregated audio samples sent to output
+        AUDIO_COMPUTE, ///< processed each cycle but not sent to output
         GRAPHICS_BIND, ///< State available for visualization (read-only)
         CUSTOM ///< User-defined output handling via callbacks
     };

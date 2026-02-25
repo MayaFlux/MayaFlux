@@ -14,7 +14,10 @@ void NodeNetwork::ensure_initialized()
 
 std::optional<std::vector<double>> NodeNetwork::get_audio_buffer() const
 {
-    if (m_output_mode == OutputMode::AUDIO_SINK && !m_last_audio_buffer.empty()) {
+    if (
+        (m_output_mode == OutputMode::AUDIO_SINK
+            || m_output_mode == OutputMode::AUDIO_COMPUTE)
+        && !m_last_audio_buffer.empty()) {
         return m_last_audio_buffer;
     }
     return std::nullopt;

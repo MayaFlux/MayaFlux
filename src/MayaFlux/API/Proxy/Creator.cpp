@@ -43,10 +43,12 @@ void register_network(const std::shared_ptr<Nodes::Network::NodeNetwork>& networ
     auto token = get_node_token(ctx.domain.value());
 
     if (token == Nodes::ProcessingToken::AUDIO_RATE) {
-        if (network->get_output_mode() != Nodes::Network::NodeNetwork::OutputMode::AUDIO_SINK) {
+        if (
+            network->get_output_mode() != Nodes::Network::NodeNetwork::OutputMode::AUDIO_SINK
+            && network->get_output_mode() != Nodes::Network::NodeNetwork::OutputMode::AUDIO_COMPUTE) {
             MF_WARN(Journal::Component::API,
                 Journal::Context::Init,
-                "Registering audio network in AUDIO_RATE domain without AUDIO_SINK output mode. Forcing AUDIO_SINK mode.");
+                "Registering audio network in AUDIO_RATE domain without AUDIO_SINK  or AUDIO_COMPUTE mode. Forcing AUDIO_SINK mode.");
             network->set_output_mode(Nodes::Network::NodeNetwork::OutputMode::AUDIO_SINK);
         }
         if (ctx.channel.has_value()) {
