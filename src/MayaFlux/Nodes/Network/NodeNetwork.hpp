@@ -6,6 +6,42 @@
 namespace MayaFlux::Nodes::Network {
 
 /**
+ * @enum Topology
+ * @brief Defines the structural relationships between nodes in the network
+ */
+enum class Topology : uint8_t {
+    INDEPENDENT, ///< No connections, nodes process independently
+    CHAIN, ///< Linear sequence: node[i] → node[i+1]
+    RING, ///< Circular: last node connects to first
+    GRID_2D, ///< 2D lattice with 4-connectivity
+    GRID_3D, ///< 3D lattice with 6-connectivity
+    SPATIAL, ///< Dynamic proximity-based (nodes within radius interact)
+    CUSTOM ///< User-defined arbitrary topology
+};
+
+/**
+ * @enum OutputMode
+ * @brief Defines how the network's computational results are exposed
+ */
+enum class OutputMode : uint8_t {
+    NONE, ///< Pure internal state, no external output
+    AUDIO_SINK, ///< Aggregated audio samples sent to output
+    AUDIO_COMPUTE, ///< processed each cycle but not sent to output
+    GRAPHICS_BIND, ///< State available for visualization (read-only)
+    CUSTOM ///< User-defined output handling via callbacks
+};
+
+/**
+ * @enum MappingMode
+ * @brief Defines how nodes map to external entities (e.g., audio channels,
+ * graphics objects)
+ */
+enum class MappingMode : uint8_t {
+    BROADCAST, ///< One node → all network nodes
+    ONE_TO_ONE ///< Node array/network → network nodes (must match count)
+};
+
+/**
  * @class NodeNetwork
  * @brief Abstract base class for structured collections of nodes with defined
  * relationships
@@ -77,42 +113,6 @@ namespace MayaFlux::Nodes::Network {
  */
 class MAYAFLUX_API NodeNetwork {
 public:
-    /**
-     * @enum Topology
-     * @brief Defines the structural relationships between nodes in the network
-     */
-    enum class Topology : uint8_t {
-        INDEPENDENT, ///< No connections, nodes process independently
-        CHAIN, ///< Linear sequence: node[i] → node[i+1]
-        RING, ///< Circular: last node connects to first
-        GRID_2D, ///< 2D lattice with 4-connectivity
-        GRID_3D, ///< 3D lattice with 6-connectivity
-        SPATIAL, ///< Dynamic proximity-based (nodes within radius interact)
-        CUSTOM ///< User-defined arbitrary topology
-    };
-
-    /**
-     * @enum OutputMode
-     * @brief Defines how the network's computational results are exposed
-     */
-    enum class OutputMode : uint8_t {
-        NONE, ///< Pure internal state, no external output
-        AUDIO_SINK, ///< Aggregated audio samples sent to output
-        AUDIO_COMPUTE, ///< processed each cycle but not sent to output
-        GRAPHICS_BIND, ///< State available for visualization (read-only)
-        CUSTOM ///< User-defined output handling via callbacks
-    };
-
-    /**
-     * @enum MappingMode
-     * @brief Defines how nodes map to external entities (e.g., audio channels,
-     * graphics objects)
-     */
-    enum class MappingMode : uint8_t {
-        BROADCAST, ///< One node → all network nodes
-        ONE_TO_ONE ///< Node array/network → network nodes (must match count)
-    };
-
     virtual ~NodeNetwork() = default;
 
     //-------------------------------------------------------------------------

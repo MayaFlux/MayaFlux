@@ -1425,12 +1425,12 @@ void compose() {
                          glm::vec3(-1.5f, -1.5f, -0.5f),
                          glm::vec3(1.5f, 1.5f, 0.5f))
         | Graphics;
-    particles->set_topology(NodeNetwork::Topology::SPATIAL);
+    particles->set_topology(Topology::SPATIAL);
     particles->set_interaction_radius(0.6f);
     particles->set_spring_stiffness(0.3f);
     particles->set_gravity(glm::vec3(0.0f, 0.0f, 0.0f));
     particles->set_drag(0.05f);
-    particles->set_output_mode(NodeNetwork::OutputMode::GRAPHICS_BIND);
+    particles->set_output_mode(OutputMode::GRAPHICS_BIND);
 
     // Inverted signal → turbulence: when audio swells, particles calm; when audio recedes, chaos
     particles->map_parameter("turbulence", inverter, NodeNetwork::MappingMode::BROADCAST);
@@ -1674,7 +1674,7 @@ void compose() {
     particles->set_gravity(glm::vec3(0.0f, 0.0f, 0.0f));
     particles->set_drag(0.08f);
     particles->set_bounds_mode(ParticleNetwork::BoundsMode::BOUNCE);
-    particles->set_topology(NodeNetwork::Topology::GRID_2D);
+    particles->set_topology(Topology::GRID_2D);
 
     particles->map_parameter("turbulence", low_norm, NodeNetwork::MappingMode::BROADCAST);
 
@@ -1721,7 +1721,7 @@ void compose() {
         ParticleNetwork::InitializationMode::GRID
     ) | Graphics;
 
-    particles->set_topology(NodeNetwork::Topology::SPATIAL);
+    particles->set_topology(Topology::SPATIAL);
     particles->set_interaction_radius(0.5f);
     particles->set_spring_stiffness(0.2f);
     particles->set_repulsion_strength(1.0f);
