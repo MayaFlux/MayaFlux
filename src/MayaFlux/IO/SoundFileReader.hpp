@@ -91,6 +91,35 @@ public:
     bool open(const std::string& filepath, FileReadOptions options = FileReadOptions::ALL) override;
 
     /**
+     * @brief Open an audio stream from an already-constructed demux and stream context.
+     *
+     * Secondary open path for callers that have already probed the demuxer and
+     * opened an AudioStreamContext (e.g. VideoFileReader sharing its m_demux and
+     * m_audio). No avformat_open_input or AudioStreamContext::open is performed —
+     * both contexts are adopted as-is.
+     *
+     * The filepath is required only for filesystem-level metadata (file_size,
+     * modification_time) populated during build_metadata. It must point to the
+     * same file already open in the demux context. Pass an empty string only if
+     * FileReadOptions::EXTRACT_METADATA is not set.
+     *
+     * All subsequent SoundFileReader operations — metadata, regions, read_all,
+     * load_into_container — behave identically to the filepath-based open().
+     *
+     * Both contexts must remain valid for the lifetime of this reader.
+     *
+     * @param demux    Shared, already-open demux context.
+     * @param audio    Shared, already-open and valid audio stream context.
+     * @param filepath Path to the source file (used for filesystem metadata only).
+     * @param options  File read options (metadata, regions, etc.).
+     * @return True if both contexts are valid and setup succeeded.
+     */
+    bool open_from_demux(std::shared_ptr<FFmpegDemuxContext> demux,
+        std::shared_ptr<AudioStreamContext> audio,
+        const std::string& filepath,
+        FileReadOptions options = FileReadOptions::ALL);
+
+    /**
      * @brief Close the currently open file and release resources.
      */
     void close() override;

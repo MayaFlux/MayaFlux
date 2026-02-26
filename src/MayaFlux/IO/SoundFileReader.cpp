@@ -123,6 +123,47 @@ bool SoundFileReader::open(const std::string& filepath, FileReadOptions options)
     return true;
 }
 
+bool SoundFileReader::open_from_demux(
+    std::shared_ptr<FFmpegDemuxContext> demux,
+    std::shared_ptr<AudioStreamContext> audio,
+    const std::string& filepath,
+    FileReadOptions options)
+{
+    std::unique_lock<std::shared_mutex> lock(m_context_mutex);
+
+    m_demux.reset();
+    m_audio.reset();
+    m_current_frame_position = 0;
+    {
+        std::lock_guard<std::mutex> ml(m_metadata_mutex);
+        m_cached_metadata.reset();
+        m_cached_regions.clear();
+    }
+    clear_error();
+
+    if (!demux || !demux->is_open()) {
+        set_error("open_from_demux: demux context is null or not open");
+        return false;
+    }
+
+    if (!audio || !audio->is_valid()) {
+        set_error("open_from_demux: audio stream context is null or not valid");
+        return false;
+    }
+
+    m_filepath = filepath;
+    m_demux = std::move(demux);
+    m_audio = std::move(audio);
+
+    if ((options & FileReadOptions::EXTRACT_METADATA) != FileReadOptions::NONE)
+        build_metadata(m_demux, m_audio);
+
+    if ((options & FileReadOptions::EXTRACT_REGIONS) != FileReadOptions::NONE)
+        build_regions(m_demux, m_audio);
+
+    return true;
+}
+
 void SoundFileReader::close()
 {
     std::unique_lock<std::shared_mutex> lock(m_context_mutex);

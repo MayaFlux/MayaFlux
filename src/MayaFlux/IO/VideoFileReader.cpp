@@ -283,6 +283,7 @@ bool VideoFileReader::load_into_container(
 
     std::shared_ptr<VideoStreamContext> video;
     std::shared_ptr<AudioStreamContext> audio;
+    std::shared_ptr<FFmpegDemuxContext> demux;
     {
         std::shared_lock lock(m_context_mutex);
         if (!m_demux || !m_video) {
@@ -291,6 +292,7 @@ bool VideoFileReader::load_into_container(
         }
         video = m_video;
         audio = m_audio;
+        demux = m_demux;
     }
 
     vc->setup(video->total_frames,
@@ -319,19 +321,27 @@ bool VideoFileReader::load_into_container(
     if (want_audio && audio && audio->is_valid()) {
         {
             std::unique_lock lock(m_context_mutex);
-            m_demux->seek(audio->stream_index, 0);
+            demux->seek(audio->stream_index, 0);
             audio->flush_codec();
             audio->drain_resampler_init();
         }
 
-        auto audio_data = decode_audio_frames(m_demux, audio);
-        if (!audio_data.empty()) {
-            m_audio_container = std::make_shared<Kakshya::SoundFileContainer>(
-                audio->sample_rate, audio->channels);
-            m_audio_container->setup(audio->total_frames, audio->sample_rate, audio->channels);
-            m_audio_container->set_raw_data(audio_data);
-            m_audio_container->create_default_processor();
-            m_audio_container->mark_ready_for_processing(true);
+        SoundFileReader audio_reader;
+        audio_reader.set_audio_options(m_audio_options);
+
+        if (audio_reader.open_from_demux(demux, audio, m_filepath, m_options)) {
+            auto sc = audio_reader.create_container();
+            if (audio_reader.load_into_container(sc)) {
+                m_audio_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(sc);
+            } else {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "VideoFileReader: audio open succeeded but load failed: {}",
+                    audio_reader.get_last_error());
+            }
+        } else {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "VideoFileReader: open_from_demux failed: {}",
+                audio_reader.get_last_error());
         }
     }
 

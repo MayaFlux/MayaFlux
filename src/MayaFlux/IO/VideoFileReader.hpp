@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FileReader.hpp"
+#include "SoundFileReader.hpp"
 
 #include "MayaFlux/IO/AudioStreamContext.hpp"
 #include "MayaFlux/IO/FFmpegDemuxContext.hpp"
@@ -17,7 +17,7 @@ namespace MayaFlux::IO {
  */
 enum class VideoReadOptions : uint32_t {
     NONE = 0,
-    EXTRACT_AUDIO = 1 << 0, ///< Also decode the best audio stream into a SoundFileContainer.
+    EXTRACT_AUDIO = 1 << 0, ///< Decode the best audio stream via SoundFileReader into a SoundFileContainer.
     ALL = 0xFFFFFFFF
 };
 
@@ -35,15 +35,19 @@ inline VideoReadOptions operator&(VideoReadOptions a, VideoReadOptions b)
  * @class VideoFileReader
  * @brief FFmpeg-based video file reader for MayaFlux.
  *
- * Load-purpose reader that decodes an entire video file into memory.
- * Produces a VideoFileContainer (RGBA uint8_t pixel data) and optionally
- * a SoundFileContainer if the container holds an audio stream and
- * EXTRACT_AUDIO is set.
+ * Transient load reader: open → read_all / read_frames →
+ * load_into_container → close.
+ *
+ * Produces a VideoFileContainer (RGBA uint8_t pixel data per frame).
+ * When EXTRACT_AUDIO is set, audio extraction is fully delegated to
+ * SoundFileReader::open_from_demux(), sharing the open FFmpegDemuxContext.
+ * This means the resulting SoundFileContainer is produced by the identical
+ * pipeline used for standalone audio files — AudioReadOptions, metadata,
+ * regions, resampling — with no bespoke audio decode loop in this class.
  *
  * Mirrors SoundFileReader in structure: open → read_all / read_frames →
  * load_into_container → close. The reader is transient — open, decode,
- * close. Streaming decode is a future processor concern, not a reader
- * concern.
+ * close.
  *
  * The demuxer is shared between audio and video stream contexts so
  * both can be decoded from a single open() call. Packets are filtered
@@ -122,7 +126,7 @@ public:
     /**
      * @brief Set audio-specific options for the embedded audio stream.
      */
-    // void set_audio_options(AudioReadOptions options) { m_audio_options = options; }
+    void set_audio_options(AudioReadOptions options) { m_audio_options = options; }
 
     /**
      * @brief Set target sample rate for embedded audio resampling.
@@ -156,7 +160,7 @@ private:
     std::string m_filepath;
     FileReadOptions m_options = FileReadOptions::ALL;
     VideoReadOptions m_video_options = VideoReadOptions::NONE;
-    // AudioReadOptions m_audio_options = AudioReadOptions::NONE;
+    AudioReadOptions m_audio_options = AudioReadOptions::NONE;
 
     mutable std::string m_last_error;
     mutable std::mutex m_error_mutex;
@@ -179,10 +183,10 @@ private:
     // =========================================================================
 
     /**
-     * @brief Decode video frames into RGBA uint8_t data.
+     * @brief Decode video frames into RGBA uint8_t DataVariant.
      *
-     * Reads packets from the demuxer, filters by video stream_index,
-     * decodes via avcodec, scales via sws_scale into the output format.
+     * Reads packets from the demuxer filtered by video stream_index,
+     * decodes via avcodec, scales via sws_scale to the configured output format.
      *
      * @param demux      Demux context (packet source).
      * @param video      Video stream context (codec + scaler).

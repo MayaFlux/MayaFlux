@@ -1,8 +1,6 @@
 #include "FrameAccessProcessor.hpp"
 
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
-#include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
-#include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
