@@ -166,7 +166,11 @@ void FrameAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>&
 
         processed_data_vector.resize(1);
         if (!region_data.empty()) {
-            safe_copy_data_variant(region_data[0], processed_data_vector[0]);
+            if (const auto* src = std::get_if<std::vector<uint8_t>>(&region_data[0])) {
+                processed_data_vector[0] = *src;
+            } else {
+                safe_copy_data_variant(region_data[0], processed_data_vector[0]);
+            }
         }
 
         if (m_auto_advance) {

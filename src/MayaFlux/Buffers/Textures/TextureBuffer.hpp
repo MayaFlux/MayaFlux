@@ -165,6 +165,16 @@ public:
         return m_render_processor;
     }
 
+protected:
+    /**
+     * @brief Allow inherited classes to set the TextureProcessor directly
+     * @param processor Shared pointer to the TextureProcessor managing this buffer
+     */
+    inline void set_texture_processor(const std::shared_ptr<TextureProcessor>& processor)
+    {
+        m_texture_processor = processor;
+    }
+
 private:
     friend class TextureProcessor;
 
