@@ -157,21 +157,27 @@ void FrameAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>&
             return;
         }
 
-        Region output_region(
-            { m_current_frame, 0, 0, 0 },
-            { m_current_frame + frames_to_extract - 1, m_height - 1, m_width - 1, m_channels - 1 });
-
-        auto region_data = container->get_region_data(output_region);
-        auto& processed_data_vector = container->get_processed_data();
-
-        processed_data_vector.resize(1);
-        if (!region_data.empty()) {
-            if (const auto* src = std::get_if<std::vector<uint8_t>>(&region_data[0])) {
-                processed_data_vector[0] = *src;
-            } else {
-                safe_copy_data_variant(region_data[0], processed_data_vector[0]);
-            }
+        const auto* raw = static_cast<const uint8_t*>(container->get_raw_data());
+        if (!raw) {
+            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "FrameAccessProcessor: container has no raw data");
+            m_is_processing = false;
+            return;
         }
+
+        uint64_t byte_offset = m_current_frame * m_frame_byte_size;
+        uint64_t byte_count = frames_to_extract * m_frame_byte_size;
+
+        auto& processed_data_vector = container->get_processed_data();
+        processed_data_vector.resize(1);
+
+        auto* dest = std::get_if<std::vector<uint8_t>>(&processed_data_vector[0]);
+        if (!dest) {
+            processed_data_vector[0] = std::vector<uint8_t>();
+            dest = std::get_if<std::vector<uint8_t>>(&processed_data_vector[0]);
+        }
+        dest->resize(byte_count);
+        std::memcpy(dest->data(), raw + byte_offset, byte_count);
 
         if (m_auto_advance) {
             advance_frame(frames_to_extract);
