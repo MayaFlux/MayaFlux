@@ -3,6 +3,7 @@
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/DataProcessor.hpp"
 #include "MayaFlux/Kakshya/NDData/DataAccess.hpp"
+#include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
@@ -415,7 +416,11 @@ void VideoStreamContainer::mark_ready_for_processing(bool ready)
     }
 }
 
-void VideoStreamContainer::create_default_processor() { }
+void VideoStreamContainer::create_default_processor()
+{
+    auto processor = std::make_shared<FrameAccessProcessor>();
+    set_default_processor(processor);
+}
 
 void VideoStreamContainer::process_default()
 {

@@ -312,6 +312,7 @@ bool VideoFileReader::load_into_container(
     for (const auto& [name, group] : region_groups)
         vc->add_region_group(group);
 
+    vc->create_default_processor();
     vc->mark_ready_for_processing(true);
 
     bool want_audio = (m_video_options & VideoReadOptions::EXTRACT_AUDIO) != VideoReadOptions::NONE;
