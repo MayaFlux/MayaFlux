@@ -1,16 +1,11 @@
 #pragma once
 
 #include "FileReader.hpp"
-#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
-// Forward declarations for FFmpeg types
-extern "C" {
-struct AVFormatContext;
-struct AVCodecContext;
-struct AVFrame;
-struct AVPacket;
-struct SwrContext;
-}
+#include "MayaFlux/IO/AudioStreamContext.hpp"
+#include "MayaFlux/IO/FFmpegDemuxContext.hpp"
+
+#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 
 namespace MayaFlux::IO {
 
@@ -20,9 +15,9 @@ namespace MayaFlux::IO {
  */
 enum class AudioReadOptions : uint32_t {
     NONE = 0,
-    NORMALIZE = 1 << 0, // Not implemented - would use FFmpeg's volume filter
-    CONVERT_TO_MONO = 1 << 2, // Not implemented - would use FFmpeg's channel mixer
-    DEINTERLEAVE = 1 << 3, // Convert from interleaved to planar layout
+    NORMALIZE = 1 << 0, ///< Not implemented — placeholder for future volume filter.
+    CONVERT_TO_MONO = 1 << 2, ///< Not implemented — placeholder for channel mixer.
+    DEINTERLEAVE = 1 << 3, ///< Output planar (per-channel) doubles instead of interleaved.
     ALL = 0xFFFFFFFF
 };
 
@@ -35,36 +30,6 @@ inline AudioReadOptions operator&(AudioReadOptions a, AudioReadOptions b)
 {
     return static_cast<AudioReadOptions>(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 }
-
-/**
- * @brief RAII wrapper for FFmpeg contexts with proper cleanup
- *
- * This struct holds all FFmpeg-related state and ensures proper cleanup order.
- * Shared ownership allows safe concurrent access with reader-writer semantics.
- */
-struct FFmpegContext {
-    AVFormatContext* format_context = nullptr;
-    AVCodecContext* codec_context = nullptr;
-    SwrContext* swr_context = nullptr;
-    int audio_stream_index = -1;
-    uint64_t total_frames = 0;
-    uint32_t sample_rate = 0;
-    uint32_t channels = 0;
-
-    ~FFmpegContext();
-
-    // Non-copyable, non-movable (managed by shared_ptr)
-    FFmpegContext() = default;
-    FFmpegContext(const FFmpegContext&) = delete;
-    FFmpegContext& operator=(const FFmpegContext&) = delete;
-    FFmpegContext(FFmpegContext&&) = delete;
-    FFmpegContext& operator=(FFmpegContext&&) = delete;
-
-    bool is_valid() const
-    {
-        return format_context && codec_context && audio_stream_index >= 0;
-    }
-};
 
 /**
  * @class SoundFileReader
@@ -215,13 +180,13 @@ public:
      * @brief Check if the reader supports streaming access.
      * @return True if streaming is supported.
      */
-    bool supports_streaming() const override;
+    bool supports_streaming() const override { return true; }
 
     /**
      * @brief Get the preferred chunk size for streaming reads.
-     * @return Preferred chunk size in frames.
+     * @return Preferred chunk size in frames, typically 4096.
      */
-    uint64_t get_preferred_chunk_size() const override;
+    uint64_t get_preferred_chunk_size() const override { return 4096; }
 
     /**
      * @brief Get the number of dimensions in the audio data (typically 2: time, channel).
@@ -255,26 +220,19 @@ public:
      */
     void set_target_sample_rate(uint32_t sample_rate) { m_target_sample_rate = sample_rate; }
 
-    /**
-     * @brief Set the target bit depth (ignored, always outputs double).
-     * @param bit_depth Target bit depth.
-     * @deprecated Always outputs double precision.
-     */
-    void set_target_bit_depth(uint32_t bit_depth) { m_target_bit_depth = bit_depth; }
-
-    /**
-     * @brief Initialize FFmpeg libraries (thread-safe, called automatically).
-     */
-    static void initialize_ffmpeg();
-
 private:
-    // FFmpeg contexts - let FFmpeg manage these
+    // =========================================================================
+    // Contexts (composition — Option B)
+    // =========================================================================
 
-    // Shared FFmpeg context - enables safe concurrent access
-    std::shared_ptr<FFmpegContext> m_context;
+    std::shared_ptr<FFmpegDemuxContext> m_demux; ///< Container / format state.
+    std::shared_ptr<AudioStreamContext> m_audio; ///< Codec + resampler state.
 
-    // Reader-writer lock: multiple readers OR single writer
-    mutable std::shared_mutex m_context_mutex;
+    mutable std::shared_mutex m_context_mutex; ///< Guards both context pointers.
+
+    // =========================================================================
+    // Reader state
+    // =========================================================================
 
     /**
      * @brief Path to the currently open file.
@@ -284,7 +242,7 @@ private:
     /**
      * @brief File read options used for this session.
      */
-    FileReadOptions m_options;
+    FileReadOptions m_options = FileReadOptions::ALL;
 
     /**
      * @brief Audio-specific read options.
@@ -295,6 +253,11 @@ private:
      * @brief Last error message encountered.
      */
     mutable std::string m_last_error;
+
+    /**
+     * @brief Mutex for thread-safe error message access.
+     */
+    mutable std::mutex m_error_mutex;
 
     /**
      * @brief Cached file metadata.
@@ -317,60 +280,51 @@ private:
     uint32_t m_target_sample_rate = 0;
 
     /**
-     * @brief Target bit depth (ignored, always outputs double).
-     */
-    uint32_t m_target_bit_depth = 0;
-
-    /**
      * @brief Mutex for thread-safe metadata access.
      */
     mutable std::mutex m_metadata_mutex;
 
-    // Simplified internal methods
-
+    // =========================================================================
+    // Internal helpers
+    // =========================================================================
     /**
-     * @brief Set up the FFmpeg resampler if needed.
-     * @return True if setup succeeded.
-     */
-    bool setup_resampler(const std::shared_ptr<FFmpegContext>& ctx);
-
-    /**
-     * @brief Extract metadata from the file.
-     */
-    void extract_metadata(const std::shared_ptr<FFmpegContext>& ctx);
-
-    /**
-     * @brief Extract region information from the file.
-     */
-    void extract_regions(const std::shared_ptr<FFmpegContext>& ctx);
-
-    /**
-     * @brief Decode a specific number of frames from the file.
+     * @brief Decode num_frames PCM frames starting at offset.
      * @param ctx FFmpeg context.
      * @param num_frames Number of frames to decode.
      * @param offset Frame offset from beginning.
      * @return DataVariant containing decoded data.
+     *
+     * Caller must hold at least a shared lock on m_context_mutex.
      */
     std::vector<Kakshya::DataVariant> decode_frames(
-        std::shared_ptr<FFmpegContext> ctx,
+        const std::shared_ptr<FFmpegDemuxContext>& demux,
+        const std::shared_ptr<AudioStreamContext>& audio,
         uint64_t num_frames,
         uint64_t offset);
 
     /**
-     * @brief Internal seek implementation.
+     * @brief Seek the demuxer and flush the codec to the given frame position.
      * @param ctx FFmpeg context.
      * @param frame_position Target frame position.
      * @return True if seek succeeded.
+     *
+     * Caller must hold an exclusive lock on m_context_mutex.
      */
-    bool seek_internal(std::shared_ptr<FFmpegContext>& ctx, uint64_t frame_position);
+    bool seek_internal(const std::shared_ptr<FFmpegDemuxContext>& demux,
+        const std::shared_ptr<AudioStreamContext>& audio,
+        uint64_t frame_position);
 
     /**
-     * @brief Convert interleaved audio data to deinterleaved (planar) format.
-     * @param interleaved Input interleaved data.
-     * @param channels Number of channels.
-     * @return Deinterleaved data as std::vector<double>.
+     * @brief Build and cache FileMetadata from both contexts.
      */
-    std::vector<std::vector<double>> deinterleave_data(const std::vector<double>& interleaved, uint32_t channels);
+    void build_metadata(const std::shared_ptr<FFmpegDemuxContext>& demux,
+        const std::shared_ptr<AudioStreamContext>& audio) const;
+
+    /**
+     * @brief Build and cache FileRegion list from both contexts.
+     */
+    void build_regions(const std::shared_ptr<FFmpegDemuxContext>& demux,
+        const std::shared_ptr<AudioStreamContext>& audio) const;
 
     /**
      * @brief Set the last error message.
@@ -382,16 +336,6 @@ private:
      * @brief Clear the last error message.
      */
     void clear_error() const;
-
-    /**
-     * @brief True if FFmpeg has been initialized.
-     */
-    static std::atomic<bool> s_ffmpeg_initialized;
-
-    /**
-     * @brief Mutex for FFmpeg initialization.
-     */
-    static std::mutex s_ffmpeg_init_mutex;
 };
 
 } // namespace MayaFlux::IO

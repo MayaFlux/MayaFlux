@@ -18,15 +18,13 @@ namespace MayaFlux {
 std::shared_ptr<MayaFlux::Kakshya::SoundFileContainer> load_audio_file(const std::string& filepath)
 {
     auto reader = std::make_unique<IO::SoundFileReader>();
-    MayaFlux::IO::SoundFileReader::initialize_ffmpeg();
 
     if (!reader->can_read(filepath)) {
-        std::cerr << "Cannot read file: " << filepath << '\n';
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO, "Cannot read file: {}", filepath);
         return nullptr;
     }
 
     reader->set_target_sample_rate(MayaFlux::Config::get_sample_rate());
-    reader->set_target_bit_depth(64);
     reader->set_audio_options(IO::AudioReadOptions::DEINTERLEAVE);
 
     IO::FileReadOptions options = IO::FileReadOptions::EXTRACT_METADATA;
