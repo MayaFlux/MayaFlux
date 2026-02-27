@@ -80,14 +80,20 @@ bool AudioStreamContext::open(const FFmpegDemuxContext& demux,
         return false;
     }
 
+    // for (size_t i = 0; i < demux.format_context->nb_streams; i++) {
+    //     if (i != static_cast<size_t>(stream_index)) {
+    //         demux.format_context->streams[i]->discard = AVDISCARD_ALL;
+    //     }
+    // }
+
     sample_rate = static_cast<uint32_t>(codec_context->sample_rate);
     channels = static_cast<uint32_t>(codec_context->ch_layout.nb_channels);
 
-    if (stream->duration != AV_NOPTS_VALUE && stream->time_base.num && stream->time_base.den) {
-        double dur = (double)stream->duration * av_q2d(stream->time_base);
-        total_frames = static_cast<uint64_t>(dur * sample_rate);
+    if (stream->duration > 0) {
+        total_frames = av_rescale_q(stream->duration, stream->time_base,
+            AVRational { 1, (int)sample_rate });
     } else if (demux.format_context->duration != AV_NOPTS_VALUE) {
-        double dur = (double)demux.format_context->duration / static_cast<double>(AV_TIME_BASE);
+        double dur = (double)demux.format_context->duration / AV_TIME_BASE;
         total_frames = static_cast<uint64_t>(dur * sample_rate);
     }
 

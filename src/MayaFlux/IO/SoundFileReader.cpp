@@ -403,6 +403,7 @@ std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(
     }
 
     uint64_t decoded = 0;
+    bool eof_reached = false;
 
     AVPacket* pkt = av_packet_alloc();
     AVFrame* frame = av_frame_alloc();
@@ -431,29 +432,32 @@ std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(
     }
 
     while (decoded < num_frames) {
-        int ret = av_read_frame(demux->format_context, pkt);
-
-        if (ret < 0) {
+        if (!eof_reached) {
+            int ret = av_read_frame(demux->format_context, pkt);
             if (ret == AVERROR_EOF) {
+                eof_reached = true;
                 avcodec_send_packet(audio->codec_context, nullptr);
+            } else if (ret < 0) {
+                eof_reached = true;
+            } else if (pkt->stream_index == audio->stream_index) {
+                avcodec_send_packet(audio->codec_context, pkt);
+                av_packet_unref(pkt);
             } else {
-                break;
+                av_packet_unref(pkt);
             }
-        } else if (pkt->stream_index != audio->stream_index) {
-            av_packet_unref(pkt);
-            continue;
-        } else {
-            ret = avcodec_send_packet(audio->codec_context, pkt);
-            av_packet_unref(pkt);
-            if (ret < 0 && ret != AVERROR(EAGAIN))
-                continue;
         }
 
-        while (ret >= 0 && decoded < num_frames) {
-            ret = avcodec_receive_frame(audio->codec_context, frame);
-            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        int receive_ret = 0;
+        while (decoded < num_frames) {
+            receive_ret = avcodec_receive_frame(audio->codec_context, frame);
+
+            if (receive_ret == AVERROR(EAGAIN))
                 break;
-            if (ret < 0)
+            if (receive_ret == AVERROR_EOF) {
+                // decoded = num_frames;
+                break;
+            }
+            if (receive_ret < 0)
                 break;
 
             int out_samples = swr_convert(
@@ -480,15 +484,20 @@ std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(
             }
             av_frame_unref(frame);
         }
+
+        if (eof_reached && receive_ret == AVERROR_EOF)
+            break;
     }
 
-    // Drain any residual samples from the resampler
     while (true) {
         int n = swr_convert(audio->swr_context, resample_buf, max_resampled, nullptr, 0);
         if (n <= 0)
             break;
-        if (decoded < num_frames) {
-            uint64_t to_copy = std::min(static_cast<uint64_t>(n), num_frames - decoded);
+
+        uint64_t to_copy = std::min(static_cast<uint64_t>(n),
+            (num_frames > decoded) ? (num_frames - decoded) : 0);
+
+        if (to_copy > 0) {
             if (use_planar) {
                 for (int c = 0; c < ch; ++c) {
                     auto* src = reinterpret_cast<double*>(resample_buf[c]);
@@ -501,6 +510,8 @@ std::vector<Kakshya::DataVariant> SoundFileReader::decode_frames(
                 dst.insert(dst.end(), src, src + to_copy * static_cast<uint64_t>(ch));
             }
             decoded += to_copy;
+        } else {
+            break;
         }
     }
 
