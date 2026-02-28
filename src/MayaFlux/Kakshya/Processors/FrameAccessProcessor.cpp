@@ -1,6 +1,6 @@
 #include "FrameAccessProcessor.hpp"
 
-#include "MayaFlux/Kakshya/StreamContainer.hpp"
+#include "MayaFlux/Kakshya/Source/VideoStreamContainer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -155,16 +155,15 @@ void FrameAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>&
             return;
         }
 
-        const auto* raw = static_cast<const uint8_t*>(container->get_raw_data());
-        if (!raw) {
+        auto video_container = std::dynamic_pointer_cast<VideoStreamContainer>(source_container);
+        if (!video_container) {
             MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
-                "FrameAccessProcessor: container has no raw data");
+                "FrameAccessProcessor: container is not a VideoStreamContainer");
             m_is_processing = false;
             return;
         }
 
-        uint64_t byte_offset = m_current_frame * m_frame_byte_size;
-        uint64_t byte_count = frames_to_extract * m_frame_byte_size;
+        const uint64_t byte_count = frames_to_extract * m_frame_byte_size;
 
         auto& processed_data_vector = container->get_processed_data();
         processed_data_vector.resize(1);
@@ -175,7 +174,26 @@ void FrameAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>&
             dest = std::get_if<std::vector<uint8_t>>(&processed_data_vector[0]);
         }
         dest->resize(byte_count);
-        std::memcpy(dest->data(), raw + byte_offset, byte_count);
+
+        uint8_t* write_ptr = dest->data();
+        bool all_ok = true;
+
+        for (uint64_t i = 0; i < frames_to_extract; ++i) {
+            auto pixels = video_container->get_frame_pixels(m_current_frame + i);
+            if (pixels.empty()) {
+                std::memset(write_ptr, 0, m_frame_byte_size);
+                all_ok = false;
+            } else {
+                std::memcpy(write_ptr, pixels.data(), m_frame_byte_size);
+            }
+            write_ptr += m_frame_byte_size;
+        }
+
+        if (!all_ok) {
+            MF_RT_ERROR(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
+                "FrameAccessProcessor: one or more frames unavailable at frame {}",
+                m_current_frame);
+        }
 
         if (m_auto_advance) {
             advance_frame(frames_to_extract);

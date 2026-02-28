@@ -9,15 +9,14 @@
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 
+#include <condition_variable>
+
 namespace MayaFlux::IO {
 
-/**
- * @enum VideoReadOptions
- * @brief Video-specific reading options.
- */
+/// @brief Video-specific reading options.
 enum class VideoReadOptions : uint32_t {
     NONE = 0,
-    EXTRACT_AUDIO = 1 << 0, ///< Decode the best audio stream via SoundFileReader into a SoundFileContainer.
+    EXTRACT_AUDIO = 1 << 0,
     ALL = 0xFFFFFFFF
 };
 
@@ -33,30 +32,26 @@ inline VideoReadOptions operator&(VideoReadOptions a, VideoReadOptions b)
 
 /**
  * @class VideoFileReader
- * @brief FFmpeg-based video file reader for MayaFlux.
+ * @brief Streaming FFmpeg-based video file reader with background decode.
  *
- * Transient load reader: open → read_all / read_frames →
- * load_into_container → close.
+ * The reader is NOT transient — it stays alive alongside its container and
+ * owns the FFmpeg decode contexts plus a background decode thread. The
+ * lifecycle is:
  *
- * Produces a VideoFileContainer (RGBA uint8_t pixel data per frame).
- * When EXTRACT_AUDIO is set, audio extraction is fully delegated to
- * SoundFileReader::open_from_demux(), sharing the open FFmpegDemuxContext.
- * This means the resulting SoundFileContainer is produced by the identical
- * pipeline used for standalone audio files — AudioReadOptions, metadata,
- * regions, resampling — with no bespoke audio decode loop in this class.
+ *   open() → create_container() → load_into_container() → [playback] → close()
  *
- * Mirrors SoundFileReader in structure: open → read_all / read_frames →
- * load_into_container → close. The reader is transient — open, decode,
- * close.
+ * load_into_container() sets up the container's ring buffer, synchronously
+ * decodes the first batch (so frame 0 is available immediately), then starts
+ * a background thread that batch-decodes ahead of the consumer read head.
  *
- * The demuxer is shared between audio and video stream contexts so
- * both can be decoded from a single open() call. Packets are filtered
- * by stream_index in the decode loop.
+ * When the consumer (FrameAccessProcessor → VideoStreamReader) advances past
+ * ring_capacity - refill_threshold decoded frames, the decode thread
+ * automatically refills with the next decode_batch_size frames.
  *
- * All decoded video data is converted to RGBA via SwsContext (matching
- * Vulkan VK_FORMAT_R8G8B8A8_UNORM and TextureBuffer pipeline).
- * Audio data is converted to double via SwrContext (matching existing
- * SoundFileContainer convention).
+ * Seek invalidates the ring, repositions the demuxer, synchronously decodes
+ * the first batch at the new position, then restarts background decoding.
+ *
+ * Audio extraction (EXTRACT_AUDIO) is delegated to SoundFileReader as before.
  */
 class VideoFileReader : public FileReader {
 public:
@@ -87,55 +82,58 @@ public:
     [[nodiscard]] std::type_index get_container_type() const override { return typeid(Kakshya::VideoFileContainer); }
 
     [[nodiscard]] std::string get_last_error() const override;
-    [[nodiscard]] bool supports_streaming() const override { return false; }
-    [[nodiscard]] uint64_t get_preferred_chunk_size() const override { return 1; }
+    [[nodiscard]] bool supports_streaming() const override { return true; }
+    [[nodiscard]] uint64_t get_preferred_chunk_size() const override { return m_decode_batch_size; }
     [[nodiscard]] size_t get_num_dimensions() const override;
     [[nodiscard]] std::vector<uint64_t> get_dimension_sizes() const override;
 
     // =========================================================================
-    // Video-specific API
+    // Streaming configuration
     // =========================================================================
 
     /**
-     * @brief Read a range of video frames into RGBA uint8_t data.
-     * @param num_frames Number of frames to decode.
-     * @param offset     Frame offset from beginning.
-     * @return Single-element vector containing std::vector<uint8_t>.
+     * @brief Set the number of decoded frame slots in the ring buffer.
+     *        Default: 32. Must be a power of 2 (enforced by FixedStorage).
+     *        Must be called before load_into_container().
      */
-    std::vector<Kakshya::DataVariant> read_frames(uint64_t num_frames, uint64_t offset = 0);
+    void set_ring_capacity(uint32_t n)
+    {
+        n = std::max(4U, n);
+        uint32_t p = 1;
+        while (p < n)
+            p <<= 1;
+        m_ring_capacity = p;
+    }
 
     /**
-     * @brief Set video-specific read options.
+     * @brief Set the number of frames decoded per batch by the background thread.
+     *        Default: 8.
      */
+    void set_decode_batch_size(uint32_t n) { m_decode_batch_size = std::max(1U, n); }
+
+    /**
+     * @brief Start refilling when fewer than this many frames remain ahead of
+     *        the consumer read head. Default: ring_capacity / 4.
+     *        A value of 0 means auto-compute as ring_capacity / 4.
+     */
+    void set_refill_threshold(uint32_t n) { m_refill_threshold = n; }
+
+    // =========================================================================
+    // Video-specific configuration
+    // =========================================================================
+
     void set_video_options(VideoReadOptions options) { m_video_options = options; }
-
-    /**
-     * @brief Set target output dimensions (0 = keep source).
-     */
     void set_target_dimensions(uint32_t width, uint32_t height)
     {
         m_target_width = width;
         m_target_height = height;
     }
-
-    /**
-     * @brief Set target output pixel format (negative = AV_PIX_FMT_RGBA).
-     */
-    void set_target_pixel_format(int format) { m_target_pixel_format = format; }
-
-    /**
-     * @brief Set audio-specific options for the embedded audio stream.
-     */
+    void set_target_sample_rate(uint32_t sample_rate) { m_target_sample_rate = sample_rate; }
     void set_audio_options(AudioReadOptions options) { m_audio_options = options; }
 
     /**
-     * @brief Set target sample rate for embedded audio resampling.
-     */
-    void set_target_sample_rate(uint32_t sample_rate) { m_target_sample_rate = sample_rate; }
-
-    /**
-     * @brief After load_into_container(), retrieve the audio container if EXTRACT_AUDIO was set.
-     * @return Audio container or nullptr if no audio stream exists or was not extracted.
+     * @brief After load_into_container(), retrieve the audio container if
+     *        EXTRACT_AUDIO was set.
      */
     [[nodiscard]] std::shared_ptr<Kakshya::SoundFileContainer> get_audio_container() const
     {
@@ -144,87 +142,81 @@ public:
 
 private:
     // =========================================================================
-    // Contexts
+    // FFmpeg state
     // =========================================================================
 
     std::shared_ptr<FFmpegDemuxContext> m_demux;
     std::shared_ptr<VideoStreamContext> m_video;
     std::shared_ptr<AudioStreamContext> m_audio;
-
     mutable std::shared_mutex m_context_mutex;
-
-    // =========================================================================
-    // Reader state
-    // =========================================================================
 
     std::string m_filepath;
     FileReadOptions m_options = FileReadOptions::ALL;
     VideoReadOptions m_video_options = VideoReadOptions::NONE;
     AudioReadOptions m_audio_options = AudioReadOptions::NONE;
 
+    uint32_t m_target_width { 0 };
+    uint32_t m_target_height { 0 };
+    uint32_t m_target_sample_rate { 0 };
+
     mutable std::string m_last_error;
     mutable std::mutex m_error_mutex;
-
     mutable std::optional<FileMetadata> m_cached_metadata;
     mutable std::vector<FileRegion> m_cached_regions;
     mutable std::mutex m_metadata_mutex;
 
-    std::atomic<uint64_t> m_current_frame_position { 0 };
-
-    uint32_t m_target_width = 0;
-    uint32_t m_target_height = 0;
-    int m_target_pixel_format = -1;
-    uint32_t m_target_sample_rate = 0;
-
     std::shared_ptr<Kakshya::SoundFileContainer> m_audio_container;
 
     // =========================================================================
-    // Internal helpers
+    // Streaming decode state
     // =========================================================================
 
-    /**
-     * @brief Decode video frames into RGBA uint8_t DataVariant.
-     *
-     * Reads packets from the demuxer filtered by video stream_index,
-     * decodes via avcodec, scales via sws_scale to the configured output format.
-     *
-     * @param demux      Demux context (packet source).
-     * @param video      Video stream context (codec + scaler).
-     * @param num_frames Number of frames to decode.
-     * @return Single-element vector containing std::vector<uint8_t>.
-     */
-    std::vector<Kakshya::DataVariant> decode_video_frames(
-        const std::shared_ptr<FFmpegDemuxContext>& demux,
-        const std::shared_ptr<VideoStreamContext>& video,
-        uint64_t num_frames);
+    uint32_t m_ring_capacity { 32 };
+    uint32_t m_decode_batch_size { 8 };
+    uint32_t m_refill_threshold { 0 };
+
+    std::weak_ptr<Kakshya::VideoFileContainer> m_container_ref;
+
+    std::thread m_decode_thread;
+    std::mutex m_decode_mutex;
+    std::condition_variable m_decode_cv;
+    std::atomic<bool> m_decode_stop { false };
+    std::atomic<bool> m_decode_active { false };
+    std::atomic<uint64_t> m_decode_head { 0 };
+
+    /// @brief One-frame sws scratch buffer (padded linesize, reused by decode thread).
+    std::vector<uint8_t> m_sws_buf;
+
+    // =========================================================================
+    // Decode thread
+    // =========================================================================
+
+    void start_decode_thread();
+    void stop_decode_thread();
+    void decode_thread_func();
 
     /**
-     * @brief Decode all audio frames from the file.
-     *
-     * Seeks to beginning, reads all packets filtering by audio stream_index,
-     * decodes and resamples to double. Used when EXTRACT_AUDIO is set.
-     *
-     * @param demux Demux context (packet source).
-     * @param audio Audio stream context (codec + resampler).
-     * @return DataVariant vector (interleaved doubles).
+     * @brief Decode up to batch_size frames starting at m_decode_head.
+     *        Pumps packets in a loop, draining multiple frames per packet
+     *        batch. Returns the number of frames actually decoded.
      */
-    std::vector<Kakshya::DataVariant> decode_audio_frames(
-        const std::shared_ptr<FFmpegDemuxContext>& demux,
-        const std::shared_ptr<AudioStreamContext>& audio);
+    uint64_t decode_batch(Kakshya::VideoFileContainer& vc, uint64_t batch_size);
+
+    // =========================================================================
+    // Shared helpers
+    // =========================================================================
 
     bool seek_internal(const std::shared_ptr<FFmpegDemuxContext>& demux,
         const std::shared_ptr<VideoStreamContext>& video,
         uint64_t frame_position);
 
     void build_metadata(const std::shared_ptr<FFmpegDemuxContext>& demux,
-        const std::shared_ptr<VideoStreamContext>& video,
-        const std::shared_ptr<AudioStreamContext>& audio) const;
+        const std::shared_ptr<VideoStreamContext>& video) const;
 
     void build_regions(const std::shared_ptr<FFmpegDemuxContext>& demux,
-        const std::shared_ptr<VideoStreamContext>& video,
-        const std::shared_ptr<AudioStreamContext>& audio) const;
+        const std::shared_ptr<VideoStreamContext>& video) const;
 
-    void set_error(const std::string& error) const;
+    void set_error(const std::string& msg) const;
     void clear_error() const;
 };
 

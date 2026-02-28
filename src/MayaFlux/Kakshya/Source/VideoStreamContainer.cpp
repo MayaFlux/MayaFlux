@@ -70,6 +70,90 @@ void VideoStreamContainer::set_memory_layout(MemoryLayout layout)
 }
 
 // =========================================================================
+// Ring buffer setup
+// =========================================================================
+
+void VideoStreamContainer::setup_ring(uint64_t total_frames,
+    uint32_t ring_capacity,
+    uint32_t width,
+    uint32_t height,
+    uint32_t channels,
+    double frame_rate)
+{
+    std::unique_lock data_lock(m_data_mutex);
+
+    m_width = width;
+    m_height = height;
+    m_channels = channels;
+    m_frame_rate = frame_rate;
+    m_total_source_frames = total_frames;
+    m_ring_capacity = ring_capacity;
+    m_num_frames = total_frames;
+
+    const size_t frame_bytes = get_frame_byte_size();
+
+    m_data.resize(1);
+    auto& pixels = m_data[0].emplace<std::vector<uint8_t>>();
+    pixels.resize(frame_bytes * ring_capacity, 0);
+
+    m_slot_frame = std::vector<std::atomic<uint64_t>>(ring_capacity);
+    for (auto& sf : m_slot_frame)
+        sf.store(UINT64_MAX, std::memory_order_relaxed);
+
+    m_ready_queue.reset();
+
+    setup_dimensions();
+    update_processing_state(ProcessingState::IDLE);
+}
+
+// =========================================================================
+// Ring write API
+// =========================================================================
+
+uint8_t* VideoStreamContainer::mutable_slot_ptr(uint64_t frame_index)
+{
+    if (m_ring_capacity == 0 || frame_index >= m_total_source_frames)
+        return nullptr;
+
+    auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+    if (!pixels)
+        return nullptr;
+
+    return pixels->data() + slot_for(frame_index) * get_frame_byte_size();
+}
+
+void VideoStreamContainer::commit_frame(uint64_t frame_index)
+{
+    if (m_ring_capacity == 0)
+        return;
+
+    m_slot_frame[slot_for(frame_index)].store(frame_index, std::memory_order_release);
+    (void)m_ready_queue.push(frame_index);
+
+    {
+        std::lock_guard lock(m_ring_notify_mutex);
+    }
+    m_ring_notify_cv.notify_all();
+}
+
+void VideoStreamContainer::invalidate_ring()
+{
+    for (auto& sf : m_slot_frame)
+        sf.store(UINT64_MAX, std::memory_order_relaxed);
+
+    m_ready_queue.reset();
+    std::atomic_thread_fence(std::memory_order_release);
+}
+
+bool VideoStreamContainer::is_frame_available(uint64_t frame_index) const
+{
+    if (m_ring_capacity == 0)
+        return false;
+
+    return m_slot_frame[slot_for(frame_index)].load(std::memory_order_acquire) == frame_index;
+}
+
+// =========================================================================
 // Frame access
 // =========================================================================
 
@@ -80,22 +164,49 @@ size_t VideoStreamContainer::get_frame_byte_size() const
 
 std::span<const uint8_t> VideoStreamContainer::get_frame_pixels(uint64_t frame_index) const
 {
-    std::shared_lock lock(m_data_mutex);
+    const size_t frame_bytes = get_frame_byte_size();
+    if (frame_bytes == 0 || frame_index >= m_num_frames)
+        return {};
 
-    if (m_data.empty() || frame_index >= m_num_frames)
+    if (m_ring_capacity == 0) {
+        std::shared_lock lock(m_data_mutex);
+
+        if (m_data.empty())
+            return {};
+
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+        if (!pixels)
+            return {};
+
+        const size_t offset = frame_index * frame_bytes;
+        if (offset + frame_bytes > pixels->size())
+            return {};
+
+        return { pixels->data() + offset, frame_bytes };
+    }
+
+    uint32_t slot = slot_for(frame_index);
+
+    if (m_slot_frame[slot].load(std::memory_order_acquire) == frame_index) {
+        const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
+        if (!pixels)
+            return {};
+        return { pixels->data() + slot * frame_bytes, frame_bytes };
+    }
+
+    std::unique_lock lock(m_ring_notify_mutex);
+    bool available = m_ring_notify_cv.wait_for(lock, std::chrono::milliseconds(100), [&] {
+        return m_slot_frame[slot].load(std::memory_order_acquire) == frame_index;
+    });
+
+    if (!available)
         return {};
 
     const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
     if (!pixels)
         return {};
 
-    const size_t frame_bytes = get_frame_byte_size();
-    const size_t offset = frame_index * frame_bytes;
-
-    if (offset + frame_bytes > pixels->size())
-        return {};
-
-    return { pixels->data() + offset, frame_bytes };
+    return { pixels->data() + slot * frame_bytes, frame_bytes };
 }
 
 std::span<const double> VideoStreamContainer::get_frame(uint64_t /*frame_index*/) const
@@ -278,7 +389,11 @@ void VideoStreamContainer::advance_read_position(const std::vector<uint64_t>& fr
 
 bool VideoStreamContainer::is_at_end() const
 {
-    return m_num_frames == 0 || m_read_position.load() >= m_num_frames;
+    if (is_looping())
+        return false;
+
+    uint64_t total = (m_ring_capacity > 0) ? m_total_source_frames : m_num_frames;
+    return total == 0 || m_read_position.load() >= total;
 }
 
 void VideoStreamContainer::reset_read_position()
@@ -356,6 +471,9 @@ void VideoStreamContainer::clear()
 
 const void* VideoStreamContainer::get_raw_data() const
 {
+    if (m_ring_capacity > 0)
+        return nullptr;
+
     if (m_data.empty())
         return nullptr;
     const auto* v = std::get_if<std::vector<uint8_t>>(&m_data[0]);
@@ -364,6 +482,9 @@ const void* VideoStreamContainer::get_raw_data() const
 
 bool VideoStreamContainer::has_data() const
 {
+    if (m_ring_capacity > 0)
+        return m_total_source_frames > 0;
+
     std::shared_lock lock(m_data_mutex);
     if (m_data.empty())
         return false;

@@ -1,12 +1,9 @@
 #include "VideoFileReader.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/opt.h>
-#include <libavutil/samplefmt.h>
-#include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
 
 #include <cstddef>
@@ -15,13 +12,10 @@ extern "C" {
 namespace MayaFlux::IO {
 
 // =========================================================================
-// Construction / Destruction
+// Construction / destruction
 // =========================================================================
 
-VideoFileReader::VideoFileReader()
-{
-    FFmpegDemuxContext::init_ffmpeg();
-}
+VideoFileReader::VideoFileReader() = default;
 
 VideoFileReader::~VideoFileReader()
 {
@@ -29,36 +23,25 @@ VideoFileReader::~VideoFileReader()
 }
 
 // =========================================================================
-// File operations
+// open / close / is_open
 // =========================================================================
 
 bool VideoFileReader::can_read(const std::string& filepath) const
 {
-    FFmpegDemuxContext probe;
-    if (!probe.open(filepath))
+    static const std::vector<std::string> exts = {
+        "mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "m4v", "ts", "mts"
+    };
+    auto dot = filepath.rfind('.');
+    if (dot == std::string::npos)
         return false;
-
-    const AVCodec* codec = nullptr;
-    int idx = probe.find_best_stream(AVMEDIA_TYPE_VIDEO,
-        reinterpret_cast<const void**>(&codec));
-    return idx >= 0 && codec != nullptr;
+    std::string ext = filepath.substr(dot + 1);
+    std::ranges::transform(ext, ext.begin(), ::tolower);
+    return std::ranges::find(exts, ext) != exts.end();
 }
 
 bool VideoFileReader::open(const std::string& filepath, FileReadOptions options)
 {
-    std::unique_lock lock(m_context_mutex);
-
-    m_demux.reset();
-    m_video.reset();
-    m_audio.reset();
-    m_audio_container.reset();
-    m_current_frame_position = 0;
-    {
-        std::lock_guard ml(m_metadata_mutex);
-        m_cached_metadata.reset();
-        m_cached_regions.clear();
-    }
-    clear_error();
+    close();
 
     m_filepath = filepath;
     m_options = options;
@@ -70,187 +53,143 @@ bool VideoFileReader::open(const std::string& filepath, FileReadOptions options)
     }
 
     auto video = std::make_shared<VideoStreamContext>();
-    if (!video->open(*demux, m_target_width, m_target_height, m_target_pixel_format)) {
+    if (!video->open(*demux, m_target_width, m_target_height)) {
         set_error(video->last_error());
         return false;
     }
 
-    m_demux = std::move(demux);
-    m_video = std::move(video);
-
-    bool want_audio = (m_video_options & VideoReadOptions::EXTRACT_AUDIO) != VideoReadOptions::NONE;
-    if (want_audio) {
-        auto audio = std::make_shared<AudioStreamContext>();
-        if (audio->open(*m_demux, false, m_target_sample_rate))
-            m_audio = std::move(audio);
+    std::shared_ptr<AudioStreamContext> audio;
+    if ((m_video_options & VideoReadOptions::EXTRACT_AUDIO) != VideoReadOptions::NONE) {
+        audio = std::make_shared<AudioStreamContext>();
+        if (!audio->open(*demux, false, m_target_sample_rate)) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "VideoFileReader: no audio stream found or audio open failed");
+            audio.reset();
+        }
     }
 
-    if ((options & FileReadOptions::EXTRACT_METADATA) != FileReadOptions::NONE)
-        build_metadata(m_demux, m_video, m_audio);
+    {
+        std::unique_lock lock(m_context_mutex);
+        m_demux = std::move(demux);
+        m_video = std::move(video);
+        m_audio = std::move(audio);
+    }
 
-    if ((options & FileReadOptions::EXTRACT_REGIONS) != FileReadOptions::NONE)
-        build_regions(m_demux, m_video, m_audio);
+    if ((m_options & FileReadOptions::EXTRACT_METADATA) != FileReadOptions::NONE)
+        build_metadata(m_demux, m_video);
+    if ((m_options & FileReadOptions::EXTRACT_REGIONS) != FileReadOptions::NONE)
+        build_regions(m_demux, m_video);
 
     return true;
 }
 
 void VideoFileReader::close()
 {
-    std::unique_lock lock(m_context_mutex);
-    m_audio.reset();
-    m_video.reset();
-    m_demux.reset();
+    stop_decode_thread();
+    m_container_ref.reset();
+
+    std::unique_lock ctx_lock(m_context_mutex);
+
+    if (m_audio) {
+        m_audio->close();
+        m_audio.reset();
+    }
+    if (m_video) {
+        m_video->close();
+        m_video.reset();
+    }
+    if (m_demux) {
+        m_demux->close();
+        m_demux.reset();
+    }
+
     m_audio_container.reset();
-    m_current_frame_position = 0;
-    m_filepath.clear();
+    m_sws_buf.clear();
+    m_sws_buf.shrink_to_fit();
+
     {
-        std::lock_guard ml(m_metadata_mutex);
+        std::lock_guard lock(m_metadata_mutex);
         m_cached_metadata.reset();
         m_cached_regions.clear();
     }
+
+    m_decode_head.store(0);
+    clear_error();
 }
 
 bool VideoFileReader::is_open() const
 {
     std::shared_lock lock(m_context_mutex);
-    return m_demux && m_demux->is_open() && m_video && m_video->is_valid();
+    return m_demux && m_video && m_video->is_valid();
 }
 
 // =========================================================================
-// Metadata and Regions
+// Metadata / regions
 // =========================================================================
 
 std::optional<FileMetadata> VideoFileReader::get_metadata() const
 {
-    std::shared_lock lock(m_context_mutex);
-    if (!m_demux || !m_video)
-        return std::nullopt;
-
-    {
-        std::lock_guard ml(m_metadata_mutex);
-        if (m_cached_metadata)
-            return m_cached_metadata;
-    }
-
-    build_metadata(m_demux, m_video, m_audio);
-
-    std::lock_guard ml(m_metadata_mutex);
+    std::lock_guard lock(m_metadata_mutex);
     return m_cached_metadata;
 }
 
 std::vector<FileRegion> VideoFileReader::get_regions() const
 {
-    std::shared_lock lock(m_context_mutex);
-    if (!m_demux || !m_video)
-        return {};
-
-    {
-        std::lock_guard ml(m_metadata_mutex);
-        if (!m_cached_regions.empty())
-            return m_cached_regions;
-    }
-
-    build_regions(m_demux, m_video, m_audio);
-
-    std::lock_guard ml(m_metadata_mutex);
+    std::lock_guard lock(m_metadata_mutex);
     return m_cached_regions;
 }
 
 void VideoFileReader::build_metadata(
     const std::shared_ptr<FFmpegDemuxContext>& demux,
-    const std::shared_ptr<VideoStreamContext>& video,
-    const std::shared_ptr<AudioStreamContext>& audio) const
+    const std::shared_ptr<VideoStreamContext>& video) const
 {
     FileMetadata meta;
+    meta.mime_type = "video";
     demux->extract_container_metadata(meta);
     video->extract_stream_metadata(*demux, meta);
 
-    if (audio && audio->is_valid())
-        audio->extract_stream_metadata(*demux, meta);
-
-    meta.file_size = std::filesystem::file_size(m_filepath);
-    auto ftime = std::filesystem::last_write_time(m_filepath);
-    meta.modification_time = std::chrono::system_clock::time_point(
-        std::chrono::seconds(
-            std::chrono::duration_cast<std::chrono::seconds>(ftime.time_since_epoch())));
-
-    std::lock_guard ml(m_metadata_mutex);
+    std::lock_guard lock(m_metadata_mutex);
     m_cached_metadata = std::move(meta);
 }
 
 void VideoFileReader::build_regions(
     const std::shared_ptr<FFmpegDemuxContext>& demux,
-    const std::shared_ptr<VideoStreamContext>& /*video*/,
-    const std::shared_ptr<AudioStreamContext>& audio) const
+    const std::shared_ptr<VideoStreamContext>& video) const
 {
+    std::vector<FileRegion> regions;
+
     auto chapters = demux->extract_chapter_regions();
+    regions.insert(regions.end(),
+        std::make_move_iterator(chapters.begin()),
+        std::make_move_iterator(chapters.end()));
 
-    std::vector<FileRegion> all;
-    all.reserve(chapters.size());
-    all.insert(all.end(), chapters.begin(), chapters.end());
+    auto keyframes = video->extract_keyframe_regions(*demux);
+    regions.insert(regions.end(),
+        std::make_move_iterator(keyframes.begin()),
+        std::make_move_iterator(keyframes.end()));
 
-    if (audio && audio->is_valid()) {
-        auto cues = audio->extract_cue_regions(*demux);
-        all.insert(all.end(), cues.begin(), cues.end());
-    }
-
-    std::lock_guard ml(m_metadata_mutex);
-    m_cached_regions = std::move(all);
+    std::lock_guard lock(m_metadata_mutex);
+    m_cached_regions = std::move(regions);
 }
 
 // =========================================================================
-// Reading
+// FileReader interface — read_all / read_region (not supported in streaming mode)
 // =========================================================================
 
 std::vector<Kakshya::DataVariant> VideoFileReader::read_all()
 {
-    std::shared_lock lock(m_context_mutex);
-    if (!m_demux || !m_video) {
-        set_error("File not open");
-        return {};
-    }
-    return decode_video_frames(m_demux, m_video, m_video->total_frames);
+    MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+        "VideoFileReader::read_all() is not supported; "
+        "use create_container() + load_into_container()");
+    return {};
 }
 
-std::vector<Kakshya::DataVariant> VideoFileReader::read_region(const FileRegion& region)
+std::vector<Kakshya::DataVariant> VideoFileReader::read_region(const FileRegion& /*region*/)
 {
-    if (region.start_coordinates.empty() || region.end_coordinates.empty()) {
-        set_error("Invalid region coordinates");
-        return {};
-    }
-    uint64_t start = region.start_coordinates[0];
-    uint64_t end = region.end_coordinates[0];
-    uint64_t n = (end > start) ? (end - start) : 1;
-    return read_frames(n, start);
-}
-
-std::vector<Kakshya::DataVariant> VideoFileReader::read_frames(uint64_t num_frames,
-    uint64_t offset)
-{
-    std::shared_lock lock(m_context_mutex);
-    if (!m_demux || !m_video) {
-        set_error("File not open");
-        return {};
-    }
-
-    if (offset != m_current_frame_position.load()) {
-        lock.unlock();
-        std::unique_lock wlock(m_context_mutex);
-        if (!m_demux || !m_video) {
-            set_error("File closed during operation");
-            return {};
-        }
-        if (!seek_internal(m_demux, m_video, offset))
-            return {};
-        wlock.unlock();
-        lock.lock();
-        if (!m_demux || !m_video) {
-            set_error("File closed during operation");
-            return {};
-        }
-    }
-
-    return decode_video_frames(m_demux, m_video, num_frames);
+    MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+        "VideoFileReader::read_region() is not supported; "
+        "use the container API to access regions");
+    return {};
 }
 
 // =========================================================================
@@ -295,29 +234,37 @@ bool VideoFileReader::load_into_container(
         demux = m_demux;
     }
 
-    vc->setup(video->total_frames,
+    const uint64_t total = video->total_frames;
+    if (total == 0) {
+        set_error("Video stream reports 0 frames");
+        return false;
+    }
+
+    // -----------------------------------------------------------------
+    // Ring buffer allocation
+    // -----------------------------------------------------------------
+
+    const uint32_t ring_cap = std::min(
+        m_ring_capacity,
+        static_cast<uint32_t>(total));
+
+    vc->setup_ring(total,
+        ring_cap,
         video->out_width,
         video->out_height,
         video->out_bytes_per_pixel,
         video->frame_rate);
 
-    auto data = read_all();
-    if (data.empty()) {
-        set_error("Failed to decode video data");
-        return false;
-    }
+    m_sws_buf.resize(
+        static_cast<size_t>(video->out_linesize) * video->out_height);
 
-    vc->set_raw_data(data);
+    // -----------------------------------------------------------------
+    // Audio extraction FIRST — before video decode touches the demuxer
+    // -----------------------------------------------------------------
 
-    auto regions = get_regions();
-    auto region_groups = regions_to_groups(regions);
-    for (const auto& [name, group] : region_groups)
-        vc->add_region_group(group);
+    bool want_audio = (m_video_options & VideoReadOptions::EXTRACT_AUDIO)
+        != VideoReadOptions::NONE;
 
-    vc->create_default_processor();
-    vc->mark_ready_for_processing(true);
-
-    bool want_audio = (m_video_options & VideoReadOptions::EXTRACT_AUDIO) != VideoReadOptions::NONE;
     if (want_audio && audio && audio->is_valid()) {
         {
             std::unique_lock lock(m_context_mutex);
@@ -335,7 +282,7 @@ bool VideoFileReader::load_into_container(
                 m_audio_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(sc);
             } else {
                 MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                    "VideoFileReader: audio open succeeded but load failed: {}",
+                    "VideoFileReader: audio load failed: {}",
                     audio_reader.get_last_error());
             }
         } else {
@@ -343,9 +290,238 @@ bool VideoFileReader::load_into_container(
                 "VideoFileReader: open_from_demux failed: {}",
                 audio_reader.get_last_error());
         }
+
+        {
+            std::unique_lock lock(m_context_mutex);
+            demux->seek(video->stream_index, 0);
+            video->flush_codec();
+        }
     }
 
+    // -----------------------------------------------------------------
+    // Synchronous preload: decode first batch into the ring
+    // -----------------------------------------------------------------
+
+    m_decode_head.store(0);
+    m_container_ref = vc;
+
+    const uint64_t preload = std::min(
+        static_cast<uint64_t>(m_decode_batch_size),
+        total);
+
+    uint64_t decoded = decode_batch(*vc, preload);
+
+    if (decoded == 0) {
+        set_error("Failed to decode any frames during preload");
+        return false;
+    }
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "VideoFileReader: preloaded {}/{} frames ({}x{}, {:.1f} fps, ring={})",
+        decoded, total,
+        video->out_width, video->out_height,
+        video->frame_rate, ring_cap);
+
+    // -----------------------------------------------------------------
+    // Regions and processor
+    // -----------------------------------------------------------------
+
+    auto regions = get_regions();
+    auto region_groups = regions_to_groups(regions);
+    for (const auto& [name, group] : region_groups)
+        vc->add_region_group(group);
+
+    vc->create_default_processor();
+    vc->mark_ready_for_processing(true);
+
+    // -----------------------------------------------------------------
+    // Start background decode thread
+    // -----------------------------------------------------------------
+
+    if (decoded < total)
+        start_decode_thread();
+
     return true;
+}
+
+// =========================================================================
+// Decode: batch (multiple frames per wake cycle)
+// =========================================================================
+
+uint64_t VideoFileReader::decode_batch(
+    Kakshya::VideoFileContainer& vc, uint64_t batch_size)
+{
+    std::shared_lock ctx_lock(m_context_mutex);
+    if (!m_demux || !m_video || !m_video->is_valid())
+        return 0;
+
+    const size_t frame_bytes = vc.get_frame_byte_size();
+    const int packed_stride = static_cast<int>(
+        m_video->out_width * m_video->out_bytes_per_pixel);
+
+    uint64_t decoded = 0;
+
+    AVPacket* pkt = av_packet_alloc();
+    AVFrame* frame = av_frame_alloc();
+    if (!pkt || !frame) {
+        av_packet_free(&pkt);
+        av_frame_free(&frame);
+        return 0;
+    }
+
+    uint8_t* sws_dst[1] = { m_sws_buf.data() };
+    int sws_stride[1] = { m_video->out_linesize };
+
+    auto write_frame_to_ring = [&]() -> bool {
+        uint64_t idx = m_decode_head.load();
+        if (idx >= vc.get_total_source_frames())
+            return false;
+
+        uint8_t* dest = vc.mutable_slot_ptr(idx);
+        if (!dest)
+            return false;
+
+        sws_scale(m_video->sws_context,
+            frame->data, frame->linesize,
+            0, static_cast<int>(m_video->height),
+            sws_dst, sws_stride);
+
+        if (m_video->out_linesize == packed_stride) {
+            std::memcpy(dest, m_sws_buf.data(), frame_bytes);
+        } else {
+            for (uint32_t row = 0; row < m_video->out_height; ++row) {
+                std::memcpy(
+                    dest + static_cast<size_t>(row) * packed_stride,
+                    m_sws_buf.data() + static_cast<size_t>(row) * m_video->out_linesize,
+                    static_cast<size_t>(packed_stride));
+            }
+        }
+
+        vc.commit_frame(idx);
+        m_decode_head.fetch_add(1);
+        ++decoded;
+
+        av_frame_unref(frame);
+        return true;
+    };
+
+    while (decoded < batch_size) {
+        int ret = av_read_frame(m_demux->format_context, pkt);
+
+        if (ret < 0) {
+            if (ret == AVERROR_EOF) {
+                avcodec_send_packet(m_video->codec_context, nullptr);
+            } else {
+                break;
+            }
+        } else if (pkt->stream_index != m_video->stream_index) {
+            av_packet_unref(pkt);
+            continue;
+        } else {
+            ret = avcodec_send_packet(m_video->codec_context, pkt);
+            av_packet_unref(pkt);
+            if (ret < 0 && ret != AVERROR(EAGAIN))
+                continue;
+        }
+
+        while (decoded < batch_size) {
+            ret = avcodec_receive_frame(m_video->codec_context, frame);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+                break;
+            if (ret < 0)
+                break;
+
+            if (!write_frame_to_ring())
+                goto done;
+        }
+
+        if (ret == AVERROR_EOF)
+            break;
+    }
+
+done:
+    av_packet_free(&pkt);
+    av_frame_free(&frame);
+    return decoded;
+}
+
+// =========================================================================
+// Background decode thread
+// =========================================================================
+
+void VideoFileReader::start_decode_thread()
+{
+    stop_decode_thread();
+
+    m_decode_stop.store(false);
+    m_decode_active.store(true);
+    m_decode_thread = std::thread(&VideoFileReader::decode_thread_func, this);
+}
+
+void VideoFileReader::stop_decode_thread()
+{
+    if (!m_decode_active.load())
+        return;
+
+    m_decode_stop.store(true);
+    m_decode_cv.notify_all();
+
+    if (m_decode_thread.joinable())
+        m_decode_thread.join();
+
+    m_decode_active.store(false);
+}
+
+void VideoFileReader::decode_thread_func()
+{
+    auto vc = m_container_ref.lock();
+    if (!vc) {
+        MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+            "VideoFileReader: decode thread — container expired");
+        m_decode_active.store(false);
+        return;
+    }
+
+    const uint64_t total = vc->get_total_source_frames();
+    const uint32_t ring_cap = vc->get_ring_capacity();
+    const uint32_t threshold = (m_refill_threshold > 0)
+        ? m_refill_threshold
+        : ring_cap / 4;
+
+    while (!m_decode_stop.load()) {
+        uint64_t head = m_decode_head.load();
+
+        if (head >= total)
+            break;
+
+        uint64_t read_pos = vc->get_read_position()[0];
+        uint64_t buffered_ahead = (head > read_pos) ? (head - read_pos) : 0;
+
+        if (buffered_ahead >= ring_cap) {
+            std::unique_lock lock(m_decode_mutex);
+            m_decode_cv.wait_for(lock, std::chrono::milliseconds(50), [&] {
+                if (m_decode_stop.load())
+                    return true;
+
+                uint64_t rp = vc->get_read_position()[0];
+                uint64_t h = m_decode_head.load();
+                uint64_t ahead = (h > rp) ? (h - rp) : 0;
+                return ahead < (ring_cap - threshold);
+            });
+            continue;
+        }
+
+        uint64_t batch = std::min(
+            static_cast<uint64_t>(m_decode_batch_size),
+            total - head);
+
+        uint64_t decoded = decode_batch(*vc, batch);
+
+        if (decoded == 0)
+            break;
+    }
+
+    m_decode_active.store(false);
 }
 
 // =========================================================================
@@ -354,21 +530,53 @@ bool VideoFileReader::load_into_container(
 
 std::vector<uint64_t> VideoFileReader::get_read_position() const
 {
-    return { m_current_frame_position.load() };
+    return { m_decode_head.load() };
 }
 
 bool VideoFileReader::seek(const std::vector<uint64_t>& position)
 {
-    if (position.empty()) {
-        set_error("Empty position vector");
+    if (position.empty())
         return false;
+
+    const uint64_t target_frame = position[0];
+
+    stop_decode_thread();
+
+    std::shared_ptr<VideoStreamContext> video;
+    std::shared_ptr<FFmpegDemuxContext> demux;
+    {
+        std::shared_lock lock(m_context_mutex);
+        if (!m_demux || !m_video || !m_video->is_valid()) {
+            set_error("Cannot seek: reader not open");
+            return false;
+        }
+        video = m_video;
+        demux = m_demux;
     }
-    std::unique_lock lock(m_context_mutex);
-    if (!m_demux || !m_video) {
-        set_error("File not open");
+
+    if (!seek_internal(demux, video, target_frame))
         return false;
-    }
-    return seek_internal(m_demux, m_video, position[0]);
+
+    m_decode_head.store(target_frame);
+
+    auto vc = m_container_ref.lock();
+    if (!vc)
+        return true;
+
+    vc->invalidate_ring();
+    vc->set_read_position({ target_frame });
+
+    const uint64_t total = vc->get_total_source_frames();
+    const uint64_t batch = std::min(
+        static_cast<uint64_t>(m_decode_batch_size),
+        total > target_frame ? total - target_frame : 0UL);
+
+    decode_batch(*vc, batch);
+
+    if (m_decode_head.load() < total)
+        start_decode_thread();
+
+    return true;
 }
 
 bool VideoFileReader::seek_internal(
@@ -399,202 +607,11 @@ bool VideoFileReader::seek_internal(
     }
 
     video->flush_codec();
-    m_current_frame_position = frame_position;
     return true;
 }
 
 // =========================================================================
-// Video decode loop
-// =========================================================================
-
-std::vector<Kakshya::DataVariant> VideoFileReader::decode_video_frames(
-    const std::shared_ptr<FFmpegDemuxContext>& demux,
-    const std::shared_ptr<VideoStreamContext>& video,
-    uint64_t num_frames)
-{
-    if (!video->is_valid()) {
-        set_error("Invalid video context for decoding");
-        return {};
-    }
-
-    const size_t frame_bytes = static_cast<size_t>(video->out_linesize) * video->out_height;
-
-    std::vector<uint8_t> pixels;
-    pixels.reserve(num_frames * frame_bytes);
-
-    uint64_t decoded = 0;
-
-    AVPacket* pkt = av_packet_alloc();
-    AVFrame* frame = av_frame_alloc();
-    if (!pkt || !frame) {
-        av_packet_free(&pkt);
-        av_frame_free(&frame);
-        set_error("Failed to allocate packet/frame");
-        return {};
-    }
-
-    std::vector<uint8_t> row_buf(static_cast<size_t>(video->out_linesize) * video->out_height);
-    uint8_t* dst_data[1] = { row_buf.data() };
-    int dst_linesize[1] = { video->out_linesize };
-
-    while (decoded < num_frames) {
-        int ret = av_read_frame(demux->format_context, pkt);
-
-        if (ret < 0) {
-            if (ret == AVERROR_EOF) {
-                avcodec_send_packet(video->codec_context, nullptr);
-            } else {
-                break;
-            }
-        } else if (pkt->stream_index != video->stream_index) {
-            av_packet_unref(pkt);
-            continue;
-        } else {
-            ret = avcodec_send_packet(video->codec_context, pkt);
-            av_packet_unref(pkt);
-            if (ret < 0 && ret != AVERROR(EAGAIN))
-                continue;
-        }
-
-        while (decoded < num_frames) {
-            ret = avcodec_receive_frame(video->codec_context, frame);
-            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-                break;
-            if (ret < 0)
-                break;
-
-            sws_scale(video->sws_context,
-                frame->data, frame->linesize,
-                0, static_cast<int>(video->height),
-                dst_data, dst_linesize);
-
-            pixels.insert(pixels.end(), row_buf.begin(), row_buf.end());
-            ++decoded;
-
-            av_frame_unref(frame);
-        }
-
-        if (ret == AVERROR_EOF)
-            break;
-    }
-
-    av_packet_free(&pkt);
-    av_frame_free(&frame);
-
-    m_current_frame_position += decoded;
-
-    if (pixels.empty())
-        return {};
-
-    std::vector<Kakshya::DataVariant> output(1);
-    output[0] = std::move(pixels);
-    return output;
-}
-
-// =========================================================================
-// Audio decode loop (for embedded audio extraction)
-// =========================================================================
-
-std::vector<Kakshya::DataVariant> VideoFileReader::decode_audio_frames(
-    const std::shared_ptr<FFmpegDemuxContext>& demux,
-    const std::shared_ptr<AudioStreamContext>& audio)
-{
-    if (!audio->is_valid()) {
-        set_error("Invalid audio context for decoding");
-        return {};
-    }
-
-    int ch = static_cast<int>(audio->channels);
-
-    std::vector<Kakshya::DataVariant> output(1);
-    output[0] = std::vector<double>();
-    auto& dst = std::get<std::vector<double>>(output[0]);
-    dst.reserve(audio->total_frames * static_cast<size_t>(ch));
-
-    AVPacket* pkt = av_packet_alloc();
-    AVFrame* frame = av_frame_alloc();
-    if (!pkt || !frame) {
-        av_packet_free(&pkt);
-        av_frame_free(&frame);
-        set_error("Failed to allocate packet/frame for audio");
-        return {};
-    }
-
-    int max_resampled = static_cast<int>(audio->total_frames + 8192);
-
-    uint8_t** resample_buf = nullptr;
-    int linesize = 0;
-    if (av_samples_alloc_array_and_samples(
-            &resample_buf, &linesize, ch, max_resampled, AV_SAMPLE_FMT_DBL, 0)
-        < 0) {
-        av_packet_free(&pkt);
-        av_frame_free(&frame);
-        set_error("Failed to allocate resample buffer");
-        return {};
-    }
-
-    while (true) {
-        int ret = av_read_frame(demux->format_context, pkt);
-
-        if (ret < 0) {
-            if (ret == AVERROR_EOF) {
-                avcodec_send_packet(audio->codec_context, nullptr);
-            } else {
-                break;
-            }
-        } else if (pkt->stream_index != audio->stream_index) {
-            av_packet_unref(pkt);
-            continue;
-        } else {
-            ret = avcodec_send_packet(audio->codec_context, pkt);
-            av_packet_unref(pkt);
-            if (ret < 0 && ret != AVERROR(EAGAIN))
-                continue;
-        }
-
-        while (true) {
-            ret = avcodec_receive_frame(audio->codec_context, frame);
-            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-                break;
-            if (ret < 0)
-                break;
-
-            int out_samples = swr_convert(
-                audio->swr_context,
-                resample_buf, max_resampled,
-                const_cast<const uint8_t**>(frame->data),
-                frame->nb_samples);
-
-            if (out_samples > 0) {
-                auto* src = reinterpret_cast<double*>(resample_buf[0]);
-                dst.insert(dst.end(), src, src + static_cast<ptrdiff_t>(out_samples * ch));
-            }
-
-            av_frame_unref(frame);
-        }
-
-        if (ret == AVERROR_EOF)
-            break;
-    }
-
-    while (true) {
-        int n = swr_convert(audio->swr_context, resample_buf, max_resampled, nullptr, 0);
-        if (n <= 0)
-            break;
-        auto* src = reinterpret_cast<double*>(resample_buf[0]);
-        dst.insert(dst.end(), src, src + static_cast<ptrdiff_t>(n * ch));
-    }
-
-    av_freep(&resample_buf[0]);
-    av_freep(&resample_buf);
-    av_packet_free(&pkt);
-    av_frame_free(&frame);
-
-    return output;
-}
-
-// =========================================================================
-// Utility
+// Dimension queries
 // =========================================================================
 
 size_t VideoFileReader::get_num_dimensions() const
@@ -607,20 +624,22 @@ std::vector<uint64_t> VideoFileReader::get_dimension_sizes() const
     std::shared_lock lock(m_context_mutex);
     if (!m_video)
         return { 0, 0, 0, 0 };
-    return { m_video->total_frames,
+    return {
+        m_video->total_frames,
         m_video->out_height,
         m_video->out_width,
-        m_video->out_bytes_per_pixel };
+        m_video->out_bytes_per_pixel
+    };
 }
 
 std::vector<std::string> VideoFileReader::get_supported_extensions() const
 {
-    return {
-        "mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "mpg", "mpeg",
-        "m4v", "3gp", "3g2", "mxf", "ts", "m2ts", "vob", "ogv", "rm",
-        "rmvb", "asf", "f4v", "divx", "dv", "mts", "m2v", "y4m"
-    };
+    return { "mp4", "mkv", "avi", "mov", "webm", "flv", "wmv", "m4v", "ts", "mts" };
 }
+
+// =========================================================================
+// Error
+// =========================================================================
 
 std::string VideoFileReader::get_last_error() const
 {
@@ -628,11 +647,12 @@ std::string VideoFileReader::get_last_error() const
     return m_last_error;
 }
 
-void VideoFileReader::set_error(const std::string& err) const
+void VideoFileReader::set_error(const std::string& msg) const
 {
     std::lock_guard lock(m_error_mutex);
-    m_last_error = err;
-    MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, "VideoFileReader: {}", err);
+    m_last_error = msg;
+    MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+        "VideoFileReader: {}", msg);
 }
 
 void VideoFileReader::clear_error() const

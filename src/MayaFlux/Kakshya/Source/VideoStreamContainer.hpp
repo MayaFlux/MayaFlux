@@ -3,6 +3,9 @@
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 
+#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+#include <condition_variable>
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -87,6 +90,65 @@ public:
     ContainerDataStructure& get_structure() override { return m_structure; }
     const ContainerDataStructure& get_structure() const override { return m_structure; }
     void set_structure(ContainerDataStructure structure) override { m_structure = structure; }
+
+    // =========================================================================
+    // Ring buffer streaming API
+    // =========================================================================
+
+    /**
+     * @brief Allocate m_data[0] as a ring of ring_capacity frames.
+     *
+     * Switches the container from flat mode to ring mode. m_data[0] is
+     * resized to ring_capacity x frame_byte_size. m_num_frames is set to
+     * total_frames so processors see the full temporal extent. Pixel data
+     * is indexed by frame_index % ring_capacity.
+     *
+     * @param total_frames  Total frames in the source (file, stream, etc).
+     * @param ring_capacity Number of frame slots (must be power of 2).
+     * @param width         Frame width in pixels.
+     * @param height        Frame height in pixels.
+     * @param channels      Colour channels per pixel.
+     * @param frame_rate    Frame rate in fps.
+     */
+    void setup_ring(uint64_t total_frames,
+        uint32_t ring_capacity,
+        uint32_t width,
+        uint32_t height,
+        uint32_t channels,
+        double frame_rate);
+
+    /**
+     * @brief Mutable pointer into m_data[0] for the decode thread to write into.
+     * @param frame_index Absolute frame index; mapped to slot via modulo.
+     * @return Pointer into the pixel vector, or nullptr if not in ring mode.
+     */
+    [[nodiscard]] uint8_t* mutable_slot_ptr(uint64_t frame_index);
+
+    /**
+     * @brief Publish a decoded frame. Sets validity, pushes to ready queue,
+     *        notifies any thread blocked in get_frame_pixels().
+     * @param frame_index Absolute frame index just written.
+     */
+    void commit_frame(uint64_t frame_index);
+
+    /**
+     * @brief Invalidate all ring slots. Called before seek.
+     */
+    void invalidate_ring();
+
+    /**
+     * @brief Check if a frame is currently valid in the ring.
+     * @param frame_index Absolute frame index.
+     */
+    [[nodiscard]] bool is_frame_available(uint64_t frame_index) const;
+
+    /**
+     * @brief True if the container is operating in ring mode.
+     */
+    [[nodiscard]] bool is_ring_mode() const { return m_ring_capacity > 0; }
+
+    [[nodiscard]] uint32_t get_ring_capacity() const { return m_ring_capacity; }
+    [[nodiscard]] uint64_t get_total_source_frames() const { return m_total_source_frames; }
 
     // =========================================================================
     // RegionGroup management
@@ -244,6 +306,26 @@ protected:
 
     std::atomic<uint32_t> m_registered_readers { 0 };
     std::atomic<uint32_t> m_consumed_readers { 0 };
+
+    // =========================================================================
+    // Ring buffer state (inactive when m_ring_capacity == 0)
+    // =========================================================================
+
+    uint32_t m_ring_capacity { 0 };
+    uint64_t m_total_source_frames { 0 };
+
+    std::vector<std::atomic<uint64_t>> m_slot_frame;
+
+    static constexpr uint32_t READY_QUEUE_CAPACITY = 256;
+    Memory::LockFreeQueue<uint64_t, READY_QUEUE_CAPACITY> m_ready_queue;
+
+    mutable std::mutex m_ring_notify_mutex;
+    mutable std::condition_variable m_ring_notify_cv;
+
+    [[nodiscard]] uint32_t slot_for(uint64_t frame_index) const
+    {
+        return static_cast<uint32_t>(frame_index % m_ring_capacity);
+    }
 };
 
 } // namespace MayaFlux::Kakshya
