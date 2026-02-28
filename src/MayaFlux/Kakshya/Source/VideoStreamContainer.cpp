@@ -7,6 +7,9 @@
 #include "MayaFlux/Kakshya/Utils/CoordUtils.hpp"
 #include "MayaFlux/Kakshya/Utils/RegionUtils.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/IOService.hpp"
+
 namespace MayaFlux::Kakshya {
 
 // =========================================================================
@@ -78,7 +81,9 @@ void VideoStreamContainer::setup_ring(uint64_t total_frames,
     uint32_t width,
     uint32_t height,
     uint32_t channels,
-    double frame_rate)
+    double frame_rate,
+    uint32_t refill_threshold,
+    uint64_t reader_id)
 {
     std::unique_lock data_lock(m_data_mutex);
 
@@ -89,6 +94,12 @@ void VideoStreamContainer::setup_ring(uint64_t total_frames,
     m_total_source_frames = total_frames;
     m_ring_capacity = ring_capacity;
     m_num_frames = total_frames;
+    m_cache_head.store(0, std::memory_order_relaxed);
+    m_refill_threshold = refill_threshold;
+    m_io_reader_id = reader_id;
+
+    m_io_service = Registry::BackendRegistry::instance()
+                       .get_service<Registry::Service::IOService>();
 
     const size_t frame_bytes = get_frame_byte_size();
 
@@ -130,10 +141,7 @@ void VideoStreamContainer::commit_frame(uint64_t frame_index)
     m_slot_frame[slot_for(frame_index)].store(frame_index, std::memory_order_release);
     (void)m_ready_queue.push(frame_index);
 
-    {
-        std::lock_guard lock(m_ring_notify_mutex);
-    }
-    m_ring_notify_cv.notify_all();
+    advance_cache_head(frame_index);
 }
 
 void VideoStreamContainer::invalidate_ring()
@@ -194,19 +202,7 @@ std::span<const uint8_t> VideoStreamContainer::get_frame_pixels(uint64_t frame_i
         return { pixels->data() + slot * frame_bytes, frame_bytes };
     }
 
-    std::unique_lock lock(m_ring_notify_mutex);
-    bool available = m_ring_notify_cv.wait_for(lock, std::chrono::milliseconds(100), [&] {
-        return m_slot_frame[slot].load(std::memory_order_acquire) == frame_index;
-    });
-
-    if (!available)
-        return {};
-
-    const auto* pixels = std::get_if<std::vector<uint8_t>>(&m_data[0]);
-    if (!pixels)
-        return {};
-
-    return { pixels->data() + slot * frame_bytes, frame_bytes };
+    return {};
 }
 
 std::span<const double> VideoStreamContainer::get_frame(uint64_t /*frame_index*/) const
@@ -372,6 +368,15 @@ void VideoStreamContainer::set_read_position(const std::vector<uint64_t>& positi
 void VideoStreamContainer::update_read_position_for_channel(size_t /*channel*/, uint64_t frame)
 {
     m_read_position.store(frame);
+
+    if (m_ring_capacity == 0 || m_refill_threshold == 0 || !m_io_service)
+        return;
+
+    const uint64_t head = m_cache_head.load(std::memory_order_acquire);
+    const uint64_t buffered = (head > frame) ? (head - frame) : 0;
+
+    if (buffered < m_refill_threshold && m_io_service->request_decode)
+        m_io_service->request_decode(m_io_reader_id);
 }
 
 const std::vector<uint64_t>& VideoStreamContainer::get_read_position() const

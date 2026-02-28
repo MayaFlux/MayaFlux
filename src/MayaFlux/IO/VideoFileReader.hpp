@@ -174,6 +174,7 @@ private:
     uint32_t m_ring_capacity { 32 };
     uint32_t m_decode_batch_size { 8 };
     uint32_t m_refill_threshold { 0 };
+    uint64_t m_reader_id { 0 };
 
     std::weak_ptr<Kakshya::VideoFileContainer> m_container_ref;
 
@@ -183,6 +184,8 @@ private:
     std::atomic<bool> m_decode_stop { false };
     std::atomic<bool> m_decode_active { false };
     std::atomic<uint64_t> m_decode_head { 0 };
+
+    std::shared_ptr<Registry::Service::IOService> m_io_service;
 
     /// @brief One-frame sws scratch buffer (padded linesize, reused by decode thread).
     std::vector<uint8_t> m_sws_buf;

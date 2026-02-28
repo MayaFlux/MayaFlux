@@ -1,6 +1,9 @@
 #include "VideoFileReader.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include "MayaFlux/Registry/BackendRegistry.hpp"
+#include "MayaFlux/Registry/Service/IOService.hpp"
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -15,7 +18,25 @@ namespace MayaFlux::IO {
 // Construction / destruction
 // =========================================================================
 
-VideoFileReader::VideoFileReader() = default;
+VideoFileReader::VideoFileReader()
+{
+    auto& registry = Registry::BackendRegistry::instance();
+    m_io_service = std::make_shared<Registry::Service::IOService>();
+
+    static std::atomic<uint64_t> s_next_id { 1 };
+    m_reader_id = s_next_id.fetch_add(1, std::memory_order_relaxed);
+
+    auto* cv_ptr = &m_decode_cv;
+    auto self_id = m_reader_id;
+
+    m_io_service->request_decode = [cv_ptr, self_id](uint64_t reader_id) {
+        if (reader_id == self_id)
+            cv_ptr->notify_one();
+    };
+
+    registry.register_service<Registry::Service::IOService>(
+        [this]() -> void* { return m_io_service.get(); });
+}
 
 VideoFileReader::~VideoFileReader()
 {
@@ -248,12 +269,14 @@ bool VideoFileReader::load_into_container(
         m_ring_capacity,
         static_cast<uint32_t>(total));
 
-    vc->setup_ring(total,
-        ring_cap,
-        video->out_width,
-        video->out_height,
-        video->out_bytes_per_pixel,
-        video->frame_rate);
+    const uint32_t threshold = (m_refill_threshold > 0)
+        ? m_refill_threshold
+        : ring_cap / 4;
+
+    vc->setup_ring(total, ring_cap,
+        video->out_width, video->out_height,
+        video->out_bytes_per_pixel, video->frame_rate,
+        threshold, m_reader_id);
 
     m_sws_buf.resize(
         static_cast<size_t>(video->out_linesize) * video->out_height);
@@ -499,14 +522,13 @@ void VideoFileReader::decode_thread_func()
 
         if (buffered_ahead >= ring_cap) {
             std::unique_lock lock(m_decode_mutex);
-            m_decode_cv.wait_for(lock, std::chrono::milliseconds(50), [&] {
+            m_decode_cv.wait_for(lock, std::chrono::milliseconds(200), [&] {
                 if (m_decode_stop.load())
                     return true;
-
-                uint64_t rp = vc->get_read_position()[0];
-                uint64_t h = m_decode_head.load();
-                uint64_t ahead = (h > rp) ? (h - rp) : 0;
-                return ahead < (ring_cap - threshold);
+                const uint64_t h = m_decode_head.load();
+                const uint64_t rp = vc->get_read_position()[0];
+                const uint64_t ahead = (h > rp) ? (h - rp) : 0;
+                return ahead < static_cast<uint64_t>(ring_cap - threshold);
             });
             continue;
         }

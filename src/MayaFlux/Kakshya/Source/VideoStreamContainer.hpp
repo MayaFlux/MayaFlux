@@ -6,6 +6,10 @@
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
 #include <condition_variable>
 
+namespace MayaFlux::Registry::Service {
+struct IOService;
+}
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -109,13 +113,17 @@ public:
      * @param height        Frame height in pixels.
      * @param channels      Colour channels per pixel.
      * @param frame_rate    Frame rate in fps.
+     * @param refill_threshold Frames of look-ahead below which refill callback fires.
+     * @param reader_id The current class ID registered at the stream/file-read source
      */
     void setup_ring(uint64_t total_frames,
         uint32_t ring_capacity,
         uint32_t width,
         uint32_t height,
         uint32_t channels,
-        double frame_rate);
+        double frame_rate,
+        uint32_t refill_threshold,
+        uint64_t reader_id = 0);
 
     /**
      * @brief Mutable pointer into m_data[0] for the decode thread to write into.
@@ -149,6 +157,39 @@ public:
 
     [[nodiscard]] uint32_t get_ring_capacity() const { return m_ring_capacity; }
     [[nodiscard]] uint64_t get_total_source_frames() const { return m_total_source_frames; }
+
+    /**
+     * @brief Set the number of frames below which the refill callback fires.
+     *        Called by the reader before or immediately after setup_ring().
+     * @param threshold Frames of look-ahead below which notification fires.
+     */
+    void set_refill_threshold(uint32_t threshold)
+    {
+        m_refill_threshold = threshold;
+    }
+
+    /**
+     * @brief Advance the container's view of how many frames have been decoded.
+     *        Called by the decode thread (via VideoFileReader) after commit_frame().
+     *        Monotonically increasing; never decremented (seek resets via setup_ring).
+     * @param frame_index The highest frame index just committed.
+     */
+    void advance_cache_head(uint64_t frame_index)
+    {
+        uint64_t prev = m_cache_head.load(std::memory_order_relaxed);
+        while (frame_index > prev
+            && !m_cache_head.compare_exchange_weak(prev, frame_index,
+                std::memory_order_release, std::memory_order_relaxed)) { }
+    }
+
+    /**
+     * @brief Total frame count known at construction / setup_ring() time.
+     *        Non-zero even before any frames are decoded.
+     */
+    [[nodiscard]] uint64_t get_cache_head() const
+    {
+        return m_cache_head.load(std::memory_order_acquire);
+    }
 
     // =========================================================================
     // RegionGroup management
@@ -319,8 +360,22 @@ protected:
     static constexpr uint32_t READY_QUEUE_CAPACITY = 256;
     Memory::LockFreeQueue<uint64_t, READY_QUEUE_CAPACITY> m_ready_queue;
 
-    mutable std::mutex m_ring_notify_mutex;
-    mutable std::condition_variable m_ring_notify_cv;
+    /**
+     * @brief Highest frame index committed by the decode thread.
+     *        Written by the decode thread via commit_frame(); read by
+     *        update_read_position_for_channel() to compute buffered-ahead count.
+     */
+    std::atomic<uint64_t> m_cache_head { 0 };
+
+    /**
+     * @brief Trigger refill when (m_cache_head - read_position) drops below this.
+     *        Set by the reader at load_into_container() time.
+     *        A value of 0 disables threshold notification.
+     */
+    uint32_t m_refill_threshold { 0 };
+
+    Registry::Service::IOService* m_io_service { nullptr }; // non-owning; owned by registry
+    uint64_t m_io_reader_id { 0 };
 
     [[nodiscard]] uint32_t slot_for(uint64_t frame_index) const
     {
