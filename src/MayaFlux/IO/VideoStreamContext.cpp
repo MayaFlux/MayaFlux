@@ -1,4 +1,5 @@
 #include "VideoStreamContext.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -110,6 +111,37 @@ bool VideoStreamContext::open(const FFmpegDemuxContext& demux,
             / static_cast<double>(AV_TIME_BASE);
         total_frames = static_cast<uint64_t>(dur * frame_rate);
     }
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "[VideoStreamContext] stream #{} | "
+        "avg_frame_rate={}/{} ({:.6f} fps) | "
+        "r_frame_rate={}/{} ({:.6f} fps) | "
+        "chosen frame_rate={:.6f} fps | "
+        "nb_frames={} | "
+        "stream duration={} (tb={}/{}, => {:.4f}s) | "
+        "format duration={} (=> {:.4f}s) | "
+        "total_frames={} | "
+        "source={}",
+        stream_index,
+        stream->avg_frame_rate.num, stream->avg_frame_rate.den,
+        (stream->avg_frame_rate.den > 0 ? av_q2d(stream->avg_frame_rate) : 0.0),
+        stream->r_frame_rate.num, stream->r_frame_rate.den,
+        (stream->r_frame_rate.den > 0 ? av_q2d(stream->r_frame_rate) : 0.0),
+        frame_rate,
+        static_cast<int64_t>(stream->nb_frames),
+        stream->duration,
+        stream->time_base.num, stream->time_base.den,
+        (stream->duration != AV_NOPTS_VALUE && stream->time_base.den > 0
+                ? static_cast<double>(stream->duration) * av_q2d(stream->time_base)
+                : -1.0),
+        demux.format_context->duration,
+        (demux.format_context->duration != AV_NOPTS_VALUE
+                ? static_cast<double>(demux.format_context->duration) / AV_TIME_BASE
+                : -1.0),
+        total_frames,
+        (stream->nb_frames > 0 ? "nb_frames"
+                               : (stream->duration != AV_NOPTS_VALUE ? "stream_duration*fps"
+                                                                     : "format_duration*fps")));
 
     if (!setup_scaler(target_width, target_height, target_format)) {
         close();

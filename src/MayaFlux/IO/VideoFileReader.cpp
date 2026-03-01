@@ -4,6 +4,9 @@
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/IOService.hpp"
 
+#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
+#include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
+
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -43,10 +46,6 @@ VideoFileReader::~VideoFileReader()
     close();
 }
 
-// =========================================================================
-// open / close / is_open
-// =========================================================================
-
 bool VideoFileReader::can_read(const std::string& filepath) const
 {
     static const std::vector<std::string> exts = {
@@ -81,8 +80,10 @@ bool VideoFileReader::open(const std::string& filepath, FileReadOptions options)
 
     std::shared_ptr<AudioStreamContext> audio;
     if ((m_video_options & VideoReadOptions::EXTRACT_AUDIO) != VideoReadOptions::NONE) {
+        bool planar = (m_audio_options & AudioReadOptions::DEINTERLEAVE) != AudioReadOptions::NONE;
+
         audio = std::make_shared<AudioStreamContext>();
-        if (!audio->open(*demux, false, m_target_sample_rate)) {
+        if (!audio->open(*demux, planar, m_target_sample_rate)) {
             MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                 "VideoFileReader: no audio stream found or audio open failed");
             audio.reset();
@@ -193,8 +194,13 @@ void VideoFileReader::build_regions(
     m_cached_regions = std::move(regions);
 }
 
+std::type_index VideoFileReader::get_container_type() const
+{
+    return typeid(Kakshya::VideoFileContainer);
+}
+
 // =========================================================================
-// FileReader interface — read_all / read_region (not supported in streaming mode)
+// FileReader interface
 // =========================================================================
 
 std::vector<Kakshya::DataVariant> VideoFileReader::read_all()
@@ -261,10 +267,6 @@ bool VideoFileReader::load_into_container(
         return false;
     }
 
-    // -----------------------------------------------------------------
-    // Ring buffer allocation
-    // -----------------------------------------------------------------
-
     const uint32_t ring_cap = std::min(
         m_ring_capacity,
         static_cast<uint32_t>(total));
@@ -281,12 +283,9 @@ bool VideoFileReader::load_into_container(
     m_sws_buf.resize(
         static_cast<size_t>(video->out_linesize) * video->out_height);
 
-    // -----------------------------------------------------------------
-    // Audio extraction FIRST — before video decode touches the demuxer
-    // -----------------------------------------------------------------
-
     bool want_audio = (m_video_options & VideoReadOptions::EXTRACT_AUDIO)
-        != VideoReadOptions::NONE;
+            != VideoReadOptions::NONE
+        && demux->find_best_stream(AVMEDIA_TYPE_AUDIO) >= 0;
 
     if (want_audio && audio && audio->is_valid()) {
         {
@@ -298,6 +297,7 @@ bool VideoFileReader::load_into_container(
 
         SoundFileReader audio_reader;
         audio_reader.set_audio_options(m_audio_options);
+        audio_reader.set_target_sample_rate(m_target_sample_rate);
 
         if (audio_reader.open_from_demux(demux, audio, m_filepath, m_options)) {
             auto sc = audio_reader.create_container();
@@ -321,10 +321,6 @@ bool VideoFileReader::load_into_container(
         }
     }
 
-    // -----------------------------------------------------------------
-    // Synchronous preload: decode first batch into the ring
-    // -----------------------------------------------------------------
-
     m_decode_head.store(0);
     m_container_ref = vc;
 
@@ -345,10 +341,6 @@ bool VideoFileReader::load_into_container(
         video->out_width, video->out_height,
         video->frame_rate, ring_cap);
 
-    // -----------------------------------------------------------------
-    // Regions and processor
-    // -----------------------------------------------------------------
-
     auto regions = get_regions();
     auto region_groups = regions_to_groups(regions);
     for (const auto& [name, group] : region_groups)
@@ -357,19 +349,11 @@ bool VideoFileReader::load_into_container(
     vc->create_default_processor();
     vc->mark_ready_for_processing(true);
 
-    // -----------------------------------------------------------------
-    // Start background decode thread
-    // -----------------------------------------------------------------
-
     if (decoded < total)
         start_decode_thread();
 
     return true;
 }
-
-// =========================================================================
-// Decode: batch (multiple frames per wake cycle)
-// =========================================================================
 
 uint64_t VideoFileReader::decode_batch(
     Kakshya::VideoFileContainer& vc, uint64_t batch_size)

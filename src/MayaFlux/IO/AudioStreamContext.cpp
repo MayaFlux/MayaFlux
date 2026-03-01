@@ -80,12 +80,6 @@ bool AudioStreamContext::open(const FFmpegDemuxContext& demux,
         return false;
     }
 
-    // for (size_t i = 0; i < demux.format_context->nb_streams; i++) {
-    //     if (i != static_cast<size_t>(stream_index)) {
-    //         demux.format_context->streams[i]->discard = AVDISCARD_ALL;
-    //     }
-    // }
-
     sample_rate = static_cast<uint32_t>(codec_context->sample_rate);
     channels = static_cast<uint32_t>(codec_context->ch_layout.nb_channels);
 

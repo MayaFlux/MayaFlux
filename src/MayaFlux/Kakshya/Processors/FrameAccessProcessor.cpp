@@ -25,6 +25,9 @@ void FrameAccessProcessor::on_attach(const std::shared_ptr<SignalSourceContainer
         m_prepared = true;
         container->mark_ready_for_processing(true);
 
+        m_last_process_time = std::chrono::steady_clock::now();
+        m_frame_accumulator = 0.0;
+
         MF_INFO(Journal::Component::Kakshya, Journal::Context::ContainerProcessing,
             "FrameAccessProcessor attached: {}×{}×{} frames={}, frame_bytes={}, batch={}",
             m_width, m_height, m_channels, m_total_frames,
@@ -74,6 +77,9 @@ void FrameAccessProcessor::store_metadata(const std::shared_ptr<SignalSourceCont
             m_current_frame = stream_positions[0];
         }
     }
+
+    if (auto vc = std::dynamic_pointer_cast<VideoStreamContainer>(container))
+        m_frame_rate = vc->get_frame_rate();
 }
 
 void FrameAccessProcessor::validate()
@@ -196,7 +202,17 @@ void FrameAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>&
         }
 
         if (m_auto_advance) {
-            advance_frame(frames_to_extract);
+            if (m_frame_rate > 0.0) {
+                constexpr double k_render_fps = 60.0;
+                m_frame_accumulator += m_frame_rate / k_render_fps;
+                auto frames_to_advance = static_cast<uint64_t>(m_frame_accumulator);
+                if (frames_to_advance > 0) {
+                    m_frame_accumulator -= static_cast<double>(frames_to_advance);
+                    advance_frame(frames_to_advance);
+                }
+            } else {
+                advance_frame(frames_to_extract);
+            }
         }
 
     } catch (const std::exception& e) {

@@ -144,7 +144,21 @@ private:
     bool m_looping_enabled {};
     Region m_loop_region;
 
-    std::chrono::steady_clock::time_point m_last_process_time;
+    std::chrono::steady_clock::time_point m_last_process_time {};
+
+    /**
+     * @brief Sub-frame accumulator for wall-clock-driven advancement.
+     *        Accumulates fractional frames between render ticks so that
+     *        the video advances at its native frame_rate regardless of the
+     *        render loop's FPS.
+     */
+    double m_frame_accumulator {};
+
+    /**
+     * @brief Cached video frame rate in frames per second.
+     *        Set from container metadata in store_metadata().
+     */
+    double m_frame_rate {};
 
     /**
      * @brief Cache dimension metadata and frame geometry from the container.

@@ -6,10 +6,16 @@
 #include "MayaFlux/IO/FFmpegDemuxContext.hpp"
 #include "MayaFlux/IO/VideoStreamContext.hpp"
 
-#include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
-#include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
-
 #include <condition_variable>
+
+namespace MayaFlux::Kakshya {
+class VideoFileContainer;
+class SoundFileContainer;
+}
+
+namespace MayaFlux::Registry::Service {
+struct IOService;
+}
 
 namespace MayaFlux::IO {
 
@@ -79,7 +85,7 @@ public:
     [[nodiscard]] std::vector<std::string> get_supported_extensions() const override;
 
     [[nodiscard]] std::type_index get_data_type() const override { return typeid(std::vector<uint8_t>); }
-    [[nodiscard]] std::type_index get_container_type() const override { return typeid(Kakshya::VideoFileContainer); }
+    [[nodiscard]] std::type_index get_container_type() const override;
 
     [[nodiscard]] std::string get_last_error() const override;
     [[nodiscard]] bool supports_streaming() const override { return true; }
