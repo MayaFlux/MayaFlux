@@ -167,6 +167,15 @@ void download_from_gpu(
 MAYAFLUX_API std::shared_ptr<VKBuffer> create_staging_buffer(size_t size);
 
 /**
+ * @brief Allocate a persistent host-visible staging buffer sized for
+ *        repeated streaming uploads to an image of @p size bytes.
+ *        Call once; pass the result to upload_image_streaming() every frame.
+ * @param size Byte footprint of the target image (use VKImage::get_size_bytes()).
+ * @return Initialised host-visible VKBuffer, or nullptr on failure.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<VKBuffer> create_image_staging_buffer(size_t size);
+
+/**
  * @brief Check if buffer is device-local (staging needed)
  * @param buffer Buffer to check
  * @return True if buffer is device-local

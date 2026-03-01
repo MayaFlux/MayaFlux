@@ -1,11 +1,16 @@
 #include "TextureProcessor.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
-#include "MayaFlux/Journal/Archivist.hpp"
+#include "TextureBuffer.hpp"
+
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
+
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
-#include "TextureBuffer.hpp"
+
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -61,6 +66,7 @@ void TextureProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 void TextureProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     m_texture_buffer.reset();
+    m_stream_staging.reset();
 }
 
 void TextureProcessor::processing_function(const std::shared_ptr<Buffer>& /*buffer*/)
@@ -185,10 +191,24 @@ void TextureProcessor::update_pixels_if_dirty()
     }
 
     auto& loom = Portal::Graphics::get_texture_manager();
-    loom.upload_data(
-        m_texture_buffer->get_texture(),
-        pixel_data.data(),
-        pixel_data.size());
+
+    if (m_streaming_mode && !m_stream_staging) {
+        m_stream_staging = create_image_staging_buffer(
+            m_texture_buffer->get_texture()->get_size_bytes());
+    }
+
+    if (m_streaming_mode && m_stream_staging) {
+        loom.upload_data(
+            m_texture_buffer->get_texture(),
+            pixel_data.data(),
+            pixel_data.size(),
+            m_stream_staging);
+    } else {
+        loom.upload_data(
+            m_texture_buffer->get_texture(),
+            pixel_data.data(),
+            pixel_data.size());
+    }
 
     m_texture_buffer->m_texture_dirty = false;
 

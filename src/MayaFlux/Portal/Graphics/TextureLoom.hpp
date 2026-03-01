@@ -9,6 +9,10 @@ class VulkanBackend;
 class BackendResourceManager;
 }
 
+namespace MayaFlux::Buffers {
+class VKBuffer;
+}
+
 namespace MayaFlux::Portal::Graphics {
 
 /**
@@ -208,6 +212,22 @@ public:
         const std::shared_ptr<Core::VKImage>& image,
         const void* data,
         size_t size);
+
+    /**
+     * @brief Upload pixel data reusing a caller-supplied persistent staging buffer.
+     *        Identical to upload_data() but skips the per-call VkBuffer allocation,
+     *        eliminating the Vulkan object churn that causes VK_ERROR_DEVICE_LOST
+     *        under sustained per-frame texture updates (e.g. video playback).
+     * @param image   Target VKImage (must already be initialised).
+     * @param data    Pixel data pointer (at least @p size bytes).
+     * @param size    Byte count — must match the image footprint.
+     * @param staging Host-visible staging VKBuffer from create_streaming_staging().
+     */
+    void upload_data(
+        const std::shared_ptr<Core::VKImage>& image,
+        const void* data,
+        size_t size,
+        const std::shared_ptr<Buffers::VKBuffer>& staging);
 
     /**
      * @brief Download pixel data from a texture

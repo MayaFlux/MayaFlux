@@ -605,6 +605,91 @@ void BackendResourceManager::upload_image_data(
         size, image->get_width(), image->get_height());
 }
 
+void BackendResourceManager::upload_image_data_with_staging(
+    std::shared_ptr<VKImage> image,
+    const void* data,
+    size_t size,
+    const std::shared_ptr<Buffers::VKBuffer>& staging)
+{
+    if (!image || !data || !staging) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Invalid parameters for upload_image_data_with_staging");
+        return;
+    }
+
+    void* mapped = staging->get_mapped_ptr();
+    if (!mapped) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "upload_image_data_with_staging: staging buffer has no mapped pointer");
+        return;
+    }
+
+    std::memcpy(mapped, data, size);
+    staging->mark_dirty_range(0, size);
+
+    auto& resources = staging->get_buffer_resources();
+    vk::MappedMemoryRange range { resources.memory, 0, VK_WHOLE_SIZE };
+
+    if (auto result = m_context.get_device().flushMappedMemoryRanges(1, &range);
+        result != vk::Result::eSuccess) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "upload_image_data_with_staging: flush failed: {}", vk::to_string(result));
+    }
+
+    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+        vk::ImageMemoryBarrier barrier {};
+        barrier.oldLayout = image->get_current_layout();
+        barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image->get_image();
+        barrier.subresourceRange = {
+            image->get_aspect_flags(), 0,
+            image->get_mip_levels(), 0,
+            image->get_array_layers()
+        };
+        barrier.srcAccessMask = vk::AccessFlagBits::eShaderRead;
+        barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+
+        cmd.pipelineBarrier(
+            vk::PipelineStageFlagBits::eFragmentShader,
+            vk::PipelineStageFlagBits::eTransfer,
+            {}, 0, nullptr, 0, nullptr, 1, &barrier);
+
+        vk::BufferImageCopy region {};
+        region.imageSubresource.aspectMask = image->get_aspect_flags();
+        region.imageSubresource.layerCount = image->get_array_layers();
+        region.imageOffset = vk::Offset3D { 0, 0, 0 };
+        region.imageExtent = vk::Extent3D {
+            image->get_width(),
+            image->get_height(),
+            image->get_depth()
+        };
+
+        cmd.copyBufferToImage(
+            staging->get_buffer(),
+            image->get_image(),
+            vk::ImageLayout::eTransferDstOptimal,
+            1, &region);
+
+        barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+        barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+        barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+        cmd.pipelineBarrier(
+            vk::PipelineStageFlagBits::eTransfer,
+            vk::PipelineStageFlagBits::eFragmentShader,
+            {}, 0, nullptr, 0, nullptr, 1, &barrier);
+    });
+
+    image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "upload_image_data_with_staging: {} bytes to image {}x{}",
+        size, image->get_width(), image->get_height());
+}
+
 void BackendResourceManager::download_image_data(
     std::shared_ptr<VKImage> image,
     void* data,

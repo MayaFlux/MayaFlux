@@ -195,6 +195,10 @@ void VideoStreamReader::on_container_state_change(
     }
 }
 
+// =========================================================================
+// VideoContainerBuffer implementation
+// =========================================================================
+
 VideoContainerBuffer::VideoContainerBuffer(
     const std::shared_ptr<Kakshya::StreamContainer>& container,
     Portal::Graphics::ImageFormat format)
@@ -227,6 +231,7 @@ void VideoContainerBuffer::setup_processors(ProcessingToken token)
     enforce_default_processing(true);
 
     auto texture_proc = std::make_shared<TextureProcessor>();
+    texture_proc->set_streaming_mode(true);
     texture_proc->set_processing_token(token);
     set_texture_processor(texture_proc);
 

@@ -325,7 +325,7 @@ bool VideoFileReader::load_into_container(
     m_container_ref = vc;
 
     const uint64_t preload = std::min(
-        static_cast<uint64_t>(m_decode_batch_size),
+        static_cast<uint64_t>(ring_cap),
         total);
 
     uint64_t decoded = decode_batch(*vc, preload);
@@ -497,29 +497,30 @@ void VideoFileReader::decode_thread_func()
 
     while (!m_decode_stop.load()) {
         uint64_t head = m_decode_head.load();
+        const uint64_t read_pos = vc->get_read_position()[0];
 
         if (head >= total)
             break;
 
-        uint64_t read_pos = vc->get_read_position()[0];
-        uint64_t buffered_ahead = (head > read_pos) ? (head - read_pos) : 0;
+        const uint64_t buffered = (head > read_pos) ? (head - read_pos) : 0;
 
-        if (buffered_ahead >= ring_cap) {
+        if (buffered >= static_cast<uint64_t>(ring_cap)) {
             std::unique_lock lock(m_decode_mutex);
-            m_decode_cv.wait_for(lock, std::chrono::milliseconds(200), [&] {
+            m_decode_cv.wait_for(lock, std::chrono::milliseconds(50), [&] {
                 if (m_decode_stop.load())
                     return true;
-                const uint64_t h = m_decode_head.load();
+                const uint64_t h = m_decode_head.load(std::memory_order_acquire);
                 const uint64_t rp = vc->get_read_position()[0];
                 const uint64_t ahead = (h > rp) ? (h - rp) : 0;
-                return ahead < static_cast<uint64_t>(ring_cap - threshold);
+                return ahead <= static_cast<uint64_t>(ring_cap - threshold);
             });
             continue;
         }
 
-        uint64_t batch = std::min(
-            static_cast<uint64_t>(m_decode_batch_size),
-            total - head);
+        const uint64_t want = static_cast<uint64_t>(ring_cap) - buffered;
+        const uint64_t capped = std::min(want, total - head);
+        const uint64_t batch = std::min(capped,
+            static_cast<uint64_t>(m_decode_batch_size));
 
         uint64_t decoded = decode_batch(*vc, batch);
 
