@@ -433,10 +433,14 @@ uint64_t VideoFileReader::decode_batch(
 
         while (decoded < batch_size) {
             ret = avcodec_receive_frame(m_video->codec_context, frame);
-            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+            if (ret == AVERROR(EAGAIN))
                 break;
-            if (ret < 0)
+            if (ret == AVERROR_EOF)
+                goto done;
+            if (ret < 0) {
+                av_frame_unref(frame);
                 break;
+            }
 
             if (!write_frame_to_ring())
                 goto done;

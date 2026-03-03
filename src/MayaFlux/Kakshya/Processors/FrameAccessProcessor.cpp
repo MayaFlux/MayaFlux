@@ -207,8 +207,7 @@ void FrameAccessProcessor::process(const std::shared_ptr<SignalSourceContainer>&
                     "FrameAccessProcessor: auto-advance enabled but frame data was incomplete. Waiting for next process call without advancing frame.");
             }
             if (m_frame_rate > 0.0) {
-                constexpr double k_render_fps = 60.0;
-                m_frame_accumulator += m_frame_rate / k_render_fps;
+                m_frame_accumulator += m_frame_rate / m_global_fps;
                 auto frames_to_advance = static_cast<uint64_t>(m_frame_accumulator);
                 if (frames_to_advance > 0) {
                     m_frame_accumulator -= static_cast<double>(frames_to_advance);

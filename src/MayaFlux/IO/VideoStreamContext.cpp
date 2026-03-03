@@ -89,15 +89,19 @@ bool VideoStreamContext::open(const FFmpegDemuxContext& demux,
         return false;
     }
 
-    width = static_cast<uint32_t>(codec_context->width);
-    height = static_cast<uint32_t>(codec_context->height);
-    src_pixel_format = codec_context->pix_fmt;
-
-    if (stream->avg_frame_rate.den > 0 && stream->avg_frame_rate.num > 0) {
+    if (codec_context->codec_id == AV_CODEC_ID_HEVC
+        && stream->r_frame_rate.den > 0
+        && stream->r_frame_rate.num > 0) {
+        frame_rate = av_q2d(stream->r_frame_rate);
+    } else if (stream->avg_frame_rate.den > 0 && stream->avg_frame_rate.num > 0) {
         frame_rate = av_q2d(stream->avg_frame_rate);
     } else if (stream->r_frame_rate.den > 0 && stream->r_frame_rate.num > 0) {
         frame_rate = av_q2d(stream->r_frame_rate);
     }
+
+    width = static_cast<uint32_t>(codec_context->width);
+    height = static_cast<uint32_t>(codec_context->height);
+    src_pixel_format = codec_context->pix_fmt;
 
     if (stream->nb_frames > 0) {
         total_frames = static_cast<uint64_t>(stream->nb_frames);

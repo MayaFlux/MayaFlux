@@ -123,6 +123,8 @@ public:
      */
     [[nodiscard]] uint64_t get_frame_byte_size() const { return m_frame_byte_size; }
 
+    void set_global_fps(double fps) { m_global_fps = fps; }
+
 private:
     std::atomic<bool> m_is_processing { false };
     bool m_prepared {};
@@ -140,6 +142,7 @@ private:
     uint64_t m_height {};
     uint64_t m_channels {};
     uint64_t m_frame_byte_size {};
+    double m_global_fps { 60.0 };
 
     bool m_looping_enabled {};
     Region m_loop_region;
