@@ -30,8 +30,8 @@ enum class SpectralOperation : uint8_t {
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class MAYAFLUX_API SpectralTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
-    using input_type = IO<InputType>;
-    using output_type = IO<OutputType>;
+    using input_type = Datum<InputType>;
+    using output_type = Datum<OutputType>;
 
     /**
      * @brief Constructs a SpectralTransformer with specified operation

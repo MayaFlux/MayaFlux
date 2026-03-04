@@ -152,7 +152,7 @@ TEST_F(ConvolutionTransformerTest, DirectConvolutionWithImpulseResponse)
     for (const auto& channel : test_signal) {
         input_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input(input_channels);
+    Datum<std::vector<DataVariant>> input(input_channels);
 
     auto result = transformer->apply_operation(input);
 
@@ -183,7 +183,7 @@ TEST_F(ConvolutionTransformerTest, CrossCorrelationNormalized)
     for (const auto& channel : test_signal) {
         input_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input(input_channels);
+    Datum<std::vector<DataVariant>> input(input_channels);
 
     auto result = transformer->apply_operation(input);
 
@@ -211,7 +211,7 @@ TEST_F(ConvolutionTransformerTest, MatchedFilterDetection)
     for (const auto& channel : test_signal) {
         input_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input(input_channels);
+    Datum<std::vector<DataVariant>> input(input_channels);
 
     auto result = transformer->apply_operation(input);
 
@@ -235,7 +235,7 @@ TEST_F(ConvolutionTransformerTest, AutoCorrelation)
     for (const auto& channel : test_signal) {
         input_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input(input_channels);
+    Datum<std::vector<DataVariant>> input(input_channels);
 
     auto result = transformer->apply_operation(input);
 
@@ -261,7 +261,7 @@ TEST_F(ConvolutionTransformerTest, DeconvolutionBasic)
     for (const auto& channel : test_signal) {
         input_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input(input_channels);
+    Datum<std::vector<DataVariant>> input(input_channels);
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(input);
@@ -299,12 +299,12 @@ protected:
         for (const auto& channel : test_signal) {
             input_channels.emplace_back(channel);
         }
-        test_input = IO<std::vector<DataVariant>>(input_channels);
+        test_input = Datum<std::vector<DataVariant>>(input_channels);
     }
 
     std::vector<std::vector<double>> test_signal;
     std::vector<DataVariant> input_channels;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(TransformerMetadataTest, ConvolutionTransformerMetadata)
@@ -444,13 +444,13 @@ protected:
         for (const auto& channel : test_signal) {
             input_channels.emplace_back(channel);
         }
-        test_input = IO<std::vector<DataVariant>>(input_channels);
+        test_input = Datum<std::vector<DataVariant>>(input_channels);
     }
 
     std::unique_ptr<MathematicalTransformer<>> transformer;
     std::vector<std::vector<double>> test_signal;
     std::vector<DataVariant> input_channels;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(MathematicalTransformerTest, GainTransformation)
@@ -525,7 +525,7 @@ TEST_F(MathematicalTransformerTest, LogarithmicTransformation)
     for (const auto& channel : positive_signal) {
         positive_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> positive_input(positive_channels);
+    Datum<std::vector<DataVariant>> positive_input(positive_channels);
 
     transformer->set_parameter("operation", MathematicalOperation::LOGARITHMIC);
     transformer->set_parameter("base", std::numbers::e);
@@ -556,7 +556,7 @@ TEST_F(MathematicalTransformerTest, ExponentialTransformation)
     for (const auto& channel : zero_signal) {
         zero_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> zero_input(zero_channels);
+    Datum<std::vector<DataVariant>> zero_input(zero_channels);
 
     transformer->set_parameter("operation", MathematicalOperation::EXPONENTIAL);
     transformer->set_parameter("base", std::numbers::e);
@@ -584,7 +584,7 @@ TEST_F(MathematicalTransformerTest, TrigonometricSine)
     for (const auto& channel : pi_half_signal) {
         pi_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> pi_input(pi_channels);
+    Datum<std::vector<DataVariant>> pi_input(pi_channels);
 
     transformer->set_parameter("operation", MathematicalOperation::TRIGONOMETRIC);
     transformer->set_parameter("trig_function", std::string("sin"));
@@ -614,7 +614,7 @@ TEST_F(MathematicalTransformerTest, TrigonometricCosine)
     for (const auto& channel : zero_signal) {
         zero_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> zero_input(zero_channels);
+    Datum<std::vector<DataVariant>> zero_input(zero_channels);
 
     transformer->set_parameter("operation", MathematicalOperation::TRIGONOMETRIC);
     transformer->set_parameter("trig_function", std::string("cos"));
@@ -705,7 +705,7 @@ TEST_F(MathematicalTransformerTest, MultiChannelConsistency)
     for (const auto& channel : identical_signal) {
         identical_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> identical_input(identical_channels);
+    Datum<std::vector<DataVariant>> identical_input(identical_channels);
 
     transformer->set_parameter("operation", MathematicalOperation::GAIN);
     transformer->set_parameter("gain_factor", 1.5);
@@ -741,13 +741,13 @@ protected:
         for (const auto& channel : test_signal) {
             input_channels.emplace_back(channel);
         }
-        test_input = IO<std::vector<DataVariant>>(input_channels);
+        test_input = Datum<std::vector<DataVariant>>(input_channels);
     }
 
     std::unique_ptr<SpectralTransformer<>> transformer;
     std::vector<std::vector<double>> test_signal;
     std::vector<DataVariant> input_channels;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(SpectralTransformerTest, FrequencyShiftTransformation)
@@ -892,7 +892,7 @@ TEST_F(SpectralTransformerTest, MultiChannelSpectralConsistency)
     for (const auto& channel : identical_signal) {
         identical_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> identical_input(identical_channels);
+    Datum<std::vector<DataVariant>> identical_input(identical_channels);
 
     transformer->set_parameter("operation", SpectralOperation::HARMONIC_ENHANCE);
     transformer->set_parameter("enhancement_factor", 1.5);
@@ -954,13 +954,13 @@ protected:
         for (const auto& channel : test_signal) {
             input_channels.emplace_back(channel);
         }
-        test_input = IO<std::vector<DataVariant>>(input_channels);
+        test_input = Datum<std::vector<DataVariant>>(input_channels);
     }
 
     std::unique_ptr<TemporalTransformer<>> transformer;
     std::vector<std::vector<double>> test_signal;
     std::vector<DataVariant> input_channels;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(TemporalTransformerTest, SliceTransformation)
@@ -1139,7 +1139,7 @@ TEST_F(TemporalTransformerTest, MultiChannelTemporalConsistency)
     for (const auto& channel : identical_signal) {
         identical_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> identical_input(identical_channels);
+    Datum<std::vector<DataVariant>> identical_input(identical_channels);
 
     transformer->set_parameter("operation", TemporalOperation::TIME_REVERSE);
 
@@ -1209,21 +1209,21 @@ protected:
         for (const auto& channel : large_signal) {
             large_channels.emplace_back(channel);
         }
-        large_input = IO<std::vector<DataVariant>>(large_channels);
+        large_input = Datum<std::vector<DataVariant>>(large_channels);
 
         small_channels.reserve(small_signal.size());
         for (const auto& channel : small_signal) {
             small_channels.emplace_back(channel);
         }
-        small_input = IO<std::vector<DataVariant>>(small_channels);
+        small_input = Datum<std::vector<DataVariant>>(small_channels);
     }
 
     std::vector<std::vector<double>> large_signal;
     std::vector<std::vector<double>> small_signal;
     std::vector<DataVariant> large_channels;
     std::vector<DataVariant> small_channels;
-    IO<std::vector<DataVariant>> large_input;
-    IO<std::vector<DataVariant>> small_input;
+    Datum<std::vector<DataVariant>> large_input;
+    Datum<std::vector<DataVariant>> small_input;
 };
 
 TEST_F(TransformerPerformanceTest, ScalabilityWithSignalSize)
@@ -1328,7 +1328,7 @@ TEST_F(TransformerPerformanceTest, MultiChannelOverhead)
 
     std::vector<DataVariant> single_channel_input;
     single_channel_input.emplace_back(single_channel_signal[0]);
-    IO<std::vector<DataVariant>> single_input(single_channel_input);
+    Datum<std::vector<DataVariant>> single_input(single_channel_input);
 
     auto start_time = std::chrono::high_resolution_clock::now();
     auto multi_result = transformer->apply_operation(large_input);
@@ -1372,21 +1372,21 @@ protected:
         for (const auto& channel : impulse) {
             impulse_channels.emplace_back(channel);
         }
-        impulse_input = IO<std::vector<DataVariant>>(impulse_channels);
+        impulse_input = Datum<std::vector<DataVariant>>(impulse_channels);
 
         sine_channels.reserve(sine_wave.size());
         for (const auto& channel : sine_wave) {
             sine_channels.emplace_back(channel);
         }
-        sine_input = IO<std::vector<DataVariant>>(sine_channels);
+        sine_input = Datum<std::vector<DataVariant>>(sine_channels);
     }
 
     std::vector<std::vector<double>> impulse;
     std::vector<std::vector<double>> sine_wave;
     std::vector<DataVariant> impulse_channels;
     std::vector<DataVariant> sine_channels;
-    IO<std::vector<DataVariant>> impulse_input;
-    IO<std::vector<DataVariant>> sine_input;
+    Datum<std::vector<DataVariant>> impulse_input;
+    Datum<std::vector<DataVariant>> sine_input;
 };
 
 TEST_F(AlgorithmVerificationTest, ConvolutionWithKnownImpulseResponse)
@@ -1427,7 +1427,7 @@ TEST_F(AlgorithmVerificationTest, MathematicalPolynomialEvaluation)
     for (size_t ch = 0; ch < 2; ++ch) {
         test_channels.emplace_back(test_values);
     }
-    IO<std::vector<DataVariant>> test_input(test_channels);
+    Datum<std::vector<DataVariant>> test_input(test_channels);
 
     auto result = transformer->apply_operation(test_input);
     const auto& result_channels = result.data;
@@ -1459,7 +1459,7 @@ TEST_F(AlgorithmVerificationTest, TemporalReverseSymmetry)
     for (size_t ch = 0; ch < 2; ++ch) {
         symmetric_channels.emplace_back(symmetric_signal);
     }
-    IO<std::vector<DataVariant>> symmetric_input(symmetric_channels);
+    Datum<std::vector<DataVariant>> symmetric_input(symmetric_channels);
 
     auto result = transformer->apply_operation(symmetric_input);
     const auto& result_channels = result.data;
@@ -1546,7 +1546,7 @@ TEST_F(AlgorithmVerificationTest, ConvolutionLinearity)
         }
         combined_channels.emplace_back(combined);
     }
-    IO<std::vector<DataVariant>> combined_input(combined_channels);
+    Datum<std::vector<DataVariant>> combined_input(combined_channels);
 
     auto combined_result = transformer->apply_operation(combined_input);
 
@@ -1555,8 +1555,8 @@ TEST_F(AlgorithmVerificationTest, ConvolutionLinearity)
         signal1_channels.emplace_back(signal1[ch]);
         signal2_channels.emplace_back(signal2[ch]);
     }
-    IO<std::vector<DataVariant>> signal1_input(signal1_channels);
-    IO<std::vector<DataVariant>> signal2_input(signal2_channels);
+    Datum<std::vector<DataVariant>> signal1_input(signal1_channels);
+    Datum<std::vector<DataVariant>> signal2_input(signal2_channels);
 
     auto result1 = transformer->apply_operation(signal1_input);
     auto result2 = transformer->apply_operation(signal2_input);
@@ -1598,12 +1598,12 @@ protected:
         for (const auto& channel : normal_signal) {
             input_channels.emplace_back(channel);
         }
-        test_input = IO<std::vector<DataVariant>>(input_channels);
+        test_input = Datum<std::vector<DataVariant>>(input_channels);
     }
 
     std::vector<std::vector<double>> normal_signal;
     std::vector<DataVariant> input_channels;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(TransformerRobustnessTest, InvalidParameterTypes)
@@ -1644,7 +1644,7 @@ TEST_F(TransformerRobustnessTest, ValidationHandlesProblematicData)
     for (size_t ch = 0; ch < normal_signal.size(); ++ch) {
         problematic_channels.emplace_back(problematic_signal);
     }
-    IO<std::vector<DataVariant>> problematic_input(problematic_channels);
+    Datum<std::vector<DataVariant>> problematic_input(problematic_channels);
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(problematic_input);
@@ -1677,7 +1677,7 @@ TEST_F(TransformerRobustnessTest, ZeroDivisionProtection)
     for (size_t ch = 0; ch < normal_signal.size(); ++ch) {
         zero_channels.emplace_back(signal_with_zero);
     }
-    IO<std::vector<DataVariant>> zero_input(zero_channels);
+    Datum<std::vector<DataVariant>> zero_input(zero_channels);
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(zero_input);
@@ -1710,7 +1710,7 @@ TEST_F(TransformerRobustnessTest, VeryLargeSignals)
     for (const auto& channel : large_signal) {
         large_channels.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> large_input(large_channels);
+    Datum<std::vector<DataVariant>> large_input(large_channels);
 
     auto transformer = std::make_unique<MathematicalTransformer<>>();
     transformer->set_parameter("operation", MathematicalOperation::NORMALIZE);
@@ -1744,7 +1744,7 @@ TEST_F(TransformerRobustnessTest, EmptyAndMinimalData)
     for (size_t ch = 0; ch < 2; ++ch) {
         minimal_channels.emplace_back(minimal_signal);
     }
-    IO<std::vector<DataVariant>> minimal_input(minimal_channels);
+    Datum<std::vector<DataVariant>> minimal_input(minimal_channels);
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(minimal_input);
@@ -1763,7 +1763,7 @@ TEST_F(TransformerRobustnessTest, EmptyAndMinimalData)
     for (size_t ch = 0; ch < 2; ++ch) {
         empty_channels.emplace_back(empty_signal);
     }
-    IO<std::vector<DataVariant>> empty_input(empty_channels);
+    Datum<std::vector<DataVariant>> empty_input(empty_channels);
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(empty_input);
@@ -1784,7 +1784,7 @@ TEST_F(TransformerRobustnessTest, MixedChannelSizes)
     std::vector<DataVariant> mixed_channels;
     mixed_channels.emplace_back(short_channel);
     mixed_channels.emplace_back(long_channel);
-    IO<std::vector<DataVariant>> mixed_input(mixed_channels);
+    Datum<std::vector<DataVariant>> mixed_input(mixed_channels);
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(mixed_input);
@@ -1860,7 +1860,7 @@ TEST_F(TransformerStrategyTest, StrategyStringConversion)
         channel_variants.emplace_back(channel);
     }
 
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(input);
@@ -1907,7 +1907,7 @@ TEST_F(TransformerStrategyTest, MultiChannelProcessing)
         channel_variants.emplace_back(channel);
     }
 
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(input);
@@ -1941,7 +1941,7 @@ TEST_F(TransformerStrategyTest, VariableChannelCounts)
             channel_variants.emplace_back(channel);
         }
 
-        IO<std::vector<DataVariant>> input { channel_variants };
+        Datum<std::vector<DataVariant>> input { channel_variants };
 
         EXPECT_NO_THROW({
             auto result = transformer->apply_operation(input);
@@ -2001,7 +2001,7 @@ TEST_F(TransformerComputationTest, TransformationProgress)
         channel_variants.emplace_back(channel);
     }
 
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(input);
@@ -2075,7 +2075,7 @@ TEST_F(TransformerParameterTest, ParameterTypeConversion)
         channel_variants.emplace_back(channel);
     }
 
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     auto result = transformer->apply_operation(input);
 
@@ -2103,7 +2103,7 @@ TEST_F(TransformerParameterTest, DefaultParameterValues)
         channel_variants.emplace_back(channel);
     }
 
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(input);
@@ -2133,7 +2133,7 @@ TEST_F(TransformerParameterTest, InvalidParameterHandling)
         channel_variants.emplace_back(channel);
     }
 
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     EXPECT_NO_THROW({
         auto result = transformer->apply_operation(input);
@@ -2178,7 +2178,7 @@ TEST_F(TransformerParameterTest, MultiChannelParameterEffects)
         channel_variants.emplace_back(channel);
     }
 
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     auto result = transformer->apply_operation(input);
 
@@ -2214,25 +2214,25 @@ protected:
         for (const auto& channel : normal_signal) {
             normal_channels.emplace_back(channel);
         }
-        normal_input = IO<std::vector<DataVariant>>(normal_channels);
+        normal_input = Datum<std::vector<DataVariant>>(normal_channels);
 
         empty_channels.reserve(empty_signal.size());
         for (const auto& channel : empty_signal) {
             empty_channels.emplace_back(channel);
         }
-        empty_input = IO<std::vector<DataVariant>>(empty_channels);
+        empty_input = Datum<std::vector<DataVariant>>(empty_channels);
 
         single_channels.reserve(single_sample.size());
         for (const auto& channel : single_sample) {
             single_channels.emplace_back(channel);
         }
-        single_input = IO<std::vector<DataVariant>>(single_channels);
+        single_input = Datum<std::vector<DataVariant>>(single_channels);
 
         constant_channels.reserve(constant_signal.size());
         for (const auto& channel : constant_signal) {
             constant_channels.emplace_back(channel);
         }
-        constant_input = IO<std::vector<DataVariant>>(constant_channels);
+        constant_input = Datum<std::vector<DataVariant>>(constant_channels);
     }
 
     std::vector<std::vector<double>> normal_signal;
@@ -2245,10 +2245,10 @@ protected:
     std::vector<DataVariant> single_channels;
     std::vector<DataVariant> constant_channels;
 
-    IO<std::vector<DataVariant>> normal_input;
-    IO<std::vector<DataVariant>> empty_input;
-    IO<std::vector<DataVariant>> single_input;
-    IO<std::vector<DataVariant>> constant_input;
+    Datum<std::vector<DataVariant>> normal_input;
+    Datum<std::vector<DataVariant>> empty_input;
+    Datum<std::vector<DataVariant>> single_input;
+    Datum<std::vector<DataVariant>> constant_input;
 };
 
 TEST_F(TransformerValidationTest, EmptySignalHandling)
@@ -2329,7 +2329,7 @@ TEST_F(TransformerValidationTest, ExtremeValueHandling)
     for (size_t ch = 0; ch < 2; ++ch) {
         extreme_channels.emplace_back(extreme_values);
     }
-    IO<std::vector<DataVariant>> extreme_input(extreme_channels);
+    Datum<std::vector<DataVariant>> extreme_input(extreme_channels);
 
     auto math_transformer = std::make_unique<MathematicalTransformer<>>();
     math_transformer->set_parameter("operation", MathematicalOperation::NORMALIZE);
@@ -2361,7 +2361,7 @@ TEST_F(TransformerValidationTest, MixedValidInvalidChannels)
     std::vector<DataVariant> mixed_channels;
     mixed_channels.emplace_back(valid_channel);
     mixed_channels.emplace_back(invalid_channel);
-    IO<std::vector<DataVariant>> mixed_input(mixed_channels);
+    Datum<std::vector<DataVariant>> mixed_input(mixed_channels);
 
     auto math_transformer = std::make_unique<MathematicalTransformer<>>();
     math_transformer->set_parameter("operation", MathematicalOperation::GAIN);
@@ -2389,7 +2389,7 @@ TEST_F(TransformerValidationTest, ChannelSizeConsistencyValidation)
     std::vector<DataVariant> inconsistent_channels;
     inconsistent_channels.emplace_back(short_channel);
     inconsistent_channels.emplace_back(long_channel);
-    IO<std::vector<DataVariant>> inconsistent_input(inconsistent_channels);
+    Datum<std::vector<DataVariant>> inconsistent_input(inconsistent_channels);
 
     auto transformers = std::vector<std::unique_ptr<UniversalTransformer<std::vector<DataVariant>, std::vector<DataVariant>>>> {};
     transformers.push_back(std::make_unique<MathematicalTransformer<>>());
@@ -2423,7 +2423,7 @@ TEST_F(TransformerValidationTest, ValidationRecoveryBehavior)
     for (size_t ch = 0; ch < 2; ++ch) {
         negative_channels.emplace_back(negative_data);
     }
-    IO<std::vector<DataVariant>> negative_input(negative_channels);
+    Datum<std::vector<DataVariant>> negative_input(negative_channels);
 
     auto first_result = math_transformer->apply_operation(negative_input);
 
@@ -2432,7 +2432,7 @@ TEST_F(TransformerValidationTest, ValidationRecoveryBehavior)
     for (size_t ch = 0; ch < 2; ++ch) {
         positive_channels.emplace_back(positive_data);
     }
-    IO<std::vector<DataVariant>> positive_input(positive_channels);
+    Datum<std::vector<DataVariant>> positive_input(positive_channels);
 
     EXPECT_NO_THROW({
         auto second_result = math_transformer->apply_operation(positive_input);
@@ -2471,7 +2471,7 @@ TEST_F(TransformerConsistencyTest, ConsistentResultsAcrossRuns)
     for (const auto& channel : test_signal) {
         channel_variants.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     auto result1 = transformer->apply_operation(input);
     auto result2 = transformer->apply_operation(input);
@@ -2506,7 +2506,7 @@ TEST_F(TransformerConsistencyTest, ParameterIsolation)
     for (const auto& channel : test_signal) {
         channel_variants.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     auto result1 = transformer->apply_operation(input);
 
@@ -2563,7 +2563,7 @@ TEST_F(TransformerIntegrationTest, ChainedTransformations)
     for (const auto& channel : test_signal) {
         channel_variants.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     auto result1 = gain_transformer->apply_operation(input);
     auto result2 = offset_transformer->apply_operation(result1);
@@ -2603,7 +2603,7 @@ TEST_F(TransformerIntegrationTest, CrossDomainTransformation)
     for (const auto& channel : test_signal) {
         channel_variants.emplace_back(channel);
     }
-    IO<std::vector<DataVariant>> input { channel_variants };
+    Datum<std::vector<DataVariant>> input { channel_variants };
 
     auto result1 = normalize_transformer->apply_operation(input);
     auto result2 = reverse_transformer->apply_operation(result1);
@@ -2632,7 +2632,7 @@ TEST_F(TransformerIntegrationTest, MultipleDataTypesSupport)
     std::vector<double> double_data = { 1.0, 2.0, 3.0, 4.0 };
     std::vector<DataVariant> channel_variants;
     channel_variants.emplace_back(double_data);
-    IO<std::vector<DataVariant>> double_input { channel_variants };
+    Datum<std::vector<DataVariant>> double_input { channel_variants };
 
     auto double_result = transformer->apply_operation(double_input);
 
@@ -2650,7 +2650,7 @@ TEST_F(TransformerIntegrationTest, MultipleDataTypesSupport)
     /* std::vector<float> float_data = { 1.0F, 2.0F, 3.0F, 4.0F };
     std::vector<DataVariant> float_channel_variants;
     float_channel_variants.emplace_back(float_data);
-    IO<std::vector<DataVariant>> float_input { float_channel_variants };
+    Datum<std::vector<DataVariant>> float_input { float_channel_variants };
     auto float_result = transformer->apply_operation(float_input);
 
     EXPECT_NO_THROW({

@@ -204,9 +204,9 @@ public:
     }
 
     /**
-     * @brief Extract structured double data from IO container or direct ComputeData with automatic container handling
+     * @brief Extract structured double data from Datum container or direct ComputeData with automatic container handling
      * @tparam T OperationReadyData type
-     * @param compute_data  or IO container with data and optional container
+     * @param compute_data  or Datum container with data and optional container
      * @return Tuple of [spans, structure_info]
      * @throws std::runtime_error if container required but not provided
      */
@@ -274,8 +274,8 @@ public:
     }
 
     /**
-     * @brief Reconstruct IO type from double vector and structure info
-     * @tparam T Target IO type
+     * @brief Reconstruct Datum type from double vector and structure info
+     * @tparam T Target Datum type
      * @param double_data Processed double vector
      * @param structure_info Original structure metadata
      * @return Reconstructed data of type T
@@ -297,9 +297,9 @@ public:
     }
 
     /**
-     * @brief Setup operation buffer from IO or ComputeData type
-     * @tparam T IO or ComputeData type
-     * @param input IO container or direct ComputeData
+     * @brief Setup operation buffer from Datum or ComputeData type
+     * @tparam T Datum or ComputeData type
+     * @param input Datum container or direct ComputeData
      * @param working_buffer Buffer to setup (will be resized)
      * @return Tuple of [working_spans, structure_info]
      */

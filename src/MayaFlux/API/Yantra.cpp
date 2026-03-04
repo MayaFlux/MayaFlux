@@ -491,7 +491,7 @@ void apply_gain(std::vector<double>& data, double gain_factor)
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
     transformer->set_parameter("gain_factor", gain_factor);
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = transformer->apply_operation(input);
 
     data = std::get<std::vector<double>>(result.data[0]);
@@ -502,7 +502,7 @@ void apply_gain(Kakshya::DataVariant& data, double gain_factor)
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
     transformer->set_parameter("gain_factor", gain_factor);
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = transformer->apply_operation(input);
 
     data = std::get<std::vector<double>>(result.data[0]);
@@ -512,7 +512,7 @@ void apply_gain_channels(std::vector<Kakshya::DataVariant>& channels, double gai
 {
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
     transformer->set_parameter("gain_factor", gain_factor);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { channels };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { channels };
     auto result = transformer->apply_operation(input);
     channels = result.data;
 }
@@ -532,7 +532,7 @@ std::vector<double> with_gain(const std::vector<double>& data, double gain_facto
 {
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
     transformer->set_parameter("gain_factor", gain_factor);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = transformer->apply_operation(input);
     return std::get<std::vector<double>>(result.data[0]);
 }
@@ -541,7 +541,7 @@ Kakshya::DataVariant with_gain(const Kakshya::DataVariant& data, double gain_fac
 {
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
     transformer->set_parameter("gain_factor", gain_factor);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = transformer->apply_operation(input);
     return result.data[0];
 }
@@ -550,7 +550,7 @@ std::vector<Kakshya::DataVariant> with_gain_channels(const std::vector<Kakshya::
 {
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::GAIN);
     transformer->set_parameter("gain_factor", gain_factor);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { channels };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { channels };
     auto result = transformer->apply_operation(input);
     return result.data;
 }
@@ -559,7 +559,7 @@ void normalize(std::vector<double>& data, double target_peak)
 {
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::NORMALIZE);
     transformer->set_parameter("target_peak", target_peak);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = transformer->apply_operation(input);
     data = std::get<std::vector<double>>(result.data[0]);
 }
@@ -568,7 +568,7 @@ void normalize(Kakshya::DataVariant& data, double target_peak)
 {
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::NORMALIZE);
     transformer->set_parameter("target_peak", target_peak);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = transformer->apply_operation(input);
     data = result.data[0];
 }
@@ -594,7 +594,7 @@ std::vector<double> normalized(const std::vector<double>& data, double target_pe
 {
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::NORMALIZE);
     transformer->set_parameter("target_peak", target_peak);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = transformer->apply_operation(input);
     return std::get<std::vector<double>>(result.data[0]);
 }
@@ -603,7 +603,7 @@ Kakshya::DataVariant normalized(const Kakshya::DataVariant& data, double target_
 {
     auto transformer = std::make_shared<Yantra::MathematicalTransformer<>>(Yantra::MathematicalOperation::NORMALIZE);
     transformer->set_parameter("target_peak", target_peak);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = transformer->apply_operation(input);
     return result.data[0];
 }
@@ -625,7 +625,7 @@ std::vector<Kakshya::DataVariant> normalized_channels(const std::vector<Kakshya:
 void reverse(std::vector<double>& data)
 {
     auto transformer = std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = transformer->apply_operation(input);
     data = std::get<std::vector<double>>(result.data[0]);
 }
@@ -633,7 +633,7 @@ void reverse(std::vector<double>& data)
 void reverse(Kakshya::DataVariant& data)
 {
     auto transformer = std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = transformer->apply_operation(input);
     data = result.data[0];
 }
@@ -641,7 +641,7 @@ void reverse(Kakshya::DataVariant& data)
 void reverse_channels(std::vector<Kakshya::DataVariant>& channels)
 {
     auto transformer = std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { channels };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { channels };
     auto result = transformer->apply_operation(input);
     channels = result.data;
 }
@@ -649,7 +649,7 @@ void reverse_channels(std::vector<Kakshya::DataVariant>& channels)
 std::vector<double> reversed(const std::vector<double>& data)
 {
     auto transformer = std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = transformer->apply_operation(input);
     return std::get<std::vector<double>>(result.data[0]);
 }
@@ -657,7 +657,7 @@ std::vector<double> reversed(const std::vector<double>& data)
 Kakshya::DataVariant reversed(const Kakshya::DataVariant& data)
 {
     auto transformer = std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = transformer->apply_operation(input);
     return result.data[0];
 }
@@ -665,7 +665,7 @@ Kakshya::DataVariant reversed(const Kakshya::DataVariant& data)
 std::vector<Kakshya::DataVariant> reversed_channels(const std::vector<Kakshya::DataVariant>& channels)
 {
     auto transformer = std::make_shared<Yantra::TemporalTransformer<>>(Yantra::TemporalOperation::TIME_REVERSE);
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { channels };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { channels };
     auto result = transformer->apply_operation(input);
     return result.data;
 }
@@ -808,7 +808,7 @@ std::vector<double> extract_silent_data(const std::vector<double>& data,
     extractor->set_parameter("silence_threshold", threshold);
     extractor->set_parameter("min_duration", static_cast<uint32_t>(min_silence_duration));
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = extractor->apply_operation(input);
 
     return result.data[0];
@@ -823,7 +823,7 @@ std::vector<double> extract_silent_data(const Kakshya::DataVariant& data,
     extractor->set_parameter("silence_threshold", threshold);
     extractor->set_parameter("min_duration", static_cast<uint32_t>(min_silence_duration));
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = extractor->apply_operation(input);
 
     return result.data[0];
@@ -839,7 +839,7 @@ std::vector<double> extract_zero_crossing_regions(const std::vector<double>& dat
     extractor->set_parameter("min_distance", 1.0);
     extractor->set_parameter("region_size", static_cast<uint32_t>(region_size));
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = extractor->apply_operation(input);
 
     return result.data[0];
@@ -855,7 +855,7 @@ std::vector<double> extract_zero_crossing_regions(const Kakshya::DataVariant& da
     extractor->set_parameter("min_distance", 1.0);
     extractor->set_parameter("region_size", static_cast<uint32_t>(region_size));
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = extractor->apply_operation(input);
 
     return result.data[0];
@@ -906,7 +906,7 @@ std::vector<std::vector<double>> windowed_segments(const std::vector<double>& da
         Yantra::ExtractionMethod::OVERLAPPING_WINDOWS);
     extractor->set_parameter("overlap", double(hop_size) / window_size);
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = extractor->apply_operation(input);
 
     auto extracted_data = result.data[0];
@@ -928,7 +928,7 @@ std::vector<std::vector<double>> windowed_segments(const Kakshya::DataVariant& d
         Yantra::ExtractionMethod::OVERLAPPING_WINDOWS);
     extractor->set_parameter("overlap", double(hop_size) / window_size);
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = extractor->apply_operation(input);
 
     auto extracted_data = result.data[0];
@@ -965,7 +965,7 @@ std::vector<std::pair<size_t, size_t>> detect_silence(const std::vector<double>&
     extractor->set_parameter("silence_threshold", threshold);
     extractor->set_parameter("min_duration", static_cast<uint32_t>(min_silence_duration));
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { Kakshya::DataVariant(data) } };
     auto result = extractor->apply_operation(input);
 
     std::vector<std::pair<size_t, size_t>> silence_regions;
@@ -986,7 +986,7 @@ std::vector<std::pair<size_t, size_t>> detect_silence(const Kakshya::DataVariant
     extractor->set_parameter("silence_threshold", threshold);
     extractor->set_parameter("min_duration", static_cast<uint32_t>(min_silence_duration));
 
-    Yantra::IO<std::vector<Kakshya::DataVariant>> input { { data } };
+    Yantra::Datum<std::vector<Kakshya::DataVariant>> input { { data } };
     auto result = extractor->apply_operation(input);
 
     std::vector<std::pair<size_t, size_t>> silence_regions;

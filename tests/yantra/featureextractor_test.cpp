@@ -204,7 +204,7 @@ TEST_F(FeatureExtractorFunctionalTest, InputValidation)
         Kakshya::DataVariant { multi_channel_data[1] }
     };
 
-    IO<std::vector<Kakshya::DataVariant>> valid_input(multi_channel_input);
+    Datum<std::vector<Kakshya::DataVariant>> valid_input(multi_channel_input);
     EXPECT_TRUE(extractor->validate_extraction_input(valid_input));
 
     std::vector<double> empty_data;
@@ -212,7 +212,7 @@ TEST_F(FeatureExtractorFunctionalTest, InputValidation)
         Kakshya::DataVariant { empty_data },
         Kakshya::DataVariant { empty_data }
     };
-    IO<std::vector<Kakshya::DataVariant>> empty_input(empty_multi_channel);
+    Datum<std::vector<Kakshya::DataVariant>> empty_input(empty_multi_channel);
 
     EXPECT_NO_THROW(extractor->validate_extraction_input(empty_input));
 }

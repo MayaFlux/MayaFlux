@@ -78,12 +78,12 @@ protected:
     {
         pipeline = std::make_shared<ComputationPipeline<std::vector<DataVariant>>>();
         test_data = PipelineTestDataGenerator::create_test_multichannel_signal();
-        test_input = IO<std::vector<DataVariant>> { test_data };
+        test_input = Datum<std::vector<DataVariant>> { test_data };
     }
 
     std::shared_ptr<ComputationPipeline<std::vector<DataVariant>>> pipeline;
     std::vector<DataVariant> test_data;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(ComputationPipelineTest, EmptyPipelineProcessing)
@@ -241,13 +241,13 @@ protected:
         grammar = PipelineTestDataGenerator::create_test_grammar();
         pipeline = std::make_shared<ComputationPipeline<std::vector<DataVariant>>>(grammar);
         test_data = PipelineTestDataGenerator::create_test_multichannel_signal();
-        test_input = IO<std::vector<DataVariant>> { test_data };
+        test_input = Datum<std::vector<DataVariant>> { test_data };
     }
 
     std::shared_ptr<ComputationGrammar> grammar;
     std::shared_ptr<ComputationPipeline<std::vector<DataVariant>>> pipeline;
     std::vector<DataVariant> test_data;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(PipelineGrammarTest, GrammarRuleApplication)
@@ -364,11 +364,11 @@ public:
     void SetUp() override
     {
         test_data = PipelineTestDataGenerator::create_test_multichannel_signal();
-        test_input = IO<std::vector<DataVariant>> { test_data };
+        test_input = Datum<std::vector<DataVariant>> { test_data };
     }
 
     std::vector<DataVariant> test_data;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(PipelineFactoryTest, CreateAudioPipeline)
@@ -473,7 +473,7 @@ protected:
 TEST_F(PipelineEdgeCaseTest, EmptyInput)
 {
     std::vector<DataVariant> empty_multichannel;
-    IO<std::vector<DataVariant>> empty_input { empty_multichannel };
+    Datum<std::vector<DataVariant>> empty_input { empty_multichannel };
 
     auto math_transformer = std::make_shared<MathematicalTransformer<>>(MathematicalOperation::GAIN);
     pipeline->add_operation(math_transformer, "gain");
@@ -489,7 +489,7 @@ TEST_F(PipelineEdgeCaseTest, EmptyChannelsInput)
         DataVariant(std::vector<double> {}),
         DataVariant(std::vector<double> {})
     };
-    IO<std::vector<DataVariant>> empty_channels_input { empty_channels };
+    Datum<std::vector<DataVariant>> empty_channels_input { empty_channels };
 
     auto math_transformer = std::make_shared<MathematicalTransformer<>>(MathematicalOperation::GAIN);
     pipeline->add_operation(math_transformer, "gain");
@@ -532,7 +532,7 @@ protected:
         pipeline = std::make_shared<ComputationPipeline<std::vector<DataVariant>>>();
 
         test_data = PipelineTestDataGenerator::create_test_multichannel_signal(2, 1024);
-        test_input = IO<std::vector<DataVariant>> { test_data };
+        test_input = Datum<std::vector<DataVariant>> { test_data };
 
         auto gain1 = std::make_shared<MathematicalTransformer<>>(MathematicalOperation::GAIN);
         gain1->set_parameter("gain_factor", 1.1);
@@ -548,7 +548,7 @@ protected:
 
     std::shared_ptr<ComputationPipeline<std::vector<DataVariant>>> pipeline;
     std::vector<DataVariant> test_data;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(PipelinePerformanceTest, ConsistentResults)
@@ -607,7 +607,7 @@ TEST_F(PipelinePerformanceTest, OperationOrder)
 TEST_F(PipelinePerformanceTest, LargeDataProcessing)
 {
     std::vector<DataVariant> large_multichannel = PipelineTestDataGenerator::create_test_multichannel_signal(8, 10000);
-    IO<std::vector<DataVariant>> large_input { large_multichannel };
+    Datum<std::vector<DataVariant>> large_input { large_multichannel };
 
     EXPECT_NO_THROW({
         auto result = pipeline->process(large_input);
@@ -649,7 +649,7 @@ TEST_F(PipelineMultiChannelTest, HandlesVariableChannelCounts)
 
     for (auto channels : channel_counts) {
         auto test_data = PipelineTestDataGenerator::create_test_multichannel_signal(channels, 128);
-        IO<std::vector<DataVariant>> test_input { test_data };
+        Datum<std::vector<DataVariant>> test_input { test_data };
 
         auto result = pipeline->process(test_input);
         EXPECT_EQ(result.data.size(), channels) << "Should handle " << channels << " channels";
@@ -676,7 +676,7 @@ TEST_F(PipelineMultiChannelTest, HandlesMixedChannelSizes)
         DataVariant(std::vector<double>(64, 0.9))
     };
 
-    IO<std::vector<DataVariant>> test_input { mixed_size_data };
+    Datum<std::vector<DataVariant>> test_input { mixed_size_data };
     auto result = pipeline->process(test_input);
 
     EXPECT_EQ(result.data.size(), 4) << "Should preserve channel count";
@@ -707,7 +707,7 @@ TEST_F(PipelineMultiChannelTest, ComplexMultiChannelPipeline)
     pipeline->add_operation(gain2_op, "gain2");
 
     auto test_data = PipelineTestDataGenerator::create_test_multichannel_signal(6, 256);
-    IO<std::vector<DataVariant>> test_input { test_data };
+    Datum<std::vector<DataVariant>> test_input { test_data };
 
     auto result = pipeline->process(test_input);
 
@@ -739,7 +739,7 @@ TEST_F(PipelineMultiChannelTest, PerformanceWithHighChannelCount)
     pipeline->add_operation(gain_op, "high_channel_gain");
 
     auto large_multichannel = PipelineTestDataGenerator::create_test_multichannel_signal(32, 1024);
-    IO<std::vector<DataVariant>> test_input { large_multichannel };
+    Datum<std::vector<DataVariant>> test_input { large_multichannel };
 
     auto start = std::chrono::high_resolution_clock::now();
     auto result = pipeline->process(test_input);
@@ -775,7 +775,7 @@ TEST_F(PipelineMultiChannelTest, MultiChannelWithGrammarIntegration)
     pipeline_with_grammar->add_operation(manual_op, "manual_reverse");
 
     auto test_data = PipelineTestDataGenerator::create_test_multichannel_signal(4, 256);
-    IO<std::vector<DataVariant>> test_input { test_data };
+    Datum<std::vector<DataVariant>> test_input { test_data };
 
     auto parametric_ctx = PipelineTestDataGenerator::create_test_context(ComputationContext::PARAMETRIC);
     auto result = pipeline_with_grammar->process(test_input, parametric_ctx);

@@ -66,8 +66,8 @@ namespace MayaFlux::Yantra {
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class MAYAFLUX_API ComputationPipeline {
 public:
-    using input_type = IO<InputType>;
-    using output_type = IO<OutputType>;
+    using input_type = Datum<InputType>;
+    using output_type = Datum<OutputType>;
 
     /**
      * @brief Constructor with optional grammar
@@ -463,7 +463,7 @@ public:
      * parameter configuration based on the input characteristics and context.
      *
      * The process:
-     * 1. Wraps input data in IO structure
+     * 1. Wraps input data in Datum structure
      * 2. Searches for matching grammar rules
      * 3. Applies the best matching rule if found
      * 4. Returns processed data or original data if no rules match
@@ -474,12 +474,12 @@ public:
     template <ComputeData InputType>
     auto execute_with_grammar(const InputType& input, const ExecutionContext& context = {})
     {
-        IO<InputType> input_data { input };
+        Datum<InputType> input_data { input };
 
         if (auto best_rule = m_grammar->find_best_match(input_data, context)) {
             if (auto rule_result = m_grammar->execute_rule(best_rule->name, input_data, context)) {
                 try {
-                    input_data = std::any_cast<IO<InputType>>(*rule_result);
+                    input_data = std::any_cast<Datum<InputType>>(*rule_result);
                 } catch (const std::bad_any_cast&) {
                     // Continue with original data if conversion fails
                 }

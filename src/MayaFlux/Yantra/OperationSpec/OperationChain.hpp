@@ -274,12 +274,12 @@ public:
     }
 
     /**
-     * @brief Extract to IO wrapper with metadata
+     * @brief Extract to Datum wrapper with metadata
      * @return IO-wrapped data with execution metadata
      */
-    IO<DataType> to_io() const
+    Datum<DataType> to_io() const
     {
-        IO<DataType> result(m_data);
+        Datum<DataType> result(m_data);
         result.metadata["execution_history"] = m_operation_history;
         result.metadata["successful"] = m_successful;
         if (!m_errors.empty()) {

@@ -137,7 +137,7 @@ TEST_F(StatisticalAnalyzerNewTest, WindowedAnalysis)
 TEST_F(StatisticalAnalyzerNewTest, PipelineOutput)
 {
     std::vector<Kakshya::DataVariant> multi_channel_input = { Kakshya::DataVariant { test_data } };
-    IO<std::vector<Kakshya::DataVariant>> input { multi_channel_input };
+    Datum<std::vector<Kakshya::DataVariant>> input { multi_channel_input };
 
     analyzer->set_method("mean");
     auto output = analyzer->apply_operation(input);

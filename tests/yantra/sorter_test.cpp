@@ -146,7 +146,7 @@ TEST_F(ModernSorterTest, SorterProperties)
 
 TEST_F(ModernSorterTest, BasicMultiChannelSorting)
 {
-    IO<std::vector<Kakshya::DataVariant>> input { multi_channel_data };
+    Datum<std::vector<Kakshya::DataVariant>> input { multi_channel_data };
 
     data_sorter->set_direction(SortingDirection::ASCENDING);
     auto result = data_sorter->apply_operation(input);
@@ -166,7 +166,7 @@ TEST_F(ModernSorterTest, BasicMultiChannelSorting)
 TEST_F(ModernSorterTest, BasicSingleChannelSorting)
 {
     std::vector<Kakshya::DataVariant> single_channel = { Kakshya::DataVariant { test_data } };
-    IO<std::vector<Kakshya::DataVariant>> input { single_channel };
+    Datum<std::vector<Kakshya::DataVariant>> input { single_channel };
 
     data_sorter->set_direction(SortingDirection::ASCENDING);
     auto result = data_sorter->apply_operation(input);
@@ -185,7 +185,7 @@ TEST_F(ModernSorterTest, BasicSingleChannelSorting)
 TEST_F(ModernSorterTest, RegionGroupSortingWithContainer)
 {
     auto region_sorter = std::make_shared<TestStandardSorter<RegionGroup>>();
-    IO<RegionGroup> input { test_group, container };
+    Datum<RegionGroup> input { test_group, container };
 
     EXPECT_NO_THROW(region_sorter->apply_operation(input));
 
@@ -210,7 +210,7 @@ TEST_F(ModernSorterTest, HelperFunctionMultiChannel)
 
 TEST_F(ModernSorterTest, GenerateIndicesMultiChannel)
 {
-    IO<std::vector<Kakshya::DataVariant>> input { multi_channel_data, container };
+    Datum<std::vector<Kakshya::DataVariant>> input { multi_channel_data, container };
     auto indices = generate_compute_data_indices(input, SortingDirection::ASCENDING);
 
     EXPECT_EQ(indices.size(), 2);
@@ -239,7 +239,7 @@ TEST_F(ModernSorterTest, MixedDataTypes)
         Kakshya::DataVariant { std::vector<float> { 6.0F, 4.0F, 5.0F } }
     };
 
-    IO<std::vector<Kakshya::DataVariant>> input { mixed_data };
+    Datum<std::vector<Kakshya::DataVariant>> input { mixed_data };
     auto result = data_sorter->apply_operation(input);
 
     ASSERT_EQ(result.data.size(), 2);
@@ -256,7 +256,7 @@ TEST_F(ModernSorterTest, MixedDataTypes)
 TEST_F(ModernSorterTest, EmptyMultiChannelData)
 {
     std::vector<Kakshya::DataVariant> empty_multi_channel;
-    IO<std::vector<Kakshya::DataVariant>> input { empty_multi_channel };
+    Datum<std::vector<Kakshya::DataVariant>> input { empty_multi_channel };
 
     EXPECT_NO_THROW(data_sorter->apply_operation(input));
 
@@ -267,7 +267,7 @@ TEST_F(ModernSorterTest, EmptyMultiChannelData)
 TEST_F(ModernSorterTest, ContainerPreservation)
 {
     auto region_sorter = std::make_shared<TestStandardSorter<RegionGroup>>();
-    IO<RegionGroup> input { test_group, container };
+    Datum<RegionGroup> input { test_group, container };
 
     auto result = region_sorter->apply_operation(input);
 
@@ -281,7 +281,7 @@ TEST_F(ModernSorterTest, EigenMatrixSorting)
     test_matrix << 3.0, 1.0, 2.0,
         6.0, 4.0, 5.0;
 
-    IO<Eigen::MatrixXd> input { test_matrix };
+    Datum<Eigen::MatrixXd> input { test_matrix };
     auto result = eigen_sorter->apply_operation(input);
 
     for (int col = 0; col < result.data.cols(); ++col) {
@@ -293,7 +293,7 @@ TEST_F(ModernSorterTest, EigenMatrixSorting)
 
 TEST_F(ModernSorterTest, IndexOnlySorting)
 {
-    IO<std::vector<Kakshya::DataVariant>> input { multi_channel_data };
+    Datum<std::vector<Kakshya::DataVariant>> input { multi_channel_data };
 
     auto indices = generate_compute_data_indices(input, SortingDirection::ASCENDING);
 
@@ -314,7 +314,7 @@ TEST_F(ModernSorterTest, IndexOnlySorting)
 TEST_F(ModernSorterTest, HelperFunctionInPlace)
 {
     std::vector<Kakshya::DataVariant> data_copy = { Kakshya::DataVariant { test_data } };
-    IO<std::vector<Kakshya::DataVariant>> input { data_copy };
+    Datum<std::vector<Kakshya::DataVariant>> input { data_copy };
 
     sort_compute_data_inplace(input, SortingDirection::ASCENDING, SortingAlgorithm::STANDARD);
 
@@ -336,7 +336,7 @@ TEST_F(ModernSorterTest, HelperFunctionExtract)
 TEST_F(ModernSorterTest, GenerateIndices)
 {
     std::vector<Kakshya::DataVariant> single_channel = { Kakshya::DataVariant { test_data } };
-    IO<std::vector<Kakshya::DataVariant>> input { single_channel };
+    Datum<std::vector<Kakshya::DataVariant>> input { single_channel };
     auto indices = generate_compute_data_indices(input, SortingDirection::ASCENDING);
 
     ASSERT_EQ(indices.size(), 1);
@@ -354,7 +354,7 @@ TEST_F(ModernSorterTest, GenerateIndices)
 TEST_F(ModernSorterTest, DifferentAlgorithms)
 {
     std::vector<Kakshya::DataVariant> single_channel = { Kakshya::DataVariant { test_data } };
-    IO<std::vector<Kakshya::DataVariant>> input { single_channel };
+    Datum<std::vector<Kakshya::DataVariant>> input { single_channel };
 
     std::vector<SortingAlgorithm> algorithms = {
         SortingAlgorithm::STANDARD,
@@ -375,7 +375,7 @@ TEST_F(ModernSorterTest, DifferentAlgorithms)
 TEST_F(ModernSorterTest, SortingStrategies)
 {
     std::vector<Kakshya::DataVariant> single_channel = { Kakshya::DataVariant { test_data } };
-    IO<std::vector<Kakshya::DataVariant>> input { single_channel };
+    Datum<std::vector<Kakshya::DataVariant>> input { single_channel };
 
     data_sorter->set_strategy(SortingStrategy::COPY_SORT);
     auto copy_result = data_sorter->apply_operation(input);
@@ -390,7 +390,7 @@ TEST_F(ModernSorterTest, DuplicateValues)
 {
     std::vector<double> duplicate_data { 3.0, 1.0, 3.0, 1.0, 2.0, 2.0 };
     std::vector<Kakshya::DataVariant> single_channel = { Kakshya::DataVariant { duplicate_data } };
-    IO<std::vector<Kakshya::DataVariant>> input { single_channel };
+    Datum<std::vector<Kakshya::DataVariant>> input { single_channel };
 
     auto result = data_sorter->apply_operation(input);
 
@@ -408,7 +408,7 @@ TEST_F(ModernSorterTest, LargeDataPerformance)
     std::shuffle(large_data.begin(), large_data.end(), std::mt19937 { 42 });
 
     std::vector<Kakshya::DataVariant> single_channel = { Kakshya::DataVariant { large_data } };
-    IO<std::vector<Kakshya::DataVariant>> input { single_channel };
+    Datum<std::vector<Kakshya::DataVariant>> input { single_channel };
 
     auto start = std::chrono::high_resolution_clock::now();
     auto result = data_sorter->apply_operation(input);

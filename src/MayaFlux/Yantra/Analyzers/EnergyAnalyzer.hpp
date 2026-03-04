@@ -106,8 +106,8 @@ struct MAYAFLUX_API EnergyAnalysis {
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = Eigen::VectorXd>
 class MAYAFLUX_API EnergyAnalyzer : public UniversalAnalyzer<InputType, OutputType> {
 public:
-    using input_type = IO<InputType>;
-    using output_type = IO<OutputType>;
+    using input_type = Datum<InputType>;
+    using output_type = Datum<OutputType>;
     using base_type = UniversalAnalyzer<InputType, OutputType>;
 
     /**
@@ -295,7 +295,7 @@ protected:
 
     /**
      * @brief Core analysis implementation - creates analysis result AND pipeline output
-     * @param input Input data wrapped in IO container
+     * @param input Input data wrapped in Datum container
      * @return Pipeline output (data flow for chaining operations)
      */
     output_type analyze_implementation(const input_type& input) override
