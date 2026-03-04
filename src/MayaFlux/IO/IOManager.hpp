@@ -1,11 +1,13 @@
 #pragma once
 
+#include "MayaFlux/IO/CameraReader.hpp"
 #include "MayaFlux/IO/VideoFileReader.hpp"
 
 namespace MayaFlux::Kakshya {
 class SignalSourceContainer;
 class VideoFileContainer;
 class SoundFileContainer;
+class CameraContainer;
 }
 
 namespace MayaFlux::Buffers {
@@ -215,6 +217,57 @@ public:
     get_extracted_audio(const std::shared_ptr<Kakshya::VideoFileContainer>& container) const;
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Camera — open
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Open a camera device and create a CameraContainer.
+     *
+     * Constructs a CameraReader, opens the device, creates the container,
+     * configures its FrameAccessProcessor (auto_advance disabled), assigns
+     * a globally unique reader_id, registers the reader for IOService
+     * dispatch, and wires the container's IOService callback via
+     * CameraContainer::setup_io().
+     *
+     * After this call, the normal processing pipeline drives frame pulls:
+     * CameraContainer::process_default() → IOService::request_frame(reader_id)
+     * → dispatch_frame_request() → CameraReader::pull_frame_all()
+     * → decode thread → pull_frame() → mutable_frame_ptr() write → READY.
+     *
+     * @param config Device and resolution configuration.
+     * @return Opened CameraContainer, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::CameraContainer>
+    open_camera(const CameraConfig& config);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Camera — hook
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Wire a CameraContainer to the graphics buffer system.
+     *
+     * Creates a VideoContainerBuffer via BufferManager with GRAPHICS_BACKEND
+     * token, stores it keyed by container pointer, and returns it. Identical
+     * to hook_video_container_to_buffer() but accepts CameraContainer.
+     *
+     * @param container Opened CameraContainer from open_camera().
+     * @return Created VideoContainerBuffer, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::VideoContainerBuffer>
+    hook_camera_to_buffer(const std::shared_ptr<Kakshya::CameraContainer>& container);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Camera — retrieve
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Retrieve the VideoContainerBuffer created for a camera container.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::VideoContainerBuffer>
+    get_camera_buffer(const std::shared_ptr<Kakshya::CameraContainer>& container) const;
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Video reader management
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -273,17 +326,25 @@ private:
      */
     void dispatch_decode_request(uint64_t reader_id);
 
+    /**
+     * @brief IOService::request_frame target — shared-lock lookup + pull_frame_all().
+     * Non-blocking. Safe from any thread.
+     */
+    void dispatch_frame_request(uint64_t reader_id);
+
     void configure_frame_processor(
         const std::shared_ptr<Kakshya::VideoFileContainer>& container);
 
     void configure_audio_processor(
         const std::shared_ptr<Kakshya::SoundFileContainer>& container);
 
-    // ── Video readers ──────────────────────────────────────────────────────
+    // ── readers ──────────────────────────────────────────────────────
 
     std::atomic<uint64_t> m_next_reader_id { 1 };
     mutable std::shared_mutex m_readers_mutex;
+    mutable std::shared_mutex m_camera_mutex;
     std::unordered_map<uint64_t, std::shared_ptr<VideoFileReader>> m_video_readers;
+    std::unordered_map<uint64_t, std::shared_ptr<CameraReader>> m_camera_readers;
 
     std::vector<std::shared_ptr<SoundFileReader>> m_audio_readers;
 
@@ -297,6 +358,11 @@ private:
         std::shared_ptr<Kakshya::VideoFileContainer>,
         std::shared_ptr<Buffers::VideoContainerBuffer>>
         m_video_buffers;
+
+    std::unordered_map<
+        std::shared_ptr<Kakshya::CameraContainer>,
+        std::shared_ptr<Buffers::VideoContainerBuffer>>
+        m_camera_buffers;
 
     std::unordered_map<
         std::shared_ptr<Kakshya::VideoFileContainer>,
