@@ -49,14 +49,24 @@ struct MAYAFLUX_API CameraConfig {
 
 /**
  * @class CameraReader
- * @brief Synchronous per-frame FFmpeg device reader for live camera input.
+ * @brief FFmpeg device reader for live camera input with background decode.
  *
- * CameraReader owns the FFmpeg demux and video codec contexts for a single
- * camera device. Unlike VideoFileReader it has no ring buffer, no background
- * decode thread, and no seek — pull_frame() is called synchronously once per
- * graphics cycle by IOManager.
+ * Owns the FFmpeg demux and video codec contexts for a single camera device.
+ * Decodes frames on a dedicated thread signalled by IOService::request_frame,
+ * writing RGBA pixels directly into CameraContainer::mutable_frame_ptr() and
+ * marking the container READY. The graphics thread is never blocked by device
+ * I/O.
  *
- * Lifecycle: open() → create_container() → [pull_frame() per cycle] → close()
+ * Two integration paths:
+ *   - Managed:    IOManager::open_camera() handles registration, reader_id
+ *                 assignment, container wiring, and avdevice initialisation.
+ *   - Standalone: open() → create_container() → setup_io_service(id) →
+ *                 set_container() → close(). Caller is responsible for
+ *                 avdevice_register_all() before open().
+ *
+ * Unlike VideoFileReader there is no ring buffer, no seek, and no batch
+ * decode — the device is a live unbounded source. One frame is pulled per
+ * process cycle, demand-driven by CameraContainer::process_default().
  */
 class MAYAFLUX_API CameraReader {
 public:
