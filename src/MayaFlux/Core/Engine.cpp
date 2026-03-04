@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Core/Input/InputManager.hpp"
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
+#include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kinesis/Stochastic.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
@@ -48,6 +49,7 @@ Engine::Engine(Engine&& other) noexcept
     , m_window_manager(std::move(other.m_window_manager))
     , m_event_manager(std::move(other.m_event_manager))
     , m_input_manager(std::move(other.m_input_manager))
+    , m_io_manager(std::move(other.m_io_manager))
     , m_stochastic_engine(std::move(other.m_stochastic_engine))
 {
     other.m_is_initialized = false;
@@ -69,6 +71,7 @@ Engine& Engine::operator=(Engine&& other) noexcept
         m_window_manager = std::move(other.m_window_manager);
         m_event_manager = std::move(other.m_event_manager);
         m_input_manager = std::move(other.m_input_manager);
+        m_io_manager = std::move(other.m_io_manager);
         m_stochastic_engine = std::move(other.m_stochastic_engine);
 
         m_is_initialized = other.m_is_initialized;
@@ -114,6 +117,9 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
         m_stream_info.sample_rate, m_stream_info.buffer_size);
 
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>(m_stream_info.sample_rate, m_stream_info.buffer_size);
+
+    m_io_manager = std::make_shared<IO::IOManager>(
+        m_stream_info.sample_rate, m_stream_info.buffer_size, m_graphics_config.target_frame_rate, m_buffer_manager);
 
     if (m_graphics_config.windowing_backend != GlobalGraphicsConfig::WindowingBackend::NONE) {
         m_window_manager = std::make_shared<WindowManager>(m_graphics_config);

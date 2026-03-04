@@ -14,6 +14,10 @@ namespace MayaFlux::Vruta {
 class EventManager;
 }
 
+namespace MayaFlux::IO {
+class IOManager;
+}
+
 namespace MayaFlux::Core {
 
 class WindowManager;
@@ -277,6 +281,16 @@ public:
     inline std::shared_ptr<InputManager> get_input_manager() { return m_input_manager; }
 
     /**
+     * @brief Gets the IO manager
+     * @return Shared pointer to the IOManager for media loading and dispatch
+     *
+     * The IOManager provides high-level functions for loading video/audio files
+     * and manages the dispatch of decode requests to background threads.
+     * Access through Engine ensures proper initialization and integration with buffers.
+     */
+    inline std::shared_ptr<IO::IOManager> get_io_manager() { return m_io_manager; }
+
+    /**
      * @brief Gets the stochastic signal generator engine
      * @return Pointer to the Stochastic engine for random/procedural generation
      *
@@ -356,6 +370,7 @@ private:
     std::shared_ptr<WindowManager> m_window_manager; ///< Window manager (Windowing subsystem)
     std::shared_ptr<Vruta::EventManager> m_event_manager; ///< Event manager (currently only glfw events)
     std::shared_ptr<InputManager> m_input_manager; ///< Input manager (HID/MIDI/etc.)
+    std::shared_ptr<IO::IOManager> m_io_manager; ///< IO manager for video/audio loading and dispatch
     std::unique_ptr<Kinesis::Stochastic::Stochastic> m_stochastic_engine; ///< Core stochastic engine for random generation
 
 #ifdef MAYAFLUX_PLATFORM_MACOS

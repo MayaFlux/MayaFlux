@@ -21,24 +21,34 @@ namespace MayaFlux::IO {
 // Construction / destruction
 // =========================================================================
 
-VideoFileReader::VideoFileReader()
+VideoFileReader::VideoFileReader() = default;
+
+void VideoFileReader::setup_io_service(uint64_t reader_id)
 {
-    auto& registry = Registry::BackendRegistry::instance();
-    m_io_service = std::make_shared<Registry::Service::IOService>();
+    m_reader_id = reader_id;
 
-    static std::atomic<uint64_t> s_next_id { 1 };
-    m_reader_id = s_next_id.fetch_add(1, std::memory_order_relaxed);
+    if (!Registry::BackendRegistry::instance()
+            .get_service<Registry::Service::IOService>()) {
 
-    auto* cv_ptr = &m_decode_cv;
-    auto self_id = m_reader_id;
+        m_io_service = std::make_shared<Registry::Service::IOService>();
+        m_io_service->request_decode = [this](uint64_t reader_id) {
+            if (reader_id == m_reader_id)
+                signal_decode();
+        };
 
-    m_io_service->request_decode = [cv_ptr, self_id](uint64_t reader_id) {
-        if (reader_id == self_id)
-            cv_ptr->notify_one();
-    };
+        Registry::BackendRegistry::instance()
+            .register_service<Registry::Service::IOService>(
+                [this]() -> void* { return m_io_service.get(); });
 
-    registry.register_service<Registry::Service::IOService>(
-        [this]() -> void* { return m_io_service.get(); });
+        m_owns_io_service = true;
+    }
+}
+
+void VideoFileReader::setup_io_service(const std::shared_ptr<Registry::Service::IOService>& io_service, uint64_t reader_id)
+{
+    m_io_service = io_service;
+    m_reader_id = reader_id;
+    m_owns_io_service = false;
 }
 
 VideoFileReader::~VideoFileReader()
@@ -137,6 +147,13 @@ void VideoFileReader::close()
 
     m_decode_head.store(0);
     clear_error();
+
+    if (m_owns_io_service) {
+        Registry::BackendRegistry::instance()
+            .unregister_service<Registry::Service::IOService>();
+        m_io_service.reset();
+        m_owns_io_service = false;
+    }
 }
 
 bool VideoFileReader::is_open() const
@@ -619,6 +636,11 @@ bool VideoFileReader::seek_internal(
 
     video->flush_codec();
     return true;
+}
+
+void VideoFileReader::signal_decode()
+{
+    m_decode_cv.notify_one();
 }
 
 // =========================================================================

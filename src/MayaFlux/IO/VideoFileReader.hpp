@@ -146,6 +146,64 @@ public:
         return m_audio_container;
     }
 
+    //=========================================================================
+    // IOManager integration
+    //=========================================================================
+
+    /**
+     * @brief Assign an externally-managed reader_id before load_into_container().
+     *
+     * When IOManager is present it assigns a globally unique id and calls this
+     * before load_into_container().  If never called, load_into_container()
+     * generates a local id from an instance-private atomic — safe for standalone
+     * single-reader use, but not unique across concurrent readers.
+     *
+     * @param id Opaque id assigned by the orchestration layer.
+     */
+    void set_reader_id(uint64_t id) { m_reader_id = id; }
+
+    /**
+     * @brief Returns the reader_id active for this instance.
+     *
+     * Valid after set_reader_id() or after load_into_container() has been called.
+     */
+    [[nodiscard]] uint64_t get_reader_id() const { return m_reader_id; }
+
+    /**
+     * @brief Non-blocking signal to the background decode thread.
+     *
+     * Called by IOManager::dispatch_decode_request() when it owns the IOService
+     * registration.  In standalone mode the IOService lambda calls this directly.
+     * Must never block.
+     */
+    void signal_decode();
+
+    /**
+     * @brief Internal setup for IOService integration. Called by load_into_container()
+     *        if no IOService is registered yet.  Can also be called manually
+     *        to pre-register before load_into_container().
+     *
+     * In standalone mode, the reader generates its own reader_id and registers
+     * an IOService lambda that calls signal_decode() when a decode request is
+     * dispatched with the matching reader_id.
+     *
+     * When IOManager is present, it assigns a globally unique reader_id and
+     * calls the second overload of setup_io_service() with the shared IOService
+     * instance it manages.  The reader then registers a lambda that calls
+     * signal_decode() when a decode request is dispatched with the matching id.
+     */
+    void setup_io_service(uint64_t reader_id = 0);
+
+    /**
+     * @brief Overload for IOManager-managed IOService.  Registers a lambda that
+     *        calls signal_decode() when a decode request is dispatched with the
+     *        matching reader_id.
+     *
+     * The caller retains ownership of the shared IOService instance and must ensure
+     * it remains valid for the lifetime of this reader.
+     */
+    void setup_io_service(const std::shared_ptr<Registry::Service::IOService>& io_service, uint64_t reader_id);
+
 private:
     // =========================================================================
     // FFmpeg state
@@ -181,6 +239,7 @@ private:
     uint32_t m_decode_batch_size { 8 };
     uint32_t m_refill_threshold { 0 };
     uint64_t m_reader_id { 0 };
+    bool m_owns_io_service {};
 
     std::weak_ptr<Kakshya::VideoFileContainer> m_container_ref;
 
