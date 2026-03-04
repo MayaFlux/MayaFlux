@@ -31,7 +31,7 @@ TEST_F(EnergyAnalyzerTest, CalculateRMSEnergy)
     analyzer->set_parameter("method", "rms");
     analyzer->set_analysis_granularity(AnalysisGranularity::RAW_VALUES);
 
-    IO<std::shared_ptr<SignalSourceContainer>> input(container);
+    Datum<std::shared_ptr<SignalSourceContainer>> input(container);
     auto pipeline_result = analyzer->apply_operation(input);
 
     EXPECT_TRUE(pipeline_result.data.size() > 0);
@@ -133,7 +133,7 @@ TEST_F(EnergyAnalyzerTest, PipelineMetadata)
 {
     analyzer->set_parameter("method", "rms");
 
-    IO<std::shared_ptr<SignalSourceContainer>> input(container);
+    Datum<std::shared_ptr<SignalSourceContainer>> input(container);
     auto pipeline_result = analyzer->apply_operation(input);
 
     EXPECT_TRUE(pipeline_result.metadata.contains("source_analyzer"));
@@ -153,7 +153,7 @@ TEST_F(EnergyAnalyzerTest, AnalysisDataAccessibility)
 {
     analyzer->set_parameter("method", "peak");
 
-    IO<std::shared_ptr<SignalSourceContainer>> input(container);
+    Datum<std::shared_ptr<SignalSourceContainer>> input(container);
     auto pipeline_result = analyzer->apply_operation(input);
 
     auto cached_analysis = analyzer->get_energy_analysis();

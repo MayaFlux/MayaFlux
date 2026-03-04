@@ -24,8 +24,8 @@ class ComputeMatrix;
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class MAYAFLUX_API ComputeOperation {
 public:
-    using input_type = IO<InputType>;
-    using output_type = IO<OutputType>;
+    using input_type = Datum<InputType>;
+    using output_type = Datum<OutputType>;
 
     /**
      * @brief Constructor with data type validation warnings
@@ -76,7 +76,7 @@ public:
     /**
      * @brief Convenience overload for direct data processing (backward compatibility)
      * @param data Raw data to be processed
-     * @return Transformed output as IO context
+     * @return Transformed output as Datum context
      */
     output_type operator()(const InputType& data)
     {

@@ -129,7 +129,7 @@ public:
      * @return Optional containing result or nullopt on failure
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
-    std::optional<IO<OutputType>> execute(const InputType& input, Args&&... args)
+    std::optional<Datum<OutputType>> execute(const InputType& input, Args&&... args)
     {
         auto operation = std::make_shared<OpClass>(std::forward<Args>(args)...);
         return execute_operation<OpClass, InputType, OutputType>(operation, input);
@@ -145,7 +145,7 @@ public:
      * @return Optional containing result or nullopt on failure
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::optional<IO<OutputType>> execute_named(const std::string& name, const InputType& input)
+    std::optional<Datum<OutputType>> execute_named(const std::string& name, const InputType& input)
     {
         auto operation = m_operations.get<OpClass>(name);
         if (!operation)
@@ -163,7 +163,7 @@ public:
      * @return Optional containing result or nullopt on failure
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::optional<IO<OutputType>> execute_with(std::shared_ptr<OpClass> operation, const InputType& input)
+    std::optional<Datum<OutputType>> execute_with(std::shared_ptr<OpClass> operation, const InputType& input)
     {
         return execute_operation<OpClass, InputType, OutputType>(operation, input);
     }
@@ -178,7 +178,7 @@ public:
      * @return Future containing the result
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
-    std::future<std::optional<IO<OutputType>>> execute_async(const InputType& input, Args&&... args)
+    std::future<std::optional<Datum<OutputType>>> execute_async(const InputType& input, Args&&... args)
     {
         return std::async(std::launch::async, [this, input, args...]() {
             return execute<OpClass, InputType, OutputType>(input, args...);
@@ -189,7 +189,7 @@ public:
      * @brief Execute named operation asynchronously
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::future<std::optional<IO<OutputType>>> execute_named_async(const std::string& name, const InputType& input)
+    std::future<std::optional<Datum<OutputType>>> execute_named_async(const std::string& name, const InputType& input)
     {
         return std::async(std::launch::async, [this, name, input]() {
             return execute_named<OpClass, InputType, OutputType>(name, input);
@@ -220,19 +220,19 @@ public:
      * @return Vector of results
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType>
-    std::vector<std::optional<IO<OutputType>>> execute_parallel_named(
+    std::vector<std::optional<Datum<OutputType>>> execute_parallel_named(
         const std::vector<std::string>& names,
         const InputType& input)
     {
 
-        std::vector<std::future<std::optional<IO<OutputType>>>> futures;
+        std::vector<std::future<std::optional<Datum<OutputType>>>> futures;
         futures.reserve(names.size());
 
         for (const auto& name : names) {
             futures.push_back(execute_named_async<OpClass, InputType, OutputType>(name, input));
         }
 
-        std::vector<std::optional<IO<OutputType>>> results;
+        std::vector<std::optional<Datum<OutputType>>> results;
         results.reserve(futures.size());
 
         for (auto& future : futures) {
@@ -256,7 +256,7 @@ public:
         ComputeData InputType,
         ComputeData IntermediateType,
         ComputeData OutputType>
-    std::optional<IO<OutputType>> execute_chain(const InputType& input)
+    std::optional<Datum<OutputType>> execute_chain(const InputType& input)
     {
         auto first_result = execute<FirstOp, InputType, IntermediateType>(input);
         if (!first_result)
@@ -272,7 +272,7 @@ public:
         ComputeData InputType,
         ComputeData IntermediateType,
         ComputeData OutputType>
-    std::optional<IO<OutputType>> execute_chain_named(
+    std::optional<Datum<OutputType>> execute_chain_named(
         const std::string& first_name,
         const std::string& second_name,
         const InputType& input)
@@ -295,14 +295,14 @@ public:
      * @return Vector of results
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
-    std::vector<std::optional<IO<OutputType>>> execute_batch(
+    std::vector<std::optional<Datum<OutputType>>> execute_batch(
         const std::vector<InputType>& inputs,
         Args&&... args)
     {
 
         auto operation = std::make_shared<OpClass>(std::forward<Args>(args)...);
 
-        std::vector<std::optional<IO<OutputType>>> results;
+        std::vector<std::optional<Datum<OutputType>>> results;
         results.reserve(inputs.size());
 
         for (const auto& input : inputs) {
@@ -316,14 +316,14 @@ public:
      * @brief Execute operation on multiple inputs in parallel
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType = InputType, typename... Args>
-    std::vector<std::optional<IO<OutputType>>> execute_batch_parallel(
+    std::vector<std::optional<Datum<OutputType>>> execute_batch_parallel(
         const std::vector<InputType>& inputs,
         Args&&... args)
     {
 
         auto operation = std::make_shared<OpClass>(std::forward<Args>(args)...);
 
-        std::vector<std::optional<IO<OutputType>>> results(inputs.size());
+        std::vector<std::optional<Datum<OutputType>>> results(inputs.size());
 
         MayaFlux::Parallel::transform(MayaFlux::Parallel::par_unseq,
             inputs.begin(), inputs.end(),
@@ -421,7 +421,7 @@ private:
      * @brief Core execution implementation
      */
     template <typename OpClass, ComputeData InputType, ComputeData OutputType>
-    std::optional<IO<OutputType>> execute_operation(
+    std::optional<Datum<OutputType>> execute_operation(
         std::shared_ptr<OpClass> operation,
         const InputType& input)
     {
@@ -431,7 +431,7 @@ private:
         m_total_executions++;
 
         try {
-            IO<InputType> input_wrapper(input);
+            Datum<InputType> input_wrapper(input);
 
             ExecutionContext ctx;
             configure_execution_context(ctx, std::type_index(typeid(OpClass)));

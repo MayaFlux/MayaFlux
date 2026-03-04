@@ -102,6 +102,22 @@ public:
         size_t size);
 
     /**
+     * @brief Upload image data using a caller-supplied persistent staging buffer.
+     *        Identical to upload_image_data() but skips the per-call VkBuffer
+     *        allocation. The staging buffer must be host-visible and at least
+     *        @p size bytes. Intended for high-frequency streaming uploads.
+     * @param image   Target VKImage.
+     * @param data    Source pixel data pointer.
+     * @param size    Byte count.
+     * @param staging Pre-allocated host-visible staging buffer.
+     */
+    void upload_image_data_with_staging(
+        std::shared_ptr<VKImage> image,
+        const void* data,
+        size_t size,
+        const std::shared_ptr<Buffers::VKBuffer>& staging);
+
+    /**
      * @brief Download data from an image into a caller-supplied buffer.
      *
      * Transitions the image to eTransferSrcOptimal, copies to a staging buffer,

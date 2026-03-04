@@ -83,8 +83,8 @@ enum class ExtractionScope : uint8_t {
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class MAYAFLUX_API UniversalExtractor : public ComputeOperation<InputType, OutputType> {
 public:
-    using input_type = IO<InputType>;
-    using output_type = IO<OutputType>;
+    using input_type = Datum<InputType>;
+    using output_type = Datum<OutputType>;
     using base_type = ComputeOperation<InputType, OutputType>;
 
     virtual ~UniversalExtractor() = default;
@@ -136,7 +136,7 @@ public:
     /**
      * @brief Type-safe extraction method
      * @param data Input data
-     * @return Extracted data directly (no IO wrapper)
+     * @return Extracted data directly (no Datum wrapper)
      */
     OutputType extract_data(const InputType& data)
     {

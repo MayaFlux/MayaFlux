@@ -52,11 +52,11 @@ protected:
     void SetUp() override
     {
         test_data = GrammarTestDataGenerator::create_test_multichannel_signal();
-        test_input = IO<std::vector<DataVariant>> { test_data };
+        test_input = Datum<std::vector<DataVariant>> { test_data };
     }
 
     std::vector<DataVariant> test_data;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(UniversalMatcherTest, ContextMatcherWorks)
@@ -180,12 +180,12 @@ protected:
     {
         grammar = std::make_shared<ComputationGrammar>();
         test_data = GrammarTestDataGenerator::create_test_multichannel_signal();
-        test_input = IO<std::vector<DataVariant>> { test_data };
+        test_input = Datum<std::vector<DataVariant>> { test_data };
     }
 
     std::shared_ptr<ComputationGrammar> grammar;
     std::vector<DataVariant> test_data;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(ComputationGrammarTest, BasicRuleCreation)
@@ -255,7 +255,7 @@ TEST_F(ComputationGrammarTest, RuleExecutionWorks)
     EXPECT_TRUE(result.has_value()) << "Should execute rule successfully";
 
     try {
-        auto output = std::any_cast<IO<std::vector<DataVariant>>>(*result);
+        auto output = std::any_cast<Datum<std::vector<DataVariant>>>(*result);
         EXPECT_EQ(output.data.size(), test_data.size()) << "Should preserve channel count";
 
         for (size_t ch = 0; ch < output.data.size(); ++ch) {
@@ -285,7 +285,7 @@ TEST_F(ComputationGrammarTest, OperationRuleWorks)
     EXPECT_TRUE(result.has_value()) << "Should execute operation rule successfully";
 
     try {
-        auto output = std::any_cast<IO<std::vector<DataVariant>>>(*result);
+        auto output = std::any_cast<Datum<std::vector<DataVariant>>>(*result);
         EXPECT_EQ(output.data.size(), test_data.size()) << "Should preserve channel count";
 
         for (size_t ch = 0; ch < output.data.size(); ++ch) {
@@ -408,7 +408,7 @@ TEST_F(GrammarEdgeCaseTest, NoMatchingRules)
         DataVariant(std::vector<double> { 1.0, 2.0, 3.0 }),
         DataVariant(std::vector<double> { 4.0, 5.0, 6.0 })
     };
-    IO<std::vector<DataVariant>> test_input { multichannel_test };
+    Datum<std::vector<DataVariant>> test_input { multichannel_test };
     ExecutionContext ctx;
 
     auto best_match = grammar->find_best_match(test_input, ctx);
@@ -425,7 +425,7 @@ TEST_F(GrammarEdgeCaseTest, EmptyInput)
         UniversalMatcher::create_type_matcher<std::vector<DataVariant>>(), {}, 50, MathematicalOperation::GAIN);
 
     std::vector<DataVariant> empty_multichannel;
-    IO<std::vector<DataVariant>> empty_input { empty_multichannel };
+    Datum<std::vector<DataVariant>> empty_input { empty_multichannel };
     auto parametric_ctx = GrammarTestDataGenerator::create_test_context(ComputationContext::PARAMETRIC);
 
     EXPECT_NO_THROW({
@@ -443,7 +443,7 @@ TEST_F(GrammarEdgeCaseTest, EmptyChannelsInput)
         DataVariant(std::vector<double> {}),
         DataVariant(std::vector<double> {})
     };
-    IO<std::vector<DataVariant>> empty_channels_input { empty_channels };
+    Datum<std::vector<DataVariant>> empty_channels_input { empty_channels };
     auto parametric_ctx = GrammarTestDataGenerator::create_test_context(ComputationContext::PARAMETRIC);
 
     EXPECT_NO_THROW({
@@ -462,7 +462,7 @@ TEST_F(GrammarEdgeCaseTest, InvalidContextMetadata)
         DataVariant(std::vector<double> { 1.0, 2.0, 3.0 }),
         DataVariant(std::vector<double> { 4.0, 5.0, 6.0 })
     };
-    IO<std::vector<DataVariant>> test_input { multichannel_test };
+    Datum<std::vector<DataVariant>> test_input { multichannel_test };
 
     ExecutionContext invalid_ctx {
         .dependencies = {},
@@ -489,7 +489,7 @@ TEST_F(GrammarEdgeCaseTest, ExceptionInRuleExecution)
         DataVariant(std::vector<double> { 1.0, 2.0, 3.0 }),
         DataVariant(std::vector<double> { 4.0, 5.0, 6.0 })
     };
-    IO<std::vector<DataVariant>> test_input { multichannel_test };
+    Datum<std::vector<DataVariant>> test_input { multichannel_test };
     auto temporal_ctx = GrammarTestDataGenerator::create_test_context(ComputationContext::TEMPORAL);
 
     EXPECT_THROW({ grammar->execute_rule("throwing_rule", test_input, temporal_ctx); }, std::runtime_error) << "Should propagate exceptions from rule execution";
@@ -505,7 +505,7 @@ protected:
     {
         grammar = std::make_shared<ComputationGrammar>();
         test_data = GrammarTestDataGenerator::create_test_multichannel_signal(2, 1024);
-        test_input = IO<std::vector<DataVariant>> { test_data };
+        test_input = Datum<std::vector<DataVariant>> { test_data };
 
         for (int i = 0; i < 10; ++i) {
             grammar->add_operation_rule<MathematicalTransformer<>>(
@@ -520,7 +520,7 @@ protected:
 
     std::shared_ptr<ComputationGrammar> grammar;
     std::vector<DataVariant> test_data;
-    IO<std::vector<DataVariant>> test_input;
+    Datum<std::vector<DataVariant>> test_input;
 };
 
 TEST_F(GrammarPerformanceTest, ConsistentRuleSelection)
@@ -551,8 +551,8 @@ TEST_F(GrammarPerformanceTest, RuleExecutionDeterministic)
     EXPECT_TRUE(result2.has_value()) << "Should execute rule successfully";
 
     try {
-        auto output1 = std::any_cast<IO<std::vector<DataVariant>>>(*result1);
-        auto output2 = std::any_cast<IO<std::vector<DataVariant>>>(*result2);
+        auto output1 = std::any_cast<Datum<std::vector<DataVariant>>>(*result1);
+        auto output2 = std::any_cast<Datum<std::vector<DataVariant>>>(*result2);
 
         EXPECT_EQ(output1.data.size(), output2.data.size()) << "Results should have same channel count";
 
@@ -596,14 +596,14 @@ TEST_F(GrammarMultiChannelTest, HandlesVariableChannelCounts)
 
     for (auto channels : channel_counts) {
         auto test_data = GrammarTestDataGenerator::create_test_multichannel_signal(channels, 128);
-        IO<std::vector<DataVariant>> test_input { test_data };
+        Datum<std::vector<DataVariant>> test_input { test_data };
         auto parametric_ctx = GrammarTestDataGenerator::create_test_context(ComputationContext::PARAMETRIC);
 
         auto result = grammar->execute_rule("multichannel_rule", test_input, parametric_ctx);
         EXPECT_TRUE(result.has_value()) << "Should handle " << channels << " channels";
 
         try {
-            auto output = std::any_cast<IO<std::vector<DataVariant>>>(*result);
+            auto output = std::any_cast<Datum<std::vector<DataVariant>>>(*result);
             EXPECT_EQ(output.data.size(), channels) << "Should preserve channel count for " << channels << " channels";
         } catch (const std::exception& e) {
             FAIL() << "Failed to process " << channels << " channels: " << e.what();
@@ -624,14 +624,14 @@ TEST_F(GrammarMultiChannelTest, HandlesMixedChannelSizes)
         DataVariant(std::vector<double>(512, 0.7))
     };
 
-    IO<std::vector<DataVariant>> test_input { mixed_size_data };
+    Datum<std::vector<DataVariant>> test_input { mixed_size_data };
     auto parametric_ctx = GrammarTestDataGenerator::create_test_context(ComputationContext::PARAMETRIC);
 
     auto result = grammar->execute_rule("mixed_size_rule", test_input, parametric_ctx);
     EXPECT_TRUE(result.has_value()) << "Should handle mixed channel sizes";
 
     try {
-        auto output = std::any_cast<IO<std::vector<DataVariant>>>(*result);
+        auto output = std::any_cast<Datum<std::vector<DataVariant>>>(*result);
         EXPECT_EQ(output.data.size(), 3) << "Should preserve channel count";
 
         auto ch0_data = std::get<std::vector<double>>(output.data[0]);
@@ -660,14 +660,14 @@ TEST_F(GrammarMultiChannelTest, HandlesDifferentDataTypes)
         DataVariant(std::vector<double> { 7.0, 8.0, 9.0 })
     };
 
-    IO<std::vector<DataVariant>> test_input { mixed_type_data };
+    Datum<std::vector<DataVariant>> test_input { mixed_type_data };
     auto parametric_ctx = GrammarTestDataGenerator::create_test_context(ComputationContext::PARAMETRIC);
 
     auto result = grammar->execute_rule("mixed_type_rule", test_input, parametric_ctx);
     EXPECT_TRUE(result.has_value()) << "Should handle mixed data types";
 
     try {
-        auto output = std::any_cast<IO<std::vector<DataVariant>>>(*result);
+        auto output = std::any_cast<Datum<std::vector<DataVariant>>>(*result);
         EXPECT_EQ(output.data.size(), 3) << "Should preserve channel count";
 
         for (size_t ch = 0; ch < output.data.size(); ++ch) {
@@ -688,7 +688,7 @@ TEST_F(GrammarMultiChannelTest, PerformanceWithLargeMultiChannel)
         { { "gain_factor", 1.0 } }, 50, MathematicalOperation::GAIN);
 
     auto large_multichannel = GrammarTestDataGenerator::create_test_multichannel_signal(8, 44100);
-    IO<std::vector<DataVariant>> test_input { large_multichannel };
+    Datum<std::vector<DataVariant>> test_input { large_multichannel };
     auto parametric_ctx = GrammarTestDataGenerator::create_test_context(ComputationContext::PARAMETRIC);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -701,7 +701,7 @@ TEST_F(GrammarMultiChannelTest, PerformanceWithLargeMultiChannel)
     EXPECT_LT(duration.count(), 1000) << "Should process large multichannel data in reasonable time";
 
     try {
-        auto output = std::any_cast<IO<std::vector<DataVariant>>>(*result);
+        auto output = std::any_cast<Datum<std::vector<DataVariant>>>(*result);
         EXPECT_EQ(output.data.size(), 8) << "Should preserve all 8 channels";
 
         for (size_t ch = 0; ch < output.data.size(); ++ch) {
@@ -719,7 +719,7 @@ TEST_F(GrammarMultiChannelTest, ComplexMultiChannelMatcher)
     auto complex_matcher = UniversalMatcher::combine_and({ UniversalMatcher::create_type_matcher<std::vector<DataVariant>>(),
         [](const std::any& input, const ExecutionContext&) -> bool {
             try {
-                auto io_input = std::any_cast<IO<std::vector<DataVariant>>>(input);
+                auto io_input = std::any_cast<Datum<std::vector<DataVariant>>>(input);
                 return io_input.data.size() == 2;
             } catch (...) {
                 return false;
@@ -737,7 +737,7 @@ TEST_F(GrammarMultiChannelTest, ComplexMultiChannelMatcher)
     grammar->add_rule(std::move(rule));
 
     auto stereo_data = GrammarTestDataGenerator::create_test_multichannel_signal(2, 128);
-    IO<std::vector<DataVariant>> stereo_input { stereo_data };
+    Datum<std::vector<DataVariant>> stereo_input { stereo_data };
     auto temporal_ctx = GrammarTestDataGenerator::create_test_context(ComputationContext::TEMPORAL);
 
     auto stereo_match = grammar->find_best_match(stereo_input, temporal_ctx);
@@ -745,13 +745,13 @@ TEST_F(GrammarMultiChannelTest, ComplexMultiChannelMatcher)
     EXPECT_EQ(stereo_match->name, "stereo_only_rule") << "Should select stereo-specific rule";
 
     auto mono_data = GrammarTestDataGenerator::create_test_multichannel_signal(1, 128);
-    IO<std::vector<DataVariant>> mono_input { mono_data };
+    Datum<std::vector<DataVariant>> mono_input { mono_data };
 
     auto mono_match = grammar->find_best_match(mono_input, temporal_ctx);
     EXPECT_FALSE(mono_match.has_value()) << "Should not match mono data";
 
     auto surround_data = GrammarTestDataGenerator::create_test_multichannel_signal(6, 128);
-    IO<std::vector<DataVariant>> surround_input { surround_data };
+    Datum<std::vector<DataVariant>> surround_input { surround_data };
 
     auto surround_match = grammar->find_best_match(surround_input, temporal_ctx);
     EXPECT_FALSE(surround_match.has_value()) << "Should not match surround data";

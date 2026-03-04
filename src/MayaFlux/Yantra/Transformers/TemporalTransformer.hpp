@@ -32,8 +32,8 @@ enum class TemporalOperation : uint8_t {
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class MAYAFLUX_API TemporalTransformer final : public UniversalTransformer<InputType, OutputType> {
 public:
-    using input_type = IO<InputType>;
-    using output_type = IO<OutputType>;
+    using input_type = Datum<InputType>;
+    using output_type = Datum<OutputType>;
 
     /**
      * @brief Constructs a TemporalTransformer with specified operation

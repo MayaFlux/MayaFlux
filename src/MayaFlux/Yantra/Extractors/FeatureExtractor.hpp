@@ -61,8 +61,8 @@ enum class ExtractionMethod : uint8_t {
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = std::vector<std::vector<double>>>
 class MAYAFLUX_API FeatureExtractor : public UniversalExtractor<InputType, OutputType> {
 public:
-    using input_type = IO<InputType>;
-    using output_type = IO<OutputType>;
+    using input_type = Datum<InputType>;
+    using output_type = Datum<OutputType>;
     using base_type = UniversalExtractor<InputType, OutputType>;
 
     /**

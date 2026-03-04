@@ -340,6 +340,21 @@ void TextureLoom::upload_data(
     m_resource_manager->upload_image_data(image, data, size);
 }
 
+void TextureLoom::upload_data(
+    const std::shared_ptr<Core::VKImage>& image,
+    const void* data,
+    size_t size,
+    const std::shared_ptr<Buffers::VKBuffer>& staging)
+{
+    if (!is_initialized() || !image || !data || !staging) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "Invalid parameters for upload_data_streaming");
+        return;
+    }
+
+    m_resource_manager->upload_image_data_with_staging(image, data, size, staging);
+}
+
 void TextureLoom::download_data(
     const std::shared_ptr<Core::VKImage>& image, void* data, size_t size)
 {

@@ -6,7 +6,7 @@
 namespace MayaFlux::Yantra {
 
 /**
- * @struct IO
+ * @struct Datum
  * @brief Input/Output container for computation pipeline data flow with structure preservation.
  * @tparam T Data type that satisfies ComputeData concept
  *
@@ -21,7 +21,7 @@ namespace MayaFlux::Yantra {
  * - Move semantics for efficiency with large data
  */
 template <ComputeData T = std::vector<Kakshya::DataVariant>>
-struct MAYAFLUX_API IO {
+struct MAYAFLUX_API Datum {
     T data; ///< The actual computation data
     std::vector<Kakshya::DataDimension> dimensions; ///< Data dimensional structure
     Kakshya::DataModality modality {}; ///< Data modality (audio, image, spectral, etc.)
@@ -30,7 +30,7 @@ struct MAYAFLUX_API IO {
 
     std::optional<std::shared_ptr<Kakshya::SignalSourceContainer>> container; ///< Optional reference to container, required for regions
 
-    IO() = default; ///< Default constructor
+    Datum() = default; ///< Default constructor
 
     /**
      * @brief Construct from data by copy with automatic structure inference
@@ -40,7 +40,7 @@ struct MAYAFLUX_API IO {
      * For containers, uses their existing dimensional information.
      * For other types, creates appropriate dimensional structures.
      */
-    IO(const T& d)
+    Datum(const T& d)
         : data(d)
     {
         auto [dims, mod] = infer_structure(d);
@@ -56,7 +56,7 @@ struct MAYAFLUX_API IO {
      * This constructor is useful when the data is part of a larger container
      * and we want to maintain a reference to that container for context.
      */
-    IO(const T& d, const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
+    Datum(const T& d, const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
         : data(d)
         , container(cont)
     {
@@ -72,7 +72,7 @@ struct MAYAFLUX_API IO {
      * Automatically infers dimensions and modality before moving the data.
      * More efficient for large data structures.
      */
-    IO(T&& d)
+    Datum(T&& d)
         : data(std::move(d))
     {
         // Note: We infer from data after it's moved, which should be fine
@@ -90,7 +90,7 @@ struct MAYAFLUX_API IO {
      * Automatically infers dimensions and modality before moving the data.
      * More efficient for large data structures.
      */
-    IO(T&& d, const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
+    Datum(T&& d, const std::shared_ptr<Kakshya::SignalSourceContainer>& cont)
         : data(std::move(d))
         , container(cont)
     {
@@ -105,7 +105,7 @@ struct MAYAFLUX_API IO {
      * @param dims Explicit dimensional structure
      * @param mod Explicit data modality
      */
-    IO(T&& d, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
+    Datum(T&& d, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
         : data(std::move(d))
         , dimensions(std::move(dims))
         , modality(mod)
@@ -119,7 +119,7 @@ struct MAYAFLUX_API IO {
      * @param dims Explicit dimensional structure
      * @param mod Explicit data modality
      */
-    IO(T&& d, const std::shared_ptr<Kakshya::SignalSourceContainer> container, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
+    Datum(T&& d, const std::shared_ptr<Kakshya::SignalSourceContainer> container, std::vector<Kakshya::DataDimension> dims, Kakshya::DataModality mod)
         : data(std::move(d))
         , container(container)
         , dimensions(std::move(dims))
@@ -298,7 +298,7 @@ public:
      * @param input Input data container with metadata
      * @return Processed output data container
      */
-    virtual IO<T> execute(const IO<T>& input) = 0;
+    virtual Datum<T> execute(const Datum<T>& input) = 0;
 
     /**
      * @brief Get the name/identifier of this operation
@@ -327,12 +327,12 @@ protected:
     std::vector<std::shared_ptr<OpUnit<T>>> dependencies; ///< Operation dependencies
 };
 
-/// Helper to detect if a type is an IO
+/// Helper to detect if a type is an Datum
 template <typename>
 struct is_IO : std::false_type { };
-/// Specialization for IO types
+/// Specialization for Datum types
 template <typename T>
-struct is_IO<IO<T>> : std::true_type { };
+struct is_IO<Datum<T>> : std::true_type { };
 
 /**
  * @concept OperationReadyData
@@ -342,15 +342,15 @@ struct is_IO<IO<T>> : std::true_type { };
  * - MultiVariant (universal data variant)
  * - RegionLike (regions or region groups)
  * - EigenMatrixLike (Eigen matrices/vectors)
- * - IO (input/output containers with structure)
+ * - Datum (input/output containers with structure)
  */
 template <typename T>
 concept OperationReadyData = MultiVariant<T> || RegionLike<T> || EigenMatrixLike<T> || is_IO<T>::value;
 
-using DataIO = IO<std::vector<Kakshya::DataVariant>>; ///< IO for universal data variant
-using ContainerIO = IO<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
-using RegionIO = IO<Kakshya::Region>; ///< IO for single regions
-using RegionGroupIO = IO<Kakshya::RegionGroup>; ///< IO for region groups
-using SegmentIO = IO<std::vector<Kakshya::RegionSegment>>; ///< IO for region segments
+using DataIO = Datum<std::vector<Kakshya::DataVariant>>; ///< IO for universal data variant
+using ContainerIO = Datum<std::shared_ptr<Kakshya::SignalSourceContainer>>; ///< IO for signal containers
+using RegionIO = Datum<Kakshya::Region>; ///< IO for single regions
+using RegionGroupIO = Datum<Kakshya::RegionGroup>; ///< IO for region groups
+using SegmentIO = Datum<std::vector<Kakshya::RegionSegment>>; ///< IO for region segments
 
 }

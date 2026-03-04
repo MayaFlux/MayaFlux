@@ -16,6 +16,10 @@ namespace Kakshya {
     class DynamicSoundStream;
 }
 
+namespace IO {
+    class IOManager;
+}
+
 namespace Kriya {
 
     using TransformVectorFunction = std::function<Kakshya::DataVariant(std::vector<Kakshya::DataVariant>&, uint32_t)>;
@@ -197,34 +201,40 @@ namespace Kriya {
 
         /**
          * @brief Create a file capture operation that reads from file and stores in stream.
+         * @param io_manager IOManager for file loading
          * @param filepath Path to audio file
          * @param channel Channel index (default: 0)
          * @param cycle_count Number of cycles to capture (0 = continuous)
          * @return BufferOperation configured for file capture
          */
         static BufferOperation capture_file(
+            const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
             uint32_t channel = 0,
             uint32_t cycle_count = 0);
 
         /**
          * @brief Create CaptureBuilder for file with fluent configuration.
+         * @param io_manager IOManager for file loading
          * @param filepath Path to audio file
          * @param channel Channel index (default: 0)
          * @return CaptureBuilder for fluent configuration
          */
         static CaptureBuilder capture_file_from(
+            const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
             uint32_t channel = 0);
 
         /**
          * @brief Create operation to route file data to DynamicSoundStream.
+         * @param io_manager IOManager for file loading
          * @param filepath Path to audio file
          * @param target_stream Target DynamicSoundStream
          * @param cycle_count Number of cycles to read (0 = entire file)
          * @return BufferOperation configured for file to stream routing
          */
         static BufferOperation file_to_stream(
+            const std::shared_ptr<IO::IOManager>& io_manager,
             const std::string& filepath,
             std::shared_ptr<Kakshya::DynamicSoundStream> target_stream,
             uint32_t cycle_count = 0);

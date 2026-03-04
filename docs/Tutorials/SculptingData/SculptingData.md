@@ -264,7 +264,6 @@ if (!reader->can_read("file.wav")) {
 }
 
 reader->set_target_sample_rate(MayaFlux::Config::get_sample_rate());
-reader->set_target_bit_depth(64);
 reader->set_audio_options(MayaFlux::IO::AudioReadOptions::DEINTERLEAVE);
 
 MayaFlux::IO::FileReadOptions options = MayaFlux::IO::FileReadOptions::EXTRACT_METADATA;

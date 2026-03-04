@@ -243,6 +243,32 @@ std::shared_ptr<VKBuffer> create_staging_buffer(size_t size)
     return buffer;
 }
 
+std::shared_ptr<VKBuffer> create_image_staging_buffer(size_t size)
+{
+    auto buf = std::make_shared<VKBuffer>(
+        size,
+        VKBuffer::Usage::STAGING,
+        Kakshya::DataModality::IMAGE_COLOR);
+
+    auto buffer_service = Registry::BackendRegistry::instance()
+                              .get_service<Registry::Service::BufferService>();
+
+    if (!buffer_service) {
+        error<std::runtime_error>(
+            Journal::Component::Buffers,
+            Journal::Context::BufferProcessing,
+            std::source_location::current(),
+            "create_image_staging_buffer requires a valid buffer service");
+    }
+
+    buffer_service->initialize_buffer(buf);
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+        "create_image_staging_buffer: allocated {} bytes", size);
+
+    return buf;
+}
+
 void upload_to_gpu(
     const void* data,
     size_t size,

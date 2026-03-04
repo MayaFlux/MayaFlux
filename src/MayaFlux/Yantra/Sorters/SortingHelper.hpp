@@ -243,7 +243,7 @@ std::vector<size_t> generate_sort_indices(const Container& container, Comparator
  * @param algorithm Sort algorithm
  */
 template <ComputeData T>
-void sort_compute_data_inplace(IO<T>& data,
+void sort_compute_data_inplace(Datum<T>& data,
     SortingDirection direction,
     SortingAlgorithm algorithm)
 {
@@ -297,13 +297,13 @@ T sort_compute_data_extract(const T& data,
  * @return Sorted copy of the data
  */
 template <typename T>
-T sort_compute_data_extract(const IO<T>& data,
+T sort_compute_data_extract(const Datum<T>& data,
     SortingDirection direction,
     SortingAlgorithm algorithm)
 {
     std::vector<std::vector<double>> working_buffer;
     auto [working_spans, structure_info] = OperationHelper::setup_operation_buffer(
-        const_cast<IO<T>&>(data), working_buffer);
+        const_cast<Datum<T>&>(data), working_buffer);
 
     sort_channels_inplace(working_spans, direction, algorithm);
 
@@ -331,7 +331,7 @@ T sort_compute_data(const T& data, SortingDirection direction = SortingDirection
  * @return Vector of index vectors (one per channel)
  */
 template <ComputeData T>
-std::vector<std::vector<size_t>> generate_compute_data_indices(const IO<T>& data,
+std::vector<std::vector<size_t>> generate_compute_data_indices(const Datum<T>& data,
     SortingDirection direction)
 {
     if constexpr (RequiresContainer<T>) {

@@ -1,9 +1,9 @@
 #include "BufferOperation.hpp"
 
-#include "MayaFlux/API/Depot.hpp"
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Container/SoundFileBridge.hpp"
 
+#include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kriya {
@@ -37,11 +37,12 @@ CaptureBuilder BufferOperation::capture_input_from(
 }
 
 BufferOperation BufferOperation::capture_file(
+    const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
     uint32_t channel,
     uint32_t cycle_count)
 {
-    auto file_container = MayaFlux::load_audio_file(filepath);
+    auto file_container = io_manager->load_audio(filepath);
     if (!file_container) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO, std::source_location::current(),
             "Failed to load audio file: {}", filepath);
@@ -60,10 +61,11 @@ BufferOperation BufferOperation::capture_file(
 }
 
 CaptureBuilder BufferOperation::capture_file_from(
+    const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
     uint32_t channel)
 {
-    auto file_container = MayaFlux::load_audio_file(filepath);
+    auto file_container = io_manager->load_audio(filepath);
     if (!file_container) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO, std::source_location::current(),
             "Failed to load audio file: {}", filepath);
@@ -76,11 +78,12 @@ CaptureBuilder BufferOperation::capture_file_from(
 }
 
 BufferOperation BufferOperation::file_to_stream(
+    const std::shared_ptr<IO::IOManager>& io_manager,
     const std::string& filepath,
     std::shared_ptr<Kakshya::DynamicSoundStream> target_stream,
     uint32_t cycle_count)
 {
-    auto file_container = MayaFlux::load_audio_file(filepath);
+    auto file_container = io_manager->load_audio(filepath);
     if (!file_container) {
         error<std::runtime_error>(Journal::Component::Kriya, Journal::Context::AsyncIO, std::source_location::current(),
             "Failed to load audio file: {}", filepath);

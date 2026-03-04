@@ -278,7 +278,7 @@ public:
 
             apply_context_parameters(operation, ctx);
 
-            auto typed_input = std::any_cast<IO<std::vector<Kakshya::DataVariant>>>(input);
+            auto typed_input = std::any_cast<Datum<std::vector<Kakshya::DataVariant>>>(input);
             return operation->apply_operation(typed_input);
         };
 

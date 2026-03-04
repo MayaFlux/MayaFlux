@@ -872,7 +872,7 @@ TEST_F(MatrixPerformanceTest, ConsistentResults)
 
 TEST_F(MatrixPerformanceTest, ConcurrentExecution)
 {
-    std::vector<std::future<std::optional<IO<std::vector<DataVariant>>>>> futures;
+    std::vector<std::future<std::optional<Datum<std::vector<DataVariant>>>>> futures;
 
     for (int i = 0; i < 5; ++i) {
         futures.push_back(matrix->execute_named_async<MathematicalTransformer<>, std::vector<DataVariant>>(
@@ -1256,7 +1256,7 @@ TEST_F(MatrixResilienceTest, MultiChannelErrorHandling)
 
 TEST_F(MatrixResilienceTest, ConcurrentErrorHandling)
 {
-    std::vector<std::future<std::optional<IO<std::vector<DataVariant>>>>> futures;
+    std::vector<std::future<std::optional<Datum<std::vector<DataVariant>>>>> futures;
 
     auto valid_op = matrix->create_operation<MathematicalTransformer<>>("concurrent_valid", MathematicalOperation::GAIN);
     valid_op->set_parameter("gain_factor", 1.3);

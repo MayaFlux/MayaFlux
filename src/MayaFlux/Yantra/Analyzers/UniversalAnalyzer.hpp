@@ -79,8 +79,8 @@ enum class AnalysisGranularity : uint8_t {
 template <ComputeData InputType = std::vector<Kakshya::DataVariant>, ComputeData OutputType = InputType>
 class MAYAFLUX_API UniversalAnalyzer : public ComputeOperation<InputType, OutputType> {
 public:
-    using input_type = IO<InputType>;
-    using output_type = IO<OutputType>;
+    using input_type = Datum<InputType>;
+    using output_type = Datum<OutputType>;
     using base_type = ComputeOperation<InputType, OutputType>;
 
     virtual ~UniversalAnalyzer() = default;
@@ -239,11 +239,11 @@ public:
 protected:
     /**
      * @brief Core analysis implementation - must be overridden by derived classes
-     * @param input Input data wrapped in IO container
-     * @return Analysis results wrapped in IO container
+     * @param input Input data wrapped in Datum container
+     * @return Analysis results wrapped in Datum container
      *
      * This is where the actual analysis logic goes. The method receives data
-     * in an IO wrapper which may contain metadata, and should return results
+     * in an Datum wrapper which may contain metadata, and should return results
      * in the same wrapper format.
      */
     output_type operation_function(const input_type& input) override

@@ -45,7 +45,7 @@ public:
     {
         return [](const std::any& input, const ExecutionContext& /*ctx*/) -> bool {
             try {
-                std::any_cast<IO<DataType>>(input);
+                std::any_cast<Datum<DataType>>(input);
                 return true;
             } catch (const std::bad_any_cast&) {
                 return false;
