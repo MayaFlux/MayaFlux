@@ -2,6 +2,7 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavdevice/avdevice.h>
 #include <libavformat/avformat.h>
 #include <libavutil/opt.h>
 }
@@ -58,6 +59,38 @@ void FFmpegDemuxContext::close()
         format_context = nullptr;
     }
     m_last_error.clear();
+}
+
+bool FFmpegDemuxContext::open_device(const std::string& device_name,
+    const std::string& format_name,
+    AVDictionary** options)
+{
+    close();
+    init_ffmpeg();
+
+    const AVInputFormat* fmt = av_find_input_format(format_name.c_str());
+    if (!fmt) {
+        m_last_error = "av_find_input_format failed for: " + format_name;
+        return false;
+    }
+
+    int ret = avformat_open_input(&format_context,
+        device_name.c_str(), fmt, options);
+    if (ret < 0) {
+        char errbuf[AV_ERROR_MAX_STRING_SIZE];
+        av_strerror(ret, errbuf, sizeof(errbuf));
+        m_last_error = "avformat_open_input failed for device: "
+            + device_name + " (" + errbuf + ")";
+        return false;
+    }
+
+    if (avformat_find_stream_info(format_context, nullptr) < 0) {
+        avformat_close_input(&format_context);
+        m_last_error = "avformat_find_stream_info failed for device: " + device_name;
+        return false;
+    }
+
+    return true;
 }
 
 // =========================================================================
