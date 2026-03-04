@@ -6,6 +6,7 @@
 
 #include "MayaFlux/Buffers/AudioBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
@@ -91,20 +92,14 @@ void register_container(const std::shared_ptr<Kakshya::SoundFileContainer>& cont
 {
     if (auto sound_container = std::dynamic_pointer_cast<Kakshya::SoundFileContainer>(container)) {
         if (domain == Domain::AUDIO) {
-            s_last_created_container_buffers.clear();
-            s_last_created_container_buffers = hook_sound_container_to_buffers(sound_container);
+            (void)get_io_manager()->hook_audio_container_to_buffers(sound_container);
         }
     }
 }
 
-std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_container(const std::string& filepath)
+std::shared_ptr<Kakshya::SoundFileContainer> Creator::load_sound_container(const std::string& filepath)
 {
-    return load_audio_file(filepath);
-}
-
-std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> get_last_created_container_buffers()
-{
-    return s_last_created_container_buffers;
+    return get_io_manager()->load_audio(filepath);
 }
 
 std::shared_ptr<Nodes::Node> operator|(const std::shared_ptr<Nodes::Node>& node, Domain d)
@@ -130,7 +125,7 @@ std::shared_ptr<Buffers::Buffer> operator|(const std::shared_ptr<Buffers::Buffer
 
 std::shared_ptr<Buffers::TextureBuffer> Creator::load_buffer(const std::string& filepath)
 {
-    return load_image_file(filepath);
+    return get_io_manager()->load_image(filepath);
 }
 
 std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(

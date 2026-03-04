@@ -90,6 +90,7 @@
 
 #include "Kakshya/Source/DynamicSoundStream.hpp"
 #include "Kakshya/Source/SoundFileContainer.hpp"
+#include "Kakshya/Source/VideoFileContainer.hpp"
 
 #include "Journal/Archivist.hpp"
 
@@ -104,7 +105,10 @@
 #include "Portal/Graphics/ShaderFoundry.hpp"
 #include "Portal/Graphics/TextureLoom.hpp"
 
-#include "MayaFlux/IO/ImageReader.hpp"
+#include "IO/IOManager.hpp"
+#include "IO/ImageReader.hpp"
+#include "IO/SoundFileReader.hpp"
+#include "IO/VideoFileReader.hpp"
 
 using namespace MayaFlux::Kakshya;
 using namespace MayaFlux::Kriya;

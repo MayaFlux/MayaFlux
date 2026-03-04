@@ -11,6 +11,7 @@ class SoundFileContainer;
 namespace MayaFlux::Buffers {
 class VideoContainerBuffer;
 class SoundContainerBuffer;
+class TextureBuffer;
 class BufferManager;
 }
 
@@ -205,6 +206,14 @@ public:
     get_audio_buffers(
         const std::shared_ptr<Kakshya::SoundFileContainer>& container) const;
 
+    /**
+     * @brief Retrieve the SoundFileContainer extracted from a video file.
+     * @param container VideoFileContainer whose audio was extracted during load_video().
+     * @return Extracted SoundFileContainer, or nullptr if not found.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::SoundFileContainer>
+    get_extracted_audio(const std::shared_ptr<Kakshya::VideoFileContainer>& container) const;
+
     // ─────────────────────────────────────────────────────────────────────────
     // Video reader management
     // ─────────────────────────────────────────────────────────────────────────
@@ -233,6 +242,23 @@ public:
      * @param reader_id Id returned by register_video_reader().
      */
     void release_video_reader(uint64_t reader_id);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Image — load
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Load an image file into a TextureBuffer.
+     *
+     * Opens the file via ImageReader, decodes to RGBA8, and creates a
+     * TextureBuffer containing the pixel data. The reader is retained
+     * for the lifetime of IOManager.
+     *
+     * @param filepath Path to the image file (PNG, JPG, BMP, TGA, etc.).
+     * @return TextureBuffer with pixel data, or nullptr on failure.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::TextureBuffer>
+    load_image(const std::string& filepath);
 
 private:
     uint64_t m_sample_rate;
@@ -271,6 +297,11 @@ private:
         std::shared_ptr<Kakshya::VideoFileContainer>,
         std::shared_ptr<Buffers::VideoContainerBuffer>>
         m_video_buffers;
+
+    std::unordered_map<
+        std::shared_ptr<Kakshya::VideoFileContainer>,
+        std::shared_ptr<Kakshya::SoundFileContainer>>
+        m_extracted_audio;
 
     std::unordered_map<
         std::shared_ptr<Kakshya::SoundFileContainer>,

@@ -63,11 +63,17 @@ namespace Kakshya {
     class SignalSourceContainer;
     class DynamicSoundStream;
     class SoundFileContainer;
+    class VideoFileContainer;
 }
 
 namespace Core {
     struct InputBinding;
 }
+
+namespace IO {
+    struct LoadConfig;
+}
+
 }
 
 #define ALL_NODE_REGISTRATIONS                                                \

@@ -11,6 +11,7 @@
 
 #include "MayaFlux/Buffers/Container/SoundContainerBuffer.hpp"
 #include "MayaFlux/Buffers/Container/VideoContainerBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
 
 #include "MayaFlux/IO/ImageReader.hpp"
 
@@ -118,6 +119,7 @@ IOManager::load_video(const std::string& filepath, LoadConfig config)
         if (audio_container) {
             configure_audio_processor(audio_container);
             result.audio = audio_container;
+            m_extracted_audio[video_container] = audio_container;
         } else {
             MF_WARN(Journal::Component::API, Journal::Context::FileIO,
                 "No audio track found in: {}", filepath);
@@ -217,6 +219,36 @@ std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::st
     m_audio_readers.push_back(std::move(reader));
 
     return sound_container;
+}
+
+std::shared_ptr<Buffers::TextureBuffer>
+IOManager::load_image(const std::string& filepath)
+{
+    auto reader = std::make_shared<IO::ImageReader>();
+
+    if (!reader->open(filepath)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "Failed to open image: {}", filepath);
+        return nullptr;
+    }
+
+    auto texture_buffer = reader->create_texture_buffer();
+
+    if (!texture_buffer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "Failed to create texture buffer from: {}", filepath);
+        return nullptr;
+    }
+
+    m_image_readers.push_back(std::move(reader));
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "Loaded image: {} ({}x{})",
+        std::filesystem::path(filepath).filename().string(),
+        texture_buffer->get_width(),
+        texture_buffer->get_height());
+
+    return texture_buffer;
 }
 
 void IOManager::configure_frame_processor(
@@ -360,6 +392,14 @@ IOManager::get_audio_buffers(
     std::shared_lock lock(m_buffers_mutex);
     auto it = m_audio_buffers.find(container);
     return it != m_audio_buffers.end() ? it->second : std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> {};
+}
+
+std::shared_ptr<Kakshya::SoundFileContainer>
+IOManager::get_extracted_audio(const std::shared_ptr<Kakshya::VideoFileContainer>& container) const
+{
+    std::shared_lock lock(m_buffers_mutex);
+    auto it = m_extracted_audio.find(container);
+    return it != m_extracted_audio.end() ? it->second : nullptr;
 }
 
 } // namespace MayaFlux::IO

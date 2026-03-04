@@ -212,7 +212,7 @@ public:
 
     auto read_audio(const std::string& filepath) -> CreationHandle<Kakshya::SoundFileContainer>
     {
-        auto container = load_container(filepath);
+        auto container = load_sound_container(filepath);
         return CreationHandle<Kakshya::SoundFileContainer>(container);
     }
 
@@ -257,7 +257,7 @@ public:
         const Core::InputBinding& binding);
 
 private:
-    std::shared_ptr<Kakshya::SoundFileContainer> load_container(const std::string& filepath);
+    std::shared_ptr<Kakshya::SoundFileContainer> load_sound_container(const std::string& filepath);
     std::shared_ptr<Buffers::TextureBuffer> load_buffer(const std::string& filepath);
 };
 
@@ -298,17 +298,5 @@ static constexpr auto Graphics = Domain::GRAPHICS;
  * ```
  */
 extern MAYAFLUX_API Creator vega;
-
-static std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> s_last_created_container_buffers;
-
-/**
- * @brief Retrieves the last created container buffers from the Creator.
- * @return Vector of shared pointers to the last created SoundContainerBuffer instances.
- *
- * This function returns the container buffers that were most recently created
- * by the Creator instance when registering a SoundFileContainer in the AUDIO domain.
- * It allows access to these buffers for further manipulation or inspection.
- */
-std::vector<std::shared_ptr<Buffers::SoundContainerBuffer>> MAYAFLUX_API get_last_created_container_buffers();
 
 } // namespace MayaFlux
