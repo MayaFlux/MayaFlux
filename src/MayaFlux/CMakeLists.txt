@@ -89,6 +89,7 @@ if(WIN32)
         FFmpeg::avutil
         FFmpeg::swresample
         FFmpeg::swscale
+        FFmpeg::avdevice
         hidapi::hidapi
         RtMidi::rtmidi
         gdi32
@@ -121,5 +122,6 @@ else()
         PkgConfig::LIBAVUTIL
         PkgConfig::LIBSWRESAMPLE
         PkgConfig::LIBSWSCALE
+        PkgConfig::LIBAVDEVICE
     )
 endif()

@@ -74,7 +74,7 @@ if(WIN32)
 
     # FFmpeg components
     if(NOT TARGET FFmpeg::avcodec)
-        foreach(component avcodec avformat avutil swresample swscale)
+        foreach(component avcodec avformat avutil swresample swscale avdevice)
             add_library(FFmpeg::${component} UNKNOWN IMPORTED)
             set_target_properties(FFmpeg::${component} PROPERTIES
                 IMPORTED_LOCATION "$ENV{FFMPEG_ROOT}/lib/${component}.lib"
@@ -145,6 +145,7 @@ else()
     pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
     pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
+    pkg_check_modules(LIBAVDEVICE REQUIRED IMPORTED_TARGET libavdevice)
 
 endif()
 
@@ -215,6 +216,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             FFmpeg::avutil
             FFmpeg::swresample
             FFmpeg::swscale
+            FFmpeg::avdevice
             hidapi::hidapi
             RtMidi::rtmidi
             gdi32
@@ -234,6 +236,7 @@ if(NOT TARGET MayaFlux::MayaFluxLib)
             PkgConfig::LIBAVUTIL
             PkgConfig::LIBSWRESAMPLE
             PkgConfig::LIBSWSCALE
+            PkgConfig::LIBAVDEVICE
             PkgConfig::magic_enum
             PkgConfig::HIDAPI
             PkgConfig::RtMidi

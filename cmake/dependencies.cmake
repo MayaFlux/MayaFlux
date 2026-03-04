@@ -14,7 +14,7 @@ if(WIN32)
     find_package(LLVM CONFIG REQUIRED HINTS "$ENV{LLVM_DIR}")
     find_package(Clang CONFIG REQUIRED HINTS "$ENV{Clang_DIR}")
 
-    foreach(component avcodec avformat avutil swresample swscale)
+    foreach(component avcodec avformat avutil swresample swscale avdevice)
         string(TOUPPER ${component} comp_upper)
         add_library(FFmpeg::${component} UNKNOWN IMPORTED)
         set_target_properties(FFmpeg::${component} PROPERTIES
@@ -55,6 +55,7 @@ else()
     pkg_check_modules(LIBAVUTIL REQUIRED IMPORTED_TARGET libavutil)
     pkg_check_modules(LIBSWRESAMPLE REQUIRED IMPORTED_TARGET libswresample)
     pkg_check_modules(LIBSWSCALE REQUIRED IMPORTED_TARGET libswscale)
+    pkg_check_modules(LIBAVDEVICE REQUIRED IMPORTED_TARGET libavdevice)
 
     set(MAYAFLUX_EIGEN_INCLUDE ${Eigen_INCLUDE_DIRS})
 endif()
