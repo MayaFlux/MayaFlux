@@ -6,6 +6,7 @@
 
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
+#include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 
@@ -16,6 +17,10 @@
 #include "MayaFlux/IO/ImageReader.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+
+extern "C" {
+#include <libavdevice/avdevice.h>
+}
 
 namespace MayaFlux::IO {
 
@@ -35,6 +40,10 @@ IOManager::IOManager(uint64_t sample_rate, uint32_t buffer_size, uint32_t frame_
         .register_service<Registry::Service::IOService>(
             [svc = m_io_service]() -> void* { return svc.get(); });
 
+    m_io_service->request_frame = [this](uint64_t reader_id) {
+        dispatch_frame_request(reader_id);
+    };
+
     MF_INFO(Journal::Component::Core, Journal::Context::Init, "IOManager initialised");
 }
 
@@ -48,6 +57,11 @@ IOManager::~IOManager()
     {
         std::unique_lock lock(m_readers_mutex);
         m_video_readers.clear();
+    }
+
+    {
+        std::unique_lock lock(m_camera_mutex);
+        m_camera_readers.clear();
     }
 
     {
@@ -185,6 +199,20 @@ void IOManager::dispatch_decode_request(uint64_t reader_id)
     it->second->signal_decode();
 }
 
+void IOManager::dispatch_frame_request(uint64_t reader_id)
+{
+    std::shared_lock lock(m_camera_mutex);
+    auto it = m_camera_readers.find(reader_id);
+
+    if (it == m_camera_readers.end()) {
+        MF_WARN(Journal::Component::Core, Journal::Context::AsyncIO,
+            "IOManager: dispatch_frame_request unknown reader_id={}", reader_id);
+        return;
+    }
+
+    it->second->pull_frame_all();
+}
+
 std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::string& filepath, LoadConfig config)
 {
     auto reader = std::make_shared<IO::SoundFileReader>();
@@ -219,6 +247,49 @@ std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::st
     m_audio_readers.push_back(std::move(reader));
 
     return sound_container;
+}
+
+std::shared_ptr<Kakshya::CameraContainer>
+IOManager::open_camera(const CameraConfig& config)
+{
+    static std::once_flag s_avdevice_init;
+    std::call_once(s_avdevice_init, [] { avdevice_register_all(); });
+
+    auto reader = std::make_shared<CameraReader>();
+
+    if (!reader->open(config)) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "open_camera: failed — {}", reader->last_error());
+        return nullptr;
+    }
+
+    auto container = reader->create_container();
+    if (!container) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "open_camera: failed to create container — {}",
+            reader->last_error());
+        return nullptr;
+    }
+
+    container->create_default_processor();
+
+    uint64_t rid = m_next_reader_id.fetch_add(1, std::memory_order_relaxed);
+    reader->set_container(container);
+
+    {
+        std::unique_lock lock(m_camera_mutex);
+        m_camera_readers[rid] = reader;
+    }
+
+    container->setup_io(rid);
+    container->mark_ready_for_processing(true);
+
+    MF_INFO(Journal::Component::API, Journal::Context::FileIO,
+        "open_camera: reader_id={} device='{}' {}x{} @{:.1f}fps",
+        rid, config.device_name,
+        reader->width(), reader->height(), reader->frame_rate());
+
+    return container;
 }
 
 std::shared_ptr<Buffers::TextureBuffer>
@@ -377,6 +448,45 @@ IOManager::hook_audio_container_to_buffers(
 }
 
 std::shared_ptr<Buffers::VideoContainerBuffer>
+IOManager::hook_camera_to_buffer(
+    const std::shared_ptr<Kakshya::CameraContainer>& container)
+{
+    if (!container) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "hook_camera_to_buffer: null container");
+        return nullptr;
+    }
+
+    auto stream_container = std::dynamic_pointer_cast<Kakshya::StreamContainer>(container);
+    if (!stream_container) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "hook_camera_to_buffer: container is not a StreamContainer");
+        return nullptr;
+    }
+
+    auto video_buffer = m_buffer_manager->create_graphics_buffer<Buffers::VideoContainerBuffer>(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND,
+        stream_container);
+
+    if (!video_buffer) {
+        MF_ERROR(Journal::Component::API, Journal::Context::BufferManagement,
+            "hook_camera_to_buffer: failed to create VideoContainerBuffer");
+        return nullptr;
+    }
+
+    {
+        std::unique_lock lock(m_camera_mutex);
+        m_camera_buffers[container] = video_buffer;
+    }
+
+    MF_INFO(Journal::Component::API, Journal::Context::BufferManagement,
+        "Hooked CameraContainer to VideoContainerBuffer ({}x{})",
+        video_buffer->get_width(), video_buffer->get_height());
+
+    return video_buffer;
+}
+
+std::shared_ptr<Buffers::VideoContainerBuffer>
 IOManager::get_video_buffer(
     const std::shared_ptr<Kakshya::VideoFileContainer>& container) const
 {
@@ -400,6 +510,15 @@ IOManager::get_extracted_audio(const std::shared_ptr<Kakshya::VideoFileContainer
     std::shared_lock lock(m_buffers_mutex);
     auto it = m_extracted_audio.find(container);
     return it != m_extracted_audio.end() ? it->second : nullptr;
+}
+
+std::shared_ptr<Buffers::VideoContainerBuffer>
+IOManager::get_camera_buffer(
+    const std::shared_ptr<Kakshya::CameraContainer>& container) const
+{
+    std::shared_lock lock(m_camera_mutex);
+    auto it = m_camera_buffers.find(container);
+    return it != m_camera_buffers.end() ? it->second : nullptr;
 }
 
 } // namespace MayaFlux::IO

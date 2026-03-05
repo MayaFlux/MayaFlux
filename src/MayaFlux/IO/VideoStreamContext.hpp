@@ -5,6 +5,7 @@
 extern "C" {
 struct AVCodecContext;
 struct SwsContext;
+struct AVFrame;
 }
 
 namespace MayaFlux::IO {
@@ -65,6 +66,37 @@ public:
         int target_format = -1);
 
     /**
+     * @brief Open codec only, without initialising the SwsContext scaler.
+     *
+     * Intended for live capture devices (dshow, v4l2, avfoundation) where
+     * pix_fmt is AV_PIX_FMT_NONE until the first decoded frame arrives and
+     * sws_getContext therefore cannot be called at open time.
+     *
+     * After this call is_codec_valid() returns true; is_valid() returns false
+     * until rebuild_scaler_from_frame() has been called successfully.
+     *
+     * @param demux          Open demux context (must outlive this object).
+     * @param target_width   Desired output width  (0 = use frame width).
+     * @param target_height  Desired output height (0 = use frame height).
+     * @param target_format  Desired AVPixelFormat  (negative = AV_PIX_FMT_RGBA).
+     * @return True if codec was opened successfully.
+     */
+    [[nodiscard]] bool open_device(const FFmpegDemuxContext& demux,
+        uint32_t target_width = 0,
+        uint32_t target_height = 0,
+        int target_format = -1);
+
+    /**
+     * @brief True if the codec context is open and ready to receive packets.
+     *        Does NOT require the SwsContext scaler to be initialised.
+     *        Use this check in live-capture paths instead of is_valid().
+     */
+    [[nodiscard]] bool is_codec_valid() const
+    {
+        return codec_context && stream_index >= 0;
+    }
+
+    /**
      * @brief Release codec and scaler resources.
      *        Safe to call multiple times.
      */
@@ -77,6 +109,27 @@ public:
     {
         return codec_context && sws_context && stream_index >= 0;
     }
+
+    /**
+     * @brief Rebuild the SwsContext using the pixel format resolved from a live
+     *        decoded frame.
+     *
+     * dshow and similar capture devices on Windows leave pix_fmt as
+     * AV_PIX_FMT_NONE until the first decoded frame arrives.  Call this once
+     * from the camera's frame-receive loop on the very first valid AVFrame to
+     * finalise the scaler before calling sws_scale.
+     *
+     * @param frame        The first successfully decoded AVFrame.
+     * @param target_width  Desired output width  (0 = keep frame width).
+     * @param target_height Desired output height (0 = keep frame height).
+     * @param target_format Desired AVPixelFormat  (negative = AV_PIX_FMT_RGBA).
+     * @return True if the scaler was (re)initialised successfully.
+     */
+    [[nodiscard]] bool rebuild_scaler_from_frame(
+        const AVFrame* frame,
+        uint32_t target_width = 0,
+        uint32_t target_height = 0,
+        int target_format = -1);
 
     // =========================================================================
     // Codec flush
@@ -122,16 +175,20 @@ public:
     SwsContext* sws_context = nullptr; ///< Owned; freed in destructor.
 
     int stream_index = -1;
-    uint64_t total_frames = 0;
-    uint32_t width = 0; ///< Source width in pixels.
-    uint32_t height = 0; ///< Source height in pixels.
-    uint32_t out_width = 0; ///< Output width after scaling.
-    uint32_t out_height = 0; ///< Output height after scaling.
-    double frame_rate = 0.0; ///< Average frame rate (fps).
+    uint64_t total_frames {};
+    uint32_t width {}; ///< Source width in pixels.
+    uint32_t height {}; ///< Source height in pixels.
+    uint32_t out_width {}; ///< Output width after scaling.
+    uint32_t out_height {}; ///< Output height after scaling.
+    double frame_rate {}; ///< Average frame rate (fps).
     int src_pixel_format = -1; ///< Source AVPixelFormat.
     int out_pixel_format = -1; ///< Output AVPixelFormat.
     uint32_t out_bytes_per_pixel = 4; ///< Bytes per pixel in output format.
-    int out_linesize = 0; ///< Output row stride in bytes.
+    int out_linesize {}; ///< Output row stride in bytes.
+
+    uint32_t target_width {}; ///< Requested output width  (0 = source).
+    uint32_t target_height {}; ///< Requested output height (0 = source).
+    int target_format = -1; ///< Requested AVPixelFormat (negative = RGBA).
 
 private:
     std::string m_last_error;

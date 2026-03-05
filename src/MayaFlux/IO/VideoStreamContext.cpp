@@ -89,6 +89,58 @@ bool VideoStreamContext::open(const FFmpegDemuxContext& demux,
         return false;
     }
 
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    uint32_t probed_width = 0;
+    uint32_t probed_height = 0;
+
+    if (codec_context->pix_fmt == AV_PIX_FMT_NONE) {
+        AVPacket* probe_pkt = av_packet_alloc();
+        AVFrame* probe_frm = av_frame_alloc();
+
+        if (probe_pkt && probe_frm) {
+            AVFormatContext* fmt = demux.format_context;
+            bool probed = false;
+
+            while (!probed && av_read_frame(fmt, probe_pkt) >= 0) {
+                if (probe_pkt->stream_index != stream_index) {
+                    av_packet_unref(probe_pkt);
+                    continue;
+                }
+                if (avcodec_send_packet(codec_context, probe_pkt) >= 0) {
+                    if (avcodec_receive_frame(codec_context, probe_frm) >= 0) {
+                        if (codec_context->pix_fmt == AV_PIX_FMT_NONE
+                            && probe_frm->format != AV_PIX_FMT_NONE) {
+                            codec_context->pix_fmt = static_cast<AVPixelFormat>(probe_frm->format);
+                        }
+                        probed_width = static_cast<uint32_t>(probe_frm->width);
+                        probed_height = static_cast<uint32_t>(probe_frm->height);
+                        probed = true;
+                        av_frame_unref(probe_frm);
+                    }
+                }
+                av_packet_unref(probe_pkt);
+            }
+        }
+
+        av_packet_free(&probe_pkt);
+        av_frame_free(&probe_frm);
+        avcodec_flush_buffers(codec_context);
+    }
+
+    width = static_cast<uint32_t>(codec_context->width);
+    height = static_cast<uint32_t>(codec_context->height);
+
+    if (probed_width > 0 && probed_height > 0) {
+        width = probed_width;
+        height = probed_height;
+        codec_context->width = static_cast<int>(width);
+        codec_context->height = static_cast<int>(height);
+    }
+#else
+    width = static_cast<uint32_t>(codec_context->width);
+    height = static_cast<uint32_t>(codec_context->height);
+#endif
+
     if (codec_context->codec_id == AV_CODEC_ID_HEVC
         && stream->r_frame_rate.den > 0
         && stream->r_frame_rate.num > 0) {
@@ -99,8 +151,6 @@ bool VideoStreamContext::open(const FFmpegDemuxContext& demux,
         frame_rate = av_q2d(stream->r_frame_rate);
     }
 
-    width = static_cast<uint32_t>(codec_context->width);
-    height = static_cast<uint32_t>(codec_context->height);
     src_pixel_format = codec_context->pix_fmt;
 
     if (stream->nb_frames > 0) {
@@ -155,6 +205,88 @@ bool VideoStreamContext::open(const FFmpegDemuxContext& demux,
     return true;
 }
 
+bool VideoStreamContext::open_device(const FFmpegDemuxContext& demux,
+    uint32_t tw, uint32_t th, int tf)
+{
+    close();
+    FFmpegDemuxContext::init_ffmpeg();
+
+    if (!demux.is_open()) {
+        m_last_error = "Demux context is not open";
+        return false;
+    }
+
+    const AVCodec* codec = nullptr;
+    stream_index = demux.find_best_stream(AVMEDIA_TYPE_VIDEO,
+        reinterpret_cast<const void**>(&codec));
+    if (stream_index < 0 || !codec) {
+        m_last_error = "No video stream found";
+        return false;
+    }
+
+    codec_context = avcodec_alloc_context3(codec);
+    if (!codec_context) {
+        m_last_error = "avcodec_alloc_context3 failed";
+        return false;
+    }
+
+    AVStream* stream = demux.get_stream(stream_index);
+    if (avcodec_parameters_to_context(codec_context, stream->codecpar) < 0) {
+        m_last_error = "avcodec_parameters_to_context failed";
+        close();
+        return false;
+    }
+
+    if (avcodec_open2(codec_context, codec, nullptr) < 0) {
+        m_last_error = "avcodec_open2 failed";
+        close();
+        return false;
+    }
+
+    target_width = tw;
+    target_height = th;
+    target_format = tf;
+
+    src_pixel_format = codec_context->pix_fmt;
+
+    width = static_cast<uint32_t>(codec_context->width);
+    height = static_cast<uint32_t>(codec_context->height);
+
+    if (width == 0 || height == 0) {
+        AVStream* s = demux.get_stream(stream_index);
+        width = static_cast<uint32_t>(s->codecpar->width);
+        height = static_cast<uint32_t>(s->codecpar->height);
+    }
+
+    if (width == 0 || height == 0) {
+        width = target_width;
+        height = target_height;
+    }
+
+#ifdef MAYAFLUX_PLATFORM_WINDOWS
+    if (target_width > 0 && target_height > 0
+        && width == target_height && height == target_width) {
+        std::swap(width, height);
+    }
+#endif
+
+    out_width = target_width > 0 ? target_width : width;
+    out_height = target_height > 0 ? target_height : height;
+
+    if (stream->avg_frame_rate.den > 0 && stream->avg_frame_rate.num > 0)
+        frame_rate = av_q2d(stream->avg_frame_rate);
+    else if (stream->r_frame_rate.den > 0 && stream->r_frame_rate.num > 0)
+        frame_rate = av_q2d(stream->r_frame_rate);
+
+    auto fmt = av_get_pix_fmt_name(static_cast<AVPixelFormat>(src_pixel_format));
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "[VideoStreamContext] open_device: stream #{} | {}x{} | pix_fmt={}",
+        stream_index, width, height, fmt ? fmt : "none");
+
+    return true;
+}
+
 // =========================================================================
 // Scaler
 // =========================================================================
@@ -165,6 +297,12 @@ bool VideoStreamContext::setup_scaler(uint32_t target_width,
 {
     if (!codec_context)
         return false;
+
+    if (codec_context->pix_fmt == AV_PIX_FMT_NONE) {
+        m_last_error = "setup_scaler: source pix_fmt is AV_PIX_FMT_NONE — "
+                       "codec has not resolved its output format yet";
+        return false;
+    }
 
     out_width = target_width > 0 ? target_width : width;
     out_height = target_height > 0 ? target_height : height;
@@ -204,6 +342,37 @@ bool VideoStreamContext::setup_scaler(uint32_t target_width,
         out_linesize += 32 - align_remainder;
 
     return true;
+}
+
+bool VideoStreamContext::rebuild_scaler_from_frame(
+    const AVFrame* frame,
+    uint32_t tw, uint32_t th, int tf)
+{
+    if (!frame || frame->width <= 0 || frame->height <= 0
+        || frame->format == AV_PIX_FMT_NONE) {
+        m_last_error = "rebuild_scaler_from_frame: invalid frame";
+        return false;
+    }
+
+    if (codec_context && codec_context->pix_fmt == AV_PIX_FMT_NONE)
+        codec_context->pix_fmt = static_cast<AVPixelFormat>(frame->format);
+
+    if (width == 0 || height == 0) {
+        width = static_cast<uint32_t>(frame->width);
+        height = static_cast<uint32_t>(frame->height);
+    }
+    src_pixel_format = codec_context ? codec_context->pix_fmt : frame->format;
+
+    if (sws_context) {
+        sws_freeContext(sws_context);
+        sws_context = nullptr;
+    }
+
+    const uint32_t use_w = tw > 0 ? tw : (target_width > 0 ? target_width : width);
+    const uint32_t use_h = th > 0 ? th : (target_height > 0 ? target_height : height);
+    const int use_f = tf >= 0 ? tf : (target_format >= 0 ? target_format : -1);
+
+    return setup_scaler(use_w, use_h, use_f);
 }
 
 // =========================================================================

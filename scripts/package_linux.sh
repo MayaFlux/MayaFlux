@@ -53,8 +53,8 @@ mkdir -p "$BUILD_DIR" "$INSTALL_DIR"
 # ---------------------------------------------
 # Configure & build
 # ---------------------------------------------
-cmake -S . -B "$BUILD_DIR" \
-    -DCMAKE_BUILD_TYPE=Release \
+cmake -G Ninja -S . -B "$BUILD_DIR" \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR"
 
 cmake --build "$BUILD_DIR" --parallel

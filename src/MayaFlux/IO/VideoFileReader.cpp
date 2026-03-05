@@ -8,11 +8,10 @@
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
 
 extern "C" {
+#include <cstddef>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
-
-#include <cstddef>
 }
 
 namespace MayaFlux::IO {
@@ -378,6 +377,10 @@ uint64_t VideoFileReader::decode_batch(
     std::shared_lock ctx_lock(m_context_mutex);
     if (!m_demux || !m_video || !m_video->is_valid())
         return 0;
+
+    const size_t required = static_cast<size_t>(m_video->out_linesize) * m_video->out_height;
+    if (m_sws_buf.size() < required)
+        m_sws_buf.resize(required);
 
     const size_t frame_bytes = vc.get_frame_byte_size();
     const int packed_stride = static_cast<int>(

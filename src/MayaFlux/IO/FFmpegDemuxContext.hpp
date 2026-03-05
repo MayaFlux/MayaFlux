@@ -4,6 +4,7 @@ extern "C" {
 struct AVFormatContext;
 struct AVStream;
 struct AVDictionaryEntry;
+struct AVDictionary;
 }
 
 #include "MayaFlux/IO/FileReader.hpp"
@@ -59,6 +60,22 @@ public:
      * @brief True if the format context is open and stream info was found.
      */
     [[nodiscard]] bool is_open() const { return format_context != nullptr; }
+
+    /**
+     * @brief Open an FFmpeg device input (camera, screen capture, etc.).
+     *
+     * Calls av_find_input_format() then avformat_open_input() with the
+     * supplied options dict. avdevice_register_all() must have been called
+     * before this method.
+     *
+     * @param device_name  Platform device string (e.g. "/dev/video0").
+     * @param format_name  FFmpeg input format name (e.g. "v4l2", "avfoundation").
+     * @param options      AVDictionary of format options; consumed and freed on return.
+     * @return True on success.
+     */
+    [[nodiscard]] bool open_device(const std::string& device_name,
+        const std::string& format_name,
+        AVDictionary** options = nullptr);
 
     // =========================================================================
     // Stream discovery

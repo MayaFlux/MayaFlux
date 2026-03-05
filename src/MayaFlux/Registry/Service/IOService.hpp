@@ -29,6 +29,19 @@ struct IOService {
      *                  disambiguates concurrent streams sharing this service.
      */
     std::function<void(uint64_t reader_id)> request_decode;
+
+    /**
+     * @brief Request the identified camera reader to pull the next frame.
+     *
+     * Called from CameraContainer when FrameAccessProcessor completes
+     * a process cycle. The implementation looks up the CameraReader by
+     * reader_id and calls pull_frame_all(). Must be non-blocking.
+     * Safe to call from any thread.
+     *
+     * @param reader_id Opaque identifier assigned by IOManager at
+     *                  open_camera() time.
+     */
+    std::function<void(uint64_t reader_id)> request_frame;
 };
 
 } // namespace MayaFlux::Registry::Service

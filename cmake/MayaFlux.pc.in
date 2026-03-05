@@ -18,7 +18,7 @@ Version: @PROJECT_VERSION@
 URL: https://github.com/MayaFlux/MayaFlux
 
 # Core public dependencies (all platforms)
-Requires: glfw3 >= 3.4 rtaudio libavcodec libavformat libavutil libswresample libswscale
+Requires: glfw3 >= 3.4 rtaudio libavcodec libavformat libavutil libswresample libswscale libavdevice
 
 # Vulkan (platform-specific: Windows via Vulkan::Vulkan, Unix via PkgConfig)
 # vulkan package name is portable across systems
