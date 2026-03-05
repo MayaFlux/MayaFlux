@@ -74,6 +74,7 @@ bool CameraReader::open(const CameraConfig& config)
     std::string size_str = std::to_string(config.target_width)
         + "x"
         + std::to_string(config.target_height);
+
     av_dict_set(&opts, "video_size", size_str.c_str(), 0);
 
     if (!m_demux->open_device(config.device_name, fmt_name, &opts)) {
@@ -83,7 +84,7 @@ bool CameraReader::open(const CameraConfig& config)
         return false;
     }
 
-    if (!m_video->open(*m_demux,
+    if (!m_video->open_device(*m_demux,
             config.target_width,
             config.target_height)) {
         m_last_error = "Video stream open failed: " + m_video->last_error();
@@ -93,14 +94,13 @@ bool CameraReader::open(const CameraConfig& config)
         return false;
     }
 
-    const size_t buf_bytes = static_cast<size_t>(m_video->out_width)
-        * m_video->out_height * 4;
-    m_sws_buf.resize(buf_bytes);
+    m_sws_buf.clear();
+    m_scaler_ready = false;
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-        "CameraReader: opened '{}' via {} — {}x{} @{:.1f}fps",
+        "CameraReader: opened '{}' via {} — {}x{} @{:.1f}fps (scaler deferred)",
         config.device_name, fmt_name,
-        m_video->out_width, m_video->out_height, m_video->frame_rate);
+        m_video->width, m_video->height, m_video->frame_rate);
 
     return true;
 }
@@ -112,21 +112,23 @@ void CameraReader::close()
     std::unique_lock lock(m_ctx_mutex);
     m_video->close();
     m_demux->close();
+    m_scaler_ready = false;
     m_sws_buf.clear();
+    m_sws_buf.shrink_to_fit();
     m_last_error.clear();
 }
 
 bool CameraReader::is_open() const
 {
     std::shared_lock lock(m_ctx_mutex);
-    return m_demux->is_open() && m_video->is_valid();
+    return m_demux->is_open() && m_video->is_codec_valid();
 }
 
 std::shared_ptr<Kakshya::CameraContainer>
 CameraReader::create_container() const
 {
     std::shared_lock lock(m_ctx_mutex);
-    if (!m_video->is_valid()) {
+    if (!m_video->is_codec_valid()) {
         m_last_error = "Cannot create container: reader not open";
         return nullptr;
     }
@@ -145,7 +147,7 @@ bool CameraReader::pull_frame(
         return false;
 
     std::shared_lock lock(m_ctx_mutex);
-    if (!m_video->is_valid())
+    if (!m_video->is_codec_valid())
         return false;
 
     uint8_t* dest = container->mutable_frame_ptr();
@@ -186,13 +188,42 @@ bool CameraReader::pull_frame(
         if (ret < 0)
             break;
 
-        uint8_t* dst_data[1] = { dest };
-        int dst_linesize[1] = { m_video->out_linesize };
+        if (!m_scaler_ready) {
+            if (!m_video->rebuild_scaler_from_frame(
+                    frame,
+                    static_cast<uint32_t>(frame->width),
+                    static_cast<uint32_t>(frame->height))) {
+                MF_ERROR(Journal::Component::IO, Journal::Context::Runtime,
+                    "CameraReader: scaler init failed: {}",
+                    m_video->last_error());
+                break;
+            }
+            const size_t buf_bytes = static_cast<size_t>(m_video->out_linesize) * m_video->out_height;
+            m_sws_buf.assign(buf_bytes, 0);
+            m_scaler_ready = true;
+        }
+
+        uint8_t* sws_dst[1] = { m_sws_buf.data() };
+        int sws_stride[1] = { m_video->out_linesize };
 
         sws_scale(m_video->sws_context,
             frame->data, frame->linesize,
             0, static_cast<int>(m_video->height),
-            dst_data, dst_linesize);
+            sws_dst, sws_stride);
+
+        const int packed_stride = static_cast<int>(m_video->out_width * m_video->out_bytes_per_pixel);
+
+        if (m_video->out_linesize == packed_stride) {
+            std::memcpy(dest, m_sws_buf.data(),
+                static_cast<size_t>(packed_stride) * m_video->out_height);
+        } else {
+            for (uint32_t row = 0; row < m_video->out_height; ++row) {
+                std::memcpy(
+                    dest + static_cast<size_t>(row) * packed_stride,
+                    m_sws_buf.data() + static_cast<size_t>(row) * m_video->out_linesize,
+                    static_cast<size_t>(packed_stride));
+            }
+        }
 
         container->mark_ready_for_processing(true);
         got_frame = true;

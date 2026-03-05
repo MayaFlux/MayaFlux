@@ -169,8 +169,9 @@ private:
     std::weak_ptr<Kakshya::CameraContainer> m_container_ref;
 
     std::shared_ptr<Registry::Service::IOService> m_standalone_service;
-    uint64_t m_standalone_reader_id { 0 };
-    bool m_owns_service { false };
+    uint64_t m_standalone_reader_id {};
+    bool m_owns_service {};
+    bool m_scaler_ready {};
 
     std::thread m_decode_thread;
     std::mutex m_decode_mutex;
