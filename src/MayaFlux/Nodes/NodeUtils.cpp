@@ -2,8 +2,6 @@
 
 #include "Node.hpp"
 
-#include "MayaFlux/API/Config.hpp"
-
 namespace MayaFlux::Nodes {
 
 bool callback_exists(const std::vector<NodeHook>& callbacks, const NodeHook& callback)
@@ -150,7 +148,7 @@ std::vector<uint32_t> get_active_channels(uint32_t channel_mask, uint32_t fallba
     if (channel_mask == 0) {
         channels.push_back(fallback_channel);
     } else {
-        for (uint32_t channel = 0; channel < MayaFlux::Config::get_node_config().max_channels; ++channel) {
+        for (uint32_t channel = 0; channel < MAX_CHANNEL_COUNT; ++channel) {
             if (channel_mask & (1ULL << channel)) {
                 channels.push_back(channel);
             }
