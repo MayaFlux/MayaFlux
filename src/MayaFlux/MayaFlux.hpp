@@ -29,7 +29,7 @@
 #include "MayaFlux/API/Proxy/Temporal.hpp"
 
 #ifdef MAYASIMPLE
-#include "Nodes/Constant.hpp"
+#include "Nodes/Conduit/Constant.hpp"
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
 #include "Nodes/Generators/Impulse.hpp"
@@ -61,6 +61,7 @@
 #include "Buffers/BufferProcessingChain.hpp"
 #include "Buffers/Container/SoundContainerBuffer.hpp"
 #include "Buffers/Container/SoundStreamWriter.hpp"
+#include "Buffers/Container/VideoContainerBuffer.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Network/NetworkGeometryBuffer.hpp"
 #include "Buffers/Node/FilterProcessor.hpp"
