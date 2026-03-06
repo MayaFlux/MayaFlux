@@ -118,6 +118,8 @@ void Engine::Init(const GlobalStreamInfo& streamInfo, const GlobalGraphicsConfig
 
     m_node_graph_manager = std::make_shared<Nodes::NodeGraphManager>(m_stream_info.sample_rate, m_stream_info.buffer_size);
 
+    m_node_graph_manager->set_node_config(m_node_config);
+
     m_io_manager = std::make_shared<IO::IOManager>(
         m_stream_info.sample_rate, m_stream_info.buffer_size, m_graphics_config.target_frame_rate, m_buffer_manager);
 
@@ -347,6 +349,23 @@ void Engine::End()
 
     m_is_initialized = false;
     m_is_paused = false;
+}
+
+Nodes::NodeConfig& Engine::get_node_config()
+{
+    if (m_node_graph_manager) {
+        return m_node_graph_manager->get_node_config();
+    }
+
+    return m_node_config;
+}
+
+void Engine::set_node_config(const Nodes::NodeConfig& config)
+{
+    m_node_config = config;
+    if (m_node_graph_manager) {
+        m_node_graph_manager->set_node_config(config);
+    }
 }
 
 } // namespace MayaFlux::Core

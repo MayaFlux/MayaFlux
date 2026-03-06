@@ -1,7 +1,10 @@
 #include "MayaFlux/Journal/JournalEntry.hpp"
-#include "MayaFlux/Nodes/NodeSpec.hpp"
 
 namespace MayaFlux {
+
+namespace Nodes {
+    struct NodeConfig;
+}
 
 namespace Core {
     struct GlobalStreamInfo;
@@ -24,9 +27,13 @@ MAYAFLUX_API bool is_engine_initialized();
 */
 namespace Config {
 
-    extern Nodes::NodeConfig node_config;
-
     MAYAFLUX_API Nodes::NodeConfig& get_node_config();
+
+    /**
+     * @brief Sets the node configuration for the default engine
+     * @param config The NodeConfig to set
+     */
+    MAYAFLUX_API void set_node_config(const Nodes::NodeConfig& config);
 
     /**
      * @brief Gets the sample rate from the default engine
