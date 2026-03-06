@@ -30,6 +30,7 @@
 
 #ifdef MAYASIMPLE
 #include "Nodes/Conduit/Constant.hpp"
+#include "Nodes/Conduit/StreamReaderNode.hpp"
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
 #include "Nodes/Generators/Impulse.hpp"
@@ -68,6 +69,7 @@
 #include "Buffers/Node/LogicProcessor.hpp"
 #include "Buffers/Node/NodeBindingsProcessor.hpp"
 #include "Buffers/Node/NodeBuffer.hpp"
+#include "Buffers/Node/NodeFeedProcessor.hpp"
 #include "Buffers/Node/PolynomialProcessor.hpp"
 #include "Buffers/Recursive/FeedbackBuffer.hpp"
 #include "Buffers/Shaders/DescriptorBindingsProcessor.hpp"
