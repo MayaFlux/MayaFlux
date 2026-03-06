@@ -30,6 +30,7 @@
 
 #ifdef MAYASIMPLE
 #include "Nodes/Conduit/Constant.hpp"
+#include "Nodes/Conduit/NodeChain.hpp"
 #include "Nodes/Conduit/StreamReaderNode.hpp"
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"

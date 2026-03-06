@@ -571,4 +571,23 @@ MAYAFLUX_API void route_buffer(
     uint32_t num_blocks,
     const Buffers::ProcessingToken& token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
+/**
+ * @brief Connects two nodes in series (pipeline operator)
+ * @param lhs Source node (may already be a ChainNode)
+ * @param rhs Target node (may already be a ChainNode)
+ * @return A ChainNode containing the flattened sequence
+ *
+ * If lhs is already a ChainNode, rhs is appended to its sequence
+ * rather than creating a nested chain.
+ *
+ * Uses the default engine's NodeGraphManager for registration.
+ * For manual construction without registration, create ChainNode directly
+ * with no manager argument.
+ *
+ * ```cpp
+ * auto chain = generator >> transformer >> output;
+ * ```
+ */
+MAYAFLUX_API std::shared_ptr<Nodes::Node> operator>>(std::shared_ptr<Nodes::Node> lhs, std::shared_ptr<Nodes::Node> rhs);
+
 }

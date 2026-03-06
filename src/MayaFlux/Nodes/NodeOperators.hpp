@@ -4,25 +4,6 @@
 namespace MayaFlux::Nodes {
 
 /**
- * @brief Connects two nodes in series (pipeline operator)
- * @param lhs Source node
- * @param rhs Target node
- * @return The target node for further chaining
- *
- * Creates a connection where the output of the left-hand node
- * becomes the input to the right-hand node. This allows for
- * intuitive creation of processing chains:
- *
- * ```cpp
- * auto chain = generator >> transformer >> output;
- * ```
- *
- * The returned node is the right-hand node, allowing for
- * further chaining of operations.
- */
-MAYAFLUX_API std::shared_ptr<Node> operator>>(std::shared_ptr<Node> lhs, std::shared_ptr<Node> rhs);
-
-/**
  * @brief Combines two nodes in parallel (addition operator)
  * @param lhs First node
  * @param rhs Second node
