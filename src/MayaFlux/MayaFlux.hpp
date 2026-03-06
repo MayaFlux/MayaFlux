@@ -64,6 +64,7 @@
 #include "Buffers/Container/SoundStreamWriter.hpp"
 #include "Buffers/Container/VideoContainerBuffer.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
+#include "Buffers/Network/NetworkAudioBuffer.hpp"
 #include "Buffers/Network/NetworkGeometryBuffer.hpp"
 #include "Buffers/Node/FilterProcessor.hpp"
 #include "Buffers/Node/LogicProcessor.hpp"
