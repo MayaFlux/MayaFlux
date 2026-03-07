@@ -8,6 +8,7 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Core/Engine.hpp"
 #include "MayaFlux/Nodes/Conduit/NodeChain.hpp"
+#include "MayaFlux/Nodes/Conduit/NodeCombine.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
@@ -324,7 +325,7 @@ void route_buffer(
     get_buffer_manager()->route_buffer_to_channel(buffer, target_channel, num_blocks, token);
 }
 
-std::shared_ptr<Nodes::Node> operator>>(std::shared_ptr<Nodes::Node> lhs, std::shared_ptr<Nodes::Node> rhs)
+std::shared_ptr<Nodes::Node> operator>>(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs)
 {
     auto manager = get_node_graph_manager();
 
@@ -356,6 +357,24 @@ std::shared_ptr<Nodes::Node> operator>>(std::shared_ptr<Nodes::Node> lhs, std::s
 
     chain->initialize();
     return chain;
+}
+
+std::shared_ptr<Nodes::Node> operator+(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs)
+{
+    auto manager = get_node_graph_manager();
+    auto result = std::make_shared<Nodes::BinaryOpNode>(
+        lhs, rhs, [](double a, double b) { return a + b; }, *manager);
+    result->initialize();
+    return result;
+}
+
+std::shared_ptr<Nodes::Node> operator*(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs)
+{
+    auto manager = get_node_graph_manager();
+    auto result = std::make_shared<Nodes::BinaryOpNode>(
+        lhs, rhs, [](double a, double b) { return a * b; }, *manager);
+    result->initialize();
+    return result;
 }
 
 }

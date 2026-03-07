@@ -1,7 +1,7 @@
 #pragma once
 
 #include "GpuContext.hpp"
-#include "NodeOperators.hpp"
+#include "MayaFlux/Nodes/NodeUtils.hpp"
 
 /**
  * @namespace MayaFlux::Nodes

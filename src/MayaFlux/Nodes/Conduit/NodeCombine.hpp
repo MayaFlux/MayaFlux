@@ -1,7 +1,12 @@
 #pragma once
-#include "Node.hpp"
+
+#include "MayaFlux/Nodes/Node.hpp"
+
+#include "MayaFlux/Core/ProcessingTokens.hpp"
 
 namespace MayaFlux::Nodes {
+
+class NodeGraphManager;
 
 /**
  * @class BinaryOpContext
@@ -111,6 +116,25 @@ public:
     BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_ptr<Node>& rhs, CombineFunc func);
 
     /**
+     * @brief Creates a new binary operation node (managed)
+     * @param lhs The left-hand side node
+     * @param rhs The right-hand side node
+     * @param func The function to combine the outputs of both nodes
+     * @param manager Graph manager for registration
+     * @param token Processing domain for registration (default AUDIO_RATE)
+     *
+     * Common combine functions include:
+     * - Addition: [](double a, double b) { return a + b; }
+     * - Multiplication: [](double a, double b) { return a * b; }
+     */
+    BinaryOpNode(
+        const std::shared_ptr<Node>& lhs,
+        const std::shared_ptr<Node>& rhs,
+        CombineFunc func,
+        NodeGraphManager& manager,
+        ProcessingToken token = ProcessingToken::AUDIO_RATE);
+
+    /**
      * @brief Initializes the binary operation node
      *
      * This method performs any necessary setup for the binary operation node,
@@ -202,6 +226,20 @@ private:
     CombineFunc m_func;
 
     /**
+     * @brief Reference to the node graph manager for registration and callback management
+     *
+     * This reference is used to register the binary operation node and its input nodes
+     * with the graph manager, allowing them to be included in processing cycles and
+     * for querying Config.
+     */
+    NodeGraphManager* m_manager {};
+
+    /**
+     * @brief The processing token indicating the domain in which this node operates
+     */
+    ProcessingToken m_token { ProcessingToken::AUDIO_RATE };
+
+    /**
      * @brief The last output value from the left-hand side node
      *
      * This value is stored to provide context information to callbacks,
@@ -240,4 +278,5 @@ private:
 public:
     bool is_initialized() const;
 };
+
 }

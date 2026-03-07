@@ -1,5 +1,7 @@
 #include "Generator.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+
 namespace MayaFlux::Nodes::Generator {
 
 void Generator::enable_mock_process(bool mock_process)
@@ -52,6 +54,17 @@ NodeContext& Generator::get_last_context()
         return m_context_gpu;
     }
     return m_context;
+}
+
+void operator*(const std::shared_ptr<Node>& node, double value)
+{
+    if (auto gen = std::dynamic_pointer_cast<Generator>(node)) {
+        gen->set_amplitude(value);
+    } else {
+        MF_ERROR(Journal::Component::API, Journal::Context::NodeProcessing,
+            "Cannot multiply non-generator node by a scalar. "
+            "Use set_[params] methods or create a BinaryOpNode.");
+    }
 }
 
 } // namespace MayaFlux::Nodes::Generator

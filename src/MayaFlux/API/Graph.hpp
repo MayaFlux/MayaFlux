@@ -588,6 +588,43 @@ MAYAFLUX_API void route_buffer(
  * auto chain = generator >> transformer >> output;
  * ```
  */
-MAYAFLUX_API std::shared_ptr<Nodes::Node> operator>>(std::shared_ptr<Nodes::Node> lhs, std::shared_ptr<Nodes::Node> rhs);
+MAYAFLUX_API std::shared_ptr<Nodes::Node> operator>>(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs);
+
+/**
+ * @brief Combines two nodes in parallel (addition)
+ * @param lhs First node
+ * @param rhs Second node
+ * @return A BinaryOpNode that sums both outputs
+ *
+ * Creates a new node that processes both input nodes and sums their outputs.
+ * This allows for mixing multiple data sources or transformations:
+ *
+ * ```cpp
+ * auto combined = primary_source + secondary_source;
+ * ```
+ *
+ * The resulting node takes an input, passes it to both source nodes,
+ * and returns the sum of their outputs.
+ */
+MAYAFLUX_API std::shared_ptr<Nodes::Node> operator+(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs);
+
+/**
+ * @brief Combines two nodes in parallel (multiplication)
+ * @param lhs First node
+ * @param rhs Second node
+ * @return A BinaryOpNode that multiplies both outputs
+ *
+ * Creates a new node that processes both input nodes and multiplies their outputs.
+ * This is useful for amplitude modulation, scaling operations, and other
+ * multiplicative transformations:
+ *
+ * ```cpp
+ * auto modulated = carrier * modulator;
+ * ```
+ *
+ * The resulting node takes an input, passes it to both source nodes,
+ * and returns the product of their outputs.
+ */
+MAYAFLUX_API std::shared_ptr<Nodes::Node> operator*(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs);
 
 }

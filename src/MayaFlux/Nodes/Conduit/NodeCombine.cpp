@@ -1,6 +1,6 @@
-#include "NodeStructure.hpp"
-#include "MayaFlux/API/Config.hpp"
-#include "MayaFlux/API/Graph.hpp"
+#include "NodeCombine.hpp"
+
+#include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -35,41 +35,58 @@ BinaryOpNode::BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_p
     }
 }
 
+BinaryOpNode::BinaryOpNode(
+    const std::shared_ptr<Node>& lhs,
+    const std::shared_ptr<Node>& rhs,
+    CombineFunc func,
+    NodeGraphManager& manager,
+    ProcessingToken token)
+    : BinaryOpNode(lhs, rhs, std::move(func))
+{
+    m_manager = &manager;
+    m_token = token;
+}
+
 void BinaryOpNode::initialize()
 {
     if (!m_is_initialized) {
-        auto self = shared_from_this();
-        uint32_t lhs_mask = m_lhs ? m_lhs->get_channel_mask().load() : 0;
-        uint32_t rhs_mask = m_rhs ? m_rhs->get_channel_mask().load() : 0;
-        uint32_t combined_mask = lhs_mask | rhs_mask;
 
-        if (combined_mask != 0) {
-            for (auto& channel : get_active_channels(combined_mask, 0)) {
-                MayaFlux::register_audio_node(self, channel);
+        if (m_manager) {
+            auto self = shared_from_this();
+            uint32_t lhs_mask = m_lhs ? m_lhs->get_channel_mask().load() : 0;
+            uint32_t rhs_mask = m_rhs ? m_rhs->get_channel_mask().load() : 0;
+            uint32_t combined_mask = lhs_mask | rhs_mask;
+
+            if (combined_mask != 0) {
+                for (auto& channel : get_active_channels(combined_mask, 0)) {
+                    m_manager->add_to_root(self, m_token, channel);
+                }
+            } else {
+                m_manager->add_to_root(self, m_token, 0);
             }
-        } else {
-            MayaFlux::register_audio_node(self, 0);
+            m_is_initialized = true;
         }
-        m_is_initialized = true;
     }
 
-    auto semantics = MayaFlux::Config::get_node_config().binary_op_semantics;
-    switch (semantics) {
-    case NodeBinaryOpSemantics::REPLACE:
-        if (m_lhs) {
-            for (auto& channel : get_active_channels(m_lhs, 0)) {
-                MayaFlux::unregister_audio_node(m_lhs, channel);
+    if (m_manager) {
+        auto semantics = m_manager->get_node_config().binary_op_semantics;
+        switch (semantics) {
+        case NodeBinaryOpSemantics::REPLACE:
+            if (m_lhs) {
+                for (auto& channel : get_active_channels(m_lhs, 0)) {
+                    m_manager->remove_from_root(m_lhs, m_token, channel);
+                }
             }
-        }
-        if (m_rhs) {
-            for (auto& channel : get_active_channels(m_rhs, 0)) {
-                MayaFlux::unregister_audio_node(m_rhs, channel);
+            if (m_rhs) {
+                for (auto& channel : get_active_channels(m_rhs, 0)) {
+                    m_manager->remove_from_root(m_rhs, m_token, channel);
+                }
             }
+            break;
+        case NodeBinaryOpSemantics::KEEP:
+        default:
+            break;
         }
-        break;
-    case NodeBinaryOpSemantics::KEEP:
-    default:
-        break;
     }
 }
 

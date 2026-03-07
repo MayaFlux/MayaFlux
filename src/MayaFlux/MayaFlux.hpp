@@ -31,6 +31,7 @@
 #ifdef MAYASIMPLE
 #include "Nodes/Conduit/Constant.hpp"
 #include "Nodes/Conduit/NodeChain.hpp"
+#include "Nodes/Conduit/NodeCombine.hpp"
 #include "Nodes/Conduit/StreamReaderNode.hpp"
 #include "Nodes/Filters/FIR.hpp"
 #include "Nodes/Filters/IIR.hpp"
@@ -48,7 +49,6 @@
 #include "Nodes/Graphics/TopologyGeneratorNode.hpp"
 #include "Nodes/Network/NodeNetwork.hpp"
 #include "Nodes/NodeGraphManager.hpp"
-#include "Nodes/NodeStructure.hpp"
 
 #include "MayaFlux/Nodes/Network/ModalNetwork.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
