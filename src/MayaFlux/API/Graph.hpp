@@ -571,4 +571,60 @@ MAYAFLUX_API void route_buffer(
     uint32_t num_blocks,
     const Buffers::ProcessingToken& token = Buffers::ProcessingToken::AUDIO_BACKEND);
 
+/**
+ * @brief Connects two nodes in series (pipeline operator)
+ * @param lhs Source node (may already be a ChainNode)
+ * @param rhs Target node (may already be a ChainNode)
+ * @return A ChainNode containing the flattened sequence
+ *
+ * If lhs is already a ChainNode, rhs is appended to its sequence
+ * rather than creating a nested chain.
+ *
+ * Uses the default engine's NodeGraphManager for registration.
+ * For manual construction without registration, create ChainNode directly
+ * with no manager argument.
+ *
+ * ```cpp
+ * auto chain = generator >> transformer >> output;
+ * ```
+ */
+MAYAFLUX_API std::shared_ptr<Nodes::Node> operator>>(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs);
+
+/**
+ * @brief Combines two nodes in parallel (addition)
+ * @param lhs First node
+ * @param rhs Second node
+ * @return A BinaryOpNode that sums both outputs
+ *
+ * Creates a new node that processes both input nodes and sums their outputs.
+ * This allows for mixing multiple data sources or transformations:
+ *
+ * ```cpp
+ * auto combined = primary_source + secondary_source;
+ * ```
+ *
+ * The resulting node takes an input, passes it to both source nodes,
+ * and returns the sum of their outputs.
+ */
+MAYAFLUX_API std::shared_ptr<Nodes::Node> operator+(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs);
+
+/**
+ * @brief Combines two nodes in parallel (multiplication)
+ * @param lhs First node
+ * @param rhs Second node
+ * @return A BinaryOpNode that multiplies both outputs
+ *
+ * Creates a new node that processes both input nodes and multiplies their outputs.
+ * This is useful for amplitude modulation, scaling operations, and other
+ * multiplicative transformations:
+ *
+ * ```cpp
+ * auto modulated = carrier * modulator;
+ * ```
+ *
+ * The resulting node takes an input, passes it to both source nodes,
+ * and returns the product of their outputs.
+ */
+MAYAFLUX_API std::shared_ptr<Nodes::Node> operator*(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs);
+
 }

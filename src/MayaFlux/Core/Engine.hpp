@@ -5,6 +5,7 @@
 #include "GlobalGraphicsInfo.hpp"
 #include "GlobalInputConfig.hpp"
 #include "GlobalStreamInfo.hpp"
+#include "MayaFlux/Nodes/NodeSpec.hpp"
 
 namespace MayaFlux::Kinesis::Stochastic {
 class Stochastic;
@@ -222,6 +223,18 @@ public:
      */
     inline GlobalInputConfig& get_input_config() { return m_input_config; }
 
+    /**
+     * @brief Gets the current node processing configuration
+     * @return Reference to the Nodes::NodeConfig struct
+     */
+    Nodes::NodeConfig& get_node_config();
+
+    /**
+     * @brief Sets the node processing configuration
+     * @param config The new node configuration to apply
+     */
+    void set_node_config(const Nodes::NodeConfig& config);
+
     //-------------------------------------------------------------------------
     // Component Access - Engine acts as access router to all subsystems
     //-------------------------------------------------------------------------
@@ -353,6 +366,7 @@ private:
     GlobalStreamInfo m_stream_info {}; ///< Stream configuration
     GlobalGraphicsConfig m_graphics_config {}; ///< Graphics/windowing configuration
     GlobalInputConfig m_input_config {}; ///< Input configuration
+    Nodes::NodeConfig m_node_config {}; ///< Node processing configuration
 
     bool m_is_paused {}; ///< Pause state flag
     bool m_is_initialized {};

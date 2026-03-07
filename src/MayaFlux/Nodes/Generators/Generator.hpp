@@ -212,4 +212,19 @@ protected:
     GeneratorContextGpu m_context_gpu { 0., m_frequency, m_amplitude, m_phase, get_gpu_data_buffer() };
 };
 
+/**
+ * @brief Sets the generator's amplitude
+ * @param node Generator node to modify
+ * @param value New amplitude value
+ *
+ * This operator allows setting the generator's amplitude using
+ * a more intuitive syntax, such as:
+ *
+ * ```cpp
+ * auto generator = std::make_shared<Sine>(440, 1, 0);
+ * generator * 0.5; // Halves the amplitude
+ * ```
+ */
+MAYAFLUX_API void operator*(const std::shared_ptr<Node>& node, double value);
+
 }

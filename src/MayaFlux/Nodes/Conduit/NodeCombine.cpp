@@ -1,0 +1,301 @@
+#include "NodeCombine.hpp"
+
+#include "MayaFlux/Nodes/NodeGraphManager.hpp"
+
+#include "MayaFlux/Journal/Archivist.hpp"
+
+namespace MayaFlux::Nodes {
+
+BinaryOpContext::BinaryOpContext(double value, double lhs_value, double rhs_value)
+    : NodeContext(value, typeid(BinaryOpContext).name())
+    , lhs_value(lhs_value)
+    , rhs_value(rhs_value)
+{
+}
+
+BinaryOpContextGpu::BinaryOpContextGpu(double value, double lhs_value, double rhs_value, std::span<const float> gpu_data)
+    : BinaryOpContext(value, lhs_value, rhs_value)
+    , GpuVectorData(gpu_data)
+{
+    type_id = typeid(BinaryOpContextGpu).name();
+}
+
+CompositeOpContext::CompositeOpContext(double value, std::vector<double> input_values)
+    : NodeContext(value, typeid(CompositeOpContext).name())
+    , input_values(std::move(input_values))
+{
+}
+
+CompositeOpContextGpu::CompositeOpContextGpu(double value, std::vector<double> input_values, std::span<const float> gpu_data)
+    : CompositeOpContext(value, std::move(input_values))
+    , GpuVectorData(gpu_data)
+{
+    type_id = typeid(CompositeOpContextGpu).name();
+}
+
+BinaryOpNode::BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_ptr<Node>& rhs, CombineFunc func)
+    : m_lhs(lhs)
+    , m_rhs(rhs)
+    , m_func(std::move(func))
+    , m_context(0.0, 0.0, 0.0)
+    , m_context_gpu(0.0, 0.0, 0.0, get_gpu_data_buffer())
+{
+    if (!m_lhs || !m_rhs) {
+        error<std::invalid_argument>(
+            Journal::Component::Nodes, Journal::Context::Init,
+            std::source_location::current(),
+            "BinaryOpNode requires both lhs and rhs nodes to be non-null");
+    }
+}
+
+BinaryOpNode::BinaryOpNode(
+    const std::shared_ptr<Node>& lhs,
+    const std::shared_ptr<Node>& rhs,
+    CombineFunc func,
+    NodeGraphManager& manager,
+    ProcessingToken token)
+    : BinaryOpNode(lhs, rhs, std::move(func))
+{
+    m_manager = &manager;
+    m_token = token;
+}
+
+void BinaryOpNode::initialize()
+{
+    if (!m_is_initialized) {
+
+        if (m_manager) {
+            auto self = shared_from_this();
+            uint32_t lhs_mask = m_lhs ? m_lhs->get_channel_mask().load() : 0;
+            uint32_t rhs_mask = m_rhs ? m_rhs->get_channel_mask().load() : 0;
+            uint32_t combined_mask = lhs_mask | rhs_mask;
+
+            if (combined_mask != 0) {
+                for (auto& channel : get_active_channels(combined_mask, 0)) {
+                    m_manager->add_to_root(self, m_token, channel);
+                }
+            } else {
+                m_manager->add_to_root(self, m_token, 0);
+            }
+            m_is_initialized = true;
+        }
+    }
+
+    if (m_manager) {
+        auto semantics = m_manager->get_node_config().binary_op_semantics;
+        switch (semantics) {
+        case NodeBinaryOpSemantics::REPLACE:
+            if (m_lhs) {
+                for (auto& channel : get_active_channels(m_lhs, 0)) {
+                    m_manager->remove_from_root(m_lhs, m_token, channel);
+                }
+            }
+            if (m_rhs) {
+                for (auto& channel : get_active_channels(m_rhs, 0)) {
+                    m_manager->remove_from_root(m_rhs, m_token, channel);
+                }
+            }
+            break;
+        case NodeBinaryOpSemantics::KEEP:
+        default:
+            break;
+        }
+    }
+}
+
+double BinaryOpNode::process_sample(double input)
+{
+    if (!m_lhs || !m_rhs) {
+        return input;
+    }
+
+    if (!is_initialized())
+        initialize();
+
+    atomic_inc_modulator_count(m_lhs->m_modulator_count, 1);
+    atomic_inc_modulator_count(m_rhs->m_modulator_count, 1);
+
+    uint32_t lstate = m_lhs->m_state.load();
+    if (lstate & NodeState::PROCESSED) {
+        m_last_lhs_value = input + m_lhs->get_last_output();
+    } else {
+        m_last_lhs_value = m_lhs->process_sample(input);
+        atomic_add_flag(m_lhs->m_state, NodeState::PROCESSED);
+    }
+
+    uint32_t rstate = m_rhs->m_state.load();
+    if (rstate & NodeState::PROCESSED) {
+        m_last_rhs_value = input + m_rhs->get_last_output();
+    } else {
+        m_last_rhs_value = m_rhs->process_sample(input);
+        atomic_add_flag(m_rhs->m_state, NodeState::PROCESSED);
+    }
+
+    m_last_output = m_func(m_last_lhs_value, m_last_rhs_value);
+
+    if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+        notify_tick(m_last_output);
+
+    atomic_dec_modulator_count(m_lhs->m_modulator_count, 1);
+    atomic_dec_modulator_count(m_rhs->m_modulator_count, 1);
+
+    try_reset_processed_state(m_lhs);
+    try_reset_processed_state(m_rhs);
+
+    return m_last_output;
+}
+
+std::vector<double> BinaryOpNode::process_batch(unsigned int num_samples)
+{
+    std::vector<double> output(num_samples);
+    for (unsigned int i = 0; i < num_samples; ++i) {
+        output[i] = process_sample(0.0);
+    }
+    return output;
+}
+
+void BinaryOpNode::notify_tick(double value)
+{
+    update_context(value);
+    auto& ctx = get_last_context();
+
+    for (const auto& callback : m_callbacks) {
+        callback(ctx);
+    }
+
+    for (const auto& [callback, condition] : m_conditional_callbacks) {
+        if (condition(ctx)) {
+            callback(ctx);
+        }
+    }
+}
+
+void BinaryOpNode::reset_processed_state()
+{
+    atomic_remove_flag(m_state, NodeState::PROCESSED);
+    if (m_lhs)
+        m_lhs->reset_processed_state();
+    if (m_rhs)
+        m_rhs->reset_processed_state();
+}
+
+void BinaryOpNode::save_state()
+{
+    m_saved_last_lhs_value = m_last_lhs_value;
+    m_saved_last_rhs_value = m_last_rhs_value;
+
+    if (m_lhs)
+        m_lhs->save_state();
+    if (m_rhs)
+        m_rhs->save_state();
+
+    m_state_saved = true;
+}
+
+void BinaryOpNode::restore_state()
+{
+    m_last_lhs_value = m_saved_last_lhs_value;
+    m_last_rhs_value = m_saved_last_rhs_value;
+
+    if (m_lhs)
+        m_lhs->restore_state();
+    if (m_rhs)
+        m_rhs->restore_state();
+
+    m_state_saved = false;
+}
+
+void BinaryOpNode::update_context(double /*value*/)
+{
+    if (m_gpu_compatible) {
+        m_context_gpu.value = m_last_output;
+        m_context_gpu.lhs_value = m_last_lhs_value;
+        m_context_gpu.rhs_value = m_last_rhs_value;
+    } else {
+        m_context.value = m_last_output;
+        m_context.lhs_value = m_last_lhs_value;
+        m_context.rhs_value = m_last_rhs_value;
+    }
+}
+
+NodeContext& BinaryOpNode::get_last_context()
+{
+    if (m_gpu_compatible) {
+        return m_context_gpu;
+    }
+    return m_context;
+}
+
+bool BinaryOpNode::is_initialized() const
+{
+    auto lstate = m_lhs->m_state.load();
+    auto rstate = m_rhs->m_state.load();
+    bool is_lhs_registered = m_lhs ? (lstate & NodeState::ACTIVE) : false;
+    bool is_rhs_registered = m_rhs ? (rstate & NodeState::ACTIVE) : false;
+    return !is_lhs_registered && !is_rhs_registered;
+}
+
+namespace detail {
+
+    void composite_initialize(
+        const std::vector<std::shared_ptr<Node>>& inputs,
+        NodeGraphManager& manager,
+        ProcessingToken token,
+        const std::shared_ptr<Node>& self)
+    {
+        uint32_t combined_mask = 0;
+        for (const auto& input : inputs)
+            combined_mask |= input->get_channel_mask().load();
+
+        if (combined_mask != 0) {
+            for (auto ch : get_active_channels(combined_mask, 0))
+                manager.add_to_root(self, token, ch);
+        } else {
+            manager.add_to_root(self, token, 0);
+        }
+    }
+
+    void composite_apply_semantics(
+        const std::vector<std::shared_ptr<Node>>& inputs,
+        NodeGraphManager& manager,
+        ProcessingToken token)
+    {
+        if (manager.get_node_config().binary_op_semantics != NodeBinaryOpSemantics::REPLACE)
+            return;
+
+        for (const auto& input : inputs) {
+            for (auto ch : get_active_channels(input, 0))
+                manager.remove_from_root(input, token, ch);
+        }
+    }
+
+    void composite_validate(const std::vector<std::shared_ptr<Node>>& inputs, size_t N)
+    {
+        if (N > 0 && inputs.size() != N) {
+            error<std::invalid_argument>(
+                Journal::Component::Nodes, Journal::Context::Init,
+                std::source_location::current(),
+                "CompositeOpNode<{}> requires exactly {} inputs, got {}",
+                N, N, inputs.size());
+        }
+
+        if (inputs.size() < 2) {
+            error<std::invalid_argument>(
+                Journal::Component::Nodes, Journal::Context::Init,
+                std::source_location::current(),
+                "CompositeOpNode requires at least 2 inputs, got {}",
+                inputs.size());
+        }
+
+        for (size_t i = 0; i < inputs.size(); ++i) {
+            if (!inputs[i]) {
+                error<std::invalid_argument>(
+                    Journal::Component::Nodes, Journal::Context::Init,
+                    std::source_location::current(),
+                    "CompositeOpNode input at index {} is null", i);
+            }
+        }
+    }
+}
+
+} // namespace MayaFlux::Nodes

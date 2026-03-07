@@ -1,10 +1,10 @@
 #include "../test_config.h"
 
 #include "MayaFlux/MayaFlux.hpp"
+#include "MayaFlux/Nodes/Conduit/NodeCombine.hpp"
 #include "MayaFlux/Nodes/Filters/FIR.hpp"
 #include "MayaFlux/Nodes/Generators/Sine.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
-#include "MayaFlux/Nodes/NodeStructure.hpp"
 
 namespace MayaFlux::Test {
 

@@ -7,6 +7,8 @@
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Core/Engine.hpp"
+#include "MayaFlux/Nodes/Conduit/NodeChain.hpp"
+#include "MayaFlux/Nodes/Conduit/NodeCombine.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
 
@@ -321,6 +323,58 @@ void route_buffer(
     const Buffers::ProcessingToken& token)
 {
     get_buffer_manager()->route_buffer_to_channel(buffer, target_channel, num_blocks, token);
+}
+
+std::shared_ptr<Nodes::Node> operator>>(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs)
+{
+    auto manager = get_node_graph_manager();
+
+    auto lhs_chain = std::dynamic_pointer_cast<Nodes::ChainNode>(lhs);
+    auto rhs_chain = std::dynamic_pointer_cast<Nodes::ChainNode>(rhs);
+
+    if (lhs_chain) {
+        if (rhs_chain) {
+            lhs_chain->append_chain(rhs_chain);
+        } else {
+            lhs_chain->append(rhs);
+        }
+        lhs_chain->initialize();
+        return lhs_chain;
+    }
+
+    std::shared_ptr<Nodes::ChainNode> chain;
+    if (rhs_chain) {
+        std::vector<std::shared_ptr<Nodes::Node>> nodes;
+        nodes.reserve(1 + rhs_chain->size());
+        nodes.push_back(lhs);
+        for (auto& node : rhs_chain->nodes()) {
+            nodes.push_back(node);
+        }
+        chain = std::make_shared<Nodes::ChainNode>(std::move(nodes), *manager);
+    } else {
+        chain = std::make_shared<Nodes::ChainNode>(lhs, rhs, *manager);
+    }
+
+    chain->initialize();
+    return chain;
+}
+
+std::shared_ptr<Nodes::Node> operator+(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs)
+{
+    auto manager = get_node_graph_manager();
+    auto result = std::make_shared<Nodes::BinaryOpNode>(
+        lhs, rhs, [](double a, double b) { return a + b; }, *manager);
+    result->initialize();
+    return result;
+}
+
+std::shared_ptr<Nodes::Node> operator*(const std::shared_ptr<Nodes::Node>& lhs, const std::shared_ptr<Nodes::Node>& rhs)
+{
+    auto manager = get_node_graph_manager();
+    auto result = std::make_shared<Nodes::BinaryOpNode>(
+        lhs, rhs, [](double a, double b) { return a * b; }, *manager);
+    result->initialize();
+    return result;
 }
 
 }

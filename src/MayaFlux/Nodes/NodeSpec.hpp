@@ -2,6 +2,8 @@
 
 namespace MayaFlux::Nodes {
 
+inline constexpr uint32_t MAX_CHANNEL_COUNT = 32; ///< Hard limit imposed by uint32_t channel mask width
+
 /**
  * @enum NodeChainSemantics
  * @brief Defines how to handle existing nodes when creating a new chain
@@ -26,7 +28,7 @@ enum NodeBinaryOpSemantics : uint8_t {
  */
 struct NodeConfig {
     size_t channel_cache_size { 256 }; ///< Number of cached channels for oprations
-    uint32_t max_channels { 32 }; ///< Maximum number of channels supported (uint32_t bits)
+    uint32_t max_channels { MAX_CHANNEL_COUNT }; ///< Cannot exceed MAX_CHANNEL_COUNT
     size_t callback_cache_size { 64 };
     size_t timer_cleanup_threshold { 20 };
 

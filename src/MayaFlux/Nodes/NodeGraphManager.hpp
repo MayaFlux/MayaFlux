@@ -1,5 +1,6 @@
 #pragma once
 
+#include "NodeSpec.hpp"
 #include "RootNode.hpp"
 
 namespace MayaFlux::Nodes {
@@ -466,6 +467,19 @@ public:
      */
     void cleanup_completed_routing(ProcessingToken token);
 
+    /**
+     * @brief Sets the node configuration for this manager
+     * @param config The NodeConfig to set
+     */
+    void set_node_config(const NodeConfig& config) { m_node_config = config; }
+
+    /**
+     * @brief Gets the current node configuration
+     * @return Reference to the current NodeConfig
+     */
+    NodeConfig& get_node_config() { return m_node_config; }
+    const NodeConfig& get_node_config() const { return m_node_config; }
+
 private:
     /**
      * @brief Map of channel indices to their root nodes (AUDIO_RATE domain)
@@ -557,6 +571,8 @@ private:
     uint32_t m_registered_sample_rate { 48000 }; ///< Sample rate for audio processing, used for normalization
 
     uint32_t m_registered_block_size { 512 }; ///< Block size for audio processing, used for normalizationbuffer
+
+    NodeConfig m_node_config; ///< Configuration for node creation and management
 
     /**
      * @brief Ensures a root node exists for the given token and channel

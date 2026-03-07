@@ -44,6 +44,7 @@ namespace Nodes {
         struct MIDIConfig;
     }
     class Constant;
+    class StreamReaderNode;
 }
 
 namespace Buffers {
@@ -57,6 +58,7 @@ namespace Buffers {
     class TextureBuffer;
     class GeometryBuffer;
     class NetworkGeometryBuffer;
+    class NetworkAudioBuffer;
 }
 
 namespace Kakshya {
@@ -93,6 +95,7 @@ namespace IO {
     N(PointCollectionNode, MayaFlux::Nodes::GpuSync::PointCollectionNode)     \
     N(TopologyGeneratorNode, MayaFlux::Nodes::GpuSync::TopologyGeneratorNode) \
     N(ProceduralTextureNode, MayaFlux::Nodes::GpuSync::ProceduralTextureNode) \
+    N(StreamReaderNode, MayaFlux::Nodes::StreamReaderNode)                    \
     N(Constant, MayaFlux::Nodes::Constant)
 
 #define ALL_NODE_NETWORK_REGISTRATIONS                              \
@@ -102,13 +105,14 @@ namespace IO {
     W(ParticleNetwork, MayaFlux::Nodes::Network::ParticleNetwork)   \
     W(PointCloudNetwork, MayaFlux::Nodes::Network::PointCloudNetwork)
 
-#define ALL_BUFFER_REGISTRATION                                      \
-    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)                   \
-    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)                     \
-    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)             \
-    B(SoundContainerBuffer, MayaFlux::Buffers::SoundContainerBuffer) \
-    B(VKBuffer, MayaFlux::Buffers::VKBuffer)                         \
-    B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer)       \
-    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)               \
-    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)             \
-    B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)
+#define ALL_BUFFER_REGISTRATION                                        \
+    B(AudioBuffer, MayaFlux::Buffers::AudioBuffer)                     \
+    B(NodeBuffer, MayaFlux::Buffers::NodeBuffer)                       \
+    B(FeedbackBuffer, MayaFlux::Buffers::FeedbackBuffer)               \
+    B(SoundContainerBuffer, MayaFlux::Buffers::SoundContainerBuffer)   \
+    B(VKBuffer, MayaFlux::Buffers::VKBuffer)                           \
+    B(NodeTextureBuffer, MayaFlux::Buffers::NodeTextureBuffer)         \
+    B(TextureBuffer, MayaFlux::Buffers::TextureBuffer)                 \
+    B(GeometryBuffer, MayaFlux::Buffers::GeometryBuffer)               \
+    B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer) \
+    B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)

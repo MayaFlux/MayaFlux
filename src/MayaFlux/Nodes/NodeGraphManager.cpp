@@ -2,6 +2,8 @@
 
 #include "Network/NodeNetwork.hpp"
 
+#include "Conduit/NodeChain.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nodes {
@@ -456,7 +458,8 @@ void NodeGraphManager::connect(const std::string& source_id, const std::string& 
     auto target = get_node(target_id);
 
     if (source && target) {
-        source >> target;
+        auto chain = std::make_shared<ChainNode>(source, target, *this);
+        chain->initialize();
     }
 }
 
