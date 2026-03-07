@@ -20,6 +20,19 @@ BinaryOpContextGpu::BinaryOpContextGpu(double value, double lhs_value, double rh
     type_id = typeid(BinaryOpContextGpu).name();
 }
 
+CompositeOpContext::CompositeOpContext(double value, std::vector<double> input_values)
+    : NodeContext(value, typeid(CompositeOpContext).name())
+    , input_values(std::move(input_values))
+{
+}
+
+CompositeOpContextGpu::CompositeOpContextGpu(double value, std::vector<double> input_values, std::span<const float> gpu_data)
+    : CompositeOpContext(value, std::move(input_values))
+    , GpuVectorData(gpu_data)
+{
+    type_id = typeid(CompositeOpContextGpu).name();
+}
+
 BinaryOpNode::BinaryOpNode(const std::shared_ptr<Node>& lhs, const std::shared_ptr<Node>& rhs, CombineFunc func)
     : m_lhs(lhs)
     , m_rhs(rhs)
@@ -220,6 +233,69 @@ bool BinaryOpNode::is_initialized() const
     bool is_lhs_registered = m_lhs ? (lstate & NodeState::ACTIVE) : false;
     bool is_rhs_registered = m_rhs ? (rstate & NodeState::ACTIVE) : false;
     return !is_lhs_registered && !is_rhs_registered;
+}
+
+namespace detail {
+
+    void composite_initialize(
+        const std::vector<std::shared_ptr<Node>>& inputs,
+        NodeGraphManager& manager,
+        ProcessingToken token,
+        const std::shared_ptr<Node>& self)
+    {
+        uint32_t combined_mask = 0;
+        for (const auto& input : inputs)
+            combined_mask |= input->get_channel_mask().load();
+
+        if (combined_mask != 0) {
+            for (auto ch : get_active_channels(combined_mask, 0))
+                manager.add_to_root(self, token, ch);
+        } else {
+            manager.add_to_root(self, token, 0);
+        }
+    }
+
+    void composite_apply_semantics(
+        const std::vector<std::shared_ptr<Node>>& inputs,
+        NodeGraphManager& manager,
+        ProcessingToken token)
+    {
+        if (manager.get_node_config().binary_op_semantics != NodeBinaryOpSemantics::REPLACE)
+            return;
+
+        for (const auto& input : inputs) {
+            for (auto ch : get_active_channels(input, 0))
+                manager.remove_from_root(input, token, ch);
+        }
+    }
+
+    void composite_validate(const std::vector<std::shared_ptr<Node>>& inputs, size_t N)
+    {
+        if (N > 0 && inputs.size() != N) {
+            error<std::invalid_argument>(
+                Journal::Component::Nodes, Journal::Context::Init,
+                std::source_location::current(),
+                "CompositeOpNode<{}> requires exactly {} inputs, got {}",
+                N, N, inputs.size());
+        }
+
+        if (inputs.size() < 2) {
+            error<std::invalid_argument>(
+                Journal::Component::Nodes, Journal::Context::Init,
+                std::source_location::current(),
+                "CompositeOpNode requires at least 2 inputs, got {}",
+                inputs.size());
+        }
+
+        for (size_t i = 0; i < inputs.size(); ++i) {
+            if (!inputs[i]) {
+                error<std::invalid_argument>(
+                    Journal::Component::Nodes, Journal::Context::Init,
+                    std::source_location::current(),
+                    "CompositeOpNode input at index {} is null", i);
+            }
+        }
+    }
 }
 
 } // namespace MayaFlux::Nodes

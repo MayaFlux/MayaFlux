@@ -78,6 +78,29 @@ public:
 };
 
 /**
+ * @class CompositeOpContext
+ * @brief Context for N-ary composite operation callbacks
+ *
+ * Provides the individual values from all input nodes alongside
+ * the combined output value.
+ */
+class MAYAFLUX_API CompositeOpContext : public NodeContext {
+public:
+    CompositeOpContext(double value, std::vector<double> input_values);
+
+    std::vector<double> input_values;
+};
+
+/**
+ * @class CompositeOpContextGpu
+ * @brief GPU-compatible context for composite operation callbacks
+ */
+class MAYAFLUX_API CompositeOpContextGpu : public CompositeOpContext, public GpuVectorData {
+public:
+    CompositeOpContextGpu(double value, std::vector<double> input_values, std::span<const float> gpu_data);
+};
+
+/**
  * @class BinaryOpNode
  * @brief Combines the outputs of two nodes using a binary operation
  *
@@ -277,6 +300,255 @@ private:
 
 public:
     bool is_initialized() const;
+};
+
+// =============================================================================
+// CompositeOpNode
+// =============================================================================
+
+namespace detail {
+    void composite_initialize(
+        const std::vector<std::shared_ptr<Node>>& inputs,
+        NodeGraphManager& manager,
+        ProcessingToken token,
+        const std::shared_ptr<Node>& self);
+
+    void composite_apply_semantics(
+        const std::vector<std::shared_ptr<Node>>& inputs,
+        NodeGraphManager& manager,
+        ProcessingToken token);
+
+    void composite_validate(const std::vector<std::shared_ptr<Node>>& inputs, size_t N);
+}
+
+/**
+ * @class CompositeOpNode
+ * @brief Combines the outputs of N nodes using a composite operation
+ *
+ * All input nodes process the same input sample. Their outputs are
+ * collected and passed to a user-supplied combine function.
+ * Generalizes BinaryOpNode to arbitrary arity.
+ *
+ * No operator overloads are provided since there is no natural N-ary
+ * operator syntax in C++.
+ *
+ * @tparam N Optional compile-time arity. 0 (default) means runtime-determined.
+ */
+template <size_t N = 0>
+class MAYAFLUX_API CompositeOpNode : public Node, public std::enable_shared_from_this<CompositeOpNode<N>> {
+public:
+    using CombineFunc = std::function<double(std::span<const double>)>;
+
+    /**
+     * @brief Creates a composite operation node (unmanaged)
+     * @param inputs The input nodes whose outputs will be combined
+     * @param func Function that receives all node outputs and returns combined result
+     */
+    CompositeOpNode(
+        std::vector<std::shared_ptr<Node>> inputs,
+        CombineFunc func)
+        : m_inputs(std::move(inputs))
+        , m_func(std::move(func))
+        , m_input_values(m_inputs.size(), 0.0)
+        , m_saved_input_values(m_inputs.size(), 0.0)
+        , m_context(0.0, std::vector<double>(m_inputs.size(), 0.0))
+        , m_context_gpu(0.0, std::vector<double>(m_inputs.size(), 0.0), Node::get_gpu_data_buffer())
+    {
+        detail::composite_validate(m_inputs, N);
+    }
+
+    /**
+     * @brief Creates a composite operation node (managed)
+     * @param inputs The input nodes whose outputs will be combined
+     * @param func Function that receives all node outputs and returns combined result
+     * @param manager Graph manager for registration
+     * @param token Processing domain for registration (default AUDIO_RATE)
+     */
+    CompositeOpNode(
+        std::vector<std::shared_ptr<Node>> inputs,
+        CombineFunc func,
+        NodeGraphManager& manager,
+        ProcessingToken token = ProcessingToken::AUDIO_RATE)
+        : m_inputs(std::move(inputs))
+        , m_func(std::move(func))
+        , m_manager(&manager)
+        , m_token(token)
+        , m_input_values(m_inputs.size(), 0.0)
+        , m_saved_input_values(m_inputs.size(), 0.0)
+        , m_context(0.0, std::vector<double>(m_inputs.size(), 0.0))
+        , m_context_gpu(0.0, std::vector<double>(m_inputs.size(), 0.0), Node::get_gpu_data_buffer())
+    {
+        detail::composite_validate(m_inputs, N);
+    }
+
+    /**
+     * @brief Creates a composite operation node with derived node types (managed)
+     * @tparam DerivedNode A type derived from Node
+     * @param inputs The input nodes whose outputs will be combined
+     * @param func Function that receives all node outputs and returns combined result
+     * @param manager Graph manager for registration
+     * @param token Processing domain for registration (default AUDIO_RATE)
+     *
+     * This constructor allows for creating a CompositeOpNode using a vector of shared pointers to a type derived from Node.
+     * It performs an implicit conversion to the base Node type for internal storage, while still allowing the caller to use their specific node types.
+     */
+    template <typename DerivedNode>
+        requires std::derived_from<DerivedNode, Node>
+    CompositeOpNode(
+        std::vector<std::shared_ptr<DerivedNode>> inputs,
+        CombineFunc func,
+        NodeGraphManager& manager,
+        ProcessingToken token = ProcessingToken::AUDIO_RATE)
+        : CompositeOpNode(
+              std::vector<std::shared_ptr<Node>>(inputs.begin(), inputs.end()),
+              std::move(func), manager, token)
+    {
+    }
+
+    void initialize()
+    {
+        if (!m_is_initialized) {
+            if (m_manager)
+                detail::composite_initialize(m_inputs, *m_manager, m_token, this->shared_from_this());
+            m_is_initialized = true;
+        }
+        if (m_manager)
+            detail::composite_apply_semantics(m_inputs, *m_manager, m_token);
+    }
+
+    double process_sample(double input = 0.) override
+    {
+        if (!is_initialized())
+            initialize();
+
+        for (auto& node : m_inputs) {
+            atomic_inc_modulator_count(node->m_modulator_count, 1);
+        }
+
+        for (size_t i = 0; i < m_inputs.size(); ++i) {
+            uint32_t state = m_inputs[i]->m_state.load();
+            if (state & NodeState::PROCESSED) {
+                m_input_values[i] = input + m_inputs[i]->get_last_output();
+            } else {
+                m_input_values[i] = m_inputs[i]->process_sample(input);
+                atomic_add_flag(m_inputs[i]->m_state, NodeState::PROCESSED);
+            }
+        }
+
+        m_last_output = m_func(std::span<const double>(m_input_values));
+
+        if (!m_state_saved || (m_state_saved && m_fire_events_during_snapshot))
+            notify_tick(m_last_output);
+
+        for (auto& node : m_inputs) {
+            atomic_dec_modulator_count(node->m_modulator_count, 1);
+        }
+
+        for (auto& node : m_inputs) {
+            try_reset_processed_state(node);
+        }
+
+        return m_last_output;
+    }
+
+    std::vector<double> process_batch(unsigned int num_samples) override
+    {
+        std::vector<double> output(num_samples);
+        for (unsigned int i = 0; i < num_samples; ++i) {
+            output[i] = process_sample(0.0);
+        }
+        return output;
+    }
+
+    void reset_processed_state() override
+    {
+        atomic_remove_flag(m_state, NodeState::PROCESSED);
+        for (auto& node : m_inputs) {
+            if (node)
+                node->reset_processed_state();
+        }
+    }
+
+    void save_state() override
+    {
+        m_saved_input_values = m_input_values;
+        for (auto& node : m_inputs) {
+            if (node)
+                node->save_state();
+        }
+        m_state_saved = true;
+    }
+
+    void restore_state() override
+    {
+        m_input_values = m_saved_input_values;
+        for (auto& node : m_inputs) {
+            if (node)
+                node->restore_state();
+        }
+        m_state_saved = false;
+    }
+
+    [[nodiscard]] size_t input_count() const { return m_inputs.size(); }
+    [[nodiscard]] const std::vector<std::shared_ptr<Node>>& inputs() const { return m_inputs; }
+
+    [[nodiscard]] bool is_initialized() const
+    {
+        for (auto& node : m_inputs) {
+            auto state = node->m_state.load();
+            if (state & NodeState::ACTIVE)
+                return false;
+        }
+        return m_is_initialized;
+    }
+
+protected:
+    void notify_tick(double value) override
+    {
+        update_context(value);
+        auto& ctx = get_last_context();
+
+        for (const auto& callback : m_callbacks) {
+            callback(ctx);
+        }
+
+        for (const auto& [callback, condition] : m_conditional_callbacks) {
+            if (condition(ctx)) {
+                callback(ctx);
+            }
+        }
+    }
+
+    void update_context(double) override
+    {
+        if (m_gpu_compatible) {
+            m_context_gpu.value = m_last_output;
+            m_context_gpu.input_values = m_input_values;
+        } else {
+            m_context.value = m_last_output;
+            m_context.input_values = m_input_values;
+        }
+    }
+
+    NodeContext& get_last_context() override
+    {
+        if (m_gpu_compatible)
+            return m_context_gpu;
+        return m_context;
+    }
+
+private:
+    std::vector<std::shared_ptr<Node>> m_inputs;
+    CombineFunc m_func;
+    NodeGraphManager* m_manager {};
+    ProcessingToken m_token { ProcessingToken::AUDIO_RATE };
+    std::vector<double> m_input_values;
+    std::vector<double> m_saved_input_values;
+    bool m_is_initialized {};
+    bool m_state_saved {};
+
+    CompositeOpContext m_context;
+    CompositeOpContextGpu m_context_gpu;
 };
 
 }
