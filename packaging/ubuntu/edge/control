@@ -36,6 +36,7 @@ Build-Depends:
     libavcodec-dev,
     libavformat-dev,
     libswscale-dev,
+    libavdevice-dev,
     libhidapi-dev,
     librtmidi-dev,
     git
@@ -78,6 +79,7 @@ Depends:
     libavcodec-dev,
     libavformat-dev,
     libswscale-dev,
+    libavdevice-dev,
     libhidapi-dev,
     librtmidi-dev
 Suggests:
