@@ -60,6 +60,7 @@ void GraphicsBatchProcessor::processing_function(const std::shared_ptr<Buffer>& 
                     info.target_window = window;
                     info.pipeline_id = id;
                     info.command_buffer_id = vk_buffer->get_pipeline_command(id);
+                    info.needs_depth = vk_buffer->needs_depth_attachment();
 
                     root_buf->add_renderable_buffer(info);
 
@@ -264,7 +265,25 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
         }
 
         try {
-            flow.begin_rendering(primary_cmd_id, window, swapchain_image);
+            bool window_needs_depth = false;
+            for (const auto* info : buffer_infos) {
+                if (info->needs_depth) {
+                    window_needs_depth = true;
+                    break;
+                }
+            }
+
+            vk::ImageView depth_view = nullptr;
+            if (window_needs_depth) {
+                display_service->ensure_depth_attachment(window);
+                auto* view_ptr = display_service->get_depth_image_view(window);
+                if (view_ptr) {
+                    depth_view = *static_cast<vk::ImageView*>(view_ptr);
+                }
+            }
+
+            flow.begin_rendering(primary_cmd_id, window, swapchain_image,
+                Portal::Graphics::default_color, depth_view);
 
             std::vector<vk::CommandBuffer> secondary_buffers;
             for (const auto* info : buffer_infos) {

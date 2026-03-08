@@ -477,6 +477,16 @@ public:
         m_render_config_dirty = true;
     }
 
+    /**
+     * @brief Mark this buffer as requiring depth testing when rendered
+     */
+    void set_needs_depth_attachment(bool needs) { m_needs_depth = needs; }
+
+    /**
+     * @brief Check if this buffer requires depth attachment for rendering
+     */
+    [[nodiscard]] bool needs_depth_attachment() const { return m_needs_depth; }
+
 protected:
     /**
      * @brief Called by derived classes to set their context-specific defaults
@@ -504,6 +514,7 @@ private:
     // Buffer parameters
     size_t m_size_bytes {};
     Usage m_usage {};
+    bool m_needs_depth {};
 
     // Semantic metadata
     Kakshya::DataModality m_modality;

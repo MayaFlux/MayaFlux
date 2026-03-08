@@ -43,6 +43,7 @@ public:
         std::shared_ptr<Core::Window> target_window;
         RenderPipelineID pipeline_id;
         CommandBufferID command_buffer_id;
+        bool needs_depth {};
     };
 
     /**
