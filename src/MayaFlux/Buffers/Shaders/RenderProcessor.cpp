@@ -84,6 +84,45 @@ void RenderProcessor::enable_alpha_blending()
     m_needs_pipeline_rebuild = true;
 }
 
+void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op)
+{
+    m_depth_stencil.depth_test_enable = true;
+    m_depth_stencil.depth_write_enable = true;
+    m_depth_stencil.depth_compare_op = compare_op;
+    m_depth_enabled = true;
+    m_needs_pipeline_rebuild = true;
+}
+
+void RenderProcessor::set_view_transform(const Kinesis::ViewTransform& vt)
+{
+    m_view_transform = vt;
+    m_view_transform_source = nullptr;
+
+    if (!m_depth_enabled) {
+        enable_depth_test();
+    }
+
+    if (m_push_constant_data.size() < sizeof(Kinesis::ViewTransform)) {
+        set_push_constant_size(sizeof(Kinesis::ViewTransform));
+    }
+
+    std::memcpy(m_push_constant_data.data(), &vt, sizeof(Kinesis::ViewTransform));
+}
+
+void RenderProcessor::set_view_transform_source(std::function<Kinesis::ViewTransform()> fn)
+{
+    m_view_transform_source = std::move(fn);
+    m_view_transform.reset();
+
+    if (!m_depth_enabled) {
+        enable_depth_test();
+    }
+
+    if (m_push_constant_data.size() < sizeof(Kinesis::ViewTransform)) {
+        set_push_constant_size(sizeof(Kinesis::ViewTransform));
+    }
+}
+
 void RenderProcessor::bind_texture(
     uint32_t binding,
     const std::shared_ptr<Core::VKImage>& texture,
@@ -236,12 +275,20 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     vk::Format swapchain_format = static_cast<vk::Format>(
         m_display_service->get_swapchain_format(m_target_window));
 
-    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format });
+    vk::Format depth_format = m_depth_enabled
+        ? vk::Format::eD32Sfloat
+        : vk::Format::eUndefined;
+
+    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format);
 
     if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Failed to create render pipeline");
         return;
+    }
+
+    if (m_depth_enabled) {
+        buffer->set_needs_depth_attachment(true);
     }
 
     m_needs_descriptor_rebuild = !pipeline_config.descriptor_sets.empty() && m_descriptor_set_ids.empty();
@@ -422,6 +469,23 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         flow.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
     }
 
+    if (m_view_transform_source || m_view_transform.has_value()) {
+        Kinesis::ViewTransform vt = m_view_transform_source
+            ? m_view_transform_source()
+            : m_view_transform.value();
+
+        auto& staging = buffer->get_pipeline_context().push_constant_staging;
+
+        if (!staging.empty()) {
+            if (staging.size() < sizeof(Kinesis::ViewTransform)) {
+                staging.resize(std::max(staging.size(), sizeof(Kinesis::ViewTransform)));
+            }
+            std::memcpy(staging.data(), &vt, sizeof(Kinesis::ViewTransform));
+        } else {
+            std::memcpy(m_push_constant_data.data(), &vt, sizeof(Kinesis::ViewTransform));
+        }
+    }
+
     const auto& staging = buffer->get_pipeline_context();
     if (!staging.push_constant_staging.empty()) {
         flow.push_constants(
@@ -483,6 +547,10 @@ void RenderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
             m_needs_pipeline_rebuild = true;
             m_buffer_info[vk_buffer] = { .semantic_layout = vertex_layout.value(), .use_reflection = false };
         }
+    }
+
+    if (m_depth_enabled) {
+        vk_buffer->set_needs_depth_attachment(true);
     }
 
     if (!m_display_service) {
