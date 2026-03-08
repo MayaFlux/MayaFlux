@@ -102,6 +102,8 @@ void RenderProcessor::set_view_transform(const Kinesis::ViewTransform& vt)
         enable_depth_test();
     }
 
+    m_cull_mode = Portal::Graphics::CullMode::BACK;
+
     if (m_push_constant_data.size() < sizeof(Kinesis::ViewTransform)) {
         set_push_constant_size(sizeof(Kinesis::ViewTransform));
     }
@@ -117,6 +119,8 @@ void RenderProcessor::set_view_transform_source(std::function<Kinesis::ViewTrans
     if (!m_depth_enabled) {
         enable_depth_test();
     }
+
+    m_cull_mode = Portal::Graphics::CullMode::BACK;
 
     if (m_push_constant_data.size() < sizeof(Kinesis::ViewTransform)) {
         set_push_constant_size(sizeof(Kinesis::ViewTransform));
