@@ -520,7 +520,8 @@ void RenderFlow::begin_rendering(
     CommandBufferID cmd_id,
     const std::shared_ptr<Core::Window>& window,
     vk::Image swapchain_image,
-    const std::array<float, 4>& clear_color)
+    const std::array<float, 4>& clear_color,
+    vk::ImageView depth_image_view)
 {
     auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
     if (!cmd) {
@@ -609,6 +610,20 @@ void RenderFlow::begin_rendering(
         color_attachment.clearValue.color = vk::ClearColorValue(window->get_create_info().clear_color);
     }
 
+    vk::RenderingAttachmentInfo depth_attachment {};
+    if (depth_image_view) {
+        depth_attachment.sType = vk::StructureType::eRenderingAttachmentInfo;
+        depth_attachment.pNext = nullptr;
+        depth_attachment.imageView = depth_image_view;
+        depth_attachment.imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+        depth_attachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+        depth_attachment.resolveImageView = nullptr;
+        depth_attachment.resolveImageLayout = vk::ImageLayout::eUndefined;
+        depth_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+        depth_attachment.storeOp = vk::AttachmentStoreOp::eDontCare;
+        depth_attachment.clearValue.depthStencil = vk::ClearDepthStencilValue { 1.0F, 0 };
+    }
+
     vk::RenderingInfo rendering_info {};
     rendering_info.sType = vk::StructureType::eRenderingInfo;
     rendering_info.pNext = nullptr;
@@ -618,14 +633,15 @@ void RenderFlow::begin_rendering(
     rendering_info.layerCount = 1;
     rendering_info.colorAttachmentCount = 1;
     rendering_info.pColorAttachments = &color_attachment;
-    rendering_info.pDepthAttachment = nullptr;
+    rendering_info.pDepthAttachment = depth_image_view ? &depth_attachment : nullptr;
     rendering_info.pStencilAttachment = nullptr;
 
     cmd.beginRendering(rendering_info);
 
     MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
-        "Began dynamic rendering for window '{}' ({}x{})",
-        window->get_create_info().title, width, height);
+        "Began dynamic rendering for window '{}' ({}x{}, depth: {})",
+        window->get_create_info().title, width, height,
+        depth_image_view ? "yes" : "no");
 }
 
 void RenderFlow::end_rendering(
