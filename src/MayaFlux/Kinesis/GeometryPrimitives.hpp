@@ -83,7 +83,7 @@ void apply_transform(
  * @param vertices Vertices to transform (modified in-place)
  * @param axis Rotation axis (will be normalized)
  * @param angle Rotation angle in radians (right-hand rule)
- * @param origin Rotation center (default: world origin)
+ * @param origin Rotation pivot (default: coordinate origin)
  */
 void apply_rotation(
     std::vector<glm::vec3>& vertices,
@@ -104,7 +104,7 @@ void apply_translation(
  * @brief Apply uniform scaling to vertex set
  * @param vertices Vertices to transform (modified in-place)
  * @param scale Scale factor (must be > 0)
- * @param origin Scaling center (default: world origin)
+ * @param origin Scaling pivot (default: coordinate origin)
  */
 void apply_uniform_scale(
     std::vector<glm::vec3>& vertices,
