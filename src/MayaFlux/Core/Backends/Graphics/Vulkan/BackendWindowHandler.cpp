@@ -40,6 +40,20 @@ void WindowRenderContext::cleanup(VKContext& context)
     }
     in_flight.clear();
 
+    if (depth_image && depth_image->is_initialized()) {
+        const auto& res = depth_image->get_image_resources();
+        if (res.image_view) {
+            device.destroyImageView(res.image_view);
+        }
+        if (res.memory) {
+            device.freeMemory(res.memory);
+        }
+        if (res.image) {
+            device.destroyImage(res.image);
+        }
+        depth_image.reset();
+    }
+
     if (swapchain) {
         swapchain->cleanup();
         swapchain.reset();
@@ -391,7 +405,85 @@ bool BackendWindowHandler::recreate_swapchain_internal(WindowRenderContext& cont
         return false;
     }
 
+    if (context.depth_image) {
+        auto device = m_context.get_device();
+        const auto& res = context.depth_image->get_image_resources();
+        if (res.image_view) {
+            device.destroyImageView(res.image_view);
+        }
+        if (res.memory) {
+            device.freeMemory(res.memory);
+        }
+        if (res.image) {
+            device.destroyImage(res.image);
+        }
+        context.depth_image.reset();
+    }
+
     return true;
+}
+
+void BackendWindowHandler::ensure_depth_image(WindowRenderContext& ctx)
+{
+    if (!ctx.swapchain) {
+        return;
+    }
+
+    auto extent = ctx.swapchain->get_extent();
+
+    if (ctx.depth_image && ctx.depth_image->is_initialized()
+        && ctx.depth_image->get_width() == extent.width
+        && ctx.depth_image->get_height() == extent.height) {
+        return;
+    }
+
+    auto device = m_context.get_device();
+
+    if (ctx.depth_image && ctx.depth_image->is_initialized()) {
+        device.waitIdle();
+        const auto& res = ctx.depth_image->get_image_resources();
+        if (res.image_view) {
+            device.destroyImageView(res.image_view);
+        }
+        if (res.memory) {
+            device.freeMemory(res.memory);
+        }
+        if (res.image) {
+            device.destroyImage(res.image);
+        }
+        ctx.depth_image.reset();
+    }
+
+    ctx.depth_image = std::make_shared<VKImage>(
+        extent.width, extent.height, 1,
+        vk::Format::eD32Sfloat,
+        VKImage::Usage::DEPTH_STENCIL,
+        VKImage::Type::TYPE_2D,
+        1, 1,
+        Kakshya::DataModality::IMAGE_2D);
+
+    m_resource_manager->initialize_image(ctx.depth_image);
+
+    if (!ctx.depth_image->is_initialized()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Failed to create depth image for window '{}'",
+            ctx.window->get_create_info().title);
+        ctx.depth_image.reset();
+        return;
+    }
+
+    m_resource_manager->transition_image_layout(
+        ctx.depth_image->get_image(),
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        1, 1,
+        vk::ImageAspectFlagBits::eDepth);
+    ctx.depth_image->set_current_layout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+    MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
+        "Created depth image for window '{}': {}x{}, D32_SFLOAT",
+        ctx.window->get_create_info().title,
+        extent.width, extent.height);
 }
 
 void BackendWindowHandler::render_window(const std::shared_ptr<Window>& window)

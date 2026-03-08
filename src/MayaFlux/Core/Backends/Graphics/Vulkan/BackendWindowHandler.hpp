@@ -9,6 +9,7 @@ struct DisplayService;
 namespace MayaFlux::Core {
 
 class VKContext;
+class VKImage;
 class VKSwapchain;
 class VKCommandManager;
 class Window;
@@ -24,6 +25,7 @@ struct WindowRenderContext {
     std::vector<vk::Fence> in_flight;
 
     std::vector<vk::CommandBuffer> clear_command_buffers;
+    std::shared_ptr<VKImage> depth_image;
 
     bool needs_recreation {};
     size_t current_frame {};
@@ -109,6 +111,15 @@ private:
      * @return True if recreation succeeded
      */
     bool recreate_swapchain_internal(WindowRenderContext& context);
+
+    /**
+     * @brief Ensure depth image exists at current swapchain extent
+     * @param ctx Window context to create depth image for
+     *
+     * Creates or recreates a D32_SFLOAT depth image matching the
+     * swapchain extent. No-op if depth image already matches.
+     */
+    void ensure_depth_image(WindowRenderContext& ctx);
 
     /**
      * @brief Render empty windows with clear color
