@@ -195,6 +195,8 @@ private:
          * @brief The node to be registered or unregistered
          */
         std::shared_ptr<Node> node;
+
+        bool is_addition { true };
     } m_pending_ops[MAX_PENDING_NODES];
 
     /**
