@@ -109,6 +109,19 @@ public:
         const std::shared_ptr<VKBuffer>& buffer,
         const Kakshya::VertexLayout& layout);
 
+    /**
+     * @brief Set blend mode for color attachment
+     * @param config Blend attachment configuration
+     */
+    inline void set_blend_attachment(const Portal::Graphics::BlendAttachmentConfig& config)
+    {
+        m_blend_attachment = config;
+        m_needs_pipeline_rebuild = true;
+    }
+
+    /** @brief Enable standard alpha blending (src_alpha, one_minus_src_alpha) */
+    void enable_alpha_blending();
+
 protected:
     void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) override;
     void execute_shader(const std::shared_ptr<VKBuffer>& buffer) override;
@@ -143,6 +156,10 @@ private:
         vk::Sampler sampler;
     };
     std::unordered_map<uint32_t, TextureBinding> m_texture_bindings;
+
+    std::optional<Portal::Graphics::BlendAttachmentConfig> m_blend_attachment;
+
+    Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };

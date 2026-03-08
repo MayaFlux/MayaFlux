@@ -74,6 +74,16 @@ void RenderProcessor::set_target_window(const std::shared_ptr<Core::Window>& win
     window->register_rendering_buffer(buffer);
 }
 
+void RenderProcessor::enable_alpha_blending()
+{
+    Portal::Graphics::BlendAttachmentConfig blend = Portal::Graphics::BlendAttachmentConfig::alpha_blend();
+    set_blend_attachment(blend);
+
+    m_depth_stencil.depth_test_enable = false;
+    m_depth_stencil.depth_write_enable = false;
+    m_needs_pipeline_rebuild = true;
+}
+
 void RenderProcessor::bind_texture(
     uint32_t binding,
     const std::shared_ptr<Core::VKImage>& texture,
@@ -157,7 +167,13 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     pipeline_config.rasterization.polygon_mode = m_polygon_mode;
     pipeline_config.rasterization.cull_mode = m_cull_mode;
 
-    pipeline_config.blend_attachments.emplace_back();
+    if (m_blend_attachment.has_value()) {
+        pipeline_config.blend_attachments.push_back(m_blend_attachment.value());
+    } else {
+        pipeline_config.blend_attachments.emplace_back();
+    }
+
+    pipeline_config.depth_stencil = m_depth_stencil;
 
     if (m_buffer_info.find(buffer) == m_buffer_info.end()) {
         if (buffer->has_vertex_layout()) {
